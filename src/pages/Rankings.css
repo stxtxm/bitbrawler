@@ -1,0 +1,175 @@
+.rankings-content {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    background: rgba(0, 0, 0, 0.6);
+    border: 4px solid #4a4a4a;
+    padding: 20px;
+    min-height: 400px;
+}
+
+.loading-state,
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    font-family: 'Press Start 2P', cursive;
+    color: #fff;
+    text-shadow: 2px 2px 0 #000;
+}
+
+.blink {
+    animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0;
+    }
+}
+
+/* GRILLE */
+.rankings-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.rankings-header {
+    display: grid;
+    grid-template-columns: 50px 80px 1fr 60px 150px;
+    padding: 10px;
+    background: #2a2a2a;
+    border-bottom: 2px solid #fff;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.8rem;
+    color: #ffd700;
+    text-shadow: 1px 1px 0 #000;
+}
+
+.ranking-row {
+    display: grid;
+    grid-template-columns: 50px 80px 1fr 60px 150px;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid #4a4a4a;
+    padding: 5px;
+    transition: all 0.2s;
+}
+
+.ranking-row:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: #ffd700;
+    transform: scale(1.01);
+}
+
+.col-rank,
+.col-lvl,
+.col-avatar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Press Start 2P', cursive;
+}
+
+.col-rank {
+    font-size: 1.2rem;
+    color: #fff;
+}
+
+.col-name {
+    display: flex;
+    flex-direction: column;
+    padding-left: 15px;
+}
+
+.char-name {
+    font-family: 'Press Start 2P', cursive;
+    color: #fff;
+    font-size: 1rem;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+.char-class {
+    font-family: 'Roboto', sans-serif;
+    color: #aaa;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.col-lvl {
+    color: #00ff00;
+}
+
+.lvl-badge {
+    border: 2px solid #00ff00;
+    padding: 4px 6px;
+    background: rgba(0, 255, 0, 0.1);
+}
+
+.col-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.7rem;
+    font-family: 'Press Start 2P', cursive;
+    color: #ccc;
+}
+
+.mini-stat {
+    display: flex;
+    justify-content: space-between;
+}
+
+.mini-stat span {
+    color: #666;
+    margin-right: 5px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+
+    .rankings-header,
+    .ranking-row {
+        grid-template-columns: 40px 60px 1fr 50px;
+    }
+
+    .col-stats,
+    .rankings-header .col-stats {
+        display: none;
+    }
+
+    .rankings-content {
+        padding: 5px;
+        border: none;
+        background: transparent;
+    }
+
+    .alpha-reset-btn {
+        font-size: 0.7rem !important;
+        /* Larger touch target */
+        opacity: 0.8 !important;
+        /* More visible */
+        padding: 15px !important;
+        /* Easier to tap */
+        width: 100%;
+        margin-top: 20px;
+    }
+}
+
+/* Alpha Reset Tool Button */
+.alpha-reset-btn {
+    font-size: 0.5rem !important;
+    opacity: 0.5;
+    border: 1px solid #ff4444 !important;
+    color: #ff4444 !important;
+    padding: 5px 10px !important;
+    background: transparent;
+    font-family: 'Press Start 2P', cursive;
+    cursor: pointer;
+}
+
+.alpha-reset-btn:hover {
+    opacity: 1;
+    background: rgba(255, 68, 68, 0.1) !important;
+}

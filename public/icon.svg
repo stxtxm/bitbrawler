@@ -1,0 +1,25 @@
+<svg width="512" height="512" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+  <!-- Black background -->
+  <rect width="12" height="12" fill="#000000"/>
+  
+  <!-- Character head - simple pixel art face -->
+  <!-- Skin base -->
+  <rect x="3" y="3" width="6" height="6" fill="#f4a460"/>
+  
+  <!-- Hair (magenta) -->
+  <rect x="3" y="2" width="6" height="1" fill="#ff00ff"/>
+  <rect x="2" y="3" width="1" height="1" fill="#ff00ff"/>
+  <rect x="9" y="3" width="1" height="1" fill="#ff00ff"/>
+  
+  <!-- Eyes (white with cyan pupils) -->
+  <rect x="4" y="5" width="1" height="1" fill="#ffffff"/>
+  <rect x="7" y="5" width="1" height="1" fill="#ffffff"/>
+  <rect x="4" y="5" width="1" height="1" fill="#00ffff" opacity="0.7"/>
+  <rect x="7" y="5" width="1" height="1" fill="#00ffff" opacity="0.7"/>
+  
+  <!-- Mouth -->
+  <rect x="5" y="7" width="2" height="1" fill="#a00000"/>
+  
+  <!-- Neck/body hint -->
+  <rect x="5" y="9" width="2" height="2" fill="#333333"/>
+</svg>

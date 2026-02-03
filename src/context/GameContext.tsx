@@ -1,0 +1,242 @@
+import { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
+import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { db } from '../config/firebase';
+import { Character } from '../types/Character';
+
+interface GameContextType {
+  activeCharacter: Character | null;
+  loading: boolean;
+  firebaseAvailable: boolean;
+  login: (name: string) => Promise<string | null>;
+  logout: () => void;
+  setCharacter: (char: Character) => void;
+  useFight: () => Promise<void>;
+}
+
+const GameContext = createContext<GameContextType | undefined>(undefined);
+
+// Constants
+const DAILY_FIGHTS = 5;
+const LOCAL_STORAGE_KEY = 'bitbrawler_active_char';
+const DAILY_RESET_INTERVAL = 60000; // 1 minute
+
+// Helper functions
+const clearLocalData = () => {
+  localStorage.removeItem(LOCAL_STORAGE_KEY);
+};
+
+const saveLocalData = (character: Character) => {
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(character));
+};
+
+const loadLocalData = (): Character | null => {
+  const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+  if (!saved) return null;
+  
+  try {
+    return JSON.parse(saved);
+  } catch {
+    clearLocalData();
+    return null;
+  }
+};
+
+const getServerTime = async (): Promise<number> => {
+  try {
+    const serverTimeSnapshot = await getDocs(collection(db, "server_time"));
+    return serverTimeSnapshot.docs[0]?.data()?.timestamp || Date.now();
+  } catch {
+    return Date.now();
+  }
+};
+
+const shouldResetDaily = (lastReset: number): boolean => {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const lastResetDate = new Date(lastReset);
+  const lastResetDay = new Date(lastResetDate.getFullYear(), lastResetDate.getMonth(), lastResetDate.getDate());
+  
+  return today > lastResetDay;
+};
+
+export const GameProvider = ({ children }: { children: ReactNode }) => {
+  const [activeCharacter, setActiveCharacter] = useState<Character | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [firebaseAvailable, setFirebaseAvailable] = useState(true);
+
+  // Firebase error handler
+  const handleFirebaseError = useCallback((error: any, context: string) => {
+    console.error(`Firebase error (${context}):`, error);
+    setFirebaseAvailable(false);
+    clearLocalData();
+    setActiveCharacter(null);
+  }, []);
+
+  // Sync character with Firestore
+  const syncCharacterWithFirestore = useCallback(async (character: Character): Promise<Character | null> => {
+    if (!character.firestoreId) return null;
+
+    try {
+      const docSnap = await getDocs(query(collection(db, "characters"), where("__name__", "==", character.firestoreId)));
+      
+      if (docSnap.empty) {
+        handleFirebaseError(new Error('Character not found in Firestore'), 'sync');
+        return null;
+      }
+
+      const firestoreData = docSnap.docs[0].data() as Character;
+      return {
+        ...firestoreData,
+        firestoreId: character.firestoreId
+      };
+    } catch (error) {
+      handleFirebaseError(error, 'sync');
+      return null;
+    }
+  }, [handleFirebaseError]);
+
+  // Load character on mount
+  useEffect(() => {
+    const loadCharacter = async () => {
+      const localChar = loadLocalData();
+      if (!localChar) {
+        setLoading(false);
+        return;
+      }
+
+      if (!localChar.firestoreId) {
+        clearLocalData();
+        setLoading(false);
+        return;
+      }
+
+      const syncedChar = await syncCharacterWithFirestore(localChar);
+      if (syncedChar) {
+        setActiveCharacter(syncedChar);
+        saveLocalData(syncedChar);
+      }
+
+      setLoading(false);
+    };
+
+    loadCharacter();
+  }, [syncCharacterWithFirestore]);
+
+  // Daily reset check
+  useEffect(() => {
+    if (!activeCharacter?.firestoreId) return;
+
+    const checkDailyReset = async () => {
+      try {
+        if (!shouldResetDaily(activeCharacter.lastFightReset)) return;
+
+        const serverTime = await getServerTime();
+        const updatedChar = {
+          ...activeCharacter,
+          fightsLeft: DAILY_FIGHTS,
+          lastFightReset: serverTime
+        };
+
+        await updateDoc(doc(db, "characters", activeCharacter.firestoreId!), {
+          fightsLeft: DAILY_FIGHTS,
+          lastFightReset: serverTime
+        });
+
+        setActiveCharacter(updatedChar);
+        saveLocalData(updatedChar);
+      } catch (error) {
+        handleFirebaseError(error, 'daily-reset');
+      }
+    };
+
+    checkDailyReset();
+    const interval = setInterval(checkDailyReset, DAILY_RESET_INTERVAL);
+    
+    return () => clearInterval(interval);
+  }, [activeCharacter, handleFirebaseError]);
+
+  // Login function
+  const login = useCallback(async (name: string): Promise<string | null> => {
+    try {
+      const q = query(collection(db, "characters"), where("name", "==", name));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        return "Fighter not found!";
+      }
+
+      const doc = querySnapshot.docs[0];
+      const firestoreData = doc.data() as Character;
+      const fullChar = { 
+        ...firestoreData, 
+        firestoreId: doc.id 
+      };
+
+      setActiveCharacter(fullChar);
+      saveLocalData(fullChar);
+      setFirebaseAvailable(true);
+      return null;
+    } catch (error) {
+      handleFirebaseError(error, 'login');
+      return "Connection error - please check your internet connection and try again";
+    }
+  }, [handleFirebaseError]);
+
+  // Logout function
+  const logout = useCallback(() => {
+    setActiveCharacter(null);
+    clearLocalData();
+  }, []);
+
+  // Set character function
+  const setCharacter = useCallback((char: Character) => {
+    setActiveCharacter(char);
+    saveLocalData(char);
+  }, []);
+
+  // Use fight function
+  const useFight = useCallback(async (): Promise<void> => {
+    if (!activeCharacter?.firestoreId) return;
+
+    const updatedChar = {
+      ...activeCharacter,
+      fightsLeft: Math.max(0, (activeCharacter.fightsLeft || 0) - 1)
+    };
+
+    try {
+      await updateDoc(doc(db, "characters", activeCharacter.firestoreId!), {
+        fightsLeft: updatedChar.fightsLeft
+      });
+
+      setActiveCharacter(updatedChar);
+      saveLocalData(updatedChar);
+    } catch (error) {
+      handleFirebaseError(error, 'use-fight');
+      throw new Error("Connection error - fight not counted. Please check your internet connection.");
+    }
+  }, [activeCharacter, handleFirebaseError]);
+
+  const value: GameContextType = {
+    activeCharacter,
+    loading,
+    firebaseAvailable,
+    login,
+    logout,
+    setCharacter,
+    useFight,
+  };
+
+  return (
+    <GameContext.Provider value={value}>
+      {children}
+    </GameContext.Provider>
+  );
+};
+
+export const useGame = (): GameContextType => {
+  const context = useContext(GameContext);
+  if (context === undefined) {
+    throw new Error('useGame must be used within a GameProvider');
+  }
+  return context;
+};

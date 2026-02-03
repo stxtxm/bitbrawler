@@ -1,0 +1,23 @@
+{
+    "short_name": "BitBrawler",
+    "name": "BITBRAWLER - 8-Bit Battle Arena",
+    "description": "The ultimate 8-bit retro fighting arena. Create your custom pixel warrior and dominate the arena!",
+    "icons": [
+        {
+            "src": "icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ],
+    "start_url": "/",
+    "display": "standalone",
+    "theme_color": "#000000",
+    "background_color": "#000000",
+    "orientation": "portrait",
+    "categories": [
+        "games",
+        "entertainment"
+    ],
+    "lang": "en"
+}
