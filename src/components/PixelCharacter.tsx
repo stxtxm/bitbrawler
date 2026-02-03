@@ -15,16 +15,16 @@ export const PixelCharacter: React.FC<PixelCharacterProps> = ({ seed, gender, sc
         const seedNum = getSeedFromText(seed);
         const rng = mulberry32(seedNum);
 
-        const pick = <T,>(arr: T[]) => arr[Math.floor(rng() * arr.length)];
+        const pick = <T,>(arr: readonly T[] | T[]) => arr[Math.floor(rng() * arr.length)];
 
         return {
-            skinColor: pick(PIXEL_PALETTES.skins),
-            hairColor: pick(PIXEL_PALETTES.hair),
-            shirtColor: pick(PIXEL_PALETTES.clothes),
-            pantsColor: pick(PIXEL_PALETTES.pants),
+            skinColor: pick(PIXEL_PALETTES.skins) as string,
+            hairColor: pick(PIXEL_PALETTES.hair) as string,
+            shirtColor: pick(PIXEL_PALETTES.clothes) as string,
+            pantsColor: pick(PIXEL_PALETTES.pants) as string,
             shoesColor: '#333',
-            eyeColor: pick(PIXEL_PALETTES.eyes),
-            logoColor: pick(PIXEL_PALETTES.clothes),
+            eyeColor: pick(PIXEL_PALETTES.eyes) as string,
+            logoColor: pick(PIXEL_PALETTES.clothes) as string,
             // Randomly select head variation based on gender
             headType: gender === 'male'
                 ? pick(['male', 'male_bald', 'male_cap', 'male_beard', 'male_mohawk'])
