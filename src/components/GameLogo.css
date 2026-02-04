@@ -120,14 +120,14 @@
     }
 
     .logo-title .bit {
-        font-size: 1rem;
-        letter-spacing: 8px;
-        margin-bottom: 4px;
+        font-size: 0.8rem;
+        letter-spacing: 6px;
+        margin-bottom: 3px;
     }
 
     .logo-title .brawler {
-        font-size: 2.8rem;
-        letter-spacing: 4px;
+        font-size: 2rem;
+        letter-spacing: 2px;
     }
 
     .logo-main-row {
@@ -135,12 +135,18 @@
     }
 
     .logo-character-wrapper {
-        transform: scale(0.5);
-        margin: 0 -15px;
+        transform: scale(0.4);
+        margin: 0 -20px;
     }
 
     .character-aura {
-        width: 40px;
-        height: 60px;
+        width: 35px;
+        height: 50px;
+    }
+
+    .logo-tagline {
+        font-size: 0.6rem;
+        letter-spacing: 2px;
+        margin-top: 10px;
     }
 }
