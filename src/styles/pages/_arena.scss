@@ -5,12 +5,10 @@
     width: 100%;
     max-width: 1100px;
     margin: 0 auto;
-    overflow-y: auto; // Allow scroll if needed, but aim for none
 
     @include mobile {
         margin: 0 auto;
         padding: 8px;
-        overflow-y: auto;
     }
 }
 
