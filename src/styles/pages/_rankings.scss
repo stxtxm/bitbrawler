@@ -2,21 +2,18 @@
 
 // Rankings page specific container styles
 .rankings-page.retro-container {
-    min-height: 80vh;
-    min-height: 80dvh;
-    max-height: 85vh;
-    max-height: 85dvh;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100dvh;
     width: 100%;
     max-width: 1100px;
-    margin: 10px auto;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
     overflow: hidden; // No page scroll, only list scroll
 
     @include mobile {
-        margin: 5px auto;
-        max-height: 95vh;
-        max-height: 95dvh;
+        margin: 0 auto;
     }
 }
 
@@ -47,6 +44,7 @@
 .rankings-list {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     min-height: 0;
     scrollbar-width: thin;
     scrollbar-color: $accent-gold #000;

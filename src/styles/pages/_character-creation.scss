@@ -2,15 +2,12 @@
 
 // Character creation specific container styles
 .character-creation-page.retro-container {
-    min-height: 85vh;
-    min-height: 85dvh;
     width: 100%;
     max-width: 1100px;
-    margin: 10px auto;
+    margin: 0 auto;
 
     @include mobile {
-        margin: 5px auto;
-        min-height: auto; // Let content flow naturally on mobile
+        margin: 0 auto;
     }
 }
 

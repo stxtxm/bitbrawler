@@ -2,15 +2,13 @@
 
 // Arena specific container styles - aligned with other pages
 .arena-container.retro-container {
-    min-height: 80vh;
-    min-height: 80dvh;
     width: 100%;
     max-width: 1100px;
-    margin: 10px auto;
+    margin: 0 auto;
     overflow-y: auto; // Allow scroll if needed, but aim for none
 
     @include mobile {
-        margin: 5px auto;
+        margin: 0 auto;
         padding: 8px;
         overflow-y: auto;
     }

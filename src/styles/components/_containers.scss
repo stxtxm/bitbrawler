@@ -3,14 +3,16 @@
 .container {
     width: 90%;
     max-width: 1200px;
-    margin: 0 auto; // Removed vertical margins to prevent unnecessary scrolling
+    margin: 10px auto; // Keep a small vertical margin to allow pull-to-refresh
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
 
     @include mobile {
         width: 94%;
         max-width: none;
-        margin: 0 auto; // Removed vertical margins
+        margin: 6px auto;
         padding: 10px;
     }
 }
