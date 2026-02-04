@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { PixelIcon } from '../components/PixelIcon'
+import { GameLogo } from '../components/GameLogo'
 import './HomePage.css'
 
 const HomePage = () => {
@@ -19,16 +20,13 @@ const HomePage = () => {
         </nav>
 
         <div className="logo">
-          <div className="logo-image">
-            <img src="/logo.png" alt="BITBRAWLER" />
-          </div>
-          <span className="tagline">8-BIT BATTLE ARENA</span>
+          <GameLogo />
         </div>
       </header>
 
       <main>
         <div className="hero-section">
-          <h2 className="hero-title">Create Your Fighter</h2>
+          <h2 className="hero-title hero-text">Create Your Fighter</h2>
           <p className="hero-subtitle">Build the ultimate warrior and dominate the arena!</p>
 
           <div className="actions">

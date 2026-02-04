@@ -2,15 +2,19 @@ import { createContext, useState, useContext, ReactNode, useEffect, useCallback 
 import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Character } from '../types/Character';
+import { gainXp, calculateFightXp } from '../utils/xpUtils';
 
 interface GameContextType {
   activeCharacter: Character | null;
   loading: boolean;
   firebaseAvailable: boolean;
+  lastXpGain: number | null;
+  lastLevelUp: { levelsGained: number; newLevel: number } | null;
   login: (name: string) => Promise<string | null>;
   logout: () => void;
   setCharacter: (char: Character) => void;
-  useFight: () => Promise<void>;
+  useFight: () => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
+  clearXpNotifications: () => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -32,7 +36,7 @@ const saveLocalData = (character: Character) => {
 const loadLocalData = (): Character | null => {
   const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
   if (!saved) return null;
-  
+
   try {
     return JSON.parse(saved);
   } catch {
@@ -55,7 +59,7 @@ const shouldResetDaily = (lastReset: number): boolean => {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const lastResetDate = new Date(lastReset);
   const lastResetDay = new Date(lastResetDate.getFullYear(), lastResetDate.getMonth(), lastResetDate.getDate());
-  
+
   return today > lastResetDay;
 };
 
@@ -63,6 +67,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [activeCharacter, setActiveCharacter] = useState<Character | null>(null);
   const [loading, setLoading] = useState(true);
   const [firebaseAvailable, setFirebaseAvailable] = useState(true);
+  const [lastXpGain, setLastXpGain] = useState<number | null>(null);
+  const [lastLevelUp, setLastLevelUp] = useState<{ levelsGained: number; newLevel: number } | null>(null);
 
   // Firebase error handler
   const handleFirebaseError = useCallback((error: any, context: string) => {
@@ -78,7 +84,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const docSnap = await getDocs(query(collection(db, "characters"), where("__name__", "==", character.firestoreId)));
-      
+
       if (docSnap.empty) {
         handleFirebaseError(new Error('Character not found in Firestore'), 'sync');
         return null;
@@ -151,7 +157,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
     checkDailyReset();
     const interval = setInterval(checkDailyReset, DAILY_RESET_INTERVAL);
-    
+
     return () => clearInterval(interval);
   }, [activeCharacter, handleFirebaseError]);
 
@@ -167,9 +173,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
       const doc = querySnapshot.docs[0];
       const firestoreData = doc.data() as Character;
-      const fullChar = { 
-        ...firestoreData, 
-        firestoreId: doc.id 
+      const fullChar = {
+        ...firestoreData,
+        firestoreId: doc.id
       };
 
       setActiveCharacter(fullChar);
@@ -194,22 +200,55 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     saveLocalData(char);
   }, []);
 
-  // Use fight function
-  const useFight = useCallback(async (): Promise<void> => {
-    if (!activeCharacter?.firestoreId) return;
+  // Clear XP notifications
+  const clearXpNotifications = useCallback(() => {
+    setLastXpGain(null);
+    setLastLevelUp(null);
+  }, []);
+
+  // Use fight function with XP system
+  const useFight = useCallback(async (): Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null> => {
+    if (!activeCharacter?.firestoreId) return null;
+
+    // Simulate win/loss (can be replaced with actual combat result)
+    const won = Math.random() > 0.3; // 70% win rate for now
+
+    // Calculate XP gained
+    const xpGained = calculateFightXp(activeCharacter.level, won);
+
+    // Process XP gain and level up
+    const xpResult = gainXp(activeCharacter, xpGained);
 
     const updatedChar = {
-      ...activeCharacter,
+      ...xpResult.updatedCharacter,
       fightsLeft: Math.max(0, (activeCharacter.fightsLeft || 0) - 1)
     };
 
     try {
       await updateDoc(doc(db, "characters", activeCharacter.firestoreId!), {
-        fightsLeft: updatedChar.fightsLeft
+        fightsLeft: updatedChar.fightsLeft,
+        level: updatedChar.level,
+        experience: updatedChar.experience
       });
 
       setActiveCharacter(updatedChar);
       saveLocalData(updatedChar);
+
+      // Set XP notifications
+      setLastXpGain(xpGained);
+      if (xpResult.leveledUp) {
+        setLastLevelUp({
+          levelsGained: xpResult.levelsGained,
+          newLevel: xpResult.newLevel
+        });
+      }
+
+      return {
+        xpGained,
+        leveledUp: xpResult.leveledUp,
+        levelsGained: xpResult.levelsGained,
+        newLevel: xpResult.newLevel
+      };
     } catch (error) {
       handleFirebaseError(error, 'use-fight');
       throw new Error("Connection error - fight not counted. Please check your internet connection.");
@@ -220,10 +259,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     activeCharacter,
     loading,
     firebaseAvailable,
+    lastXpGain,
+    lastLevelUp,
     login,
     logout,
     setCharacter,
     useFight,
+    clearXpNotifications,
   };
 
   return (

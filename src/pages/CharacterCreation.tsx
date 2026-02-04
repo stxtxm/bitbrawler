@@ -93,7 +93,7 @@ const CharacterCreation = () => {
   return (
     <div className="container retro-container">
       <header className="game-header">
-        <h1>NEW GAME</h1>
+        <h1 className="hero-text">NEW GAME</h1>
       </header>
 
       {showSuccessModal && (

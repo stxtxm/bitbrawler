@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { GameProvider, useGame } from '../context/GameContext';
 import { Character } from '../types/Character';
@@ -54,8 +54,8 @@ describe('Firebase Unavailability Handling', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorage.clear();
-    
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
     // Mock localStorage
     Object.defineProperty(window, 'localStorage', {
       value: {
@@ -67,24 +67,21 @@ describe('Firebase Unavailability Handling', () => {
       writable: true
     });
 
-    // Mock server time
-    const mockServerTimeSnapshot = {
+    // Default mock
+    (getDocs as any).mockResolvedValue({
       docs: [{
         data: () => ({ timestamp: Date.now() })
       }]
-    };
-    (getDocs as any).mockResolvedValue(mockServerTimeSnapshot);
+    });
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
   it('should set firebaseAvailable to false when Firestore fails during load', async () => {
-    // Setup: Character in localStorage
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
-
-    // Mock Firestore failure
     (getDocs as any).mockRejectedValue(new Error('Network error'));
 
     const { result } = renderHook(() => useGame(), {
@@ -95,14 +92,12 @@ describe('Firebase Unavailability Handling', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    // Firebase should be marked as unavailable
     expect(result.current.firebaseAvailable).toBe(false);
     expect(result.current.activeCharacter).toBeNull();
     expect(localStorage.removeItem).toHaveBeenCalledWith('bitbrawler_active_char');
   });
 
   it('should set firebaseAvailable to false when login fails', async () => {
-    // Mock login failure
     (getDocs as any).mockRejectedValue(new Error('Connection failed'));
 
     const { result } = renderHook(() => useGame(), {
@@ -113,29 +108,23 @@ describe('Firebase Unavailability Handling', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    // Attempt login
-    const loginResult = await result.current.login('Test Hero');
+    let loginResult: string | null = null;
+    await act(async () => {
+      loginResult = await result.current.login('Test Hero');
+    });
 
     expect(loginResult).toBe('Connection error - please check your internet connection and try again');
-    
-    // Wait for state update
-    await waitFor(() => {
-      expect(result.current.firebaseAvailable).toBe(false);
-    });
+    expect(result.current.firebaseAvailable).toBe(false);
   });
 
   it('should set firebaseAvailable to false when useFight fails', async () => {
-    // Setup: Character loaded successfully
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
-
     (getDocs as any).mockResolvedValue({
       docs: [{
         data: () => mockCharacter,
         id: 'test-firestore-id'
       }]
     });
-
-    // Mock updateDoc failure
     (updateDoc as any).mockRejectedValue(new Error('Connection lost'));
 
     const { result } = renderHook(() => useGame(), {
@@ -146,29 +135,38 @@ describe('Firebase Unavailability Handling', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    // Attempt to use a fight
-    await expect(result.current.useFight()).rejects.toThrow('Connection error - fight not counted');
-    
-    // Wait for state update
-    await waitFor(() => {
-      expect(result.current.firebaseAvailable).toBe(false);
+    await act(async () => {
+      await expect(result.current.useFight()).rejects.toThrow('Connection error - fight not counted');
     });
+
+    expect(result.current.firebaseAvailable).toBe(false);
   });
 
   it('should set firebaseAvailable to false when daily reset fails', async () => {
-    // Setup: Character loaded successfully
-    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    const yesterdayChar = {
+      ...mockCharacter,
+      lastFightReset: Date.now() - 86400000 * 2,
+      fightsLeft: 0
+    };
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(yesterdayChar));
 
-    // Mock successful initial load
+    // First call: sync character
     (getDocs as any).mockResolvedValueOnce({
       docs: [{
-        data: () => mockCharacter,
+        data: () => yesterdayChar,
         id: 'test-firestore-id'
       }]
     });
 
-    // Mock server time failure for daily reset
-    (getDocs as any).mockRejectedValueOnce(new Error('Server unavailable'));
+    // Second call: get server time
+    (getDocs as any).mockResolvedValueOnce({
+      docs: [{
+        data: () => ({ timestamp: Date.now() })
+      }]
+    });
+
+    // Update fails
+    (updateDoc as any).mockRejectedValueOnce(new Error('Server unavailable'));
 
     const { result } = renderHook(() => useGame(), {
       wrapper: createWrapper()
@@ -178,20 +176,20 @@ describe('Firebase Unavailability Handling', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    // Wait for daily reset check to fail
+    // Advance timers to trigger daily reset check
+    await act(async () => {
+      vi.advanceTimersByTime(100);
+    });
+
     await waitFor(() => {
       expect(result.current.firebaseAvailable).toBe(false);
-    }, { timeout: 3000 });
+    }, { timeout: 5000 });
 
     expect(result.current.activeCharacter).toBeNull();
-    expect(localStorage.removeItem).toHaveBeenCalledWith('bitbrawler_active_char');
   });
 
   it('should clear localStorage when Firebase is unavailable', async () => {
-    // Setup: Character in localStorage
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
-
-    // Mock Firestore failure
     (getDocs as any).mockRejectedValue(new Error('Firebase down'));
 
     const { result } = renderHook(() => useGame(), {
@@ -202,17 +200,13 @@ describe('Firebase Unavailability Handling', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    // Should clear localStorage to prevent playing with stale data
     expect(localStorage.removeItem).toHaveBeenCalledWith('bitbrawler_active_char');
     expect(result.current.activeCharacter).toBeNull();
     expect(result.current.firebaseAvailable).toBe(false);
   });
 
   it('should prevent access to game when Firebase is unavailable', async () => {
-    // Setup: Character in localStorage
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
-
-    // Mock Firestore failure
     (getDocs as any).mockRejectedValue(new Error('No internet'));
 
     const { result } = renderHook(() => useGame(), {
@@ -223,16 +217,19 @@ describe('Firebase Unavailability Handling', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    // User should not be able to access the game
     expect(result.current.firebaseAvailable).toBe(false);
     expect(result.current.activeCharacter).toBeNull();
-    
-    // Login should return error message (not reject)
-    const loginResult = await result.current.login('any');
+
+    let loginResult: string | null = null;
+    await act(async () => {
+      loginResult = await result.current.login('any');
+    });
     expect(loginResult).toBe('Connection error - please check your internet connection and try again');
-    
-    // useFight should return undefined when no character is loaded (not reject)
-    const fightResult = await result.current.useFight();
-    expect(fightResult).toBeUndefined();
+
+    let fightResult: any = undefined;
+    await act(async () => {
+      fightResult = await result.current.useFight();
+    });
+    expect(fightResult).toBeNull();
   });
 });

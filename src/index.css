@@ -1,29 +1,23 @@
 @import "@fontsource/press-start-2p";
 
-:root {
-  font-family: 'Press Start 2P', monospace;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: dark;
-  color: #f0f0f0;
-
-  --bg-primary: #121214;
-  --accent-gold: #ffcc00;
-
-  background-color: #000;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: none;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
-}
-
+/* --- Base & Reset --- */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+:root {
+  font-family: 'Press Start 2P', monospace;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  color: #f0f0f0;
+  background-color: #000;
+  --accent-gold: #ffcc00;
+  --accent-red: #ff3333;
+  --accent-green: #00ff66;
+  --bg-dark: #0a0a0a;
 }
 
 body {
@@ -32,7 +26,6 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  position: relative;
   overflow-x: hidden;
 }
 
@@ -41,6 +34,131 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+}
+
+/* --- Typographie Hero --- */
+.hero-text {
+  font-family: 'Press Start 2P', monospace;
+  color: #ffcc00;
+  text-transform: uppercase;
+  letter-spacing: 6px;
+  line-height: 1.2;
+  text-shadow:
+    3px 3px 0px #000,
+    -1px -1px 0px #000,
+    1px -1px 0px #000,
+    -1px 1px 0px #000,
+    1px 1px 0px #000,
+    4px 4px 0px rgba(0, 0, 0, 0.5);
+  display: inline-block;
+}
+
+/* --- Layout & Containers --- */
+.container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.retro-container {
+  background: rgba(10, 10, 12, 0.9);
+  border: 4px solid #fff;
+  padding: 30px;
+  box-shadow: 10px 10px 0 #333;
   position: relative;
-  z-index: 2;
+}
+
+.game-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.game-header h1 {
+  margin-bottom: 15px;
+}
+
+.subtitle {
+  color: #888;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  animation: blink 2s infinite;
+}
+
+/* --- Form Elements --- */
+input,
+button,
+select,
+textarea,
+label {
+  font-family: 'Press Start 2P', monospace;
+}
+
+.retro-input {
+  width: 100%;
+  padding: 15px;
+  background: #000;
+  border: 2px solid #444;
+  color: #fff;
+  font-size: 0.8rem;
+}
+
+.retro-input:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+}
+
+/* --- Buttons --- */
+.button {
+  padding: 15px 25px;
+  border: 4px solid #fff;
+  background: #000;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.8rem;
+  text-decoration: none;
+  transition: all 0.15s;
+  display: inline-block;
+  text-align: center;
+}
+
+.button:hover {
+  transform: translate(-4px, -4px);
+  box-shadow: 8px 8px 0 var(--accent-gold);
+  border-color: var(--accent-gold);
+}
+
+.button:active {
+  transform: translate(0, 0);
+  box-shadow: 0 0 0 transparent;
+}
+
+.button.secondary {
+  border-color: #666;
+  color: #aaa;
+}
+
+/* --- Animations --- */
+@keyframes blink {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* --- Mobile Fixes --- */
+@media (max-width: 768px) {
+  .retro-container {
+    padding: 15px;
+    border-width: 2px;
+    box-shadow: 5px 5px 0 #333;
+  }
 }

@@ -26,7 +26,7 @@ const Login = () => {
     return (
         <div className="container retro-container login-container">
             <header className="game-header">
-                <h1>LOGIN</h1>
+                <h1 className="hero-text">LOGIN</h1>
                 <p className="subtitle">ENTER YOUR NAME, FIGHTER</p>
             </header>
 

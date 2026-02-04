@@ -82,7 +82,7 @@ const Rankings = () => {
     return (
         <div className="container retro-container">
             <header className="game-header">
-                <h1>HALL OF FAME</h1>
+                <h1 className="hero-text">HALL OF FAME</h1>
                 <p className="subtitle">LEGENDARY FIGHTERS</p>
             </header>
 

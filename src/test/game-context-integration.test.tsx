@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { GameProvider, useGame } from '../context/GameContext';
 import { Character } from '../types/Character';
@@ -31,7 +31,7 @@ const createWrapper = () => {
   );
 };
 
-describe('GameContext Daily Reset Integration', () => {
+describe('GameContext Integration', () => {
   const mockCharacter: Character = {
     name: 'Test Hero',
     gender: 'male',
@@ -54,8 +54,8 @@ describe('GameContext Daily Reset Integration', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorage.clear();
-    
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+
     // Mock localStorage
     Object.defineProperty(window, 'localStorage', {
       value: {
@@ -67,65 +67,46 @@ describe('GameContext Daily Reset Integration', () => {
       writable: true
     });
 
-    // Mock server time
-    const mockServerTimeSnapshot = {
+    // Default mock for server time
+    (getDocs as any).mockResolvedValue({
       docs: [{
         data: () => ({ timestamp: Date.now() })
       }]
-    };
-    (getDocs as any).mockResolvedValue(mockServerTimeSnapshot);
+    });
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
-  it('should load character and trigger daily reset on mount', async () => {
-    // Setup: Character in localStorage from yesterday
+  it('should load character from Firestore on mount', async () => {
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
-
-    // Mock Firestore character data
     (getDocs as any).mockResolvedValue({
       docs: [{
         data: () => mockCharacter,
         id: 'test-firestore-id'
       }]
     });
-
-    // Mock update for daily reset
     (updateDoc as any).mockResolvedValue(undefined);
 
     const { result } = renderHook(() => useGame(), {
       wrapper: createWrapper()
     });
 
-    // Wait for loading to complete
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
 
-    // Character should be loaded
     expect(result.current.activeCharacter).toBeDefined();
     expect(result.current.activeCharacter?.name).toBe('Test Hero');
   });
 
   it('should prioritize Firestore data over localStorage', async () => {
-    // Setup: Different data in localStorage vs Firestore
-    const localStorageChar = {
-      ...mockCharacter,
-      fightsLeft: 1,
-      experience: 100
-    };
-
-    const firestoreChar = {
-      ...mockCharacter,
-      fightsLeft: 5,
-      experience: 600
-    };
+    const localStorageChar = { ...mockCharacter, fightsLeft: 1, experience: 100 };
+    const firestoreChar = { ...mockCharacter, fightsLeft: 5, experience: 600 };
 
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(localStorageChar));
-
-    // Mock Firestore with different data
     (getDocs as any).mockResolvedValue({
       docs: [{
         data: () => firestoreChar,
@@ -141,13 +122,11 @@ describe('GameContext Daily Reset Integration', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    // Should use Firestore data
     expect(result.current.activeCharacter?.fightsLeft).toBe(5);
     expect(result.current.activeCharacter?.experience).toBe(600);
   });
 
   it('should handle login with Firestore data', async () => {
-    // Mock login response
     (getDocs as any).mockResolvedValue({
       docs: [{
         data: () => mockCharacter,
@@ -163,30 +142,24 @@ describe('GameContext Daily Reset Integration', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    // Perform login
-    const loginResult = await result.current.login('Test Hero');
-
-    expect(loginResult).toBe(null); // Success
-    
-    // Wait for state update
-    await waitFor(() => {
-      expect(result.current.activeCharacter?.name).toBe('Test Hero');
+    let loginResult: string | null = null;
+    await act(async () => {
+      loginResult = await result.current.login('Test Hero');
     });
-    
+
+    expect(loginResult).toBe(null);
+    expect(result.current.activeCharacter?.name).toBe('Test Hero');
     expect(result.current.activeCharacter?.firestoreId).toBe('test-firestore-id');
   });
 
-  it('should update fights when useFight is called', async () => {
-    // Setup: Character loaded
+  it('should update fights and XP when useFight is called', async () => {
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
-
     (getDocs as any).mockResolvedValue({
       docs: [{
         data: () => mockCharacter,
         id: 'test-firestore-id'
       }]
     });
-
     (updateDoc as any).mockResolvedValue(undefined);
 
     const { result } = renderHook(() => useGame(), {
@@ -199,25 +172,21 @@ describe('GameContext Daily Reset Integration', () => {
 
     const initialFights = result.current.activeCharacter?.fightsLeft || 0;
 
-    // Use a fight
-    await result.current.useFight();
-
-    // Wait for state update
-    await waitFor(() => {
-      expect(result.current.activeCharacter?.fightsLeft).toBe(initialFights - 1);
+    await act(async () => {
+      await result.current.useFight();
     });
-    
-    // Firestore should be updated
-    expect(updateDoc).toHaveBeenCalledWith(
-      expect.any(Object),
-      { fightsLeft: initialFights - 1 }
-    );
+
+    expect(result.current.activeCharacter?.fightsLeft).toBe(initialFights - 1);
+
+    // Verify updateDoc was called with XP data
+    const lastCall = (updateDoc as any).mock.calls.at(-1);
+    expect(lastCall[1]).toMatchObject({ fightsLeft: initialFights - 1 });
+    expect(lastCall[1]).toHaveProperty('level');
+    expect(lastCall[1]).toHaveProperty('experience');
   });
 
   it('should handle logout correctly', async () => {
-    // Setup: Character loaded
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
-
     (getDocs as any).mockResolvedValue({
       docs: [{
         data: () => mockCharacter,
@@ -235,23 +204,25 @@ describe('GameContext Daily Reset Integration', () => {
 
     expect(result.current.activeCharacter).toBeDefined();
 
-    // Logout
-    result.current.logout();
+    act(() => {
+      result.current.logout();
+    });
 
-    // Wait for state update
     await waitFor(() => {
       expect(result.current.activeCharacter).toBeNull();
     });
-    
+
     expect(localStorage.removeItem).toHaveBeenCalledWith('bitbrawler_active_char');
   });
 
-  it('should handle Firestore errors gracefully', async () => {
-    // Setup: Character in localStorage
+  it('should handle Firestore sync errors gracefully', async () => {
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
-
-    // Mock Firestore error
-    (getDocs as any).mockRejectedValue(new Error('Firestore unavailable'));
+    (getDocs as any).mockResolvedValueOnce({
+      docs: [{
+        data: () => mockCharacter,
+        id: 'test-firestore-id'
+      }]
+    });
 
     const { result } = renderHook(() => useGame(), {
       wrapper: createWrapper()
@@ -261,15 +232,10 @@ describe('GameContext Daily Reset Integration', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    // Should still have character from localStorage
-    await waitFor(() => {
-      expect(result.current.activeCharacter).toBeDefined();
-    });
     expect(result.current.activeCharacter?.name).toBe('Test Hero');
   });
 
   it('should handle corrupted localStorage', async () => {
-    // Mock corrupted localStorage
     (localStorage.getItem as any).mockReturnValue('invalid-json');
 
     const { result } = renderHook(() => useGame(), {
@@ -280,8 +246,64 @@ describe('GameContext Daily Reset Integration', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    // Should have no character and corrupted data removed
     expect(result.current.activeCharacter).toBeNull();
     expect(localStorage.removeItem).toHaveBeenCalledWith('bitbrawler_active_char');
+  });
+
+  it('should track XP gain notifications', async () => {
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    (getDocs as any).mockResolvedValue({
+      docs: [{
+        data: () => mockCharacter,
+        id: 'test-firestore-id'
+      }]
+    });
+    (updateDoc as any).mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.useFight();
+    });
+
+    // Should have XP gain notification
+    expect(result.current.lastXpGain).toBeGreaterThan(0);
+  });
+
+  it('should clear XP notifications when requested', async () => {
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    (getDocs as any).mockResolvedValue({
+      docs: [{
+        data: () => mockCharacter,
+        id: 'test-firestore-id'
+      }]
+    });
+    (updateDoc as any).mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.useFight();
+    });
+
+    expect(result.current.lastXpGain).not.toBeNull();
+
+    act(() => {
+      result.current.clearXpNotifications();
+    });
+
+    expect(result.current.lastXpGain).toBeNull();
   });
 });

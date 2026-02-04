@@ -1,11 +1,4 @@
-/* HomePage Retro Style */
-
-.game-header {
-  text-align: center;
-  margin-bottom: 40px;
-  position: relative;
-  /* Context for absolute positioning of Member Login */
-}
+/* HomePage Styles */
 
 .logo {
   display: flex;
@@ -16,32 +9,6 @@
   margin-bottom: 25px;
 }
 
-.logo-image {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.logo-image img {
-  max-width: 200px;
-  width: 100%;
-  height: auto;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-}
-
-.tagline {
-  display: block;
-  color: #fff;
-  font-size: 0.8rem;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  font-family: 'Press Start 2P', monospace;
-  text-shadow: 2px 2px 0 #000;
-}
-
-/* MEMBER LOGIN CORNER BUTTON */
-/* NAVIGATION BAR */
 .top-nav {
   display: flex;
   justify-content: space-between;
@@ -76,61 +43,26 @@
   transform: translateY(-2px);
 }
 
-
-
 .hero-section {
   text-align: center;
   margin-bottom: 60px;
-  border-bottom: 4px dashed #fff;
+  border-bottom: 4px dashed #333;
   padding-bottom: 40px;
 }
 
 .hero-title {
   font-size: 1.5rem;
-  color: #fff;
   margin-bottom: 20px;
-  text-shadow: 2px 2px 0 #000;
 }
 
 .hero-subtitle {
-  color: #ccc;
+  color: #888;
   font-size: 0.9rem;
   margin-bottom: 40px;
   line-height: 1.6;
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
-}
-
-.actions {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-/* Uniform Buttons - Primary logic removed for cleaner look */
-.button.primary-btn {
-  background: #000;
-  color: #aaa;
-  border: 2px solid #666;
-  box-shadow: 4px 4px 0 #666;
-  text-decoration: none;
-  display: inline-block;
-}
-
-.button.primary-btn:hover {
-  background: #111;
-  color: #ffcc00;
-  border-color: #ffcc00;
-  box-shadow: 6px 6px 0 #ffcc00;
-  transform: translate(-2px, -2px);
-}
-
-.button:focus,
-.nav-btn:focus,
-a:focus {
-  outline: none;
 }
 
 .features {
@@ -142,17 +74,16 @@ a:focus {
 
 .feature-card {
   background: #000;
-  border: 2px solid #fff;
+  border: 4px solid #333;
   padding: 20px;
   text-align: center;
-  transition: all 0.1s;
-  box-shadow: 4px 4px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.15s;
 }
 
 .feature-card:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0 #ffcc00;
-  border-color: #ffcc00;
+  transform: translate(-4px, -4px);
+  box-shadow: 8px 8px 0 var(--accent-gold);
+  border-color: var(--accent-gold);
 }
 
 .feature-icon {
@@ -161,89 +92,24 @@ a:focus {
   justify-content: center;
   align-items: center;
   height: 80px;
-  background: #111;
-  border: 2px solid #333;
-  box-shadow: inset 0 0 10px #000;
+  background: #0a0a0a;
+  border: 2px solid #222;
 }
 
 .feature-card h3 {
-  color: #ffcc00;
+  color: var(--accent-gold);
   margin-bottom: 10px;
   font-size: 1rem;
 }
 
 .feature-card p {
-  color: #ccc;
+  color: #888;
   line-height: 1.5;
   font-size: 0.7rem;
 }
 
-/* --- RESPONSIVE ADJUSTMENTS --- */
 @media (max-width: 600px) {
-  .login-corner-btn {
-    position: relative;
-    /* Unlock from corner on mobile */
-    top: auto;
-    right: auto;
-    display: inline-block;
-    margin-bottom: 15px;
-    width: 100%;
-    margin-top: 10px;
-  }
-
-  .game-header {
-    margin-bottom: 20px;
-  }
-
-  .logo {
-    gap: 10px;
-  }
-
-  .logo-image img {
-    max-width: 200px;
-  }
-
-  .tagline {
-    font-size: 0.6rem;
-  }
-
   .hero-title {
-    font-size: 1.2rem;
-  }
-
-  .actions {
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .actions .button,
-  .actions .primary-btn {
-    width: auto;
-    flex: 1 1 auto;
-    min-width: 140px;
-    font-size: 0.7rem;
-    padding: 12px 5px;
-    box-sizing: border-box;
-  }
-
-  .button {
-    margin: 0;
-  }
-
-  .features {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Intermediate tablet breakpoint to prevent overlap */
-@media (max-width: 768px) {
-  .login-corner-btn {
-    position: relative;
-    top: auto;
-    right: auto;
-    display: inline-block;
-    margin-bottom: 20px;
-    width: auto;
+    font-size: 1rem;
   }
 }
