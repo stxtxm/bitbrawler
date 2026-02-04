@@ -4,7 +4,6 @@ import { useGame } from '../context/GameContext';
 import { PixelCharacter } from '../components/PixelCharacter';
 import { PixelIcon } from '../components/PixelIcon';
 import { getXpProgress, formatXpDisplay, getMaxLevel } from '../utils/xpUtils';
-import './Arena.css';
 
 const Arena = () => {
     const { activeCharacter, logout, useFight, lastXpGain, lastLevelUp, clearXpNotifications } = useGame();

@@ -4,14 +4,20 @@ import { collection, getDocs, query, doc, deleteDoc } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { Character } from '../types/Character'
 import { PixelCharacter } from '../components/PixelCharacter'
-import './Rankings.css'
+import { useGame } from '../context/GameContext'
 
 const Rankings = () => {
     const navigate = useNavigate()
+    const { setCharacter } = useGame()
     const [characters, setCharacters] = useState<Character[]>([])
     const [loading, setLoading] = useState(true)
     const [showResetModal, setShowResetModal] = useState(false)
     const [resetStatus, setResetStatus] = useState<'confirm' | 'success' | 'error' | null>(null)
+
+    const handleCharacterSelect = (character: Character) => {
+        setCharacter(character)
+        navigate('/arena')
+    }
 
     useEffect(() => {
         const fetchCharacters = async () => {
@@ -26,7 +32,10 @@ const Rankings = () => {
                 querySnapshot.forEach((doc) => {
                     // On ignore les documents malformés ou vides si besoin
                     const data = doc.data() as Character
-                    fetchedChars.push({ ...data, id: parseInt(doc.id) || Date.now() }) // Fallback pour ID
+                    fetchedChars.push({
+                        ...data,
+                        firestoreId: doc.id // Critical for persistence
+                    })
                 })
 
                 // Tri local par niveau (décroissant) puis nom
@@ -80,7 +89,7 @@ const Rankings = () => {
     }
 
     return (
-        <div className="container retro-container">
+        <div className="container retro-container rankings-page">
             <header className="game-header">
                 <h1 className="hero-text">HALL OF FAME</h1>
                 <p className="subtitle">LEGENDARY FIGHTERS</p>
@@ -110,7 +119,12 @@ const Rankings = () => {
 
                         <div className="rankings-list">
                             {characters.map((char, index) => (
-                                <div key={index} className="ranking-row">
+                                <div
+                                    key={index}
+                                    className="ranking-row"
+                                    onClick={() => handleCharacterSelect(char)}
+                                    title="Click to play with this character"
+                                >
                                     <div className="col-rank">{index + 1}</div>
                                     <div className="col-avatar">
                                         <div className="mini-avatar">

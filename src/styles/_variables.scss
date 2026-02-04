@@ -1,0 +1,40 @@
+// Variables
+$accent-gold: #ffcc00;
+$accent-red: #ff3333;
+$accent-green: #00ff66;
+$bg-dark: #0a0a0a;
+$border-color: #fff;
+$font-pixel: 'Press Start 2P', monospace;
+
+// Mixins
+@mixin flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+@mixin retro-border($width: 4px, $color: $border-color) {
+    border: $width solid $color;
+}
+
+@mixin pixel-shadow($color: rgba(255, 255, 255, 0.2), $x: 10px, $y: 10px) {
+    box-shadow: $x $y 0px $color;
+}
+
+@mixin mobile {
+    @media (max-width: 600px) {
+        @content;
+    }
+}
+
+@mixin small-mobile {
+    @media (max-width: 380px) {
+        @content;
+    }
+}
+
+@mixin tablet {
+    @media (max-width: 768px) {
+        @content;
+    }
+}

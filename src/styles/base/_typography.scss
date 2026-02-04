@@ -1,0 +1,86 @@
+@use '../variables' as *;
+@import "@fontsource/press-start-2p";
+
+:root {
+    font-family: $font-pixel;
+    line-height: 1.5;
+    font-weight: 400;
+    color-scheme: dark;
+    color: #f0f0f0;
+}
+
+h1,
+h2,
+h3 {
+    color: $accent-gold;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+    text-shadow: 4px 4px 0 #990000;
+    letter-spacing: 2px;
+
+    @include mobile {
+        margin-bottom: 15px;
+    }
+}
+
+@include mobile {
+    h1 {
+        font-size: 1.5rem;
+        text-shadow: 3px 3px 0 #990000;
+    }
+
+    h2 {
+        font-size: 1.2rem;
+    }
+
+    h3 {
+        font-size: 1rem;
+    }
+}
+
+.hero-text {
+    font-family: $font-pixel;
+    color: $accent-gold;
+    text-transform: uppercase;
+    letter-spacing: 6px;
+    line-height: 1.2;
+    text-shadow:
+        3px 3px 0px #000,
+        -1px -1px 0px #000,
+        1px -1px 0px #000,
+        -1px 1px 0px #000,
+        1px 1px 0px #000,
+        4px 4px 0px rgba(0, 0, 0, 0.5);
+    display: inline-block;
+
+    @include tablet {
+        letter-spacing: 2px;
+    }
+
+    @include small-mobile {
+        letter-spacing: 1px;
+    }
+}
+
+.subtitle {
+    color: #888;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    animation: blink 2s infinite;
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+}
+
+.blink {
+    animation: blink 1s step-end infinite;
+}

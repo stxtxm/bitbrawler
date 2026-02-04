@@ -1,0 +1,43 @@
+@use '../variables' as *;
+
+input,
+button,
+select,
+textarea,
+label {
+    font-family: $font-pixel;
+}
+
+.retro-input {
+    width: 100%;
+    padding: 15px;
+    background: #000;
+    border: 2px solid #444;
+    color: #fff;
+    font-size: 0.8rem;
+
+    &:focus {
+        outline: none;
+        border-color: $accent-gold;
+    }
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+
+    label {
+        font-size: 0.8rem;
+        color: $accent-gold;
+
+        @include tablet {
+            font-size: 0.55rem;
+        }
+    }
+
+    @include tablet {
+        gap: 2px;
+    }
+}

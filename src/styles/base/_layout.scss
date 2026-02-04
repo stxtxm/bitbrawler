@@ -1,0 +1,58 @@
+@use '../variables' as *;
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: #000;
+    overflow-x: hidden;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+#root {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    width: 100%;
+    // Remove individual tablet padding here, handled by .App
+}
+
+.App {
+    text-align: center;
+    font-family: $font-pixel;
+    color: #fff;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 15px; // Safe zone for box-shadows
+
+    @include mobile {
+        padding: 8px; // Smaller safe zone
+        justify-content: center;
+    }
+}
+
+main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding-top: 20px;
+    scrollbar-width: thin;
+    scrollbar-color: #333 #000;
+
+    @include mobile {
+        padding-top: 10px;
+    }
+}

@@ -6,7 +6,6 @@ import Rankings from './pages/Rankings'
 import Login from './pages/Login'
 import Arena from './pages/Arena'
 import FirebaseError from './components/FirebaseError'
-import './App.css'
 
 function App() {
   const { activeCharacter, loading, firebaseAvailable } = useGame()

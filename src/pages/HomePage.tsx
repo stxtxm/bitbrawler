@@ -1,11 +1,10 @@
 import { Link } from 'react-router-dom'
 import { PixelIcon } from '../components/PixelIcon'
 import { GameLogo } from '../components/GameLogo'
-import './HomePage.css'
 
 const HomePage = () => {
   return (
-    <div className="container">
+    <div className="container retro-container home-page">
       <header className="game-header">
         <nav className="top-nav">
           <div className="nav-left">
@@ -42,23 +41,31 @@ const HomePage = () => {
         <div className="features">
           <div className="feature-card">
             <div className="feature-icon"><PixelIcon type="fighters" size={48} /></div>
-            <h3>FIGHTERS</h3>
-            <p>Design unique fighters with randomized stats and appearances</p>
+            <div className="feature-card-content">
+              <h3>FIGHTERS</h3>
+              <p>Design unique fighters with randomized stats and appearances</p>
+            </div>
           </div>
           <div className="feature-card">
             <div className="feature-icon"><PixelIcon type="arena" size={48} /></div>
-            <h3>ARENA</h3>
-            <p>Fight against other players in intense combat matches</p>
+            <div className="feature-card-content">
+              <h3>ARENA</h3>
+              <p>Fight against other players in intense combat matches</p>
+            </div>
           </div>
           <div className="feature-card">
             <div className="feature-icon"><PixelIcon type="levels" size={48} /></div>
-            <h3>LEVELS</h3>
-            <p>Level up your fighter and unlock new abilities</p>
+            <div className="feature-card-content">
+              <h3>LEVELS</h3>
+              <p>Level up your fighter and unlock new abilities</p>
+            </div>
           </div>
           <div className="feature-card highlight-card">
             <div className="feature-icon"><PixelIcon type="updates" size={48} /></div>
-            <h3>UPDATES</h3>
-            <p>Regular updates with new features and content</p>
+            <div className="feature-card-content">
+              <h3>UPDATES</h3>
+              <p>Regular updates with new features and content</p>
+            </div>
           </div>
         </div>
       </main>

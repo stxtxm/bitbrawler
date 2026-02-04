@@ -1,6 +1,5 @@
 import React from 'react';
 import { PixelCharacter } from './PixelCharacter';
-import './GameLogo.css';
 
 interface GameLogoProps {
     showTagline?: boolean;

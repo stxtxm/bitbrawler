@@ -1,4 +1,4 @@
-/* Login Page Styles */
+@use '../variables' as *;
 
 .login-container {
     max-width: 500px;
@@ -13,12 +13,12 @@
 }
 
 .error-message {
-    color: var(--accent-red);
+    color: $accent-red;
     font-size: 0.6rem;
     text-align: center;
-    border: 2px solid var(--accent-red);
+    border: 2px solid $accent-red;
     padding: 10px;
-    background: rgba(255, 51, 51, 0.1);
+    background: rgba($accent-red, 0.1);
 }
 
 .actions {
@@ -28,6 +28,6 @@
 }
 
 .primary-btn {
-    border-color: var(--accent-gold);
-    color: var(--accent-gold);
+    border-color: $accent-gold;
+    color: $accent-gold;
 }

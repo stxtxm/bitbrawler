@@ -1,0 +1,508 @@
+@use '../variables' as *;
+
+// Arena specific container styles - aligned with other pages
+.arena-container.retro-container {
+    min-height: 80vh;
+    min-height: 80dvh;
+    width: 100%;
+    max-width: 1100px;
+    margin: 10px auto;
+    overflow-y: auto; // Allow scroll if needed, but aim for none
+
+    @include mobile {
+        margin: 5px auto;
+        padding: 8px;
+        overflow-y: auto;
+    }
+}
+
+.arena-header {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    border-bottom: 2px solid #333;
+    background: #000;
+    margin-bottom: 10px;
+
+    @include mobile {
+        padding: 5px 8px;
+        margin-bottom: 5px;
+        border-bottom-width: 1px;
+    }
+}
+
+.char-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    @include mobile {
+        gap: 5px;
+    }
+}
+
+.arena-char-name {
+    font-size: 1.5rem;
+    color: $accent-gold;
+    margin: 0;
+
+    @include mobile {
+        font-size: 0.8rem;
+    }
+}
+
+.arena-lvl-badge {
+    color: $accent-green;
+    font-size: 0.7rem;
+
+    @include mobile {
+        font-size: 0.5rem;
+    }
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+
+    @include mobile {
+        gap: 4px;
+    }
+}
+
+.icon-btn {
+    padding: 8px !important;
+    min-width: 40px !important;
+    height: 40px !important;
+    @include flex-center;
+    @include retro-border(2px, #fff);
+    background: #000;
+    cursor: pointer;
+
+    @include mobile {
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+        padding: 4px !important;
+        border-width: 1px;
+    }
+}
+
+.arena-content {
+    display: flex;
+    gap: 15px;
+    flex: 1;
+    min-height: 0;
+
+    @include mobile {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
+
+.character-display {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.02);
+    @include retro-border(2px, #222);
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    min-width: 0;
+
+    @include mobile {
+        padding: 5px;
+        border-width: 1px;
+    }
+}
+
+.avatar-box {
+    flex: 1;
+    background: radial-gradient(circle, #222 0%, #000 100%);
+    @include retro-border(2px, #fff);
+    @include flex-center;
+    min-height: 150px;
+    margin-bottom: 10px;
+    overflow: hidden;
+
+    @include mobile {
+        min-height: 100px;
+        margin-bottom: 5px;
+        border-width: 1px;
+    }
+}
+
+.xp-section {
+    width: 100%;
+    margin-bottom: 10px;
+
+    @include mobile {
+        margin-bottom: 5px;
+    }
+}
+
+.xp-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.6rem;
+    margin-bottom: 4px;
+
+    @include mobile {
+        font-size: 0.45rem;
+        margin-bottom: 2px;
+    }
+}
+
+.xp-bar-container {
+    height: 12px;
+    background: #111;
+    border: 1px solid #333;
+    position: relative;
+    overflow: hidden;
+
+    @include mobile {
+        height: 8px;
+    }
+}
+
+.xp-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #00ccff, #0066aa);
+    transition: width 0.6s ease;
+}
+
+.stat-row.principal {
+    display: flex;
+    align-items: center;
+    padding: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    @include retro-border(1px, #333);
+    margin-bottom: 6px;
+    font-size: 0.65rem;
+
+    @include mobile {
+        padding: 3px;
+        margin-bottom: 3px;
+        font-size: 0.5rem;
+    }
+}
+
+.bar-container {
+    flex: 1;
+    height: 6px;
+    background: #111;
+    margin: 0 10px;
+    border: 1px solid #444;
+
+    @include mobile {
+        height: 4px;
+        margin: 0 5px;
+    }
+}
+
+.hp-bar {
+    height: 100%;
+    background: $accent-red;
+}
+
+.stats-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+
+    @include mobile {
+        gap: 2px;
+    }
+}
+
+.compact-stat {
+    background: #111;
+    border: 1px solid #333;
+    padding: 4px 2px;
+    @include flex-center;
+    flex-direction: column;
+    font-size: 0.5rem;
+
+    span:last-child {
+        color: $accent-gold;
+        margin-top: 2px;
+    }
+
+    @include mobile {
+        padding: 2px;
+        font-size: 0.4rem;
+    }
+}
+
+.action-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+
+    @include mobile {
+        flex: none;
+        gap: 5px;
+    }
+}
+
+.daily-status-compact {
+    background: linear-gradient(135deg, #0a0a0a 0%, #000 100%);
+    @include retro-border(2px, #222);
+    border-left: 6px solid $accent-red;
+    padding: 10px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+
+    @include mobile {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 8px;
+        border-left-width: 3px;
+        gap: 0;
+        border-width: 1px;
+    }
+}
+
+.status-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    @include mobile {
+        gap: 5px;
+    }
+}
+
+.label-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+
+.label-main {
+    font-size: 0.8rem;
+    color: #fff;
+    letter-spacing: 1px;
+
+    @include mobile {
+        font-size: 0.5rem;
+        letter-spacing: 0;
+    }
+}
+
+.label-sub {
+    font-size: 0.6rem;
+    color: $accent-red;
+    letter-spacing: 1px;
+
+    @include mobile {
+        display: none;
+    }
+}
+
+.mini-pips {
+    display: flex;
+    gap: 8px;
+
+    @include mobile {
+        gap: 4px;
+    }
+}
+
+.mini-pip {
+    width: 12px;
+    height: 12px;
+    background: #111;
+    border: 2px solid #333;
+    transform: rotate(45deg);
+
+    &.active {
+        background: $accent-red;
+        border-color: #fff;
+        box-shadow: 0 0 8px $accent-red;
+    }
+
+    @include mobile {
+        width: 8px;
+        height: 8px;
+        border-width: 1px;
+    }
+}
+
+.giant-btn {
+    flex: 1;
+    @include flex-center;
+    font-size: 2rem !important;
+    background: #000;
+    @include retro-border(3px, $accent-gold);
+    color: $accent-gold;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+    padding: 20px !important;
+    min-height: 80px;
+
+    &:hover:not(:disabled) {
+        background: $accent-gold;
+        color: #000;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    @include mobile {
+        flex: none;
+        height: 50px;
+        min-height: 50px;
+        font-size: 1.2rem !important;
+        padding: 10px !important;
+        border-width: 2px;
+    }
+}
+
+// Level up animation overlay
+.level-up-pop-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    @include flex-center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease;
+}
+
+.level-up-card {
+    background: linear-gradient(135deg, #1a0a00 0%, #000 100%);
+    @include retro-border(4px, $accent-gold);
+    padding: 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    animation: cardSlideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    max-width: 400px;
+    width: 90%;
+
+    @include mobile {
+        padding: 20px;
+        border-width: 2px;
+    }
+}
+
+.card-shine {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg,
+            transparent 30%,
+            rgba(255, 204, 0, 0.1) 50%,
+            transparent 70%);
+    animation: shine 2s ease-in-out infinite;
+}
+
+.level-up-badge {
+    background: $accent-red;
+    color: #000;
+    padding: 4px 12px;
+    font-size: 0.6rem;
+    margin: 0 auto 15px;
+    display: inline-block;
+    @include retro-border(2px, #fff);
+}
+
+.stars-top,
+.stars-bottom {
+    color: $accent-gold;
+    font-size: 1.2rem;
+    margin: 10px 0;
+    letter-spacing: 8px;
+}
+
+.lvl-title {
+    font-size: 1.8rem;
+    color: $accent-gold;
+    margin: 20px 0;
+    text-shadow: 3px 3px 0 #000;
+}
+
+.lvl-big-number {
+    font-size: 3rem;
+    margin: 20px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.lvl-old {
+    color: #666;
+}
+
+.lvl-arrow {
+    color: $accent-green;
+}
+
+.lvl-new {
+    color: $accent-gold;
+    animation: pulse 1s ease-in-out infinite;
+}
+
+.level-up-footer {
+    color: $accent-green;
+    font-size: 0.8rem;
+    margin-top: 20px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes cardSlideUp {
+    from {
+        transform: translateY(100px) scale(0.8);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes shine {
+
+    0%,
+    100% {
+        transform: translateX(-100%) translateY(-100%);
+    }
+
+    50% {
+        transform: translateX(100%) translateY(100%);
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+}

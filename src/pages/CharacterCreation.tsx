@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PixelCharacter } from '../components/PixelCharacter'
 import { Character } from '../types/Character'
-import './CharacterCreation.css'
 import { db } from '../config/firebase'
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore'
 import { useGame } from '../context/GameContext'
@@ -91,7 +90,7 @@ const CharacterCreation = () => {
   }
 
   return (
-    <div className="container retro-container">
+    <div className="container retro-container character-creation-page">
       <header className="game-header">
         <h1 className="hero-text">NEW GAME</h1>
       </header>
@@ -129,6 +128,57 @@ const CharacterCreation = () => {
 
       <div className="creation-content">
         <div className="left-panel">
+          <div className="preview-section-compact">
+            <div className="preview-box">
+              {generatedCharacter && (
+                <PixelCharacter
+                  seed={generatedCharacter.seed}
+                  gender={gender}
+                  scale={window.innerWidth > 768 ? 25 : 12}
+                />
+              )}
+            </div>
+
+            {generatedCharacter && (
+              <div className="stats-readout-compact">
+                <div className="stat-grid">
+                  <div className="stat-card" title="Strength">
+                    <span className="stat-icon">💪</span>
+                    <span className="stat-label">STR</span>
+                    <span className="stat-value">{generatedCharacter.strength}</span>
+                  </div>
+                  <div className="stat-card" title="Vitality">
+                    <span className="stat-icon">🛡️</span>
+                    <span className="stat-label">VIT</span>
+                    <span className="stat-value">{generatedCharacter.vitality}</span>
+                  </div>
+                  <div className="stat-card" title="Dexterity">
+                    <span className="stat-icon">⚡</span>
+                    <span className="stat-label">DEX</span>
+                    <span className="stat-value">{generatedCharacter.dexterity}</span>
+                  </div>
+                  <div className="stat-card" title="Luck">
+                    <span className="stat-icon">🍀</span>
+                    <span className="stat-label">LUK</span>
+                    <span className="stat-value">{generatedCharacter.luck}</span>
+                  </div>
+                  <div className="stat-card" title="Intelligence">
+                    <span className="stat-icon">🔮</span>
+                    <span className="stat-label">INT</span>
+                    <span className="stat-value">{generatedCharacter.intelligence}</span>
+                  </div>
+                </div>
+                <div className="hp-stat-card">
+                  <span className="stat-icon">❤️</span>
+                  <span className="stat-label">HP</span>
+                  <span className="stat-value">{generatedCharacter.hp}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="right-panel">
           <div className="creation-form">
             <div className="form-group">
               <label htmlFor="name">NAME:</label>
@@ -189,57 +239,6 @@ const CharacterCreation = () => {
             <button className="button secondary back-btn" onClick={() => navigate('/')}>
               BACK
             </button>
-          </div>
-        </div>
-
-        <div className="right-panel">
-          <div className="preview-section-compact">
-            <div className="preview-box">
-              {generatedCharacter && (
-                <PixelCharacter
-                  seed={generatedCharacter.seed}
-                  gender={gender}
-                  scale={window.innerWidth > 768 ? 15 : 12}
-                />
-              )}
-            </div>
-
-            {generatedCharacter && (
-              <div className="stats-readout-compact">
-                <div className="stat-grid">
-                  <div className="stat-card" title="Strength">
-                    <span className="stat-icon">💪</span>
-                    <span className="stat-label">STR</span>
-                    <span className="stat-value">{generatedCharacter.strength}</span>
-                  </div>
-                  <div className="stat-card" title="Vitality">
-                    <span className="stat-icon">🛡️</span>
-                    <span className="stat-label">VIT</span>
-                    <span className="stat-value">{generatedCharacter.vitality}</span>
-                  </div>
-                  <div className="stat-card" title="Dexterity">
-                    <span className="stat-icon">⚡</span>
-                    <span className="stat-label">DEX</span>
-                    <span className="stat-value">{generatedCharacter.dexterity}</span>
-                  </div>
-                  <div className="stat-card" title="Luck">
-                    <span className="stat-icon">🍀</span>
-                    <span className="stat-label">LUK</span>
-                    <span className="stat-value">{generatedCharacter.luck}</span>
-                  </div>
-                  <div className="stat-card" title="Intelligence">
-                    <span className="stat-icon">🔮</span>
-                    <span className="stat-label">INT</span>
-                    <span className="stat-value">{generatedCharacter.intelligence}</span>
-                  </div>
-                </div>
-                <div className="hp-stat-card">
-                  <span className="stat-icon">❤️</span>
-                  <span className="stat-label">HP</span>
-                  <span className="stat-value">{generatedCharacter.hp}</span>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
