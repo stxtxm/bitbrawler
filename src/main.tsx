@@ -8,6 +8,21 @@ import './styles/main.scss'
 // Dynamic basename: use repo name for GH Pages, root for local dev
 const basename = '/';
 
+const isStandalone =
+  window.matchMedia?.('(display-mode: standalone)').matches ||
+  (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+
+if (isStandalone) {
+  document.body.classList.add('pwa')
+  const viewport = document.querySelector('meta[name="viewport"]')
+  if (viewport) {
+    viewport.setAttribute(
+      'content',
+      'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover',
+    )
+  }
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter

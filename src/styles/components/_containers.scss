@@ -3,18 +3,30 @@
 .container {
     width: 90%;
     max-width: 1200px;
-    margin: 0 auto;
+    margin: 10px auto; // Small vertical margin keeps browser pull-to-refresh
     display: flex;
     flex-direction: column;
+    min-height: calc(100vh - 16px);
+    min-height: calc(100dvh - 16px);
+
+    @include mobile {
+        width: 94%;
+        max-width: none;
+        margin: 6px auto;
+        padding: 10px;
+        min-height: calc(100vh - 10px);
+        min-height: calc(100dvh - 10px);
+    }
+}
+
+// PWA: lock container height to prevent global scrolling
+body.pwa .container {
+    margin: 0 auto;
     height: calc(100vh - 30px);
     height: calc(100dvh - 30px);
     overflow: hidden;
 
     @include mobile {
-        width: 94%;
-        max-width: none;
-        margin: 0 auto;
-        padding: 10px;
         height: calc(100vh - 16px);
         height: calc(100dvh - 16px);
     }

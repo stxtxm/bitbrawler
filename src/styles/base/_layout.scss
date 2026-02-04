@@ -5,12 +5,12 @@ body {
     height: 100%;
     margin: 0;
     padding: 0;
-    overscroll-behavior: none;
 }
 
 body {
     background-color: #000;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
 }
@@ -20,8 +20,6 @@ body {
     flex-direction: column;
     flex: 1;
     width: 100%;
-    overflow: hidden;
-    overscroll-behavior: none;
     // Remove individual tablet padding here, handled by .App
 }
 
@@ -38,13 +36,23 @@ body {
     min-height: 100vh;
     min-height: 100dvh;
     padding: 15px; // Safe zone for box-shadows
-    overflow: hidden;
-    overscroll-behavior: none;
 
     @include mobile {
         padding: 8px; // Smaller safe zone
         justify-content: center;
     }
+}
+
+// PWA: lock global scroll and overscroll while keeping browser refresh intact.
+body.pwa {
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+body.pwa #root,
+body.pwa .App {
+    overflow: hidden;
+    overscroll-behavior: none;
 }
 
 main {
