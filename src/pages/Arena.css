@@ -1,211 +1,409 @@
-/* Arena Page Styles */
+/* Arena Page Styles - Final Robust Version */
+.arena-container {
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #000;
+}
 
 .arena-header {
+    flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 15px 25px;
     border-bottom: 4px solid #333;
-    padding-bottom: 20px;
-    margin-bottom: 30px;
+    background: #000;
 }
 
-.level {
+.arena-char-name {
+    font-size: 1.8rem;
+    /* Bigger name for wider screen */
+    color: var(--accent-gold);
+    margin: 0;
+}
+
+.arena-lvl-badge {
     color: var(--accent-green);
-    font-size: 1.2rem;
-    text-shadow: 0 0 10px rgba(0, 255, 102, 0.3);
+    font-size: 0.9rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.icon-btn {
+    padding: 10px !important;
+    min-width: 44px !important;
+    height: 44px !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 3px solid #fff;
+    background: #000;
+    cursor: pointer;
 }
 
 .arena-content {
+    flex: 1;
     display: flex;
-    gap: 40px;
-    flex-wrap: wrap;
-    justify-content: center;
+    gap: 20px;
+    /* Even wider gap */
+    padding: 20px;
+    overflow: hidden;
+    min-height: 0;
+    width: 100%;
+    max-width: 100%;
 }
 
 .character-display {
-    flex: 1;
-    min-width: 300px;
+    flex: 1.2;
+    /* More presence */
     background: rgba(255, 255, 255, 0.03);
-    padding: 30px;
     border: 4px solid #222;
+    /* White border for high visibility */
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 30px;
+    padding: 20px;
+    min-width: 0;
+    /* Force it wider on desktop */
+    box-sizing: border-box;
 }
 
 .avatar-box {
-    background: #000;
-    border: 4px solid #fff;
-    padding: 25px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
-}
-
-.stats-panel {
-    width: 100%;
-}
-
-.stat-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 12px 0;
-    border-bottom: 1px dashed #222;
-    align-items: center;
-    font-size: 0.8rem;
-}
-
-.bar-container {
-    flex-grow: 1;
-    height: 12px;
-    background: #111;
-    margin: 0 15px;
-    border: 2px solid #333;
-}
-
-.hp-bar {
-    height: 100%;
-    background: var(--accent-red);
-    box-shadow: 0 0 10px rgba(255, 51, 51, 0.5);
-}
-
-.action-panel {
     flex: 1;
-    min-width: 300px;
+    background: radial-gradient(circle, #222 0%, #000 100%);
+    border: 4px solid #fff;
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 40px;
-}
-
-.daily-status {
-    text-align: center;
-    background: #000;
-    padding: 30px;
-    border: 4px solid var(--accent-gold);
-    width: 100%;
-}
-
-.daily-title {
-    font-size: 1rem;
-    color: var(--accent-gold);
+    min-height: 0;
     margin-bottom: 20px;
+    overflow: hidden;
+    /* Ensure no overflow */
 }
 
-.remaining-text {
-    font-size: 0.7rem;
-    color: #888;
-    margin-top: 15px;
-}
-
-.fights-counter {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    margin: 20px 0;
-}
-
-.fight-pip {
-    width: 25px;
-    height: 25px;
-    background: #111;
-    border: 2px solid #333;
-    transform: rotate(45deg);
-}
-
-.fight-pip.active {
-    background: var(--accent-red);
-    border-color: var(--accent-gold);
-}
-
-.giant-btn {
-    font-size: 1.5rem !important;
-    width: 100%;
-    padding: 30px !important;
-    animation: pulse-btn 2s infinite;
-}
-
-@keyframes pulse-btn {
-
-    0%,
-    100% {
-        transform: scale(1);
-    }
-
-    50% {
-        transform: scale(1.03);
-    }
-}
-
-/* XP Bar */
 .xp-section {
     width: 100%;
-    margin: 20px 0;
+    margin-bottom: 20px;
 }
 
 .xp-header {
     display: flex;
     justify-content: space-between;
-    font-size: 0.6rem;
-    margin-bottom: 10px;
-}
-
-.xp-label {
-    color: #00ccff;
+    font-size: 0.7rem;
+    margin-bottom: 8px;
 }
 
 .xp-bar-container {
-    height: 18px;
+    height: 14px;
     background: #111;
     border: 2px solid #333;
+    position: relative;
     overflow: hidden;
 }
 
 .xp-bar {
     height: 100%;
     background: linear-gradient(90deg, #00ccff, #0066aa);
-    transition: width 0.6s cubic-bezier(0.18, 0.89, 0.32, 1);
+    transition: width 0.6s ease;
 }
 
-.xp-bar.max-level {
-    background: linear-gradient(90deg, #ffd700, #ff8c00);
+.stats-panel {
+    width: 100%;
 }
 
-/* Level Up */
-.level-up-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.9);
+.stat-row.principal {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid #333;
+    margin-bottom: 10px;
+    font-size: 0.8rem;
+}
+
+.bar-container {
+    flex: 1;
+    height: 8px;
+    background: #111;
+    margin: 0 15px;
+    border: 1px solid #444;
+}
+
+.hp-bar {
+    height: 100%;
+    background: var(--accent-red);
+}
+
+.stats-grid-compact {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.compact-stat {
+    background: #111;
+    border: 1px solid #333;
+    padding: 8px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.6rem;
+}
+
+.compact-stat span:last-child {
+    color: var(--accent-gold);
+    margin-top: 4px;
+}
+
+.action-panel {
+    flex: 0.8;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.daily-status-compact {
+    background: linear-gradient(135deg, #0a0a0a 0%, #000 100%);
+    border: 3px solid #222;
+    border-left: 8px solid var(--accent-red);
+    padding: 15px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex-shrink: 0;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+    box-sizing: border-box;
+    /* Fix for centering and overflow */
+}
+
+.status-label {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.label-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    /* Default for mobile/small screens */
+    gap: 2px;
+}
+
+.label-main {
+    font-size: 1rem;
+    color: #fff;
+    letter-spacing: 1px;
+    line-height: 1;
+}
+
+.label-sub {
+    font-size: 0.7rem;
+    color: var(--accent-red);
+    letter-spacing: 1px;
+    white-space: nowrap;
+    display: block;
+}
+
+.mini-pips {
+    display: flex;
+    gap: 10px;
+}
+
+.mini-pip {
+    width: 14px;
+    height: 14px;
+    background: #111;
+    border: 2px solid #333;
+    transform: rotate(45deg);
+}
+
+.mini-pip.active {
+    background: var(--accent-red);
+    border-color: #fff;
+    box-shadow: 0 0 10px var(--accent-red);
+}
+
+.giant-btn {
+    flex: 1;
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 2000;
-    backdrop-filter: blur(8px);
-}
-
-.level-up-content {
-    text-align: center;
-}
-
-.level-up-title {
-    font-size: 2.5rem;
-    color: #fff;
-    margin: 20px 0;
-    text-shadow: 0 0 20px #00ccff;
-}
-
-.level-up-number {
-    font-size: 5rem;
+    font-size: 2.5rem !important;
+    background: #000;
+    border: 4px solid var(--accent-gold) !important;
     color: var(--accent-gold);
-    text-shadow: 0 0 30px var(--accent-gold);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
 }
 
+.giant-btn:hover:not(:disabled) {
+    background: var(--accent-gold);
+    color: #000;
+}
+
+/* --- MOBILE --- */
 @media (max-width: 768px) {
-    .arena-content {
-        flex-direction: column;
+    .arena-header {
+        padding: 8px 15px;
     }
 
-    .char-info h2 {
-        font-size: 1.5rem;
+    .arena-char-name {
+        font-size: 1rem;
+    }
+
+    .icon-btn {
+        width: 36px !important;
+        height: 36px !important;
+        padding: 5px !important;
+    }
+
+    .arena-content {
+        flex-direction: column;
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .character-display {
+        flex: 1;
+        min-height: 0;
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .avatar-box {
+        margin-bottom: 10px;
+        overflow: hidden;
+    }
+
+    .avatar-box>* {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    .xp-section,
+    .stats-panel {
+        margin-bottom: 10px;
+    }
+
+    .action-panel {
+        flex: 0;
+        flex-shrink: 0;
+        gap: 10px;
+    }
+
+    .daily-status-compact {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        border-left-width: 4px;
+        gap: 0;
+    }
+
+    .status-label {
+        gap: 8px;
+    }
+
+    .label-main {
+        font-size: 0.7rem;
+    }
+
+    .label-sub {
+        display: none;
+        /* Hide subtext on mobile to save space */
+    }
+
+    .mini-pips {
+        gap: 6px;
+    }
+
+    .mini-pip {
+        width: 10px;
+        height: 10px;
+    }
+
+    .giant-btn {
+        flex: none;
+        height: 60px;
+        font-size: 1.5rem !important;
+    }
+}
+
+/* --- DESKTOP ONLY OPTIMIZATIONS --- */
+@media (min-width: 1024px) {
+    .action-panel {
+        flex: 1;
+        gap: 30px;
+        min-width: 400px;
+    }
+
+    .daily-status-compact {
+        flex-direction: column;
+        /* Centered stack layout */
+        padding: 30px;
+        gap: 20px;
+        align-items: center;
+        text-align: center;
+        border-color: #333;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .status-label {
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .label-text {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+    }
+
+    .label-main {
+        font-size: 1.1rem;
+        /* Reduced to fit the frame */
+        line-height: 1;
+        white-space: nowrap;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .label-sub {
+        font-size: 0.8rem;
+        /* Reduced for better fit */
+        margin-top: 5px;
+        display: block;
+        /* Ensure it's on its own line */
+    }
+
+    .mini-pips {
+        justify-content: center;
+        gap: 15px;
+        /* Slightly tighter for laptop screens */
+        width: 100%;
+    }
+
+    .mini-pip {
+        width: 18px;
+        height: 18px;
+    }
+
+    .giant-btn {
+        font-size: 3.5rem !important;
+        text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.4);
     }
 }

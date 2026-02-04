@@ -199,7 +199,7 @@ const CharacterCreation = () => {
                 <PixelCharacter
                   seed={generatedCharacter.seed}
                   gender={gender}
-                  scale={11}
+                  scale={window.innerWidth > 768 ? 15 : 12}
                 />
               )}
             </div>

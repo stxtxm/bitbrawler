@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 import { PixelCharacter } from '../components/PixelCharacter';
+import { PixelIcon } from '../components/PixelIcon';
 import { getXpProgress, formatXpDisplay, getMaxLevel } from '../utils/xpUtils';
 import './Arena.css';
 
@@ -52,35 +53,45 @@ const Arena = () => {
 
     return (
         <div className="container retro-container arena-container">
-            {/* Level Up Overlay */}
+            {/* Level Up Notification (Dopamine hit!) */}
             {showLevelUp && lastLevelUp && (
-                <div className="level-up-overlay">
-                    <div className="level-up-content">
-                        <div className="level-up-stars">★ ★ ★</div>
-                        <h2 className="level-up-title">LEVEL UP!</h2>
-                        <div className="level-up-number">LV. {lastLevelUp.newLevel}</div>
-                        {lastLevelUp.levelsGained > 1 && (
-                            <p className="multi-level">+{lastLevelUp.levelsGained} LEVELS!</p>
-                        )}
-                        <div className="level-up-stars">★ ★ ★</div>
+                <div className="level-up-pop-overlay">
+                    <div className="level-up-card">
+                        <div className="card-shine"></div>
+                        <div className="level-up-badge">NEW RANK!</div>
+                        <div className="stars-top">★ ★ ★ ★ ★</div>
+                        <h2 className="lvl-title">LEVEL UP</h2>
+                        <div className="lvl-big-number">
+                            <span className="lvl-old">{lastLevelUp.newLevel - lastLevelUp.levelsGained}</span>
+                            <span className="lvl-arrow">➜</span>
+                            <span className="lvl-new">{lastLevelUp.newLevel}</span>
+                        </div>
+                        <div className="stars-bottom">★ ★ ★ ★ ★</div>
+                        <div className="level-up-footer">STRENGTH INCREASED!</div>
                     </div>
                 </div>
             )}
 
             <header className="arena-header">
                 <div className="char-info">
-                    <h2 className="hero-text" style={{ fontSize: '1.5rem', letterSpacing: '4px' }}>{activeCharacter.name}</h2>
-                    <span className="level">LVL {activeCharacter.level}</span>
+                    <h2 className="arena-char-name">{activeCharacter.name}</h2>
+                    <div className="arena-lvl-badge">LVL {activeCharacter.level}</div>
                 </div>
-                <button className="button small-btn logout-btn" onClick={() => { logout(); setTimeout(() => navigate('/'), 0); }}>
-                    LOGOUT
-                </button>
+                <div className="header-actions">
+                    <button className="button icon-btn" onClick={() => navigate('/rankings')} title="Rankings">
+                        <PixelIcon type="trophy" size={20} />
+                    </button>
+                    <button className="button icon-btn logout-btn" onClick={() => { logout(); setTimeout(() => navigate('/'), 0); }} title="Logout">
+                        <PixelIcon type="power" size={20} />
+                    </button>
+                </div>
             </header>
+
 
             <div className="arena-content">
                 <div className="character-display">
                     <div className="avatar-box">
-                        <PixelCharacter seed={activeCharacter.seed} gender={activeCharacter.gender} scale={8} />
+                        <PixelCharacter seed={activeCharacter.seed} gender={activeCharacter.gender} scale={window.innerWidth < 600 ? 16 : 12} />
                     </div>
 
                     {/* XP Bar Section */}
@@ -104,23 +115,36 @@ const Arena = () => {
                     </div>
 
                     <div className="stats-panel">
-                        <div className="stat-row"><span>HP</span> <div className="bar-container"><div className="bar hp-bar" style={{ width: '100%' }}></div></div> {activeCharacter.hp}</div>
-                        <div className="stat-row"><span>STR</span> {activeCharacter.strength}</div>
-                        <div className="stat-row"><span>VIT</span> {activeCharacter.vitality}</div>
-                        <div className="stat-row"><span>DEX</span> {activeCharacter.dexterity}</div>
-                        <div className="stat-row"><span>LUK</span> {activeCharacter.luck}</div>
+                        <div className="stat-row principal">
+                            <span>HP</span>
+                            <div className="bar-container">
+                                <div className="bar hp-bar" style={{ width: '100%' }}></div>
+                            </div>
+                            <span className="stat-val">{activeCharacter.hp}</span>
+                        </div>
+                        <div className="stats-grid-compact">
+                            <div className="compact-stat"><span>STR</span> <span>{activeCharacter.strength}</span></div>
+                            <div className="compact-stat"><span>VIT</span> <span>{activeCharacter.vitality}</span></div>
+                            <div className="compact-stat"><span>DEX</span> <span>{activeCharacter.dexterity}</span></div>
+                            <div className="compact-stat"><span>LUK</span> <span>{activeCharacter.luck}</span></div>
+                        </div>
                     </div>
                 </div>
 
                 <div className="action-panel">
-                    <div className="daily-status">
-                        <h3>DAILY FIGHTS</h3>
-                        <div className="fights-counter">
+                    <div className="daily-status-compact">
+                        <div className="status-label">
+                            <PixelIcon type="sword" size={32} />
+                            <div className="label-text">
+                                <span className="label-main">BATTLE ENERGY</span>
+                                <span className="label-sub">{activeCharacter.fightsLeft || 0} / 5 AVAILABLE</span>
+                            </div>
+                        </div>
+                        <div className="mini-pips">
                             {Array.from({ length: 5 }).map((_, i) => (
-                                <div key={i} className={`fight-pip ${i < (activeCharacter.fightsLeft || 0) ? 'active' : 'used'}`}></div>
+                                <div key={i} className={`mini-pip ${i < (activeCharacter.fightsLeft || 0) ? 'active' : 'used'}`}></div>
                             ))}
                         </div>
-                        <p>{activeCharacter.fightsLeft || 0} REMAINING</p>
                     </div>
 
                     <button
@@ -131,6 +155,7 @@ const Arena = () => {
                         {(activeCharacter.fightsLeft || 0) > 0 ? 'FIGHT!' : 'REST NOW'}
                     </button>
                 </div>
+
             </div>
         </div>
     );
