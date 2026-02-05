@@ -95,7 +95,7 @@ const Arena = () => {
                     <button className="button icon-btn" onClick={() => navigate('/rankings')} title="Rankings">
                         <PixelIcon type="trophy" size={26} />
                     </button>
-                    <button className="button icon-btn logout-btn" onClick={() => { logout(); setTimeout(() => navigate('/'), 0); }} title="Logout">
+                    <button className="button icon-btn" onClick={() => { logout(); setTimeout(() => navigate('/'), 0); }} title="Logout">
                         <PixelIcon type="power" size={26} />
                     </button>
                 </div>
