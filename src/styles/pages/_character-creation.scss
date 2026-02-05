@@ -33,27 +33,23 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 0;
     min-height: 0;
 
     @include tablet {
         flex: none;
         width: 100%;
-        gap: 5px;
+        gap: 0;
     }
 }
 
 .left-panel {
-    flex: 1.5; // Preview takes more space on desktop
-
     @include tablet {
         order: 1; // Preview first on mobile
     }
 }
 
 .right-panel {
-    flex: 1;
-
     @include tablet {
         order: 2; // Form second on mobile
     }
@@ -91,7 +87,7 @@
     @include tablet {
         padding: 0;
         border-width: 2px;
-        min-height: 160px;
+        min-height: 150px;
         flex: none;
         margin-top: 0;
     }
@@ -104,8 +100,88 @@
     flex-shrink: 0;
 
     @include tablet {
-        padding: 3px;
+        padding: 6px;
         border-width: 1px;
+    }
+}
+
+@include mobile {
+    .character-creation-page .game-header {
+        margin-bottom: 6px;
+    }
+
+    .preview-box {
+        min-height: 140px;
+    }
+
+    .stats-readout-compact {
+        padding: 6px;
+    }
+
+    .stat-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        margin-bottom: 6px;
+    }
+
+    .stat-card {
+        padding: 4px;
+        gap: 3px;
+    }
+
+    .stat-icon {
+        font-size: 0.75rem;
+    }
+
+    .stat-label {
+        font-size: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 0.9rem;
+    }
+
+    .hp-stat-card {
+        padding: 6px;
+        gap: 8px;
+    }
+}
+
+
+@include small-mobile {
+    .preview-box {
+        min-height: 110px;
+    }
+
+    .stats-readout-compact {
+        padding: 4px;
+    }
+
+    .stat-grid {
+        gap: 2px;
+        margin-bottom: 3px;
+    }
+
+    .stat-card {
+        padding: 2px;
+        gap: 1px;
+    }
+
+    .stat-icon {
+        font-size: 0.55rem;
+    }
+
+    .stat-label {
+        font-size: 0.4rem;
+    }
+
+    .stat-value {
+        font-size: 0.75rem;
+    }
+
+    .hp-stat-card {
+        padding: 3px;
+        gap: 5px;
     }
 }
 
@@ -116,8 +192,9 @@
     margin-bottom: 10px;
 
     @include tablet {
-        gap: 2px;
-        margin-bottom: 2px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        margin-bottom: 6px;
     }
 }
 
@@ -130,7 +207,8 @@
     gap: 4px;
 
     @include tablet {
-        padding: 2px;
+        padding: 4px;
+        gap: 3px;
     }
 }
 
@@ -138,18 +216,26 @@
     font-size: 1.1rem;
 
     @include tablet {
-        font-size: 0.6rem;
+        font-size: 0.75rem;
     }
 }
 
 .stat-label {
     font-size: 0.45rem;
     color: #888;
+
+    @include tablet {
+        font-size: 0.5rem;
+    }
 }
 
 .stat-value {
     font-size: 0.8rem;
     color: $accent-green;
+
+    @include tablet {
+        font-size: 0.9rem;
+    }
 }
 
 .hp-stat-card {
@@ -166,8 +252,8 @@
     }
 
     @include tablet {
-        padding: 3px;
-        gap: 5px;
+        padding: 6px;
+        gap: 8px;
     }
 }
 
@@ -179,12 +265,41 @@
     flex-direction: column;
     gap: 15px;
     flex: 1;
+    min-height: clamp(200px, 34vh, 340px);
 
     @include tablet {
-        padding: 8px;
-        gap: 8px;
+        padding: 10px;
+        gap: 10px;
         border: none;
         background: transparent;
+    }
+}
+
+@include mobile {
+    .creation-form {
+        padding: 10px;
+        gap: 10px;
+    }
+
+    .form-group {
+        gap: 6px;
+    }
+
+    input[type="text"] {
+        padding: 12px;
+        font-size: 1rem;
+    }
+}
+
+@include small-mobile {
+    .creation-form {
+        padding: 8px;
+        gap: 8px;
+    }
+
+    input[type="text"] {
+        padding: 10px;
+        font-size: 0.9rem;
     }
 }
 
@@ -222,8 +337,8 @@ input[type="text"] {
     }
 
     @include tablet {
-        padding: 10px;
-        font-size: 0.9rem;
+        padding: 12px;
+        font-size: 1rem;
     }
 }
 
@@ -251,7 +366,30 @@ input[type="text"] {
     }
 
     @include tablet {
+        padding: 10px;
+        font-size: 0.65rem;
+    }
+}
+
+@include mobile {
+    .gender-selection {
+        gap: 6px;
+    }
+
+    .gender-btn {
+        padding: 10px;
+        font-size: 0.65rem;
+    }
+}
+
+@include small-mobile {
+    .gender-selection {
+        gap: 5px;
+    }
+
+    .gender-btn {
         padding: 8px;
+        font-size: 0.6rem;
     }
 }
 
@@ -267,8 +405,22 @@ input[type="text"] {
     font-size: 0.8rem !important;
 
     @include tablet {
+        padding: 12px !important;
+        font-size: 0.6rem !important;
+    }
+}
+
+@include mobile {
+    .retro-btn {
+        padding: 12px !important;
+        font-size: 0.6rem !important;
+    }
+}
+
+@include small-mobile {
+    .retro-btn {
         padding: 10px !important;
-        font-size: 0.5rem !important;
+        font-size: 0.55rem !important;
     }
 }
 
@@ -285,6 +437,29 @@ input[type="text"] {
     border-color: #444 !important;
 }
 
+@include mobile {
+    .back-btn {
+        padding: 10px !important;
+        font-size: 0.6rem !important;
+    }
+}
+
+@include small-mobile {
+    .button-group {
+        gap: 8px;
+    }
+
+    .actions {
+        margin-top: auto;
+        padding-top: 6px;
+    }
+
+    .back-btn {
+        padding: 8px !important;
+        font-size: 0.55rem !important;
+    }
+}
+
 /* iPhone SE specific extreme density */
 @media (max-width: 768px) and (max-height: 700px) {
     .character-creation-page .game-header {
@@ -292,27 +467,73 @@ input[type="text"] {
     }
 
     .preview-box {
-        min-height: 150px;
+        min-height: 110px;
     }
 
-    .creation-form {
-        gap: 5px;
+    .stats-readout-compact {
+        padding: 3px;
     }
 
     .stat-grid {
+        gap: 2px;
         margin-bottom: 2px;
+    }
+
+    .stat-card {
+        padding: 2px;
+        gap: 1px;
+    }
+
+    .stat-icon {
+        font-size: 0.5rem;
+    }
+
+    .stat-label {
+        font-size: 0.4rem;
+    }
+
+    .stat-value {
+        font-size: 0.7rem;
     }
 
     .hp-stat-card {
         padding: 2px;
+        gap: 4px;
+    }
+
+    .creation-form {
+        gap: 4px;
+    }
+
+    input[type="text"] {
+        padding: 8px;
+        font-size: 0.85rem;
+    }
+
+    .gender-btn {
+        padding: 7px;
+        font-size: 0.55rem;
+    }
+
+    .stat-grid {
+        margin-bottom: 3px;
+    }
+
+    .hp-stat-card {
+        padding: 3px;
     }
 
     .button-group {
-        gap: 5px;
+        gap: 6px;
     }
 
     .retro-btn {
-        padding: 8px !important;
+        padding: 7px !important;
+    }
+
+    .actions {
+        margin-top: auto;
+        padding-top: 4px;
     }
 
     .back-btn {
