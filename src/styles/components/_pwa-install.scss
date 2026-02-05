@@ -1,0 +1,73 @@
+@use '../variables' as *;
+
+.pwa-install {
+    position: fixed;
+    inset: 0;
+    z-index: 1800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: radial-gradient(circle at 20% 20%, rgba(255, 204, 0, 0.08), transparent 45%),
+        radial-gradient(circle at 80% 10%, rgba(0, 255, 102, 0.08), transparent 50%),
+        rgba(0, 0, 0, 0.8);
+
+    @include mobile {
+        padding: 10px;
+    }
+}
+
+.pwa-install__panel {
+    width: 100%;
+    max-width: 520px;
+    text-align: center;
+}
+
+.pwa-install__badge {
+    font-size: 0.55rem;
+    color: $accent-gold;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+}
+
+.pwa-install__title {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+
+    @include mobile {
+        font-size: 0.8rem;
+    }
+}
+
+.pwa-install__text {
+    font-size: 0.6rem;
+    color: #ddd;
+    line-height: 1.5;
+    margin-bottom: 16px;
+}
+
+.pwa-install__steps {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid #222;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.pwa-install__step {
+    font-size: 0.55rem;
+    color: #bbb;
+    margin-bottom: 6px;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.pwa-install__button {
+    margin: 0 auto 10px;
+    min-width: 200px;
+}
+
+.pwa-install__later {
+    margin: 0;
+}

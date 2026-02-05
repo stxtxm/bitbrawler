@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
+import { useConnectionBlocker } from '../context/ConnectionBlockerContext';
 
 const Login = () => {
     const [name, setName] = useState('');
     const [error, setError] = useState<string | null>(null);
     const { login, loading } = useGame();
+    const { requireConnection } = useConnectionBlocker();
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -13,6 +15,9 @@ const Login = () => {
         setError(null);
 
         if (!name.trim()) return;
+
+        const canProceed = await requireConnection();
+        if (!canProceed) return;
 
         const err = await login(name.trim().toUpperCase());
         if (err) {

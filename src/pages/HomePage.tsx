@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom'
 import { PixelIcon } from '../components/PixelIcon'
 import { GameLogo } from '../components/GameLogo'
+import PwaInstallScreen from '../components/PwaInstallScreen'
 
 const HomePage = () => {
   return (
     <div className="container retro-container home-page">
+      <PwaInstallScreen />
       <header className="game-header">
         <nav className="top-nav">
           <div className="nav-left">
@@ -74,4 +76,3 @@ const HomePage = () => {
 }
 
 export default HomePage
-

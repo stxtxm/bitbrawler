@@ -1,5 +1,5 @@
 import { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
-import { collection, query, where, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, updateDoc, doc, limit } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Character } from '../types/Character';
 import { gainXp, calculateFightXp } from '../utils/xpUtils';
@@ -13,6 +13,7 @@ interface GameContextType {
   login: (name: string) => Promise<string | null>;
   logout: () => void;
   setCharacter: (char: Character) => void;
+  retryConnection: () => Promise<boolean>;
   useFight: () => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
   clearXpNotifications: () => void;
 }
@@ -206,6 +207,19 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setLastLevelUp(null);
   }, []);
 
+  const retryConnection = useCallback(async (): Promise<boolean> => {
+    try {
+      const q = query(collection(db, "server_time"), limit(1));
+      await getDocs(q);
+      setFirebaseAvailable(true);
+      return true;
+    } catch (error) {
+      console.error('Firebase retry failed:', error);
+      setFirebaseAvailable(false);
+      return false;
+    }
+  }, []);
+
   // Use fight function with XP system
   const useFight = useCallback(async (): Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null> => {
     if (!activeCharacter?.firestoreId) return null;
@@ -264,6 +278,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     login,
     logout,
     setCharacter,
+    retryConnection,
     useFight,
     clearXpNotifications,
   };

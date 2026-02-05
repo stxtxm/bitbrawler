@@ -9,6 +9,9 @@
 @use 'components/containers';
 @use 'components/forms';
 @use 'components/game-logo';
+@use 'components/status-screen';
+@use 'components/pwa-install';
+@use 'components/sw-toast';
 
 // Pages
 @use 'pages/home';

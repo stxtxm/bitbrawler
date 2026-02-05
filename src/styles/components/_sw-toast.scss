@@ -1,0 +1,56 @@
+@use '../variables' as *;
+
+.sw-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 16px;
+    transform: translateX(-50%);
+    z-index: 1900;
+    width: min(92vw, 540px);
+    background: #050505;
+    border: 2px solid $accent-gold;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    @include pixel-shadow($accent-gold, 4px, 4px);
+
+    @include mobile {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+.sw-toast__content {
+    text-align: left;
+}
+
+.sw-toast__title {
+    font-size: 0.6rem;
+    color: $accent-gold;
+    margin-bottom: 4px;
+}
+
+.sw-toast__text {
+    font-size: 0.5rem;
+    color: #ccc;
+}
+
+.sw-toast__actions {
+    display: flex;
+    gap: 8px;
+
+    @include mobile {
+        flex-direction: column;
+    }
+}
+
+.sw-toast__btn {
+    margin: 0;
+    min-width: 120px;
+
+    @include mobile {
+        width: 100%;
+    }
+}

@@ -5,11 +5,13 @@ import { Character } from '../types/Character'
 import { db } from '../config/firebase'
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore'
 import { useGame } from '../context/GameContext'
+import { useConnectionBlocker } from '../context/ConnectionBlockerContext'
 import { generateInitialStats } from '../utils/characterUtils'
 
 const CharacterCreation = () => {
   const navigate = useNavigate()
   const { setCharacter } = useGame()
+  const { requireConnection } = useConnectionBlocker()
   const [name, setName] = useState('')
   const [gender, setGender] = useState<'male' | 'female'>('male')
   const [generatedCharacter, setGeneratedCharacter] = useState<Character | null>(null)
@@ -54,6 +56,12 @@ const CharacterCreation = () => {
     setIsSubmitting(true)
     setNameError(''); // Reset error
     setShowErrorModal(false);
+
+    const canProceed = await requireConnection()
+    if (!canProceed) {
+      setIsSubmitting(false)
+      return
+    }
 
     try {
       // 1. Vérifier si le nom existe déjà dans Firestore

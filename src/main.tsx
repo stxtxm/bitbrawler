@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import { GameProvider } from './context/GameContext'
+import ErrorBoundary from './components/ErrorBoundary'
+import { ConnectionBlockerProvider } from './context/ConnectionBlockerContext'
 import './styles/main.scss'
 
 // Dynamic basename: use repo name for GH Pages, root for local dev
@@ -23,6 +25,34 @@ if (isStandalone) {
   }
 }
 
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then((registration) => {
+      const dispatchUpdate = () => {
+        if (registration.waiting) {
+          window.dispatchEvent(new CustomEvent('sw-update', { detail: registration }))
+        }
+      }
+
+      if (registration.waiting) {
+        dispatchUpdate()
+      }
+
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing
+        if (!newWorker) return
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            dispatchUpdate()
+          }
+        })
+      })
+    }).catch((error) => {
+      console.error('Service worker registration failed:', error)
+    })
+  })
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter
@@ -32,9 +62,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         v7_relativeSplatPath: true,
       }}
     >
-      <GameProvider>
-        <App />
-      </GameProvider>
+      <ErrorBoundary>
+        <GameProvider>
+          <ConnectionBlockerProvider>
+            <App />
+          </ConnectionBlockerProvider>
+        </GameProvider>
+      </ErrorBoundary>
     </BrowserRouter>
   </React.StrictMode>,
 )

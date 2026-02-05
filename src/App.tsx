@@ -5,10 +5,12 @@ import CharacterCreation from './pages/CharacterCreation'
 import Rankings from './pages/Rankings'
 import Login from './pages/Login'
 import Arena from './pages/Arena'
-import FirebaseError from './components/FirebaseError'
+import { useOnlineStatus } from './hooks/useOnlineStatus'
+import SwUpdateToast from './components/SwUpdateToast'
 
 function App() {
   const { activeCharacter, loading, firebaseAvailable } = useGame()
+  const isOnline = useOnlineStatus()
 
   // Show nothing while checking persistence
   if (loading) {
@@ -17,18 +19,37 @@ function App() {
     </div>
   }
 
-  // Show Firebase error if Firebase is unavailable
-  if (!firebaseAvailable) {
-    return <FirebaseError />
-  }
+  const canAutoRedirect = isOnline && firebaseAvailable
 
   return (
     <div className="App">
+      <SwUpdateToast />
       <Routes>
-        <Route path="/" element={activeCharacter ? <Navigate to="/arena" /> : <HomePage />} />
+        <Route
+          path="/"
+          element={activeCharacter && canAutoRedirect ? <Navigate to="/arena" /> : <HomePage />}
+        />
         <Route path="/create-character" element={<CharacterCreation />} />
-        <Route path="/login" element={activeCharacter ? <Navigate to="/arena" /> : <Login />} />
-        <Route path="/arena" element={activeCharacter ? <Arena /> : <Navigate to="/login" />} />
+        <Route
+          path="/login"
+          element={
+            activeCharacter && canAutoRedirect ? (
+              <Navigate to="/arena" />
+            ) : (
+              <Login />
+            )
+          }
+        />
+        <Route
+          path="/arena"
+          element={
+            activeCharacter ? (
+              <Arena />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
         <Route path="/rankings" element={<Rankings />} />
       </Routes>
     </div>

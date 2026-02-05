@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, getDocs, query, doc, deleteDoc } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { Character } from '../types/Character'
 import { PixelCharacter } from '../components/PixelCharacter'
 import { useGame } from '../context/GameContext'
+import { useOnlineStatus } from '../hooks/useOnlineStatus'
+import { useConnectionBlocker } from '../context/ConnectionBlockerContext'
 
 const Rankings = () => {
     const navigate = useNavigate()
@@ -13,44 +15,56 @@ const Rankings = () => {
     const [loading, setLoading] = useState(true)
     const [showResetModal, setShowResetModal] = useState(false)
     const [resetStatus, setResetStatus] = useState<'confirm' | 'success' | 'error' | null>(null)
+    const [loadError, setLoadError] = useState<string | null>(null)
+    const isOnline = useOnlineStatus()
+    const { requireConnection } = useConnectionBlocker()
 
     const handleCharacterSelect = (character: Character) => {
         setCharacter(character)
         navigate('/arena')
     }
 
-    useEffect(() => {
-        const fetchCharacters = async () => {
-            try {
-                const charactersCollection = collection(db, 'characters')
-                // On essaie de trier, mais si ça fail (manque d'index), on fallback sans tri
-                // Pour l'instant on récupère tout simplement
-                const q = query(charactersCollection)
-                const querySnapshot = await getDocs(q)
+    const fetchCharacters = useCallback(async () => {
+        setLoading(true)
+        setLoadError(null)
 
-                const fetchedChars: Character[] = []
-                querySnapshot.forEach((doc) => {
-                    // On ignore les documents malformés ou vides si besoin
-                    const data = doc.data() as Character
-                    fetchedChars.push({
-                        ...data,
-                        firestoreId: doc.id // Critical for persistence
-                    })
+        try {
+            const charactersCollection = collection(db, 'characters')
+            // On essaie de trier, mais si ça fail (manque d'index), on fallback sans tri
+            // Pour l'instant on récupère tout simplement
+            const q = query(charactersCollection)
+            const querySnapshot = await getDocs(q)
+
+            const fetchedChars: Character[] = []
+            querySnapshot.forEach((doc) => {
+                // On ignore les documents malformés ou vides si besoin
+                const data = doc.data() as Character
+                fetchedChars.push({
+                    ...data,
+                    firestoreId: doc.id // Critical for persistence
                 })
+            })
 
-                // Tri local par niveau (décroissant) puis nom
-                fetchedChars.sort((a, b) => b.level - a.level || a.name.localeCompare(b.name))
+            // Tri local par niveau (décroissant) puis nom
+            fetchedChars.sort((a, b) => b.level - a.level || a.name.localeCompare(b.name))
 
-                setCharacters(fetchedChars)
-            } catch (error) {
-                console.error("Error fetching characters:", error)
-            } finally {
-                setLoading(false)
-            }
+            setCharacters(fetchedChars)
+        } catch (error) {
+            console.error("Error fetching characters:", error)
+            setLoadError('Unable to load rankings. Please retry when you are online.')
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
+    useEffect(() => {
+        if (!isOnline) {
+            setLoading(false)
+            return
         }
 
         fetchCharacters()
-    }, [])
+    }, [fetchCharacters, isOnline])
 
     // ALPHA TOOL: Reset Function
     const handleAlphaResetClick = () => {
@@ -61,6 +75,12 @@ const Rankings = () => {
     const confirmReset = async () => {
         setLoading(true);
         try {
+            const ok = await requireConnection()
+            if (!ok) {
+                setLoading(false)
+                return
+            }
+
             const querySnapshot = await getDocs(collection(db, 'characters'));
             const deletePromises = querySnapshot.docs.map(d => deleteDoc(doc(db, 'characters', d.id)));
             await Promise.all(deletePromises);
@@ -96,9 +116,41 @@ const Rankings = () => {
             </header>
 
             <div className="rankings-content">
-                {loading ? (
+                {!isOnline ? (
+                    <div className="empty-state">
+                        <p>OFFLINE MODE</p>
+                        <p className="sub-text">Connect to load the Hall of Fame.</p>
+                        <button
+                            className="button retro-btn"
+                            onClick={async () => {
+                                const ok = await requireConnection()
+                                if (ok) {
+                                    fetchCharacters()
+                                }
+                            }}
+                        >
+                            RETRY CONNECTION
+                        </button>
+                    </div>
+                ) : loading ? (
                     <div className="loading-state">
                         <p className="blink">LOADING DATA...</p>
+                    </div>
+                ) : loadError ? (
+                    <div className="empty-state">
+                        <p>CONNECTION REQUIRED</p>
+                        <p className="sub-text">{loadError}</p>
+                        <button
+                            className="button retro-btn"
+                            onClick={async () => {
+                                const ok = await requireConnection()
+                                if (ok) {
+                                    fetchCharacters()
+                                }
+                            }}
+                        >
+                            RETRY CONNECTION
+                        </button>
                     </div>
                 ) : characters.length === 0 ? (
                     <div className="empty-state">

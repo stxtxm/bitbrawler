@@ -1,12 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
+import { useConnectionBlocker } from '../context/ConnectionBlockerContext';
 import { PixelCharacter } from '../components/PixelCharacter';
 import { PixelIcon } from '../components/PixelIcon';
 import { getXpProgress, formatXpDisplay, getMaxLevel } from '../utils/xpUtils';
 
 const Arena = () => {
     const { activeCharacter, logout, useFight, lastXpGain, lastLevelUp, clearXpNotifications } = useGame();
+    const { requireConnection } = useConnectionBlocker();
     const navigate = useNavigate();
     const [showXpGain, setShowXpGain] = useState(false);
     const [showLevelUp, setShowLevelUp] = useState(false);
@@ -49,6 +51,11 @@ const Arena = () => {
 
     const xpProgress = getXpProgress(activeCharacter);
     const isMaxLevel = activeCharacter.level >= getMaxLevel();
+    const handleFight = async () => {
+        const canProceed = await requireConnection();
+        if (!canProceed) return;
+        await useFight();
+    };
 
     return (
         <div className="container retro-container arena-container">
@@ -149,7 +156,7 @@ const Arena = () => {
                     <button
                         className="button primary-btn giant-btn"
                         disabled={(activeCharacter.fightsLeft || 0) <= 0}
-                        onClick={useFight}
+                        onClick={handleFight}
                     >
                         {(activeCharacter.fightsLeft || 0) > 0 ? 'FIGHT!' : 'REST NOW'}
                     </button>
