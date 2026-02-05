@@ -74,6 +74,12 @@ self.addEventListener('activate', (event) => {
   )
 })
 
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
+})
+
 self.addEventListener('fetch', (event) => {
   const { request } = event
   if (request.method !== 'GET') return
@@ -92,10 +98,4 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(networkFirst(request, RUNTIME_CACHE))
-})
-
-self.addEventListener('message', (event) => {
-  if (event.data === 'SKIP_WAITING') {
-    self.skipWaiting()
-  }
 })

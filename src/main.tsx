@@ -26,15 +26,16 @@ if (isStandalone) {
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then((registration) => {
-      const dispatchUpdate = () => {
-        if (registration.waiting) {
-          window.dispatchEvent(new CustomEvent('sw-update', { detail: registration }))
-        }
-      }
+    let hasRefreshed = false
+    const refreshOnce = () => {
+      if (hasRefreshed) return
+      hasRefreshed = true
+      window.location.reload()
+    }
 
+    navigator.serviceWorker.register('/sw.js').then((registration) => {
       if (registration.waiting) {
-        dispatchUpdate()
+        registration.waiting.postMessage('SKIP_WAITING')
       }
 
       registration.addEventListener('updatefound', () => {
@@ -42,13 +43,15 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
         if (!newWorker) return
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            dispatchUpdate()
+            registration.waiting?.postMessage('SKIP_WAITING')
           }
         })
       })
     }).catch((error) => {
       console.error('Service worker registration failed:', error)
     })
+
+    navigator.serviceWorker.addEventListener('controllerchange', refreshOnce)
   })
 }
 

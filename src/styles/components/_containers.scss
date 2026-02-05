@@ -11,9 +11,9 @@
 
     @media (min-width: 769px) {
         margin: 0 auto;
-        min-height: auto;
-        height: calc(100vh - 30px);
-        height: calc(100dvh - 30px);
+        min-height: calc(100vh - 30px);
+        min-height: calc(100dvh - 30px);
+        height: auto;
     }
 
     @include mobile {

@@ -6,7 +6,6 @@ import Rankings from './pages/Rankings'
 import Login from './pages/Login'
 import Arena from './pages/Arena'
 import { useOnlineStatus } from './hooks/useOnlineStatus'
-import SwUpdateToast from './components/SwUpdateToast'
 
 function App() {
   const { activeCharacter, loading, firebaseAvailable } = useGame()
@@ -23,7 +22,6 @@ function App() {
 
   return (
     <div className="App">
-      <SwUpdateToast />
       <Routes>
         <Route
           path="/"
