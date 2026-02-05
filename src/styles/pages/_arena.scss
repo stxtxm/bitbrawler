@@ -60,10 +60,14 @@
 
 .header-actions {
     display: flex;
-    gap: 8px;
+    gap: 10px;
+
+    @include tablet {
+        gap: 16px;
+    }
 
     @include mobile {
-        gap: 4px;
+        gap: 22px;
     }
 }
 
