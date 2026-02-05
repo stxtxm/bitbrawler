@@ -5,13 +5,14 @@ import { Character } from '../types/Character'
 import { db } from '../config/firebase'
 import { collection, addDoc, query, where, getDocs } from 'firebase/firestore'
 import { useGame } from '../context/GameContext'
-import { useConnectionBlocker } from '../context/ConnectionBlockerContext'
+import { useConnectionGate } from '../hooks/useConnectionGate'
+import ConnectionModal from '../components/ConnectionModal'
 import { generateInitialStats } from '../utils/characterUtils'
 
 const CharacterCreation = () => {
   const navigate = useNavigate()
   const { setCharacter } = useGame()
-  const { requireConnection } = useConnectionBlocker()
+  const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate()
   const [name, setName] = useState('')
   const [gender, setGender] = useState<'male' | 'female'>('male')
   const [generatedCharacter, setGeneratedCharacter] = useState<Character | null>(null)
@@ -20,6 +21,7 @@ const CharacterCreation = () => {
   const [nameError, setNameError] = useState('')
   const [showErrorModal, setShowErrorModal] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const connectionMessage = 'Connect to create and sync your fighter.'
 
   const generateRandomCharacter = (currentGender: 'male' | 'female' = gender) => {
     setIsGenerating(true)
@@ -41,6 +43,7 @@ const CharacterCreation = () => {
     generateRandomCharacter();
   }, []);
 
+
   const handleCreateCharacter = async () => {
     const trimmedName = name.trim();
     if (!trimmedName) {
@@ -57,7 +60,7 @@ const CharacterCreation = () => {
     setNameError(''); // Reset error
     setShowErrorModal(false);
 
-    const canProceed = await requireConnection()
+    const canProceed = await ensureConnection(connectionMessage)
     if (!canProceed) {
       setIsSubmitting(false)
       return
@@ -93,7 +96,9 @@ const CharacterCreation = () => {
       setTimeout(() => navigate('/arena'), 2000);
     } catch (error) {
       console.error('Erreur Critique:', error);
-      alert("ERREUR CRITIQUE : Connexion au serveur impossible.");
+      setIsSubmitting(false)
+      openModal(connectionMessage)
+      return
     }
   }
 
@@ -236,7 +241,11 @@ const CharacterCreation = () => {
               </button>
 
               {generatedCharacter && (
-                <button className="button retro-btn start-btn" onClick={handleCreateCharacter}>
+                <button
+                  className="button retro-btn start-btn"
+                  onClick={handleCreateCharacter}
+                  disabled={isSubmitting}
+                >
                   START GAME
                 </button>
               )}
@@ -250,6 +259,11 @@ const CharacterCreation = () => {
           </div>
         </div>
       </div>
+      <ConnectionModal
+        open={connectionModal.open}
+        message={connectionModal.message}
+        onClose={closeModal}
+      />
 
     </div>
   )

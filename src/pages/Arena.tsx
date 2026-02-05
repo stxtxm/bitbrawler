@@ -1,15 +1,18 @@
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
-import { useConnectionBlocker } from '../context/ConnectionBlockerContext';
+import { useConnectionGate } from '../hooks/useConnectionGate';
+import ConnectionModal from '../components/ConnectionModal';
 import { PixelCharacter } from '../components/PixelCharacter';
 import { PixelIcon } from '../components/PixelIcon';
 import { getXpProgress, formatXpDisplay, getMaxLevel } from '../utils/xpUtils';
 
 const Arena = () => {
     const { activeCharacter, logout, useFight, lastXpGain, lastLevelUp, clearXpNotifications } = useGame();
-    const { requireConnection } = useConnectionBlocker();
+    const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const navigate = useNavigate();
+    const connectionMessage = 'Connect to battle and sync your progress.';
+
     const [showXpGain, setShowXpGain] = useState(false);
     const [showLevelUp, setShowLevelUp] = useState(false);
     const [xpBarAnimating, setXpBarAnimating] = useState(false);
@@ -52,9 +55,14 @@ const Arena = () => {
     const xpProgress = getXpProgress(activeCharacter);
     const isMaxLevel = activeCharacter.level >= getMaxLevel();
     const handleFight = async () => {
-        const canProceed = await requireConnection();
+        const canProceed = await ensureConnection(connectionMessage);
         if (!canProceed) return;
-        await useFight();
+        try {
+            await useFight();
+        } catch (error) {
+            console.error('Fight failed:', error);
+            openModal(connectionMessage);
+        }
     };
 
     return (
@@ -85,10 +93,10 @@ const Arena = () => {
                 </div>
                 <div className="header-actions">
                     <button className="button icon-btn" onClick={() => navigate('/rankings')} title="Rankings">
-                        <PixelIcon type="trophy" size={20} />
+                        <PixelIcon type="trophy" size={26} />
                     </button>
                     <button className="button icon-btn logout-btn" onClick={() => { logout(); setTimeout(() => navigate('/'), 0); }} title="Logout">
-                        <PixelIcon type="power" size={20} />
+                        <PixelIcon type="power" size={26} />
                     </button>
                 </div>
             </header>
@@ -163,6 +171,11 @@ const Arena = () => {
                 </div>
 
             </div>
+            <ConnectionModal
+                open={connectionModal.open}
+                message={connectionModal.message}
+                onClose={closeModal}
+            />
         </div>
     );
 };

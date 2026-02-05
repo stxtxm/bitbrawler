@@ -4,7 +4,6 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import { GameProvider } from './context/GameContext'
 import ErrorBoundary from './components/ErrorBoundary'
-import { ConnectionBlockerProvider } from './context/ConnectionBlockerContext'
 import './styles/main.scss'
 
 // Dynamic basename: use repo name for GH Pages, root for local dev
@@ -64,9 +63,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     >
       <ErrorBoundary>
         <GameProvider>
-          <ConnectionBlockerProvider>
-            <App />
-          </ConnectionBlockerProvider>
+          <App />
         </GameProvider>
       </ErrorBoundary>
     </BrowserRouter>

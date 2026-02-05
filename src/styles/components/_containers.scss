@@ -9,6 +9,13 @@
     min-height: calc(100vh - 16px);
     min-height: calc(100dvh - 16px);
 
+    @media (min-width: 769px) {
+        margin: 0 auto;
+        min-height: auto;
+        height: calc(100vh - 30px);
+        height: calc(100dvh - 30px);
+    }
+
     @include mobile {
         width: 94%;
         max-width: none;

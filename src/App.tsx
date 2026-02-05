@@ -46,7 +46,7 @@ function App() {
             activeCharacter ? (
               <Arena />
             ) : (
-              <Navigate to="/login" />
+              (isOnline && firebaseAvailable) ? <Navigate to="/login" /> : <Navigate to="/" />
             )
           }
         />

@@ -6,18 +6,16 @@ import { Character } from '../types/Character'
 import { PixelCharacter } from '../components/PixelCharacter'
 import { useGame } from '../context/GameContext'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
-import { useConnectionBlocker } from '../context/ConnectionBlockerContext'
 
 const Rankings = () => {
     const navigate = useNavigate()
-    const { setCharacter } = useGame()
+    const { setCharacter, firebaseAvailable, retryConnection } = useGame()
     const [characters, setCharacters] = useState<Character[]>([])
     const [loading, setLoading] = useState(true)
     const [showResetModal, setShowResetModal] = useState(false)
     const [resetStatus, setResetStatus] = useState<'confirm' | 'success' | 'error' | null>(null)
     const [loadError, setLoadError] = useState<string | null>(null)
     const isOnline = useOnlineStatus()
-    const { requireConnection } = useConnectionBlocker()
 
     const handleCharacterSelect = (character: Character) => {
         setCharacter(character)
@@ -52,19 +50,21 @@ const Rankings = () => {
         } catch (error) {
             console.error("Error fetching characters:", error)
             setLoadError('Unable to load rankings. Please retry when you are online.')
+            setCharacters([])
         } finally {
             setLoading(false)
         }
     }, [])
 
     useEffect(() => {
-        if (!isOnline) {
+        if (!isOnline || !firebaseAvailable) {
+            setCharacters([])
             setLoading(false)
             return
         }
 
         fetchCharacters()
-    }, [fetchCharacters, isOnline])
+    }, [fetchCharacters, firebaseAvailable, isOnline])
 
     // ALPHA TOOL: Reset Function
     const handleAlphaResetClick = () => {
@@ -75,8 +75,7 @@ const Rankings = () => {
     const confirmReset = async () => {
         setLoading(true);
         try {
-            const ok = await requireConnection()
-            if (!ok) {
+            if (!isOnline || !firebaseAvailable) {
                 setLoading(false)
                 return
             }
@@ -116,17 +115,16 @@ const Rankings = () => {
             </header>
 
             <div className="rankings-content">
-                {!isOnline ? (
+                {!isOnline || !firebaseAvailable ? (
                     <div className="empty-state">
-                        <p>OFFLINE MODE</p>
+                        <p>CONNECTION REQUIRED</p>
                         <p className="sub-text">Connect to load the Hall of Fame.</p>
                         <button
                             className="button retro-btn"
                             onClick={async () => {
-                                const ok = await requireConnection()
-                                if (ok) {
-                                    fetchCharacters()
-                                }
+                                if (!isOnline) return
+                                const ok = await retryConnection()
+                                if (ok) fetchCharacters()
                             }}
                         >
                             RETRY CONNECTION
@@ -143,10 +141,9 @@ const Rankings = () => {
                         <button
                             className="button retro-btn"
                             onClick={async () => {
-                                const ok = await requireConnection()
-                                if (ok) {
-                                    fetchCharacters()
-                                }
+                                if (!isOnline) return
+                                const ok = await retryConnection()
+                                if (ok) fetchCharacters()
                             }}
                         >
                             RETRY CONNECTION
@@ -209,6 +206,7 @@ const Rankings = () => {
                 <button
                     className="button alpha-reset-btn"
                     onClick={handleAlphaResetClick}
+                    disabled={!isOnline || !firebaseAvailable}
                 >
                     [ALPHA] RESET DB
                 </button>

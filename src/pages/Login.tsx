@@ -1,14 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
-import { useConnectionBlocker } from '../context/ConnectionBlockerContext';
+import { useConnectionGate } from '../hooks/useConnectionGate';
+import ConnectionModal from '../components/ConnectionModal';
 
 const Login = () => {
     const [name, setName] = useState('');
     const [error, setError] = useState<string | null>(null);
     const { login, loading } = useGame();
-    const { requireConnection } = useConnectionBlocker();
+    const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const navigate = useNavigate();
+    const connectionMessage = 'Please connect to continue.';
+
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -16,12 +19,16 @@ const Login = () => {
 
         if (!name.trim()) return;
 
-        const canProceed = await requireConnection();
+        const canProceed = await ensureConnection(connectionMessage);
         if (!canProceed) return;
 
         const err = await login(name.trim().toUpperCase());
         if (err) {
-            setError(err);
+            if (err.toLowerCase().includes('connection')) {
+                openModal(connectionMessage);
+            } else {
+                setError(err);
+            }
         } else {
             navigate('/arena');
         }
@@ -66,6 +73,11 @@ const Login = () => {
                     </button>
                 </div>
             </form>
+            <ConnectionModal
+                open={connectionModal.open}
+                message={connectionModal.message}
+                onClose={closeModal}
+            />
         </div>
     );
 };
