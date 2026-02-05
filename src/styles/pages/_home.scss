@@ -189,9 +189,17 @@ main {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    min-height: 0;
+    scrollbar-gutter: stable;
 
     // Custom scrollbar for small mobile to see features if they overflow
     @include small-mobile {
         overflow-y: auto;
     }
+}
+
+body.pwa .home-page main {
+    justify-content: flex-start;
+    overflow-y: auto;
+    padding-bottom: 8px;
 }
