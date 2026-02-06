@@ -8,9 +8,9 @@ beforeAll(() => {
     console.error = (...args: any[]) => {
         // Suppress expected Firebase error messages during tests
         const message = args[0]?.toString() || '';
-        if (message.includes('Firebase error')) {
-            return; // Silently ignore expected Firebase errors
-        }
+    if (message.includes('Firebase error') || message.includes('Firebase retry failed')) {
+      return; // Silently ignore expected Firebase errors
+    }
         originalConsoleError.apply(console, args);
     };
 });

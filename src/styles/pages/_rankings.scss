@@ -1,3 +1,4 @@
+@use 'sass:color';
 @use '../variables' as *;
 
 // Rankings page specific container styles
@@ -55,7 +56,7 @@
         }
 
         &-thumb {
-            background: linear-gradient(180deg, $accent-gold 0%, darken($accent-gold, 20%) 100%);
+            background: linear-gradient(180deg, $accent-gold 0%, color.adjust($accent-gold, $lightness: -20%) 100%);
             border: 2px solid #000;
 
             &:hover {

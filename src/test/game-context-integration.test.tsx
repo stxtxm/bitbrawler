@@ -19,10 +19,12 @@ vi.mock('firebase/firestore', () => ({
   query: vi.fn(),
   where: vi.fn(),
   getDocs: vi.fn(),
+  getDocsFromServer: vi.fn(),
   updateDoc: vi.fn(),
+  limit: vi.fn(),
 }));
 
-import { getDocs, updateDoc } from 'firebase/firestore';
+import { getDocs, getDocsFromServer, updateDoc } from 'firebase/firestore';
 
 // Wrapper component for testing hooks
 const createWrapper = () => {
@@ -69,6 +71,12 @@ describe('GameContext Integration', () => {
 
     // Default mock for server time
     (getDocs as any).mockResolvedValue({
+      docs: [{
+        data: () => ({ timestamp: Date.now() })
+      }]
+    });
+
+    (getDocsFromServer as any).mockResolvedValue({
       docs: [{
         data: () => ({ timestamp: Date.now() })
       }]

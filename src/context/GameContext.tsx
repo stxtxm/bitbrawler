@@ -1,8 +1,9 @@
 import { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
-import { collection, query, where, getDocs, updateDoc, doc, limit } from 'firebase/firestore';
+import { collection, query, where, getDocs, getDocsFromServer, updateDoc, doc, limit } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Character } from '../types/Character';
 import { gainXp, calculateFightXp } from '../utils/xpUtils';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 interface GameContextType {
   activeCharacter: Character | null;
@@ -64,41 +65,47 @@ const shouldResetDaily = (lastReset: number): boolean => {
   return today > lastResetDay;
 };
 
+type SyncResult =
+  | { status: 'ok'; character: Character }
+  | { status: 'missing' }
+  | { status: 'error' };
+
 export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [activeCharacter, setActiveCharacter] = useState<Character | null>(null);
   const [loading, setLoading] = useState(true);
   const [firebaseAvailable, setFirebaseAvailable] = useState(true);
   const [lastXpGain, setLastXpGain] = useState<number | null>(null);
   const [lastLevelUp, setLastLevelUp] = useState<{ levelsGained: number; newLevel: number } | null>(null);
+  const isOnline = useOnlineStatus();
 
   // Firebase error handler
   const handleFirebaseError = useCallback((error: any, context: string) => {
     console.error(`Firebase error (${context}):`, error);
     setFirebaseAvailable(false);
-    clearLocalData();
-    setActiveCharacter(null);
   }, []);
 
   // Sync character with Firestore
-  const syncCharacterWithFirestore = useCallback(async (character: Character): Promise<Character | null> => {
-    if (!character.firestoreId) return null;
+  const syncCharacterWithFirestore = useCallback(async (character: Character): Promise<SyncResult> => {
+    if (!character.firestoreId) return { status: 'missing' };
 
     try {
       const docSnap = await getDocs(query(collection(db, "characters"), where("__name__", "==", character.firestoreId)));
-
       if (docSnap.empty) {
-        handleFirebaseError(new Error('Character not found in Firestore'), 'sync');
-        return null;
+        return { status: 'missing' };
       }
 
       const firestoreData = docSnap.docs[0].data() as Character;
+      setFirebaseAvailable(true);
       return {
-        ...firestoreData,
-        firestoreId: character.firestoreId
+        status: 'ok',
+        character: {
+          ...firestoreData,
+          firestoreId: character.firestoreId
+        }
       };
     } catch (error) {
       handleFirebaseError(error, 'sync');
-      return null;
+      return { status: 'error' };
     }
   }, [handleFirebaseError]);
 
@@ -117,21 +124,32 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      const syncedChar = await syncCharacterWithFirestore(localChar);
-      if (syncedChar) {
-        setActiveCharacter(syncedChar);
-        saveLocalData(syncedChar);
+      if (!isOnline) {
+        setActiveCharacter(localChar);
+        setFirebaseAvailable(false);
+        setLoading(false);
+        return;
+      }
+
+      const syncResult = await syncCharacterWithFirestore(localChar);
+      if (syncResult.status === 'ok') {
+        setActiveCharacter(syncResult.character);
+        saveLocalData(syncResult.character);
+      } else {
+        setActiveCharacter(localChar);
+        setFirebaseAvailable(false);
       }
 
       setLoading(false);
     };
 
     loadCharacter();
-  }, [syncCharacterWithFirestore]);
+  }, [isOnline, syncCharacterWithFirestore]);
 
   // Daily reset check
   useEffect(() => {
     if (!activeCharacter?.firestoreId) return;
+    if (!isOnline || !firebaseAvailable) return;
 
     const checkDailyReset = async () => {
       try {
@@ -160,7 +178,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const interval = setInterval(checkDailyReset, DAILY_RESET_INTERVAL);
 
     return () => clearInterval(interval);
-  }, [activeCharacter, handleFirebaseError]);
+  }, [activeCharacter, firebaseAvailable, handleFirebaseError, isOnline]);
 
   // Login function
   const login = useCallback(async (name: string): Promise<string | null> => {
@@ -209,8 +227,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   const retryConnection = useCallback(async (): Promise<boolean> => {
     try {
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        setFirebaseAvailable(false);
+        return false;
+      }
       const q = query(collection(db, "server_time"), limit(1));
-      await getDocs(q);
+      await getDocsFromServer(q);
       setFirebaseAvailable(true);
       return true;
     } catch (error) {

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { useConnectionGate } from '../hooks/useConnectionGate';
 import ConnectionModal from '../components/ConnectionModal';
+import { prefetchArena } from '../routes/lazyPages';
 
 const Login = () => {
     const [name, setName] = useState('');
@@ -11,6 +12,28 @@ const Login = () => {
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const navigate = useNavigate();
     const connectionMessage = 'Please connect to continue.';
+    const prefetchStarted = useRef(false);
+
+    useEffect(() => {
+        if (prefetchStarted.current) return;
+        const runPrefetch = () => {
+            if (prefetchStarted.current) return;
+            prefetchStarted.current = true;
+            prefetchArena();
+        };
+
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+            const id = (window as Window & { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback?.(runPrefetch);
+            return () => {
+                if (id !== undefined) {
+                    (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(id);
+                }
+            };
+        }
+
+        const timer = window.setTimeout(runPrefetch, 250);
+        return () => window.clearTimeout(timer);
+    }, []);
 
 
     const handleSubmit = async (e: React.FormEvent) => {

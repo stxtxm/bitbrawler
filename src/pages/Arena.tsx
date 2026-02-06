@@ -2,20 +2,24 @@ import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 import { useConnectionGate } from '../hooks/useConnectionGate';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import ConnectionModal from '../components/ConnectionModal';
 import { PixelCharacter } from '../components/PixelCharacter';
 import { PixelIcon } from '../components/PixelIcon';
 import { getXpProgress, formatXpDisplay, getMaxLevel } from '../utils/xpUtils';
 
 const Arena = () => {
-    const { activeCharacter, logout, useFight, lastXpGain, lastLevelUp, clearXpNotifications } = useGame();
+    const { activeCharacter, logout, useFight, lastXpGain, lastLevelUp, clearXpNotifications, firebaseAvailable, retryConnection } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const navigate = useNavigate();
+    const isOnline = useOnlineStatus();
     const connectionMessage = 'Connect to battle and sync your progress.';
 
     const [showXpGain, setShowXpGain] = useState(false);
     const [showLevelUp, setShowLevelUp] = useState(false);
     const [xpBarAnimating, setXpBarAnimating] = useState(false);
+    const [retrying, setRetrying] = useState(false);
+    const [retryFailed, setRetryFailed] = useState(false);
 
     // Handle XP gain notification
     useEffect(() => {
@@ -54,6 +58,20 @@ const Arena = () => {
 
     const xpProgress = getXpProgress(activeCharacter);
     const isMaxLevel = activeCharacter.level >= getMaxLevel();
+    const isOfflineMode = !isOnline || !firebaseAvailable;
+    const fightsLeft = activeCharacter.fightsLeft || 0;
+    const canFight = !isOfflineMode && fightsLeft > 0;
+    const handleRetry = async () => {
+        if (!isOnline || retrying) return;
+        setRetrying(true);
+        setRetryFailed(false);
+        const ok = await retryConnection();
+        setRetrying(false);
+        if (!ok) {
+            setRetryFailed(true);
+            setTimeout(() => setRetryFailed(false), 2000);
+        }
+    };
     const handleFight = async () => {
         const canProceed = await ensureConnection(connectionMessage);
         if (!canProceed) return;
@@ -101,6 +119,28 @@ const Arena = () => {
                 </div>
             </header>
 
+
+            {isOfflineMode && (
+                <div className="offline-banner" role="status" aria-live="polite">
+                    <div className="offline-row">
+                        <div className="offline-title">OFFLINE MODE</div>
+                        <div className="offline-actions">
+                            <button
+                                className="offline-retry-btn"
+                                onClick={handleRetry}
+                                disabled={!isOnline || retrying}
+                                title="Retry connection"
+                                aria-label="Retry connection"
+                            >
+                                <PixelIcon type="updates" size={14} />
+                                <span className="offline-retry-label">RETRY</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div className="offline-sub">Stats are the last synced snapshot. Connect to fight and sync.</div>
+                    {retryFailed && <div className="offline-retry-text">RETRY FAILED</div>}
+                </div>
+            )}
 
             <div className="arena-content">
                 <div className="character-display">
@@ -151,22 +191,24 @@ const Arena = () => {
                             <PixelIcon type="sword" size={32} />
                             <div className="label-text">
                                 <span className="label-main">BATTLE ENERGY</span>
-                                <span className="label-sub">{activeCharacter.fightsLeft || 0} / 5 AVAILABLE</span>
+                                <span className="label-sub">
+                                    {isOfflineMode ? 'OFFLINE SNAPSHOT' : `${fightsLeft} / 5 AVAILABLE`}
+                                </span>
                             </div>
                         </div>
                         <div className="mini-pips">
                             {Array.from({ length: 5 }).map((_, i) => (
-                                <div key={i} className={`mini-pip ${i < (activeCharacter.fightsLeft || 0) ? 'active' : 'used'}`}></div>
+                                <div key={i} className={`mini-pip ${i < fightsLeft ? 'active' : 'used'}`}></div>
                             ))}
                         </div>
                     </div>
 
                     <button
                         className="button primary-btn giant-btn"
-                        disabled={(activeCharacter.fightsLeft || 0) <= 0}
+                        disabled={!canFight}
                         onClick={handleFight}
                     >
-                        {(activeCharacter.fightsLeft || 0) > 0 ? 'FIGHT!' : 'REST NOW'}
+                        {isOfflineMode ? 'OFFLINE' : (fightsLeft > 0 ? 'FIGHT!' : 'REST NOW')}
                     </button>
                 </div>
 

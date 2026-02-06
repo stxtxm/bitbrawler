@@ -8,7 +8,8 @@ Offline behavior
 - Home page is accessible offline.
 - Rankings show "Connection required" when offline or Firebase is unavailable.
 - Login, New Game, and Arena actions use `useConnectionGate` to block actions and show `ConnectionModal`.
-- Local storage is cleared if Firebase becomes unavailable to avoid stale data.
+- Arena is accessible offline in read-only mode using the last synced snapshot; fights are disabled and a warning banner is shown.
+- Local storage is kept on Firebase/network errors to allow offline snapshots; it's cleared only on logout, corrupted data, or missing server record.
 - `/arena` redirects to `/` when there is no active character and offline/unavailable.
 
 UI tuning

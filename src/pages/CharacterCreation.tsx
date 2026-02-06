@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PixelCharacter } from '../components/PixelCharacter'
 import { Character } from '../types/Character'
@@ -8,6 +8,7 @@ import { useGame } from '../context/GameContext'
 import { useConnectionGate } from '../hooks/useConnectionGate'
 import ConnectionModal from '../components/ConnectionModal'
 import { generateInitialStats } from '../utils/characterUtils'
+import { prefetchArena } from '../routes/lazyPages'
 
 const CharacterCreation = () => {
   const navigate = useNavigate()
@@ -22,6 +23,7 @@ const CharacterCreation = () => {
   const [showErrorModal, setShowErrorModal] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const connectionMessage = 'Connect to create and sync your fighter.'
+  const prefetchStarted = useRef(false)
 
   const generateRandomCharacter = (currentGender: 'male' | 'female' = gender) => {
     setIsGenerating(true)
@@ -42,6 +44,27 @@ const CharacterCreation = () => {
   useEffect(() => {
     generateRandomCharacter();
   }, []);
+
+  useEffect(() => {
+    if (prefetchStarted.current) return
+    const runPrefetch = () => {
+      if (prefetchStarted.current) return
+      prefetchStarted.current = true
+      prefetchArena()
+    }
+
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      const id = (window as Window & { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback?.(runPrefetch)
+      return () => {
+        if (id !== undefined) {
+          (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(id)
+        }
+      }
+    }
+
+    const timer = window.setTimeout(runPrefetch, 250)
+    return () => window.clearTimeout(timer)
+  }, [])
 
 
   const handleCreateCharacter = async () => {

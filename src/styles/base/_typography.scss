@@ -1,5 +1,6 @@
+@use 'sass:meta';
 @use '../variables' as *;
-@import "@fontsource/press-start-2p";
+@include meta.load-css("@fontsource/press-start-2p");
 
 :root {
     font-family: $font-pixel;

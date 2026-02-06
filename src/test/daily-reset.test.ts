@@ -16,7 +16,9 @@ vi.mock('firebase/firestore', () => ({
   query: vi.fn(),
   where: vi.fn(),
   getDocs: vi.fn(),
+  getDocsFromServer: vi.fn(),
   updateDoc: vi.fn(),
+  limit: vi.fn(),
 }));
 
 // Mock GameContext
