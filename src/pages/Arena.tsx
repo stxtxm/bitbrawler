@@ -20,6 +20,7 @@ const Arena = () => {
     const [xpBarAnimating, setXpBarAnimating] = useState(false);
     const [retrying, setRetrying] = useState(false);
     const [retryFailed, setRetryFailed] = useState(false);
+    const [inventoryOpen, setInventoryOpen] = useState(false);
 
     // Handle XP gain notification
     useEffect(() => {
@@ -110,8 +111,13 @@ const Arena = () => {
                     <div className="arena-lvl-badge">LVL {activeCharacter.level}</div>
                 </div>
                 <div className="header-actions">
-                    <button className="button icon-btn" onClick={() => navigate('/rankings')} title="Rankings">
-                        <PixelIcon type="trophy" size={26} />
+                    <button
+                        className="button icon-btn inventory-btn"
+                        onClick={() => setInventoryOpen(true)}
+                        title="Inventory"
+                        aria-label="Inventory"
+                    >
+                        <PixelIcon type="backpack" size={26} />
                     </button>
                     <button className="button icon-btn" onClick={() => { logout(); setTimeout(() => navigate('/'), 0); }} title="Logout">
                         <PixelIcon type="power" size={26} />
@@ -218,6 +224,24 @@ const Arena = () => {
                 message={connectionModal.message}
                 onClose={closeModal}
             />
+            {inventoryOpen && (
+                <div className="retro-modal-overlay inventory-overlay" onClick={() => setInventoryOpen(false)}>
+                    <div className="retro-modal inventory-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="inventory-header">
+                            <h2 className="inventory-title">INVENTORY</h2>
+                            <button className="inventory-close" onClick={() => setInventoryOpen(false)} aria-label="Close inventory">
+                                ×
+                            </button>
+                        </div>
+                        <div className="inventory-grid">
+                            {Array.from({ length: 24 }).map((_, index) => (
+                                <div key={index} className="inventory-slot" aria-hidden="true" />
+                            ))}
+                        </div>
+                        <div className="inventory-footer">EMPTY SLOTS</div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -3,6 +3,7 @@ import { collection, query, where, getDocs, getDocsFromServer, updateDoc, doc, l
 import { db } from '../config/firebase';
 import { Character } from '../types/Character';
 import { gainXp, calculateFightXp } from '../utils/xpUtils';
+import { shouldResetDaily } from '../utils/dailyReset';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 interface GameContextType {
@@ -54,15 +55,6 @@ const getServerTime = async (): Promise<number> => {
   } catch {
     return Date.now();
   }
-};
-
-const shouldResetDaily = (lastReset: number): boolean => {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const lastResetDate = new Date(lastReset);
-  const lastResetDay = new Date(lastResetDate.getFullYear(), lastResetDate.getMonth(), lastResetDate.getDate());
-
-  return today > lastResetDay;
 };
 
 type SyncResult =

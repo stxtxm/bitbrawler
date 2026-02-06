@@ -3,16 +3,19 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useGame } from './context/GameContext'
 import { useOnlineStatus } from './hooks/useOnlineStatus'
 import { HomePage, CharacterCreation, Rankings, Login, Arena } from './routes/lazyPages'
+import { shouldResetDaily } from './utils/dailyReset'
+import LoadingScreen from './components/LoadingScreen'
 
 function App() {
   const { activeCharacter, loading, firebaseAvailable } = useGame()
   const isOnline = useOnlineStatus()
 
   // Show nothing while checking persistence
-  if (loading) {
-    return <div className="App" style={{ textAlign: 'center', padding: '40px' }}>
-      <p style={{ color: '#fff', fontFamily: 'Press Start 2P' }}>LOADING...</p>
-    </div>
+  const resetDue =
+    !!activeCharacter && isOnline && firebaseAvailable && shouldResetDaily(activeCharacter.lastFightReset)
+
+  if (loading || resetDue) {
+    return <LoadingScreen />
   }
 
   const canAutoRedirect = !!activeCharacter
@@ -20,9 +23,7 @@ function App() {
   return (
     <div className="App">
       <Suspense fallback={
-        <div className="App" style={{ textAlign: 'center', padding: '40px' }}>
-          <p style={{ color: '#fff', fontFamily: 'Press Start 2P' }}>LOADING...</p>
-        </div>
+        <LoadingScreen />
       }>
         <Routes>
           <Route
