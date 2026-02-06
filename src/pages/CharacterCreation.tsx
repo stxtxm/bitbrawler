@@ -53,17 +53,22 @@ const CharacterCreation = () => {
       prefetchArena()
     }
 
-    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      const id = (window as Window & { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback?.(runPrefetch)
+    const win = globalThis as typeof globalThis & {
+      requestIdleCallback?: (cb: () => void) => number
+      cancelIdleCallback?: (id: number) => void
+    }
+
+    if (typeof win.requestIdleCallback === 'function') {
+      const id = win.requestIdleCallback(runPrefetch)
       return () => {
         if (id !== undefined) {
-          (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(id)
+          win.cancelIdleCallback?.(id)
         }
       }
     }
 
-    const timer = window.setTimeout(runPrefetch, 250)
-    return () => window.clearTimeout(timer)
+    const timer = setTimeout(runPrefetch, 250)
+    return () => clearTimeout(timer)
   }, [])
 
 
