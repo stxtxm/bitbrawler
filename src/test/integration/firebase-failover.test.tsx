@@ -145,7 +145,7 @@ describe('Firebase Unavailability Handling', () => {
     });
 
     await act(async () => {
-      await expect(result.current.useFight(true, 50)).rejects.toThrow('Connection error - fight not counted');
+      await expect(result.current.useFight(true, 50, 'FOE')).rejects.toThrow('Connection error - fight not counted');
     });
 
     expect(result.current.firebaseAvailable).toBe(false);
@@ -238,7 +238,7 @@ describe('Firebase Unavailability Handling', () => {
     expect(loginResult).toBe('Connection error - please check your internet connection and try again');
 
     await act(async () => {
-      await expect(result.current.useFight(true, 50)).rejects.toThrow('Connection error - fight not counted');
+      await expect(result.current.useFight(true, 50, 'FOE')).rejects.toThrow('Connection error - fight not counted');
     });
   });
 
