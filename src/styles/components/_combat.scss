@@ -22,6 +22,9 @@
     padding: 2rem;
     max-width: 90vw;
     width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     border-radius: 8px;
     position: relative;
     animation: slideUp 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
@@ -110,6 +113,77 @@
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+}
+
+.combat-health {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.health-card {
+    background: rgba(0, 0, 0, 0.35);
+    border: 2px solid #ffd700;
+    border-radius: 6px;
+    padding: 0.6rem 0.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.health-card.right {
+    border-color: #4ecdc4;
+}
+
+.health-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.health-name {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.6rem;
+    color: #fff;
+    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+}
+
+.health-level {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.55rem;
+    color: #ffd700;
+}
+
+.health-bar {
+    height: 12px;
+    border: 2px solid #111;
+    background: #1b1b1b;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.7);
+}
+
+.health-bar-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #2ecc71 0%, #27ae60 100%);
+    transition: width 0.35s ease;
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.6);
+    transform-origin: left center;
+}
+
+.health-bar-fill.low {
+    background: linear-gradient(90deg, #ff6b6b 0%, #ee5a6f 100%);
+    box-shadow: 0 0 12px rgba(255, 107, 107, 0.7);
+    animation: healthPulse 0.8s ease-in-out infinite;
+}
+
+.health-values {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.5rem;
+    color: #c9f7ff;
+    text-align: right;
 }
 
 .combat-fighters {
@@ -375,6 +449,18 @@
     }
 }
 
+@keyframes healthPulse {
+    0%,
+    100% {
+        transform: scaleX(1);
+        filter: brightness(1);
+    }
+    50% {
+        transform: scaleX(1.02);
+        filter: brightness(1.2);
+    }
+}
+
 /* Mobile responsive */
 @media (max-width: 768px) {
     .combat-modal {
@@ -408,6 +494,23 @@
         max-height: 200px;
     }
 
+    .combat-health {
+        grid-template-columns: 1fr;
+    }
+
+    .health-meta {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .health-name {
+        font-size: 0.55rem;
+    }
+
+    .health-values {
+        font-size: 0.45rem;
+    }
+
     .result-badge {
         font-size: 1.2rem;
         padding: 0.8rem 1.5rem;
@@ -424,6 +527,25 @@
     .result-btn {
         font-size: 0.8rem !important;
         padding: 0.8rem 1.5rem !important;
+    }
+}
+
+@media (max-width: 520px) {
+    .combat-action {
+        gap: 1rem;
+    }
+
+    .combat-fighters {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .fighter-name-small {
+        font-size: 0.6rem;
+    }
+
+    .combat-log {
+        max-height: 160px;
     }
 }
 

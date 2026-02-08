@@ -9,6 +9,11 @@ export interface CombatStats {
   magicPower: number;
 }
 
+export interface CombatSnapshot {
+  attackerHp: number;
+  defenderHp: number;
+}
+
 export function calculateCombatStats(character: Character): CombatStats {
   // Balanced calculation based on 5-stat system
   // STR -> Offense
@@ -54,115 +59,137 @@ export function simulateCombat(attacker: Character, defender: Character): {
   winner: 'attacker' | 'defender' | 'draw';
   rounds: number;
   details: string[];
+  timeline: CombatSnapshot[];
 } {
   const intruder = calculateCombatStats(attacker)
   const target = calculateCombatStats(defender)
 
   const details: string[] = []
+  const timeline: CombatSnapshot[] = []
   let attackerHp = attacker.hp
   let defenderHp = defender.hp
   let rounds = 0
 
-  details.push(`${attacker.name} vs ${defender.name}`)
+  const clampHp = (hp: number) => Math.max(0, Math.round(hp))
+  const record = (detail: string) => {
+    details.push(detail)
+    timeline.push({
+      attackerHp: clampHp(attackerHp),
+      defenderHp: clampHp(defenderHp)
+    })
+  }
+
+  record(`${attacker.name} vs ${defender.name}`)
+
+  const resolveAttack = (
+    actor: Character,
+    targetChar: Character,
+    actorStats: CombatStats,
+    targetStats: CombatStats,
+    actorHp: number,
+    targetHp: number,
+    round: number,
+    isCounter: boolean
+  ) => {
+    const actorComeback = actorHp < (actor.hp * 0.35) ? 1.1 : 1.0
+
+    // Hit chance formula (65-92% range)
+    const baseHitChance = 76 + (actor.dexterity - targetChar.dexterity) * 1.2
+    const finalHitChance = Math.max(65, Math.min(92, baseHitChance + (actorComeback > 1 ? 4 : 0)))
+
+    if (Math.random() * 100 < finalHitChance) {
+      let damageMultiplier = 1
+      let msg = ""
+
+      if (Math.random() * 100 < actorStats.critChance) {
+        damageMultiplier = 1.5
+        msg = " CRIT!"
+      }
+
+      const isMagic = Math.random() * 100 < (actor.intelligence * 1.2)
+      const magicSurge = isMagic ? Math.round(actorStats.magicPower * 0.5) : 0
+      const varianceFactor = 0.85 + Math.random() * 0.3
+      const baseDamage = (actorStats.offense * 1.1 * damageMultiplier) - (targetStats.defense * 0.6)
+      const damage = Math.max(4, Math.round((baseDamage + magicSurge) * varianceFactor * actorComeback))
+      targetHp -= damage
+
+      if (isMagic) {
+        const magicVerb = isCounter ? "counters with MAGIC SURGE!" : "uses MAGIC SURGE!"
+        return {
+          actorHp,
+          targetHp,
+          detail: `Round ${round}: ${actor.name} ${magicVerb} ${damage} DMG${actorComeback > 1 ? " 🔥" : ""}`
+        }
+      }
+
+      const actionVerb = isCounter ? "counter" : "hit"
+      return {
+        actorHp,
+        targetHp,
+        detail: `Round ${round}: ${actor.name} ${actionVerb}${msg} ${damage} DMG${actorComeback > 1 ? " 🔥" : ""}`
+      }
+    }
+
+    const missVerb = isCounter ? "missed counter!" : "missed!"
+    return {
+      actorHp,
+      targetHp,
+      detail: `Round ${round}: ${actor.name} ${missVerb}`
+    }
+  }
 
   while (attackerHp > 0 && defenderHp > 0 && rounds < 50) {
     rounds++
 
-    // Comeback Spirit: Slight boost when HP is low (< 40%)
-    const attackerComeback = attackerHp < (attacker.hp * 0.4) ? 1.15 : 1.0;
-    const defenderComeback = defenderHp < (defender.hp * 0.4) ? 1.15 : 1.0;
+    const initiativeChance = 0.5 + ((intruder.speed - target.speed) * 0.005)
+    const attackerFirst = Math.random() < Math.max(0.35, Math.min(0.65, initiativeChance))
 
-    // Attacker turn
-    // Hit chance formula (70-95% range)
-    const attackerHitChance = 80 + (attacker.dexterity - defender.dexterity) * 1.5;
-    const finalAttackerHitChance = Math.max(70, Math.min(95, attackerHitChance + (attackerComeback > 1 ? 5 : 0)));
+    if (attackerFirst) {
+      const attackerStrike = resolveAttack(attacker, defender, intruder, target, attackerHp, defenderHp, rounds, false)
+      attackerHp = attackerStrike.actorHp
+      defenderHp = attackerStrike.targetHp
+      record(attackerStrike.detail)
 
-    if (Math.random() * 100 < finalAttackerHitChance) {
-      let damageMultiplier = 1;
-      let msg = "";
+      if (defenderHp <= 0) break
 
-      // Luck Crit
-      if (Math.random() * 100 < intruder.critChance) {
-        damageMultiplier = 1.6; // Increased from 1.5 to 1.6
-        msg = " CRIT!";
-      }
-
-      // Intelligence Surge (Magic Damage)
-      if (Math.random() * 100 < (attacker.intelligence * 1.5)) {
-        const magicSurge = Math.round(intruder.magicPower * 0.6);
-        // Increased damage variance to ±20% for more suspense
-        const varianceFactor = 0.8 + Math.random() * 0.4;
-        const baseDamage = (intruder.offense * 1.2 * damageMultiplier) - (target.defense * 0.5);
-        const damage = Math.max(5, Math.round((baseDamage + magicSurge) * varianceFactor * attackerComeback));
-        defenderHp -= damage;
-        details.push(`Round ${rounds}: ${attacker.name} uses MAGIC SURGE! ${damage} DMG${attackerComeback > 1 ? " 🔥" : ""}`);
-      } else {
-        // Increased damage variance to ±20%
-        const varianceFactor = 0.8 + Math.random() * 0.4;
-        const baseDamage = (intruder.offense * 1.2 * damageMultiplier) - (target.defense * 0.5);
-        const damage = Math.max(5, Math.round(baseDamage * varianceFactor * attackerComeback));
-        defenderHp -= damage;
-        details.push(`Round ${rounds}: ${attacker.name} hit${msg} ${damage} DMG${attackerComeback > 1 ? " 🔥" : ""}`);
-      }
+      const defenderStrike = resolveAttack(defender, attacker, target, intruder, defenderHp, attackerHp, rounds, true)
+      defenderHp = defenderStrike.actorHp
+      attackerHp = defenderStrike.targetHp
+      record(defenderStrike.detail)
     } else {
-      details.push(`Round ${rounds}: ${attacker.name} missed!`);
-    }
+      const defenderStrike = resolveAttack(defender, attacker, target, intruder, defenderHp, attackerHp, rounds, false)
+      defenderHp = defenderStrike.actorHp
+      attackerHp = defenderStrike.targetHp
+      record(defenderStrike.detail)
 
-    if (defenderHp <= 0) break;
+      if (attackerHp <= 0) break
 
-    // Defender turn
-    const defenderHitChance = 80 + (defender.dexterity - attacker.dexterity) * 1.5;
-    const finalDefenderHitChance = Math.max(70, Math.min(95, defenderHitChance + (defenderComeback > 1 ? 5 : 0)));
-
-    if (Math.random() * 100 < finalDefenderHitChance) {
-      let damageMultiplier = 1;
-      let msg = "";
-
-      if (Math.random() * 100 < target.critChance) {
-        damageMultiplier = 1.6;
-        msg = " CRIT!";
-      }
-
-      // Defender Magic Surge
-      if (Math.random() * 100 < (defender.intelligence * 1.5)) {
-        const magicSurge = Math.round(target.magicPower * 0.6);
-        // Increased damage variance to ±20%
-        const varianceFactor = 0.8 + Math.random() * 0.4;
-        const baseDamage = (target.offense * 1.2 * damageMultiplier) - (intruder.defense * 0.5);
-        const counterDamage = Math.max(5, Math.round((baseDamage + magicSurge) * varianceFactor * defenderComeback));
-        attackerHp -= counterDamage;
-        details.push(`Round ${rounds}: ${defender.name} counters with MAGIC SURGE! ${counterDamage} DMG${defenderComeback > 1 ? " 🔥" : ""}`);
-      } else {
-        // Increased damage variance to ±20%
-        const varianceFactor = 0.8 + Math.random() * 0.4;
-        const baseDamage = (target.offense * 1.2 * damageMultiplier) - (intruder.defense * 0.5);
-        const counterDamage = Math.max(5, Math.round(baseDamage * varianceFactor * defenderComeback));
-        attackerHp -= counterDamage;
-        details.push(`Round ${rounds}: ${defender.name} counter${msg} ${counterDamage} DMG${defenderComeback > 1 ? " 🔥" : ""}`);
-      }
-    } else {
-      details.push(`Round ${rounds}: ${defender.name} missed counter!`);
+      const attackerStrike = resolveAttack(attacker, defender, intruder, target, attackerHp, defenderHp, rounds, true)
+      attackerHp = attackerStrike.actorHp
+      defenderHp = attackerStrike.targetHp
+      record(attackerStrike.detail)
     }
   }
 
   let winner: 'attacker' | 'defender' | 'draw'
   if (attackerHp <= 0 && defenderHp <= 0) {
     winner = 'draw'
-    details.push("Match nul !")
+    record("Match nul !")
   } else if (attackerHp <= 0) {
     winner = 'defender'
-    details.push(`${defender.name} gagne !`)
+    record(`${defender.name} gagne !`)
   } else if (defenderHp <= 0) {
     winner = 'attacker'
-    details.push(`${attacker.name} gagne !`)
+    record(`${attacker.name} gagne !`)
   } else {
     winner = 'draw'
-    details.push("Limite de rounds atteinte !")
+    record("Limite de rounds atteinte !")
   }
 
   return {
     winner,
     rounds,
-    details
+    details,
+    timeline
   }
 }

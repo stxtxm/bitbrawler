@@ -62,6 +62,9 @@ describe('Combat System', () => {
         expect(result.winner).toBeDefined();
         expect(result.rounds).toBeGreaterThan(0);
         expect(result.details.length).toBeGreaterThan(0);
+        expect(result.timeline.length).toBe(result.details.length);
+        expect(result.timeline[0].attackerHp).toBe(attacker.hp);
+        expect(result.timeline[0].defenderHp).toBe(defender.hp);
         expect(result.details[0]).toContain('Attacker vs Defender');
     });
 });

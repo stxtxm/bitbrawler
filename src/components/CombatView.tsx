@@ -18,6 +18,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose }:
         winner: 'attacker' | 'defender' | 'draw';
         rounds: number;
         details: string[];
+        timeline: { attackerHp: number; defenderHp: number }[];
     } | null>(null);
     const [currentRound, setCurrentRound] = useState(0);
 
@@ -68,6 +69,26 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose }:
     const won = combatResult?.winner === 'attacker';
     const draw = combatResult?.winner === 'draw';
 
+    const playerMaxHp = player.maxHp || player.hp;
+    const opponentMaxHp = opponent.maxHp || opponent.hp;
+
+    const getSnapshot = () => {
+        if (!combatResult?.timeline?.length) {
+            return { attackerHp: player.hp, defenderHp: opponent.hp };
+        }
+        if (phase === 'result') {
+            return combatResult.timeline[combatResult.timeline.length - 1];
+        }
+        const index = Math.min(currentRound, combatResult.timeline.length - 1);
+        return combatResult.timeline[index];
+    };
+
+    const snapshot = getSnapshot();
+    const playerHp = Math.max(0, Math.min(playerMaxHp, snapshot.attackerHp));
+    const opponentHp = Math.max(0, Math.min(opponentMaxHp, snapshot.defenderHp));
+    const playerHpPercent = Math.max(0, Math.min(100, (playerHp / playerMaxHp) * 100));
+    const opponentHpPercent = Math.max(0, Math.min(100, (opponentHp / opponentMaxHp) * 100));
+
     return (
         <div className="combat-overlay" onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()}>
             <div className="combat-modal">
@@ -95,6 +116,34 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose }:
                 {/* Combat Phase */}
                 {phase === 'combat' && combatResult && (
                     <div className="combat-action">
+                        <div className="combat-health">
+                            <div className="health-card left">
+                                <div className="health-meta">
+                                    <span className="health-name">{player.name}</span>
+                                    <span className="health-level">LVL {player.level}</span>
+                                </div>
+                                <div className="health-bar">
+                                    <div
+                                        className={`health-bar-fill ${playerHpPercent <= 25 ? 'low' : ''}`}
+                                        style={{ width: `${playerHpPercent}%` }}
+                                    />
+                                </div>
+                                <div className="health-values">{playerHp} / {playerMaxHp}</div>
+                            </div>
+                            <div className="health-card right">
+                                <div className="health-meta">
+                                    <span className="health-name">{opponent.name}</span>
+                                    <span className="health-level">LVL {opponent.level}</span>
+                                </div>
+                                <div className="health-bar">
+                                    <div
+                                        className={`health-bar-fill ${opponentHpPercent <= 25 ? 'low' : ''}`}
+                                        style={{ width: `${opponentHpPercent}%` }}
+                                    />
+                                </div>
+                                <div className="health-values">{opponentHp} / {opponentMaxHp}</div>
+                            </div>
+                        </div>
                         <div className="combat-fighters">
                             <div className="fighter-side left">
                                 <PixelCharacter seed={player.seed} gender={player.gender} scale={6} />
