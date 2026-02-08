@@ -245,7 +245,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
     const updatedChar = {
       ...xpResult.updatedCharacter,
-      fightsLeft: Math.max(0, (activeCharacter.fightsLeft || 0) - 1)
+      fightsLeft: Math.max(0, (activeCharacter.fightsLeft || 0) - 1),
+      wins: won ? (activeCharacter.wins || 0) + 1 : (activeCharacter.wins || 0),
+      losses: won ? (activeCharacter.losses || 0) : (activeCharacter.losses || 0) + 1
     };
 
     try {

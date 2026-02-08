@@ -181,7 +181,7 @@ describe('GameContext Integration', () => {
     const initialFights = result.current.activeCharacter?.fightsLeft || 0;
 
     await act(async () => {
-      await result.current.useFight();
+      await result.current.useFight(true, 50);
     });
 
     expect(result.current.activeCharacter?.fightsLeft).toBe(initialFights - 1);
@@ -277,7 +277,7 @@ describe('GameContext Integration', () => {
     });
 
     await act(async () => {
-      await result.current.useFight();
+      await result.current.useFight(true, 50);
     });
 
     // Should have XP gain notification
@@ -303,7 +303,7 @@ describe('GameContext Integration', () => {
     });
 
     await act(async () => {
-      await result.current.useFight();
+      await result.current.useFight(true, 50);
     });
 
     expect(result.current.lastXpGain).not.toBeNull();

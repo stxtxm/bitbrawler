@@ -11,7 +11,6 @@ import { Character } from '../types/Character';
  * - Total points remain constant across all characters
  */
 export const generateInitialStats = (name: string, gender: 'male' | 'female'): Character => {
-    const TOTAL_POINTS = 50;
     const BASE_PER_STAT = 10;
     const MAX_VARIANCE = 3;
 

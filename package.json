@@ -32,7 +32,7 @@
     "eslint": "^9.39.2",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.0",
-    "firebase-admin": "^13.6.1",
+    "firebase-admin": "11.11.1",
     "jsdom": "^24.0.0",
     "sass-embedded": "^1.97.3",
     "ts-node": "^10.9.2",
