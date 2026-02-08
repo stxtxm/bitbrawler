@@ -3,8 +3,6 @@ import { collection, query, where, getDocs, getDocsFromServer, updateDoc, doc, l
 import { db } from '../config/firebase';
 import { Character } from '../types/Character';
 import { gainXp } from '../utils/xpUtils';
-import { GAME_RULES } from '../config/gameRules';
-import { shouldResetDaily } from '../utils/dailyReset';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { findOpponent, MatchmakingResult } from '../utils/matchmakingUtils';
 
@@ -27,7 +25,6 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 
 // Constants
 const LOCAL_STORAGE_KEY = 'bitbrawler_active_char';
-const DAILY_RESET_INTERVAL = 60000; // 1 minute
 
 // Helper functions
 const clearLocalData = () => {
@@ -47,15 +44,6 @@ const loadLocalData = (): Character | null => {
   } catch {
     clearLocalData();
     return null;
-  }
-};
-
-const getServerTime = async (): Promise<number> => {
-  try {
-    const serverTimeSnapshot = await getDocs(collection(db, "server_time"));
-    return serverTimeSnapshot.docs[0]?.data()?.timestamp || Date.now();
-  } catch {
-    return Date.now();
   }
 };
 
@@ -146,39 +134,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     loadCharacter();
   }, [isOnline, syncCharacterWithFirestore]);
 
-  // Daily reset check
-  useEffect(() => {
-    if (!activeCharacter?.firestoreId) return;
-    if (!isOnline || !firebaseAvailable) return;
-
-    const checkDailyReset = async () => {
-      try {
-        if (!shouldResetDaily(activeCharacter.lastFightReset)) return;
-
-        const serverTime = await getServerTime();
-        const updatedChar = {
-          ...activeCharacter,
-          fightsLeft: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
-          lastFightReset: serverTime
-        };
-
-        await updateDoc(doc(db, "characters", activeCharacter.firestoreId!), {
-          fightsLeft: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
-          lastFightReset: serverTime
-        });
-
-        setActiveCharacter(updatedChar);
-        saveLocalData(updatedChar);
-      } catch (error) {
-        handleFirebaseError(error, 'daily-reset');
-      }
-    };
-
-    checkDailyReset();
-    const interval = setInterval(checkDailyReset, DAILY_RESET_INTERVAL);
-
-    return () => clearInterval(interval);
-  }, [activeCharacter, firebaseAvailable, handleFirebaseError, isOnline]);
+  // Characters are now reset centrally via GitHub Actions every 24h.
+  // The frontend syncs the state on mount/login.
 
   // Login function
   const login = useCallback(async (name: string): Promise<string | null> => {

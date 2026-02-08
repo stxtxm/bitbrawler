@@ -9,7 +9,8 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "test": "vitest",
-    "bots:run": "tsx scripts/bot-engine.ts"
+    "bots:run": "tsx scripts/bot-engine.ts",
+    "daily-reset:run": "tsx scripts/daily-reset-engine.ts"
   },
   "dependencies": {
     "@fontsource/press-start-2p": "^5.2.7",

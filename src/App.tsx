@@ -3,18 +3,13 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useGame } from './context/GameContext'
 import { useOnlineStatus } from './hooks/useOnlineStatus'
 import { HomePage, CharacterCreation, Rankings, Login, Arena } from './routes/lazyPages'
-import { shouldResetDaily } from './utils/dailyReset'
 import LoadingScreen from './components/LoadingScreen'
 
 function App() {
   const { activeCharacter, loading, firebaseAvailable } = useGame()
   const isOnline = useOnlineStatus()
 
-  // Show nothing while checking persistence
-  const resetDue =
-    !!activeCharacter && isOnline && firebaseAvailable && shouldResetDaily(activeCharacter.lastFightReset)
-
-  if (loading || resetDue) {
+  if (loading) {
     return <LoadingScreen />
   }
 
