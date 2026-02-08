@@ -97,7 +97,6 @@ export function simulateCombat(attacker: Character, defender: Character): {
 
   const resolveAttack = (
     actor: Character,
-    targetChar: Character,
     actorStats: CombatStats,
     targetStats: CombatStats,
     actorHp: number,
@@ -161,26 +160,26 @@ export function simulateCombat(attacker: Character, defender: Character): {
     const attackerFirst = Math.random() < Math.max(0.4, Math.min(0.6, initiativeChance))
 
     if (attackerFirst) {
-      const attackerStrike = resolveAttack(attacker, defender, intruder, target, attackerHp, defenderHp, rounds, false)
+      const attackerStrike = resolveAttack(attacker, intruder, target, attackerHp, defenderHp, rounds, false)
       attackerHp = attackerStrike.actorHp
       defenderHp = attackerStrike.targetHp
       record(attackerStrike.detail)
 
       if (defenderHp <= 0) break
 
-      const defenderStrike = resolveAttack(defender, attacker, target, intruder, defenderHp, attackerHp, rounds, true)
+      const defenderStrike = resolveAttack(defender, target, intruder, defenderHp, attackerHp, rounds, true)
       defenderHp = defenderStrike.actorHp
       attackerHp = defenderStrike.targetHp
       record(defenderStrike.detail)
     } else {
-      const defenderStrike = resolveAttack(defender, attacker, target, intruder, defenderHp, attackerHp, rounds, false)
+      const defenderStrike = resolveAttack(defender, target, intruder, defenderHp, attackerHp, rounds, false)
       defenderHp = defenderStrike.actorHp
       attackerHp = defenderStrike.targetHp
       record(defenderStrike.detail)
 
       if (attackerHp <= 0) break
 
-      const attackerStrike = resolveAttack(attacker, defender, intruder, target, attackerHp, defenderHp, rounds, true)
+      const attackerStrike = resolveAttack(attacker, intruder, target, attackerHp, defenderHp, rounds, true)
       attackerHp = attackerStrike.actorHp
       defenderHp = attackerStrike.targetHp
       record(attackerStrike.detail)
