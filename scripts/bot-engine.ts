@@ -125,61 +125,85 @@ async function simulateBotDailyLife() {
         };
     });
 
-    // Decide activity based on configured rate (or 50% for high activity)
-    // Use a bit of randomness to vary load
-    const activeBots = bots.filter(() => Math.random() > 0.5);
+    // Decide activity: Increase activity to ensure at least 2 bots move if available
+    const shuffle = (array: any[]) => [...array].sort(() => Math.random() - 0.5);
+    const shuffledBots = shuffle(bots);
+
+    // Pick at least 2 active bots (or all if less than 2)
+    const activeCount = Math.max(Math.min(bots.length, 2), Math.floor(bots.length * 0.7));
+    const activeBots = shuffledBots.slice(0, activeCount);
 
     console.log(`⚡ Simulating activity for ${activeBots.length} bots...`);
 
     for (const bot of activeBots) {
         if (!bot.firestoreId) continue;
 
-        let updates: Partial<Character> = {};
-        let fightsLeft = bot.fightsLeft;
+        let currentBotState = { ...bot };
+        let fightsLeft = currentBotState.fightsLeft;
         const now = Date.now();
+        let totalXpGained = 0;
+        let startLevel = currentBotState.level;
 
         // 1. Daily Reset Logic
-        if (now - bot.lastFightReset > 24 * 60 * 60 * 1000) {
+        if (now - currentBotState.lastFightReset > 24 * 60 * 60 * 1000) {
             fightsLeft = GAME_RULES.COMBAT.MAX_DAILY_FIGHTS;
-            updates.lastFightReset = now;
-            console.log(`🔄 Daily reset for bot ${bot.name}`);
+            currentBotState.lastFightReset = now;
+            console.log(`🔄 Daily reset for bot ${currentBotState.name}`);
         }
 
-        // 2. Fight Logic (only if energy remains)
-        if (fightsLeft > 0) {
-            // Simulate real combat outcome
-            const won = Math.random() > 0.5; // Fair 50/50 win rate against "virtual" opponents
+        // 2. Fight Logic (Perform multiple actions per hour)
+        const desiredActions = Math.floor(Math.random() * 2) + 2; // 2 to 3 actions
+        let actionsTaken = 0;
+
+        while (actionsTaken < desiredActions && fightsLeft > 0) {
+            // Simulate real combat outcome (50/50 win rate)
+            const won = Math.random() > 0.5;
 
             // Calculate XP exactly like a player
-            const xpGained = calculateFightXp(bot.level, won);
+            const xpGained = calculateFightXp(currentBotState.level, won);
+            totalXpGained += xpGained;
 
             // Apply XP/Level up logic
-            const result = gainXp(bot, xpGained);
+            const result = gainXp(currentBotState, xpGained);
 
-            updates = {
-                ...updates,
-                experience: result.updatedCharacter.experience,
-                level: result.updatedCharacter.level,
+            // Update local state for next iteration
+            currentBotState = {
+                ...result.updatedCharacter,
                 fightsLeft: fightsLeft - 1,
-                wins: won ? (bot.wins || 0) + 1 : (bot.wins || 0),
-                losses: won ? (bot.losses || 0) : (bot.losses || 0) + 1,
-                // Update stats if leveled up
-                // Simple auto-distribution logic: +1 to main stats
-                strength: result.leveledUp ? bot.strength + 1 : bot.strength,
-                vitality: result.leveledUp ? bot.vitality + 1 : bot.vitality,
-                dexterity: result.leveledUp ? bot.dexterity + 1 : bot.dexterity,
-                hp: result.leveledUp ? bot.hp + 5 : bot.hp,
-                maxHp: result.leveledUp ? bot.maxHp + 5 : bot.maxHp
+                wins: won ? (currentBotState.wins || 0) + 1 : (currentBotState.wins || 0),
+                losses: won ? (currentBotState.losses || 0) : (currentBotState.losses || 0) + 1,
+                // Simple auto-distribution logic if leveled up
+                strength: result.leveledUp ? currentBotState.strength + 1 : currentBotState.strength,
+                vitality: result.leveledUp ? currentBotState.vitality + 1 : currentBotState.vitality,
+                dexterity: result.leveledUp ? currentBotState.dexterity + 1 : currentBotState.dexterity,
+                hp: result.leveledUp ? currentBotState.hp + 8 : currentBotState.hp, // Match HP formula
+                maxHp: result.leveledUp ? currentBotState.maxHp + 8 : currentBotState.maxHp
             };
 
-            if (result.leveledUp) {
-                console.log(`🆙 Bot ${bot.name} leveled up to ${result.newLevel}!`);
-            } else {
-                console.log(`👊 Bot ${bot.name} ${won ? 'won' : 'lost'} and gained ${xpGained} XP. Energy left: ${updates.fightsLeft}`);
-            }
+            fightsLeft--;
+            actionsTaken++;
+        }
 
-            // Save updates
-            await db.collection('characters').doc(bot.firestoreId).update(updates);
+        if (actionsTaken > 0) {
+            // Final database update
+            const finalUpdates: Partial<Character> = {
+                experience: currentBotState.experience,
+                level: currentBotState.level,
+                fightsLeft: currentBotState.fightsLeft,
+                wins: currentBotState.wins,
+                losses: currentBotState.losses,
+                strength: currentBotState.strength,
+                vitality: currentBotState.vitality,
+                dexterity: currentBotState.dexterity,
+                hp: currentBotState.hp,
+                maxHp: currentBotState.maxHp,
+                lastFightReset: currentBotState.lastFightReset
+            };
+
+            await db.collection('characters').doc(bot.firestoreId).update(finalUpdates);
+
+            const levelDiff = currentBotState.level - startLevel;
+            console.log(`👊 Bot ${bot.name}: ${actionsTaken} fights, +${totalXpGained} XP. ${levelDiff > 0 ? `🆙 LVL UP +${levelDiff}` : ''} Energy left: ${currentBotState.fightsLeft}`);
         } else {
             console.log(`💤 Bot ${bot.name} is resting (0 energy).`);
         }
