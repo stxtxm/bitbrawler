@@ -8,27 +8,75 @@ import { getHpForVitality } from './statUtils';
 export const generateCharacterName = (): string => {
     // Shorter adjectives and nouns to stay under 10 chars total
     const ADJECTIVES = [
-        'Dark', 'Iron', 'Grim', 'Swift', 'Bold', 'Cold', 'Fire', 'Storm', 'Wild', 'Deep',
-        'Light', 'Vile', 'Pure', 'Frost', 'Blue', 'Red', 'Gold', 'Zen', 'Cyber', 'Mega'
+        // Core
+        'Ash', 'Black', 'Blue', 'Bold', 'Brave', 'Bronze', 'Calm', 'Cold', 'Crag', 'Crim',
+        'Dark', 'Dawn', 'Dread', 'Drift', 'Dusk', 'Ember', 'Feral', 'Fierce', 'Fire', 'Frost',
+        'Gale', 'Ghost', 'Gloom', 'Gold', 'Grim', 'Hawk', 'Iron', 'Ivory', 'Jade', 'Keen',
+        'Lone', 'Mighty', 'Mist', 'Night', 'Noble', 'Pale', 'Prime', 'Pure', 'Rogue', 'Sable',
+        'Scar', 'Shadow', 'Silent', 'Silver', 'Slate', 'Smoky', 'Snow', 'Solar', 'Steel',
+        'Stone', 'Storm', 'Swift', 'Tide', 'True', 'Umber', 'Vast', 'Wild', 'Wind', 'Wolven', 'Zen',
+
+        // Nature / Terrain
+        'Briar', 'Cedar', 'Cliff', 'Dune', 'Dust', 'Flint', 'Forest', 'Grove', 'Jungle', 'Moss',
+        'Oasis', 'Pine', 'Reef', 'Ridge', 'River', 'Sage', 'Sand', 'Silt', 'Sky', 'Thorn',
+        'Vale', 'Vine', 'Wave', 'Wilds',
+
+        // Elemental / Cosmic
+        'Arc', 'Blaze', 'Bolt', 'Cinder', 'Comet', 'Flare', 'Flux', 'Fume', 'Glint', 'Glow',
+        'Glace', 'Lunar', 'Meteor', 'Nova', 'Orb', 'Pyre', 'Quake', 'Shard', 'Solar', 'Spark',
+        'Star', 'Storm', 'Void',
+
+        // Arcane / Mythic
+        'Crypt', 'Hex', 'Myth', 'Noir', 'Rune', 'Ward', 'Wyrd',
+
+        // Tech / Cyber
+        'Brass', 'Chrome', 'Cyber', 'Gear', 'Glitch', 'Ion', 'Mech', 'Nano', 'Neon', 'Pulse',
+        'Steam', 'Synth', 'Volt'
     ];
 
     const NOUNS = [
-        'Knight', 'Blade', 'Wolf', 'Fang', 'Heart', 'Soul', 'Storm', 'Shadow', 'Mage',
-        'Brawler', 'Striker', 'Guard', 'Keeper', 'Lord', 'King', 'Queen', 'Dragon',
-        'Titan', 'Wraith', 'Ghost', 'Specter', 'Byte', 'Bit', 'Link', 'Code'
+        // Warrior / Roles
+        'Aegis', 'Archer', 'Blade', 'Brawler', 'Chaser', 'Corsair', 'Dancer', 'Drifter', 'Guard',
+        'Hunter', 'Knight', 'Lancer', 'Monk', 'Oracle', 'Pilot', 'Pirate', 'Ranger', 'Reaper',
+        'Rider', 'Rogue', 'Sage', 'Scout', 'Seer', 'Striker', 'Warden',
+
+        // Beasts
+        'Bear', 'Boar', 'Crow', 'Drake', 'Eagle', 'Fox', 'Hawk', 'Hound', 'Lion', 'Lynx',
+        'Raven', 'Shark', 'Stag', 'Tiger', 'Viper', 'Wolf', 'Wyrm', 'Wyvern',
+
+        // Weapons / Gear
+        'Anchor', 'Arrow', 'Claw', 'Dagger', 'Edge', 'Fang', 'Glaive', 'Hammer', 'Shield',
+        'Spear', 'Sword', 'Talon',
+
+        // Shadow / Spirit
+        'Bane', 'Cipher', 'Ghost', 'Phantom', 'Shade', 'Shadow', 'Skull', 'Specter', 'Wraith',
+
+        // Mystic / Cosmic
+        'Flame', 'Flint', 'Nova', 'Rune', 'Sigil', 'Storm', 'Titan',
+
+        // Tech / Cyber
+        'Byte', 'Code', 'Core', 'Drone', 'Node'
     ];
 
-    let adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
-    let noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+    const pick = <T,>(list: T[]) => list[Math.floor(Math.random() * list.length)];
 
-    let name = `${adj}${noun}`;
+    const buildName = () => {
+        const roll = Math.random();
+        if (roll < 0.72) {
+            return `${pick(ADJECTIVES)}${pick(NOUNS)}`;
+        }
+        const first = pick(NOUNS);
+        let second = pick(NOUNS);
+        if (second === first) second = pick(NOUNS);
+        return `${first}${second}`;
+    };
 
-    // If somehow too long, try again (max 10 chars)
+    let name = buildName();
+
+    // If too long, try again (max 20 tries)
     let attempts = 0;
-    while (name.length > 10 && attempts < 10) {
-        adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
-        noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
-        name = `${adj}${noun}`;
+    while (name.length > 10 && attempts < 20) {
+        name = buildName();
         attempts++;
     }
 
