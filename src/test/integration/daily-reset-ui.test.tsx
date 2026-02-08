@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import App from '../App'
-import { useGame } from '../context/GameContext'
-import { useOnlineStatus } from '../hooks/useOnlineStatus'
+import App from '../../App'
+import { useGame } from '../../context/GameContext'
+import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 
-vi.mock('../context/GameContext', () => ({
+vi.mock('../../context/GameContext', () => ({
   useGame: vi.fn(),
 }))
 
-vi.mock('../hooks/useOnlineStatus', () => ({
+vi.mock('../../hooks/useOnlineStatus', () => ({
   useOnlineStatus: vi.fn(),
 }))
 

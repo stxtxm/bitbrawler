@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import App from '../App'
-import { GameProvider } from '../context/GameContext'
+import App from '../../App'
+import { GameProvider } from '../../context/GameContext'
 
-vi.mock('../config/firebase', () => ({
+vi.mock('../../config/firebase', () => ({
   db: {
     collection: vi.fn(),
     doc: vi.fn(),
@@ -22,11 +22,11 @@ vi.mock('firebase/firestore', () => ({
   limit: vi.fn(),
 }))
 
-vi.mock('../hooks/useOnlineStatus', () => ({
+vi.mock('../../hooks/useOnlineStatus', () => ({
   useOnlineStatus: vi.fn(),
 }))
 
-import { useOnlineStatus } from '../hooks/useOnlineStatus'
+import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 
 const mockUseOnlineStatus = useOnlineStatus as unknown as ReturnType<typeof vi.fn>
 

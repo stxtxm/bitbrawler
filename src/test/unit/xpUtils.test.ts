@@ -7,8 +7,8 @@ import {
     calculateFightXp,
     formatXpDisplay,
     getMaxLevel
-} from '../utils/xpUtils';
-import { Character } from '../types/Character';
+} from '../../utils/xpUtils';
+import { Character } from '../../types/Character';
 
 // Helper to create a test character
 const createTestCharacter = (level: number, experience: number): Character => ({

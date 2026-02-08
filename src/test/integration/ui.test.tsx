@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
-import { PixelCharacter } from '../components/PixelCharacter';
+import { PixelCharacter } from '../../components/PixelCharacter';
 
 describe('PixelCharacter Component', () => {
     it('should render an SVG element', () => {

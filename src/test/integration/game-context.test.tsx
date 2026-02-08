@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { ReactNode } from 'react';
-import { GameProvider, useGame } from '../context/GameContext';
-import { Character } from '../types/Character';
+import { GameProvider, useGame } from '../../context/GameContext';
+import { Character } from '../../types/Character';
 
 // Mock Firebase
-vi.mock('../config/firebase', () => ({
+vi.mock('../../config/firebase', () => ({
   db: {
     collection: vi.fn(),
     doc: vi.fn(),

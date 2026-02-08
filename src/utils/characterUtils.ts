@@ -1,72 +1,49 @@
+import { GAME_RULES } from '../config/gameRules';
 import { Character } from '../types/Character';
 
 /**
- * Generates balanced initial stats for a new character
- * Uses a controlled distribution to ensure fairness and prevent extreme builds
- * 
- * Stats System:
- * - Total stat points: 50 (distributed evenly with controlled variance)
- * - Each stat gets: 10 base points ± variance
- * - Max variance per stat: ±3 points to prevent min-maxing
+ * Generates initial stats for a new character using GAME_RULES
+ * - Ensures balanced total stats
+ * - Randomizes distribution within min/max bounds
  * - Total points remain constant across all characters
  */
 export const generateInitialStats = (name: string, gender: 'male' | 'female'): Character => {
-    const BASE_PER_STAT = 10;
-    const MAX_VARIANCE = 3;
+    const { BASE_VALUE, MIN_VALUE, MAX_VALUE } = GAME_RULES.STATS;
+    const NUM_STATS = 5;
 
-    // Initialize all stats at base value
-    const stats = {
-        strength: BASE_PER_STAT,
-        vitality: BASE_PER_STAT,
-        dexterity: BASE_PER_STAT,
-        luck: BASE_PER_STAT,
-        intelligence: BASE_PER_STAT
+    // Initialize stats
+    const stats: Record<string, number> = {
+        strength: BASE_VALUE,
+        vitality: BASE_VALUE,
+        dexterity: BASE_VALUE,
+        luck: BASE_VALUE,
+        intelligence: BASE_VALUE
     };
 
-    // Create controlled variance for each stat
-    const statKeys = Object.keys(stats) as (keyof typeof stats)[];
-    const variances: number[] = [];
+    const statKeys = Object.keys(stats);
 
-    // Generate random variances that sum to 0 (to maintain total)
-    for (let i = 0; i < statKeys.length - 1; i++) {
-        const variance = Math.floor(Math.random() * (MAX_VARIANCE * 2 + 1)) - MAX_VARIANCE;
-        variances.push(variance);
-    }
+    // Shuffle stats by exchanging points
+    // We do multiple passes of +1/-1 swaps to ensure random distribution
+    // This guarantees the sum remains constant (50)
+    for (let i = 0; i < 20; i++) {
+        const donorIndex = Math.floor(Math.random() * NUM_STATS);
+        const receiverIndex = Math.floor(Math.random() * NUM_STATS);
 
-    // Last variance is calculated to ensure sum = 0
-    const lastVariance = -variances.reduce((sum, v) => sum + v, 0);
+        if (donorIndex === receiverIndex) continue;
 
-    // Clamp the last variance to MAX_VARIANCE
-    variances.push(Math.max(-MAX_VARIANCE, Math.min(MAX_VARIANCE, lastVariance)));
+        const donorKey = statKeys[donorIndex];
+        const receiverKey = statKeys[receiverIndex];
 
-    // If the clamping broke the sum, redistribute
-    const varianceSum = variances.reduce((sum, v) => sum + v, 0);
-    if (varianceSum !== 0) {
-        // Redistribute excess to maintain balance
-        const excess = varianceSum;
-        for (let i = 0; i < variances.length; i++) {
-            const adjustment = Math.min(Math.abs(excess), MAX_VARIANCE - Math.abs(variances[i]));
-            if (excess > 0 && variances[i] > -MAX_VARIANCE) {
-                variances[i] -= Math.min(adjustment, variances[i] + MAX_VARIANCE);
-            } else if (excess < 0 && variances[i] < MAX_VARIANCE) {
-                variances[i] += Math.min(adjustment, MAX_VARIANCE - variances[i]);
-            }
-            if (variances.reduce((sum, v) => sum + v, 0) === 0) break;
+        // Ensure we stay within reasonably balanced bounds
+        if (stats[donorKey] > MIN_VALUE && stats[receiverKey] < MAX_VALUE) {
+            stats[donorKey]--;
+            stats[receiverKey]++;
         }
     }
 
-    // Apply variances to stats
-    statKeys.forEach((key, index) => {
-        stats[key] += variances[index];
-    });
-
-    // Ensure all stats are within valid range (5-15)
-    statKeys.forEach(key => {
-        stats[key] = Math.max(5, Math.min(15, stats[key]));
-    });
-
     // Calculate HP based on vitality (more consistent)
     const hp = 100 + (stats.vitality * 8);
+    // Create consistent seed for visuals
     const characterSeed = Math.random().toString(36).substring(2, 10);
 
     return {
@@ -84,7 +61,7 @@ export const generateInitialStats = (name: string, gender: 'male' | 'female'): C
         experience: 0,
         wins: 0,
         losses: 0,
-        fightsLeft: 5,
+        fightsLeft: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
         lastFightReset: Date.now()
     };
 };

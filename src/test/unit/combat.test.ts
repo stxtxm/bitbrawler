@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { calculateCombatStats, getCombatBalance, simulateCombat } from '../utils/combatUtils';
-import { Character } from '../types/Character';
+import { calculateCombatStats, getCombatBalance, simulateCombat } from '../../utils/combatUtils';
+import { Character } from '../../types/Character';
 
 describe('Combat System', () => {
     const mockCharacter: Character = {

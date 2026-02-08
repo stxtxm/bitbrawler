@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { mulberry32, getSeedFromText } from '../utils/randomUtils';
+import { mulberry32, getSeedFromText } from '../../utils/randomUtils';
 
 describe('Random Utilities', () => {
     it('should be deterministic for the same seed', () => {

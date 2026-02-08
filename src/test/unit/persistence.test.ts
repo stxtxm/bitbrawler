@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { Character } from '../types/Character';
+import { Character } from '../../types/Character';
 
 describe('LocalStorage Persistence', () => {
     const mockChar: Character = {

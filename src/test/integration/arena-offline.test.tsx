@@ -1,21 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, fireEvent, act } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import Arena from '../pages/Arena'
-import { useGame } from '../context/GameContext'
-import { useConnectionGate } from '../hooks/useConnectionGate'
-import { useOnlineStatus } from '../hooks/useOnlineStatus'
-import { Character } from '../types/Character'
+import Arena from '../../pages/Arena'
+import { useGame } from '../../context/GameContext'
+import { useConnectionGate } from '../../hooks/useConnectionGate'
+import { useOnlineStatus } from '../../hooks/useOnlineStatus'
+import { Character } from '../../types/Character'
 
-vi.mock('../context/GameContext', () => ({
+vi.mock('../../context/GameContext', () => ({
   useGame: vi.fn(),
 }))
 
-vi.mock('../hooks/useConnectionGate', () => ({
+vi.mock('../../hooks/useConnectionGate', () => ({
   useConnectionGate: vi.fn(),
 }))
 
-vi.mock('../hooks/useOnlineStatus', () => ({
+vi.mock('../../hooks/useOnlineStatus', () => ({
   useOnlineStatus: vi.fn(),
 }))
 

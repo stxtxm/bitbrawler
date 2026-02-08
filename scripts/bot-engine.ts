@@ -1,7 +1,8 @@
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { getFirestore } from 'firebase-admin/firestore';
 import { generateInitialStats } from '../src/utils/characterUtils';
 import { calculateFightXp, gainXp } from '../src/utils/xpUtils';
+import { GAME_RULES } from '../src/config/gameRules';
 import { BOT_NAMES } from './bot-data';
 import fs from 'fs';
 import path from 'path';
@@ -61,15 +62,17 @@ async function runBotLogic() {
         const botCount = await measureBotPopulation();
         console.log(`📊 Current bot population: ${botCount}`);
 
-        // 1. Force population growth if low
-        if (botCount < 5) {
+        // 1. Force population growth if below minimum
+        if (botCount < GAME_RULES.BOTS.MIN_POPULATION) {
             console.log('📉 Bot population low. Spawning reinforcements...');
-            await createNewBot();
-            await createNewBot();
-            await createNewBot();
+            const needed = GAME_RULES.BOTS.MIN_POPULATION - botCount;
+            for (let i = 0; i < needed; i++) {
+                await createNewBot();
+            }
         } else {
-            // Standard growth: 30% chance to create a new bot
-            if (Math.random() > 0.7) {
+            // 2. Guaranteed hourly growth (100% chance as per GROWTH_CHANCE: 1.0)
+            if (Math.random() <= GAME_RULES.BOTS.GROWTH_CHANCE) {
+                console.log('📈 Hourly bot growth triggered.');
                 await createNewBot();
             }
         }
@@ -92,16 +95,14 @@ async function createNewBot() {
 
     const botData: Character = {
         ...stats,
-        isBot: true, // Crucial: Identifier les bots
+        isBot: true,
         experience: 0,
         wins: 0,
         losses: 0,
-        fightsLeft: 5,
+        fightsLeft: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
         lastFightReset: Date.now()
     };
 
-    // Convert timestamp for Firestore if needed, but client uses number
-    // We keep it consistent with client logic
     await db.collection('characters').add(botData);
     console.log(`🆕 Created new bot: ${fullName} (Level ${stats.level})`);
 }
@@ -126,13 +127,14 @@ async function simulateBotDailyLife() {
         };
     });
 
-    // High activity for testing: 50% of bots do something
+    // Decide activity based on configured rate (or 50% for high activity)
+    // Use a bit of randomness to vary load
     const activeBots = bots.filter(() => Math.random() > 0.5);
 
     console.log(`⚡ Simulating activity for ${activeBots.length} bots...`);
 
     for (const bot of activeBots) {
-        if (!bot.firestoreId) continue; // Safety check
+        if (!bot.firestoreId) continue;
 
         let updates: Partial<Character> = {};
         let fightsLeft = bot.fightsLeft;
@@ -140,7 +142,7 @@ async function simulateBotDailyLife() {
 
         // 1. Daily Reset Logic
         if (now - bot.lastFightReset > 24 * 60 * 60 * 1000) {
-            fightsLeft = 5;
+            fightsLeft = GAME_RULES.COMBAT.MAX_DAILY_FIGHTS;
             updates.lastFightReset = now;
             console.log(`🔄 Daily reset for bot ${bot.name}`);
         }
@@ -163,7 +165,8 @@ async function simulateBotDailyLife() {
                 fightsLeft: fightsLeft - 1,
                 wins: won ? (bot.wins || 0) + 1 : (bot.wins || 0),
                 losses: won ? (bot.losses || 0) : (bot.losses || 0) + 1,
-                // Update stats if leveled up (simple auto-distribution for bots)
+                // Update stats if leveled up
+                // Simple auto-distribution logic: +1 to main stats
                 strength: result.leveledUp ? bot.strength + 1 : bot.strength,
                 vitality: result.leveledUp ? bot.vitality + 1 : bot.vitality,
                 dexterity: result.leveledUp ? bot.dexterity + 1 : bot.dexterity,

@@ -3,6 +3,7 @@ import { collection, query, where, getDocs, getDocsFromServer, updateDoc, doc, l
 import { db } from '../config/firebase';
 import { Character } from '../types/Character';
 import { gainXp } from '../utils/xpUtils';
+import { GAME_RULES } from '../config/gameRules';
 import { shouldResetDaily } from '../utils/dailyReset';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { findOpponent, MatchmakingResult } from '../utils/matchmakingUtils';
@@ -25,7 +26,6 @@ interface GameContextType {
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 // Constants
-const DAILY_FIGHTS = 5;
 const LOCAL_STORAGE_KEY = 'bitbrawler_active_char';
 const DAILY_RESET_INTERVAL = 60000; // 1 minute
 
@@ -152,12 +152,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         const serverTime = await getServerTime();
         const updatedChar = {
           ...activeCharacter,
-          fightsLeft: DAILY_FIGHTS,
+          fightsLeft: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
           lastFightReset: serverTime
         };
 
         await updateDoc(doc(db, "characters", activeCharacter.firestoreId!), {
-          fightsLeft: DAILY_FIGHTS,
+          fightsLeft: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
           lastFightReset: serverTime
         });
 

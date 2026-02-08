@@ -1,19 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { generateInitialStats } from '../utils/characterUtils';
+import { generateInitialStats } from '../../utils/characterUtils';
 
 describe('Character Generation', () => {
     it('should generate a character with the correct initial stat pool', () => {
         const char = generateInitialStats('Test', 'male');
 
-        // Base is 6 for 5 stats (30) + pool of 16 = 46 total RPG points
+        // Base is 10 for 5 stats (50) total RPG points
         const totalRPGStats = char.strength + char.vitality + char.dexterity + char.luck + char.intelligence;
-        expect(totalRPGStats).toBe(46);
+        expect(totalRPGStats).toBe(50);
     });
 
     it('should calculate HP correctly based on vitality', () => {
         const char = generateInitialStats('Test', 'female');
-        // HP Formula: 100 + (vitality * 5)
-        const expectedHp = 100 + (char.vitality * 5);
+        // HP Formula: 100 + (vitality * 8)
+        const expectedHp = 100 + (char.vitality * 8);
         expect(char.hp).toBe(expectedHp);
         expect(char.maxHp).toBe(expectedHp);
     });

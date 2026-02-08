@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { Character } from '../types/Character';
+import { Character } from '../../types/Character';
 
 // Mock Firebase
-vi.mock('../config/firebase', () => ({
+vi.mock('../../config/firebase', () => ({
   db: {
     collection: vi.fn(),
     doc: vi.fn(),
@@ -22,7 +22,7 @@ vi.mock('firebase/firestore', () => ({
 }));
 
 // Mock GameContext
-vi.mock('../context/GameContext', () => ({
+vi.mock('../../context/GameContext', () => ({
   GameProvider: ({ children }: { children: any }) => children,
   useGame: vi.fn(),
 }));

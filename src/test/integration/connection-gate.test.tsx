@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act, waitFor } from '@testing-library/react'
-import { useConnectionGate } from '../hooks/useConnectionGate'
-import { useGame } from '../context/GameContext'
-import { useOnlineStatus } from '../hooks/useOnlineStatus'
+import { useConnectionGate } from '../../hooks/useConnectionGate'
+import { useGame } from '../../context/GameContext'
+import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 
-vi.mock('../context/GameContext', () => ({
+vi.mock('../../context/GameContext', () => ({
   useGame: vi.fn(),
 }))
 
-vi.mock('../hooks/useOnlineStatus', () => ({
+vi.mock('../../hooks/useOnlineStatus', () => ({
   useOnlineStatus: vi.fn(),
 }))
 

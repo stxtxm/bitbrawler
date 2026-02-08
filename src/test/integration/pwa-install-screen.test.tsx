@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, fireEvent, screen, waitFor } from '@testing-library/react';
-import PwaInstallScreen from '../components/PwaInstallScreen';
-import { usePwaInstallPrompt } from '../hooks/usePwaInstallPrompt';
+import PwaInstallScreen from '../../components/PwaInstallScreen';
+import { usePwaInstallPrompt } from '../../hooks/usePwaInstallPrompt';
 
-vi.mock('../hooks/usePwaInstallPrompt', () => ({
+vi.mock('../../hooks/usePwaInstallPrompt', () => ({
   usePwaInstallPrompt: vi.fn(),
 }));
 
