@@ -2,6 +2,31 @@ import { GAME_RULES } from '../config/gameRules';
 import { Character } from '../types/Character';
 
 /**
+ * Generates a logical, coherent, single-word name without numbers or special characters.
+ */
+export const generateCharacterName = (): string => {
+    const ADJECTIVES = [
+        'Dark', 'Iron', 'Grim', 'Swift', 'Bold', 'Cold', 'Fire', 'Storm', 'Shadow', 'Moon',
+        'Sun', 'Wild', 'Deep', 'Light', 'Vile', 'Pure', 'Frost', 'Thunder', 'Blood', 'Spirit',
+        'Zen', 'Mega', 'Giga', 'Ultra', 'Hyper', 'Cyber', 'Nano', 'Pixel', 'Retro', 'Turbo',
+        'Void', 'Star', 'Zenith', 'Aero', 'Pyro', 'Cryo', 'Electro', 'Jade', 'Gold', 'Silver'
+    ];
+
+    const NOUNS = [
+        'Knight', 'Blade', 'Wolf', 'Fang', 'Heart', 'Soul', 'Storm', 'Shadow', 'Sage', 'Mage',
+        'Brawler', 'Fighter', 'Striker', 'Guard', 'Keeper', 'Seeker', 'Walker', 'Runner', 'Dancer', 'Reaper',
+        'Slayer', 'Hunter', 'Master', 'Lord', 'King', 'Queen', 'Dragon', 'Hawk', 'Eagle', 'Falcon',
+        'Titan', 'Giant', 'Golem', 'Wraith', 'Ghost', 'Specter', 'Phantom', 'Orb', 'Core', 'Link',
+        'Code', 'Byte', 'Bit', 'Grid', 'Dojo', 'Sensei', 'Ronin', 'Samurai', 'Ninja', 'Monk'
+    ];
+
+    const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+    const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+
+    return `${adj}${noun}`;
+};
+
+/**
  * Generates initial stats for a new character using GAME_RULES
  * - Ensures balanced total stats
  * - Randomizes distribution within min/max bounds

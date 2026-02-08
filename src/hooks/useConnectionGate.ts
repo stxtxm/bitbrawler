@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState, useEffect } from 'react'
 import { useGame } from '../context/GameContext'
 import { useOnlineStatus } from './useOnlineStatus'
 
@@ -25,6 +25,13 @@ export const useConnectionGate = () => {
   const closeModal = useCallback(() => {
     setConnectionModal((prev) => ({ ...prev, open: false }))
   }, [])
+
+  // Auto-close modal when connection is restored
+  useEffect(() => {
+    if (isOnline && firebaseAvailable && connectionModal.open) {
+      closeModal()
+    }
+  }, [isOnline, firebaseAvailable, connectionModal.open, closeModal])
 
   const ensureConnection = useCallback(
     async (message: string) => {

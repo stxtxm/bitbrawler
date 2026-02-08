@@ -1,13 +1,26 @@
 import React from 'react';
 
 interface PixelIconProps {
-    type: 'fighters' | 'arena' | 'levels' | 'updates' | 'user' | 'trophy' | 'power' | 'sword' | 'backpack';
+    type: 'fighters' | 'arena' | 'levels' | 'updates' | 'user' | 'trophy' | 'power' | 'sword' | 'backpack' | 'dice';
     size?: number;
 }
 
 export const PixelIcon: React.FC<PixelIconProps> = ({ type, size = 32 }) => {
     const renderIcon = () => {
         switch (type) {
+            case 'dice':
+                return (
+                    <svg width={size} height={size} viewBox="0 0 8 8" shapeRendering="crispEdges">
+                        <rect x="1" y="1" width="6" height="6" fill="#fff" />
+                        <rect x="2" y="2" width="1" height="1" fill="#000" />
+                        <rect x="5" y="2" width="1" height="1" fill="#000" />
+                        <rect x="3" y="3" width="2" height="2" fill="#000" />
+                        <rect x="2" y="5" width="1" height="1" fill="#000" />
+                        <rect x="5" y="5" width="1" height="1" fill="#000" />
+                        <rect x="0" y="1" width="1" height="6" fill="#ccc" />
+                        <rect x="1" y="7" width="6" height="1" fill="#ccc" />
+                    </svg>
+                );
             case 'fighters':
                 return (
                     <svg width={size} height={size} viewBox="0 0 8 8" shapeRendering="crispEdges">

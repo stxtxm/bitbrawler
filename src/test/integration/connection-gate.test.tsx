@@ -80,9 +80,10 @@ describe('useConnectionGate', () => {
   })
 
   it('supports manual open and close', async () => {
-    mockUseOnlineStatus.mockReturnValue(true)
+    // Mock as offline to prevent auto-close
+    mockUseOnlineStatus.mockReturnValue(false)
     mockUseGame.mockReturnValue({
-      firebaseAvailable: true,
+      firebaseAvailable: false,
       retryConnection: vi.fn(),
     })
 
@@ -97,6 +98,33 @@ describe('useConnectionGate', () => {
     act(() => {
       result.current.closeModal()
     })
+
+    await waitFor(() => expect(result.current.connectionModal.open).toBe(false))
+  })
+
+  it('auto-closes modal when connection becomes available', async () => {
+    mockUseOnlineStatus.mockReturnValue(false)
+    mockUseGame.mockReturnValue({
+      firebaseAvailable: false,
+      retryConnection: vi.fn(),
+    })
+
+    const { result, rerender } = renderHook(() => useConnectionGate())
+
+    act(() => {
+      result.current.openModal('Should auto-close')
+    })
+
+    await waitFor(() => expect(result.current.connectionModal.open).toBe(true))
+
+    // Switch to online/available
+    mockUseOnlineStatus.mockReturnValue(true)
+    mockUseGame.mockReturnValue({
+      firebaseAvailable: true,
+      retryConnection: vi.fn(),
+    })
+
+    rerender()
 
     await waitFor(() => expect(result.current.connectionModal.open).toBe(false))
   })

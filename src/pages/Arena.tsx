@@ -11,7 +11,7 @@ import { CombatView } from '../components/CombatView';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
 
 const Arena = () => {
-    const { activeCharacter, logout, useFight, findOpponent, lastXpGain, lastLevelUp, clearXpNotifications, firebaseAvailable, retryConnection } = useGame();
+    const { activeCharacter, logout, useFight, findOpponent, lastXpGain, lastLevelUp, clearXpNotifications, firebaseAvailable } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const navigate = useNavigate();
     const isOnline = useOnlineStatus();
@@ -20,8 +20,6 @@ const Arena = () => {
     const [showXpGain, setShowXpGain] = useState(false);
     const [showLevelUp, setShowLevelUp] = useState(false);
     const [xpBarAnimating, setXpBarAnimating] = useState(false);
-    const [retrying, setRetrying] = useState(false);
-    const [retryFailed, setRetryFailed] = useState(false);
     const [inventoryOpen, setInventoryOpen] = useState(false);
     const [matchmaking, setMatchmaking] = useState(false);
     const [combatData, setCombatData] = useState<MatchmakingResult | null>(null);
@@ -66,17 +64,6 @@ const Arena = () => {
     const isOfflineMode = !isOnline || !firebaseAvailable;
     const fightsLeft = activeCharacter.fightsLeft || 0;
     const canFight = !isOfflineMode && fightsLeft > 0;
-    const handleRetry = async () => {
-        if (!isOnline || retrying) return;
-        setRetrying(true);
-        setRetryFailed(false);
-        const ok = await retryConnection();
-        setRetrying(false);
-        if (!ok) {
-            setRetryFailed(true);
-            setTimeout(() => setRetryFailed(false), 2000);
-        }
-    };
 
     const handleFight = async () => {
         const canProceed = await ensureConnection(connectionMessage);
@@ -164,21 +151,8 @@ const Arena = () => {
                 <div className="offline-banner" role="status" aria-live="polite">
                     <div className="offline-row">
                         <div className="offline-title">OFFLINE MODE</div>
-                        <div className="offline-actions">
-                            <button
-                                className="offline-retry-btn"
-                                onClick={handleRetry}
-                                disabled={!isOnline || retrying}
-                                title="Retry connection"
-                                aria-label="Retry connection"
-                            >
-                                <PixelIcon type="updates" size={14} />
-                                <span className="offline-retry-label">RETRY</span>
-                            </button>
-                        </div>
                     </div>
                     <div className="offline-sub">Stats are the last synced snapshot. Connect to fight and sync.</div>
-                    {retryFailed && <div className="offline-retry-text">RETRY FAILED</div>}
                 </div>
             )}
 

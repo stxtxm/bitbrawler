@@ -7,7 +7,8 @@ import { collection, addDoc, query, where, getDocs } from 'firebase/firestore'
 import { useGame } from '../context/GameContext'
 import { useConnectionGate } from '../hooks/useConnectionGate'
 import ConnectionModal from '../components/ConnectionModal'
-import { generateInitialStats } from '../utils/characterUtils'
+import { generateInitialStats, generateCharacterName } from '../utils/characterUtils'
+import { PixelIcon } from '../components/PixelIcon'
 import { prefetchArena } from '../routes/lazyPages'
 
 const CharacterCreation = () => {
@@ -223,22 +224,39 @@ const CharacterCreation = () => {
           <div className="creation-form">
             <div className="form-group">
               <label htmlFor="name">NAME:</label>
-              <input
-                type="text"
-                id="name"
-                name="characterName"
-                autoComplete="off"
-                autoCorrect="off"
-                spellCheck={false}
-                value={name}
-                onChange={(e) => {
-                  setName(e.target.value.toUpperCase());
-                  setNameError('');
-                  setShowErrorModal(false);
-                }}
-                placeholder="PLAYER 1"
-                maxLength={12}
-              />
+              <div className="name-input-wrapper" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <input
+                  type="text"
+                  id="name"
+                  name="characterName"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  value={name}
+                  onChange={(e) => {
+                    setName(e.target.value.toUpperCase());
+                    setNameError('');
+                    setShowErrorModal(false);
+                  }}
+                  placeholder="PLAYER 1"
+                  maxLength={12}
+                  style={{ flex: 1 }}
+                />
+                <button
+                  type="button"
+                  className="button icon-btn name-gen-btn"
+                  onClick={() => {
+                    const newName = generateCharacterName();
+                    setName(newName.toUpperCase());
+                    setNameError('');
+                  }}
+                  title="Generate Random Name"
+                  aria-label="Generate Random Name"
+                  style={{ padding: '8px', minWidth: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <PixelIcon type="dice" size={20} />
+                </button>
+              </div>
             </div>
 
             <div className="form-group">

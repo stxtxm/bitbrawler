@@ -3,7 +3,6 @@ interface ConnectionModalProps {
   message: string
   onClose: () => void
   title?: string
-  actionLabel?: string
 }
 
 const ConnectionModal = ({
@@ -11,19 +10,16 @@ const ConnectionModal = ({
   message,
   onClose,
   title = 'CONNECTION REQUIRED',
-  actionLabel = 'RETRY',
 }: ConnectionModalProps) => {
   if (!open) return null
 
   return (
-    <div className="retro-modal-overlay">
-      <div className="retro-modal error-modal">
+    <div className="retro-modal-overlay" onClick={onClose}>
+      <div className="retro-modal error-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">{title}</div>
         <div className="modal-body">
           <p>{message}</p>
-          <button className="button retro-btn" onClick={onClose} style={{ marginTop: '20px' }}>
-            {actionLabel}
-          </button>
+          <div className="modal-hint">Click anywhere to dismiss</div>
         </div>
       </div>
     </div>

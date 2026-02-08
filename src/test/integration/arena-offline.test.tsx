@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, fireEvent, act } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Arena from '../../pages/Arena'
 import { useGame } from '../../context/GameContext'
@@ -64,10 +64,9 @@ describe('Arena offline mode', () => {
       lastLevelUp: null,
       clearXpNotifications: vi.fn(),
       firebaseAvailable: true,
-      retryConnection: vi.fn(),
     })
 
-    const { getByText, getByRole } = render(
+    const { getByText, getByRole, queryByRole } = render(
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Arena />
       </MemoryRouter>
@@ -76,13 +75,13 @@ describe('Arena offline mode', () => {
     expect(getByText('OFFLINE MODE')).toBeInTheDocument()
     const fightButton = getByRole('button', { name: 'OFFLINE' })
     expect(fightButton).toBeDisabled()
-    const retryButton = getByRole('button', { name: 'Retry connection' })
-    expect(retryButton).toBeDisabled()
+
+    // Retry button was removed from banner
+    expect(queryByRole('button', { name: /RETRY/i })).toBeNull()
   })
 
-  it('allows retry when online but Firebase is unavailable', async () => {
+  it('remains in offline mode when Firebase is unavailable', () => {
     mockUseOnlineStatus.mockReturnValue(true)
-    const retryConnection = vi.fn().mockResolvedValue(false)
     mockUseGame.mockReturnValue({
       activeCharacter: mockCharacter,
       logout: vi.fn(),
@@ -91,22 +90,19 @@ describe('Arena offline mode', () => {
       lastLevelUp: null,
       clearXpNotifications: vi.fn(),
       firebaseAvailable: false,
-      retryConnection,
     })
 
-    const { getByText, getByRole } = render(
+    const { getByText, getByRole, queryByRole } = render(
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Arena />
       </MemoryRouter>
     )
 
     expect(getByText('OFFLINE MODE')).toBeInTheDocument()
-    const retryButton = getByRole('button', { name: 'Retry connection' })
-    expect(retryButton).not.toBeDisabled()
-    await act(async () => {
-      fireEvent.click(retryButton)
-      await Promise.resolve()
-    })
-    expect(retryConnection).toHaveBeenCalled()
+    const fightButton = getByRole('button', { name: 'OFFLINE' })
+    expect(fightButton).toBeDisabled()
+
+    // Retry button was removed from banner
+    expect(queryByRole('button', { name: /RETRY/i })).toBeNull()
   })
 })

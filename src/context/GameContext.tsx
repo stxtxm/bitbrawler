@@ -129,9 +129,15 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       if (syncResult.status === 'ok') {
         setActiveCharacter(syncResult.character);
         saveLocalData(syncResult.character);
-      } else {
+        setFirebaseAvailable(true);
+      } else if (syncResult.status === 'error') {
         setActiveCharacter(localChar);
         setFirebaseAvailable(false);
+      } else {
+        // Status is 'missing' - character may have been deleted on server
+        // We keep the local character but consider Firebase available
+        setActiveCharacter(localChar);
+        setFirebaseAvailable(true);
       }
 
       setLoading(false);

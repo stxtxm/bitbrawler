@@ -1,9 +1,8 @@
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { generateInitialStats } from '../src/utils/characterUtils';
+import { generateInitialStats, generateCharacterName } from '../src/utils/characterUtils';
 import { calculateFightXp, gainXp } from '../src/utils/xpUtils';
 import { GAME_RULES } from '../src/config/gameRules';
-import { BOT_NAMES } from './bot-data';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -88,8 +87,7 @@ async function runBotLogic() {
 }
 
 async function createNewBot() {
-    const name = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
-    const fullName = `${name}_${Math.floor(Math.random() * 9999)}`;
+    const fullName = generateCharacterName();
 
     const stats = generateInitialStats(fullName, Math.random() > 0.5 ? 'male' : 'female');
 
