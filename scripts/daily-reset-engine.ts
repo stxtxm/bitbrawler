@@ -47,18 +47,19 @@ const db = getFirestore();
 
 async function runDailyReset() {
     console.log('⏳ Starting Global Daily Reset...');
-    const now = Date.now();
-    const twentyFourHoursAgo = now - (24 * 60 * 60 * 1000);
+
+    // Calculate the start of today in UTC
+    const now = new Date();
+    const todayUTCStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).getTime();
 
     try {
-        // Find all characters that haven't been reset in the last 24 hours
-        // OR characters that have less than max fights (to be safe)
+        // Find all characters whose last reset was before today (UTC)
         const snapshot = await db.collection('characters')
-            .where('lastFightReset', '<=', twentyFourHoursAgo)
+            .where('lastFightReset', '<', todayUTCStart)
             .get();
 
         if (snapshot.empty) {
-            console.log('✅ All characters are already up to date.');
+            console.log('✅ All characters are already up to date for today.');
             return;
         }
 

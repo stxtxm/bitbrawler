@@ -2,7 +2,7 @@ name: Global Daily Reset
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Every day at 00:00 UTC
+    - cron: '10 * * * *' # Every hour at :10 (to avoid peak load delays)
   workflow_dispatch: # Allow manual trigger
 
 jobs:
