@@ -134,9 +134,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         setActiveCharacter(localChar);
         setFirebaseAvailable(false);
       } else {
-        // Status is 'missing' - character may have been deleted on server
-        // We keep the local character but consider Firebase available
-        setActiveCharacter(localChar);
+        // Status is 'missing' - character has been deleted on server
+        clearLocalData();
+        setActiveCharacter(null);
         setFirebaseAvailable(true);
       }
 
@@ -281,7 +281,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         levelsGained: xpResult.levelsGained,
         newLevel: xpResult.newLevel
       };
-    } catch (error) {
+    } catch (error: any) {
+      // Check if character was deleted while playing
+      if (error && (error.code === 'not-found' || error.message?.includes('not found'))) {
+        clearLocalData();
+        setActiveCharacter(null);
+        throw new Error("Your character has been deleted or is no longer available.");
+      }
+
       handleFirebaseError(error, 'use-fight');
       throw new Error("Connection error - fight not counted. Please check your internet connection.");
     }

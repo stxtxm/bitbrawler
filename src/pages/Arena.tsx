@@ -95,9 +95,9 @@ const Arena = () => {
     const handleCombatComplete = async (won: boolean, xpGained: number) => {
         try {
             await useFight(won, xpGained);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Fight result save failed:', error);
-            openModal(connectionMessage);
+            openModal(error.message || connectionMessage);
         }
     };
 

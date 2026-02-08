@@ -314,4 +314,51 @@ describe('GameContext Integration', () => {
 
     expect(result.current.lastXpGain).toBeNull();
   });
+
+  it('should logout if character is missing from Firestore on mount', async () => {
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    (getDocs as any).mockResolvedValue({ docs: [], empty: true }); // Missing character
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.activeCharacter).toBeNull();
+    expect(localStorage.removeItem).toHaveBeenCalledWith('bitbrawler_active_char');
+  });
+
+  it('should logout and throw error if character is deleted during a fight', async () => {
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    (getDocs as any).mockResolvedValue({
+      docs: [{
+        data: () => mockCharacter,
+        id: 'test-firestore-id'
+      }]
+    });
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    // Simulate character being deleted before updateDoc
+    const notFoundError = new Error('Document not found');
+    (notFoundError as any).code = 'not-found';
+    (updateDoc as any).mockRejectedValue(notFoundError);
+
+    await act(async () => {
+      await expect(result.current.useFight(true, 50))
+        .rejects.toThrow('Your character has been deleted');
+    });
+
+    expect(result.current.activeCharacter).toBeNull();
+    expect(localStorage.removeItem).toHaveBeenCalledWith('bitbrawler_active_char');
+  });
 });
