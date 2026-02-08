@@ -25,4 +25,5 @@ export interface Character {
   fightsLeft: number;
   lastFightReset: number; // Timestamp
   firestoreId?: string; // For updates
+  isBot?: boolean; // To identify automated characters
 }

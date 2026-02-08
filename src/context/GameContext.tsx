@@ -2,9 +2,10 @@ import { createContext, useState, useContext, ReactNode, useEffect, useCallback 
 import { collection, query, where, getDocs, getDocsFromServer, updateDoc, doc, limit } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Character } from '../types/Character';
-import { gainXp, calculateFightXp } from '../utils/xpUtils';
+import { gainXp } from '../utils/xpUtils';
 import { shouldResetDaily } from '../utils/dailyReset';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { findOpponent, MatchmakingResult } from '../utils/matchmakingUtils';
 
 interface GameContextType {
   activeCharacter: Character | null;
@@ -16,7 +17,8 @@ interface GameContextType {
   logout: () => void;
   setCharacter: (char: Character) => void;
   retryConnection: () => Promise<boolean>;
-  useFight: () => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
+  useFight: (won: boolean, xpGained: number) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
+  findOpponent: () => Promise<MatchmakingResult | null>;
   clearXpNotifications: () => void;
 }
 
@@ -235,14 +237,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // Use fight function with XP system
-  const useFight = useCallback(async (): Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null> => {
+  const useFight = useCallback(async (won: boolean, xpGained: number): Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null> => {
     if (!activeCharacter?.firestoreId) return null;
-
-    // Simulate win/loss (can be replaced with actual combat result)
-    const won = Math.random() > 0.3; // 70% win rate for now
-
-    // Calculate XP gained
-    const xpGained = calculateFightXp(activeCharacter.level, won);
 
     // Process XP gain and level up
     const xpResult = gainXp(activeCharacter, xpGained);
@@ -283,6 +279,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [activeCharacter, handleFirebaseError]);
 
+  // Find opponent for matchmaking
+  const findOpponentForPlayer = useCallback(async (): Promise<MatchmakingResult | null> => {
+    if (!activeCharacter) return null;
+    return await findOpponent(activeCharacter);
+  }, [activeCharacter]);
+
   const value: GameContextType = {
     activeCharacter,
     loading,
@@ -294,6 +296,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setCharacter,
     retryConnection,
     useFight,
+    findOpponent: findOpponentForPlayer,
     clearXpNotifications,
   };
 

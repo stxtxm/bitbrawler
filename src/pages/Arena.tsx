@@ -7,9 +7,11 @@ import ConnectionModal from '../components/ConnectionModal';
 import { PixelCharacter } from '../components/PixelCharacter';
 import { PixelIcon } from '../components/PixelIcon';
 import { getXpProgress, formatXpDisplay, getMaxLevel } from '../utils/xpUtils';
+import { CombatView } from '../components/CombatView';
+import { MatchmakingResult } from '../utils/matchmakingUtils';
 
 const Arena = () => {
-    const { activeCharacter, logout, useFight, lastXpGain, lastLevelUp, clearXpNotifications, firebaseAvailable, retryConnection } = useGame();
+    const { activeCharacter, logout, useFight, findOpponent, lastXpGain, lastLevelUp, clearXpNotifications, firebaseAvailable, retryConnection } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const navigate = useNavigate();
     const isOnline = useOnlineStatus();
@@ -21,6 +23,8 @@ const Arena = () => {
     const [retrying, setRetrying] = useState(false);
     const [retryFailed, setRetryFailed] = useState(false);
     const [inventoryOpen, setInventoryOpen] = useState(false);
+    const [matchmaking, setMatchmaking] = useState(false);
+    const [combatData, setCombatData] = useState<MatchmakingResult | null>(null);
 
     // Handle XP gain notification
     useEffect(() => {
@@ -73,16 +77,46 @@ const Arena = () => {
             setTimeout(() => setRetryFailed(false), 2000);
         }
     };
+
     const handleFight = async () => {
         const canProceed = await ensureConnection(connectionMessage);
         if (!canProceed) return;
+
+        setMatchmaking(true);
+
         try {
-            await useFight();
+            // Find an opponent
+            const match = await findOpponent();
+
+            if (!match) {
+                openModal('No opponents found! Try again later.');
+                setMatchmaking(false);
+                return;
+            }
+
+            // Start combat with the matched opponent
+            setCombatData(match);
+            setMatchmaking(false);
         } catch (error) {
-            console.error('Fight failed:', error);
+            console.error('Matchmaking failed:', error);
+            openModal(connectionMessage);
+            setMatchmaking(false);
+        }
+    };
+
+    const handleCombatComplete = async (won: boolean, xpGained: number) => {
+        try {
+            await useFight(won, xpGained);
+        } catch (error) {
+            console.error('Fight result save failed:', error);
             openModal(connectionMessage);
         }
     };
+
+    const handleCloseCombat = () => {
+        setCombatData(null);
+    };
+
 
     return (
         <div className="container retro-container arena-container">
@@ -211,10 +245,10 @@ const Arena = () => {
 
                     <button
                         className="button primary-btn giant-btn"
-                        disabled={!canFight}
+                        disabled={!canFight || matchmaking}
                         onClick={handleFight}
                     >
-                        {isOfflineMode ? 'OFFLINE' : (fightsLeft > 0 ? 'FIGHT!' : 'REST NOW')}
+                        {matchmaking ? 'SEARCHING...' : (isOfflineMode ? 'OFFLINE' : (fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'))}
                     </button>
                 </div>
 
@@ -241,6 +275,15 @@ const Arena = () => {
                         <div className="inventory-footer">EMPTY SLOTS</div>
                     </div>
                 </div>
+            )}
+            {combatData && activeCharacter && (
+                <CombatView
+                    player={activeCharacter}
+                    opponent={combatData.opponent}
+                    matchType={combatData.matchType}
+                    onComplete={handleCombatComplete}
+                    onClose={handleCloseCombat}
+                />
             )}
         </div>
     );
