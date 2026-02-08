@@ -25,6 +25,13 @@ describe('generateCharacterName', () => {
         }
     });
 
+    it('should generate names no longer than 10 characters', () => {
+        for (let i = 0; i < 100; i++) {
+            const name = generateCharacterName();
+            expect(name.length).toBeLessThanOrEqual(10);
+        }
+    });
+
     it('should be reasonably varied', () => {
         const names = new Set();
         for (let i = 0; i < 50; i++) {

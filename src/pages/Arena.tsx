@@ -69,6 +69,7 @@ const Arena = () => {
         const canProceed = await ensureConnection(connectionMessage);
         if (!canProceed) return;
 
+        if (window.navigator.vibrate) window.navigator.vibrate(80);
         setMatchmaking(true);
 
         try {

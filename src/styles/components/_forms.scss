@@ -15,10 +15,18 @@ label {
     border: 2px solid #444;
     color: #fff;
     font-size: 0.8rem;
+    appearance: none;
+    -webkit-appearance: none;
+    border-radius: 0;
 
     &:focus {
         outline: none;
         border-color: $accent-gold;
+    }
+
+    @include mobile {
+        padding: 12px;
+        font-size: 1rem; // Prevents iOS zoom on focus
     }
 }
 

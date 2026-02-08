@@ -5,25 +5,33 @@ import { Character } from '../types/Character';
  * Generates a logical, coherent, single-word name without numbers or special characters.
  */
 export const generateCharacterName = (): string => {
+    // Shorter adjectives and nouns to stay under 10 chars total
     const ADJECTIVES = [
-        'Dark', 'Iron', 'Grim', 'Swift', 'Bold', 'Cold', 'Fire', 'Storm', 'Shadow', 'Moon',
-        'Sun', 'Wild', 'Deep', 'Light', 'Vile', 'Pure', 'Frost', 'Thunder', 'Blood', 'Spirit',
-        'Zen', 'Mega', 'Giga', 'Ultra', 'Hyper', 'Cyber', 'Nano', 'Pixel', 'Retro', 'Turbo',
-        'Void', 'Star', 'Zenith', 'Aero', 'Pyro', 'Cryo', 'Electro', 'Jade', 'Gold', 'Silver'
+        'Dark', 'Iron', 'Grim', 'Swift', 'Bold', 'Cold', 'Fire', 'Storm', 'Wild', 'Deep',
+        'Light', 'Vile', 'Pure', 'Frost', 'Blue', 'Red', 'Gold', 'Zen', 'Cyber', 'Mega'
     ];
 
     const NOUNS = [
-        'Knight', 'Blade', 'Wolf', 'Fang', 'Heart', 'Soul', 'Storm', 'Shadow', 'Sage', 'Mage',
-        'Brawler', 'Fighter', 'Striker', 'Guard', 'Keeper', 'Seeker', 'Walker', 'Runner', 'Dancer', 'Reaper',
-        'Slayer', 'Hunter', 'Master', 'Lord', 'King', 'Queen', 'Dragon', 'Hawk', 'Eagle', 'Falcon',
-        'Titan', 'Giant', 'Golem', 'Wraith', 'Ghost', 'Specter', 'Phantom', 'Orb', 'Core', 'Link',
-        'Code', 'Byte', 'Bit', 'Grid', 'Dojo', 'Sensei', 'Ronin', 'Samurai', 'Ninja', 'Monk'
+        'Knight', 'Blade', 'Wolf', 'Fang', 'Heart', 'Soul', 'Storm', 'Shadow', 'Mage',
+        'Brawler', 'Striker', 'Guard', 'Keeper', 'Lord', 'King', 'Queen', 'Dragon',
+        'Titan', 'Wraith', 'Ghost', 'Specter', 'Byte', 'Bit', 'Link', 'Code'
     ];
 
-    const adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
-    const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+    let adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+    let noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
 
-    return `${adj}${noun}`;
+    let name = `${adj}${noun}`;
+
+    // If somehow too long, try again (max 10 chars)
+    let attempts = 0;
+    while (name.length > 10 && attempts < 10) {
+        adj = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
+        noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+        name = `${adj}${noun}`;
+        attempts++;
+    }
+
+    return name.substring(0, 10);
 };
 
 /**

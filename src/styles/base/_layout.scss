@@ -35,11 +35,19 @@ body {
     width: 100%;
     min-height: 100vh;
     min-height: 100dvh;
-    padding: 15px; // Safe zone for box-shadows
+    padding: 15px;
+    padding-top: max(15px, env(safe-area-inset-top));
+    padding-bottom: max(15px, env(safe-area-inset-bottom));
+    padding-left: max(15px, env(safe-area-inset-left));
+    padding-right: max(15px, env(safe-area-inset-right));
 
     @include mobile {
-        padding: 8px; // Smaller safe zone
-        justify-content: center;
+        padding: 8px;
+        padding-top: max(10px, env(safe-area-inset-top));
+        padding-bottom: max(20px, env(safe-area-inset-bottom)); // Extra space for bottom navigators
+        padding-left: max(8px, env(safe-area-inset-left));
+        padding-right: max(8px, env(safe-area-inset-right));
+        justify-content: flex-start; // Better for scrolling content on mobile
     }
 }
 

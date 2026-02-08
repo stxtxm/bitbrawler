@@ -239,13 +239,14 @@ const CharacterCreation = () => {
                     setShowErrorModal(false);
                   }}
                   placeholder="PLAYER 1"
-                  maxLength={12}
+                  maxLength={10}
                   style={{ flex: 1 }}
                 />
                 <button
                   type="button"
                   className="button icon-btn name-gen-btn"
                   onClick={() => {
+                    if (window.navigator.vibrate) window.navigator.vibrate(50);
                     const newName = generateCharacterName();
                     setName(newName.toUpperCase());
                     setNameError('');
