@@ -141,7 +141,8 @@ async function simulateBotDailyLife() {
         const data = doc.data() as Character;
         return {
             ...data,
-            firestoreId: doc.id
+            firestoreId: doc.id,
+            statPoints: data.statPoints ?? 0
         };
     });
 
@@ -168,7 +169,7 @@ async function simulateBotDailyLife() {
     for (const bot of activeBots) {
         if (!bot.firestoreId) continue;
 
-        let currentBotState = { ...bot };
+        let currentBotState = { ...bot, statPoints: bot.statPoints ?? 0 };
         let fightsLeft = currentBotState.fightsLeft;
         const now = Date.now();
         let totalXpGained = 0;
@@ -211,9 +212,13 @@ async function simulateBotDailyLife() {
             // Apply XP/Level up logic
             const result = gainXp(currentBotState, xpGained);
             const pointsGained = result.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL;
+            const updatedBase = {
+                ...result.updatedCharacter,
+                statPoints: result.updatedCharacter.statPoints ?? currentBotState.statPoints ?? 0
+            };
             const withStats = pointsGained > 0
-                ? autoAllocateStatPoints(result.updatedCharacter, pointsGained)
-                : result.updatedCharacter;
+                ? autoAllocateStatPoints(updatedBase, pointsGained)
+                : updatedBase;
 
             // Update local state for next iteration
             // Record history
@@ -260,7 +265,11 @@ async function simulateBotDailyLife() {
                 statPoints: currentBotState.statPoints
             };
 
-            await db.collection('characters').doc(bot.firestoreId).update(finalUpdates);
+            const sanitizedUpdates = Object.fromEntries(
+                Object.entries(finalUpdates).filter(([, value]) => value !== undefined)
+            );
+
+            await db.collection('characters').doc(bot.firestoreId).update(sanitizedUpdates);
 
             const levelDiff = currentBotState.level - startLevel;
             console.log(`👊 Bot ${bot.name}: ${actionsTaken} fights, +${totalXpGained} XP. ${levelDiff > 0 ? `🆙 LVL UP +${levelDiff}` : ''} Energy left: ${currentBotState.fightsLeft}`);
