@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Character } from '../types/Character';
 import { PixelCharacter } from './PixelCharacter';
+import { PixelIcon } from './PixelIcon';
 import { simulateCombat } from '../utils/combatUtils';
 import { getMatchDifficultyLabel } from '../utils/matchmakingUtils';
+import { parseCombatDetail, CombatAction } from '../utils/combatLogUtils';
 
 interface CombatViewProps {
     player: Character;
@@ -21,6 +23,9 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose }:
         timeline: { attackerHp: number; defenderHp: number }[];
     } | null>(null);
     const [currentRound, setCurrentRound] = useState(0);
+    const logRef = useRef<HTMLDivElement | null>(null);
+    const [actionPulse, setActionPulse] = useState<CombatAction | null>(null);
+    const pulseTimeoutRef = useRef<number | null>(null);
 
     useEffect(() => {
         // Intro phase: 2 seconds
@@ -41,19 +46,54 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose }:
             const roundInterval = setInterval(() => {
                 if (roundIndex < combatResult.details.length) {
                     setCurrentRound(roundIndex);
+                    const detail = combatResult.details[roundIndex];
+                    const action = parseCombatDetail(detail, player.name, opponent.name);
+                    if (action) {
+                        setActionPulse(action);
+                        if (pulseTimeoutRef.current !== null) {
+                            window.clearTimeout(pulseTimeoutRef.current);
+                        }
+                        pulseTimeoutRef.current = window.setTimeout(() => {
+                            setActionPulse(null);
+                            pulseTimeoutRef.current = null;
+                        }, 260);
+                    }
                     roundIndex++;
                 } else {
                     clearInterval(roundInterval);
                     // Show result after combat animation
                     setTimeout(() => {
                         setPhase('result');
-                    }, 1000);
+                    }, 1200);
                 }
-            }, 400); // 400ms per round detail
+            }, 520); // Slightly slower for readability
 
             return () => clearInterval(roundInterval);
         }
     }, [phase, combatResult]);
+
+    useEffect(() => {
+        return () => {
+            if (pulseTimeoutRef.current !== null) {
+                window.clearTimeout(pulseTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        if (phase !== 'combat') {
+            setActionPulse(null);
+        }
+    }, [phase]);
+
+    useEffect(() => {
+        if (phase !== 'combat') return;
+        const node = logRef.current;
+        if (!node) return;
+        requestAnimationFrame(() => {
+            node.scrollTop = node.scrollHeight;
+        });
+    }, [currentRound, phase]);
 
     const handleFinish = () => {
         if (!combatResult) return;
@@ -116,45 +156,35 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose }:
                 {/* Combat Phase */}
                 {phase === 'combat' && combatResult && (
                     <div className="combat-action">
-                        <div className="combat-health">
-                            <div className="health-card left">
-                                <div className="health-meta">
-                                    <span className="health-name">{player.name}</span>
-                                    <span className="health-level">LVL {player.level}</span>
-                                </div>
-                                <div className="health-bar">
-                                    <div
-                                        className={`health-bar-fill ${playerHpPercent <= 25 ? 'low' : ''}`}
-                                        style={{ width: `${playerHpPercent}%` }}
-                                    />
-                                </div>
-                                <div className="health-values">{playerHp} / {playerMaxHp}</div>
-                            </div>
-                            <div className="health-card right">
-                                <div className="health-meta">
-                                    <span className="health-name">{opponent.name}</span>
-                                    <span className="health-level">LVL {opponent.level}</span>
-                                </div>
-                                <div className="health-bar">
-                                    <div
-                                        className={`health-bar-fill ${opponentHpPercent <= 25 ? 'low' : ''}`}
-                                        style={{ width: `${opponentHpPercent}%` }}
-                                    />
-                                </div>
-                                <div className="health-values">{opponentHp} / {opponentMaxHp}</div>
-                            </div>
-                        </div>
                         <div className="combat-fighters">
-                            <div className="fighter-side left">
+                            <div className={`fighter-side left${actionPulse?.actor === 'player' ? ` action-${actionPulse.type}` : ''}`}>
                                 <PixelCharacter seed={player.seed} gender={player.gender} scale={6} />
                                 <div className="fighter-name-small">{player.name}</div>
+                                <div className="fighter-health">
+                                    <div className="health-bar">
+                                        <div
+                                            className={`health-bar-fill ${playerHpPercent <= 25 ? 'low' : ''}`}
+                                            style={{ width: `${playerHpPercent}%` }}
+                                        />
+                                    </div>
+                                    <div className="health-values">{playerHp} / {playerMaxHp}</div>
+                                </div>
                             </div>
-                            <div className="fighter-side right">
+                            <div className={`fighter-side right${actionPulse?.actor === 'opponent' ? ` action-${actionPulse.type}` : ''}`}>
                                 <PixelCharacter seed={opponent.seed} gender={opponent.gender} scale={6} />
                                 <div className="fighter-name-small">{opponent.name}</div>
+                                <div className="fighter-health">
+                                    <div className="health-bar">
+                                        <div
+                                            className={`health-bar-fill ${opponentHpPercent <= 25 ? 'low' : ''}`}
+                                            style={{ width: `${opponentHpPercent}%` }}
+                                        />
+                                    </div>
+                                    <div className="health-values">{opponentHp} / {opponentMaxHp}</div>
+                                </div>
                             </div>
                         </div>
-                        <div className="combat-log">
+                        <div className="combat-log" ref={logRef}>
                             {combatResult.details.slice(0, currentRound + 1).map((detail, idx) => (
                                 <div
                                     key={idx}
@@ -173,7 +203,9 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose }:
                         {won && (
                             <>
                                 <div className="result-badge victory">VICTORY!</div>
-                                <div className="result-icon">🏆</div>
+                                <div className="result-icon pixel">
+                                    <PixelIcon type="trophy" size={72} />
+                                </div>
                                 <div className="result-message">
                                     You defeated {opponent.name} in {combatResult.rounds} rounds!
                                 </div>
@@ -182,7 +214,9 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose }:
                         {!won && !draw && (
                             <>
                                 <div className="result-badge defeat">DEFEAT</div>
-                                <div className="result-icon">💀</div>
+                                <div className="result-icon pixel">
+                                    <PixelIcon type="skull" size={72} />
+                                </div>
                                 <div className="result-message">
                                     {opponent.name} defeated you in {combatResult.rounds} rounds.
                                 </div>
@@ -191,7 +225,9 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose }:
                         {draw && (
                             <>
                                 <div className="result-badge draw">DRAW</div>
-                                <div className="result-icon">⚔️</div>
+                                <div className="result-icon pixel">
+                                    <PixelIcon type="swords" size={72} />
+                                </div>
                                 <div className="result-message">
                                     The match ended in a draw after {combatResult.rounds} rounds!
                                 </div>

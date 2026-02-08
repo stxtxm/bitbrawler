@@ -112,51 +112,11 @@
     min-height: 400px;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
-}
-
-.combat-health {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
     gap: 1rem;
 }
 
-.health-card {
-    background: rgba(0, 0, 0, 0.35);
-    border: 2px solid #ffd700;
-    border-radius: 6px;
-    padding: 0.6rem 0.8rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-}
-
-.health-card.right {
-    border-color: #4ecdc4;
-}
-
-.health-meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-}
-
-.health-name {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 0.6rem;
-    color: #fff;
-    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
-}
-
-.health-level {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 0.55rem;
-    color: #ffd700;
-}
-
 .health-bar {
-    height: 12px;
+    height: 10px;
     border: 2px solid #111;
     background: #1b1b1b;
     border-radius: 4px;
@@ -181,34 +141,74 @@
 
 .health-values {
     font-family: 'Press Start 2P', monospace;
-    font-size: 0.5rem;
+    font-size: 0.45rem;
     color: #c9f7ff;
-    text-align: right;
+    text-align: center;
 }
 
 .combat-fighters {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     padding: 1rem;
     background: rgba(0, 0, 0, 0.3);
     border: 2px solid #4ecdc4;
     border-radius: 4px;
 }
 
+.combat-fighters .pixel-character {
+    width: 72px;
+    height: 108px;
+}
+
 .fighter-side {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
+    flex: 1;
+    min-width: 0;
+    max-width: 50%;
 }
 
 .fighter-side.left {
-    animation: shakeLeft 0.5s ease-in-out;
+    animation: none;
 }
 
 .fighter-side.right {
-    animation: shakeRight 0.5s ease-in-out;
+    animation: none;
+}
+
+.fighter-side.left.action-hit {
+    animation: strikeRight 0.35s ease;
+}
+
+.fighter-side.right.action-hit {
+    animation: strikeLeft 0.35s ease;
+}
+
+.fighter-side.action-crit {
+    animation: critFlash 0.45s ease;
+}
+
+.fighter-side.action-magic {
+    animation: magicPulse 0.5s ease;
+}
+
+.fighter-side.left.action-miss {
+    animation: missWobbleLeft 0.4s ease;
+}
+
+.fighter-side.right.action-miss {
+    animation: missWobbleRight 0.4s ease;
+}
+
+.fighter-side.left.action-counter {
+    animation: counterJoltRight 0.4s ease;
+}
+
+.fighter-side.right.action-counter {
+    animation: counterJoltLeft 0.4s ease;
 }
 
 .fighter-name-small {
@@ -216,6 +216,19 @@
     font-size: 0.7rem;
     color: #fff;
     text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+    text-align: center;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fighter-health {
+    width: 100%;
+    max-width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
 }
 
 .combat-log {
@@ -223,7 +236,9 @@
     border: 2px solid #ffd700;
     padding: 1rem;
     border-radius: 4px;
-    max-height: 300px;
+    height: 180px;
+    max-height: 180px;
+    min-height: 180px;
     overflow-y: auto;
     font-family: 'Press Start 2P', monospace;
     font-size: 0.7rem;
@@ -284,8 +299,16 @@
 }
 
 .result-icon {
-    font-size: 4rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     animation: rotateIn 0.8s ease;
+    filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.35));
+}
+
+.result-icon.pixel svg {
+    width: 72px;
+    height: 72px;
 }
 
 .result-message {
@@ -372,38 +395,6 @@
     }
 }
 
-@keyframes shakeLeft {
-
-    0%,
-    100% {
-        transform: translateX(0);
-    }
-
-    25% {
-        transform: translateX(-5px);
-    }
-
-    75% {
-        transform: translateX(5px);
-    }
-}
-
-@keyframes shakeRight {
-
-    0%,
-    100% {
-        transform: translateX(0);
-    }
-
-    25% {
-        transform: translateX(5px);
-    }
-
-    75% {
-        transform: translateX(-5px);
-    }
-}
-
 @keyframes flashText {
 
     0%,
@@ -414,6 +405,114 @@
     50% {
         opacity: 0.7;
         transform: scale(1.05);
+    }
+}
+
+@keyframes strikeRight {
+    0% {
+        transform: translateX(0) scale(1);
+    }
+    40% {
+        transform: translateX(6px) scale(1.04);
+    }
+    100% {
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes strikeLeft {
+    0% {
+        transform: translateX(0) scale(1);
+    }
+    40% {
+        transform: translateX(-6px) scale(1.04);
+    }
+    100% {
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes critFlash {
+    0% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+    40% {
+        transform: scale(1.08);
+        filter: brightness(1.4);
+    }
+    100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+}
+
+@keyframes magicPulse {
+    0% {
+        transform: translateY(0) scale(1);
+        filter: drop-shadow(0 0 0 rgba(78, 205, 196, 0));
+    }
+    50% {
+        transform: translateY(-4px) scale(1.03);
+        filter: drop-shadow(0 0 8px rgba(78, 205, 196, 0.8));
+    }
+    100% {
+        transform: translateY(0) scale(1);
+        filter: drop-shadow(0 0 0 rgba(78, 205, 196, 0));
+    }
+}
+
+@keyframes missWobbleLeft {
+    0% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    50% {
+        transform: translateX(-6px);
+        opacity: 0.7;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes missWobbleRight {
+    0% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    50% {
+        transform: translateX(6px);
+        opacity: 0.7;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes counterJoltRight {
+    0% {
+        transform: translateX(0) scale(1);
+    }
+    35% {
+        transform: translateX(6px) scale(1.03);
+    }
+    100% {
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes counterJoltLeft {
+    0% {
+        transform: translateX(0) scale(1);
+    }
+    35% {
+        transform: translateX(-6px) scale(1.03);
+    }
+    100% {
+        transform: translateX(0) scale(1);
     }
 }
 
@@ -491,24 +590,17 @@
 
     .combat-log {
         font-size: 0.6rem;
-        max-height: 200px;
+        height: 130px;
+        max-height: 130px;
+        min-height: 130px;
     }
 
-    .combat-health {
-        grid-template-columns: 1fr;
-    }
-
-    .health-meta {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .health-name {
-        font-size: 0.55rem;
+    .fighter-health {
+        max-width: 160px;
     }
 
     .health-values {
-        font-size: 0.45rem;
+        font-size: 0.4rem;
     }
 
     .result-badge {
@@ -517,7 +609,7 @@
     }
 
     .result-icon {
-        font-size: 3rem;
+        transform: scale(0.85);
     }
 
     .result-message {
@@ -532,20 +624,61 @@
 
 @media (max-width: 520px) {
     .combat-action {
-        gap: 1rem;
+        gap: 0.8rem;
     }
 
     .combat-fighters {
-        flex-direction: column;
-        gap: 0.75rem;
+        flex-direction: row;
+        gap: 0.5rem;
+        padding: 0.6rem;
     }
 
     .fighter-name-small {
         font-size: 0.6rem;
     }
 
+    .combat-fighters .pixel-character {
+        width: 56px;
+        height: 84px;
+    }
+
+    .fighter-health {
+        max-width: 140px;
+    }
+
     .combat-log {
-        max-height: 160px;
+        height: 110px;
+        max-height: 110px;
+        min-height: 110px;
+    }
+}
+
+@media (max-width: 380px) {
+    .result-icon {
+        transform: scale(0.75);
+    }
+
+    .combat-log {
+        height: 100px;
+        max-height: 100px;
+        min-height: 100px;
+    }
+
+    .combat-fighters {
+        padding: 0.5rem;
+    }
+
+    .combat-fighters .pixel-character {
+        width: 48px;
+        height: 72px;
+    }
+
+    .fighter-name-small {
+        font-size: 0.55rem;
+    }
+
+    .fighter-health {
+        max-width: 120px;
     }
 }
 

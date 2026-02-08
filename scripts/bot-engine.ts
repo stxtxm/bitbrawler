@@ -106,7 +106,7 @@ async function runBotLogic() {
 }
 
 async function createNewBot() {
-    const fullName = generateCharacterName();
+    const fullName = generateCharacterName().toUpperCase();
 
     const stats = generateInitialStats(fullName, Math.random() > 0.5 ? 'male' : 'female');
 

@@ -122,10 +122,10 @@ export function simulateCombat(attacker: Character, defender: Character): {
 
       const magicChance = Math.min(30, 5 + (actorStats.magicPower * 0.35))
       const isMagic = Math.random() * 100 < magicChance
-      const magicSurge = isMagic ? Math.round(actorStats.magicPower * 0.45) : 0
-      const varianceFactor = 0.88 + Math.random() * 0.24
-      const baseDamage = (actorStats.offense * 1.05 * damageMultiplier) - (targetStats.defense * 0.7)
-      const damage = Math.max(3, Math.round((baseDamage + magicSurge) * varianceFactor * actorComeback))
+      const magicSurge = isMagic ? Math.round(actorStats.magicPower * 0.55) : 0
+      const varianceFactor = 0.9 + Math.random() * 0.2
+      const baseDamage = (actorStats.offense * 1.2 * damageMultiplier) - (targetStats.defense * 0.55)
+      const damage = Math.max(4, Math.round((baseDamage + magicSurge) * varianceFactor * actorComeback))
       targetHp -= damage
 
       if (isMagic) {
@@ -133,7 +133,7 @@ export function simulateCombat(attacker: Character, defender: Character): {
         return {
           actorHp,
           targetHp,
-          detail: `Round ${round}: ${actor.name} ${magicVerb} ${damage} DMG${actorComeback > 1 ? " 🔥" : ""}`
+          detail: `Round ${round}: ${actor.name} ${magicVerb} ${damage} DMG`
         }
       }
 
@@ -141,7 +141,7 @@ export function simulateCombat(attacker: Character, defender: Character): {
       return {
         actorHp,
         targetHp,
-        detail: `Round ${round}: ${actor.name} ${actionVerb}${msg} ${damage} DMG${actorComeback > 1 ? " 🔥" : ""}`
+        detail: `Round ${round}: ${actor.name} ${actionVerb}${msg} ${damage} DMG`
       }
     }
 
