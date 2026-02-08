@@ -41,6 +41,16 @@ describe('Combat System', () => {
         expect(stats.critChance).toBe(28);
     });
 
+    it('should include inventory bonuses in combat stats', () => {
+        const base = { ...mockCharacter, strength: 10, inventory: [] };
+        const boosted = { ...mockCharacter, strength: 10, inventory: ['rusty_sword'] };
+
+        const baseStats = calculateCombatStats(base as Character);
+        const boostedStats = calculateCombatStats(boosted as Character);
+
+        expect(boostedStats.offense).toBeGreaterThan(baseStats.offense);
+    });
+
     it('should apply diminishing returns to high stats', () => {
         const low = calculateCombatStats({ ...mockCharacter, strength: 10 });
         const lowPlus = calculateCombatStats({ ...mockCharacter, strength: 11 });

@@ -84,4 +84,36 @@ describe('Arena stat icons', () => {
       expect(getByText(label)).toBeInTheDocument();
     });
   });
+
+  it('applies inventory bonuses to arena stats', () => {
+    const boostedCharacter: Character = {
+      ...mockCharacter,
+      strength: 9,
+      inventory: ['rusty_sword'],
+    };
+
+    mockUseGame.mockReturnValue({
+      activeCharacter: boostedCharacter,
+      logout: vi.fn(),
+      useFight: vi.fn(),
+      findOpponent: vi.fn(),
+      lastXpGain: null,
+      lastLevelUp: null,
+      clearXpNotifications: vi.fn(),
+      firebaseAvailable: true,
+      allocateStatPoint: vi.fn(),
+      rollLootbox: vi.fn(),
+    });
+
+    const { getByText } = render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Arena />
+      </MemoryRouter>
+    );
+
+    const strengthLabel = getByText('STR');
+    const row = strengthLabel.closest('.compact-stat');
+    const value = row?.querySelector('.compact-stat-value');
+    expect(value?.textContent).toBe('10');
+  });
 });

@@ -11,7 +11,7 @@ import { getXpProgress, formatXpDisplay, getMaxLevel } from '../utils/xpUtils';
 import { StatKey } from '../utils/statUtils';
 import { CombatView } from '../components/CombatView';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
-import { applyEquipmentToCharacter, getItemById } from '../utils/equipmentUtils';
+import { applyEquipmentToCharacter, getEquipmentBonuses, getItemById } from '../utils/equipmentUtils';
 import { canRollLootbox } from '../utils/lootboxUtils';
 import { ItemStats, PixelItemAsset } from '../types/Item';
 
@@ -104,6 +104,11 @@ const Arena = () => {
             .filter(([, value]) => typeof value === 'number' && value !== 0) as [keyof ItemStats, number][])
         : [];
     const previewSlotLabel = previewItem ? previewItem.slot.toUpperCase() : '';
+    const totalBonus = getEquipmentBonuses(activeCharacter);
+    const bonusOrder: Array<keyof ItemStats> = ['strength', 'vitality', 'dexterity', 'luck', 'intelligence', 'focus', 'hp'];
+    const totalBonusEntries = bonusOrder
+        .map((key) => ({ key, value: totalBonus[key] || 0 }))
+        .filter((entry) => entry.value > 0);
 
     const handleAllocateStat = async (stat: StatKey) => {
         if (allocatingStat || pendingStatPoints <= 0) return;
@@ -521,6 +526,24 @@ const Arena = () => {
                                     </>
                                 ) : (
                                     <div className="inventory-empty-details">TAP AN ITEM TO VIEW BONUSES</div>
+                                )}
+                                {totalBonusEntries.length > 0 && (
+                                    <div className="inventory-bonus-summary">
+                                        <div className="bonus-title">TOTAL BONUS</div>
+                                        <div className="bonus-list">
+                                            {totalBonusEntries.map((entry) => {
+                                                const meta = itemStatMeta[entry.key];
+                                                if (!meta) return null;
+                                                return (
+                                                    <div key={entry.key} className="bonus-chip">
+                                                        <PixelIcon type={meta.icon} size={10} />
+                                                        <span className="bonus-label">{meta.label}</span>
+                                                        <span className="bonus-value">+{entry.value}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         </div>
