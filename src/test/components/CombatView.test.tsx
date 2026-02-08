@@ -2,6 +2,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import { CombatView } from '../../components/CombatView';
 import { Character } from '../../types/Character';
+import * as combatUtils from '../../utils/combatUtils';
+import * as combatLogUtils from '../../utils/combatLogUtils';
 
 describe('CombatView Interface', () => {
     const player: Character = {
@@ -67,5 +69,51 @@ describe('CombatView Interface', () => {
         expect(logs).toBeInTheDocument();
 
         vi.useRealTimers();
+    });
+
+    it('should apply action and reaction classes during combat', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 1,
+            details: ['Hero lands a critical hit!'],
+            timeline: [{ attackerHp: 100, defenderHp: 80 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'crit'
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => {
+            vi.advanceTimersByTime(2500);
+        });
+
+        act(() => {
+            vi.advanceTimersByTime(600);
+        });
+
+        const combatAction = container.querySelector('.combat-action.action-crit');
+        expect(combatAction).not.toBeNull();
+
+        const playerSide = container.querySelector('.fighter-side.left.action-crit');
+        const opponentSide = container.querySelector('.fighter-side.right.react-crit');
+
+        expect(playerSide).not.toBeNull();
+        expect(opponentSide).not.toBeNull();
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
     });
 });

@@ -4,7 +4,7 @@ import { PixelCharacter } from './PixelCharacter';
 import { PixelIcon } from './PixelIcon';
 import { simulateCombat } from '../utils/combatUtils';
 import { getMatchDifficultyLabel } from '../utils/matchmakingUtils';
-import { parseCombatDetail, CombatAction } from '../utils/combatLogUtils';
+import { parseCombatDetail, CombatAction, CombatActionType } from '../utils/combatLogUtils';
 
 interface CombatViewProps {
     player: Character;
@@ -29,6 +29,13 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
     const pulseTimeoutRef = useRef<number | null>(null);
     const [scanIndex, setScanIndex] = useState(0);
     const [scanLocked, setScanLocked] = useState(false);
+    const actionDurations: Record<CombatActionType, number> = {
+        hit: 380,
+        crit: 560,
+        magic: 600,
+        miss: 420,
+        counter: 440,
+    };
 
     const scanList = useMemo(() => {
         const map = new Map<string, Character>();
@@ -104,10 +111,11 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
                         if (pulseTimeoutRef.current !== null) {
                             window.clearTimeout(pulseTimeoutRef.current);
                         }
+                        const duration = actionDurations[action.type] ?? 320;
                         pulseTimeoutRef.current = window.setTimeout(() => {
                             setActionPulse(null);
                             pulseTimeoutRef.current = null;
-                        }, 260);
+                        }, duration);
                     }
                     roundIndex++;
                 } else {
@@ -179,6 +187,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
     const opponentHp = Math.max(0, Math.min(opponentMaxHp, snapshot.defenderHp));
     const playerHpPercent = Math.max(0, Math.min(100, (playerHp / playerMaxHp) * 100));
     const opponentHpPercent = Math.max(0, Math.min(100, (opponentHp / opponentMaxHp) * 100));
+    const reactionType = actionPulse && actionPulse.type !== 'miss' ? actionPulse.type : null;
 
     return (
         <div className="combat-overlay" onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()}>
@@ -210,9 +219,17 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
 
                 {/* Combat Phase */}
                 {phase === 'combat' && combatResult && (
-                    <div className="combat-action">
+                    <div className={`combat-action${actionPulse ? ` action-${actionPulse.type}` : ''}`}>
                         <div className="combat-fighters">
-                            <div className={`fighter-side left${actionPulse?.actor === 'player' ? ` action-${actionPulse.type}` : ''}`}>
+                            <div
+                                className={`fighter-side left${
+                                    actionPulse?.actor === 'player'
+                                        ? ` action-${actionPulse.type}`
+                                        : reactionType && actionPulse?.actor === 'opponent'
+                                            ? ` react-${reactionType}`
+                                            : ''
+                                }`}
+                            >
                                 <PixelCharacter seed={player.seed} gender={player.gender} scale={6} />
                                 <div className="fighter-name-small">{player.name}</div>
                                 <div className="fighter-health">
@@ -225,7 +242,15 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
                                     <div className="health-values">{playerHp} / {playerMaxHp}</div>
                                 </div>
                             </div>
-                            <div className={`fighter-side right${actionPulse?.actor === 'opponent' ? ` action-${actionPulse.type}` : ''}`}>
+                            <div
+                                className={`fighter-side right${
+                                    actionPulse?.actor === 'opponent'
+                                        ? ` action-${actionPulse.type}`
+                                        : reactionType && actionPulse?.actor === 'player'
+                                            ? ` react-${reactionType}`
+                                            : ''
+                                }`}
+                            >
                                 <PixelCharacter seed={opponent.seed} gender={opponent.gender} scale={6} />
                                 <div className="fighter-name-small">{opponent.name}</div>
                                 <div className="fighter-health">
