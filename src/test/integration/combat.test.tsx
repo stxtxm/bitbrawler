@@ -34,7 +34,8 @@ describe('🤝 Matchmaking System', () => {
         losses: 0,
         fightsLeft: 5,
         lastFightReset: 0,
-        firestoreId: 'p1'
+        firestoreId: 'p1',
+        foughtToday: []
     };
 
     const sameLevelOpponent: Character = {
@@ -78,6 +79,43 @@ describe('🤝 Matchmaking System', () => {
         });
 
         const result = await findOpponent(player);
+        expect(result).toBeNull();
+    });
+
+    it('should exclude opponents already fought today', async () => {
+        const playerWithHistory: Character = { ...player, foughtToday: ['o1'] };
+        const freshOpponent: Character = { ...sameLevelOpponent, name: 'Fresh', firestoreId: 'o2' };
+
+        (getDocs as any).mockResolvedValue({
+            empty: false,
+            docs: [
+                { id: 'o1', data: () => sameLevelOpponent },
+                { id: 'o2', data: () => freshOpponent }
+            ]
+        });
+
+        const result = await findOpponent(playerWithHistory);
+
+        expect(result).not.toBeNull();
+        if (result) {
+            expect(result.opponent.firestoreId).toBe('o2');
+            expect(result.opponent.name).toBe('Fresh');
+        }
+    });
+
+    it('should return null if all same-level opponents were fought today', async () => {
+        const playerWithHistory: Character = { ...player, foughtToday: ['o1', 'o2'] };
+        const opponentTwo: Character = { ...sameLevelOpponent, name: 'Opponent Two', firestoreId: 'o2' };
+
+        (getDocs as any).mockResolvedValue({
+            empty: false,
+            docs: [
+                { id: 'o1', data: () => sameLevelOpponent },
+                { id: 'o2', data: () => opponentTwo }
+            ]
+        });
+
+        const result = await findOpponent(playerWithHistory);
         expect(result).toBeNull();
     });
 

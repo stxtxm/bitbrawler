@@ -181,7 +181,7 @@ describe('GameContext Integration', () => {
     const initialFights = result.current.activeCharacter?.fightsLeft || 0;
 
     await act(async () => {
-      await result.current.useFight(true, 50, 'MOCK_FOE');
+      await result.current.useFight(true, 50, 'MOCK_FOE', 'opp-1');
     });
 
     expect(result.current.activeCharacter?.fightsLeft).toBe(initialFights - 1);
@@ -191,6 +191,39 @@ describe('GameContext Integration', () => {
     expect(lastCall[1]).toMatchObject({ fightsLeft: initialFights - 1 });
     expect(lastCall[1]).toHaveProperty('level');
     expect(lastCall[1]).toHaveProperty('experience');
+  });
+
+  it('should track unique opponents fought today', async () => {
+    const charWithHistory: Character = {
+      ...mockCharacter,
+      foughtToday: ['opp-1']
+    };
+
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(charWithHistory));
+    (getDocs as any).mockResolvedValue({
+      docs: [{
+        data: () => charWithHistory,
+        id: 'test-firestore-id'
+      }]
+    });
+    (updateDoc as any).mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.useFight(true, 50, 'MOCK_FOE', 'opp-2');
+    });
+
+    expect(result.current.activeCharacter?.foughtToday).toEqual(['opp-1', 'opp-2']);
+
+    const lastCall = (updateDoc as any).mock.calls.at(-1);
+    expect(lastCall[1]).toMatchObject({ foughtToday: ['opp-1', 'opp-2'] });
   });
 
   it('should handle logout correctly', async () => {
@@ -277,7 +310,7 @@ describe('GameContext Integration', () => {
     });
 
     await act(async () => {
-      await result.current.useFight(true, 50, 'MOCK_FOE');
+      await result.current.useFight(true, 50, 'MOCK_FOE', 'opp-1');
     });
 
     // Should have XP gain notification
@@ -303,7 +336,7 @@ describe('GameContext Integration', () => {
     });
 
     await act(async () => {
-      await result.current.useFight(true, 50, 'MOCK_OPPONENT');
+      await result.current.useFight(true, 50, 'MOCK_OPPONENT', 'opp-2');
     });
 
     expect(result.current.lastXpGain).not.toBeNull();
@@ -354,7 +387,7 @@ describe('GameContext Integration', () => {
     (updateDoc as any).mockRejectedValue(notFoundError);
 
     await act(async () => {
-      await expect(result.current.useFight(true, 50, 'FOE'))
+      await expect(result.current.useFight(true, 50, 'FOE', 'opp-3'))
         .rejects.toThrow('Your character has been deleted');
     });
 

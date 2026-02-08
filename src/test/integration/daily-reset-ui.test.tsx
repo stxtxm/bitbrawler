@@ -21,7 +21,7 @@ describe('Daily reset UI gating', () => {
     vi.clearAllMocks()
   })
 
-  it('shows loading screen when daily reset is due', () => {
+  it('does not block UI when daily reset is due (centralized reset)', () => {
     mockUseOnlineStatus.mockReturnValue(true)
     mockUseGame.mockReturnValue({
       activeCharacter: { lastFightReset: Date.now() - 86400000 },
@@ -29,12 +29,13 @@ describe('Daily reset UI gating', () => {
       firebaseAvailable: true,
     })
 
-    const { getByText } = render(
+    const { queryByText, container } = render(
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <App />
       </MemoryRouter>
     )
 
-    expect(getByText('LOADING...')).toBeInTheDocument()
+    expect(queryByText('LOADING...')).toBeNull()
+    expect(container.querySelector('.App')).not.toBeNull()
   })
 })

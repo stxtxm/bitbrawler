@@ -145,38 +145,24 @@ describe('Firebase Unavailability Handling', () => {
     });
 
     await act(async () => {
-      await expect(result.current.useFight(true, 50, 'FOE')).rejects.toThrow('Connection error - fight not counted');
+      await expect(result.current.useFight(true, 50, 'FOE', 'opp-1')).rejects.toThrow('Connection error - fight not counted');
     });
 
     expect(result.current.firebaseAvailable).toBe(false);
     expect(result.current.activeCharacter).toBeDefined();
   });
 
-  it('should set firebaseAvailable to false when daily reset fails', async () => {
-    const yesterdayChar = {
-      ...mockCharacter,
-      lastFightReset: Date.now() - 86400000 * 2,
-      fightsLeft: 0
-    };
-    (localStorage.getItem as any).mockReturnValue(JSON.stringify(yesterdayChar));
+  it('should return false when retryConnection runs while offline', async () => {
+    const originalOnLine = navigator.onLine;
+    Object.defineProperty(navigator, 'onLine', { value: false, configurable: true });
 
-    // First call: sync character
-    (getDocs as any).mockResolvedValueOnce({
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    (getDocs as any).mockResolvedValue({
       docs: [{
-        data: () => yesterdayChar,
+        data: () => mockCharacter,
         id: 'test-firestore-id'
       }]
     });
-
-    // Second call: get server time
-    (getDocs as any).mockResolvedValueOnce({
-      docs: [{
-        data: () => ({ timestamp: Date.now() })
-      }]
-    });
-
-    // Update fails
-    (updateDoc as any).mockRejectedValueOnce(new Error('Server unavailable'));
 
     const { result } = renderHook(() => useGame(), {
       wrapper: createWrapper()
@@ -186,16 +172,15 @@ describe('Firebase Unavailability Handling', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    // Advance timers to trigger daily reset check
+    let ok = true;
     await act(async () => {
-      vi.advanceTimersByTime(100);
+      ok = await result.current.retryConnection();
     });
 
-    await waitFor(() => {
-      expect(result.current.firebaseAvailable).toBe(false);
-    }, { timeout: 5000 });
+    expect(ok).toBe(false);
+    expect(result.current.firebaseAvailable).toBe(false);
 
-    expect(result.current.activeCharacter).toBeDefined();
+    Object.defineProperty(navigator, 'onLine', { value: originalOnLine, configurable: true });
   });
 
   it('should keep localStorage when Firebase is unavailable', async () => {
@@ -238,7 +223,7 @@ describe('Firebase Unavailability Handling', () => {
     expect(loginResult).toBe('Connection error - please check your internet connection and try again');
 
     await act(async () => {
-      await expect(result.current.useFight(true, 50, 'FOE')).rejects.toThrow('Connection error - fight not counted');
+      await expect(result.current.useFight(true, 50, 'FOE', 'opp-2')).rejects.toThrow('Connection error - fight not counted');
     });
   });
 
