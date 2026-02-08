@@ -1,0 +1,11 @@
+
+ RUN  v1.6.1 /home/timo/dev/bitbrawler
+
+ ✓ src/test/unit/xpUtils.test.ts  (20 tests) 15ms
+ ✓ src/test/integration/game-context.test.tsx  (11 tests) 929ms
+
+ Test Files  2 passed (2)
+      Tests  31 passed (31)
+   Start at  15:42:17
+   Duration  3.39s (transform 238ms, setup 321ms, collect 618ms, tests 944ms, environment 1.55s, prepare 358ms)
+

@@ -1,3 +1,10 @@
+export interface FightHistory {
+  date: number; // Timestamp
+  opponentName: string;
+  won: boolean;
+  xpGained: number;
+}
+
 export interface Character {
   id?: number;
   seed: string;
@@ -26,4 +33,5 @@ export interface Character {
   lastFightReset: number; // Timestamp
   firestoreId?: string; // For updates
   isBot?: boolean; // To identify automated characters
+  fightHistory?: FightHistory[];
 }

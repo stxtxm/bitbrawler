@@ -740,3 +740,108 @@
         transform: scale(1.1);
     }
 }
+
+// History Modal Styles
+.history-modal {
+    max-width: 450px !important;
+    background: radial-gradient(circle at top, #0a0a1a 0%, #000 70%) !important;
+    @include retro-border(4px, $accent-gold);
+}
+
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    max-height: 50vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: $accent-gold #111;
+
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: #111;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: $accent-gold;
+    }
+}
+
+.history-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid #333;
+    gap: 12px;
+    font-family: rgba(255, 255, 255, 0.9);
+
+    &.won {
+        border-left: 4px solid $accent-green;
+
+        .history-status {
+            color: $accent-green;
+        }
+    }
+
+    &.lost {
+        border-left: 4px solid $accent-red;
+
+        .history-status {
+            color: $accent-red;
+        }
+    }
+
+    @include mobile {
+        padding: 8px;
+        gap: 8px;
+    }
+}
+
+.history-status {
+    font-size: 0.6rem;
+    font-weight: bold;
+    min-width: 40px;
+}
+
+.history-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.history-opponent {
+    font-size: 0.75rem;
+    color: #fff;
+
+    @include mobile {
+        font-size: 0.6rem;
+    }
+}
+
+.history-date {
+    font-size: 0.45rem;
+    color: #666;
+}
+
+.history-xp {
+    font-size: 0.65rem;
+    color: $accent-gold;
+
+    @include mobile {
+        font-size: 0.55rem;
+    }
+}
+
+.no-history {
+    padding: 40px 20px;
+    text-align: center;
+    color: #444;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+}

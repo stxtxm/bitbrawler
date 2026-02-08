@@ -18,7 +18,7 @@ interface GameContextType {
   logout: () => void;
   setCharacter: (char: Character) => void;
   retryConnection: () => Promise<boolean>;
-  useFight: (won: boolean, xpGained: number) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
+  useFight: (won: boolean, xpGained: number, opponentName: string) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
   findOpponent: () => Promise<MatchmakingResult | null>;
   clearXpNotifications: () => void;
 }
@@ -242,25 +242,40 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  // Use fight function with XP system
-  const useFight = useCallback(async (won: boolean, xpGained: number): Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null> => {
+  const useFight = useCallback(async (won: boolean, xpGained: number, opponentName: string): Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null> => {
     if (!activeCharacter?.firestoreId) return null;
 
     // Process XP gain and level up
     const xpResult = gainXp(activeCharacter, xpGained);
 
+    // Prepare history entry
+    const historyEntry = {
+      date: Date.now(),
+      won,
+      xpGained,
+      opponentName
+    };
+
+    // Maintain a max of 20 history entries
+    const existingHistory = activeCharacter.fightHistory || [];
+    const newHistory = [historyEntry, ...existingHistory].slice(0, 20);
+
     const updatedChar = {
       ...xpResult.updatedCharacter,
       fightsLeft: Math.max(0, (activeCharacter.fightsLeft || 0) - 1),
       wins: won ? (activeCharacter.wins || 0) + 1 : (activeCharacter.wins || 0),
-      losses: won ? (activeCharacter.losses || 0) : (activeCharacter.losses || 0) + 1
+      losses: won ? (activeCharacter.losses || 0) : (activeCharacter.losses || 0) + 1,
+      fightHistory: newHistory
     };
 
     try {
       await updateDoc(doc(db, "characters", activeCharacter.firestoreId!), {
         fightsLeft: updatedChar.fightsLeft,
         level: updatedChar.level,
-        experience: updatedChar.experience
+        experience: updatedChar.experience,
+        wins: updatedChar.wins,
+        losses: updatedChar.losses,
+        fightHistory: updatedChar.fightHistory
       });
 
       setActiveCharacter(updatedChar);

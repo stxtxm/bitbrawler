@@ -167,11 +167,23 @@ async function simulateBotDailyLife() {
             const result = gainXp(currentBotState, xpGained);
 
             // Update local state for next iteration
+            // Record history
+            const historyEntry = {
+                date: Date.now(),
+                won,
+                xpGained,
+                opponentName: 'ARENA FOE'
+            };
+            const existingHistory = currentBotState.fightHistory || [];
+            const newHistory = [historyEntry, ...existingHistory].slice(0, 20);
+
+            // Update local state for next iteration
             currentBotState = {
                 ...result.updatedCharacter,
                 fightsLeft: fightsLeft - 1,
                 wins: won ? (currentBotState.wins || 0) + 1 : (currentBotState.wins || 0),
                 losses: won ? (currentBotState.losses || 0) : (currentBotState.losses || 0) + 1,
+                fightHistory: newHistory,
                 // Simple auto-distribution logic if leveled up
                 strength: result.leveledUp ? currentBotState.strength + 1 : currentBotState.strength,
                 vitality: result.leveledUp ? currentBotState.vitality + 1 : currentBotState.vitality,
@@ -192,6 +204,7 @@ async function simulateBotDailyLife() {
                 fightsLeft: currentBotState.fightsLeft,
                 wins: currentBotState.wins,
                 losses: currentBotState.losses,
+                fightHistory: currentBotState.fightHistory,
                 strength: currentBotState.strength,
                 vitality: currentBotState.vitality,
                 dexterity: currentBotState.dexterity,

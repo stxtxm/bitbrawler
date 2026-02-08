@@ -21,6 +21,7 @@ const Arena = () => {
     const [showLevelUp, setShowLevelUp] = useState(false);
     const [xpBarAnimating, setXpBarAnimating] = useState(false);
     const [inventoryOpen, setInventoryOpen] = useState(false);
+    const [historyOpen, setHistoryOpen] = useState(false);
     const [matchmaking, setMatchmaking] = useState(false);
     const [combatData, setCombatData] = useState<MatchmakingResult | null>(null);
 
@@ -94,7 +95,8 @@ const Arena = () => {
 
     const handleCombatComplete = async (won: boolean, xpGained: number) => {
         try {
-            await useFight(won, xpGained);
+            const opponentName = combatData?.opponent.name || 'UNKNOWN';
+            await useFight(won, xpGained, opponentName);
         } catch (error: any) {
             console.error('Fight result save failed:', error);
             openModal(error.message || connectionMessage);
@@ -133,6 +135,14 @@ const Arena = () => {
                     <div className="arena-lvl-badge">LVL {activeCharacter.level}</div>
                 </div>
                 <div className="header-actions">
+                    <button
+                        className="button icon-btn"
+                        onClick={() => setHistoryOpen(true)}
+                        title="Combat History"
+                        aria-label="Combat History"
+                    >
+                        <PixelIcon type="history" size={26} />
+                    </button>
                     <button
                         className="button icon-btn inventory-btn"
                         onClick={() => setInventoryOpen(true)}
@@ -248,6 +258,37 @@ const Arena = () => {
                             ))}
                         </div>
                         <div className="inventory-footer">EMPTY SLOTS</div>
+                    </div>
+                </div>
+            )}
+            {historyOpen && (
+                <div className="retro-modal-overlay" onClick={() => setHistoryOpen(false)}>
+                    <div className="retro-modal history-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="inventory-header">
+                            <h2 className="inventory-title">COMBAT LOGS</h2>
+                            <button className="inventory-close" onClick={() => setHistoryOpen(false)} aria-label="Close history">
+                                ×
+                            </button>
+                        </div>
+                        <div className="history-list">
+                            {!activeCharacter.fightHistory || activeCharacter.fightHistory.length === 0 ? (
+                                <div className="no-history">NO BATTLES RECORDED YET</div>
+                            ) : (
+                                activeCharacter.fightHistory.map((fight, i) => (
+                                    <div key={i} className={`history-item ${fight.won ? 'won' : 'lost'}`}>
+                                        <div className="history-status">{fight.won ? 'WIN' : 'LOST'}</div>
+                                        <div className="history-info">
+                                            <div className="history-opponent">VS {fight.opponentName}</div>
+                                            <div className="history-date">
+                                                {new Date(fight.date).toLocaleDateString()} {new Date(fight.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </div>
+                                        </div>
+                                        <div className="history-xp">+{fight.xpGained} XP</div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                        <div className="inventory-footer">LAST 20 ENCOUNTERS</div>
                     </div>
                 </div>
             )}
