@@ -13,7 +13,8 @@ vi.mock('firebase/firestore', () => ({
     query: vi.fn(),
     where: vi.fn(),
     limit: vi.fn(),
-    getDocs: vi.fn()
+    getDocs: vi.fn(),
+    deleteField: vi.fn(),
 }));
 
 describe('🤝 Matchmaking System', () => {
@@ -69,6 +70,7 @@ describe('🤝 Matchmaking System', () => {
             expect(result.opponent.level).toBe(player.level);
             expect(result.opponent.name).toBe('Equal');
             expect(result.matchType).toMatch(/balanced|similar/);
+            expect(result.candidates.length).toBeGreaterThan(0);
         }
     });
 
@@ -101,6 +103,7 @@ describe('🤝 Matchmaking System', () => {
         if (result) {
             expect(result.opponent.firestoreId).toBe('o2');
             expect(result.opponent.name).toBe('Fresh');
+            expect(result.candidates.some((cand) => cand.firestoreId === 'o2')).toBe(true);
         }
     });
 

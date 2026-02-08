@@ -66,6 +66,7 @@ describe('Arena stat icons', () => {
       firebaseAvailable: true,
       allocateStatPoint: vi.fn(),
       rollLootbox: vi.fn(),
+      startMatchmaking: vi.fn(),
     });
   });
 
@@ -103,6 +104,7 @@ describe('Arena stat icons', () => {
       firebaseAvailable: true,
       allocateStatPoint: vi.fn(),
       rollLootbox: vi.fn(),
+      startMatchmaking: vi.fn(),
     });
 
     const { getByText } = render(

@@ -6,6 +6,7 @@ import { applyEquipmentToCharacter } from './equipmentUtils';
 export interface MatchmakingResult {
     opponent: Character;
     matchType: 'balanced' | 'similar';
+    candidates: Character[];
 }
 
 /**
@@ -103,10 +104,12 @@ async function findOpponentByExactLevel(player: Character): Promise<MatchmakingR
 
         // Determine match type based on power difference
         const matchType = selectedCandidate.powerDiff <= 3 ? 'balanced' : 'similar';
+        const candidateList = sortedCandidates.map((entry) => entry.character);
 
         return {
             opponent: selectedCandidate.character,
-            matchType
+            matchType,
+            candidates: candidateList
         };
     } catch (error) {
         console.error('Exact level query error:', error);

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Character } from '../types/Character';
 import { PixelCharacter } from './PixelCharacter';
 import { PixelIcon } from './PixelIcon';
@@ -12,9 +12,10 @@ interface CombatViewProps {
     matchType: 'balanced' | 'similar';
     onComplete: (won: boolean, xpGained: number) => void;
     onClose: () => void;
+    candidates?: Character[];
 }
 
-export const CombatView = ({ player, opponent, matchType, onComplete, onClose }: CombatViewProps) => {
+export const CombatView = ({ player, opponent, matchType, onComplete, onClose, candidates = [] }: CombatViewProps) => {
     const [phase, setPhase] = useState<'intro' | 'combat' | 'result'>('intro');
     const [combatResult, setCombatResult] = useState<{
         winner: 'attacker' | 'defender' | 'draw';
@@ -26,6 +27,23 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose }:
     const logRef = useRef<HTMLDivElement | null>(null);
     const [actionPulse, setActionPulse] = useState<CombatAction | null>(null);
     const pulseTimeoutRef = useRef<number | null>(null);
+    const [scanIndex, setScanIndex] = useState(0);
+    const [scanLocked, setScanLocked] = useState(false);
+
+    const scanList = useMemo(() => {
+        const map = new Map<string, Character>();
+        const add = (entry: Character) => {
+            const key = entry.firestoreId || entry.name;
+            if (!map.has(key)) {
+                map.set(key, entry);
+            }
+        };
+        candidates.forEach(add);
+        add(opponent);
+        return Array.from(map.values());
+    }, [candidates, opponent]);
+
+    const selectedKey = opponent.firestoreId || opponent.name;
 
     useEffect(() => {
         // Intro phase: 2 seconds
@@ -38,6 +56,39 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose }:
 
         return () => clearTimeout(introTimer);
     }, [player, opponent]);
+
+    useEffect(() => {
+        if (phase !== 'intro') return;
+        if (scanList.length <= 1) {
+            setScanIndex(0);
+            setScanLocked(true);
+            return;
+        }
+
+        let index = 0;
+        setScanIndex(0);
+        setScanLocked(false);
+
+        const scanInterval = 140;
+        const scanDuration = 1900;
+
+        const intervalId = window.setInterval(() => {
+            index = (index + 1) % scanList.length;
+            setScanIndex(index);
+        }, scanInterval);
+
+        const lockTimer = window.setTimeout(() => {
+            window.clearInterval(intervalId);
+            const finalIndex = scanList.findIndex((entry) => (entry.firestoreId || entry.name) === selectedKey);
+            setScanIndex(finalIndex >= 0 ? finalIndex : 0);
+            setScanLocked(true);
+        }, scanDuration);
+
+        return () => {
+            window.clearInterval(intervalId);
+            window.clearTimeout(lockTimer);
+        };
+    }, [phase, scanList, selectedKey]);
 
     useEffect(() => {
         if (phase === 'combat' && combatResult) {
@@ -136,19 +187,23 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose }:
                 {phase === 'intro' && (
                     <div className="combat-intro">
                         <div className="match-type-badge">{getMatchDifficultyLabel(matchType)}</div>
-                        <h2 className="combat-title">BATTLE START!</h2>
-                        <div className="vs-container">
-                            <div className="fighter-intro">
-                                <PixelCharacter seed={player.seed} gender={player.gender} scale={8} />
-                                <div className="fighter-name">{player.name}</div>
-                                <div className="fighter-level">LVL {player.level}</div>
+                        <h2 className="combat-title">MATCHMAKING</h2>
+                        <div className="matchmaking-stage">
+                            <div className={`scan-card ${scanLocked ? 'locked' : 'scanning'}`}>
+                                <div className="scan-subtitle">{scanLocked ? 'OPPONENT FOUND' : 'SCANNING...'}</div>
+                                <div className="scan-avatar">
+                                    <PixelCharacter seed={scanList[scanIndex]?.seed || opponent.seed} gender={scanList[scanIndex]?.gender || opponent.gender} scale={8} />
+                                </div>
+                                <div className="scan-name">{scanList[scanIndex]?.name || opponent.name}</div>
+                                <div className="scan-level">LVL {scanList[scanIndex]?.level ?? opponent.level}</div>
                             </div>
-                            <div className="vs-text">VS</div>
-                            <div className="fighter-intro">
-                                <PixelCharacter seed={opponent.seed} gender={opponent.gender} scale={8} />
-                                <div className="fighter-name">{opponent.name}</div>
-                                <div className="fighter-level">LVL {opponent.level}</div>
-                            </div>
+                            <div className="scan-caption">LEVEL {opponent.level} OPPONENTS</div>
+                            {scanLocked && (
+                                <div className="scan-lock">
+                                    <span className="lock-pulse" aria-hidden="true"></span>
+                                    LOCKED
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

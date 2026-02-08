@@ -19,7 +19,7 @@ describe('CombatView Interface', () => {
         seed: 'def'
     };
 
-    it('should render correct match type and names', () => {
+    it('should render correct match type and opponent name only', () => {
         render(
             <CombatView
                 player={player}
@@ -31,8 +31,8 @@ describe('CombatView Interface', () => {
         );
 
         expect(screen.getByText('BALANCED MATCH')).toBeInTheDocument();
-        expect(screen.getByText('Hero')).toBeInTheDocument();
-        expect(screen.getByText('Villain')).toBeInTheDocument();
+        expect(screen.getAllByText('Villain').length).toBeGreaterThan(0);
+        expect(screen.queryByText('Hero')).toBeNull();
     });
 
     it('should transition to combat phase after intro', async () => {

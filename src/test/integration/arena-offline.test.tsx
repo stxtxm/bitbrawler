@@ -68,6 +68,7 @@ describe('Arena offline mode', () => {
       firebaseAvailable: true,
       allocateStatPoint: vi.fn(),
       rollLootbox: vi.fn(),
+      startMatchmaking: vi.fn(),
     })
 
     const { getByText, getByRole, queryByRole } = render(
@@ -97,6 +98,7 @@ describe('Arena offline mode', () => {
       firebaseAvailable: false,
       allocateStatPoint: vi.fn(),
       rollLootbox: vi.fn(),
+      startMatchmaking: vi.fn(),
     })
 
     const { getByText, getByRole, queryByRole } = render(

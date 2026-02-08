@@ -66,6 +66,7 @@ describe('Arena inventory modal', () => {
       retryConnection: vi.fn(),
       allocateStatPoint: vi.fn(),
       rollLootbox: vi.fn(),
+      startMatchmaking: vi.fn(),
     })
   })
 

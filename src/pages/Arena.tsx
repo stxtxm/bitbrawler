@@ -16,7 +16,7 @@ import { canRollLootbox } from '../utils/lootboxUtils';
 import { ItemStats, PixelItemAsset } from '../types/Item';
 
 const Arena = () => {
-    const { activeCharacter, logout, useFight, findOpponent, lastXpGain, lastLevelUp, clearXpNotifications, firebaseAvailable, allocateStatPoint, rollLootbox } = useGame();
+    const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, firebaseAvailable, allocateStatPoint, rollLootbox } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const navigate = useNavigate();
     const isOnline = useOnlineStatus();
@@ -70,7 +70,8 @@ const Arena = () => {
     const isMaxLevel = activeCharacter.level >= getMaxLevel();
     const isOfflineMode = !isOnline || !firebaseAvailable;
     const fightsLeft = activeCharacter.fightsLeft || 0;
-    const canFight = !isOfflineMode && fightsLeft > 0;
+    const hasPendingFight = !!activeCharacter.pendingFight;
+    const canFight = !isOfflineMode && fightsLeft > 0 && !hasPendingFight;
     const pendingStatPoints = activeCharacter.statPoints || 0;
     const canCloseLevelUp = pendingStatPoints === 0;
     const shouldShowLevelUp = showLevelUp || (pendingStatPoints > 0 && !deferLevelUp);
@@ -191,6 +192,7 @@ const Arena = () => {
     };
 
     const handleFight = async () => {
+        if (matchmaking || hasPendingFight) return;
         const canProceed = await ensureConnection(connectionMessage);
         if (!canProceed) return;
 
@@ -199,7 +201,7 @@ const Arena = () => {
 
         try {
             // Find an opponent
-            const match = await findOpponent();
+            const match = await startMatchmaking();
 
             if (!match) {
                 openModal('No opponents found! Try again later.');
@@ -427,7 +429,11 @@ const Arena = () => {
                         disabled={!canFight || matchmaking}
                         onClick={handleFight}
                     >
-                        {matchmaking ? 'SEARCHING...' : (isOfflineMode ? 'OFFLINE' : (fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'))}
+                        {matchmaking
+                            ? 'SEARCHING...'
+                            : hasPendingFight
+                                ? 'RESOLVING...'
+                                : (isOfflineMode ? 'OFFLINE' : (fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'))}
                     </button>
                 </div>
 
@@ -439,7 +445,7 @@ const Arena = () => {
             />
             {inventoryOpen && (
                 <div className="retro-modal-overlay inventory-overlay" onClick={() => setInventoryOpen(false)}>
-                    <div className="retro-modal inventory-modal" onClick={(e) => e.stopPropagation()}>
+                    <div className={`retro-modal inventory-modal ${lootboxRolling ? 'lootbox-active' : ''}`} onClick={(e) => e.stopPropagation()}>
                         <div className="inventory-header">
                             <h2 className="inventory-title">INVENTORY</h2>
                             <button className="inventory-close" onClick={() => setInventoryOpen(false)} aria-label="Close inventory">
@@ -602,6 +608,7 @@ const Arena = () => {
                     player={applyEquipmentToCharacter(activeCharacter)}
                     opponent={applyEquipmentToCharacter(combatData.opponent)}
                     matchType={combatData.matchType}
+                    candidates={combatData.candidates}
                     onComplete={handleCombatComplete}
                     onClose={handleCloseCombat}
                 />

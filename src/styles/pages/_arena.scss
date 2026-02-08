@@ -137,7 +137,7 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    max-height: 80vh;
+    max-height: 84vh;
     overflow: hidden;
     position: relative;
 
@@ -156,6 +156,7 @@
     .inventory-modal {
         max-width: 980px;
         width: 90%;
+        max-height: 90vh;
     }
 
     .retro-modal.inventory-modal {
@@ -255,7 +256,7 @@
 
     .inventory-grid {
         flex: 1.7;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(5, minmax(0, 1fr));
         gap: 12px;
         padding: 16px;
     }
@@ -277,6 +278,20 @@
     .inventory-stat-value {
         font-size: 0.6rem;
     }
+}
+
+.inventory-modal.lootbox-active {
+    overflow: hidden;
+}
+
+.inventory-modal.lootbox-active .inventory-grid {
+    overflow: hidden;
+    scrollbar-width: none;
+}
+
+.inventory-modal.lootbox-active .inventory-grid::-webkit-scrollbar {
+    width: 0;
+    height: 0;
 }
 
 .inventory-slot {
@@ -1072,13 +1087,27 @@
     position: relative;
     overflow: hidden;
     animation: cardSlideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    max-width: 420px;
-    width: min(94vw, 420px);
+    max-width: 520px;
+    width: min(94vw, 520px);
     line-height: 1.1;
 
     @include mobile {
         padding: 10px;
         border-width: 2px;
+    }
+}
+
+@include tablet {
+    .level-up-card {
+        max-width: 640px;
+        width: min(92vw, 640px);
+    }
+}
+
+@media (min-width: 1024px) {
+    .level-up-card {
+        max-width: 760px;
+        width: min(86vw, 760px);
     }
 }
 
@@ -1264,6 +1293,12 @@
     .level-up-card {
         max-width: 360px;
         padding: 10px;
+        width: min(96vw, 360px);
+        min-height: 88vh;
+        max-height: 92vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
 
     .stars-top,
@@ -1293,12 +1328,13 @@
     .level-up-stats {
         margin-top: 6px;
         gap: 4px;
+        min-height: 0;
     }
 
     .level-up-stat-row {
         padding: 3px 5px;
         gap: 4px;
-        grid-template-columns: auto auto auto 1fr auto;
+        grid-template-columns: auto auto auto 1fr minmax(48px, auto);
         grid-template-areas: "icon label value hint action";
         row-gap: 0;
     }
@@ -1328,14 +1364,18 @@
     }
 
     .stat-add-btn {
-        width: 30px;
-        height: 26px;
-        font-size: 0.7rem !important;
+        width: 48px;
+        height: 36px;
+        font-size: 0.98rem !important;
     }
 
     .level-up-confirm {
         padding: 7px 10px !important;
         font-size: 0.62rem !important;
+    }
+
+    .level-up-actions {
+        margin-top: auto;
     }
 
     .level-up-later {
@@ -1350,6 +1390,8 @@
         width: 96%;
         max-width: 360px;
         padding: 10px;
+        min-height: 90vh;
+        max-height: 94vh;
     }
 
     .lvl-big-number {
@@ -1367,10 +1409,108 @@
     }
 }
 
+@media (max-width: 400px) {
+    .level-up-card {
+        padding: 8px;
+        min-height: 92vh;
+        max-height: 95vh;
+        justify-content: flex-start;
+        gap: 6px;
+    }
+
+    .stars-top,
+    .stars-bottom {
+        display: none;
+    }
+
+    .lvl-title {
+        font-size: 0.82rem;
+        margin: 2px 0;
+    }
+
+    .lvl-big-number {
+        font-size: 1.1rem;
+        margin: 2px 0;
+        gap: 4px;
+    }
+
+    .points-label {
+        font-size: 0.38rem;
+    }
+
+    .points-value {
+        font-size: 0.75rem;
+    }
+
+    .level-up-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 2px;
+        margin-top: 4px;
+    }
+
+    .level-up-stat-row {
+        padding: 2px 4px;
+        gap: 2px;
+        grid-template-columns: auto auto auto minmax(34px, auto);
+        grid-template-areas:
+            "icon label value action"
+            "hint hint hint hint";
+    }
+
+    .level-up-stat-row .stat-icon {
+        width: 12px;
+        height: 12px;
+    }
+
+    .level-up-stat-row .stat-label {
+        font-size: 0.42rem;
+    }
+
+    .level-up-stat-row .stat-value {
+        font-size: 0.46rem;
+    }
+
+    .level-up-stat-row .stat-hint {
+        display: -webkit-box;
+        font-size: 0.34rem;
+        line-height: 1.1;
+        white-space: normal;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .stat-add-btn {
+        width: 36px;
+        height: 32px;
+        font-size: 0.78rem !important;
+    }
+
+    .level-up-actions {
+        margin-top: 6px;
+        gap: 4px;
+    }
+
+    .level-up-confirm {
+        padding: 6px 8px !important;
+        font-size: 0.58rem !important;
+    }
+
+    .level-up-later {
+        font-size: 0.54rem !important;
+        padding: 5px 8px !important;
+    }
+}
+
 @media (max-width: 360px) {
     .level-up-card {
         max-width: 360px;
         padding: 8px;
+        min-height: 92vh;
+        max-height: 94vh;
+        justify-content: flex-start;
+        gap: 6px;
     }
 
     .lvl-big-number {
@@ -1378,13 +1518,62 @@
     }
 
     .level-up-stat-row {
-        padding: 4px 6px;
-        gap: 5px;
+        padding: 2px 4px;
+        gap: 2px;
+        grid-template-columns: auto auto auto minmax(32px, auto);
+        grid-template-areas:
+            "icon label value action"
+            "hint hint hint hint";
     }
 
     .stat-add-btn {
-        width: 28px;
-        height: 24px;
+        width: 34px;
+        height: 30px;
+        font-size: 0.72rem !important;
+    }
+
+    .level-up-stat-row .stat-icon {
+        width: 12px;
+        height: 12px;
+    }
+
+    .level-up-stat-row .stat-label {
+        font-size: 0.42rem;
+    }
+
+    .level-up-stat-row .stat-value {
+        font-size: 0.45rem;
+    }
+
+    .level-up-stat-row .stat-hint {
+        display: -webkit-box;
+        font-size: 0.32rem;
+        line-height: 1.05;
+        white-space: normal;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .level-up-stats {
+        gap: 2px;
+        margin-top: 4px;
+    }
+
+    .level-up-actions {
+        margin-top: 6px;
+        gap: 4px;
+    }
+
+    .level-up-confirm {
+        padding: 6px 8px !important;
+        font-size: 0.58rem !important;
+    }
+
+    .level-up-later {
+        font-size: 0.54rem !important;
+        padding: 5px 8px !important;
     }
 
     .stars-top,

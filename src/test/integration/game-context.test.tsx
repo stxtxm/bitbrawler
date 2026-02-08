@@ -22,9 +22,22 @@ vi.mock('firebase/firestore', () => ({
   getDocsFromServer: vi.fn(),
   updateDoc: vi.fn(),
   limit: vi.fn(),
+  deleteField: vi.fn(),
+}));
+
+vi.mock('../../utils/matchmakingUtils', () => ({
+  findOpponent: vi.fn(),
+}));
+
+vi.mock('../../utils/lootboxUtils', () => ({
+  canRollLootbox: vi.fn(),
+  rollLootbox: vi.fn(),
 }));
 
 import { getDocs, getDocsFromServer, updateDoc } from 'firebase/firestore';
+import { findOpponent } from '../../utils/matchmakingUtils';
+import { canRollLootbox, rollLootbox } from '../../utils/lootboxUtils';
+import { PixelItemAsset } from '../../types/Item';
 
 // Wrapper component for testing hooks
 const createWrapper = () => {
@@ -53,7 +66,9 @@ describe('GameContext Integration', () => {
     fightsLeft: 2,
     lastFightReset: Date.now() - 86400000, // Yesterday
     firestoreId: 'test-firestore-id',
-    statPoints: 0
+    statPoints: 0,
+    inventory: [],
+    lastLootRoll: 0
   };
 
   beforeEach(() => {
@@ -195,6 +210,161 @@ describe('GameContext Integration', () => {
     expect(lastCall[1]).toHaveProperty('experience');
   });
 
+  it('should reserve energy and store pending fight on matchmaking start', async () => {
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    (getDocs as any).mockResolvedValue({
+      docs: [{
+        data: () => mockCharacter,
+        id: 'test-firestore-id'
+      }]
+    });
+    (updateDoc as any).mockResolvedValue(undefined);
+
+    const opponent: Character = {
+      ...mockCharacter,
+      name: 'Opp',
+      firestoreId: 'opp-1'
+    };
+
+    (findOpponent as any).mockResolvedValue({
+      opponent,
+      matchType: 'balanced',
+      candidates: [opponent]
+    });
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    const initialFights = result.current.activeCharacter?.fightsLeft || 0;
+
+    await act(async () => {
+      await result.current.startMatchmaking();
+    });
+
+    expect(result.current.activeCharacter?.fightsLeft).toBe(initialFights - 1);
+    expect(result.current.activeCharacter?.pendingFight?.status).toBe('matched');
+  });
+
+  it('should refund energy when no opponent is found', async () => {
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    (getDocs as any).mockResolvedValue({
+      docs: [{
+        data: () => mockCharacter,
+        id: 'test-firestore-id'
+      }]
+    });
+    (updateDoc as any).mockResolvedValue(undefined);
+
+    (findOpponent as any).mockResolvedValue(null);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    const initialFights = result.current.activeCharacter?.fightsLeft || 0;
+
+    await act(async () => {
+      const match = await result.current.startMatchmaking();
+      expect(match).toBeNull();
+    });
+
+    expect(result.current.activeCharacter?.fightsLeft).toBe(initialFights);
+    expect(result.current.activeCharacter?.pendingFight).toBeUndefined();
+  });
+
+  it('should omit undefined bot flags in pending fight payload', async () => {
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    (getDocs as any).mockResolvedValue({
+      docs: [{
+        data: () => mockCharacter,
+        id: 'test-firestore-id'
+      }]
+    });
+    (updateDoc as any).mockResolvedValue(undefined);
+
+    const opponent: Character = {
+      ...mockCharacter,
+      name: 'Opp',
+      firestoreId: 'opp-3'
+    };
+
+    (findOpponent as any).mockResolvedValue({
+      opponent,
+      matchType: 'balanced',
+      candidates: [opponent]
+    });
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.startMatchmaking();
+    });
+
+    const lastCall = (updateDoc as any).mock.calls.at(-1);
+    const pendingFight = lastCall?.[1]?.pendingFight;
+    expect(pendingFight).toBeDefined();
+    expect(Object.prototype.hasOwnProperty.call(pendingFight.opponent, 'isBot')).toBe(false);
+  });
+
+  it('should not consume extra energy when pending fight resolves', async () => {
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    (getDocs as any).mockResolvedValue({
+      docs: [{
+        data: () => mockCharacter,
+        id: 'test-firestore-id'
+      }]
+    });
+    (updateDoc as any).mockResolvedValue(undefined);
+
+    const opponent: Character = {
+      ...mockCharacter,
+      name: 'Opp',
+      firestoreId: 'opp-2'
+    };
+
+    (findOpponent as any).mockResolvedValue({
+      opponent,
+      matchType: 'balanced',
+      candidates: [opponent]
+    });
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.startMatchmaking();
+    });
+
+    const reservedFights = result.current.activeCharacter?.fightsLeft || 0;
+
+    await act(async () => {
+      await result.current.useFight(true, 50, opponent.name, opponent.firestoreId || '');
+    });
+
+    expect(result.current.activeCharacter?.fightsLeft).toBe(reservedFights);
+    expect(result.current.activeCharacter?.pendingFight).toBeUndefined();
+  });
+
   it('should track unique opponents fought today', async () => {
     const charWithHistory: Character = {
       ...mockCharacter,
@@ -286,6 +456,50 @@ describe('GameContext Integration', () => {
 
     const lastCall = (updateDoc as any).mock.calls.at(-1);
     expect(lastCall[1]).toMatchObject({ strength: mockCharacter.strength + 1, statPoints: 0 });
+  });
+
+  it('should roll a lootbox item and persist inventory', async () => {
+    const now = new Date('2025-01-01T00:00:00Z');
+    vi.setSystemTime(now);
+
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    (getDocs as any).mockResolvedValue({
+      docs: [{
+        data: () => mockCharacter,
+        id: 'test-firestore-id'
+      }]
+    });
+    (updateDoc as any).mockResolvedValue(undefined);
+
+    const mockItem: PixelItemAsset = {
+      id: 'test-item',
+      name: 'Test Item',
+      rarity: 'common',
+      slot: 'weapon',
+      stats: { strength: 1 },
+      pixels: [[1]]
+    };
+
+    (canRollLootbox as any).mockReturnValue(true);
+    (rollLootbox as any).mockReturnValue(mockItem);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      const item = await result.current.rollLootbox();
+      expect(item?.id).toBe('test-item');
+    });
+
+    expect(result.current.activeCharacter?.inventory).toContain('test-item');
+    const lastCall = (updateDoc as any).mock.calls.at(-1);
+    expect(lastCall[1]).toMatchObject({ inventory: ['test-item'] });
+    expect(lastCall[1]).toHaveProperty('lastLootRoll');
   });
 
   it('should handle logout correctly', async () => {

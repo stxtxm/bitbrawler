@@ -4,10 +4,12 @@ Bitbrawler is a retro 8-bit arena experience where players create a pixel fighte
 
 ## Features
 - 8-bit UI with SVG pixel rendering
-- Character creation with RPG stats (STR, VIT, DEX, LUK, INT)
-- Arena fights with XP gain, level ups, and enhanced combat (crit + magic + comeback)
-- Strict same-level matchmaking with power balancing and daily opponent rotation
-- Bot engine with population management and real combat simulation
+- Character creation with RPG stats (STR, VIT, DEX, LUK, INT, FOC)
+- Arena fights with XP gain, level ups, and enhanced combat (crit + magic + focus)
+- Strict same-level matchmaking with power balancing, daily opponent rotation, and animated opponent scan
+- Daily lootbox + inventory items (auto-applied stat bonuses, rarity-based)
+- Bot engine with population management, real combat simulation, and daily lootbox usage
+- Anti-cheat fight reservation (pending fights resolve even if player quits mid-matchmaking)
 - Global daily reset for fights/opponent tracking (scripted)
 - Hall of Fame rankings
 - PWA install experience (mobile and desktop)
@@ -17,7 +19,7 @@ Bitbrawler is a retro 8-bit arena experience where players create a pixel fighte
 ## Offline and Sync Behavior
 - Gameplay requires Firebase; actions that need a connection show a blocking modal
 - Home page is available offline; Rankings display a "Connection required" state
-- Local storage is cleared when Firebase is unavailable to prevent stale data
+- Offline snapshot is kept in local storage; it’s cleared only on logout, corrupted data, or missing server record
 - Service worker caches the app shell and assets; updates apply silently with a one-time reload when the new worker activates
 
 ## Tech Stack

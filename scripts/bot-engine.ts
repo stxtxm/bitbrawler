@@ -5,6 +5,8 @@ import { calculateFightXp, gainXp } from '../src/utils/xpUtils';
 import { simulateCombat } from '../src/utils/combatUtils';
 import { GAME_RULES } from '../src/config/gameRules';
 import { autoAllocateStatPoints } from '../src/utils/statUtils';
+import { ITEM_ASSETS } from '../src/data/itemAssets';
+import { canRollLootbox, rollLootbox } from '../src/utils/lootboxUtils';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -50,6 +52,7 @@ if (!getApps().length) {
 }
 
 const db = getFirestore();
+const INVENTORY_CAPACITY = 24;
 
 async function measureBotPopulation() {
     const total = await db.collection('characters').where('isBot', '==', true).count().get();
@@ -181,15 +184,39 @@ async function simulateBotDailyLife() {
         const now = Date.now();
         let totalXpGained = 0;
         let startLevel = currentBotState.level;
+        let didLootbox = false;
+        let didReset = false;
 
         // 1. Daily Reset Logic
         if (now - currentBotState.lastFightReset > 24 * 60 * 60 * 1000) {
             fightsLeft = GAME_RULES.COMBAT.MAX_DAILY_FIGHTS;
             currentBotState.lastFightReset = now;
+            didReset = true;
             console.log(`🔄 Daily reset for bot ${currentBotState.name}`);
         }
 
-        // 2. Fight Logic (Perform multiple actions per hour)
+        // 2. Daily Lootbox
+        if (canRollLootbox(currentBotState.lastLootRoll, now)) {
+            const inventory = currentBotState.inventory || [];
+            if (inventory.length < INVENTORY_CAPACITY) {
+                const item = rollLootbox(ITEM_ASSETS);
+                if (item) {
+                    currentBotState = {
+                        ...currentBotState,
+                        inventory: [...inventory, item.id],
+                        lastLootRoll: now
+                    };
+                    didLootbox = true;
+                    console.log(`🎁 Bot ${currentBotState.name} opened lootbox: ${item.name} (${item.rarity})`);
+                }
+            } else {
+                console.log(`📦 Bot ${currentBotState.name} inventory full. Skipping lootbox.`);
+            }
+        } else {
+            console.log(`⏳ Bot ${currentBotState.name} already opened daily lootbox.`);
+        }
+
+        // 3. Fight Logic (Perform multiple actions per hour)
         const desiredActions = Math.floor(Math.random() * 2) + 2; // 2 to 3 actions
         let actionsTaken = 0;
 
@@ -252,7 +279,8 @@ async function simulateBotDailyLife() {
             actionsTaken++;
         }
 
-        if (actionsTaken > 0) {
+        const shouldPersist = actionsTaken > 0 || didLootbox || didReset;
+        if (shouldPersist) {
             // Final database update
             const finalUpdates: Partial<Character> = {
                 experience: currentBotState.experience,
@@ -270,7 +298,9 @@ async function simulateBotDailyLife() {
                 hp: currentBotState.hp,
                 maxHp: currentBotState.maxHp,
                 lastFightReset: currentBotState.lastFightReset,
-                statPoints: currentBotState.statPoints
+                statPoints: currentBotState.statPoints,
+                inventory: currentBotState.inventory,
+                lastLootRoll: currentBotState.lastLootRoll
             };
 
             const sanitizedUpdates = Object.fromEntries(
@@ -280,7 +310,13 @@ async function simulateBotDailyLife() {
             await db.collection('characters').doc(bot.firestoreId).update(sanitizedUpdates);
 
             const levelDiff = currentBotState.level - startLevel;
-            console.log(`👊 Bot ${bot.name}: ${actionsTaken} fights, +${totalXpGained} XP. ${levelDiff > 0 ? `🆙 LVL UP +${levelDiff}` : ''} Energy left: ${currentBotState.fightsLeft}`);
+            if (actionsTaken > 0) {
+                console.log(`👊 Bot ${bot.name}: ${actionsTaken} fights, +${totalXpGained} XP. ${levelDiff > 0 ? `🆙 LVL UP +${levelDiff}` : ''} Energy left: ${currentBotState.fightsLeft}`);
+            } else if (didLootbox) {
+                console.log(`📦 Bot ${bot.name} updated inventory. Energy left: ${currentBotState.fightsLeft}`);
+            } else {
+                console.log(`💤 Bot ${bot.name} is resting (0 energy).`);
+            }
         } else {
             console.log(`💤 Bot ${bot.name} is resting (0 energy).`);
         }

@@ -5,6 +5,36 @@ export interface FightHistory {
   xpGained: number;
 }
 
+export interface PendingFightOpponent {
+  firestoreId?: string;
+  name: string;
+  gender: 'male' | 'female';
+  seed: string;
+  level: number;
+  experience: number;
+  strength: number;
+  vitality: number;
+  dexterity: number;
+  luck: number;
+  intelligence: number;
+  focus: number;
+  hp: number;
+  maxHp: number;
+  wins: number;
+  losses: number;
+  fightsLeft: number;
+  lastFightReset: number;
+  isBot?: boolean;
+  inventory?: string[];
+}
+
+export interface PendingFight {
+  status: 'searching' | 'matched';
+  startedAt: number;
+  opponent?: PendingFightOpponent;
+  matchType?: 'balanced' | 'similar';
+}
+
 export interface Character {
   id?: number;
   seed: string;
@@ -44,4 +74,5 @@ export interface Character {
     accessory?: string;
   };
   lastLootRoll?: number; // Timestamp (UTC) of daily lootbox roll
+  pendingFight?: PendingFight;
 }
