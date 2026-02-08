@@ -14,6 +14,7 @@ describe('Stat Utils', () => {
         dexterity: 10,
         luck: 10,
         intelligence: 10,
+        focus: 10,
         hp: getHpForVitality(10),
         maxHp: getHpForVitality(10),
         wins: 0,
@@ -51,7 +52,8 @@ describe('Stat Utils', () => {
             (updated.vitality - uneven.vitality) +
             (updated.dexterity - uneven.dexterity) +
             (updated.luck - uneven.luck) +
-            (updated.intelligence - uneven.intelligence);
+            (updated.intelligence - uneven.intelligence) +
+            (updated.focus - uneven.focus);
 
         expect(totalIncrease).toBe(2);
         expect(updated.statPoints).toBe(0);

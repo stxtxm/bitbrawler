@@ -7,6 +7,9 @@ import { applyStatPoint, StatKey } from '../utils/statUtils';
 import { GAME_RULES } from '../config/gameRules';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { findOpponent, MatchmakingResult } from '../utils/matchmakingUtils';
+import { ITEM_ASSETS } from '../data/itemAssets';
+import { canRollLootbox, rollLootbox } from '../utils/lootboxUtils';
+import { PixelItemAsset } from '../types/Item';
 
 interface GameContextType {
   activeCharacter: Character | null;
@@ -22,12 +25,25 @@ interface GameContextType {
   findOpponent: () => Promise<MatchmakingResult | null>;
   clearXpNotifications: () => void;
   allocateStatPoint: (stat: StatKey) => Promise<Character | null>;
+  rollLootbox: () => Promise<PixelItemAsset | null>;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 // Constants
 const LOCAL_STORAGE_KEY = 'bitbrawler_active_char';
+const INVENTORY_CAPACITY = 24;
+
+const normalizeCharacter = (character: Character): Character => {
+  return {
+    ...character,
+    focus: character.focus ?? GAME_RULES.STATS.BASE_VALUE,
+    statPoints: character.statPoints ?? 0,
+    inventory: character.inventory ?? [],
+    equipped: character.equipped ?? {},
+    lastLootRoll: character.lastLootRoll ?? 0,
+  };
+};
 
 // Helper functions
 const clearLocalData = () => {
@@ -96,7 +112,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   // Load character on mount
   useEffect(() => {
-    const loadCharacter = async () => {
+  const loadCharacter = async () => {
       const localChar = loadLocalData();
       if (!localChar) {
         setLoading(false);
@@ -110,7 +126,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (!isOnline) {
-        setActiveCharacter(localChar);
+        setActiveCharacter(normalizeCharacter(localChar));
         setFirebaseAvailable(false);
         setLoading(false);
         return;
@@ -118,11 +134,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
       const syncResult = await syncCharacterWithFirestore(localChar);
       if (syncResult.status === 'ok') {
-        setActiveCharacter(syncResult.character);
-        saveLocalData(syncResult.character);
+        const normalized = normalizeCharacter(syncResult.character);
+        setActiveCharacter(normalized);
+        saveLocalData(normalized);
         setFirebaseAvailable(true);
       } else if (syncResult.status === 'error') {
-        setActiveCharacter(localChar);
+        setActiveCharacter(normalizeCharacter(localChar));
         setFirebaseAvailable(false);
       } else {
         // Status is 'missing' - character has been deleted on server
@@ -152,10 +169,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
       const doc = querySnapshot.docs[0];
       const firestoreData = doc.data() as Character;
-      const fullChar = {
+      const fullChar = normalizeCharacter({
         ...firestoreData,
         firestoreId: doc.id
-      };
+      });
 
       setActiveCharacter(fullChar);
       saveLocalData(fullChar);
@@ -175,8 +192,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   // Set character function
   const setCharacter = useCallback((char: Character) => {
-    setActiveCharacter(char);
-    saveLocalData(char);
+    const normalized = normalizeCharacter(char);
+    setActiveCharacter(normalized);
+    saveLocalData(normalized);
   }, []);
 
   // Clear XP notifications
@@ -227,7 +245,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const pointsGained = xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL;
     const existingPoints = activeCharacter.statPoints || 0;
 
-    const updatedChar: Character = {
+    const updatedChar: Character = normalizeCharacter({
       ...xpResult.updatedCharacter,
       fightsLeft: Math.max(0, (activeCharacter.fightsLeft || 0) - 1),
       wins: won ? (activeCharacter.wins || 0) + 1 : (activeCharacter.wins || 0),
@@ -235,7 +253,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       fightHistory: newHistory,
       foughtToday: newFoughtToday,
       statPoints: existingPoints + pointsGained
-    };
+    });
 
     try {
       await updateDoc(doc(db, "characters", activeCharacter.firestoreId!), {
@@ -246,7 +264,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         losses: updatedChar.losses,
         fightHistory: updatedChar.fightHistory,
         foughtToday: updatedChar.foughtToday,
-        statPoints: updatedChar.statPoints
+        statPoints: updatedChar.statPoints,
+        focus: updatedChar.focus
       });
 
       setActiveCharacter(updatedChar);
@@ -284,14 +303,15 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     if (!activeCharacter?.firestoreId) return null;
     if (!activeCharacter.statPoints || activeCharacter.statPoints <= 0) return null;
 
-    const updatedChar = applyStatPoint(activeCharacter, stat);
+    const updatedChar = normalizeCharacter(applyStatPoint(activeCharacter, stat));
 
     try {
       await updateDoc(doc(db, "characters", activeCharacter.firestoreId!), {
         [stat]: (updatedChar as any)[stat],
         hp: updatedChar.hp,
         maxHp: updatedChar.maxHp,
-        statPoints: updatedChar.statPoints
+        statPoints: updatedChar.statPoints,
+        focus: updatedChar.focus
       });
 
       setActiveCharacter(updatedChar);
@@ -300,6 +320,43 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     } catch (error: any) {
       handleFirebaseError(error, 'stat-allocate');
       throw new Error("Connection error - stat point not saved. Please check your internet connection.");
+    }
+  }, [activeCharacter, handleFirebaseError]);
+
+  const rollLootboxForPlayer = useCallback(async () => {
+    if (!activeCharacter?.firestoreId) return null;
+
+    const now = Date.now();
+    if (!canRollLootbox(activeCharacter.lastLootRoll, now)) {
+      throw new Error('Daily lootbox already opened.');
+    }
+
+    const inventory = activeCharacter.inventory || [];
+    if (inventory.length >= INVENTORY_CAPACITY) {
+      throw new Error('Inventory is full.');
+    }
+
+    const item = rollLootbox(ITEM_ASSETS);
+    if (!item) return null;
+
+    const updatedChar = normalizeCharacter({
+      ...activeCharacter,
+      inventory: [...inventory, item.id],
+      lastLootRoll: now,
+    });
+
+    try {
+      await updateDoc(doc(db, "characters", activeCharacter.firestoreId!), {
+        inventory: updatedChar.inventory,
+        lastLootRoll: updatedChar.lastLootRoll,
+        focus: updatedChar.focus
+      });
+      setActiveCharacter(updatedChar);
+      saveLocalData(updatedChar);
+      return item;
+    } catch (error: any) {
+      handleFirebaseError(error, 'lootbox');
+      throw new Error('Connection error - lootbox not saved.');
     }
   }, [activeCharacter, handleFirebaseError]);
 
@@ -323,6 +380,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     findOpponent: findOpponentForPlayer,
     clearXpNotifications,
     allocateStatPoint,
+    rollLootbox: rollLootboxForPlayer,
   };
 
   return (

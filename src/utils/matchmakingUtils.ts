@@ -1,6 +1,7 @@
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Character } from '../types/Character';
+import { applyEquipmentToCharacter } from './equipmentUtils';
 
 export interface MatchmakingResult {
     opponent: Character;
@@ -36,12 +37,14 @@ export async function findOpponent(player: Character): Promise<MatchmakingResult
  * Calculate total power of a character for balanced matchmaking
  */
 function calculateTotalPower(character: Character): number {
+    const effective = applyEquipmentToCharacter(character);
     return (
-        character.strength +
-        character.vitality +
-        character.dexterity +
-        character.luck +
-        character.intelligence
+        effective.strength +
+        effective.vitality +
+        effective.dexterity +
+        effective.luck +
+        effective.intelligence +
+        effective.focus
     );
 }
 

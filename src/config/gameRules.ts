@@ -1,6 +1,6 @@
 export const GAME_RULES = {
     STATS: {
-        TOTAL_POINTS: 50,
+        TOTAL_POINTS: 60,
         BASE_VALUE: 10,
         MIN_VALUE: 6, // Updated based on recent balancing
         MAX_VALUE: 14,

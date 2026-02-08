@@ -8,7 +8,7 @@ describe('CombatView Interface', () => {
         name: 'Hero',
         level: 5,
         hp: 100, maxHp: 100,
-        strength: 10, vitality: 10, dexterity: 10, luck: 10, intelligence: 10,
+        strength: 10, vitality: 10, dexterity: 10, luck: 10, intelligence: 10, focus: 10,
         experience: 0, wins: 0, losses: 0, fightsLeft: 5, lastFightReset: 0,
         gender: 'male', seed: 'abc'
     };

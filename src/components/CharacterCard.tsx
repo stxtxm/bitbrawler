@@ -48,6 +48,14 @@ const CharacterCard = ({ character, onSelect, selected }: CharacterCardProps) =>
             <span className="stat-label">LUK:</span>
             <span className="stat-value">{character.luck}</span>
           </div>
+          <div className="stat">
+            <span className="stat-label">INT:</span>
+            <span className="stat-value">{character.intelligence}</span>
+          </div>
+          <div className="stat">
+            <span className="stat-label">FOC:</span>
+            <span className="stat-value">{character.focus}</span>
+          </div>
           <div className="stat hp-full">
             <span className="stat-label">HP:</span>
             <span className="stat-value">{character.hp}/{character.maxHp}</span>

@@ -19,6 +19,7 @@ export interface Character {
   dexterity: number; // Dexterité / Précision
   luck: number;      // Chance / Critiques
   intelligence: number; // Intelligence / Magie
+  focus: number;     // Focus / Précision / Contrôle
 
   // Derived
   hp: number;
@@ -36,4 +37,11 @@ export interface Character {
   fightHistory?: FightHistory[];
   foughtToday?: string[]; // Array of firestoreIds fought today
   statPoints?: number; // Unspent stat points from level-ups
+  inventory?: string[]; // Item ids
+  equipped?: {
+    weapon?: string;
+    armor?: string;
+    accessory?: string;
+  };
+  lastLootRoll?: number; // Timestamp (UTC) of daily lootbox roll
 }

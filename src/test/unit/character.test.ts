@@ -5,9 +5,15 @@ describe('Character Generation', () => {
     it('should generate a character with the correct initial stat pool', () => {
         const char = generateInitialStats('Test', 'male');
 
-        // Base is 10 for 5 stats (50) total RPG points
-        const totalRPGStats = char.strength + char.vitality + char.dexterity + char.luck + char.intelligence;
-        expect(totalRPGStats).toBe(50);
+        // Base is 10 for 6 stats (60) total RPG points
+        const totalRPGStats =
+            char.strength +
+            char.vitality +
+            char.dexterity +
+            char.luck +
+            char.intelligence +
+            char.focus;
+        expect(totalRPGStats).toBe(60);
     });
 
     it('should calculate HP correctly based on vitality', () => {

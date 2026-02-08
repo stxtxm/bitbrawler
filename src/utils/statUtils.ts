@@ -1,6 +1,6 @@
 import { Character } from '../types/Character';
 
-export const STAT_KEYS = ['strength', 'vitality', 'dexterity', 'luck', 'intelligence'] as const;
+export const STAT_KEYS = ['strength', 'vitality', 'dexterity', 'luck', 'intelligence', 'focus'] as const;
 export type StatKey = typeof STAT_KEYS[number];
 
 const BASE_HP = 100;

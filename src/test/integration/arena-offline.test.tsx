@@ -34,6 +34,7 @@ const mockCharacter: Character = {
   dexterity: 7,
   luck: 5,
   intelligence: 4,
+  focus: 5,
   hp: 40,
   maxHp: 40,
   wins: 2,
@@ -60,10 +61,13 @@ describe('Arena offline mode', () => {
       activeCharacter: mockCharacter,
       logout: vi.fn(),
       useFight: vi.fn(),
+      findOpponent: vi.fn(),
       lastXpGain: null,
       lastLevelUp: null,
       clearXpNotifications: vi.fn(),
       firebaseAvailable: true,
+      allocateStatPoint: vi.fn(),
+      rollLootbox: vi.fn(),
     })
 
     const { getByText, getByRole, queryByRole } = render(
@@ -86,10 +90,13 @@ describe('Arena offline mode', () => {
       activeCharacter: mockCharacter,
       logout: vi.fn(),
       useFight: vi.fn(),
+      findOpponent: vi.fn(),
       lastXpGain: null,
       lastLevelUp: null,
       clearXpNotifications: vi.fn(),
       firebaseAvailable: false,
+      allocateStatPoint: vi.fn(),
+      rollLootbox: vi.fn(),
     })
 
     const { getByText, getByRole, queryByRole } = render(

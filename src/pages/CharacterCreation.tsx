@@ -209,6 +209,11 @@ const CharacterCreation = () => {
                     <span className="stat-label">INT</span>
                     <span className="stat-value">{generatedCharacter.intelligence}</span>
                   </div>
+                  <div className="stat-card" title="Focus">
+                    <span className="stat-icon"><PixelIcon type="focus" size={16} /></span>
+                    <span className="stat-label">FOC</span>
+                    <span className="stat-value">{generatedCharacter.focus}</span>
+                  </div>
                 </div>
                 <div className="hp-stat-card">
                   <span className="stat-icon"><PixelIcon type="vitality" size={16} /></span>

@@ -1,6 +1,6 @@
 import { GAME_RULES } from '../config/gameRules';
 import { Character } from '../types/Character';
-import { getHpForVitality } from './statUtils';
+import { getHpForVitality, STAT_KEYS, StatKey } from './statUtils';
 
 /**
  * Generates a logical, coherent, single-word name without numbers or special characters.
@@ -91,18 +91,19 @@ export const generateCharacterName = (): string => {
  */
 export const generateInitialStats = (name: string, gender: 'male' | 'female'): Character => {
     const { BASE_VALUE, MIN_VALUE, MAX_VALUE } = GAME_RULES.STATS;
-    const NUM_STATS = 5;
+    const NUM_STATS = STAT_KEYS.length;
 
     // Initialize stats
-    const stats: Record<string, number> = {
+    const stats: Record<StatKey, number> = {
         strength: BASE_VALUE,
         vitality: BASE_VALUE,
         dexterity: BASE_VALUE,
         luck: BASE_VALUE,
-        intelligence: BASE_VALUE
+        intelligence: BASE_VALUE,
+        focus: BASE_VALUE
     };
 
-    const statKeys = Object.keys(stats);
+    const statKeys = STAT_KEYS as StatKey[];
 
     // Shuffle stats by exchanging points
     // We do multiple passes of +1/-1 swaps to ensure random distribution
@@ -140,11 +141,15 @@ export const generateInitialStats = (name: string, gender: 'male' | 'female'): C
         dexterity: stats.dexterity,
         luck: stats.luck,
         intelligence: stats.intelligence,
+        focus: stats.focus,
         experience: 0,
         wins: 0,
         losses: 0,
         fightsLeft: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
         lastFightReset: Date.now(),
-        statPoints: 0
+        statPoints: 0,
+        inventory: [],
+        equipped: {},
+        lastLootRoll: 0
     };
 };

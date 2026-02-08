@@ -29,6 +29,7 @@ describe('🤝 Matchmaking System', () => {
         dexterity: 10,
         luck: 10,
         intelligence: 10,
+        focus: 10,
         experience: 0,
         wins: 0,
         losses: 0,

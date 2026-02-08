@@ -22,6 +22,7 @@ const createTestCharacter = (level: number, experience: number): Character => ({
     dexterity: 10,
     luck: 10,
     intelligence: 10,
+    focus: 10,
     hp: 100,
     maxHp: 100,
     wins: 0,

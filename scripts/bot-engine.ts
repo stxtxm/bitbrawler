@@ -118,7 +118,10 @@ async function createNewBot() {
         losses: 0,
         fightsLeft: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
         lastFightReset: Date.now(),
-        statPoints: 0
+        statPoints: 0,
+        inventory: [],
+        equipped: {},
+        lastLootRoll: 0
     };
 
     await db.collection('characters').add(botData);
@@ -142,7 +145,11 @@ async function simulateBotDailyLife() {
         return {
             ...data,
             firestoreId: doc.id,
-            statPoints: data.statPoints ?? 0
+            statPoints: data.statPoints ?? 0,
+            focus: data.focus ?? GAME_RULES.STATS.BASE_VALUE,
+            inventory: data.inventory ?? [],
+            equipped: data.equipped ?? {},
+            lastLootRoll: data.lastLootRoll ?? 0
         };
     });
 
@@ -259,6 +266,7 @@ async function simulateBotDailyLife() {
                 dexterity: currentBotState.dexterity,
                 luck: currentBotState.luck,
                 intelligence: currentBotState.intelligence,
+                focus: currentBotState.focus,
                 hp: currentBotState.hp,
                 maxHp: currentBotState.maxHp,
                 lastFightReset: currentBotState.lastFightReset,

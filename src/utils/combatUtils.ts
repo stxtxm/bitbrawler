@@ -1,4 +1,5 @@
 import { Character } from '../types/Character'
+import { applyEquipmentToCharacter } from './equipmentUtils'
 
 export interface CombatStats {
   totalPower: number;
@@ -7,6 +8,7 @@ export interface CombatStats {
   speed: number;
   critChance: number;
   magicPower: number;
+  focus: number;
 }
 
 export interface CombatSnapshot {
@@ -23,27 +25,31 @@ function scaleStat(value: number): number {
 }
 
 export function calculateCombatStats(character: Character): CombatStats {
+  const effectiveCharacter = applyEquipmentToCharacter(character);
   // Balanced calculation based on 5-stat system
   // STR -> Offense
   // VIT -> Defense
   // DEX -> Speed/Precision
   // LUK -> Criticals
   // INT -> Magic / Special Power
+  // FOC -> Focus / Accuracy Control
 
-  const effectiveStrength = scaleStat(character.strength);
-  const effectiveVitality = scaleStat(character.vitality);
-  const effectiveDexterity = scaleStat(character.dexterity);
-  const effectiveLuck = scaleStat(character.luck);
-  const effectiveIntelligence = scaleStat(character.intelligence);
+  const effectiveStrength = scaleStat(effectiveCharacter.strength);
+  const effectiveVitality = scaleStat(effectiveCharacter.vitality);
+  const effectiveDexterity = scaleStat(effectiveCharacter.dexterity);
+  const effectiveLuck = scaleStat(effectiveCharacter.luck);
+  const effectiveIntelligence = scaleStat(effectiveCharacter.intelligence);
+  const effectiveFocus = scaleStat(effectiveCharacter.focus);
 
-  const offense = effectiveStrength * 1.9;
-  const defense = effectiveVitality * 2.1;
-  const speed = effectiveDexterity * 1.7;
-  const critChance = Math.min(28, effectiveLuck * 1.4);
-  const magicPower = effectiveIntelligence * 1.7;
+  const offense = effectiveStrength * 1.85;
+  const defense = effectiveVitality * 2.0;
+  const speed = effectiveDexterity * 1.6;
+  const critChance = Math.min(28, effectiveLuck * 1.35);
+  const magicPower = effectiveIntelligence * 1.6;
+  const focus = effectiveFocus * 1.35;
 
   // Total power for comparison
-  const totalPower = (offense + defense + speed + magicPower + critChance);
+  const totalPower = (offense + defense + speed + magicPower + critChance + (focus * 0.6));
 
   return {
     totalPower,
@@ -51,21 +57,23 @@ export function calculateCombatStats(character: Character): CombatStats {
     defense,
     speed,
     critChance,
-    magicPower
+    magicPower,
+    focus
   }
 }
 
 export function getCombatBalance(stats: CombatStats): string {
-  const { offense, defense, speed, magicPower } = stats
+  const { offense, defense, speed, magicPower, focus } = stats
 
-  if (offense === defense && defense === speed && speed === magicPower) return "⚖️ Balanced";
+  if (offense === defense && defense === speed && speed === magicPower && speed === focus) return "⚖️ Balanced";
 
-  const max = Math.max(offense, defense, speed, magicPower);
+  const max = Math.max(offense, defense, speed, magicPower, focus);
 
   if (max === offense) return "⚔️ Berserker";
   if (max === defense) return "🛡️ Tank";
   if (max === speed) return "⚡ Speedster";
   if (max === magicPower) return "🔮 Mage";
+  if (max === focus) return "🎯 Sharpshooter";
   return "⚖️ Balanced";
 }
 
@@ -75,13 +83,15 @@ export function simulateCombat(attacker: Character, defender: Character): {
   details: string[];
   timeline: CombatSnapshot[];
 } {
+  const effectiveAttacker = applyEquipmentToCharacter(attacker)
+  const effectiveDefender = applyEquipmentToCharacter(defender)
   const intruder = calculateCombatStats(attacker)
   const target = calculateCombatStats(defender)
 
   const details: string[] = []
   const timeline: CombatSnapshot[] = []
-  let attackerHp = attacker.hp
-  let defenderHp = defender.hp
+  let attackerHp = effectiveAttacker.hp
+  let defenderHp = effectiveDefender.hp
   let rounds = 0
 
   const clampHp = (hp: number) => Math.max(0, Math.round(hp))
@@ -108,8 +118,9 @@ export function simulateCombat(attacker: Character, defender: Character): {
 
     // Hit chance formula (62-90% range), weighted by speed differential
     const speedDelta = actorStats.speed - targetStats.speed
-    const baseHitChance = 74 + (speedDelta * 0.45)
-    const finalHitChance = Math.max(62, Math.min(90, baseHitChance + (actorComeback > 1 ? 4 : 0)))
+    const focusDelta = actorStats.focus - targetStats.focus
+    const baseHitChance = 72 + (speedDelta * 0.4) + (focusDelta * 0.25)
+    const finalHitChance = Math.max(60, Math.min(92, baseHitChance + (actorComeback > 1 ? 4 : 0)))
 
     if (Math.random() * 100 < finalHitChance) {
       let damageMultiplier = 1
@@ -120,12 +131,15 @@ export function simulateCombat(attacker: Character, defender: Character): {
         msg = " CRIT!"
       }
 
-      const magicChance = Math.min(30, 5 + (actorStats.magicPower * 0.35))
+      const magicChance = Math.min(30, 5 + (actorStats.magicPower * 0.32) + (actorStats.focus * 0.08))
       const isMagic = Math.random() * 100 < magicChance
       const magicSurge = isMagic ? Math.round(actorStats.magicPower * 0.55) : 0
-      const varianceFactor = 0.9 + Math.random() * 0.2
-      const baseDamage = (actorStats.offense * 1.2 * damageMultiplier) - (targetStats.defense * 0.55)
-      const damage = Math.max(4, Math.round((baseDamage + magicSurge) * varianceFactor * actorComeback))
+      const focusStability = Math.min(0.08, actorStats.focus * 0.002)
+      const varianceRange = 0.2 - focusStability
+      const varianceFactor = (1 - (varianceRange / 2)) + (Math.random() * varianceRange)
+      const focusSurge = Math.random() * 100 < Math.min(8, actorStats.focus * 0.22) ? 1.08 : 1
+      const baseDamage = (actorStats.offense * 1.18 * damageMultiplier) - (targetStats.defense * 0.55)
+      const damage = Math.max(4, Math.round((baseDamage + magicSurge) * varianceFactor * actorComeback * focusSurge))
       targetHp -= damage
 
       if (isMagic) {

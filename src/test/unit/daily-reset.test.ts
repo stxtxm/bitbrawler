@@ -42,6 +42,7 @@ describe('Daily Reset Functionality', () => {
     dexterity: 10,
     luck: 8,
     intelligence: 11,
+    focus: 10,
     experience: 500,
     wins: 10,
     losses: 3,

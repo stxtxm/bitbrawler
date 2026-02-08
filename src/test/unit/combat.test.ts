@@ -15,6 +15,7 @@ describe('Combat System', () => {
         dexterity: 10,
         luck: 10,
         intelligence: 10,
+        focus: 10,
         experience: 0,
         wins: 0,
         losses: 0,
@@ -25,11 +26,12 @@ describe('Combat System', () => {
     it('should correctly calculate combat stats from RPG stats', () => {
         const stats = calculateCombatStats(mockCharacter);
 
-        expect(stats.offense).toBeCloseTo(19, 1);
-        expect(stats.defense).toBeCloseTo(21, 1);
-        expect(stats.speed).toBeCloseTo(17, 1);
-        expect(stats.critChance).toBeCloseTo(14, 1);
-        expect(stats.magicPower).toBeCloseTo(17, 1);
+        expect(stats.offense).toBeCloseTo(18.5, 1);
+        expect(stats.defense).toBeCloseTo(20, 1);
+        expect(stats.speed).toBeCloseTo(16, 1);
+        expect(stats.critChance).toBeCloseTo(13.5, 1);
+        expect(stats.magicPower).toBeCloseTo(16, 1);
+        expect(stats.focus).toBeCloseTo(13.5, 1);
     });
 
     it('should cap critical chance at 28%', () => {
@@ -53,16 +55,16 @@ describe('Combat System', () => {
 
     it('should correctly identify a character class/balance', () => {
         const stats = calculateCombatStats(mockCharacter);
-        const balancedStats = { ...stats, offense: 10, defense: 10, speed: 10, magicPower: 10 };
+        const balancedStats = { ...stats, offense: 10, defense: 10, speed: 10, magicPower: 10, focus: 10 };
         expect(getCombatBalance(balancedStats)).toBe('⚖️ Balanced');
 
-        const tankStats = { ...stats, offense: 10, defense: 30, speed: 10, magicPower: 10 };
+        const tankStats = { ...stats, offense: 10, defense: 30, speed: 10, magicPower: 10, focus: 10 };
         expect(getCombatBalance(tankStats)).toBe('🛡️ Tank');
 
-        const dpsStats = { ...stats, offense: 30, defense: 10, speed: 10, magicPower: 10 };
+        const dpsStats = { ...stats, offense: 30, defense: 10, speed: 10, magicPower: 10, focus: 10 };
         expect(getCombatBalance(dpsStats)).toBe('⚔️ Berserker');
 
-        const mageStats = { ...stats, offense: 10, defense: 10, speed: 10, magicPower: 30 };
+        const mageStats = { ...stats, offense: 10, defense: 10, speed: 10, magicPower: 30, focus: 10 };
         expect(getCombatBalance(mageStats)).toBe('🔮 Mage');
     });
 

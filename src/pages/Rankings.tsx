@@ -191,6 +191,9 @@ const Rankings = () => {
                                         <div className="mini-stat"><span>STR</span>{char.strength}</div>
                                         <div className="mini-stat"><span>VIT</span>{char.vitality}</div>
                                         <div className="mini-stat"><span>DEX</span>{char.dexterity}</div>
+                                        <div className="mini-stat"><span>LUK</span>{char.luck}</div>
+                                        <div className="mini-stat"><span>INT</span>{char.intelligence}</div>
+                                        <div className="mini-stat"><span>FOC</span>{char.focus}</div>
                                     </div>
                                 </div>
                             ))}

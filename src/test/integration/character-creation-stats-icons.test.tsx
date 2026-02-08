@@ -37,6 +37,7 @@ const mockCharacter: Character = {
   dexterity: 5,
   luck: 4,
   intelligence: 3,
+  focus: 5,
   hp: 38,
   maxHp: 38,
   wins: 0,
@@ -74,7 +75,7 @@ describe('Character creation stat icons', () => {
 
     const statsReadout = container.querySelector('.stats-readout-compact');
     expect(statsReadout).not.toBeNull();
-    expect(statsReadout?.querySelectorAll('.stat-card .stat-icon svg').length).toBe(5);
+    expect(statsReadout?.querySelectorAll('.stat-card .stat-icon svg').length).toBe(6);
     expect(statsReadout?.querySelectorAll('.hp-stat-card .stat-icon svg').length).toBe(1);
   });
 });

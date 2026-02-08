@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface PixelIconProps {
-    type: 'fighters' | 'arena' | 'levels' | 'updates' | 'user' | 'trophy' | 'power' | 'sword' | 'backpack' | 'dice' | 'history' | 'skull' | 'swords' | 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence';
+    type: 'fighters' | 'arena' | 'levels' | 'updates' | 'user' | 'trophy' | 'power' | 'sword' | 'backpack' | 'dice' | 'history' | 'skull' | 'swords' | 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence' | 'focus' | 'chest';
     size?: number;
 }
 
@@ -209,6 +209,28 @@ export const PixelIcon: React.FC<PixelIconProps> = ({ type, size = 32 }) => {
                         <rect x="1" y="2" width="6" height="2" fill="#63b3ff" />
                         <rect x="2" y="4" width="4" height="2" fill="#63b3ff" />
                         <rect x="3" y="6" width="2" height="1" fill="#3f7bd6" />
+                    </svg>
+                );
+            case 'focus':
+                return (
+                    <svg width={size} height={size} viewBox="0 0 8 8" shapeRendering="crispEdges">
+                        <rect x="3" y="0" width="2" height="1" fill="#ffcc00" />
+                        <rect x="0" y="3" width="1" height="2" fill="#ffcc00" />
+                        <rect x="7" y="3" width="1" height="2" fill="#ffcc00" />
+                        <rect x="3" y="7" width="2" height="1" fill="#ffcc00" />
+                        <rect x="2" y="2" width="4" height="4" fill="#111" />
+                        <rect x="3" y="3" width="2" height="2" fill="#ffcc00" />
+                    </svg>
+                );
+            case 'chest':
+                return (
+                    <svg width={size} height={size} viewBox="0 0 8 8" shapeRendering="crispEdges">
+                        <rect x="1" y="2" width="6" height="4" fill="#8b5a2b" />
+                        <rect x="1" y="1" width="6" height="1" fill="#9b6a3a" />
+                        <rect x="1" y="6" width="6" height="1" fill="#6f3f1e" />
+                        <rect x="3" y="2" width="2" height="3" fill="#ffcc00" />
+                        <rect x="0" y="3" width="1" height="2" fill="#111" />
+                        <rect x="7" y="3" width="1" height="2" fill="#111" />
                     </svg>
                 );
             default:

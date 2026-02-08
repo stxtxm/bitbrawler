@@ -34,6 +34,7 @@ const mockCharacter: Character = {
   dexterity: 6,
   luck: 5,
   intelligence: 4,
+  focus: 5,
   hp: 50,
   maxHp: 50,
   wins: 3,
@@ -64,6 +65,7 @@ describe('Arena stat icons', () => {
       clearXpNotifications: vi.fn(),
       firebaseAvailable: true,
       allocateStatPoint: vi.fn(),
+      rollLootbox: vi.fn(),
     });
   });
 
@@ -76,9 +78,9 @@ describe('Arena stat icons', () => {
 
     const statsGrid = container.querySelector('.stats-grid-compact');
     expect(statsGrid).not.toBeNull();
-    expect(statsGrid?.querySelectorAll('.compact-stat-icon svg').length).toBe(5);
+    expect(statsGrid?.querySelectorAll('.compact-stat-icon svg').length).toBe(6);
 
-    ['STR', 'VIT', 'DEX', 'LUK', 'INT'].forEach((label) => {
+    ['STR', 'VIT', 'DEX', 'LUK', 'INT', 'FOC'].forEach((label) => {
       expect(getByText(label)).toBeInTheDocument();
     });
   });

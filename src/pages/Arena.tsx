@@ -6,13 +6,17 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import ConnectionModal from '../components/ConnectionModal';
 import { PixelCharacter } from '../components/PixelCharacter';
 import { PixelIcon } from '../components/PixelIcon';
+import { PixelItemIcon } from '../components/PixelItemIcon';
 import { getXpProgress, formatXpDisplay, getMaxLevel } from '../utils/xpUtils';
 import { StatKey } from '../utils/statUtils';
 import { CombatView } from '../components/CombatView';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
+import { applyEquipmentToCharacter, getItemById } from '../utils/equipmentUtils';
+import { canRollLootbox } from '../utils/lootboxUtils';
+import { ItemStats, PixelItemAsset } from '../types/Item';
 
 const Arena = () => {
-    const { activeCharacter, logout, useFight, findOpponent, lastXpGain, lastLevelUp, clearXpNotifications, firebaseAvailable, allocateStatPoint } = useGame();
+    const { activeCharacter, logout, useFight, findOpponent, lastXpGain, lastLevelUp, clearXpNotifications, firebaseAvailable, allocateStatPoint, rollLootbox } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const navigate = useNavigate();
     const isOnline = useOnlineStatus();
@@ -27,6 +31,10 @@ const Arena = () => {
     const [combatData, setCombatData] = useState<MatchmakingResult | null>(null);
     const [allocatingStat, setAllocatingStat] = useState<StatKey | null>(null);
     const [deferLevelUp, setDeferLevelUp] = useState(false);
+    const [lootboxRolling, setLootboxRolling] = useState(false);
+    const [lootboxResult, setLootboxResult] = useState<PixelItemAsset | null>(null);
+    const [inventoryHoveredId, setInventoryHoveredId] = useState<string | null>(null);
+    const [inventorySelectedId, setInventorySelectedId] = useState<string | null>(null);
 
     // Handle XP gain notification
     useEffect(() => {
@@ -57,6 +65,7 @@ const Arena = () => {
         return <div className="loading-screen">ACCESS DENIED</div>;
     }
 
+    const effectiveCharacter = applyEquipmentToCharacter(activeCharacter);
     const xpProgress = getXpProgress(activeCharacter);
     const isMaxLevel = activeCharacter.level >= getMaxLevel();
     const isOfflineMode = !isOnline || !firebaseAvailable;
@@ -66,14 +75,35 @@ const Arena = () => {
     const canCloseLevelUp = pendingStatPoints === 0;
     const shouldShowLevelUp = showLevelUp || (pendingStatPoints > 0 && !deferLevelUp);
     const hasLevelInfo = lastLevelUp !== null;
-    type StatIconType = 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence';
+    const inventory = activeCharacter.inventory || [];
+    const inventoryCapacity = 24;
+    const inventoryFull = inventory.length >= inventoryCapacity;
+    const canRollDailyLoot = canRollLootbox(activeCharacter.lastLootRoll, Date.now());
+    type StatIconType = 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence' | 'focus';
     const statOptions: Array<{ key: StatKey; label: string; value: number; hint: string; icon: StatIconType }> = [
-        { key: 'strength', label: 'STR', value: activeCharacter.strength, hint: 'Damage', icon: 'strength' },
-        { key: 'vitality', label: 'VIT', value: activeCharacter.vitality, hint: 'HP / Defense', icon: 'vitality' },
-        { key: 'dexterity', label: 'DEX', value: activeCharacter.dexterity, hint: 'Accuracy / Speed', icon: 'dexterity' },
-        { key: 'luck', label: 'LUK', value: activeCharacter.luck, hint: 'Crit Chance', icon: 'luck' },
-        { key: 'intelligence', label: 'INT', value: activeCharacter.intelligence, hint: 'Magic Power', icon: 'intelligence' },
+        { key: 'strength', label: 'STR', value: effectiveCharacter.strength, hint: 'Damage', icon: 'strength' },
+        { key: 'vitality', label: 'VIT', value: effectiveCharacter.vitality, hint: 'HP / Defense', icon: 'vitality' },
+        { key: 'dexterity', label: 'DEX', value: effectiveCharacter.dexterity, hint: 'Speed', icon: 'dexterity' },
+        { key: 'luck', label: 'LUK', value: effectiveCharacter.luck, hint: 'Crit Chance', icon: 'luck' },
+        { key: 'intelligence', label: 'INT', value: effectiveCharacter.intelligence, hint: 'Magic Power', icon: 'intelligence' },
+        { key: 'focus', label: 'FOC', value: effectiveCharacter.focus, hint: 'Accuracy / Control', icon: 'focus' },
     ];
+    const itemStatMeta: Record<keyof ItemStats, { label: string; icon: StatIconType }> = {
+        strength: { label: 'STR', icon: 'strength' },
+        vitality: { label: 'VIT', icon: 'vitality' },
+        dexterity: { label: 'DEX', icon: 'dexterity' },
+        luck: { label: 'LUK', icon: 'luck' },
+        intelligence: { label: 'INT', icon: 'intelligence' },
+        focus: { label: 'FOC', icon: 'focus' },
+        hp: { label: 'HP', icon: 'vitality' },
+    };
+    const previewItemId = inventoryHoveredId || inventorySelectedId;
+    const previewItem = getItemById(previewItemId);
+    const previewStats = previewItem
+        ? (Object.entries(previewItem.stats)
+            .filter(([, value]) => typeof value === 'number' && value !== 0) as [keyof ItemStats, number][])
+        : [];
+    const previewSlotLabel = previewItem ? previewItem.slot.toUpperCase() : '';
 
     const handleAllocateStat = async (stat: StatKey) => {
         if (allocatingStat || pendingStatPoints <= 0) return;
@@ -115,6 +145,45 @@ const Arena = () => {
             setDeferLevelUp(false);
         }
     }, [pendingStatPoints]);
+
+    useEffect(() => {
+        if (!inventoryOpen) {
+            setLootboxResult(null);
+            setLootboxRolling(false);
+            setInventoryHoveredId(null);
+            setInventorySelectedId(null);
+        }
+    }, [inventoryOpen]);
+
+    const handleLootboxRoll = async () => {
+        if (lootboxRolling) return;
+        if (isOfflineMode) {
+            openModal(connectionMessage);
+            return;
+        }
+        const canProceed = await ensureConnection(connectionMessage);
+        if (!canProceed) return;
+
+        setLootboxRolling(true);
+        setLootboxResult(null);
+
+        setTimeout(async () => {
+            try {
+                const item = await rollLootbox();
+                if (item) {
+                    setLootboxResult(item);
+                }
+            } catch (error: any) {
+                openModal(error.message || connectionMessage);
+            } finally {
+                setLootboxRolling(false);
+            }
+        }, 900);
+    };
+
+    const handleSelectItem = (itemId: string) => {
+        setInventorySelectedId(itemId);
+    };
 
     const handleFight = async () => {
         const canProceed = await ensureConnection(connectionMessage);
@@ -306,7 +375,7 @@ const Arena = () => {
                             <div className="bar-container">
                                 <div className="bar hp-bar" style={{ width: '100%' }}></div>
                             </div>
-                            <span className="stat-val">{activeCharacter.hp}</span>
+                            <span className="stat-val">{effectiveCharacter.maxHp}</span>
                         </div>
                         <div className="stats-grid-compact">
                             {statOptions.map((stat) => (
@@ -372,12 +441,105 @@ const Arena = () => {
                                 ×
                             </button>
                         </div>
-                        <div className="inventory-grid">
-                            {Array.from({ length: 24 }).map((_, index) => (
-                                <div key={index} className="inventory-slot" aria-hidden="true" />
-                            ))}
+                        <div className="inventory-roll">
+                            <button
+                                className="button lootbox-btn"
+                                onClick={handleLootboxRoll}
+                                disabled={lootboxRolling || !canRollDailyLoot || inventoryFull || isOfflineMode}
+                                aria-label="Daily lootbox roll"
+                            >
+                                <PixelIcon type="chest" size={18} />
+                                <span>
+                                    {lootboxRolling
+                                        ? 'OPENING...'
+                                        : inventoryFull
+                                            ? 'INVENTORY FULL'
+                                            : canRollDailyLoot
+                                                ? 'DAILY LOOTBOX'
+                                                : 'COME BACK TOMORROW'}
+                                </span>
+                            </button>
+                            <div className="lootbox-status">
+                                {inventory.length}/{inventoryCapacity} SLOTS
+                            </div>
                         </div>
-                        <div className="inventory-footer">EMPTY SLOTS</div>
+                        <div className="inventory-body">
+                            <div className="inventory-grid">
+                                {Array.from({ length: inventoryCapacity }).map((_, index) => {
+                                    const itemId = inventory[index];
+                                    const item = getItemById(itemId);
+                                    if (!item) {
+                                        return <div key={index} className="inventory-slot empty" aria-hidden="true" />;
+                                    }
+                                    const isSelected = previewItemId === item.id;
+                                    return (
+                                        <button
+                                            key={index}
+                                            className={`inventory-slot item-slot rarity-${item.rarity} ${isSelected ? 'selected' : ''}`}
+                                            onClick={() => handleSelectItem(item.id)}
+                                            onMouseEnter={() => setInventoryHoveredId(item.id)}
+                                            onMouseLeave={() => setInventoryHoveredId((current) => (current === item.id ? null : current))}
+                                            onFocus={() => setInventoryHoveredId(item.id)}
+                                            onBlur={() => setInventoryHoveredId((current) => (current === item.id ? null : current))}
+                                            onTouchStart={() => setInventorySelectedId(item.id)}
+                                            title={`${item.name} (${item.rarity})`}
+                                            aria-label={`View ${item.name}`}
+                                        >
+                                            <PixelItemIcon pixels={item.pixels} size={24} />
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <div className={`inventory-details ${previewItem ? '' : 'empty'}`}>
+                                {previewItem ? (
+                                    <>
+                                        <div className={`inventory-item-head rarity-${previewItem.rarity}`}>
+                                            <PixelItemIcon pixels={previewItem.pixels} size={30} />
+                                            <div className="inventory-item-meta">
+                                                <div className="inventory-item-name">{previewItem.name}</div>
+                                                <div className="inventory-item-sub">
+                                                    <span className="inventory-item-slot">{previewSlotLabel}</span>
+                                                    <span className="inventory-item-rarity">{previewItem.rarity.toUpperCase()}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="inventory-item-stats">
+                                            {previewStats.map(([statKey, value]) => {
+                                                const meta = itemStatMeta[statKey];
+                                                if (!meta) return null;
+                                                return (
+                                                    <div key={statKey} className="inventory-stat-row">
+                                                        <span className="inventory-stat-icon">
+                                                            <PixelIcon type={meta.icon} size={12} />
+                                                        </span>
+                                                        <span className="inventory-stat-label">{meta.label}</span>
+                                                        <span className="inventory-stat-value">+{value}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="inventory-empty-details">TAP AN ITEM TO VIEW BONUSES</div>
+                                )}
+                            </div>
+                        </div>
+                        {lootboxResult && (
+                            <div className="inventory-footer">
+                                <div className={`lootbox-result rarity-${lootboxResult.rarity}`}>
+                                    <PixelItemIcon pixels={lootboxResult.pixels} size={26} />
+                                    <span>FOUND: {lootboxResult.name}</span>
+                                </div>
+                            </div>
+                        )}
+                        {lootboxRolling && (
+                            <div className="lootbox-overlay">
+                                <div className="lootbox-anim">
+                                    <PixelIcon type="chest" size={46} />
+                                    <div className="lootbox-text">OPENING...</div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -414,8 +576,8 @@ const Arena = () => {
             )}
             {combatData && activeCharacter && (
                 <CombatView
-                    player={activeCharacter}
-                    opponent={combatData.opponent}
+                    player={applyEquipmentToCharacter(activeCharacter)}
+                    opponent={applyEquipmentToCharacter(combatData.opponent)}
                     matchType={combatData.matchType}
                     onComplete={handleCombatComplete}
                     onClose={handleCloseCombat}

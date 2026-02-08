@@ -62,6 +62,7 @@ describe('App offline routing', () => {
         dexterity: 7,
         luck: 5,
         intelligence: 4,
+        focus: 5,
         hp: 40,
         maxHp: 40,
         wins: 2,

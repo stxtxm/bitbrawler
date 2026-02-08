@@ -34,6 +34,7 @@ const mockCharacter: Character = {
   dexterity: 7,
   luck: 5,
   intelligence: 4,
+  focus: 5,
   hp: 40,
   maxHp: 40,
   wins: 2,
@@ -57,11 +58,14 @@ describe('Arena inventory modal', () => {
       activeCharacter: mockCharacter,
       logout: vi.fn(),
       useFight: vi.fn(),
+      findOpponent: vi.fn(),
       lastXpGain: null,
       lastLevelUp: null,
       clearXpNotifications: vi.fn(),
       firebaseAvailable: true,
       retryConnection: vi.fn(),
+      allocateStatPoint: vi.fn(),
+      rollLootbox: vi.fn(),
     })
   })
 
