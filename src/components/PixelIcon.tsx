@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface PixelIconProps {
-    type: 'fighters' | 'arena' | 'levels' | 'updates' | 'user' | 'trophy' | 'power' | 'sword' | 'backpack' | 'dice' | 'history' | 'skull' | 'swords';
+    type: 'fighters' | 'arena' | 'levels' | 'updates' | 'user' | 'trophy' | 'power' | 'sword' | 'backpack' | 'dice' | 'history' | 'skull' | 'swords' | 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence';
     size?: number;
 }
 
@@ -154,6 +154,61 @@ export const PixelIcon: React.FC<PixelIconProps> = ({ type, size = 32 }) => {
                         <rect x="1" y="5" width="2" height="1" fill="#844" />
                         <rect x="5" y="5" width="2" height="1" fill="#844" />
                         <rect x="3" y="6" width="2" height="1" fill="#888" />
+                    </svg>
+                );
+            case 'strength':
+                return (
+                    <svg width={size} height={size} viewBox="0 0 8 8" shapeRendering="crispEdges">
+                        <rect x="2" y="1" width="4" height="1" fill="#f0c7a4" />
+                        <rect x="1" y="2" width="6" height="2" fill="#f0c7a4" />
+                        <rect x="1" y="4" width="5" height="2" fill="#f0c7a4" />
+                        <rect x="2" y="6" width="3" height="1" fill="#d9a07a" />
+                        <rect x="5" y="2" width="2" height="1" fill="#d9a07a" />
+                        <rect x="0" y="3" width="1" height="2" fill="#d9a07a" />
+                    </svg>
+                );
+            case 'vitality':
+                return (
+                    <svg width={size} height={size} viewBox="0 0 8 8" shapeRendering="crispEdges">
+                        <rect x="2" y="1" width="1" height="1" fill="#ff4d4d" />
+                        <rect x="5" y="1" width="1" height="1" fill="#ff4d4d" />
+                        <rect x="1" y="2" width="2" height="1" fill="#ff4d4d" />
+                        <rect x="5" y="2" width="2" height="1" fill="#ff4d4d" />
+                        <rect x="1" y="3" width="6" height="2" fill="#ff4d4d" />
+                        <rect x="2" y="5" width="4" height="1" fill="#ff4d4d" />
+                        <rect x="3" y="6" width="2" height="1" fill="#d93636" />
+                    </svg>
+                );
+            case 'dexterity':
+                return (
+                    <svg width={size} height={size} viewBox="0 0 8 8" shapeRendering="crispEdges">
+                        <rect x="3" y="1" width="2" height="1" fill="#9adf6b" />
+                        <rect x="2" y="2" width="3" height="1" fill="#9adf6b" />
+                        <rect x="1" y="3" width="4" height="1" fill="#9adf6b" />
+                        <rect x="1" y="4" width="4" height="1" fill="#9adf6b" />
+                        <rect x="1" y="5" width="5" height="1" fill="#7fb955" />
+                        <rect x="1" y="6" width="6" height="1" fill="#5c4a3a" />
+                    </svg>
+                );
+            case 'luck':
+                return (
+                    <svg width={size} height={size} viewBox="0 0 8 8" shapeRendering="crispEdges">
+                        <rect x="2" y="1" width="2" height="2" fill="#4cd964" />
+                        <rect x="4" y="1" width="2" height="2" fill="#4cd964" />
+                        <rect x="1" y="3" width="2" height="2" fill="#4cd964" />
+                        <rect x="5" y="3" width="2" height="2" fill="#4cd964" />
+                        <rect x="3" y="3" width="2" height="2" fill="#4cd964" />
+                        <rect x="3" y="5" width="2" height="2" fill="#3aa64c" />
+                    </svg>
+                );
+            case 'intelligence':
+                return (
+                    <svg width={size} height={size} viewBox="0 0 8 8" shapeRendering="crispEdges">
+                        <rect x="3" y="0" width="2" height="1" fill="#63b3ff" />
+                        <rect x="2" y="1" width="4" height="1" fill="#63b3ff" />
+                        <rect x="1" y="2" width="6" height="2" fill="#63b3ff" />
+                        <rect x="2" y="4" width="4" height="2" fill="#63b3ff" />
+                        <rect x="3" y="6" width="2" height="1" fill="#3f7bd6" />
                     </svg>
                 );
             default:

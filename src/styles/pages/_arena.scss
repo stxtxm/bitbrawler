@@ -17,10 +17,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
     padding: 10px 15px;
     border-bottom: 2px solid #333;
     background: #000;
     margin-bottom: 10px;
+    overflow: hidden;
 
     @include mobile {
         padding: 5px 8px;
@@ -249,9 +251,14 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
 
     @include mobile {
-        gap: 5px;
+        gap: 2px;
     }
 }
 
@@ -259,31 +266,87 @@
     font-size: 1.5rem;
     color: $accent-gold;
     margin: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 
     @include mobile {
         font-size: 0.8rem;
     }
 }
 
-.arena-lvl-badge {
-    color: $accent-green;
-    font-size: 0.7rem;
+.arena-lvl {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.lvl-label {
+    color: #8bd8d2;
+    font-size: 0.6rem;
+    letter-spacing: 1px;
 
     @include mobile {
+        font-size: 0.45rem;
+    }
+}
+
+.lvl-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    color: $accent-gold;
+    background: #111;
+    @include retro-border(2px, $accent-gold);
+    box-shadow: inset 0 0 6px rgba(255, 215, 0, 0.2);
+
+    @include mobile {
+        min-width: 22px;
+        font-size: 0.55rem;
+        padding: 1px 5px;
+        border-width: 1px;
+    }
+}
+
+@include mobile {
+    .arena-char-name {
+        font-size: 0.75rem;
+        white-space: normal;
+        line-height: 1.1;
+        max-height: 2.2em;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .lvl-label {
+        font-size: 0.4rem;
+    }
+
+    .lvl-chip {
+        min-width: 20px;
         font-size: 0.5rem;
+        padding: 1px 4px;
     }
 }
 
 .header-actions {
     display: flex;
     gap: 10px;
+    flex-shrink: 0;
+    flex-wrap: nowrap;
 
     @include tablet {
         gap: 16px;
     }
 
     @include mobile {
-        gap: 22px;
+        gap: 8px;
     }
 }
 
@@ -304,6 +367,21 @@
         --icon-btn-size: clamp(38px, 12vw, 48px);
         --icon-size: calc(var(--icon-btn-size) * 0.5);
         border-width: 1px;
+    }
+}
+
+@media (max-width: 380px) {
+    .arena-char-name {
+        font-size: 0.7rem;
+    }
+
+    .header-actions {
+        gap: 6px;
+    }
+
+    .icon-btn {
+        --icon-btn-size: clamp(32px, 11vw, 40px);
+        --icon-size: calc(var(--icon-btn-size) * 0.5);
     }
 }
 
@@ -455,16 +533,50 @@
     padding: 4px 2px;
     @include flex-center;
     flex-direction: column;
+    gap: 2px;
     font-size: 0.5rem;
-
-    span:last-child {
-        color: $accent-gold;
-        margin-top: 2px;
-    }
 
     @include mobile {
         padding: 2px;
         font-size: 0.4rem;
+        gap: 1px;
+    }
+}
+
+.compact-stat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+    font-size: 0.7rem;
+}
+
+.compact-stat-icon svg {
+    width: 1em;
+    height: 1em;
+}
+
+.compact-stat-label {
+    font-size: 0.42rem;
+    color: #c9c9c9;
+}
+
+.compact-stat-value {
+    color: $accent-gold;
+    font-size: 0.55rem;
+}
+
+@include mobile {
+    .compact-stat-icon {
+        font-size: 0.55rem;
+    }
+
+    .compact-stat-label {
+        font-size: 0.38rem;
+    }
+
+    .compact-stat-value {
+        font-size: 0.5rem;
     }
 }
 
@@ -612,35 +724,36 @@
     animation: fadeIn 0.3s ease;
 }
 
+@include mobile {
+    .level-up-pop-overlay {
+        align-items: flex-start;
+        padding: 10px 8px;
+        overflow: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .level-up-pop-overlay::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+    }
+}
+
 .level-up-card {
     background: linear-gradient(135deg, #1a0a00 0%, #000 100%);
     @include retro-border(4px, $accent-gold);
-    padding: 40px;
+    padding: 24px;
     text-align: center;
     position: relative;
     overflow: hidden;
     animation: cardSlideUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    max-width: 400px;
-    width: 90%;
+    max-width: 420px;
+    width: min(94vw, 420px);
+    line-height: 1.1;
 
     @include mobile {
-        padding: 20px;
+        padding: 10px;
         border-width: 2px;
-    }
-}
-
-@include mobile {
-    .level-up-stat-row {
-        grid-template-columns: 1fr auto;
-    }
-
-    .level-up-stat-row .stat-value {
-        justify-self: end;
-    }
-
-    .stat-add-btn {
-        width: 30px;
-        height: 28px;
     }
 }
 
@@ -661,8 +774,8 @@
     background: $accent-red;
     color: #000;
     padding: 4px 12px;
-    font-size: 0.6rem;
-    margin: 0 auto 15px;
+    font-size: 0.55rem;
+    margin: 0 auto 10px;
     display: inline-block;
     @include retro-border(2px, #fff);
 }
@@ -670,25 +783,25 @@
 .stars-top,
 .stars-bottom {
     color: $accent-gold;
-    font-size: 1.2rem;
-    margin: 10px 0;
-    letter-spacing: 8px;
+    font-size: 1.1rem;
+    margin: 6px 0;
+    letter-spacing: 6px;
 }
 
 .lvl-title {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     color: $accent-gold;
-    margin: 20px 0;
+    margin: 12px 0;
     text-shadow: 3px 3px 0 #000;
 }
 
 .lvl-big-number {
-    font-size: 3rem;
-    margin: 20px 0;
+    font-size: 2.4rem;
+    margin: 12px 0;
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 20px;
+    gap: 14px;
 }
 
 .lvl-old {
@@ -711,61 +824,83 @@
 }
 
 .level-up-points {
-    margin-top: 10px;
+    margin-top: 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
 }
 
 .points-label {
-    font-size: 0.55rem;
-    letter-spacing: 2px;
+    font-size: 0.5rem;
+    letter-spacing: 1.5px;
     color: #ccc;
 }
 
 .points-value {
-    font-size: 1.6rem;
+    font-size: 1.3rem;
     color: $accent-gold;
     text-shadow: 2px 2px 0 #000;
 }
 
 .points-warning {
-    font-size: 0.5rem;
+    font-size: 0.45rem;
     color: $accent-red;
 }
 
 .level-up-stats {
-    margin-top: 15px;
+    margin-top: 8px;
     display: grid;
-    gap: 8px;
+    gap: 6px;
 }
 
 .level-up-stat-row {
     display: grid;
-    grid-template-columns: 1fr 1fr auto;
+    grid-template-columns: auto auto auto 1fr auto;
+    grid-template-areas: "icon label value hint action";
     align-items: center;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid #333;
-    padding: 6px 10px;
-    gap: 10px;
+    padding: 4px 6px;
+    gap: 5px;
+}
+
+.level-up-stat-row .stat-icon {
+    grid-area: icon;
+    width: 14px;
+    height: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .level-up-stat-row .stat-label {
+    grid-area: label;
     color: #fff;
-    font-size: 0.6rem;
+    font-size: 0.5rem;
 }
 
 .level-up-stat-row .stat-value {
+    grid-area: value;
     color: $accent-gold;
-    font-size: 0.7rem;
+    font-size: 0.55rem;
     text-align: center;
 }
 
+.level-up-stat-row .stat-hint {
+    grid-area: hint;
+    font-size: 0.4rem;
+    color: #9aa0a6;
+    text-align: left;
+    white-space: nowrap;
+    min-width: 0;
+}
+
 .stat-add-btn {
-    font-size: 0.8rem !important;
-    width: 36px;
-    height: 32px;
+    grid-area: action;
+    font-size: 0.65rem !important;
+    width: 28px;
+    height: 24px;
     padding: 0 !important;
     background: $accent-green;
     color: #000;
@@ -777,9 +912,160 @@
     cursor: not-allowed;
 }
 
+
 .level-up-confirm {
-    margin-top: 18px;
-    padding: 12px 22px !important;
+    margin-top: 10px;
+    padding: 8px 14px !important;
+    font-size: 0.75rem !important;
+}
+
+.level-up-actions {
+    margin-top: 8px;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.level-up-later {
+    font-size: 0.6rem !important;
+    padding: 7px 10px !important;
+    background: #000;
+    color: #fff;
+    @include retro-border(2px, #fff);
+}
+
+@include mobile {
+    .level-up-card {
+        max-width: 360px;
+        padding: 10px;
+    }
+
+    .stars-top,
+    .stars-bottom {
+        display: none;
+    }
+
+    .lvl-title {
+        font-size: 0.95rem;
+        margin: 4px 0;
+    }
+
+    .lvl-big-number {
+        font-size: 1.4rem;
+        margin: 4px 0;
+        gap: 4px;
+    }
+
+    .points-label {
+        font-size: 0.42rem;
+    }
+
+    .points-value {
+        font-size: 0.9rem;
+    }
+
+    .level-up-stats {
+        margin-top: 6px;
+        gap: 4px;
+    }
+
+    .level-up-stat-row {
+        padding: 3px 5px;
+        gap: 4px;
+        grid-template-columns: auto auto auto 1fr auto;
+        grid-template-areas: "icon label value hint action";
+        row-gap: 0;
+    }
+
+    .level-up-stat-row .stat-icon {
+        width: 14px;
+        height: 14px;
+    }
+
+    .level-up-stat-row .stat-label {
+        font-size: 0.48rem;
+    }
+
+    .level-up-stat-row .stat-value {
+        font-size: 0.52rem;
+        text-align: center;
+    }
+
+    .level-up-stat-row .stat-hint {
+        display: block;
+        font-size: 0.38rem;
+        color: #9aa0a6;
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .stat-add-btn {
+        width: 30px;
+        height: 26px;
+        font-size: 0.7rem !important;
+    }
+
+    .level-up-confirm {
+        padding: 7px 10px !important;
+        font-size: 0.62rem !important;
+    }
+
+    .level-up-later {
+        font-size: 0.58rem !important;
+        padding: 6px 9px !important;
+    }
+
+}
+
+@media (max-width: 480px) {
+    .level-up-card {
+        width: 96%;
+        max-width: 360px;
+        padding: 10px;
+    }
+
+    .lvl-big-number {
+        font-size: 1.35rem;
+    }
+
+    .level-up-stat-row {
+        grid-template-columns: auto auto auto 1fr auto;
+        grid-template-areas: "icon label value hint action";
+    }
+
+    .level-up-stat-row .stat-value {
+        justify-self: center;
+        text-align: center;
+    }
+}
+
+@media (max-width: 360px) {
+    .level-up-card {
+        max-width: 360px;
+        padding: 8px;
+    }
+
+    .lvl-big-number {
+        font-size: 1.25rem;
+    }
+
+    .level-up-stat-row {
+        padding: 4px 6px;
+        gap: 5px;
+    }
+
+    .stat-add-btn {
+        width: 28px;
+        height: 24px;
+    }
+
+    .stars-top,
+    .stars-bottom {
+        display: none;
+    }
 }
 
 @keyframes fadeIn {

@@ -26,6 +26,7 @@ const Arena = () => {
     const [matchmaking, setMatchmaking] = useState(false);
     const [combatData, setCombatData] = useState<MatchmakingResult | null>(null);
     const [allocatingStat, setAllocatingStat] = useState<StatKey | null>(null);
+    const [deferLevelUp, setDeferLevelUp] = useState(false);
 
     // Handle XP gain notification
     useEffect(() => {
@@ -46,6 +47,7 @@ const Arena = () => {
     useEffect(() => {
         if (lastLevelUp !== null) {
             setShowLevelUp(true);
+            setDeferLevelUp(false);
         }
     }, [lastLevelUp]);
 
@@ -62,8 +64,16 @@ const Arena = () => {
     const canFight = !isOfflineMode && fightsLeft > 0;
     const pendingStatPoints = activeCharacter.statPoints || 0;
     const canCloseLevelUp = pendingStatPoints === 0;
-    const shouldShowLevelUp = showLevelUp || pendingStatPoints > 0;
+    const shouldShowLevelUp = showLevelUp || (pendingStatPoints > 0 && !deferLevelUp);
     const hasLevelInfo = lastLevelUp !== null;
+    type StatIconType = 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence';
+    const statOptions: Array<{ key: StatKey; label: string; value: number; hint: string; icon: StatIconType }> = [
+        { key: 'strength', label: 'STR', value: activeCharacter.strength, hint: 'Damage', icon: 'strength' },
+        { key: 'vitality', label: 'VIT', value: activeCharacter.vitality, hint: 'HP / Defense', icon: 'vitality' },
+        { key: 'dexterity', label: 'DEX', value: activeCharacter.dexterity, hint: 'Accuracy / Speed', icon: 'dexterity' },
+        { key: 'luck', label: 'LUK', value: activeCharacter.luck, hint: 'Crit Chance', icon: 'luck' },
+        { key: 'intelligence', label: 'INT', value: activeCharacter.intelligence, hint: 'Magic Power', icon: 'intelligence' },
+    ];
 
     const handleAllocateStat = async (stat: StatKey) => {
         if (allocatingStat || pendingStatPoints <= 0) return;
@@ -88,6 +98,23 @@ const Arena = () => {
         setShowLevelUp(false);
         clearXpNotifications();
     };
+
+    const handleDeferLevelUp = () => {
+        setShowLevelUp(false);
+        setDeferLevelUp(true);
+        clearXpNotifications();
+    };
+
+    const handleOpenLevelUp = () => {
+        setShowLevelUp(true);
+        setDeferLevelUp(false);
+    };
+
+    useEffect(() => {
+        if (pendingStatPoints === 0) {
+            setDeferLevelUp(false);
+        }
+    }, [pendingStatPoints]);
 
     const handleFight = async () => {
         const canProceed = await ensureConnection(connectionMessage);
@@ -155,23 +182,25 @@ const Arena = () => {
                         )}
                         <div className="stars-bottom">★ ★ ★ ★ ★</div>
                         <div className="level-up-points">
-                            <div className="points-label">POINTS TO SPEND</div>
-                            <div className="points-value">{pendingStatPoints}</div>
+                            <div className="points-label">
+                                {pendingStatPoints > 1 ? 'POINTS TO SPEND' : 'CHOOSE A STAT'}
+                            </div>
+                            {pendingStatPoints > 1 && (
+                                <div className="points-value">{pendingStatPoints}</div>
+                            )}
                             {isOfflineMode && (
                                 <div className="points-warning">CONNECT TO ASSIGN POINTS</div>
                             )}
                         </div>
                         <div className="level-up-stats">
-                            {[
-                                { key: 'strength', label: 'STR', value: activeCharacter.strength },
-                                { key: 'vitality', label: 'VIT', value: activeCharacter.vitality },
-                                { key: 'dexterity', label: 'DEX', value: activeCharacter.dexterity },
-                                { key: 'luck', label: 'LUK', value: activeCharacter.luck },
-                                { key: 'intelligence', label: 'INT', value: activeCharacter.intelligence },
-                            ].map((stat) => (
+                            {statOptions.map((stat) => (
                                 <div key={stat.key} className="level-up-stat-row">
+                                    <span className="stat-icon">
+                                        <PixelIcon type={stat.icon} size={12} />
+                                    </span>
                                     <span className="stat-label">{stat.label}</span>
                                     <span className="stat-value">{stat.value}</span>
+                                    <span className="stat-hint">{stat.hint}</span>
                                     <button
                                         className="button stat-add-btn"
                                         onClick={() => handleAllocateStat(stat.key as StatKey)}
@@ -183,13 +212,23 @@ const Arena = () => {
                                 </div>
                             ))}
                         </div>
-                        <button
-                            className="button primary-btn level-up-confirm"
-                            disabled={!canCloseLevelUp}
-                            onClick={handleCloseLevelUp}
-                        >
-                            READY
-                        </button>
+                        <div className="level-up-actions">
+                            {pendingStatPoints > 0 && (
+                                <button
+                                    className="button secondary-btn level-up-later"
+                                    onClick={handleDeferLevelUp}
+                                >
+                                    LATER
+                                </button>
+                            )}
+                            <button
+                                className="button primary-btn level-up-confirm"
+                                disabled={!canCloseLevelUp}
+                                onClick={handleCloseLevelUp}
+                            >
+                                APPLY
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -197,7 +236,10 @@ const Arena = () => {
             <header className="arena-header">
                 <div className="char-info">
                     <h2 className="arena-char-name">{activeCharacter.name}</h2>
-                    <div className="arena-lvl-badge">LVL {activeCharacter.level}</div>
+                    <div className="arena-lvl">
+                        <span className="lvl-label">LVL</span>
+                        <span className="lvl-chip">{activeCharacter.level}</span>
+                    </div>
                 </div>
                 <div className="header-actions">
                     <button
@@ -267,12 +309,24 @@ const Arena = () => {
                             <span className="stat-val">{activeCharacter.hp}</span>
                         </div>
                         <div className="stats-grid-compact">
-                            <div className="compact-stat"><span>STR</span> <span>{activeCharacter.strength}</span></div>
-                            <div className="compact-stat"><span>VIT</span> <span>{activeCharacter.vitality}</span></div>
-                            <div className="compact-stat"><span>DEX</span> <span>{activeCharacter.dexterity}</span></div>
-                            <div className="compact-stat"><span>LUK</span> <span>{activeCharacter.luck}</span></div>
-                            <div className="compact-stat"><span>INT</span> <span>{activeCharacter.intelligence}</span></div>
+                            {statOptions.map((stat) => (
+                                <div key={stat.key} className="compact-stat">
+                                    <span className="compact-stat-icon">
+                                        <PixelIcon type={stat.icon} size={12} />
+                                    </span>
+                                    <span className="compact-stat-label">{stat.label}</span>
+                                    <span className="compact-stat-value">{stat.value}</span>
+                                </div>
+                            ))}
                         </div>
+                        {pendingStatPoints > 0 && (
+                            <button
+                                className="button secondary-btn stat-allocate-btn"
+                                onClick={handleOpenLevelUp}
+                            >
+                                SPEND POINT
+                            </button>
+                        )}
                     </div>
                 </div>
 

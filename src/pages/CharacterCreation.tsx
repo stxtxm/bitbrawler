@@ -185,33 +185,33 @@ const CharacterCreation = () => {
               <div className="stats-readout-compact">
                 <div className="stat-grid">
                   <div className="stat-card" title="Strength">
-                    <span className="stat-icon">💪</span>
+                    <span className="stat-icon"><PixelIcon type="strength" size={16} /></span>
                     <span className="stat-label">STR</span>
                     <span className="stat-value">{generatedCharacter.strength}</span>
                   </div>
                   <div className="stat-card" title="Vitality">
-                    <span className="stat-icon">🛡️</span>
+                    <span className="stat-icon"><PixelIcon type="vitality" size={16} /></span>
                     <span className="stat-label">VIT</span>
                     <span className="stat-value">{generatedCharacter.vitality}</span>
                   </div>
                   <div className="stat-card" title="Dexterity">
-                    <span className="stat-icon">⚡</span>
+                    <span className="stat-icon"><PixelIcon type="dexterity" size={16} /></span>
                     <span className="stat-label">DEX</span>
                     <span className="stat-value">{generatedCharacter.dexterity}</span>
                   </div>
                   <div className="stat-card" title="Luck">
-                    <span className="stat-icon">🍀</span>
+                    <span className="stat-icon"><PixelIcon type="luck" size={16} /></span>
                     <span className="stat-label">LUK</span>
                     <span className="stat-value">{generatedCharacter.luck}</span>
                   </div>
                   <div className="stat-card" title="Intelligence">
-                    <span className="stat-icon">🔮</span>
+                    <span className="stat-icon"><PixelIcon type="intelligence" size={16} /></span>
                     <span className="stat-label">INT</span>
                     <span className="stat-value">{generatedCharacter.intelligence}</span>
                   </div>
                 </div>
                 <div className="hp-stat-card">
-                  <span className="stat-icon">❤️</span>
+                  <span className="stat-icon"><PixelIcon type="vitality" size={16} /></span>
                   <span className="stat-label">HP</span>
                   <span className="stat-value">{generatedCharacter.hp}</span>
                 </div>
