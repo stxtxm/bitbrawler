@@ -51,7 +51,8 @@ describe('GameContext Integration', () => {
     losses: 3,
     fightsLeft: 2,
     lastFightReset: Date.now() - 86400000, // Yesterday
-    firestoreId: 'test-firestore-id'
+    firestoreId: 'test-firestore-id',
+    statPoints: 0
   };
 
   beforeEach(() => {
@@ -196,7 +197,8 @@ describe('GameContext Integration', () => {
   it('should track unique opponents fought today', async () => {
     const charWithHistory: Character = {
       ...mockCharacter,
-      foughtToday: ['opp-1']
+      foughtToday: ['opp-1'],
+      statPoints: 0
     };
 
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(charWithHistory));
@@ -224,6 +226,65 @@ describe('GameContext Integration', () => {
 
     const lastCall = (updateDoc as any).mock.calls.at(-1);
     expect(lastCall[1]).toMatchObject({ foughtToday: ['opp-1', 'opp-2'] });
+  });
+
+  it('should grant stat points when leveling up', async () => {
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    (getDocs as any).mockResolvedValue({
+      docs: [{
+        data: () => mockCharacter,
+        id: 'test-firestore-id'
+      }]
+    });
+    (updateDoc as any).mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.useFight(true, 10000, 'LEVEL_UP_FOE', 'opp-lvl');
+    });
+
+    expect(result.current.activeCharacter?.statPoints).toBeGreaterThan(0);
+  });
+
+  it('should allocate stat points and persist updates', async () => {
+    const charWithPoints: Character = {
+      ...mockCharacter,
+      statPoints: 1
+    };
+
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(charWithPoints));
+    (getDocs as any).mockResolvedValue({
+      docs: [{
+        data: () => charWithPoints,
+        id: 'test-firestore-id'
+      }]
+    });
+    (updateDoc as any).mockResolvedValue(undefined);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.allocateStatPoint('strength');
+    });
+
+    expect(result.current.activeCharacter?.strength).toBe(mockCharacter.strength + 1);
+    expect(result.current.activeCharacter?.statPoints).toBe(0);
+
+    const lastCall = (updateDoc as any).mock.calls.at(-1);
+    expect(lastCall[1]).toMatchObject({ strength: mockCharacter.strength + 1, statPoints: 0 });
   });
 
   it('should handle logout correctly', async () => {

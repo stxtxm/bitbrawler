@@ -1,5 +1,6 @@
 import { GAME_RULES } from '../config/gameRules';
 import { Character } from '../types/Character';
+import { getHpForVitality } from './statUtils';
 
 /**
  * Generates a logical, coherent, single-word name without numbers or special characters.
@@ -75,7 +76,7 @@ export const generateInitialStats = (name: string, gender: 'male' | 'female'): C
     }
 
     // Calculate HP based on vitality (more consistent)
-    const hp = 100 + (stats.vitality * 8);
+    const hp = getHpForVitality(stats.vitality);
     // Create consistent seed for visuals
     const characterSeed = Math.random().toString(36).substring(2, 10);
 
@@ -95,6 +96,7 @@ export const generateInitialStats = (name: string, gender: 'male' | 'female'): C
         wins: 0,
         losses: 0,
         fightsLeft: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
-        lastFightReset: Date.now()
+        lastFightReset: Date.now(),
+        statPoints: 0
     };
 };

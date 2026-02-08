@@ -4,6 +4,7 @@ import { generateInitialStats, generateCharacterName } from '../src/utils/charac
 import { calculateFightXp, gainXp } from '../src/utils/xpUtils';
 import { simulateCombat } from '../src/utils/combatUtils';
 import { GAME_RULES } from '../src/config/gameRules';
+import { autoAllocateStatPoints } from '../src/utils/statUtils';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -116,7 +117,8 @@ async function createNewBot() {
         wins: 0,
         losses: 0,
         fightsLeft: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
-        lastFightReset: Date.now()
+        lastFightReset: Date.now(),
+        statPoints: 0
     };
 
     await db.collection('characters').add(botData);
@@ -208,6 +210,10 @@ async function simulateBotDailyLife() {
 
             // Apply XP/Level up logic
             const result = gainXp(currentBotState, xpGained);
+            const pointsGained = result.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL;
+            const withStats = pointsGained > 0
+                ? autoAllocateStatPoints(result.updatedCharacter, pointsGained)
+                : result.updatedCharacter;
 
             // Update local state for next iteration
             // Record history
@@ -222,17 +228,12 @@ async function simulateBotDailyLife() {
 
             // Update local state for next iteration
             currentBotState = {
-                ...result.updatedCharacter,
+                ...withStats,
                 fightsLeft: fightsLeft - 1,
                 wins: won ? (currentBotState.wins || 0) + 1 : (currentBotState.wins || 0),
                 losses: won ? (currentBotState.losses || 0) : (currentBotState.losses || 0) + 1,
                 fightHistory: newHistory,
-                // Simple auto-distribution logic if leveled up
-                strength: result.leveledUp ? currentBotState.strength + 1 : currentBotState.strength,
-                vitality: result.leveledUp ? currentBotState.vitality + 1 : currentBotState.vitality,
-                dexterity: result.leveledUp ? currentBotState.dexterity + 1 : currentBotState.dexterity,
-                hp: result.leveledUp ? currentBotState.hp + 8 : currentBotState.hp, // Match HP formula
-                maxHp: result.leveledUp ? currentBotState.maxHp + 8 : currentBotState.maxHp
+                statPoints: withStats.statPoints
             };
 
             fightsLeft--;
@@ -251,9 +252,12 @@ async function simulateBotDailyLife() {
                 strength: currentBotState.strength,
                 vitality: currentBotState.vitality,
                 dexterity: currentBotState.dexterity,
+                luck: currentBotState.luck,
+                intelligence: currentBotState.intelligence,
                 hp: currentBotState.hp,
                 maxHp: currentBotState.maxHp,
-                lastFightReset: currentBotState.lastFightReset
+                lastFightReset: currentBotState.lastFightReset,
+                statPoints: currentBotState.statPoints
             };
 
             await db.collection('characters').doc(bot.firestoreId).update(finalUpdates);

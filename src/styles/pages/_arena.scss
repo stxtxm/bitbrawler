@@ -441,7 +441,7 @@
 
 .stats-grid-compact {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 4px;
 
     @include mobile {
@@ -629,6 +629,21 @@
     }
 }
 
+@include mobile {
+    .level-up-stat-row {
+        grid-template-columns: 1fr auto;
+    }
+
+    .level-up-stat-row .stat-value {
+        justify-self: end;
+    }
+
+    .stat-add-btn {
+        width: 30px;
+        height: 28px;
+    }
+}
+
 .card-shine {
     position: absolute;
     top: -50%;
@@ -693,6 +708,78 @@
     color: $accent-green;
     font-size: 0.8rem;
     margin-top: 20px;
+}
+
+.level-up-points {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.points-label {
+    font-size: 0.55rem;
+    letter-spacing: 2px;
+    color: #ccc;
+}
+
+.points-value {
+    font-size: 1.6rem;
+    color: $accent-gold;
+    text-shadow: 2px 2px 0 #000;
+}
+
+.points-warning {
+    font-size: 0.5rem;
+    color: $accent-red;
+}
+
+.level-up-stats {
+    margin-top: 15px;
+    display: grid;
+    gap: 8px;
+}
+
+.level-up-stat-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid #333;
+    padding: 6px 10px;
+    gap: 10px;
+}
+
+.level-up-stat-row .stat-label {
+    color: #fff;
+    font-size: 0.6rem;
+}
+
+.level-up-stat-row .stat-value {
+    color: $accent-gold;
+    font-size: 0.7rem;
+    text-align: center;
+}
+
+.stat-add-btn {
+    font-size: 0.8rem !important;
+    width: 36px;
+    height: 32px;
+    padding: 0 !important;
+    background: $accent-green;
+    color: #000;
+    border: 2px solid #000 !important;
+}
+
+.stat-add-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.level-up-confirm {
+    margin-top: 18px;
+    padding: 12px 22px !important;
 }
 
 @keyframes fadeIn {

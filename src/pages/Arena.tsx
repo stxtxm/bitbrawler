@@ -7,11 +7,12 @@ import ConnectionModal from '../components/ConnectionModal';
 import { PixelCharacter } from '../components/PixelCharacter';
 import { PixelIcon } from '../components/PixelIcon';
 import { getXpProgress, formatXpDisplay, getMaxLevel } from '../utils/xpUtils';
+import { StatKey } from '../utils/statUtils';
 import { CombatView } from '../components/CombatView';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
 
 const Arena = () => {
-    const { activeCharacter, logout, useFight, findOpponent, lastXpGain, lastLevelUp, clearXpNotifications, firebaseAvailable } = useGame();
+    const { activeCharacter, logout, useFight, findOpponent, lastXpGain, lastLevelUp, clearXpNotifications, firebaseAvailable, allocateStatPoint } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const navigate = useNavigate();
     const isOnline = useOnlineStatus();
@@ -24,6 +25,7 @@ const Arena = () => {
     const [historyOpen, setHistoryOpen] = useState(false);
     const [matchmaking, setMatchmaking] = useState(false);
     const [combatData, setCombatData] = useState<MatchmakingResult | null>(null);
+    const [allocatingStat, setAllocatingStat] = useState<StatKey | null>(null);
 
     // Handle XP gain notification
     useEffect(() => {
@@ -44,15 +46,8 @@ const Arena = () => {
     useEffect(() => {
         if (lastLevelUp !== null) {
             setShowLevelUp(true);
-
-            const timer = setTimeout(() => {
-                setShowLevelUp(false);
-                clearXpNotifications();
-            }, 3000);
-
-            return () => clearTimeout(timer);
         }
-    }, [lastLevelUp, clearXpNotifications]);
+    }, [lastLevelUp]);
 
     if (!activeCharacter) {
         // Redirection vers la home si pas de perso (ex: après un logout)
@@ -65,6 +60,34 @@ const Arena = () => {
     const isOfflineMode = !isOnline || !firebaseAvailable;
     const fightsLeft = activeCharacter.fightsLeft || 0;
     const canFight = !isOfflineMode && fightsLeft > 0;
+    const pendingStatPoints = activeCharacter.statPoints || 0;
+    const canCloseLevelUp = pendingStatPoints === 0;
+    const shouldShowLevelUp = showLevelUp || pendingStatPoints > 0;
+    const hasLevelInfo = lastLevelUp !== null;
+
+    const handleAllocateStat = async (stat: StatKey) => {
+        if (allocatingStat || pendingStatPoints <= 0) return;
+
+        if (isOfflineMode) {
+            openModal(connectionMessage);
+            return;
+        }
+
+        setAllocatingStat(stat);
+        try {
+            await allocateStatPoint(stat);
+        } catch (error: any) {
+            openModal(error.message || connectionMessage);
+        } finally {
+            setAllocatingStat(null);
+        }
+    };
+
+    const handleCloseLevelUp = () => {
+        if (!canCloseLevelUp) return;
+        setShowLevelUp(false);
+        clearXpNotifications();
+    };
 
     const handleFight = async () => {
         const canProceed = await ensureConnection(connectionMessage);
@@ -112,20 +135,61 @@ const Arena = () => {
     return (
         <div className="container retro-container arena-container">
             {/* Level Up Notification (Dopamine hit!) */}
-            {showLevelUp && lastLevelUp && (
+            {shouldShowLevelUp && (
                 <div className="level-up-pop-overlay">
                     <div className="level-up-card">
                         <div className="card-shine"></div>
                         <div className="level-up-badge">NEW RANK!</div>
                         <div className="stars-top">★ ★ ★ ★ ★</div>
                         <h2 className="lvl-title">LEVEL UP</h2>
-                        <div className="lvl-big-number">
-                            <span className="lvl-old">{lastLevelUp.newLevel - lastLevelUp.levelsGained}</span>
-                            <span className="lvl-arrow">➜</span>
-                            <span className="lvl-new">{lastLevelUp.newLevel}</span>
-                        </div>
+                        {hasLevelInfo ? (
+                            <div className="lvl-big-number">
+                                <span className="lvl-old">{lastLevelUp!.newLevel - lastLevelUp!.levelsGained}</span>
+                                <span className="lvl-arrow">➜</span>
+                                <span className="lvl-new">{lastLevelUp!.newLevel}</span>
+                            </div>
+                        ) : (
+                            <div className="lvl-big-number">
+                                <span className="lvl-new">LVL {activeCharacter.level}</span>
+                            </div>
+                        )}
                         <div className="stars-bottom">★ ★ ★ ★ ★</div>
-                        <div className="level-up-footer">STRENGTH INCREASED!</div>
+                        <div className="level-up-points">
+                            <div className="points-label">POINTS TO SPEND</div>
+                            <div className="points-value">{pendingStatPoints}</div>
+                            {isOfflineMode && (
+                                <div className="points-warning">CONNECT TO ASSIGN POINTS</div>
+                            )}
+                        </div>
+                        <div className="level-up-stats">
+                            {[
+                                { key: 'strength', label: 'STR', value: activeCharacter.strength },
+                                { key: 'vitality', label: 'VIT', value: activeCharacter.vitality },
+                                { key: 'dexterity', label: 'DEX', value: activeCharacter.dexterity },
+                                { key: 'luck', label: 'LUK', value: activeCharacter.luck },
+                                { key: 'intelligence', label: 'INT', value: activeCharacter.intelligence },
+                            ].map((stat) => (
+                                <div key={stat.key} className="level-up-stat-row">
+                                    <span className="stat-label">{stat.label}</span>
+                                    <span className="stat-value">{stat.value}</span>
+                                    <button
+                                        className="button stat-add-btn"
+                                        onClick={() => handleAllocateStat(stat.key as StatKey)}
+                                        disabled={pendingStatPoints <= 0 || !!allocatingStat || isOfflineMode}
+                                        aria-label={`Increase ${stat.label}`}
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                        <button
+                            className="button primary-btn level-up-confirm"
+                            disabled={!canCloseLevelUp}
+                            onClick={handleCloseLevelUp}
+                        >
+                            READY
+                        </button>
                     </div>
                 </div>
             )}
@@ -207,6 +271,7 @@ const Arena = () => {
                             <div className="compact-stat"><span>VIT</span> <span>{activeCharacter.vitality}</span></div>
                             <div className="compact-stat"><span>DEX</span> <span>{activeCharacter.dexterity}</span></div>
                             <div className="compact-stat"><span>LUK</span> <span>{activeCharacter.luck}</span></div>
+                            <div className="compact-stat"><span>INT</span> <span>{activeCharacter.intelligence}</span></div>
                         </div>
                     </div>
                 </div>

@@ -3,6 +3,8 @@ import { collection, query, where, getDocs, getDocsFromServer, updateDoc, doc, l
 import { db } from '../config/firebase';
 import { Character } from '../types/Character';
 import { gainXp } from '../utils/xpUtils';
+import { applyStatPoint, StatKey } from '../utils/statUtils';
+import { GAME_RULES } from '../config/gameRules';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { findOpponent, MatchmakingResult } from '../utils/matchmakingUtils';
 
@@ -19,6 +21,7 @@ interface GameContextType {
   useFight: (won: boolean, xpGained: number, opponentName: string, opponentId: string) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
   findOpponent: () => Promise<MatchmakingResult | null>;
   clearXpNotifications: () => void;
+  allocateStatPoint: (stat: StatKey) => Promise<Character | null>;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -221,13 +224,17 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const existingFoughtToday = activeCharacter.foughtToday || [];
     const newFoughtToday = Array.from(new Set([...existingFoughtToday, opponentId])).filter(id => id);
 
+    const pointsGained = xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL;
+    const existingPoints = activeCharacter.statPoints || 0;
+
     const updatedChar: Character = {
       ...xpResult.updatedCharacter,
       fightsLeft: Math.max(0, (activeCharacter.fightsLeft || 0) - 1),
       wins: won ? (activeCharacter.wins || 0) + 1 : (activeCharacter.wins || 0),
       losses: won ? (activeCharacter.losses || 0) : (activeCharacter.losses || 0) + 1,
       fightHistory: newHistory,
-      foughtToday: newFoughtToday
+      foughtToday: newFoughtToday,
+      statPoints: existingPoints + pointsGained
     };
 
     try {
@@ -238,7 +245,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         wins: updatedChar.wins,
         losses: updatedChar.losses,
         fightHistory: updatedChar.fightHistory,
-        foughtToday: updatedChar.foughtToday
+        foughtToday: updatedChar.foughtToday,
+        statPoints: updatedChar.statPoints
       });
 
       setActiveCharacter(updatedChar);
@@ -272,6 +280,29 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [activeCharacter, handleFirebaseError]);
 
+  const allocateStatPoint = useCallback(async (stat: StatKey): Promise<Character | null> => {
+    if (!activeCharacter?.firestoreId) return null;
+    if (!activeCharacter.statPoints || activeCharacter.statPoints <= 0) return null;
+
+    const updatedChar = applyStatPoint(activeCharacter, stat);
+
+    try {
+      await updateDoc(doc(db, "characters", activeCharacter.firestoreId!), {
+        [stat]: (updatedChar as any)[stat],
+        hp: updatedChar.hp,
+        maxHp: updatedChar.maxHp,
+        statPoints: updatedChar.statPoints
+      });
+
+      setActiveCharacter(updatedChar);
+      saveLocalData(updatedChar);
+      return updatedChar;
+    } catch (error: any) {
+      handleFirebaseError(error, 'stat-allocate');
+      throw new Error("Connection error - stat point not saved. Please check your internet connection.");
+    }
+  }, [activeCharacter, handleFirebaseError]);
+
   // Find opponent for matchmaking
   const findOpponentForPlayer = useCallback(async (): Promise<MatchmakingResult | null> => {
     if (!activeCharacter) return null;
@@ -291,6 +322,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     useFight,
     findOpponent: findOpponentForPlayer,
     clearXpNotifications,
+    allocateStatPoint,
   };
 
   return (

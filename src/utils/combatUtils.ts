@@ -14,6 +14,14 @@ export interface CombatSnapshot {
   defenderHp: number;
 }
 
+const STAT_BASELINE = 10;
+
+function scaleStat(value: number): number {
+  if (value <= STAT_BASELINE) return value;
+  const delta = value - STAT_BASELINE;
+  return STAT_BASELINE + Math.pow(delta, 0.85);
+}
+
 export function calculateCombatStats(character: Character): CombatStats {
   // Balanced calculation based on 5-stat system
   // STR -> Offense
@@ -22,14 +30,20 @@ export function calculateCombatStats(character: Character): CombatStats {
   // LUK -> Criticals
   // INT -> Magic / Special Power
 
-  const offense = character.strength * 2;
-  const defense = character.vitality * 2;
-  const speed = character.dexterity * 2;
-  const critChance = Math.min(30, character.luck * 2);
-  const magicPower = character.intelligence * 2;
+  const effectiveStrength = scaleStat(character.strength);
+  const effectiveVitality = scaleStat(character.vitality);
+  const effectiveDexterity = scaleStat(character.dexterity);
+  const effectiveLuck = scaleStat(character.luck);
+  const effectiveIntelligence = scaleStat(character.intelligence);
+
+  const offense = effectiveStrength * 1.9;
+  const defense = effectiveVitality * 2.1;
+  const speed = effectiveDexterity * 1.7;
+  const critChance = Math.min(28, effectiveLuck * 1.4);
+  const magicPower = effectiveIntelligence * 1.7;
 
   // Total power for comparison
-  const totalPower = (offense + defense + speed + magicPower + (character.luck * 2));
+  const totalPower = (offense + defense + speed + magicPower + critChance);
 
   return {
     totalPower,
@@ -93,24 +107,26 @@ export function simulateCombat(attacker: Character, defender: Character): {
   ) => {
     const actorComeback = actorHp < (actor.hp * 0.35) ? 1.1 : 1.0
 
-    // Hit chance formula (65-92% range)
-    const baseHitChance = 76 + (actor.dexterity - targetChar.dexterity) * 1.2
-    const finalHitChance = Math.max(65, Math.min(92, baseHitChance + (actorComeback > 1 ? 4 : 0)))
+    // Hit chance formula (62-90% range), weighted by speed differential
+    const speedDelta = actorStats.speed - targetStats.speed
+    const baseHitChance = 74 + (speedDelta * 0.45)
+    const finalHitChance = Math.max(62, Math.min(90, baseHitChance + (actorComeback > 1 ? 4 : 0)))
 
     if (Math.random() * 100 < finalHitChance) {
       let damageMultiplier = 1
       let msg = ""
 
       if (Math.random() * 100 < actorStats.critChance) {
-        damageMultiplier = 1.5
+        damageMultiplier = 1.45
         msg = " CRIT!"
       }
 
-      const isMagic = Math.random() * 100 < (actor.intelligence * 1.2)
-      const magicSurge = isMagic ? Math.round(actorStats.magicPower * 0.5) : 0
-      const varianceFactor = 0.85 + Math.random() * 0.3
-      const baseDamage = (actorStats.offense * 1.1 * damageMultiplier) - (targetStats.defense * 0.6)
-      const damage = Math.max(4, Math.round((baseDamage + magicSurge) * varianceFactor * actorComeback))
+      const magicChance = Math.min(30, 5 + (actorStats.magicPower * 0.35))
+      const isMagic = Math.random() * 100 < magicChance
+      const magicSurge = isMagic ? Math.round(actorStats.magicPower * 0.45) : 0
+      const varianceFactor = 0.88 + Math.random() * 0.24
+      const baseDamage = (actorStats.offense * 1.05 * damageMultiplier) - (targetStats.defense * 0.7)
+      const damage = Math.max(3, Math.round((baseDamage + magicSurge) * varianceFactor * actorComeback))
       targetHp -= damage
 
       if (isMagic) {
@@ -141,8 +157,8 @@ export function simulateCombat(attacker: Character, defender: Character): {
   while (attackerHp > 0 && defenderHp > 0 && rounds < 50) {
     rounds++
 
-    const initiativeChance = 0.5 + ((intruder.speed - target.speed) * 0.005)
-    const attackerFirst = Math.random() < Math.max(0.35, Math.min(0.65, initiativeChance))
+    const initiativeChance = 0.5 + ((intruder.speed - target.speed) * 0.004)
+    const attackerFirst = Math.random() < Math.max(0.4, Math.min(0.6, initiativeChance))
 
     if (attackerFirst) {
       const attackerStrike = resolveAttack(attacker, defender, intruder, target, attackerHp, defenderHp, rounds, false)

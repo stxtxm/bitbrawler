@@ -25,23 +25,36 @@ describe('Combat System', () => {
     it('should correctly calculate combat stats from RPG stats', () => {
         const stats = calculateCombatStats(mockCharacter);
 
-        expect(stats.offense).toBe(20); // 10 * 2
-        expect(stats.defense).toBe(20); // 10 * 2
-        expect(stats.speed).toBe(20);   // 10 * 2
-        expect(stats.critChance).toBe(20); // 10 * 2
-        expect(stats.magicPower).toBe(20); // 10 * 2
+        expect(stats.offense).toBeCloseTo(19, 1);
+        expect(stats.defense).toBeCloseTo(21, 1);
+        expect(stats.speed).toBeCloseTo(17, 1);
+        expect(stats.critChance).toBeCloseTo(14, 1);
+        expect(stats.magicPower).toBeCloseTo(17, 1);
     });
 
-    it('should cap critical chance at 30%', () => {
+    it('should cap critical chance at 28%', () => {
         const luckyChar = { ...mockCharacter, luck: 50 };
         const stats = calculateCombatStats(luckyChar as Character);
 
-        expect(stats.critChance).toBe(30);
+        expect(stats.critChance).toBe(28);
+    });
+
+    it('should apply diminishing returns to high stats', () => {
+        const low = calculateCombatStats({ ...mockCharacter, strength: 10 });
+        const lowPlus = calculateCombatStats({ ...mockCharacter, strength: 11 });
+        const high = calculateCombatStats({ ...mockCharacter, strength: 20 });
+        const highPlus = calculateCombatStats({ ...mockCharacter, strength: 21 });
+
+        const lowDelta = lowPlus.offense - low.offense;
+        const highDelta = highPlus.offense - high.offense;
+
+        expect(lowDelta).toBeGreaterThan(highDelta);
     });
 
     it('should correctly identify a character class/balance', () => {
         const stats = calculateCombatStats(mockCharacter);
-        expect(getCombatBalance(stats)).toBe('⚖️ Balanced');
+        const balancedStats = { ...stats, offense: 10, defense: 10, speed: 10, magicPower: 10 };
+        expect(getCombatBalance(balancedStats)).toBe('⚖️ Balanced');
 
         const tankStats = { ...stats, offense: 10, defense: 30, speed: 10, magicPower: 10 };
         expect(getCombatBalance(tankStats)).toBe('🛡️ Tank');

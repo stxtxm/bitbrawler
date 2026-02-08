@@ -35,4 +35,5 @@ export interface Character {
   isBot?: boolean; // To identify automated characters
   fightHistory?: FightHistory[];
   foughtToday?: string[]; // Array of firestoreIds fought today
+  statPoints?: number; // Unspent stat points from level-ups
 }
