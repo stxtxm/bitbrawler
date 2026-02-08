@@ -49,15 +49,29 @@ if (!getApps().length) {
 
 const db = getFirestore();
 
+async function measureBotPopulation() {
+    const snapshot = await db.collection('characters').where('isBot', '==', true).count().get();
+    return snapshot.data().count;
+}
+
 async function runBotLogic() {
     console.log('🤖 Starting Bot Engine...');
 
     try {
-        // 1. Create a new bot occasionally (30% chance per run)
-        const shouldCreate = Math.random() > 0.7;
+        const botCount = await measureBotPopulation();
+        console.log(`📊 Current bot population: ${botCount}`);
 
-        if (shouldCreate) {
+        // 1. Force population growth if low
+        if (botCount < 5) {
+            console.log('📉 Bot population low. Spawning reinforcements...');
             await createNewBot();
+            await createNewBot();
+            await createNewBot();
+        } else {
+            // Standard growth: 30% chance to create a new bot
+            if (Math.random() > 0.7) {
+                await createNewBot();
+            }
         }
 
         // 2. Simulate complete daily cycle for bots
@@ -104,15 +118,22 @@ async function simulateBotDailyLife() {
         return;
     }
 
-    const bots = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data() as Character
-    }));
+    const bots = snapshot.docs.map(doc => {
+        const data = doc.data() as Character;
+        return {
+            ...data,
+            firestoreId: doc.id
+        };
+    });
 
-    // Pick active bots for this run (e.g., 20% of bots do something now)
-    const activeBots = bots.sort(() => 0.5 - Math.random()).slice(0, Math.max(1, Math.floor(bots.length * 0.2)));
+    // High activity for testing: 50% of bots do something
+    const activeBots = bots.filter(() => Math.random() > 0.5);
+
+    console.log(`⚡ Simulating activity for ${activeBots.length} bots...`);
 
     for (const bot of activeBots) {
+        if (!bot.firestoreId) continue; // Safety check
+
         let updates: Partial<Character> = {};
         let fightsLeft = bot.fightsLeft;
         const now = Date.now();
@@ -157,7 +178,7 @@ async function simulateBotDailyLife() {
             }
 
             // Save updates
-            await db.collection('characters').doc(bot.id).update(updates);
+            await db.collection('characters').doc(bot.firestoreId).update(updates);
         } else {
             console.log(`💤 Bot ${bot.name} is resting (0 energy).`);
         }
