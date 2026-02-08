@@ -96,7 +96,8 @@ const Arena = () => {
     const handleCombatComplete = async (won: boolean, xpGained: number) => {
         try {
             const opponentName = combatData?.opponent.name || 'UNKNOWN';
-            await useFight(won, xpGained, opponentName);
+            const opponentId = combatData?.opponent.firestoreId || '';
+            await useFight(won, xpGained, opponentName, opponentId);
         } catch (error: any) {
             console.error('Fight result save failed:', error);
             openModal(error.message || connectionMessage);

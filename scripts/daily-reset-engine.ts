@@ -72,7 +72,8 @@ async function runDailyReset() {
             const docRef = db.collection('characters').doc(doc.id);
             batch.update(docRef, {
                 fightsLeft: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
-                lastFightReset: now
+                lastFightReset: now,
+                foughtToday: []
             });
             count++;
 

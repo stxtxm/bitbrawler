@@ -5,7 +5,10 @@ Bitbrawler is a retro 8-bit arena experience where players create a pixel fighte
 ## Features
 - 8-bit UI with SVG pixel rendering
 - Character creation with RPG stats (STR, VIT, DEX, LUK, INT)
-- Arena fights with XP gain and level ups
+- Arena fights with XP gain, level ups, and enhanced combat (crit + magic + comeback)
+- Strict same-level matchmaking with power balancing and daily opponent rotation
+- Bot engine with population management and real combat simulation
+- Global daily reset for fights/opponent tracking (scripted)
 - Hall of Fame rankings
 - PWA install experience (mobile and desktop)
 - Error boundary and connection-aware UX
@@ -41,6 +44,12 @@ npm test -- --run
 
 # Build for production
 npm run build
+
+# Run bot simulation engine (Firebase Admin required)
+npm run bots:run
+
+# Run daily reset (UTC) for fights/opponent tracking
+npm run daily-reset:run
 ```
 
 ## Project Structure
@@ -51,6 +60,7 @@ src/
   context/           Game state and persistence
   hooks/             Online status and connection gates
   pages/             Home, Login, Creation, Arena, Rankings
+  scripts/           Bot engine + daily reset scripts
   styles/            Global and page styles
   test/              Vitest suite
   utils/             Game logic (combat, XP, random)

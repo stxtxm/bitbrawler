@@ -63,13 +63,21 @@ async function findOpponentByExactLevel(player: Character): Promise<MatchmakingR
             return null;
         }
 
-        // Filter out the current player and get all candidates
+        // Filter out the current player and already fought today
         const candidates = snapshot.docs
             .map(doc => ({
                 ...doc.data() as Character,
                 firestoreId: doc.id
             }))
-            .filter(char => char.firestoreId !== player.firestoreId);
+            .filter(char => {
+                // Exclude self
+                if (char.firestoreId === player.firestoreId) return false;
+
+                // Exclude characters already fought today
+                if (player.foughtToday && player.foughtToday.includes(char.firestoreId!)) return false;
+
+                return true;
+            });
 
         if (candidates.length === 0) {
             return null;

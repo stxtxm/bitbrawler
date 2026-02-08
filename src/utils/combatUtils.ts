@@ -68,35 +68,41 @@ export function simulateCombat(attacker: Character, defender: Character): {
   while (attackerHp > 0 && defenderHp > 0 && rounds < 50) {
     rounds++
 
+    // Comeback Spirit: Slight boost when HP is low (< 40%)
+    const attackerComeback = attackerHp < (attacker.hp * 0.4) ? 1.15 : 1.0;
+    const defenderComeback = defenderHp < (defender.hp * 0.4) ? 1.15 : 1.0;
+
     // Attacker turn
-    // More balanced hit chance formula (70-95% range instead of 65-98%)
+    // Hit chance formula (70-95% range)
     const attackerHitChance = 80 + (attacker.dexterity - defender.dexterity) * 1.5;
-    if (Math.random() * 100 < Math.max(70, Math.min(95, attackerHitChance))) {
+    const finalAttackerHitChance = Math.max(70, Math.min(95, attackerHitChance + (attackerComeback > 1 ? 5 : 0)));
+
+    if (Math.random() * 100 < finalAttackerHitChance) {
       let damageMultiplier = 1;
       let msg = "";
 
-      // Luck Crit (slightly increased chance)
+      // Luck Crit
       if (Math.random() * 100 < intruder.critChance) {
-        damageMultiplier = 1.5; // Increased from 1.4 to 1.5
+        damageMultiplier = 1.6; // Increased from 1.5 to 1.6
         msg = " CRIT!";
       }
 
       // Intelligence Surge (Magic Damage)
       if (Math.random() * 100 < (attacker.intelligence * 1.5)) {
-        const magicSurge = Math.round(intruder.magicPower * 0.5);
-        // Add damage variance ±15%
-        const varianceFactor = 0.85 + Math.random() * 0.3;
+        const magicSurge = Math.round(intruder.magicPower * 0.6);
+        // Increased damage variance to ±20% for more suspense
+        const varianceFactor = 0.8 + Math.random() * 0.4;
         const baseDamage = (intruder.offense * 1.2 * damageMultiplier) - (target.defense * 0.5);
-        const damage = Math.max(5, Math.round((baseDamage + magicSurge) * varianceFactor));
+        const damage = Math.max(5, Math.round((baseDamage + magicSurge) * varianceFactor * attackerComeback));
         defenderHp -= damage;
-        details.push(`Round ${rounds}: ${attacker.name} uses MAGIC SURGE! ${damage} DMG`);
+        details.push(`Round ${rounds}: ${attacker.name} uses MAGIC SURGE! ${damage} DMG${attackerComeback > 1 ? " 🔥" : ""}`);
       } else {
-        // Add damage variance ±15%
-        const varianceFactor = 0.85 + Math.random() * 0.3;
+        // Increased damage variance to ±20%
+        const varianceFactor = 0.8 + Math.random() * 0.4;
         const baseDamage = (intruder.offense * 1.2 * damageMultiplier) - (target.defense * 0.5);
-        const damage = Math.max(5, Math.round(baseDamage * varianceFactor));
+        const damage = Math.max(5, Math.round(baseDamage * varianceFactor * attackerComeback));
         defenderHp -= damage;
-        details.push(`Round ${rounds}: ${attacker.name} hit${msg} ${damage} DMG`);
+        details.push(`Round ${rounds}: ${attacker.name} hit${msg} ${damage} DMG${attackerComeback > 1 ? " 🔥" : ""}`);
       }
     } else {
       details.push(`Round ${rounds}: ${attacker.name} missed!`);
@@ -106,31 +112,33 @@ export function simulateCombat(attacker: Character, defender: Character): {
 
     // Defender turn
     const defenderHitChance = 80 + (defender.dexterity - attacker.dexterity) * 1.5;
-    if (Math.random() * 100 < Math.max(70, Math.min(95, defenderHitChance))) {
+    const finalDefenderHitChance = Math.max(70, Math.min(95, defenderHitChance + (defenderComeback > 1 ? 5 : 0)));
+
+    if (Math.random() * 100 < finalDefenderHitChance) {
       let damageMultiplier = 1;
       let msg = "";
 
       if (Math.random() * 100 < target.critChance) {
-        damageMultiplier = 1.5;
+        damageMultiplier = 1.6;
         msg = " CRIT!";
       }
 
       // Defender Magic Surge
       if (Math.random() * 100 < (defender.intelligence * 1.5)) {
-        const magicSurge = Math.round(target.magicPower * 0.5);
-        // Add damage variance ±15%
-        const varianceFactor = 0.85 + Math.random() * 0.3;
+        const magicSurge = Math.round(target.magicPower * 0.6);
+        // Increased damage variance to ±20%
+        const varianceFactor = 0.8 + Math.random() * 0.4;
         const baseDamage = (target.offense * 1.2 * damageMultiplier) - (intruder.defense * 0.5);
-        const counterDamage = Math.max(5, Math.round((baseDamage + magicSurge) * varianceFactor));
+        const counterDamage = Math.max(5, Math.round((baseDamage + magicSurge) * varianceFactor * defenderComeback));
         attackerHp -= counterDamage;
-        details.push(`Round ${rounds}: ${defender.name} counters with MAGIC SURGE! ${counterDamage} DMG`);
+        details.push(`Round ${rounds}: ${defender.name} counters with MAGIC SURGE! ${counterDamage} DMG${defenderComeback > 1 ? " 🔥" : ""}`);
       } else {
-        // Add damage variance ±15%
-        const varianceFactor = 0.85 + Math.random() * 0.3;
+        // Increased damage variance to ±20%
+        const varianceFactor = 0.8 + Math.random() * 0.4;
         const baseDamage = (target.offense * 1.2 * damageMultiplier) - (intruder.defense * 0.5);
-        const counterDamage = Math.max(5, Math.round(baseDamage * varianceFactor));
+        const counterDamage = Math.max(5, Math.round(baseDamage * varianceFactor * defenderComeback));
         attackerHp -= counterDamage;
-        details.push(`Round ${rounds}: ${defender.name} counter${msg} ${counterDamage} DMG`);
+        details.push(`Round ${rounds}: ${defender.name} counter${msg} ${counterDamage} DMG${defenderComeback > 1 ? " 🔥" : ""}`);
       }
     } else {
       details.push(`Round ${rounds}: ${defender.name} missed counter!`);

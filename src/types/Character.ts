@@ -34,4 +34,5 @@ export interface Character {
   firestoreId?: string; // For updates
   isBot?: boolean; // To identify automated characters
   fightHistory?: FightHistory[];
+  foughtToday?: string[]; // Array of firestoreIds fought today
 }

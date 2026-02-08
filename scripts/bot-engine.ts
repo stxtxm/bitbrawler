@@ -2,6 +2,7 @@ import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { generateInitialStats, generateCharacterName } from '../src/utils/characterUtils';
 import { calculateFightXp, gainXp } from '../src/utils/xpUtils';
+import { simulateCombat } from '../src/utils/combatUtils';
 import { GAME_RULES } from '../src/config/gameRules';
 import fs from 'fs';
 import path from 'path';
@@ -50,30 +51,47 @@ if (!getApps().length) {
 const db = getFirestore();
 
 async function measureBotPopulation() {
-    const snapshot = await db.collection('characters').where('isBot', '==', true).count().get();
-    return snapshot.data().count;
+    const total = await db.collection('characters').where('isBot', '==', true).count().get();
+    const lvl1 = await db.collection('characters')
+        .where('isBot', '==', true)
+        .where('level', '==', 1)
+        .count().get();
+
+    return {
+        total: total.data().count,
+        lvl1: lvl1.data().count
+    };
 }
 
 async function runBotLogic() {
     console.log('🤖 Starting Bot Engine...');
 
     try {
-        const botCount = await measureBotPopulation();
-        console.log(`📊 Current bot population: ${botCount}`);
+        const populations = await measureBotPopulation();
+        console.log(`📊 Current bot population: ${populations.total} (Lvl 1: ${populations.lvl1})`);
 
         // 1. Force population growth if below minimum
-        if (botCount < GAME_RULES.BOTS.MIN_POPULATION) {
-            console.log('📉 Bot population low. Spawning reinforcements...');
-            const needed = GAME_RULES.BOTS.MIN_POPULATION - botCount;
+        if (populations.total < GAME_RULES.BOTS.MIN_POPULATION) {
+            console.log('📉 Total bot population low. Spawning reinforcements...');
+            const needed = GAME_RULES.BOTS.MIN_POPULATION - populations.total;
             for (let i = 0; i < needed; i++) {
                 await createNewBot();
             }
-        } else {
-            // 2. Guaranteed hourly growth (100% chance as per GROWTH_CHANCE: 1.0)
-            if (Math.random() <= GAME_RULES.BOTS.GROWTH_CHANCE) {
-                console.log('📈 Hourly bot growth triggered.');
+        }
+
+        // 1b. Ensure minimum level 1 bots
+        if (populations.lvl1 < GAME_RULES.BOTS.MIN_LVL1_BOTS) {
+            console.log(`📉 Lvl 1 bot population low (${populations.lvl1}/${GAME_RULES.BOTS.MIN_LVL1_BOTS}). Spawning LVL 1 bots...`);
+            const needed = GAME_RULES.BOTS.MIN_LVL1_BOTS - populations.lvl1;
+            for (let i = 0; i < needed; i++) {
                 await createNewBot();
             }
+        }
+
+        // 2. Guaranteed hourly growth (100% chance as per GROWTH_CHANCE: 1.0)
+        if (Math.random() <= GAME_RULES.BOTS.GROWTH_CHANCE) {
+            console.log('📈 Hourly bot growth triggered.');
+            await createNewBot();
         }
 
         // 2. Simulate complete daily cycle for bots
@@ -135,6 +153,16 @@ async function simulateBotDailyLife() {
 
     console.log(`⚡ Simulating activity for ${activeBots.length} bots...`);
 
+    // Fetch potential opponents for bots (a mix of bots and real players)
+    const opponentSnapshot = await db.collection('characters')
+        .limit(100)
+        .get();
+
+    const allCharacters = opponentSnapshot.docs.map(doc => ({
+        ...doc.data() as Character,
+        firestoreId: doc.id
+    }));
+
     for (const bot of activeBots) {
         if (!bot.firestoreId) continue;
 
@@ -156,8 +184,23 @@ async function simulateBotDailyLife() {
         let actionsTaken = 0;
 
         while (actionsTaken < desiredActions && fightsLeft > 0) {
-            // Simulate real combat outcome (50/50 win rate)
-            const won = Math.random() > 0.5;
+            // Find a suitable opponent for the bot
+            const potentialOpponents = allCharacters.filter(c =>
+                c.firestoreId !== currentBotState.firestoreId &&
+                c.level === currentBotState.level
+            );
+
+            let opponent: Character;
+            if (potentialOpponents.length > 0) {
+                opponent = potentialOpponents[Math.floor(Math.random() * potentialOpponents.length)];
+            } else {
+                console.log(`⚠️ No same-level opponent for bot ${currentBotState.name} (LVL ${currentBotState.level}). Skipping fights.`);
+                break;
+            }
+
+            // SIMULATE REAL COMBAT using the shared logic
+            const combat = simulateCombat(currentBotState, opponent);
+            const won = combat.winner === 'attacker';
 
             // Calculate XP exactly like a player
             const xpGained = calculateFightXp(currentBotState.level, won);
@@ -172,7 +215,7 @@ async function simulateBotDailyLife() {
                 date: Date.now(),
                 won,
                 xpGained,
-                opponentName: 'ARENA FOE'
+                opponentName: opponent.name
             };
             const existingHistory = currentBotState.fightHistory || [];
             const newHistory = [historyEntry, ...existingHistory].slice(0, 20);

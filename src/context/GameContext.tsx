@@ -16,7 +16,7 @@ interface GameContextType {
   logout: () => void;
   setCharacter: (char: Character) => void;
   retryConnection: () => Promise<boolean>;
-  useFight: (won: boolean, xpGained: number, opponentName: string) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
+  useFight: (won: boolean, xpGained: number, opponentName: string, opponentId: string) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
   findOpponent: () => Promise<MatchmakingResult | null>;
   clearXpNotifications: () => void;
 }
@@ -199,7 +199,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const useFight = useCallback(async (won: boolean, xpGained: number, opponentName: string): Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null> => {
+  const useFight = useCallback(async (won: boolean, xpGained: number, opponentName: string, opponentId: string): Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null> => {
     if (!activeCharacter?.firestoreId) return null;
 
     // Process XP gain and level up
@@ -217,12 +217,17 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const existingHistory = activeCharacter.fightHistory || [];
     const newHistory = [historyEntry, ...existingHistory].slice(0, 20);
 
-    const updatedChar = {
+    // Track daily opponents
+    const existingFoughtToday = activeCharacter.foughtToday || [];
+    const newFoughtToday = Array.from(new Set([...existingFoughtToday, opponentId])).filter(id => id);
+
+    const updatedChar: Character = {
       ...xpResult.updatedCharacter,
       fightsLeft: Math.max(0, (activeCharacter.fightsLeft || 0) - 1),
       wins: won ? (activeCharacter.wins || 0) + 1 : (activeCharacter.wins || 0),
       losses: won ? (activeCharacter.losses || 0) : (activeCharacter.losses || 0) + 1,
-      fightHistory: newHistory
+      fightHistory: newHistory,
+      foughtToday: newFoughtToday
     };
 
     try {
@@ -232,7 +237,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         experience: updatedChar.experience,
         wins: updatedChar.wins,
         losses: updatedChar.losses,
-        fightHistory: updatedChar.fightHistory
+        fightHistory: updatedChar.fightHistory,
+        foughtToday: updatedChar.foughtToday
       });
 
       setActiveCharacter(updatedChar);
