@@ -103,7 +103,7 @@ export const generateInitialStats = (name: string, gender: 'male' | 'female'): C
         focus: BASE_VALUE
     };
 
-    const statKeys = STAT_KEYS as StatKey[];
+    const statKeys = STAT_KEYS;
 
     // Shuffle stats by exchanging points
     // We do multiple passes of +1/-1 swaps to ensure random distribution

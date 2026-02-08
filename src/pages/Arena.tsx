@@ -98,7 +98,7 @@ const Arena = () => {
         focus: { label: 'FOC', icon: 'focus' },
         hp: { label: 'HP', icon: 'vitality' },
     };
-    const previewItemId = inventoryHoveredId || inventorySelectedId;
+    const previewItemId = inventoryHoveredId ?? inventorySelectedId ?? undefined;
     const previewItem = getItemById(previewItemId);
     const previewStats = previewItem
         ? (Object.entries(previewItem.stats)
