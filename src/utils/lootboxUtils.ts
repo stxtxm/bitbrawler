@@ -9,9 +9,41 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 const getUtcDayKey = (timestamp: number) => Math.floor(timestamp / DAY_MS);
 
-export function canRollLootbox(lastRoll: number | undefined, now: number = Date.now()): boolean {
-  if (!lastRoll) return true;
-  return getUtcDayKey(lastRoll) !== getUtcDayKey(now);
+type TimestampLike = {
+  toMillis?: () => number;
+  seconds?: number;
+  nanoseconds?: number;
+};
+
+const normalizeTimestamp = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  if (value && typeof value === 'object') {
+    const maybe = value as TimestampLike;
+    if (typeof maybe.toMillis === 'function') {
+      const millis = maybe.toMillis();
+      return Number.isFinite(millis) ? millis : null;
+    }
+    if (typeof maybe.seconds === 'number') {
+      const nanos = typeof maybe.nanoseconds === 'number' ? maybe.nanoseconds : 0;
+      return Math.floor(maybe.seconds * 1000 + nanos / 1_000_000);
+    }
+  }
+
+  return null;
+};
+
+export function canRollLootbox(lastRoll: unknown, now: number = Date.now()): boolean {
+  const normalized = normalizeTimestamp(lastRoll);
+  if (normalized === null) return true;
+  return getUtcDayKey(normalized) !== getUtcDayKey(now);
 }
 
 export function rollLootbox(

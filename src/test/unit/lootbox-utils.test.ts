@@ -26,4 +26,15 @@ describe('lootboxUtils', () => {
     expect(item).not.toBeNull();
     expect(item?.rarity).toBe('uncommon');
   });
+
+  it('handles timestamp-like last roll values', () => {
+    const now = Date.UTC(2024, 0, 2, 10, 0, 0);
+    const sameDaySeconds = Math.floor(Date.UTC(2024, 0, 2, 1, 0, 0) / 1000);
+    const timestampLike = { seconds: sameDaySeconds, nanoseconds: 0 };
+
+    expect(canRollLootbox(timestampLike, now)).toBe(false);
+
+    const toMillisLike = { toMillis: () => Date.UTC(2024, 0, 2, 2, 0, 0) };
+    expect(canRollLootbox(toMillisLike, now)).toBe(false);
+  });
 });
