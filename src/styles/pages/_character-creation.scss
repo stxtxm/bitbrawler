@@ -391,6 +391,27 @@ input[type="text"] {
     }
 }
 
+@media (max-width: 600px) and (min-width: 381px) {
+    .gender-btn {
+        padding: 9px;
+        font-size: 0.62rem;
+    }
+
+    .button-group {
+        gap: 8px;
+    }
+
+    .retro-btn {
+        padding: 11px !important;
+        font-size: 0.58rem !important;
+    }
+
+    .back-btn {
+        padding: 9px !important;
+        font-size: 0.58rem !important;
+    }
+}
+
 @include small-mobile {
     .gender-selection {
         gap: 5px;

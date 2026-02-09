@@ -27,10 +27,10 @@ export const PixelCharacter: React.FC<PixelCharacterProps> = ({ seed, gender, sc
             logoColor: pick(PIXEL_PALETTES.clothes) as string,
             // Randomly select head variation based on gender
             headType: gender === 'male'
-                ? pick(['male', 'male_bald', 'male_cap', 'male_beard', 'male_mohawk'])
-                : pick(['female', 'female_pigtails', 'female_braid', 'female_ponytail', 'female_short']),
+                ? pick(['male', 'male_bald', 'male_cap', 'male_beard', 'male_mohawk', 'male_headband', 'male_hood'])
+                : pick(['female', 'female_pigtails', 'female_braid', 'female_ponytail', 'female_short', 'female_bun', 'female_long']),
             // Randomly select body variation
-            bodyType: pick(['basic', 'sleeveless', 'armor', 'jacket'])
+            bodyType: pick(['basic', 'sleeveless', 'armor', 'jacket', 'hoodie', 'tunic'])
         };
     }, [seed, gender]);
 
