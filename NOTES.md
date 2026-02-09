@@ -40,8 +40,9 @@ Bots and automation
 - Keeps population above minimums, spawns growth per scheduled run.
 - Same-level fights only; uses shared combat + XP logic for parity.
 - Bots auto-roll the daily lootbox (logs: opened, inventory full, already opened).
-- Daily reset script clears `foughtToday` and restores fight energy.
+- Daily reset script clears `foughtToday` and restores fight energy at Paris midnight.
 - Bot activity is throttled (smaller batches, fewer active bots, 1–2 fights per run) to protect free-tier quota.
+ - Name generator adds a short letter suffix to avoid duplicates in a session.
 
 Offline behavior
 - Home works offline; Rankings show “Connection required” state when offline.
@@ -62,4 +63,5 @@ Testing
   offline routing, Firebase failover.
 
 Ops
-- GitHub Actions: daily reset scheduled at 00:00 UTC; bot engine runs every 2 hours.
+- GitHub Actions: daily reset scheduled for Paris midnight with a double cron (CET/CEST)
+  and a script-side midnight window guard; bot engine runs hourly (UTC top of hour).

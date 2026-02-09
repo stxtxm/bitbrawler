@@ -8,9 +8,9 @@ Bitbrawler is a retro 8-bit arena experience where players create a pixel fighte
 - Arena fights with XP gain, level ups, and enhanced combat (crit + magic + focus)
 - Strict same-level matchmaking with power balancing, daily opponent rotation, and animated opponent scan
 - Daily lootbox + inventory items (auto-applied stat bonuses, rarity-based)
-- Bot engine with population management, real combat simulation, and daily lootbox usage
+- Bot engine with population management, real combat simulation, and daily lootbox usage (hourly scheduler)
 - Anti-cheat fight reservation (pending fights resolve even if player quits mid-matchmaking)
-- Global daily reset for fights/opponent tracking (scripted, midnight UTC)
+- Global daily reset for fights/opponent tracking (scripted, Paris midnight w/ DST-safe cron)
 - Hall of Fame rankings
 - PWA install experience (mobile and desktop)
 - Error boundary and connection-aware UX
@@ -50,7 +50,7 @@ npm run build
 # Run bot simulation engine (Firebase Admin required)
 npm run bots:run
 
-# Run daily reset (UTC midnight) for fights/opponent tracking
+# Run daily reset (Paris midnight schedule in GitHub Actions)
 npm run daily-reset:run
 ```
 

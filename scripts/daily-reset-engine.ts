@@ -1,6 +1,12 @@
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { GAME_RULES } from '../src/config/gameRules';
+import {
+    formatZonedDateLabel,
+    getZonedMidnightUtc,
+    getZonedParts,
+    isWithinZonedMidnightWindow
+} from '../src/utils/timezoneUtils';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -46,66 +52,6 @@ if (!getApps().length) {
 const db = getFirestore();
 const PARIS_TIMEZONE = 'Europe/Paris';
 
-type ZonedParts = {
-    year: number;
-    month: number;
-    day: number;
-    hour: number;
-    minute: number;
-    second: number;
-};
-
-const getZonedParts = (date: Date, timeZone: string): ZonedParts => {
-    const formatter = new Intl.DateTimeFormat('en-GB', {
-        timeZone,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hourCycle: 'h23'
-    });
-    const parts = formatter.formatToParts(date);
-    const values: Record<string, string> = {};
-    parts.forEach((part) => {
-        if (part.type !== 'literal') {
-            values[part.type] = part.value;
-        }
-    });
-    return {
-        year: Number(values.year),
-        month: Number(values.month),
-        day: Number(values.day),
-        hour: Number(values.hour),
-        minute: Number(values.minute),
-        second: Number(values.second)
-    };
-};
-
-const getTimeZoneOffsetMinutes = (date: Date, timeZone: string) => {
-    const zoned = getZonedParts(date, timeZone);
-    const zonedAsUtc = Date.UTC(
-        zoned.year,
-        zoned.month - 1,
-        zoned.day,
-        zoned.hour,
-        zoned.minute,
-        zoned.second
-    );
-    return (zonedAsUtc - date.getTime()) / 60000;
-};
-
-const getZonedMidnightUtc = (date: Date, timeZone: string) => {
-    const zoned = getZonedParts(date, timeZone);
-    const utcGuess = Date.UTC(zoned.year, zoned.month - 1, zoned.day, 0, 0, 0);
-    const offsetMinutes = getTimeZoneOffsetMinutes(new Date(utcGuess), timeZone);
-    return utcGuess - offsetMinutes * 60 * 1000;
-};
-
-const formatZonedDateLabel = (parts: ZonedParts) =>
-    `${parts.year}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}`;
-
 async function runDailyReset() {
     console.log('⏳ Starting Global Daily Reset...');
 
@@ -119,7 +65,7 @@ async function runDailyReset() {
     console.log(`📆 Paris day start (UTC): ${new Date(parisMidnightUtc).toISOString()} (day ${parisLabel})`);
 
     // Only run near Paris midnight to avoid accidental resets.
-    if (!(parisNow.hour === 0 && parisNow.minute < 10)) {
+    if (!isWithinZonedMidnightWindow(now, PARIS_TIMEZONE, 10)) {
         console.log('⏭️ Not within Paris midnight window. Skipping daily reset.');
         return;
     }
