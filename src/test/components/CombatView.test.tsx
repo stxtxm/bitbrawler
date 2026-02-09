@@ -161,4 +161,38 @@ describe('CombatView Interface', () => {
         vi.useRealTimers();
         vi.restoreAllMocks();
     });
+
+    it('should show XP gained in result view', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 1,
+            details: ['Hero hits Villain'],
+            timeline: [{ attackerHp: 100, defenderHp: 90 }]
+        });
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => {
+            vi.advanceTimersByTime(2500);
+        });
+
+        act(() => {
+            vi.advanceTimersByTime(3000);
+        });
+
+        expect(screen.getByText('+50 XP')).toBeInTheDocument();
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
 });

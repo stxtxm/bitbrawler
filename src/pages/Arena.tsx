@@ -565,7 +565,7 @@ const Arena = () => {
                         </div>
                         {lootboxResult && (
                             <div className="lootbox-result-overlay" role="dialog" aria-label="Lootbox reward" onClick={handleCloseLootboxResult}>
-                                <div className={`lootbox-result-card rarity-${lootboxResult.rarity}`} onClick={(e) => e.stopPropagation()}>
+                                <div className={`lootbox-result-card rarity-${lootboxResult.rarity}`} onClick={handleCloseLootboxResult}>
                                     <div className="lootbox-result-glow"></div>
                                     <div className="lootbox-result-title">NEW ITEM</div>
                                     <div className="lootbox-result-item">

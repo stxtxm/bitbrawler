@@ -630,6 +630,20 @@
     align-items: center;
     justify-content: center;
     gap: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.combat-result.victory::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(255, 215, 0, 0.2), transparent 50%),
+        radial-gradient(circle at 80% 30%, rgba(255, 215, 0, 0.18), transparent 55%);
+    opacity: 0.6;
+    animation: victoryGlow 2.5s ease-in-out infinite;
+    pointer-events: none;
 }
 
 .result-badge {
@@ -646,6 +660,7 @@
     background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
     color: #000;
     border-color: #fff;
+    animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55), badgeShine 2.4s ease-in-out infinite;
 }
 
 .result-badge.defeat {
@@ -666,11 +681,50 @@
     justify-content: center;
     animation: rotateIn 0.8s ease;
     filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.35));
+    position: relative;
 }
 
 .result-icon.pixel svg {
     width: 72px;
     height: 72px;
+}
+
+.result-icon.victory {
+    animation: victoryPop 0.9s cubic-bezier(0.3, 1.4, 0.4, 1) both;
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.6));
+}
+
+.result-icon.victory::before,
+.result-icon.victory::after {
+    content: '';
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #ffd700;
+    opacity: 0;
+    box-shadow:
+        10px 0 0 #ffd700,
+        -10px 0 0 #ffd700,
+        0 10px 0 #ffd700,
+        0 -10px 0 #ffd700;
+}
+
+.result-icon.victory::before {
+    animation: victorySpark 1.2s ease-in-out infinite;
+}
+
+.result-icon.victory::after {
+    animation: victorySpark 1.2s ease-in-out infinite 0.3s;
+}
+
+.result-icon.defeat {
+    animation: defeatDrop 0.7s ease both;
+    filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.5));
+}
+
+.result-icon.draw {
+    animation: drawWobble 1s ease-in-out infinite;
+    filter: drop-shadow(0 0 6px rgba(149, 165, 166, 0.5));
 }
 
 .result-message {
@@ -680,6 +734,33 @@
     text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
     line-height: 1.6;
     max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    align-items: center;
+}
+
+.result-xp {
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    color: $accent-gold;
+    text-shadow: 3px 3px 0 #000;
+    animation: xpPulse 1.2s ease-in-out infinite;
+}
+
+.result-xp.defeat {
+    color: #ff6b6b;
+    animation: none;
+}
+
+.result-xp.draw {
+    color: #9aa0a6;
+    animation: none;
+}
+
+.result-sub {
+    font-size: 0.65rem;
+    color: #d6d6d6;
 }
 
 .result-btn {
@@ -1162,6 +1243,43 @@
     }
 }
 
+@keyframes victoryPop {
+    0% { transform: scale(0.7); opacity: 0; }
+    60% { transform: scale(1.08); opacity: 1; }
+    100% { transform: scale(1); }
+}
+
+@keyframes victorySpark {
+    0%, 100% { opacity: 0; transform: scale(0.6); }
+    50% { opacity: 0.9; transform: scale(1); }
+}
+
+@keyframes badgeShine {
+    0%, 100% { box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3); }
+    50% { box-shadow: 0 6px 0 rgba(0, 0, 0, 0.3), 0 0 18px rgba(255, 215, 0, 0.45); }
+}
+
+@keyframes victoryGlow {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 0.7; }
+}
+
+@keyframes defeatDrop {
+    0% { transform: translateY(-6px) scale(0.95); opacity: 0; }
+    70% { transform: translateY(2px) scale(1); opacity: 1; }
+    100% { transform: translateY(0); }
+}
+
+@keyframes drawWobble {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(-2deg) scale(1.02); }
+}
+
+@keyframes xpPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+}
+
 /* Mobile responsive */
 @media (max-width: 768px) {
     .combat-action::after {
@@ -1220,6 +1338,14 @@
 
     .result-message {
         font-size: 0.7rem;
+    }
+
+    .result-xp {
+        font-size: 0.9rem;
+    }
+
+    .result-sub {
+        font-size: 0.55rem;
     }
 
     .result-btn {

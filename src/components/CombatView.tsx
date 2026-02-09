@@ -154,12 +154,16 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
         });
     }, [currentRound, phase]);
 
+    const getXpGained = (won: boolean) => {
+        const baseXp = won ? 50 : 20;
+        return Math.round(baseXp * (1 + (opponent.level - player.level) * 0.1));
+    };
+
     const handleFinish = () => {
         if (!combatResult) return;
 
         const won = combatResult.winner === 'attacker';
-        const baseXp = won ? 50 : 20;
-        const xpGained = Math.round(baseXp * (1 + (opponent.level - player.level) * 0.1));
+        const xpGained = getXpGained(won);
 
         onComplete(won, xpGained);
         onClose();
@@ -167,6 +171,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
 
     const won = combatResult?.winner === 'attacker';
     const draw = combatResult?.winner === 'draw';
+    const xpPreview = getXpGained(won);
 
     const playerMaxHp = player.maxHp || player.hp;
     const opponentMaxHp = opponent.maxHp || opponent.hp;
@@ -279,37 +284,40 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
 
                 {/* Result Phase */}
                 {phase === 'result' && combatResult && (
-                    <div className="combat-result">
+                    <div className={`combat-result${won ? ' victory' : draw ? ' draw' : ' defeat'}`}>
                         {won && (
                             <>
                                 <div className="result-badge victory">VICTORY!</div>
-                                <div className="result-icon pixel">
-                                    <PixelIcon type="trophy" size={72} />
+                                <div className="result-icon pixel victory">
+                                    <PixelIcon type="trophy" size={80} />
                                 </div>
                                 <div className="result-message">
-                                    You defeated {opponent.name} in {combatResult.rounds} rounds!
+                                    <div className="result-xp victory">+{xpPreview} XP</div>
+                                    <div className="result-sub">Victory over {opponent.name}</div>
                                 </div>
                             </>
                         )}
                         {!won && !draw && (
                             <>
                                 <div className="result-badge defeat">DEFEAT</div>
-                                <div className="result-icon pixel">
+                                <div className="result-icon pixel defeat">
                                     <PixelIcon type="skull" size={72} />
                                 </div>
                                 <div className="result-message">
-                                    {opponent.name} defeated you in {combatResult.rounds} rounds.
+                                    <div className="result-xp defeat">+{xpPreview} XP</div>
+                                    <div className="result-sub">Defeated by {opponent.name}</div>
                                 </div>
                             </>
                         )}
                         {draw && (
                             <>
                                 <div className="result-badge draw">DRAW</div>
-                                <div className="result-icon pixel">
+                                <div className="result-icon pixel draw">
                                     <PixelIcon type="swords" size={72} />
                                 </div>
                                 <div className="result-message">
-                                    The match ended in a draw after {combatResult.rounds} rounds!
+                                    <div className="result-xp draw">+{xpPreview} XP</div>
+                                    <div className="result-sub">Stalemate vs {opponent.name}</div>
                                 </div>
                             </>
                         )}

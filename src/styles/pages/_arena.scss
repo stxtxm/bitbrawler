@@ -556,9 +556,9 @@
 
 .lootbox-result-card {
     position: relative;
-    width: clamp(260px, 78vw, 520px);
+    width: clamp(320px, 82vw, 680px);
     max-height: min(80vh, 720px);
-    padding: 18px 16px;
+    padding: 22px 20px;
     background: radial-gradient(circle at top, #0b0b0b 0%, #000 80%);
     border: 3px solid $accent-gold;
     @include retro-border(3px, $accent-gold);
@@ -738,8 +738,8 @@
     }
 
     .lootbox-result-card {
-        width: min(90vw, 420px);
-        padding: 14px 12px;
+        width: min(92vw, 480px);
+        padding: 16px 14px;
         gap: 10px;
     }
 
@@ -807,8 +807,8 @@
     }
 
     .lootbox-result-card {
-        width: 92vw;
-        padding: 12px 10px;
+        width: 94vw;
+        padding: 14px 10px;
         gap: 8px;
     }
 
