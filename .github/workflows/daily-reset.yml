@@ -2,7 +2,9 @@ name: Global Daily Reset
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Once daily at 00:00 UTC
+    # Two schedules to cover Europe/Paris midnight across DST.
+    - cron: '0 22 * * *' # 00:00 Paris during CEST (UTC+2)
+    - cron: '0 23 * * *' # 00:00 Paris during CET (UTC+1)
   workflow_dispatch: # Allow manual trigger
 
 jobs:

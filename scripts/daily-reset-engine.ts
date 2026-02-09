@@ -44,25 +44,94 @@ if (!getApps().length) {
 }
 
 const db = getFirestore();
+const PARIS_TIMEZONE = 'Europe/Paris';
+
+type ZonedParts = {
+    year: number;
+    month: number;
+    day: number;
+    hour: number;
+    minute: number;
+    second: number;
+};
+
+const getZonedParts = (date: Date, timeZone: string): ZonedParts => {
+    const formatter = new Intl.DateTimeFormat('en-GB', {
+        timeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hourCycle: 'h23'
+    });
+    const parts = formatter.formatToParts(date);
+    const values: Record<string, string> = {};
+    parts.forEach((part) => {
+        if (part.type !== 'literal') {
+            values[part.type] = part.value;
+        }
+    });
+    return {
+        year: Number(values.year),
+        month: Number(values.month),
+        day: Number(values.day),
+        hour: Number(values.hour),
+        minute: Number(values.minute),
+        second: Number(values.second)
+    };
+};
+
+const getTimeZoneOffsetMinutes = (date: Date, timeZone: string) => {
+    const zoned = getZonedParts(date, timeZone);
+    const zonedAsUtc = Date.UTC(
+        zoned.year,
+        zoned.month - 1,
+        zoned.day,
+        zoned.hour,
+        zoned.minute,
+        zoned.second
+    );
+    return (zonedAsUtc - date.getTime()) / 60000;
+};
+
+const getZonedMidnightUtc = (date: Date, timeZone: string) => {
+    const zoned = getZonedParts(date, timeZone);
+    const utcGuess = Date.UTC(zoned.year, zoned.month - 1, zoned.day, 0, 0, 0);
+    const offsetMinutes = getTimeZoneOffsetMinutes(new Date(utcGuess), timeZone);
+    return utcGuess - offsetMinutes * 60 * 1000;
+};
+
+const formatZonedDateLabel = (parts: ZonedParts) =>
+    `${parts.year}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}`;
 
 async function runDailyReset() {
     console.log('⏳ Starting Global Daily Reset...');
 
-    // Calculate the start of today in UTC
     const now = new Date();
-    const todayUTCStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).getTime();
-    const todayLabel = new Date(todayUTCStart).toISOString().split('T')[0];
+    const parisNow = getZonedParts(now, PARIS_TIMEZONE);
+    const parisLabel = formatZonedDateLabel(parisNow);
+    const parisMidnightUtc = getZonedMidnightUtc(now, PARIS_TIMEZONE);
+
     console.log(`🕒 Current time (UTC): ${now.toISOString()}`);
-    console.log(`📆 UTC day start: ${new Date(todayUTCStart).toISOString()} (day ${todayLabel})`);
+    console.log(`🕒 Current time (Paris): ${parisLabel} ${String(parisNow.hour).padStart(2, '0')}:${String(parisNow.minute).padStart(2, '0')}:${String(parisNow.second).padStart(2, '0')}`);
+    console.log(`📆 Paris day start (UTC): ${new Date(parisMidnightUtc).toISOString()} (day ${parisLabel})`);
+
+    // Only run near Paris midnight to avoid accidental resets.
+    if (!(parisNow.hour === 0 && parisNow.minute < 10)) {
+        console.log('⏭️ Not within Paris midnight window. Skipping daily reset.');
+        return;
+    }
 
     try {
         // Find all characters whose last reset was before today (UTC)
         const snapshot = await db.collection('characters')
-            .where('lastFightReset', '<', todayUTCStart)
+            .where('lastFightReset', '<', parisMidnightUtc)
             .get();
 
         if (snapshot.empty) {
-            console.log(`✅ All characters are already up to date for ${todayLabel}.`);
+            console.log(`✅ All characters are already up to date for ${parisLabel}.`);
             return;
         }
 
@@ -80,7 +149,7 @@ async function runDailyReset() {
                 const docRef = db.collection('characters').doc(doc.id);
                 batch.update(docRef, {
                     fightsLeft: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
-                    lastFightReset: todayUTCStart,
+                    lastFightReset: parisMidnightUtc,
                     foughtToday: []
                 });
             });
