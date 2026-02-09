@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { calculateCombatStats, getCombatBalance, simulateCombat } from '../../utils/combatUtils';
 import { Character } from '../../types/Character';
 
@@ -22,6 +22,10 @@ describe('Combat System', () => {
         fightsLeft: 5,
         lastFightReset: Date.now()
     };
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
     it('should correctly calculate combat stats from RPG stats', () => {
         const stats = calculateCombatStats(mockCharacter);
@@ -91,5 +95,55 @@ describe('Combat System', () => {
         expect(result.timeline[0].attackerHp).toBe(attacker.hp);
         expect(result.timeline[0].defenderHp).toBe(defender.hp);
         expect(result.details[0]).toContain('Attacker vs Defender');
+    });
+
+    it('should never report negative HP and should cap rounds', () => {
+        const attacker = { ...mockCharacter, name: 'Attacker', strength: 18 };
+        const defender = { ...mockCharacter, name: 'Defender', vitality: 18 };
+        const result = simulateCombat(attacker as Character, defender as Character);
+
+        expect(result.rounds).toBeLessThanOrEqual(50);
+        result.timeline.forEach((snapshot) => {
+            expect(snapshot.attackerHp).toBeGreaterThanOrEqual(0);
+            expect(snapshot.defenderHp).toBeGreaterThanOrEqual(0);
+        });
+    });
+
+    it('should log crit hits when crit triggers', () => {
+        const attacker = { ...mockCharacter, name: 'Critter', strength: 40, luck: 50 };
+        const defender = { ...mockCharacter, name: 'Dummy', vitality: 5, hp: 50, maxHp: 50 };
+
+        const sequence = [
+            0, // initiative
+            0, // hit
+            0, // crit
+            0.99, // magic miss
+            0.5, // variance
+            0.99 // focus surge miss
+        ];
+        vi.spyOn(Math, 'random').mockImplementation(() => sequence.shift() ?? 0.99);
+
+        const result = simulateCombat(attacker as Character, defender as Character);
+        const critLog = result.details.find((line) => line.includes('CRIT!'));
+        expect(critLog).toBeTruthy();
+    });
+
+    it('should log magic surges when magic triggers', () => {
+        const attacker = { ...mockCharacter, name: 'Mage', intelligence: 40 };
+        const defender = { ...mockCharacter, name: 'Dummy', vitality: 5, hp: 50, maxHp: 50 };
+
+        const sequence = [
+            0, // initiative
+            0, // hit
+            0.99, // crit miss
+            0, // magic hit
+            0.5, // variance
+            0.99 // focus surge miss
+        ];
+        vi.spyOn(Math, 'random').mockImplementation(() => sequence.shift() ?? 0.99);
+
+        const result = simulateCombat(attacker as Character, defender as Character);
+        const magicLog = result.details.find((line) => line.includes('MAGIC SURGE'));
+        expect(magicLog).toBeTruthy();
     });
 });

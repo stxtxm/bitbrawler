@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { canRollLootbox, rollLootbox } from '../../utils/lootboxUtils';
 import { ITEM_ASSETS } from '../../data/itemAssets';
+import { mulberry32 } from '../../utils/randomUtils';
 
 describe('lootboxUtils', () => {
   it('allows one roll per UTC day', () => {
@@ -25,6 +26,30 @@ describe('lootboxUtils', () => {
     const item = rollLootbox(ITEM_ASSETS, rng);
     expect(item).not.toBeNull();
     expect(item?.rarity).toBe('uncommon');
+  });
+
+  it('falls back to the available pool when the target rarity is empty', () => {
+    const uncommonOnly = ITEM_ASSETS.filter((item) => item.rarity === 'uncommon');
+    const rng = () => 0.05; // would target common
+    const item = rollLootbox(uncommonOnly, rng);
+
+    expect(item).not.toBeNull();
+    expect(item?.rarity).toBe('uncommon');
+  });
+
+  it('respects rarity weights over many rolls', () => {
+    const rng = mulberry32(424242);
+    let uncommonCount = 0;
+    const totalRolls = 1000;
+
+    for (let i = 0; i < totalRolls; i++) {
+      const item = rollLootbox(ITEM_ASSETS, rng);
+      if (item?.rarity === 'uncommon') uncommonCount += 1;
+    }
+
+    const ratio = uncommonCount / totalRolls;
+    expect(ratio).toBeGreaterThan(0.12);
+    expect(ratio).toBeLessThan(0.28);
   });
 
   it('handles timestamp-like last roll values', () => {

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { findOpponent, getMatchDifficultyLabel } from '../../utils/matchmakingUtils';
 import { Character } from '../../types/Character';
 import { getDocs } from 'firebase/firestore';
@@ -48,6 +48,10 @@ describe('🤝 Matchmaking System', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should find opponent of EXACT same level', async () => {
@@ -121,6 +125,52 @@ describe('🤝 Matchmaking System', () => {
 
         const result = await findOpponent(playerWithHistory);
         expect(result).toBeNull();
+    });
+
+    it('should exclude the current player from candidates', async () => {
+        (getDocs as any).mockResolvedValue({
+            empty: false,
+            docs: [
+                { id: player.firestoreId, data: () => player }
+            ]
+        });
+
+        const result = await findOpponent(player);
+        expect(result).toBeNull();
+    });
+
+    it('should sort candidates by closest power difference', async () => {
+        const playerPower: Character = {
+            ...player,
+            strength: 10,
+            vitality: 10,
+            dexterity: 10,
+            luck: 10,
+            intelligence: 10,
+            focus: 10
+        };
+
+        const close = { ...sameLevelOpponent, name: 'Close', firestoreId: 'o1', strength: 10 };
+        const mid = { ...sameLevelOpponent, name: 'Mid', firestoreId: 'o2', strength: 14 };
+        const far = { ...sameLevelOpponent, name: 'Far', firestoreId: 'o3', strength: 22 };
+
+        (getDocs as any).mockResolvedValue({
+            empty: false,
+            docs: [
+                { id: 'o3', data: () => far },
+                { id: 'o1', data: () => close },
+                { id: 'o2', data: () => mid }
+            ]
+        });
+
+        vi.spyOn(Math, 'random').mockReturnValue(0);
+        const result = await findOpponent(playerPower);
+        expect(result).not.toBeNull();
+        if (result) {
+            expect(result.candidates.map((cand) => cand.firestoreId)).toEqual(['o1', 'o2', 'o3']);
+            expect(result.opponent.firestoreId).toBe('o1');
+            expect(result.matchType).toBe('balanced');
+        }
     });
 
     it('should prioritize balanced stats', async () => {
