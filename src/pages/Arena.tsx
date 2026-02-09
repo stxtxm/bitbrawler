@@ -104,6 +104,10 @@ const Arena = () => {
         ? (Object.entries(previewItem.stats)
             .filter(([, value]) => typeof value === 'number' && value !== 0) as [keyof ItemStats, number][])
         : [];
+    const lootboxStats = lootboxResult
+        ? (Object.entries(lootboxResult.stats)
+            .filter(([, value]) => typeof value === 'number' && value !== 0) as [keyof ItemStats, number][])
+        : [];
     const previewSlotLabel = previewItem ? previewItem.slot.toUpperCase() : '';
     const totalBonus = getEquipmentBonuses(activeCharacter);
     const bonusOrder: Array<keyof ItemStats> = ['strength', 'vitality', 'dexterity', 'luck', 'intelligence', 'focus', 'hp'];
@@ -178,6 +182,8 @@ const Arena = () => {
                 const item = await rollLootbox();
                 if (item) {
                     setLootboxResult(item);
+                    setInventorySelectedId(item.id);
+                    setInventoryHoveredId(item.id);
                 }
             } catch (error: any) {
                 openModal(error.message || connectionMessage);
@@ -185,6 +191,10 @@ const Arena = () => {
                 setLootboxRolling(false);
             }
         }, 900);
+    };
+
+    const handleCloseLootboxResult = () => {
+        setLootboxResult(null);
     };
 
     const handleSelectItem = (itemId: string) => {
@@ -554,10 +564,33 @@ const Arena = () => {
                             </div>
                         </div>
                         {lootboxResult && (
-                            <div className="inventory-footer">
-                                <div className={`lootbox-result rarity-${lootboxResult.rarity}`}>
-                                    <PixelItemIcon pixels={lootboxResult.pixels} size={26} />
-                                    <span>FOUND: {lootboxResult.name}</span>
+                            <div className="lootbox-result-overlay" role="dialog" aria-label="Lootbox reward" onClick={handleCloseLootboxResult}>
+                                <div className={`lootbox-result-card rarity-${lootboxResult.rarity}`} onClick={(e) => e.stopPropagation()}>
+                                    <div className="lootbox-result-glow"></div>
+                                    <div className="lootbox-result-title">NEW ITEM</div>
+                                    <div className="lootbox-result-item">
+                                        <div className="lootbox-result-icon">
+                                            <PixelItemIcon pixels={lootboxResult.pixels} size={64} />
+                                        </div>
+                                        <div className="lootbox-result-meta">
+                                            <div className="lootbox-result-name">{lootboxResult.name}</div>
+                                            <div className="lootbox-result-rarity">{lootboxResult.rarity.toUpperCase()}</div>
+                                        </div>
+                                    </div>
+                                    <div className="lootbox-result-stats">
+                                        {lootboxStats.map(([statKey, value]) => {
+                                            const meta = itemStatMeta[statKey];
+                                            if (!meta) return null;
+                                            return (
+                                                <div key={statKey} className="lootbox-result-stat">
+                                                    <PixelIcon type={meta.icon} size={12} />
+                                                    <span className="lootbox-stat-label">{meta.label}</span>
+                                                    <span className="lootbox-stat-value">+{value}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="lootbox-result-hint">TAP TO CONTINUE</div>
                                 </div>
                             </div>
                         )}

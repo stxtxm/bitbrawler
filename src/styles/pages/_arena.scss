@@ -542,35 +542,139 @@
 }
 
 
-.lootbox-result {
-    display: inline-flex;
+// Lootbox result overlay (replaces footer banner)
+.lootbox-result-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.82);
+    display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.55rem;
-    color: $accent-gold;
-    text-transform: uppercase;
-    flex-wrap: wrap;
     justify-content: center;
-    max-width: 100%;
+    z-index: 6;
+    animation: fadeIn 0.2s ease;
+}
+
+.lootbox-result-card {
+    position: relative;
+    width: clamp(260px, 78vw, 520px);
+    max-height: min(80vh, 720px);
+    padding: 18px 16px;
+    background: radial-gradient(circle at top, #0b0b0b 0%, #000 80%);
+    border: 3px solid $accent-gold;
+    @include retro-border(3px, $accent-gold);
     text-align: center;
-    row-gap: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: hidden;
+    animation: lootboxReveal 0.35s cubic-bezier(0.3, 1.4, 0.4, 1);
+}
+
+.lootbox-result-card.rarity-common {
+    border-color: #c9c9c9;
+}
+
+.lootbox-result-card.rarity-uncommon {
+    border-color: #4cd964;
+}
+
+.lootbox-result-glow {
+    position: absolute;
+    inset: -30%;
+    background: radial-gradient(circle at 50% 20%, rgba(255, 204, 0, 0.25) 0%, rgba(0, 0, 0, 0) 60%);
+    opacity: 0.7;
+    animation: lootboxGlow 2s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.lootbox-result-title {
+    font-family: $font-pixel;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: $accent-gold;
+    text-shadow: 2px 2px 0 #000;
+    z-index: 1;
+}
+
+.lootbox-result-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    z-index: 1;
+}
+
+.lootbox-result-icon {
+    padding: 6px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid #222;
+}
+
+.lootbox-result-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    text-align: left;
+}
+
+.lootbox-result-name {
+    font-family: $font-pixel;
+    font-size: 0.75rem;
+    color: #fff;
+    letter-spacing: 1px;
+}
+
+.lootbox-result-rarity {
+    font-size: 0.5rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #9aa0a6;
+}
+
+.lootbox-result-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    z-index: 1;
+}
+
+.lootbox-result-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     padding: 4px 6px;
-    background: rgba(0, 0, 0, 0.35);
     border: 1px solid #222;
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 0.5rem;
+    color: #c7c7c7;
+    justify-content: space-between;
 }
 
-.lootbox-result span {
-    max-width: 100%;
-    white-space: normal;
-    word-break: break-word;
+.lootbox-stat-label {
+    color: #c7c7c7;
 }
 
-.lootbox-result.rarity-common {
-    color: #c9c9c9;
+.lootbox-stat-value {
+    color: $accent-green;
 }
 
-.lootbox-result.rarity-uncommon {
-    color: #4cd964;
+.lootbox-result-hint {
+    font-size: 0.45rem;
+    letter-spacing: 1px;
+    color: #7fdad2;
+    text-transform: uppercase;
+    z-index: 1;
+}
+
+@keyframes lootboxReveal {
+    0% { transform: translateY(12px) scale(0.96); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes lootboxGlow {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 0.75; }
 }
 
 @include mobile {
@@ -633,9 +737,32 @@
         margin-top: 8px;
     }
 
-    .lootbox-result {
-        font-size: 0.48rem;
-        gap: 6px;
+    .lootbox-result-card {
+        width: min(90vw, 420px);
+        padding: 14px 12px;
+        gap: 10px;
+    }
+
+    .lootbox-result-title {
+        font-size: 0.6rem;
+    }
+
+    .lootbox-result-name {
+        font-size: 0.65rem;
+    }
+
+    .lootbox-result-stats {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+
+    .lootbox-result-stat {
+        font-size: 0.45rem;
+        padding: 3px 5px;
+    }
+
+    .lootbox-result-hint {
+        font-size: 0.4rem;
     }
 }
 
@@ -679,8 +806,26 @@
         font-size: 0.38rem;
     }
 
-    .lootbox-result {
-        font-size: 0.44rem;
+    .lootbox-result-card {
+        width: 92vw;
+        padding: 12px 10px;
+        gap: 8px;
+    }
+
+    .lootbox-result-item {
+        gap: 8px;
+    }
+
+    .lootbox-result-name {
+        font-size: 0.58rem;
+    }
+
+    .lootbox-result-stat {
+        font-size: 0.42rem;
+    }
+
+    .lootbox-result-hint {
+        font-size: 0.36rem;
     }
 }
 

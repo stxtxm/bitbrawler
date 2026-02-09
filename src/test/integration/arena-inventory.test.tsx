@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, fireEvent, act, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Arena from '../../pages/Arena'
 import { useGame } from '../../context/GameContext'
@@ -42,6 +42,8 @@ const mockCharacter: Character = {
   fightsLeft: 3,
   lastFightReset: Date.now(),
   firestoreId: 'test-id',
+  lastLootRoll: 0,
+  inventory: [],
 }
 
 describe('Arena inventory modal', () => {
@@ -70,6 +72,10 @@ describe('Arena inventory modal', () => {
     })
   })
 
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('opens inventory modal when backpack is clicked', () => {
     const { getByLabelText, getByText } = render(
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
@@ -91,5 +97,50 @@ describe('Arena inventory modal', () => {
     fireEvent.click(getByLabelText('Inventory'))
     fireEvent.click(getByLabelText('Close inventory'))
     expect(queryByText('INVENTORY')).toBeNull()
+  })
+
+  it('shows lootbox reward overlay after rolling', async () => {
+    vi.useFakeTimers()
+
+    const mockItem = {
+      id: 'rusty_sword',
+      name: 'Rusty Sword',
+      slot: 'weapon',
+      rarity: 'common',
+      stats: { strength: 1 },
+      pixels: [[1, 0], [0, 1]],
+    }
+
+    mockUseGame.mockReturnValue({
+      activeCharacter: mockCharacter,
+      logout: vi.fn(),
+      useFight: vi.fn(),
+      findOpponent: vi.fn(),
+      lastXpGain: null,
+      lastLevelUp: null,
+      clearXpNotifications: vi.fn(),
+      firebaseAvailable: true,
+      retryConnection: vi.fn(),
+      allocateStatPoint: vi.fn(),
+      rollLootbox: vi.fn().mockResolvedValue(mockItem),
+      startMatchmaking: vi.fn(),
+    })
+
+    const { getByLabelText, getByText } = render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Arena />
+      </MemoryRouter>
+    )
+
+    fireEvent.click(getByLabelText('Inventory'))
+    fireEvent.click(getByLabelText('Daily lootbox roll'))
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1000)
+    })
+
+    const overlay = getByLabelText('Lootbox reward')
+    expect(within(overlay).getByText('NEW ITEM')).toBeInTheDocument()
+    expect(within(overlay).getByText('Rusty Sword')).toBeInTheDocument()
   })
 })
