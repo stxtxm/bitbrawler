@@ -116,4 +116,49 @@ describe('CombatView Interface', () => {
         vi.useRealTimers();
         vi.restoreAllMocks();
     });
+
+    it('should skip reaction class on miss actions', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'defender',
+            rounds: 1,
+            details: ['Villain missed the attack!'],
+            timeline: [{ attackerHp: 100, defenderHp: 100 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'opponent',
+            type: 'miss'
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => {
+            vi.advanceTimersByTime(2500);
+        });
+
+        act(() => {
+            vi.advanceTimersByTime(600);
+        });
+
+        const combatAction = container.querySelector('.combat-action.action-miss');
+        expect(combatAction).not.toBeNull();
+
+        const opponentSide = container.querySelector('.fighter-side.right.action-miss');
+        const playerReact = container.querySelector('.fighter-side.left.react-miss');
+        expect(opponentSide).not.toBeNull();
+        expect(playerReact).toBeNull();
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
 });

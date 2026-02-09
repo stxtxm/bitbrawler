@@ -29,6 +29,7 @@ Combat rules
 
 Lootbox + inventory
 - Daily lootbox gating uses UTC day (`canRollLootbox`).
+- `canRollLootbox` accepts Firestore timestamp shapes (`seconds`/`toMillis`) to avoid double rolls.
 - Inventory capacity is 24; items are auto-applied (no manual equip flow).
 - Items are defined in `src/data/itemAssets.ts` with `common` and `uncommon` rarities.
 - `equipmentUtils` aggregates inventory bonuses; arena + combat use `applyEquipmentToCharacter`.
@@ -36,10 +37,11 @@ Lootbox + inventory
 
 Bots and automation
 - Bot engine: `scripts/bot-engine.ts`.
-- Keeps population above minimums, runs hourly growth.
+- Keeps population above minimums, spawns growth per scheduled run.
 - Same-level fights only; uses shared combat + XP logic for parity.
 - Bots auto-roll the daily lootbox (logs: opened, inventory full, already opened).
 - Daily reset script clears `foughtToday` and restores fight energy.
+- Bot activity is throttled (smaller batches, fewer active bots, 1–2 fights per run) to protect free-tier quota.
 
 Offline behavior
 - Home works offline; Rankings show “Connection required” state when offline.
@@ -52,8 +54,12 @@ UI tuning
 - Stat rows compress on very small screens; action buttons remain readable.
 - Matchmaking intro is an animated opponent scan with a lock effect.
 - Inventory modal is larger on desktop, with hover/tap item details and bonus chips.
+- Combat actions include subtle 8-bit impact overlays and reaction animations; mobile overlay avoids grid flashes.
 
 Testing
 - Unit: combat math, lootbox gating, equipment bonuses, XP, stats, RNG.
 - Integration: matchmaking, pending fights, lootbox persistence, arena inventory/bonuses,
   offline routing, Firebase failover.
+
+Ops
+- GitHub Actions: daily reset scheduled at 00:00 UTC; bot engine runs every 2 hours.

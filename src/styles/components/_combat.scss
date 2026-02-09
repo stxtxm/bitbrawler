@@ -278,11 +278,9 @@
 }
 
 .combat-action::after {
-    background-image:
-        repeating-linear-gradient(90deg, var(--burst-color) 0 2px, transparent 2px 10px),
-        repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.15) 0 2px, transparent 2px 8px);
-    background-size: 10px 10px;
-    mix-blend-mode: screen;
+    background-image: radial-gradient(var(--burst-color) 1px, transparent 1px);
+    background-size: 12px 12px;
+    mix-blend-mode: normal;
 }
 
 .combat-action.action-hit {
@@ -1166,6 +1164,10 @@
 
 /* Mobile responsive */
 @media (max-width: 768px) {
+    .combat-action::after {
+        background-image: none;
+    }
+
     .combat-modal {
         padding: 1.5rem;
         width: 95vw;
