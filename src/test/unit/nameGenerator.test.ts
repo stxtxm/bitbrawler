@@ -53,4 +53,22 @@ describe('generateCharacterName', () => {
 
         expect(names.size).toBe(50);
     });
+
+    it('should only add a suffix when a collision occurs', () => {
+        const registry = new Set<string>();
+        const rng = () => 0.1;
+        const now = () => 1700000000000;
+
+        const first = generateCharacterName({ rng, now, registry });
+        const second = generateCharacterName({ rng, now, registry });
+
+        expect(first).not.toBe(second);
+
+        const baseMax = 8; // MAX_NAME_LENGTH - MIN_SUFFIX_LENGTH
+        const trimmed = first.length > baseMax ? first.slice(0, baseMax) : first;
+
+        expect(second.startsWith(trimmed)).toBe(true);
+        expect(second.length).toBeGreaterThanOrEqual(trimmed.length + 2);
+        expect(second.length).toBeLessThanOrEqual(trimmed.length + 3);
+    });
 });
