@@ -126,7 +126,7 @@ describe('Arena inventory modal', () => {
       startMatchmaking: vi.fn(),
     })
 
-    const { getByLabelText, getByText } = render(
+    const { getByLabelText } = render(
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Arena />
       </MemoryRouter>
