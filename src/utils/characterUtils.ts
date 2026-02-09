@@ -26,7 +26,11 @@ const NEUTRAL_NOUNS = [
     'Ranger', 'Rider', 'Rogue', 'Sage', 'Scout', 'Seer', 'Squire', 'Striker', 'Tamer', 'Warden'
 ];
 
-const THEME_POOLS = [
+const THEME_POOLS: readonly {
+    name: string;
+    adjectives: readonly string[];
+    nouns: readonly string[];
+}[] = [
     {
         name: 'nature',
         adjectives: [
@@ -84,7 +88,7 @@ const THEME_POOLS = [
             'Aegis', 'Golem', 'Hydra', 'Oracle', 'Titan', 'Ward', 'Wyrm', 'Wyvern'
         ]
     }
-] as const;
+];
 
 /**
  * Generates a logical, coherent, single-word name without numbers or special characters.
@@ -96,9 +100,9 @@ export const generateCharacterName = (options: NameGeneratorOptions = {}): strin
     const now = options.now ?? Date.now;
     const registry = options.registry ?? usedGeneratedNames;
 
-    const pick = <T,>(list: T[]) => list[Math.floor(rng() * list.length)];
+    const pick = <T,>(list: readonly T[]) => list[Math.floor(rng() * list.length)];
 
-    const pickWithMax = (list: string[], maxLen: number) => {
+    const pickWithMax = (list: readonly string[], maxLen: number) => {
         const candidates = list.filter((word) => word.length <= maxLen);
         if (candidates.length) {
             return pick(candidates);
@@ -107,10 +111,10 @@ export const generateCharacterName = (options: NameGeneratorOptions = {}): strin
         return shortest.substring(0, maxLen);
     };
 
-    const minLength = (list: string[]) =>
+    const minLength = (list: readonly string[]) =>
         list.reduce((min, word) => (word.length < min ? word.length : min), Infinity);
 
-    const pickPair = (listA: string[], listB: string[], maxLen: number) => {
+    const pickPair = (listA: readonly string[], listB: readonly string[], maxLen: number) => {
         const minB = minLength(listB);
         const candidatesA = listA.filter((word) => word.length <= maxLen - minB);
         const first = pick(candidatesA.length ? candidatesA : listA);
