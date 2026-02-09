@@ -53,6 +53,8 @@ if (!getApps().length) {
 
 const db = getFirestore();
 const INVENTORY_CAPACITY = 24;
+const SIMULATION_BATCH = 30;
+const MAX_ACTIVE_BOTS = 10;
 
 async function measureBotPopulation() {
     const total = await db.collection('characters').where('isBot', '==', true).count().get();
@@ -135,7 +137,7 @@ async function simulateBotDailyLife() {
     // Fetch only bots
     const snapshot = await db.collection('characters')
         .where('isBot', '==', true)
-        .limit(50) // Process up to 50 bots at a time
+        .limit(SIMULATION_BATCH) // Process a smaller batch to limit writes
         .get();
 
     if (snapshot.empty) {
@@ -160,15 +162,17 @@ async function simulateBotDailyLife() {
     const shuffle = (array: any[]) => [...array].sort(() => Math.random() - 0.5);
     const shuffledBots = shuffle(bots);
 
-    // Pick at least 2 active bots (or all if less than 2)
-    const activeCount = Math.max(Math.min(bots.length, 2), Math.floor(bots.length * 0.7));
+    // Reduce activity to protect free-tier quota
+    const activityRate = Math.min(Math.max(GAME_RULES.BOTS.ACTIVITY_RATE ?? 0.25, 0.1), 0.4);
+    const desiredActive = Math.max(1, Math.ceil(bots.length * activityRate));
+    const activeCount = Math.min(bots.length, Math.min(MAX_ACTIVE_BOTS, desiredActive));
     const activeBots = shuffledBots.slice(0, activeCount);
 
-    console.log(`⚡ Simulating activity for ${activeBots.length} bots...`);
+    console.log(`⚡ Simulating activity for ${activeBots.length} bots (rate ${Math.round(activityRate * 100)}%).`);
 
     // Fetch potential opponents for bots (a mix of bots and real players)
     const opponentSnapshot = await db.collection('characters')
-        .limit(100)
+        .limit(80)
         .get();
 
     const allCharacters = opponentSnapshot.docs.map(doc => ({
@@ -217,7 +221,7 @@ async function simulateBotDailyLife() {
         }
 
         // 3. Fight Logic (Perform multiple actions per hour)
-        const desiredActions = Math.floor(Math.random() * 2) + 2; // 2 to 3 actions
+        const desiredActions = Math.floor(Math.random() * 2) + 1; // 1 to 2 actions
         let actionsTaken = 0;
 
         while (actionsTaken < desiredActions && fightsLeft > 0) {

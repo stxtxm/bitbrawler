@@ -14,7 +14,7 @@ export const GAME_RULES = {
     BOTS: {
         MIN_POPULATION: 2,
         MIN_LVL1_BOTS: 3, // Ensure at least 3 lvl 1 bots
-        ACTIVITY_RATE: 0.5,
-        GROWTH_CHANCE: 1.0, // Create a bot every hourly run
+        ACTIVITY_RATE: 0.25, // Percentage of bots active per run
+        GROWTH_CHANCE: 1.0, // Create a bot every scheduled run
     }
 } as const;

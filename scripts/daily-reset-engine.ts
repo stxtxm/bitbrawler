@@ -51,6 +51,9 @@ async function runDailyReset() {
     // Calculate the start of today in UTC
     const now = new Date();
     const todayUTCStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())).getTime();
+    const todayLabel = new Date(todayUTCStart).toISOString().split('T')[0];
+    console.log(`🕒 Current time (UTC): ${now.toISOString()}`);
+    console.log(`📆 UTC day start: ${new Date(todayUTCStart).toISOString()} (day ${todayLabel})`);
 
     try {
         // Find all characters whose last reset was before today (UTC)
@@ -59,33 +62,36 @@ async function runDailyReset() {
             .get();
 
         if (snapshot.empty) {
-            console.log('✅ All characters are already up to date for today.');
+            console.log(`✅ All characters are already up to date for ${todayLabel}.`);
             return;
         }
 
         console.log(`🔄 Resetting ${snapshot.size} characters...`);
 
-        const batch = db.batch();
-        let count = 0;
+        const docs = snapshot.docs;
+        const batchSize = 400;
+        let totalUpdated = 0;
+        let batchIndex = 0;
 
-        snapshot.docs.forEach((doc) => {
-            const docRef = db.collection('characters').doc(doc.id);
-            batch.update(docRef, {
-                fightsLeft: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
-                lastFightReset: now,
-                foughtToday: []
+        for (let i = 0; i < docs.length; i += batchSize) {
+            const batch = db.batch();
+            const slice = docs.slice(i, i + batchSize);
+            slice.forEach((doc) => {
+                const docRef = db.collection('characters').doc(doc.id);
+                batch.update(docRef, {
+                    fightsLeft: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
+                    lastFightReset: todayUTCStart,
+                    foughtToday: []
+                });
             });
-            count++;
 
-            // Commit every 400 docs (Firebase limit is 500)
-            if (count % 400 === 0) {
-                // We'd need to await here, but for simple script we can just use a loop
-                // but scripts usually handle smaller batches.
-            }
-        });
+            batchIndex += 1;
+            await batch.commit();
+            totalUpdated += slice.length;
+            console.log(`✅ Batch ${batchIndex} committed (${slice.length} characters).`);
+        }
 
-        await batch.commit();
-        console.log(`✨ Successfully reset energy for ${count} characters.`);
+        console.log(`✨ Successfully reset energy for ${totalUpdated} characters.`);
 
     } catch (error) {
         console.error('❌ Daily reset failed:', error);
