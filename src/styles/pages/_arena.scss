@@ -144,6 +144,7 @@
     @include mobile {
         padding: 16px;
         border-width: 2px;
+        max-height: 92vh;
     }
 }
 
@@ -457,7 +458,8 @@
     gap: 6px;
 
     @include mobile {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4px;
     }
 }
 
@@ -547,6 +549,20 @@
     font-size: 0.55rem;
     color: $accent-gold;
     text-transform: uppercase;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 100%;
+    text-align: center;
+    row-gap: 4px;
+    padding: 4px 6px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid #222;
+}
+
+.lootbox-result span {
+    max-width: 100%;
+    white-space: normal;
+    word-break: break-word;
 }
 
 .lootbox-result.rarity-common {
@@ -555,6 +571,117 @@
 
 .lootbox-result.rarity-uncommon {
     color: #4cd964;
+}
+
+@include mobile {
+    .inventory-details {
+        padding: 8px;
+        gap: 8px;
+        min-height: 0;
+    }
+
+    .inventory-item-head {
+        gap: 8px;
+        padding-left: 4px;
+    }
+
+    .inventory-item-name {
+        font-size: 0.62rem;
+    }
+
+    .inventory-item-sub {
+        font-size: 0.4rem;
+        gap: 4px;
+    }
+
+    .inventory-item-stats {
+        gap: 4px;
+    }
+
+    .inventory-stat-row {
+        padding: 3px 5px;
+        gap: 4px;
+    }
+
+    .inventory-stat-icon {
+        width: 14px;
+        height: 14px;
+    }
+
+    .inventory-stat-label {
+        font-size: 0.45rem;
+    }
+
+    .inventory-stat-value {
+        font-size: 0.5rem;
+    }
+
+    .inventory-bonus-summary {
+        gap: 4px;
+        padding-top: 6px;
+    }
+
+    .bonus-list {
+        gap: 4px;
+    }
+
+    .bonus-title {
+        font-size: 0.4rem;
+    }
+
+    .inventory-footer {
+        margin-top: 8px;
+    }
+
+    .lootbox-result {
+        font-size: 0.48rem;
+        gap: 6px;
+    }
+}
+
+@include small-mobile {
+    .inventory-details {
+        padding: 6px;
+        gap: 6px;
+        min-height: 0;
+    }
+
+    .inventory-item-name {
+        font-size: 0.58rem;
+    }
+
+    .inventory-item-sub {
+        font-size: 0.38rem;
+    }
+
+    .inventory-item-stats {
+        gap: 3px;
+    }
+
+    .inventory-stat-row {
+        padding: 2px 4px;
+    }
+
+    .inventory-stat-label {
+        font-size: 0.42rem;
+    }
+
+    .inventory-stat-value {
+        font-size: 0.46rem;
+    }
+
+    .bonus-chip {
+        font-size: 0.42rem;
+        padding: 2px 4px;
+    }
+
+    .bonus-title {
+        font-size: 0.38rem;
+    }
+
+    .lootbox-result {
+        font-size: 0.44rem;
+    }
 }
 
 .lootbox-overlay {
