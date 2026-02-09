@@ -40,4 +40,17 @@ describe('generateCharacterName', () => {
         // We expect some variety
         expect(names.size).toBeGreaterThan(10);
     });
+
+    it('should keep generated names unique even with deterministic rolls', () => {
+        const registry = new Set<string>();
+        const rng = () => 0.1;
+        const now = () => 1700000000000;
+        const names = new Set<string>();
+
+        for (let i = 0; i < 50; i++) {
+            names.add(generateCharacterName({ rng, now, registry }));
+        }
+
+        expect(names.size).toBe(50);
+    });
 });
