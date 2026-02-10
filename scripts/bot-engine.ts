@@ -1,5 +1,3 @@
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
 import { generateInitialStats, generateCharacterName } from '../src/utils/characterUtils';
 import { calculateFightXp, gainXp } from '../src/utils/xpUtils';
 import { simulateCombat } from '../src/utils/combatUtils';
@@ -7,51 +5,25 @@ import { GAME_RULES } from '../src/config/gameRules';
 import { autoAllocateStatPoints } from '../src/utils/statUtils';
 import { ITEM_ASSETS } from '../src/data/itemAssets';
 import { canRollLootbox, rollLootbox } from '../src/utils/lootboxUtils';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
 import { Character } from '../src/types/Character';
-
-// Load environment variables (for local dev)
-dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { initFirebaseAdmin, loadServiceAccount } from './firebaseAdmin';
 
 // Initialize Firebase Admin
-let serviceAccount: any;
+let serviceAccount: ReturnType<typeof loadServiceAccount>;
 
 try {
-    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-        try {
-            const decoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString('utf-8');
-            serviceAccount = JSON.parse(decoded);
-        } catch {
-            serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-        }
-    } else {
-        // Local development fallback
-        const serviceAccountPath = path.resolve(__dirname, '../serviceAccountKey.json');
-        if (fs.existsSync(serviceAccountPath)) {
-            serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
-        } else {
-            console.warn('⚠️ No service account found. Please set FIREBASE_SERVICE_ACCOUNT env var or add serviceAccountKey.json');
-            process.exit(0);
-        }
-    }
+    serviceAccount = loadServiceAccount();
 } catch (error) {
     console.error('Failed to parse service account:', error);
     process.exit(1);
 }
 
-if (!getApps().length) {
-    initializeApp({
-        credential: cert(serviceAccount)
-    });
+if (!serviceAccount) {
+    console.warn('⚠️ No service account found. Please set FIREBASE_SERVICE_ACCOUNT env var or add serviceAccountKey.json');
+    process.exit(0);
 }
 
-const db = getFirestore();
+const db = initFirebaseAdmin(serviceAccount);
 const INVENTORY_CAPACITY = 24;
 const SIMULATION_BATCH = 30;
 const MAX_ACTIVE_BOTS = 10;

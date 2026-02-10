@@ -1,55 +1,27 @@
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { GAME_RULES } from '../src/config/gameRules';
 import {
     formatZonedDateLabel,
     getZonedMidnightUtc,
-    getZonedParts,
-    isWithinZonedMidnightWindow
+    getZonedParts
 } from '../src/utils/timezoneUtils';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
-
-// Load environment variables
-dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { initFirebaseAdmin, loadServiceAccount } from './firebaseAdmin';
 
 // Initialize Firebase Admin
-let serviceAccount: any;
+let serviceAccount: ReturnType<typeof loadServiceAccount>;
 
 try {
-    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-        try {
-            const decoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString('utf-8');
-            serviceAccount = JSON.parse(decoded);
-        } catch {
-            serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-        }
-    } else {
-        const serviceAccountPath = path.resolve(__dirname, '../serviceAccountKey.json');
-        if (fs.existsSync(serviceAccountPath)) {
-            serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
-        } else {
-            console.warn('⚠️ No service account found for daily reset.');
-            process.exit(0);
-        }
-    }
+    serviceAccount = loadServiceAccount();
 } catch (error) {
     console.error('Failed to parse service account:', error);
     process.exit(1);
 }
 
-if (!getApps().length) {
-    initializeApp({
-        credential: cert(serviceAccount)
-    });
+if (!serviceAccount) {
+    console.warn('⚠️ No service account found for daily reset.');
+    process.exit(0);
 }
 
-const db = getFirestore();
+const db = initFirebaseAdmin(serviceAccount);
 const PARIS_TIMEZONE = 'Europe/Paris';
 
 async function runDailyReset() {
@@ -63,12 +35,6 @@ async function runDailyReset() {
     console.log(`🕒 Current time (UTC): ${now.toISOString()}`);
     console.log(`🕒 Current time (Paris): ${parisLabel} ${String(parisNow.hour).padStart(2, '0')}:${String(parisNow.minute).padStart(2, '0')}:${String(parisNow.second).padStart(2, '0')}`);
     console.log(`📆 Paris day start (UTC): ${new Date(parisMidnightUtc).toISOString()} (day ${parisLabel})`);
-
-    // Only run near Paris midnight to avoid accidental resets.
-    if (!isWithinZonedMidnightWindow(now, PARIS_TIMEZONE, 10)) {
-        console.log('⏭️ Not within Paris midnight window. Skipping daily reset.');
-        return;
-    }
 
     try {
         // Find all characters whose last reset was before today (UTC)
