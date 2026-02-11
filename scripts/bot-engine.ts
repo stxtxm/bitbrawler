@@ -11,6 +11,37 @@ import { initFirebaseAdmin, loadServiceAccount } from './firebaseAdmin';
 // Initialize Firebase Admin
 let serviceAccount: ReturnType<typeof loadServiceAccount>;
 
+type TimestampLike = {
+    toMillis?: () => number;
+    seconds?: number;
+    nanoseconds?: number;
+};
+
+const normalizeTimestamp = (value: unknown, fallback = 0): number => {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+        return value;
+    }
+
+    if (typeof value === 'string') {
+        const parsed = Date.parse(value);
+        return Number.isNaN(parsed) ? fallback : parsed;
+    }
+
+    if (value && typeof value === 'object') {
+        const maybe = value as TimestampLike;
+        if (typeof maybe.toMillis === 'function') {
+            const millis = maybe.toMillis();
+            return Number.isFinite(millis) ? millis : fallback;
+        }
+        if (typeof maybe.seconds === 'number') {
+            const nanos = typeof maybe.nanoseconds === 'number' ? maybe.nanoseconds : 0;
+            return Math.floor(maybe.seconds * 1000 + nanos / 1_000_000);
+        }
+    }
+
+    return fallback;
+};
+
 try {
     serviceAccount = loadServiceAccount();
 } catch (error) {
@@ -25,8 +56,6 @@ if (!serviceAccount) {
 
 const db = initFirebaseAdmin(serviceAccount);
 const INVENTORY_CAPACITY = 24;
-const SIMULATION_BATCH = 30;
-const MAX_ACTIVE_BOTS = 10;
 
 async function measureBotPopulation() {
     const total = await db.collection('characters').where('isBot', '==', true).count().get();
@@ -95,6 +124,7 @@ async function createNewBot() {
         losses: 0,
         fightsLeft: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
         lastFightReset: Date.now(),
+        battleCount: 0,
         statPoints: 0,
         inventory: [],
         equipped: {},
@@ -109,7 +139,6 @@ async function simulateBotDailyLife() {
     // Fetch only bots
     const snapshot = await db.collection('characters')
         .where('isBot', '==', true)
-        .limit(SIMULATION_BATCH) // Process a smaller batch to limit writes
         .get();
 
     if (snapshot.empty) {
@@ -119,9 +148,19 @@ async function simulateBotDailyLife() {
 
     const bots = snapshot.docs.map(doc => {
         const data = doc.data() as Character;
+        const lastFightReset = normalizeTimestamp(data.lastFightReset, 0);
+        const fightsLeft = typeof data.fightsLeft === 'number' && Number.isFinite(data.fightsLeft)
+            ? data.fightsLeft
+            : 0;
+        const battleCount = typeof (data as { battleCount?: unknown }).battleCount === 'number'
+            ? (data as { battleCount?: number }).battleCount ?? 0
+            : 0;
         return {
             ...data,
             firestoreId: doc.id,
+            fightsLeft,
+            lastFightReset,
+            battleCount,
             statPoints: data.statPoints ?? 0,
             focus: data.focus ?? GAME_RULES.STATS.BASE_VALUE,
             inventory: data.inventory ?? [],
@@ -130,17 +169,7 @@ async function simulateBotDailyLife() {
         };
     });
 
-    // Decide activity: Increase activity to ensure at least 2 bots move if available
-    const shuffle = (array: any[]) => [...array].sort(() => Math.random() - 0.5);
-    const shuffledBots = shuffle(bots);
-
-    // Reduce activity to protect free-tier quota
-    const activityRate = Math.min(Math.max(GAME_RULES.BOTS.ACTIVITY_RATE ?? 0.25, 0.1), 0.4);
-    const desiredActive = Math.max(1, Math.ceil(bots.length * activityRate));
-    const activeCount = Math.min(bots.length, Math.min(MAX_ACTIVE_BOTS, desiredActive));
-    const activeBots = shuffledBots.slice(0, activeCount);
-
-    console.log(`⚡ Simulating activity for ${activeBots.length} bots (rate ${Math.round(activityRate * 100)}%).`);
+    console.log(`⚡ Simulating activity for ${bots.length} bots.`);
 
     // Fetch potential opponents for bots (a mix of bots and real players)
     const opponentSnapshot = await db.collection('characters')
@@ -152,7 +181,7 @@ async function simulateBotDailyLife() {
         firestoreId: doc.id
     }));
 
-    for (const bot of activeBots) {
+    for (const bot of bots) {
         if (!bot.firestoreId) continue;
 
         let currentBotState = { ...bot, statPoints: bot.statPoints ?? 0 };
@@ -167,6 +196,7 @@ async function simulateBotDailyLife() {
         if (now - currentBotState.lastFightReset > 24 * 60 * 60 * 1000) {
             fightsLeft = GAME_RULES.COMBAT.MAX_DAILY_FIGHTS;
             currentBotState.lastFightReset = now;
+            currentBotState.battleCount = 0;
             didReset = true;
             console.log(`🔄 Daily reset for bot ${currentBotState.name}`);
         }
@@ -193,7 +223,7 @@ async function simulateBotDailyLife() {
         }
 
         // 3. Fight Logic (Perform multiple actions per hour)
-        const desiredActions = Math.floor(Math.random() * 2) + 1; // 1 to 2 actions
+        const desiredActions = Math.floor(Math.random() * 3) + 1; // 1 to 3 actions
         let actionsTaken = 0;
 
         while (actionsTaken < desiredActions && fightsLeft > 0) {
@@ -264,6 +294,7 @@ async function simulateBotDailyLife() {
                 fightsLeft: currentBotState.fightsLeft,
                 wins: currentBotState.wins,
                 losses: currentBotState.losses,
+                battleCount: currentBotState.battleCount,
                 fightHistory: currentBotState.fightHistory,
                 strength: currentBotState.strength,
                 vitality: currentBotState.vitality,

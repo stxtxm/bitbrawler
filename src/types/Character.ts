@@ -62,6 +62,7 @@ export interface Character {
   // Daily System
   fightsLeft: number;
   lastFightReset: number; // Timestamp
+  battleCount?: number;
   firestoreId?: string; // For updates
   isBot?: boolean; // To identify automated characters
   fightHistory?: FightHistory[];

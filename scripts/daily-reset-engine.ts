@@ -4,6 +4,7 @@ import {
     getZonedMidnightUtc,
     getZonedParts
 } from '../src/utils/timezoneUtils';
+import { Timestamp, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { initFirebaseAdmin, loadServiceAccount } from './firebaseAdmin';
 
 // Initialize Firebase Admin
@@ -23,6 +24,7 @@ if (!serviceAccount) {
 
 const db = initFirebaseAdmin(serviceAccount);
 const PARIS_TIMEZONE = 'Europe/Paris';
+const RESET_SCOPE = (process.env.RESET_SCOPE || 'all').toLowerCase();
 
 async function runDailyReset() {
     console.log('⏳ Starting Global Daily Reset...');
@@ -37,19 +39,46 @@ async function runDailyReset() {
     console.log(`📆 Paris day start (UTC): ${new Date(parisMidnightUtc).toISOString()} (day ${parisLabel})`);
 
     try {
-        // Find all characters whose last reset was before today (UTC)
-        const snapshot = await db.collection('characters')
-            .where('lastFightReset', '<', parisMidnightUtc)
-            .get();
+        const charactersRef = db.collection('characters');
+        let docs: QueryDocumentSnapshot[] = [];
+        let scopeLabel = '';
 
-        if (snapshot.empty) {
-            console.log(`✅ All characters are already up to date for ${parisLabel}.`);
+        if (RESET_SCOPE === 'all') {
+            const snapshot = await charactersRef.get();
+            docs = snapshot.docs;
+            scopeLabel = 'full reset';
+        } else {
+            const timestampCutoff = Timestamp.fromMillis(parisMidnightUtc);
+
+            // Find all characters whose last reset was before today (UTC),
+            // including missing/null fields and legacy Timestamp values.
+            const [numericSnapshot, nullSnapshot, timestampSnapshot] = await Promise.all([
+                charactersRef.where('lastFightReset', '<', parisMidnightUtc).get(),
+                charactersRef.where('lastFightReset', '==', null).get(),
+                charactersRef.where('lastFightReset', '<', timestampCutoff).get()
+            ]);
+
+            const deduped = new Map<string, QueryDocumentSnapshot>();
+            [numericSnapshot, nullSnapshot, timestampSnapshot].forEach((snap) => {
+                snap.docs.forEach((doc) => deduped.set(doc.id, doc));
+            });
+
+            docs = Array.from(deduped.values());
+            scopeLabel = `numeric: ${numericSnapshot.size}, missing/null: ${nullSnapshot.size}, timestamp: ${timestampSnapshot.size}`;
+        }
+
+        if (docs.length === 0) {
+            if (RESET_SCOPE === 'all') {
+                console.log('ℹ️ No characters found to reset.');
+            } else {
+                console.log(`✅ All characters are already up to date for ${parisLabel}.`);
+            }
             return;
         }
 
-        console.log(`🔄 Resetting ${snapshot.size} characters...`);
-
-        const docs = snapshot.docs;
+        console.log(
+            `🔄 Resetting ${docs.length} characters (${scopeLabel})...`
+        );
         const batchSize = 400;
         let totalUpdated = 0;
         let batchIndex = 0;
@@ -62,7 +91,8 @@ async function runDailyReset() {
                 batch.update(docRef, {
                     fightsLeft: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
                     lastFightReset: parisMidnightUtc,
-                    foughtToday: []
+                    foughtToday: [],
+                    battleCount: 0
                 });
             });
 

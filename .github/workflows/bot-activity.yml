@@ -2,8 +2,8 @@ name: Bot Activity
 
 on:
   schedule:
-    # Run every 4 hours (UTC).
-    - cron: '0 */4 * * *'
+    # Run every 2 hours (UTC).
+    - cron: '0 */2 * * *'
   workflow_dispatch: # Allow manual trigger from GitHub UI
 
 jobs:
