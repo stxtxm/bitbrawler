@@ -44,6 +44,14 @@
     overflow-y: auto;
     overflow-x: hidden;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 12px 18px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 35%),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 1px, transparent 1px, transparent 4px),
+        #080808;
     scrollbar-width: thin;
     scrollbar-color: $accent-gold #000;
 
@@ -75,16 +83,22 @@
 .rankings-header,
 .ranking-row {
     display: grid;
-    grid-template-columns: 80px 100px 1fr 100px 180px;
+    grid-template-columns: 70px 90px 1fr 80px;
+    grid-template-areas: "rank avatar name lvl";
     padding: 15px;
 
     @include tablet {
-        grid-template-columns: 40px 60px 1fr 50px;
+        grid-template-columns: 44px 70px 1fr 60px;
         padding: 8px 10px;
     }
 
     @include mobile {
-        padding: 5px 8px;
+        grid-template-columns: 46px 1fr;
+        grid-template-areas:
+            "rank name"
+            "avatar lvl";
+        row-gap: 6px;
+        padding: 10px 10px;
     }
 }
 
@@ -102,21 +116,59 @@
         font-size: 0.5rem;
         border-bottom-width: 2px;
     }
+
+    @include mobile {
+        display: none;
+    }
 }
 
 .ranking-row {
     align-items: center;
-    padding: 12px 15px;
-    border-bottom: 1px solid #111;
+    padding: 12px 14px;
+    border: 1px solid #1b1b1b;
+    border-radius: 10px;
+    background: linear-gradient(90deg, #0d0d0d 0%, #141414 100%);
+    position: relative;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02), 0 6px 10px rgba(0, 0, 0, 0.35);
     transition: all 0.2s ease;
     cursor: default;
 
+    &::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: rgba($accent-gold, 0.2);
+        opacity: 0.6;
+        border-top-left-radius: 10px;
+        border-bottom-left-radius: 10px;
+    }
+
+    &.rank-1::before {
+        background: $accent-gold;
+        opacity: 0.9;
+    }
+
+    &.rank-2::before {
+        background: #c0c0c0;
+        opacity: 0.8;
+    }
+
+    &.rank-3::before {
+        background: #cd7f32;
+        opacity: 0.8;
+    }
+
     &:hover {
-        background: rgba($accent-gold, 0.08);
+        transform: translateY(-2px);
+        border-color: #2a2a2a;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 8px 14px rgba(0, 0, 0, 0.45);
     }
 
     @include mobile {
-        padding: 8px;
+        padding: 10px;
     }
 }
 
@@ -124,29 +176,42 @@
     font-size: 1.2rem;
     text-align: center;
     font-weight: bold;
+    grid-area: rank;
+    justify-self: center;
+    width: 42px;
+    padding: 6px 0;
+    border-radius: 6px;
+    border: 1px solid #262626;
+    background: #0b0b0b;
 
     &.rank-1 {
         color: $accent-gold;
+        border-color: rgba($accent-gold, 0.6);
     }
 
     &.rank-2 {
         color: #c0c0c0;
+        border-color: rgba(192, 192, 192, 0.6);
     }
 
     &.rank-3 {
         color: #cd7f32;
+        border-color: rgba(205, 127, 50, 0.6);
     }
 
     @include tablet {
         font-size: 0.9rem;
+        width: 34px;
     }
 
     @include mobile {
-        font-size: 0.7rem;
+        font-size: 0.75rem;
+        width: 32px;
     }
 }
 
 .col-avatar {
+    grid-area: avatar;
     @include flex-center;
 
     .mini-avatar {
@@ -160,13 +225,15 @@
     }
 }
 
-.col-info {
+.col-name {
+    grid-area: name;
     display: flex;
     flex-direction: column;
     gap: 3px;
 }
 
 .col-lvl {
+    grid-area: lvl;
     text-align: center;
     color: $accent-green;
     font-size: 0.9rem;
@@ -174,6 +241,29 @@
 
     @include mobile {
         font-size: 0.65rem;
+    }
+}
+
+.lvl-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 46px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    background: #0b0b0b;
+    border: 1px solid rgba($accent-green, 0.4);
+    color: $accent-green;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6);
+
+    @include tablet {
+        min-width: 40px;
+        padding: 5px 6px;
+    }
+
+    @include mobile {
+        min-width: 36px;
+        padding: 4px 6px;
     }
 }
 
@@ -200,34 +290,6 @@
 
     @include mobile {
         font-size: 0.4rem;
-    }
-}
-
-.col-stats {
-    @include flex-center;
-    flex-direction: column;
-    gap: 3px;
-    font-size: 0.5rem;
-    color: #888;
-
-    @include tablet {
-        display: none;
-    }
-}
-
-.mini-stat {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    gap: 8px;
-
-    .stat-label {
-        color: #666;
-    }
-
-    .stat-value {
-        color: $accent-green;
-        font-weight: bold;
     }
 }
 

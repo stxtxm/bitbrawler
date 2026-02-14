@@ -158,16 +158,15 @@ const Rankings = () => {
                             <div className="col-avatar">AVATAR</div>
                             <div className="col-name">NAME</div>
                             <div className="col-lvl">LVL</div>
-                            <div className="col-stats">STATS</div>
                         </div>
 
                         <div className="rankings-list">
                             {characters.map((char, index) => (
                                 <div
                                     key={index}
-                                    className="ranking-row"
+                                    className={`ranking-row${index < 3 ? ` rank-${index + 1}` : ''}`}
                                 >
-                                    <div className="col-rank">{index + 1}</div>
+                                    <div className={`col-rank rank-${index + 1}`}>{index + 1}</div>
                                     <div className="col-avatar">
                                         <div className="mini-avatar">
                                             <PixelCharacter seed={char.seed} gender={char.gender} scale={3} />
@@ -179,14 +178,6 @@ const Rankings = () => {
                                     </div>
                                     <div className="col-lvl">
                                         <span className="lvl-badge">{char.level}</span>
-                                    </div>
-                                    <div className="col-stats">
-                                        <div className="mini-stat"><span>STR</span>{char.strength}</div>
-                                        <div className="mini-stat"><span>VIT</span>{char.vitality}</div>
-                                        <div className="mini-stat"><span>DEX</span>{char.dexterity}</div>
-                                        <div className="mini-stat"><span>LUK</span>{char.luck}</div>
-                                        <div className="mini-stat"><span>INT</span>{char.intelligence}</div>
-                                        <div className="mini-stat"><span>FOC</span>{char.focus}</div>
                                     </div>
                                 </div>
                             ))}
