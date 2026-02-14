@@ -19,6 +19,10 @@ type TimestampLike = {
     nanoseconds?: number;
 };
 
+type BotSimulationOptions = {
+    skipBotIds?: Set<string>;
+};
+
 const normalizeTimestamp = (value: unknown, fallback = 0): number => {
     if (typeof value === 'number' && Number.isFinite(value)) {
         return value;
@@ -78,22 +82,30 @@ async function runBotLogic() {
     try {
         const populations = await measureBotPopulation();
         console.log(`📊 Current bot population: ${populations.total} (Lvl 1: ${populations.lvl1})`);
+        const skipBotIds = new Set<string>();
+        let totalBots = populations.total;
+        let lvl1Bots = populations.lvl1;
 
         // 1. Force population growth if below minimum
-        if (populations.total < GAME_RULES.BOTS.MIN_POPULATION) {
+        if (totalBots < GAME_RULES.BOTS.MIN_POPULATION) {
             console.log('📉 Total bot population low. Spawning reinforcements...');
-            const needed = GAME_RULES.BOTS.MIN_POPULATION - populations.total;
+            const needed = GAME_RULES.BOTS.MIN_POPULATION - totalBots;
             for (let i = 0; i < needed; i++) {
                 await createNewBot();
+                totalBots += 1;
+                lvl1Bots += 1;
             }
         }
 
         // 1b. Ensure minimum level 1 bots
-        if (populations.lvl1 < GAME_RULES.BOTS.MIN_LVL1_BOTS) {
-            console.log(`📉 Lvl 1 bot population low (${populations.lvl1}/${GAME_RULES.BOTS.MIN_LVL1_BOTS}). Spawning LVL 1 bots...`);
-            const needed = GAME_RULES.BOTS.MIN_LVL1_BOTS - populations.lvl1;
+        if (lvl1Bots < GAME_RULES.BOTS.MIN_LVL1_BOTS) {
+            console.log(`📉 Lvl 1 bot population low (${lvl1Bots}/${GAME_RULES.BOTS.MIN_LVL1_BOTS}). Spawning LVL 1 bots...`);
+            const needed = GAME_RULES.BOTS.MIN_LVL1_BOTS - lvl1Bots;
             for (let i = 0; i < needed; i++) {
-                await createNewBot();
+                const newBotId = await createNewBot();
+                skipBotIds.add(newBotId);
+                totalBots += 1;
+                lvl1Bots += 1;
             }
         }
 
@@ -104,7 +116,7 @@ async function runBotLogic() {
         }
 
         // 2. Simulate complete daily cycle for bots
-        await simulateBotDailyLife();
+        await simulateBotDailyLife({ skipBotIds });
 
         console.log('✅ Bot Engine finished successfully');
     } catch (error) {
@@ -113,7 +125,7 @@ async function runBotLogic() {
     }
 }
 
-async function createNewBot() {
+async function createNewBot(): Promise<string> {
     const fullName = generateCharacterName().toUpperCase();
 
     const stats = generateInitialStats(fullName, Math.random() > 0.5 ? 'male' : 'female');
@@ -133,11 +145,13 @@ async function createNewBot() {
         lastLootRoll: 0
     };
 
-    await db.collection('characters').add(botData);
+    const docRef = await db.collection('characters').add(botData);
     console.log(`🆕 Created new bot: ${fullName} (Level ${stats.level})`);
+    return docRef.id;
 }
 
-async function simulateBotDailyLife() {
+async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
+    const { skipBotIds } = options;
     // Fetch only bots
     const snapshot = await db.collection('characters')
         .where('isBot', '==', true)
@@ -171,7 +185,15 @@ async function simulateBotDailyLife() {
         };
     });
 
-    console.log(`⚡ Simulating activity for ${bots.length} bots.`);
+    const activeBots = skipBotIds && skipBotIds.size > 0
+        ? bots.filter(bot => !skipBotIds.has(bot.firestoreId ?? ''))
+        : bots;
+    const skippedCount = bots.length - activeBots.length;
+    if (skippedCount > 0) {
+        console.log(`⏸️ Skipping ${skippedCount} newly spawned LVL 1 bots (no activity yet).`);
+    }
+
+    console.log(`⚡ Simulating activity for ${activeBots.length} bots.`);
 
     const opponentsByLevel = new Map<number, Character[]>();
     const loadOpponentsForLevel = async (level: number) => {
@@ -187,7 +209,7 @@ async function simulateBotDailyLife() {
         opponentsByLevel.set(level, opponents);
     };
 
-    for (const bot of bots) {
+    for (const bot of activeBots) {
         if (!bot.firestoreId) continue;
 
         let currentBotState = { ...bot, statPoints: bot.statPoints ?? 0 };
