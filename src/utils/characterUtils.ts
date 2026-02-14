@@ -17,13 +17,20 @@ type NameGeneratorOptions = {
 
 const NEUTRAL_ADJECTIVES = [
     'Bold', 'Brave', 'Calm', 'Fierce', 'Grim', 'Keen', 'Lone', 'Mighty', 'Noble', 'Silent',
-    'Swift', 'True', 'Vast', 'Wild', 'Prime', 'Steel', 'Stone', 'Iron', 'Silver', 'Gold'
+    'Swift', 'True', 'Vast', 'Wild', 'Prime', 'Steel', 'Stone', 'Iron', 'Silver', 'Gold',
+    'Amber', 'Azure', 'Bright', 'Brisk', 'Cobalt', 'Crimson', 'Dawn', 'Dusk', 'Ebon', 'Feral',
+    'Gilded', 'Glory', 'Hardy', 'Ivory', 'Jade', 'Nimble', 'Proud', 'Rogue', 'Sable', 'Stark',
+    'Stern', 'Storm', 'Frost', 'Flint', 'Grit', 'Valor', 'Vivid', 'Vigil', 'Arcane', 'Mystic',
+    'Ancient', 'Sacred', 'Savage', 'Shadow', 'Solar', 'Lunar', 'Glint', 'Riven'
 ];
 
 const NEUTRAL_NOUNS = [
     'Adept', 'Agent', 'Archer', 'Bard', 'Blade', 'Brawler', 'Chaser', 'Cleric', 'Drifter',
     'Fencer', 'Guard', 'Hunter', 'Knight', 'Lancer', 'Mage', 'Monk', 'Oracle', 'Pilot',
-    'Ranger', 'Rider', 'Rogue', 'Sage', 'Scout', 'Seer', 'Squire', 'Striker', 'Tamer', 'Warden'
+    'Ranger', 'Rider', 'Rogue', 'Sage', 'Scout', 'Seer', 'Squire', 'Striker', 'Tamer', 'Warden',
+    'Avatar', 'Bishop', 'Breaker', 'Crusader', 'Duelist', 'Enigma', 'Exile', 'Jester', 'Nomad',
+    'Outlaw', 'Paladin', 'Raptor', 'Reaver', 'Sentinel', 'Shaman', 'Stalker', 'Vanguard',
+    'Wanderer', 'Warrior', 'Vigil', 'Herald'
 ];
 
 const THEME_POOLS: readonly {
@@ -34,58 +41,79 @@ const THEME_POOLS: readonly {
     {
         name: 'nature',
         adjectives: [
-            'Ash', 'Ashen', 'Briar', 'Cedar', 'Cliff', 'Coral', 'Dune', 'Dust', 'Flint', 'Forest',
-            'Grove', 'Moss', 'Oasis', 'Pine', 'Reef', 'Ridge', 'River', 'Sage', 'Sand', 'Silt',
-            'Sky', 'Thorn', 'Vale', 'Vine', 'Wave', 'Wilds'
+            'Ash', 'Ashen', 'Bark', 'Bloom', 'Briar', 'Bramble', 'Brook', 'Cedar', 'Cliff', 'Coral',
+            'Crest', 'Dune', 'Dust', 'Fern', 'Field', 'Flint', 'Flora', 'Forest', 'Glen', 'Grove',
+            'Heath', 'Hollow', 'Lake', 'Leaf', 'Meadow', 'Mire', 'Moss', 'Oasis', 'Oak', 'Pine',
+            'Reef', 'Reed', 'Ridge', 'River', 'Root', 'Sage', 'Sand', 'Silt', 'Sky', 'Sprig',
+            'Thorn', 'Timber', 'Vale', 'Vine', 'Wave', 'Willow', 'Wilds', 'Yew'
         ],
         nouns: [
-            'Bear', 'Boar', 'Crow', 'Drake', 'Eagle', 'Fox', 'Hawk', 'Hound', 'Lion', 'Lynx',
-            'Raven', 'Shark', 'Stag', 'Tiger', 'Viper', 'Wolf', 'Wyrm', 'Reef', 'Ridge', 'Grove',
-            'Vale', 'River', 'Dune'
+            'Bear', 'Bison', 'Boar', 'Bull', 'Crane', 'Crow', 'Deer', 'Drake', 'Eagle', 'Elk',
+            'Fox', 'Hawk', 'Heron', 'Hound', 'Lion', 'Lynx', 'Mantis', 'Otter', 'Panther', 'Puma',
+            'Ram', 'Raven', 'Serpent', 'Shark', 'Stag', 'Swan', 'Tiger', 'Toad', 'Viper', 'Whale',
+            'Wolf', 'Wyrm', 'Reef', 'Ridge', 'Grove', 'Vale', 'River', 'Dune'
         ]
     },
     {
         name: 'elemental',
         adjectives: [
-            'Arc', 'Apex', 'Aether', 'Blaze', 'Bolt', 'Cinder', 'Comet', 'Ember', 'Flare', 'Flux',
-            'Frost', 'Gale', 'Glint', 'Glow', 'Glace', 'Halo', 'Lunar', 'Meteor', 'Nova', 'Orb',
-            'Pyre', 'Quake', 'Rift', 'Rime', 'Shard', 'Spark', 'Solar', 'Star', 'Storm', 'Tide',
-            'Void'
+            'Arc', 'Apex', 'Aether', 'Aqua', 'Blaze', 'Blitz', 'Bolt', 'Cinder', 'Comet', 'Cryo',
+            'Ember', 'Flare', 'Flux', 'Frost', 'Gale', 'Glint', 'Glow', 'Glace', 'Halo', 'Inferno',
+            'Ion', 'Lava', 'Lunar', 'Meteor', 'Mist', 'Nova', 'Orb', 'Plasma', 'Pyre', 'Quake',
+            'Quasar', 'Rift', 'Rime', 'Shard', 'Spark', 'Solar', 'Star', 'Storm', 'Surge',
+            'Tempest', 'Tide', 'Void', 'Zephyr'
         ],
         nouns: [
             'Flame', 'Flint', 'Golem', 'Hydra', 'Nova', 'Orb', 'Rune', 'Shard', 'Sigil', 'Spark',
-            'Storm', 'Titan', 'Wyrm', 'Wyvern'
+            'Storm', 'Titan', 'Wyrm', 'Wyvern', 'Bolt', 'Burst', 'Core', 'Flare', 'Flux', 'Gale',
+            'Gust', 'Ion', 'Magma', 'Quasar', 'Rime', 'Surge', 'Tide', 'Wave'
         ]
     },
     {
         name: 'shadow',
         adjectives: [
-            'Dark', 'Dread', 'Ebon', 'Gloom', 'Hex', 'Myth', 'Noir', 'Nyx', 'Omen', 'Rune',
-            'Sable', 'Shade', 'Umber', 'Wyrd', 'Crypt'
+            'Abyss', 'Black', 'Bleak', 'Blight', 'Crypt', 'Dark', 'Dread', 'Ebon', 'Gloom', 'Grave',
+            'Hex', 'Hollow', 'Myth', 'Night', 'Noir', 'Nyx', 'Omen', 'Rune', 'Ruin', 'Sable',
+            'Shade', 'Umber', 'Veil', 'Wisp', 'Wyrd'
         ],
         nouns: [
-            'Bane', 'Cipher', 'Ghost', 'Phantom', 'Shade', 'Shadow', 'Skull', 'Specter', 'Wraith',
-            'Rune', 'Sigil'
+            'Bane', 'Cipher', 'Crow', 'Crypt', 'Fang', 'Ghost', 'Ghoul', 'Grim', 'Mask', 'Phantom',
+            'Razor', 'Shade', 'Shadow', 'Skull', 'Specter', 'Wraith', 'Rune', 'Sigil'
         ]
     },
     {
         name: 'tech',
         adjectives: [
-            'Brass', 'Chrome', 'Cyber', 'Gear', 'Glitch', 'Ion', 'Mech', 'Nano', 'Neon',
-            'Pulse', 'Steam', 'Synth', 'Volt'
+            'Bit', 'Brass', 'Chrome', 'Circuit', 'Cipher', 'Cyber', 'Data', 'Digital', 'Gear',
+            'Glitch', 'Ion', 'Matrix', 'Mech', 'Nano', 'Neon', 'Pixel', 'Pulse', 'Retro',
+            'Signal', 'Steam', 'Synth', 'Turbo', 'Vector', 'Volt'
         ],
         nouns: [
-            'Byte', 'Code', 'Core', 'Drone', 'Node', 'Vector'
+            'Array', 'Byte', 'Bit', 'Chip', 'Code', 'Core', 'Drone', 'Drive', 'Frame', 'Grid',
+            'Link', 'Logic', 'Module', 'Node', 'Packet', 'Signal', 'Stack', 'Switch', 'Vector'
         ]
     },
     {
         name: 'mythic',
         adjectives: [
-            'Elder', 'Ivory', 'Jade', 'Myth', 'Onyx', 'Prime', 'Sable', 'Umber', 'Vivid', 'Zeal',
-            'Zen'
+            'Ancient', 'Arcane', 'Divine', 'Elder', 'Eternal', 'Fabled', 'Hallowed', 'Ivory',
+            'Jade', 'Myth', 'Mythic', 'Onyx', 'Prime', 'Runic', 'Sacred', 'Sable', 'Umber',
+            'Vivid', 'Zeal', 'Zen'
         ],
         nouns: [
-            'Aegis', 'Golem', 'Hydra', 'Oracle', 'Titan', 'Ward', 'Wyrm', 'Wyvern'
+            'Aegis', 'Chimera', 'Dragon', 'Griffin', 'Golem', 'Hydra', 'Oracle', 'Phoenix',
+            'Relic', 'Rune', 'Sigil', 'Sphinx', 'Titan', 'Ward', 'Wyrm', 'Wyvern'
+        ]
+    },
+    {
+        name: 'celestial',
+        adjectives: [
+            'Astral', 'Aurora', 'Comet', 'Cosmic', 'Eclipse', 'Lunar', 'Nebula', 'Nova', 'Orbit',
+            'Solar', 'Star', 'Stellar', 'Void', 'Zenith'
+        ],
+        nouns: [
+            'Aurora', 'Comet', 'Cosmos', 'Eclipse', 'Meteor', 'Moon', 'Nebula', 'Nova', 'Orbit',
+            'Quasar', 'Star', 'Zenith'
         ]
     }
 ];

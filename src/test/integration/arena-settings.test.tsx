@@ -102,8 +102,8 @@ describe('Arena settings modal', () => {
     expect(setAutoMode).toHaveBeenCalledWith(true)
   })
 
-  it('opens combat logs from settings', () => {
-    const { getByLabelText, getByText } = render(
+  it('opens combat logs within settings', () => {
+    const { getByLabelText, getByText, queryByText } = render(
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Arena />
       </MemoryRouter>
@@ -113,6 +113,7 @@ describe('Arena settings modal', () => {
     fireEvent.click(getByText('VIEW LOGS'))
 
     expect(getByText('COMBAT LOGS')).toBeInTheDocument()
+    expect(queryByText('SETTINGS')).toBeNull()
   })
 
   it('requires confirmation before deleting character', async () => {

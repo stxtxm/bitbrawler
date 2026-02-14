@@ -26,7 +26,6 @@ const Arena = () => {
     const [showLevelUp, setShowLevelUp] = useState(false);
     const [xpBarAnimating, setXpBarAnimating] = useState(false);
     const [inventoryOpen, setInventoryOpen] = useState(false);
-    const [historyOpen, setHistoryOpen] = useState(false);
     const [matchmaking, setMatchmaking] = useState(false);
     const [combatData, setCombatData] = useState<MatchmakingResult | null>(null);
     const [allocatingStat, setAllocatingStat] = useState<StatKey | null>(null);
@@ -36,6 +35,7 @@ const Arena = () => {
     const [inventoryHoveredId, setInventoryHoveredId] = useState<string | null>(null);
     const [inventorySelectedId, setInventorySelectedId] = useState<string | null>(null);
     const [settingsOpen, setSettingsOpen] = useState(false);
+    const [settingsView, setSettingsView] = useState<'main' | 'logs'>('main');
     const [autoModeUpdating, setAutoModeUpdating] = useState(false);
     const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm'>('idle');
     const [deletePending, setDeletePending] = useState(false);
@@ -171,6 +171,7 @@ const Arena = () => {
 
     useEffect(() => {
         if (!settingsOpen) {
+            setSettingsView('main');
             setDeleteStep('idle');
             setDeletePending(false);
         }
@@ -213,8 +214,11 @@ const Arena = () => {
     };
 
     const handleOpenHistoryFromSettings = () => {
-        setSettingsOpen(false);
-        setHistoryOpen(true);
+        setSettingsView('logs');
+    };
+
+    const handleReturnToSettings = () => {
+        setSettingsView('main');
     };
 
     const autoModeEnabled = !!activeCharacter?.isBot;
@@ -672,105 +676,107 @@ const Arena = () => {
                 <div className="retro-modal-overlay settings-overlay" onClick={() => setSettingsOpen(false)}>
                     <div className="retro-modal settings-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="inventory-header settings-header">
-                            <h2 className="inventory-title">SETTINGS</h2>
+                            <div className="settings-title-row">
+                                {settingsView === 'logs' && (
+                                    <button className="button settings-back" onClick={handleReturnToSettings}>
+                                        BACK
+                                    </button>
+                                )}
+                                <h2 className="inventory-title">{settingsView === 'logs' ? 'COMBAT LOGS' : 'SETTINGS'}</h2>
+                            </div>
                             <button className="inventory-close" onClick={() => setSettingsOpen(false)} aria-label="Close settings">
                                 <PixelIcon type="close" size={14} />
                             </button>
                         </div>
 
                         <div className="settings-body">
-                            <div className="settings-section">
-                                <div className="settings-row">
-                                    <div className="settings-label">
-                                        <span>AUTO MODE</span>
-                                        <span className="settings-sub">Let the bot engine handle fights.</span>
+                            {settingsView === 'logs' ? (
+                                <>
+                                    <div className="history-list settings-history-list">
+                                        {!activeCharacter.fightHistory || activeCharacter.fightHistory.length === 0 ? (
+                                            <div className="no-history">NO BATTLES RECORDED YET</div>
+                                        ) : (
+                                            activeCharacter.fightHistory.map((fight, i) => (
+                                                <div key={i} className={`history-item ${fight.won ? 'won' : 'lost'}`}>
+                                                    <div className="history-status">{fight.won ? 'WIN' : 'LOST'}</div>
+                                                    <div className="history-info">
+                                                        <div className="history-opponent">VS {fight.opponentName}</div>
+                                                        <div className="history-date">
+                                                            {new Date(fight.date).toLocaleDateString()} {new Date(fight.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </div>
+                                                    </div>
+                                                    <div className="history-xp">+{fight.xpGained} XP</div>
+                                                </div>
+                                            ))
+                                        )}
                                     </div>
-                                    <button
-                                        className={`pixel-switch ${autoModeEnabled ? 'on' : 'off'}`}
-                                        onClick={handleToggleAutoMode}
-                                        disabled={autoModeUpdating || isOfflineMode}
-                                        role="switch"
-                                        aria-checked={autoModeEnabled}
-                                        aria-label="Auto mode"
-                                    >
-                                        <span className="switch-knob" />
-                                        <span className="switch-text">{autoModeEnabled ? 'ON' : 'OFF'}</span>
-                                    </button>
-                                </div>
-                                <div className="settings-hint">Switching off returns full manual control.</div>
-                            </div>
-
-                            <div className="settings-divider" />
-
-                            <div className="settings-section">
-                                <div className="settings-row">
-                                    <div className="settings-label">
-                                        <span>COMBAT LOGS</span>
-                                        <span className="settings-sub">Review your last 20 battles.</span>
-                                    </div>
-                                    <button className="button settings-link" onClick={handleOpenHistoryFromSettings}>
-                                        <PixelIcon type="history" size={14} />
-                                        VIEW LOGS
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="settings-divider" />
-
-                            <div className="settings-section danger-zone">
-                                <div className="settings-row">
-                                    <div className="settings-label danger-label">
-                                        <span>DELETE CHARACTER</span>
-                                        <span className="settings-sub">Permanent. Cannot be undone.</span>
-                                    </div>
-                                </div>
-                                {deleteStep === 'idle' ? (
-                                    <button className="button danger-btn" onClick={handleDeleteCharacter}>
-                                        DELETE
-                                    </button>
-                                ) : (
-                                    <div className="danger-actions">
-                                        <button className="button danger-btn" onClick={handleDeleteCharacter} disabled={deletePending}>
-                                            {deletePending ? 'DELETING...' : 'CONFIRM DELETE'}
-                                        </button>
-                                        <button className="button secondary" onClick={() => setDeleteStep('idle')} disabled={deletePending}>
-                                            CANCEL
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-            {historyOpen && (
-                <div className="retro-modal-overlay" onClick={() => setHistoryOpen(false)}>
-                    <div className="retro-modal history-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="inventory-header">
-                            <h2 className="inventory-title">COMBAT LOGS</h2>
-                            <button className="inventory-close" onClick={() => setHistoryOpen(false)} aria-label="Close history">
-                                ×
-                            </button>
-                        </div>
-                        <div className="history-list">
-                            {!activeCharacter.fightHistory || activeCharacter.fightHistory.length === 0 ? (
-                                <div className="no-history">NO BATTLES RECORDED YET</div>
+                                    <div className="inventory-footer">LAST 20 ENCOUNTERS</div>
+                                </>
                             ) : (
-                                activeCharacter.fightHistory.map((fight, i) => (
-                                    <div key={i} className={`history-item ${fight.won ? 'won' : 'lost'}`}>
-                                        <div className="history-status">{fight.won ? 'WIN' : 'LOST'}</div>
-                                        <div className="history-info">
-                                            <div className="history-opponent">VS {fight.opponentName}</div>
-                                            <div className="history-date">
-                                                {new Date(fight.date).toLocaleDateString()} {new Date(fight.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                <>
+                                    <div className="settings-section">
+                                        <div className="settings-row">
+                                            <div className="settings-label">
+                                                <span>AUTO MODE</span>
+                                                <span className="settings-sub">Let the bot engine handle fights.</span>
+                                            </div>
+                                            <button
+                                                className={`pixel-switch ${autoModeEnabled ? 'on' : 'off'}`}
+                                                onClick={handleToggleAutoMode}
+                                                disabled={autoModeUpdating || isOfflineMode}
+                                                role="switch"
+                                                aria-checked={autoModeEnabled}
+                                                aria-label="Auto mode"
+                                            >
+                                                <span className="switch-knob" />
+                                                <span className="switch-text">{autoModeEnabled ? 'ON' : 'OFF'}</span>
+                                            </button>
+                                        </div>
+                                        <div className="settings-hint">Switching off returns full manual control.</div>
+                                    </div>
+
+                                    <div className="settings-divider" />
+
+                                    <div className="settings-section">
+                                        <div className="settings-row">
+                                            <div className="settings-label">
+                                                <span>COMBAT LOGS</span>
+                                                <span className="settings-sub">Review your last 20 battles.</span>
+                                            </div>
+                                            <button className="button settings-link" onClick={handleOpenHistoryFromSettings}>
+                                                <PixelIcon type="history" size={14} />
+                                                VIEW LOGS
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="settings-divider" />
+
+                                    <div className="settings-section danger-zone">
+                                        <div className="settings-row">
+                                            <div className="settings-label danger-label">
+                                                <span>DELETE CHARACTER</span>
+                                                <span className="settings-sub">Permanent. Cannot be undone.</span>
                                             </div>
                                         </div>
-                                        <div className="history-xp">+{fight.xpGained} XP</div>
+                                        {deleteStep === 'idle' ? (
+                                            <button className="button danger-btn" onClick={handleDeleteCharacter}>
+                                                DELETE
+                                            </button>
+                                        ) : (
+                                            <div className="danger-actions">
+                                                <button className="button danger-btn" onClick={handleDeleteCharacter} disabled={deletePending}>
+                                                    {deletePending ? 'DELETING...' : 'CONFIRM DELETE'}
+                                                </button>
+                                                <button className="button secondary" onClick={() => setDeleteStep('idle')} disabled={deletePending}>
+                                                    CANCEL
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
-                                ))
+                                </>
                             )}
                         </div>
-                        <div className="inventory-footer">LAST 20 ENCOUNTERS</div>
                     </div>
                 </div>
             )}
