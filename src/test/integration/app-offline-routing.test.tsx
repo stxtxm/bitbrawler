@@ -3,6 +3,7 @@ import { render, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import App from '../../App'
 import { GameProvider } from '../../context/GameContext'
+import { prefetchArena } from '../../routes/lazyPages'
 
 vi.mock('../../config/firebase', () => ({
   db: {
@@ -74,6 +75,8 @@ describe('App offline routing', () => {
         firestoreId: 'test-id',
       }),
     )
+
+    await prefetchArena()
 
     const { getByText } = render(
       <MemoryRouter initialEntries={['/arena']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
