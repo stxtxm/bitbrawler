@@ -227,11 +227,10 @@ async function simulateBotDailyLife() {
             console.log(`⏳ Bot ${currentBotState.name} already opened daily lootbox.`);
         }
 
-        // 3. Fight Logic (Perform multiple actions per hour)
-        const desiredActions = Math.floor(Math.random() * 3) + 1; // 1 to 3 actions
+        // 3. Fight Logic (Use all available energy when possible)
         let actionsTaken = 0;
 
-        while (actionsTaken < desiredActions && fightsLeft > 0) {
+        while (fightsLeft > 0) {
             // Find a suitable opponent for the bot
             const potentialOpponents = allCharacters.filter(c =>
                 c.firestoreId !== currentBotState.firestoreId &&
@@ -330,7 +329,11 @@ async function simulateBotDailyLife() {
                 console.log(`💤 Bot ${bot.name} is resting (0 energy).`);
             }
         } else {
-            console.log(`💤 Bot ${bot.name} is resting (0 energy).`);
+            if (fightsLeft > 0) {
+                console.log(`💤 Bot ${bot.name} found no opponents (energy: ${fightsLeft}).`);
+            } else {
+                console.log(`💤 Bot ${bot.name} is resting (0 energy).`);
+            }
         }
     }
 }
