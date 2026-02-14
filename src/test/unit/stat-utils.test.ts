@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { applyStatPoint, autoAllocateStatPoints, getHpForVitality, grantStatPoints } from '../../utils/statUtils';
+import { applyStatPoint, autoAllocateStatPoints, autoAllocateStatPointsRandom, getHpForVitality, grantStatPoints } from '../../utils/statUtils';
 import { Character } from '../../types/Character';
 
 describe('Stat Utils', () => {
@@ -56,6 +56,15 @@ describe('Stat Utils', () => {
             (updated.focus - uneven.focus);
 
         expect(totalIncrease).toBe(2);
+        expect(updated.statPoints).toBe(0);
+    });
+
+    it('auto-allocates stat points randomly', () => {
+        const rng = () => 0; // always pick strength
+        const updated = autoAllocateStatPointsRandom(baseCharacter, 2, rng);
+
+        expect(updated.strength).toBe(baseCharacter.strength + 2);
+        expect(updated.vitality).toBe(baseCharacter.vitality);
         expect(updated.statPoints).toBe(0);
     });
 });

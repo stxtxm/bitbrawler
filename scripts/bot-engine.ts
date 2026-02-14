@@ -2,7 +2,7 @@ import { generateInitialStats, generateCharacterName } from '../src/utils/charac
 import { calculateFightXp, gainXp } from '../src/utils/xpUtils';
 import { simulateCombat } from '../src/utils/combatUtils';
 import { GAME_RULES } from '../src/config/gameRules';
-import { autoAllocateStatPoints } from '../src/utils/statUtils';
+import { autoAllocateStatPointsRandom } from '../src/utils/statUtils';
 import { ITEM_ASSETS } from '../src/data/itemAssets';
 import { canRollLootbox, rollLootbox } from '../src/utils/lootboxUtils';
 import { DAILY_RESET_TIMEZONE, shouldResetDaily } from '../src/utils/dailyReset';
@@ -266,7 +266,7 @@ async function simulateBotDailyLife() {
                 statPoints: result.updatedCharacter.statPoints ?? currentBotState.statPoints ?? 0
             };
             const withStats = pointsGained > 0
-                ? autoAllocateStatPoints(updatedBase, pointsGained)
+                ? autoAllocateStatPointsRandom(updatedBase, pointsGained)
                 : updatedBase;
 
             // Update local state for next iteration
