@@ -8,7 +8,7 @@ Data model (Character)
 - Core fields: `level`, `experience`, stats (STR/VIT/DEX/LUK/INT/FOC), `hp`, `maxHp`, `wins`, `losses`.
 - Daily fields: `fightsLeft`, `lastFightReset`, `fightHistory` (cap 20), `foughtToday` (Firestore IDs).
 - Progression fields: `statPoints` for level-up allocation, `focus` is an active stat, not derived.
-- Inventory fields: `inventory` (item IDs), `lastLootRoll` (UTC timestamp), optional `equipped` reserved for future.
+- Inventory fields: `inventory` (item IDs), `lastLootRoll` (timestamp ms), optional `equipped` reserved for future.
 - Anti-cheat: `pendingFight` holds `status`, `startedAt`, optional `opponent` snapshot, and `matchType`.
 - `pendingFight.opponent.isBot` is only stored when it is a boolean (avoid Firestore undefined values).
 
@@ -31,6 +31,7 @@ Lootbox + inventory
 - Daily lootbox gating uses the same Paris day reset as fight energy (`canRollLootbox`).
 - `canRollLootbox` accepts Firestore timestamp shapes (`seconds`/`toMillis`) to avoid double rolls.
 - Inventory capacity is 24; items are auto-applied (no manual equip flow).
+- Lootbox rolls exclude items already owned; if all items are owned, no new loot is granted.
 - Items are defined in `src/data/itemAssets.ts` with `common` and `uncommon` rarities.
 - `equipmentUtils` aggregates inventory bonuses; arena + combat use `applyEquipmentToCharacter`.
 - Inventory modal shows item details on hover/tap and a total bonus summary.
@@ -41,8 +42,8 @@ Bots and automation
 - Same-level fights only; uses shared combat + XP logic for parity.
 - Bots auto-roll the daily lootbox (logs: opened, inventory full, already opened).
 - Daily reset script clears `foughtToday` and restores fight energy at Paris midnight.
-- Bot activity is throttled (smaller batches, fewer active bots, 1–2 fights per run) to protect free-tier quota.
- - Name generator adds a short letter suffix to avoid duplicates in a session.
+- Bots consume all available energy per run when opponents exist (same-level pool query).
+- Name generator adds a short letter suffix to avoid duplicates in a session.
 
 Offline behavior
 - Home works offline; Rankings show “Connection required” state when offline.
@@ -56,6 +57,8 @@ UI tuning
 - Matchmaking intro is an animated opponent scan with a lock effect.
 - Inventory modal is larger on desktop, with hover/tap item details and bonus chips.
 - Combat actions include subtle 8-bit impact overlays and reaction animations; mobile overlay avoids grid flashes.
+- Arena settings modal owns Auto mode toggle, combat logs, and safe delete actions.
+- Rankings list is read-only, stats hidden, with internal scroll.
 
 Testing
 - Unit: combat math, lootbox gating, equipment bonuses, XP, stats, RNG.
@@ -65,3 +68,9 @@ Testing
 Ops
 - GitHub Actions: daily reset scheduled for Paris midnight with a double cron (CET/CEST)
   and a script-side midnight window guard; bot engine runs hourly (UTC top of hour).
+
+Handoff (Next Agent)
+- Arena settings logs are rendered inside the same modal (view switch), not a separate popup.
+- Bot engine opponent pool is fetched per-level (`where('level','==', level)`, limit 50).
+- Lootbox and daily reset are aligned to Paris day.
+- Name generator pools were expanded for more variety.
