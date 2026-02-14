@@ -1983,6 +1983,186 @@
     }
 }
 
+// Settings Modal Styles
+.settings-overlay {
+    backdrop-filter: blur(3px);
+}
+
+.settings-modal {
+    max-width: 560px;
+    width: 92%;
+    padding: 24px;
+    @include retro-border(4px, $accent-gold);
+    background: radial-gradient(circle at top, #101010 0%, #000 70%);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-height: 84vh;
+    overflow: hidden;
+
+    @include mobile {
+        padding: 16px;
+        border-width: 2px;
+        max-height: 92vh;
+    }
+}
+
+@media (min-width: 980px) {
+    .settings-modal {
+        max-width: 720px;
+        width: 88%;
+    }
+}
+
+.settings-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: left;
+}
+
+.settings-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    @include mobile {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+.settings-label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.7rem;
+    color: #fff;
+    letter-spacing: 1px;
+}
+
+.settings-sub {
+    font-size: 0.5rem;
+    color: #777;
+}
+
+.settings-hint {
+    font-size: 0.55rem;
+    color: #666;
+}
+
+.settings-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+}
+
+.pixel-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: clamp(94px, 28vw, 130px);
+    height: 34px;
+    padding: 4px 10px;
+    border: 2px solid #333;
+    background: #050505;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.55rem;
+    gap: 8px;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    @include mobile {
+        height: 30px;
+        font-size: 0.5rem;
+    }
+}
+
+.switch-knob {
+    width: 18px;
+    height: 18px;
+    background: #111;
+    border: 2px solid #666;
+    box-shadow: inset 0 0 0 1px #000;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+
+    @include mobile {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+.switch-text {
+    margin-left: auto;
+    min-width: 28px;
+    text-align: right;
+}
+
+.pixel-switch.on {
+    border-color: $accent-green;
+    color: $accent-green;
+    background: rgba($accent-green, 0.12);
+
+    .switch-knob {
+        transform: translateX(34px);
+        border-color: $accent-green;
+        background: $accent-green;
+    }
+
+    @include mobile {
+        .switch-knob {
+            transform: translateX(28px);
+        }
+    }
+}
+
+.pixel-switch.off {
+    .switch-knob {
+        transform: translateX(0);
+    }
+}
+
+.danger-zone {
+    border: 1px solid rgba($accent-red, 0.3);
+    background: rgba(80, 0, 0, 0.12);
+    padding: 12px;
+    border-radius: 10px;
+}
+
+.danger-label {
+    color: $accent-red;
+}
+
+.danger-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.danger-btn {
+    border-color: $accent-red !important;
+    color: $accent-red !important;
+    background: #000 !important;
+
+    &:hover:not(:disabled) {
+        background: $accent-red !important;
+        color: #000 !important;
+    }
+}
+
 .history-date {
     font-size: 0.45rem;
     color: #666;

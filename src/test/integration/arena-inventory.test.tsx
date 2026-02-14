@@ -69,6 +69,8 @@ describe('Arena inventory modal', () => {
       allocateStatPoint: vi.fn(),
       rollLootbox: vi.fn(),
       startMatchmaking: vi.fn(),
+      setAutoMode: vi.fn(),
+      deleteCharacter: vi.fn(),
     })
   })
 
@@ -124,6 +126,8 @@ describe('Arena inventory modal', () => {
       allocateStatPoint: vi.fn(),
       rollLootbox: vi.fn().mockResolvedValue(mockItem),
       startMatchmaking: vi.fn(),
+      setAutoMode: vi.fn(),
+      deleteCharacter: vi.fn(),
     })
 
     const { getByLabelText } = render(

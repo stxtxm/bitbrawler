@@ -67,6 +67,8 @@ describe('Arena stat icons', () => {
       allocateStatPoint: vi.fn(),
       rollLootbox: vi.fn(),
       startMatchmaking: vi.fn(),
+      setAutoMode: vi.fn(),
+      deleteCharacter: vi.fn(),
     });
   });
 
@@ -105,6 +107,8 @@ describe('Arena stat icons', () => {
       allocateStatPoint: vi.fn(),
       rollLootbox: vi.fn(),
       startMatchmaking: vi.fn(),
+      setAutoMode: vi.fn(),
+      deleteCharacter: vi.fn(),
     });
 
     const { getByText } = render(

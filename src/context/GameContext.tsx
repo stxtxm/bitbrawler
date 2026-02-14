@@ -1,5 +1,5 @@
 import { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from 'react';
-import { collection, query, where, getDocs, getDocsFromServer, updateDoc, doc, limit, deleteField } from 'firebase/firestore';
+import { collection, query, where, getDocs, getDocsFromServer, updateDoc, doc, limit, deleteField, deleteDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Character, PendingFight, PendingFightOpponent } from '../types/Character';
 import { gainXp } from '../utils/xpUtils';
@@ -34,6 +34,8 @@ interface GameContextType {
   allocateStatPoint: (stat: StatKey) => Promise<Character | null>;
   rollLootbox: () => Promise<PixelItemAsset | null>;
   startMatchmaking: () => Promise<MatchmakingResult | null>;
+  setAutoMode: (enabled: boolean) => Promise<Character | null>;
+  deleteCharacter: () => Promise<boolean>;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -607,6 +609,37 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [activeCharacter, handleFirebaseError, persistCharacter]);
 
+  const setAutoMode = useCallback(async (enabled: boolean) => {
+    if (!activeCharacter?.firestoreId) return null;
+    const updatedChar = normalizeCharacter({
+      ...activeCharacter,
+      isBot: enabled
+    });
+
+    try {
+      await updateDoc(doc(db, "characters", activeCharacter.firestoreId), {
+        isBot: enabled
+      });
+      persistCharacter(updatedChar);
+      return updatedChar;
+    } catch (error: any) {
+      handleFirebaseError(error, 'auto-mode');
+      throw new Error('Connection error - auto mode not saved.');
+    }
+  }, [activeCharacter, handleFirebaseError, persistCharacter]);
+
+  const deleteCharacter = useCallback(async () => {
+    if (!activeCharacter?.firestoreId) return false;
+    try {
+      await deleteDoc(doc(db, "characters", activeCharacter.firestoreId));
+      logout();
+      return true;
+    } catch (error: any) {
+      handleFirebaseError(error, 'delete-character');
+      throw new Error('Connection error - character not deleted.');
+    }
+  }, [activeCharacter, handleFirebaseError, logout]);
+
   // Find opponent for matchmaking
   const findOpponentForPlayer = useCallback(async (): Promise<MatchmakingResult | null> => {
     if (!activeCharacter) return null;
@@ -629,6 +662,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     clearXpNotifications,
     allocateStatPoint,
     rollLootbox: rollLootboxForPlayer,
+    setAutoMode,
+    deleteCharacter,
   };
 
   return (

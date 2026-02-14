@@ -24,4 +24,9 @@ describe('PixelIcon', () => {
         const { container: chestContainer } = render(<PixelIcon type="chest" size={16} />);
         expect(chestContainer.querySelector('svg')).not.toBeNull();
     });
+
+    it('renders gear icon', () => {
+        const { container } = render(<PixelIcon type="gear" size={16} />);
+        expect(container.querySelector('svg')).not.toBeNull();
+    });
 });

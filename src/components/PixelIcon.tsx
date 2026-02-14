@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface PixelIconProps {
-    type: 'fighters' | 'arena' | 'levels' | 'updates' | 'user' | 'trophy' | 'power' | 'sword' | 'backpack' | 'dice' | 'history' | 'skull' | 'swords' | 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence' | 'focus' | 'chest';
+    type: 'fighters' | 'arena' | 'levels' | 'updates' | 'user' | 'trophy' | 'power' | 'sword' | 'backpack' | 'dice' | 'history' | 'skull' | 'swords' | 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence' | 'focus' | 'chest' | 'gear';
     size?: number;
 }
 
@@ -124,6 +124,23 @@ export const PixelIcon: React.FC<PixelIconProps> = ({ type, size = 32 }) => {
                         <rect x="1" y="5" width="2" height="1" fill="#ffcc00" />
                         <rect x="4" y="5" width="3" height="1" fill="#fff" />
                         <rect x="1" y="7" width="6" height="1" fill="#fff" />
+                    </svg>
+                );
+            case 'gear':
+                return (
+                    <svg width={size} height={size} viewBox="0 0 8 8" shapeRendering="crispEdges">
+                        <rect x="3" y="0" width="2" height="1" fill="#c0c0c0" />
+                        <rect x="2" y="1" width="1" height="1" fill="#c0c0c0" />
+                        <rect x="5" y="1" width="1" height="1" fill="#c0c0c0" />
+                        <rect x="1" y="2" width="1" height="1" fill="#c0c0c0" />
+                        <rect x="6" y="2" width="1" height="1" fill="#c0c0c0" />
+                        <rect x="1" y="5" width="1" height="1" fill="#c0c0c0" />
+                        <rect x="6" y="5" width="1" height="1" fill="#c0c0c0" />
+                        <rect x="2" y="6" width="1" height="1" fill="#c0c0c0" />
+                        <rect x="5" y="6" width="1" height="1" fill="#c0c0c0" />
+                        <rect x="3" y="7" width="2" height="1" fill="#c0c0c0" />
+                        <rect x="2" y="2" width="4" height="4" fill="#888" />
+                        <rect x="3" y="3" width="2" height="2" fill="#111" />
                     </svg>
                 );
             case 'skull':

@@ -16,7 +16,7 @@ import { canRollLootbox } from '../utils/lootboxUtils';
 import { ItemStats, PixelItemAsset } from '../types/Item';
 
 const Arena = () => {
-    const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, firebaseAvailable, allocateStatPoint, rollLootbox } = useGame();
+    const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, firebaseAvailable, allocateStatPoint, rollLootbox, setAutoMode, deleteCharacter } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const navigate = useNavigate();
     const isOnline = useOnlineStatus();
@@ -35,6 +35,10 @@ const Arena = () => {
     const [lootboxResult, setLootboxResult] = useState<PixelItemAsset | null>(null);
     const [inventoryHoveredId, setInventoryHoveredId] = useState<string | null>(null);
     const [inventorySelectedId, setInventorySelectedId] = useState<string | null>(null);
+    const [settingsOpen, setSettingsOpen] = useState(false);
+    const [autoModeUpdating, setAutoModeUpdating] = useState(false);
+    const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm'>('idle');
+    const [deletePending, setDeletePending] = useState(false);
 
     // Handle XP gain notification
     useEffect(() => {
@@ -165,6 +169,13 @@ const Arena = () => {
         }
     }, [inventoryOpen]);
 
+    useEffect(() => {
+        if (!settingsOpen) {
+            setDeleteStep('idle');
+            setDeletePending(false);
+        }
+    }, [settingsOpen]);
+
     const handleLootboxRoll = async () => {
         if (lootboxRolling) return;
         if (isOfflineMode) {
@@ -199,6 +210,52 @@ const Arena = () => {
 
     const handleSelectItem = (itemId: string) => {
         setInventorySelectedId(itemId);
+    };
+
+    const autoModeEnabled = !!activeCharacter?.isBot;
+
+    const handleToggleAutoMode = async () => {
+        if (autoModeUpdating) return;
+        if (isOfflineMode) {
+            openModal(connectionMessage);
+            return;
+        }
+        const canProceed = await ensureConnection(connectionMessage);
+        if (!canProceed) return;
+
+        setAutoModeUpdating(true);
+        try {
+            await setAutoMode(!autoModeEnabled);
+        } catch (error: any) {
+            openModal(error.message || connectionMessage);
+        } finally {
+            setAutoModeUpdating(false);
+        }
+    };
+
+    const handleDeleteCharacter = async () => {
+        if (deletePending) return;
+        if (deleteStep === 'idle') {
+            setDeleteStep('confirm');
+            return;
+        }
+        if (isOfflineMode) {
+            openModal(connectionMessage);
+            return;
+        }
+        const canProceed = await ensureConnection(connectionMessage);
+        if (!canProceed) return;
+
+        setDeletePending(true);
+        try {
+            await deleteCharacter();
+            setSettingsOpen(false);
+            setTimeout(() => navigate('/'), 0);
+        } catch (error: any) {
+            openModal(error.message || connectionMessage);
+        } finally {
+            setDeletePending(false);
+        }
     };
 
     const handleFight = async () => {
@@ -328,6 +385,14 @@ const Arena = () => {
                     </div>
                 </div>
                 <div className="header-actions">
+                    <button
+                        className="button icon-btn"
+                        onClick={() => setSettingsOpen(true)}
+                        title="Settings"
+                        aria-label="Settings"
+                    >
+                        <PixelIcon type="gear" size={26} />
+                    </button>
                     <button
                         className="button icon-btn"
                         onClick={() => setHistoryOpen(true)}
@@ -602,6 +667,67 @@ const Arena = () => {
                                 </div>
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {settingsOpen && (
+                <div className="retro-modal-overlay settings-overlay" onClick={() => setSettingsOpen(false)}>
+                    <div className="retro-modal settings-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="inventory-header settings-header">
+                            <h2 className="inventory-title">SETTINGS</h2>
+                            <button className="inventory-close" onClick={() => setSettingsOpen(false)} aria-label="Close settings">
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="settings-body">
+                            <div className="settings-section">
+                                <div className="settings-row">
+                                    <div className="settings-label">
+                                        <span>AUTO MODE</span>
+                                        <span className="settings-sub">Let the bot engine handle fights.</span>
+                                    </div>
+                                    <button
+                                        className={`pixel-switch ${autoModeEnabled ? 'on' : 'off'}`}
+                                        onClick={handleToggleAutoMode}
+                                        disabled={autoModeUpdating || isOfflineMode}
+                                        role="switch"
+                                        aria-checked={autoModeEnabled}
+                                        aria-label="Auto mode"
+                                    >
+                                        <span className="switch-knob" />
+                                        <span className="switch-text">{autoModeEnabled ? 'ON' : 'OFF'}</span>
+                                    </button>
+                                </div>
+                                <div className="settings-hint">Switching off returns full manual control.</div>
+                            </div>
+
+                            <div className="settings-divider" />
+
+                            <div className="settings-section danger-zone">
+                                <div className="settings-row">
+                                    <div className="settings-label danger-label">
+                                        <span>DELETE CHARACTER</span>
+                                        <span className="settings-sub">Permanent. Cannot be undone.</span>
+                                    </div>
+                                </div>
+                                {deleteStep === 'idle' ? (
+                                    <button className="button danger-btn" onClick={handleDeleteCharacter}>
+                                        DELETE
+                                    </button>
+                                ) : (
+                                    <div className="danger-actions">
+                                        <button className="button danger-btn" onClick={handleDeleteCharacter} disabled={deletePending}>
+                                            {deletePending ? 'DELETING...' : 'CONFIRM DELETE'}
+                                        </button>
+                                        <button className="button secondary" onClick={() => setDeleteStep('idle')} disabled={deletePending}>
+                                            CANCEL
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

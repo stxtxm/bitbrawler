@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render } from '@testing-library/react'
+import { render, fireEvent, act } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Arena from '../../pages/Arena'
 import { useGame } from '../../context/GameContext'
@@ -25,38 +25,36 @@ const mockUseOnlineStatus = useOnlineStatus as unknown as ReturnType<typeof vi.f
 
 const mockCharacter: Character = {
   seed: 'test-seed',
-  name: 'Test Hero',
+  name: 'Auto Hero',
   gender: 'male',
-  level: 3,
-  experience: 120,
+  level: 4,
+  experience: 160,
   strength: 8,
-  vitality: 6,
-  dexterity: 7,
+  vitality: 7,
+  dexterity: 6,
   luck: 5,
   intelligence: 4,
   focus: 5,
-  hp: 40,
-  maxHp: 40,
+  hp: 45,
+  maxHp: 45,
   wins: 2,
   losses: 1,
   fightsLeft: 3,
   lastFightReset: Date.now(),
-  firestoreId: 'test-id',
+  firestoreId: 'auto-id',
+  isBot: false,
 }
 
-describe('Arena offline mode', () => {
+describe('Arena settings modal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUseOnlineStatus.mockReturnValue(true)
     mockUseConnectionGate.mockReturnValue({
-      ensureConnection: vi.fn().mockResolvedValue(false),
+      ensureConnection: vi.fn().mockResolvedValue(true),
       openModal: vi.fn(),
       closeModal: vi.fn(),
       connectionModal: { open: false, message: '' },
     })
-  })
-
-  it('shows offline banner and disables fight when device is offline', () => {
-    mockUseOnlineStatus.mockReturnValue(false)
     mockUseGame.mockReturnValue({
       activeCharacter: mockCharacter,
       logout: vi.fn(),
@@ -66,56 +64,62 @@ describe('Arena offline mode', () => {
       lastLevelUp: null,
       clearXpNotifications: vi.fn(),
       firebaseAvailable: true,
+      retryConnection: vi.fn(),
       allocateStatPoint: vi.fn(),
       rollLootbox: vi.fn(),
       startMatchmaking: vi.fn(),
-      setAutoMode: vi.fn(),
-      deleteCharacter: vi.fn(),
+      setAutoMode: vi.fn().mockResolvedValue(mockCharacter),
+      deleteCharacter: vi.fn().mockResolvedValue(true),
     })
-
-    const { getByText, getByRole, queryByRole } = render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <Arena />
-      </MemoryRouter>
-    )
-
-    expect(getByText('OFFLINE MODE')).toBeInTheDocument()
-    const fightButton = getByRole('button', { name: 'OFFLINE' })
-    expect(fightButton).toBeDisabled()
-
-    // Retry button was removed from banner
-    expect(queryByRole('button', { name: /RETRY/i })).toBeNull()
   })
 
-  it('remains in offline mode when Firebase is unavailable', () => {
-    mockUseOnlineStatus.mockReturnValue(true)
-    mockUseGame.mockReturnValue({
-      activeCharacter: mockCharacter,
-      logout: vi.fn(),
-      useFight: vi.fn(),
-      findOpponent: vi.fn(),
-      lastXpGain: null,
-      lastLevelUp: null,
-      clearXpNotifications: vi.fn(),
-      firebaseAvailable: false,
-      allocateStatPoint: vi.fn(),
-      rollLootbox: vi.fn(),
-      startMatchmaking: vi.fn(),
-      setAutoMode: vi.fn(),
-      deleteCharacter: vi.fn(),
-    })
-
-    const { getByText, getByRole, queryByRole } = render(
+  it('opens settings modal when gear is clicked', () => {
+    const { getByLabelText, getByText } = render(
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Arena />
       </MemoryRouter>
     )
 
-    expect(getByText('OFFLINE MODE')).toBeInTheDocument()
-    const fightButton = getByRole('button', { name: 'OFFLINE' })
-    expect(fightButton).toBeDisabled()
+    fireEvent.click(getByLabelText('Settings'))
+    expect(getByText('SETTINGS')).toBeInTheDocument()
+  })
 
-    // Retry button was removed from banner
-    expect(queryByRole('button', { name: /RETRY/i })).toBeNull()
+  it('toggles auto mode when switch is clicked', async () => {
+    const { getByLabelText, getByRole } = render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Arena />
+      </MemoryRouter>
+    )
+
+    fireEvent.click(getByLabelText('Settings'))
+    const autoSwitch = getByRole('switch', { name: 'Auto mode' })
+
+    await act(async () => {
+      fireEvent.click(autoSwitch)
+    })
+
+    const { setAutoMode } = mockUseGame.mock.results[0].value
+    expect(setAutoMode).toHaveBeenCalledWith(true)
+  })
+
+  it('requires confirmation before deleting character', async () => {
+    const { getByLabelText, getByText, queryByText } = render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Arena />
+      </MemoryRouter>
+    )
+
+    fireEvent.click(getByLabelText('Settings'))
+    const deleteButton = getByText('DELETE')
+    fireEvent.click(deleteButton)
+
+    expect(queryByText('CONFIRM DELETE')).toBeInTheDocument()
+
+    await act(async () => {
+      fireEvent.click(getByText('CONFIRM DELETE'))
+    })
+
+    const { deleteCharacter } = mockUseGame.mock.results[0].value
+    expect(deleteCharacter).toHaveBeenCalled()
   })
 })
