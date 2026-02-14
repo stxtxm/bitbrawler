@@ -212,6 +212,11 @@ const Arena = () => {
         setInventorySelectedId(itemId);
     };
 
+    const handleOpenHistoryFromSettings = () => {
+        setSettingsOpen(false);
+        setHistoryOpen(true);
+    };
+
     const autoModeEnabled = !!activeCharacter?.isBot;
 
     const handleToggleAutoMode = async () => {
@@ -392,14 +397,6 @@ const Arena = () => {
                         aria-label="Settings"
                     >
                         <PixelIcon type="gear" size={26} />
-                    </button>
-                    <button
-                        className="button icon-btn"
-                        onClick={() => setHistoryOpen(true)}
-                        title="Combat History"
-                        aria-label="Combat History"
-                    >
-                        <PixelIcon type="history" size={26} />
                     </button>
                     <button
                         className="button icon-btn inventory-btn"
@@ -677,7 +674,7 @@ const Arena = () => {
                         <div className="inventory-header settings-header">
                             <h2 className="inventory-title">SETTINGS</h2>
                             <button className="inventory-close" onClick={() => setSettingsOpen(false)} aria-label="Close settings">
-                                ✕
+                                <PixelIcon type="close" size={14} />
                             </button>
                         </div>
 
@@ -701,6 +698,21 @@ const Arena = () => {
                                     </button>
                                 </div>
                                 <div className="settings-hint">Switching off returns full manual control.</div>
+                            </div>
+
+                            <div className="settings-divider" />
+
+                            <div className="settings-section">
+                                <div className="settings-row">
+                                    <div className="settings-label">
+                                        <span>COMBAT LOGS</span>
+                                        <span className="settings-sub">Review your last 20 battles.</span>
+                                    </div>
+                                    <button className="button settings-link" onClick={handleOpenHistoryFromSettings}>
+                                        <PixelIcon type="history" size={14} />
+                                        VIEW LOGS
+                                    </button>
+                                </div>
                             </div>
 
                             <div className="settings-divider" />

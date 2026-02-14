@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface PixelIconProps {
-    type: 'fighters' | 'arena' | 'levels' | 'updates' | 'user' | 'trophy' | 'power' | 'sword' | 'backpack' | 'dice' | 'history' | 'skull' | 'swords' | 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence' | 'focus' | 'chest' | 'gear';
+    type: 'fighters' | 'arena' | 'levels' | 'updates' | 'user' | 'trophy' | 'power' | 'sword' | 'backpack' | 'dice' | 'history' | 'skull' | 'swords' | 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence' | 'focus' | 'chest' | 'gear' | 'close';
     size?: number;
 }
 
@@ -141,6 +141,20 @@ export const PixelIcon: React.FC<PixelIconProps> = ({ type, size = 32 }) => {
                         <rect x="3" y="7" width="2" height="1" fill="#c0c0c0" />
                         <rect x="2" y="2" width="4" height="4" fill="#888" />
                         <rect x="3" y="3" width="2" height="2" fill="#111" />
+                    </svg>
+                );
+            case 'close':
+                return (
+                    <svg width={size} height={size} viewBox="0 0 8 8" shapeRendering="crispEdges">
+                        <rect x="1" y="1" width="1" height="1" fill="#ff3333" />
+                        <rect x="2" y="2" width="1" height="1" fill="#ff3333" />
+                        <rect x="3" y="3" width="2" height="2" fill="#ff3333" />
+                        <rect x="5" y="2" width="1" height="1" fill="#ff3333" />
+                        <rect x="6" y="1" width="1" height="1" fill="#ff3333" />
+                        <rect x="1" y="6" width="1" height="1" fill="#ff3333" />
+                        <rect x="2" y="5" width="1" height="1" fill="#ff3333" />
+                        <rect x="5" y="5" width="1" height="1" fill="#ff3333" />
+                        <rect x="6" y="6" width="1" height="1" fill="#ff3333" />
                     </svg>
                 );
             case 'skull':

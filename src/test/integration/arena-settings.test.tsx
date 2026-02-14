@@ -102,6 +102,19 @@ describe('Arena settings modal', () => {
     expect(setAutoMode).toHaveBeenCalledWith(true)
   })
 
+  it('opens combat logs from settings', () => {
+    const { getByLabelText, getByText } = render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Arena />
+      </MemoryRouter>
+    )
+
+    fireEvent.click(getByLabelText('Settings'))
+    fireEvent.click(getByText('VIEW LOGS'))
+
+    expect(getByText('COMBAT LOGS')).toBeInTheDocument()
+  })
+
   it('requires confirmation before deleting character', async () => {
     const { getByLabelText, getByText, queryByText } = render(
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>

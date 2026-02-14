@@ -210,6 +210,10 @@
         font-size: 0.8rem;
         border-width: 1px;
     }
+
+    svg {
+        display: block;
+    }
 }
 
 .inventory-body {
@@ -2014,6 +2018,20 @@
     }
 }
 
+@media (min-width: 1280px) {
+    .settings-modal {
+        max-width: 820px;
+        width: 84%;
+    }
+}
+
+@media (min-width: 1600px) {
+    .settings-modal {
+        max-width: 900px;
+        width: 80%;
+    }
+}
+
 .settings-body {
     display: flex;
     flex-direction: column;
@@ -2036,6 +2054,28 @@
     @include mobile {
         flex-direction: column;
         align-items: flex-start;
+    }
+}
+
+.settings-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 120px;
+    justify-content: center;
+    font-size: 0.55rem;
+    letter-spacing: 1px;
+    @include retro-border(2px, $accent-gold);
+    background: #000;
+    color: $accent-gold;
+
+    &:hover:not(:disabled) {
+        background: $accent-gold;
+        color: #000;
+    }
+
+    @include mobile {
+        width: 100%;
     }
 }
 
