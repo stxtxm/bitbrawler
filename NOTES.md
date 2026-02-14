@@ -28,7 +28,7 @@ Combat rules
 - `simulateCombat` returns a timeline for HP animations and combat logs.
 
 Lootbox + inventory
-- Daily lootbox gating uses UTC day (`canRollLootbox`).
+- Daily lootbox gating uses the same Paris day reset as fight energy (`canRollLootbox`).
 - `canRollLootbox` accepts Firestore timestamp shapes (`seconds`/`toMillis`) to avoid double rolls.
 - Inventory capacity is 24; items are auto-applied (no manual equip flow).
 - Items are defined in `src/data/itemAssets.ts` with `common` and `uncommon` rarities.

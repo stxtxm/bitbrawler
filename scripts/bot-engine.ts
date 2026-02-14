@@ -5,6 +5,8 @@ import { GAME_RULES } from '../src/config/gameRules';
 import { autoAllocateStatPoints } from '../src/utils/statUtils';
 import { ITEM_ASSETS } from '../src/data/itemAssets';
 import { canRollLootbox, rollLootbox } from '../src/utils/lootboxUtils';
+import { DAILY_RESET_TIMEZONE, shouldResetDaily } from '../src/utils/dailyReset';
+import { getZonedMidnightUtc } from '../src/utils/timezoneUtils';
 import { Character } from '../src/types/Character';
 import { initFirebaseAdmin, loadServiceAccount } from './firebaseAdmin';
 
@@ -193,9 +195,10 @@ async function simulateBotDailyLife() {
         let didReset = false;
 
         // 1. Daily Reset Logic
-        if (now - currentBotState.lastFightReset > 24 * 60 * 60 * 1000) {
+        if (shouldResetDaily(currentBotState.lastFightReset, now)) {
+            const parisMidnightUtc = getZonedMidnightUtc(new Date(now), DAILY_RESET_TIMEZONE);
             fightsLeft = GAME_RULES.COMBAT.MAX_DAILY_FIGHTS;
-            currentBotState.lastFightReset = now;
+            currentBotState.lastFightReset = parisMidnightUtc;
             currentBotState.battleCount = 0;
             didReset = true;
             console.log(`🔄 Daily reset for bot ${currentBotState.name}`);
@@ -205,7 +208,7 @@ async function simulateBotDailyLife() {
         if (canRollLootbox(currentBotState.lastLootRoll, now)) {
             const inventory = currentBotState.inventory || [];
             if (inventory.length < INVENTORY_CAPACITY) {
-                const item = rollLootbox(ITEM_ASSETS);
+                const item = rollLootbox(ITEM_ASSETS, Math.random, inventory);
                 if (item) {
                     currentBotState = {
                         ...currentBotState,
@@ -214,6 +217,8 @@ async function simulateBotDailyLife() {
                     };
                     didLootbox = true;
                     console.log(`🎁 Bot ${currentBotState.name} opened lootbox: ${item.name} (${item.rarity})`);
+                } else {
+                    console.log(`🎁 Bot ${currentBotState.name} already collected all lootbox items.`);
                 }
             } else {
                 console.log(`📦 Bot ${currentBotState.name} inventory full. Skipping lootbox.`);

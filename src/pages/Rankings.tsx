@@ -9,18 +9,13 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus'
 
 const Rankings = () => {
     const navigate = useNavigate()
-    const { setCharacter, firebaseAvailable, retryConnection } = useGame()
+    const { firebaseAvailable, retryConnection } = useGame()
     const [characters, setCharacters] = useState<Character[]>([])
     const [loading, setLoading] = useState(true)
     const [showResetModal, setShowResetModal] = useState(false)
     const [resetStatus, setResetStatus] = useState<'confirm' | 'success' | 'error' | null>(null)
     const [loadError, setLoadError] = useState<string | null>(null)
     const isOnline = useOnlineStatus()
-
-    const handleCharacterSelect = (character: Character) => {
-        setCharacter(character)
-        navigate('/arena')
-    }
 
     const fetchCharacters = useCallback(async () => {
         setLoading(true)
@@ -171,8 +166,6 @@ const Rankings = () => {
                                 <div
                                     key={index}
                                     className="ranking-row"
-                                    onClick={() => handleCharacterSelect(char)}
-                                    title="Click to play with this character"
                                 >
                                     <div className="col-rank">{index + 1}</div>
                                     <div className="col-avatar">

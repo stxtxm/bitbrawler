@@ -582,8 +582,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       throw new Error('Inventory is full.');
     }
 
-    const item = rollLootbox(ITEM_ASSETS);
-    if (!item) return null;
+    const item = rollLootbox(ITEM_ASSETS, Math.random, inventory);
+    if (!item) {
+      throw new Error('No new loot available.');
+    }
 
     const updatedChar = normalizeCharacter({
       ...activeCharacter,

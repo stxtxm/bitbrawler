@@ -1,4 +1,5 @@
 import { GAME_RULES } from '../src/config/gameRules';
+import { DAILY_RESET_TIMEZONE } from '../src/utils/dailyReset';
 import {
     formatZonedDateLabel,
     getZonedMidnightUtc,
@@ -23,16 +24,15 @@ if (!serviceAccount) {
 }
 
 const db = initFirebaseAdmin(serviceAccount);
-const PARIS_TIMEZONE = 'Europe/Paris';
 const RESET_SCOPE = (process.env.RESET_SCOPE || 'all').toLowerCase();
 
 async function runDailyReset() {
     console.log('⏳ Starting Global Daily Reset...');
 
     const now = new Date();
-    const parisNow = getZonedParts(now, PARIS_TIMEZONE);
+    const parisNow = getZonedParts(now, DAILY_RESET_TIMEZONE);
     const parisLabel = formatZonedDateLabel(parisNow);
-    const parisMidnightUtc = getZonedMidnightUtc(now, PARIS_TIMEZONE);
+    const parisMidnightUtc = getZonedMidnightUtc(now, DAILY_RESET_TIMEZONE);
 
     console.log(`🕒 Current time (UTC): ${now.toISOString()}`);
     console.log(`🕒 Current time (Paris): ${parisLabel} ${String(parisNow.hour).padStart(2, '0')}:${String(parisNow.minute).padStart(2, '0')}:${String(parisNow.second).padStart(2, '0')}`);
@@ -50,7 +50,7 @@ async function runDailyReset() {
         } else {
             const timestampCutoff = Timestamp.fromMillis(parisMidnightUtc);
 
-            // Find all characters whose last reset was before today (UTC),
+            // Find all characters whose last reset was before today (Paris day start),
             // including missing/null fields and legacy Timestamp values.
             const [numericSnapshot, nullSnapshot, timestampSnapshot] = await Promise.all([
                 charactersRef.where('lastFightReset', '<', parisMidnightUtc).get(),

@@ -109,22 +109,14 @@
     padding: 12px 15px;
     border-bottom: 1px solid #111;
     transition: all 0.2s ease;
-    cursor: pointer;
+    cursor: default;
 
     &:hover {
-        background: rgba($accent-gold, 0.12);
-        transform: translateX(4px);
-        border-left: 3px solid $accent-gold;
-        padding-left: 12px;
+        background: rgba($accent-gold, 0.08);
     }
 
     @include mobile {
         padding: 8px;
-
-        &:hover {
-            transform: translateX(2px);
-            border-left-width: 2px;
-        }
     }
 }
 
