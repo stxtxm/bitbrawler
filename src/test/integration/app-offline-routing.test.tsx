@@ -34,6 +34,7 @@ const mockUseOnlineStatus = useOnlineStatus as unknown as ReturnType<typeof vi.f
 describe('App offline routing', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useRealTimers()
     Object.defineProperty(window, 'localStorage', {
       value: {
         getItem: vi.fn(),

@@ -173,15 +173,19 @@ async function simulateBotDailyLife() {
 
     console.log(`⚡ Simulating activity for ${bots.length} bots.`);
 
-    // Fetch potential opponents for bots (a mix of bots and real players)
-    const opponentSnapshot = await db.collection('characters')
-        .limit(80)
-        .get();
-
-    const allCharacters = opponentSnapshot.docs.map(doc => ({
-        ...doc.data() as Character,
-        firestoreId: doc.id
-    }));
+    const opponentsByLevel = new Map<number, Character[]>();
+    const loadOpponentsForLevel = async (level: number) => {
+        if (opponentsByLevel.has(level)) return;
+        const snapshot = await db.collection('characters')
+            .where('level', '==', level)
+            .limit(50)
+            .get();
+        const opponents = snapshot.docs.map(doc => ({
+            ...doc.data() as Character,
+            firestoreId: doc.id
+        }));
+        opponentsByLevel.set(level, opponents);
+    };
 
     for (const bot of bots) {
         if (!bot.firestoreId) continue;
@@ -232,9 +236,10 @@ async function simulateBotDailyLife() {
 
         while (fightsLeft > 0) {
             // Find a suitable opponent for the bot
-            const potentialOpponents = allCharacters.filter(c =>
-                c.firestoreId !== currentBotState.firestoreId &&
-                c.level === currentBotState.level
+            await loadOpponentsForLevel(currentBotState.level);
+            const pool = opponentsByLevel.get(currentBotState.level) ?? [];
+            const potentialOpponents = pool.filter(c =>
+                c.firestoreId !== currentBotState.firestoreId
             );
 
             let opponent: Character;
