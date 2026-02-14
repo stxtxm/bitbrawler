@@ -1,6 +1,6 @@
 export type ItemSlot = 'weapon' | 'armor' | 'accessory';
 
-export type ItemRarity = 'common' | 'uncommon';
+export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic';
 
 export interface ItemStats {
   strength?: number;
@@ -19,4 +19,5 @@ export interface PixelItemAsset {
   rarity: ItemRarity;
   stats: ItemStats;
   pixels: number[][];
+  requiredLevel: number;
 }

@@ -111,6 +111,7 @@ describe('Arena inventory modal', () => {
       rarity: 'common',
       stats: { strength: 1 },
       pixels: [[1, 0], [0, 1]],
+      requiredLevel: 1,
     }
 
     mockUseGame.mockReturnValue({

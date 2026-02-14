@@ -346,6 +346,14 @@
     border-color: #4cd964;
 }
 
+.inventory-slot.rarity-rare {
+    border-color: #63b3ff;
+}
+
+.inventory-slot.rarity-epic {
+    border-color: #9b59b6;
+}
+
 .inventory-roll {
     display: flex;
     align-items: center;
@@ -430,6 +438,14 @@
 
 .inventory-item-head.rarity-uncommon {
     border-left-color: #4cd964;
+}
+
+.inventory-item-head.rarity-rare {
+    border-left-color: #63b3ff;
+}
+
+.inventory-item-head.rarity-epic {
+    border-left-color: #9b59b6;
 }
 
 .inventory-item-meta {
@@ -580,6 +596,14 @@
 
 .lootbox-result-card.rarity-uncommon {
     border-color: #4cd964;
+}
+
+.lootbox-result-card.rarity-rare {
+    border-color: #63b3ff;
+}
+
+.lootbox-result-card.rarity-epic {
+    border-color: #9b59b6;
 }
 
 .lootbox-result-glow {

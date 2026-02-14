@@ -477,7 +477,8 @@ describe('GameContext Integration', () => {
       rarity: 'common',
       slot: 'weapon',
       stats: { strength: 1 },
-      pixels: [[1]]
+      pixels: [[1]],
+      requiredLevel: 1
     };
 
     (canRollLootbox as any).mockReturnValue(true);

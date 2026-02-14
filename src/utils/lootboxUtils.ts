@@ -1,9 +1,33 @@
-import { PixelItemAsset } from '../types/Item';
+import { ItemRarity, PixelItemAsset } from '../types/Item';
 import { getDailyResetKey } from './dailyReset';
 
-export const LOOTBOX_RARITY_WEIGHTS: Record<PixelItemAsset['rarity'], number> = {
+export const LOOTBOX_RARITY_WEIGHTS: Record<ItemRarity, number> = {
   common: 0.8,
   uncommon: 0.2,
+  rare: 0,
+  epic: 0,
+};
+
+export const getLootboxRarityWeights = (level: number): Record<ItemRarity, number> => {
+  if (level >= 10) {
+    return { common: 0.45, uncommon: 0.3, rare: 0.18, epic: 0.07 };
+  }
+  if (level >= 7) {
+    return { common: 0.5, uncommon: 0.3, rare: 0.15, epic: 0.05 };
+  }
+  if (level >= 4) {
+    return { common: 0.65, uncommon: 0.25, rare: 0.1, epic: 0 };
+  }
+  return { ...LOOTBOX_RARITY_WEIGHTS };
+};
+
+export const getEligibleLootboxItems = (
+  items: PixelItemAsset[],
+  level: number,
+  excludeIds: string[] = []
+) => {
+  const excluded = new Set(excludeIds);
+  return items.filter((item) => item.requiredLevel <= level && !excluded.has(item.id));
 };
 
 type TimestampLike = {
@@ -45,26 +69,49 @@ export function canRollLootbox(lastRoll: unknown, now: number = Date.now()): boo
 
 export function rollLootbox(
   items: PixelItemAsset[],
-  rng: () => number = Math.random,
-  excludeIds: string[] = []
+  options: { rng?: () => number; excludeIds?: string[]; level?: number } = {}
 ): PixelItemAsset | null {
   if (!items.length) return null;
 
-  const excluded = new Set(excludeIds);
-  const availableItems = excluded.size
-    ? items.filter((item) => !excluded.has(item.id))
-    : items;
-  if (!availableItems.length) return null;
+  const rng = options.rng ?? Math.random;
+  const level = options.level ?? 1;
+  const excludeIds = options.excludeIds ?? [];
+  const eligibleItems = getEligibleLootboxItems(items, level, excludeIds);
+  if (!eligibleItems.length) return null;
 
-  const commons = availableItems.filter((item) => item.rarity === 'common');
-  const uncommons = availableItems.filter((item) => item.rarity === 'uncommon');
+  const rarities: ItemRarity[] = ['common', 'uncommon', 'rare', 'epic'];
+  const itemsByRarity = rarities.reduce<Record<ItemRarity, PixelItemAsset[]>>((acc, rarity) => {
+    acc[rarity] = eligibleItems.filter((item) => item.rarity === rarity);
+    return acc;
+  }, {
+    common: [],
+    uncommon: [],
+    rare: [],
+    epic: []
+  });
 
-  const roll = rng();
-  const targetRarity = roll < LOOTBOX_RARITY_WEIGHTS.common ? 'common' : 'uncommon';
-  const pool = targetRarity === 'common' ? commons : uncommons;
-  const fallbackPool = targetRarity === 'common' ? uncommons : commons;
-  const finalPool = pool.length ? pool : fallbackPool;
-  if (!finalPool.length) return null;
-  const pick = Math.floor(rng() * finalPool.length);
-  return finalPool[pick];
+  const weights = getLootboxRarityWeights(level);
+  const availableRarities = rarities.filter((rarity) => itemsByRarity[rarity].length > 0);
+  if (!availableRarities.length) return null;
+
+  const weightedRarities = availableRarities.filter((rarity) => (weights[rarity] ?? 0) > 0);
+  const selectionRarities = weightedRarities.length ? weightedRarities : availableRarities;
+  const totalWeight = selectionRarities.reduce((sum, rarity) => sum + (weights[rarity] ?? 1), 0);
+
+  const roll = rng() * totalWeight;
+  let cursor = 0;
+  let chosen: ItemRarity = selectionRarities[0];
+  for (const rarity of selectionRarities) {
+    const weight = weights[rarity] ?? 1;
+    cursor += weight;
+    if (roll <= cursor) {
+      chosen = rarity;
+      break;
+    }
+  }
+
+  const pool = itemsByRarity[chosen];
+  if (!pool.length) return null;
+  const pick = Math.floor(rng() * pool.length);
+  return pool[pick];
 }
