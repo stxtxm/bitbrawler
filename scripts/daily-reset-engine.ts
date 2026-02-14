@@ -3,7 +3,8 @@ import { DAILY_RESET_TIMEZONE } from '../src/utils/dailyReset';
 import {
     formatZonedDateLabel,
     getZonedMidnightUtc,
-    getZonedParts
+    getZonedParts,
+    isWithinZonedMidnightWindow
 } from '../src/utils/timezoneUtils';
 import { Timestamp, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { initFirebaseAdmin, loadServiceAccount } from './firebaseAdmin';
@@ -30,6 +31,13 @@ async function runDailyReset() {
     console.log('⏳ Starting Global Daily Reset...');
 
     const now = new Date();
+    const windowMinutes = Number(process.env.RESET_WINDOW_MINUTES || 10);
+    const forceRun = process.env.RESET_FORCE === '1' || process.env.RESET_FORCE === 'true';
+    if (!forceRun && !isWithinZonedMidnightWindow(now, DAILY_RESET_TIMEZONE, windowMinutes)) {
+        console.log(`⏭️ Skipping reset: outside Paris midnight window (${windowMinutes}m).`);
+        return;
+    }
+
     const parisNow = getZonedParts(now, DAILY_RESET_TIMEZONE);
     const parisLabel = formatZonedDateLabel(parisNow);
     const parisMidnightUtc = getZonedMidnightUtc(now, DAILY_RESET_TIMEZONE);
