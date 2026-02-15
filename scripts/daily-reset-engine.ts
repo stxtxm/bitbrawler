@@ -2,9 +2,9 @@ import { GAME_RULES } from '../src/config/gameRules';
 import { DAILY_RESET_TIMEZONE } from '../src/utils/dailyReset';
 import {
     formatZonedDateLabel,
-    getZonedMidnightUtcForWindow,
     getZonedParts,
-    isWithinZonedHourWindow
+    getZonedMidnightUtc,
+    isWithinZonedMidnightWindow
 } from '../src/utils/timezoneUtils';
 import { Timestamp, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { initFirebaseAdmin, loadServiceAccount } from './firebaseAdmin';
@@ -26,8 +26,8 @@ if (!serviceAccount) {
 
 const db = initFirebaseAdmin(serviceAccount);
 const RESET_SCOPE = (process.env.RESET_SCOPE || 'all').toLowerCase();
-const RESET_WINDOW_START_HOUR = 23;
-const RESET_WINDOW_END_HOUR = 1;
+const RESET_WINDOW_MINUTES = 45;
+const RESET_WINDOW_LABEL = `00:00-00:${String(RESET_WINDOW_MINUTES).padStart(2, '0')}`;
 const RESET_STATE_COLLECTION = 'maintenance';
 const RESET_STATE_DOC_ID = 'dailyReset';
 
@@ -38,12 +38,15 @@ async function runDailyReset() {
     const forceRun = process.env.RESET_FORCE === '1' || process.env.RESET_FORCE === 'true';
 
     const parisNow = getZonedParts(now, DAILY_RESET_TIMEZONE);
-    if (!forceRun && !isWithinZonedHourWindow(now, DAILY_RESET_TIMEZONE, RESET_WINDOW_START_HOUR, RESET_WINDOW_END_HOUR)) {
-        console.log('⏭️ Skipping reset: outside Paris reset window (23:00-01:00).');
+    if (!forceRun && !isWithinZonedMidnightWindow(now, DAILY_RESET_TIMEZONE, RESET_WINDOW_MINUTES)) {
+        console.log(`⏭️ Skipping reset: outside Paris midnight window (${RESET_WINDOW_LABEL}).`);
         return;
     }
 
-    const parisResetMidnightUtc = getZonedMidnightUtcForWindow(now, DAILY_RESET_TIMEZONE, RESET_WINDOW_START_HOUR);
+    // The workflow is triggered twice (22:00 and 23:00 UTC) to cover DST.
+    // Only one of those corresponds to Paris midnight; the midnight window guard above
+    // prevents running one hour early/late and avoids draining fresh fights in the bot catch-up window.
+    const parisResetMidnightUtc = getZonedMidnightUtc(now, DAILY_RESET_TIMEZONE);
     const parisResetDay = getZonedParts(new Date(parisResetMidnightUtc), DAILY_RESET_TIMEZONE);
     const parisNowLabel = formatZonedDateLabel(parisNow);
     const parisResetLabel = formatZonedDateLabel(parisResetDay);
@@ -102,7 +105,7 @@ async function runDailyReset() {
                 lastCompletedAt: now.getTime(),
                 lastCompletedAtUtc: now.toISOString(),
                 targetParisMidnightUtc: parisResetMidnightUtc,
-                window: '23:00-01:00',
+                window: RESET_WINDOW_LABEL,
                 scope: RESET_SCOPE,
                 updatedCharacters: 0
             }, { merge: true });
@@ -141,7 +144,7 @@ async function runDailyReset() {
             lastCompletedAt: now.getTime(),
             lastCompletedAtUtc: now.toISOString(),
             targetParisMidnightUtc: parisResetMidnightUtc,
-            window: '23:00-01:00',
+            window: RESET_WINDOW_LABEL,
             scope: RESET_SCOPE,
             updatedCharacters: totalUpdated
         }, { merge: true });
