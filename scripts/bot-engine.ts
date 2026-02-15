@@ -6,7 +6,12 @@ import { autoAllocateStatPointsRandom } from '../src/utils/statUtils';
 import { ITEM_ASSETS } from '../src/data/itemAssets';
 import { canRollLootbox, rollLootbox } from '../src/utils/lootboxUtils';
 import { DAILY_RESET_TIMEZONE, shouldResetDaily } from '../src/utils/dailyReset';
-import { getZonedMidnightUtc } from '../src/utils/timezoneUtils';
+import { getZonedMidnightUtc, getZonedParts } from '../src/utils/timezoneUtils';
+import {
+    buildLevelOneReserveTarget,
+    getBotActivityProfile,
+    getBotFightBudgetForRun
+} from '../src/utils/botBehaviorUtils';
 import { Character } from '../src/types/Character';
 import { initFirebaseAdmin, loadServiceAccount } from './firebaseAdmin';
 
@@ -21,6 +26,13 @@ type TimestampLike = {
 
 type BotSimulationOptions = {
     skipBotIds?: Set<string>;
+    protectedLevelOneCount?: number;
+};
+
+type PopulationSnapshot = {
+    totalBots: number;
+    levelOneBots: number;
+    levelOneHumans: number;
 };
 
 const normalizeTimestamp = (value: unknown, fallback = 0): number => {
@@ -63,16 +75,29 @@ if (!serviceAccount) {
 const db = initFirebaseAdmin(serviceAccount);
 const INVENTORY_CAPACITY = 24;
 
-async function measureBotPopulation() {
-    const total = await db.collection('characters').where('isBot', '==', true).count().get();
-    const lvl1 = await db.collection('characters')
-        .where('isBot', '==', true)
-        .where('level', '==', 1)
-        .count().get();
+async function measurePopulation(): Promise<PopulationSnapshot> {
+    const [totalBotsSnapshot, levelOneBotsSnapshot, levelOneCharactersSnapshot] = await Promise.all([
+        db.collection('characters').where('isBot', '==', true).count().get(),
+        db.collection('characters')
+            .where('isBot', '==', true)
+            .where('level', '==', 1)
+            .count()
+            .get(),
+        db.collection('characters')
+            .where('level', '==', 1)
+            .count()
+            .get()
+    ]);
+
+    const totalBots = totalBotsSnapshot.data().count;
+    const levelOneBots = levelOneBotsSnapshot.data().count;
+    const levelOneCharacters = levelOneCharactersSnapshot.data().count;
+    const levelOneHumans = Math.max(0, levelOneCharacters - levelOneBots);
 
     return {
-        total: total.data().count,
-        lvl1: lvl1.data().count
+        totalBots,
+        levelOneBots,
+        levelOneHumans
     };
 }
 
@@ -80,11 +105,14 @@ async function runBotLogic() {
     console.log('🤖 Starting Bot Engine...');
 
     try {
-        const populations = await measureBotPopulation();
-        console.log(`📊 Current bot population: ${populations.total} (Lvl 1: ${populations.lvl1})`);
+        const populations = await measurePopulation();
+        const levelOneReserveTarget = buildLevelOneReserveTarget(populations.levelOneHumans);
+        console.log(
+            `📊 Population snapshot | bots: ${populations.totalBots}, lvl1 bots: ${populations.levelOneBots}, lvl1 humans: ${populations.levelOneHumans}, reserve target: ${levelOneReserveTarget}`
+        );
         const skipBotIds = new Set<string>();
-        let totalBots = populations.total;
-        let lvl1Bots = populations.lvl1;
+        let totalBots = populations.totalBots;
+        let lvl1Bots = populations.levelOneBots;
 
         // 1. Force population growth if below minimum
         if (totalBots < GAME_RULES.BOTS.MIN_POPULATION) {
@@ -97,10 +125,10 @@ async function runBotLogic() {
             }
         }
 
-        // 1b. Ensure minimum level 1 bots
-        if (lvl1Bots < GAME_RULES.BOTS.MIN_LVL1_BOTS) {
-            console.log(`📉 Lvl 1 bot population low (${lvl1Bots}/${GAME_RULES.BOTS.MIN_LVL1_BOTS}). Spawning LVL 1 bots...`);
-            const needed = GAME_RULES.BOTS.MIN_LVL1_BOTS - lvl1Bots;
+        // 1b. Ensure a dynamic reserve of level 1 opponents for onboarding
+        if (lvl1Bots < levelOneReserveTarget) {
+            console.log(`📉 Lvl 1 reserve low (${lvl1Bots}/${levelOneReserveTarget}). Spawning LVL 1 bots...`);
+            const needed = levelOneReserveTarget - lvl1Bots;
             for (let i = 0; i < needed; i++) {
                 const newBotId = await createNewBot();
                 skipBotIds.add(newBotId);
@@ -109,14 +137,18 @@ async function runBotLogic() {
             }
         }
 
-        // 2. Guaranteed hourly growth (100% chance as per GROWTH_CHANCE: 1.0)
+        // 2. Baseline growth keeps roster fresh
         if (Math.random() <= GAME_RULES.BOTS.GROWTH_CHANCE) {
-            console.log('📈 Hourly bot growth triggered.');
-            await createNewBot();
+            console.log('📈 Scheduled bot growth triggered.');
+            const newBotId = await createNewBot();
+            skipBotIds.add(newBotId);
         }
 
-        // 2. Simulate complete daily cycle for bots
-        await simulateBotDailyLife({ skipBotIds });
+        // 3. Simulate bot activity with level 1 protection for starter matchmaking
+        await simulateBotDailyLife({
+            skipBotIds,
+            protectedLevelOneCount: levelOneReserveTarget
+        });
 
         console.log('✅ Bot Engine finished successfully');
     } catch (error) {
@@ -150,8 +182,54 @@ async function createNewBot(): Promise<string> {
     return docRef.id;
 }
 
+function selectProtectedLevelOneBotIds(
+    bots: Character[],
+    skipIds: Set<string>,
+    protectedLevelOneCount: number
+): Set<string> {
+    const nextSkip = new Set(skipIds);
+    if (protectedLevelOneCount <= 0) return nextSkip;
+
+    const alreadyProtected = bots.filter((bot) =>
+        bot.level === 1 &&
+        !!bot.firestoreId &&
+        nextSkip.has(bot.firestoreId)
+    ).length;
+
+    const additionalNeeded = Math.max(0, protectedLevelOneCount - alreadyProtected);
+    if (additionalNeeded === 0) return nextSkip;
+
+    const levelOnePool = bots
+        .filter((bot) =>
+            bot.level === 1 &&
+            !!bot.firestoreId &&
+            !nextSkip.has(bot.firestoreId)
+        )
+        .sort((a, b) => {
+            const aBattles = a.battleCount ?? 0;
+            const bBattles = b.battleCount ?? 0;
+            if (aBattles !== bBattles) return aBattles - bBattles;
+            const aEnergy = a.fightsLeft ?? 0;
+            const bEnergy = b.fightsLeft ?? 0;
+            return bEnergy - aEnergy;
+        });
+
+    const maxProtectable = Math.max(0, levelOnePool.length - GAME_RULES.BOTS.MIN_LVL1_ACTIVE_BOTS);
+    const toProtect = Math.min(additionalNeeded, maxProtectable);
+
+    for (let i = 0; i < toProtect; i++) {
+        const bot = levelOnePool[i];
+        if (bot.firestoreId) nextSkip.add(bot.firestoreId);
+    }
+
+    return nextSkip;
+}
+
 async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
-    const { skipBotIds } = options;
+    const {
+        skipBotIds = new Set<string>(),
+        protectedLevelOneCount = GAME_RULES.BOTS.MIN_LVL1_BOTS
+    } = options;
     // Fetch only bots
     const snapshot = await db.collection('characters')
         .where('isBot', '==', true)
@@ -185,12 +263,11 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
         };
     });
 
-    const activeBots = skipBotIds && skipBotIds.size > 0
-        ? bots.filter(bot => !skipBotIds.has(bot.firestoreId ?? ''))
-        : bots;
+    const protectedIds = selectProtectedLevelOneBotIds(bots, skipBotIds, protectedLevelOneCount);
+    const activeBots = bots.filter(bot => !protectedIds.has(bot.firestoreId ?? ''));
     const skippedCount = bots.length - activeBots.length;
     if (skippedCount > 0) {
-        console.log(`⏸️ Skipping ${skippedCount} newly spawned LVL 1 bots (no activity yet).`);
+        console.log(`⏸️ Protecting ${skippedCount} bots this run (starter reserve + fresh spawns).`);
     }
 
     console.log(`⚡ Simulating activity for ${activeBots.length} bots.`);
@@ -215,8 +292,10 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
         let currentBotState = { ...bot, statPoints: bot.statPoints ?? 0 };
         let fightsLeft = currentBotState.fightsLeft;
         const now = Date.now();
+        const parisHour = getZonedParts(new Date(now), DAILY_RESET_TIMEZONE).hour;
+        const profile = getBotActivityProfile(bot.firestoreId, bot.seed);
         let totalXpGained = 0;
-        let startLevel = currentBotState.level;
+        const startLevel = currentBotState.level;
         let didLootbox = false;
         let didReset = false;
 
@@ -253,10 +332,15 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
             console.log(`⏳ Bot ${currentBotState.name} already opened daily lootbox.`);
         }
 
-        // 3. Fight Logic (Use all available energy when possible)
+        // 3. Fight Logic (variable pace per bot profile + day progression)
+        const fightBudget = getBotFightBudgetForRun({
+            fightsLeft,
+            parisHour,
+            profile
+        });
         let actionsTaken = 0;
 
-        while (fightsLeft > 0) {
+        while (fightsLeft > 0 && actionsTaken < fightBudget) {
             // Find a suitable opponent for the bot
             await loadOpponentsForLevel(currentBotState.level);
             const pool = opponentsByLevel.get(currentBotState.level) ?? [];
@@ -308,6 +392,7 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                 fightsLeft: fightsLeft - 1,
                 wins: won ? (currentBotState.wins || 0) + 1 : (currentBotState.wins || 0),
                 losses: won ? (currentBotState.losses || 0) : (currentBotState.losses || 0) + 1,
+                battleCount: (currentBotState.battleCount || 0) + 1,
                 fightHistory: newHistory,
                 statPoints: withStats.statPoints
             };
@@ -349,15 +434,20 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
 
             const levelDiff = currentBotState.level - startLevel;
             if (actionsTaken > 0) {
-                console.log(`👊 Bot ${bot.name}: ${actionsTaken} fights, +${totalXpGained} XP. ${levelDiff > 0 ? `🆙 LVL UP +${levelDiff}` : ''} Energy left: ${currentBotState.fightsLeft}`);
+                console.log(`👊 Bot ${bot.name}: ${actionsTaken}/${fightBudget} fights, +${totalXpGained} XP. ${levelDiff > 0 ? `🆙 LVL UP +${levelDiff}` : ''} Energy left: ${currentBotState.fightsLeft}`);
             } else if (didLootbox) {
                 console.log(`📦 Bot ${bot.name} updated inventory. Energy left: ${currentBotState.fightsLeft}`);
             } else {
-                console.log(`💤 Bot ${bot.name} is resting (0 energy).`);
+                const restReason = fightBudget === 0 && fightsLeft > 0 ? 'scheduled rest' : '0 energy';
+                console.log(`💤 Bot ${bot.name} is resting (${restReason}).`);
             }
         } else {
             if (fightsLeft > 0) {
-                console.log(`💤 Bot ${bot.name} found no opponents (energy: ${fightsLeft}).`);
+                if (fightBudget === 0) {
+                    console.log(`💤 Bot ${bot.name} skipped activity this run (energy: ${fightsLeft}).`);
+                } else {
+                    console.log(`💤 Bot ${bot.name} found no opponents (energy: ${fightsLeft}).`);
+                }
             } else {
                 console.log(`💤 Bot ${bot.name} is resting (0 energy).`);
             }

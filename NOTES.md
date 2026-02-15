@@ -41,9 +41,10 @@ Bots and automation
 - Bot engine: `scripts/bot-engine.ts`.
 - Keeps population above minimums, spawns growth per scheduled run.
 - Same-level fights only; uses shared combat + XP logic for parity.
+- Maintains a dynamic protected reserve of level 1 bots based on current level 1 human demand.
 - Bots auto-roll the daily lootbox (logs: opened, inventory full, already opened).
 - Daily reset script clears `foughtToday` and restores fight energy at Paris midnight.
-- Bots consume all available energy per run when opponents exist (same-level pool query).
+- Bot activity now uses per-bot profiles and run budgets for more organic pacing.
 - Name generator adds a short letter suffix to avoid duplicates in a session.
 
 Offline behavior
