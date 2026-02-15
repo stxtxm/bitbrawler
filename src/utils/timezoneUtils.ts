@@ -67,3 +67,29 @@ export const isWithinZonedMidnightWindow = (
   const parts = getZonedParts(date, timeZone);
   return parts.hour === 0 && parts.minute < windowMinutes;
 };
+
+export const isWithinZonedHourWindow = (
+  date: Date,
+  timeZone: string,
+  startHourInclusive: number,
+  endHourExclusive: number
+) => {
+  const { hour } = getZonedParts(date, timeZone);
+  if (startHourInclusive === endHourExclusive) return true;
+  if (startHourInclusive < endHourExclusive) {
+    return hour >= startHourInclusive && hour < endHourExclusive;
+  }
+  return hour >= startHourInclusive || hour < endHourExclusive;
+};
+
+export const getZonedMidnightUtcForWindow = (
+  date: Date,
+  timeZone: string,
+  windowStartHour = 23
+) => {
+  const { hour } = getZonedParts(date, timeZone);
+  const referenceDate = hour >= windowStartHour
+    ? new Date(date.getTime() + 60 * 60 * 1000)
+    : date;
+  return getZonedMidnightUtc(referenceDate, timeZone);
+};

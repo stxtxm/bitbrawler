@@ -2,9 +2,9 @@ import { GAME_RULES } from '../src/config/gameRules';
 import { DAILY_RESET_TIMEZONE } from '../src/utils/dailyReset';
 import {
     formatZonedDateLabel,
-    getZonedMidnightUtc,
+    getZonedMidnightUtcForWindow,
     getZonedParts,
-    isWithinZonedMidnightWindow
+    isWithinZonedHourWindow
 } from '../src/utils/timezoneUtils';
 import { Timestamp, QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { initFirebaseAdmin, loadServiceAccount } from './firebaseAdmin';
@@ -26,27 +26,43 @@ if (!serviceAccount) {
 
 const db = initFirebaseAdmin(serviceAccount);
 const RESET_SCOPE = (process.env.RESET_SCOPE || 'all').toLowerCase();
+const RESET_WINDOW_START_HOUR = 23;
+const RESET_WINDOW_END_HOUR = 1;
+const RESET_STATE_COLLECTION = 'maintenance';
+const RESET_STATE_DOC_ID = 'dailyReset';
 
 async function runDailyReset() {
     console.log('⏳ Starting Global Daily Reset...');
 
     const now = new Date();
-    const windowMinutes = Number(process.env.RESET_WINDOW_MINUTES || 10);
     const forceRun = process.env.RESET_FORCE === '1' || process.env.RESET_FORCE === 'true';
-    if (!forceRun && !isWithinZonedMidnightWindow(now, DAILY_RESET_TIMEZONE, windowMinutes)) {
-        console.log(`⏭️ Skipping reset: outside Paris midnight window (${windowMinutes}m).`);
+
+    const parisNow = getZonedParts(now, DAILY_RESET_TIMEZONE);
+    if (!forceRun && !isWithinZonedHourWindow(now, DAILY_RESET_TIMEZONE, RESET_WINDOW_START_HOUR, RESET_WINDOW_END_HOUR)) {
+        console.log('⏭️ Skipping reset: outside Paris reset window (23:00-01:00).');
         return;
     }
 
-    const parisNow = getZonedParts(now, DAILY_RESET_TIMEZONE);
-    const parisLabel = formatZonedDateLabel(parisNow);
-    const parisMidnightUtc = getZonedMidnightUtc(now, DAILY_RESET_TIMEZONE);
+    const parisResetMidnightUtc = getZonedMidnightUtcForWindow(now, DAILY_RESET_TIMEZONE, RESET_WINDOW_START_HOUR);
+    const parisResetDay = getZonedParts(new Date(parisResetMidnightUtc), DAILY_RESET_TIMEZONE);
+    const parisNowLabel = formatZonedDateLabel(parisNow);
+    const parisResetLabel = formatZonedDateLabel(parisResetDay);
+    const resetStateRef = db.collection(RESET_STATE_COLLECTION).doc(RESET_STATE_DOC_ID);
 
     console.log(`🕒 Current time (UTC): ${now.toISOString()}`);
-    console.log(`🕒 Current time (Paris): ${parisLabel} ${String(parisNow.hour).padStart(2, '0')}:${String(parisNow.minute).padStart(2, '0')}:${String(parisNow.second).padStart(2, '0')}`);
-    console.log(`📆 Paris day start (UTC): ${new Date(parisMidnightUtc).toISOString()} (day ${parisLabel})`);
+    console.log(`🕒 Current time (Paris): ${parisNowLabel} ${String(parisNow.hour).padStart(2, '0')}:${String(parisNow.minute).padStart(2, '0')}:${String(parisNow.second).padStart(2, '0')}`);
+    console.log(`📆 Target reset day: ${parisResetLabel} (Paris midnight UTC: ${new Date(parisResetMidnightUtc).toISOString()})`);
 
     try {
+        if (!forceRun) {
+            const resetState = await resetStateRef.get();
+            const lastCompletedKey = resetState.exists ? resetState.get('lastCompletedKey') : null;
+            if (lastCompletedKey === parisResetLabel) {
+                console.log(`⏭️ Skipping reset: already completed for Paris day ${parisResetLabel}.`);
+                return;
+            }
+        }
+
         const charactersRef = db.collection('characters');
         let docs: QueryDocumentSnapshot[] = [];
         let scopeLabel = '';
@@ -56,12 +72,12 @@ async function runDailyReset() {
             docs = snapshot.docs;
             scopeLabel = 'full reset';
         } else {
-            const timestampCutoff = Timestamp.fromMillis(parisMidnightUtc);
+            const timestampCutoff = Timestamp.fromMillis(parisResetMidnightUtc);
 
             // Find all characters whose last reset was before today (Paris day start),
             // including missing/null fields and legacy Timestamp values.
             const [numericSnapshot, nullSnapshot, timestampSnapshot] = await Promise.all([
-                charactersRef.where('lastFightReset', '<', parisMidnightUtc).get(),
+                charactersRef.where('lastFightReset', '<', parisResetMidnightUtc).get(),
                 charactersRef.where('lastFightReset', '==', null).get(),
                 charactersRef.where('lastFightReset', '<', timestampCutoff).get()
             ]);
@@ -79,8 +95,17 @@ async function runDailyReset() {
             if (RESET_SCOPE === 'all') {
                 console.log('ℹ️ No characters found to reset.');
             } else {
-                console.log(`✅ All characters are already up to date for ${parisLabel}.`);
+                console.log(`✅ All characters are already up to date for ${parisResetLabel}.`);
             }
+            await resetStateRef.set({
+                lastCompletedKey: parisResetLabel,
+                lastCompletedAt: now.getTime(),
+                lastCompletedAtUtc: now.toISOString(),
+                targetParisMidnightUtc: parisResetMidnightUtc,
+                window: '23:00-01:00',
+                scope: RESET_SCOPE,
+                updatedCharacters: 0
+            }, { merge: true });
             return;
         }
 
@@ -98,7 +123,7 @@ async function runDailyReset() {
                 const docRef = db.collection('characters').doc(doc.id);
                 batch.update(docRef, {
                     fightsLeft: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
-                    lastFightReset: parisMidnightUtc,
+                    lastFightReset: parisResetMidnightUtc,
                     foughtToday: [],
                     battleCount: 0
                 });
@@ -111,6 +136,15 @@ async function runDailyReset() {
         }
 
         console.log(`✨ Successfully reset energy for ${totalUpdated} characters.`);
+        await resetStateRef.set({
+            lastCompletedKey: parisResetLabel,
+            lastCompletedAt: now.getTime(),
+            lastCompletedAtUtc: now.toISOString(),
+            targetParisMidnightUtc: parisResetMidnightUtc,
+            window: '23:00-01:00',
+            scope: RESET_SCOPE,
+            updatedCharacters: totalUpdated
+        }, { merge: true });
 
     } catch (error) {
         console.error('❌ Daily reset failed:', error);
@@ -121,4 +155,7 @@ async function runDailyReset() {
 runDailyReset().then(() => {
     console.log('👋 Daily Reset finished.');
     process.exit(0);
+}).catch((error) => {
+    console.error('❌ Daily reset failed:', error);
+    process.exit(1);
 });
