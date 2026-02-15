@@ -44,7 +44,9 @@ Bots and automation
 - Keeps population above minimums, spawns growth per scheduled run.
 - Same-level fights only; uses shared combat + XP logic for parity.
 - Maintains a dynamic protected reserve of level 1 bots based on current level 1 human demand.
+- Daily reset + daily lootbox pass runs for all bots each execution (including protected pool).
 - Bots auto-roll the daily lootbox (logs: opened, inventory full, already opened).
+- End-of-day catch-up window drains remaining fights before reset (`END_OF_DAY_DRAIN_START_HOUR`, Europe/Paris).
 - Daily reset script clears `foughtToday` and restores fight energy at Paris midnight.
 - Bot activity now uses per-bot profiles and run budgets for more organic pacing.
 - Bot action logs now show random target + result and write incoming defense logs for targets.
@@ -68,15 +70,17 @@ UI tuning
 
 Testing
 - Unit: combat math, lootbox gating, equipment bonuses, XP, stats, RNG.
+- Unit: lazy route prefetch gating (`canPrefetch`, `prefetchArena`) and end-of-day drain window checks.
 - Integration: matchmaking, pending fights, lootbox persistence, arena inventory/bonuses,
-  offline routing, Firebase failover.
+  offline routing, Firebase failover, and settings combat log privacy rendering.
+- Router warnings are prevented with shared `renderWithRouter` helper (`src/test/utils/router.tsx`).
 
 Ops
 - GitHub Actions: daily reset scheduled for Paris midnight with a double cron (CET/CEST)
-  and a script-side midnight window guard; bot engine runs hourly (UTC top of hour).
+  and a script-side midnight window guard; bot engine runs every 2 hours (UTC top of even hour).
 
 Handoff (Next Agent)
 - Arena settings logs are rendered inside the same modal (view switch), not a separate popup.
 - Bot engine opponent pool is fetched per-level (`where('level','==', level)`, limit 50).
-- Lootbox and daily reset are aligned to Paris day.
+- Lootbox and daily reset are aligned to Paris day, and final bot runs drain remaining fights.
 - Name generator pools were expanded for more variety.

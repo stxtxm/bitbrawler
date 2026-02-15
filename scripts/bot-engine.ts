@@ -10,7 +10,8 @@ import { getZonedMidnightUtc, getZonedParts } from '../src/utils/timezoneUtils';
 import {
     buildLevelOneReserveTarget,
     getBotActivityProfile,
-    getBotFightBudgetForRun
+    getBotFightBudgetForRun,
+    isEndOfDayDrainWindow
 } from '../src/utils/botBehaviorUtils';
 import { Character, IncomingFightHistory } from '../src/types/Character';
 import { initFirebaseAdmin, loadServiceAccount } from './firebaseAdmin';
@@ -178,7 +179,7 @@ async function runBotLogic() {
             skipBotIds.add(newBotId);
         }
 
-        // 3. Simulate bot activity with level 1 protection for starter matchmaking
+        // 3. Simulate bot activity with level 1 protection (except end-of-day catch-up)
         await simulateBotDailyLife({
             skipBotIds,
             protectedLevelOneCount: levelOneReserveTarget
@@ -297,16 +298,27 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
         };
     });
 
+    const runNow = Date.now();
+    const runParisHour = getZonedParts(new Date(runNow), DAILY_RESET_TIMEZONE).hour;
+    const endOfDayDrain = isEndOfDayDrainWindow(runParisHour);
     const protectedIds = selectProtectedLevelOneBotIds(bots, skipBotIds, protectedLevelOneCount);
-    const activeBots = bots.filter(bot => !protectedIds.has(bot.firestoreId ?? ''));
-    const skippedCount = bots.length - activeBots.length;
-    if (skippedCount > 0) {
-        console.log(`⏸️ Protecting ${skippedCount} bots this run (starter reserve + fresh spawns).`);
+    const protectionEnabled = !endOfDayDrain;
+    const fightEligibleBots = protectionEnabled
+        ? bots.filter(bot => !protectedIds.has(bot.firestoreId ?? ''))
+        : bots;
+    const protectedCount = protectionEnabled ? bots.length - fightEligibleBots.length : 0;
+
+    if (endOfDayDrain) {
+        console.log('🌙 End-of-day catch-up window active: draining remaining fights for all bots before reset.');
+    } else if (protectedCount > 0) {
+        console.log(`⏸️ Protecting ${protectedCount} bots this run (starter reserve + fresh spawns).`);
     }
 
-    console.log(`⚡ Simulating activity for ${activeBots.length} bots.`);
+    console.log(`🎁 Processing daily reset/loot for ${bots.length} bots.`);
+    console.log(`⚡ Simulating fight activity for ${fightEligibleBots.length} bots.`);
 
     const opponentsByLevel = new Map<number, Character[]>();
+    let fallbackOpponentPool: Character[] | null = null;
     const loadOpponentsForLevel = async (level: number) => {
         if (opponentsByLevel.has(level)) return;
         const snapshot = await db.collection('characters')
@@ -319,23 +331,31 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
         }));
         opponentsByLevel.set(level, opponents);
     };
+    const loadFallbackOpponentPool = async () => {
+        if (fallbackOpponentPool) return;
+        const snapshot = await db.collection('characters')
+            .limit(200)
+            .get();
+        fallbackOpponentPool = snapshot.docs.map(doc => ({
+            ...doc.data() as Character,
+            firestoreId: doc.id
+        }));
+    };
 
-    for (const bot of activeBots) {
+    for (const bot of bots) {
         if (!bot.firestoreId) continue;
 
+        const isProtected = protectionEnabled && protectedIds.has(bot.firestoreId);
         let currentBotState = { ...bot, statPoints: bot.statPoints ?? 0 };
         let fightsLeft = currentBotState.fightsLeft;
-        const now = Date.now();
-        const parisHour = getZonedParts(new Date(now), DAILY_RESET_TIMEZONE).hour;
-        const profile = getBotActivityProfile(bot.firestoreId, bot.seed);
         let totalXpGained = 0;
         const startLevel = currentBotState.level;
         let didLootbox = false;
         let didReset = false;
 
         // 1. Daily Reset Logic
-        if (shouldResetDaily(currentBotState.lastFightReset, now)) {
-            const parisMidnightUtc = getZonedMidnightUtc(new Date(now), DAILY_RESET_TIMEZONE);
+        if (shouldResetDaily(currentBotState.lastFightReset, runNow)) {
+            const parisMidnightUtc = getZonedMidnightUtc(new Date(runNow), DAILY_RESET_TIMEZONE);
             fightsLeft = GAME_RULES.COMBAT.MAX_DAILY_FIGHTS;
             currentBotState.lastFightReset = parisMidnightUtc;
             currentBotState.battleCount = 0;
@@ -344,7 +364,7 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
         }
 
         // 2. Daily Lootbox
-        if (canRollLootbox(currentBotState.lastLootRoll, now)) {
+        if (canRollLootbox(currentBotState.lastLootRoll, runNow)) {
             const inventory = currentBotState.inventory || [];
             if (inventory.length < INVENTORY_CAPACITY) {
                 const item = rollLootbox(ITEM_ASSETS, { excludeIds: inventory, level: currentBotState.level });
@@ -352,7 +372,7 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                     currentBotState = {
                         ...currentBotState,
                         inventory: [...inventory, item.id],
-                        lastLootRoll: now
+                        lastLootRoll: runNow
                     };
                     didLootbox = true;
                     console.log(`🎁 Bot ${currentBotState.name} opened lootbox: ${item.name} (${item.rarity})`);
@@ -367,26 +387,44 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
         }
 
         // 3. Fight Logic (variable pace per bot profile + day progression)
-        const fightBudget = getBotFightBudgetForRun({
-            fightsLeft,
-            parisHour,
-            profile
-        });
+        const fightBudget = isProtected
+            ? 0
+            : endOfDayDrain
+                ? fightsLeft
+                : getBotFightBudgetForRun({
+                    fightsLeft,
+                    parisHour: runParisHour,
+                    profile: getBotActivityProfile(bot.firestoreId, bot.seed)
+                });
         let actionsTaken = 0;
 
         while (fightsLeft > 0 && actionsTaken < fightBudget) {
             // Find a suitable opponent for the bot
             await loadOpponentsForLevel(currentBotState.level);
             const pool = opponentsByLevel.get(currentBotState.level) ?? [];
-            const potentialOpponents = pool.filter(c =>
+            let potentialOpponents = pool.filter(c =>
                 c.firestoreId !== currentBotState.firestoreId
             );
+
+            if (potentialOpponents.length === 0 && endOfDayDrain) {
+                await loadFallbackOpponentPool();
+                potentialOpponents = (fallbackOpponentPool ?? []).filter(c =>
+                    c.firestoreId !== currentBotState.firestoreId
+                );
+                if (potentialOpponents.length > 0) {
+                    console.log(`🔁 ${currentBotState.name}: fallback opponent pool used for end-of-day catch-up.`);
+                }
+            }
 
             let opponent: Character;
             if (potentialOpponents.length > 0) {
                 opponent = potentialOpponents[Math.floor(Math.random() * potentialOpponents.length)];
             } else {
-                console.log(`⚠️ No same-level opponent for bot ${currentBotState.name} (LVL ${currentBotState.level}). Skipping fights.`);
+                console.log(
+                    endOfDayDrain
+                        ? `⚠️ No opponents available for bot ${currentBotState.name}. Skipping remaining fights.`
+                        : `⚠️ No same-level opponent for bot ${currentBotState.name} (LVL ${currentBotState.level}). Skipping fights.`
+                );
                 break;
             }
 
@@ -433,7 +471,6 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
             const historyEntry = {
                 date: Date.now(),
                 won,
-                xpGained,
                 opponentName: opponent.name
             };
             const existingHistory = currentBotState.fightHistory || [];
@@ -490,6 +527,8 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                 console.log(`👊 Bot ${bot.name}: ${actionsTaken}/${fightBudget} fights, +${totalXpGained} XP. ${levelDiff > 0 ? `🆙 LVL UP +${levelDiff}` : ''} Energy left: ${currentBotState.fightsLeft}`);
             } else if (didLootbox) {
                 console.log(`📦 Bot ${bot.name} updated inventory. Energy left: ${currentBotState.fightsLeft}`);
+            } else if (isProtected && fightsLeft > 0) {
+                console.log(`🛡️ Bot ${bot.name} kept in protected pool (energy: ${fightsLeft}).`);
             } else {
                 const restReason = fightBudget === 0 && fightsLeft > 0 ? 'scheduled rest' : '0 energy';
                 console.log(`💤 Bot ${bot.name} is resting (${restReason}).`);

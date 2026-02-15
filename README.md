@@ -8,9 +8,9 @@ Bitbrawler is a retro 8-bit arena experience where players create a pixel fighte
 - Arena fights with XP gain, level ups, and enhanced combat (crit + magic + focus)
 - Strict same-level matchmaking with power balancing, daily opponent rotation, and animated opponent scan
 - Daily lootbox + inventory items (auto-applied stat bonuses, rarity-based, expanded level 1 pool)
-- Bot engine with population management, organic activity pacing, level 1 starter reserve, real combat simulation, and daily lootbox usage (hourly scheduler)
+- Bot engine with population management, organic activity pacing, level 1 starter reserve, real combat simulation, immediate daily lootbox usage, and end-of-day fight catch-up before reset (2-hour scheduler)
 - Anti-cheat fight reservation (pending fights resolve even if player quits mid-matchmaking)
-- Incoming attack logs in Arena settings (bot/player attacks shown, no XP impact)
+- Incoming attack logs in Arena settings (attacker type hidden from players, no XP line shown)
 - Global daily reset for fights/opponent tracking (scripted, Paris midnight w/ DST-safe cron)
 - Hall of Fame rankings
 - Arena settings modal with Auto mode toggle, combat logs, and safe character delete
@@ -78,7 +78,11 @@ public/
 ## Notes
 See `NOTES.md` for recent UI/UX decisions and implementation details.
 
+## Docs
+- `docs/agent-handoff.md`: implementation and testing conventions for future agents.
+
 ## Handoff Notes
 - Settings modal now owns combat logs (no header icon). Check `src/pages/Arena.tsx` + `src/styles/pages/_arena.scss`.
 - Rankings list is read-only (no character switching) and uses internal scroll.
-- Daily reset and lootbox gating align to Paris day; bot fights use same-level pools (`scripts/bot-engine.ts`).
+- Daily reset and lootbox gating align to Paris day; bot fights use same-level pools with end-of-day catch-up (`scripts/bot-engine.ts`).
+- Router test warnings are avoided with `renderWithRouter` in `src/test/utils/router.tsx`.

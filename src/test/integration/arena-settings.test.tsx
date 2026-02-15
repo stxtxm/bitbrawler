@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, fireEvent, act } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { fireEvent, act } from '@testing-library/react'
 import Arena from '../../pages/Arena'
 import { useGame } from '../../context/GameContext'
 import { useConnectionGate } from '../../hooks/useConnectionGate'
 import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 import { Character } from '../../types/Character'
+import { renderWithRouter } from '../utils/router'
 
 vi.mock('../../context/GameContext', () => ({
   useGame: vi.fn(),
@@ -43,6 +43,23 @@ const mockCharacter: Character = {
   lastFightReset: Date.now(),
   firestoreId: 'auto-id',
   isBot: false,
+  fightHistory: [
+    {
+      date: Date.now() - 60_000,
+      opponentName: 'RIVAL',
+      won: true,
+      xpGained: 100,
+    },
+  ],
+  incomingFightHistory: [
+    {
+      date: Date.now() - 30_000,
+      attackerName: 'NIGHT HUNTER',
+      attackerIsBot: true,
+      won: false,
+      source: 'bot',
+    },
+  ],
 }
 
 describe('Arena settings modal', () => {
@@ -74,22 +91,14 @@ describe('Arena settings modal', () => {
   })
 
   it('opens settings modal when gear is clicked', () => {
-    const { getByLabelText, getByText } = render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <Arena />
-      </MemoryRouter>
-    )
+    const { getByLabelText, getByText } = renderWithRouter(<Arena />)
 
     fireEvent.click(getByLabelText('Settings'))
     expect(getByText('SETTINGS')).toBeInTheDocument()
   })
 
   it('toggles auto mode when switch is clicked', async () => {
-    const { getByLabelText, getByRole } = render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <Arena />
-      </MemoryRouter>
-    )
+    const { getByLabelText, getByRole } = renderWithRouter(<Arena />)
 
     fireEvent.click(getByLabelText('Settings'))
     const autoSwitch = getByRole('switch', { name: 'Auto mode' })
@@ -103,11 +112,7 @@ describe('Arena settings modal', () => {
   })
 
   it('opens combat logs within settings', () => {
-    const { getByLabelText, getByText, queryByText } = render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <Arena />
-      </MemoryRouter>
-    )
+    const { getByLabelText, getByText, queryByText } = renderWithRouter(<Arena />)
 
     fireEvent.click(getByLabelText('Settings'))
     fireEvent.click(getByText('VIEW LOGS'))
@@ -117,11 +122,7 @@ describe('Arena settings modal', () => {
   })
 
   it('requires confirmation before deleting character', async () => {
-    const { getByLabelText, getByText, queryByText } = render(
-      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <Arena />
-      </MemoryRouter>
-    )
+    const { getByLabelText, getByText, queryByText } = renderWithRouter(<Arena />)
 
     fireEvent.click(getByLabelText('Settings'))
     const deleteButton = getByText('DELETE')
@@ -135,5 +136,18 @@ describe('Arena settings modal', () => {
 
     const { deleteCharacter } = mockUseGame.mock.results[0].value
     expect(deleteCharacter).toHaveBeenCalled()
+  })
+
+  it('hides attacker type and xp details in combat logs', () => {
+    const { getByLabelText, getByText, queryByText } = renderWithRouter(<Arena />)
+
+    fireEvent.click(getByLabelText('Settings'))
+    fireEvent.click(getByText('VIEW LOGS'))
+
+    expect(getByText('ATTACKED BY NIGHT HUNTER')).toBeInTheDocument()
+    expect(queryByText(/\[BOT\]/i)).toBeNull()
+    expect(queryByText(/\[PLAYER\]/i)).toBeNull()
+    expect(queryByText(/^NO XP$/i)).toBeNull()
+    expect(queryByText(/\+\d+\s*XP/i)).toBeNull()
   })
 })

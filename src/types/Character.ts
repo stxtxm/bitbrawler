@@ -2,7 +2,7 @@ export interface FightHistory {
   date: number; // Timestamp
   opponentName: string;
   won: boolean;
-  xpGained: number;
+  xpGained?: number;
 }
 
 export interface IncomingFightHistory {

@@ -1,15 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { screen, fireEvent } from '@testing-library/react';
 import HomePage from '../../pages/HomePage';
+import { renderWithRouter } from '../utils/router';
 
 describe('HomePage', () => {
   it('opens and closes patch notes modal', () => {
-    render(
-      <MemoryRouter>
-        <HomePage />
-      </MemoryRouter>
-    );
+    renderWithRouter(<HomePage />);
 
     const notesButton = screen.getByRole('button', { name: 'PATCH NOTES' });
     fireEvent.click(notesButton);

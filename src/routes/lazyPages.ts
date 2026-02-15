@@ -6,7 +6,7 @@ const rankingsImporter = () => import('../pages/Rankings')
 const loginImporter = () => import('../pages/Login')
 const arenaImporter = () => import('../pages/Arena')
 
-const canPrefetch = () => {
+export const canPrefetch = () => {
   if (typeof navigator === 'undefined') return true
   return navigator.onLine !== false
 }

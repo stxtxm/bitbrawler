@@ -11,8 +11,8 @@ export const UPDATE_NOTES: UpdateNote[] = [
     date: '2026-02-15',
     title: 'Organic combat activity',
     changes: [
-      'Bots now attack random same-level targets with more organic pacing.',
-      'Arena settings combat logs now include incoming attacks from bots and players (no XP impact).',
+      'Bots now attack random targets with organic pacing and finish remaining fights before daily reset.',
+      'Arena settings combat logs now include incoming attacks without exposing attacker type and without XP lines.',
       'Early lootboxes now include extra low-power level 1 common and uncommon items.',
     ],
   },

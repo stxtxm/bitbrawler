@@ -335,7 +335,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const historyEntry = {
       date: Date.now(),
       won,
-      xpGained,
       opponentName
     };
 

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useGame } from '../context/GameContext';
 import { useConnectionGate } from '../hooks/useConnectionGate';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -20,8 +20,11 @@ type SettingsLogEntry = {
     won: boolean;
     direction: 'outgoing' | 'incoming';
     displayName: string;
-    xpGained: number;
-    attackerIsBot?: boolean;
+};
+
+const formatSettingsLogDate = (timestamp: number) => {
+    const date = new Date(timestamp);
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 };
 
 const Arena = () => {
@@ -127,25 +130,25 @@ const Arena = () => {
     const totalBonusEntries = bonusOrder
         .map((key) => ({ key, value: totalBonus[key] || 0 }))
         .filter((entry) => entry.value > 0);
-    const combinedHistory: SettingsLogEntry[] = [
-        ...(activeCharacter.fightHistory || []).map((fight) => ({
-            date: fight.date,
-            won: fight.won,
-            direction: 'outgoing' as const,
-            displayName: fight.opponentName,
-            xpGained: fight.xpGained,
-        })),
-        ...(activeCharacter.incomingFightHistory || []).map((fight) => ({
-            date: fight.date,
-            won: fight.won,
-            direction: 'incoming' as const,
-            displayName: fight.attackerName,
-            xpGained: 0,
-            attackerIsBot: fight.attackerIsBot,
-        })),
-    ]
-        .sort((a, b) => b.date - a.date)
-        .slice(0, 20);
+    const combinedHistory: SettingsLogEntry[] = useMemo(
+        () => [
+            ...(activeCharacter.fightHistory || []).map((fight) => ({
+                date: fight.date,
+                won: fight.won,
+                direction: 'outgoing' as const,
+                displayName: fight.opponentName,
+            })),
+            ...(activeCharacter.incomingFightHistory || []).map((fight) => ({
+                date: fight.date,
+                won: fight.won,
+                direction: 'incoming' as const,
+                displayName: fight.attackerName,
+            })),
+        ]
+            .sort((a, b) => b.date - a.date)
+            .slice(0, 20),
+        [activeCharacter.fightHistory, activeCharacter.incomingFightHistory]
+    );
 
     const handleAllocateStat = async (stat: StatKey) => {
         if (allocatingStat || pendingStatPoints <= 0) return;
@@ -734,15 +737,12 @@ const Arena = () => {
                                                     <div className="history-info">
                                                         <div className="history-opponent">
                                                             {fight.direction === 'incoming'
-                                                                ? `ATTACKED BY ${fight.displayName}${fight.attackerIsBot ? ' [BOT]' : ' [PLAYER]'}`
+                                                                ? `ATTACKED BY ${fight.displayName}`
                                                                 : `VS ${fight.displayName}`}
                                                         </div>
                                                         <div className="history-date">
-                                                            {new Date(fight.date).toLocaleDateString()} {new Date(fight.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            {formatSettingsLogDate(fight.date)}
                                                         </div>
-                                                    </div>
-                                                    <div className={`history-xp ${fight.direction === 'incoming' ? 'no-xp' : ''}`}>
-                                                        {fight.direction === 'incoming' ? 'NO XP' : `+${fight.xpGained} XP`}
                                                     </div>
                                                 </div>
                                             ))

@@ -3,7 +3,8 @@ import { GAME_RULES } from '../../config/gameRules';
 import {
     buildLevelOneReserveTarget,
     getBotActivityProfile,
-    getBotFightBudgetForRun
+    getBotFightBudgetForRun,
+    isEndOfDayDrainWindow
 } from '../../utils/botBehaviorUtils';
 
 const sequenceRng = (values: number[]) => {
@@ -61,5 +62,11 @@ describe('botBehaviorUtils', () => {
             rng: sequenceRng([0.99])
         });
         expect(budget).toBe(0);
+    });
+
+    it('detects end-of-day drain window at configured hour', () => {
+        expect(isEndOfDayDrainWindow(22)).toBe(true);
+        expect(isEndOfDayDrainWindow(23)).toBe(true);
+        expect(isEndOfDayDrainWindow(21)).toBe(false);
     });
 });

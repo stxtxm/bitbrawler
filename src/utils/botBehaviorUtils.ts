@@ -36,6 +36,15 @@ export const getBotActivityProfile = (botId: string, seed = ''): BotActivityProf
     };
 };
 
+export const isEndOfDayDrainWindow = (
+    parisHour: number,
+    startHour = GAME_RULES.BOTS.END_OF_DAY_DRAIN_START_HOUR
+): boolean => {
+    const safeHour = clamp(Math.floor(parisHour), 0, 23);
+    const safeStart = clamp(Math.floor(startHour), 0, 23);
+    return safeHour >= safeStart;
+};
+
 export const getBotFightBudgetForRun = ({
     fightsLeft,
     parisHour,
