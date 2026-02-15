@@ -1,8 +1,12 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PixelIcon } from '../components/PixelIcon'
 import { GameLogo } from '../components/GameLogo'
+import { UPDATE_NOTES } from '../data/updateNotes'
 
 const HomePage = () => {
+  const [showUpdateNotes, setShowUpdateNotes] = useState(false)
+
   return (
     <div className="container retro-container home-page">
       <header className="game-header">
@@ -35,6 +39,13 @@ const HomePage = () => {
             <Link to="/rankings" className="button secondary">
               HALL OF FAME
             </Link>
+            <button
+              type="button"
+              className="button secondary update-notes-btn"
+              onClick={() => setShowUpdateNotes(true)}
+            >
+              PATCH NOTES
+            </button>
           </div>
         </div>
 
@@ -69,6 +80,32 @@ const HomePage = () => {
           </div>
         </div>
       </main>
+
+      {showUpdateNotes && (
+        <div className="retro-modal-overlay home-notes-overlay" onClick={() => setShowUpdateNotes(false)}>
+          <div className="retro-modal home-notes-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">PATCH NOTES</div>
+            <div className="modal-body">
+              <div className="home-notes-list">
+                {UPDATE_NOTES.map((note) => (
+                  <article key={`${note.version}-${note.date}`} className="home-note-entry">
+                    <h3>{note.version} · {note.date}</h3>
+                    <p className="home-note-title">{note.title}</p>
+                    <ul>
+                      {note.changes.map((change) => (
+                        <li key={change}>{change}</li>
+                      ))}
+                    </ul>
+                  </article>
+                ))}
+              </div>
+              <button type="button" className="button primary-btn" onClick={() => setShowUpdateNotes(false)}>
+                CLOSE
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

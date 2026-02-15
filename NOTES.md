@@ -23,8 +23,9 @@ Matchmaking + anti-cheat
 
 Combat rules
 - `calculateCombatStats` includes FOC and inventory bonuses; diminishing returns at higher stats.
+- Combat tuning constants are centralized in `src/config/combatBalance.ts` for quicker balancing edits.
 - Hit chance is DEX/FOC weighted; crit chance from LUK (capped), magic surge from INT.
-- Comeback boost when HP < 40% (damage + hit chance).
+- Comeback boost when HP < 35% (damage + hit chance).
 - `simulateCombat` returns a timeline for HP animations and combat logs.
 
 Lootbox + inventory
@@ -59,6 +60,7 @@ UI tuning
 - Combat actions include subtle 8-bit impact overlays and reaction animations; mobile overlay avoids grid flashes.
 - Arena settings modal owns Auto mode toggle, combat logs, and safe delete actions.
 - Rankings list is read-only, stats hidden, with internal scroll.
+- Home page includes a PATCH NOTES button that opens update notes in a modal.
 
 Testing
 - Unit: combat math, lootbox gating, equipment bonuses, XP, stats, RNG.

@@ -1,7 +1,7 @@
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Character } from '../types/Character';
-import { applyEquipmentToCharacter } from './equipmentUtils';
+import { calculateCombatStats } from './combatUtils';
 
 export interface MatchmakingResult {
     opponent: Character;
@@ -35,18 +35,11 @@ export async function findOpponent(player: Character): Promise<MatchmakingResult
 }
 
 /**
- * Calculate total power of a character for balanced matchmaking
+ * Calculate combat power using shared combat math so matchmaking stays aligned
+ * with actual fight outcomes.
  */
 function calculateTotalPower(character: Character): number {
-    const effective = applyEquipmentToCharacter(character);
-    return (
-        effective.strength +
-        effective.vitality +
-        effective.dexterity +
-        effective.luck +
-        effective.intelligence +
-        effective.focus
-    );
+    return calculateCombatStats(character).totalPower;
 }
 
 /**
@@ -90,7 +83,7 @@ async function findOpponentByExactLevel(player: Character): Promise<MatchmakingR
         // Calculate player's total power
         const playerPower = calculateTotalPower(player);
 
-        // Sort candidates by power similarity (closest total stats to player)
+        // Sort candidates by closest combat power
         const sortedCandidates = candidates
             .map(candidate => ({
                 character: candidate,

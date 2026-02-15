@@ -13,6 +13,7 @@ Bitbrawler is a retro 8-bit arena experience where players create a pixel fighte
 - Global daily reset for fights/opponent tracking (scripted, Paris midnight w/ DST-safe cron)
 - Hall of Fame rankings
 - Arena settings modal with Auto mode toggle, combat logs, and safe character delete
+- Home PATCH NOTES modal for quick update summaries
 - PWA install experience (mobile and desktop)
 - Error boundary and connection-aware UX
 - Responsive layout for mobile, tablet, desktop, and large displays
@@ -59,7 +60,7 @@ npm run daily-reset:run
 ```
 src/
   components/        UI building blocks (PixelCharacter, ConnectionModal, ErrorBoundary)
-  config/            Firebase configuration
+  config/            Firebase + combat balancing configuration
   context/           Game state and persistence
   hooks/             Online status and connection gates
   pages/             Home, Login, Creation, Arena, Rankings

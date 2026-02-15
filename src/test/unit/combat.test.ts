@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { calculateCombatStats, getCombatBalance, simulateCombat } from '../../utils/combatUtils';
 import { Character } from '../../types/Character';
+import { COMBAT_BALANCE } from '../../config/combatBalance';
 
 describe('Combat System', () => {
     const mockCharacter: Character = {
@@ -67,6 +68,15 @@ describe('Combat System', () => {
         expect(lowDelta).toBeGreaterThan(highDelta);
     });
 
+    it('should grant a small level-based combat boost at equal raw stats', () => {
+        const lowLevel = calculateCombatStats({ ...mockCharacter, level: 1 });
+        const highLevel = calculateCombatStats({ ...mockCharacter, level: 20 });
+
+        expect(highLevel.offense).toBeGreaterThan(lowLevel.offense);
+        expect(highLevel.defense).toBeGreaterThan(lowLevel.defense);
+        expect(highLevel.totalPower).toBeGreaterThan(lowLevel.totalPower);
+    });
+
     it('should correctly identify a character class/balance', () => {
         const stats = calculateCombatStats(mockCharacter);
         const balancedStats = { ...stats, offense: 10, defense: 10, speed: 10, magicPower: 10, focus: 10 };
@@ -102,7 +112,7 @@ describe('Combat System', () => {
         const defender = { ...mockCharacter, name: 'Defender', vitality: 18 };
         const result = simulateCombat(attacker as Character, defender as Character);
 
-        expect(result.rounds).toBeLessThanOrEqual(50);
+        expect(result.rounds).toBeLessThanOrEqual(COMBAT_BALANCE.roundLimit);
         result.timeline.forEach((snapshot) => {
             expect(snapshot.attackerHp).toBeGreaterThanOrEqual(0);
             expect(snapshot.defenderHp).toBeGreaterThanOrEqual(0);
