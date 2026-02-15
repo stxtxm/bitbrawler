@@ -12,7 +12,7 @@ import {
     getBotActivityProfile,
     getBotFightBudgetForRun
 } from '../src/utils/botBehaviorUtils';
-import { Character } from '../src/types/Character';
+import { Character, IncomingFightHistory } from '../src/types/Character';
 import { initFirebaseAdmin, loadServiceAccount } from './firebaseAdmin';
 
 // Initialize Firebase Admin
@@ -60,6 +60,19 @@ const normalizeTimestamp = (value: unknown, fallback = 0): number => {
     return fallback;
 };
 
+const normalizeIncomingFightHistory = (value: unknown): IncomingFightHistory[] => {
+    if (!Array.isArray(value)) return [];
+
+    return value
+        .filter((entry): entry is IncomingFightHistory => (
+            !!entry &&
+            typeof entry === 'object' &&
+            typeof (entry as IncomingFightHistory).date === 'number' &&
+            typeof (entry as IncomingFightHistory).attackerName === 'string' &&
+            typeof (entry as IncomingFightHistory).won === 'boolean'
+        ));
+};
+
 try {
     serviceAccount = loadServiceAccount();
 } catch (error) {
@@ -74,6 +87,27 @@ if (!serviceAccount) {
 
 const db = initFirebaseAdmin(serviceAccount);
 const INVENTORY_CAPACITY = 24;
+const COMBAT_LOG_HISTORY_CAP = 20;
+
+async function appendIncomingFightHistory(targetCharacterId: string, entry: IncomingFightHistory): Promise<boolean> {
+    try {
+        const targetRef = db.collection('characters').doc(targetCharacterId);
+        await db.runTransaction(async (transaction) => {
+            const snapshot = await transaction.get(targetRef);
+            if (!snapshot.exists) return;
+
+            const existing = normalizeIncomingFightHistory(snapshot.get('incomingFightHistory'));
+            const nextHistory = [entry, ...existing].slice(0, COMBAT_LOG_HISTORY_CAP);
+            transaction.update(targetRef, {
+                incomingFightHistory: nextHistory
+            });
+        });
+        return true;
+    } catch (error) {
+        console.warn(`⚠️ Failed to append incoming fight history for ${targetCharacterId}:`, error);
+        return false;
+    }
+}
 
 async function measurePopulation(): Promise<PopulationSnapshot> {
     const [totalBotsSnapshot, levelOneBotsSnapshot, levelOneCharactersSnapshot] = await Promise.all([
@@ -359,6 +393,25 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
             // SIMULATE REAL COMBAT using the shared logic
             const combat = simulateCombat(currentBotState, opponent);
             const won = combat.winner === 'attacker';
+            const opponentType = opponent.isBot ? 'BOT' : 'PLAYER';
+            const combatOutcome = won ? 'WIN' : 'LOSS';
+
+            console.log(`⚔️ ${currentBotState.name} vs ${opponent.name} [${opponentType}] -> ${combatOutcome}`);
+
+            if (opponent.firestoreId) {
+                const incomingEntry: IncomingFightHistory = {
+                    date: Date.now(),
+                    attackerName: currentBotState.name,
+                    attackerId: currentBotState.firestoreId,
+                    attackerIsBot: true,
+                    won: !won,
+                    source: 'bot'
+                };
+                const logged = await appendIncomingFightHistory(opponent.firestoreId, incomingEntry);
+                if (logged) {
+                    console.log(`📝 Logged incoming attack on ${opponent.name} [${opponentType}]`);
+                }
+            }
 
             // Calculate XP exactly like a player
             const xpGained = calculateFightXp(currentBotState.level, won);

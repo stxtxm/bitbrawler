@@ -7,6 +7,16 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '0.8.0',
+    date: '2026-02-15',
+    title: 'Organic combat activity',
+    changes: [
+      'Bots now attack random same-level targets with more organic pacing.',
+      'Arena settings combat logs now include incoming attacks from bots and players (no XP impact).',
+      'Early lootboxes now include extra low-power level 1 common and uncommon items.',
+    ],
+  },
+  {
     version: '0.7.0',
     date: '2026-02-15',
     title: 'Daily reset reliability',

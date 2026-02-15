@@ -20,6 +20,7 @@ Matchmaking + anti-cheat
 - If no match is found while pending, energy is refunded and `pendingFight` cleared.
 - `resolvePendingFight` runs on load if a pending fight exists and resolves via `simulateCombat`
   without consuming extra energy.
+- Outgoing fights append an incoming defense log on the target character (no XP/progression impact).
 
 Combat rules
 - `calculateCombatStats` includes FOC and inventory bonuses; diminishing returns at higher stats.
@@ -34,6 +35,7 @@ Lootbox + inventory
 - Inventory capacity is 24; items are auto-applied (no manual equip flow).
 - Lootbox rolls exclude items already owned; if all items are owned, no new loot is granted.
 - Items are defined in `src/data/itemAssets.ts` with `common` and `uncommon` rarities.
+- Added extra low-power level 1 common/uncommon items to diversify early lootbox rewards.
 - `equipmentUtils` aggregates inventory bonuses; arena + combat use `applyEquipmentToCharacter`.
 - Inventory modal shows item details on hover/tap and a total bonus summary.
 
@@ -45,6 +47,7 @@ Bots and automation
 - Bots auto-roll the daily lootbox (logs: opened, inventory full, already opened).
 - Daily reset script clears `foughtToday` and restores fight energy at Paris midnight.
 - Bot activity now uses per-bot profiles and run budgets for more organic pacing.
+- Bot action logs now show random target + result and write incoming defense logs for targets.
 - Name generator adds a short letter suffix to avoid duplicates in a session.
 
 Offline behavior

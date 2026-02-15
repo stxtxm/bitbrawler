@@ -7,9 +7,10 @@ Bitbrawler is a retro 8-bit arena experience where players create a pixel fighte
 - Character creation with RPG stats (STR, VIT, DEX, LUK, INT, FOC)
 - Arena fights with XP gain, level ups, and enhanced combat (crit + magic + focus)
 - Strict same-level matchmaking with power balancing, daily opponent rotation, and animated opponent scan
-- Daily lootbox + inventory items (auto-applied stat bonuses, rarity-based)
+- Daily lootbox + inventory items (auto-applied stat bonuses, rarity-based, expanded level 1 pool)
 - Bot engine with population management, organic activity pacing, level 1 starter reserve, real combat simulation, and daily lootbox usage (hourly scheduler)
 - Anti-cheat fight reservation (pending fights resolve even if player quits mid-matchmaking)
+- Incoming attack logs in Arena settings (bot/player attacks shown, no XP impact)
 - Global daily reset for fights/opponent tracking (scripted, Paris midnight w/ DST-safe cron)
 - Hall of Fame rankings
 - Arena settings modal with Auto mode toggle, combat logs, and safe character delete

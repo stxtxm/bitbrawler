@@ -1,7 +1,7 @@
 import { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from 'react';
-import { collection, query, where, getDocs, getDocsFromServer, updateDoc, doc, limit, deleteField, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, getDocsFromServer, updateDoc, doc, limit, deleteField, deleteDoc, runTransaction } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { Character, PendingFight, PendingFightOpponent } from '../types/Character';
+import { Character, IncomingFightHistory, PendingFight, PendingFightOpponent } from '../types/Character';
 import { gainXp } from '../utils/xpUtils';
 import { applyStatPoint, StatKey } from '../utils/statUtils';
 import { GAME_RULES } from '../config/gameRules';
@@ -43,6 +43,7 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 // Constants
 const LOCAL_STORAGE_KEY = 'bitbrawler_active_char';
 const INVENTORY_CAPACITY = 24;
+const COMBAT_LOG_HISTORY_CAP = 20;
 
 const normalizeCharacter = (character: Character): Character => {
   return {
@@ -51,6 +52,7 @@ const normalizeCharacter = (character: Character): Character => {
     statPoints: character.statPoints ?? 0,
     inventory: character.inventory ?? [],
     lastLootRoll: character.lastLootRoll ?? 0,
+    incomingFightHistory: character.incomingFightHistory ?? [],
   };
 };
 
@@ -296,6 +298,26 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  const appendIncomingFightHistory = useCallback(async (
+    targetCharacterId: string,
+    entry: IncomingFightHistory
+  ) => {
+    const targetRef = doc(db, 'characters', targetCharacterId);
+
+    await runTransaction(db, async (transaction) => {
+      const snapshot = await transaction.get(targetRef);
+      if (!snapshot.exists()) return;
+
+      const existingRaw = snapshot.get('incomingFightHistory');
+      const existing = Array.isArray(existingRaw) ? existingRaw : [];
+
+      const nextHistory = [entry, ...existing].slice(0, COMBAT_LOG_HISTORY_CAP);
+      transaction.update(targetRef, {
+        incomingFightHistory: nextHistory
+      });
+    });
+  }, []);
+
   const useFight = useCallback(async (
     won: boolean,
     xpGained: number,
@@ -357,6 +379,21 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       persistCharacter(updatedChar);
       initiatedMatchmakingRef.current = false;
 
+      if (opponentId && opponentId !== baseCharacter.firestoreId) {
+        const incomingEntry: IncomingFightHistory = {
+          date: Date.now(),
+          attackerName: baseCharacter.name,
+          attackerId: baseCharacter.firestoreId,
+          attackerIsBot: !!baseCharacter.isBot,
+          won: !won,
+          source: 'player'
+        };
+
+        appendIncomingFightHistory(opponentId, incomingEntry).catch((error) => {
+          console.warn('Incoming fight history sync skipped:', error);
+        });
+      }
+
       // Set XP notifications
       setLastXpGain(xpGained);
       if (xpResult.leveledUp) {
@@ -383,7 +420,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       handleFirebaseError(error, 'use-fight');
       throw new Error("Connection error - fight not counted. Please check your internet connection.");
     }
-  }, [activeCharacter, handleFirebaseError, persistCharacter]);
+  }, [activeCharacter, appendIncomingFightHistory, handleFirebaseError, persistCharacter]);
 
   const allocateStatPoint = useCallback(async (stat: StatKey): Promise<Character | null> => {
     if (!activeCharacter?.firestoreId) return null;

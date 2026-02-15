@@ -1983,6 +1983,10 @@
         }
     }
 
+    &.incoming {
+        background: rgba(99, 179, 255, 0.06);
+    }
+
     @include mobile {
         padding: 8px;
         gap: 8px;
@@ -2267,6 +2271,10 @@
     @include mobile {
         font-size: 0.55rem;
     }
+}
+
+.history-xp.no-xp {
+    color: #8b9bb3;
 }
 
 .no-history {

@@ -5,6 +5,15 @@ export interface FightHistory {
   xpGained: number;
 }
 
+export interface IncomingFightHistory {
+  date: number; // Timestamp
+  attackerName: string;
+  attackerId?: string;
+  attackerIsBot?: boolean;
+  won: boolean; // Defender perspective
+  source?: 'player' | 'bot';
+}
+
 export interface PendingFightOpponent {
   firestoreId?: string;
   name: string;
@@ -66,6 +75,7 @@ export interface Character {
   firestoreId?: string; // For updates
   isBot?: boolean; // To identify automated characters
   fightHistory?: FightHistory[];
+  incomingFightHistory?: IncomingFightHistory[]; // Incoming attacks (no XP/progression impact)
   foughtToday?: string[]; // Array of firestoreIds fought today
   statPoints?: number; // Unspent stat points from level-ups
   inventory?: string[]; // Item ids

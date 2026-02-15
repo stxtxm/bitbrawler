@@ -15,6 +15,15 @@ import { applyEquipmentToCharacter, getEquipmentBonuses, getItemById } from '../
 import { canRollLootbox } from '../utils/lootboxUtils';
 import { ItemStats, PixelItemAsset } from '../types/Item';
 
+type SettingsLogEntry = {
+    date: number;
+    won: boolean;
+    direction: 'outgoing' | 'incoming';
+    displayName: string;
+    xpGained: number;
+    attackerIsBot?: boolean;
+};
+
 const Arena = () => {
     const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, firebaseAvailable, allocateStatPoint, rollLootbox, setAutoMode, deleteCharacter } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
@@ -118,6 +127,25 @@ const Arena = () => {
     const totalBonusEntries = bonusOrder
         .map((key) => ({ key, value: totalBonus[key] || 0 }))
         .filter((entry) => entry.value > 0);
+    const combinedHistory: SettingsLogEntry[] = [
+        ...(activeCharacter.fightHistory || []).map((fight) => ({
+            date: fight.date,
+            won: fight.won,
+            direction: 'outgoing' as const,
+            displayName: fight.opponentName,
+            xpGained: fight.xpGained,
+        })),
+        ...(activeCharacter.incomingFightHistory || []).map((fight) => ({
+            date: fight.date,
+            won: fight.won,
+            direction: 'incoming' as const,
+            displayName: fight.attackerName,
+            xpGained: 0,
+            attackerIsBot: fight.attackerIsBot,
+        })),
+    ]
+        .sort((a, b) => b.date - a.date)
+        .slice(0, 20);
 
     const handleAllocateStat = async (stat: StatKey) => {
         if (allocatingStat || pendingStatPoints <= 0) return;
@@ -693,19 +721,29 @@ const Arena = () => {
                             {settingsView === 'logs' ? (
                                 <>
                                     <div className="history-list settings-history-list">
-                                        {!activeCharacter.fightHistory || activeCharacter.fightHistory.length === 0 ? (
-                                            <div className="no-history">NO BATTLES RECORDED YET</div>
+                                        {combinedHistory.length === 0 ? (
+                                            <div className="no-history">NO COMBAT ACTIVITY YET</div>
                                         ) : (
-                                            activeCharacter.fightHistory.map((fight, i) => (
-                                                <div key={i} className={`history-item ${fight.won ? 'won' : 'lost'}`}>
-                                                    <div className="history-status">{fight.won ? 'WIN' : 'LOST'}</div>
+                                            combinedHistory.map((fight, i) => (
+                                                <div key={i} className={`history-item ${fight.won ? 'won' : 'lost'} ${fight.direction}`}>
+                                                    <div className="history-status">
+                                                        {fight.direction === 'incoming'
+                                                            ? (fight.won ? 'DEFENDED' : 'HIT')
+                                                            : (fight.won ? 'WIN' : 'LOST')}
+                                                    </div>
                                                     <div className="history-info">
-                                                        <div className="history-opponent">VS {fight.opponentName}</div>
+                                                        <div className="history-opponent">
+                                                            {fight.direction === 'incoming'
+                                                                ? `ATTACKED BY ${fight.displayName}${fight.attackerIsBot ? ' [BOT]' : ' [PLAYER]'}`
+                                                                : `VS ${fight.displayName}`}
+                                                        </div>
                                                         <div className="history-date">
                                                             {new Date(fight.date).toLocaleDateString()} {new Date(fight.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                         </div>
                                                     </div>
-                                                    <div className="history-xp">+{fight.xpGained} XP</div>
+                                                    <div className={`history-xp ${fight.direction === 'incoming' ? 'no-xp' : ''}`}>
+                                                        {fight.direction === 'incoming' ? 'NO XP' : `+${fight.xpGained} XP`}
+                                                    </div>
                                                 </div>
                                             ))
                                         )}
@@ -741,7 +779,7 @@ const Arena = () => {
                                         <div className="settings-row">
                                             <div className="settings-label">
                                                 <span>COMBAT LOGS</span>
-                                                <span className="settings-sub">Review your last 20 battles.</span>
+                                                <span className="settings-sub">Review your last 20 outgoing and incoming encounters.</span>
                                             </div>
                                             <button className="button settings-link" onClick={handleOpenHistoryFromSettings}>
                                                 <PixelIcon type="history" size={14} />
