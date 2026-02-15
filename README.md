@@ -78,9 +78,6 @@ public/
 ## Notes
 See `NOTES.md` for recent UI/UX decisions and implementation details.
 
-## Docs
-- `docs/agent-handoff.md`: implementation and testing conventions for future agents.
-
 ## Handoff Notes
 - Settings modal now owns combat logs (no header icon). Check `src/pages/Arena.tsx` + `src/styles/pages/_arena.scss`.
 - Rankings list is read-only (no character switching) and uses internal scroll.
