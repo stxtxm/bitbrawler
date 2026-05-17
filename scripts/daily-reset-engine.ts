@@ -25,7 +25,7 @@ if (!serviceAccount) {
 }
 
 const db = initFirebaseAdmin(serviceAccount);
-const RESET_SCOPE = (process.env.RESET_SCOPE || 'all').toLowerCase();
+const RESET_SCOPE = (process.env.RESET_SCOPE || 'incremental').toLowerCase();
 const RESET_WINDOW_MINUTES = 45;
 const RESET_WINDOW_LABEL = `00:00-00:${String(RESET_WINDOW_MINUTES).padStart(2, '0')}`;
 const RESET_STATE_COLLECTION = 'maintenance';
@@ -133,12 +133,43 @@ async function runDailyReset() {
             });
 
             batchIndex += 1;
-            await batch.commit();
-            totalUpdated += slice.length;
-            console.log(`✅ Batch ${batchIndex} committed (${slice.length} characters).`);
+            try {
+                await batch.commit();
+                totalUpdated += slice.length;
+                console.log(`✅ Batch ${batchIndex} committed (${slice.length} characters).`);
+            } catch (batchError) {
+                console.error(`❌ Batch ${batchIndex} failed (${slice.length} characters):`, batchError);
+            }
         }
 
-        console.log(`✨ Successfully reset energy for ${totalUpdated} characters.`);
+        // Spot check: verify a sample of characters received the reset
+        if (totalUpdated > 0) {
+            try {
+                const sampleSize = Math.min(5, totalUpdated);
+                const sampleIds = docs
+                    .slice(0, sampleSize * 10)
+                    .filter(() => Math.random() < 0.3)
+                    .slice(0, sampleSize)
+                    .map(d => d.id);
+
+                if (sampleIds.length > 0) {
+                    const sampleSnap = await Promise.all(
+                        sampleIds.map(id => db.collection('characters').doc(id).get())
+                    );
+                    const verified = sampleSnap.filter(s => s.exists && s.get('fightsLeft') === GAME_RULES.COMBAT.MAX_DAILY_FIGHTS).length;
+                    if (verified === sampleIds.length) {
+                        console.log(`✅ Spot check: ${verified}/${sampleIds.length} characters verified (fightsLeft = ${GAME_RULES.COMBAT.MAX_DAILY_FIGHTS})`);
+                    } else {
+                        console.warn(`⚠️ Spot check: ${verified}/${sampleIds.length} characters have correct fightsLeft. Check logs.`);
+                    }
+                }
+            } catch (spotError) {
+                console.warn('⚠️ Spot check query failed:', spotError);
+            }
+        }
+
+        const finalStatus = totalUpdated > 0 ? 'completed' : 'no_updates';
+        console.log(`✨ ${finalStatus === 'completed' ? `Successfully reset energy for ${totalUpdated} characters.` : 'No characters needed reset.'}`);
         await resetStateRef.set({
             lastCompletedKey: parisResetLabel,
             lastCompletedAt: now.getTime(),
@@ -146,7 +177,9 @@ async function runDailyReset() {
             targetParisMidnightUtc: parisResetMidnightUtc,
             window: RESET_WINDOW_LABEL,
             scope: RESET_SCOPE,
-            updatedCharacters: totalUpdated
+            updatedCharacters: totalUpdated,
+            status: finalStatus,
+            batchErrors: batchIndex > 0 && totalUpdated < docs.length ? 'partial' : 'none'
         }, { merge: true });
 
     } catch (error) {
