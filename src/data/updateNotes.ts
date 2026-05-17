@@ -7,6 +7,18 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '0.9.0',
+    date: '2026-05-17',
+    title: 'Combat balance & XP progression',
+    changes: [
+      'Focus stat now contributes more to total power, hit accuracy, and magic surge chance.',
+      'Focus surge is easier to trigger and deals more bonus damage.',
+      'Critical hit cap raised from 28% to 30% for luck-focused builds.',
+      'Comeback mechanic slightly stronger when low on HP.',
+      'XP earned per fight scales faster at high levels (8% per level instead of 5%).',
+    ],
+  },
+  {
     version: '0.8.0',
     date: '2026-02-15',
     title: 'Organic combat activity',

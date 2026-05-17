@@ -22,12 +22,15 @@ Matchmaking + anti-cheat
   without consuming extra energy.
 - Outgoing fights append an incoming defense log on the target character (no XP/progression impact).
 
-Combat rules
+Combat rules (v0.9.0)
 - `calculateCombatStats` includes FOC and inventory bonuses; diminishing returns at higher stats.
 - Combat tuning constants are centralized in `src/config/combatBalance.ts` for quicker balancing edits.
-- Hit chance is DEX/FOC weighted; crit chance from LUK (capped), magic surge from INT.
-- Comeback boost when HP < 35% (damage + hit chance).
+- Hit chance is DEX/FOC weighted (FOC weight 0.35); crit chance from LUK (capped at 30%), magic surge from INT.
+- Focus surge triggers up to 12% of the time with 1.12x damage multiplier. Surge chance per focus point: 0.30.
+- Focus contributes to total power at 85% weight (up from 60%) — no longer a dead stat.
+- Comeback boost when HP < 35% (damage ×1.12, +4 hit chance).
 - `simulateCombat` returns a timeline for HP animations and combat logs.
+- XP per fight scales at 8% per level above 1 (up from 5%) to sustain high-level progression.
 
 Lootbox + inventory
 - Daily lootbox gating uses the same Paris day reset as fight energy (`canRollLootbox`).
