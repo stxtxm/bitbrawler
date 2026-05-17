@@ -14,12 +14,12 @@ export const GAME_RULES = {
     BOTS: {
         MIN_POPULATION: 2,
         MIN_LVL1_BOTS: 10, // Ensure at least 10 lvl 1 bots
-        MIN_LVL1_ACTIVE_BOTS: 2, // Keep a few lvl1 bots progressing naturally
+        MIN_LVL1_ACTIVE_BOTS: 1, // Keep 1 lvl1 bot progressing (reduced from 2)
         LVL1_RESERVE_PER_HUMAN: 1.5, // Dynamic reserve sizing for real players
         LVL1_RESERVE_BUFFER: 6, // Extra starter buffer even with few humans
-        ACTIVITY_RATE: 0.35, // Percentage of bots active per run
-        MAX_FIGHTS_PER_RUN: 3, // Avoid all-energy dumps in a single run
+        ACTIVITY_RATE: 0.20, // Percentage of bots active per run (reduced from 0.35)
+        MAX_FIGHTS_PER_RUN: 2, // Avoid all-energy dumps in a single run (reduced from 3)
         END_OF_DAY_DRAIN_START_HOUR: 22, // Paris hour when bots must finish all remaining fights before reset
-        GROWTH_CHANCE: 1.0, // Create a bot every scheduled run
+        GROWTH_CHANCE: 0.5, // Create a bot every other run (reduced from 1.0)
     }
 } as const;
