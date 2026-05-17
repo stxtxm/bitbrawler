@@ -185,6 +185,20 @@ async function runBotLogic() {
             protectedLevelOneCount: levelOneReserveTarget
         });
 
+        // 4. Final guarantee: ensure at least 5 level 1 bots exist for new players
+        const finalPop = await measurePopulation();
+        if (finalPop.levelOneBots < 5) {
+            const needed = 5 - finalPop.levelOneBots;
+            console.log(`🛡️ Final check: lvl1 bots = ${finalPop.levelOneBots}, spawning ${needed} more...`);
+            for (let i = 0; i < needed; i++) {
+                await createNewBot();
+            }
+            const afterPop = await measurePopulation();
+            console.log(`✅ Post-spawn: ${afterPop.levelOneBots} lvl1 bots now available`);
+        } else {
+            console.log(`✅ Final check: ${finalPop.levelOneBots} lvl1 bots available (≥ 5)`);
+        }
+
         console.log('✅ Bot Engine finished successfully');
     } catch (error) {
         console.error('❌ Bot Engine failed:', error);
@@ -343,206 +357,211 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
     };
 
     for (const bot of bots) {
-        if (!bot.firestoreId) continue;
+        try {
+            if (!bot.firestoreId) continue;
 
-        const isProtected = protectionEnabled && protectedIds.has(bot.firestoreId);
-        let currentBotState = { ...bot, statPoints: bot.statPoints ?? 0 };
-        let fightsLeft = currentBotState.fightsLeft;
-        let totalXpGained = 0;
-        const startLevel = currentBotState.level;
-        let didLootbox = false;
-        let didReset = false;
+            const isProtected = protectionEnabled && protectedIds.has(bot.firestoreId);
+            let currentBotState = { ...bot, statPoints: bot.statPoints ?? 0 };
+            let fightsLeft = currentBotState.fightsLeft;
+            let totalXpGained = 0;
+            const startLevel = currentBotState.level;
+            let didLootbox = false;
+            let didReset = false;
 
-        // 1. Daily Reset Logic
-        if (shouldResetDaily(currentBotState.lastFightReset, runNow)) {
-            const parisMidnightUtc = getZonedMidnightUtc(new Date(runNow), DAILY_RESET_TIMEZONE);
-            fightsLeft = GAME_RULES.COMBAT.MAX_DAILY_FIGHTS;
-            currentBotState.lastFightReset = parisMidnightUtc;
-            currentBotState.battleCount = 0;
-            didReset = true;
-            console.log(`🔄 Daily reset for bot ${currentBotState.name}`);
-        }
+            // 1. Daily Reset Logic
+            if (shouldResetDaily(currentBotState.lastFightReset, runNow)) {
+                const parisMidnightUtc = getZonedMidnightUtc(new Date(runNow), DAILY_RESET_TIMEZONE);
+                fightsLeft = GAME_RULES.COMBAT.MAX_DAILY_FIGHTS;
+                currentBotState.lastFightReset = parisMidnightUtc;
+                currentBotState.battleCount = 0;
+                didReset = true;
+                console.log(`🔄 Daily reset for bot ${currentBotState.name}`);
+            }
 
-        // 2. Daily Lootbox
-        if (canRollLootbox(currentBotState.lastLootRoll, runNow)) {
-            const inventory = currentBotState.inventory || [];
-            if (inventory.length < INVENTORY_CAPACITY) {
-                const item = rollLootbox(ITEM_ASSETS, { excludeIds: inventory, level: currentBotState.level });
-                if (item) {
-                    currentBotState = {
-                        ...currentBotState,
-                        inventory: [...inventory, item.id],
-                        lastLootRoll: runNow
-                    };
-                    didLootbox = true;
-                    console.log(`🎁 Bot ${currentBotState.name} opened lootbox: ${item.name} (${item.rarity})`);
+            // 2. Daily Lootbox
+            if (canRollLootbox(currentBotState.lastLootRoll, runNow)) {
+                const inventory = currentBotState.inventory || [];
+                if (inventory.length < INVENTORY_CAPACITY) {
+                    const item = rollLootbox(ITEM_ASSETS, { excludeIds: inventory, level: currentBotState.level });
+                    if (item) {
+                        currentBotState = {
+                            ...currentBotState,
+                            inventory: [...inventory, item.id],
+                            lastLootRoll: runNow
+                        };
+                        didLootbox = true;
+                        console.log(`🎁 Bot ${currentBotState.name} opened lootbox: ${item.name} (${item.rarity})`);
+                    } else {
+                        console.log(`🎁 Bot ${currentBotState.name} already collected all lootbox items.`);
+                    }
                 } else {
-                    console.log(`🎁 Bot ${currentBotState.name} already collected all lootbox items.`);
+                    console.log(`📦 Bot ${currentBotState.name} inventory full. Skipping lootbox.`);
                 }
             } else {
-                console.log(`📦 Bot ${currentBotState.name} inventory full. Skipping lootbox.`);
+                console.log(`⏳ Bot ${currentBotState.name} already opened daily lootbox.`);
             }
-        } else {
-            console.log(`⏳ Bot ${currentBotState.name} already opened daily lootbox.`);
-        }
 
-        // 3. Fight Logic (variable pace per bot profile + day progression)
-        const fightBudget = isProtected
-            ? 0
-            : endOfDayDrain
-                ? fightsLeft
-                : getBotFightBudgetForRun({
-                    fightsLeft,
-                    parisHour: runParisHour,
-                    profile: getBotActivityProfile(bot.firestoreId, bot.seed)
-                });
-        let actionsTaken = 0;
+            // 3. Fight Logic (variable pace per bot profile + day progression)
+            const fightBudget = isProtected
+                ? 0
+                : endOfDayDrain
+                    ? fightsLeft
+                    : getBotFightBudgetForRun({
+                        fightsLeft,
+                        parisHour: runParisHour,
+                        profile: getBotActivityProfile(bot.firestoreId, bot.seed)
+                    });
+            let actionsTaken = 0;
 
-        while (fightsLeft > 0 && actionsTaken < fightBudget) {
-            // Find a suitable opponent for the bot
-            await loadOpponentsForLevel(currentBotState.level);
-            const pool = opponentsByLevel.get(currentBotState.level) ?? [];
-            let potentialOpponents = pool.filter(c =>
-                c.firestoreId !== currentBotState.firestoreId
-            );
-
-            if (potentialOpponents.length === 0 && endOfDayDrain) {
-                await loadFallbackOpponentPool();
-                potentialOpponents = (fallbackOpponentPool ?? []).filter(c =>
+            while (fightsLeft > 0 && actionsTaken < fightBudget) {
+                // Find a suitable opponent for the bot
+                await loadOpponentsForLevel(currentBotState.level);
+                const pool = opponentsByLevel.get(currentBotState.level) ?? [];
+                let potentialOpponents = pool.filter(c =>
                     c.firestoreId !== currentBotState.firestoreId
                 );
+
+                if (potentialOpponents.length === 0 && endOfDayDrain) {
+                    await loadFallbackOpponentPool();
+                    potentialOpponents = (fallbackOpponentPool ?? []).filter(c =>
+                        c.firestoreId !== currentBotState.firestoreId
+                    );
+                    if (potentialOpponents.length > 0) {
+                        console.log(`🔁 ${currentBotState.name}: fallback opponent pool used for end-of-day catch-up.`);
+                    }
+                }
+
+                let opponent: Character;
                 if (potentialOpponents.length > 0) {
-                    console.log(`🔁 ${currentBotState.name}: fallback opponent pool used for end-of-day catch-up.`);
-                }
-            }
-
-            let opponent: Character;
-            if (potentialOpponents.length > 0) {
-                opponent = potentialOpponents[Math.floor(Math.random() * potentialOpponents.length)];
-            } else {
-                console.log(
-                    endOfDayDrain
-                        ? `⚠️ No opponents available for bot ${currentBotState.name}. Skipping remaining fights.`
-                        : `⚠️ No same-level opponent for bot ${currentBotState.name} (LVL ${currentBotState.level}). Skipping fights.`
-                );
-                break;
-            }
-
-            // SIMULATE REAL COMBAT using the shared logic
-            const combat = simulateCombat(currentBotState, opponent);
-            const won = combat.winner === 'attacker';
-            const opponentType = opponent.isBot ? 'BOT' : 'PLAYER';
-            const combatOutcome = won ? 'WIN' : 'LOSS';
-
-            console.log(`⚔️ ${currentBotState.name} vs ${opponent.name} [${opponentType}] -> ${combatOutcome}`);
-
-            if (opponent.firestoreId) {
-                const incomingEntry: IncomingFightHistory = {
-                    date: Date.now(),
-                    attackerName: currentBotState.name,
-                    attackerId: currentBotState.firestoreId,
-                    attackerIsBot: true,
-                    won: !won,
-                    source: 'bot'
-                };
-                const logged = await appendIncomingFightHistory(opponent.firestoreId, incomingEntry);
-                if (logged) {
-                    console.log(`📝 Logged incoming attack on ${opponent.name} [${opponentType}]`);
-                }
-            }
-
-            // Calculate XP exactly like a player
-            const xpGained = calculateFightXp(currentBotState.level, won);
-            totalXpGained += xpGained;
-
-            // Apply XP/Level up logic
-            const result = gainXp(currentBotState, xpGained);
-            const pointsGained = result.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL;
-            const updatedBase = {
-                ...result.updatedCharacter,
-                statPoints: result.updatedCharacter.statPoints ?? currentBotState.statPoints ?? 0
-            };
-            const withStats = pointsGained > 0
-                ? autoAllocateStatPointsRandom(updatedBase, pointsGained)
-                : updatedBase;
-
-            // Update local state for next iteration
-            // Record history
-            const historyEntry = {
-                date: Date.now(),
-                won,
-                opponentName: opponent.name
-            };
-            const existingHistory = currentBotState.fightHistory || [];
-            const newHistory = [historyEntry, ...existingHistory].slice(0, 20);
-
-            // Update local state for next iteration
-            currentBotState = {
-                ...withStats,
-                fightsLeft: fightsLeft - 1,
-                wins: won ? (currentBotState.wins || 0) + 1 : (currentBotState.wins || 0),
-                losses: won ? (currentBotState.losses || 0) : (currentBotState.losses || 0) + 1,
-                battleCount: (currentBotState.battleCount || 0) + 1,
-                fightHistory: newHistory,
-                statPoints: withStats.statPoints
-            };
-
-            fightsLeft--;
-            actionsTaken++;
-        }
-
-        const shouldPersist = actionsTaken > 0 || didLootbox || didReset;
-        if (shouldPersist) {
-            // Final database update
-            const finalUpdates: Partial<Character> = {
-                experience: currentBotState.experience,
-                level: currentBotState.level,
-                fightsLeft: currentBotState.fightsLeft,
-                wins: currentBotState.wins,
-                losses: currentBotState.losses,
-                battleCount: currentBotState.battleCount,
-                fightHistory: currentBotState.fightHistory,
-                strength: currentBotState.strength,
-                vitality: currentBotState.vitality,
-                dexterity: currentBotState.dexterity,
-                luck: currentBotState.luck,
-                intelligence: currentBotState.intelligence,
-                focus: currentBotState.focus,
-                hp: currentBotState.hp,
-                maxHp: currentBotState.maxHp,
-                lastFightReset: currentBotState.lastFightReset,
-                statPoints: currentBotState.statPoints,
-                inventory: currentBotState.inventory,
-                lastLootRoll: currentBotState.lastLootRoll
-            };
-
-            const sanitizedUpdates = Object.fromEntries(
-                Object.entries(finalUpdates).filter(([, value]) => value !== undefined)
-            );
-
-            await db.collection('characters').doc(bot.firestoreId).update(sanitizedUpdates);
-
-            const levelDiff = currentBotState.level - startLevel;
-            if (actionsTaken > 0) {
-                console.log(`👊 Bot ${bot.name}: ${actionsTaken}/${fightBudget} fights, +${totalXpGained} XP. ${levelDiff > 0 ? `🆙 LVL UP +${levelDiff}` : ''} Energy left: ${currentBotState.fightsLeft}`);
-            } else if (didLootbox) {
-                console.log(`📦 Bot ${bot.name} updated inventory. Energy left: ${currentBotState.fightsLeft}`);
-            } else if (isProtected && fightsLeft > 0) {
-                console.log(`🛡️ Bot ${bot.name} kept in protected pool (energy: ${fightsLeft}).`);
-            } else {
-                const restReason = fightBudget === 0 && fightsLeft > 0 ? 'scheduled rest' : '0 energy';
-                console.log(`💤 Bot ${bot.name} is resting (${restReason}).`);
-            }
-        } else {
-            if (fightsLeft > 0) {
-                if (fightBudget === 0) {
-                    console.log(`💤 Bot ${bot.name} skipped activity this run (energy: ${fightsLeft}).`);
+                    opponent = potentialOpponents[Math.floor(Math.random() * potentialOpponents.length)];
                 } else {
-                    console.log(`💤 Bot ${bot.name} found no opponents (energy: ${fightsLeft}).`);
+                    console.log(
+                        endOfDayDrain
+                            ? `⚠️ No opponents available for bot ${currentBotState.name}. Skipping remaining fights.`
+                            : `⚠️ No same-level opponent for bot ${currentBotState.name} (LVL ${currentBotState.level}). Skipping fights.`
+                    );
+                    break;
+                }
+
+                // SIMULATE REAL COMBAT using the shared logic
+                const combat = simulateCombat(currentBotState, opponent);
+                const won = combat.winner === 'attacker';
+                const opponentType = opponent.isBot ? 'BOT' : 'PLAYER';
+                const combatOutcome = won ? 'WIN' : 'LOSS';
+
+                console.log(`⚔️ ${currentBotState.name} vs ${opponent.name} [${opponentType}] -> ${combatOutcome}`);
+
+                if (opponent.firestoreId) {
+                    const incomingEntry: IncomingFightHistory = {
+                        date: Date.now(),
+                        attackerName: currentBotState.name,
+                        attackerId: currentBotState.firestoreId,
+                        attackerIsBot: true,
+                        won: !won,
+                        source: 'bot'
+                    };
+                    const logged = await appendIncomingFightHistory(opponent.firestoreId, incomingEntry);
+                    if (logged) {
+                        console.log(`📝 Logged incoming attack on ${opponent.name} [${opponentType}]`);
+                    }
+                }
+
+                // Calculate XP exactly like a player
+                const xpGained = calculateFightXp(currentBotState.level, won);
+                totalXpGained += xpGained;
+
+                // Apply XP/Level up logic
+                const result = gainXp(currentBotState, xpGained);
+                const pointsGained = result.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL;
+                const updatedBase = {
+                    ...result.updatedCharacter,
+                    statPoints: result.updatedCharacter.statPoints ?? currentBotState.statPoints ?? 0
+                };
+                const withStats = pointsGained > 0
+                    ? autoAllocateStatPointsRandom(updatedBase, pointsGained)
+                    : updatedBase;
+
+                // Update local state for next iteration
+                // Record history
+                const historyEntry = {
+                    date: Date.now(),
+                    won,
+                    opponentName: opponent.name
+                };
+                const existingHistory = currentBotState.fightHistory || [];
+                const newHistory = [historyEntry, ...existingHistory].slice(0, 20);
+
+                // Update local state for next iteration
+                currentBotState = {
+                    ...withStats,
+                    fightsLeft: fightsLeft - 1,
+                    wins: won ? (currentBotState.wins || 0) + 1 : (currentBotState.wins || 0),
+                    losses: won ? (currentBotState.losses || 0) : (currentBotState.losses || 0) + 1,
+                    battleCount: (currentBotState.battleCount || 0) + 1,
+                    fightHistory: newHistory,
+                    statPoints: withStats.statPoints
+                };
+
+                fightsLeft--;
+                actionsTaken++;
+            }
+
+            const shouldPersist = actionsTaken > 0 || didLootbox || didReset;
+            if (shouldPersist) {
+                // Final database update
+                const finalUpdates: Partial<Character> = {
+                    experience: currentBotState.experience,
+                    level: currentBotState.level,
+                    fightsLeft: currentBotState.fightsLeft,
+                    wins: currentBotState.wins,
+                    losses: currentBotState.losses,
+                    battleCount: currentBotState.battleCount,
+                    fightHistory: currentBotState.fightHistory,
+                    strength: currentBotState.strength,
+                    vitality: currentBotState.vitality,
+                    dexterity: currentBotState.dexterity,
+                    luck: currentBotState.luck,
+                    intelligence: currentBotState.intelligence,
+                    focus: currentBotState.focus,
+                    hp: currentBotState.hp,
+                    maxHp: currentBotState.maxHp,
+                    lastFightReset: currentBotState.lastFightReset,
+                    statPoints: currentBotState.statPoints,
+                    inventory: currentBotState.inventory,
+                    lastLootRoll: currentBotState.lastLootRoll
+                };
+
+                const sanitizedUpdates = Object.fromEntries(
+                    Object.entries(finalUpdates).filter(([, value]) => value !== undefined)
+                );
+
+                await db.collection('characters').doc(bot.firestoreId).update(sanitizedUpdates);
+
+                const levelDiff = currentBotState.level - startLevel;
+                if (actionsTaken > 0) {
+                    console.log(`👊 Bot ${bot.name}: ${actionsTaken}/${fightBudget} fights, +${totalXpGained} XP. ${levelDiff > 0 ? `🆙 LVL UP +${levelDiff}` : ''} Energy left: ${currentBotState.fightsLeft}`);
+                } else if (didLootbox) {
+                    console.log(`📦 Bot ${bot.name} updated inventory. Energy left: ${currentBotState.fightsLeft}`);
+                } else if (isProtected && fightsLeft > 0) {
+                    console.log(`🛡️ Bot ${bot.name} kept in protected pool (energy: ${fightsLeft}).`);
+                } else {
+                    const restReason = fightBudget === 0 && fightsLeft > 0 ? 'scheduled rest' : '0 energy';
+                    console.log(`💤 Bot ${bot.name} is resting (${restReason}).`);
                 }
             } else {
-                console.log(`💤 Bot ${bot.name} is resting (0 energy).`);
+                if (fightsLeft > 0) {
+                    if (fightBudget === 0) {
+                        console.log(`💤 Bot ${bot.name} skipped activity this run (energy: ${fightsLeft}).`);
+                    } else {
+                        console.log(`💤 Bot ${bot.name} found no opponents (energy: ${fightsLeft}).`);
+                    }
+                } else {
+                    console.log(`💤 Bot ${bot.name} is resting (0 energy).`);
+                }
             }
+        } catch (botError) {
+            const botName = bot.name || bot.firestoreId || 'unknown';
+            console.warn(`⚠️ Bot ${botName} skipped due to error:`, botError);
         }
     }
 }

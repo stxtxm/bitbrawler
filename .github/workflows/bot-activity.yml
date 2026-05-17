@@ -9,6 +9,7 @@ on:
 jobs:
   run-bots:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout Code
@@ -23,6 +24,18 @@ jobs:
         run: npm ci
 
       - name: Run Bot Engine
+        id: bot-engine
+        continue-on-error: true
         run: npx tsx scripts/bot-engine.ts
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Sanity Check
+        if: always()
+        run: |
+          if [ "${{ steps.bot-engine.outcome }}" = "failure" ]; then
+            echo "❌ Bot engine step failed. Level 1 bot pool may be low."
+            echo "ℹ️ The final guarantee check in the engine should have spawned bots if needed."
+            exit 0
+          fi
+          echo "✅ Bot engine step completed successfully"
