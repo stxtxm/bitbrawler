@@ -8,8 +8,8 @@ export const COMBAT_BALANCE = {
     magicPower: 1.6,
     focus: 1.35,
     critChance: 1.35,
-    critCap: 28,
-    totalPowerFocusWeight: 0.6,
+    critCap: 30,
+    totalPowerFocusWeight: 0.85,
   },
   levelScaling: {
     perLevel: 0.012,
@@ -19,7 +19,7 @@ export const COMBAT_BALANCE = {
   comeback: {
     hpThresholdRatio: 0.35,
     hitBonus: 4,
-    damageMultiplier: 1.1,
+    damageMultiplier: 1.12,
   },
   initiative: {
     baseChance: 0.5,
@@ -30,7 +30,7 @@ export const COMBAT_BALANCE = {
   hitChance: {
     base: 72,
     speedWeight: 0.4,
-    focusWeight: 0.25,
+    focusWeight: 0.35,
     min: 60,
     max: 92,
   },
@@ -53,9 +53,9 @@ export const COMBAT_BALANCE = {
     maxStability: 0.08,
   },
   focusSurge: {
-    chanceWeight: 0.22,
-    maxChance: 8,
-    damageMultiplier: 1.08,
+    chanceWeight: 0.30,
+    maxChance: 12,
+    damageMultiplier: 1.12,
   },
 } as const;
 

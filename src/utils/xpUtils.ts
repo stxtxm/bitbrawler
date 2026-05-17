@@ -61,8 +61,8 @@ export function getXpProgress(character: Character) {
 export function calculateFightXp(playerLevel: number, won: boolean): number {
     const baseXp = won ? GAME_RULES.COMBAT.XP_WIN : GAME_RULES.COMBAT.XP_LOSS;
 
-    // Level scaling: +5% XP per level to keep progression meaningful
-    const scaling = 1 + (playerLevel - 1) * 0.05;
+    // Level scaling: +8% XP per level to keep progression meaningful
+    const scaling = 1 + (playerLevel - 1) * 0.08;
 
     // Add small random variance (+/- 10%)
     const variance = 0.9 + Math.random() * 0.2;

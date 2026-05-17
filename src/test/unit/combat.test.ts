@@ -39,11 +39,11 @@ describe('Combat System', () => {
         expect(stats.focus).toBeCloseTo(13.5, 1);
     });
 
-    it('should cap critical chance at 28%', () => {
+    it('should cap critical chance at 30%', () => {
         const luckyChar = { ...mockCharacter, luck: 50 };
         const stats = calculateCombatStats(luckyChar as Character);
 
-        expect(stats.critChance).toBe(28);
+        expect(stats.critChance).toBe(30);
     });
 
     it('should include inventory bonuses in combat stats', () => {
