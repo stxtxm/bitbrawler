@@ -99,3 +99,33 @@ jobs:
             echo "All model attempts failed."
             exit 1
           fi
+
+      - name: Backfill /oc on bot-created issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ISSUES=$(gh issue list --state open --limit 30 --json number,author,body --jq '.[]')
+          if [ -z "$ISSUES" ]; then
+            echo "No open issues to inspect."
+            exit 0
+          fi
+
+          echo "$ISSUES" | while IFS= read -r ISSUE_JSON; do
+            ISSUE_NUM=$(echo "$ISSUE_JSON" | jq -r '.number')
+            ISSUE_AUTHOR=$(echo "$ISSUE_JSON" | jq -r '.author.login // ""')
+            ISSUE_BODY=$(echo "$ISSUE_JSON" | jq -r '.body // ""')
+
+            if ! echo "$ISSUE_AUTHOR" | grep -qiE '(github-actions|opencode-agent|\[bot\])'; then
+              continue
+            fi
+
+            if echo "$ISSUE_BODY" | grep -qiE '(^|[[:space:]])/(oc|opencode)($|[[:space:]])'; then
+              continue
+            fi
+
+            UPDATED_BODY="/oc
+
+$ISSUE_BODY"
+            gh issue edit "$ISSUE_NUM" --body "$UPDATED_BODY"
+            echo "Added /oc to issue #$ISSUE_NUM"
+          done

@@ -6,7 +6,6 @@ on:
 
 jobs:
   ensure-oc-trigger:
-    if: github.event.issue.user.login == 'app/github-actions' || github.event.issue.user.login == 'opencode-agent'
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -16,6 +15,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          AUTHOR="${{ github.event.issue.user.login }}"
+          if ! echo "$AUTHOR" | grep -qiE '(github-actions|opencode-agent|\[bot\])'; then
+            echo "Issue author '$AUTHOR' is not an automation bot. Skipping."
+            exit 0
+          fi
+
           BODY="${{ github.event.issue.body }}"
           if echo "$BODY" | grep -qiE '(^|[[:space:]])/(oc|opencode)($|[[:space:]])'; then
             echo "Issue already contains /oc or /opencode trigger."
