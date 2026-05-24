@@ -31,14 +31,23 @@ function dateKey() {
 
 function loadStats() {
   try {
-    return JSON.parse(readFileSync(STATS_FILE, 'utf-8'))
-  } catch {
+    const data = readFileSync(STATS_FILE, 'utf-8')
+    console.log(`   📄 Loaded stats from ${STATS_FILE}`)
+    return JSON.parse(data)
+  } catch (err) {
+    console.log(`   📄 No existing stats at ${STATS_FILE}, starting fresh (${err.message})`)
     return []
   }
 }
 
 function saveStats(stats) {
-  writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2))
+  try {
+    writeFileSync(STATS_FILE, JSON.stringify(stats, null, 2))
+    console.log(`   💾 Stats written to ${STATS_FILE} (${stats.length} records)`)
+  } catch (err) {
+    console.error(`   ❌ Failed to write stats to ${STATS_FILE}: ${err.message}`)
+    throw err
+  }
 }
 
 async function sleep(ms) {
@@ -46,8 +55,24 @@ async function sleep(ms) {
 }
 
 async function run() {
+  console.log('═══════════════════════════════════════════')
+  console.log('  🤖 QA Bot starting')
+  console.log('═══════════════════════════════════════════')
+  console.log(`  Config:`)
+  console.log(`    baseUrl:        ${config.baseUrl}`)
+  console.log(`    fightsPerRun:   ${config.fightsPerRun}`)
+  console.log(`    statsFile:      ${STATS_FILE}`)
+  console.log(`    screenshotsDir: ${SCREENSHOTS_DIR}`)
+  console.log(`    headless:       ${config.headless}`)
+  console.log(`    slowMo:         ${config.slowMo}`)
+  console.log(`  CWD: ${process.cwd()}`)
+  console.log('───────────────────────────────────────────')
+
   if (!existsSync(SCREENSHOTS_DIR)) {
     mkdirSync(SCREENSHOTS_DIR, { recursive: true })
+    console.log(`   📁 Created screenshots directory: ${SCREENSHOTS_DIR}`)
+  } else {
+    console.log(`   📁 Screenshots directory exists: ${SCREENSHOTS_DIR}`)
   }
 
   const browser = await chromium.launch({
@@ -288,21 +313,31 @@ async function run() {
     const stats = loadStats()
     stats.push(runRecord)
     saveStats(stats)
-    console.log('✅ Stats saved')
+    console.log(`✅ Stats saved (run #${stats.length})`)
 
   } catch (err) {
     console.error('❌ Error:', err.message)
+    console.error(`   Stack: ${err.stack}`)
     runRecord.errors.push(err.message)
-    const errorScreenshot = join(SCREENSHOTS_DIR, `${dateKey()}-error.png`)
-    await page.screenshot({ path: errorScreenshot }).catch(() => {})
-    console.log(`   Screenshot saved: ${errorScreenshot}`)
 
-    const stats = loadStats()
-    stats.push(runRecord)
-    saveStats(stats)
+    if (typeof page !== 'undefined' && page) {
+      const errorScreenshot = join(SCREENSHOTS_DIR, `${dateKey()}-error.png`)
+      await page.screenshot({ path: errorScreenshot }).catch(e => console.error(`   Could not save error screenshot: ${e.message}`))
+      console.log(`   Screenshot saved: ${errorScreenshot}`)
+    }
+
+    try {
+      const stats = loadStats()
+      stats.push(runRecord)
+      saveStats(stats)
+      console.log(`✅ Error stats saved (run #${stats.length})`)
+    } catch (saveErr) {
+      console.error(`❌ Could not save error stats: ${saveErr.message}`)
+    }
   } finally {
     await browser.close()
     console.log('🏁 Browser closed')
+    console.log('═══════════════════════════════════════════')
   }
 }
 
