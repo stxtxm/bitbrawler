@@ -131,12 +131,14 @@ bitbrawler/
 │   │   ├── CombatView.tsx
 │   │   ├── ConnectionModal.tsx
 │   │   ├── ErrorBoundary.tsx
+│   │   ├── Footer.tsx
 │   │   ├── GameLogo.tsx
 │   │   ├── LoadingScreen.tsx
 │   │   ├── PixelAssets.ts
 │   │   ├── PixelCharacter.tsx
 │   │   ├── PixelIcon.tsx
 │   │   ├── PixelItemIcon.tsx
+│   │   ├── PwaInstallPrompt.tsx
 │   │   └── StatusScreen.tsx
 │   ├── config/              # Supabase client, combat balance, game rules
 │   │   ├── combatBalance.ts
@@ -152,6 +154,7 @@ bitbrawler/
 │   │   ├── CharacterCreation.tsx
 │   │   ├── HomePage.tsx
 │   │   ├── Login.tsx
+│   │   ├── NotFound.tsx
 │   │   └── Rankings.tsx
 │   ├── routes/              # Lazy loading configuration
 │   │   └── lazyPages.ts
