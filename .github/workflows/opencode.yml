@@ -3,22 +3,15 @@ name: OpenCode Agent
 on:
   issues:
     types: [opened]
-  issue_comment:
-    types: [created]
 
 jobs:
   implement:
-    if: |
-      (github.event_name == 'issues' &&
-        (contains(github.event.issue.body, '/oc') || contains(github.event.issue.body, '/opencode')))
-      || (github.event_name == 'issue_comment' &&
-        (contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode')))
+    if: contains(github.event.issue.body, '/oc') || contains(github.event.issue.body, '/opencode')
     runs-on: self-hosted
-    timeout-minutes: 60
+    timeout-minutes: 30
     permissions:
       contents: write
       pull-requests: write
-      issues: write
 
     steps:
       - name: Checkout
@@ -26,43 +19,28 @@ jobs:
         with:
           fetch-depth: 1
 
-      - name: Configure git
+      - name: Setup
         run: |
           git config user.name "opencode-agent"
           git config user.email "agent@opencode.ai"
-
-      - name: Create feature branch
-        run: |
           BRANCH="feat/auto-issue-${{ github.event.issue.number }}"
           git checkout -b "$BRANCH"
           echo "BRANCH=$BRANCH" >> $GITHUB_ENV
 
-      - name: Extract prompt from issue
-        id: prompt
-        run: |
-          if [ "${{ github.event_name }}" = "issues" ]; then
-            BODY='${{ github.event.issue.body }}'
-          else
-            BODY='${{ github.event.comment.body }}'
-          fi
-          PROMPT=$(echo "$BODY" | sed 's/\/oc//g; s/\/opencode//g' | xargs)
-          echo "PROMPT=$PROMPT" >> $GITHUB_ENV
-
-      - name: Run opencode locally
+      - name: Implement with opencode (isolated data dir)
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          OPENCODE_DATA_DIR: /tmp/opencode-runner-data
         run: |
-          opencode run --model "opencode/deepseek-v4-flash-free" "$PROMPT" --yes
+          mkdir -p /tmp/opencode-runner-data
+          PROMPT="$(echo '${{ github.event.issue.body }}' | sed 's|/oc||g; s|/opencode||g' | xargs)"
+          /home/timo/.opencode/bin/opencode run --yes --model "opencode/deepseek-v4-flash-free" "Implement in this codebase: $PROMPT"
 
       - name: Push and create PR
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          git push origin "$BRANCH"
-          gh pr create \
-            --title "${{ github.event.issue.title }}" \
-            --body "Closes #${{ github.event.issue.number }}
-
-            Implementation automatisee par opencode." \
-            --base master \
-            --label "auto-generated"
+          git add -A
+          git diff --cached --quiet || git commit -m "feat: automatic implementation of #${{ github.event.issue.number }}"
+          git push origin "$BRANCH" 2>&1
+          gh pr create --title "${{ github.event.issue.title }}" --body "Closes #${{ github.event.issue.number }}" --base master --label "auto-generated" 2>&1 || true
