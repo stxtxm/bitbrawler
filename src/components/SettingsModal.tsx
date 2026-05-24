@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Character } from '../types/Character';
 import { PixelIcon } from './PixelIcon';
+import { useSound } from '../hooks/useSound';
 import { SettingsLogEntry, formatSettingsLogDate } from '../utils/arenaUtils';
 
 interface SettingsModalProps {
@@ -30,6 +31,7 @@ const SettingsModal = ({
     const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm'>('idle');
     const [deletePending, setDeletePending] = useState(false);
     const [localAutoModeUpdating, setLocalAutoModeUpdating] = useState(false);
+    const sound = useSound();
 
     const combinedHistory: SettingsLogEntry[] = useMemo(
         () => [
@@ -190,6 +192,46 @@ const SettingsModal = ({
                                         VIEW LOGS
                                     </button>
                                 </div>
+                            </div>
+
+                            <div className="settings-divider" />
+
+                            <div className="settings-section">
+                                <div className="settings-row">
+                                    <div className="settings-label">
+                                        <span>SOUND FX</span>
+                                        <span className="settings-sub">Toggle retro sound effects.</span>
+                                    </div>
+                                    <button
+                                        className={`pixel-switch ${sound.enabled ? 'on' : 'off'}`}
+                                        onClick={() => sound.setEnabled(!sound.enabled)}
+                                        role="switch"
+                                        aria-checked={sound.enabled}
+                                        aria-label="Sound effects"
+                                    >
+                                        <span className="switch-knob" />
+                                        <span className="switch-text">{sound.enabled ? 'ON' : 'OFF'}</span>
+                                    </button>
+                                </div>
+                                {sound.enabled && (
+                                    <div className="settings-volume-row">
+                                        <label className="volume-label" htmlFor="sound-volume-modal">VOLUME</label>
+                                        <div className="volume-control">
+                                            <span className="volume-icon">♩</span>
+                                            <input
+                                                id="sound-volume-modal"
+                                                type="range"
+                                                min="0"
+                                                max="100"
+                                                value={Math.round(sound.volume * 100)}
+                                                onChange={(e) => sound.setVolume(Number(e.target.value) / 100)}
+                                                className="pixel-slider"
+                                                aria-label="Sound volume"
+                                            />
+                                            <span className="volume-value">{Math.round(sound.volume * 100)}%</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="settings-divider" />
