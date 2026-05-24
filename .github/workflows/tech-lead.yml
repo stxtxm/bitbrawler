@@ -31,26 +31,25 @@ jobs:
           git config user.name "opencode-agent"
           git config user.email "agent@opencode.ai"
 
-      - name: Merge at most one safe agent PR
+      - name: Merge one eligible agent PR with green checks
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
-          CANDIDATES=$(gh pr list --state open --json number,author,isDraft,mergeStateStatus,labels,createdAt --jq '[.[]
-            | .author_login = (.author.login // "")
-            | .has_auto_label = ([.labels[]?.name] | index("auto-generated") != null)
-            | .is_agent = (.has_auto_label or .author_login == "app/github-actions" or .author_login == "opencode-agent" or (.author_login | test("bot"; "i")))
-            | select(.is_agent == true and .isDraft == false)
-          ] | sort_by(.createdAt)')
+          PR_NUM=$(gh pr list --state open --limit 50 --json number,author,isDraft,labels,createdAt \
+            --jq '[.[]
+              | .author_login = (.author.login // "")
+              | .has_auto_label = ([.labels[]?.name] | index("auto-generated") != null)
+              | .is_agent = (.has_auto_label or .author_login == "app/github-actions" or .author_login == "opencode-agent" or (.author_login | test("bot"; "i")))
+              | select(.is_agent == true and .isDraft == false)
+            ] | sort_by(.createdAt) | .[0].number // empty')
 
-          COUNT=$(echo "$CANDIDATES" | jq 'length')
-          if [ "$COUNT" -eq 0 ]; then
-            echo "No eligible agent PRs."
+          if [ -z "${PR_NUM:-}" ]; then
+            echo "No eligible agent PR found."
             exit 0
           fi
 
-          PR_NUM=$(echo "$CANDIDATES" | jq -r '.[0].number')
           MERGE_STATE=$(gh pr view "$PR_NUM" --json mergeStateStatus --jq '.mergeStateStatus // ""')
           if [ "$MERGE_STATE" != "CLEAN" ] && [ "$MERGE_STATE" != "HAS_HOOKS" ]; then
             echo "PR #$PR_NUM not mergeable now (state=$MERGE_STATE)."
@@ -63,31 +62,37 @@ jobs:
             exit 0
           fi
 
-          echo "Merging PR #$PR_NUM (safe mode: max 1 per run)..."
+          echo "Merging PR #$PR_NUM..."
           gh pr merge "$PR_NUM" --squash --delete-branch
 
-      - name: Run Tech Lead agent
+      - name: Run Tech Lead agent with fallback models
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
+
           MODELS=(
             "opencode/deepseek-v4-flash-free"
             "opencode/nemotron"
             "opencode/big-pickle"
           )
 
-          PROMPT="Analyse le repo aujourd'hui. Consulte les stats QA (qa/stats.json), regarde les commits récents, puis crée des issues avec /oc pour les améliorations à faire."
+          PROMPT="Analyse le repo aujourd'hui. Vérifie la cohérence des PRs et leur ordre de merge, et si une PR casse la suite crée une issue de correction ciblée pour le même agent. Crée des issues actionnables avec /oc en première ligne du body."
 
           SUCCESS=0
           for MODEL in "${MODELS[@]}"; do
+            echo "Trying model: $MODEL"
             if opencode run --dangerously-skip-permissions --agent tech-lead --model "$MODEL" "$PROMPT"; then
               SUCCESS=1
+              echo "Model selected: $MODEL"
               break
             fi
+            echo "Model failed: $MODEL"
           done
 
           if [ "$SUCCESS" -ne 1 ]; then
+            echo "All model attempts failed."
             exit 1
           fi
 
@@ -95,6 +100,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
+
           gh issue list --state open --limit 50 --json number,author,body --jq '.[] | @json' | while IFS= read -r issue; do
             num=$(echo "$issue" | jq -r '.number')
             author=$(echo "$issue" | jq -r '.author.login // ""')
@@ -103,6 +110,7 @@ jobs:
             if ! echo "$author" | grep -qiE '(github-actions|opencode-agent|\[bot\])'; then
               continue
             fi
+
             if echo "$body" | grep -qiE '(^|[[:space:]])/(oc|opencode)($|[[:space:]])'; then
               continue
             fi
