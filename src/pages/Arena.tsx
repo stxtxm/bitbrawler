@@ -487,7 +487,7 @@ const Arena = () => {
                         <div className="stat-row principal">
                             <span>HP</span>
                             <div className="bar-container">
-                                <div className="bar hp-bar" style={{ width: `${(effectiveCharacter.hp / effectiveCharacter.maxHp) * 100}%` }}></div>
+                                <div className="bar hp-bar" style={{ width: '100%' }}></div>
                             </div>
                             <span className="stat-val">{effectiveCharacter.maxHp}</span>
                         </div>
