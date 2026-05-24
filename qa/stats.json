@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "date": "2026-05-24T18:10:44.359Z",
+    "run": "2026-05-24",
+    "character": "QA-BRUTALBOLT",
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "final_stats": null,
+    "errors": [
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('button:has-text(\"FIGHT\"), button:has-text(\"LOGIN\"), button:has-text(\"START\")').first()\n"
+    ],
+    "load_times_ms": {
+      "home": 1119
+    }
+  }
+]
