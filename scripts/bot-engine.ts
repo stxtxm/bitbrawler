@@ -193,7 +193,7 @@ async function createNewBot(): Promise<string> {
         dexterity: stats.dexterity,
         luck: stats.luck,
         intelligence: stats.intelligence,
-        focus: stats.focus ?? 10,
+        focus: stats.focus ?? GAME_RULES.STATS.BASE_VALUE,
         is_bot: true,
         experience: 0,
         wins: 0,

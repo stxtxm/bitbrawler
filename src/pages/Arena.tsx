@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useGame } from '../context/GameContext';
 import { useConnectionGate } from '../hooks/useConnectionGate';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { useSound } from '../hooks/useSound';
 import ConnectionModal from '../components/ConnectionModal';
 import { PixelCharacter } from '../components/PixelCharacter';
 import { PixelIcon } from '../components/PixelIcon';
@@ -30,6 +31,7 @@ const formatSettingsLogDate = (timestamp: number) => {
 
 const Arena = () => {
     const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, allocateStatPoint, rollLootbox, setAutoMode, deleteCharacter } = useGame();
+    const sound = useSound();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const navigate = useNavigate();
     const isOnline = useOnlineStatus();
@@ -73,6 +75,7 @@ const Arena = () => {
         if (lastLevelUp !== null) {
             setShowLevelUp(true);
             setDeferLevelUp(false);
+            sound.play('levelup');
         }
     }, [lastLevelUp]);
 
@@ -228,6 +231,7 @@ const Arena = () => {
                     setLootboxResult(item);
                     setInventorySelectedId(item.id);
                     setInventoryHoveredId(item.id);
+                    sound.play('lootbox');
                 }
             } catch (error: any) {
                 openModal(error.message || connectionMessage);
@@ -332,6 +336,7 @@ const Arena = () => {
             const opponentName = combatData?.opponent.name || 'UNKNOWN';
             const opponentId = combatData?.opponent.id || '';
             await useFight(won, xpGained, opponentName, opponentId);
+            sound.play(won ? 'victory' : 'defeat');
         } catch (error: any) {
             console.error('Fight result save failed:', error);
             openModal(error.message || connectionMessage);
@@ -428,7 +433,7 @@ const Arena = () => {
                 <div className="header-actions">
                     <button
                         className="button icon-btn"
-                        onClick={() => setSettingsOpen(true)}
+                        onClick={() => { sound.play('nav'); setSettingsOpen(true); }}
                         title="Settings"
                         aria-label="Settings"
                     >
@@ -436,7 +441,7 @@ const Arena = () => {
                     </button>
                     <button
                         className="button icon-btn inventory-btn"
-                        onClick={() => setInventoryOpen(true)}
+                        onClick={() => { sound.play('nav'); setInventoryOpen(true); }}
                         title="Inventory"
                         aria-label="Inventory"
                     >
@@ -488,7 +493,7 @@ const Arena = () => {
                         <div className="stat-row principal">
                             <span>HP</span>
                             <div className="bar-container">
-                                <div className="bar hp-bar" style={{ width: '100%' }}></div>
+                                <div className="bar hp-bar" style={{ width: `${(effectiveCharacter.hp / effectiveCharacter.maxHp) * 100}%` }}></div>
                             </div>
                             <span className="stat-val">{effectiveCharacter.maxHp}</span>
                         </div>
@@ -716,7 +721,7 @@ const Arena = () => {
                                 )}
                                 <h2 className="inventory-title">{settingsView === 'logs' ? 'COMBAT LOGS' : 'SETTINGS'}</h2>
                             </div>
-                            <button className="inventory-close" onClick={() => setSettingsOpen(false)} aria-label="Close settings">
+                            <button className="inventory-close" onClick={() => { sound.play('nav'); setSettingsOpen(false); }} aria-label="Close settings">
                                 <PixelIcon type="close" size={14} />
                             </button>
                         </div>
@@ -787,6 +792,46 @@ const Arena = () => {
                                                 VIEW LOGS
                                             </button>
                                         </div>
+                                    </div>
+
+                                    <div className="settings-divider" />
+
+                                    <div className="settings-section">
+                                        <div className="settings-row">
+                                            <div className="settings-label">
+                                                <span>SOUND FX</span>
+                                                <span className="settings-sub">Toggle retro sound effects.</span>
+                                            </div>
+                                            <button
+                                                className={`pixel-switch ${sound.enabled ? 'on' : 'off'}`}
+                                                onClick={() => sound.setEnabled(!sound.enabled)}
+                                                role="switch"
+                                                aria-checked={sound.enabled}
+                                                aria-label="Sound effects"
+                                            >
+                                                <span className="switch-knob" />
+                                                <span className="switch-text">{sound.enabled ? 'ON' : 'OFF'}</span>
+                                            </button>
+                                        </div>
+                                        {sound.enabled && (
+                                            <div className="settings-volume-row">
+                                                <label className="volume-label" htmlFor="sound-volume">VOLUME</label>
+                                                <div className="volume-control">
+                                                    <span className="volume-icon">♩</span>
+                                                    <input
+                                                        id="sound-volume"
+                                                        type="range"
+                                                        min="0"
+                                                        max="100"
+                                                        value={Math.round(sound.volume * 100)}
+                                                        onChange={(e) => sound.setVolume(Number(e.target.value) / 100)}
+                                                        className="pixel-slider"
+                                                        aria-label="Sound volume"
+                                                    />
+                                                    <span className="volume-value">{Math.round(sound.volume * 100)}%</span>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="settings-divider" />
