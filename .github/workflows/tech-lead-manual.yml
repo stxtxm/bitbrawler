@@ -1,0 +1,213 @@
+name: Tech Lead Manual
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  tech-lead:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 20
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install opencode
+        run: npm install -g opencode-ai
+
+      - name: Configure git
+        run: |
+          git config user.name "opencode-agent"
+          git config user.email "agent@opencode.ai"
+
+      - name: Merge auto-generated PRs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          PR_LIST=$(gh pr list --state open --json number,title,author,labels,isDraft,body)
+          PR_COUNT=$(echo "$PR_LIST" | jq 'length')
+          if [ "$PR_COUNT" -eq 0 ]; then
+            echo "No open PRs to evaluate."
+            exit 0
+          fi
+
+          # Build a deterministic merge queue:
+          # - only agent PRs
+          # - skip drafts
+          # - prefer Queue run order from linked issue body when available
+          QUEUED=$(echo "$PR_LIST" | jq -c '
+            [ .[]
+              | .author_login = (.author.login // "")
+              | .has_auto_label = ([.labels[]?.name] | index("auto-generated") != null)
+              | .is_agent = (.has_auto_label
+                            or (.author_login == "app/github-actions")
+                            or (.author_login == "opencode-agent")
+                            or (.author_login | test("bot"; "i")))
+              | select(.is_agent == true and .isDraft == false)
+              | .linked_issue = (
+                  (.body // "")
+                  | capture("(?i)(closes|fixes|resolves)\\s*#(?<n>[0-9]+)")?.n
+                  | tonumber?
+                )
+              | .queue_order = 999999
+            ]')
+
+          QUEUED_COUNT=$(echo "$QUEUED" | jq 'length')
+          if [ "$QUEUED_COUNT" -eq 0 ]; then
+            echo "No eligible agent PRs to merge."
+            exit 0
+          fi
+
+          TEMP_QUEUE="/tmp/tech_lead_merge_queue.jsonl"
+          : > "$TEMP_QUEUE"
+
+          echo "$QUEUED" | jq -c '.[]' | while IFS= read -r PR_JSON; do
+            PR_NUM=$(echo "$PR_JSON" | jq -r '.number')
+            LINKED_ISSUE=$(echo "$PR_JSON" | jq -r '.linked_issue // empty')
+            QUEUE_ORDER=999999
+
+            if [ -n "$LINKED_ISSUE" ]; then
+              ISSUE_BODY=$(gh issue view "$LINKED_ISSUE" --json body --jq '.body // ""' || true)
+              ISSUE_QUEUE=$(echo "$ISSUE_BODY" | sed -n 's/.*Queue run order:[[:space:]]*\([0-9][0-9]*\).*/\1/p' | head -n1)
+              if [ -n "$ISSUE_QUEUE" ]; then
+                QUEUE_ORDER="$ISSUE_QUEUE"
+              fi
+            fi
+
+            echo "$PR_JSON" | jq -c --argjson q "$QUEUE_ORDER" '. + {queue_order: $q}' >> "$TEMP_QUEUE"
+          done
+
+          SORTED=$(jq -s 'sort_by(.queue_order, .number)' "$TEMP_QUEUE")
+          echo "Merge queue:"
+          echo "$SORTED" | jq -r '.[] | " - PR #\(.number) (queue=\(.queue_order), issue=\(.linked_issue // "none"))"'
+
+          echo "$SORTED" | jq -c '.[]' | while IFS= read -r PR_JSON; do
+            PR_NUM=$(echo "$PR_JSON" | jq -r '.number')
+            LINKED_ISSUE=$(echo "$PR_JSON" | jq -r '.linked_issue // empty')
+
+            echo "Processing PR #$PR_NUM..."
+            PR_MERGE_STATE=$(gh pr view "$PR_NUM" --json mergeStateStatus --jq '.mergeStateStatus // ""')
+            if [ "$PR_MERGE_STATE" != "CLEAN" ] && [ "$PR_MERGE_STATE" != "HAS_HOOKS" ]; then
+              echo "⏳ PR #$PR_NUM mergeStateStatus=$PR_MERGE_STATE. Skipping."
+              continue
+            fi
+
+            MERGE_TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            if ! gh pr merge "$PR_NUM" --squash --delete-branch; then
+              echo "⚠️ Failed to merge PR #$PR_NUM."
+              continue
+            fi
+
+            echo "⏱️ Waiting for CI push run after merge of PR #$PR_NUM..."
+            CI_RUN_ID=""
+            for _ in $(seq 1 36); do
+              CI_RUN_ID=$(gh run list --workflow "CI" --branch master --event push --limit 20 --json databaseId,createdAt --jq \
+                --arg ts "$MERGE_TS" '[.[] | select(.createdAt >= $ts)] | sort_by(.createdAt) | .[0].databaseId // empty')
+              if [ -n "$CI_RUN_ID" ]; then
+                break
+              fi
+              sleep 10
+            done
+
+            if [ -z "$CI_RUN_ID" ]; then
+              echo "❌ No CI run detected after merge of PR #$PR_NUM. Stopping merge chain."
+              exit 1
+            fi
+
+            for _ in $(seq 1 60); do
+              CI_STATUS=$(gh run view "$CI_RUN_ID" --json status --jq '.status')
+              if [ "$CI_STATUS" = "completed" ]; then
+                break
+              fi
+              sleep 10
+            done
+
+            CI_CONCLUSION=$(gh run view "$CI_RUN_ID" --json conclusion,url --jq '.conclusion + " " + .url')
+            CI_RESULT=$(echo "$CI_CONCLUSION" | awk '{print $1}')
+            CI_URL=$(echo "$CI_CONCLUSION" | cut -d' ' -f2-)
+
+            if [ "$CI_RESULT" != "success" ]; then
+              echo "❌ CI failed after merge of PR #$PR_NUM: $CI_URL"
+              gh pr comment "$PR_NUM" --body "🚨 Post-merge CI failed after this PR: $CI_URL"
+              if [ -n "$LINKED_ISSUE" ]; then
+                gh issue comment "$LINKED_ISSUE" --body "/oc Regression détectée après merge de la PR #$PR_NUM. Corrige immédiatement et ouvre une PR de fix. CI en échec: $CI_URL"
+              fi
+              exit 1
+            fi
+
+            echo "✅ CI green after PR #$PR_NUM: $CI_URL"
+            if [ -n "$LINKED_ISSUE" ]; then
+              gh issue close "$LINKED_ISSUE" --comment "✅ PR #$PR_NUM mergée et CI verte ($CI_URL). Fermeture automatique par Tech Lead."
+              echo "Closed linked issue #$LINKED_ISSUE"
+            fi
+          done
+
+      - name: Run Tech Lead agent
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          MODELS=(
+            "opencode/deepseek-v4-flash-free"
+            "opencode/nemotron"
+            "opencode/big-pickle"
+          )
+
+          PROMPT="Analyse le repo aujourd'hui. Consulte les stats QA (qa/stats.json), regarde les commits récents, merge les PRs si pas déjà fait, et crée des issues avec /oc pour les améliorations à faire."
+
+          SUCCESS=0
+          for MODEL in "${MODELS[@]}"; do
+            echo "Trying model: $MODEL"
+            if opencode run --dangerously-skip-permissions --agent tech-lead --model "$MODEL" "$PROMPT"; then
+              echo "Model selected: $MODEL"
+              SUCCESS=1
+              break
+            fi
+            echo "Model failed: $MODEL"
+          done
+
+          if [ "$SUCCESS" -ne 1 ]; then
+            echo "All model attempts failed."
+            exit 1
+          fi
+
+      - name: Backfill /oc on bot-created issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ISSUES=$(gh issue list --state open --limit 30 --json number,author,body --jq '.[]')
+          if [ -z "$ISSUES" ]; then
+            echo "No open issues to inspect."
+            exit 0
+          fi
+
+          echo "$ISSUES" | while IFS= read -r ISSUE_JSON; do
+            ISSUE_NUM=$(echo "$ISSUE_JSON" | jq -r '.number')
+            ISSUE_AUTHOR=$(echo "$ISSUE_JSON" | jq -r '.author.login // ""')
+            ISSUE_BODY=$(echo "$ISSUE_JSON" | jq -r '.body // ""')
+
+            if ! echo "$ISSUE_AUTHOR" | grep -qiE '(github-actions|opencode-agent|\[bot\])'; then
+              continue
+            fi
+
+            if echo "$ISSUE_BODY" | grep -qiE '(^|[[:space:]])/(oc|opencode)($|[[:space:]])'; then
+              continue
+            fi
+
+            UPDATED_BODY="/oc
+
+$ISSUE_BODY"
+            gh issue edit "$ISSUE_NUM" --body "$UPDATED_BODY"
+            echo "Added /oc to issue #$ISSUE_NUM"
+          done
