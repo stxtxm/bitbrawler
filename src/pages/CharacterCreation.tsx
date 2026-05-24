@@ -128,17 +128,13 @@ const CharacterCreation = () => {
 
       try {
         // 1. Vérifier si le nom existe déjà dans Supabase
-        const { data, error: checkError } = await supabase
+        const { data: existing } = await supabase
           .from('characters')
           .select('id')
           .eq('name', trimmedName)
-          .single();
+          .limit(1);
 
-        if (checkError && checkError.code !== 'PGRST116') {
-          throw checkError;
-        }
-
-        if (data) {
+        if (existing && existing.length > 0) {
           setNameError('NAME ALREADY TAKEN!');
           setShowErrorModal(true);
           setIsSubmitting(false)
