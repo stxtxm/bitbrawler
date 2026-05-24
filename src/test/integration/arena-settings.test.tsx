@@ -41,7 +41,7 @@ const mockCharacter: Character = {
   losses: 1,
   fightsLeft: 3,
   lastFightReset: Date.now(),
-  firestoreId: 'auto-id',
+  id: 'auto-id',
   isBot: false,
   fightHistory: [
     {
