@@ -63,7 +63,7 @@ describe('convertFromSupabase', () => {
     expect(char.lastLootRoll).toBe(1700000000000)
     expect(char.incomingFightHistory).toEqual([{ winner: 'player2' }])
     expect(char.isBot).toBe(false)
-    expect(char.firestoreId).toBe('abc-123')
+    expect(char.id).toBe('abc-123')
   })
 
   it('handles a bot character correctly', () => {
@@ -71,7 +71,7 @@ describe('convertFromSupabase', () => {
     const char = convertFromSupabase(botRow)
 
     expect(char.isBot).toBe(true)
-    expect(char.firestoreId).toBe('bot-1')
+    expect(char.id).toBe('bot-1')
   })
 
   it('handles nullish optional fields', () => {
@@ -130,7 +130,7 @@ describe('convertToSupabase', () => {
     lastLootRoll: 1700000000000,
     incomingFightHistory: [{ date: 1700000000000, attackerName: 'player2', won: false }],
     isBot: false,
-    firestoreId: 'abc-123',
+    id: 'abc-123',
   }
 
   it('maps all Character fields to CharacterRow correctly', () => {
@@ -191,7 +191,7 @@ describe('convertToSupabase', () => {
       lastLootRoll: undefined as any,
       incomingFightHistory: undefined as any,
       isBot: undefined as any,
-      firestoreId: 'x',
+      id: 'x',
     }
 
     const row = convertToSupabase(minimal)
