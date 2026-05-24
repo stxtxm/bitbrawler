@@ -11,6 +11,7 @@ import { canRollLootbox, rollLootbox } from '../utils/lootboxUtils';
 import { PixelItemAsset } from '../types/Item';
 import { simulateCombat } from '../utils/combatUtils';
 import { convertFromSupabase } from '../utils/supabaseUtils';
+import { INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP } from '../utils/persistenceUtils';
 
 interface GameContextType {
   activeCharacter: Character | null;
@@ -49,8 +50,6 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 
 // Constants
 const LOCAL_STORAGE_KEY = 'bitbrawler_active_char';
-const INVENTORY_CAPACITY = 24;
-const COMBAT_LOG_HISTORY_CAP = 20;
 
 const normalizeCharacter = (character: Character): Character => {
   return {
