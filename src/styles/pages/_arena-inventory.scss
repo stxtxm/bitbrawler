@@ -1,0 +1,801 @@
+@use '../variables' as *;
+
+// ============================================
+// Inventory Overlay & Modal
+// ============================================
+
+.inventory-overlay {
+    backdrop-filter: blur(3px);
+}
+
+.inventory-modal {
+    max-width: 600px;
+    width: 92%;
+    padding: 24px;
+    @include retro-border(4px, $accent-gold);
+    background: radial-gradient(circle at top, #0e0b06 0%, #000 70%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 84vh;
+    overflow: hidden;
+    position: relative;
+
+    @include mobile {
+        padding: 16px;
+        border-width: 2px;
+        max-height: 92vh;
+    }
+}
+
+.retro-modal.inventory-modal {
+    max-width: 640px;
+    width: 94%;
+}
+
+@media (min-width: 980px) {
+    .inventory-modal {
+        max-width: 980px;
+        width: 90%;
+        max-height: 90vh;
+    }
+
+    .retro-modal.inventory-modal {
+        max-width: 980px;
+        width: 90%;
+    }
+}
+
+.inventory-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.inventory-title {
+    font-family: $font-pixel;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    color: $accent-gold;
+    margin: 0;
+    text-shadow: 2px 2px 0 #000;
+
+    @include mobile {
+        font-size: 0.7rem;
+    }
+}
+
+.inventory-close {
+    width: 28px;
+    height: 28px;
+    background: #000;
+    color: $accent-red;
+    border: 2px solid $accent-red;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    @include flex-center;
+    transition: transform 0.15s ease, background 0.2s ease;
+
+    &:hover {
+        background: $accent-red;
+        color: #000;
+        transform: translateY(-2px);
+    }
+
+    @include mobile {
+        width: 24px;
+        height: 24px;
+        font-size: 0.8rem;
+        border-width: 1px;
+    }
+
+    svg {
+        display: block;
+    }
+}
+
+// ============================================
+// Inventory Body & Grid
+// ============================================
+
+.inventory-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+}
+
+.inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    padding: 14px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid #222;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+
+    @include tablet {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    @include mobile {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+        padding: 8px;
+        border-width: 1px;
+    }
+
+    @include small-mobile {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 5px;
+    }
+}
+
+@media (min-width: 980px) {
+    .inventory-body {
+        flex-direction: row;
+        align-items: stretch;
+        gap: 16px;
+    }
+
+    .inventory-grid {
+        flex: 1.7;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 12px;
+        padding: 16px;
+    }
+
+    .inventory-details {
+        flex: 0.7;
+        min-width: 280px;
+        font-size: 0.6rem;
+    }
+
+    .inventory-item-name {
+        font-size: 0.85rem;
+    }
+
+    .inventory-stat-label {
+        font-size: 0.55rem;
+    }
+
+    .inventory-stat-value {
+        font-size: 0.6rem;
+    }
+}
+
+// ============================================
+// Inventory Slots
+// ============================================
+
+.inventory-modal.lootbox-active {
+    overflow: hidden;
+}
+
+.inventory-modal.lootbox-active .inventory-grid {
+    overflow: hidden;
+    scrollbar-width: none;
+}
+
+.inventory-modal.lootbox-active .inventory-grid::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+.inventory-slot {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    background: linear-gradient(145deg, #111 0%, #050505 100%);
+    border: 2px solid #333;
+    box-shadow: inset 0 0 0 2px #000;
+    padding: 0;
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 4px;
+        border: 1px dashed rgba(255, 204, 0, 0.15);
+    }
+
+    @include mobile {
+        border-width: 1px;
+    }
+}
+
+.inventory-slot.item-slot {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 4px;
+    appearance: none;
+}
+
+.inventory-slot.item-slot:hover {
+    border-color: $accent-gold;
+}
+
+.inventory-slot.item-slot.selected {
+    border-color: $accent-gold;
+    box-shadow: inset 0 0 0 2px #000, 0 0 6px rgba(255, 204, 0, 0.35);
+}
+
+.inventory-slot.rarity-common {
+    border-color: #666;
+}
+
+.inventory-slot.rarity-uncommon {
+    border-color: #4cd964;
+}
+
+.inventory-slot.rarity-rare {
+    border-color: #63b3ff;
+}
+
+.inventory-slot.rarity-epic {
+    border-color: #9b59b6;
+}
+
+// ============================================
+// Inventory Roll / Lootbox Button
+// ============================================
+
+.inventory-roll {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 10px;
+    border: 1px solid #222;
+    background: rgba(0, 0, 0, 0.4);
+
+    @include mobile {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+    }
+}
+
+.lootbox-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px !important;
+    font-size: 0.55rem !important;
+    background: #111;
+    color: $accent-gold;
+    border: 2px solid $accent-gold !important;
+    text-transform: uppercase;
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    @include mobile {
+        font-size: 0.5rem !important;
+        padding: 6px 8px !important;
+    }
+}
+
+.lootbox-status {
+    font-size: 0.5rem;
+    color: #9aa0a6;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.inventory-footer {
+    margin-top: 12px;
+    font-size: 0.55rem;
+    letter-spacing: 1px;
+    color: #666;
+    text-align: center;
+}
+
+// ============================================
+// Inventory Details Panel
+// ============================================
+
+.inventory-details {
+    border: 2px solid #222;
+    background: rgba(0, 0, 0, 0.55);
+    padding: 10px 12px;
+    font-size: 0.55rem;
+    color: #c7c7c7;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 120px;
+}
+
+.inventory-details.empty {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: #666;
+    letter-spacing: 1px;
+}
+
+.inventory-item-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 6px;
+    border-left: 2px solid #666;
+}
+
+.inventory-item-head.rarity-uncommon {
+    border-left-color: #4cd964;
+}
+
+.inventory-item-head.rarity-rare {
+    border-left-color: #63b3ff;
+}
+
+.inventory-item-head.rarity-epic {
+    border-left-color: #9b59b6;
+}
+
+.inventory-item-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.inventory-item-name {
+    font-family: $font-pixel;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+    color: $accent-gold;
+}
+
+.inventory-item-sub {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 0.45rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #8b8b8b;
+}
+
+.inventory-item-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+
+    @include mobile {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4px;
+    }
+}
+
+.inventory-stat-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid #222;
+}
+
+.inventory-stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+}
+
+.inventory-stat-label {
+    font-size: 0.5rem;
+    color: #b5b5b5;
+    letter-spacing: 1px;
+}
+
+.inventory-stat-value {
+    margin-left: auto;
+    color: $accent-green;
+    font-size: 0.55rem;
+}
+
+// ============================================
+// Bonus Summary
+// ============================================
+
+.inventory-bonus-summary {
+    margin-top: auto;
+    padding-top: 8px;
+    border-top: 1px solid #222;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.bonus-title {
+    font-size: 0.45rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #8bd8d2;
+}
+
+.bonus-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.bonus-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid #222;
+    font-size: 0.5rem;
+    color: #cfeccf;
+    line-height: 1;
+}
+
+.bonus-label {
+    color: #c7c7c7;
+}
+
+.bonus-value {
+    color: $accent-green;
+}
+
+@include mobile {
+    .bonus-chip {
+        font-size: 0.45rem;
+        padding: 2px 5px;
+    }
+}
+
+// ============================================
+// Lootbox Result Overlay
+// ============================================
+
+.lootbox-result-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.82);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 6;
+    animation: fadeIn 0.2s ease;
+}
+
+.lootbox-result-card {
+    position: relative;
+    width: clamp(320px, 82vw, 680px);
+    max-height: min(80vh, 720px);
+    padding: 22px 20px;
+    background: radial-gradient(circle at top, #0b0b0b 0%, #000 80%);
+    border: 3px solid $accent-gold;
+    @include retro-border(3px, $accent-gold);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: hidden;
+    animation: lootboxReveal 0.35s cubic-bezier(0.3, 1.4, 0.4, 1);
+}
+
+.lootbox-result-card.rarity-common {
+    border-color: #c9c9c9;
+}
+
+.lootbox-result-card.rarity-uncommon {
+    border-color: #4cd964;
+}
+
+.lootbox-result-card.rarity-rare {
+    border-color: #63b3ff;
+}
+
+.lootbox-result-card.rarity-epic {
+    border-color: #9b59b6;
+}
+
+.lootbox-result-glow {
+    position: absolute;
+    inset: -30%;
+    background: radial-gradient(circle at 50% 20%, rgba(255, 204, 0, 0.25) 0%, rgba(0, 0, 0, 0) 60%);
+    opacity: 0.7;
+    animation: lootboxGlow 2s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.lootbox-result-title {
+    font-family: $font-pixel;
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: $accent-gold;
+    text-shadow: 2px 2px 0 #000;
+    z-index: 1;
+}
+
+.lootbox-result-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    z-index: 1;
+}
+
+.lootbox-result-icon {
+    padding: 6px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid #222;
+}
+
+.lootbox-result-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    text-align: left;
+}
+
+.lootbox-result-name {
+    font-family: $font-pixel;
+    font-size: 0.75rem;
+    color: #fff;
+    letter-spacing: 1px;
+}
+
+.lootbox-result-rarity {
+    font-size: 0.5rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #9aa0a6;
+}
+
+.lootbox-result-stats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    z-index: 1;
+}
+
+.lootbox-result-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 6px;
+    border: 1px solid #222;
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 0.5rem;
+    color: #c7c7c7;
+    justify-content: space-between;
+}
+
+.lootbox-stat-label {
+    color: #c7c7c7;
+}
+
+.lootbox-stat-value {
+    color: $accent-green;
+}
+
+.lootbox-result-hint {
+    font-size: 0.45rem;
+    letter-spacing: 1px;
+    color: #7fdad2;
+    text-transform: uppercase;
+    z-index: 1;
+}
+
+// ============================================
+// Lootbox Overlay / Animation
+// ============================================
+
+.lootbox-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+
+.lootbox-anim {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    animation: lootboxShake 0.6s ease-in-out infinite;
+}
+
+.lootbox-text {
+    font-size: 0.6rem;
+    color: $accent-gold;
+    letter-spacing: 2px;
+}
+
+// ============================================
+// Inventory & Lootbox Mobile Overrides
+// ============================================
+
+@include mobile {
+    .inventory-details {
+        padding: 8px;
+        gap: 8px;
+        min-height: 0;
+    }
+
+    .inventory-item-head {
+        gap: 8px;
+        padding-left: 4px;
+    }
+
+    .inventory-item-name {
+        font-size: 0.62rem;
+    }
+
+    .inventory-item-sub {
+        font-size: 0.4rem;
+        gap: 4px;
+    }
+
+    .inventory-item-stats {
+        gap: 4px;
+    }
+
+    .inventory-stat-row {
+        padding: 3px 5px;
+        gap: 4px;
+    }
+
+    .inventory-stat-icon {
+        width: 14px;
+        height: 14px;
+    }
+
+    .inventory-stat-label {
+        font-size: 0.45rem;
+    }
+
+    .inventory-stat-value {
+        font-size: 0.5rem;
+    }
+
+    .inventory-bonus-summary {
+        gap: 4px;
+        padding-top: 6px;
+    }
+
+    .bonus-list {
+        gap: 4px;
+    }
+
+    .bonus-title {
+        font-size: 0.4rem;
+    }
+
+    .inventory-footer {
+        margin-top: 8px;
+    }
+
+    .lootbox-result-card {
+        width: min(92vw, 480px);
+        padding: 16px 14px;
+        gap: 10px;
+    }
+
+    .lootbox-result-title {
+        font-size: 0.6rem;
+    }
+
+    .lootbox-result-name {
+        font-size: 0.65rem;
+    }
+
+    .lootbox-result-stats {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+
+    .lootbox-result-stat {
+        font-size: 0.45rem;
+        padding: 3px 5px;
+    }
+
+    .lootbox-result-hint {
+        font-size: 0.4rem;
+    }
+}
+
+@include small-mobile {
+    .inventory-details {
+        padding: 6px;
+        gap: 6px;
+        min-height: 0;
+    }
+
+    .inventory-item-name {
+        font-size: 0.58rem;
+    }
+
+    .inventory-item-sub {
+        font-size: 0.38rem;
+    }
+
+    .inventory-item-stats {
+        gap: 3px;
+    }
+
+    .inventory-stat-row {
+        padding: 2px 4px;
+    }
+
+    .inventory-stat-label {
+        font-size: 0.42rem;
+    }
+
+    .inventory-stat-value {
+        font-size: 0.46rem;
+    }
+
+    .bonus-chip {
+        font-size: 0.42rem;
+        padding: 2px 4px;
+    }
+
+    .bonus-title {
+        font-size: 0.38rem;
+    }
+
+    .lootbox-result-card {
+        width: 94vw;
+        padding: 14px 10px;
+        gap: 8px;
+    }
+
+    .lootbox-result-item {
+        gap: 8px;
+    }
+
+    .lootbox-result-name {
+        font-size: 0.58rem;
+    }
+
+    .lootbox-result-stat {
+        font-size: 0.42rem;
+    }
+
+    .lootbox-result-hint {
+        font-size: 0.36rem;
+    }
+}
+
+// ============================================
+// Lootbox Keyframes
+// ============================================
+
+@keyframes lootboxReveal {
+    0% { transform: translateY(12px) scale(0.96); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes lootboxGlow {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 0.75; }
+}
+
+@keyframes lootboxShake {
+    0% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-3px) scale(1.04); }
+    100% { transform: translateY(0) scale(1); }
+}

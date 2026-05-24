@@ -39,7 +39,7 @@ describe('Database Unavailability Handling', () => {
     losses: 3,
     fightsLeft: 3,
     lastFightReset: Date.now(),
-    firestoreId: 'test-firestore-id'
+    id: 'test-firestore-id'
   };
 
   beforeEach(() => {

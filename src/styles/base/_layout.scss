@@ -31,7 +31,6 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     width: 100%;
     min-height: 100vh;
     min-height: 100dvh;
@@ -49,6 +48,15 @@ body {
         padding-right: max(8px, env(safe-area-inset-right));
         justify-content: flex-start; // Better for scrolling content on mobile
     }
+}
+
+// Content wrapper that pushes footer to the bottom
+.app-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 800px;
 }
 
 // PWA: lock global scroll and overscroll while keeping browser refresh intact.

@@ -63,10 +63,10 @@ async function findOpponentByExactLevel(player: Character): Promise<MatchmakingR
             .map(convertFromSupabase)
             .filter(char => {
                 // Exclude self
-                if (char.firestoreId === player.firestoreId) return false;
+                if (char.id === player.id) return false;
 
                 // Exclude characters already fought today
-                if (player.foughtToday && player.foughtToday.includes(char.firestoreId!)) return false;
+                if (player.foughtToday && player.foughtToday.includes(char.id!)) return false;
 
                 return true;
             });

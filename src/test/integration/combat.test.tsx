@@ -37,14 +37,14 @@ describe('🤝 Matchmaking System', () => {
         losses: 0,
         fightsLeft: 5,
         lastFightReset: 0,
-        firestoreId: 'p1',
+        id: 'p1',
         foughtToday: []
     };
 
     const sameLevelOpponent: Character = {
         ...player,
         name: 'Equal',
-        firestoreId: 'o1'
+        id: 'o1'
     };
 
     beforeEach(() => {
@@ -78,7 +78,7 @@ describe('🤝 Matchmaking System', () => {
 
     it('should exclude opponents already fought today', async () => {
         const playerWithHistory: Character = { ...player, foughtToday: ['o1'] };
-        const freshOpponent: Character = { ...sameLevelOpponent, name: 'Fresh', firestoreId: 'o2' };
+        const freshOpponent: Character = { ...sameLevelOpponent, name: 'Fresh', id: 'o2' };
 
         mockCharacters([sameLevelOpponent, freshOpponent]);
 
@@ -86,15 +86,15 @@ describe('🤝 Matchmaking System', () => {
 
         expect(result).not.toBeNull();
         if (result) {
-            expect(result.opponent.firestoreId).toBe('o2');
+            expect(result.opponent.id).toBe('o2');
             expect(result.opponent.name).toBe('Fresh');
-            expect(result.candidates.some((cand) => cand.firestoreId === 'o2')).toBe(true);
+            expect(result.candidates.some((cand) => cand.id === 'o2')).toBe(true);
         }
     });
 
     it('should return null if all same-level opponents were fought today', async () => {
         const playerWithHistory: Character = { ...player, foughtToday: ['o1', 'o2'] };
-        const opponentTwo: Character = { ...sameLevelOpponent, name: 'Opponent Two', firestoreId: 'o2' };
+        const opponentTwo: Character = { ...sameLevelOpponent, name: 'Opponent Two', id: 'o2' };
 
         mockCharacters([sameLevelOpponent, opponentTwo]);
 
@@ -120,9 +120,9 @@ describe('🤝 Matchmaking System', () => {
             focus: 10
         };
 
-        const close = { ...sameLevelOpponent, name: 'Close', firestoreId: 'o1', strength: 10 };
-        const mid = { ...sameLevelOpponent, name: 'Mid', firestoreId: 'o2', strength: 14 };
-        const far = { ...sameLevelOpponent, name: 'Far', firestoreId: 'o3', strength: 22 };
+        const close = { ...sameLevelOpponent, name: 'Close', id: 'o1', strength: 10 };
+        const mid = { ...sameLevelOpponent, name: 'Mid', id: 'o2', strength: 14 };
+        const far = { ...sameLevelOpponent, name: 'Far', id: 'o3', strength: 22 };
 
         mockCharacters([far, close, mid]);
 
@@ -130,8 +130,8 @@ describe('🤝 Matchmaking System', () => {
         const result = await findOpponent(playerPower);
         expect(result).not.toBeNull();
         if (result) {
-            expect(result.candidates.map((cand) => cand.firestoreId)).toEqual(['o1', 'o2', 'o3']);
-            expect(result.opponent.firestoreId).toBe('o1');
+            expect(result.candidates.map((cand) => cand.id)).toEqual(['o1', 'o2', 'o3']);
+            expect(result.opponent.id).toBe('o1');
             expect(result.matchType).toBe('balanced');
         }
     });

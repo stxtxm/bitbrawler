@@ -68,13 +68,14 @@ UI tuning
 - Arena settings modal owns Auto mode toggle, combat logs, and safe delete actions.
 - Rankings list is read-only, stats hidden, with internal scroll.
 - Home page includes a PATCH NOTES button that opens update notes in a modal.
+- Global Footer (`src/components/Footer.tsx`) visible on all pages: copyright, GitHub link, credits, app version. Styled with 8-bit pixel theme (divider, gold accents). Pushed to bottom via `.app-content` flex wrapper in `_layout.scss`.
 
 Testing
 - Unit: combat math, lootbox gating, equipment bonuses, XP, stats, RNG, matchmaking, supabase utils.
 - Unit: lazy route prefetch gating (`canPrefetch`, `prefetchArena`) and end-of-day drain window checks.
 - Integration: matchmaking, pending fights, lootbox persistence, arena inventory/bonuses, offline routing, Supabase failover, and settings combat log privacy rendering.
 - Router warnings are prevented with shared `renderWithRouter` helper (`src/test/utils/router.tsx`).
-- **190 tests — 35 test files** (`npm test`).
+- **197 tests — 36 test files** (`npm test`).
 
 Infrastructure (v1.0.0)
 - Database migrated from Firebase Firestore to Supabase (PostgreSQL).

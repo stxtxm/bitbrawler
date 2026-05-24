@@ -60,7 +60,7 @@ describe('GameContext Integration', () => {
     losses: 3,
     fightsLeft: 2,
     lastFightReset: Date.now() - 86400000,
-    firestoreId: 'test-firestore-id',
+    id: 'test-firestore-id',
     statPoints: 0,
     inventory: [],
     lastLootRoll: 0
@@ -138,7 +138,7 @@ describe('GameContext Integration', () => {
 
     expect(loginResult).toBe(null);
     expect(result.current.activeCharacter?.name).toBe('Test Hero');
-    expect(result.current.activeCharacter?.firestoreId).toBe('test-firestore-id');
+    expect(result.current.activeCharacter?.id).toBe('test-firestore-id');
   });
 
   it('should update fights and XP when useFight is called', async () => {
@@ -171,7 +171,7 @@ describe('GameContext Integration', () => {
     const opponent: Character = {
       ...mockCharacter,
       name: 'Opp',
-      firestoreId: 'opp-1'
+      id: 'opp-1'
     };
 
     (findOpponent as any).mockResolvedValue({
@@ -232,7 +232,7 @@ describe('GameContext Integration', () => {
     const opponent: Character = {
       ...mockCharacter,
       name: 'Opp',
-      firestoreId: 'opp-3'
+      id: 'opp-3'
     };
 
     (findOpponent as any).mockResolvedValue({
@@ -266,7 +266,7 @@ describe('GameContext Integration', () => {
     const opponent: Character = {
       ...mockCharacter,
       name: 'Opp',
-      firestoreId: 'opp-2'
+      id: 'opp-2'
     };
 
     (findOpponent as any).mockResolvedValue({
@@ -291,6 +291,8 @@ describe('GameContext Integration', () => {
 
     await act(async () => {
       await result.current.executeFight(true, 50, opponent.name, opponent.firestoreId || '');
+      await result.current.useFight(true, 50, opponent.name, opponent.id || '');
+>>>>>>> origin/master
     });
 
     expect(result.current.activeCharacter?.fightsLeft).toBe(reservedFights);
