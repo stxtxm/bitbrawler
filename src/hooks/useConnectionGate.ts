@@ -8,7 +8,7 @@ type ConnectionModalState = {
 }
 
 export const useConnectionGate = () => {
-  const { firebaseAvailable, retryConnection } = useGame()
+  const { dbAvailable, retryConnection } = useGame()
   const isOnline = useOnlineStatus()
   const [connectionModal, setConnectionModal] = useState<ConnectionModalState>({
     open: false,
@@ -28,10 +28,10 @@ export const useConnectionGate = () => {
 
   // Auto-close modal when connection is restored
   useEffect(() => {
-    if (isOnline && firebaseAvailable && connectionModal.open) {
+    if (isOnline && dbAvailable && connectionModal.open) {
       closeModal()
     }
-  }, [isOnline, firebaseAvailable, connectionModal.open, closeModal])
+  }, [isOnline, dbAvailable, connectionModal.open, closeModal])
 
   const ensureConnection = useCallback(
     async (message: string) => {
@@ -40,7 +40,7 @@ export const useConnectionGate = () => {
         return false
       }
 
-      if (!firebaseAvailable) {
+      if (!dbAvailable) {
         const ok = await retryConnection()
         if (!ok) {
           openModal(message)
@@ -50,7 +50,7 @@ export const useConnectionGate = () => {
 
       return true
     },
-    [firebaseAvailable, isOnline, openModal, retryConnection],
+    [dbAvailable, isOnline, openModal, retryConnection],
   )
 
   return {

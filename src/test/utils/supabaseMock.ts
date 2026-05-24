@@ -48,14 +48,6 @@ export function createQueryBuilder(initialValue?: MockSupabaseResolvedValue) {
   return builder;
 }
 
-export function createSupabaseMock() {
-  const mockFrom = vi.fn();
-  return {
-    supabase: { from: mockFrom },
-    mockFrom,
-  };
-}
-
 export function characterToSupabaseRow(char: any): any {
   return {
     id: char.firestoreId || 'test-id',

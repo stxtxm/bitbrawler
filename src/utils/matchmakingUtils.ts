@@ -1,6 +1,7 @@
-import { supabase, CharacterRow } from '../config/supabase';
+import { supabase } from '../config/supabase';
 import { Character } from '../types/Character';
 import { calculateCombatStats } from './combatUtils';
+import { convertFromSupabase } from './supabaseUtils';
 
 export interface MatchmakingResult {
     opponent: Character;
@@ -59,10 +60,7 @@ async function findOpponentByExactLevel(player: Character): Promise<MatchmakingR
 
         // Convert from Supabase format and filter out the current player and already fought today
         const candidates = data
-            .map(row => ({
-                ...convertFromSupabase(row),
-                firestoreId: row.id
-            }))
+            .map(convertFromSupabase)
             .filter(char => {
                 // Exclude self
                 if (char.firestoreId === player.firestoreId) return false;
@@ -105,38 +103,6 @@ async function findOpponentByExactLevel(player: Character): Promise<MatchmakingR
         console.error('Exact level query error:', error);
         return null;
     }
-}
-
-// Conversion function for matchmaking
-function convertFromSupabase(row: CharacterRow): Character {
-    return {
-        name: row.name,
-        gender: row.gender as 'male' | 'female',
-        seed: row.seed,
-        level: row.level,
-        hp: row.hp,
-        maxHp: row.max_hp,
-        strength: row.strength,
-        vitality: row.vitality,
-        dexterity: row.dexterity,
-        luck: row.luck,
-        intelligence: row.intelligence,
-        focus: row.focus,
-        experience: row.experience,
-        wins: row.wins,
-        losses: row.losses,
-        fightsLeft: row.fights_left,
-        lastFightReset: row.last_fight_reset,
-        fightHistory: row.fight_history,
-        foughtToday: row.fought_today,
-        statPoints: row.stat_points,
-        pendingFight: row.pending_fight,
-        inventory: row.inventory,
-        lastLootRoll: row.last_loot_roll,
-        incomingFightHistory: row.incoming_fight_history,
-        isBot: row.is_bot,
-        firestoreId: row.id
-    };
 }
 
 /**

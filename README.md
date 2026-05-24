@@ -7,27 +7,16 @@ Bitbrawler is a retro 8-bit arena experience where players create a pixel fighte
 - Character creation with RPG stats (STR, VIT, DEX, LUK, INT, FOC)
 - Arena fights with XP gain, level ups, and enhanced combat (crit + magic + focus)
 - Strict same-level matchmaking with power balancing, daily opponent rotation, and animated opponent scan
-- Daily lootbox + inventory items (auto-applied stat bonuses, rarity-based, expanded level 1 pool)
-- Bot engine with population management, organic activity pacing, level 1 starter reserve, real combat simulation, immediate daily lootbox usage, and end-of-day fight catch-up before reset (2-hour scheduler)
+- Daily lootbox + inventory items (auto-applied stat bonuses, rarity-based)
+- Bot engine with population management and organic activity pacing
 - Anti-cheat fight reservation (pending fights resolve even if player quits mid-matchmaking)
-- Incoming attack logs in Arena settings (attacker type hidden from players, no XP line shown)
-- Global daily reset for fights/opponent tracking (scripted, Paris midnight w/ DST-safe cron)
+- Global daily reset for fights/opponent tracking (scripted, Paris midnight)
 - Hall of Fame rankings
-- Arena settings modal with Auto mode toggle, combat logs, and safe character delete
-- Home PATCH NOTES modal for quick update summaries
-- PWA install experience (mobile and desktop)
-- Error boundary and connection-aware UX
-- Responsive layout for mobile, tablet, desktop, and large displays
-
-## Offline and Sync Behavior
-- Gameplay requires Firebase; actions that need a connection show a blocking modal
-- Home page is available offline; Rankings display a "Connection required" state
-- Offline snapshot is kept in local storage; it’s cleared only on logout, corrupted data, or missing server record
-- Service worker caches the app shell and assets; updates apply silently with a one-time reload when the new worker activates
+- PWA install experience
 
 ## Tech Stack
 - React 18 + TypeScript + Vite
-- Firebase Firestore
+- Supabase (PostgreSQL)
 - Vitest + Testing Library
 - Sass
 
@@ -36,7 +25,7 @@ Bitbrawler is a retro 8-bit arena experience where players create a pixel fighte
    ```bash
    npm install
    ```
-2. Configure Firebase (see `.env.example`)
+2. Configure Supabase (see `.env.example`)
 3. Run locally
    ```bash
    npm run dev
@@ -44,42 +33,41 @@ Bitbrawler is a retro 8-bit arena experience where players create a pixel fighte
 
 ## Scripts
 ```bash
-# Run tests
-npm test -- --run
-
-# Build for production
-npm run build
-
-# Run bot simulation engine (Firebase Admin required)
-npm run bots:run
-
-# Run daily reset (Paris midnight schedule in GitHub Actions)
-npm run daily-reset:run
+npm test          # Run tests
+npm run build     # TypeScript check + production build
+npm run bots:run  # Run bot simulation engine
+npm run daily-reset:run  # Run daily reset
 ```
+
+## CI/CD
+- **CI**: Automatique sur chaque PR (`lint` → `tsc` → `test` → `build`)
+- **OpenCode**: Les agents autonomes creent, reviewent et mergent les PRs via `/oc`
+- **Deploiement**: Vercel (auto-deploy sur push main)
+
+## Agents OpenCode
+- `dev-agent` (default): Implemente, review et merge automatiquement
+- `reviewer`: Revue de code specialisee
+
+Utilise `/oc` ou `/opencode` dans une issue/PR pour declencher un agent.
 
 ## Project Structure
 ```
 src/
-  components/        UI building blocks (PixelCharacter, ConnectionModal, ErrorBoundary)
-  config/            Firebase + combat balancing configuration
+  components/        UI building blocks
+  config/            Supabase + combat balancing
   context/           Game state and persistence
   hooks/             Online status and connection gates
   pages/             Home, Login, Creation, Arena, Rankings
   scripts/           Bot engine + daily reset scripts
   styles/            Global and page styles
   test/              Vitest suite
-  utils/             Game logic (combat, XP, random)
+  utils/             Game logic (combat, XP, random, matchmaking, supabase)
 public/
   sw.js              Service worker
-  manifest.json      PWA config
-  icon.svg           App icon (pixel style)
+.opencode/
+  agents/            Agent definitions
+.github/workflows/   CI/CD pipelines
 ```
 
 ## Notes
-See `NOTES.md` for recent UI/UX decisions and implementation details.
-
-## Handoff Notes
-- Settings modal now owns combat logs (no header icon). Check `src/pages/Arena.tsx` + `src/styles/pages/_arena.scss`.
-- Rankings list is read-only (no character switching) and uses internal scroll.
-- Daily reset and lootbox gating align to Paris day; bot fights use same-level pools with end-of-day catch-up (`scripts/bot-engine.ts`).
-- Router test warnings are avoided with `renderWithRouter` in `src/test/utils/router.tsx`.
+See `NOTES.md` for implementation details.

@@ -24,7 +24,7 @@ describe('useConnectionGate', () => {
     mockUseOnlineStatus.mockReturnValue(false)
     const retryConnection = vi.fn().mockResolvedValue(true)
     mockUseGame.mockReturnValue({
-      firebaseAvailable: true,
+      dbAvailable: true,
       retryConnection,
     })
 
@@ -44,7 +44,7 @@ describe('useConnectionGate', () => {
     mockUseOnlineStatus.mockReturnValue(true)
     const retryConnection = vi.fn().mockResolvedValue(false)
     mockUseGame.mockReturnValue({
-      firebaseAvailable: false,
+      dbAvailable: false,
       retryConnection,
     })
 
@@ -64,7 +64,7 @@ describe('useConnectionGate', () => {
     mockUseOnlineStatus.mockReturnValue(true)
     const retryConnection = vi.fn().mockResolvedValue(true)
     mockUseGame.mockReturnValue({
-      firebaseAvailable: false,
+      dbAvailable: false,
       retryConnection,
     })
 
@@ -83,7 +83,7 @@ describe('useConnectionGate', () => {
     // Mock as offline to prevent auto-close
     mockUseOnlineStatus.mockReturnValue(false)
     mockUseGame.mockReturnValue({
-      firebaseAvailable: false,
+      dbAvailable: false,
       retryConnection: vi.fn(),
     })
 
@@ -105,7 +105,7 @@ describe('useConnectionGate', () => {
   it('auto-closes modal when connection becomes available', async () => {
     mockUseOnlineStatus.mockReturnValue(false)
     mockUseGame.mockReturnValue({
-      firebaseAvailable: false,
+      dbAvailable: false,
       retryConnection: vi.fn(),
     })
 
@@ -120,7 +120,7 @@ describe('useConnectionGate', () => {
     // Switch to online/available
     mockUseOnlineStatus.mockReturnValue(true)
     mockUseGame.mockReturnValue({
-      firebaseAvailable: true,
+      dbAvailable: true,
       retryConnection: vi.fn(),
     })
 

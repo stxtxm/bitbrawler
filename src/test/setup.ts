@@ -1,16 +1,14 @@
 import '@testing-library/jest-dom';
 import { beforeAll, afterAll } from 'vitest';
 
-// Suppress expected console.error calls during tests (Firebase error handling)
 const originalConsoleError = console.error;
 
 beforeAll(() => {
     console.error = (...args: any[]) => {
-        // Suppress expected Firebase error messages during tests
         const message = args[0]?.toString() || '';
-    if (message.includes('Firebase error') || message.includes('Firebase retry failed')) {
-      return; // Silently ignore expected Firebase errors
-    }
+        if (message.includes('Supabase retry failed')) {
+            return;
+        }
         originalConsoleError.apply(console, args);
     };
 });
