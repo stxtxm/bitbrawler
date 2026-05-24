@@ -1,0 +1,136 @@
+@use '../variables' as *;
+
+.not-found-page {
+  min-height: 60vh;
+  @include flex-center;
+  width: 100%;
+}
+
+.not-found-content {
+  @include flex-center;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 600px;
+  padding: 20px;
+
+  @include mobile {
+    gap: 14px;
+    padding: 10px;
+  }
+}
+
+.not-found-404 {
+  font-size: 6rem;
+  color: $accent-red;
+  text-shadow:
+    6px 6px 0 darken($accent-red, 20%),
+    8px 8px 0 rgba(0, 0, 0, 0.5);
+  margin: 0;
+  line-height: 1;
+  animation: glitch 3s infinite step-end;
+  letter-spacing: 8px;
+
+  @include mobile {
+    font-size: 3.5rem;
+    text-shadow:
+      4px 4px 0 darken($accent-red, 20%),
+      6px 6px 0 rgba(0, 0, 0, 0.5);
+  }
+
+  @include small-mobile {
+    font-size: 2.5rem;
+  }
+}
+
+@keyframes glitch {
+  0%, 90%, 100% {
+    transform: translate(0);
+    text-shadow:
+      6px 6px 0 darken($accent-red, 20%),
+      8px 8px 0 rgba(0, 0, 0, 0.5);
+  }
+  92% {
+    transform: translate(-3px, 1px);
+    text-shadow:
+      4px 4px 0 darken($accent-red, 20%),
+      6px 6px 0 rgba(0, 0, 0, 0.5);
+  }
+  94% {
+    transform: translate(3px, -1px);
+    text-shadow:
+      8px 8px 0 darken($accent-red, 20%),
+      10px 10px 0 rgba(0, 0, 0, 0.5);
+  }
+  96% {
+    transform: translate(-2px, -1px);
+    text-shadow:
+      5px 5px 0 darken($accent-red, 20%),
+      7px 7px 0 rgba(0, 0, 0, 0.5);
+  }
+}
+
+.not-found-character {
+  @include flex-center;
+  margin: 10px 0;
+}
+
+.sad-pixel-character {
+  animation: characterIdle 2s ease-in-out infinite;
+  image-rendering: pixelated;
+}
+
+@keyframes characterIdle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.not-found-title {
+  font-size: 1.3rem;
+  color: $accent-gold;
+  text-shadow:
+    4px 4px 0 #990000,
+    6px 6px 0 rgba(0, 0, 0, 0.5);
+  margin: 0;
+  letter-spacing: 4px;
+  animation: blink 2s infinite;
+  text-align: center;
+
+  @include mobile {
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+  }
+
+  @include small-mobile {
+    font-size: 0.75rem;
+  }
+}
+
+.not-found-message {
+  font-size: 0.65rem;
+  color: #aaa;
+  text-align: center;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 400px;
+  letter-spacing: 1px;
+
+  @include mobile {
+    font-size: 0.5rem;
+    line-height: 1.5;
+  }
+}
+
+.not-found-return {
+  margin-top: 10px;
+  min-width: 200px;
+
+  @include mobile {
+    min-width: 0;
+    width: 100%;
+    max-width: 280px;
+  }
+}
