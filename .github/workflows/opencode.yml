@@ -19,9 +19,40 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: anomalyco/opencode/github@v1.15.10
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+      - uses: actions/setup-node@v4
         with:
-          model: opencode/deepseek-v4-flash-free
+          node-version: 20
+
+      - name: Install opencode
+        run: npm install -g opencode-ai
+
+      - name: Configure git
+        run: |
+          git config user.name "opencode-agent"
+          git config user.email "agent@opencode.ai"
+
+      - name: Create branch
+        run: |
+          BRANCH="feat/auto-${{ github.event.issue.number }}"
+          git checkout -b "$BRANCH"
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+
+      - name: Implement
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+        run: |
+          PROMPT=$(echo '${{ github.event.issue.body }}' | sed 's|/oc||g; s|/opencode||g' | xargs)
+          opencode run --yes --model "opencode/deepseek-v4-flash-free" "$PROMPT"
+
+      - name: Push and create PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git add -A
+          git diff --cached --quiet || git commit -m "feat: auto-implement #${{ github.event.issue.number }}"
+          git push origin "$BRANCH" -f
+          gh pr create \
+            --title "${{ github.event.issue.title }}" \
+            --body "Closes #${{ github.event.issue.number }}" \
+            --base master \
+            --label "auto-generated" || true
