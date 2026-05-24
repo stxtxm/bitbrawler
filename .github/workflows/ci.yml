@@ -36,22 +36,3 @@ jobs:
 
       - name: Build
         run: npm run build
-
-  auto-merge:
-    needs: check
-    if: |
-      github.event_name == 'pull_request' &&
-      github.event.pull_request.user.login == 'opencode-agent' &&
-      contains(github.event.pull_request.labels.*.name, 'auto-generated')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-
-    steps:
-      - name: Approve and merge
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh pr review --approve "${{ github.event.pull_request.html_url }}"
-          gh pr merge --squash --delete-branch "${{ github.event.pull_request.html_url }}"

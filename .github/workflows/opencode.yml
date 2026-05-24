@@ -3,10 +3,24 @@ name: OpenCode Agent
 on:
   issues:
     types: [opened, edited]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: Issue number to implement
+        required: true
+        type: string
 
 jobs:
   implement:
-    if: contains(github.event.issue.body, '/oc') || contains(github.event.issue.body, '/opencode')
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'issues' &&
+        (
+          contains(github.event.issue.body, '/oc') ||
+          contains(github.event.issue.body, '/opencode')
+        )
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -31,17 +45,31 @@ jobs:
           git config user.name "opencode-agent"
           git config user.email "agent@opencode.ai"
 
-      - name: Create branch
-        run: |
-          BRANCH="feat/auto-${{ github.event.issue.number }}"
-          git checkout -b "$BRANCH"
-          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
-
-      - name: Get prompt from issue
+      - name: Resolve issue context
         env:
           GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER_INPUT: ${{ github.event.inputs.issue_number }}
+          ISSUE_NUMBER_EVENT: ${{ github.event.issue.number }}
         run: |
-          gh issue view ${{ github.event.issue.number }} --json body --jq '.body' > /tmp/prompt.txt
+          ISSUE_NUMBER="$ISSUE_NUMBER_EVENT"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ISSUE_NUMBER="$ISSUE_NUMBER_INPUT"
+          fi
+
+          if [ -z "$ISSUE_NUMBER" ]; then
+            echo "Issue number is required."
+            exit 1
+          fi
+
+          gh issue view "$ISSUE_NUMBER" --json body --jq '.body' > /tmp/prompt.txt
+          gh issue view "$ISSUE_NUMBER" --json title --jq '.title' > /tmp/issue-title.txt
+          echo "ISSUE_NUMBER=$ISSUE_NUMBER" >> "$GITHUB_ENV"
+
+      - name: Create branch
+        run: |
+          BRANCH="feat/auto-$ISSUE_NUMBER"
+          git checkout -b "$BRANCH"
+          echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
 
       - name: Implement
         env:
@@ -75,11 +103,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           git add -A
-          git diff --cached --quiet || git commit -m "feat: auto-implement #${{ github.event.issue.number }}"
+          git diff --cached --quiet || git commit -m "feat: auto-implement #$ISSUE_NUMBER"
           git push origin "$BRANCH" -f
           gh label get auto-generated 2>/dev/null && LABEL_FLAG="--label auto-generated" || LABEL_FLAG=""
           gh pr create \
-            --title "${{ github.event.issue.title }}" \
-            --body "Closes #${{ github.event.issue.number }}" \
+            --title "$(cat /tmp/issue-title.txt)" \
+            --body "Closes #$ISSUE_NUMBER" \
             --base master \
             $LABEL_FLAG || true

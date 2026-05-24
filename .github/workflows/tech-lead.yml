@@ -7,11 +7,16 @@ on:
     - cron: '0 19 * * *'
   workflow_dispatch:
 
+concurrency:
+  group: tech-lead-merge-lane
+  cancel-in-progress: false
+
 jobs:
   tech-lead:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     permissions:
+      actions: write
       contents: write
       pull-requests: write
       issues: write
@@ -33,43 +38,104 @@ jobs:
           git config user.name "opencode-agent"
           git config user.email "agent@opencode.ai"
 
-      - name: Merge auto-generated PRs
+      - name: Mark issue scan start
+        run: echo "TECH_LEAD_SCAN_START=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+
+      - name: Merge only one eligible agent PR
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          PRS=$(gh pr list --state open --json number,headRefName,title,author,labels,isDraft --jq '.[]')
-          if [ -z "$PRS" ]; then
-            echo "No open PRs to evaluate."
+          set -euo pipefail
+
+          LATEST_MASTER_CI=$(gh run list --workflow ci.yml --branch master --event push --limit 1 --json databaseId,status,conclusion,url,createdAt)
+          MASTER_CI_COUNT=$(echo "$LATEST_MASTER_CI" | jq 'length')
+          if [ "$MASTER_CI_COUNT" -gt 0 ]; then
+            MASTER_CI_STATUS=$(echo "$LATEST_MASTER_CI" | jq -r '.[0].status // ""')
+            MASTER_CI_CONCLUSION=$(echo "$LATEST_MASTER_CI" | jq -r '.[0].conclusion // ""')
+            MASTER_CI_URL=$(echo "$LATEST_MASTER_CI" | jq -r '.[0].url // ""')
+
+            if [ "$MASTER_CI_STATUS" != "completed" ]; then
+              echo "Latest master push CI is still running: $MASTER_CI_URL"
+              exit 0
+            fi
+
+            if [ "$MASTER_CI_CONCLUSION" != "success" ]; then
+              echo "Latest master push CI is not green yet: $MASTER_CI_URL"
+              exit 0
+            fi
+          else
+            echo "No previous master push CI run found. Continuing."
+          fi
+
+          PR_NUM=$(gh pr list --state open --limit 50 --json number,author,isDraft,labels,createdAt,baseRefName \
+            --jq '[.[]
+              | .author_login = (.author.login // "")
+              | .has_auto_label = ([.labels[]?.name] | index("auto-generated") != null)
+              | .is_agent = (
+                  .has_auto_label or
+                  .author_login == "app/github-actions" or
+                  .author_login == "opencode-agent" or
+                  (.author_login | test("bot"; "i"))
+                )
+              | select(.is_agent == true and .isDraft == false and .baseRefName == "master")
+            ] | sort_by(.createdAt) | .[0].number // empty')
+
+          if [ -z "${PR_NUM:-}" ]; then
+            echo "No eligible agent PR found."
             exit 0
           fi
 
-          echo "$PRS" | while IFS= read -r PR_JSON; do
-            PR_NUM=$(echo "$PR_JSON" | jq -r '.number')
-            PR_AUTHOR=$(echo "$PR_JSON" | jq -r '.author.login // ""')
-            PR_DRAFT=$(echo "$PR_JSON" | jq -r '.isDraft')
-            HAS_AUTO_LABEL=$(echo "$PR_JSON" | jq -r '[.labels[]?.name] | index("auto-generated") != null')
-            echo "Processing PR #$PR_NUM..."
+          MERGE_STATE=$(gh pr view "$PR_NUM" --json mergeStateStatus --jq '.mergeStateStatus // ""')
+          if [ "$MERGE_STATE" != "CLEAN" ] && [ "$MERGE_STATE" != "HAS_HOOKS" ]; then
+            echo "PR #$PR_NUM is not mergeable now (state=$MERGE_STATE)."
+            exit 0
+          fi
 
-            # Only auto-merge bot-generated PRs (legacy label flow or current app/github-actions flow)
-            if [ "$HAS_AUTO_LABEL" != "true" ] && [ "$PR_AUTHOR" != "app/github-actions" ] && [ "$PR_AUTHOR" != "opencode-agent" ]; then
-              echo "ℹ️ PR #$PR_NUM is not from agent flow. Skipping."
-              continue
+          BLOCKING=$(gh pr view "$PR_NUM" --json statusCheckRollup --jq '[.statusCheckRollup[]? | select((.status? != "COMPLETED") or (.conclusion? != null and .conclusion != "SUCCESS") or (.state? != null and .state != "SUCCESS"))] | length')
+          if [ "$BLOCKING" -ne 0 ]; then
+            echo "PR #$PR_NUM does not have a fully green check suite yet."
+            exit 0
+          fi
+
+          echo "Approving and merging PR #$PR_NUM..."
+          MERGE_TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          gh pr review --approve "$PR_NUM" || true
+          gh pr merge "$PR_NUM" --squash --delete-branch
+
+          echo "Waiting for post-merge master push CI after PR #$PR_NUM..."
+          CI_RUN_ID=""
+          for _ in $(seq 1 36); do
+            RUNS_JSON=$(gh run list --workflow ci.yml --branch master --event push --limit 20 --json databaseId,createdAt)
+            CI_RUN_ID=$(echo "$RUNS_JSON" | jq -r --arg ts "$MERGE_TS" '[.[] | select(.createdAt >= $ts)] | sort_by(.createdAt) | .[0].databaseId // empty')
+            if [ -n "$CI_RUN_ID" ]; then
+              break
             fi
-
-            if [ "$PR_DRAFT" = "true" ]; then
-              echo "⏳ PR #$PR_NUM is draft. Skipping."
-              continue
-            fi
-
-            PR_MERGE_STATE=$(gh pr view "$PR_NUM" --json mergeStateStatus --jq '.mergeStateStatus // ""')
-            if [ "$PR_MERGE_STATE" != "CLEAN" ] && [ "$PR_MERGE_STATE" != "HAS_HOOKS" ]; then
-              echo "⏳ PR #$PR_NUM mergeStateStatus=$PR_MERGE_STATE. Skipping."
-              continue
-            fi
-
-            echo "✅ Merging eligible agent PR #$PR_NUM..."
-            gh pr merge "$PR_NUM" --squash --delete-branch || echo "⚠️ Failed to merge PR #$PR_NUM (may already be merged)"
+            sleep 10
           done
+
+          if [ -z "$CI_RUN_ID" ]; then
+            echo "No post-merge CI push run detected after PR #$PR_NUM."
+            exit 1
+          fi
+
+          for _ in $(seq 1 60); do
+            CI_STATUS=$(gh run view "$CI_RUN_ID" --json status --jq '.status // ""')
+            if [ "$CI_STATUS" = "completed" ]; then
+              break
+            fi
+            sleep 10
+          done
+
+          CI_CONCLUSION=$(gh run view "$CI_RUN_ID" --json conclusion,url --jq '.conclusion + " " + .url')
+          CI_RESULT=$(echo "$CI_CONCLUSION" | awk '{print $1}')
+          CI_URL=$(echo "$CI_CONCLUSION" | cut -d' ' -f2-)
+
+          if [ "$CI_RESULT" != "success" ]; then
+            echo "Post-merge master CI failed after PR #$PR_NUM: $CI_URL"
+            exit 1
+          fi
+
+          echo "Post-merge master CI is green after PR #$PR_NUM: $CI_URL"
 
       - name: Run Tech Lead agent
         env:
@@ -82,7 +148,7 @@ jobs:
             "opencode/big-pickle"
           )
 
-          PROMPT="Analyse le repo aujourd'hui. Consulte les stats QA (qa/stats.json), regarde les commits récents, merge les PRs si pas déjà fait, et crée des issues avec /oc pour les améliorations à faire."
+          PROMPT="Analyse le repo aujourd'hui. Consulte les stats QA (qa/stats.json), regarde les commits récents, respecte un merge order prudent, et crée des issues avec /oc pour les améliorations à faire."
 
           SUCCESS=0
           for MODEL in "${MODELS[@]}"; do
@@ -98,4 +164,44 @@ jobs:
           if [ "$SUCCESS" -ne 1 ]; then
             echo "All model attempts failed."
             exit 1
+          fi
+
+      - name: Dispatch OpenCode for freshly created bot issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ISSUES_FILE=/tmp/tech-lead-issues.txt
+
+          gh api "repos/${GITHUB_REPOSITORY}/issues?state=open&sort=created&direction=desc&per_page=100&since=${TECH_LEAD_SCAN_START}" \
+            --jq '.[] | select(.pull_request | not) | @base64' > "$ISSUES_FILE"
+
+          FOUND=0
+          while IFS= read -r row; do
+            [ -z "$row" ] && continue
+
+            json=$(printf '%s' "$row" | base64 --decode)
+            number=$(echo "$json" | jq -r '.number')
+            author=$(echo "$json" | jq -r '.user.login // ""')
+            created_at=$(echo "$json" | jq -r '.created_at')
+            body=$(echo "$json" | jq -r '.body // ""')
+
+            if [[ "$created_at" < "$TECH_LEAD_SCAN_START" ]]; then
+              continue
+            fi
+
+            if [ "$author" != "github-actions[bot]" ] && [ "$author" != "app/github-actions" ] && [ "$author" != "opencode-agent" ]; then
+              continue
+            fi
+
+            if ! printf '%s' "$body" | grep -qiE '(^|[[:space:]])/(oc|opencode)($|[[:space:]])'; then
+              continue
+            fi
+
+            echo "Dispatching OpenCode workflow for issue #$number..."
+            gh workflow run opencode.yml -f issue_number="$number"
+            FOUND=1
+          done < "$ISSUES_FILE"
+
+          if [ "$FOUND" -eq 0 ]; then
+            echo "No fresh bot-created /oc issues found."
           fi
