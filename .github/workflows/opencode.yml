@@ -37,11 +37,17 @@ jobs:
           git checkout -b "$BRANCH"
           echo "BRANCH=$BRANCH" >> $GITHUB_ENV
 
+      - name: Get prompt from issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue view ${{ github.event.issue.number }} --json body --jq '.body' > /tmp/prompt.txt
+
       - name: Implement
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         run: |
-          PROMPT=$(echo '${{ github.event.issue.body }}' | sed 's|/oc||g; s|/opencode||g' | xargs)
+          PROMPT=$(cat /tmp/prompt.txt | sed 's|/oc||g; s|/opencode||g' | xargs)
           opencode run --dangerously-skip-permissions --model "opencode/deepseek-v4-flash-free" "$PROMPT"
 
       - name: Push and create PR
