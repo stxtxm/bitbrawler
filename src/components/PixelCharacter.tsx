@@ -74,9 +74,9 @@ export const PixelCharacter: React.FC<PixelCharacterProps> = ({ seed, gender, sc
         return result;
     }
 
-    // @ts-ignore
+    // @ts-expect-error - Dynamic index access on const object
     const headGrid = PIXEL_HEADS[features.headType];
-    // @ts-ignore
+    // @ts-expect-error - Dynamic index access on const object
     const bodyGrid = PIXEL_BODIES[features.bodyType];
 
     // Grid size is roughly 12 wide x 20 high combined

@@ -20,7 +20,7 @@ import SettingsModal from '../components/SettingsModal';
 type StatIconType = 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence' | 'focus';
 
 const Arena = () => {
-    const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, allocateStatPoint, rollLootbox, setAutoMode, deleteCharacter } = useGame();
+    const { activeCharacter, logout, executeFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, allocateStatPoint, rollLootbox, setAutoMode, deleteCharacter } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const { play: playSound, enabled: soundEnabled, volume: soundVolume, setEnabled: setSoundEnabled, setVolume: setSoundVolume } = useSound();
     const navigate = useNavigate();
@@ -61,6 +61,53 @@ const Arena = () => {
         }
     }, [lastLevelUp]);
 
+    // Combined fight history (moved before guard — uses optional chaining)
+    const combinedHistory: SettingsLogEntry[] = useMemo(
+        () => [
+            ...(activeCharacter?.fightHistory || []).map((fight) => ({
+                date: fight.date,
+                won: fight.won,
+                direction: 'outgoing' as const,
+                displayName: fight.opponentName,
+            })),
+            ...(activeCharacter?.incomingFightHistory || []).map((fight) => ({
+                date: fight.date,
+                won: fight.won,
+                direction: 'incoming' as const,
+                displayName: fight.attackerName,
+            })),
+        ]
+            .sort((a, b) => b.date - a.date)
+            .slice(0, 20),
+        [activeCharacter?.fightHistory, activeCharacter?.incomingFightHistory]
+    );
+
+    // Defer level-up when no stat points remain
+    useEffect(() => {
+        if ((activeCharacter?.statPoints || 0) === 0) {
+            setDeferLevelUp(false);
+        }
+    }, [activeCharacter?.statPoints]);
+
+    // Reset lootbox/inventory state when closing
+    useEffect(() => {
+        if (!inventoryOpen) {
+            setLootboxResult(null);
+            setLootboxRolling(false);
+            setInventoryHoveredId(null);
+            setInventorySelectedId(null);
+        }
+    }, [inventoryOpen]);
+
+    // Reset settings state when closing
+    useEffect(() => {
+        if (!settingsOpen) {
+            setSettingsView('main');
+            setDeleteStep('idle');
+            setDeletePending(false);
+        }
+    }, [settingsOpen]);
+
     if (!activeCharacter) {
         setTimeout(() => navigate('/'), 100);
         return <div className="loading-screen">ACCESS DENIED</div>;
@@ -86,14 +133,48 @@ const Arena = () => {
         { key: 'intelligence', label: 'INT', value: effectiveCharacter.intelligence, hint: 'Magic Power', icon: 'intelligence' },
         { key: 'focus', label: 'FOC', value: effectiveCharacter.focus, hint: 'Accuracy / Control', icon: 'focus' },
     ];
+    const itemStatMeta: Record<keyof ItemStats, { label: string; icon: StatIconType }> = {
+        strength: { label: 'STR', icon: 'strength' },
+        vitality: { label: 'VIT', icon: 'vitality' },
+        dexterity: { label: 'DEX', icon: 'dexterity' },
+        luck: { label: 'LUK', icon: 'luck' },
+        intelligence: { label: 'INT', icon: 'intelligence' },
+        focus: { label: 'FOC', icon: 'focus' },
+        hp: { label: 'HP', icon: 'vitality' },
+    };
+    const previewItemId = inventoryHoveredId ?? inventorySelectedId ?? undefined;
+    const previewItem = getItemById(previewItemId);
+    const previewStats = previewItem
+        ? (Object.entries(previewItem.stats)
+            .filter(([, value]) => typeof value === 'number' && value !== 0) as [keyof ItemStats, number][])
+        : [];
+    const lootboxStats = lootboxResult
+        ? (Object.entries(lootboxResult.stats)
+            .filter(([, value]) => typeof value === 'number' && value !== 0) as [keyof ItemStats, number][])
+        : [];
+    const previewSlotLabel = previewItem ? previewItem.slot.toUpperCase() : '';
+    const totalBonus = getEquipmentBonuses(activeCharacter);
+    const bonusOrder: Array<keyof ItemStats> = ['strength', 'vitality', 'dexterity', 'luck', 'intelligence', 'focus', 'hp'];
+    const totalBonusEntries = bonusOrder
+        .map((key) => ({ key, value: totalBonus[key] || 0 }))
+        .filter((entry) => entry.value > 0);
+>>>>>>> origin/master
 
     const handleAllocateStat = async (stat: StatKey) => {
         if (allocatingStat || pendingStatPoints <= 0) return;
         if (isOfflineMode) { openModal(connectionMessage); return; }
         setAllocatingStat(stat);
+        try {
+            await allocateStatPoint(stat);
+        } catch (error) {
+            openModal(error instanceof Error ? error.message : connectionMessage);
+        } finally {
+            setAllocatingStat(null);
+        }
         try { await allocateStatPoint(stat); }
         catch (error: any) { openModal(error.message || connectionMessage); }
         finally { setAllocatingStat(null); }
+>>>>>>> origin/master
     };
 
     const handleCloseLevelUp = () => {
@@ -113,9 +194,99 @@ const Arena = () => {
         setDeferLevelUp(false);
     };
 
+    const handleLootboxRoll = async () => {
+        if (lootboxRolling) return;
+        if (isOfflineMode) {
+            openModal(connectionMessage);
+            return;
+        }
+        const canProceed = await ensureConnection(connectionMessage);
+        if (!canProceed) return;
+
+        setLootboxRolling(true);
+        setLootboxResult(null);
+
+        setTimeout(async () => {
+            try {
+                const item = await rollLootbox();
+                if (item) {
+                    setLootboxResult(item);
+                    setInventorySelectedId(item.id);
+                    setInventoryHoveredId(item.id);
+                }
+            } catch (error) {
+                openModal(error instanceof Error ? error.message : connectionMessage);
+            } finally {
+                setLootboxRolling(false);
+            }
+        }, 900);
+    };
+
+    const handleCloseLootboxResult = () => {
+        setLootboxResult(null);
+    };
+
+    const handleSelectItem = (itemId: string) => {
+        setInventorySelectedId(itemId);
+    };
+
+    const handleOpenHistoryFromSettings = () => {
+        setSettingsView('logs');
+    };
+
+    const handleReturnToSettings = () => {
+        setSettingsView('main');
+    };
+
+    const autoModeEnabled = !!activeCharacter?.isBot;
+
+    const handleToggleAutoMode = async () => {
+        if (autoModeUpdating) return;
+        if (isOfflineMode) {
+            openModal(connectionMessage);
+            return;
+        }
+        const canProceed = await ensureConnection(connectionMessage);
+        if (!canProceed) return;
+
+        setAutoModeUpdating(true);
+        try {
+            await setAutoMode(!autoModeEnabled);
+        } catch (error) {
+            openModal(error instanceof Error ? error.message : connectionMessage);
+        } finally {
+            setAutoModeUpdating(false);
+        }
+    };
+
+    const handleDeleteCharacter = async () => {
+        if (deletePending) return;
+        if (deleteStep === 'idle') {
+            setDeleteStep('confirm');
+            return;
+        }
+        if (isOfflineMode) {
+            openModal(connectionMessage);
+            return;
+        }
+        const canProceed = await ensureConnection(connectionMessage);
+        if (!canProceed) return;
+
+        setDeletePending(true);
+        try {
+            await deleteCharacter();
+            setSettingsOpen(false);
+            setTimeout(() => navigate('/'), 0);
+        } catch (error) {
+            openModal(error instanceof Error ? error.message : connectionMessage);
+        } finally {
+            setDeletePending(false);
+        }
+    };
     useEffect(() => {
         if (pendingStatPoints === 0) setDeferLevelUp(false);
     }, [pendingStatPoints]);
+>>>>>>> origin/master
 
     useEffect(() => {
         if (!inventoryOpen) {
@@ -260,11 +431,15 @@ const Arena = () => {
     const handleCombatComplete = async (won: boolean, xpGained: number) => {
         try {
             const opponentName = combatData?.opponent.name || 'UNKNOWN';
+            const opponentId = combatData?.opponent.firestoreId || '';
+            await executeFight(won, xpGained, opponentName, opponentId);
+        } catch (error) {
             const opponentId = combatData?.opponent.id || '';
             await useFight(won, xpGained, opponentName, opponentId);
         } catch (error: any) {
+>>>>>>> origin/master
             console.error('Fight result save failed:', error);
-            openModal(error.message || connectionMessage);
+            openModal(error instanceof Error ? error.message : connectionMessage);
         }
     };
 
