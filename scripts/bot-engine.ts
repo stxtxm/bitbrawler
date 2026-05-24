@@ -15,9 +15,8 @@ import {
 } from '../src/utils/botBehaviorUtils';
 import { Character, IncomingFightHistory } from '../src/types/Character';
 import { supabase } from './supabaseAdmin';
+import { INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP } from '../src/utils/persistenceUtils';
 
-const INVENTORY_CAPACITY = 24;
-const COMBAT_LOG_HISTORY_CAP = 20;
 const DB_BATCH_SIZE = 10;
 
 // Columns needed for bot processing (all mutating columns + identity)
