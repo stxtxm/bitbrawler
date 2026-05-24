@@ -7,40 +7,21 @@ on:
 jobs:
   implement:
     if: contains(github.event.issue.body, '/oc') || contains(github.event.issue.body, '/opencode')
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: write
       pull-requests: write
+      issues: write
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Setup
-        run: |
-          git config user.name "opencode-agent"
-          git config user.email "agent@opencode.ai"
-          BRANCH="feat/auto-issue-${{ github.event.issue.number }}"
-          git checkout -b "$BRANCH"
-          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
-
-      - name: Implement with opencode (isolated data dir)
+      - uses: anomalyco/opencode/github@v1.15.10
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          OPENCODE_DATA_DIR: /tmp/opencode-runner-data
-        run: |
-          mkdir -p /tmp/opencode-runner-data
-          PROMPT="$(echo '${{ github.event.issue.body }}' | sed 's|/oc||g; s|/opencode||g' | xargs)"
-          /home/timo/.opencode/bin/opencode run --yes --model "opencode/deepseek-v4-flash-free" "Implement in this codebase: $PROMPT"
-
-      - name: Push and create PR
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          git add -A
-          git diff --cached --quiet || git commit -m "feat: automatic implementation of #${{ github.event.issue.number }}"
-          git push origin "$BRANCH" 2>&1
-          gh pr create --title "${{ github.event.issue.title }}" --body "Closes #${{ github.event.issue.number }}" --base master --label "auto-generated" 2>&1 || true
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+        with:
+          model: opencode/deepseek-v4-flash-free
