@@ -6,6 +6,14 @@ import { simulateCombat } from '../utils/combatUtils';
 import { getMatchDifficultyLabel } from '../utils/matchmakingUtils';
 import { parseCombatDetail, CombatAction, CombatActionType } from '../utils/combatLogUtils';
 
+const ACTION_DURATIONS: Record<CombatActionType, number> = {
+    hit: 380,
+    crit: 560,
+    magic: 600,
+    miss: 420,
+    counter: 440,
+};
+
 interface CombatViewProps {
     player: Character;
     opponent: Character;
@@ -29,13 +37,6 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
     const pulseTimeoutRef = useRef<number | null>(null);
     const [scanIndex, setScanIndex] = useState(0);
     const [scanLocked, setScanLocked] = useState(false);
-    const actionDurations: Record<CombatActionType, number> = {
-        hit: 380,
-        crit: 560,
-        magic: 600,
-        miss: 420,
-        counter: 440,
-    };
 
     const scanList = useMemo(() => {
         const map = new Map<string, Character>();
@@ -111,7 +112,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
                         if (pulseTimeoutRef.current !== null) {
                             window.clearTimeout(pulseTimeoutRef.current);
                         }
-                        const duration = actionDurations[action.type] ?? 320;
+                        const duration = ACTION_DURATIONS[action.type] ?? 320;
                         pulseTimeoutRef.current = window.setTimeout(() => {
                             setActionPulse(null);
                             pulseTimeoutRef.current = null;
@@ -129,7 +130,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
 
             return () => clearInterval(roundInterval);
         }
-    }, [phase, combatResult]);
+    }, [phase, combatResult, player.name, opponent.name]);
 
     useEffect(() => {
         return () => {
