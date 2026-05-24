@@ -23,7 +23,7 @@ export function convertFromSupabase(row: CharacterRow): Character {
     fightHistory: row.fight_history,
     foughtToday: row.fought_today,
     statPoints: row.stat_points,
-    pendingFight: row.pending_fight,
+    pendingFight: row.pending_fight ?? undefined,
     inventory: row.inventory,
     lastLootRoll: row.last_loot_roll,
     incomingFightHistory: row.incoming_fight_history,

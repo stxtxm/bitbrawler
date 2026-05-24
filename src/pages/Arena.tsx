@@ -28,7 +28,7 @@ const formatSettingsLogDate = (timestamp: number) => {
 };
 
 const Arena = () => {
-    const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, allocateStatPoint, rollLootbox, setAutoMode, deleteCharacter } = useGame();
+    const { activeCharacter, logout, executeFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, allocateStatPoint, rollLootbox, setAutoMode, deleteCharacter } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const navigate = useNavigate();
     const isOnline = useOnlineStatus();
@@ -74,6 +74,53 @@ const Arena = () => {
             setDeferLevelUp(false);
         }
     }, [lastLevelUp]);
+
+    // Combined fight history (moved before guard — uses optional chaining)
+    const combinedHistory: SettingsLogEntry[] = useMemo(
+        () => [
+            ...(activeCharacter?.fightHistory || []).map((fight) => ({
+                date: fight.date,
+                won: fight.won,
+                direction: 'outgoing' as const,
+                displayName: fight.opponentName,
+            })),
+            ...(activeCharacter?.incomingFightHistory || []).map((fight) => ({
+                date: fight.date,
+                won: fight.won,
+                direction: 'incoming' as const,
+                displayName: fight.attackerName,
+            })),
+        ]
+            .sort((a, b) => b.date - a.date)
+            .slice(0, 20),
+        [activeCharacter?.fightHistory, activeCharacter?.incomingFightHistory]
+    );
+
+    // Defer level-up when no stat points remain
+    useEffect(() => {
+        if ((activeCharacter?.statPoints || 0) === 0) {
+            setDeferLevelUp(false);
+        }
+    }, [activeCharacter?.statPoints]);
+
+    // Reset lootbox/inventory state when closing
+    useEffect(() => {
+        if (!inventoryOpen) {
+            setLootboxResult(null);
+            setLootboxRolling(false);
+            setInventoryHoveredId(null);
+            setInventorySelectedId(null);
+        }
+    }, [inventoryOpen]);
+
+    // Reset settings state when closing
+    useEffect(() => {
+        if (!settingsOpen) {
+            setSettingsView('main');
+            setDeleteStep('idle');
+            setDeletePending(false);
+        }
+    }, [settingsOpen]);
 
     if (!activeCharacter) {
         // Redirection vers la home si pas de perso (ex: après un logout)
@@ -130,25 +177,6 @@ const Arena = () => {
     const totalBonusEntries = bonusOrder
         .map((key) => ({ key, value: totalBonus[key] || 0 }))
         .filter((entry) => entry.value > 0);
-    const combinedHistory: SettingsLogEntry[] = useMemo(
-        () => [
-            ...(activeCharacter.fightHistory || []).map((fight) => ({
-                date: fight.date,
-                won: fight.won,
-                direction: 'outgoing' as const,
-                displayName: fight.opponentName,
-            })),
-            ...(activeCharacter.incomingFightHistory || []).map((fight) => ({
-                date: fight.date,
-                won: fight.won,
-                direction: 'incoming' as const,
-                displayName: fight.attackerName,
-            })),
-        ]
-            .sort((a, b) => b.date - a.date)
-            .slice(0, 20),
-        [activeCharacter.fightHistory, activeCharacter.incomingFightHistory]
-    );
 
     const handleAllocateStat = async (stat: StatKey) => {
         if (allocatingStat || pendingStatPoints <= 0) return;
@@ -161,8 +189,8 @@ const Arena = () => {
         setAllocatingStat(stat);
         try {
             await allocateStatPoint(stat);
-        } catch (error: any) {
-            openModal(error.message || connectionMessage);
+        } catch (error) {
+            openModal(error instanceof Error ? error.message : connectionMessage);
         } finally {
             setAllocatingStat(null);
         }
@@ -185,29 +213,6 @@ const Arena = () => {
         setDeferLevelUp(false);
     };
 
-    useEffect(() => {
-        if (pendingStatPoints === 0) {
-            setDeferLevelUp(false);
-        }
-    }, [pendingStatPoints]);
-
-    useEffect(() => {
-        if (!inventoryOpen) {
-            setLootboxResult(null);
-            setLootboxRolling(false);
-            setInventoryHoveredId(null);
-            setInventorySelectedId(null);
-        }
-    }, [inventoryOpen]);
-
-    useEffect(() => {
-        if (!settingsOpen) {
-            setSettingsView('main');
-            setDeleteStep('idle');
-            setDeletePending(false);
-        }
-    }, [settingsOpen]);
-
     const handleLootboxRoll = async () => {
         if (lootboxRolling) return;
         if (isOfflineMode) {
@@ -228,8 +233,8 @@ const Arena = () => {
                     setInventorySelectedId(item.id);
                     setInventoryHoveredId(item.id);
                 }
-            } catch (error: any) {
-                openModal(error.message || connectionMessage);
+            } catch (error) {
+                openModal(error instanceof Error ? error.message : connectionMessage);
             } finally {
                 setLootboxRolling(false);
             }
@@ -266,8 +271,8 @@ const Arena = () => {
         setAutoModeUpdating(true);
         try {
             await setAutoMode(!autoModeEnabled);
-        } catch (error: any) {
-            openModal(error.message || connectionMessage);
+        } catch (error) {
+            openModal(error instanceof Error ? error.message : connectionMessage);
         } finally {
             setAutoModeUpdating(false);
         }
@@ -291,8 +296,8 @@ const Arena = () => {
             await deleteCharacter();
             setSettingsOpen(false);
             setTimeout(() => navigate('/'), 0);
-        } catch (error: any) {
-            openModal(error.message || connectionMessage);
+        } catch (error) {
+            openModal(error instanceof Error ? error.message : connectionMessage);
         } finally {
             setDeletePending(false);
         }
@@ -330,10 +335,10 @@ const Arena = () => {
         try {
             const opponentName = combatData?.opponent.name || 'UNKNOWN';
             const opponentId = combatData?.opponent.firestoreId || '';
-            await useFight(won, xpGained, opponentName, opponentId);
-        } catch (error: any) {
+            await executeFight(won, xpGained, opponentName, opponentId);
+        } catch (error) {
             console.error('Fight result save failed:', error);
-            openModal(error.message || connectionMessage);
+            openModal(error instanceof Error ? error.message : connectionMessage);
         }
     };
 

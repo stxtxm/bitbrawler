@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import type { FightHistory, IncomingFightHistory, PendingFight } from '../types/Character'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://bhbpvbfvuayafygdrbgb.supabase.co'
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_TvmRepD1Trhu5bQIGZbkmg_YZ3FI3Gn'
@@ -30,13 +31,13 @@ export type CharacterRow = {
   losses: number
   fights_left: number
   last_fight_reset: number
-  fight_history: any[]
+  fight_history: FightHistory[]
   fought_today: string[]
   stat_points: number
-  pending_fight: any
+  pending_fight: PendingFight | null
   inventory: string[]
   last_loot_roll: number
-  incoming_fight_history: any[]
+  incoming_fight_history: IncomingFightHistory[]
   is_bot: boolean
   auto_mode: boolean
 }

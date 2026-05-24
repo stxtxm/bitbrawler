@@ -8,8 +8,8 @@ export type MockSupabaseResolvedValue = {
 };
 
 export function createQueryBuilder(initialValue?: MockSupabaseResolvedValue) {
-  let currentData = initialValue?.data ?? [];
-  let currentError = initialValue?.error ?? null;
+  const currentData = initialValue?.data ?? [];
+  const currentError = initialValue?.error ?? null;
   const shouldReject = initialValue?.reject ?? false;
   const currentCount = initialValue?.count;
 

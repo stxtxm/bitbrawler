@@ -24,13 +24,13 @@ describe('convertFromSupabase', () => {
     losses: 3,
     fights_left: 2,
     last_fight_reset: 1700000000000,
-    fight_history: [{ winner: 'player1' }],
+    fight_history: [{ opponentName: 'player1', won: true, date: 1700000000000 }],
     fought_today: ['opp-1', 'opp-2'],
     stat_points: 3,
     pending_fight: null,
     inventory: ['sword_01'],
     last_loot_roll: 1700000000000,
-    incoming_fight_history: [{ winner: 'player2' }],
+    incoming_fight_history: [{ attackerName: 'player2', won: false, date: 1700000000000 }],
     is_bot: false,
     auto_mode: false,
   }
@@ -55,13 +55,13 @@ describe('convertFromSupabase', () => {
     expect(char.losses).toBe(3)
     expect(char.fightsLeft).toBe(2)
     expect(char.lastFightReset).toBe(1700000000000)
-    expect(char.fightHistory).toEqual([{ winner: 'player1' }])
+    expect(char.fightHistory).toEqual([{ opponentName: 'player1', won: true, date: 1700000000000 }])
     expect(char.foughtToday).toEqual(['opp-1', 'opp-2'])
     expect(char.statPoints).toBe(3)
-    expect(char.pendingFight).toBeNull()
+    expect(char.pendingFight).toBeUndefined()
     expect(char.inventory).toEqual(['sword_01'])
     expect(char.lastLootRoll).toBe(1700000000000)
-    expect(char.incomingFightHistory).toEqual([{ winner: 'player2' }])
+    expect(char.incomingFightHistory).toEqual([{ attackerName: 'player2', won: false, date: 1700000000000 }])
     expect(char.isBot).toBe(false)
     expect(char.firestoreId).toBe('abc-123')
   })
@@ -85,21 +85,25 @@ describe('convertFromSupabase', () => {
     }
     const char = convertFromSupabase(minimalRow)
 
-    expect(char.pendingFight).toBeNull()
+    expect(char.pendingFight).toBeUndefined()
     expect(char.fightHistory).toEqual([])
     expect(char.inventory).toEqual([])
   })
 
   it('preserves fight history arrays', () => {
     const hist = [
-      { winner: 'a', loser: 'b', date: 1 },
-      { winner: 'c', loser: 'd', date: 2 },
+      { opponentName: 'a', won: true, date: 1 },
+      { opponentName: 'c', won: false, date: 2 },
     ]
-    const rowWithHistory: CharacterRow = { ...row, fight_history: hist, incoming_fight_history: hist }
+    const incomingHist = [
+      { attackerName: 'a', won: false, date: 1 },
+      { attackerName: 'c', won: true, date: 2 },
+    ]
+    const rowWithHistory: CharacterRow = { ...row, fight_history: hist, incoming_fight_history: incomingHist }
     const char = convertFromSupabase(rowWithHistory)
 
     expect(char.fightHistory).toEqual(hist)
-    expect(char.incomingFightHistory).toEqual(hist)
+    expect(char.incomingFightHistory).toEqual(incomingHist)
   })
 })
 
