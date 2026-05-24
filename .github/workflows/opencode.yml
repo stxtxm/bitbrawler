@@ -51,8 +51,9 @@ jobs:
           git add -A
           git diff --cached --quiet || git commit -m "feat: auto-implement #${{ github.event.issue.number }}"
           git push origin "$BRANCH" -f
+          gh label get auto-generated 2>/dev/null && LABEL_FLAG="--label auto-generated" || LABEL_FLAG=""
           gh pr create \
             --title "${{ github.event.issue.title }}" \
             --body "Closes #${{ github.event.issue.number }}" \
             --base master \
-            --label "auto-generated" || true
+            $LABEL_FLAG || true
