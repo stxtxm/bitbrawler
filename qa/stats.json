@@ -13,5 +13,25 @@
     "load_times_ms": {
       "home": 1119
     }
+  },
+  {
+    "date": "2026-05-24T18:34:51.001Z",
+    "run": "2026-05-24",
+    "character": "QA-GOLDDRAGON",
+    "fights": [],
+    "lootbox": {
+      "available": false
+    },
+    "auto_mode_enabled": false,
+    "final_stats": {
+      "level": null,
+      "xp": null,
+      "wins": null,
+      "losses": null
+    },
+    "errors": [],
+    "load_times_ms": {
+      "home": 938
+    }
   }
 ]
