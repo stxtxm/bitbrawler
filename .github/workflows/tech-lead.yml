@@ -1,0 +1,66 @@
+name: Tech Lead Daily
+
+on:
+  schedule:
+    # Run at 21h Paris time (= 19h UTC standard, 21h UTC+2)
+    # Use 19h UTC to cover both standard and summer time
+    - cron: '0 19 * * *'
+  workflow_dispatch:
+
+jobs:
+  tech-lead:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 20
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install opencode
+        run: npm install -g opencode-ai
+
+      - name: Configure git
+        run: |
+          git config user.name "opencode-agent"
+          git config user.email "agent@opencode.ai"
+
+      - name: Merge auto-generated PRs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PRS=$(gh pr list --label "auto-generated" --state open --json number,headRefName,title --jq '.[]')
+          if [ -z "$PRS" ]; then
+            echo "No open auto-generated PRs to merge."
+            exit 0
+          fi
+
+          echo "$PRS" | while IFS= read -r PR_JSON; do
+            PR_NUM=$(echo "$PR_JSON" | jq -r '.number')
+            echo "Processing PR #$PR_NUM..."
+
+            CHECKS=$(gh pr view "$PR_NUM" --json statusCheckRollup --jq '[.statusCheckRollup[]? | select(.status != "COMPLETED")] | length')
+
+            if [ -z "$CHECKS" ] || [ "$CHECKS" -eq 0 ]; then
+              echo "✅ CI green for PR #$PR_NUM. Merging..."
+              gh pr merge "$PR_NUM" --squash --delete-branch || echo "⚠️ Failed to merge PR #$PR_NUM (may already be merged)"
+            else
+              echo "⏳ CI not green for PR #$PR_NUM ($CHECKS checks pending/failing). Skipping."
+            fi
+          done
+
+      - name: Run Tech Lead agent
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          opencode run --dangerously-skip-permissions --agent tech-lead \
+            "Analyse le repo aujourd'hui. Consulte les stats QA (qa/stats.json), regarde les commits récents, merge les PRs si pas déjà fait, et crée des issues avec /oc pour les améliorations à faire."

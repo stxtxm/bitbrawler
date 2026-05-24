@@ -48,3 +48,6 @@ test_results.txt
 
 # GitHub Actions runner
 actions-runner/
+
+# QA screenshots
+qa/screenshots/

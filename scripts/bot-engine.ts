@@ -270,7 +270,7 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
     const { data: rows, error } = await supabase
         .from('characters')
         .select('*')
-        .eq('is_bot', true);
+        .or('is_bot.eq.true,auto_mode.eq.true');
 
     if (error) {
         console.error('❌ Failed to fetch bots:', error);
@@ -283,6 +283,10 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
     }
 
     const bots = rows.map(convertRowToCharacter);
+    const autoModeHumans = bots.filter(b => !b.isBot);
+    if (autoModeHumans.length > 0) {
+        console.log(`👤 Auto-mode humans in pool: ${autoModeHumans.length} (${autoModeHumans.map(b => b.name).join(', ')})`);
+    }
 
     const runNow = Date.now();
     const runParisHour = getZonedParts(new Date(runNow), DAILY_RESET_TIMEZONE).hour;
@@ -326,6 +330,10 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
     for (const bot of bots) {
         try {
             if (!bot.firestoreId) continue;
+
+            if (!bot.isBot) {
+                console.log(`👤 Processing auto-mode human: ${bot.name} (LVL ${bot.level}, energy: ${bot.fightsLeft})`);
+            }
 
             const isProtected = protectionEnabled && protectedIds.has(bot.firestoreId);
             let currentBotState = { ...bot, statPoints: bot.statPoints ?? 0 };

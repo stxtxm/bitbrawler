@@ -1,0 +1,46 @@
+name: QA Tester
+
+on:
+  schedule:
+    # 5x/day Paris time: 8h, 11h, 14h, 17h, 20h UTC+2
+    # In UTC: 6h, 9h, 12h, 15h, 18h
+    - cron: '0 6,9,12,15,18 * * *'
+  workflow_dispatch:
+
+jobs:
+  run-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright
+        run: npx playwright install chromium --with-deps
+
+      - name: Run QA Tests
+        id: qa-tests
+        continue-on-error: true
+        run: node qa/qa-bot.mjs
+        env:
+          QA_PASSWORD: ${{ secrets.QA_PASSWORD }}
+          QA_HEADLESS: 'true'
+
+      - name: Commit QA stats
+        if: always()
+        run: |
+          git config user.name "opencode-agent"
+          git config user.email "agent@opencode.ai"
+          git add qa/stats.json
+          git diff --cached --quiet || git commit -m "chore: update QA stats"
+          git pull --rebase
+          git push
