@@ -16,6 +16,9 @@
 // Pages
 @use 'pages/home';
 @use 'pages/arena';
+@use 'pages/arena-inventory';
+@use 'pages/arena-levelup';
+@use 'pages/arena-settings';
 @use 'pages/login';
 @use 'pages/rankings';
 @use 'pages/character-creation';
