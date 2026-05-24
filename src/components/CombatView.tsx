@@ -42,7 +42,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
     const scanList = useMemo(() => {
         const map = new Map<string, Character>();
         const add = (entry: Character) => {
-            const key = entry.firestoreId || entry.name;
+            const key = entry.id || entry.name;
             if (!map.has(key)) {
                 map.set(key, entry);
             }
@@ -52,7 +52,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
         return Array.from(map.values());
     }, [candidates, opponent]);
 
-    const selectedKey = opponent.firestoreId || opponent.name;
+    const selectedKey = opponent.id || opponent.name;
 
     useEffect(() => {
         // Intro phase: 2 seconds
@@ -88,7 +88,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
 
         const lockTimer = window.setTimeout(() => {
             window.clearInterval(intervalId);
-            const finalIndex = scanList.findIndex((entry) => (entry.firestoreId || entry.name) === selectedKey);
+            const finalIndex = scanList.findIndex((entry) => (entry.id || entry.name) === selectedKey);
             setScanIndex(finalIndex >= 0 ? finalIndex : 0);
             setScanLocked(true);
         }, scanDuration);

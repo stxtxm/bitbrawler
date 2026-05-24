@@ -1,32 +1,23 @@
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 import { useConnectionGate } from '../hooks/useConnectionGate';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import ConnectionModal from '../components/ConnectionModal';
-import { PixelCharacter } from '../components/PixelCharacter';
 import { PixelIcon } from '../components/PixelIcon';
-import { PixelItemIcon } from '../components/PixelItemIcon';
-import { getXpProgress, formatXpDisplay, getMaxLevel } from '../utils/xpUtils';
+import { getXpProgress, getMaxLevel } from '../utils/xpUtils';
 import { StatKey } from '../utils/statUtils';
 import { CombatView } from '../components/CombatView';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
-import { applyEquipmentToCharacter, getEquipmentBonuses, getItemById } from '../utils/equipmentUtils';
-import { canRollLootbox } from '../utils/lootboxUtils';
-import { ItemStats, PixelItemAsset } from '../types/Item';
+import { applyEquipmentToCharacter } from '../utils/equipmentUtils';
+import LevelUpOverlay from '../components/LevelUpOverlay';
+import CharacterStats from '../components/CharacterStats';
+import FightButton from '../components/FightButton';
+import InventoryModal from '../components/InventoryModal';
+import SettingsModal from '../components/SettingsModal';
 
-type SettingsLogEntry = {
-    date: number;
-    won: boolean;
-    direction: 'outgoing' | 'incoming';
-    displayName: string;
-};
-
-const formatSettingsLogDate = (timestamp: number) => {
-    const date = new Date(timestamp);
-    return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-};
+type StatIconType = 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence' | 'focus';
 
 const Arena = () => {
     const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, allocateStatPoint, rollLootbox, setAutoMode, deleteCharacter } = useGame();
@@ -43,15 +34,7 @@ const Arena = () => {
     const [combatData, setCombatData] = useState<MatchmakingResult | null>(null);
     const [allocatingStat, setAllocatingStat] = useState<StatKey | null>(null);
     const [deferLevelUp, setDeferLevelUp] = useState(false);
-    const [lootboxRolling, setLootboxRolling] = useState(false);
-    const [lootboxResult, setLootboxResult] = useState<PixelItemAsset | null>(null);
-    const [inventoryHoveredId, setInventoryHoveredId] = useState<string | null>(null);
-    const [inventorySelectedId, setInventorySelectedId] = useState<string | null>(null);
     const [settingsOpen, setSettingsOpen] = useState(false);
-    const [settingsView, setSettingsView] = useState<'main' | 'logs'>('main');
-    const [autoModeUpdating, setAutoModeUpdating] = useState(false);
-    const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm'>('idle');
-    const [deletePending, setDeletePending] = useState(false);
 
     // Handle XP gain notification
     useEffect(() => {
@@ -77,7 +60,6 @@ const Arena = () => {
     }, [lastLevelUp]);
 
     if (!activeCharacter) {
-        // Redirection vers la home si pas de perso (ex: après un logout)
         setTimeout(() => navigate('/'), 100);
         return <div className="loading-screen">ACCESS DENIED</div>;
     }
@@ -93,11 +75,7 @@ const Arena = () => {
     const canCloseLevelUp = pendingStatPoints === 0;
     const shouldShowLevelUp = showLevelUp || (pendingStatPoints > 0 && !deferLevelUp);
     const hasLevelInfo = lastLevelUp !== null;
-    const inventory = activeCharacter.inventory || [];
-    const inventoryCapacity = 24;
-    const inventoryFull = inventory.length >= inventoryCapacity;
-    const canRollDailyLoot = canRollLootbox(activeCharacter.lastLootRoll, Date.now());
-    type StatIconType = 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence' | 'focus';
+
     const statOptions: Array<{ key: StatKey; label: string; value: number; hint: string; icon: StatIconType }> = [
         { key: 'strength', label: 'STR', value: effectiveCharacter.strength, hint: 'Damage', icon: 'strength' },
         { key: 'vitality', label: 'VIT', value: effectiveCharacter.vitality, hint: 'HP / Defense', icon: 'vitality' },
@@ -106,67 +84,14 @@ const Arena = () => {
         { key: 'intelligence', label: 'INT', value: effectiveCharacter.intelligence, hint: 'Magic Power', icon: 'intelligence' },
         { key: 'focus', label: 'FOC', value: effectiveCharacter.focus, hint: 'Accuracy / Control', icon: 'focus' },
     ];
-    const itemStatMeta: Record<keyof ItemStats, { label: string; icon: StatIconType }> = {
-        strength: { label: 'STR', icon: 'strength' },
-        vitality: { label: 'VIT', icon: 'vitality' },
-        dexterity: { label: 'DEX', icon: 'dexterity' },
-        luck: { label: 'LUK', icon: 'luck' },
-        intelligence: { label: 'INT', icon: 'intelligence' },
-        focus: { label: 'FOC', icon: 'focus' },
-        hp: { label: 'HP', icon: 'vitality' },
-    };
-    const previewItemId = inventoryHoveredId ?? inventorySelectedId ?? undefined;
-    const previewItem = getItemById(previewItemId);
-    const previewStats = previewItem
-        ? (Object.entries(previewItem.stats)
-            .filter(([, value]) => typeof value === 'number' && value !== 0) as [keyof ItemStats, number][])
-        : [];
-    const lootboxStats = lootboxResult
-        ? (Object.entries(lootboxResult.stats)
-            .filter(([, value]) => typeof value === 'number' && value !== 0) as [keyof ItemStats, number][])
-        : [];
-    const previewSlotLabel = previewItem ? previewItem.slot.toUpperCase() : '';
-    const totalBonus = getEquipmentBonuses(activeCharacter);
-    const bonusOrder: Array<keyof ItemStats> = ['strength', 'vitality', 'dexterity', 'luck', 'intelligence', 'focus', 'hp'];
-    const totalBonusEntries = bonusOrder
-        .map((key) => ({ key, value: totalBonus[key] || 0 }))
-        .filter((entry) => entry.value > 0);
-    const combinedHistory: SettingsLogEntry[] = useMemo(
-        () => [
-            ...(activeCharacter.fightHistory || []).map((fight) => ({
-                date: fight.date,
-                won: fight.won,
-                direction: 'outgoing' as const,
-                displayName: fight.opponentName,
-            })),
-            ...(activeCharacter.incomingFightHistory || []).map((fight) => ({
-                date: fight.date,
-                won: fight.won,
-                direction: 'incoming' as const,
-                displayName: fight.attackerName,
-            })),
-        ]
-            .sort((a, b) => b.date - a.date)
-            .slice(0, 20),
-        [activeCharacter.fightHistory, activeCharacter.incomingFightHistory]
-    );
 
     const handleAllocateStat = async (stat: StatKey) => {
         if (allocatingStat || pendingStatPoints <= 0) return;
-
-        if (isOfflineMode) {
-            openModal(connectionMessage);
-            return;
-        }
-
+        if (isOfflineMode) { openModal(connectionMessage); return; }
         setAllocatingStat(stat);
-        try {
-            await allocateStatPoint(stat);
-        } catch (error: any) {
-            openModal(error.message || connectionMessage);
-        } finally {
-            setAllocatingStat(null);
-        }
+        try { await allocateStatPoint(stat); }
+        catch (error: any) { openModal(error.message || connectionMessage); }
+        finally { setAllocatingStat(null); }
     };
 
     const handleCloseLevelUp = () => {
@@ -187,117 +112,8 @@ const Arena = () => {
     };
 
     useEffect(() => {
-        if (pendingStatPoints === 0) {
-            setDeferLevelUp(false);
-        }
+        if (pendingStatPoints === 0) setDeferLevelUp(false);
     }, [pendingStatPoints]);
-
-    useEffect(() => {
-        if (!inventoryOpen) {
-            setLootboxResult(null);
-            setLootboxRolling(false);
-            setInventoryHoveredId(null);
-            setInventorySelectedId(null);
-        }
-    }, [inventoryOpen]);
-
-    useEffect(() => {
-        if (!settingsOpen) {
-            setSettingsView('main');
-            setDeleteStep('idle');
-            setDeletePending(false);
-        }
-    }, [settingsOpen]);
-
-    const handleLootboxRoll = async () => {
-        if (lootboxRolling) return;
-        if (isOfflineMode) {
-            openModal(connectionMessage);
-            return;
-        }
-        const canProceed = await ensureConnection(connectionMessage);
-        if (!canProceed) return;
-
-        setLootboxRolling(true);
-        setLootboxResult(null);
-
-        setTimeout(async () => {
-            try {
-                const item = await rollLootbox();
-                if (item) {
-                    setLootboxResult(item);
-                    setInventorySelectedId(item.id);
-                    setInventoryHoveredId(item.id);
-                }
-            } catch (error: any) {
-                openModal(error.message || connectionMessage);
-            } finally {
-                setLootboxRolling(false);
-            }
-        }, 900);
-    };
-
-    const handleCloseLootboxResult = () => {
-        setLootboxResult(null);
-    };
-
-    const handleSelectItem = (itemId: string) => {
-        setInventorySelectedId(itemId);
-    };
-
-    const handleOpenHistoryFromSettings = () => {
-        setSettingsView('logs');
-    };
-
-    const handleReturnToSettings = () => {
-        setSettingsView('main');
-    };
-
-    const autoModeEnabled = !!activeCharacter?.isBot;
-
-    const handleToggleAutoMode = async () => {
-        if (autoModeUpdating) return;
-        if (isOfflineMode) {
-            openModal(connectionMessage);
-            return;
-        }
-        const canProceed = await ensureConnection(connectionMessage);
-        if (!canProceed) return;
-
-        setAutoModeUpdating(true);
-        try {
-            await setAutoMode(!autoModeEnabled);
-        } catch (error: any) {
-            openModal(error.message || connectionMessage);
-        } finally {
-            setAutoModeUpdating(false);
-        }
-    };
-
-    const handleDeleteCharacter = async () => {
-        if (deletePending) return;
-        if (deleteStep === 'idle') {
-            setDeleteStep('confirm');
-            return;
-        }
-        if (isOfflineMode) {
-            openModal(connectionMessage);
-            return;
-        }
-        const canProceed = await ensureConnection(connectionMessage);
-        if (!canProceed) return;
-
-        setDeletePending(true);
-        try {
-            await deleteCharacter();
-            setSettingsOpen(false);
-            setTimeout(() => navigate('/'), 0);
-        } catch (error: any) {
-            openModal(error.message || connectionMessage);
-        } finally {
-            setDeletePending(false);
-        }
-    };
 
     const handleFight = async () => {
         if (matchmaking || hasPendingFight) return;
@@ -308,16 +124,12 @@ const Arena = () => {
         setMatchmaking(true);
 
         try {
-            // Find an opponent
             const match = await startMatchmaking();
-
             if (!match) {
                 openModal('No opponents found! Try again later.');
                 setMatchmaking(false);
                 return;
             }
-
-            // Start combat with the matched opponent
             setCombatData(match);
             setMatchmaking(false);
         } catch (error) {
@@ -330,7 +142,7 @@ const Arena = () => {
     const handleCombatComplete = async (won: boolean, xpGained: number) => {
         try {
             const opponentName = combatData?.opponent.name || 'UNKNOWN';
-            const opponentId = combatData?.opponent.firestoreId || '';
+            const opponentId = combatData?.opponent.id || '';
             await useFight(won, xpGained, opponentName, opponentId);
         } catch (error: any) {
             console.error('Fight result save failed:', error);
@@ -428,6 +240,26 @@ const Arena = () => {
                     </div>
                 </div>
             )}
+    const handleCloseCombat = () => setCombatData(null);
+
+    return (
+        <div className="container retro-container arena-container">
+            <LevelUpOverlay
+                shouldShowLevelUp={shouldShowLevelUp}
+                activeCharacter={activeCharacter}
+                effectiveCharacter={effectiveCharacter}
+                lastLevelUp={lastLevelUp}
+                pendingStatPoints={pendingStatPoints}
+                isOfflineMode={isOfflineMode}
+                allocatingStat={allocatingStat}
+                statOptions={statOptions}
+                canCloseLevelUp={canCloseLevelUp}
+                hasLevelInfo={hasLevelInfo}
+                handleAllocateStat={handleAllocateStat}
+                handleCloseLevelUp={handleCloseLevelUp}
+                handleDeferLevelUp={handleDeferLevelUp}
+            />
+>>>>>>> origin/master
 
             <header className="arena-header">
                 <div className="char-info">
@@ -438,20 +270,10 @@ const Arena = () => {
                     </div>
                 </div>
                 <div className="header-actions">
-                    <button
-                        className="button icon-btn"
-                        onClick={() => setSettingsOpen(true)}
-                        title="Settings"
-                        aria-label="Settings"
-                    >
+                    <button className="button icon-btn" onClick={() => setSettingsOpen(true)} title="Settings" aria-label="Settings">
                         <PixelIcon type="gear" size={26} />
                     </button>
-                    <button
-                        className="button icon-btn inventory-btn"
-                        onClick={() => setInventoryOpen(true)}
-                        title="Inventory"
-                        aria-label="Inventory"
-                    >
+                    <button className="button icon-btn inventory-btn" onClick={() => setInventoryOpen(true)} title="Inventory" aria-label="Inventory">
                         <PixelIcon type="backpack" size={26} />
                     </button>
                     <button className="button icon-btn" onClick={() => { logout(); setTimeout(() => navigate('/'), 0); }} title="Logout" aria-label="Logout">
@@ -459,7 +281,6 @@ const Arena = () => {
                     </button>
                 </div>
             </header>
-
 
             {isOfflineMode && (
                 <div className="offline-banner" role="status" aria-live="polite">
@@ -557,7 +378,29 @@ const Arena = () => {
                     </button>
                 </div>
 
+                <CharacterStats
+                    activeCharacter={activeCharacter}
+                    effectiveCharacter={effectiveCharacter}
+                    xpProgress={xpProgress}
+                    xpBarAnimating={xpBarAnimating}
+                    showXpGain={showXpGain}
+                    lastXpGain={lastXpGain}
+                    isMaxLevel={isMaxLevel}
+                    pendingStatPoints={pendingStatPoints}
+                    statOptions={statOptions}
+                    handleOpenLevelUp={handleOpenLevelUp}
+                />
+                <FightButton
+                    canFight={canFight}
+                    matchmaking={matchmaking}
+                    hasPendingFight={hasPendingFight}
+                    isOfflineMode={isOfflineMode}
+                    fightsLeft={fightsLeft}
+                    handleFight={handleFight}
+                />
+>>>>>>> origin/master
             </div>
+
             <ConnectionModal
                 open={connectionModal.open}
                 message={connectionModal.message}
@@ -846,6 +689,26 @@ const Arena = () => {
                 </div>
             )}
             </main>
+            <InventoryModal
+                isOpen={inventoryOpen}
+                activeCharacter={activeCharacter}
+                isOfflineMode={isOfflineMode}
+                onClose={() => setInventoryOpen(false)}
+                rollLootbox={rollLootbox}
+                openModal={openModal}
+            />
+            <SettingsModal
+                isOpen={settingsOpen}
+                activeCharacter={activeCharacter}
+                isOfflineMode={isOfflineMode}
+                onClose={() => setSettingsOpen(false)}
+                setAutoMode={setAutoMode}
+                deleteCharacter={deleteCharacter}
+                openModal={openModal}
+                ensureConnection={() => ensureConnection(connectionMessage)}
+                navigate={navigate}
+            />
+>>>>>>> origin/master
             {combatData && activeCharacter && (
                 <CombatView
                     player={applyEquipmentToCharacter(activeCharacter)}
