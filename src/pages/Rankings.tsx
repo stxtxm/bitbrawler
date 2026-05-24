@@ -103,7 +103,7 @@ const Rankings = () => {
             const { error } = await supabase
                 .from('characters')
                 .delete()
-                .neq('id', 'none'); // Delete all records
+                .neq('id', '00000000-0000-0000-0000-000000000000');
 
             if (error) throw error;
 
