@@ -5,7 +5,7 @@ on:
     # Run at 21h Paris time (= 19h UTC standard, 21h UTC+2)
     # Use 19h UTC to cover both standard and summer time
     - cron: '0 19 * * *'
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 jobs:
   tech-lead:
