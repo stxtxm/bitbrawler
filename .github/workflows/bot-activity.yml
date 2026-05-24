@@ -4,7 +4,7 @@ on:
   schedule:
     # Run every 2 hours (UTC).
     - cron: '0 */2 * * *'
-  workflow_dispatch: # Allow manual trigger from GitHub UI
+  workflow_dispatch:
 
 jobs:
   run-bots:
@@ -28,7 +28,8 @@ jobs:
         continue-on-error: true
         run: npx tsx scripts/bot-engine.ts
         env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: Sanity Check
         if: always()

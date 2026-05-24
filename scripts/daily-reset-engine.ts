@@ -6,30 +6,11 @@ import {
     getZonedMidnightUtc,
     isWithinZonedMidnightWindow
 } from '../src/utils/timezoneUtils';
-import { Timestamp, QueryDocumentSnapshot } from 'firebase-admin/firestore';
-import { initFirebaseAdmin, loadServiceAccount } from './firebaseAdmin';
+import { supabase } from './supabaseAdmin';
 
-// Initialize Firebase Admin
-let serviceAccount: ReturnType<typeof loadServiceAccount>;
-
-try {
-    serviceAccount = loadServiceAccount();
-} catch (error) {
-    console.error('Failed to parse service account:', error);
-    process.exit(1);
-}
-
-if (!serviceAccount) {
-    console.warn('⚠️ No service account found for daily reset.');
-    process.exit(0);
-}
-
-const db = initFirebaseAdmin(serviceAccount);
 const RESET_SCOPE = (process.env.RESET_SCOPE || 'incremental').toLowerCase();
 const RESET_WINDOW_MINUTES = 45;
 const RESET_WINDOW_LABEL = `00:00-00:${String(RESET_WINDOW_MINUTES).padStart(2, '0')}`;
-const RESET_STATE_COLLECTION = 'maintenance';
-const RESET_STATE_DOC_ID = 'dailyReset';
 
 async function runDailyReset() {
     console.log('⏳ Starting Global Daily Reset...');
@@ -43,14 +24,10 @@ async function runDailyReset() {
         return;
     }
 
-    // The workflow is triggered twice (22:00 and 23:00 UTC) to cover DST.
-    // Only one of those corresponds to Paris midnight; the midnight window guard above
-    // prevents running one hour early/late and avoids draining fresh fights in the bot catch-up window.
     const parisResetMidnightUtc = getZonedMidnightUtc(now, DAILY_RESET_TIMEZONE);
     const parisResetDay = getZonedParts(new Date(parisResetMidnightUtc), DAILY_RESET_TIMEZONE);
     const parisNowLabel = formatZonedDateLabel(parisNow);
     const parisResetLabel = formatZonedDateLabel(parisResetDay);
-    const resetStateRef = db.collection(RESET_STATE_COLLECTION).doc(RESET_STATE_DOC_ID);
 
     console.log(`🕒 Current time (UTC): ${now.toISOString()}`);
     console.log(`🕒 Current time (Paris): ${parisNowLabel} ${String(parisNow.hour).padStart(2, '0')}:${String(parisNow.minute).padStart(2, '0')}:${String(parisNow.second).padStart(2, '0')}`);
@@ -58,40 +35,54 @@ async function runDailyReset() {
 
     try {
         if (!forceRun) {
-            const resetState = await resetStateRef.get();
-            const lastCompletedKey = resetState.exists ? resetState.get('lastCompletedKey') : null;
-            if (lastCompletedKey === parisResetLabel) {
-                console.log(`⏭️ Skipping reset: already completed for Paris day ${parisResetLabel}.`);
-                return;
+            try {
+                const { data: resetState } = await supabase
+                    .from('maintenance')
+                    .select('last_completed_key')
+                    .eq('id', 'dailyReset')
+                    .single();
+
+                if (resetState?.last_completed_key === parisResetLabel) {
+                    console.log(`⏭️ Skipping reset: already completed for Paris day ${parisResetLabel}.`);
+                    return;
+                }
+            } catch {
+                console.log('ℹ️ Maintenance state check skipped (table not available).');
             }
         }
 
-        const charactersRef = db.collection('characters');
-        let docs: QueryDocumentSnapshot[] = [];
+        let docs: { id: string }[] = [];
         let scopeLabel = '';
 
         if (RESET_SCOPE === 'all') {
-            const snapshot = await charactersRef.get();
-            docs = snapshot.docs;
+            const { data: all, error } = await supabase
+                .from('characters')
+                .select('id');
+
+            if (error) throw error;
+            docs = all ?? [];
             scopeLabel = 'full reset';
         } else {
-            const timestampCutoff = Timestamp.fromMillis(parisResetMidnightUtc);
+            const { data: numericDocs, error: numericError } = await supabase
+                .from('characters')
+                .select('id')
+                .lt('last_fight_reset', parisResetMidnightUtc);
 
-            // Find all characters whose last reset was before today (Paris day start),
-            // including missing/null fields and legacy Timestamp values.
-            const [numericSnapshot, nullSnapshot, timestampSnapshot] = await Promise.all([
-                charactersRef.where('lastFightReset', '<', parisResetMidnightUtc).get(),
-                charactersRef.where('lastFightReset', '==', null).get(),
-                charactersRef.where('lastFightReset', '<', timestampCutoff).get()
-            ]);
+            if (numericError) throw numericError;
 
-            const deduped = new Map<string, QueryDocumentSnapshot>();
-            [numericSnapshot, nullSnapshot, timestampSnapshot].forEach((snap) => {
-                snap.docs.forEach((doc) => deduped.set(doc.id, doc));
-            });
+            const { data: nullDocs, error: nullError } = await supabase
+                .from('characters')
+                .select('id')
+                .is('last_fight_reset', null);
+
+            if (nullError) throw nullError;
+
+            const deduped = new Map<string, { id: string }>();
+            (numericDocs ?? []).forEach(d => deduped.set(d.id, d));
+            (nullDocs ?? []).forEach(d => deduped.set(d.id, d));
 
             docs = Array.from(deduped.values());
-            scopeLabel = `numeric: ${numericSnapshot.size}, missing/null: ${nullSnapshot.size}, timestamp: ${timestampSnapshot.size}`;
+            scopeLabel = `numeric: ${numericDocs?.length ?? 0}, missing/null: ${nullDocs?.length ?? 0}`;
         }
 
         if (docs.length === 0) {
@@ -100,49 +91,42 @@ async function runDailyReset() {
             } else {
                 console.log(`✅ All characters are already up to date for ${parisResetLabel}.`);
             }
-            await resetStateRef.set({
-                lastCompletedKey: parisResetLabel,
-                lastCompletedAt: now.getTime(),
-                lastCompletedAtUtc: now.toISOString(),
-                targetParisMidnightUtc: parisResetMidnightUtc,
-                window: RESET_WINDOW_LABEL,
-                scope: RESET_SCOPE,
-                updatedCharacters: 0
-            }, { merge: true });
+            await upsertMaintenanceState(parisResetLabel, now.getTime(), parisResetMidnightUtc, 0);
             return;
         }
 
         console.log(
             `🔄 Resetting ${docs.length} characters (${scopeLabel})...`
         );
-        const batchSize = 400;
+
+        const batchSize = 20;
         let totalUpdated = 0;
         let batchIndex = 0;
 
         for (let i = 0; i < docs.length; i += batchSize) {
-            const batch = db.batch();
             const slice = docs.slice(i, i + batchSize);
-            slice.forEach((doc) => {
-                const docRef = db.collection('characters').doc(doc.id);
-                batch.update(docRef, {
-                    fightsLeft: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
-                    lastFightReset: parisResetMidnightUtc,
-                    foughtToday: [],
-                    battleCount: 0
-                });
-            });
-
             batchIndex += 1;
             try {
-                await batch.commit();
-                totalUpdated += slice.length;
-                console.log(`✅ Batch ${batchIndex} committed (${slice.length} characters).`);
+                const results = await Promise.all(
+                    slice.map(doc =>
+                        supabase
+                            .from('characters')
+                            .update({
+                                fights_left: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
+                                last_fight_reset: parisResetMidnightUtc,
+                                fought_today: [],
+                            })
+                            .eq('id', doc.id)
+                    )
+                );
+                const succeeded = slice.length - results.filter(r => r.error).length;
+                totalUpdated += succeeded;
+                console.log(`✅ Batch ${batchIndex} committed (${succeeded}/${slice.length} characters).`);
             } catch (batchError) {
                 console.error(`❌ Batch ${batchIndex} failed (${slice.length} characters):`, batchError);
             }
         }
 
-        // Spot check: verify a sample of characters received the reset
         if (totalUpdated > 0) {
             try {
                 const sampleSize = Math.min(5, totalUpdated);
@@ -153,10 +137,14 @@ async function runDailyReset() {
                     .map(d => d.id);
 
                 if (sampleIds.length > 0) {
-                    const sampleSnap = await Promise.all(
-                        sampleIds.map(id => db.collection('characters').doc(id).get())
+                    const sampleResults = await Promise.all(
+                        sampleIds.map(id =>
+                            supabase.from('characters').select('fights_left').eq('id', id).single()
+                        )
                     );
-                    const verified = sampleSnap.filter(s => s.exists && s.get('fightsLeft') === GAME_RULES.COMBAT.MAX_DAILY_FIGHTS).length;
+                    const verified = sampleResults.filter(
+                        r => r.data && r.data.fights_left === GAME_RULES.COMBAT.MAX_DAILY_FIGHTS
+                    ).length;
                     if (verified === sampleIds.length) {
                         console.log(`✅ Spot check: ${verified}/${sampleIds.length} characters verified (fightsLeft = ${GAME_RULES.COMBAT.MAX_DAILY_FIGHTS})`);
                     } else {
@@ -170,21 +158,37 @@ async function runDailyReset() {
 
         const finalStatus = totalUpdated > 0 ? 'completed' : 'no_updates';
         console.log(`✨ ${finalStatus === 'completed' ? `Successfully reset energy for ${totalUpdated} characters.` : 'No characters needed reset.'}`);
-        await resetStateRef.set({
-            lastCompletedKey: parisResetLabel,
-            lastCompletedAt: now.getTime(),
-            lastCompletedAtUtc: now.toISOString(),
-            targetParisMidnightUtc: parisResetMidnightUtc,
-            window: RESET_WINDOW_LABEL,
-            scope: RESET_SCOPE,
-            updatedCharacters: totalUpdated,
-            status: finalStatus,
-            batchErrors: batchIndex > 0 && totalUpdated < docs.length ? 'partial' : 'none'
-        }, { merge: true });
+        await upsertMaintenanceState(parisResetLabel, now.getTime(), parisResetMidnightUtc, totalUpdated, finalStatus);
 
     } catch (error) {
         console.error('❌ Daily reset failed:', error);
         process.exit(1);
+    }
+}
+
+async function upsertMaintenanceState(
+    lastCompletedKey: string,
+    lastCompletedAt: number,
+    targetParisMidnightUtc: number,
+    updatedCharacters: number,
+    status: string = 'completed'
+) {
+    const { error } = await supabase
+        .from('maintenance')
+        .upsert({
+            id: 'dailyReset',
+            last_completed_key: lastCompletedKey,
+            last_completed_at: lastCompletedAt,
+            last_completed_at_utc: new Date(lastCompletedAt).toISOString(),
+            target_paris_midnight_utc: targetParisMidnightUtc,
+            reset_window: RESET_WINDOW_LABEL,
+            scope: RESET_SCOPE,
+            updated_characters: updatedCharacters,
+            status,
+        }, { onConflict: 'id' });
+
+    if (error) {
+        console.log('ℹ️ Maintenance state tracking skipped (table not available yet).');
     }
 }
 

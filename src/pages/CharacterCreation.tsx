@@ -2,14 +2,45 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PixelCharacter } from '../components/PixelCharacter'
 import { Character } from '../types/Character'
-import { db } from '../config/firebase'
-import { collection, addDoc, query, where, getDocs } from 'firebase/firestore'
+import { supabase, CharacterRow } from '../config/supabase'
 import { useGame } from '../context/GameContext'
 import { useConnectionGate } from '../hooks/useConnectionGate'
 import ConnectionModal from '../components/ConnectionModal'
 import { generateInitialStats, generateCharacterName } from '../utils/characterUtils'
 import { PixelIcon } from '../components/PixelIcon'
 import { prefetchArena } from '../routes/lazyPages'
+
+// Conversion function for character creation
+const convertToSupabase = (character: Character): Partial<CharacterRow> => {
+  return {
+    name: character.name,
+    gender: character.gender as 'male' | 'female',
+    seed: character.seed,
+    level: character.level,
+    hp: character.hp,
+    max_hp: character.maxHp,
+    strength: character.strength,
+    vitality: character.vitality,
+    dexterity: character.dexterity,
+    luck: character.luck,
+    intelligence: character.intelligence,
+    focus: character.focus ?? 10,
+    experience: character.experience ?? 0,
+    wins: character.wins ?? 0,
+    losses: character.losses ?? 0,
+    fights_left: character.fightsLeft ?? 5,
+    last_fight_reset: character.lastFightReset ?? Date.now(),
+    fight_history: character.fightHistory ?? [],
+    fought_today: character.foughtToday ?? [],
+    stat_points: character.statPoints ?? 0,
+    pending_fight: character.pendingFight ?? null,
+    inventory: character.inventory ?? [],
+    last_loot_roll: character.lastLootRoll ?? 0,
+    incoming_fight_history: character.incomingFightHistory ?? [],
+    is_bot: typeof character.isBot === 'boolean' ? character.isBot : false,
+    auto_mode: false
+  };
+};
 
 const CharacterCreation = () => {
   const navigate = useNavigate()
@@ -95,29 +126,39 @@ const CharacterCreation = () => {
       return
     }
 
-    try {
-      // 1. Vérifier si le nom existe déjà dans Firestore
-      const q = query(collection(db, "characters"), where("name", "==", trimmedName));
-      const querySnapshot = await getDocs(q);
+      try {
+        // 1. Vérifier si le nom existe déjà dans Supabase
+        const { data } = await supabase
+          .from('characters')
+          .select('id')
+          .eq('name', trimmedName)
+          .single();
 
-      if (!querySnapshot.empty) {
-        setNameError('NAME ALREADY TAKEN!');
-        setShowErrorModal(true);
-        setIsSubmitting(false)
-        return;
-      }
+        if (data) {
+          setNameError('NAME ALREADY TAKEN!');
+          setShowErrorModal(true);
+          setIsSubmitting(false)
+          return;
+        }
 
-      // 2. Si le nom est libre, créer le personnage
-      const finalCharacter = {
-        ...generatedCharacter,
-        name: trimmedName
-      }
+        // 2. Si le nom est libre, créer le personnage
+        const finalCharacter = {
+          ...generatedCharacter,
+          name: trimmedName
+        }
 
-      const docRef = await addDoc(collection(db, "characters"), finalCharacter);
-      console.log("Personnage sauvegardé sur le Cloud avec l'ID: ", docRef.id);
+        const { data: newChar, error: insertError } = await supabase
+          .from('characters')
+          .insert([convertToSupabase(finalCharacter)])
+          .select()
+          .single();
 
-      // Connecter l'utilisateur immédiatement
-      setCharacter({ ...finalCharacter, firestoreId: docRef.id });
+        if (insertError) throw insertError;
+
+        console.log("Personnage sauvegardé sur Supabase avec l'ID: ", newChar.id);
+
+        // Connecter l'utilisateur immédiatement
+        setCharacter({ ...finalCharacter, firestoreId: newChar.id });
       // Ensure error modal is closed and show success
       setShowErrorModal(false);
       setShowSuccessModal(true);

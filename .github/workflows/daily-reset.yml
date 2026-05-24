@@ -5,7 +5,7 @@ on:
     # Two schedules to cover Europe/Paris midnight across DST.
     - cron: '0 22 * * *' # 00:00 Paris during CEST (UTC+2)
     - cron: '0 23 * * *' # 00:00 Paris during CET (UTC+1)
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch:
 
 jobs:
   daily-reset:
@@ -29,14 +29,15 @@ jobs:
         continue-on-error: true
         run: npm run daily-reset:run
         env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: Sanity Check
         if: always()
         run: |
           if [ "${{ steps.daily-reset.outcome }}" = "failure" ]; then
             echo "❌ Daily reset step failed. Characters may not have been reset."
-            echo "ℹ️ Check Firestore maintenance/dailyReset doc for partial completion status."
+            echo "ℹ️ Check Supabase maintenance table for partial completion status."
             exit 0
           fi
           echo "✅ Daily reset step completed successfully"

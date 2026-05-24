@@ -1,5 +1,4 @@
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { supabase, CharacterRow } from '../config/supabase';
 import { Character } from '../types/Character';
 import { calculateCombatStats } from './combatUtils';
 
@@ -48,23 +47,21 @@ function calculateTotalPower(character: Character): number {
 async function findOpponentByExactLevel(player: Character): Promise<MatchmakingResult | null> {
     try {
         // Query characters at the exact same level, excluding the current player
-        const q = query(
-            collection(db, 'characters'),
-            where('level', '==', player.level),
-            limit(50) // Get multiple candidates for better selection
-        );
+        const { data, error } = await supabase
+            .from('characters')
+            .select('*')
+            .eq('level', player.level)
+            .limit(50);
 
-        const snapshot = await getDocs(q);
-
-        if (snapshot.empty) {
+        if (error || !data || data.length === 0) {
             return null;
         }
 
-        // Filter out the current player and already fought today
-        const candidates = snapshot.docs
-            .map(doc => ({
-                ...doc.data() as Character,
-                firestoreId: doc.id
+        // Convert from Supabase format and filter out the current player and already fought today
+        const candidates = data
+            .map(row => ({
+                ...convertFromSupabase(row),
+                firestoreId: row.id
             }))
             .filter(char => {
                 // Exclude self
@@ -108,6 +105,38 @@ async function findOpponentByExactLevel(player: Character): Promise<MatchmakingR
         console.error('Exact level query error:', error);
         return null;
     }
+}
+
+// Conversion function for matchmaking
+function convertFromSupabase(row: CharacterRow): Character {
+    return {
+        name: row.name,
+        gender: row.gender as 'male' | 'female',
+        seed: row.seed,
+        level: row.level,
+        hp: row.hp,
+        maxHp: row.max_hp,
+        strength: row.strength,
+        vitality: row.vitality,
+        dexterity: row.dexterity,
+        luck: row.luck,
+        intelligence: row.intelligence,
+        focus: row.focus,
+        experience: row.experience,
+        wins: row.wins,
+        losses: row.losses,
+        fightsLeft: row.fights_left,
+        lastFightReset: row.last_fight_reset,
+        fightHistory: row.fight_history,
+        foughtToday: row.fought_today,
+        statPoints: row.stat_points,
+        pendingFight: row.pending_fight,
+        inventory: row.inventory,
+        lastLootRoll: row.last_loot_roll,
+        incomingFightHistory: row.incoming_fight_history,
+        isBot: row.is_bot,
+        firestoreId: row.id
+    };
 }
 
 /**

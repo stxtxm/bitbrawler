@@ -3,39 +3,24 @@ import { renderHook, waitFor, act } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { GameProvider, useGame } from '../../context/GameContext';
 import { Character } from '../../types/Character';
+import { createQueryBuilder, characterToSupabaseRow } from '../../test/utils/supabaseMock';
 
-// Mock Firebase
-vi.mock('../../config/firebase', () => ({
-  db: {
-    collection: vi.fn(),
-    doc: vi.fn(),
-  }
+const { mockSupabaseFrom } = vi.hoisted(() => ({
+  mockSupabaseFrom: vi.fn()
 }));
 
-// Mock Firestore functions
-vi.mock('firebase/firestore', () => ({
-  collection: vi.fn(),
-  doc: vi.fn(),
-  query: vi.fn(),
-  where: vi.fn(),
-  getDocs: vi.fn(),
-  getDocsFromServer: vi.fn(),
-  updateDoc: vi.fn(),
-  runTransaction: vi.fn().mockResolvedValue(undefined),
-  limit: vi.fn(),
-  deleteField: vi.fn(),
+vi.mock('../../config/supabase', () => ({
+  supabase: { from: mockSupabaseFrom },
+  CharacterRow: {}
 }));
 
-import { getDocs, getDocsFromServer, updateDoc } from 'firebase/firestore';
-
-// Wrapper component for testing hooks
 const createWrapper = () => {
   return ({ children }: { children: ReactNode }) => (
     <GameProvider>{children}</GameProvider>
   );
 };
 
-describe('Firebase Unavailability Handling', () => {
+describe('Database Unavailability Handling', () => {
   const mockCharacter: Character = {
     name: 'Test Hero',
     gender: 'male',
@@ -59,9 +44,7 @@ describe('Firebase Unavailability Handling', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers({ shouldAdvanceTime: true });
 
-    // Mock localStorage
     Object.defineProperty(window, 'localStorage', {
       value: {
         getItem: vi.fn(),
@@ -71,29 +54,16 @@ describe('Firebase Unavailability Handling', () => {
       },
       writable: true
     });
-
-    // Default mock
-    (getDocs as any).mockResolvedValue({
-      docs: [{
-        data: () => ({ timestamp: Date.now() })
-      }]
-    });
-
-    (getDocsFromServer as any).mockResolvedValue({
-      docs: [{
-        data: () => ({ timestamp: Date.now() })
-      }]
-    });
   });
 
   afterEach(() => {
-    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
-  it('should set firebaseAvailable to false when Firestore fails during load', async () => {
+  it('should set firebaseAvailable to false when Supabase fails during load', async () => {
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
-    (getDocs as any).mockRejectedValue(new Error('Network error'));
+    const builder = createQueryBuilder({ error: new Error('Network error'), reject: true });
+    mockSupabaseFrom.mockReturnValue(builder);
 
     const { result } = renderHook(() => useGame(), {
       wrapper: createWrapper()
@@ -109,7 +79,9 @@ describe('Firebase Unavailability Handling', () => {
   });
 
   it('should set firebaseAvailable to false when login fails', async () => {
-    (getDocs as any).mockRejectedValue(new Error('Connection failed'));
+    (localStorage.getItem as any).mockReturnValue(null);
+    const builder = createQueryBuilder({ error: new Error('Connection failed'), reject: true });
+    mockSupabaseFrom.mockReturnValue(builder);
 
     const { result } = renderHook(() => useGame(), {
       wrapper: createWrapper()
@@ -131,13 +103,12 @@ describe('Firebase Unavailability Handling', () => {
 
   it('should set firebaseAvailable to false when useFight fails', async () => {
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
-    (getDocs as any).mockResolvedValue({
-      docs: [{
-        data: () => mockCharacter,
-        id: 'test-firestore-id'
-      }]
-    });
-    (updateDoc as any).mockRejectedValue(new Error('Connection lost'));
+    const builder = createQueryBuilder({ data: characterToSupabaseRow(mockCharacter), error: null });
+    mockSupabaseFrom.mockReturnValue(builder);
+
+    // Make the update call fail
+    const updateBuilder = createQueryBuilder({ error: new Error('Connection lost'), reject: true });
+    builder.update.mockReturnValue(updateBuilder);
 
     const { result } = renderHook(() => useGame(), {
       wrapper: createWrapper()
@@ -156,16 +127,9 @@ describe('Firebase Unavailability Handling', () => {
   });
 
   it('should return false when retryConnection runs while offline', async () => {
-    const originalOnLine = navigator.onLine;
-    Object.defineProperty(navigator, 'onLine', { value: false, configurable: true });
-
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
-    (getDocs as any).mockResolvedValue({
-      docs: [{
-        data: () => mockCharacter,
-        id: 'test-firestore-id'
-      }]
-    });
+    const builder = createQueryBuilder({ data: characterToSupabaseRow(mockCharacter), error: null });
+    mockSupabaseFrom.mockReturnValue(builder);
 
     const { result } = renderHook(() => useGame(), {
       wrapper: createWrapper()
@@ -176,19 +140,20 @@ describe('Firebase Unavailability Handling', () => {
     });
 
     let ok = true;
+    Object.defineProperty(navigator, 'onLine', { value: false, configurable: true });
     await act(async () => {
       ok = await result.current.retryConnection();
     });
+    Object.defineProperty(navigator, 'onLine', { value: true, configurable: true });
 
     expect(ok).toBe(false);
     expect(result.current.firebaseAvailable).toBe(false);
-
-    Object.defineProperty(navigator, 'onLine', { value: originalOnLine, configurable: true });
   });
 
-  it('should keep localStorage when Firebase is unavailable', async () => {
+  it('should keep localStorage when Supabase is unavailable', async () => {
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
-    (getDocs as any).mockRejectedValue(new Error('Firebase down'));
+    const builder = createQueryBuilder({ error: new Error('Network error'), reject: true });
+    mockSupabaseFrom.mockReturnValue(builder);
 
     const { result } = renderHook(() => useGame(), {
       wrapper: createWrapper()
@@ -203,10 +168,10 @@ describe('Firebase Unavailability Handling', () => {
     expect(result.current.firebaseAvailable).toBe(false);
   });
 
-  it('should keep snapshot but block actions when Firebase is unavailable', async () => {
+  it('should keep snapshot but block actions when Supabase is unavailable', async () => {
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
-    (getDocs as any).mockRejectedValue(new Error('No internet'));
-    (updateDoc as any).mockRejectedValue(new Error('Connection lost'));
+    const builder = createQueryBuilder({ error: new Error('Network error'), reject: true });
+    mockSupabaseFrom.mockReturnValue(builder);
 
     const { result } = renderHook(() => useGame(), {
       wrapper: createWrapper()
@@ -232,8 +197,8 @@ describe('Firebase Unavailability Handling', () => {
 
   it('should return false when retryConnection cannot reach server', async () => {
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
-    (getDocs as any).mockRejectedValue(new Error('No internet'));
-    (getDocsFromServer as any).mockRejectedValue(new Error('No internet'));
+    const builder = createQueryBuilder({ error: new Error('Network error'), reject: true });
+    mockSupabaseFrom.mockReturnValue(builder);
 
     const { result } = renderHook(() => useGame(), {
       wrapper: createWrapper()

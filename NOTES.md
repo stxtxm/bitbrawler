@@ -1,16 +1,16 @@
 Project Notes (Latest)
 
 Overview
-- Bitbrawler is a retro 8-bit arena brawler with Firebase Firestore as the source of truth.
+- Bitbrawler is a retro 8-bit arena brawler with Supabase (PostgreSQL) as the source of truth.
 - Core loop: create a character, fight in the arena, earn XP, level up, climb rankings.
 
 Data model (Character)
 - Core fields: `level`, `experience`, stats (STR/VIT/DEX/LUK/INT/FOC), `hp`, `maxHp`, `wins`, `losses`.
-- Daily fields: `fightsLeft`, `lastFightReset`, `fightHistory` (cap 20), `foughtToday` (Firestore IDs).
+- Daily fields: `fightsLeft`, `lastFightReset`, `fightHistory` (cap 20), `foughtToday` (character IDs).
 - Progression fields: `statPoints` for level-up allocation, `focus` is an active stat, not derived.
-- Inventory fields: `inventory` (item IDs), `lastLootRoll` (timestamp ms), optional `equipped` reserved for future.
+- Inventory fields: `inventory` (item IDs), `lastLootRoll` (timestamp ms).
 - Anti-cheat: `pendingFight` holds `status`, `startedAt`, optional `opponent` snapshot, and `matchType`.
-- `pendingFight.opponent.isBot` is only stored when it is a boolean (avoid Firestore undefined values).
+- `pendingFight.opponent.isBot` is only stored when it is a boolean.
 
 Matchmaking + anti-cheat
 - Strict same-level matchmaking in `src/utils/matchmakingUtils.ts`.
@@ -18,11 +18,10 @@ Matchmaking + anti-cheat
 - `startMatchmaking` reserves fight energy and stores `pendingFight` immediately.
 - If a match is found, the opponent snapshot is stored in `pendingFight`.
 - If no match is found while pending, energy is refunded and `pendingFight` cleared.
-- `resolvePendingFight` runs on load if a pending fight exists and resolves via `simulateCombat`
-  without consuming extra energy.
+- `resolvePendingFight` runs on load if a pending fight exists and resolves via `simulateCombat` without consuming extra energy.
 - Outgoing fights append an incoming defense log on the target character (no XP/progression impact).
 
-Combat rules (v0.9.0)
+Combat rules (v0.9.0 / v1.0.0)
 - `calculateCombatStats` includes FOC and inventory bonuses; diminishing returns at higher stats.
 - Combat tuning constants are centralized in `src/config/combatBalance.ts` for quicker balancing edits.
 - Hit chance is DEX/FOC weighted (FOC weight 0.35); crit chance from LUK (capped at 30%), magic surge from INT.
@@ -34,7 +33,6 @@ Combat rules (v0.9.0)
 
 Lootbox + inventory
 - Daily lootbox gating uses the same Paris day reset as fight energy (`canRollLootbox`).
-- `canRollLootbox` accepts Firestore timestamp shapes (`seconds`/`toMillis`) to avoid double rolls.
 - Inventory capacity is 24; items are auto-applied (no manual equip flow).
 - Lootbox rolls exclude items already owned; if all items are owned, no new loot is granted.
 - Items are defined in `src/data/itemAssets.ts` with `common` and `uncommon` rarities.
@@ -56,7 +54,7 @@ Bots and automation
 - Name generator adds a short letter suffix to avoid duplicates in a session.
 
 Offline behavior
-- Home works offline; Rankings show “Connection required” state when offline.
+- Home works offline; Rankings show "Connection required" state when offline.
 - Arena supports read-only view from local snapshot; fights are blocked offline.
 - Local storage snapshot is kept except logout, corrupted data, or missing server record.
 - Service worker caches the app shell and reloads once on update activation.
@@ -74,16 +72,18 @@ UI tuning
 Testing
 - Unit: combat math, lootbox gating, equipment bonuses, XP, stats, RNG.
 - Unit: lazy route prefetch gating (`canPrefetch`, `prefetchArena`) and end-of-day drain window checks.
-- Integration: matchmaking, pending fights, lootbox persistence, arena inventory/bonuses,
-  offline routing, Firebase failover, and settings combat log privacy rendering.
+- Integration: matchmaking, pending fights, lootbox persistence, arena inventory/bonuses, offline routing, Supabase failover, and settings combat log privacy rendering.
 - Router warnings are prevented with shared `renderWithRouter` helper (`src/test/utils/router.tsx`).
 
-Ops
-- GitHub Actions: daily reset scheduled for Paris midnight with a double cron (CET/CEST)
-  and a script-side midnight window guard; bot engine runs every 2 hours (UTC top of even hour).
+Infrastructure (v1.0.0)
+- Database migrated from Firebase Firestore to Supabase (PostgreSQL).
+- Scripts (`scripts/bot-engine.ts`, `scripts/daily-reset-engine.ts`) use `@supabase/supabase-js` via `scripts/supabaseAdmin.ts`.
+- GitHub Actions: daily reset scheduled for Paris midnight with a double cron (CET/CEST) and a script-side midnight window guard; bot engine runs every 2 hours (UTC top of even hour).
+- GitHub Actions secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (no longer Firebase).
 
 Handoff (Next Agent)
 - Arena settings logs are rendered inside the same modal (view switch), not a separate popup.
 - Bot engine opponent pool is fetched per-level (`where('level','==', level)`, limit 50).
 - Lootbox and daily reset are aligned to Paris day, and final bot runs drain remaining fights.
 - Name generator pools were expanded for more variety.
+- Supabase service role key required for scripts (`SUPABASE_SERVICE_ROLE_KEY`). RLS open for dev.

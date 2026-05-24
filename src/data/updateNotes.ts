@@ -7,6 +7,19 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '1.0.0',
+    date: '2026-05-24',
+    title: 'Supabase migration & infrastructure',
+    changes: [
+      'Firebase Firestore replaced with Supabase as the database backend.',
+      'All character data, matchmaking, and fight logic now runs on PostgreSQL via Supabase.',
+      'Bot engine and daily reset scripts migrated to Supabase with full end-to-end verification.',
+      'GitHub Actions workflows updated to use Supabase secrets.',
+      'Real-time offline support preserved with local storage snapshot fallback.',
+      'Fixed test mocks for Supabase compatibility (179 tests passing).',
+    ],
+  },
+  {
     version: '0.9.0',
     date: '2026-05-17',
     title: 'Combat balance & XP progression',

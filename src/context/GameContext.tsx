@@ -1,6 +1,5 @@
 import { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from 'react';
-import { collection, query, where, getDocs, getDocsFromServer, updateDoc, doc, limit, deleteField, deleteDoc, runTransaction } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { supabase, CharacterRow } from '../config/supabase';
 import { Character, IncomingFightHistory, PendingFight, PendingFightOpponent } from '../types/Character';
 import { gainXp } from '../utils/xpUtils';
 import { applyStatPoint, StatKey } from '../utils/statUtils';
@@ -89,6 +88,39 @@ const buildPendingOpponent = (opponent: Character): PendingFightOpponent => {
   return base;
 };
 
+// Conversion functions between Supabase and app formats
+// Conversion function from Supabase format to app format
+const convertFromSupabase = (row: CharacterRow): Character => {
+  return {
+    name: row.name,
+    gender: row.gender as 'male' | 'female',
+    seed: row.seed,
+    level: row.level,
+    hp: row.hp,
+    maxHp: row.max_hp,
+    strength: row.strength,
+    vitality: row.vitality,
+    dexterity: row.dexterity,
+    luck: row.luck,
+    intelligence: row.intelligence,
+    focus: row.focus,
+    experience: row.experience,
+    wins: row.wins,
+    losses: row.losses,
+    fightsLeft: row.fights_left,
+    lastFightReset: row.last_fight_reset,
+    fightHistory: row.fight_history,
+    foughtToday: row.fought_today,
+    statPoints: row.stat_points,
+    pendingFight: row.pending_fight,
+    inventory: row.inventory,
+    lastLootRoll: row.last_loot_roll,
+    incomingFightHistory: row.incoming_fight_history,
+    isBot: row.is_bot,
+    firestoreId: row.id
+  };
+};
+
 const hydratePendingOpponent = (snapshot: PendingFightOpponent): Character => {
   return normalizeCharacter({
     seed: snapshot.seed,
@@ -166,22 +198,30 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setFirebaseAvailable(false);
   }, []);
 
-  // Sync character with Firestore
-  const syncCharacterWithFirestore = useCallback(async (character: Character): Promise<SyncResult> => {
+  // Sync character with Supabase
+  const syncCharacterWithSupabase = useCallback(async (character: Character): Promise<SyncResult> => {
     if (!character.firestoreId) return { status: 'missing' };
 
     try {
-      const docSnap = await getDocs(query(collection(db, "characters"), where("__name__", "==", character.firestoreId)));
-      if (docSnap.empty) {
-        return { status: 'missing' };
+      const { data, error } = await supabase
+        .from('characters')
+        .select('*')
+        .eq('id', character.firestoreId)
+        .single();
+
+      if (error || !data) {
+        if (error?.code === 'PGRST116') { // Not found
+          return { status: 'missing' };
+        }
+        throw error;
       }
 
-      const firestoreData = docSnap.docs[0].data() as Character;
+      const supabaseData = convertFromSupabase(data);
       setFirebaseAvailable(true);
       return {
         status: 'ok',
         character: {
-          ...firestoreData,
+          ...supabaseData,
           firestoreId: character.firestoreId
         }
       };
@@ -213,7 +253,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      const syncResult = await syncCharacterWithFirestore(localChar);
+      const syncResult = await syncCharacterWithSupabase(localChar);
       if (syncResult.status === 'ok') {
         const normalized = normalizeCharacter(syncResult.character);
         persistCharacter(normalized);
@@ -232,7 +272,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     };
 
     loadCharacter();
-  }, [isOnline, persistCharacter, syncCharacterWithFirestore]);
+  }, [isOnline, persistCharacter, syncCharacterWithSupabase]);
 
 
   // Characters are now reset centrally via GitHub Actions every 24h.
@@ -241,18 +281,26 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   // Login function
   const login = useCallback(async (name: string): Promise<string | null> => {
     try {
-      const q = query(collection(db, "characters"), where("name", "==", name));
-      const querySnapshot = await getDocs(q);
+      const { data, error } = await supabase
+        .from('characters')
+        .select('*')
+        .eq('name', name)
+        .single();
 
-      if (querySnapshot.empty) {
+      if (error) {
+        if (error.code === 'PGRST116') { // Not found
+          return "Fighter not found!";
+        }
+        throw error;
+      }
+
+      if (!data) {
         return "Fighter not found!";
       }
 
-      const doc = querySnapshot.docs[0];
-      const firestoreData = doc.data() as Character;
       const fullChar = normalizeCharacter({
-        ...firestoreData,
-        firestoreId: doc.id
+        ...convertFromSupabase(data),
+        firestoreId: data.id
       });
 
       persistCharacter(fullChar);
@@ -287,12 +335,18 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         setFirebaseAvailable(false);
         return false;
       }
-      const q = query(collection(db, "server_time"), limit(1));
-      await getDocsFromServer(q);
+      // Check Supabase connection by fetching server time
+      const { error } = await supabase
+        .from('server_time')
+        .select('timestamp')
+        .limit(1);
+      
+      if (error) throw error;
+      
       setFirebaseAvailable(true);
       return true;
     } catch (error) {
-      console.error('Firebase retry failed:', error);
+      console.error('Supabase retry failed:', error);
       setFirebaseAvailable(false);
       return false;
     }
@@ -302,20 +356,27 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     targetCharacterId: string,
     entry: IncomingFightHistory
   ) => {
-    const targetRef = doc(db, 'characters', targetCharacterId);
+    try {
+      // Get current history
+      const { data, error } = await supabase
+        .from('characters')
+        .select('incoming_fight_history')
+        .eq('id', targetCharacterId)
+        .single();
 
-    await runTransaction(db, async (transaction) => {
-      const snapshot = await transaction.get(targetRef);
-      if (!snapshot.exists()) return;
+      if (error || !data) return;
 
-      const existingRaw = snapshot.get('incomingFightHistory');
-      const existing = Array.isArray(existingRaw) ? existingRaw : [];
-
+      const existing = Array.isArray(data.incoming_fight_history) ? data.incoming_fight_history : [];
       const nextHistory = [entry, ...existing].slice(0, COMBAT_LOG_HISTORY_CAP);
-      transaction.update(targetRef, {
-        incomingFightHistory: nextHistory
-      });
-    });
+
+      // Update with new history
+      await supabase
+        .from('characters')
+        .update({ incoming_fight_history: nextHistory })
+        .eq('id', targetCharacterId);
+    } catch (error) {
+      console.warn('Failed to append incoming fight history:', error);
+    }
   }, []);
 
   const useFight = useCallback(async (
@@ -361,22 +422,25 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       pendingFight: undefined
     });
 
-    try {
-      await updateDoc(doc(db, "characters", baseCharacter.firestoreId!), {
-        fightsLeft: updatedChar.fightsLeft,
-        level: updatedChar.level,
-        experience: updatedChar.experience,
-        wins: updatedChar.wins,
-        losses: updatedChar.losses,
-        fightHistory: updatedChar.fightHistory,
-        foughtToday: updatedChar.foughtToday,
-        statPoints: updatedChar.statPoints,
-        focus: updatedChar.focus,
-        pendingFight: deleteField()
-      });
+     try {
+       await supabase
+        .from('characters')
+        .update({
+          fights_left: updatedChar.fightsLeft,
+          level: updatedChar.level,
+          experience: updatedChar.experience,
+          wins: updatedChar.wins,
+          losses: updatedChar.losses,
+          fight_history: updatedChar.fightHistory,
+          fought_today: updatedChar.foughtToday,
+          stat_points: updatedChar.statPoints,
+          focus: updatedChar.focus,
+          pending_fight: null
+        })
+        .eq('id', baseCharacter.firestoreId!);
 
-      persistCharacter(updatedChar);
-      initiatedMatchmakingRef.current = false;
+       persistCharacter(updatedChar);
+       initiatedMatchmakingRef.current = false;
 
       if (opponentId && opponentId !== baseCharacter.firestoreId) {
         const incomingEntry: IncomingFightHistory = {
@@ -427,21 +491,24 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
     const updatedChar = normalizeCharacter(applyStatPoint(activeCharacter, stat));
 
-    try {
-      await updateDoc(doc(db, "characters", activeCharacter.firestoreId!), {
-        [stat]: (updatedChar as any)[stat],
-        hp: updatedChar.hp,
-        maxHp: updatedChar.maxHp,
-        statPoints: updatedChar.statPoints,
-        focus: updatedChar.focus
-      });
+     try {
+       await supabase
+        .from('characters')
+        .update({
+          [stat]: (updatedChar as any)[stat],
+          hp: updatedChar.hp,
+          max_hp: updatedChar.maxHp,
+          stat_points: updatedChar.statPoints,
+          focus: updatedChar.focus
+        })
+        .eq('id', activeCharacter.firestoreId!);
 
-      persistCharacter(updatedChar);
-      return updatedChar;
-    } catch (error: any) {
-      handleFirebaseError(error, 'stat-allocate');
-      throw new Error("Connection error - stat point not saved. Please check your internet connection.");
-    }
+       persistCharacter(updatedChar);
+       return updatedChar;
+     } catch (error: any) {
+       handleFirebaseError(error, 'stat-allocate');
+       throw new Error("Connection error - stat point not saved. Please check your internet connection.");
+     }
   }, [activeCharacter, handleFirebaseError, persistCharacter]);
 
   const startMatchmakingForPlayer = useCallback(async (): Promise<MatchmakingResult | null> => {
@@ -463,18 +530,21 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       pendingFight: pending
     });
 
-    try {
-      await updateDoc(doc(db, "characters", activeCharacter.firestoreId!), {
-        fightsLeft: reservedChar.fightsLeft,
-        pendingFight: pending,
-        focus: reservedChar.focus
-      });
-      persistCharacter(reservedChar);
-    } catch (error: any) {
-      handleFirebaseError(error, 'matchmaking-start');
-      initiatedMatchmakingRef.current = false;
-      throw new Error('Connection error - matchmaking not saved.');
-    }
+     try {
+       await supabase
+        .from('characters')
+        .update({
+          fights_left: reservedChar.fightsLeft,
+          pending_fight: pending,
+          focus: reservedChar.focus
+        })
+        .eq('id', activeCharacter.firestoreId!);
+       persistCharacter(reservedChar);
+     } catch (error: any) {
+       handleFirebaseError(error, 'matchmaking-start');
+       initiatedMatchmakingRef.current = false;
+       throw new Error('Connection error - matchmaking not saved.');
+     }
 
     const match = await findOpponent(reservedChar);
     if (!match) {
@@ -484,15 +554,18 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         pendingFight: undefined
       });
 
-      try {
-        await updateDoc(doc(db, "characters", activeCharacter.firestoreId!), {
-          fightsLeft: refundedChar.fightsLeft,
-          pendingFight: deleteField(),
-          focus: refundedChar.focus
-        });
-      } catch (error: any) {
-        handleFirebaseError(error, 'matchmaking-refund');
-      }
+       try {
+         await supabase
+          .from('characters')
+          .update({
+            fights_left: refundedChar.fightsLeft,
+            pending_fight: null,
+            focus: refundedChar.focus
+          })
+          .eq('id', activeCharacter.firestoreId!);
+       } catch (error: any) {
+         handleFirebaseError(error, 'matchmaking-refund');
+       }
 
       persistCharacter(refundedChar);
       initiatedMatchmakingRef.current = false;
@@ -511,17 +584,20 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       pendingFight: matchedPending
     });
 
-    try {
-      await updateDoc(doc(db, "characters", activeCharacter.firestoreId!), {
-        pendingFight: matchedPending,
-        focus: matchedChar.focus
-      });
-      persistCharacter(matchedChar);
-    } catch (error: any) {
-      handleFirebaseError(error, 'matchmaking-lock');
-      initiatedMatchmakingRef.current = false;
-      throw new Error('Connection error - matchmaking not saved.');
-    }
+     try {
+       await supabase
+        .from('characters')
+        .update({
+          pending_fight: matchedPending,
+          focus: matchedChar.focus
+        })
+        .eq('id', activeCharacter.firestoreId!);
+       persistCharacter(matchedChar);
+     } catch (error: any) {
+       handleFirebaseError(error, 'matchmaking-lock');
+       initiatedMatchmakingRef.current = false;
+       throw new Error('Connection error - matchmaking not saved.');
+     }
 
     return match;
   }, [activeCharacter, handleFirebaseError, persistCharacter]);
@@ -546,11 +622,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
             fightsLeft: (character.fightsLeft || 0) + 1,
             pendingFight: undefined
           });
-          await updateDoc(doc(db, "characters", character.firestoreId), {
-            fightsLeft: refundedChar.fightsLeft,
-            pendingFight: deleteField(),
-            focus: refundedChar.focus
-          });
+           await supabase
+            .from('characters')
+            .update({
+              fights_left: refundedChar.fightsLeft,
+              pending_fight: null,
+              focus: refundedChar.focus
+            })
+            .eq('id', character.firestoreId);
           persistCharacter(refundedChar);
           return;
         }
@@ -567,11 +646,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           pendingFight: matchedPending
         });
 
-        await updateDoc(doc(db, "characters", character.firestoreId), {
-          pendingFight: matchedPending,
-          focus: matchedChar.focus
-        });
-        persistCharacter(matchedChar);
+         await supabase
+          .from('characters')
+          .update({
+            pending_fight: matchedPending,
+            focus: matchedChar.focus
+          })
+          .eq('id', character.firestoreId);
+         persistCharacter(matchedChar);
 
         const opponent = hydratePendingOpponent(matchedPending.opponent!);
         const combatResult = simulateCombat(matchedChar, opponent);
@@ -631,19 +713,22 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       lastLootRoll: now,
     });
 
-    try {
-      await updateDoc(doc(db, "characters", activeCharacter.firestoreId!), {
-        inventory: updatedChar.inventory,
-        lastLootRoll: updatedChar.lastLootRoll,
-        focus: updatedChar.focus
-      });
-      persistCharacter(updatedChar);
-      return item;
-    } catch (error: any) {
-      handleFirebaseError(error, 'lootbox');
-      throw new Error('Connection error - lootbox not saved.');
-    }
-  }, [activeCharacter, handleFirebaseError, persistCharacter]);
+     try {
+       await supabase
+        .from('characters')
+        .update({
+          inventory: updatedChar.inventory,
+          last_loot_roll: updatedChar.lastLootRoll,
+          focus: updatedChar.focus
+        })
+        .eq('id', activeCharacter.firestoreId!);
+       persistCharacter(updatedChar);
+       return item;
+     } catch (error: any) {
+       handleFirebaseError(error, 'lootbox');
+       throw new Error('Connection error - lootbox not saved.');
+     }
+   }, [activeCharacter, handleFirebaseError, persistCharacter]);
 
   const setAutoMode = useCallback(async (enabled: boolean) => {
     if (!activeCharacter?.firestoreId) return null;
@@ -653,9 +738,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     });
 
     try {
-      await updateDoc(doc(db, "characters", activeCharacter.firestoreId), {
-        isBot: enabled
-      });
+      await supabase
+       .from('characters')
+       .update({
+         auto_mode: enabled
+       })
+       .eq('id', activeCharacter.firestoreId);
       persistCharacter(updatedChar);
       return updatedChar;
     } catch (error: any) {
@@ -667,7 +755,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const deleteCharacter = useCallback(async () => {
     if (!activeCharacter?.firestoreId) return false;
     try {
-      await deleteDoc(doc(db, "characters", activeCharacter.firestoreId));
+      await supabase
+       .from('characters')
+       .delete()
+       .eq('id', activeCharacter.firestoreId);
       logout();
       return true;
     } catch (error: any) {

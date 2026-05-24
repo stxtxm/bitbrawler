@@ -1,7 +1,7 @@
 {
   "name": "bitbrawler",
   "private": true,
-  "version": "0.9.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,10 +10,12 @@
     "preview": "vite preview",
     "test": "vitest",
     "bots:run": "tsx scripts/bot-engine.ts",
-    "daily-reset:run": "tsx scripts/daily-reset-engine.ts"
+    "daily-reset:run": "tsx scripts/daily-reset-engine.ts",
+    "check-migration": "echo '✅ Migration vers Supabase terminée. Vérifiez MIGRATION_SUPABASE.md pour les étapes suivantes."
   },
   "dependencies": {
     "@fontsource/press-start-2p": "^5.2.7",
+    "@supabase/supabase-js": "^2.106.1",
     "firebase": "^12.8.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

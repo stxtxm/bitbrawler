@@ -1,11 +1,42 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { collection, getDocs, query, doc, deleteDoc } from 'firebase/firestore'
-import { db } from '../config/firebase'
+import { supabase, CharacterRow } from '../config/supabase'
 import { Character } from '../types/Character'
 import { PixelCharacter } from '../components/PixelCharacter'
 import { useGame } from '../context/GameContext'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
+
+// Conversion function for rankings
+const convertFromSupabase = (row: CharacterRow): Character => {
+    return {
+        name: row.name,
+        gender: row.gender as 'male' | 'female',
+        seed: row.seed,
+        level: row.level,
+        hp: row.hp,
+        maxHp: row.max_hp,
+        strength: row.strength,
+        vitality: row.vitality,
+        dexterity: row.dexterity,
+        luck: row.luck,
+        intelligence: row.intelligence,
+        focus: row.focus,
+        experience: row.experience,
+        wins: row.wins,
+        losses: row.losses,
+        fightsLeft: row.fights_left,
+        lastFightReset: row.last_fight_reset,
+        fightHistory: row.fight_history,
+        foughtToday: row.fought_today,
+        statPoints: row.stat_points,
+        pendingFight: row.pending_fight,
+        inventory: row.inventory,
+        lastLootRoll: row.last_loot_roll,
+        incomingFightHistory: row.incoming_fight_history,
+        isBot: row.is_bot,
+        firestoreId: row.id
+    };
+};
 
 const Rankings = () => {
     const navigate = useNavigate()
@@ -22,24 +53,18 @@ const Rankings = () => {
         setLoadError(null)
 
         try {
-            const charactersCollection = collection(db, 'characters')
-            // On essaie de trier, mais si ça fail (manque d'index), on fallback sans tri
-            // Pour l'instant on récupère tout simplement
-            const q = query(charactersCollection)
-            const querySnapshot = await getDocs(q)
+            const { data, error } = await supabase
+                .from('characters')
+                .select('*')
+                .order('level', { ascending: false })
+                .order('name', { ascending: true });
 
-            const fetchedChars: Character[] = []
-            querySnapshot.forEach((doc) => {
-                // On ignore les documents malformés ou vides si besoin
-                const data = doc.data() as Character
-                fetchedChars.push({
-                    ...data,
-                    firestoreId: doc.id // Critical for persistence
-                })
-            })
+            if (error) throw error;
 
-            // Tri local par niveau (décroissant) puis nom
-            fetchedChars.sort((a, b) => b.level - a.level || a.name.localeCompare(b.name))
+            const fetchedChars: Character[] = data.map(row => ({
+                ...convertFromSupabase(row),
+                firestoreId: row.id
+            }));
 
             setCharacters(fetchedChars)
         } catch (error) {
@@ -75,9 +100,12 @@ const Rankings = () => {
                 return
             }
 
-            const querySnapshot = await getDocs(collection(db, 'characters'));
-            const deletePromises = querySnapshot.docs.map(d => deleteDoc(doc(db, 'characters', d.id)));
-            await Promise.all(deletePromises);
+            const { error } = await supabase
+                .from('characters')
+                .delete()
+                .neq('id', 'none'); // Delete all records
+
+            if (error) throw error;
 
             setCharacters([]);
             setResetStatus('success');

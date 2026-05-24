@@ -1,21 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { findOpponent, getMatchDifficultyLabel } from '../../utils/matchmakingUtils';
 import { Character } from '../../types/Character';
-import { getDocs } from 'firebase/firestore';
+import { createQueryBuilder, characterToSupabaseRow } from '../../test/utils/supabaseMock';
 
-// Mock Firebase
-vi.mock('../../config/firebase', () => ({
-    db: {}
+const { mockSupabaseFrom } = vi.hoisted(() => ({
+    mockSupabaseFrom: vi.fn()
 }));
 
-vi.mock('firebase/firestore', () => ({
-    collection: vi.fn(),
-    query: vi.fn(),
-    where: vi.fn(),
-    limit: vi.fn(),
-    getDocs: vi.fn(),
-    deleteField: vi.fn(),
+vi.mock('../../config/supabase', () => ({
+    supabase: { from: mockSupabaseFrom },
+    CharacterRow: {}
 }));
+
+function mockCharacters(chars: any[]) {
+    const rows = chars.map(characterToSupabaseRow);
+    const builder = createQueryBuilder({ data: rows, error: null });
+    mockSupabaseFrom.mockReturnValue(builder);
+}
 
 describe('🤝 Matchmaking System', () => {
     const player: Character = {
@@ -55,19 +56,9 @@ describe('🤝 Matchmaking System', () => {
     });
 
     it('should find opponent of EXACT same level', async () => {
-        // In reality, Firestore filters by level. We simulate this by only returning matching docs.
-        (getDocs as any).mockResolvedValue({
-            empty: false,
-            docs: [
-                { id: 'o1', data: () => sameLevelOpponent }
-            ]
-        });
+        mockCharacters([sameLevelOpponent]);
 
         const result = await findOpponent(player);
-
-        // Safety check: ensure we query for the correct level
-        // We can't easily check 'query' arguments deeply without complex mocking,
-        // but we can trust the return value logic if the mock setup implies it.
 
         expect(result).not.toBeNull();
         if (result) {
@@ -79,11 +70,7 @@ describe('🤝 Matchmaking System', () => {
     });
 
     it('should return null if no exact level match found', async () => {
-        // Mock getDocs to return empty (simulating query finding nothing)
-        (getDocs as any).mockResolvedValue({
-            empty: true,
-            docs: []
-        });
+        mockCharacters([]);
 
         const result = await findOpponent(player);
         expect(result).toBeNull();
@@ -93,13 +80,7 @@ describe('🤝 Matchmaking System', () => {
         const playerWithHistory: Character = { ...player, foughtToday: ['o1'] };
         const freshOpponent: Character = { ...sameLevelOpponent, name: 'Fresh', firestoreId: 'o2' };
 
-        (getDocs as any).mockResolvedValue({
-            empty: false,
-            docs: [
-                { id: 'o1', data: () => sameLevelOpponent },
-                { id: 'o2', data: () => freshOpponent }
-            ]
-        });
+        mockCharacters([sameLevelOpponent, freshOpponent]);
 
         const result = await findOpponent(playerWithHistory);
 
@@ -115,25 +96,14 @@ describe('🤝 Matchmaking System', () => {
         const playerWithHistory: Character = { ...player, foughtToday: ['o1', 'o2'] };
         const opponentTwo: Character = { ...sameLevelOpponent, name: 'Opponent Two', firestoreId: 'o2' };
 
-        (getDocs as any).mockResolvedValue({
-            empty: false,
-            docs: [
-                { id: 'o1', data: () => sameLevelOpponent },
-                { id: 'o2', data: () => opponentTwo }
-            ]
-        });
+        mockCharacters([sameLevelOpponent, opponentTwo]);
 
         const result = await findOpponent(playerWithHistory);
         expect(result).toBeNull();
     });
 
     it('should exclude the current player from candidates', async () => {
-        (getDocs as any).mockResolvedValue({
-            empty: false,
-            docs: [
-                { id: player.firestoreId, data: () => player }
-            ]
-        });
+        mockCharacters([player]);
 
         const result = await findOpponent(player);
         expect(result).toBeNull();
@@ -154,14 +124,7 @@ describe('🤝 Matchmaking System', () => {
         const mid = { ...sameLevelOpponent, name: 'Mid', firestoreId: 'o2', strength: 14 };
         const far = { ...sameLevelOpponent, name: 'Far', firestoreId: 'o3', strength: 22 };
 
-        (getDocs as any).mockResolvedValue({
-            empty: false,
-            docs: [
-                { id: 'o3', data: () => far },
-                { id: 'o1', data: () => close },
-                { id: 'o2', data: () => mid }
-            ]
-        });
+        mockCharacters([far, close, mid]);
 
         vi.spyOn(Math, 'random').mockReturnValue(0);
         const result = await findOpponent(playerPower);
@@ -174,28 +137,10 @@ describe('🤝 Matchmaking System', () => {
     });
 
     it('should prioritize balanced stats', async () => {
-        // Two opponents at same level: one balanced, one weak stats
         const balancedOpponent = { ...sameLevelOpponent, strength: 10, name: 'Balanced' };
-        const unbalancedOpponent = { ...sameLevelOpponent, strength: 20, name: 'Strong' }; // 10 diff
+        const unbalancedOpponent = { ...sameLevelOpponent, strength: 20, name: 'Strong' };
 
-        (getDocs as any).mockResolvedValue({
-            empty: false,
-            docs: [
-                { id: 'o1', data: () => balancedOpponent },
-                { id: 'o2', data: () => unbalancedOpponent }
-            ]
-        });
-
-        // The logic should prefer the one with closer total power
-        // Player total power = 50
-        // Balanced total power = 50 (diff 0)
-        // Strong total power = 60 (diff 10)
-
-        // Since we sort by power diff, Balanced should be picked more likely or if we take top 3
-        // Here we technically randomness involved but the pool is small.
-        // If we only return these two, logic takes top 3 and picks random. 
-        // Both are in top 3. So it's random.
-        // But we can check matchType label logic.
+        mockCharacters([balancedOpponent, unbalancedOpponent]);
 
         const result = await findOpponent(player);
         if (result && result.opponent.name === 'Balanced') {

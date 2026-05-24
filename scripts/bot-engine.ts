@@ -14,16 +14,10 @@ import {
     isEndOfDayDrainWindow
 } from '../src/utils/botBehaviorUtils';
 import { Character, IncomingFightHistory } from '../src/types/Character';
-import { initFirebaseAdmin, loadServiceAccount } from './firebaseAdmin';
+import { supabase } from './supabaseAdmin';
 
-// Initialize Firebase Admin
-let serviceAccount: ReturnType<typeof loadServiceAccount>;
-
-type TimestampLike = {
-    toMillis?: () => number;
-    seconds?: number;
-    nanoseconds?: number;
-};
+const INVENTORY_CAPACITY = 24;
+const COMBAT_LOG_HISTORY_CAP = 20;
 
 type BotSimulationOptions = {
     skipBotIds?: Set<string>;
@@ -36,73 +30,25 @@ type PopulationSnapshot = {
     levelOneHumans: number;
 };
 
-const normalizeTimestamp = (value: unknown, fallback = 0): number => {
-    if (typeof value === 'number' && Number.isFinite(value)) {
-        return value;
-    }
-
-    if (typeof value === 'string') {
-        const parsed = Date.parse(value);
-        return Number.isNaN(parsed) ? fallback : parsed;
-    }
-
-    if (value && typeof value === 'object') {
-        const maybe = value as TimestampLike;
-        if (typeof maybe.toMillis === 'function') {
-            const millis = maybe.toMillis();
-            return Number.isFinite(millis) ? millis : fallback;
-        }
-        if (typeof maybe.seconds === 'number') {
-            const nanos = typeof maybe.nanoseconds === 'number' ? maybe.nanoseconds : 0;
-            return Math.floor(maybe.seconds * 1000 + nanos / 1_000_000);
-        }
-    }
-
-    return fallback;
-};
-
-const normalizeIncomingFightHistory = (value: unknown): IncomingFightHistory[] => {
-    if (!Array.isArray(value)) return [];
-
-    return value
-        .filter((entry): entry is IncomingFightHistory => (
-            !!entry &&
-            typeof entry === 'object' &&
-            typeof (entry as IncomingFightHistory).date === 'number' &&
-            typeof (entry as IncomingFightHistory).attackerName === 'string' &&
-            typeof (entry as IncomingFightHistory).won === 'boolean'
-        ));
-};
-
-try {
-    serviceAccount = loadServiceAccount();
-} catch (error) {
-    console.error('Failed to parse service account:', error);
-    process.exit(1);
-}
-
-if (!serviceAccount) {
-    console.warn('⚠️ No service account found. Please set FIREBASE_SERVICE_ACCOUNT env var or add serviceAccountKey.json');
-    process.exit(0);
-}
-
-const db = initFirebaseAdmin(serviceAccount);
-const INVENTORY_CAPACITY = 24;
-const COMBAT_LOG_HISTORY_CAP = 20;
-
 async function appendIncomingFightHistory(targetCharacterId: string, entry: IncomingFightHistory): Promise<boolean> {
     try {
-        const targetRef = db.collection('characters').doc(targetCharacterId);
-        await db.runTransaction(async (transaction) => {
-            const snapshot = await transaction.get(targetRef);
-            if (!snapshot.exists) return;
+        const { data: existing } = await supabase
+            .from('characters')
+            .select('incoming_fight_history')
+            .eq('id', targetCharacterId)
+            .single();
 
-            const existing = normalizeIncomingFightHistory(snapshot.get('incomingFightHistory'));
-            const nextHistory = [entry, ...existing].slice(0, COMBAT_LOG_HISTORY_CAP);
-            transaction.update(targetRef, {
-                incomingFightHistory: nextHistory
-            });
-        });
+        if (!existing) return false;
+
+        const existingHistory: IncomingFightHistory[] = existing.incoming_fight_history ?? [];
+        const nextHistory = [entry, ...existingHistory].slice(0, COMBAT_LOG_HISTORY_CAP);
+
+        const { error } = await supabase
+            .from('characters')
+            .update({ incoming_fight_history: nextHistory })
+            .eq('id', targetCharacterId);
+
+        if (error) throw error;
         return true;
     } catch (error) {
         console.warn(`⚠️ Failed to append incoming fight history for ${targetCharacterId}:`, error);
@@ -111,29 +57,18 @@ async function appendIncomingFightHistory(targetCharacterId: string, entry: Inco
 }
 
 async function measurePopulation(): Promise<PopulationSnapshot> {
-    const [totalBotsSnapshot, levelOneBotsSnapshot, levelOneCharactersSnapshot] = await Promise.all([
-        db.collection('characters').where('isBot', '==', true).count().get(),
-        db.collection('characters')
-            .where('isBot', '==', true)
-            .where('level', '==', 1)
-            .count()
-            .get(),
-        db.collection('characters')
-            .where('level', '==', 1)
-            .count()
-            .get()
+    const [totalBotsResult, levelOneBotsResult, levelOneCharactersResult] = await Promise.all([
+        supabase.from('characters').select('*', { count: 'exact', head: true }).eq('is_bot', true),
+        supabase.from('characters').select('*', { count: 'exact', head: true }).eq('is_bot', true).eq('level', 1),
+        supabase.from('characters').select('*', { count: 'exact', head: true }).eq('level', 1),
     ]);
 
-    const totalBots = totalBotsSnapshot.data().count;
-    const levelOneBots = levelOneBotsSnapshot.data().count;
-    const levelOneCharacters = levelOneCharactersSnapshot.data().count;
+    const totalBots = totalBotsResult.count ?? 0;
+    const levelOneBots = levelOneBotsResult.count ?? 0;
+    const levelOneCharacters = levelOneCharactersResult.count ?? 0;
     const levelOneHumans = Math.max(0, levelOneCharacters - levelOneBots);
 
-    return {
-        totalBots,
-        levelOneBots,
-        levelOneHumans
-    };
+    return { totalBots, levelOneBots, levelOneHumans };
 }
 
 async function runBotLogic() {
@@ -149,7 +84,6 @@ async function runBotLogic() {
         let totalBots = populations.totalBots;
         let lvl1Bots = populations.levelOneBots;
 
-        // 1. Force population growth if below minimum
         if (totalBots < GAME_RULES.BOTS.MIN_POPULATION) {
             console.log('📉 Total bot population low. Spawning reinforcements...');
             const needed = GAME_RULES.BOTS.MIN_POPULATION - totalBots;
@@ -160,7 +94,6 @@ async function runBotLogic() {
             }
         }
 
-        // 1b. Ensure a dynamic reserve of level 1 opponents for onboarding
         if (lvl1Bots < levelOneReserveTarget) {
             console.log(`📉 Lvl 1 reserve low (${lvl1Bots}/${levelOneReserveTarget}). Spawning LVL 1 bots...`);
             const needed = levelOneReserveTarget - lvl1Bots;
@@ -172,20 +105,17 @@ async function runBotLogic() {
             }
         }
 
-        // 2. Baseline growth keeps roster fresh
         if (Math.random() <= GAME_RULES.BOTS.GROWTH_CHANCE) {
             console.log('📈 Scheduled bot growth triggered.');
             const newBotId = await createNewBot();
             skipBotIds.add(newBotId);
         }
 
-        // 3. Simulate bot activity with level 1 protection (except end-of-day catch-up)
         await simulateBotDailyLife({
             skipBotIds,
             protectedLevelOneCount: levelOneReserveTarget
         });
 
-        // 4. Final guarantee: ensure at least 5 level 1 bots exist for new players
         const finalPop = await measurePopulation();
         if (finalPop.levelOneBots < 5) {
             const needed = 5 - finalPop.levelOneBots;
@@ -211,24 +141,81 @@ async function createNewBot(): Promise<string> {
 
     const stats = generateInitialStats(fullName, Math.random() > 0.5 ? 'male' : 'female');
 
-    const botData: Character = {
-        ...stats,
-        isBot: true,
+    const botRow: Record<string, any> = {
+        name: fullName,
+        gender: stats.gender,
+        seed: stats.seed,
+        level: stats.level,
+        hp: stats.hp,
+        max_hp: stats.maxHp,
+        strength: stats.strength,
+        vitality: stats.vitality,
+        dexterity: stats.dexterity,
+        luck: stats.luck,
+        intelligence: stats.intelligence,
+        focus: stats.focus ?? 10,
+        is_bot: true,
         experience: 0,
         wins: 0,
         losses: 0,
-        fightsLeft: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
-        lastFightReset: Date.now(),
-        battleCount: 0,
-        statPoints: 0,
+        fights_left: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
+        last_fight_reset: Date.now(),
+        stat_points: 0,
         inventory: [],
-        equipped: {},
-        lastLootRoll: 0
+        last_loot_roll: 0,
+        fight_history: [],
+        fought_today: [],
+        pending_fight: null,
+        incoming_fight_history: [],
+        auto_mode: false,
     };
 
-    const docRef = await db.collection('characters').add(botData);
+    const { data, error } = await supabase
+        .from('characters')
+        .insert(botRow)
+        .select('id')
+        .single();
+
+    if (error || !data) {
+        console.error(`❌ Failed to create bot ${fullName}:`, error);
+        throw error || new Error('Failed to create bot');
+    }
+
     console.log(`🆕 Created new bot: ${fullName} (Level ${stats.level})`);
-    return docRef.id;
+    return data.id;
+}
+
+function convertRowToCharacter(row: any): Character {
+    return {
+        name: row.name,
+        gender: row.gender,
+        seed: row.seed,
+        level: row.level ?? 1,
+        hp: row.hp ?? 100,
+        maxHp: row.max_hp ?? 100,
+        strength: row.strength ?? 10,
+        vitality: row.vitality ?? 10,
+        dexterity: row.dexterity ?? 10,
+        luck: row.luck ?? 10,
+        intelligence: row.intelligence ?? 10,
+        focus: row.focus ?? GAME_RULES.STATS.BASE_VALUE,
+        experience: row.experience ?? 0,
+        wins: row.wins ?? 0,
+        losses: row.losses ?? 0,
+        fightsLeft: typeof row.fights_left === 'number' && Number.isFinite(row.fights_left) ? row.fights_left : 0,
+        lastFightReset: row.last_fight_reset ?? 0,
+        fightHistory: row.fight_history ?? [],
+        foughtToday: row.fought_today ?? [],
+        statPoints: row.stat_points ?? 0,
+        pendingFight: row.pending_fight ?? null,
+        inventory: row.inventory ?? [],
+        lastLootRoll: row.last_loot_roll ?? 0,
+        incomingFightHistory: row.incoming_fight_history ?? [],
+        isBot: row.is_bot ?? false,
+        battleCount: 0,
+        firestoreId: row.id,
+        equipped: {},
+    };
 }
 
 function selectProtectedLevelOneBotIds(
@@ -279,38 +266,23 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
         skipBotIds = new Set<string>(),
         protectedLevelOneCount = GAME_RULES.BOTS.MIN_LVL1_BOTS
     } = options;
-    // Fetch only bots
-    const snapshot = await db.collection('characters')
-        .where('isBot', '==', true)
-        .get();
 
-    if (snapshot.empty) {
+    const { data: rows, error } = await supabase
+        .from('characters')
+        .select('*')
+        .eq('is_bot', true);
+
+    if (error) {
+        console.error('❌ Failed to fetch bots:', error);
+        return;
+    }
+
+    if (!rows || rows.length === 0) {
         console.log('No bots found to simulate.');
         return;
     }
 
-    const bots = snapshot.docs.map(doc => {
-        const data = doc.data() as Character;
-        const lastFightReset = normalizeTimestamp(data.lastFightReset, 0);
-        const fightsLeft = typeof data.fightsLeft === 'number' && Number.isFinite(data.fightsLeft)
-            ? data.fightsLeft
-            : 0;
-        const battleCount = typeof (data as { battleCount?: unknown }).battleCount === 'number'
-            ? (data as { battleCount?: number }).battleCount ?? 0
-            : 0;
-        return {
-            ...data,
-            firestoreId: doc.id,
-            fightsLeft,
-            lastFightReset,
-            battleCount,
-            statPoints: data.statPoints ?? 0,
-            focus: data.focus ?? GAME_RULES.STATS.BASE_VALUE,
-            inventory: data.inventory ?? [],
-            equipped: data.equipped ?? {},
-            lastLootRoll: data.lastLootRoll ?? 0
-        };
-    });
+    const bots = rows.map(convertRowToCharacter);
 
     const runNow = Date.now();
     const runParisHour = getZonedParts(new Date(runNow), DAILY_RESET_TIMEZONE).hour;
@@ -335,25 +307,20 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
     let fallbackOpponentPool: Character[] | null = null;
     const loadOpponentsForLevel = async (level: number) => {
         if (opponentsByLevel.has(level)) return;
-        const snapshot = await db.collection('characters')
-            .where('level', '==', level)
-            .limit(50)
-            .get();
-        const opponents = snapshot.docs.map(doc => ({
-            ...doc.data() as Character,
-            firestoreId: doc.id
-        }));
-        opponentsByLevel.set(level, opponents);
+        const { data: rows } = await supabase
+            .from('characters')
+            .select('*')
+            .eq('level', level)
+            .limit(50);
+        opponentsByLevel.set(level, (rows ?? []).map(convertRowToCharacter));
     };
     const loadFallbackOpponentPool = async () => {
         if (fallbackOpponentPool) return;
-        const snapshot = await db.collection('characters')
-            .limit(200)
-            .get();
-        fallbackOpponentPool = snapshot.docs.map(doc => ({
-            ...doc.data() as Character,
-            firestoreId: doc.id
-        }));
+        const { data: rows } = await supabase
+            .from('characters')
+            .select('*')
+            .limit(200);
+        fallbackOpponentPool = (rows ?? []).map(convertRowToCharacter);
     };
 
     for (const bot of bots) {
@@ -368,7 +335,6 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
             let didLootbox = false;
             let didReset = false;
 
-            // 1. Daily Reset Logic
             if (shouldResetDaily(currentBotState.lastFightReset, runNow)) {
                 const parisMidnightUtc = getZonedMidnightUtc(new Date(runNow), DAILY_RESET_TIMEZONE);
                 fightsLeft = GAME_RULES.COMBAT.MAX_DAILY_FIGHTS;
@@ -378,7 +344,6 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                 console.log(`🔄 Daily reset for bot ${currentBotState.name}`);
             }
 
-            // 2. Daily Lootbox
             if (canRollLootbox(currentBotState.lastLootRoll, runNow)) {
                 const inventory = currentBotState.inventory || [];
                 if (inventory.length < INVENTORY_CAPACITY) {
@@ -397,11 +362,8 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                 } else {
                     console.log(`📦 Bot ${currentBotState.name} inventory full. Skipping lootbox.`);
                 }
-            } else {
-                console.log(`⏳ Bot ${currentBotState.name} already opened daily lootbox.`);
             }
 
-            // 3. Fight Logic (variable pace per bot profile + day progression)
             const fightBudget = isProtected
                 ? 0
                 : endOfDayDrain
@@ -414,7 +376,6 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
             let actionsTaken = 0;
 
             while (fightsLeft > 0 && actionsTaken < fightBudget) {
-                // Find a suitable opponent for the bot
                 await loadOpponentsForLevel(currentBotState.level);
                 const pool = opponentsByLevel.get(currentBotState.level) ?? [];
                 let potentialOpponents = pool.filter(c =>
@@ -443,7 +404,6 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                     break;
                 }
 
-                // SIMULATE REAL COMBAT using the shared logic
                 const combat = simulateCombat(currentBotState, opponent);
                 const won = combat.winner === 'attacker';
                 const opponentType = opponent.isBot ? 'BOT' : 'PLAYER';
@@ -466,11 +426,9 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                     }
                 }
 
-                // Calculate XP exactly like a player
                 const xpGained = calculateFightXp(currentBotState.level, won);
                 totalXpGained += xpGained;
 
-                // Apply XP/Level up logic
                 const result = gainXp(currentBotState, xpGained);
                 const pointsGained = result.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL;
                 const updatedBase = {
@@ -481,8 +439,6 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                     ? autoAllocateStatPointsRandom(updatedBase, pointsGained)
                     : updatedBase;
 
-                // Update local state for next iteration
-                // Record history
                 const historyEntry = {
                     date: Date.now(),
                     won,
@@ -491,7 +447,6 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                 const existingHistory = currentBotState.fightHistory || [];
                 const newHistory = [historyEntry, ...existingHistory].slice(0, 20);
 
-                // Update local state for next iteration
                 currentBotState = {
                     ...withStats,
                     fightsLeft: fightsLeft - 1,
@@ -507,16 +462,14 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
             }
 
             const shouldPersist = actionsTaken > 0 || didLootbox || didReset;
-            if (shouldPersist) {
-                // Final database update
-                const finalUpdates: Partial<Character> = {
+            if (shouldPersist && bot.firestoreId) {
+                const finalUpdates: Record<string, any> = {
                     experience: currentBotState.experience,
                     level: currentBotState.level,
-                    fightsLeft: currentBotState.fightsLeft,
+                    fights_left: currentBotState.fightsLeft,
                     wins: currentBotState.wins,
                     losses: currentBotState.losses,
-                    battleCount: currentBotState.battleCount,
-                    fightHistory: currentBotState.fightHistory,
+                    fight_history: currentBotState.fightHistory,
                     strength: currentBotState.strength,
                     vitality: currentBotState.vitality,
                     dexterity: currentBotState.dexterity,
@@ -524,18 +477,25 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                     intelligence: currentBotState.intelligence,
                     focus: currentBotState.focus,
                     hp: currentBotState.hp,
-                    maxHp: currentBotState.maxHp,
-                    lastFightReset: currentBotState.lastFightReset,
-                    statPoints: currentBotState.statPoints,
+                    max_hp: currentBotState.maxHp,
+                    last_fight_reset: currentBotState.lastFightReset,
+                    stat_points: currentBotState.statPoints,
                     inventory: currentBotState.inventory,
-                    lastLootRoll: currentBotState.lastLootRoll
+                    last_loot_roll: currentBotState.lastLootRoll,
                 };
 
                 const sanitizedUpdates = Object.fromEntries(
                     Object.entries(finalUpdates).filter(([, value]) => value !== undefined)
                 );
 
-                await db.collection('characters').doc(bot.firestoreId).update(sanitizedUpdates);
+                const { error: updateError } = await supabase
+                    .from('characters')
+                    .update(sanitizedUpdates)
+                    .eq('id', bot.firestoreId);
+
+                if (updateError) {
+                    console.warn(`⚠️ Failed to update bot ${bot.name}:`, updateError);
+                }
 
                 const levelDiff = currentBotState.level - startLevel;
                 if (actionsTaken > 0) {
