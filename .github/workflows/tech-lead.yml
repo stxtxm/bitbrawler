@@ -2,13 +2,15 @@ name: Tech Lead Daily
 
 on:
   schedule:
+    # Run at 21h Paris time (= 19h UTC standard, 21h UTC+2)
+    # Use 19h UTC to cover both standard and summer time
     - cron: '0 19 * * *'
   workflow_dispatch:
 
 jobs:
   tech-lead:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
     permissions:
       contents: write
       pull-requests: write
@@ -31,61 +33,63 @@ jobs:
           git config user.name "opencode-agent"
           git config user.email "agent@opencode.ai"
 
-      - name: Merge one eligible agent PR with green checks
+      - name: Merge auto-generated PRs
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
-
-          PR_NUM=$(gh pr list --state open --limit 50 --json number,author,isDraft,labels,createdAt \
-            --jq '[.[]
-              | .author_login = (.author.login // "")
-              | .has_auto_label = ([.labels[]?.name] | index("auto-generated") != null)
-              | .is_agent = (.has_auto_label or .author_login == "app/github-actions" or .author_login == "opencode-agent" or (.author_login | test("bot"; "i")))
-              | select(.is_agent == true and .isDraft == false)
-            ] | sort_by(.createdAt) | .[0].number // empty')
-
-          if [ -z "${PR_NUM:-}" ]; then
-            echo "No eligible agent PR found."
+          PRS=$(gh pr list --state open --json number,headRefName,title,author,labels,isDraft --jq '.[]')
+          if [ -z "$PRS" ]; then
+            echo "No open PRs to evaluate."
             exit 0
           fi
 
-          MERGE_STATE=$(gh pr view "$PR_NUM" --json mergeStateStatus --jq '.mergeStateStatus // ""')
-          if [ "$MERGE_STATE" != "CLEAN" ] && [ "$MERGE_STATE" != "HAS_HOOKS" ]; then
-            echo "PR #$PR_NUM not mergeable now (state=$MERGE_STATE)."
-            exit 0
-          fi
+          echo "$PRS" | while IFS= read -r PR_JSON; do
+            PR_NUM=$(echo "$PR_JSON" | jq -r '.number')
+            PR_AUTHOR=$(echo "$PR_JSON" | jq -r '.author.login // ""')
+            PR_DRAFT=$(echo "$PR_JSON" | jq -r '.isDraft')
+            HAS_AUTO_LABEL=$(echo "$PR_JSON" | jq -r '[.labels[]?.name] | index("auto-generated") != null')
+            echo "Processing PR #$PR_NUM..."
 
-          BLOCKING=$(gh pr view "$PR_NUM" --json statusCheckRollup --jq '[.statusCheckRollup[]? | select((.status? != "COMPLETED") or (.conclusion? != null and .conclusion != "SUCCESS") or (.state? != null and .state != "SUCCESS"))] | length')
-          if [ "$BLOCKING" -ne 0 ]; then
-            echo "PR #$PR_NUM has non-green checks."
-            exit 0
-          fi
+            # Only auto-merge bot-generated PRs (legacy label flow or current app/github-actions flow)
+            if [ "$HAS_AUTO_LABEL" != "true" ] && [ "$PR_AUTHOR" != "app/github-actions" ] && [ "$PR_AUTHOR" != "opencode-agent" ]; then
+              echo "ℹ️ PR #$PR_NUM is not from agent flow. Skipping."
+              continue
+            fi
 
-          echo "Merging PR #$PR_NUM..."
-          gh pr merge "$PR_NUM" --squash --delete-branch
+            if [ "$PR_DRAFT" = "true" ]; then
+              echo "⏳ PR #$PR_NUM is draft. Skipping."
+              continue
+            fi
 
-      - name: Run Tech Lead agent with fallback models
+            PR_MERGE_STATE=$(gh pr view "$PR_NUM" --json mergeStateStatus --jq '.mergeStateStatus // ""')
+            if [ "$PR_MERGE_STATE" != "CLEAN" ] && [ "$PR_MERGE_STATE" != "HAS_HOOKS" ]; then
+              echo "⏳ PR #$PR_NUM mergeStateStatus=$PR_MERGE_STATE. Skipping."
+              continue
+            fi
+
+            echo "✅ Merging eligible agent PR #$PR_NUM..."
+            gh pr merge "$PR_NUM" --squash --delete-branch || echo "⚠️ Failed to merge PR #$PR_NUM (may already be merged)"
+          done
+
+      - name: Run Tech Lead agent
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
-
           MODELS=(
             "opencode/deepseek-v4-flash-free"
             "opencode/nemotron"
             "opencode/big-pickle"
           )
 
-          PROMPT="Analyse le repo aujourd'hui. Vérifie la cohérence des PRs et leur ordre de merge, et si une PR casse la suite crée une issue de correction ciblée pour le même agent. Crée des issues actionnables avec /oc en première ligne du body."
+          PROMPT="Analyse le repo aujourd'hui. Consulte les stats QA (qa/stats.json), regarde les commits récents, merge les PRs si pas déjà fait, et crée des issues avec /oc pour les améliorations à faire."
 
           SUCCESS=0
           for MODEL in "${MODELS[@]}"; do
             echo "Trying model: $MODEL"
             if opencode run --dangerously-skip-permissions --agent tech-lead --model "$MODEL" "$PROMPT"; then
-              SUCCESS=1
               echo "Model selected: $MODEL"
+              SUCCESS=1
               break
             fi
             echo "Model failed: $MODEL"
@@ -95,27 +99,3 @@ jobs:
             echo "All model attempts failed."
             exit 1
           fi
-
-      - name: Backfill /oc on bot-created issues
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-
-          gh issue list --state open --limit 50 --json number,author,body --jq '.[] | @json' | while IFS= read -r issue; do
-            num=$(echo "$issue" | jq -r '.number')
-            author=$(echo "$issue" | jq -r '.author.login // ""')
-            body=$(echo "$issue" | jq -r '.body // ""')
-
-            if ! echo "$author" | grep -qiE '(github-actions|opencode-agent|\[bot\])'; then
-              continue
-            fi
-
-            if echo "$body" | grep -qiE '(^|[[:space:]])/(oc|opencode)($|[[:space:]])'; then
-              continue
-            fi
-
-            gh issue edit "$num" --body "/oc
-
-$body"
-          done
