@@ -30,9 +30,10 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: anomalyco/opencode/github@latest
+      - uses: anomalyco/opencode/github@v1.15.10
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         with:
           model: opencode/deepseek-v4-flash-free
           agent: dev-agent
@@ -52,9 +53,10 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 1
 
-      - uses: anomalyco/opencode/github@latest
+      - uses: anomalyco/opencode/github@v1.15.10
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         with:
           model: opencode/deepseek-v4-flash-free
           prompt: |
