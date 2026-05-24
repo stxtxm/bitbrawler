@@ -1,26 +1,15 @@
-name: OpenCode
+name: OpenCode Agent
 
 on:
-  issue_comment:
-    types: [created]
   issues:
     types: [opened]
-  pull_request_review_comment:
-    types: [created]
-  pull_request:
-    types: [opened, synchronize, reopened]
 
 jobs:
-  opencode:
-    if: |
-      (github.event_name == 'issue_comment' &&
-        (contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode')))
-      || (github.event_name == 'issues' &&
-        (contains(github.event.issue.body, '/oc') || contains(github.event.issue.body, '/opencode')))
+  implement:
+    if: contains(github.event.issue.body, '/oc') || contains(github.event.issue.body, '/opencode')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
-      id-token: write
       contents: write
       pull-requests: write
       issues: write
@@ -30,41 +19,40 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: anomalyco/opencode/github@v1.15.10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install opencode CLI
+        run: npm install -g opencode-ai
+
+      - name: Configure git
+        run: |
+          git config user.name "opencode-agent"
+          git config user.email "agent@opencode.ai"
+
+      - name: Create feature branch
+        run: |
+          BRANCH="feat/auto-issue-${{ github.event.issue.number }}"
+          git checkout -b "$BRANCH"
+          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
+
+      - name: Run opencode
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
-        with:
-          model: opencode/deepseek-v4-flash-free
-          agent: dev-agent
+        run: |
+          ISSUE_BODY="${{ github.event.issue.body }}"
+          # Remove /oc or /opencode from the prompt
+          PROMPT=$(echo "$ISSUE_BODY" | sed 's/\/oc//g; s/\/opencode//g')
+          echo "$PROMPT" | opencode run --model "opencode/deepseek-v4-flash-free" --yes
 
-  review:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      id-token: write
-      contents: write
-      pull-requests: write
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 1
-
-      - uses: anomalyco/opencode/github@v1.15.10
+      - name: Create Pull Request
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
-        with:
-          model: opencode/deepseek-v4-flash-free
-          prompt: |
-            Review this pull request for Bitbrawler:
-            - Run npm test to verify tests pass
-            - Run npx tsc --noEmit to check TypeScript
-            - Check for code quality issues
-            - If everything passes and quality is good:
-              1. Approve the PR
-              2. Merge with squash
-              3. Delete the branch
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr create \
+            --title "${{ github.event.issue.title }}" \
+            --body "Automated implementation of #${{ github.event.issue.number }}
+
+            Closes #${{ github.event.issue.number }}" \
+            --base master
