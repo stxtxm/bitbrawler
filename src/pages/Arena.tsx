@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useGame } from '../context/GameContext';
 import { useConnectionGate } from '../hooks/useConnectionGate';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { useSound } from '../hooks/useSound';
 import ConnectionModal from '../components/ConnectionModal';
 import { PixelCharacter } from '../components/PixelCharacter';
 import { PixelIcon } from '../components/PixelIcon';
@@ -30,6 +31,7 @@ const formatSettingsLogDate = (timestamp: number) => {
 const Arena = () => {
     const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, allocateStatPoint, rollLootbox, setAutoMode, deleteCharacter } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
+    const { play: playSound, enabled: soundEnabled, volume: soundVolume, setEnabled: setSoundEnabled, setVolume: setSoundVolume } = useSound();
     const navigate = useNavigate();
     const isOnline = useOnlineStatus();
     const connectionMessage = 'Connect to battle and sync your progress.';
@@ -72,6 +74,7 @@ const Arena = () => {
         if (lastLevelUp !== null) {
             setShowLevelUp(true);
             setDeferLevelUp(false);
+            playSound('levelup');
         }
     }, [lastLevelUp]);
 
@@ -200,6 +203,13 @@ const Arena = () => {
         }
     }, [inventoryOpen]);
 
+    // Play lootbox sound when result appears
+    useEffect(() => {
+        if (lootboxResult) {
+            playSound('lootbox');
+        }
+    }, [lootboxResult]);
+
     useEffect(() => {
         if (!settingsOpen) {
             setSettingsView('main');
@@ -303,6 +313,7 @@ const Arena = () => {
         const canProceed = await ensureConnection(connectionMessage);
         if (!canProceed) return;
 
+        playSound('click');
         if (window.navigator.vibrate) window.navigator.vibrate(80);
         setMatchmaking(true);
 
@@ -427,7 +438,7 @@ const Arena = () => {
                 <div className="header-actions">
                     <button
                         className="button icon-btn"
-                        onClick={() => setSettingsOpen(true)}
+                        onClick={() => { playSound('click'); setSettingsOpen(true); }}
                         title="Settings"
                         aria-label="Settings"
                     >
@@ -435,7 +446,7 @@ const Arena = () => {
                     </button>
                     <button
                         className="button icon-btn inventory-btn"
-                        onClick={() => setInventoryOpen(true)}
+                        onClick={() => { playSound('click'); setInventoryOpen(true); }}
                         title="Inventory"
                         aria-label="Inventory"
                     >
@@ -771,6 +782,43 @@ const Arena = () => {
                                             </button>
                                         </div>
                                         <div className="settings-hint">Switching off returns full manual control.</div>
+                                    </div>
+
+                                    <div className="settings-divider" />
+
+                                    <div className="settings-section">
+                                        <div className="settings-row">
+                                            <div className="settings-label">
+                                                <span>SOUND FX</span>
+                                                <span className="settings-sub">8-bit sound effects for actions.</span>
+                                            </div>
+                                            <button
+                                                className={`pixel-switch ${soundEnabled ? 'on' : 'off'}`}
+                                                onClick={() => setSoundEnabled(!soundEnabled)}
+                                                role="switch"
+                                                aria-checked={soundEnabled}
+                                                aria-label="Sound FX"
+                                            >
+                                                <span className="switch-knob" />
+                                                <span className="switch-text">{soundEnabled ? 'ON' : 'OFF'}</span>
+                                            </button>
+                                        </div>
+                                        {soundEnabled && (
+                                            <div className="sound-volume-row">
+                                                <span className="sound-volume-label">VOLUME</span>
+                                                <input
+                                                    type="range"
+                                                    min="0"
+                                                    max="1"
+                                                    step="0.05"
+                                                    value={soundVolume}
+                                                    onChange={(e) => setSoundVolume(parseFloat(e.target.value))}
+                                                    className="sound-slider"
+                                                    aria-label="Sound volume"
+                                                />
+                                                <span className="sound-volume-value">{Math.round(soundVolume * 100)}%</span>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="settings-divider" />

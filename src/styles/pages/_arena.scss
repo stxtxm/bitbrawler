@@ -2235,6 +2235,62 @@
     }
 }
 
+/* Sound settings */
+.sound-volume-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 4px 4px;
+}
+
+.sound-volume-label {
+    font-size: 0.6rem;
+    color: #aaa;
+    letter-spacing: 1px;
+    min-width: 52px;
+}
+
+.sound-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    height: 8px;
+    max-width: 200px;
+    background: #222;
+    border: 2px solid #444;
+    outline: none;
+    cursor: pointer;
+
+    &::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        background: #fff;
+        border: 2px solid #000;
+        cursor: pointer;
+    }
+
+    &::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        background: #fff;
+        border: 2px solid #000;
+        cursor: pointer;
+    }
+
+    &:hover {
+        border-color: $accent-gold;
+    }
+}
+
+.sound-volume-value {
+    font-size: 0.6rem;
+    color: $accent-gold;
+    min-width: 32px;
+    text-align: right;
+}
+
 .danger-zone {
     border: 1px solid rgba($accent-red, 0.3);
     background: rgba(80, 0, 0, 0.12);

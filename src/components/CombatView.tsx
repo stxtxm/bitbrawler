@@ -5,6 +5,7 @@ import { PixelIcon } from './PixelIcon';
 import { simulateCombat } from '../utils/combatUtils';
 import { getMatchDifficultyLabel } from '../utils/matchmakingUtils';
 import { parseCombatDetail, CombatAction, CombatActionType } from '../utils/combatLogUtils';
+import { useSound } from '../hooks/useSound';
 
 interface CombatViewProps {
     player: Character;
@@ -16,6 +17,7 @@ interface CombatViewProps {
 }
 
 export const CombatView = ({ player, opponent, matchType, onComplete, onClose, candidates = [] }: CombatViewProps) => {
+    const { play: playSound } = useSound();
     const [phase, setPhase] = useState<'intro' | 'combat' | 'result'>('intro');
     const [combatResult, setCombatResult] = useState<{
         winner: 'attacker' | 'defender' | 'draw';
@@ -108,6 +110,12 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
                     const action = parseCombatDetail(detail, player.name, opponent.name);
                     if (action) {
                         setActionPulse(action);
+                        // Play corresponding sound
+                        if (action.type === 'crit') {
+                            playSound('crit');
+                        } else if (action.type === 'hit' || action.type === 'counter') {
+                            playSound('hit');
+                        }
                         if (pulseTimeoutRef.current !== null) {
                             window.clearTimeout(pulseTimeoutRef.current);
                         }
@@ -143,7 +151,16 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
         if (phase !== 'combat') {
             setActionPulse(null);
         }
-    }, [phase]);
+        // Play victory/defeat sound when result shows
+        if (phase === 'result' && combatResult) {
+            const won = combatResult.winner === 'attacker';
+            if (won) {
+                playSound('victory');
+            } else {
+                playSound('defeat');
+            }
+        }
+    }, [phase, combatResult]);
 
     useEffect(() => {
         if (phase !== 'combat') return;
