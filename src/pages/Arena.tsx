@@ -13,6 +13,7 @@ import { CombatView } from '../components/CombatView';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
 import { applyEquipmentToCharacter, getEquipmentBonuses, getItemById } from '../utils/equipmentUtils';
 import { canRollLootbox } from '../utils/lootboxUtils';
+import { INVENTORY_CAPACITY } from '../utils/persistenceUtils';
 import { ItemStats, PixelItemAsset } from '../types/Item';
 
 type SettingsLogEntry = {
@@ -93,7 +94,7 @@ const Arena = () => {
     const shouldShowLevelUp = showLevelUp || (pendingStatPoints > 0 && !deferLevelUp);
     const hasLevelInfo = lastLevelUp !== null;
     const inventory = activeCharacter.inventory || [];
-    const inventoryCapacity = 24;
+    const inventoryCapacity = INVENTORY_CAPACITY;
     const inventoryFull = inventory.length >= inventoryCapacity;
     const canRollDailyLoot = canRollLootbox(activeCharacter.lastLootRoll, Date.now());
     type StatIconType = 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence' | 'focus';
