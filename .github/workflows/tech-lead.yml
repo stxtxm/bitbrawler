@@ -37,7 +37,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          PRS=$(gh pr list --state open --json number,headRefName,title,author,labels,isDraft,mergeStateStatus --jq '.[]')
+          PRS=$(gh pr list --state open --json number,headRefName,title,author,labels,isDraft --jq '.[]')
           if [ -z "$PRS" ]; then
             echo "No open PRs to evaluate."
             exit 0
@@ -47,7 +47,6 @@ jobs:
             PR_NUM=$(echo "$PR_JSON" | jq -r '.number')
             PR_AUTHOR=$(echo "$PR_JSON" | jq -r '.author.login // ""')
             PR_DRAFT=$(echo "$PR_JSON" | jq -r '.isDraft')
-            PR_MERGE_STATE=$(echo "$PR_JSON" | jq -r '.mergeStateStatus // ""')
             HAS_AUTO_LABEL=$(echo "$PR_JSON" | jq -r '[.labels[]?.name] | index("auto-generated") != null')
             echo "Processing PR #$PR_NUM..."
 
@@ -62,6 +61,7 @@ jobs:
               continue
             fi
 
+            PR_MERGE_STATE=$(gh pr view "$PR_NUM" --json mergeStateStatus --jq '.mergeStateStatus // ""')
             if [ "$PR_MERGE_STATE" != "CLEAN" ] && [ "$PR_MERGE_STATE" != "HAS_HOOKS" ]; then
               echo "⏳ PR #$PR_NUM mergeStateStatus=$PR_MERGE_STATE. Skipping."
               continue
