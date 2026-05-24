@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { Character } from '../types/Character';
 import { PixelCharacter } from './PixelCharacter';
 import { PixelIcon } from './PixelIcon';
+import { useSound } from '../hooks/useSound';
 import { simulateCombat } from '../utils/combatUtils';
 import { getMatchDifficultyLabel } from '../utils/matchmakingUtils';
 import { parseCombatDetail, CombatAction, CombatActionType } from '../utils/combatLogUtils';
@@ -16,6 +17,7 @@ interface CombatViewProps {
 }
 
 export const CombatView = ({ player, opponent, matchType, onComplete, onClose, candidates = [] }: CombatViewProps) => {
+    const sound = useSound();
     const [phase, setPhase] = useState<'intro' | 'combat' | 'result'>('intro');
     const [combatResult, setCombatResult] = useState<{
         winner: 'attacker' | 'defender' | 'draw';
@@ -108,6 +110,12 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
                     const action = parseCombatDetail(detail, player.name, opponent.name);
                     if (action) {
                         setActionPulse(action);
+                        // Play sound based on action type
+                        if (action.type === 'hit' || action.type === 'counter') {
+                            sound.play('hit');
+                        } else if (action.type === 'crit') {
+                            sound.play('crit');
+                        }
                         if (pulseTimeoutRef.current !== null) {
                             window.clearTimeout(pulseTimeoutRef.current);
                         }
@@ -128,6 +136,17 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
             }, 520); // Slightly slower for readability
 
             return () => clearInterval(roundInterval);
+        }
+    }, [phase, combatResult]);
+
+    // Play victory/defeat sound when result phase starts
+    useEffect(() => {
+        if (phase === 'result' && combatResult) {
+            if (combatResult.winner === 'attacker') {
+                sound.play('victory');
+            } else if (combatResult.winner === 'defender') {
+                sound.play('defeat');
+            }
         }
     }, [phase, combatResult]);
 
