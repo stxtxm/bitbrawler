@@ -17,6 +17,10 @@ function App() {
 
   return (
     <div className="App">
+      {/* Skip to content link - visible only when focused via keyboard */}
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <Suspense fallback={
         <LoadingScreen />
       }>

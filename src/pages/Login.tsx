@@ -69,38 +69,40 @@ const Login = () => {
                 <p className="subtitle">ENTER YOUR NAME, FIGHTER</p>
             </header>
 
-            <form onSubmit={handleSubmit} className="login-form">
-                <div className="form-group">
-                    <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="CHARACTER NAME"
-                        className="retro-input"
-                        autoFocus
-                    />
-                </div>
+            <main id="main-content">
+                <form onSubmit={handleSubmit} className="login-form">
+                    <div className="form-group">
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="CHARACTER NAME"
+                            className="retro-input"
+                            autoFocus
+                        />
+                    </div>
 
-                {error && <div className="error-message blink">{error}</div>}
+                    {error && <div className="error-message blink">{error}</div>}
 
-                <div className="actions">
-                    <button
-                        type="submit"
-                        className="button primary-btn"
-                        disabled={loading || !name.trim()}
-                    >
-                        {loading ? 'CONNECTING...' : 'ENTER ARENA'}
-                    </button>
+                    <div className="actions">
+                        <button
+                            type="submit"
+                            className="button primary-btn"
+                            disabled={loading || !name.trim()}
+                        >
+                            {loading ? 'CONNECTING...' : 'ENTER ARENA'}
+                        </button>
 
-                    <button
-                        type="button"
-                        className="button secondary"
-                        onClick={() => navigate('/')}
-                    >
-                        BACK
-                    </button>
-                </div>
-            </form>
+                        <button
+                            type="button"
+                            className="button secondary"
+                            onClick={() => navigate('/')}
+                        >
+                            BACK
+                        </button>
+                    </div>
+                </form>
+            </main>
             <ConnectionModal
                 open={connectionModal.open}
                 message={connectionModal.message}

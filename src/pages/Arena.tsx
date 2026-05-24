@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useGame } from '../context/GameContext';
 import { useConnectionGate } from '../hooks/useConnectionGate';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import ConnectionModal from '../components/ConnectionModal';
 import { PixelCharacter } from '../components/PixelCharacter';
 import { PixelIcon } from '../components/PixelIcon';
@@ -341,12 +342,24 @@ const Arena = () => {
         setCombatData(null);
     };
 
+    // Focus traps for modals (must be called after all handlers and computed values)
+    const levelUpRef = useFocusTrap<HTMLDivElement>(shouldShowLevelUp, canCloseLevelUp ? handleCloseLevelUp : undefined);
+    const inventoryRef = useFocusTrap<HTMLDivElement>(inventoryOpen, () => setInventoryOpen(false));
+    const settingsRef = useFocusTrap<HTMLDivElement>(settingsOpen, () => setSettingsOpen(false));
+    const lootboxRef = useFocusTrap<HTMLDivElement>(!!lootboxResult, handleCloseLootboxResult);
 
     return (
         <div className="container retro-container arena-container">
+            <main id="main-content">
             {/* Level Up Notification (Dopamine hit!) */}
             {shouldShowLevelUp && (
-                <div className="level-up-pop-overlay">
+                <div
+                    className="level-up-pop-overlay"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Level up"
+                    ref={levelUpRef}
+                >
                     <div className="level-up-card">
                         <div className="card-shine"></div>
                         <div className="level-up-badge">NEW RANK!</div>
@@ -441,7 +454,7 @@ const Arena = () => {
                     >
                         <PixelIcon type="backpack" size={26} />
                     </button>
-                    <button className="button icon-btn" onClick={() => { logout(); setTimeout(() => navigate('/'), 0); }} title="Logout">
+                    <button className="button icon-btn" onClick={() => { logout(); setTimeout(() => navigate('/'), 0); }} title="Logout" aria-label="Logout">
                         <PixelIcon type="power" size={26} />
                     </button>
                 </div>
@@ -477,7 +490,7 @@ const Arena = () => {
                                 <div className="xp-bar-shine"></div>
                             </div>
                             {showXpGain && lastXpGain && (
-                                <div className="xp-gain-popup">+{lastXpGain} XP</div>
+                                <div className="xp-gain-popup" aria-live="polite" aria-atomic="true">+{lastXpGain} XP</div>
                             )}
                         </div>
                         {isMaxLevel && <span className="max-level-badge">★ MAX LEVEL ★</span>}
@@ -551,7 +564,14 @@ const Arena = () => {
                 onClose={closeModal}
             />
             {inventoryOpen && (
-                <div className="retro-modal-overlay inventory-overlay" onClick={() => setInventoryOpen(false)}>
+                <div
+                    className="retro-modal-overlay inventory-overlay"
+                    onClick={() => setInventoryOpen(false)}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Inventory"
+                    ref={inventoryRef}
+                >
                     <div className={`retro-modal inventory-modal ${lootboxRolling ? 'lootbox-active' : ''}`} onClick={(e) => e.stopPropagation()}>
                         <div className="inventory-header">
                             <h2 className="inventory-title">INVENTORY</h2>
@@ -661,7 +681,7 @@ const Arena = () => {
                             </div>
                         </div>
                         {lootboxResult && (
-                            <div className="lootbox-result-overlay" role="dialog" aria-label="Lootbox reward" onClick={handleCloseLootboxResult}>
+                            <div className="lootbox-result-overlay" role="dialog" aria-modal="true" aria-label="Lootbox reward" aria-live="polite" onClick={handleCloseLootboxResult} ref={lootboxRef}>
                                 <div className={`lootbox-result-card rarity-${lootboxResult.rarity}`} onClick={handleCloseLootboxResult}>
                                     <div className="lootbox-result-glow"></div>
                                     <div className="lootbox-result-title">NEW ITEM</div>
@@ -704,7 +724,14 @@ const Arena = () => {
             )}
 
             {settingsOpen && (
-                <div className="retro-modal-overlay settings-overlay" onClick={() => setSettingsOpen(false)}>
+                <div
+                    className="retro-modal-overlay settings-overlay"
+                    onClick={() => setSettingsOpen(false)}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Settings"
+                    ref={settingsRef}
+                >
                     <div className="retro-modal settings-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="inventory-header settings-header">
                             <div className="settings-title-row">
@@ -818,6 +845,7 @@ const Arena = () => {
                     </div>
                 </div>
             )}
+            </main>
             {combatData && activeCharacter && (
                 <CombatView
                     player={applyEquipmentToCharacter(activeCharacter)}
