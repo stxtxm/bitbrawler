@@ -1,10 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Configuration Supabase
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://bhbpvbfvuayafygdrbgb.supabase.co'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_TvmRepD1Trhu5bQIGZbkmg_YZ3FI3Gn'
 
-// Initialisation de Supabase Client
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('supabaseUrl or supabaseAnonKey is required')
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Types pour les tables
