@@ -16,7 +16,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
-      id-token: write
       contents: write
       pull-requests: write
       issues: write
@@ -29,19 +28,20 @@ jobs:
           persist-credentials: false
 
       - uses: anomalyco/opencode/github@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           model: opencode/deepseek-v4-flash-free
           agent: dev-agent
+          use_github_token: true
 
   review:
     if: |
       github.event_name == 'pull_request' &&
-      (github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'ready_for_review') &&
-      github.event.pull_request.user.type == 'Bot'
+      (github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.action == 'ready_for_review')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      id-token: write
       contents: write
       pull-requests: write
       checks: read
@@ -54,9 +54,12 @@ jobs:
           persist-credentials: false
 
       - uses: anomalyco/opencode/github@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           model: opencode/deepseek-v4-flash-free
           agent: reviewer
+          use_github_token: true
           prompt: |
             Review this pull request for Bitbrawler:
             - Run npm test to verify tests pass
@@ -64,5 +67,5 @@ jobs:
             - Check for code quality issues
             - If everything passes and quality is good:
               1. Approve the PR
-              2. Merge with squash (gh pr merge --squash --auto)
+              2. Merge with squash (gh pr merge --squash)
               3. Delete the branch
