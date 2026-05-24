@@ -33,7 +33,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh pr list --state open --json number,author,isDraft,mergeStateStatus,labels --jq '.[]' | while IFS= read -r pr; do
+          set -euo pipefail
+          gh pr list --state open --json number,author,isDraft,mergeStateStatus,labels --jq '.[] | @json' | while IFS= read -r pr; do
             num=$(echo "$pr" | jq -r '.number')
             author=$(echo "$pr" | jq -r '.author.login // ""')
             draft=$(echo "$pr" | jq -r '.isDraft')
@@ -41,16 +42,26 @@ jobs:
             auto_label=$(echo "$pr" | jq -r '[.labels[]?.name] | index("auto-generated") != null')
 
             if [ "$draft" = "true" ]; then
+              echo "Skip #$num draft"
               continue
             fi
             if [ "$auto_label" != "true" ] && [ "$author" != "app/github-actions" ] && [ "$author" != "opencode-agent" ]; then
+              echo "Skip #$num non-agent PR"
               continue
             fi
             if [ "$merge_state" != "CLEAN" ] && [ "$merge_state" != "HAS_HOOKS" ]; then
+              echo "Skip #$num mergeStateStatus=$merge_state"
               continue
             fi
 
-            gh pr merge "$num" --squash --delete-branch || true
+            BLOCKING=$(gh pr view "$num" --json statusCheckRollup --jq '[.statusCheckRollup[]? | select((.status? != "COMPLETED") or (.conclusion? != null and .conclusion != "SUCCESS") or (.state? != null and .state != "SUCCESS"))] | length')
+            if [ "$BLOCKING" -ne 0 ]; then
+              echo "Skip #$num checks not green"
+              continue
+            fi
+
+            echo "Merging #$num..."
+            gh pr merge "$num" --squash --delete-branch
           done
 
       - name: Run Tech Lead agent
