@@ -36,3 +36,6 @@ dist-ssr
 
 # Vite
 .vite
+
+# GitHub Actions runner
+actions-runner/
