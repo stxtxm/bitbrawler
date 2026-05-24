@@ -34,5 +34,17 @@ dist-ssr
 .env.test.local
 .env.production.local
 
+# GitHub Actions local runner
+actions-runner/
+
+# Opencode
+.opencode/node_modules/
+
+# Test output
+test_results.txt
+
 # Vite
 .vite
+
+# GitHub Actions runner
+actions-runner/

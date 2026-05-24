@@ -158,7 +158,7 @@ const CharacterCreation = () => {
         console.log("Personnage sauvegardé sur Supabase avec l'ID: ", newChar.id);
 
         // Connecter l'utilisateur immédiatement
-        setCharacter({ ...finalCharacter, firestoreId: newChar.id });
+        setCharacter({ ...finalCharacter, id: newChar.id });
       // Ensure error modal is closed and show success
       setShowErrorModal(false);
       setShowSuccessModal(true);

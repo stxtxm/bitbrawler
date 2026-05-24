@@ -53,7 +53,7 @@ describe('App offline routing', () => {
         losses: 1,
         fightsLeft: 3,
         lastFightReset: Date.now(),
-        firestoreId: 'test-id',
+        id: 'test-id',
       }),
     )
 

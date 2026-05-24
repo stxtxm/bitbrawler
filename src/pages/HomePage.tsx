@@ -11,9 +11,7 @@ const HomePage = () => {
     <div className="container retro-container home-page">
       <header className="game-header">
         <nav className="top-nav">
-          <div className="nav-left">
-            {/* Future Nav Items */}
-          </div>
+
           <div className="nav-right">
             <Link to="/login" className="nav-btn">
               <PixelIcon type="user" size={16} />

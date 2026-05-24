@@ -42,7 +42,7 @@ const mockCharacter: Character = {
   fightsLeft: 2,
   lastFightReset: Date.now(),
   fightHistory: [],
-  firestoreId: 'stat-id',
+  id: 'stat-id',
 };
 
 describe('Arena stat icons', () => {

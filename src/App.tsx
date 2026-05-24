@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useGame } from './context/GameContext'
 import { useOnlineStatus } from './hooks/useOnlineStatus'
-import { HomePage, CharacterCreation, Rankings, Login, Arena } from './routes/lazyPages'
+import { HomePage, CharacterCreation, Rankings, Login, Arena, NotFound } from './routes/lazyPages'
 import LoadingScreen from './components/LoadingScreen'
 import Footer from './components/Footer'
 
@@ -49,6 +49,7 @@ function App() {
               }
             />
             <Route path="/rankings" element={<Rankings />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
       </div>
