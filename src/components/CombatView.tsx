@@ -5,6 +5,7 @@ import { PixelIcon } from './PixelIcon';
 import { simulateCombat } from '../utils/combatUtils';
 import { getMatchDifficultyLabel } from '../utils/matchmakingUtils';
 import { parseCombatDetail, CombatAction, CombatActionType } from '../utils/combatLogUtils';
+import { useSound } from '../hooks/useSound';
 
 interface CombatViewProps {
     player: Character;
@@ -16,8 +17,17 @@ interface CombatViewProps {
 }
 
 import { useFocusTrap } from '../hooks/useFocusTrap';
+const ACTION_DURATIONS: Record<CombatActionType, number> = {
+    hit: 380,
+    crit: 560,
+    magic: 600,
+    miss: 420,
+    counter: 440,
+};
+>>>>>>> origin/master
 
 export const CombatView = ({ player, opponent, matchType, onComplete, onClose, candidates = [] }: CombatViewProps) => {
+    const { play: playSound } = useSound();
     const [phase, setPhase] = useState<'intro' | 'combat' | 'result'>('intro');
     const [combatResult, setCombatResult] = useState<{
         winner: 'attacker' | 'defender' | 'draw';
@@ -31,13 +41,6 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
     const pulseTimeoutRef = useRef<number | null>(null);
     const [scanIndex, setScanIndex] = useState(0);
     const [scanLocked, setScanLocked] = useState(false);
-    const actionDurations: Record<CombatActionType, number> = {
-        hit: 380,
-        crit: 560,
-        magic: 600,
-        miss: 420,
-        counter: 440,
-    };
 
     const scanList = useMemo(() => {
         const map = new Map<string, Character>();
@@ -110,10 +113,16 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
                     const action = parseCombatDetail(detail, player.name, opponent.name);
                     if (action) {
                         setActionPulse(action);
+                        // Play corresponding sound
+                        if (action.type === 'crit') {
+                            playSound('crit');
+                        } else if (action.type === 'hit' || action.type === 'counter') {
+                            playSound('hit');
+                        }
                         if (pulseTimeoutRef.current !== null) {
                             window.clearTimeout(pulseTimeoutRef.current);
                         }
-                        const duration = actionDurations[action.type] ?? 320;
+                        const duration = ACTION_DURATIONS[action.type] ?? 320;
                         pulseTimeoutRef.current = window.setTimeout(() => {
                             setActionPulse(null);
                             pulseTimeoutRef.current = null;
@@ -131,7 +140,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
 
             return () => clearInterval(roundInterval);
         }
-    }, [phase, combatResult]);
+    }, [phase, combatResult, player, opponent]);
 
     useEffect(() => {
         return () => {
@@ -145,7 +154,16 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
         if (phase !== 'combat') {
             setActionPulse(null);
         }
-    }, [phase]);
+        // Play victory/defeat sound when result shows
+        if (phase === 'result' && combatResult) {
+            const won = combatResult.winner === 'attacker';
+            if (won) {
+                playSound('victory');
+            } else {
+                playSound('defeat');
+            }
+        }
+    }, [phase, combatResult]);
 
     useEffect(() => {
         if (phase !== 'combat') return;

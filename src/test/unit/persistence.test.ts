@@ -44,7 +44,7 @@ describe('LocalStorage Persistence', () => {
         const getData = () => {
             try {
                 return JSON.parse(localStorage.getItem('bitbrawler_active_char')!);
-            } catch (e) {
+            } catch {
                 return null;
             }
         };

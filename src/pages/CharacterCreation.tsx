@@ -79,6 +79,7 @@ const CharacterCreation = () => {
   // Initialize on mount
   useEffect(() => {
     generateRandomCharacter();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
