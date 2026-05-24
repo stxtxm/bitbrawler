@@ -39,7 +39,7 @@ jobs:
         run: |
           git config user.name "opencode-agent"
           git config user.email "agent@opencode.ai"
-          git add qa/stats.json
+          git add qa/stats.json qa/state.json
           git diff --cached --quiet || git commit -m "chore: update QA stats"
           git pull --rebase
           git push

@@ -6,6 +6,7 @@ import config from './qa-bot.config.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const STATS_FILE = join(__dirname, config.statsFile)
+const STATE_FILE = join(__dirname, config.stateFile)
 const SCREENSHOTS_DIR = join(__dirname, config.screenshotsDir)
 const QA_TIME_ZONE = config.timeZone || 'Europe/Paris'
 const AUTO_MODE_START_HOUR = Number.isFinite(config.autoModeStartHour) ? config.autoModeStartHour : 19
@@ -45,10 +46,6 @@ function dateKey(date = new Date(), timeZone = QA_TIME_ZONE) {
   return `${parts.year}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}`
 }
 
-function getDailyQaCharacterName(runKey = dateKey()) {
-  return `QA${runKey.replace(/-/g, '')}`
-}
-
 function shouldEnableAutoMode(date = new Date(), timeZone = QA_TIME_ZONE) {
   const { hour } = getZonedParts(date, timeZone)
   return hour >= AUTO_MODE_START_HOUR
@@ -75,6 +72,27 @@ function saveStats(stats) {
     console.log(`   💾 Stats written to ${STATS_FILE} (${stats.length} records)`)
   } catch (err) {
     console.error(`   ❌ Failed to write stats to ${STATS_FILE}: ${err.message}`)
+    throw err
+  }
+}
+
+function loadState() {
+  try {
+    const data = readFileSync(STATE_FILE, 'utf-8')
+    console.log(`   📄 Loaded state from ${STATE_FILE}`)
+    return JSON.parse(data)
+  } catch (err) {
+    console.log(`   📄 No existing state at ${STATE_FILE}, starting fresh (${err.message})`)
+    return {}
+  }
+}
+
+function saveState(state) {
+  try {
+    writeFileSync(STATE_FILE, JSON.stringify(state, null, 2))
+    console.log(`   💾 State written to ${STATE_FILE}`)
+  } catch (err) {
+    console.error(`   ❌ Failed to write state to ${STATE_FILE}: ${err.message}`)
     throw err
   }
 }
@@ -136,53 +154,92 @@ async function loginCharacter(page, charName) {
   throw new Error(`Unable to determine login result for ${charName} (url=${currentUrl})`)
 }
 
-async function createCharacter(page, charName) {
+async function openCharacterCreation(page) {
   await page.goto(getAppUrl('/create-character'), { waitUntil: 'networkidle', timeout: 30000 })
-
-  const nameInput = page.locator('input[type="text"], .retro-input').first()
-  await nameInput.waitFor({ state: 'visible', timeout: 10000 })
-  await nameInput.fill(charName)
-
-  const rollBtn = page.locator('button:has-text("ROLL STATS"), button:has-text("ROLL"), button:has-text("REROLL"), button:has-text("RANDOM")').first()
-  if (await rollBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await rollBtn.click()
-    await page.waitForTimeout(500)
-  }
-
-  const startBtn = page.locator('button:has-text("START GAME"), button:has-text("START"), button:has-text("CREATE"), button:has-text("FIGHT")').first()
-  await startBtn.waitFor({ state: 'visible', timeout: 10000 })
-  await startBtn.click()
-
-  const arenaLoadMs = await waitForArena(page, 15000)
-  if (arenaLoadMs !== null) {
-    return { outcome: 'created', arenaLoadMs }
-  }
-
-  const bodyText = await readBodyText(page)
-  if (bodyText.toUpperCase().includes('NAME ALREADY TAKEN')) {
-    return { outcome: 'conflict', arenaLoadMs: null }
-  }
-
-  throw new Error(`Character creation did not reach arena for ${charName}`)
 }
 
-async function loginOrCreateDailyCharacter(page, charName) {
-  const loginResult = await loginCharacter(page, charName)
-  if (loginResult.outcome === 'reused') {
-    return loginResult
+async function generateAppCharacterName(page) {
+  const nameInput = page.locator('input[type="text"], .retro-input').first()
+  await nameInput.waitFor({ state: 'visible', timeout: 10000 })
+
+  const diceBtn = page.locator('button[aria-label="Generate Random Name"], button[title="Generate Random Name"]').first()
+  if (!(await diceBtn.isVisible({ timeout: 5000 }).catch(() => false))) {
+    throw new Error('Random name button not found on character creation screen')
   }
 
-  const createResult = await createCharacter(page, charName)
+  await diceBtn.click()
+  await page.waitForFunction(
+    () => {
+      const input = document.querySelector('input[type="text"]')
+      return Boolean(input && input.value && input.value.trim().length > 0)
+    },
+    { timeout: 5000 }
+  )
+
+  const generatedName = (await nameInput.inputValue()).trim().toUpperCase()
+  if (!generatedName) {
+    throw new Error('App-generated random name was empty')
+  }
+
+  return generatedName
+}
+
+async function createCharacterFromAppGenerator(page) {
+  await openCharacterCreation(page)
+
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    const charName = await generateAppCharacterName(page)
+    console.log(`🎲 Generated app name: ${charName} (attempt ${attempt}/5)`)
+
+    const rollBtn = page.locator('button:has-text("ROLL STATS"), button:has-text("ROLL"), button:has-text("REROLL"), button:has-text("RANDOM")').first()
+    if (await rollBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await rollBtn.click()
+      await page.waitForTimeout(500)
+    }
+
+    const startBtn = page.locator('button:has-text("START GAME"), button:has-text("START"), button:has-text("CREATE"), button:has-text("FIGHT")').first()
+    await startBtn.waitFor({ state: 'visible', timeout: 10000 })
+    await startBtn.click()
+
+    const arenaLoadMs = await waitForArena(page, 15000)
+    if (arenaLoadMs !== null) {
+      return { outcome: 'created', character: charName, arenaLoadMs }
+    }
+
+    const bodyText = await readBodyText(page)
+    if (bodyText.toUpperCase().includes('NAME ALREADY TAKEN')) {
+      const closeErrorBtn = page.locator('button:has-text("OK"), button:has-text("CLOSE")').first()
+      if (await closeErrorBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await closeErrorBtn.click().catch(() => {})
+        await page.waitForTimeout(500)
+      }
+      continue
+    }
+
+    throw new Error(`Character creation did not reach arena for generated name ${charName}`)
+  }
+
+  throw new Error('Could not create a QA fighter from app-generated names after multiple attempts')
+}
+
+async function loginOrCreateDailyCharacter(page, runKey, savedCharacterName) {
+  if (savedCharacterName) {
+    console.log(`🎭 Reusing daily QA fighter from state: ${savedCharacterName}`)
+    const loginResult = await loginCharacter(page, savedCharacterName)
+    if (loginResult.outcome === 'reused') {
+      return { ...loginResult, character: savedCharacterName }
+    }
+    console.log(`   Stored fighter ${savedCharacterName} not found for ${runKey}, creating a new one...`)
+  } else {
+    console.log(`🎭 No daily QA fighter stored for ${runKey}, creating a new one...`)
+  }
+
+  const createResult = await createCharacterFromAppGenerator(page)
   if (createResult.outcome === 'created') {
     return createResult
   }
 
-  const retryLoginResult = await loginCharacter(page, charName)
-  if (retryLoginResult.outcome === 'reused') {
-    return { outcome: 'reused-after-conflict', arenaLoadMs: retryLoginResult.arenaLoadMs }
-  }
-
-  throw new Error(`Daily QA fighter ${charName} could not be created or reused`)
+  throw new Error(`Daily QA fighter for ${runKey} could not be created or reused`)
 }
 
 async function syncAutoMode(page, desiredEnabled) {
@@ -225,8 +282,9 @@ async function syncAutoMode(page, desiredEnabled) {
 async function run() {
   const now = new Date()
   const runKey = dateKey(now)
-  const charName = getDailyQaCharacterName(runKey)
   const enableAutoMode = shouldEnableAutoMode(now)
+  const state = loadState()
+  const savedCharacterName = state.run === runKey ? state.character : null
 
   console.log('═══════════════════════════════════════════')
   console.log('  🤖 QA Bot starting')
@@ -235,10 +293,11 @@ async function run() {
   console.log(`    baseUrl:        ${config.baseUrl}`)
   console.log(`    fightsPerRun:   ${config.fightsPerRun}`)
   console.log(`    statsFile:      ${STATS_FILE}`)
+  console.log(`    stateFile:      ${STATE_FILE}`)
   console.log(`    screenshotsDir: ${SCREENSHOTS_DIR}`)
   console.log(`    timeZone:       ${QA_TIME_ZONE}`)
   console.log(`    runKey:         ${runKey}`)
-  console.log(`    fighter:        ${charName}`)
+  console.log(`    savedFighter:   ${savedCharacterName || 'none'}`)
   console.log(`    autoMode:       ${enableAutoMode ? 'ON' : 'OFF'}`)
   console.log(`    headless:       ${config.headless}`)
   console.log(`    slowMo:         ${config.slowMo}`)
@@ -278,7 +337,7 @@ async function run() {
   const runRecord = {
     date: now.toISOString(),
     run: runKey,
-    character: charName,
+    character: null,
     character_action: null,
     fights: [],
     lootbox: null,
@@ -299,12 +358,21 @@ async function run() {
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-01-home.png`) })
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-02-pre-auth.png`) })
 
-    const authResult = await loginOrCreateDailyCharacter(page, charName)
+    const authResult = await loginOrCreateDailyCharacter(page, runKey, savedCharacterName)
+    runRecord.character = authResult.character
     runRecord.character_action = authResult.outcome
     if (authResult.arenaLoadMs !== null) {
       runRecord.load_times_ms.arena = authResult.arenaLoadMs
       console.log(`   Arena loaded in ${runRecord.load_times_ms.arena}ms (${authResult.outcome})`)
     }
+    console.log(`🎭 Active QA fighter: ${runRecord.character}`)
+
+    saveState({
+      run: runKey,
+      character: runRecord.character,
+      updated_at: new Date().toISOString(),
+      source: authResult.outcome,
+    })
 
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-03-arena.png`) })
 
