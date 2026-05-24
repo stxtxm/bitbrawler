@@ -12,6 +12,15 @@ import { PixelItemAsset } from '../types/Item';
 import { simulateCombat } from '../utils/combatUtils';
 import { convertFromSupabase } from '../utils/supabaseUtils';
 
+// If a pendingFight started more than 30 minutes ago, treat it as stale
+// and clear it instead of auto-resolving. This prevents old pending fights
+// from previous interrupted sessions from blocking new fights or executing
+// with outdated character data.
+const STALE_PENDING_THRESHOLD_MS = 30 * 60 * 1000; // 30 minutes
+const isStalePendingFight = (pending: PendingFight): boolean => {
+  return Date.now() - pending.startedAt > STALE_PENDING_THRESHOLD_MS;
+};
+
 interface GameContextType {
   activeCharacter: Character | null;
   loading: boolean;
@@ -173,6 +182,24 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
      console.error(`DB error (${context}):`, error);
     setDbAvailable(false);
   }, []);
+
+  // Clear a pending fight without simulating combat (used for stale fights)
+  const clearPendingFight = useCallback(async (character: Character) => {
+    if (!character.id) return;
+    const cleared = normalizeCharacter({
+      ...character,
+      pendingFight: undefined,
+    });
+    try {
+      await supabase
+        .from('characters')
+        .update({ pending_fight: null, focus: cleared.focus })
+        .eq('id', character.id);
+      persistCharacter(cleared);
+    } catch (error: any) {
+      handleDbError(error, 'clear-pending-fight');
+    }
+  }, [handleDbError, persistCharacter]);
 
   // Sync character with Supabase
   const syncCharacterWithSupabase = useCallback(async (character: Character): Promise<SyncResult> => {
@@ -490,8 +517,15 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const startMatchmakingForPlayer = useCallback(async (): Promise<MatchmakingResult | null> => {
     if (!activeCharacter?.id) return null;
     if ((activeCharacter.fightsLeft || 0) <= 0) return null;
+
+    // If there's a stale pendingFight from a previous interrupted session,
+    // clear it silently first instead of throwing an error.
     if (activeCharacter.pendingFight) {
-      throw new Error('Match already in progress.');
+      if (isStalePendingFight(activeCharacter.pendingFight)) {
+        await clearPendingFight(activeCharacter);
+      } else {
+        throw new Error('Match already in progress.');
+      }
     }
     initiatedMatchmakingRef.current = true;
 
@@ -576,7 +610,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
      }
 
     return match;
-  }, [activeCharacter, handleDbError, persistCharacter]);
+  }, [activeCharacter, clearPendingFight, handleDbError, persistCharacter]);
 
   const resolvingPendingRef = useRef(false);
 
@@ -585,11 +619,20 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     if (!character.pendingFight) return;
     if (resolvingPendingRef.current) return;
     if (!dbAvailable) return;
+    // Defense-in-depth: if matchmaking was just initiated by the user,
+    // skip auto-resolve to avoid conflicting with the active flow.
+    if (initiatedMatchmakingRef.current) return;
+
+    const pending = character.pendingFight;
+
+    // If the pending fight is stale, just clear it without auto-resolving
+    if (isStalePendingFight(pending)) {
+      await clearPendingFight(character);
+      return;
+    }
 
     resolvingPendingRef.current = true;
     try {
-      const pending = character.pendingFight;
-
       if (pending.status === 'searching') {
         const match = await findOpponent(character);
         if (!match) {
@@ -657,7 +700,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       resolvingPendingRef.current = false;
     }
-  }, [dbAvailable, handleDbError, persistCharacter, useFight]);
+  }, [dbAvailable, handleDbError, persistCharacter, useFight, clearPendingFight]);
 
   useEffect(() => {
     if (!activeCharacter?.pendingFight) return;

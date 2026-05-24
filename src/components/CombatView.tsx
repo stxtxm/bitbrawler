@@ -159,13 +159,22 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
         return Math.round(baseXp * (1 + (opponent.level - player.level) * 0.1));
     };
 
-    const handleFinish = () => {
+    const handleFinish = async () => {
         if (!combatResult) return;
 
         const won = combatResult.winner === 'attacker';
         const xpGained = getXpGained(won);
 
-        onComplete(won, xpGained);
+        try {
+            // Await onComplete (useFight) first so pendingFight is cleared
+            // before onClose unmounts the CombatView. This prevents a race
+            // where the arena re-appears with pendingFight still set, which
+            // can block subsequent fights or trigger resolvePendingFight.
+            await onComplete(won, xpGained);
+        } catch {
+            // onComplete errors are surfaced by the caller via openModal;
+            // proceed with close regardless so the UI doesn't get stuck.
+        }
         onClose();
     };
 
