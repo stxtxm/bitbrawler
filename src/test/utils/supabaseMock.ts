@@ -77,6 +77,7 @@ export function characterToSupabaseRow(char: any): any {
     incoming_fight_history: char.incomingFightHistory ?? [],
     is_bot: typeof char.isBot === 'boolean' ? char.isBot : false,
     auto_mode: false,
+    battle_count: char.battleCount ?? 0,
     created_at: new Date().toISOString(),
   };
 }
