@@ -18,6 +18,24 @@ import { supabase } from './supabaseAdmin';
 
 const INVENTORY_CAPACITY = 24;
 const COMBAT_LOG_HISTORY_CAP = 20;
+const DB_BATCH_SIZE = 10;
+
+// Columns needed for bot processing (all mutating columns + identity)
+const BOT_SELECT_COLUMNS = [
+    'id', 'name', 'gender', 'seed', 'level', 'hp', 'max_hp',
+    'strength', 'vitality', 'dexterity', 'luck', 'intelligence', 'focus',
+    'experience', 'wins', 'losses', 'fights_left', 'last_fight_reset',
+    'stat_points', 'inventory', 'last_loot_roll', 'fight_history',
+    'fought_today', 'pending_fight', 'incoming_fight_history',
+    'is_bot', 'auto_mode'
+].join(',');
+
+// Columns needed for opponent matching and combat (stats-only, no mutation)
+const OPPONENT_SELECT_COLUMNS = [
+    'id', 'name', 'is_bot', 'level',
+    'hp', 'max_hp',
+    'strength', 'vitality', 'dexterity', 'luck', 'intelligence', 'focus'
+].join(',');
 
 type BotSimulationOptions = {
     skipBotIds?: Set<string>;
@@ -30,29 +48,52 @@ type PopulationSnapshot = {
     levelOneHumans: number;
 };
 
-async function appendIncomingFightHistory(targetCharacterId: string, entry: IncomingFightHistory): Promise<boolean> {
-    try {
-        const { data: existing } = await supabase
+/** Pre-load incoming_fight_history for all potential targets at once */
+async function preloadIncomingHistories(characterIds: Set<string>): Promise<Map<string, IncomingFightHistory[]>> {
+    const map = new Map<string, IncomingFightHistory[]>();
+    if (characterIds.size === 0) return map;
+    const ids = Array.from(characterIds);
+    for (let i = 0; i < ids.length; i += DB_BATCH_SIZE) {
+        const batch = ids.slice(i, i + DB_BATCH_SIZE);
+        const { data } = await supabase
             .from('characters')
-            .select('incoming_fight_history')
-            .eq('id', targetCharacterId)
-            .single();
+            .select('id, incoming_fight_history')
+            .in('id', batch);
+        if (data) {
+            for (const row of data) {
+                map.set(row.id, row.incoming_fight_history ?? []);
+            }
+        }
+    }
+    return map;
+}
 
-        if (!existing) return false;
+/** Batch-append incoming fight history entries (accumulate, flush at end) */
+function appendIncomingFightHistoryToCache(
+    cache: Map<string, IncomingFightHistory[]>,
+    targetCharacterId: string,
+    entry: IncomingFightHistory
+): void {
+    if (!cache.has(targetCharacterId)) return;
+    const existing = cache.get(targetCharacterId)!;
+    cache.set(targetCharacterId, [entry, ...existing].slice(0, COMBAT_LOG_HISTORY_CAP));
+}
 
-        const existingHistory: IncomingFightHistory[] = existing.incoming_fight_history ?? [];
-        const nextHistory = [entry, ...existingHistory].slice(0, COMBAT_LOG_HISTORY_CAP);
-
-        const { error } = await supabase
-            .from('characters')
-            .update({ incoming_fight_history: nextHistory })
-            .eq('id', targetCharacterId);
-
-        if (error) throw error;
-        return true;
-    } catch (error) {
-        console.warn(`⚠️ Failed to append incoming fight history for ${targetCharacterId}:`, error);
-        return false;
+async function flushIncomingHistories(
+    cache: Map<string, IncomingFightHistory[]>
+): Promise<void> {
+    const entries = Array.from(cache.entries()).filter(([, v]) => v.length > 0);
+    for (let i = 0; i < entries.length; i += DB_BATCH_SIZE) {
+        const batch = entries.slice(i, i + DB_BATCH_SIZE);
+        await Promise.all(batch.map(([id, history]) =>
+            supabase
+                .from('characters')
+                .update({ incoming_fight_history: history })
+                .eq('id', id)
+                .then(r => {
+                    if (r.error) console.warn(`⚠️ Failed to flush incoming history for ${id}:`, r.error);
+                })
+        ));
     }
 }
 
@@ -117,8 +158,8 @@ async function runBotLogic() {
         });
 
         const finalPop = await measurePopulation();
-        if (finalPop.levelOneBots < 5) {
-            const needed = 5 - finalPop.levelOneBots;
+        if (finalPop.levelOneBots < GAME_RULES.BOTS.MIN_LVL1_BOTS) {
+            const needed = GAME_RULES.BOTS.MIN_LVL1_BOTS - finalPop.levelOneBots;
             console.log(`🛡️ Final check: lvl1 bots = ${finalPop.levelOneBots}, spawning ${needed} more...`);
             for (let i = 0; i < needed; i++) {
                 await createNewBot();
@@ -126,7 +167,7 @@ async function runBotLogic() {
             const afterPop = await measurePopulation();
             console.log(`✅ Post-spawn: ${afterPop.levelOneBots} lvl1 bots now available`);
         } else {
-            console.log(`✅ Final check: ${finalPop.levelOneBots} lvl1 bots available (≥ 5)`);
+            console.log(`✅ Final check: ${finalPop.levelOneBots} lvl1 bots available (≥ ${GAME_RULES.BOTS.MIN_LVL1_BOTS})`);
         }
 
         console.log('✅ Bot Engine finished successfully');
@@ -269,7 +310,7 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
 
     const { data: rows, error } = await supabase
         .from('characters')
-        .select('*')
+        .select(BOT_SELECT_COLUMNS)
         .or('is_bot.eq.true,auto_mode.eq.true');
 
     if (error) {
@@ -313,7 +354,7 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
         if (opponentsByLevel.has(level)) return;
         const { data: rows } = await supabase
             .from('characters')
-            .select('*')
+            .select(OPPONENT_SELECT_COLUMNS)
             .eq('level', level)
             .limit(50);
         opponentsByLevel.set(level, (rows ?? []).map(convertRowToCharacter));
@@ -322,10 +363,20 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
         if (fallbackOpponentPool) return;
         const { data: rows } = await supabase
             .from('characters')
-            .select('*')
+            .select(OPPONENT_SELECT_COLUMNS)
             .limit(200);
         fallbackOpponentPool = (rows ?? []).map(convertRowToCharacter);
     };
+
+    // Pre-load incoming fight histories for all potential opponent targets
+    const allOpponentIds = new Set<string>();
+    for (const bot of bots) {
+        if (bot.firestoreId) allOpponentIds.add(bot.firestoreId);
+    }
+    const incomingHistoryCache = await preloadIncomingHistories(allOpponentIds);
+
+    // Accumulate bot state updates for batched flush
+    const pendingBotUpdates: Array<{ id: string; name: string; data: Record<string, any> }> = [];
 
     for (const bot of bots) {
         try {
@@ -419,6 +470,7 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
 
                 console.log(`⚔️ ${currentBotState.name} vs ${opponent.name} [${opponentType}] -> ${combatOutcome}`);
 
+                // Cache incoming fight history in memory instead of per-fight DB round-trips
                 if (opponent.firestoreId) {
                     const incomingEntry: IncomingFightHistory = {
                         date: Date.now(),
@@ -428,10 +480,7 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                         won: !won,
                         source: 'bot'
                     };
-                    const logged = await appendIncomingFightHistory(opponent.firestoreId, incomingEntry);
-                    if (logged) {
-                        console.log(`📝 Logged incoming attack on ${opponent.name} [${opponentType}]`);
-                    }
+                    appendIncomingFightHistoryToCache(incomingHistoryCache, opponent.firestoreId, incomingEntry);
                 }
 
                 const xpGained = calculateFightXp(currentBotState.level, won);
@@ -496,14 +545,12 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                     Object.entries(finalUpdates).filter(([, value]) => value !== undefined)
                 );
 
-                const { error: updateError } = await supabase
-                    .from('characters')
-                    .update(sanitizedUpdates)
-                    .eq('id', bot.firestoreId);
-
-                if (updateError) {
-                    console.warn(`⚠️ Failed to update bot ${bot.name}:`, updateError);
-                }
+                // Accumulate for batched flush
+                pendingBotUpdates.push({
+                    id: bot.firestoreId,
+                    name: bot.name,
+                    data: sanitizedUpdates
+                });
 
                 const levelDiff = currentBotState.level - startLevel;
                 if (actionsTaken > 0) {
@@ -532,6 +579,26 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
             console.warn(`⚠️ Bot ${botName} skipped due to error:`, botError);
         }
     }
+
+    // Flush all accumulated updates in parallel batches
+    if (pendingBotUpdates.length > 0) {
+        console.log(`💾 Flushing ${pendingBotUpdates.length} bot updates in batches of ${DB_BATCH_SIZE}...`);
+        for (let i = 0; i < pendingBotUpdates.length; i += DB_BATCH_SIZE) {
+            const batch = pendingBotUpdates.slice(i, i + DB_BATCH_SIZE);
+            await Promise.all(batch.map(({ id, name, data }) =>
+                supabase
+                    .from('characters')
+                    .update(data)
+                    .eq('id', id)
+                    .then(r => {
+                        if (r.error) console.warn(`⚠️ Failed to update bot ${name}:`, r.error);
+                    })
+            ));
+        }
+    }
+
+    // Flush accumulated incoming fight histories in parallel batches
+    await flushIncomingHistories(incomingHistoryCache);
 }
 
 runBotLogic();
