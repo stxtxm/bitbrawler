@@ -2,7 +2,7 @@ name: OpenCode Agent
 
 on:
   issues:
-    types: [opened]
+    types: [opened, edited]
 
 jobs:
   implement:
