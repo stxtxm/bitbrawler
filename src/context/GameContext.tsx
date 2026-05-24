@@ -151,6 +151,7 @@ type SyncResult =
   | { status: 'ok'; character: Character }
   | { status: 'missing' }
   | { status: 'error' };
+
 export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [activeCharacter, setActiveCharacter] = useState<Character | null>(null);
   const [loading, setLoading] = useState(true);
