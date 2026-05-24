@@ -97,7 +97,7 @@ async function flushIncomingHistories(
     }
 }
 
-async function measurePopulation(): Promise<PopulationSnapshot> {
+export async function measurePopulation(): Promise<PopulationSnapshot> {
     const [totalBotsResult, levelOneBotsResult, levelOneCharactersResult] = await Promise.all([
         supabase.from('characters').select('*', { count: 'exact', head: true }).eq('is_bot', true),
         supabase.from('characters').select('*', { count: 'exact', head: true }).eq('is_bot', true).eq('level', 1),
@@ -177,7 +177,7 @@ async function runBotLogic() {
     }
 }
 
-async function createNewBot(): Promise<string> {
+export async function createNewBot(): Promise<string> {
     const fullName = generateCharacterName().toUpperCase();
 
     const stats = generateInitialStats(fullName, Math.random() > 0.5 ? 'male' : 'female');
@@ -226,7 +226,7 @@ async function createNewBot(): Promise<string> {
     return data.id;
 }
 
-function convertRowToCharacter(row: any): Character {
+export function convertRowToCharacter(row: any): Character {
     return {
         name: row.name,
         gender: row.gender,
@@ -259,7 +259,7 @@ function convertRowToCharacter(row: any): Character {
     };
 }
 
-function selectProtectedLevelOneBotIds(
+export function selectProtectedLevelOneBotIds(
     bots: Character[],
     skipIds: Set<string>,
     protectedLevelOneCount: number
@@ -302,7 +302,7 @@ function selectProtectedLevelOneBotIds(
     return nextSkip;
 }
 
-async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
+export async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
     const {
         skipBotIds = new Set<string>(),
         protectedLevelOneCount = GAME_RULES.BOTS.MIN_LVL1_BOTS
