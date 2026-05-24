@@ -3,6 +3,8 @@ name: OpenCode
 on:
   issue_comment:
     types: [created]
+  issues:
+    types: [opened]
   pull_request_review_comment:
     types: [created]
   pull_request:
@@ -11,8 +13,10 @@ on:
 jobs:
   opencode:
     if: |
-      github.event_name == 'issue_comment' &&
-      (contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode'))
+      (github.event_name == 'issue_comment' &&
+        (contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode')))
+      || (github.event_name == 'issues' &&
+        (contains(github.event.issue.body, '/oc') || contains(github.event.issue.body, '/opencode')))
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
