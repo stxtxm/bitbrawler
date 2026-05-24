@@ -29,13 +29,6 @@ interface GameContextType {
     opponentId: string,
     options?: { consumeEnergy?: boolean; characterOverride?: Character }
   ) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
-  executeFight: (
-    won: boolean,
-    xpGained: number,
-    opponentName: string,
-    opponentId: string,
-    options?: { consumeEnergy?: boolean; characterOverride?: Character }
-  ) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
   findOpponent: () => Promise<MatchmakingResult | null>;
   clearXpNotifications: () => void;
   allocateStatPoint: (stat: StatKey) => Promise<Character | null>;
@@ -759,7 +752,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setCharacter,
     retryConnection,
     useFight,
-    executeFight: useFight,
     findOpponent: findOpponentForPlayer,
     startMatchmaking: startMatchmakingForPlayer,
     clearXpNotifications,
