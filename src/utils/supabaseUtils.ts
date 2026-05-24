@@ -1,0 +1,64 @@
+import { CharacterRow } from '../config/supabase';
+import { Character } from '../types/Character';
+
+export function convertFromSupabase(row: CharacterRow): Character {
+  return {
+    name: row.name,
+    gender: row.gender as 'male' | 'female',
+    seed: row.seed,
+    level: row.level,
+    hp: row.hp,
+    maxHp: row.max_hp,
+    strength: row.strength,
+    vitality: row.vitality,
+    dexterity: row.dexterity,
+    luck: row.luck,
+    intelligence: row.intelligence,
+    focus: row.focus,
+    experience: row.experience,
+    wins: row.wins,
+    losses: row.losses,
+    fightsLeft: row.fights_left,
+    lastFightReset: row.last_fight_reset,
+    fightHistory: row.fight_history,
+    foughtToday: row.fought_today,
+    statPoints: row.stat_points,
+    pendingFight: row.pending_fight,
+    inventory: row.inventory,
+    lastLootRoll: row.last_loot_roll,
+    incomingFightHistory: row.incoming_fight_history,
+    isBot: row.is_bot,
+    firestoreId: row.id,
+  };
+}
+
+export function convertToSupabase(character: Character): Partial<CharacterRow> {
+  return {
+    name: character.name,
+    gender: character.gender as 'male' | 'female',
+    seed: character.seed,
+    level: character.level,
+    hp: character.hp,
+    max_hp: character.maxHp,
+    strength: character.strength,
+    vitality: character.vitality,
+    dexterity: character.dexterity,
+    luck: character.luck,
+    intelligence: character.intelligence,
+    focus: character.focus ?? 10,
+    experience: character.experience ?? 0,
+    wins: character.wins ?? 0,
+    losses: character.losses ?? 0,
+    fights_left: character.fightsLeft ?? 5,
+    last_fight_reset: character.lastFightReset ?? Date.now(),
+    fight_history: character.fightHistory ?? [],
+    fought_today: character.foughtToday ?? [],
+    stat_points: character.statPoints ?? 0,
+    pending_fight: character.pendingFight ?? null,
+    inventory: character.inventory ?? [],
+    last_loot_roll: character.lastLootRoll ?? 0,
+    incoming_fight_history: character.incomingFightHistory ?? [],
+    is_bot: typeof character.isBot === 'boolean' ? character.isBot : false,
+    auto_mode: false,
+  };
+}

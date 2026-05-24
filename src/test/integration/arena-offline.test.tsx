@@ -65,7 +65,7 @@ describe('Arena offline mode', () => {
       lastXpGain: null,
       lastLevelUp: null,
       clearXpNotifications: vi.fn(),
-      firebaseAvailable: true,
+      dbAvailable: true,
       allocateStatPoint: vi.fn(),
       rollLootbox: vi.fn(),
       startMatchmaking: vi.fn(),
@@ -87,7 +87,7 @@ describe('Arena offline mode', () => {
     expect(queryByRole('button', { name: /RETRY/i })).toBeNull()
   })
 
-  it('remains in offline mode when Firebase is unavailable', () => {
+  it('remains in offline mode when database is unavailable', () => {
     mockUseOnlineStatus.mockReturnValue(true)
     mockUseGame.mockReturnValue({
       activeCharacter: mockCharacter,
@@ -97,7 +97,7 @@ describe('Arena offline mode', () => {
       lastXpGain: null,
       lastLevelUp: null,
       clearXpNotifications: vi.fn(),
-      firebaseAvailable: false,
+      dbAvailable: false,
       allocateStatPoint: vi.fn(),
       rollLootbox: vi.fn(),
       startMatchmaking: vi.fn(),

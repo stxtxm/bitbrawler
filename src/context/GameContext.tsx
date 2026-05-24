@@ -1,5 +1,5 @@
 import { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from 'react';
-import { supabase, CharacterRow } from '../config/supabase';
+import { supabase } from '../config/supabase';
 import { Character, IncomingFightHistory, PendingFight, PendingFightOpponent } from '../types/Character';
 import { gainXp } from '../utils/xpUtils';
 import { applyStatPoint, StatKey } from '../utils/statUtils';
@@ -10,11 +10,12 @@ import { ITEM_ASSETS } from '../data/itemAssets';
 import { canRollLootbox, rollLootbox } from '../utils/lootboxUtils';
 import { PixelItemAsset } from '../types/Item';
 import { simulateCombat } from '../utils/combatUtils';
+import { convertFromSupabase } from '../utils/supabaseUtils';
 
 interface GameContextType {
   activeCharacter: Character | null;
   loading: boolean;
-  firebaseAvailable: boolean;
+  dbAvailable: boolean;
   lastXpGain: number | null;
   lastLevelUp: { levelsGained: number; newLevel: number } | null;
   login: (name: string) => Promise<string | null>;
@@ -88,39 +89,6 @@ const buildPendingOpponent = (opponent: Character): PendingFightOpponent => {
   return base;
 };
 
-// Conversion functions between Supabase and app formats
-// Conversion function from Supabase format to app format
-const convertFromSupabase = (row: CharacterRow): Character => {
-  return {
-    name: row.name,
-    gender: row.gender as 'male' | 'female',
-    seed: row.seed,
-    level: row.level,
-    hp: row.hp,
-    maxHp: row.max_hp,
-    strength: row.strength,
-    vitality: row.vitality,
-    dexterity: row.dexterity,
-    luck: row.luck,
-    intelligence: row.intelligence,
-    focus: row.focus,
-    experience: row.experience,
-    wins: row.wins,
-    losses: row.losses,
-    fightsLeft: row.fights_left,
-    lastFightReset: row.last_fight_reset,
-    fightHistory: row.fight_history,
-    foughtToday: row.fought_today,
-    statPoints: row.stat_points,
-    pendingFight: row.pending_fight,
-    inventory: row.inventory,
-    lastLootRoll: row.last_loot_roll,
-    incomingFightHistory: row.incoming_fight_history,
-    isBot: row.is_bot,
-    firestoreId: row.id
-  };
-};
-
 const hydratePendingOpponent = (snapshot: PendingFightOpponent): Character => {
   return normalizeCharacter({
     seed: snapshot.seed,
@@ -180,7 +148,7 @@ type SyncResult =
 export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [activeCharacter, setActiveCharacter] = useState<Character | null>(null);
   const [loading, setLoading] = useState(true);
-  const [firebaseAvailable, setFirebaseAvailable] = useState(true);
+  const [dbAvailable, setDbAvailable] = useState(true);
   const [lastXpGain, setLastXpGain] = useState<number | null>(null);
   const [lastLevelUp, setLastLevelUp] = useState<{ levelsGained: number; newLevel: number } | null>(null);
   const isOnline = useOnlineStatus();
@@ -192,10 +160,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     return normalized;
   }, []);
 
-  // Firebase error handler
-  const handleFirebaseError = useCallback((error: any, context: string) => {
-    console.error(`Firebase error (${context}):`, error);
-    setFirebaseAvailable(false);
+  // DB error handler
+  const handleDbError = useCallback((error: any, context: string) => {
+     console.error(`DB error (${context}):`, error);
+    setDbAvailable(false);
   }, []);
 
   // Sync character with Supabase
@@ -217,7 +185,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       }
 
       const supabaseData = convertFromSupabase(data);
-      setFirebaseAvailable(true);
+      setDbAvailable(true);
       return {
         status: 'ok',
         character: {
@@ -226,10 +194,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         }
       };
     } catch (error) {
-      handleFirebaseError(error, 'sync');
+      handleDbError(error, 'sync');
       return { status: 'error' };
     }
-  }, [handleFirebaseError]);
+  }, [handleDbError]);
 
   // Load character on mount
   useEffect(() => {
@@ -248,7 +216,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
       if (!isOnline) {
         setActiveCharacter(normalizeCharacter(localChar));
-        setFirebaseAvailable(false);
+        setDbAvailable(false);
         setLoading(false);
         return;
       }
@@ -257,15 +225,15 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       if (syncResult.status === 'ok') {
         const normalized = normalizeCharacter(syncResult.character);
         persistCharacter(normalized);
-        setFirebaseAvailable(true);
+        setDbAvailable(true);
       } else if (syncResult.status === 'error') {
         setActiveCharacter(normalizeCharacter(localChar));
-        setFirebaseAvailable(false);
+        setDbAvailable(false);
       } else {
         // Status is 'missing' - character has been deleted on server
         clearLocalData();
         setActiveCharacter(null);
-        setFirebaseAvailable(true);
+        setDbAvailable(true);
       }
 
       setLoading(false);
@@ -304,13 +272,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       });
 
       persistCharacter(fullChar);
-      setFirebaseAvailable(true);
+      setDbAvailable(true);
       return null;
     } catch (error) {
-      handleFirebaseError(error, 'login');
+      handleDbError(error, 'login');
       return "Connection error - please check your internet connection and try again";
     }
-  }, [handleFirebaseError, persistCharacter]);
+  }, [handleDbError, persistCharacter]);
 
   // Logout function
   const logout = useCallback(() => {
@@ -332,7 +300,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const retryConnection = useCallback(async (): Promise<boolean> => {
     try {
       if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-        setFirebaseAvailable(false);
+        setDbAvailable(false);
         return false;
       }
       // Check Supabase connection by fetching server time
@@ -343,11 +311,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       
       if (error) throw error;
       
-      setFirebaseAvailable(true);
+      setDbAvailable(true);
       return true;
     } catch (error) {
       console.error('Supabase retry failed:', error);
-      setFirebaseAvailable(false);
+      setDbAvailable(false);
       return false;
     }
   }, []);
@@ -480,10 +448,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("Your character has been deleted or is no longer available.");
       }
 
-      handleFirebaseError(error, 'use-fight');
+      handleDbError(error, 'use-fight');
       throw new Error("Connection error - fight not counted. Please check your internet connection.");
     }
-  }, [activeCharacter, appendIncomingFightHistory, handleFirebaseError, persistCharacter]);
+  }, [activeCharacter, appendIncomingFightHistory, handleDbError, persistCharacter]);
 
   const allocateStatPoint = useCallback(async (stat: StatKey): Promise<Character | null> => {
     if (!activeCharacter?.firestoreId) return null;
@@ -506,10 +474,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
        persistCharacter(updatedChar);
        return updatedChar;
      } catch (error: any) {
-       handleFirebaseError(error, 'stat-allocate');
+       handleDbError(error, 'stat-allocate');
        throw new Error("Connection error - stat point not saved. Please check your internet connection.");
      }
-  }, [activeCharacter, handleFirebaseError, persistCharacter]);
+  }, [activeCharacter, handleDbError, persistCharacter]);
 
   const startMatchmakingForPlayer = useCallback(async (): Promise<MatchmakingResult | null> => {
     if (!activeCharacter?.firestoreId) return null;
@@ -541,7 +509,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         .eq('id', activeCharacter.firestoreId!);
        persistCharacter(reservedChar);
      } catch (error: any) {
-       handleFirebaseError(error, 'matchmaking-start');
+       handleDbError(error, 'matchmaking-start');
        initiatedMatchmakingRef.current = false;
        throw new Error('Connection error - matchmaking not saved.');
      }
@@ -564,7 +532,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           })
           .eq('id', activeCharacter.firestoreId!);
        } catch (error: any) {
-         handleFirebaseError(error, 'matchmaking-refund');
+         handleDbError(error, 'matchmaking-refund');
        }
 
       persistCharacter(refundedChar);
@@ -594,13 +562,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         .eq('id', activeCharacter.firestoreId!);
        persistCharacter(matchedChar);
      } catch (error: any) {
-       handleFirebaseError(error, 'matchmaking-lock');
+       handleDbError(error, 'matchmaking-lock');
        initiatedMatchmakingRef.current = false;
        throw new Error('Connection error - matchmaking not saved.');
      }
 
     return match;
-  }, [activeCharacter, handleFirebaseError, persistCharacter]);
+  }, [activeCharacter, handleDbError, persistCharacter]);
 
   const resolvingPendingRef = useRef(false);
 
@@ -608,7 +576,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     if (!character.firestoreId) return;
     if (!character.pendingFight) return;
     if (resolvingPendingRef.current) return;
-    if (!firebaseAvailable) return;
+    if (!dbAvailable) return;
 
     resolvingPendingRef.current = true;
     try {
@@ -677,11 +645,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         });
       }
     } catch (error: any) {
-      handleFirebaseError(error, 'pending-fight');
+      handleDbError(error, 'pending-fight');
     } finally {
       resolvingPendingRef.current = false;
     }
-  }, [firebaseAvailable, handleFirebaseError, persistCharacter, useFight]);
+  }, [dbAvailable, handleDbError, persistCharacter, useFight]);
 
   useEffect(() => {
     if (!activeCharacter?.pendingFight) return;
@@ -725,10 +693,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
        persistCharacter(updatedChar);
        return item;
      } catch (error: any) {
-       handleFirebaseError(error, 'lootbox');
+       handleDbError(error, 'lootbox');
        throw new Error('Connection error - lootbox not saved.');
      }
-   }, [activeCharacter, handleFirebaseError, persistCharacter]);
+   }, [activeCharacter, handleDbError, persistCharacter]);
 
   const setAutoMode = useCallback(async (enabled: boolean) => {
     if (!activeCharacter?.firestoreId) return null;
@@ -747,10 +715,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       persistCharacter(updatedChar);
       return updatedChar;
     } catch (error: any) {
-      handleFirebaseError(error, 'auto-mode');
+      handleDbError(error, 'auto-mode');
       throw new Error('Connection error - auto mode not saved.');
     }
-  }, [activeCharacter, handleFirebaseError, persistCharacter]);
+  }, [activeCharacter, handleDbError, persistCharacter]);
 
   const deleteCharacter = useCallback(async () => {
     if (!activeCharacter?.firestoreId) return false;
@@ -762,10 +730,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       logout();
       return true;
     } catch (error: any) {
-      handleFirebaseError(error, 'delete-character');
+      handleDbError(error, 'delete-character');
       throw new Error('Connection error - character not deleted.');
     }
-  }, [activeCharacter, handleFirebaseError, logout]);
+  }, [activeCharacter, handleDbError, logout]);
 
   // Find opponent for matchmaking
   const findOpponentForPlayer = useCallback(async (): Promise<MatchmakingResult | null> => {
@@ -776,7 +744,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const value: GameContextType = {
     activeCharacter,
     loading,
-    firebaseAvailable,
+    dbAvailable,
     lastXpGain,
     lastLevelUp,
     login,

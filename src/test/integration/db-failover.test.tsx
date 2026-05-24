@@ -60,7 +60,7 @@ describe('Database Unavailability Handling', () => {
     vi.restoreAllMocks();
   });
 
-  it('should set firebaseAvailable to false when Supabase fails during load', async () => {
+  it('should set dbAvailable to false when Supabase fails during load', async () => {
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
     const builder = createQueryBuilder({ error: new Error('Network error'), reject: true });
     mockSupabaseFrom.mockReturnValue(builder);
@@ -73,12 +73,12 @@ describe('Database Unavailability Handling', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.firebaseAvailable).toBe(false);
+    expect(result.current.dbAvailable).toBe(false);
     expect(result.current.activeCharacter?.name).toBe('Test Hero');
     expect(localStorage.removeItem).not.toHaveBeenCalled();
   });
 
-  it('should set firebaseAvailable to false when login fails', async () => {
+  it('should set dbAvailable to false when login fails', async () => {
     (localStorage.getItem as any).mockReturnValue(null);
     const builder = createQueryBuilder({ error: new Error('Connection failed'), reject: true });
     mockSupabaseFrom.mockReturnValue(builder);
@@ -97,11 +97,11 @@ describe('Database Unavailability Handling', () => {
     });
 
     expect(loginResult).toBe('Connection error - please check your internet connection and try again');
-    expect(result.current.firebaseAvailable).toBe(false);
+    expect(result.current.dbAvailable).toBe(false);
     expect(localStorage.removeItem).not.toHaveBeenCalled();
   });
 
-  it('should set firebaseAvailable to false when useFight fails', async () => {
+  it('should set dbAvailable to false when useFight fails', async () => {
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
     const builder = createQueryBuilder({ data: characterToSupabaseRow(mockCharacter), error: null });
     mockSupabaseFrom.mockReturnValue(builder);
@@ -122,7 +122,7 @@ describe('Database Unavailability Handling', () => {
       await expect(result.current.useFight(true, 50, 'FOE', 'opp-1')).rejects.toThrow('Connection error - fight not counted');
     });
 
-    expect(result.current.firebaseAvailable).toBe(false);
+    expect(result.current.dbAvailable).toBe(false);
     expect(result.current.activeCharacter).toBeDefined();
   });
 
@@ -147,7 +147,7 @@ describe('Database Unavailability Handling', () => {
     Object.defineProperty(navigator, 'onLine', { value: true, configurable: true });
 
     expect(ok).toBe(false);
-    expect(result.current.firebaseAvailable).toBe(false);
+    expect(result.current.dbAvailable).toBe(false);
   });
 
   it('should keep localStorage when Supabase is unavailable', async () => {
@@ -165,7 +165,7 @@ describe('Database Unavailability Handling', () => {
 
     expect(localStorage.removeItem).not.toHaveBeenCalled();
     expect(result.current.activeCharacter).toBeDefined();
-    expect(result.current.firebaseAvailable).toBe(false);
+    expect(result.current.dbAvailable).toBe(false);
   });
 
   it('should keep snapshot but block actions when Supabase is unavailable', async () => {
@@ -181,7 +181,7 @@ describe('Database Unavailability Handling', () => {
       expect(result.current.loading).toBe(false);
     });
 
-    expect(result.current.firebaseAvailable).toBe(false);
+    expect(result.current.dbAvailable).toBe(false);
     expect(result.current.activeCharacter).toBeDefined();
 
     let loginResult: string | null = null;
@@ -214,6 +214,6 @@ describe('Database Unavailability Handling', () => {
     });
 
     expect(ok).toBe(false);
-    expect(result.current.firebaseAvailable).toBe(false);
+    expect(result.current.dbAvailable).toBe(false);
   });
 });

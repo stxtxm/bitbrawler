@@ -70,10 +70,11 @@ UI tuning
 - Home page includes a PATCH NOTES button that opens update notes in a modal.
 
 Testing
-- Unit: combat math, lootbox gating, equipment bonuses, XP, stats, RNG.
+- Unit: combat math, lootbox gating, equipment bonuses, XP, stats, RNG, matchmaking, supabase utils.
 - Unit: lazy route prefetch gating (`canPrefetch`, `prefetchArena`) and end-of-day drain window checks.
 - Integration: matchmaking, pending fights, lootbox persistence, arena inventory/bonuses, offline routing, Supabase failover, and settings combat log privacy rendering.
 - Router warnings are prevented with shared `renderWithRouter` helper (`src/test/utils/router.tsx`).
+- **190 tests — 35 test files** (`npm test`).
 
 Infrastructure (v1.0.0)
 - Database migrated from Firebase Firestore to Supabase (PostgreSQL).

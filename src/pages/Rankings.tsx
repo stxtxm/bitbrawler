@@ -1,46 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { supabase, CharacterRow } from '../config/supabase'
+import { supabase } from '../config/supabase'
 import { Character } from '../types/Character'
 import { PixelCharacter } from '../components/PixelCharacter'
 import { useGame } from '../context/GameContext'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
-
-// Conversion function for rankings
-const convertFromSupabase = (row: CharacterRow): Character => {
-    return {
-        name: row.name,
-        gender: row.gender as 'male' | 'female',
-        seed: row.seed,
-        level: row.level,
-        hp: row.hp,
-        maxHp: row.max_hp,
-        strength: row.strength,
-        vitality: row.vitality,
-        dexterity: row.dexterity,
-        luck: row.luck,
-        intelligence: row.intelligence,
-        focus: row.focus,
-        experience: row.experience,
-        wins: row.wins,
-        losses: row.losses,
-        fightsLeft: row.fights_left,
-        lastFightReset: row.last_fight_reset,
-        fightHistory: row.fight_history,
-        foughtToday: row.fought_today,
-        statPoints: row.stat_points,
-        pendingFight: row.pending_fight,
-        inventory: row.inventory,
-        lastLootRoll: row.last_loot_roll,
-        incomingFightHistory: row.incoming_fight_history,
-        isBot: row.is_bot,
-        firestoreId: row.id
-    };
-};
+import { convertFromSupabase } from '../utils/supabaseUtils'
 
 const Rankings = () => {
     const navigate = useNavigate()
-    const { firebaseAvailable, retryConnection } = useGame()
+    const { dbAvailable, retryConnection } = useGame()
     const [characters, setCharacters] = useState<Character[]>([])
     const [loading, setLoading] = useState(true)
     const [showResetModal, setShowResetModal] = useState(false)
@@ -61,10 +30,7 @@ const Rankings = () => {
 
             if (error) throw error;
 
-            const fetchedChars: Character[] = data.map(row => ({
-                ...convertFromSupabase(row),
-                firestoreId: row.id
-            }));
+            const fetchedChars: Character[] = data.map(convertFromSupabase);
 
             setCharacters(fetchedChars)
         } catch (error) {
@@ -77,14 +43,14 @@ const Rankings = () => {
     }, [])
 
     useEffect(() => {
-        if (!isOnline || !firebaseAvailable) {
+        if (!isOnline || !dbAvailable) {
             setCharacters([])
             setLoading(false)
             return
         }
 
         fetchCharacters()
-    }, [fetchCharacters, firebaseAvailable, isOnline])
+    }, [fetchCharacters, dbAvailable, isOnline])
 
     // ALPHA TOOL: Reset Function
     const handleAlphaResetClick = () => {
@@ -95,7 +61,7 @@ const Rankings = () => {
     const confirmReset = async () => {
         setLoading(true);
         try {
-            if (!isOnline || !firebaseAvailable) {
+            if (!isOnline || !dbAvailable) {
                 setLoading(false)
                 return
             }
@@ -138,7 +104,7 @@ const Rankings = () => {
             </header>
 
             <div className="rankings-content">
-                {!isOnline || !firebaseAvailable ? (
+                {!isOnline || !dbAvailable ? (
                     <div className="empty-state">
                         <p>CONNECTION REQUIRED</p>
                         <p className="sub-text">Connect to load the Hall of Fame.</p>
@@ -221,7 +187,7 @@ const Rankings = () => {
                 <button
                     className="button alpha-reset-btn"
                     onClick={handleAlphaResetClick}
-                    disabled={!isOnline || !firebaseAvailable}
+                    disabled={!isOnline || !dbAvailable}
                 >
                     [ALPHA] RESET DB
                 </button>

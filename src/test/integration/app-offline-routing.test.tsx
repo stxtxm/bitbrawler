@@ -5,26 +5,6 @@ import App from '../../App'
 import { GameProvider } from '../../context/GameContext'
 import { prefetchArena } from '../../routes/lazyPages'
 
-vi.mock('../../config/firebase', () => ({
-  db: {
-    collection: vi.fn(),
-    doc: vi.fn(),
-  },
-}))
-
-vi.mock('firebase/firestore', () => ({
-  collection: vi.fn(),
-  doc: vi.fn(),
-  query: vi.fn(),
-  where: vi.fn(),
-  getDocs: vi.fn(),
-  getDocsFromServer: vi.fn(),
-  updateDoc: vi.fn(),
-  runTransaction: vi.fn().mockResolvedValue(undefined),
-  limit: vi.fn(),
-  deleteField: vi.fn(),
-}))
-
 vi.mock('../../hooks/useOnlineStatus', () => ({
   useOnlineStatus: vi.fn(),
 }))

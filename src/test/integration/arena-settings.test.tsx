@@ -80,7 +80,7 @@ describe('Arena settings modal', () => {
       lastXpGain: null,
       lastLevelUp: null,
       clearXpNotifications: vi.fn(),
-      firebaseAvailable: true,
+      dbAvailable: true,
       retryConnection: vi.fn(),
       allocateStatPoint: vi.fn(),
       rollLootbox: vi.fn(),

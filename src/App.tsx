@@ -6,7 +6,7 @@ import { HomePage, CharacterCreation, Rankings, Login, Arena } from './routes/la
 import LoadingScreen from './components/LoadingScreen'
 
 function App() {
-  const { activeCharacter, loading, firebaseAvailable } = useGame()
+  const { activeCharacter, loading, dbAvailable } = useGame()
   const isOnline = useOnlineStatus()
 
   if (loading) {
@@ -42,7 +42,7 @@ function App() {
               activeCharacter ? (
                 <Arena />
               ) : (
-                (isOnline && firebaseAvailable) ? <Navigate to="/login" /> : <Navigate to="/" />
+                (isOnline && dbAvailable) ? <Navigate to="/login" /> : <Navigate to="/" />
               )
             }
           />

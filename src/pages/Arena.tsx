@@ -28,7 +28,7 @@ const formatSettingsLogDate = (timestamp: number) => {
 };
 
 const Arena = () => {
-    const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, firebaseAvailable, allocateStatPoint, rollLootbox, setAutoMode, deleteCharacter } = useGame();
+    const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, allocateStatPoint, rollLootbox, setAutoMode, deleteCharacter } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const navigate = useNavigate();
     const isOnline = useOnlineStatus();
@@ -84,7 +84,7 @@ const Arena = () => {
     const effectiveCharacter = applyEquipmentToCharacter(activeCharacter);
     const xpProgress = getXpProgress(activeCharacter);
     const isMaxLevel = activeCharacter.level >= getMaxLevel();
-    const isOfflineMode = !isOnline || !firebaseAvailable;
+    const isOfflineMode = !isOnline || !dbAvailable;
     const fightsLeft = activeCharacter.fightsLeft || 0;
     const hasPendingFight = !!activeCharacter.pendingFight;
     const canFight = !isOfflineMode && fightsLeft > 0 && !hasPendingFight;

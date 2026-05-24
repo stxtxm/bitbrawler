@@ -26,7 +26,7 @@ describe('Daily reset UI gating', () => {
     mockUseGame.mockReturnValue({
       activeCharacter: { lastFightReset: Date.now() - 86400000 },
       loading: false,
-      firebaseAvailable: true,
+      dbAvailable: true,
     })
 
     const { queryByText, container } = render(
