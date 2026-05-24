@@ -25,7 +25,7 @@ const HomePage = () => {
         </div>
       </header>
 
-      <main>
+      <main id="main-content">
         <div className="hero-section">
           <h2 className="hero-title hero-text">Create Your Fighter</h2>
           <p className="hero-subtitle">Build the ultimate warrior and dominate the arena!</p>
@@ -80,7 +80,7 @@ const HomePage = () => {
       </main>
 
       {showUpdateNotes && (
-        <div className="retro-modal-overlay home-notes-overlay" onClick={() => setShowUpdateNotes(false)}>
+        <div className="retro-modal-overlay home-notes-overlay" onClick={() => setShowUpdateNotes(false)} role="dialog" aria-modal="true" aria-label="Patch notes">
           <div className="retro-modal home-notes-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">PATCH NOTES</div>
             <div className="modal-body">

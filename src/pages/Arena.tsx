@@ -3,7 +3,9 @@ import { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 import { useConnectionGate } from '../hooks/useConnectionGate';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import { useSound } from '../hooks/useSound';
+>>>>>>> origin/master
 import ConnectionModal from '../components/ConnectionModal';
 import { PixelIcon } from '../components/PixelIcon';
 import { getXpProgress, getMaxLevel } from '../utils/xpUtils';
@@ -443,6 +445,96 @@ const Arena = () => {
         }
     };
 
+    const handleCloseCombat = () => {
+        setCombatData(null);
+    };
+
+    // Focus traps for modals (must be called after all handlers and computed values)
+    const levelUpRef = useFocusTrap<HTMLDivElement>(shouldShowLevelUp, canCloseLevelUp ? handleCloseLevelUp : undefined);
+    const inventoryRef = useFocusTrap<HTMLDivElement>(inventoryOpen, () => setInventoryOpen(false));
+    const settingsRef = useFocusTrap<HTMLDivElement>(settingsOpen, () => setSettingsOpen(false));
+    const lootboxRef = useFocusTrap<HTMLDivElement>(!!lootboxResult, handleCloseLootboxResult);
+
+    return (
+        <div className="container retro-container arena-container">
+            <main id="main-content">
+            {/* Level Up Notification (Dopamine hit!) */}
+            {shouldShowLevelUp && (
+                <div
+                    className="level-up-pop-overlay"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Level up"
+                    ref={levelUpRef}
+                >
+                    <div className="level-up-card">
+                        <div className="card-shine"></div>
+                        <div className="level-up-badge">NEW RANK!</div>
+                        <div className="stars-top">★ ★ ★ ★ ★</div>
+                        <h2 className="lvl-title">LEVEL UP</h2>
+                        {hasLevelInfo ? (
+                            <div className="lvl-big-number">
+                                <span className="lvl-old">{lastLevelUp!.newLevel - lastLevelUp!.levelsGained}</span>
+                                <span className="lvl-arrow">➜</span>
+                                <span className="lvl-new">{lastLevelUp!.newLevel}</span>
+                            </div>
+                        ) : (
+                            <div className="lvl-big-number">
+                                <span className="lvl-new">LVL {activeCharacter.level}</span>
+                            </div>
+                        )}
+                        <div className="stars-bottom">★ ★ ★ ★ ★</div>
+                        <div className="level-up-points">
+                            <div className="points-label">
+                                {pendingStatPoints > 1 ? 'POINTS TO SPEND' : 'CHOOSE A STAT'}
+                            </div>
+                            {pendingStatPoints > 1 && (
+                                <div className="points-value">{pendingStatPoints}</div>
+                            )}
+                            {isOfflineMode && (
+                                <div className="points-warning">CONNECT TO ASSIGN POINTS</div>
+                            )}
+                        </div>
+                        <div className="level-up-stats">
+                            {statOptions.map((stat) => (
+                                <div key={stat.key} className="level-up-stat-row">
+                                    <span className="stat-icon">
+                                        <PixelIcon type={stat.icon} size={12} />
+                                    </span>
+                                    <span className="stat-label">{stat.label}</span>
+                                    <span className="stat-value">{stat.value}</span>
+                                    <span className="stat-hint">{stat.hint}</span>
+                                    <button
+                                        className="button stat-add-btn"
+                                        onClick={() => handleAllocateStat(stat.key as StatKey)}
+                                        disabled={pendingStatPoints <= 0 || !!allocatingStat || isOfflineMode}
+                                        aria-label={`Increase ${stat.label}`}
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="level-up-actions">
+                            {pendingStatPoints > 0 && (
+                                <button
+                                    className="button secondary-btn level-up-later"
+                                    onClick={handleDeferLevelUp}
+                                >
+                                    LATER
+                                </button>
+                            )}
+                            <button
+                                className="button primary-btn level-up-confirm"
+                                disabled={!canCloseLevelUp}
+                                onClick={handleCloseLevelUp}
+                            >
+                                APPLY
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
     const handleCloseCombat = () => setCombatData(null);
 
     return (
@@ -462,6 +554,7 @@ const Arena = () => {
                 handleCloseLevelUp={handleCloseLevelUp}
                 handleDeferLevelUp={handleDeferLevelUp}
             />
+>>>>>>> origin/master
 
             <header className="arena-header">
                 <div className="char-info">
@@ -493,7 +586,7 @@ const Arena = () => {
 >>>>>>> origin/master
                         <PixelIcon type="backpack" size={26} />
                     </button>
-                    <button className="button icon-btn" onClick={() => { logout(); setTimeout(() => navigate('/'), 0); }} title="Logout">
+                    <button className="button icon-btn" onClick={() => { logout(); setTimeout(() => navigate('/'), 0); }} title="Logout" aria-label="Logout">
                         <PixelIcon type="power" size={26} />
                     </button>
                 </div>
@@ -509,6 +602,92 @@ const Arena = () => {
             )}
 
             <div className="arena-content">
+                <div className="character-display">
+                    <div className="avatar-box">
+                        <PixelCharacter seed={activeCharacter.seed} gender={activeCharacter.gender} scale={window.innerWidth < 600 ? 16 : 12} />
+                    </div>
+
+                    {/* XP Bar Section */}
+                    <div className="xp-section">
+                        <div className="xp-header">
+                            <span className="xp-label">EXP</span>
+                            <span className="xp-text">{formatXpDisplay(activeCharacter)}</span>
+                        </div>
+                        <div className="xp-bar-container">
+                            <div
+                                className={`xp-bar ${xpBarAnimating ? 'animating' : ''} ${isMaxLevel ? 'max-level' : ''}`}
+                                style={{ width: `${xpProgress.percentage}%` }}
+                            >
+                                <div className="xp-bar-shine"></div>
+                            </div>
+                            {showXpGain && lastXpGain && (
+                                <div className="xp-gain-popup" aria-live="polite" aria-atomic="true">+{lastXpGain} XP</div>
+                            )}
+                        </div>
+                        {isMaxLevel && <span className="max-level-badge">★ MAX LEVEL ★</span>}
+                    </div>
+
+                    <div className="stats-panel">
+                        <div className="stat-row principal">
+                            <span>HP</span>
+                            <div className="bar-container">
+                                <div className="bar hp-bar" style={{ width: '100%' }}></div>
+                            </div>
+                            <span className="stat-val">{effectiveCharacter.maxHp}</span>
+                        </div>
+                        <div className="stats-grid-compact">
+                            {statOptions.map((stat) => (
+                                <div key={stat.key} className="compact-stat">
+                                    <span className="compact-stat-icon">
+                                        <PixelIcon type={stat.icon} size={12} />
+                                    </span>
+                                    <span className="compact-stat-label">{stat.label}</span>
+                                    <span className="compact-stat-value">{stat.value}</span>
+                                </div>
+                            ))}
+                        </div>
+                        {pendingStatPoints > 0 && (
+                            <button
+                                className="button secondary-btn stat-allocate-btn"
+                                onClick={handleOpenLevelUp}
+                            >
+                                SPEND POINT
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                <div className="action-panel">
+                    <div className="daily-status-compact">
+                        <div className="status-label">
+                            <PixelIcon type="sword" size={32} />
+                            <div className="label-text">
+                                <span className="label-main">BATTLE ENERGY</span>
+                                <span className="label-sub">
+                                    {isOfflineMode ? 'OFFLINE SNAPSHOT' : `${fightsLeft} / 5 AVAILABLE`}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="mini-pips">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                                <div key={i} className={`mini-pip ${i < fightsLeft ? 'active' : 'used'}`}></div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <button
+                        className="button primary-btn giant-btn"
+                        disabled={!canFight || matchmaking}
+                        onClick={handleFight}
+                    >
+                        {matchmaking
+                            ? 'SEARCHING...'
+                            : hasPendingFight
+                                ? 'RESOLVING...'
+                                : (isOfflineMode ? 'OFFLINE' : (fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'))}
+                    </button>
+                </div>
+
                 <CharacterStats
                     activeCharacter={activeCharacter}
                     effectiveCharacter={effectiveCharacter}
@@ -529,6 +708,7 @@ const Arena = () => {
                     fightsLeft={fightsLeft}
                     handleFight={handleFight}
                 />
+>>>>>>> origin/master
             </div>
 
             <ConnectionModal
@@ -537,7 +717,16 @@ const Arena = () => {
                 onClose={closeModal}
             />
             {inventoryOpen && (
+                <div
+                    className="retro-modal-overlay inventory-overlay"
+                    onClick={() => setInventoryOpen(false)}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Inventory"
+                    ref={inventoryRef}
+                >
                 <div className="retro-modal-overlay inventory-overlay" onClick={() => setInventoryOpen(false)}>
+>>>>>>> origin/master
                     <div className={`retro-modal inventory-modal ${lootboxRolling ? 'lootbox-active' : ''}`} onClick={(e) => e.stopPropagation()}>
                         <div className="inventory-header">
                             <h2 className="inventory-title">INVENTORY</h2>
@@ -647,7 +836,9 @@ const Arena = () => {
                             </div>
                         </div>
                         {lootboxResult && (
+                            <div className="lootbox-result-overlay" role="dialog" aria-modal="true" aria-label="Lootbox reward" aria-live="polite" onClick={handleCloseLootboxResult} ref={lootboxRef}>
                             <div className="lootbox-result-overlay" role="dialog" aria-label="Lootbox reward" onClick={handleCloseLootboxResult}>
+>>>>>>> origin/master
                                 <div className={`lootbox-result-card rarity-${lootboxResult.rarity}`} onClick={handleCloseLootboxResult}>
                                     <div className="lootbox-result-glow"></div>
                                     <div className="lootbox-result-title">NEW ITEM</div>
@@ -690,7 +881,16 @@ const Arena = () => {
             )}
 
             {settingsOpen && (
+                <div
+                    className="retro-modal-overlay settings-overlay"
+                    onClick={() => setSettingsOpen(false)}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Settings"
+                    ref={settingsRef}
+                >
                 <div className="retro-modal-overlay settings-overlay" onClick={() => setSettingsOpen(false)}>
+>>>>>>> origin/master
                     <div className="retro-modal settings-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="inventory-header settings-header">
                             <div className="settings-title-row">
@@ -801,6 +1001,7 @@ const Arena = () => {
                                     <div className="settings-section">
                                         <div className="settings-row">
                                             <div className="settings-label">
+>>>>>>> origin/master
                                                 <span>COMBAT LOGS</span>
                                                 <span className="settings-sub">Review your last 20 outgoing and incoming encounters.</span>
                                             </div>
@@ -841,6 +1042,8 @@ const Arena = () => {
                     </div>
                 </div>
             )}
+            </main>
+>>>>>>> origin/master
             <InventoryModal
                 isOpen={inventoryOpen}
                 activeCharacter={activeCharacter}

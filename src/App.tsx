@@ -19,6 +19,42 @@ function App() {
 
   return (
     <div className="App">
+      {/* Skip to content link - visible only when focused via keyboard */}
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
+      <Suspense fallback={
+        <LoadingScreen />
+      }>
+        <Routes>
+          <Route
+            path="/"
+            element={activeCharacter && canAutoRedirect ? <Navigate to="/arena" /> : <HomePage />}
+          />
+          <Route path="/create-character" element={<CharacterCreation />} />
+          <Route
+            path="/login"
+            element={
+              activeCharacter && canAutoRedirect ? (
+                <Navigate to="/arena" />
+              ) : (
+                <Login />
+              )
+            }
+          />
+          <Route
+            path="/arena"
+            element={
+              activeCharacter ? (
+                <Arena />
+              ) : (
+                (isOnline && dbAvailable) ? <Navigate to="/login" /> : <Navigate to="/" />
+              )
+            }
+          />
+          <Route path="/rankings" element={<Rankings />} />
+        </Routes>
+      </Suspense>
       <PwaInstallPrompt />
       <div className="app-content">
         <Suspense fallback={
@@ -56,6 +92,7 @@ function App() {
         </Suspense>
       </div>
       <Footer />
+>>>>>>> origin/master
     </div>
   )
 }

@@ -71,6 +71,32 @@ body.pwa .App {
     overscroll-behavior: none;
 }
 
+// Skip-to-content link: visually hidden by default, visible on keyboard focus
+.skip-link {
+    position: absolute;
+    top: -100%;
+    left: 0;
+    z-index: 10000;
+    padding: 8px 16px;
+    background: $accent-gold;
+    color: #000;
+    font-family: $font-pixel;
+    font-size: 0.8rem;
+    text-decoration: none;
+    transition: top 0.1s ease;
+
+    &:focus {
+        top: 0;
+        outline: 3px solid #fff;
+        outline-offset: 2px;
+    }
+
+    @include mobile {
+        font-size: 0.65rem;
+        padding: 6px 12px;
+    }
+}
+
 main {
     flex: 1;
     display: flex;

@@ -5,6 +5,7 @@ import { Character } from '../types/Character'
 import { supabase, CharacterRow } from '../config/supabase'
 import { useGame } from '../context/GameContext'
 import { useConnectionGate } from '../hooks/useConnectionGate'
+import { useFocusTrap } from '../hooks/useFocusTrap'
 import ConnectionModal from '../components/ConnectionModal'
 import { generateInitialStats, generateCharacterName } from '../utils/characterUtils'
 import { PixelIcon } from '../components/PixelIcon'
@@ -56,6 +57,9 @@ const CharacterCreation = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const connectionMessage = 'Connect to create and sync your fighter.'
   const prefetchStarted = useRef(false)
+
+  const successModalRef = useFocusTrap<HTMLDivElement>(showSuccessModal, undefined);
+  const errorModalRef = useFocusTrap<HTMLDivElement>(showErrorModal, () => setShowErrorModal(false));
 
   const generateRandomCharacter = (currentGender: 'male' | 'female' = gender) => {
     setIsGenerating(true)
@@ -180,7 +184,7 @@ const CharacterCreation = () => {
       </header>
 
       {showSuccessModal && (
-        <div className="retro-modal-overlay">
+        <div className="retro-modal-overlay" role="dialog" aria-modal="true" aria-label="Character created successfully" ref={successModalRef}>
           <div className="retro-modal success-modal">
             <div className="modal-header">SUCCESS!</div>
             <div className="modal-body">
@@ -193,7 +197,7 @@ const CharacterCreation = () => {
       )}
 
       {showErrorModal && (
-        <div className="retro-modal-overlay">
+        <div className="retro-modal-overlay" role="dialog" aria-modal="true" aria-label="Error" ref={errorModalRef}>
           <div className="retro-modal error-modal">
             <div className="modal-header" style={{ color: '#ff3333' }}>ERROR</div>
             <div className="modal-body">
@@ -210,6 +214,7 @@ const CharacterCreation = () => {
         </div>
       )}
 
+      <main id="main-content">
       <div className="creation-content">
         <div className="left-panel">
           <div className="preview-section-compact">
@@ -353,6 +358,7 @@ const CharacterCreation = () => {
           </div>
         </div>
       </div>
+      </main>
       <ConnectionModal
         open={connectionModal.open}
         message={connectionModal.message}

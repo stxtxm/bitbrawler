@@ -16,6 +16,7 @@ interface CombatViewProps {
     candidates?: Character[];
 }
 
+import { useFocusTrap } from '../hooks/useFocusTrap';
 const ACTION_DURATIONS: Record<CombatActionType, number> = {
     hit: 380,
     crit: 560,
@@ -23,6 +24,7 @@ const ACTION_DURATIONS: Record<CombatActionType, number> = {
     miss: 420,
     counter: 440,
 };
+>>>>>>> origin/master
 
 export const CombatView = ({ player, opponent, matchType, onComplete, onClose, candidates = [] }: CombatViewProps) => {
     const { play: playSound } = useSound();
@@ -212,8 +214,17 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
     const opponentHpPercent = Math.max(0, Math.min(100, (opponentHp / opponentMaxHp) * 100));
     const reactionType = actionPulse && actionPulse.type !== 'miss' ? actionPulse.type : null;
 
+    const combatRef = useFocusTrap<HTMLDivElement>(true, phase === 'result' ? handleFinish : undefined);
+
     return (
-        <div className="combat-overlay" onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()}>
+        <div
+            className="combat-overlay"
+            onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()}
+            role="dialog"
+            aria-modal="true"
+            aria-label={phase === 'intro' ? 'Matchmaking' : phase === 'combat' ? 'Combat in progress' : 'Combat result'}
+            ref={combatRef}
+        >
             <div className="combat-modal">
                 {/* Intro Phase */}
                 {phase === 'intro' && (
@@ -302,7 +313,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
 
                 {/* Result Phase */}
                 {phase === 'result' && combatResult && (
-                    <div className={`combat-result${won ? ' victory' : draw ? ' draw' : ' defeat'}`}>
+                    <div className={`combat-result${won ? ' victory' : draw ? ' draw' : ' defeat'}`} aria-live="polite" aria-atomic="true">
                         {won && (
                             <>
                                 <div className="result-badge victory">VICTORY!</div>

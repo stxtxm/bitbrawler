@@ -5,6 +5,7 @@ import { Character } from '../types/Character'
 import { PixelCharacter } from '../components/PixelCharacter'
 import { useGame } from '../context/GameContext'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
+import { useFocusTrap } from '../hooks/useFocusTrap'
 import { convertFromSupabase } from '../utils/supabaseUtils'
 
 const Rankings = () => {
@@ -96,6 +97,8 @@ const Rankings = () => {
         setResetStatus(null);
     }
 
+    const resetModalRef = useFocusTrap<HTMLDivElement>(showResetModal, resetStatus === 'confirm' ? cancelReset : undefined);
+
     return (
         <div className="container retro-container rankings-page">
             <header className="game-header">
@@ -103,7 +106,7 @@ const Rankings = () => {
                 <p className="subtitle">LEGENDARY FIGHTERS</p>
             </header>
 
-            <div className="rankings-content">
+            <main id="main-content" className="rankings-content">
                 {!isOnline || !dbAvailable ? (
                     <div className="empty-state">
                         <p>CONNECTION REQUIRED</p>
@@ -178,7 +181,7 @@ const Rankings = () => {
                         </div>
                     </div>
                 )}
-            </div>
+            </main>
 
             <div className="actions">
                 <button className="button secondary" onClick={() => navigate('/')}>
@@ -194,7 +197,7 @@ const Rankings = () => {
             </div>
 
             {showResetModal && (
-                <div className="retro-modal-overlay">
+                <div className="retro-modal-overlay" role="dialog" aria-modal="true" aria-label={resetStatus === 'confirm' ? 'Confirm database reset' : resetStatus === 'success' ? 'Database reset successful' : 'Database reset error'} ref={resetModalRef}>
                     <div className="retro-modal" style={{ borderColor: resetStatus === 'error' ? '#ff3333' : '#fff' }}>
                         {resetStatus === 'confirm' && (
                             <>
