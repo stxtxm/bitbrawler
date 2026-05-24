@@ -37,24 +37,38 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          PRS=$(gh pr list --label "auto-generated" --state open --json number,headRefName,title --jq '.[]')
+          PRS=$(gh pr list --state open --json number,headRefName,title,author,labels,isDraft,mergeStateStatus --jq '.[]')
           if [ -z "$PRS" ]; then
-            echo "No open auto-generated PRs to merge."
+            echo "No open PRs to evaluate."
             exit 0
           fi
 
           echo "$PRS" | while IFS= read -r PR_JSON; do
             PR_NUM=$(echo "$PR_JSON" | jq -r '.number')
+            PR_AUTHOR=$(echo "$PR_JSON" | jq -r '.author.login // ""')
+            PR_DRAFT=$(echo "$PR_JSON" | jq -r '.isDraft')
+            PR_MERGE_STATE=$(echo "$PR_JSON" | jq -r '.mergeStateStatus // ""')
+            HAS_AUTO_LABEL=$(echo "$PR_JSON" | jq -r '[.labels[]?.name] | index("auto-generated") != null')
             echo "Processing PR #$PR_NUM..."
 
-            CHECKS=$(gh pr view "$PR_NUM" --json statusCheckRollup --jq '[.statusCheckRollup[]? | select(.status != "COMPLETED")] | length')
-
-            if [ -z "$CHECKS" ] || [ "$CHECKS" -eq 0 ]; then
-              echo "✅ CI green for PR #$PR_NUM. Merging..."
-              gh pr merge "$PR_NUM" --squash --delete-branch || echo "⚠️ Failed to merge PR #$PR_NUM (may already be merged)"
-            else
-              echo "⏳ CI not green for PR #$PR_NUM ($CHECKS checks pending/failing). Skipping."
+            # Only auto-merge bot-generated PRs (legacy label flow or current app/github-actions flow)
+            if [ "$HAS_AUTO_LABEL" != "true" ] && [ "$PR_AUTHOR" != "app/github-actions" ] && [ "$PR_AUTHOR" != "opencode-agent" ]; then
+              echo "ℹ️ PR #$PR_NUM is not from agent flow. Skipping."
+              continue
             fi
+
+            if [ "$PR_DRAFT" = "true" ]; then
+              echo "⏳ PR #$PR_NUM is draft. Skipping."
+              continue
+            fi
+
+            if [ "$PR_MERGE_STATE" != "CLEAN" ] && [ "$PR_MERGE_STATE" != "HAS_HOOKS" ]; then
+              echo "⏳ PR #$PR_NUM mergeStateStatus=$PR_MERGE_STATE. Skipping."
+              continue
+            fi
+
+            echo "✅ Merging eligible agent PR #$PR_NUM..."
+            gh pr merge "$PR_NUM" --squash --delete-branch || echo "⚠️ Failed to merge PR #$PR_NUM (may already be merged)"
           done
 
       - name: Run Tech Lead agent

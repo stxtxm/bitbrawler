@@ -1,0 +1,30 @@
+name: Issue OC Guard
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  ensure-oc-trigger:
+    if: github.event.issue.user.login == 'app/github-actions' || github.event.issue.user.login == 'opencode-agent'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - name: Ensure /oc prefix for agent-created issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BODY="${{ github.event.issue.body }}"
+          if echo "$BODY" | grep -qiE '(^|[[:space:]])/(oc|opencode)($|[[:space:]])'; then
+            echo "Issue already contains /oc or /opencode trigger."
+            exit 0
+          fi
+
+          NEW_BODY="/oc
+
+$BODY"
+
+          gh issue edit "${{ github.event.issue.number }}" --body "$NEW_BODY"
+          echo "Added /oc trigger to issue #${{ github.event.issue.number }}."
