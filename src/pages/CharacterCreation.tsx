@@ -39,7 +39,7 @@ const convertToSupabase = (character: Character): Partial<CharacterRow> => {
     last_loot_roll: character.lastLootRoll ?? 0,
     incoming_fight_history: character.incomingFightHistory ?? [],
     is_bot: typeof character.isBot === 'boolean' ? character.isBot : false,
-    auto_mode: false
+    auto_mode: character.autoMode ?? false
   };
 };
 

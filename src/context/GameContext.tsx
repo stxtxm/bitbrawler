@@ -56,6 +56,7 @@ const normalizeCharacter = (character: Character): Character => {
   return {
     ...character,
     focus: character.focus ?? GAME_RULES.STATS.BASE_VALUE,
+    autoMode: character.autoMode ?? false,
     statPoints: character.statPoints ?? 0,
     inventory: character.inventory ?? [],
     lastLootRoll: character.lastLootRoll ?? 0,
@@ -709,7 +710,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     if (!activeCharacter?.id) return null;
     const updatedChar = normalizeCharacter({
       ...activeCharacter,
-      isBot: enabled
+      autoMode: enabled
     });
 
     try {

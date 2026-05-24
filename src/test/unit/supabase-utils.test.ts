@@ -63,14 +63,16 @@ describe('convertFromSupabase', () => {
     expect(char.lastLootRoll).toBe(1700000000000)
     expect(char.incomingFightHistory).toEqual([{ attackerName: 'player2', won: false, date: 1700000000000 }])
     expect(char.isBot).toBe(false)
+    expect(char.autoMode).toBe(false)
     expect(char.id).toBe('abc-123')
   })
 
   it('handles a bot character correctly', () => {
-    const botRow: CharacterRow = { ...row, is_bot: true, id: 'bot-1' }
+    const botRow: CharacterRow = { ...row, is_bot: true, auto_mode: true, id: 'bot-1' }
     const char = convertFromSupabase(botRow)
 
     expect(char.isBot).toBe(true)
+    expect(char.autoMode).toBe(true)
     expect(char.id).toBe('bot-1')
   })
 
@@ -134,6 +136,7 @@ describe('convertToSupabase', () => {
     lastLootRoll: 1700000000000,
     incomingFightHistory: [{ date: 1700000000000, attackerName: 'player2', won: false }],
     isBot: false,
+    autoMode: true,
     id: 'abc-123',
   }
 
@@ -165,7 +168,7 @@ describe('convertToSupabase', () => {
     expect(row.last_loot_roll).toBe(1700000000000)
     expect(row.incoming_fight_history).toEqual([{ date: 1700000000000, attackerName: 'player2', won: false }])
     expect(row.is_bot).toBe(false)
-    expect(row.auto_mode).toBe(false)
+    expect(row.auto_mode).toBe(true)
   })
 
   it('fills default values for missing optional fields', () => {
@@ -212,6 +215,7 @@ describe('convertToSupabase', () => {
     expect(row.last_loot_roll).toBe(0)
     expect(row.incoming_fight_history).toEqual([])
     expect(row.is_bot).toBe(false)
+    expect(row.auto_mode).toBe(false)
   })
 
   it('handles bot character correctly', () => {

@@ -13,6 +13,7 @@ export const normalizeCharacter = (character: Character): Character => {
   return {
     ...character,
     focus: character.focus ?? GAME_RULES.STATS.BASE_VALUE,
+    autoMode: character.autoMode ?? false,
     statPoints: character.statPoints ?? 0,
     inventory: character.inventory ?? [],
     lastLootRoll: character.lastLootRoll ?? 0,

@@ -7,26 +7,55 @@ import config from './qa-bot.config.js'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const STATS_FILE = join(__dirname, config.statsFile)
 const SCREENSHOTS_DIR = join(__dirname, config.screenshotsDir)
+const QA_TIME_ZONE = config.timeZone || 'Europe/Paris'
+const AUTO_MODE_START_HOUR = Number.isFinite(config.autoModeStartHour) ? config.autoModeStartHour : 19
 
-const FIRST_NAMES = [
-  'THUNDER', 'SHADOW', 'IRON', 'FIRE', 'SILVER', 'GOLD', 'STONE',
-  'CRIMSON', 'NIGHT', 'STORM', 'BLADE', 'FROST', 'VENOM', 'STEEL',
-  'ASHEN', 'BRUTAL', 'RAGING', 'WILDE', 'PHANTOM', 'DOOM',
-]
-const LAST_NAMES = [
-  'HAWK', 'WOLF', 'VIPER', 'LION', 'BEAR', 'FOX', 'TIGER',
-  'RAVEN', 'PANTHER', 'DRAGON', 'FANG', 'CLAW', 'FURY', 'STRIKE',
-  'WING', 'HORN', 'BOLT', 'BLADE', 'HEART', 'SKULL',
-]
+function getZonedParts(date = new Date(), timeZone = QA_TIME_ZONE) {
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  })
 
-function generateName() {
-  const first = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)]
-  const last = LAST_NAMES[Math.floor(Math.random() * LAST_NAMES.length)]
-  return `QA-${first}${last}`
+  const parts = formatter.formatToParts(date)
+  const values = {}
+  for (const part of parts) {
+    if (part.type !== 'literal') {
+      values[part.type] = part.value
+    }
+  }
+
+  return {
+    year: Number(values.year),
+    month: Number(values.month),
+    day: Number(values.day),
+    hour: Number(values.hour),
+    minute: Number(values.minute),
+    second: Number(values.second),
+  }
 }
 
-function dateKey() {
-  return new Date().toISOString().slice(0, 10)
+function dateKey(date = new Date(), timeZone = QA_TIME_ZONE) {
+  const parts = getZonedParts(date, timeZone)
+  return `${parts.year}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}`
+}
+
+function getDailyQaCharacterName(runKey = dateKey()) {
+  return `QA${runKey.replace(/-/g, '')}`
+}
+
+function shouldEnableAutoMode(date = new Date(), timeZone = QA_TIME_ZONE) {
+  const { hour } = getZonedParts(date, timeZone)
+  return hour >= AUTO_MODE_START_HOUR
+}
+
+function getAppUrl(path) {
+  return new URL(path, config.baseUrl).toString()
 }
 
 function loadStats() {
@@ -54,7 +83,151 @@ async function sleep(ms) {
   return new Promise(r => setTimeout(r, ms))
 }
 
+async function readBodyText(page) {
+  return page.locator('body').innerText().catch(() => '')
+}
+
+async function waitForArena(page, timeout = 15000) {
+  const startedAt = Date.now()
+  try {
+    await page.waitForFunction(
+      () => {
+        const path = window.location.pathname || ''
+        const text = document.body.innerText || ''
+        return path.includes('/arena') || text.includes('BATTLE ENERGY') || text.includes('AUTO MODE')
+      },
+      { timeout }
+    )
+    return Date.now() - startedAt
+  } catch {
+    return null
+  }
+}
+
+async function openLogin(page) {
+  await page.goto(getAppUrl('/login'), { waitUntil: 'networkidle', timeout: 30000 })
+}
+
+async function loginCharacter(page, charName) {
+  await openLogin(page)
+
+  const nameInput = page.locator('input[name="name"], input[type="text"], .retro-input input').first()
+  await nameInput.waitFor({ state: 'visible', timeout: 10000 })
+  await nameInput.fill(charName)
+
+  const submitBtn = page.locator('button:has-text("ENTER ARENA"), button:has-text("LOGIN"), button:has-text("START")').first()
+  await submitBtn.waitFor({ state: 'visible', timeout: 10000 })
+  await submitBtn.click()
+
+  const arenaLoadMs = await waitForArena(page, 12000)
+  if (arenaLoadMs !== null) {
+    return { outcome: 'reused', arenaLoadMs }
+  }
+
+  const bodyText = await readBodyText(page)
+  const currentUrl = page.url()
+  if (
+    bodyText.toUpperCase().includes('FIGHTER NOT FOUND') ||
+    currentUrl.includes('/login')
+  ) {
+    return { outcome: 'missing', arenaLoadMs: null }
+  }
+
+  throw new Error(`Unable to determine login result for ${charName} (url=${currentUrl})`)
+}
+
+async function createCharacter(page, charName) {
+  await page.goto(getAppUrl('/create-character'), { waitUntil: 'networkidle', timeout: 30000 })
+
+  const nameInput = page.locator('input[type="text"], .retro-input').first()
+  await nameInput.waitFor({ state: 'visible', timeout: 10000 })
+  await nameInput.fill(charName)
+
+  const rollBtn = page.locator('button:has-text("ROLL STATS"), button:has-text("ROLL"), button:has-text("REROLL"), button:has-text("RANDOM")').first()
+  if (await rollBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await rollBtn.click()
+    await page.waitForTimeout(500)
+  }
+
+  const startBtn = page.locator('button:has-text("START GAME"), button:has-text("START"), button:has-text("CREATE"), button:has-text("FIGHT")').first()
+  await startBtn.waitFor({ state: 'visible', timeout: 10000 })
+  await startBtn.click()
+
+  const arenaLoadMs = await waitForArena(page, 15000)
+  if (arenaLoadMs !== null) {
+    return { outcome: 'created', arenaLoadMs }
+  }
+
+  const bodyText = await readBodyText(page)
+  if (bodyText.toUpperCase().includes('NAME ALREADY TAKEN')) {
+    return { outcome: 'conflict', arenaLoadMs: null }
+  }
+
+  throw new Error(`Character creation did not reach arena for ${charName}`)
+}
+
+async function loginOrCreateDailyCharacter(page, charName) {
+  const loginResult = await loginCharacter(page, charName)
+  if (loginResult.outcome === 'reused') {
+    return loginResult
+  }
+
+  const createResult = await createCharacter(page, charName)
+  if (createResult.outcome === 'created') {
+    return createResult
+  }
+
+  const retryLoginResult = await loginCharacter(page, charName)
+  if (retryLoginResult.outcome === 'reused') {
+    return { outcome: 'reused-after-conflict', arenaLoadMs: retryLoginResult.arenaLoadMs }
+  }
+
+  throw new Error(`Daily QA fighter ${charName} could not be created or reused`)
+}
+
+async function syncAutoMode(page, desiredEnabled) {
+  console.log(`🔁 Setting auto mode to ${desiredEnabled ? 'ON' : 'OFF'}...`)
+
+  const settingsBtn = page.locator('button[aria-label="Settings"], button:has-text("SETTINGS"), [class*="settings"]').first()
+  if (!(await settingsBtn.isVisible({ timeout: 5000 }).catch(() => false))) {
+    console.log('   Settings button not found')
+    return false
+  }
+
+  await settingsBtn.click()
+  await page.waitForTimeout(1000)
+
+  const autoSwitch = page.locator('[role="switch"][aria-label="Auto mode"], [role="switch"], .pixel-switch').first()
+  if (!(await autoSwitch.isVisible({ timeout: 5000 }).catch(() => false))) {
+    console.log('   Auto mode switch not found')
+    return false
+  }
+
+  const currentValue = await autoSwitch.getAttribute('aria-checked').catch(() => null)
+  const isEnabled = currentValue === 'true'
+  if (isEnabled !== desiredEnabled) {
+    await autoSwitch.click()
+    await page.waitForTimeout(1000)
+    console.log(`   Auto mode changed to ${desiredEnabled ? 'ON' : 'OFF'} ✅`)
+  } else {
+    console.log(`   Auto mode already ${desiredEnabled ? 'ON' : 'OFF'}`)
+  }
+
+  const closeSettings = page.locator('button[aria-label="Close settings"], button:has-text("CLOSE"), button:has-text("OK"), .modal-close, .inventory-close').first()
+  if (await closeSettings.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await closeSettings.click()
+    await page.waitForTimeout(500)
+  }
+
+  return true
+}
+
 async function run() {
+  const now = new Date()
+  const runKey = dateKey(now)
+  const charName = getDailyQaCharacterName(runKey)
+  const enableAutoMode = shouldEnableAutoMode(now)
+
   console.log('═══════════════════════════════════════════')
   console.log('  🤖 QA Bot starting')
   console.log('═══════════════════════════════════════════')
@@ -63,6 +236,10 @@ async function run() {
   console.log(`    fightsPerRun:   ${config.fightsPerRun}`)
   console.log(`    statsFile:      ${STATS_FILE}`)
   console.log(`    screenshotsDir: ${SCREENSHOTS_DIR}`)
+  console.log(`    timeZone:       ${QA_TIME_ZONE}`)
+  console.log(`    runKey:         ${runKey}`)
+  console.log(`    fighter:        ${charName}`)
+  console.log(`    autoMode:       ${enableAutoMode ? 'ON' : 'OFF'}`)
   console.log(`    headless:       ${config.headless}`)
   console.log(`    slowMo:         ${config.slowMo}`)
   console.log(`  CWD: ${process.cwd()}`)
@@ -99,12 +276,14 @@ async function run() {
   })
 
   const runRecord = {
-    date: new Date().toISOString(),
-    run: dateKey(),
-    character: null,
+    date: now.toISOString(),
+    run: runKey,
+    character: charName,
+    character_action: null,
     fights: [],
     lootbox: null,
     auto_mode_enabled: false,
+    auto_mode_sync_ok: false,
     final_stats: null,
     errors: [],
     load_times_ms: {},
@@ -117,67 +296,17 @@ async function run() {
     runRecord.load_times_ms.home = Date.now() - startLoad
     console.log(`   Loaded in ${runRecord.load_times_ms.home}ms`)
 
-    await page.screenshot({ path: join(SCREENSHOTS_DIR, `${dateKey()}-01-home.png`) })
+    await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-01-home.png`) })
+    await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-02-pre-auth.png`) })
 
-    const charName = generateName()
-    runRecord.character = charName
-    console.log(`🎭 Using character: ${charName}`)
-
-    const loginBtn = page.locator('a.nav-btn:has-text("LOGIN"), a.button:has-text("LOGIN"), a:has-text("LOGIN")').first()
-    if (await loginBtn.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await loginBtn.click()
-      await page.waitForLoadState('networkidle')
-      console.log('   Clicked LOGIN')
+    const authResult = await loginOrCreateDailyCharacter(page, charName)
+    runRecord.character_action = authResult.outcome
+    if (authResult.arenaLoadMs !== null) {
+      runRecord.load_times_ms.arena = authResult.arenaLoadMs
+      console.log(`   Arena loaded in ${runRecord.load_times_ms.arena}ms (${authResult.outcome})`)
     }
 
-    await page.waitForTimeout(2000)
-
-    await page.screenshot({ path: join(SCREENSHOTS_DIR, `${dateKey()}-02-login.png`) })
-
-    const nameInput = page.locator('input[name="name"], input[type="text"], .retro-input input').first()
-    if (await nameInput.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await nameInput.fill(charName)
-      console.log('   Entered character name')
-
-      const submitBtn = page.locator('button:has-text("ENTER ARENA"), button:has-text("FIGHT"), button:has-text("START")').first()
-      await submitBtn.click()
-      await page.waitForTimeout(2000)
-      console.log('   Submitted')
-    }
-
-    await page.waitForTimeout(3000)
-
-    const currentUrl = page.url()
-    console.log(`   Current URL: ${currentUrl}`)
-
-    if (currentUrl.includes('create-character') || currentUrl.includes('creation')) {
-      console.log('   Creating new character...')
-
-      const rollBtn = page.locator('button:has-text("ROLL"), button:has-text("REROLL"), button:has-text("RANDOM")').first()
-      if (await rollBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await rollBtn.click()
-        await page.waitForTimeout(1000)
-      }
-
-      const startBtn = page.locator('button:has-text("START"), button:has-text("CREATE"), button:has-text("FIGHT")').first()
-      if (await startBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await startBtn.click()
-        await page.waitForTimeout(3000)
-      }
-
-      console.log('   Character created')
-    }
-
-    await page.waitForTimeout(2000)
-
-    const arenaLoadStart = Date.now()
-    const inArena = await page.locator('text=FIGHT, text=ARENA, text=BATTLE').first().isVisible({ timeout: 10000 }).catch(() => false)
-    if (inArena) {
-      runRecord.load_times_ms.arena = Date.now() - arenaLoadStart
-      console.log(`   Arena loaded in ${runRecord.load_times_ms.arena}ms`)
-    }
-
-    await page.screenshot({ path: join(SCREENSHOTS_DIR, `${dateKey()}-03-arena.png`) })
+    await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-03-arena.png`) })
 
     for (let i = 0; i < config.fightsPerRun; i++) {
       console.log(`⚔️ Fight ${i + 1}/${config.fightsPerRun}...`)
@@ -204,7 +333,7 @@ async function run() {
         )
       } catch {
         console.log('   Fight result not detected, taking screenshot')
-        await page.screenshot({ path: join(SCREENSHOTS_DIR, `${dateKey()}-fight-${i + 1}-timeout.png`) })
+        await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-timeout.png`) })
         runRecord.errors.push(`Fight ${i + 1}: timeout waiting for result`)
         await page.goto(config.baseUrl, { waitUntil: 'networkidle' }).catch(() => {})
         await page.waitForTimeout(3000)
@@ -229,7 +358,7 @@ async function run() {
       })
 
       await page.screenshot({
-        path: join(SCREENSHOTS_DIR, `${dateKey()}-fight-${i + 1}-${isVictory ? 'win' : isDefeat ? 'loss' : 'draw'}.png`),
+        path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-${isVictory ? 'win' : isDefeat ? 'loss' : 'draw'}.png`),
       })
 
       const continueBtn = page.locator('button:has-text("CONTINUE"), button:has-text("CLOSE"), button:has-text("OK")').first()
@@ -245,7 +374,7 @@ async function run() {
       await lootboxBtn.click()
       await page.waitForTimeout(2000)
 
-      await page.screenshot({ path: join(SCREENSHOTS_DIR, `${dateKey()}-04-lootbox.png`) })
+      await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-04-lootbox.png`) })
 
       const lootText = await page.locator('body').innerText()
       const itemMatch = lootText.match(/you got:?\s*(.+)/i) || lootText.match(/obtained:?\s*(.+)/i)
@@ -266,33 +395,8 @@ async function run() {
       console.log('   No lootbox available')
     }
 
-    console.log('🔁 Enabling auto mode...')
-    const settingsBtn = page.locator('button:has-text("SETTINGS"), [class*="settings"]').first()
-    if (await settingsBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await settingsBtn.click()
-      await page.waitForTimeout(1500)
-    }
-
-    const autoSwitch = page.locator('[role="switch"], .pixel-switch, .switch-track').first()
-    if (await autoSwitch.isVisible({ timeout: 3000 }).catch(() => false)) {
-      const isOn = await autoSwitch.getAttribute('aria-checked').catch(() => null)
-      if (isOn !== 'true') {
-        await autoSwitch.click()
-        await page.waitForTimeout(1000)
-        console.log('   Auto mode enabled ✅')
-      } else {
-        console.log('   Auto mode already ON')
-      }
-      runRecord.auto_mode_enabled = true
-    } else {
-      console.log('   Auto mode switch not found (might be already enabled)')
-    }
-
-    const closeSettings = page.locator('button:has-text("CLOSE"), button:has-text("OK"), .modal-close').first()
-    if (await closeSettings.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await closeSettings.click()
-      await page.waitForTimeout(1000)
-    }
+    runRecord.auto_mode_enabled = enableAutoMode
+    runRecord.auto_mode_sync_ok = await syncAutoMode(page, enableAutoMode)
 
     const finalText = await page.locator('body').innerText()
     const levelMatch = finalText.match(/LEVEL\s*(\d+)/i)
@@ -308,7 +412,7 @@ async function run() {
     }
     console.log('   Final stats:', JSON.stringify(runRecord.final_stats))
 
-    await page.screenshot({ path: join(SCREENSHOTS_DIR, `${dateKey()}-05-final.png`) })
+    await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-05-final.png`) })
 
     const stats = loadStats()
     stats.push(runRecord)
@@ -321,7 +425,7 @@ async function run() {
     runRecord.errors.push(err.message)
 
     if (typeof page !== 'undefined' && page) {
-      const errorScreenshot = join(SCREENSHOTS_DIR, `${dateKey()}-error.png`)
+      const errorScreenshot = join(SCREENSHOTS_DIR, `${runKey}-error.png`)
       await page.screenshot({ path: errorScreenshot }).catch(e => console.error(`   Could not save error screenshot: ${e.message}`))
       console.log(`   Screenshot saved: ${errorScreenshot}`)
     }

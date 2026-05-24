@@ -252,7 +252,7 @@ const Arena = () => {
         setSettingsView('main');
     };
 
-    const autoModeEnabled = !!activeCharacter?.isBot;
+    const autoModeEnabled = !!activeCharacter?.autoMode;
 
     const handleToggleAutoMode = async () => {
         if (autoModeUpdating) return;

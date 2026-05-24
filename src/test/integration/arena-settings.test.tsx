@@ -43,6 +43,7 @@ const mockCharacter: Character = {
   lastFightReset: Date.now(),
   id: 'auto-id',
   isBot: false,
+  autoMode: false,
   fightHistory: [
     {
       date: Date.now() - 60_000,
@@ -109,6 +110,30 @@ describe('Arena settings modal', () => {
 
     const { setAutoMode } = mockUseGame.mock.results[0].value
     expect(setAutoMode).toHaveBeenCalledWith(true)
+  })
+
+  it('renders auto mode as enabled from character state', () => {
+    mockUseGame.mockReturnValue({
+      activeCharacter: { ...mockCharacter, autoMode: true },
+      logout: vi.fn(),
+      useFight: vi.fn(),
+      findOpponent: vi.fn(),
+      lastXpGain: null,
+      lastLevelUp: null,
+      clearXpNotifications: vi.fn(),
+      dbAvailable: true,
+      retryConnection: vi.fn(),
+      allocateStatPoint: vi.fn(),
+      rollLootbox: vi.fn(),
+      startMatchmaking: vi.fn(),
+      setAutoMode: vi.fn().mockResolvedValue({ ...mockCharacter, autoMode: true }),
+      deleteCharacter: vi.fn().mockResolvedValue(true),
+    })
+
+    const { getByLabelText, getByRole } = renderWithRouter(<Arena />)
+
+    fireEvent.click(getByLabelText('Settings'))
+    expect(getByRole('switch', { name: 'Auto mode' })).toHaveAttribute('aria-checked', 'true')
   })
 
   it('opens combat logs within settings', () => {

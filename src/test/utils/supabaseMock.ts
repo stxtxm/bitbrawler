@@ -76,7 +76,7 @@ export function characterToSupabaseRow(char: any): any {
     last_loot_roll: char.lastLootRoll ?? 0,
     incoming_fight_history: char.incomingFightHistory ?? [],
     is_bot: typeof char.isBot === 'boolean' ? char.isBot : false,
-    auto_mode: false,
+    auto_mode: char.autoMode ?? false,
     battle_count: char.battleCount ?? 0,
     created_at: new Date().toISOString(),
   };

@@ -28,6 +28,7 @@ export function convertFromSupabase(row: CharacterRow): Character {
     lastLootRoll: row.last_loot_roll,
     incomingFightHistory: row.incoming_fight_history,
     isBot: row.is_bot,
+    autoMode: row.auto_mode,
     id: row.id,
   };
 }
@@ -59,6 +60,6 @@ export function convertToSupabase(character: Character): Partial<CharacterRow> {
     last_loot_roll: character.lastLootRoll ?? 0,
     incoming_fight_history: character.incomingFightHistory ?? [],
     is_bot: typeof character.isBot === 'boolean' ? character.isBot : false,
-    auto_mode: false,
+    auto_mode: character.autoMode ?? false,
   };
 }

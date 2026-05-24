@@ -51,7 +51,7 @@ const SettingsModal = ({
         [activeCharacter.fightHistory, activeCharacter.incomingFightHistory]
     );
 
-    const autoModeEnabled = !!activeCharacter?.isBot;
+    const autoModeEnabled = !!activeCharacter?.autoMode;
 
     const handleToggleAutoMode = async () => {
         if (localAutoModeUpdating) return;

@@ -71,6 +71,7 @@ export interface Character {
   fightsLeft: number;
   lastFightReset: number; // Timestamp
   isBot?: boolean; // To identify automated characters
+  autoMode?: boolean; // Human-controlled character delegated to the bot engine
   fightHistory?: FightHistory[];
   incomingFightHistory?: IncomingFightHistory[]; // Incoming attacks (no XP/progression impact)
   foughtToday?: string[]; // Array of ids fought today

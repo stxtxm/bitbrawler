@@ -96,7 +96,7 @@ export const useCharacterActions = ({
 
     const updatedChar = normalizeCharacter({
       ...activeCharacter,
-      isBot: enabled,
+      autoMode: enabled,
     });
 
     try {
