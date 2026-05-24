@@ -1,0 +1,24 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "opencode/deepseek-v4-flash-free",
+  "default_agent": "dev-agent",
+  "agent": {
+    "dev-agent": {
+      "description": "Agent de dev autonome. Implemente, review, merge.",
+      "mode": "primary",
+      "model": "opencode/deepseek-v4-flash-free",
+      "permission": { "edit": "allow", "bash": "allow" }
+    },
+    "reviewer": {
+      "description": "Agent de revue de code. Review les PRs et valide la qualite.",
+      "mode": "subagent",
+      "model": "opencode/deepseek-v4-flash-free",
+      "permission": { "edit": "deny", "bash": "ask" }
+    }
+  },
+  "command": {
+    "test": { "description": "Lance la suite de tests", "prompt": "Run npm test" },
+    "build": { "description": "Verifie que le build passe", "prompt": "Run npm run build" },
+    "deploy": { "description": "Deploie sur Vercel", "prompt": "Deploy to Vercel" }
+  }
+}
