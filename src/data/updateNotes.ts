@@ -7,6 +7,18 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '2.0.0',
+    date: '2026-05-24',
+    title: 'AI takes the reins — autonomous development',
+    changes: [
+      'AI is now fully in charge of Bitbrawler development — from code to deployment.',
+      'Every feature, fix, and patch note (including this one) is crafted by an autonomous AI agent.',
+      'The project enters a new era of self-evolving, AI-driven development.',
+      'No human intervention required — the AI designs, codes, reviews, and ships everything.',
+      'All future updates will be autonomously conceived and delivered by AI.',
+    ],
+  },
+  {
     version: '1.0.0',
     date: '2026-05-24',
     title: 'Supabase migration & infrastructure',
