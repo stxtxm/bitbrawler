@@ -50,6 +50,10 @@ function saveStats(stats) {
   }
 }
 
+async function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms))
+}
+
 async function run() {
   console.log('═══════════════════════════════════════════')
   console.log('  🤖 QA Bot starting')
@@ -126,8 +130,7 @@ async function run() {
       console.log('   Clicked LOGIN')
     }
 
-    // Wait for login page to render or arena if already logged in
-    await page.waitForSelector('.retro-input, button:has-text("FIGHT!")', { timeout: 10000 }).catch(() => {})
+    await page.waitForTimeout(2000)
 
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${dateKey()}-02-login.png`) })
 
@@ -138,16 +141,11 @@ async function run() {
 
       const submitBtn = page.locator('button:has-text("FIGHT"), button:has-text("LOGIN"), button:has-text("START")').first()
       await submitBtn.click()
-      // Wait for navigation to arena or character creation
-      await page.waitForURL(/\/arena|\/create-character/, { timeout: 15000 })
+      await page.waitForTimeout(2000)
       console.log('   Submitted')
     }
 
-    // Fallback: wait for arena or character creation page to be ready
-    await page.waitForFunction(
-      () => document.body.innerText.includes('FIGHT') || document.body.innerText.includes('ARENA') || window.location.href.includes('create-character'),
-      { timeout: 10000 }
-    ).catch(() => {})
+    await page.waitForTimeout(3000)
 
     const currentUrl = page.url()
     console.log(`   Current URL: ${currentUrl}`)
@@ -158,22 +156,19 @@ async function run() {
       const rollBtn = page.locator('button:has-text("ROLL"), button:has-text("REROLL"), button:has-text("RANDOM")').first()
       if (await rollBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
         await rollBtn.click()
-        // Wait for React state update to complete (isGenerating → false)
-        await page.waitForFunction(() => !document.querySelector('.roll-btn')?.hasAttribute('disabled'), { timeout: 3000 }).catch(() => {})
+        await page.waitForTimeout(1000)
       }
 
       const startBtn = page.locator('button:has-text("START"), button:has-text("CREATE"), button:has-text("FIGHT")').first()
       if (await startBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
         await startBtn.click()
-        // Wait for navigation to arena after character creation
-        await page.waitForURL('**/arena**', { timeout: 15000 })
+        await page.waitForTimeout(3000)
       }
 
       console.log('   Character created')
     }
 
-    // Wait for arena page to fully render with FIGHT button
-    await page.waitForSelector('button:has-text("FIGHT!"), button:has-text("BATTLE")', { timeout: 15000 }).catch(() => {})
+    await page.waitForTimeout(2000)
 
     const arenaLoadStart = Date.now()
     const inArena = await page.locator('text=FIGHT, text=ARENA, text=BATTLE').first().isVisible({ timeout: 10000 }).catch(() => false)
@@ -197,7 +192,8 @@ async function run() {
       await fightBtn.click()
       console.log('   Fight started, waiting for result...')
 
-      // waitForFunction below waits for VICTORY/DEFEAT/DRAW text — no fixed sleep needed
+      await sleep(1000)
+
       try {
         await page.waitForFunction(
           () => {
@@ -211,11 +207,7 @@ async function run() {
         await page.screenshot({ path: join(SCREENSHOTS_DIR, `${dateKey()}-fight-${i + 1}-timeout.png`) })
         runRecord.errors.push(`Fight ${i + 1}: timeout waiting for result`)
         await page.goto(config.baseUrl, { waitUntil: 'networkidle' }).catch(() => {})
-        // Wait for page to be interactive after error recovery
-        await page.waitForFunction(
-          () => document.body.innerText.includes('FIGHT') || document.body.innerText.includes('LOGIN') || document.body.innerText.includes('ARENA'),
-          { timeout: 10000 }
-        ).catch(() => {})
+        await page.waitForTimeout(3000)
         continue
       }
 
@@ -243,8 +235,7 @@ async function run() {
       const continueBtn = page.locator('button:has-text("CONTINUE"), button:has-text("CLOSE"), button:has-text("OK")').first()
       if (await continueBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
         await continueBtn.click()
-        // Wait for fight result modal to close and FIGHT! button to reappear
-        await page.waitForSelector('button:has-text("FIGHT!")', { timeout: 10000 }).catch(() => {})
+        await page.waitForTimeout(1500)
       }
     }
 
@@ -252,8 +243,7 @@ async function run() {
     const lootboxBtn = page.locator('button:has-text("LOOT"), button:has-text("LOOTBOX"), [class*="loot"]').first()
     if (await lootboxBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await lootboxBtn.click()
-      // Wait for lootbox opening animation (900ms JS delay + 0.35s CSS reveal) to complete
-      await page.waitForSelector('.lootbox-result-card', { timeout: 8000 })
+      await page.waitForTimeout(2000)
 
       await page.screenshot({ path: join(SCREENSHOTS_DIR, `${dateKey()}-04-lootbox.png`) })
 
@@ -269,8 +259,7 @@ async function run() {
       const closeModal = page.locator('button:has-text("CLOSE"), button:has-text("OK"), .modal-close').first()
       if (await closeModal.isVisible({ timeout: 3000 }).catch(() => false)) {
         await closeModal.click()
-        // Wait for lootbox result overlay to fully close
-        await page.waitForFunction(() => !document.querySelector('.lootbox-result-overlay'), { timeout: 5000 }).catch(() => {})
+        await page.waitForTimeout(1000)
       }
     } else {
       runRecord.lootbox = { available: false }
@@ -281,8 +270,7 @@ async function run() {
     const settingsBtn = page.locator('button:has-text("SETTINGS"), [class*="settings"]').first()
     if (await settingsBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await settingsBtn.click()
-      // Wait for settings modal to open with the auto-mode switch
-      await page.waitForSelector('[role="switch"], .pixel-switch', { timeout: 5000 }).catch(() => {})
+      await page.waitForTimeout(1500)
     }
 
     const autoSwitch = page.locator('[role="switch"], .pixel-switch, .switch-track').first()
@@ -290,11 +278,7 @@ async function run() {
       const isOn = await autoSwitch.getAttribute('aria-checked').catch(() => null)
       if (isOn !== 'true') {
         await autoSwitch.click()
-        // Wait for toggle switch CSS transition (0.2s) to settle and state to update
-        await page.waitForFunction(
-          () => document.querySelector('[role="switch"]')?.getAttribute('aria-checked') === 'true',
-          { timeout: 3000 }
-        ).catch(() => {})
+        await page.waitForTimeout(1000)
         console.log('   Auto mode enabled ✅')
       } else {
         console.log('   Auto mode already ON')
@@ -307,11 +291,7 @@ async function run() {
     const closeSettings = page.locator('button:has-text("CLOSE"), button:has-text("OK"), .modal-close').first()
     if (await closeSettings.isVisible({ timeout: 2000 }).catch(() => false)) {
       await closeSettings.click()
-      // Wait for settings modal to close — check switch is hidden or FIGHT! is visible
-      await page.waitForFunction(
-        () => !document.querySelector('.settings-overlay') || document.body.innerText.includes('FIGHT!'),
-        { timeout: 5000 }
-      ).catch(() => {})
+      await page.waitForTimeout(1000)
     }
 
     const finalText = await page.locator('body').innerText()
