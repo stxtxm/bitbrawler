@@ -3,7 +3,6 @@ import { Character } from '../types/Character';
 import { PixelItemAsset, ItemStats } from '../types/Item';
 import { PixelIcon } from './PixelIcon';
 import { PixelItemIcon } from './PixelItemIcon';
-import { useSound } from '../hooks/useSound';
 import { getItemById, getEquipmentBonuses } from '../utils/equipmentUtils';
 import { canRollLootbox } from '../utils/lootboxUtils';
 
@@ -42,7 +41,6 @@ const InventoryModal = ({
     const [inventorySelectedId, setInventorySelectedId] = useState<string | null>(null);
     const [lootboxRolling, setLootboxRolling] = useState(false);
     const [lootboxResult, setLootboxResult] = useState<PixelItemAsset | null>(null);
-    const sound = useSound();
 
     useEffect(() => {
         if (!isOpen) {
@@ -93,7 +91,6 @@ const InventoryModal = ({
                     setLootboxResult(item);
                     setInventorySelectedId(item.id);
                     setInventoryHoveredId(item.id);
-                    sound.play('lootbox');
                 }
             } catch (error: any) {
                 openModal(error.message || 'Connect to battle and sync your progress.');
