@@ -1,20 +1,18 @@
-import { createContext, useState, useContext, ReactNode, useEffect, useCallback } from 'react';
+import { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from 'react';
+import { supabase } from '../config/supabase';
+import { Character, IncomingFightHistory, PendingFight, PendingFightOpponent } from '../types/Character';
+import { gainXp } from '../utils/xpUtils';
+import { applyStatPoint, StatKey } from '../utils/statUtils';
+import { GAME_RULES } from '../config/gameRules';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
-import { Character } from '../types/Character';
-import { StatKey } from '../utils/statUtils';
-import { MatchmakingResult } from '../utils/matchmakingUtils';
+import { findOpponent, MatchmakingResult } from '../utils/matchmakingUtils';
+import { ITEM_ASSETS } from '../data/itemAssets';
+import { canRollLootbox, rollLootbox } from '../utils/lootboxUtils';
 import { PixelItemAsset } from '../types/Item';
-import {
-  normalizeCharacter,
-  saveLocalData,
-  clearLocalData,
-  loadLocalData,
-} from '../utils/persistenceUtils';
-import { useAuth } from './useAuth';
-import { useCombat } from './useCombat';
-import { useCharacterActions } from './useCharacterActions';
+import { simulateCombat } from '../utils/combatUtils';
+import { convertFromSupabase } from '../utils/supabaseUtils';
 
-export interface GameContextType {
+interface GameContextType {
   activeCharacter: Character | null;
   loading: boolean;
   dbAvailable: boolean;
@@ -24,6 +22,13 @@ export interface GameContextType {
   logout: () => void;
   setCharacter: (char: Character) => void;
   retryConnection: () => Promise<boolean>;
+  useFight: (
+    won: boolean,
+    xpGained: number,
+    opponentName: string,
+    opponentId: string,
+    options?: { consumeEnergy?: boolean; characterOverride?: Character }
+  ) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
   executeFight: (
     won: boolean,
     xpGained: number,
@@ -147,7 +152,6 @@ type SyncResult =
   | { status: 'missing' }
   | { status: 'error' };
 
->>>>>>> origin/master
 export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [activeCharacter, setActiveCharacter] = useState<Character | null>(null);
   const [loading, setLoading] = useState(true);
@@ -155,8 +159,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [lastXpGain, setLastXpGain] = useState<number | null>(null);
   const [lastLevelUp, setLastLevelUp] = useState<{ levelsGained: number; newLevel: number } | null>(null);
   const isOnline = useOnlineStatus();
-
-  // ── Core shared callbacks ──────────────────────────────────────────────────
+  const initiatedMatchmakingRef = useRef(false);
   const persistCharacter = useCallback((character: Character) => {
     const normalized = normalizeCharacter(character);
     setActiveCharacter(normalized);
@@ -165,37 +168,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // DB error handler
-  const handleDbError = useCallback((error: unknown, context: string) => {
+  const handleDbError = useCallback((error: any, context: string) => {
      console.error(`DB error (${context}):`, error);
-  const handleDbError = useCallback((_error: any, _context: string) => {
->>>>>>> origin/master
     setDbAvailable(false);
   }, []);
 
-  // ── Auth ───────────────────────────────────────────────────────────────────
-  const { login, logout, retryConnection, syncCharacterWithSupabase } = useAuth({
-    persistCharacter,
-    handleDbError,
-    setActiveCharacter,
-    setDbAvailable,
-  });
-
-  // ── Combat ─────────────────────────────────────────────────────────────────
-  const {
-    useFight,
-    startMatchmaking,
-    findOpponent,
-    resolvePendingFight,
-    initiatedMatchmakingRef,
-  } = useCombat({
-    activeCharacter,
-    persistCharacter,
-    handleDbError,
-    setLastXpGain,
-    setLastLevelUp,
-    setActiveCharacter,
-    dbAvailable,
-  });
   // Sync character with Supabase
   const syncCharacterWithSupabase = useCallback(async (character: Character): Promise<SyncResult> => {
     if (!character.id) return { status: 'missing' };
@@ -206,17 +183,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         .select('*')
         .eq('id', character.id)
         .single();
->>>>>>> origin/master
 
-  // ── Character Actions ──────────────────────────────────────────────────────
-  const { allocateStatPoint, rollLootbox, setAutoMode, deleteCharacter } = useCharacterActions({
-    activeCharacter,
-    persistCharacter,
-    handleDbError,
-    logout,
-  });
+      if (error || !data) {
+        if (error?.code === 'PGRST116') { // Not found
+          return { status: 'missing' };
+        }
+        throw error;
+      }
 
-  // ── Effects ────────────────────────────────────────────────────────────────
       const supabaseData = convertFromSupabase(data);
       setDbAvailable(true);
       return {
@@ -233,9 +207,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }, [handleDbError]);
 
   // Load character on mount
->>>>>>> origin/master
   useEffect(() => {
-    const loadCharacter = async () => {
+  const loadCharacter = async () => {
       const localChar = loadLocalData();
       if (!localChar) {
         setLoading(false);
@@ -264,6 +237,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         setActiveCharacter(normalizeCharacter(localChar));
         setDbAvailable(false);
       } else {
+        // Status is 'missing' - character has been deleted on server
         clearLocalData();
         setActiveCharacter(null);
         setDbAvailable(true);
@@ -275,13 +249,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     loadCharacter();
   }, [isOnline, persistCharacter, syncCharacterWithSupabase]);
 
-  useEffect(() => {
-    if (!activeCharacter?.pendingFight) return;
-    if (initiatedMatchmakingRef.current) return;
-    resolvePendingFight(activeCharacter);
-  }, [activeCharacter, resolvePendingFight, initiatedMatchmakingRef]);
 
-  // ── Convenience wrappers ───────────────────────────────────────────────────
   // Characters are now reset centrally via GitHub Actions every 24h.
   // The frontend syncs the state on mount/login.
 
@@ -326,17 +294,16 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // Set character function
->>>>>>> origin/master
   const setCharacter = useCallback((char: Character) => {
     persistCharacter(char);
   }, [persistCharacter]);
 
+  // Clear XP notifications
   const clearXpNotifications = useCallback(() => {
     setLastXpGain(null);
     setLastLevelUp(null);
   }, []);
 
-  // ── Context value ──────────────────────────────────────────────────────────
   const retryConnection = useCallback(async (): Promise<boolean> => {
     try {
       if (typeof navigator !== 'undefined' && navigator.onLine === false) {
@@ -387,7 +354,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const executeFight = useCallback(async (
+  const useFight = useCallback(async (
     won: boolean,
     xpGained: number,
     opponentName: string,
@@ -480,10 +447,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         levelsGained: xpResult.levelsGained,
         newLevel: xpResult.newLevel
       };
-    } catch (error) {
+    } catch (error: any) {
       // Check if character was deleted while playing
-      const dbError = error as { code?: string; message?: string } | null;
-      if (dbError && (dbError.code === 'not-found' || dbError.message?.includes('not found'))) {
+      if (error && (error.code === 'not-found' || error.message?.includes('not found'))) {
         clearLocalData();
         setActiveCharacter(null);
         throw new Error("Your character has been deleted or is no longer available.");
@@ -504,7 +470,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
        await supabase
         .from('characters')
         .update({
-          [stat]: updatedChar[stat as keyof Character],
+          [stat]: (updatedChar as any)[stat],
           hp: updatedChar.hp,
           max_hp: updatedChar.maxHp,
           stat_points: updatedChar.statPoints,
@@ -514,7 +480,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
        persistCharacter(updatedChar);
        return updatedChar;
-     } catch (error) {
+     } catch (error: any) {
        handleDbError(error, 'stat-allocate');
        throw new Error("Connection error - stat point not saved. Please check your internet connection.");
      }
@@ -549,7 +515,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         })
         .eq('id', activeCharacter.id!);
        persistCharacter(reservedChar);
-     } catch (error) {
+     } catch (error: any) {
        handleDbError(error, 'matchmaking-start');
        initiatedMatchmakingRef.current = false;
        throw new Error('Connection error - matchmaking not saved.');
@@ -571,11 +537,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
             pending_fight: null,
             focus: refundedChar.focus
           })
-          .eq('id', activeCharacter.firestoreId!);
-       } catch (error) {
           .eq('id', activeCharacter.id!);
        } catch (error: any) {
->>>>>>> origin/master
          handleDbError(error, 'matchmaking-refund');
        }
 
@@ -605,7 +568,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         })
         .eq('id', activeCharacter.id!);
        persistCharacter(matchedChar);
-     } catch (error) {
+     } catch (error: any) {
        handleDbError(error, 'matchmaking-lock');
        initiatedMatchmakingRef.current = false;
        throw new Error('Connection error - matchmaking not saved.');
@@ -671,9 +634,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         const combatResult = simulateCombat(matchedChar, opponent);
         const won = combatResult.winner === 'attacker';
         const xpGained = calculatePendingFightXp(matchedChar, opponent, won);
-        await executeFight(won, xpGained, opponent.name, opponent.firestoreId || '', {
         await useFight(won, xpGained, opponent.name, opponent.id || '', {
->>>>>>> origin/master
           consumeEnergy: false,
           characterOverride: matchedChar
         });
@@ -685,19 +646,17 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         const combatResult = simulateCombat(character, opponent);
         const won = combatResult.winner === 'attacker';
         const xpGained = calculatePendingFightXp(character, opponent, won);
-        await executeFight(won, xpGained, opponent.name, opponent.firestoreId || '', {
         await useFight(won, xpGained, opponent.name, opponent.id || '', {
->>>>>>> origin/master
           consumeEnergy: false,
           characterOverride: character
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       handleDbError(error, 'pending-fight');
     } finally {
       resolvingPendingRef.current = false;
     }
-  }, [dbAvailable, handleDbError, persistCharacter, executeFight]);
+  }, [dbAvailable, handleDbError, persistCharacter, useFight]);
 
   useEffect(() => {
     if (!activeCharacter?.pendingFight) return;
@@ -740,7 +699,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         .eq('id', activeCharacter.id!);
        persistCharacter(updatedChar);
        return item;
-     } catch (error) {
+     } catch (error: any) {
        handleDbError(error, 'lootbox');
        throw new Error('Connection error - lootbox not saved.');
      }
@@ -762,7 +721,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
        .eq('id', activeCharacter.id);
       persistCharacter(updatedChar);
       return updatedChar;
-    } catch (error) {
+    } catch (error: any) {
       handleDbError(error, 'auto-mode');
       throw new Error('Connection error - auto mode not saved.');
     }
@@ -777,7 +736,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
        .eq('id', activeCharacter.id);
       logout();
       return true;
-    } catch (error) {
+    } catch (error: any) {
       handleDbError(error, 'delete-character');
       throw new Error('Connection error - character not deleted.');
     }
@@ -789,7 +748,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     return await findOpponent(activeCharacter);
   }, [activeCharacter]);
 
->>>>>>> origin/master
   const value: GameContextType = {
     activeCharacter,
     loading,
@@ -800,16 +758,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     logout,
     setCharacter,
     retryConnection,
-    executeFight,
+    useFight,
+    executeFight: useFight,
     findOpponent: findOpponentForPlayer,
     startMatchmaking: startMatchmakingForPlayer,
-    useFight,
-    findOpponent,
-    startMatchmaking,
->>>>>>> origin/master
     clearXpNotifications,
     allocateStatPoint,
-    rollLootbox,
+    rollLootbox: rollLootboxForPlayer,
     setAutoMode,
     deleteCharacter,
   };

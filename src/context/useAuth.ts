@@ -23,13 +23,13 @@ export const useAuth = ({
 }: UseAuthDeps) => {
   // Sync character with Supabase
   const syncCharacterWithSupabase = useCallback(async (character: Character): Promise<SyncResult> => {
-    if (!character.firestoreId) return { status: 'missing' };
+    if (!character.id) return { status: 'missing' };
 
     try {
       const { data, error } = await supabase
         .from('characters')
         .select('*')
-        .eq('id', character.firestoreId)
+        .eq('id', character.id)
         .single();
 
       if (error || !data) {
@@ -45,7 +45,7 @@ export const useAuth = ({
         status: 'ok',
         character: {
           ...supabaseData,
-          firestoreId: character.firestoreId,
+          id: character.id,
         },
       };
     } catch (error) {
@@ -76,7 +76,7 @@ export const useAuth = ({
 
       const fullChar = normalizeCharacter({
         ...convertFromSupabase(data),
-        firestoreId: data.id,
+        id: data.id,
       });
 
       persistCharacter(fullChar);

@@ -44,8 +44,8 @@ export const buildPendingOpponent = (opponent: Character): PendingFightOpponent 
     inventory: opponent.inventory ?? []
   };
 
-  if (opponent.firestoreId) {
-    base.firestoreId = opponent.firestoreId;
+  if (opponent.id) {
+    base.id = opponent.id;
   }
 
   if (typeof opponent.isBot === 'boolean') {
@@ -74,7 +74,7 @@ export const hydratePendingOpponent = (snapshot: PendingFightOpponent): Characte
     losses: snapshot.losses ?? 0,
     fightsLeft: snapshot.fightsLeft ?? 0,
     lastFightReset: snapshot.lastFightReset ?? Date.now(),
-    firestoreId: snapshot.firestoreId,
+    id: snapshot.id,
     isBot: snapshot.isBot,
     inventory: snapshot.inventory ?? []
   });

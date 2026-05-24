@@ -191,7 +191,6 @@ async function run() {
       const pageText = await page.locator('body').innerText()
       const isVictory = pageText.includes('VICTORY')
       const isDefeat = pageText.includes('DEFEAT')
-      const isDraw = pageText.includes('DRAW')
 
       const xpMatch = pageText.match(/(\d+)\s*XP/)
       const xpGained = xpMatch ? parseInt(xpMatch[1]) : null

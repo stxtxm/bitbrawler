@@ -22,7 +22,7 @@ export const useCharacterActions = ({
 }: UseCharacterActionsDeps) => {
   // Allocate a stat point
   const allocateStatPoint = useCallback(async (stat: StatKey): Promise<Character | null> => {
-    if (!activeCharacter?.firestoreId) return null;
+    if (!activeCharacter?.id) return null;
     if (!activeCharacter.statPoints || activeCharacter.statPoints <= 0) return null;
 
     const updatedChar = normalizeCharacter(applyStatPoint(activeCharacter, stat));
@@ -37,7 +37,7 @@ export const useCharacterActions = ({
           stat_points: updatedChar.statPoints,
           focus: updatedChar.focus,
         })
-        .eq('id', activeCharacter.firestoreId!);
+        .eq('id', activeCharacter.id!);
 
       persistCharacter(updatedChar);
       return updatedChar;
@@ -49,7 +49,7 @@ export const useCharacterActions = ({
 
   // Roll a lootbox
   const rollLootboxForPlayer = useCallback(async (): Promise<PixelItemAsset | null> => {
-    if (!activeCharacter?.firestoreId) return null;
+    if (!activeCharacter?.id) return null;
 
     const now = Date.now();
     if (!canRollLootbox(activeCharacter.lastLootRoll, now)) {
@@ -80,7 +80,7 @@ export const useCharacterActions = ({
           last_loot_roll: updatedChar.lastLootRoll,
           focus: updatedChar.focus,
         })
-        .eq('id', activeCharacter.firestoreId!);
+        .eq('id', activeCharacter.id!);
 
       persistCharacter(updatedChar);
       return item;
@@ -92,7 +92,7 @@ export const useCharacterActions = ({
 
   // Set auto mode
   const setAutoMode = useCallback(async (enabled: boolean): Promise<Character | null> => {
-    if (!activeCharacter?.firestoreId) return null;
+    if (!activeCharacter?.id) return null;
 
     const updatedChar = normalizeCharacter({
       ...activeCharacter,
@@ -105,7 +105,7 @@ export const useCharacterActions = ({
         .update({
           auto_mode: enabled,
         })
-        .eq('id', activeCharacter.firestoreId);
+        .eq('id', activeCharacter.id);
 
       persistCharacter(updatedChar);
       return updatedChar;
@@ -117,13 +117,13 @@ export const useCharacterActions = ({
 
   // Delete character
   const deleteCharacter = useCallback(async (): Promise<boolean> => {
-    if (!activeCharacter?.firestoreId) return false;
+    if (!activeCharacter?.id) return false;
 
     try {
       await supabase
         .from('characters')
         .delete()
-        .eq('id', activeCharacter.firestoreId);
+        .eq('id', activeCharacter.id);
 
       logout();
       return true;

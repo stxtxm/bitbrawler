@@ -48,7 +48,27 @@ jobs:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         run: |
           PROMPT=$(cat /tmp/prompt.txt | tr -d "'" | sed 's|/oc||g; s|/opencode||g' | xargs)
-          opencode run --dangerously-skip-permissions --model "opencode/deepseek-v4-flash-free" "$PROMPT"
+          MODELS=(
+            "opencode/deepseek-v4-flash-free"
+            "opencode/nemotron"
+            "opencode/big-pickle"
+          )
+
+          SUCCESS=0
+          for MODEL in "${MODELS[@]}"; do
+            echo "Trying model: $MODEL"
+            if opencode run --dangerously-skip-permissions --model "$MODEL" "$PROMPT"; then
+              echo "Model selected: $MODEL"
+              SUCCESS=1
+              break
+            fi
+            echo "Model failed: $MODEL"
+          done
+
+          if [ "$SUCCESS" -ne 1 ]; then
+            echo "All model attempts failed."
+            exit 1
+          fi
 
       - name: Push and create PR
         env:

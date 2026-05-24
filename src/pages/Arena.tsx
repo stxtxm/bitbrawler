@@ -1,30 +1,35 @@
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useGame } from '../context/GameContext';
 import { useConnectionGate } from '../hooks/useConnectionGate';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
-import { useFocusTrap } from '../hooks/useFocusTrap';
-import { useSound } from '../hooks/useSound';
->>>>>>> origin/master
 import ConnectionModal from '../components/ConnectionModal';
+import { PixelCharacter } from '../components/PixelCharacter';
 import { PixelIcon } from '../components/PixelIcon';
-import { getXpProgress, getMaxLevel } from '../utils/xpUtils';
+import { PixelItemIcon } from '../components/PixelItemIcon';
+import { getXpProgress, formatXpDisplay, getMaxLevel } from '../utils/xpUtils';
 import { StatKey } from '../utils/statUtils';
 import { CombatView } from '../components/CombatView';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
-import { applyEquipmentToCharacter } from '../utils/equipmentUtils';
-import LevelUpOverlay from '../components/LevelUpOverlay';
-import CharacterStats from '../components/CharacterStats';
-import FightButton from '../components/FightButton';
-import InventoryModal from '../components/InventoryModal';
-import SettingsModal from '../components/SettingsModal';
+import { applyEquipmentToCharacter, getEquipmentBonuses, getItemById } from '../utils/equipmentUtils';
+import { canRollLootbox } from '../utils/lootboxUtils';
+import { ItemStats, PixelItemAsset } from '../types/Item';
 
-type StatIconType = 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence' | 'focus';
+type SettingsLogEntry = {
+    date: number;
+    won: boolean;
+    direction: 'outgoing' | 'incoming';
+    displayName: string;
+};
+
+const formatSettingsLogDate = (timestamp: number) => {
+    const date = new Date(timestamp);
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+};
 
 const Arena = () => {
-    const { activeCharacter, logout, executeFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, allocateStatPoint, rollLootbox, setAutoMode, deleteCharacter } = useGame();
+    const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, allocateStatPoint, rollLootbox, setAutoMode, deleteCharacter } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
-    const { play: playSound, enabled: soundEnabled, volume: soundVolume, setEnabled: setSoundEnabled, setVolume: setSoundVolume } = useSound();
     const navigate = useNavigate();
     const isOnline = useOnlineStatus();
     const connectionMessage = 'Connect to battle and sync your progress.';
@@ -37,7 +42,15 @@ const Arena = () => {
     const [combatData, setCombatData] = useState<MatchmakingResult | null>(null);
     const [allocatingStat, setAllocatingStat] = useState<StatKey | null>(null);
     const [deferLevelUp, setDeferLevelUp] = useState(false);
+    const [lootboxRolling, setLootboxRolling] = useState(false);
+    const [lootboxResult, setLootboxResult] = useState<PixelItemAsset | null>(null);
+    const [inventoryHoveredId, setInventoryHoveredId] = useState<string | null>(null);
+    const [inventorySelectedId, setInventorySelectedId] = useState<string | null>(null);
     const [settingsOpen, setSettingsOpen] = useState(false);
+    const [settingsView, setSettingsView] = useState<'main' | 'logs'>('main');
+    const [autoModeUpdating, setAutoModeUpdating] = useState(false);
+    const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm'>('idle');
+    const [deletePending, setDeletePending] = useState(false);
 
     // Handle XP gain notification
     useEffect(() => {
@@ -59,58 +72,11 @@ const Arena = () => {
         if (lastLevelUp !== null) {
             setShowLevelUp(true);
             setDeferLevelUp(false);
-            playSound('levelup');
         }
     }, [lastLevelUp]);
 
-    // Combined fight history (moved before guard — uses optional chaining)
-    const combinedHistory: SettingsLogEntry[] = useMemo(
-        () => [
-            ...(activeCharacter?.fightHistory || []).map((fight) => ({
-                date: fight.date,
-                won: fight.won,
-                direction: 'outgoing' as const,
-                displayName: fight.opponentName,
-            })),
-            ...(activeCharacter?.incomingFightHistory || []).map((fight) => ({
-                date: fight.date,
-                won: fight.won,
-                direction: 'incoming' as const,
-                displayName: fight.attackerName,
-            })),
-        ]
-            .sort((a, b) => b.date - a.date)
-            .slice(0, 20),
-        [activeCharacter?.fightHistory, activeCharacter?.incomingFightHistory]
-    );
-
-    // Defer level-up when no stat points remain
-    useEffect(() => {
-        if ((activeCharacter?.statPoints || 0) === 0) {
-            setDeferLevelUp(false);
-        }
-    }, [activeCharacter?.statPoints]);
-
-    // Reset lootbox/inventory state when closing
-    useEffect(() => {
-        if (!inventoryOpen) {
-            setLootboxResult(null);
-            setLootboxRolling(false);
-            setInventoryHoveredId(null);
-            setInventorySelectedId(null);
-        }
-    }, [inventoryOpen]);
-
-    // Reset settings state when closing
-    useEffect(() => {
-        if (!settingsOpen) {
-            setSettingsView('main');
-            setDeleteStep('idle');
-            setDeletePending(false);
-        }
-    }, [settingsOpen]);
-
     if (!activeCharacter) {
+        // Redirection vers la home si pas de perso (ex: après un logout)
         setTimeout(() => navigate('/'), 100);
         return <div className="loading-screen">ACCESS DENIED</div>;
     }
@@ -126,7 +92,11 @@ const Arena = () => {
     const canCloseLevelUp = pendingStatPoints === 0;
     const shouldShowLevelUp = showLevelUp || (pendingStatPoints > 0 && !deferLevelUp);
     const hasLevelInfo = lastLevelUp !== null;
-
+    const inventory = activeCharacter.inventory || [];
+    const inventoryCapacity = 24;
+    const inventoryFull = inventory.length >= inventoryCapacity;
+    const canRollDailyLoot = canRollLootbox(activeCharacter.lastLootRoll, Date.now());
+    type StatIconType = 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence' | 'focus';
     const statOptions: Array<{ key: StatKey; label: string; value: number; hint: string; icon: StatIconType }> = [
         { key: 'strength', label: 'STR', value: effectiveCharacter.strength, hint: 'Damage', icon: 'strength' },
         { key: 'vitality', label: 'VIT', value: effectiveCharacter.vitality, hint: 'HP / Defense', icon: 'vitality' },
@@ -160,23 +130,42 @@ const Arena = () => {
     const totalBonusEntries = bonusOrder
         .map((key) => ({ key, value: totalBonus[key] || 0 }))
         .filter((entry) => entry.value > 0);
->>>>>>> origin/master
+    const combinedHistory: SettingsLogEntry[] = useMemo(
+        () => [
+            ...(activeCharacter.fightHistory || []).map((fight) => ({
+                date: fight.date,
+                won: fight.won,
+                direction: 'outgoing' as const,
+                displayName: fight.opponentName,
+            })),
+            ...(activeCharacter.incomingFightHistory || []).map((fight) => ({
+                date: fight.date,
+                won: fight.won,
+                direction: 'incoming' as const,
+                displayName: fight.attackerName,
+            })),
+        ]
+            .sort((a, b) => b.date - a.date)
+            .slice(0, 20),
+        [activeCharacter.fightHistory, activeCharacter.incomingFightHistory]
+    );
 
     const handleAllocateStat = async (stat: StatKey) => {
         if (allocatingStat || pendingStatPoints <= 0) return;
-        if (isOfflineMode) { openModal(connectionMessage); return; }
+
+        if (isOfflineMode) {
+            openModal(connectionMessage);
+            return;
+        }
+
         setAllocatingStat(stat);
         try {
             await allocateStatPoint(stat);
-        } catch (error) {
-            openModal(error instanceof Error ? error.message : connectionMessage);
+        } catch (error: any) {
+            openModal(error.message || connectionMessage);
         } finally {
             setAllocatingStat(null);
         }
-        try { await allocateStatPoint(stat); }
-        catch (error: any) { openModal(error.message || connectionMessage); }
-        finally { setAllocatingStat(null); }
->>>>>>> origin/master
     };
 
     const handleCloseLevelUp = () => {
@@ -196,99 +185,11 @@ const Arena = () => {
         setDeferLevelUp(false);
     };
 
-    const handleLootboxRoll = async () => {
-        if (lootboxRolling) return;
-        if (isOfflineMode) {
-            openModal(connectionMessage);
-            return;
-        }
-        const canProceed = await ensureConnection(connectionMessage);
-        if (!canProceed) return;
-
-        setLootboxRolling(true);
-        setLootboxResult(null);
-
-        setTimeout(async () => {
-            try {
-                const item = await rollLootbox();
-                if (item) {
-                    setLootboxResult(item);
-                    setInventorySelectedId(item.id);
-                    setInventoryHoveredId(item.id);
-                }
-            } catch (error) {
-                openModal(error instanceof Error ? error.message : connectionMessage);
-            } finally {
-                setLootboxRolling(false);
-            }
-        }, 900);
-    };
-
-    const handleCloseLootboxResult = () => {
-        setLootboxResult(null);
-    };
-
-    const handleSelectItem = (itemId: string) => {
-        setInventorySelectedId(itemId);
-    };
-
-    const handleOpenHistoryFromSettings = () => {
-        setSettingsView('logs');
-    };
-
-    const handleReturnToSettings = () => {
-        setSettingsView('main');
-    };
-
-    const autoModeEnabled = !!activeCharacter?.isBot;
-
-    const handleToggleAutoMode = async () => {
-        if (autoModeUpdating) return;
-        if (isOfflineMode) {
-            openModal(connectionMessage);
-            return;
-        }
-        const canProceed = await ensureConnection(connectionMessage);
-        if (!canProceed) return;
-
-        setAutoModeUpdating(true);
-        try {
-            await setAutoMode(!autoModeEnabled);
-        } catch (error) {
-            openModal(error instanceof Error ? error.message : connectionMessage);
-        } finally {
-            setAutoModeUpdating(false);
-        }
-    };
-
-    const handleDeleteCharacter = async () => {
-        if (deletePending) return;
-        if (deleteStep === 'idle') {
-            setDeleteStep('confirm');
-            return;
-        }
-        if (isOfflineMode) {
-            openModal(connectionMessage);
-            return;
-        }
-        const canProceed = await ensureConnection(connectionMessage);
-        if (!canProceed) return;
-
-        setDeletePending(true);
-        try {
-            await deleteCharacter();
-            setSettingsOpen(false);
-            setTimeout(() => navigate('/'), 0);
-        } catch (error) {
-            openModal(error instanceof Error ? error.message : connectionMessage);
-        } finally {
-            setDeletePending(false);
-        }
-    };
     useEffect(() => {
-        if (pendingStatPoints === 0) setDeferLevelUp(false);
+        if (pendingStatPoints === 0) {
+            setDeferLevelUp(false);
+        }
     }, [pendingStatPoints]);
->>>>>>> origin/master
 
     useEffect(() => {
         if (!inventoryOpen) {
@@ -298,13 +199,6 @@ const Arena = () => {
             setInventorySelectedId(null);
         }
     }, [inventoryOpen]);
-
-    // Play lootbox sound when result appears
-    useEffect(() => {
-        if (lootboxResult) {
-            playSound('lootbox');
-        }
-    }, [lootboxResult]);
 
     useEffect(() => {
         if (!settingsOpen) {
@@ -404,23 +298,25 @@ const Arena = () => {
         }
     };
 
->>>>>>> origin/master
     const handleFight = async () => {
         if (matchmaking || hasPendingFight) return;
         const canProceed = await ensureConnection(connectionMessage);
         if (!canProceed) return;
 
-        playSound('click');
         if (window.navigator.vibrate) window.navigator.vibrate(80);
         setMatchmaking(true);
 
         try {
+            // Find an opponent
             const match = await startMatchmaking();
+
             if (!match) {
                 openModal('No opponents found! Try again later.');
                 setMatchmaking(false);
                 return;
             }
+
+            // Start combat with the matched opponent
             setCombatData(match);
             setMatchmaking(false);
         } catch (error) {
@@ -433,15 +329,11 @@ const Arena = () => {
     const handleCombatComplete = async (won: boolean, xpGained: number) => {
         try {
             const opponentName = combatData?.opponent.name || 'UNKNOWN';
-            const opponentId = combatData?.opponent.firestoreId || '';
-            await executeFight(won, xpGained, opponentName, opponentId);
-        } catch (error) {
             const opponentId = combatData?.opponent.id || '';
             await useFight(won, xpGained, opponentName, opponentId);
         } catch (error: any) {
->>>>>>> origin/master
             console.error('Fight result save failed:', error);
-            openModal(error instanceof Error ? error.message : connectionMessage);
+            openModal(error.message || connectionMessage);
         }
     };
 
@@ -449,24 +341,12 @@ const Arena = () => {
         setCombatData(null);
     };
 
-    // Focus traps for modals (must be called after all handlers and computed values)
-    const levelUpRef = useFocusTrap<HTMLDivElement>(shouldShowLevelUp, canCloseLevelUp ? handleCloseLevelUp : undefined);
-    const inventoryRef = useFocusTrap<HTMLDivElement>(inventoryOpen, () => setInventoryOpen(false));
-    const settingsRef = useFocusTrap<HTMLDivElement>(settingsOpen, () => setSettingsOpen(false));
-    const lootboxRef = useFocusTrap<HTMLDivElement>(!!lootboxResult, handleCloseLootboxResult);
 
     return (
         <div className="container retro-container arena-container">
-            <main id="main-content">
             {/* Level Up Notification (Dopamine hit!) */}
             {shouldShowLevelUp && (
-                <div
-                    className="level-up-pop-overlay"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="Level up"
-                    ref={levelUpRef}
-                >
+                <div className="level-up-pop-overlay">
                     <div className="level-up-card">
                         <div className="card-shine"></div>
                         <div className="level-up-badge">NEW RANK!</div>
@@ -535,26 +415,6 @@ const Arena = () => {
                     </div>
                 </div>
             )}
-    const handleCloseCombat = () => setCombatData(null);
-
-    return (
-        <div className="container retro-container arena-container">
-            <LevelUpOverlay
-                shouldShowLevelUp={shouldShowLevelUp}
-                activeCharacter={activeCharacter}
-                effectiveCharacter={effectiveCharacter}
-                lastLevelUp={lastLevelUp}
-                pendingStatPoints={pendingStatPoints}
-                isOfflineMode={isOfflineMode}
-                allocatingStat={allocatingStat}
-                statOptions={statOptions}
-                canCloseLevelUp={canCloseLevelUp}
-                hasLevelInfo={hasLevelInfo}
-                handleAllocateStat={handleAllocateStat}
-                handleCloseLevelUp={handleCloseLevelUp}
-                handleDeferLevelUp={handleDeferLevelUp}
-            />
->>>>>>> origin/master
 
             <header className="arena-header">
                 <div className="char-info">
@@ -567,7 +427,7 @@ const Arena = () => {
                 <div className="header-actions">
                     <button
                         className="button icon-btn"
-                        onClick={() => { playSound('click'); setSettingsOpen(true); }}
+                        onClick={() => setSettingsOpen(true)}
                         title="Settings"
                         aria-label="Settings"
                     >
@@ -575,22 +435,18 @@ const Arena = () => {
                     </button>
                     <button
                         className="button icon-btn inventory-btn"
-                        onClick={() => { playSound('click'); setInventoryOpen(true); }}
+                        onClick={() => setInventoryOpen(true)}
                         title="Inventory"
                         aria-label="Inventory"
                     >
-                    <button className="button icon-btn" onClick={() => setSettingsOpen(true)} title="Settings" aria-label="Settings">
-                        <PixelIcon type="gear" size={26} />
-                    </button>
-                    <button className="button icon-btn inventory-btn" onClick={() => setInventoryOpen(true)} title="Inventory" aria-label="Inventory">
->>>>>>> origin/master
                         <PixelIcon type="backpack" size={26} />
                     </button>
-                    <button className="button icon-btn" onClick={() => { logout(); setTimeout(() => navigate('/'), 0); }} title="Logout" aria-label="Logout">
+                    <button className="button icon-btn" onClick={() => { logout(); setTimeout(() => navigate('/'), 0); }} title="Logout">
                         <PixelIcon type="power" size={26} />
                     </button>
                 </div>
             </header>
+
 
             {isOfflineMode && (
                 <div className="offline-banner" role="status" aria-live="polite">
@@ -621,7 +477,7 @@ const Arena = () => {
                                 <div className="xp-bar-shine"></div>
                             </div>
                             {showXpGain && lastXpGain && (
-                                <div className="xp-gain-popup" aria-live="polite" aria-atomic="true">+{lastXpGain} XP</div>
+                                <div className="xp-gain-popup">+{lastXpGain} XP</div>
                             )}
                         </div>
                         {isMaxLevel && <span className="max-level-badge">★ MAX LEVEL ★</span>}
@@ -688,45 +544,14 @@ const Arena = () => {
                     </button>
                 </div>
 
-                <CharacterStats
-                    activeCharacter={activeCharacter}
-                    effectiveCharacter={effectiveCharacter}
-                    xpProgress={xpProgress}
-                    xpBarAnimating={xpBarAnimating}
-                    showXpGain={showXpGain}
-                    lastXpGain={lastXpGain}
-                    isMaxLevel={isMaxLevel}
-                    pendingStatPoints={pendingStatPoints}
-                    statOptions={statOptions}
-                    handleOpenLevelUp={handleOpenLevelUp}
-                />
-                <FightButton
-                    canFight={canFight}
-                    matchmaking={matchmaking}
-                    hasPendingFight={hasPendingFight}
-                    isOfflineMode={isOfflineMode}
-                    fightsLeft={fightsLeft}
-                    handleFight={handleFight}
-                />
->>>>>>> origin/master
             </div>
-
             <ConnectionModal
                 open={connectionModal.open}
                 message={connectionModal.message}
                 onClose={closeModal}
             />
             {inventoryOpen && (
-                <div
-                    className="retro-modal-overlay inventory-overlay"
-                    onClick={() => setInventoryOpen(false)}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="Inventory"
-                    ref={inventoryRef}
-                >
                 <div className="retro-modal-overlay inventory-overlay" onClick={() => setInventoryOpen(false)}>
->>>>>>> origin/master
                     <div className={`retro-modal inventory-modal ${lootboxRolling ? 'lootbox-active' : ''}`} onClick={(e) => e.stopPropagation()}>
                         <div className="inventory-header">
                             <h2 className="inventory-title">INVENTORY</h2>
@@ -836,9 +661,7 @@ const Arena = () => {
                             </div>
                         </div>
                         {lootboxResult && (
-                            <div className="lootbox-result-overlay" role="dialog" aria-modal="true" aria-label="Lootbox reward" aria-live="polite" onClick={handleCloseLootboxResult} ref={lootboxRef}>
                             <div className="lootbox-result-overlay" role="dialog" aria-label="Lootbox reward" onClick={handleCloseLootboxResult}>
->>>>>>> origin/master
                                 <div className={`lootbox-result-card rarity-${lootboxResult.rarity}`} onClick={handleCloseLootboxResult}>
                                     <div className="lootbox-result-glow"></div>
                                     <div className="lootbox-result-title">NEW ITEM</div>
@@ -881,16 +704,7 @@ const Arena = () => {
             )}
 
             {settingsOpen && (
-                <div
-                    className="retro-modal-overlay settings-overlay"
-                    onClick={() => setSettingsOpen(false)}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="Settings"
-                    ref={settingsRef}
-                >
                 <div className="retro-modal-overlay settings-overlay" onClick={() => setSettingsOpen(false)}>
->>>>>>> origin/master
                     <div className="retro-modal settings-modal" onClick={(e) => e.stopPropagation()}>
                         <div className="inventory-header settings-header">
                             <div className="settings-title-row">
@@ -964,44 +778,6 @@ const Arena = () => {
                                     <div className="settings-section">
                                         <div className="settings-row">
                                             <div className="settings-label">
-                                                <span>SOUND FX</span>
-                                                <span className="settings-sub">8-bit sound effects for actions.</span>
-                                            </div>
-                                            <button
-                                                className={`pixel-switch ${soundEnabled ? 'on' : 'off'}`}
-                                                onClick={() => setSoundEnabled(!soundEnabled)}
-                                                role="switch"
-                                                aria-checked={soundEnabled}
-                                                aria-label="Sound FX"
-                                            >
-                                                <span className="switch-knob" />
-                                                <span className="switch-text">{soundEnabled ? 'ON' : 'OFF'}</span>
-                                            </button>
-                                        </div>
-                                        {soundEnabled && (
-                                            <div className="sound-volume-row">
-                                                <span className="sound-volume-label">VOLUME</span>
-                                                <input
-                                                    type="range"
-                                                    min="0"
-                                                    max="1"
-                                                    step="0.05"
-                                                    value={soundVolume}
-                                                    onChange={(e) => setSoundVolume(parseFloat(e.target.value))}
-                                                    className="sound-slider"
-                                                    aria-label="Sound volume"
-                                                />
-                                                <span className="sound-volume-value">{Math.round(soundVolume * 100)}%</span>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <div className="settings-divider" />
-
-                                    <div className="settings-section">
-                                        <div className="settings-row">
-                                            <div className="settings-label">
->>>>>>> origin/master
                                                 <span>COMBAT LOGS</span>
                                                 <span className="settings-sub">Review your last 20 outgoing and incoming encounters.</span>
                                             </div>
@@ -1042,28 +818,6 @@ const Arena = () => {
                     </div>
                 </div>
             )}
-            </main>
->>>>>>> origin/master
-            <InventoryModal
-                isOpen={inventoryOpen}
-                activeCharacter={activeCharacter}
-                isOfflineMode={isOfflineMode}
-                onClose={() => setInventoryOpen(false)}
-                rollLootbox={rollLootbox}
-                openModal={openModal}
-            />
-            <SettingsModal
-                isOpen={settingsOpen}
-                activeCharacter={activeCharacter}
-                isOfflineMode={isOfflineMode}
-                onClose={() => setSettingsOpen(false)}
-                setAutoMode={setAutoMode}
-                deleteCharacter={deleteCharacter}
-                openModal={openModal}
-                ensureConnection={() => ensureConnection(connectionMessage)}
-                navigate={navigate}
-            />
->>>>>>> origin/master
             {combatData && activeCharacter && (
                 <CombatView
                     player={applyEquipmentToCharacter(activeCharacter)}

@@ -6,25 +6,21 @@
     "dev-agent": {
       "description": "Agent de dev autonome. Implemente, review, merge.",
       "mode": "primary",
-      "model": "opencode/deepseek-v4-flash-free",
       "permission": { "edit": "allow", "bash": "allow" }
     },
     "reviewer": {
       "description": "Agent de revue de code. Review les PRs et valide la qualite.",
       "mode": "subagent",
-      "model": "opencode/deepseek-v4-flash-free",
       "permission": { "edit": "deny", "bash": "ask" }
     },
     "tech-lead": {
       "description": "Tech Lead. Merge les PRs auto-generees, lit les stats QA, analyse le code, cree des issues avec /oc. Tourne 1x/jour a 21h.",
       "mode": "subagent",
-      "model": "opencode/deepseek-v4-flash-free",
       "permission": { "edit": "allow", "bash": "allow" }
     },
     "qa-tester": {
       "description": "QA Tester. Execute les tests Playwright E2E sur le site live (bitbrawler.vercel.app). 5 tours/jour.",
       "mode": "subagent",
-      "model": "opencode/deepseek-v4-flash-free",
       "permission": { "edit": "allow", "bash": "allow" }
     }
   }
