@@ -33,5 +33,43 @@
     "load_times_ms": {
       "home": 938
     }
+  },
+  {
+    "date": "2026-05-24T18:52:13.807Z",
+    "run": "2026-05-24",
+    "character": "QA20260524",
+    "character_action": "created",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 100,
+        "fight_duration_ms": 13356
+      },
+      {
+        "result": "defeat",
+        "xp": 100,
+        "fight_duration_ms": 20024
+      }
+    ],
+    "lootbox": {
+      "available": false
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "final_stats": {
+      "level": null,
+      "xp": 40,
+      "wins": null,
+      "losses": null
+    },
+    "errors": [
+      "Fight 3: timeout waiting for result",
+      "Fight 4: timeout waiting for result",
+      "Fight 5: timeout waiting for result"
+    ],
+    "load_times_ms": {
+      "home": 1685,
+      "arena": 2967
+    }
   }
 ]
