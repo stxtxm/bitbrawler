@@ -46,11 +46,6 @@ async function sleep(ms) {
 }
 
 async function run() {
-  if (!config.qaPassword) {
-    console.error('❌ QA_PASSWORD not set')
-    process.exit(1)
-  }
-
   if (!existsSync(SCREENSHOTS_DIR)) {
     mkdirSync(SCREENSHOTS_DIR, { recursive: true })
   }
@@ -119,16 +114,10 @@ async function run() {
       await nameInput.fill(charName)
       console.log('   Entered character name')
 
-      const passwordInput = page.locator('input[name="password"], input[type="password"]').first()
-      if (await passwordInput.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await passwordInput.fill(config.qaPassword)
-        console.log('   Entered password')
-      }
-
       const submitBtn = page.locator('button:has-text("FIGHT"), button:has-text("LOGIN"), button:has-text("START")').first()
       await submitBtn.click()
       await page.waitForTimeout(2000)
-      console.log('   Submitted login')
+      console.log('   Submitted')
     }
 
     await page.waitForTimeout(3000)

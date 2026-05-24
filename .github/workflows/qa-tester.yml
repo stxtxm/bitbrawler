@@ -32,7 +32,6 @@ jobs:
         continue-on-error: true
         run: node qa/qa-bot.mjs
         env:
-          QA_PASSWORD: ${{ secrets.QA_PASSWORD }}
           QA_HEADLESS: 'true'
 
       - name: Commit QA stats
