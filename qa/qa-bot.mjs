@@ -105,6 +105,30 @@ async function readBodyText(page) {
   return page.locator('body').innerText().catch(() => '')
 }
 
+async function readArenaStatus(page) {
+  const bodyText = await readBodyText(page)
+  const energyMatch = bodyText.match(/(\d+)\s*\/\s*5\s*AVAILABLE/i)
+  const fightsAvailable = energyMatch ? parseInt(energyMatch[1], 10) : null
+  const giantFightBtn = page.locator('button.primary-btn.giant-btn').first()
+  const fightButtonVisible = await giantFightBtn.isVisible({ timeout: 1000 }).catch(() => false)
+  const fightButtonLabel = fightButtonVisible
+    ? ((await giantFightBtn.textContent().catch(() => '')) || '').trim().toUpperCase()
+    : ''
+  const isResting = bodyText.includes('REST NOW') || fightButtonLabel.includes('REST NOW')
+  const isResolving = bodyText.includes('RESOLVING') || fightButtonLabel.includes('RESOLVING')
+  const hasFightCta = fightButtonLabel.includes('FIGHT')
+
+  return {
+    bodyText,
+    fightsAvailable,
+    fightButtonVisible,
+    fightButtonLabel,
+    isResting,
+    isResolving,
+    hasFightCta,
+  }
+}
+
 async function waitForArena(page, timeout = 15000) {
   const startedAt = Date.now()
   try {
@@ -279,12 +303,144 @@ async function syncAutoMode(page, desiredEnabled) {
   return true
 }
 
+function persistQaState(runKey, character, source, exhausted) {
+  saveState({
+    run: runKey,
+    character,
+    exhausted,
+    updated_at: new Date().toISOString(),
+    source,
+  })
+}
+
+async function maybeReplaceExhaustedCharacter(page, runKey, runRecord, reason) {
+  console.log(`♻️ Replacing QA fighter because ${reason}...`)
+  const previousCharacter = runRecord.character
+  const replacement = await createCharacterFromAppGenerator(page)
+  runRecord.character = replacement.character
+  runRecord.character_action = previousCharacter
+    ? `created-after-${reason}`
+    : replacement.outcome
+  runRecord.replaced_character = previousCharacter
+  if (replacement.arenaLoadMs !== null) {
+    runRecord.load_times_ms.arena = replacement.arenaLoadMs
+    console.log(`   Replacement arena loaded in ${runRecord.load_times_ms.arena}ms`)
+  }
+  console.log(`🎭 Active QA fighter: ${runRecord.character}`)
+  persistQaState(runKey, runRecord.character, runRecord.character_action, false)
+  await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-03-arena-replacement.png`) })
+}
+
+async function runFightSequence(page, runKey, runRecord) {
+  let recreatedForExhaustion = false
+
+  for (let i = 0; i < config.fightsPerRun; i++) {
+    const arenaStatus = await readArenaStatus(page)
+
+    if (
+      arenaStatus.fightsAvailable !== null &&
+      arenaStatus.fightsAvailable <= 0
+    ) {
+      console.log('   No battle energy available for current fighter')
+      if (!recreatedForExhaustion) {
+        await maybeReplaceExhaustedCharacter(page, runKey, runRecord, 'exhausted-energy')
+        recreatedForExhaustion = true
+        i = -1
+        continue
+      }
+      break
+    }
+
+    if (arenaStatus.isResting || !arenaStatus.hasFightCta) {
+      console.log(`   Fight CTA not available (${arenaStatus.fightButtonLabel || 'no label'})`)
+      if (!recreatedForExhaustion) {
+        await maybeReplaceExhaustedCharacter(page, runKey, runRecord, 'missing-fight-cta')
+        recreatedForExhaustion = true
+        i = -1
+        continue
+      }
+      break
+    }
+
+    console.log(`⚔️ Fight ${i + 1}/${config.fightsPerRun}...`)
+
+    const fightBtn = page.locator('button.primary-btn.giant-btn').first()
+    const fightStart = Date.now()
+    await fightBtn.click()
+    console.log('   Fight started, waiting for result...')
+
+    await sleep(1000)
+
+    try {
+      await page.waitForFunction(
+        () => {
+          const text = document.body.innerText
+          return text.includes('VICTORY') || text.includes('DEFEAT') || text.includes('DRAW')
+        },
+        { timeout: 25000 }
+      )
+    } catch {
+      console.log('   Fight result not detected, taking screenshot')
+      await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-timeout.png`) })
+      runRecord.errors.push(`Fight ${i + 1}: timeout waiting for result`)
+
+      const timeoutArenaStatus = await readArenaStatus(page)
+      if (
+        i === 0 &&
+        runRecord.fights.length === 0 &&
+        !recreatedForExhaustion &&
+        (
+          timeoutArenaStatus.isResting ||
+          (timeoutArenaStatus.fightsAvailable !== null && timeoutArenaStatus.fightsAvailable <= 0) ||
+          !timeoutArenaStatus.hasFightCta
+        )
+      ) {
+        await maybeReplaceExhaustedCharacter(page, runKey, runRecord, 'timeout-on-exhausted-fighter')
+        recreatedForExhaustion = true
+        i = -1
+        continue
+      }
+
+      await page.goto(config.baseUrl, { waitUntil: 'networkidle' }).catch(() => {})
+      await page.waitForTimeout(3000)
+      continue
+    }
+
+    const fightDuration = Date.now() - fightStart
+
+    const pageText = await page.locator('body').innerText()
+    const isVictory = pageText.includes('VICTORY')
+    const isDefeat = pageText.includes('DEFEAT')
+
+    const xpMatch = pageText.match(/(\d+)\s*XP/)
+    const xpGained = xpMatch ? parseInt(xpMatch[1]) : null
+
+    console.log(`   Result: ${isVictory ? '✅ VICTORY' : isDefeat ? '❌ DEFEAT' : '🤝 DRAW'} (${fightDuration}ms)`)
+
+    runRecord.fights.push({
+      result: isVictory ? 'victory' : isDefeat ? 'defeat' : 'draw',
+      xp: xpGained,
+      fight_duration_ms: fightDuration,
+    })
+
+    await page.screenshot({
+      path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-${isVictory ? 'win' : isDefeat ? 'loss' : 'draw'}.png`),
+    })
+
+    const continueBtn = page.locator('button:has-text("CONTINUE"), button:has-text("CLOSE"), button:has-text("OK")').first()
+    if (await continueBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await continueBtn.click()
+      await page.waitForTimeout(1500)
+    }
+  }
+}
+
 async function run() {
   const now = new Date()
   const runKey = dateKey(now)
   const enableAutoMode = shouldEnableAutoMode(now)
   const state = loadState()
-  const savedCharacterName = state.run === runKey ? state.character : null
+  const savedCharacterName = state.run === runKey && state.exhausted !== true ? state.character : null
 
   console.log('═══════════════════════════════════════════')
   console.log('  🤖 QA Bot starting')
@@ -298,6 +454,7 @@ async function run() {
   console.log(`    timeZone:       ${QA_TIME_ZONE}`)
   console.log(`    runKey:         ${runKey}`)
   console.log(`    savedFighter:   ${savedCharacterName || 'none'}`)
+  console.log(`    savedExhausted: ${state.run === runKey ? String(state.exhausted === true) : 'false'}`)
   console.log(`    autoMode:       ${enableAutoMode ? 'ON' : 'OFF'}`)
   console.log(`    headless:       ${config.headless}`)
   console.log(`    slowMo:         ${config.slowMo}`)
@@ -339,6 +496,7 @@ async function run() {
     run: runKey,
     character: null,
     character_action: null,
+    replaced_character: null,
     fights: [],
     lootbox: null,
     auto_mode_enabled: false,
@@ -366,75 +524,11 @@ async function run() {
       console.log(`   Arena loaded in ${runRecord.load_times_ms.arena}ms (${authResult.outcome})`)
     }
     console.log(`🎭 Active QA fighter: ${runRecord.character}`)
-
-    saveState({
-      run: runKey,
-      character: runRecord.character,
-      updated_at: new Date().toISOString(),
-      source: authResult.outcome,
-    })
+    persistQaState(runKey, runRecord.character, authResult.outcome, false)
 
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-03-arena.png`) })
 
-    for (let i = 0; i < config.fightsPerRun; i++) {
-      console.log(`⚔️ Fight ${i + 1}/${config.fightsPerRun}...`)
-
-      const fightBtn = page.locator('button:has-text("FIGHT"), button:has-text("BATTLE")').first()
-      if (!(await fightBtn.isVisible({ timeout: 3000 }).catch(() => false))) {
-        console.log('   No FIGHT button (might be out of fights or in cooldown)')
-        break
-      }
-
-      const fightStart = Date.now()
-      await fightBtn.click()
-      console.log('   Fight started, waiting for result...')
-
-      await sleep(1000)
-
-      try {
-        await page.waitForFunction(
-          () => {
-            const text = document.body.innerText
-            return text.includes('VICTORY') || text.includes('DEFEAT') || text.includes('DRAW')
-          },
-          { timeout: 25000 }
-        )
-      } catch {
-        console.log('   Fight result not detected, taking screenshot')
-        await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-timeout.png`) })
-        runRecord.errors.push(`Fight ${i + 1}: timeout waiting for result`)
-        await page.goto(config.baseUrl, { waitUntil: 'networkidle' }).catch(() => {})
-        await page.waitForTimeout(3000)
-        continue
-      }
-
-      const fightDuration = Date.now() - fightStart
-
-      const pageText = await page.locator('body').innerText()
-      const isVictory = pageText.includes('VICTORY')
-      const isDefeat = pageText.includes('DEFEAT')
-
-      const xpMatch = pageText.match(/(\d+)\s*XP/)
-      const xpGained = xpMatch ? parseInt(xpMatch[1]) : null
-
-      console.log(`   Result: ${isVictory ? '✅ VICTORY' : isDefeat ? '❌ DEFEAT' : '🤝 DRAW'} (${fightDuration}ms)`)
-
-      runRecord.fights.push({
-        result: isVictory ? 'victory' : isDefeat ? 'defeat' : 'draw',
-        xp: xpGained,
-        fight_duration_ms: fightDuration,
-      })
-
-      await page.screenshot({
-        path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-${isVictory ? 'win' : isDefeat ? 'loss' : 'draw'}.png`),
-      })
-
-      const continueBtn = page.locator('button:has-text("CONTINUE"), button:has-text("CLOSE"), button:has-text("OK")').first()
-      if (await continueBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await continueBtn.click()
-        await page.waitForTimeout(1500)
-      }
-    }
+    await runFightSequence(page, runKey, runRecord)
 
     console.log('🎁 Checking lootbox...')
     const lootboxBtn = page.locator('button:has-text("LOOT"), button:has-text("LOOTBOX"), [class*="loot"]').first()
@@ -479,6 +573,13 @@ async function run() {
       losses: lossesMatch ? parseInt(lossesMatch[1]) : null,
     }
     console.log('   Final stats:', JSON.stringify(runRecord.final_stats))
+
+    const finalArenaStatus = await readArenaStatus(page)
+    const fighterExhausted =
+      finalArenaStatus.isResting ||
+      (finalArenaStatus.fightsAvailable !== null && finalArenaStatus.fightsAvailable <= 0)
+    persistQaState(runKey, runRecord.character, runRecord.character_action, fighterExhausted)
+    console.log(`   Fighter exhausted for today: ${fighterExhausted ? 'yes' : 'no'}`)
 
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-05-final.png`) })
 
