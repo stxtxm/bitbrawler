@@ -27,9 +27,7 @@ jobs:
             exit 0
           fi
 
-          NEW_BODY="/oc
-
-$BODY"
+          NEW_BODY=$(printf "/oc\n\n%s" "$BODY")
 
           gh issue edit "${{ github.event.issue.number }}" --body "$NEW_BODY"
           echo "Added /oc trigger to issue #${{ github.event.issue.number }}."
