@@ -28,7 +28,7 @@ export function convertFromSupabase(row: CharacterRow): Character {
     lastLootRoll: row.last_loot_roll,
     incomingFightHistory: row.incoming_fight_history,
     isBot: row.is_bot,
-    firestoreId: row.id,
+    id: row.id,
   };
 }
 

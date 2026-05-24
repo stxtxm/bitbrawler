@@ -15,7 +15,7 @@ export interface IncomingFightHistory {
 }
 
 export interface PendingFightOpponent {
-  firestoreId?: string;
+  id?: string;
   name: string;
   gender: 'male' | 'female';
   seed: string;
@@ -45,7 +45,7 @@ export interface PendingFight {
 }
 
 export interface Character {
-  id?: number;
+  id?: string;
   seed: string;
   name: string;
   gender: 'male' | 'female';
@@ -66,24 +66,16 @@ export interface Character {
 
   wins: number;
   losses: number;
-  avatar?: string; // Optional fallback
 
   // Daily System
   fightsLeft: number;
   lastFightReset: number; // Timestamp
-  battleCount?: number;
-  firestoreId?: string; // For updates
   isBot?: boolean; // To identify automated characters
   fightHistory?: FightHistory[];
   incomingFightHistory?: IncomingFightHistory[]; // Incoming attacks (no XP/progression impact)
-  foughtToday?: string[]; // Array of firestoreIds fought today
+  foughtToday?: string[]; // Array of ids fought today
   statPoints?: number; // Unspent stat points from level-ups
   inventory?: string[]; // Item ids
-  equipped?: {
-    weapon?: string;
-    armor?: string;
-    accessory?: string;
-  };
   lastLootRoll?: number; // Timestamp (UTC) of daily lootbox roll
   pendingFight?: PendingFight;
 }

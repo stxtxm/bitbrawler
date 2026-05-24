@@ -50,7 +50,7 @@ export function createQueryBuilder(initialValue?: MockSupabaseResolvedValue) {
 
 export function characterToSupabaseRow(char: any): any {
   return {
-    id: char.firestoreId || 'test-id',
+    id: char.id || 'test-id',
     name: char.name,
     gender: char.gender,
     seed: char.seed,

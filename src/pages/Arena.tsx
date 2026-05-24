@@ -329,7 +329,7 @@ const Arena = () => {
     const handleCombatComplete = async (won: boolean, xpGained: number) => {
         try {
             const opponentName = combatData?.opponent.name || 'UNKNOWN';
-            const opponentId = combatData?.opponent.firestoreId || '';
+            const opponentId = combatData?.opponent.id || '';
             await useFight(won, xpGained, opponentName, opponentId);
         } catch (error: any) {
             console.error('Fight result save failed:', error);
