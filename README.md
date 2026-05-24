@@ -53,7 +53,7 @@ Utilise `/oc` ou `/opencode` dans une issue/PR pour declencher un agent.
 ## Project Structure
 ```
 src/
-  components/        UI building blocks
+  components/        UI building blocks (includes Footer)
   config/            Supabase + combat balancing
   context/           Game state and persistence
   hooks/             Online status and connection gates
