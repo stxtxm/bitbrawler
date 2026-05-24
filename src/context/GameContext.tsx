@@ -42,6 +42,112 @@ export interface GameContextType {
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
+// Constants
+const LOCAL_STORAGE_KEY = 'bitbrawler_active_char';
+const INVENTORY_CAPACITY = 24;
+const COMBAT_LOG_HISTORY_CAP = 20;
+
+const normalizeCharacter = (character: Character): Character => {
+  return {
+    ...character,
+    focus: character.focus ?? GAME_RULES.STATS.BASE_VALUE,
+    statPoints: character.statPoints ?? 0,
+    inventory: character.inventory ?? [],
+    lastLootRoll: character.lastLootRoll ?? 0,
+    incomingFightHistory: character.incomingFightHistory ?? [],
+  };
+};
+
+const buildPendingOpponent = (opponent: Character): PendingFightOpponent => {
+  const base: PendingFightOpponent = {
+    name: opponent.name,
+    gender: opponent.gender,
+    seed: opponent.seed,
+    level: opponent.level,
+    experience: opponent.experience,
+    strength: opponent.strength,
+    vitality: opponent.vitality,
+    dexterity: opponent.dexterity,
+    luck: opponent.luck,
+    intelligence: opponent.intelligence,
+    focus: opponent.focus ?? GAME_RULES.STATS.BASE_VALUE,
+    hp: opponent.hp,
+    maxHp: opponent.maxHp,
+    wins: opponent.wins || 0,
+    losses: opponent.losses || 0,
+    fightsLeft: opponent.fightsLeft || 0,
+    lastFightReset: opponent.lastFightReset || Date.now(),
+    inventory: opponent.inventory ?? []
+  };
+
+  if (opponent.id) {
+    base.id = opponent.id;
+  }
+
+  if (typeof opponent.isBot === 'boolean') {
+    base.isBot = opponent.isBot;
+  }
+
+  return base;
+};
+
+const hydratePendingOpponent = (snapshot: PendingFightOpponent): Character => {
+  return normalizeCharacter({
+    seed: snapshot.seed,
+    name: snapshot.name,
+    gender: snapshot.gender,
+    level: snapshot.level,
+    experience: snapshot.experience ?? 0,
+    strength: snapshot.strength,
+    vitality: snapshot.vitality,
+    dexterity: snapshot.dexterity,
+    luck: snapshot.luck,
+    intelligence: snapshot.intelligence,
+    focus: snapshot.focus ?? GAME_RULES.STATS.BASE_VALUE,
+    hp: snapshot.hp,
+    maxHp: snapshot.maxHp,
+    wins: snapshot.wins ?? 0,
+    losses: snapshot.losses ?? 0,
+    fightsLeft: snapshot.fightsLeft ?? 0,
+    lastFightReset: snapshot.lastFightReset ?? Date.now(),
+    id: snapshot.id,
+    isBot: snapshot.isBot,
+    inventory: snapshot.inventory ?? []
+  });
+};
+
+const calculatePendingFightXp = (player: Character, opponent: Character, won: boolean): number => {
+  const baseXp = won ? 50 : 20;
+  return Math.round(baseXp * (1 + (opponent.level - player.level) * 0.1));
+};
+
+// Helper functions
+const clearLocalData = () => {
+  localStorage.removeItem(LOCAL_STORAGE_KEY);
+};
+
+const saveLocalData = (character: Character) => {
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(character));
+};
+
+const loadLocalData = (): Character | null => {
+  const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+  if (!saved) return null;
+
+  try {
+    return JSON.parse(saved);
+  } catch {
+    clearLocalData();
+    return null;
+  }
+};
+
+type SyncResult =
+  | { status: 'ok'; character: Character }
+  | { status: 'missing' }
+  | { status: 'error' };
+
+>>>>>>> origin/master
 export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [activeCharacter, setActiveCharacter] = useState<Character | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,6 +192,17 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setActiveCharacter,
     dbAvailable,
   });
+  // Sync character with Supabase
+  const syncCharacterWithSupabase = useCallback(async (character: Character): Promise<SyncResult> => {
+    if (!character.id) return { status: 'missing' };
+
+    try {
+      const { data, error } = await supabase
+        .from('characters')
+        .select('*')
+        .eq('id', character.id)
+        .single();
+>>>>>>> origin/master
 
   // ── Character Actions ──────────────────────────────────────────────────────
   const { allocateStatPoint, rollLootbox, setAutoMode, deleteCharacter } = useCharacterActions({
@@ -96,6 +213,23 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   });
 
   // ── Effects ────────────────────────────────────────────────────────────────
+      const supabaseData = convertFromSupabase(data);
+      setDbAvailable(true);
+      return {
+        status: 'ok',
+        character: {
+          ...supabaseData,
+          id: character.id
+        }
+      };
+    } catch (error) {
+      handleDbError(error, 'sync');
+      return { status: 'error' };
+    }
+  }, [handleDbError]);
+
+  // Load character on mount
+>>>>>>> origin/master
   useEffect(() => {
     const loadCharacter = async () => {
       const localChar = loadLocalData();
@@ -104,7 +238,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      if (!localChar.firestoreId) {
+      if (!localChar.id) {
         clearLocalData();
         setLoading(false);
         return;
@@ -144,6 +278,51 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }, [activeCharacter, resolvePendingFight, initiatedMatchmakingRef]);
 
   // ── Convenience wrappers ───────────────────────────────────────────────────
+  // Characters are now reset centrally via GitHub Actions every 24h.
+  // The frontend syncs the state on mount/login.
+
+  // Login function
+  const login = useCallback(async (name: string): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('characters')
+        .select('*')
+        .eq('name', name)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') { // Not found
+          return "Fighter not found!";
+        }
+        throw error;
+      }
+
+      if (!data) {
+        return "Fighter not found!";
+      }
+
+      const fullChar = normalizeCharacter({
+        ...convertFromSupabase(data),
+        id: data.id
+      });
+
+      persistCharacter(fullChar);
+      setDbAvailable(true);
+      return null;
+    } catch (error) {
+      handleDbError(error, 'login');
+      return "Connection error - please check your internet connection and try again";
+    }
+  }, [handleDbError, persistCharacter]);
+
+  // Logout function
+  const logout = useCallback(() => {
+    setActiveCharacter(null);
+    clearLocalData();
+  }, []);
+
+  // Set character function
+>>>>>>> origin/master
   const setCharacter = useCallback((char: Character) => {
     persistCharacter(char);
   }, [persistCharacter]);
@@ -154,6 +333,451 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // ── Context value ──────────────────────────────────────────────────────────
+  const retryConnection = useCallback(async (): Promise<boolean> => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        setDbAvailable(false);
+        return false;
+      }
+      // Check Supabase connection by fetching server time
+      const { error } = await supabase
+        .from('server_time')
+        .select('timestamp')
+        .limit(1);
+      
+      if (error) throw error;
+      
+      setDbAvailable(true);
+      return true;
+    } catch (error) {
+      console.error('Supabase retry failed:', error);
+      setDbAvailable(false);
+      return false;
+    }
+  }, []);
+
+  const appendIncomingFightHistory = useCallback(async (
+    targetCharacterId: string,
+    entry: IncomingFightHistory
+  ) => {
+    try {
+      // Get current history
+      const { data, error } = await supabase
+        .from('characters')
+        .select('incoming_fight_history')
+        .eq('id', targetCharacterId)
+        .single();
+
+      if (error || !data) return;
+
+      const existing = Array.isArray(data.incoming_fight_history) ? data.incoming_fight_history : [];
+      const nextHistory = [entry, ...existing].slice(0, COMBAT_LOG_HISTORY_CAP);
+
+      // Update with new history
+      await supabase
+        .from('characters')
+        .update({ incoming_fight_history: nextHistory })
+        .eq('id', targetCharacterId);
+    } catch (error) {
+      console.warn('Failed to append incoming fight history:', error);
+    }
+  }, []);
+
+  const useFight = useCallback(async (
+    won: boolean,
+    xpGained: number,
+    opponentName: string,
+    opponentId: string,
+    options?: { consumeEnergy?: boolean; characterOverride?: Character }
+  ): Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null> => {
+    const baseCharacter = options?.characterOverride ?? activeCharacter;
+    if (!baseCharacter?.id) return null;
+
+    // Process XP gain and level up
+    const xpResult = gainXp(baseCharacter, xpGained);
+
+    // Prepare history entry
+    const historyEntry = {
+      date: Date.now(),
+      won,
+      opponentName
+    };
+
+    // Maintain a max of 20 history entries
+    const existingHistory = baseCharacter.fightHistory || [];
+    const newHistory = [historyEntry, ...existingHistory].slice(0, 20);
+
+    // Track daily opponents
+    const existingFoughtToday = baseCharacter.foughtToday || [];
+    const newFoughtToday = Array.from(new Set([...existingFoughtToday, opponentId])).filter(id => id);
+
+    const pointsGained = xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL;
+    const existingPoints = baseCharacter.statPoints || 0;
+    const shouldConsumeEnergy = options?.consumeEnergy ?? !baseCharacter.pendingFight;
+
+    const updatedChar: Character = normalizeCharacter({
+      ...xpResult.updatedCharacter,
+      fightsLeft: Math.max(0, (baseCharacter.fightsLeft || 0) - (shouldConsumeEnergy ? 1 : 0)),
+      wins: won ? (baseCharacter.wins || 0) + 1 : (baseCharacter.wins || 0),
+      losses: won ? (baseCharacter.losses || 0) : (baseCharacter.losses || 0) + 1,
+      fightHistory: newHistory,
+      foughtToday: newFoughtToday,
+      statPoints: existingPoints + pointsGained,
+      pendingFight: undefined
+    });
+
+     try {
+       await supabase
+        .from('characters')
+        .update({
+          fights_left: updatedChar.fightsLeft,
+          level: updatedChar.level,
+          experience: updatedChar.experience,
+          wins: updatedChar.wins,
+          losses: updatedChar.losses,
+          fight_history: updatedChar.fightHistory,
+          fought_today: updatedChar.foughtToday,
+          stat_points: updatedChar.statPoints,
+          focus: updatedChar.focus,
+          pending_fight: null
+        })
+        .eq('id', baseCharacter.id!);
+
+       persistCharacter(updatedChar);
+       initiatedMatchmakingRef.current = false;
+
+      if (opponentId && opponentId !== baseCharacter.id) {
+        const incomingEntry: IncomingFightHistory = {
+          date: Date.now(),
+          attackerName: baseCharacter.name,
+          attackerId: baseCharacter.id,
+          attackerIsBot: !!baseCharacter.isBot,
+          won: !won,
+          source: 'player'
+        };
+
+        appendIncomingFightHistory(opponentId, incomingEntry).catch((error) => {
+          console.warn('Incoming fight history sync skipped:', error);
+        });
+      }
+
+      // Set XP notifications
+      setLastXpGain(xpGained);
+      if (xpResult.leveledUp) {
+        setLastLevelUp({
+          levelsGained: xpResult.levelsGained,
+          newLevel: xpResult.newLevel
+        });
+      }
+
+      return {
+        xpGained,
+        leveledUp: xpResult.leveledUp,
+        levelsGained: xpResult.levelsGained,
+        newLevel: xpResult.newLevel
+      };
+    } catch (error: any) {
+      // Check if character was deleted while playing
+      if (error && (error.code === 'not-found' || error.message?.includes('not found'))) {
+        clearLocalData();
+        setActiveCharacter(null);
+        throw new Error("Your character has been deleted or is no longer available.");
+      }
+
+      handleDbError(error, 'use-fight');
+      throw new Error("Connection error - fight not counted. Please check your internet connection.");
+    }
+  }, [activeCharacter, appendIncomingFightHistory, handleDbError, persistCharacter]);
+
+  const allocateStatPoint = useCallback(async (stat: StatKey): Promise<Character | null> => {
+    if (!activeCharacter?.id) return null;
+    if (!activeCharacter.statPoints || activeCharacter.statPoints <= 0) return null;
+
+    const updatedChar = normalizeCharacter(applyStatPoint(activeCharacter, stat));
+
+     try {
+       await supabase
+        .from('characters')
+        .update({
+          [stat]: (updatedChar as any)[stat],
+          hp: updatedChar.hp,
+          max_hp: updatedChar.maxHp,
+          stat_points: updatedChar.statPoints,
+          focus: updatedChar.focus
+        })
+        .eq('id', activeCharacter.id!);
+
+       persistCharacter(updatedChar);
+       return updatedChar;
+     } catch (error: any) {
+       handleDbError(error, 'stat-allocate');
+       throw new Error("Connection error - stat point not saved. Please check your internet connection.");
+     }
+  }, [activeCharacter, handleDbError, persistCharacter]);
+
+  const startMatchmakingForPlayer = useCallback(async (): Promise<MatchmakingResult | null> => {
+    if (!activeCharacter?.id) return null;
+    if ((activeCharacter.fightsLeft || 0) <= 0) return null;
+    if (activeCharacter.pendingFight) {
+      throw new Error('Match already in progress.');
+    }
+    initiatedMatchmakingRef.current = true;
+
+    const pending: PendingFight = {
+      status: 'searching',
+      startedAt: Date.now()
+    };
+
+    const reservedChar = normalizeCharacter({
+      ...activeCharacter,
+      fightsLeft: Math.max(0, (activeCharacter.fightsLeft || 0) - 1),
+      pendingFight: pending
+    });
+
+     try {
+       await supabase
+        .from('characters')
+        .update({
+          fights_left: reservedChar.fightsLeft,
+          pending_fight: pending,
+          focus: reservedChar.focus
+        })
+        .eq('id', activeCharacter.id!);
+       persistCharacter(reservedChar);
+     } catch (error: any) {
+       handleDbError(error, 'matchmaking-start');
+       initiatedMatchmakingRef.current = false;
+       throw new Error('Connection error - matchmaking not saved.');
+     }
+
+    const match = await findOpponent(reservedChar);
+    if (!match) {
+      const refundedChar = normalizeCharacter({
+        ...reservedChar,
+        fightsLeft: (reservedChar.fightsLeft || 0) + 1,
+        pendingFight: undefined
+      });
+
+       try {
+         await supabase
+          .from('characters')
+          .update({
+            fights_left: refundedChar.fightsLeft,
+            pending_fight: null,
+            focus: refundedChar.focus
+          })
+          .eq('id', activeCharacter.id!);
+       } catch (error: any) {
+         handleDbError(error, 'matchmaking-refund');
+       }
+
+      persistCharacter(refundedChar);
+      initiatedMatchmakingRef.current = false;
+      return null;
+    }
+
+    const matchedPending: PendingFight = {
+      status: 'matched',
+      startedAt: pending.startedAt,
+      opponent: buildPendingOpponent(match.opponent),
+      matchType: match.matchType
+    };
+
+    const matchedChar = normalizeCharacter({
+      ...reservedChar,
+      pendingFight: matchedPending
+    });
+
+     try {
+       await supabase
+        .from('characters')
+        .update({
+          pending_fight: matchedPending,
+          focus: matchedChar.focus
+        })
+        .eq('id', activeCharacter.id!);
+       persistCharacter(matchedChar);
+     } catch (error: any) {
+       handleDbError(error, 'matchmaking-lock');
+       initiatedMatchmakingRef.current = false;
+       throw new Error('Connection error - matchmaking not saved.');
+     }
+
+    return match;
+  }, [activeCharacter, handleDbError, persistCharacter]);
+
+  const resolvingPendingRef = useRef(false);
+
+  const resolvePendingFight = useCallback(async (character: Character) => {
+    if (!character.id) return;
+    if (!character.pendingFight) return;
+    if (resolvingPendingRef.current) return;
+    if (!dbAvailable) return;
+
+    resolvingPendingRef.current = true;
+    try {
+      const pending = character.pendingFight;
+
+      if (pending.status === 'searching') {
+        const match = await findOpponent(character);
+        if (!match) {
+          const refundedChar = normalizeCharacter({
+            ...character,
+            fightsLeft: (character.fightsLeft || 0) + 1,
+            pendingFight: undefined
+          });
+           await supabase
+            .from('characters')
+            .update({
+              fights_left: refundedChar.fightsLeft,
+              pending_fight: null,
+              focus: refundedChar.focus
+            })
+            .eq('id', character.id);
+          persistCharacter(refundedChar);
+          return;
+        }
+
+        const matchedPending: PendingFight = {
+          status: 'matched',
+          startedAt: pending.startedAt,
+          opponent: buildPendingOpponent(match.opponent),
+          matchType: match.matchType
+        };
+
+        const matchedChar = normalizeCharacter({
+          ...character,
+          pendingFight: matchedPending
+        });
+
+         await supabase
+          .from('characters')
+          .update({
+            pending_fight: matchedPending,
+            focus: matchedChar.focus
+          })
+          .eq('id', character.id);
+         persistCharacter(matchedChar);
+
+        const opponent = hydratePendingOpponent(matchedPending.opponent!);
+        const combatResult = simulateCombat(matchedChar, opponent);
+        const won = combatResult.winner === 'attacker';
+        const xpGained = calculatePendingFightXp(matchedChar, opponent, won);
+        await useFight(won, xpGained, opponent.name, opponent.id || '', {
+          consumeEnergy: false,
+          characterOverride: matchedChar
+        });
+        return;
+      }
+
+      if (pending.status === 'matched' && pending.opponent) {
+        const opponent = hydratePendingOpponent(pending.opponent);
+        const combatResult = simulateCombat(character, opponent);
+        const won = combatResult.winner === 'attacker';
+        const xpGained = calculatePendingFightXp(character, opponent, won);
+        await useFight(won, xpGained, opponent.name, opponent.id || '', {
+          consumeEnergy: false,
+          characterOverride: character
+        });
+      }
+    } catch (error: any) {
+      handleDbError(error, 'pending-fight');
+    } finally {
+      resolvingPendingRef.current = false;
+    }
+  }, [dbAvailable, handleDbError, persistCharacter, useFight]);
+
+  useEffect(() => {
+    if (!activeCharacter?.pendingFight) return;
+    if (initiatedMatchmakingRef.current) return;
+    resolvePendingFight(activeCharacter);
+  }, [activeCharacter, resolvePendingFight]);
+
+  const rollLootboxForPlayer = useCallback(async () => {
+    if (!activeCharacter?.id) return null;
+
+    const now = Date.now();
+    if (!canRollLootbox(activeCharacter.lastLootRoll, now)) {
+      throw new Error('Daily lootbox already opened.');
+    }
+
+    const inventory = activeCharacter.inventory || [];
+    if (inventory.length >= INVENTORY_CAPACITY) {
+      throw new Error('Inventory is full.');
+    }
+
+    const item = rollLootbox(ITEM_ASSETS, { excludeIds: inventory, level: activeCharacter.level });
+    if (!item) {
+      throw new Error('No new loot available.');
+    }
+
+    const updatedChar = normalizeCharacter({
+      ...activeCharacter,
+      inventory: [...inventory, item.id],
+      lastLootRoll: now,
+    });
+
+     try {
+       await supabase
+        .from('characters')
+        .update({
+          inventory: updatedChar.inventory,
+          last_loot_roll: updatedChar.lastLootRoll,
+          focus: updatedChar.focus
+        })
+        .eq('id', activeCharacter.id!);
+       persistCharacter(updatedChar);
+       return item;
+     } catch (error: any) {
+       handleDbError(error, 'lootbox');
+       throw new Error('Connection error - lootbox not saved.');
+     }
+   }, [activeCharacter, handleDbError, persistCharacter]);
+
+  const setAutoMode = useCallback(async (enabled: boolean) => {
+    if (!activeCharacter?.id) return null;
+    const updatedChar = normalizeCharacter({
+      ...activeCharacter,
+      isBot: enabled
+    });
+
+    try {
+      await supabase
+       .from('characters')
+       .update({
+         auto_mode: enabled
+       })
+       .eq('id', activeCharacter.id);
+      persistCharacter(updatedChar);
+      return updatedChar;
+    } catch (error: any) {
+      handleDbError(error, 'auto-mode');
+      throw new Error('Connection error - auto mode not saved.');
+    }
+  }, [activeCharacter, handleDbError, persistCharacter]);
+
+  const deleteCharacter = useCallback(async () => {
+    if (!activeCharacter?.id) return false;
+    try {
+      await supabase
+       .from('characters')
+       .delete()
+       .eq('id', activeCharacter.id);
+      logout();
+      return true;
+    } catch (error: any) {
+      handleDbError(error, 'delete-character');
+      throw new Error('Connection error - character not deleted.');
+    }
+  }, [activeCharacter, handleDbError, logout]);
+
+  // Find opponent for matchmaking
+  const findOpponentForPlayer = useCallback(async (): Promise<MatchmakingResult | null> => {
+    if (!activeCharacter) return null;
+    return await findOpponent(activeCharacter);
+  }, [activeCharacter]);
+
+>>>>>>> origin/master
   const value: GameContextType = {
     activeCharacter,
     loading,

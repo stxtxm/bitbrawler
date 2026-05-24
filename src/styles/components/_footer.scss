@@ -1,0 +1,123 @@
+@use '../variables' as *;
+
+.app-footer {
+    width: 100%;
+    max-width: 800px;
+    margin-top: auto;
+    padding: 15px 20px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+
+    @include mobile {
+        padding: 12px 10px 8px;
+        gap: 6px;
+    }
+
+    @include small-mobile {
+        padding: 10px 6px 6px;
+        gap: 4px;
+    }
+}
+
+.footer-pixel-divider {
+    width: 80%;
+    max-width: 400px;
+    height: 4px;
+    background: repeating-linear-gradient(90deg,
+            $accent-gold,
+            $accent-gold 8px,
+            transparent 8px,
+            transparent 16px);
+    margin-bottom: 8px;
+    opacity: 0.6;
+
+    @include mobile {
+        width: 90%;
+        height: 3px;
+    }
+}
+
+.footer-content {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 12px 20px;
+
+    @include mobile {
+        gap: 8px 12px;
+    }
+
+    @include small-mobile {
+        flex-direction: column;
+        gap: 4px;
+    }
+}
+
+.footer-item {
+    font-family: $font-pixel;
+    font-size: 0.5rem;
+    color: #888;
+    letter-spacing: 1px;
+    line-height: 1.6;
+    white-space: nowrap;
+
+    @include mobile {
+        font-size: 0.45rem;
+        letter-spacing: 0.5px;
+    }
+
+    @include small-mobile {
+        font-size: 0.4rem;
+    }
+}
+
+.footer-link {
+    font-family: $font-pixel;
+    font-size: 0.5rem;
+    color: $accent-gold;
+    text-decoration: none;
+    letter-spacing: 1px;
+    line-height: 1.6;
+    white-space: nowrap;
+    transition: color 0.15s ease;
+
+    @include mobile {
+        font-size: 0.45rem;
+        letter-spacing: 0.5px;
+    }
+
+    @include small-mobile {
+        font-size: 0.4rem;
+    }
+
+    &:hover,
+    &:focus-visible {
+        color: #fff;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+
+    &:focus-visible {
+        outline: 2px solid $accent-gold;
+        outline-offset: 2px;
+        border-radius: 2px;
+    }
+}
+
+.footer-separator {
+    font-family: $font-pixel;
+    font-size: 0.5rem;
+    color: #555;
+    user-select: none;
+
+    @include mobile {
+        font-size: 0.45rem;
+    }
+
+    @include small-mobile {
+        display: none;
+    }
+}
