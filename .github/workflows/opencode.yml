@@ -42,7 +42,7 @@ jobs:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         run: |
           PROMPT=$(echo '${{ github.event.issue.body }}' | sed 's|/oc||g; s|/opencode||g' | xargs)
-          opencode run --yes --model "opencode/deepseek-v4-flash-free" "$PROMPT"
+          opencode run --dangerously-skip-permissions --model "opencode/deepseek-v4-flash-free" "$PROMPT"
 
       - name: Push and create PR
         env:
