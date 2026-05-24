@@ -9,7 +9,6 @@ const STATS_FILE = join(__dirname, config.statsFile)
 const STATE_FILE = join(__dirname, config.stateFile)
 const SCREENSHOTS_DIR = join(__dirname, config.screenshotsDir)
 const QA_TIME_ZONE = config.timeZone || 'Europe/Paris'
-const AUTO_MODE_START_HOUR = Number.isFinite(config.autoModeStartHour) ? config.autoModeStartHour : 19
 
 function getZonedParts(date = new Date(), timeZone = QA_TIME_ZONE) {
   const formatter = new Intl.DateTimeFormat('en-GB', {
@@ -44,11 +43,6 @@ function getZonedParts(date = new Date(), timeZone = QA_TIME_ZONE) {
 function dateKey(date = new Date(), timeZone = QA_TIME_ZONE) {
   const parts = getZonedParts(date, timeZone)
   return `${parts.year}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}`
-}
-
-function shouldEnableAutoMode(date = new Date(), timeZone = QA_TIME_ZONE) {
-  const { hour } = getZonedParts(date, timeZone)
-  return hour >= AUTO_MODE_START_HOUR
 }
 
 function getAppUrl(path) {
@@ -303,6 +297,100 @@ async function syncAutoMode(page, desiredEnabled) {
   return true
 }
 
+async function handleDailyLootbox(page, runKey) {
+  console.log('🎁 Checking lootbox...')
+
+  const inventoryBtn = page.locator('button[aria-label="Inventory"], button[title="Inventory"]').first()
+  if (!(await inventoryBtn.isVisible({ timeout: 5000 }).catch(() => false))) {
+    console.log('   Inventory button not found')
+    return { available: false, opened: false, reason: 'inventory-button-missing' }
+  }
+
+  await inventoryBtn.click()
+  await page.waitForTimeout(800)
+
+  const lootboxBtn = page.locator('button[aria-label="Daily lootbox roll"], .lootbox-btn').first()
+  if (!(await lootboxBtn.isVisible({ timeout: 5000 }).catch(() => false))) {
+    console.log('   Lootbox button not found in inventory')
+    const closeInventory = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
+    if (await closeInventory.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await closeInventory.click().catch(() => {})
+    }
+    return { available: false, opened: false, reason: 'lootbox-button-missing' }
+  }
+
+  const label = (((await lootboxBtn.textContent().catch(() => '')) || '').trim().toUpperCase())
+  const enabled = await lootboxBtn.isEnabled().catch(() => false)
+
+  if (!enabled || label.includes('COME BACK TOMORROW')) {
+    console.log('   No lootbox available today')
+    const closeInventory = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
+    if (await closeInventory.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await closeInventory.click().catch(() => {})
+    }
+    return { available: false, opened: false, reason: 'already-opened' }
+  }
+
+  if (label.includes('INVENTORY FULL')) {
+    console.log('   Lootbox blocked because inventory is full')
+    const closeInventory = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
+    if (await closeInventory.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await closeInventory.click().catch(() => {})
+    }
+    return { available: false, opened: false, reason: 'inventory-full' }
+  }
+
+  if (!label.includes('DAILY LOOTBOX')) {
+    console.log(`   Lootbox in unexpected state: ${label || 'no label'}`)
+    const closeInventory = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
+    if (await closeInventory.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await closeInventory.click().catch(() => {})
+    }
+    return { available: false, opened: false, reason: 'unexpected-label', label }
+  }
+
+  await lootboxBtn.click()
+  await page.waitForTimeout(1600)
+
+  await page.waitForFunction(
+    () => {
+      const text = document.body.innerText || ''
+      return text.includes('NEW ITEM') || text.includes('COME BACK TOMORROW') || text.includes('INVENTORY FULL')
+    },
+    { timeout: 6000 }
+  ).catch(() => {})
+
+  await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-04-lootbox.png`) })
+
+  const rewardName = ((await page.locator('.lootbox-result-name').textContent().catch(() => '')) || '').trim()
+  const bodyText = await readBodyText(page)
+
+  if (rewardName) {
+    console.log(`   Lootbox opened: ${rewardName}`)
+  } else {
+    console.log('   Lootbox opened')
+  }
+
+  const resultOverlay = page.locator('.lootbox-result-overlay').first()
+  if (await resultOverlay.isVisible({ timeout: 1500 }).catch(() => false)) {
+    await resultOverlay.click({ force: true }).catch(() => {})
+    await page.waitForTimeout(500)
+  }
+
+  const closeInventory = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
+  if (await closeInventory.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await closeInventory.click().catch(() => {})
+    await page.waitForTimeout(500)
+  }
+
+  return {
+    available: true,
+    opened: true,
+    item: rewardName || null,
+    raw_text: bodyText.includes('NEW ITEM') ? 'NEW ITEM' : undefined,
+  }
+}
+
 function persistQaState(runKey, character, source, exhausted) {
   saveState({
     run: runKey,
@@ -438,7 +526,6 @@ async function runFightSequence(page, runKey, runRecord) {
 async function run() {
   const now = new Date()
   const runKey = dateKey(now)
-  const enableAutoMode = shouldEnableAutoMode(now)
   const state = loadState()
   const savedCharacterName = state.run === runKey && state.exhausted !== true ? state.character : null
 
@@ -455,7 +542,7 @@ async function run() {
   console.log(`    runKey:         ${runKey}`)
   console.log(`    savedFighter:   ${savedCharacterName || 'none'}`)
   console.log(`    savedExhausted: ${state.run === runKey ? String(state.exhausted === true) : 'false'}`)
-  console.log(`    autoMode:       ${enableAutoMode ? 'ON' : 'OFF'}`)
+  console.log('    autoMode:       enable after daily fights are exhausted')
   console.log(`    headless:       ${config.headless}`)
   console.log(`    slowMo:         ${config.slowMo}`)
   console.log(`  CWD: ${process.cwd()}`)
@@ -530,36 +617,6 @@ async function run() {
 
     await runFightSequence(page, runKey, runRecord)
 
-    console.log('🎁 Checking lootbox...')
-    const lootboxBtn = page.locator('button:has-text("LOOT"), button:has-text("LOOTBOX"), [class*="loot"]').first()
-    if (await lootboxBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await lootboxBtn.click()
-      await page.waitForTimeout(2000)
-
-      await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-04-lootbox.png`) })
-
-      const lootText = await page.locator('body').innerText()
-      const itemMatch = lootText.match(/you got:?\s*(.+)/i) || lootText.match(/obtained:?\s*(.+)/i)
-
-      runRecord.lootbox = {
-        available: true,
-        item: itemMatch ? itemMatch[1].trim() : 'unknown',
-      }
-      console.log(`   Lootbox opened: ${runRecord.lootbox.item}`)
-
-      const closeModal = page.locator('button:has-text("CLOSE"), button:has-text("OK"), .modal-close').first()
-      if (await closeModal.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await closeModal.click()
-        await page.waitForTimeout(1000)
-      }
-    } else {
-      runRecord.lootbox = { available: false }
-      console.log('   No lootbox available')
-    }
-
-    runRecord.auto_mode_enabled = enableAutoMode
-    runRecord.auto_mode_sync_ok = await syncAutoMode(page, enableAutoMode)
-
     const finalText = await page.locator('body').innerText()
     const levelMatch = finalText.match(/LEVEL\s*(\d+)/i)
     const xpTotalMatch = finalText.match(/XP\s*[:]\s*(\d+)/i) || finalText.match(/(\d+)\s*\/\s*\d+\s*XP/i)
@@ -578,6 +635,9 @@ async function run() {
     const fighterExhausted =
       finalArenaStatus.isResting ||
       (finalArenaStatus.fightsAvailable !== null && finalArenaStatus.fightsAvailable <= 0)
+    runRecord.lootbox = await handleDailyLootbox(page, runKey)
+    runRecord.auto_mode_enabled = fighterExhausted
+    runRecord.auto_mode_sync_ok = await syncAutoMode(page, fighterExhausted)
     persistQaState(runKey, runRecord.character, runRecord.character_action, fighterExhausted)
     console.log(`   Fighter exhausted for today: ${fighterExhausted ? 'yes' : 'no'}`)
 
