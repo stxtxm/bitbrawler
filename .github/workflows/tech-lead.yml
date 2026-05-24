@@ -151,6 +151,10 @@ jobs:
             fi
 
             echo "✅ CI green after PR #$PR_NUM: $CI_URL"
+            if [ -n "$LINKED_ISSUE" ]; then
+              gh issue close "$LINKED_ISSUE" --comment "✅ PR #$PR_NUM mergée et CI verte ($CI_URL). Fermeture automatique par Tech Lead."
+              echo "Closed linked issue #$LINKED_ISSUE"
+            fi
           done
 
       - name: Run Tech Lead agent
