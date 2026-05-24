@@ -2344,3 +2344,10 @@
     font-size: 0.7rem;
     letter-spacing: 2px;
 }
+// Arena — index file forwarding all arena partials
+@forward 'arena-header';
+@forward 'arena-character';
+@forward 'arena-inventory';
+@forward 'arena-level-up';
+@forward 'arena-settings';
+>>>>>>> origin/master
