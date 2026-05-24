@@ -139,7 +139,7 @@ async function run() {
       await nameInput.fill(charName)
       console.log('   Entered character name')
 
-      const submitBtn = page.locator('button:has-text("FIGHT"), button:has-text("LOGIN"), button:has-text("START")').first()
+      const submitBtn = page.locator('button:has-text("ENTER ARENA"), button:has-text("FIGHT"), button:has-text("START")').first()
       await submitBtn.click()
       await page.waitForTimeout(2000)
       console.log('   Submitted')
