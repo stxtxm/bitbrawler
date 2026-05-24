@@ -4,6 +4,7 @@ import { useGame } from './context/GameContext'
 import { useOnlineStatus } from './hooks/useOnlineStatus'
 import { HomePage, CharacterCreation, Rankings, Login, Arena, NotFound } from './routes/lazyPages'
 import LoadingScreen from './components/LoadingScreen'
+import PwaInstallPrompt from './components/PwaInstallPrompt'
 
 function App() {
   const { activeCharacter, loading, dbAvailable } = useGame()
@@ -17,6 +18,7 @@ function App() {
 
   return (
     <div className="App">
+      <PwaInstallPrompt />
       <Suspense fallback={
         <LoadingScreen />
       }>
