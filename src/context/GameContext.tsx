@@ -78,8 +78,8 @@ const buildPendingOpponent = (opponent: Character): PendingFightOpponent => {
     inventory: opponent.inventory ?? []
   };
 
-  if (opponent.firestoreId) {
-    base.firestoreId = opponent.firestoreId;
+  if (opponent.id) {
+    base.id = opponent.id;
   }
 
   if (typeof opponent.isBot === 'boolean') {
@@ -108,7 +108,7 @@ const hydratePendingOpponent = (snapshot: PendingFightOpponent): Character => {
     losses: snapshot.losses ?? 0,
     fightsLeft: snapshot.fightsLeft ?? 0,
     lastFightReset: snapshot.lastFightReset ?? Date.now(),
-    firestoreId: snapshot.firestoreId,
+    id: snapshot.id,
     isBot: snapshot.isBot,
     inventory: snapshot.inventory ?? []
   });
@@ -168,13 +168,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   // Sync character with Supabase
   const syncCharacterWithSupabase = useCallback(async (character: Character): Promise<SyncResult> => {
-    if (!character.firestoreId) return { status: 'missing' };
+    if (!character.id) return { status: 'missing' };
 
     try {
       const { data, error } = await supabase
         .from('characters')
         .select('*')
-        .eq('id', character.firestoreId)
+        .eq('id', character.id)
         .single();
 
       if (error || !data) {
@@ -190,7 +190,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         status: 'ok',
         character: {
           ...supabaseData,
-          firestoreId: character.firestoreId
+          id: character.id
         }
       };
     } catch (error) {
@@ -208,7 +208,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      if (!localChar.firestoreId) {
+      if (!localChar.id) {
         clearLocalData();
         setLoading(false);
         return;
@@ -268,7 +268,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
       const fullChar = normalizeCharacter({
         ...convertFromSupabase(data),
-        firestoreId: data.id
+        id: data.id
       });
 
       persistCharacter(fullChar);
@@ -355,7 +355,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     options?: { consumeEnergy?: boolean; characterOverride?: Character }
   ): Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null> => {
     const baseCharacter = options?.characterOverride ?? activeCharacter;
-    if (!baseCharacter?.firestoreId) return null;
+    if (!baseCharacter?.id) return null;
 
     // Process XP gain and level up
     const xpResult = gainXp(baseCharacter, xpGained);
@@ -405,16 +405,16 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           focus: updatedChar.focus,
           pending_fight: null
         })
-        .eq('id', baseCharacter.firestoreId!);
+        .eq('id', baseCharacter.id!);
 
        persistCharacter(updatedChar);
        initiatedMatchmakingRef.current = false;
 
-      if (opponentId && opponentId !== baseCharacter.firestoreId) {
+      if (opponentId && opponentId !== baseCharacter.id) {
         const incomingEntry: IncomingFightHistory = {
           date: Date.now(),
           attackerName: baseCharacter.name,
-          attackerId: baseCharacter.firestoreId,
+          attackerId: baseCharacter.id,
           attackerIsBot: !!baseCharacter.isBot,
           won: !won,
           source: 'player'
@@ -454,7 +454,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }, [activeCharacter, appendIncomingFightHistory, handleDbError, persistCharacter]);
 
   const allocateStatPoint = useCallback(async (stat: StatKey): Promise<Character | null> => {
-    if (!activeCharacter?.firestoreId) return null;
+    if (!activeCharacter?.id) return null;
     if (!activeCharacter.statPoints || activeCharacter.statPoints <= 0) return null;
 
     const updatedChar = normalizeCharacter(applyStatPoint(activeCharacter, stat));
@@ -469,7 +469,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           stat_points: updatedChar.statPoints,
           focus: updatedChar.focus
         })
-        .eq('id', activeCharacter.firestoreId!);
+        .eq('id', activeCharacter.id!);
 
        persistCharacter(updatedChar);
        return updatedChar;
@@ -480,7 +480,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }, [activeCharacter, handleDbError, persistCharacter]);
 
   const startMatchmakingForPlayer = useCallback(async (): Promise<MatchmakingResult | null> => {
-    if (!activeCharacter?.firestoreId) return null;
+    if (!activeCharacter?.id) return null;
     if ((activeCharacter.fightsLeft || 0) <= 0) return null;
     if (activeCharacter.pendingFight) {
       throw new Error('Match already in progress.');
@@ -506,7 +506,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           pending_fight: pending,
           focus: reservedChar.focus
         })
-        .eq('id', activeCharacter.firestoreId!);
+        .eq('id', activeCharacter.id!);
        persistCharacter(reservedChar);
      } catch (error: any) {
        handleDbError(error, 'matchmaking-start');
@@ -530,7 +530,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
             pending_fight: null,
             focus: refundedChar.focus
           })
-          .eq('id', activeCharacter.firestoreId!);
+          .eq('id', activeCharacter.id!);
        } catch (error: any) {
          handleDbError(error, 'matchmaking-refund');
        }
@@ -559,7 +559,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           pending_fight: matchedPending,
           focus: matchedChar.focus
         })
-        .eq('id', activeCharacter.firestoreId!);
+        .eq('id', activeCharacter.id!);
        persistCharacter(matchedChar);
      } catch (error: any) {
        handleDbError(error, 'matchmaking-lock');
@@ -573,7 +573,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const resolvingPendingRef = useRef(false);
 
   const resolvePendingFight = useCallback(async (character: Character) => {
-    if (!character.firestoreId) return;
+    if (!character.id) return;
     if (!character.pendingFight) return;
     if (resolvingPendingRef.current) return;
     if (!dbAvailable) return;
@@ -597,7 +597,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
               pending_fight: null,
               focus: refundedChar.focus
             })
-            .eq('id', character.firestoreId);
+            .eq('id', character.id);
           persistCharacter(refundedChar);
           return;
         }
@@ -620,14 +620,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
             pending_fight: matchedPending,
             focus: matchedChar.focus
           })
-          .eq('id', character.firestoreId);
+          .eq('id', character.id);
          persistCharacter(matchedChar);
 
         const opponent = hydratePendingOpponent(matchedPending.opponent!);
         const combatResult = simulateCombat(matchedChar, opponent);
         const won = combatResult.winner === 'attacker';
         const xpGained = calculatePendingFightXp(matchedChar, opponent, won);
-        await useFight(won, xpGained, opponent.name, opponent.firestoreId || '', {
+        await useFight(won, xpGained, opponent.name, opponent.id || '', {
           consumeEnergy: false,
           characterOverride: matchedChar
         });
@@ -639,7 +639,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         const combatResult = simulateCombat(character, opponent);
         const won = combatResult.winner === 'attacker';
         const xpGained = calculatePendingFightXp(character, opponent, won);
-        await useFight(won, xpGained, opponent.name, opponent.firestoreId || '', {
+        await useFight(won, xpGained, opponent.name, opponent.id || '', {
           consumeEnergy: false,
           characterOverride: character
         });
@@ -658,7 +658,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }, [activeCharacter, resolvePendingFight]);
 
   const rollLootboxForPlayer = useCallback(async () => {
-    if (!activeCharacter?.firestoreId) return null;
+    if (!activeCharacter?.id) return null;
 
     const now = Date.now();
     if (!canRollLootbox(activeCharacter.lastLootRoll, now)) {
@@ -689,7 +689,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           last_loot_roll: updatedChar.lastLootRoll,
           focus: updatedChar.focus
         })
-        .eq('id', activeCharacter.firestoreId!);
+        .eq('id', activeCharacter.id!);
        persistCharacter(updatedChar);
        return item;
      } catch (error: any) {
@@ -699,7 +699,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
    }, [activeCharacter, handleDbError, persistCharacter]);
 
   const setAutoMode = useCallback(async (enabled: boolean) => {
-    if (!activeCharacter?.firestoreId) return null;
+    if (!activeCharacter?.id) return null;
     const updatedChar = normalizeCharacter({
       ...activeCharacter,
       isBot: enabled
@@ -711,7 +711,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
        .update({
          auto_mode: enabled
        })
-       .eq('id', activeCharacter.firestoreId);
+       .eq('id', activeCharacter.id);
       persistCharacter(updatedChar);
       return updatedChar;
     } catch (error: any) {
@@ -721,12 +721,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }, [activeCharacter, handleDbError, persistCharacter]);
 
   const deleteCharacter = useCallback(async () => {
-    if (!activeCharacter?.firestoreId) return false;
+    if (!activeCharacter?.id) return false;
     try {
       await supabase
        .from('characters')
        .delete()
-       .eq('id', activeCharacter.firestoreId);
+       .eq('id', activeCharacter.id);
       logout();
       return true;
     } catch (error: any) {

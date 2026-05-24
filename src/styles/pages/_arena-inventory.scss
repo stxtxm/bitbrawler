@@ -1,5 +1,9 @@
 @use '../variables' as *;
 
+// ============================================
+// Inventory Overlay & Modal
+// ============================================
+
 .inventory-overlay {
     backdrop-filter: blur(3px);
 }
@@ -92,6 +96,10 @@
     }
 }
 
+// ============================================
+// Inventory Body & Grid
+// ============================================
+
 .inventory-body {
     display: flex;
     flex-direction: column;
@@ -160,6 +168,10 @@
         font-size: 0.6rem;
     }
 }
+
+// ============================================
+// Inventory Slots
+// ============================================
 
 .inventory-modal.lootbox-active {
     overflow: hidden;
@@ -230,6 +242,10 @@
     border-color: #9b59b6;
 }
 
+// ============================================
+// Inventory Roll / Lootbox Button
+// ============================================
+
 .inventory-roll {
     display: flex;
     align-items: center;
@@ -283,6 +299,10 @@
     color: #666;
     text-align: center;
 }
+
+// ============================================
+// Inventory Details Panel
+// ============================================
 
 .inventory-details {
     border: 2px solid #222;
@@ -387,6 +407,10 @@
     font-size: 0.55rem;
 }
 
+// ============================================
+// Bonus Summary
+// ============================================
+
 .inventory-bonus-summary {
     margin-top: auto;
     padding-top: 8px;
@@ -436,7 +460,10 @@
     }
 }
 
-// Lootbox result overlay (replaces footer banner)
+// ============================================
+// Lootbox Result Overlay
+// ============================================
+
 .lootbox-result-overlay {
     position: absolute;
     inset: 0;
@@ -569,15 +596,37 @@
     z-index: 1;
 }
 
-@keyframes lootboxReveal {
-    0% { transform: translateY(12px) scale(0.96); opacity: 0; }
-    100% { transform: translateY(0) scale(1); opacity: 1; }
+// ============================================
+// Lootbox Overlay / Animation
+// ============================================
+
+.lootbox-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
 }
 
-@keyframes lootboxGlow {
-    0%, 100% { opacity: 0.45; }
-    50% { opacity: 0.75; }
+.lootbox-anim {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    animation: lootboxShake 0.6s ease-in-out infinite;
 }
+
+.lootbox-text {
+    font-size: 0.6rem;
+    color: $accent-gold;
+    letter-spacing: 2px;
+}
+
+// ============================================
+// Inventory & Lootbox Mobile Overrides
+// ============================================
 
 @include mobile {
     .inventory-details {
@@ -731,28 +780,18 @@
     }
 }
 
-.lootbox-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.75);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: fadeIn 0.2s ease;
+// ============================================
+// Lootbox Keyframes
+// ============================================
+
+@keyframes lootboxReveal {
+    0% { transform: translateY(12px) scale(0.96); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
-.lootbox-anim {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    animation: lootboxShake 0.6s ease-in-out infinite;
-}
-
-.lootbox-text {
-    font-size: 0.6rem;
-    color: $accent-gold;
-    letter-spacing: 2px;
+@keyframes lootboxGlow {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 0.75; }
 }
 
 @keyframes lootboxShake {
