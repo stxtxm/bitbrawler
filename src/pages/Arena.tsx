@@ -3,56 +3,74 @@ import { useState, useEffect, useMemo } from 'react';
 import { useGame } from '../context/GameContext';
 import { useConnectionGate } from '../hooks/useConnectionGate';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
-import ConnectionModal from '../components/ConnectionModal';
-import { PixelCharacter } from '../components/PixelCharacter';
-import { PixelIcon } from '../components/PixelIcon';
-import { PixelItemIcon } from '../components/PixelItemIcon';
-import { getXpProgress, formatXpDisplay, getMaxLevel } from '../utils/xpUtils';
+import { useFightFlow } from '../hooks/useFightFlow';
+import { getXpProgress, getMaxLevel } from '../utils/xpUtils';
+import { applyEquipmentToCharacter } from '../utils/equipmentUtils';
 import { StatKey } from '../utils/statUtils';
+import ConnectionModal from '../components/ConnectionModal';
+import LevelUpOverlay from '../components/LevelUpOverlay';
+import InventoryModal from '../components/InventoryModal';
+import SettingsModal from '../components/SettingsModal';
+import CharacterStats from '../components/CharacterStats';
+import FightButton from '../components/FightButton';
 import { CombatView } from '../components/CombatView';
-import { MatchmakingResult } from '../utils/matchmakingUtils';
-import { applyEquipmentToCharacter, getEquipmentBonuses, getItemById } from '../utils/equipmentUtils';
-import { canRollLootbox } from '../utils/lootboxUtils';
-import { ItemStats, PixelItemAsset } from '../types/Item';
+import { PixelIcon } from '../components/PixelIcon';
 
-type SettingsLogEntry = {
-    date: number;
-    won: boolean;
-    direction: 'outgoing' | 'incoming';
-    displayName: string;
-};
-
-const formatSettingsLogDate = (timestamp: number) => {
-    const date = new Date(timestamp);
-    return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-};
+type StatIconType = 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence' | 'focus';
 
 const Arena = () => {
-    const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, allocateStatPoint, rollLootbox, setAutoMode, deleteCharacter } = useGame();
+    const { activeCharacter, logout, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, allocateStatPoint, rollLootbox, setAutoMode, deleteCharacter } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const navigate = useNavigate();
     const isOnline = useOnlineStatus();
     const connectionMessage = 'Connect to battle and sync your progress.';
 
+    // ─── XP & Level-up state ────────────────────────────────────────────────
     const [showXpGain, setShowXpGain] = useState(false);
     const [showLevelUp, setShowLevelUp] = useState(false);
     const [xpBarAnimating, setXpBarAnimating] = useState(false);
-    const [inventoryOpen, setInventoryOpen] = useState(false);
-    const [matchmaking, setMatchmaking] = useState(false);
-    const [combatData, setCombatData] = useState<MatchmakingResult | null>(null);
-    const [allocatingStat, setAllocatingStat] = useState<StatKey | null>(null);
     const [deferLevelUp, setDeferLevelUp] = useState(false);
-    const [lootboxRolling, setLootboxRolling] = useState(false);
-    const [lootboxResult, setLootboxResult] = useState<PixelItemAsset | null>(null);
-    const [inventoryHoveredId, setInventoryHoveredId] = useState<string | null>(null);
-    const [inventorySelectedId, setInventorySelectedId] = useState<string | null>(null);
-    const [settingsOpen, setSettingsOpen] = useState(false);
-    const [settingsView, setSettingsView] = useState<'main' | 'logs'>('main');
-    const [autoModeUpdating, setAutoModeUpdating] = useState(false);
-    const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm'>('idle');
-    const [deletePending, setDeletePending] = useState(false);
+    const [allocatingStat, setAllocatingStat] = useState<StatKey | null>(null);
 
-    // Handle XP gain notification
+    // ─── Modal toggles ──────────────────────────────────────────────────────
+    const [inventoryOpen, setInventoryOpen] = useState(false);
+    const [settingsOpen, setSettingsOpen] = useState(false);
+
+    // ─── Derived values ─────────────────────────────────────────────────────
+    const isOfflineMode = !isOnline || !dbAvailable;
+    const fightsLeft = activeCharacter?.fightsLeft || 0;
+    const hasPendingFight = !!activeCharacter?.pendingFight;
+    const pendingStatPoints = activeCharacter?.statPoints || 0;
+    const canCloseLevelUp = pendingStatPoints === 0;
+    const shouldShowLevelUp = showLevelUp || (pendingStatPoints > 0 && !deferLevelUp);
+    const hasLevelInfo = lastLevelUp !== null;
+    const isMaxLevel = (activeCharacter?.level || 0) >= getMaxLevel();
+    const effectiveCharacter = activeCharacter ? applyEquipmentToCharacter(activeCharacter) : null;
+    const xpProgress = activeCharacter ? getXpProgress(activeCharacter) : { percentage: 0 };
+
+    const statOptions = useMemo(() => {
+        if (!effectiveCharacter) return [];
+        return [
+            { key: 'strength' as StatKey, label: 'STR', value: effectiveCharacter.strength, hint: 'Damage', icon: 'strength' as StatIconType },
+            { key: 'vitality' as StatKey, label: 'VIT', value: effectiveCharacter.vitality, hint: 'HP / Defense', icon: 'vitality' as StatIconType },
+            { key: 'dexterity' as StatKey, label: 'DEX', value: effectiveCharacter.dexterity, hint: 'Speed', icon: 'dexterity' as StatIconType },
+            { key: 'luck' as StatKey, label: 'LUK', value: effectiveCharacter.luck, hint: 'Crit Chance', icon: 'luck' as StatIconType },
+            { key: 'intelligence' as StatKey, label: 'INT', value: effectiveCharacter.intelligence, hint: 'Magic Power', icon: 'intelligence' as StatIconType },
+            { key: 'focus' as StatKey, label: 'FOC', value: effectiveCharacter.focus, hint: 'Accuracy / Control', icon: 'focus' as StatIconType },
+        ];
+    }, [effectiveCharacter]);
+
+    // ─── Fight flow (extracted hook) ────────────────────────────────────────
+    const {
+        matchmaking,
+        combatData,
+        canFight,
+        handleFight,
+        handleCombatComplete,
+        handleCloseCombat,
+    } = useFightFlow(isOfflineMode, fightsLeft, hasPendingFight, ensureConnection, openModal);
+
+    // ─── XP gain notification ───────────────────────────────────────────────
     useEffect(() => {
         if (lastXpGain !== null) {
             setShowXpGain(true);
@@ -67,7 +85,7 @@ const Arena = () => {
         }
     }, [lastXpGain]);
 
-    // Handle Level up notification
+    // ─── Level-up notification ──────────────────────────────────────────────
     useEffect(() => {
         if (lastLevelUp !== null) {
             setShowLevelUp(true);
@@ -75,81 +93,14 @@ const Arena = () => {
         }
     }, [lastLevelUp]);
 
-    if (!activeCharacter) {
-        // Redirection vers la home si pas de perso (ex: après un logout)
-        setTimeout(() => navigate('/'), 100);
-        return <div className="loading-screen">ACCESS DENIED</div>;
-    }
+    // ─── Auto-close defer when points run out ──────────────────────────────
+    useEffect(() => {
+        if (pendingStatPoints === 0) {
+            setDeferLevelUp(false);
+        }
+    }, [pendingStatPoints]);
 
-    const effectiveCharacter = applyEquipmentToCharacter(activeCharacter);
-    const xpProgress = getXpProgress(activeCharacter);
-    const isMaxLevel = activeCharacter.level >= getMaxLevel();
-    const isOfflineMode = !isOnline || !dbAvailable;
-    const fightsLeft = activeCharacter.fightsLeft || 0;
-    const hasPendingFight = !!activeCharacter.pendingFight;
-    const canFight = !isOfflineMode && fightsLeft > 0 && !hasPendingFight;
-    const pendingStatPoints = activeCharacter.statPoints || 0;
-    const canCloseLevelUp = pendingStatPoints === 0;
-    const shouldShowLevelUp = showLevelUp || (pendingStatPoints > 0 && !deferLevelUp);
-    const hasLevelInfo = lastLevelUp !== null;
-    const inventory = activeCharacter.inventory || [];
-    const inventoryCapacity = 24;
-    const inventoryFull = inventory.length >= inventoryCapacity;
-    const canRollDailyLoot = canRollLootbox(activeCharacter.lastLootRoll, Date.now());
-    type StatIconType = 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence' | 'focus';
-    const statOptions: Array<{ key: StatKey; label: string; value: number; hint: string; icon: StatIconType }> = [
-        { key: 'strength', label: 'STR', value: effectiveCharacter.strength, hint: 'Damage', icon: 'strength' },
-        { key: 'vitality', label: 'VIT', value: effectiveCharacter.vitality, hint: 'HP / Defense', icon: 'vitality' },
-        { key: 'dexterity', label: 'DEX', value: effectiveCharacter.dexterity, hint: 'Speed', icon: 'dexterity' },
-        { key: 'luck', label: 'LUK', value: effectiveCharacter.luck, hint: 'Crit Chance', icon: 'luck' },
-        { key: 'intelligence', label: 'INT', value: effectiveCharacter.intelligence, hint: 'Magic Power', icon: 'intelligence' },
-        { key: 'focus', label: 'FOC', value: effectiveCharacter.focus, hint: 'Accuracy / Control', icon: 'focus' },
-    ];
-    const itemStatMeta: Record<keyof ItemStats, { label: string; icon: StatIconType }> = {
-        strength: { label: 'STR', icon: 'strength' },
-        vitality: { label: 'VIT', icon: 'vitality' },
-        dexterity: { label: 'DEX', icon: 'dexterity' },
-        luck: { label: 'LUK', icon: 'luck' },
-        intelligence: { label: 'INT', icon: 'intelligence' },
-        focus: { label: 'FOC', icon: 'focus' },
-        hp: { label: 'HP', icon: 'vitality' },
-    };
-    const previewItemId = inventoryHoveredId ?? inventorySelectedId ?? undefined;
-    const previewItem = getItemById(previewItemId);
-    const previewStats = previewItem
-        ? (Object.entries(previewItem.stats)
-            .filter(([, value]) => typeof value === 'number' && value !== 0) as [keyof ItemStats, number][])
-        : [];
-    const lootboxStats = lootboxResult
-        ? (Object.entries(lootboxResult.stats)
-            .filter(([, value]) => typeof value === 'number' && value !== 0) as [keyof ItemStats, number][])
-        : [];
-    const previewSlotLabel = previewItem ? previewItem.slot.toUpperCase() : '';
-    const totalBonus = getEquipmentBonuses(activeCharacter);
-    const bonusOrder: Array<keyof ItemStats> = ['strength', 'vitality', 'dexterity', 'luck', 'intelligence', 'focus', 'hp'];
-    const totalBonusEntries = bonusOrder
-        .map((key) => ({ key, value: totalBonus[key] || 0 }))
-        .filter((entry) => entry.value > 0);
-    const combinedHistory: SettingsLogEntry[] = useMemo(
-        () => [
-            ...(activeCharacter.fightHistory || []).map((fight) => ({
-                date: fight.date,
-                won: fight.won,
-                direction: 'outgoing' as const,
-                displayName: fight.opponentName,
-            })),
-            ...(activeCharacter.incomingFightHistory || []).map((fight) => ({
-                date: fight.date,
-                won: fight.won,
-                direction: 'incoming' as const,
-                displayName: fight.attackerName,
-            })),
-        ]
-            .sort((a, b) => b.date - a.date)
-            .slice(0, 20),
-        [activeCharacter.fightHistory, activeCharacter.incomingFightHistory]
-    );
-
+    // ─── Handlers ───────────────────────────────────────────────────────────
     const handleAllocateStat = async (stat: StatKey) => {
         if (allocatingStat || pendingStatPoints <= 0) return;
 
@@ -185,236 +136,30 @@ const Arena = () => {
         setDeferLevelUp(false);
     };
 
-    useEffect(() => {
-        if (pendingStatPoints === 0) {
-            setDeferLevelUp(false);
-        }
-    }, [pendingStatPoints]);
-
-    useEffect(() => {
-        if (!inventoryOpen) {
-            setLootboxResult(null);
-            setLootboxRolling(false);
-            setInventoryHoveredId(null);
-            setInventorySelectedId(null);
-        }
-    }, [inventoryOpen]);
-
-    useEffect(() => {
-        if (!settingsOpen) {
-            setSettingsView('main');
-            setDeleteStep('idle');
-            setDeletePending(false);
-        }
-    }, [settingsOpen]);
-
-    const handleLootboxRoll = async () => {
-        if (lootboxRolling) return;
-        if (isOfflineMode) {
-            openModal(connectionMessage);
-            return;
-        }
-        const canProceed = await ensureConnection(connectionMessage);
-        if (!canProceed) return;
-
-        setLootboxRolling(true);
-        setLootboxResult(null);
-
-        setTimeout(async () => {
-            try {
-                const item = await rollLootbox();
-                if (item) {
-                    setLootboxResult(item);
-                    setInventorySelectedId(item.id);
-                    setInventoryHoveredId(item.id);
-                }
-            } catch (error: any) {
-                openModal(error.message || connectionMessage);
-            } finally {
-                setLootboxRolling(false);
-            }
-        }, 900);
-    };
-
-    const handleCloseLootboxResult = () => {
-        setLootboxResult(null);
-    };
-
-    const handleSelectItem = (itemId: string) => {
-        setInventorySelectedId(itemId);
-    };
-
-    const handleOpenHistoryFromSettings = () => {
-        setSettingsView('logs');
-    };
-
-    const handleReturnToSettings = () => {
-        setSettingsView('main');
-    };
-
-    const autoModeEnabled = !!activeCharacter?.isBot;
-
-    const handleToggleAutoMode = async () => {
-        if (autoModeUpdating) return;
-        if (isOfflineMode) {
-            openModal(connectionMessage);
-            return;
-        }
-        const canProceed = await ensureConnection(connectionMessage);
-        if (!canProceed) return;
-
-        setAutoModeUpdating(true);
-        try {
-            await setAutoMode(!autoModeEnabled);
-        } catch (error: any) {
-            openModal(error.message || connectionMessage);
-        } finally {
-            setAutoModeUpdating(false);
-        }
-    };
-
-    const handleDeleteCharacter = async () => {
-        if (deletePending) return;
-        if (deleteStep === 'idle') {
-            setDeleteStep('confirm');
-            return;
-        }
-        if (isOfflineMode) {
-            openModal(connectionMessage);
-            return;
-        }
-        const canProceed = await ensureConnection(connectionMessage);
-        if (!canProceed) return;
-
-        setDeletePending(true);
-        try {
-            await deleteCharacter();
-            setSettingsOpen(false);
-            setTimeout(() => navigate('/'), 0);
-        } catch (error: any) {
-            openModal(error.message || connectionMessage);
-        } finally {
-            setDeletePending(false);
-        }
-    };
-
-    const handleFight = async () => {
-        if (matchmaking || hasPendingFight) return;
-        const canProceed = await ensureConnection(connectionMessage);
-        if (!canProceed) return;
-
-        if (window.navigator.vibrate) window.navigator.vibrate(80);
-        setMatchmaking(true);
-
-        try {
-            // Find an opponent
-            const match = await startMatchmaking();
-
-            if (!match) {
-                openModal('No opponents found! Try again later.');
-                setMatchmaking(false);
-                return;
-            }
-
-            // Start combat with the matched opponent
-            setCombatData(match);
-            setMatchmaking(false);
-        } catch (error) {
-            console.error('Matchmaking failed:', error);
-            openModal(connectionMessage);
-            setMatchmaking(false);
-        }
-    };
-
-    const handleCombatComplete = async (won: boolean, xpGained: number) => {
-        try {
-            const opponentName = combatData?.opponent.name || 'UNKNOWN';
-            const opponentId = combatData?.opponent.id || '';
-            await useFight(won, xpGained, opponentName, opponentId);
-        } catch (error: any) {
-            console.error('Fight result save failed:', error);
-            openModal(error.message || connectionMessage);
-        }
-    };
-
-    const handleCloseCombat = () => {
-        setCombatData(null);
-    };
-
+    // ─── Guard: no character → redirect ────────────────────────────────────
+    if (!activeCharacter || !effectiveCharacter) {
+        setTimeout(() => navigate('/'), 100);
+        return <div className="loading-screen">ACCESS DENIED</div>;
+    }
 
     return (
         <div className="container retro-container arena-container">
-            {/* Level Up Notification (Dopamine hit!) */}
-            {shouldShowLevelUp && (
-                <div className="level-up-pop-overlay">
-                    <div className="level-up-card">
-                        <div className="card-shine"></div>
-                        <div className="level-up-badge">NEW RANK!</div>
-                        <div className="stars-top">★ ★ ★ ★ ★</div>
-                        <h2 className="lvl-title">LEVEL UP</h2>
-                        {hasLevelInfo ? (
-                            <div className="lvl-big-number">
-                                <span className="lvl-old">{lastLevelUp!.newLevel - lastLevelUp!.levelsGained}</span>
-                                <span className="lvl-arrow">➜</span>
-                                <span className="lvl-new">{lastLevelUp!.newLevel}</span>
-                            </div>
-                        ) : (
-                            <div className="lvl-big-number">
-                                <span className="lvl-new">LVL {activeCharacter.level}</span>
-                            </div>
-                        )}
-                        <div className="stars-bottom">★ ★ ★ ★ ★</div>
-                        <div className="level-up-points">
-                            <div className="points-label">
-                                {pendingStatPoints > 1 ? 'POINTS TO SPEND' : 'CHOOSE A STAT'}
-                            </div>
-                            {pendingStatPoints > 1 && (
-                                <div className="points-value">{pendingStatPoints}</div>
-                            )}
-                            {isOfflineMode && (
-                                <div className="points-warning">CONNECT TO ASSIGN POINTS</div>
-                            )}
-                        </div>
-                        <div className="level-up-stats">
-                            {statOptions.map((stat) => (
-                                <div key={stat.key} className="level-up-stat-row">
-                                    <span className="stat-icon">
-                                        <PixelIcon type={stat.icon} size={12} />
-                                    </span>
-                                    <span className="stat-label">{stat.label}</span>
-                                    <span className="stat-value">{stat.value}</span>
-                                    <span className="stat-hint">{stat.hint}</span>
-                                    <button
-                                        className="button stat-add-btn"
-                                        onClick={() => handleAllocateStat(stat.key as StatKey)}
-                                        disabled={pendingStatPoints <= 0 || !!allocatingStat || isOfflineMode}
-                                        aria-label={`Increase ${stat.label}`}
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="level-up-actions">
-                            {pendingStatPoints > 0 && (
-                                <button
-                                    className="button secondary-btn level-up-later"
-                                    onClick={handleDeferLevelUp}
-                                >
-                                    LATER
-                                </button>
-                            )}
-                            <button
-                                className="button primary-btn level-up-confirm"
-                                disabled={!canCloseLevelUp}
-                                onClick={handleCloseLevelUp}
-                            >
-                                APPLY
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Level Up overlay */}
+            <LevelUpOverlay
+                shouldShowLevelUp={shouldShowLevelUp}
+                activeCharacter={activeCharacter}
+                effectiveCharacter={effectiveCharacter}
+                lastLevelUp={lastLevelUp}
+                pendingStatPoints={pendingStatPoints}
+                isOfflineMode={isOfflineMode}
+                allocatingStat={allocatingStat}
+                statOptions={statOptions}
+                canCloseLevelUp={canCloseLevelUp}
+                hasLevelInfo={hasLevelInfo}
+                handleAllocateStat={handleAllocateStat}
+                handleCloseLevelUp={handleCloseLevelUp}
+                handleDeferLevelUp={handleDeferLevelUp}
+            />
 
             <header className="arena-header">
                 <div className="char-info">
@@ -447,7 +192,6 @@ const Arena = () => {
                 </div>
             </header>
 
-
             {isOfflineMode && (
                 <div className="offline-banner" role="status" aria-live="polite">
                     <div className="offline-row">
@@ -458,369 +202,60 @@ const Arena = () => {
             )}
 
             <div className="arena-content">
-                <div className="character-display">
-                    <div className="avatar-box">
-                        <PixelCharacter seed={activeCharacter.seed} gender={activeCharacter.gender} scale={window.innerWidth < 600 ? 16 : 12} />
-                    </div>
+                <CharacterStats
+                    activeCharacter={activeCharacter}
+                    effectiveCharacter={effectiveCharacter}
+                    xpProgress={xpProgress}
+                    xpBarAnimating={xpBarAnimating}
+                    showXpGain={showXpGain}
+                    lastXpGain={lastXpGain}
+                    isMaxLevel={isMaxLevel}
+                    pendingStatPoints={pendingStatPoints}
+                    statOptions={statOptions}
+                    handleOpenLevelUp={handleOpenLevelUp}
+                />
 
-                    {/* XP Bar Section */}
-                    <div className="xp-section">
-                        <div className="xp-header">
-                            <span className="xp-label">EXP</span>
-                            <span className="xp-text">{formatXpDisplay(activeCharacter)}</span>
-                        </div>
-                        <div className="xp-bar-container">
-                            <div
-                                className={`xp-bar ${xpBarAnimating ? 'animating' : ''} ${isMaxLevel ? 'max-level' : ''}`}
-                                style={{ width: `${xpProgress.percentage}%` }}
-                            >
-                                <div className="xp-bar-shine"></div>
-                            </div>
-                            {showXpGain && lastXpGain && (
-                                <div className="xp-gain-popup">+{lastXpGain} XP</div>
-                            )}
-                        </div>
-                        {isMaxLevel && <span className="max-level-badge">★ MAX LEVEL ★</span>}
-                    </div>
-
-                    <div className="stats-panel">
-                        <div className="stat-row principal">
-                            <span>HP</span>
-                            <div className="bar-container">
-                                <div className="bar hp-bar" style={{ width: '100%' }}></div>
-                            </div>
-                            <span className="stat-val">{effectiveCharacter.maxHp}</span>
-                        </div>
-                        <div className="stats-grid-compact">
-                            {statOptions.map((stat) => (
-                                <div key={stat.key} className="compact-stat">
-                                    <span className="compact-stat-icon">
-                                        <PixelIcon type={stat.icon} size={12} />
-                                    </span>
-                                    <span className="compact-stat-label">{stat.label}</span>
-                                    <span className="compact-stat-value">{stat.value}</span>
-                                </div>
-                            ))}
-                        </div>
-                        {pendingStatPoints > 0 && (
-                            <button
-                                className="button secondary-btn stat-allocate-btn"
-                                onClick={handleOpenLevelUp}
-                            >
-                                SPEND POINT
-                            </button>
-                        )}
-                    </div>
-                </div>
-
-                <div className="action-panel">
-                    <div className="daily-status-compact">
-                        <div className="status-label">
-                            <PixelIcon type="sword" size={32} />
-                            <div className="label-text">
-                                <span className="label-main">BATTLE ENERGY</span>
-                                <span className="label-sub">
-                                    {isOfflineMode ? 'OFFLINE SNAPSHOT' : `${fightsLeft} / 5 AVAILABLE`}
-                                </span>
-                            </div>
-                        </div>
-                        <div className="mini-pips">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                                <div key={i} className={`mini-pip ${i < fightsLeft ? 'active' : 'used'}`}></div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <button
-                        className="button primary-btn giant-btn"
-                        disabled={!canFight || matchmaking}
-                        onClick={handleFight}
-                    >
-                        {matchmaking
-                            ? 'SEARCHING...'
-                            : hasPendingFight
-                                ? 'RESOLVING...'
-                                : (isOfflineMode ? 'OFFLINE' : (fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'))}
-                    </button>
-                </div>
-
+                <FightButton
+                    canFight={canFight}
+                    matchmaking={matchmaking}
+                    hasPendingFight={hasPendingFight}
+                    isOfflineMode={isOfflineMode}
+                    fightsLeft={fightsLeft}
+                    handleFight={handleFight}
+                />
             </div>
+
             <ConnectionModal
                 open={connectionModal.open}
                 message={connectionModal.message}
                 onClose={closeModal}
             />
-            {inventoryOpen && (
-                <div className="retro-modal-overlay inventory-overlay" onClick={() => setInventoryOpen(false)}>
-                    <div className={`retro-modal inventory-modal ${lootboxRolling ? 'lootbox-active' : ''}`} onClick={(e) => e.stopPropagation()}>
-                        <div className="inventory-header">
-                            <h2 className="inventory-title">INVENTORY</h2>
-                            <button className="inventory-close" onClick={() => setInventoryOpen(false)} aria-label="Close inventory">
-                                ×
-                            </button>
-                        </div>
-                        <div className="inventory-roll">
-                            <button
-                                className="button lootbox-btn"
-                                onClick={handleLootboxRoll}
-                                disabled={lootboxRolling || !canRollDailyLoot || inventoryFull || isOfflineMode}
-                                aria-label="Daily lootbox roll"
-                            >
-                                <PixelIcon type="chest" size={18} />
-                                <span>
-                                    {lootboxRolling
-                                        ? 'OPENING...'
-                                        : inventoryFull
-                                            ? 'INVENTORY FULL'
-                                            : canRollDailyLoot
-                                                ? 'DAILY LOOTBOX'
-                                                : 'COME BACK TOMORROW'}
-                                </span>
-                            </button>
-                            <div className="lootbox-status">
-                                {inventory.length}/{inventoryCapacity} SLOTS
-                            </div>
-                        </div>
-                        <div className="inventory-body">
-                            <div className="inventory-grid">
-                                {Array.from({ length: inventoryCapacity }).map((_, index) => {
-                                    const itemId = inventory[index];
-                                    const item = getItemById(itemId);
-                                    if (!item) {
-                                        return <div key={index} className="inventory-slot empty" aria-hidden="true" />;
-                                    }
-                                    const isSelected = previewItemId === item.id;
-                                    return (
-                                        <button
-                                            key={index}
-                                            className={`inventory-slot item-slot rarity-${item.rarity} ${isSelected ? 'selected' : ''}`}
-                                            onClick={() => handleSelectItem(item.id)}
-                                            onMouseEnter={() => setInventoryHoveredId(item.id)}
-                                            onMouseLeave={() => setInventoryHoveredId((current) => (current === item.id ? null : current))}
-                                            onFocus={() => setInventoryHoveredId(item.id)}
-                                            onBlur={() => setInventoryHoveredId((current) => (current === item.id ? null : current))}
-                                            onTouchStart={() => setInventorySelectedId(item.id)}
-                                            title={`${item.name} (${item.rarity})`}
-                                            aria-label={`View ${item.name}`}
-                                        >
-                                            <PixelItemIcon pixels={item.pixels} size={24} />
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                            <div className={`inventory-details ${previewItem ? '' : 'empty'}`}>
-                                {previewItem ? (
-                                    <>
-                                        <div className={`inventory-item-head rarity-${previewItem.rarity}`}>
-                                            <PixelItemIcon pixels={previewItem.pixels} size={30} />
-                                            <div className="inventory-item-meta">
-                                                <div className="inventory-item-name">{previewItem.name}</div>
-                                                <div className="inventory-item-sub">
-                                                    <span className="inventory-item-slot">{previewSlotLabel}</span>
-                                                    <span className="inventory-item-rarity">{previewItem.rarity.toUpperCase()}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="inventory-item-stats">
-                                            {previewStats.map(([statKey, value]) => {
-                                                const meta = itemStatMeta[statKey];
-                                                if (!meta) return null;
-                                                return (
-                                                    <div key={statKey} className="inventory-stat-row">
-                                                        <span className="inventory-stat-icon">
-                                                            <PixelIcon type={meta.icon} size={12} />
-                                                        </span>
-                                                        <span className="inventory-stat-label">{meta.label}</span>
-                                                        <span className="inventory-stat-value">+{value}</span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </>
-                                ) : (
-                                    <div className="inventory-empty-details">TAP AN ITEM TO VIEW BONUSES</div>
-                                )}
-                                {totalBonusEntries.length > 0 && (
-                                    <div className="inventory-bonus-summary">
-                                        <div className="bonus-title">TOTAL BONUS</div>
-                                        <div className="bonus-list">
-                                            {totalBonusEntries.map((entry) => {
-                                                const meta = itemStatMeta[entry.key];
-                                                if (!meta) return null;
-                                                return (
-                                                    <div key={entry.key} className="bonus-chip">
-                                                        <PixelIcon type={meta.icon} size={10} />
-                                                        <span className="bonus-label">{meta.label}</span>
-                                                        <span className="bonus-value">+{entry.value}</span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        {lootboxResult && (
-                            <div className="lootbox-result-overlay" role="dialog" aria-label="Lootbox reward" onClick={handleCloseLootboxResult}>
-                                <div className={`lootbox-result-card rarity-${lootboxResult.rarity}`} onClick={handleCloseLootboxResult}>
-                                    <div className="lootbox-result-glow"></div>
-                                    <div className="lootbox-result-title">NEW ITEM</div>
-                                    <div className="lootbox-result-item">
-                                        <div className="lootbox-result-icon">
-                                            <PixelItemIcon pixels={lootboxResult.pixels} size={64} />
-                                        </div>
-                                        <div className="lootbox-result-meta">
-                                            <div className="lootbox-result-name">{lootboxResult.name}</div>
-                                            <div className="lootbox-result-rarity">{lootboxResult.rarity.toUpperCase()}</div>
-                                        </div>
-                                    </div>
-                                    <div className="lootbox-result-stats">
-                                        {lootboxStats.map(([statKey, value]) => {
-                                            const meta = itemStatMeta[statKey];
-                                            if (!meta) return null;
-                                            return (
-                                                <div key={statKey} className="lootbox-result-stat">
-                                                    <PixelIcon type={meta.icon} size={12} />
-                                                    <span className="lootbox-stat-label">{meta.label}</span>
-                                                    <span className="lootbox-stat-value">+{value}</span>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                    <div className="lootbox-result-hint">TAP TO CONTINUE</div>
-                                </div>
-                            </div>
-                        )}
-                        {lootboxRolling && (
-                            <div className="lootbox-overlay">
-                                <div className="lootbox-anim">
-                                    <PixelIcon type="chest" size={46} />
-                                    <div className="lootbox-text">OPENING...</div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
 
-            {settingsOpen && (
-                <div className="retro-modal-overlay settings-overlay" onClick={() => setSettingsOpen(false)}>
-                    <div className="retro-modal settings-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="inventory-header settings-header">
-                            <div className="settings-title-row">
-                                {settingsView === 'logs' && (
-                                    <button className="button settings-back" onClick={handleReturnToSettings}>
-                                        BACK
-                                    </button>
-                                )}
-                                <h2 className="inventory-title">{settingsView === 'logs' ? 'COMBAT LOGS' : 'SETTINGS'}</h2>
-                            </div>
-                            <button className="inventory-close" onClick={() => setSettingsOpen(false)} aria-label="Close settings">
-                                <PixelIcon type="close" size={14} />
-                            </button>
-                        </div>
+            <InventoryModal
+                isOpen={inventoryOpen}
+                activeCharacter={activeCharacter}
+                isOfflineMode={isOfflineMode}
+                onClose={() => setInventoryOpen(false)}
+                rollLootbox={rollLootbox}
+                openModal={openModal}
+                ensureConnection={ensureConnection}
+            />
 
-                        <div className="settings-body">
-                            {settingsView === 'logs' ? (
-                                <>
-                                    <div className="history-list settings-history-list">
-                                        {combinedHistory.length === 0 ? (
-                                            <div className="no-history">NO COMBAT ACTIVITY YET</div>
-                                        ) : (
-                                            combinedHistory.map((fight, i) => (
-                                                <div key={i} className={`history-item ${fight.won ? 'won' : 'lost'} ${fight.direction}`}>
-                                                    <div className="history-status">
-                                                        {fight.direction === 'incoming'
-                                                            ? (fight.won ? 'DEFENDED' : 'HIT')
-                                                            : (fight.won ? 'WIN' : 'LOST')}
-                                                    </div>
-                                                    <div className="history-info">
-                                                        <div className="history-opponent">
-                                                            {fight.direction === 'incoming'
-                                                                ? `ATTACKED BY ${fight.displayName}`
-                                                                : `VS ${fight.displayName}`}
-                                                        </div>
-                                                        <div className="history-date">
-                                                            {formatSettingsLogDate(fight.date)}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                    <div className="inventory-footer">LAST 20 ENCOUNTERS</div>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="settings-section">
-                                        <div className="settings-row">
-                                            <div className="settings-label">
-                                                <span>AUTO MODE</span>
-                                                <span className="settings-sub">Let the bot engine handle fights.</span>
-                                            </div>
-                                            <button
-                                                className={`pixel-switch ${autoModeEnabled ? 'on' : 'off'}`}
-                                                onClick={handleToggleAutoMode}
-                                                disabled={autoModeUpdating || isOfflineMode}
-                                                role="switch"
-                                                aria-checked={autoModeEnabled}
-                                                aria-label="Auto mode"
-                                            >
-                                                <span className="switch-knob" />
-                                                <span className="switch-text">{autoModeEnabled ? 'ON' : 'OFF'}</span>
-                                            </button>
-                                        </div>
-                                        <div className="settings-hint">Switching off returns full manual control.</div>
-                                    </div>
+            <SettingsModal
+                isOpen={settingsOpen}
+                activeCharacter={activeCharacter}
+                isOfflineMode={isOfflineMode}
+                onClose={() => setSettingsOpen(false)}
+                setAutoMode={setAutoMode}
+                deleteCharacter={deleteCharacter}
+                openModal={openModal}
+                ensureConnection={(msg?: string) => ensureConnection(msg || connectionMessage)}
+                navigate={navigate}
+            />
 
-                                    <div className="settings-divider" />
-
-                                    <div className="settings-section">
-                                        <div className="settings-row">
-                                            <div className="settings-label">
-                                                <span>COMBAT LOGS</span>
-                                                <span className="settings-sub">Review your last 20 outgoing and incoming encounters.</span>
-                                            </div>
-                                            <button className="button settings-link" onClick={handleOpenHistoryFromSettings}>
-                                                <PixelIcon type="history" size={14} />
-                                                VIEW LOGS
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="settings-divider" />
-
-                                    <div className="settings-section danger-zone">
-                                        <div className="settings-row">
-                                            <div className="settings-label danger-label">
-                                                <span>DELETE CHARACTER</span>
-                                                <span className="settings-sub">Permanent. Cannot be undone.</span>
-                                            </div>
-                                        </div>
-                                        {deleteStep === 'idle' ? (
-                                            <button className="button danger-btn" onClick={handleDeleteCharacter}>
-                                                DELETE
-                                            </button>
-                                        ) : (
-                                            <div className="danger-actions">
-                                                <button className="button danger-btn" onClick={handleDeleteCharacter} disabled={deletePending}>
-                                                    {deletePending ? 'DELETING...' : 'CONFIRM DELETE'}
-                                                </button>
-                                                <button className="button secondary" onClick={() => setDeleteStep('idle')} disabled={deletePending}>
-                                                    CANCEL
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
-            {combatData && activeCharacter && (
+            {combatData && (
                 <CombatView
-                    player={applyEquipmentToCharacter(activeCharacter)}
+                    player={effectiveCharacter}
                     opponent={applyEquipmentToCharacter(combatData.opponent)}
                     matchType={combatData.matchType}
                     candidates={combatData.candidates}

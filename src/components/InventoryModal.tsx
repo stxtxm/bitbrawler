@@ -15,6 +15,7 @@ interface InventoryModalProps {
     onClose: () => void;
     rollLootbox: () => Promise<PixelItemAsset | null>;
     openModal: (message: string) => void;
+    ensureConnection?: (message: string) => Promise<boolean>;
 }
 
 const INVENTORY_CAPACITY = 24;
@@ -36,6 +37,7 @@ const InventoryModal = ({
     onClose,
     rollLootbox,
     openModal,
+    ensureConnection,
 }: InventoryModalProps) => {
     const [inventoryHoveredId, setInventoryHoveredId] = useState<string | null>(null);
     const [inventorySelectedId, setInventorySelectedId] = useState<string | null>(null);
@@ -79,6 +81,10 @@ const InventoryModal = ({
         if (isOfflineMode) {
             openModal('Connect to battle and sync your progress.');
             return;
+        }
+        if (ensureConnection) {
+            const canProceed = await ensureConnection('Connect to battle and sync your progress.');
+            if (!canProceed) return;
         }
 
         setLootboxRolling(true);
