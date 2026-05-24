@@ -135,5 +135,38 @@
       "home": 2158,
       "arena": 2820
     }
+  },
+  {
+    "date": "2026-05-24T19:30:53.482Z",
+    "run": "2026-05-24",
+    "character": "NYXRUIN",
+    "character_action": "reused",
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Rusty Sword",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "final_stats": {
+      "level": null,
+      "xp": 20,
+      "wins": null,
+      "losses": null
+    },
+    "errors": [
+      "Fight 1: timeout waiting for result",
+      "Fight 2: timeout waiting for result",
+      "Fight 3: timeout waiting for result",
+      "Fight 4: timeout waiting for result",
+      "Fight 5: timeout waiting for result"
+    ],
+    "load_times_ms": {
+      "home": 1190,
+      "arena": 551
+    }
   }
 ]
