@@ -697,19 +697,25 @@ async function run() {
 
     await runFightSequence(page, runKey, runRecord)
 
+    // Ensure no overlay is blocking the arena stats before reading
+    await handleLevelUpOverlay(page)
+
+    // Debug screenshot right before stats reading to diagnose W/L capture issues
+    await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-04-stats-debug.png`) })
+
     const finalText = await page.locator('body').innerText()
     console.log('   Raw body text (first 500 chars):', finalText.slice(0, 500))
 
     const levelMatch = finalText.match(/LVL\s*(\d+)/i)
     const xpTotalMatch = finalText.match(/(\d+)\s*\/\s*\d+\s*XP/i)
-    const winsMatch = finalText.match(/\bW\s*(\d+)/i)
-    const lossesMatch = finalText.match(/\bL\s*(\d+)/i)
+    // Use a more specific combined pattern: "W <wins> L <losses>" to avoid false matches
+    const recordMatch  = finalText.match(/W\s*(\d+)\s+L\s*(\d+)/i)
 
     runRecord.final_stats = {
       level: levelMatch ? parseInt(levelMatch[1]) : null,
       xp: xpTotalMatch ? parseInt(xpTotalMatch[1]) : null,
-      wins: winsMatch ? parseInt(winsMatch[1]) : null,
-      losses: lossesMatch ? parseInt(lossesMatch[1]) : null,
+      wins: recordMatch ? parseInt(recordMatch[1]) : null,
+      losses: recordMatch ? parseInt(recordMatch[2]) : null,
     }
     console.log('   Final stats:', JSON.stringify(runRecord.final_stats))
 
