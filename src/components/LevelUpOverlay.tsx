@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Character } from '../types/Character';
 import { PixelIcon } from './PixelIcon';
-import { StatKey } from '../utils/statUtils';
+import { StatKey, STAT_TOOLTIPS } from '../utils/statUtils';
 
 type StatIconType = 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence' | 'focus';
 
@@ -98,7 +98,7 @@ const LevelUpOverlay = ({
                 </div>
                 <div className="level-up-stats">
                     {statOptions.map((stat) => (
-                        <div key={stat.key} className="level-up-stat-row">
+                        <div key={stat.key} className="level-up-stat-row" title={`${stat.label}: ${STAT_TOOLTIPS[stat.key as StatKey]}`}>
                             <span className="stat-icon">
                                 <PixelIcon type={stat.icon} size={12} />
                             </span>

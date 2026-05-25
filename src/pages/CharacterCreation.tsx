@@ -10,6 +10,7 @@ import ConnectionModal from '../components/ConnectionModal'
 import { generateInitialStats, generateCharacterName } from '../utils/characterUtils'
 import { PixelIcon } from '../components/PixelIcon'
 import { prefetchArena } from '../routes/lazyPages'
+import { STAT_TOOLTIPS } from '../utils/statUtils'
 
 // Conversion function for character creation
 const convertToSupabase = (character: Character): Partial<CharacterRow> => {
@@ -230,32 +231,32 @@ const CharacterCreation = () => {
             {generatedCharacter && (
               <div className="stats-readout-compact">
                 <div className="stat-grid">
-                  <div className="stat-card" title="Strength">
+                  <div className="stat-card" title={'STR: ' + STAT_TOOLTIPS['strength']}>
                     <span className="stat-icon"><PixelIcon type="strength" size={16} /></span>
                     <span className="stat-label">STR</span>
                     <span className="stat-value">{generatedCharacter.strength}</span>
                   </div>
-                  <div className="stat-card" title="Vitality">
+                  <div className="stat-card" title={'VIT: ' + STAT_TOOLTIPS['vitality']}>
                     <span className="stat-icon"><PixelIcon type="vitality" size={16} /></span>
                     <span className="stat-label">VIT</span>
                     <span className="stat-value">{generatedCharacter.vitality}</span>
                   </div>
-                  <div className="stat-card" title="Dexterity">
+                  <div className="stat-card" title={'DEX: ' + STAT_TOOLTIPS['dexterity']}>
                     <span className="stat-icon"><PixelIcon type="dexterity" size={16} /></span>
                     <span className="stat-label">DEX</span>
                     <span className="stat-value">{generatedCharacter.dexterity}</span>
                   </div>
-                  <div className="stat-card" title="Luck">
+                  <div className="stat-card" title={'LUK: ' + STAT_TOOLTIPS['luck']}>
                     <span className="stat-icon"><PixelIcon type="luck" size={16} /></span>
                     <span className="stat-label">LUK</span>
                     <span className="stat-value">{generatedCharacter.luck}</span>
                   </div>
-                  <div className="stat-card" title="Intelligence">
+                  <div className="stat-card" title={'INT: ' + STAT_TOOLTIPS['intelligence']}>
                     <span className="stat-icon"><PixelIcon type="intelligence" size={16} /></span>
                     <span className="stat-label">INT</span>
                     <span className="stat-value">{generatedCharacter.intelligence}</span>
                   </div>
-                  <div className="stat-card" title="Focus">
+                  <div className="stat-card" title={'FOC: ' + STAT_TOOLTIPS['focus']}>
                     <span className="stat-icon"><PixelIcon type="focus" size={16} /></span>
                     <span className="stat-label">FOC</span>
                     <span className="stat-value">{generatedCharacter.focus}</span>
