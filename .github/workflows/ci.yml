@@ -6,6 +6,8 @@ on:
   push:
     branches: [master]
 
+# Concurrency : pour master, les pushes successifs (merges batch) annulent
+# les runs précédents →  seul le dernier CI termine + 1 seul déploiement Vercel.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -36,3 +38,22 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Deploy to Vercel (production, après tests)
+        # Ne s'exécute que sur push à master, après lint+tsc+test+build passés.
+        # Annule les déploiements précédents du même groupe via concurrency.
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "❌ VERCEL_TOKEN secret non configuré."
+            echo "➡️  Ajoute-le dans https://github.com/stxtxm/bitbrawler/settings/secrets/actions"
+            echo "➡️  Génère le token depuis https://vercel.com/account/tokens"
+            echo ""
+            echo "⚠️  Désactive aussi l'auto-deploy Vercel sur master :"
+            echo "   Vercel Dashboard → bitbrawler → Settings → Git → Production Branch →"
+            echo "   décocher 'Auto Deploy' → Save"
+            exit 1
+          fi
+          npx vercel --prod --token="$VERCEL_TOKEN" --yes
