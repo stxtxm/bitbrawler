@@ -38,10 +38,10 @@ jobs:
           git config user.name "opencode-agent"
           git config user.email "agent@opencode.ai"
 
-- name: Mark issue scan start
-  run: echo "TECH_LEAD_SCAN_START=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+      - name: Mark issue scan start
+        run: echo "TECH_LEAD_SCAN_START=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
 
-- name: Run QA Stats Analysis
+      - name: Run QA Stats Analysis
         run: |
           if [ -f qa/stats.json ]; then
             npx tsx scripts/analyze-qa-stats.ts
@@ -68,23 +68,23 @@ jobs:
             QA_REPORT=$(cat qa/analysis-latest.json)
           fi
 
-           PROMPT="Tu es le tech-lead de Bitbrawler. Analyse le repo aujourd'hui.
- 
-           ## QA Stats Analysis (données de jeu réelles)
-           \`\`\`json
-           ${QA_REPORT:-"Pas de données QA disponibles."}
-           \`\`\`
- 
-           ### Analyse à partir du rapport QA :
- 
-           1. **Issues** (🔴) : si le rapport liste des issues, crée des tickets GitHub avec /oc pour chaque issue critique (win rate anormal, error rate élevé, survivabilité trop basse).
-           2. **Suggestions** (💡) : pour chaque suggestion du rapport, crée une issue /oc avec une proposition concrète de modification des constantes dans src/config/gameRules.ts.
-           3. **HP Growth (max HP)** : si hp_analysis est présent, vérifie si la croissance des HP max est équilibrée. +5-30 HP/run est sain pour un personnage qui progresse. Trop bas (les persos ne gagnent pas assez de VIT/équipement), trop haut (scaling trop rapide).
-           4. **Lootbox Rarités** : si des raretés rares/epic manquent, suggère d'ajuster LOOTBOX_RARITY_WEIGHTS dans lootboxUtils.ts.
-           5. **Trends** : regarde les tendances last_3 vs last_5 vs all_time. Si la win rate baisse de +15%, c'est un problème. Si elle monte de +15%, l'équilibrage s'améliore.
-           6. **Stats des personnages** : vérifie si les stats initiales sont équilibrées (toutes proches de 10, aucune sous 7 ou au-dessus de 13).
- 
-           Consulte aussi les commits récents."
+          PROMPT="Tu es le tech-lead de Bitbrawler. Analyse le repo aujourd'hui.
+
+            ## QA Stats Analysis (données de jeu réelles)
+            \`\`\`json
+            ${QA_REPORT:-"Pas de données QA disponibles."}
+            \`\`\`
+
+            ### Analyse à partir du rapport QA :
+
+            1. **Issues** (🔴) : si le rapport liste des issues, crée des tickets GitHub avec /oc pour chaque issue critique (win rate anormal, error rate élevé, survivabilité trop basse).
+            2. **Suggestions** (💡) : pour chaque suggestion du rapport, crée une issue /oc avec une proposition concrète de modification des constantes dans src/config/gameRules.ts.
+            3. **HP Growth (max HP)** : si hp_analysis est présent, vérifie si la croissance des HP max est équilibrée. +5-30 HP/run est sain pour un personnage qui progresse. Trop bas (les persos ne gagnent pas assez de VIT/équipement), trop haut (scaling trop rapide).
+            4. **Lootbox Rarités** : si des raretés rares/epic manquent, suggère d'ajuster LOOTBOX_RARITY_WEIGHTS dans lootboxUtils.ts.
+            5. **Trends** : regarde les tendances last_3 vs last_5 vs all_time. Si la win rate baisse de +15%, c'est un problème. Si elle monte de +15%, l'équilibrage s'améliore.
+            6. **Stats des personnages** : vérifie si les stats initiales sont équilibrées (toutes proches de 10, aucune sous 7 ou au-dessus de 13).
+
+            Consulte aussi les commits récents."
 
           SUCCESS=0
           for MODEL in "${MODELS[@]}"; do
