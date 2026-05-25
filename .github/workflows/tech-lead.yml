@@ -82,9 +82,16 @@ jobs:
           ${QA_REPORT:-"Pas de données QA disponibles."}
           \`\`\`
 
-          Si des issues ou suggestions sont listées dans le rapport, crée des issues GitHub avec /oc pour les corriger.
-          Consulte les commits récents, merge les PRs éligibles, et améliore l'équilibrage du jeu à partir des données QA réelles.
-          Si le rapport indique des tendances sur 5 runs (win rate, niveaux), ajuste les suggestions en conséquence."
+          ### Analyse à partir du rapport QA :
+
+          1. **Issues** (🔴) : si le rapport liste des issues, crée des tickets GitHub avec /oc pour chaque issue critique (win rate anormal, error rate élevé, survivabilité trop basse).
+          2. **Suggestions** (💡) : pour chaque suggestion du rapport, crée une issue /oc avec une proposition concrète de modification des constantes dans src/config/gameRules.ts.
+          3. **HP/Survivabilité** : si hp_analysis est présent, vérifie si la survivabilité (HP restant après combat) est équilibrée. Entre 30%-80% est sain. Hors de cette fourchette, crée une issue /oc.
+          4. **Lootbox Rarités** : si des raretés rares/epic manquent, suggère d'ajuster LOOTBOX_RARITY_WEIGHTS dans lootboxUtils.ts.
+          5. **Trends** : regarde les tendances last_3 vs last_5 vs all_time. Si la win rate baisse de +15%, c'est un problème. Si elle monte de +15%, l'équilibrage s'améliore.
+          6. **Stats des personnages** : vérifie si les stats initiales sont équilibrées (toutes proches de 10, aucune sous 7 ou au-dessus de 13).
+
+          Consulte aussi les commits récents, merge les PRs éligibles."
 
           SUCCESS=0
           for MODEL in "${MODELS[@]}"; do
