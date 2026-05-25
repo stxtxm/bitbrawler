@@ -11,7 +11,7 @@ import { canRollLootbox, rollLootbox } from '../utils/lootboxUtils';
 import { PixelItemAsset } from '../types/Item';
 import { simulateCombat } from '../utils/combatUtils';
 import { convertFromSupabase } from '../utils/supabaseUtils';
-import { INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP } from '../utils/persistenceUtils';
+import { INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP, calculatePendingFightXp } from '../utils/persistenceUtils';
 
 interface GameContextType {
   activeCharacter: Character | null;
@@ -112,11 +112,6 @@ const hydratePendingOpponent = (snapshot: PendingFightOpponent): Character => {
     isBot: snapshot.isBot,
     inventory: snapshot.inventory ?? []
   });
-};
-
-const calculatePendingFightXp = (player: Character, opponent: Character, won: boolean): number => {
-  const baseXp = won ? 50 : 20;
-  return Math.round(baseXp * (1 + (opponent.level - player.level) * 0.1));
 };
 
 // Helper functions
