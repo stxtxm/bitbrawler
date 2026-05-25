@@ -31,7 +31,7 @@ export const getEquipmentBonuses = (character: Character): ItemStats => {
 
 export const applyEquipmentToCharacter = (character: Character): Character => {
   const bonus = getEquipmentBonuses(character);
-  const baseMaxHp = character.maxHp || getHpForVitality(character.vitality || 0);
+  const baseMaxHp = character.maxHp || getHpForVitality(character.vitality || 0, character.level || 1);
   const bonusHp = bonus.hp || 0;
   const maxHp = baseMaxHp + bonusHp;
   const hp = Math.min(character.hp + bonusHp, maxHp || character.hp + bonusHp);
