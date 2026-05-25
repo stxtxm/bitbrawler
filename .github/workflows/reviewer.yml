@@ -1,0 +1,150 @@
+name: PR Reviewer
+
+on:
+  pull_request:
+    types: [opened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: PR number to review
+        required: true
+        type: string
+
+concurrency:
+  group: pr-review-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 20
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install opencode
+        run: npm install -g opencode-ai
+
+      - name: Wait for CI checks
+        id: wait-ci
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number || github.event.inputs.pr_number }}"
+          echo "PR number: $PR_NUMBER"
+          echo "PR_NUMBER=$PR_NUMBER" >> "$GITHUB_ENV"
+
+          echo "Waiting for CI checks on PR #$PR_NUMBER..."
+          for i in $(seq 1 60); do
+            CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
+              [.statusCheckRollup[]? | select(
+                .status? != "COMPLETED" or (.conclusion? != "SUCCESS" and .conclusion? != "NEUTRAL")
+              )] | length
+            ' 2>/dev/null || echo "60")
+            if [ "$CHECKS" -eq 0 ]; then
+              echo "All CI checks passed!"
+              exit 0
+            fi
+            echo "Waiting... ($i/60, $CHECKS checks remaining)"
+            sleep 10
+          done
+
+          echo "Timeout waiting for CI — requesting changes."
+          gh pr review "$PR_NUMBER" --request-changes --body "⏱️ Reviewer: CI checks timed out after 10 minutes. Please ensure CI passes before requesting review."
+          exit 1
+
+      - name: Configure git
+        run: |
+          git config user.name "opencode-agent"
+          git config user.email "agent@opencode.ai"
+
+      - name: Run Reviewer agent
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_DIFF=$(gh pr diff "$PR_NUMBER" 2>/dev/null || echo "")
+          PR_TITLE=$(gh pr view "$PR_NUMBER" --json title --jq '.title // ""' 2>/dev/null || echo "")
+          PR_BODY=$(gh pr view "$PR_NUMBER" --json body --jq '.body // ""' 2>/dev/null || echo "")
+          HEAD_REF=$(gh pr view "$PR_NUMBER" --json headRefName --jq '.headRefName // ""' 2>/dev/null || echo "")
+
+          # Extract linked issue from PR body (Closes #N or Fixes #N)
+          ISSUE_NUMBER=$(echo "$PR_BODY" | grep -oE '(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s+#[0-9]+' | grep -oE '#[0-9]+' | tr -d '#' | head -1 || echo "")
+
+          ISSUE_BODY=""
+          ISSUE_TITLE=""
+          if [ -n "$ISSUE_NUMBER" ]; then
+            ISSUE_TITLE=$(gh issue view "$ISSUE_NUMBER" --json title --jq '.title // ""' 2>/dev/null || echo "")
+            ISSUE_BODY=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body // ""' 2>/dev/null || echo "")
+          fi
+
+          MODEL_ATTEMPTS=0
+          MODELS=(
+            "opencode/deepseek-v4-flash-free"
+            "opencode/nemotron"
+            "opencode/big-pickle"
+          )
+
+          PROMPT="Tu es le reviewer de Bitbrawler. Review la PR #${PR_NUMBER}.
+
+          ## PR : ${PR_TITLE}
+          \`\`\`
+          ${PR_DIFF}
+          \`\`\`
+
+          ## Issue liée #${ISSUE_NUMBER:-"aucune"}
+          Titre: ${ISSUE_TITLE:-"N/A"}
+          Body: ${ISSUE_BODY:-"N/A"}
+
+          ## Instructions de review
+
+          1. **Pertinence** : le code résout-il le problème décrit dans l'issue liée ? Si pas d'issue liée, le changement a-t-il du sens ?
+          2. **Périmètre** : y a-t-il des modifications non liées à l'issue (scope creep) ?
+          3. **Conventions du projet** :
+             - Pas de commentaires dans le code
+             - Pas de \`any\` TypeScript evade
+             - Imports propres (pas d'imports inutilisés)
+             - Pas de duplication de code
+          4. **Commits** : le message de commit suit conventional commits (feat:/fix:/refactor:/chore:/test:)
+          5. **Tests** : les nouveaux cas sont-ils testés ? Les tests existants passent-ils toujours ?
+          6. **Régression** : le changement peut-il casser une autre partie du projet ?
+          7. **Sécurité** : pas d'injection SQL Supabase, pas de secrets exposés
+          8. **Performance** : pas de boucles inutiles, pas de requêtes N+1 Supabase
+
+          ## Règles
+          - Si CI est verte ✅ et tout est bon → \`gh pr review --approve "$PR_NUMBER"\` puis \`gh pr merge "$PR_NUMBER" --squash --delete-branch\`
+          - Si problèmes → \`gh pr review "$PR_NUMBER" --request-changes --body "feedback..."\`
+          - NE JAMAIS approuver si CI est rouge
+          - NE JAMAIS merge si le code a des problèmes de sécurité
+          - Si le changement semble bon mais mérite un suivi, approuve + crée une issue de suivi avec \`gh issue create\`
+          - Nettoie la branche après merge"
+
+          SUCCESS=0
+          for MODEL in "${MODELS[@]}"; do
+            MODEL_ATTEMPTS=$((MODEL_ATTEMPTS + 1))
+            echo "Trying model: $MODEL (attempt $MODEL_ATTEMPTS)"
+            if opencode run --dangerously-skip-permissions --agent reviewer --model "$MODEL" "$PROMPT"; then
+              echo "Model selected: $MODEL"
+              SUCCESS=1
+              break
+            fi
+            echo "Model failed: $MODEL"
+          done
+
+          if [ "$SUCCESS" -ne 1 ]; then
+            echo "All model attempts failed."
+            gh pr comment "$PR_NUMBER" --body "❌ Reviewer agent unavailable. Manual review required."
+            exit 1
+          fi
