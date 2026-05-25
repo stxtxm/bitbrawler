@@ -1,5 +1,12 @@
 import { GAME_RULES } from '../config/gameRules';
 import { getSeedFromText, mulberry32 } from './randomUtils';
+import { Character } from '../types/Character';
+
+/** Bot-engine characters have extra fields from Supabase row mapping */
+export type BotCharacter = Character & {
+    firestoreId: string;
+    battleCount?: number;
+};
 
 export type BotActivityProfile = {
     aggression: number;
@@ -91,3 +98,48 @@ export const getBotFightBudgetForRun = ({
     budget = clamp(budget, 1, GAME_RULES.BOTS.MAX_FIGHTS_PER_RUN);
     return Math.min(fightsLeft, budget);
 };
+
+export function selectProtectedLevelOneBotIds(
+    bots: BotCharacter[],
+    skipIds: Set<string>,
+    protectedLevelOneCount: number,
+    exemptFromProtection: Set<string> = new Set()
+): Set<string> {
+    const nextSkip = new Set(skipIds);
+    if (protectedLevelOneCount <= 0) return nextSkip;
+
+    const alreadyProtected = bots.filter((bot) =>
+        bot.level === 1 &&
+        !!bot.firestoreId &&
+        nextSkip.has(bot.firestoreId)
+    ).length;
+
+    const additionalNeeded = Math.max(0, protectedLevelOneCount - alreadyProtected);
+    if (additionalNeeded === 0) return nextSkip;
+
+    const levelOnePool = bots
+        .filter((bot) =>
+            bot.level === 1 &&
+            !!bot.firestoreId &&
+            !nextSkip.has(bot.firestoreId) &&
+            !exemptFromProtection.has(bot.firestoreId)
+        )
+        .sort((a, b) => {
+            const aBattles = a.battleCount ?? 0;
+            const bBattles = b.battleCount ?? 0;
+            if (aBattles !== bBattles) return aBattles - bBattles;
+            const aEnergy = a.fightsLeft ?? 0;
+            const bEnergy = b.fightsLeft ?? 0;
+            return bEnergy - aEnergy;
+        });
+
+    const maxProtectable = Math.max(0, levelOnePool.length - GAME_RULES.BOTS.MIN_LVL1_ACTIVE_BOTS);
+    const toProtect = Math.min(additionalNeeded, maxProtectable);
+
+    for (let i = 0; i < toProtect; i++) {
+        const bot = levelOnePool[i];
+        if (bot.firestoreId) nextSkip.add(bot.firestoreId);
+    }
+
+    return nextSkip;
+}
