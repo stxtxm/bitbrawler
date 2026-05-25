@@ -155,11 +155,14 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
         });
     }, [currentRound, phase]);
 
-    const handleFinish = () => {
+    const handleFinish = async () => {
         if (!combatResult) return;
 
-        onComplete(combatResult.winner === 'attacker', xpGained);
-        onClose();
+        try {
+            await onComplete(combatResult.winner === 'attacker', xpGained);
+        } finally {
+            onClose();
+        }
     };
 
     const won = combatResult?.winner === 'attacker';

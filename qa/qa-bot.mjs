@@ -465,12 +465,12 @@ async function runFightSequence(page, runKey, runRecord) {
           const text = document.body.innerText
           return text.includes('VICTORY') || text.includes('DEFEAT') || text.includes('DRAW')
         },
-        { timeout: 25000 }
+        { timeout: config.fightTimeout }
       )
     } catch {
-      console.log('   Fight result not detected, taking screenshot')
+      console.log(`   Fight result not detected after ${config.fightTimeout}ms timeout, taking screenshot`)
       await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-timeout.png`) })
-      runRecord.errors.push(`Fight ${i + 1}: timeout waiting for result`)
+      runRecord.errors.push(`Fight ${i + 1}: timeout waiting for result (${config.fightTimeout}ms)`)
 
       const timeoutArenaStatus = await readArenaStatus(page)
       if (
@@ -546,7 +546,8 @@ async function run() {
   console.log('═══════════════════════════════════════════')
   console.log(`  Config:`)
   console.log(`    baseUrl:        ${config.baseUrl}`)
-  console.log(`    fightsPerRun:   ${config.fightsPerRun}`)
+    console.log(`    fightsPerRun:   ${config.fightsPerRun}`)
+    console.log(`    fightTimeout:   ${config.fightTimeout}ms`)
   console.log(`    statsFile:      ${STATS_FILE}`)
   console.log(`    stateFile:      ${STATE_FILE}`)
   console.log(`    screenshotsDir: ${SCREENSHOTS_DIR}`)
