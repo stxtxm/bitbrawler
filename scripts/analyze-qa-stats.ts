@@ -19,16 +19,11 @@ const ROOT = join(__dirname, '..')
 const STATS_FILE = join(ROOT, 'qa', 'stats.json')
 const ANALYSIS_OUTPUT = join(ROOT, 'qa', 'analysis-latest.json')
 
-interface HpSnapshot {
-  current: number
-  max: number
-}
-
 interface FightRecord {
   result: 'victory' | 'defeat' | 'draw'
   xp: number | null
   fight_duration_ms: number
-  hp_after?: HpSnapshot | null
+  max_hp?: number | null        // max HP after fight (reflects level/gear growth)
 }
 
 interface LevelUpEvent {
@@ -62,10 +57,10 @@ interface RunRecord {
   initial_stats?: Record<string, number> | null
   initial_level?: number | null
   initial_xp?: { current: number; max: number } | null
-  initial_hp?: HpSnapshot | null
+  initial_max_hp?: number | null
   final_stats?: { level: number | null; xp: number | null; wins: number | null; losses: number | null } | null
   final_character_stats?: Record<string, number> | null
-  final_hp?: HpSnapshot | null
+  final_max_hp?: number | null
   level_up_events?: LevelUpEvent[]
   errors: string[]
   load_times_ms?: Record<string, number>
@@ -82,9 +77,9 @@ interface TrendWindow {
 }
 
 interface HpAnalysis {
-  avg_hp_loss_per_fight: number
-  avg_hp_after_fight: number
-  survivability_score: number     // 0-1, how much HP remains on average after fights
+  avg_initial_max_hp: number       // average max HP at run start
+  avg_final_max_hp: number         // average max HP at run end
+  avg_hp_growth_per_run: number    // average increase in max HP per run
   runs_with_hp_data: number
 }
 
@@ -249,41 +244,24 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     }
   }
 
-  // --- HP Analysis ---
-  const fightsWithHp = allFights.filter(f => f.hp_after !== null && f.hp_after !== undefined)
-  const runsWithHp = validRuns.filter(r => r.initial_hp !== null && r.initial_hp !== undefined && r.final_hp !== null && r.final_hp !== undefined)
+  // --- HP Analysis (max HP growth) ---
+  // Note: The game restores HP after every fight, so current HP always = max HP.
+  // We track max HP progression to measure character growth from level-ups and equipment.
+  const runsWithHpData = validRuns.filter(
+    r => typeof r.initial_max_hp === 'number' && typeof r.final_max_hp === 'number'
+  )
   let hpAnalysis: HpAnalysis | null = null
 
-  if (fightsWithHp.length > 0) {
-    const avgHpAfter = fightsWithHp.reduce((s, f) => s + (f.hp_after?.current ?? 0), 0) / fightsWithHp.length
-    // Average HP loss per fight: (HP before first fight - HP after each fight) averaged
-    let totalHpLoss = 0
-    let hpLossCount = 0
-    for (const r of validRuns) {
-      if (r.initial_hp && r.fights.length > 0) {
-        for (const f of r.fights) {
-          if (f.hp_after !== null && f.hp_after !== undefined) {
-            totalHpLoss += (r.initial_hp.current - f.hp_after.current)
-            hpLossCount++
-          }
-        }
-      }
-    }
-    const avgHpLoss = hpLossCount > 0 ? totalHpLoss / hpLossCount : 0
-
-    // Survivability: average HP remaining as percentage
-    const hpAfterPcts = fightsWithHp
-      .filter(f => f.hp_after && f.hp_after.max > 0)
-      .map(f => (f.hp_after!.current / f.hp_after!.max))
-    const survivability = hpAfterPcts.length > 0
-      ? hpAfterPcts.reduce((s, p) => s + p, 0) / hpAfterPcts.length
-      : 0
+  if (runsWithHpData.length > 0) {
+    const avgInitialHp = runsWithHpData.reduce((s, r) => s + (r.initial_max_hp ?? 0), 0) / runsWithHpData.length
+    const avgFinalHp = runsWithHpData.reduce((s, r) => s + (r.final_max_hp ?? 0), 0) / runsWithHpData.length
+    const avgGrowth = runsWithHpData.reduce((s, r) => s + ((r.final_max_hp ?? 0) - (r.initial_max_hp ?? 0)), 0) / runsWithHpData.length
 
     hpAnalysis = {
-      avg_hp_loss_per_fight: Math.round(avgHpLoss * 10) / 10,
-      avg_hp_after_fight: Math.round(avgHpAfter * 10) / 10,
-      survivability_score: Math.round(survivability * 1000) / 1000,
-      runs_with_hp_data: runsWithHp.length,
+      avg_initial_max_hp: Math.round(avgInitialHp * 10) / 10,
+      avg_final_max_hp: Math.round(avgFinalHp * 10) / 10,
+      avg_hp_growth_per_run: Math.round(avgGrowth * 10) / 10,
+      runs_with_hp_data: runsWithHpData.length,
     }
   }
 
@@ -356,11 +334,11 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     }
   }
 
-  // HP / survivability
+  // HP growth (max HP progression — reflects level-ups and equipment)
   if (hpAnalysis) {
-    if (hpAnalysis.survivability_score < 0.3) issues.push(`Low survivability (avg ${(hpAnalysis.survivability_score * 100).toFixed(0)}% HP after fight). Consider increasing VIT impact on HP.`)
-    if (hpAnalysis.survivability_score > 0.95) suggestions.push(`Very high survivability (avg ${(hpAnalysis.survivability_score * 100).toFixed(0)}% HP after fight). Fights may not be threatening enough.`)
-    if (hpAnalysis.avg_hp_loss_per_fight > 50) suggestions.push(`Avg HP loss per fight is ${hpAnalysis.avg_hp_loss_per_fight.toFixed(0)}. Consider balancing damage output.`)
+    if (hpAnalysis.avg_hp_growth_per_run > 50) suggestions.push(`High max HP growth (avg +${hpAnalysis.avg_hp_growth_per_run.toFixed(0)} HP/run). Characters may be scaling too fast.`)
+    if (hpAnalysis.avg_initial_max_hp < 80) suggestions.push(`Low starting max HP (avg ${hpAnalysis.avg_initial_max_hp.toFixed(0)}). Consider increasing VIT impact on HP formula.`)
+    if (hpAnalysis.avg_hp_growth_per_run < 1 && hpAnalysis.runs_with_hp_data >= 3) suggestions.push(`Minimal max HP growth (avg +${hpAnalysis.avg_hp_growth_per_run.toFixed(1)} HP/run). Characters may not be gaining enough VIT or equipment.`)
   }
 
   // Lootbox
@@ -481,9 +459,10 @@ function printReport(report: AnalysisReport): void {
   }
   console.log('')
   if (report.hp_analysis) {
-    console.log(`  ── ${bold}HP / Survivability${reset} ──`)
-    console.log(`  HP after fight: ${report.hp_analysis.avg_hp_after_fight.toFixed(0)} (${(report.hp_analysis.survivability_score * 100).toFixed(0)}% remaining)`)
-    console.log(`  HP loss/fight:  ${report.hp_analysis.avg_hp_loss_per_fight.toFixed(1)}`)
+    console.log(`  ── ${bold}HP Growth (max HP)${reset} ──`)
+    console.log(`  Initial avg:    ${report.hp_analysis.avg_initial_max_hp.toFixed(0)} HP`)
+    console.log(`  Final avg:      ${report.hp_analysis.avg_final_max_hp.toFixed(0)} HP`)
+    console.log(`  Growth/run:     +${report.hp_analysis.avg_hp_growth_per_run.toFixed(1)} HP`)
     console.log(`  Data from:      ${report.hp_analysis.runs_with_hp_data} run(s)`)
     console.log('')
   }
