@@ -618,10 +618,12 @@ async function run() {
     await runFightSequence(page, runKey, runRecord)
 
     const finalText = await page.locator('body').innerText()
-    const levelMatch = finalText.match(/LEVEL\s*(\d+)/i)
-    const xpTotalMatch = finalText.match(/XP\s*[:]\s*(\d+)/i) || finalText.match(/(\d+)\s*\/\s*\d+\s*XP/i)
-    const winsMatch = finalText.match(/WINS\s*[:]\s*(\d+)/i)
-    const lossesMatch = finalText.match(/LOSSES\s*[:]\s*(\d+)/i)
+    console.log('   Raw body text (first 500 chars):', finalText.slice(0, 500))
+
+    const levelMatch = finalText.match(/LVL\s*(\d+)/i)
+    const xpTotalMatch = finalText.match(/(\d+)\s*\/\s*\d+\s*XP/i)
+    const winsMatch = finalText.match(/\bW\s*(\d+)/i)
+    const lossesMatch = finalText.match(/\bL\s*(\d+)/i)
 
     runRecord.final_stats = {
       level: levelMatch ? parseInt(levelMatch[1]) : null,

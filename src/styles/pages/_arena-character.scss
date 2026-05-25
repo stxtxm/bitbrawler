@@ -70,6 +70,19 @@
     }
 }
 
+.arena-record {
+    color: #888;
+    font-size: 0.55rem;
+    letter-spacing: 0.5px;
+    margin-left: 8px;
+    white-space: nowrap;
+
+    @include mobile {
+        font-size: 0.45rem;
+        margin-left: 4px;
+    }
+}
+
 // ============================================
 // Header Actions
 // ============================================
