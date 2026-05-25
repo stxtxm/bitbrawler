@@ -99,21 +99,6 @@ async function readBodyText(page) {
   return page.locator('body').innerText().catch(() => '')
 }
 
-async function dismissLevelUpOverlay(page) {
-  const levelUpOverlay = page.locator('.level-up-pop-overlay').first()
-  if (await levelUpOverlay.isVisible({ timeout: 1000 }).catch(() => false)) {
-    console.log('   Level-up overlay detected, dismissing...')
-    const laterBtn = page.locator('.level-up-later').first()
-    if (await laterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await laterBtn.click()
-      await page.waitForTimeout(500)
-      console.log('   Level-up overlay dismissed')
-      return true
-    }
-  }
-  return false
-}
-
 async function readArenaStatus(page) {
   const bodyText = await readBodyText(page)
   const energyMatch = bodyText.match(/(\d+)\s*\/\s*5\s*AVAILABLE/i)
@@ -434,6 +419,55 @@ async function maybeReplaceExhaustedCharacter(page, runKey, runRecord, reason) {
   await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-03-arena-replacement.png`) })
 }
 
+/**
+ * Handle the level-up popup overlay by allocating a stat point (if any remain)
+ * and dismissing the overlay so the FIGHT button becomes clickable again.
+ * Returns true if the overlay was handled, false if not present.
+ */
+async function handleLevelUpOverlay(page) {
+  const OVERLAY_TIMEOUT = 2000
+  const levelUpOverlay = page.locator('.level-up-pop-overlay').first()
+  if (!(await levelUpOverlay.isVisible({ timeout: OVERLAY_TIMEOUT }).catch(() => false))) {
+    return false
+  }
+
+  console.log('   Level-up overlay detected, handling...')
+
+  // 1. Allocate one stat point if a stat-add-btn is available
+  const statAddBtn = page.locator('.stat-add-btn').first()
+  if (await statAddBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+    const ariaLabel = await statAddBtn.getAttribute('aria-label').catch(() => null)
+    console.log(`   Clicking ${ariaLabel || 'stat-add-btn'} to allocate point`)
+    await statAddBtn.click()
+    await page.waitForTimeout(800)
+    console.log('   Stat point allocated')
+  }
+
+  // 2. Try APPLY (primary) if no more points remain
+  const applyBtn = page.locator('.level-up-confirm').first()
+  if (await applyBtn.isEnabled({ timeout: 1000 }).catch(() => false)) {
+    await applyBtn.click()
+    await page.waitForTimeout(500)
+    console.log('   Level-up overlay closed via APPLY')
+    return true
+  }
+
+  // 3. Fallback: LATER button if still more points
+  const laterBtn = page.locator('.level-up-later').first()
+  if (await laterBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+    await laterBtn.click()
+    await page.waitForTimeout(500)
+    console.log('   Level-up overlay deferred via LATER')
+    return true
+  }
+
+  // 4. Last resort: force-click the overlay background to auto-dismiss
+  console.log('   Force-dismissing level-up overlay')
+  await levelUpOverlay.click({ force: true })
+  await page.waitForTimeout(500)
+  return true
+}
+
 async function runFightSequence(page, runKey, runRecord) {
   let recreatedForExhaustion = false
 
@@ -465,11 +499,26 @@ async function runFightSequence(page, runKey, runRecord) {
       break
     }
 
+    // Check for level-up overlay right before FIGHT (it may appear asynchronously after CONTINUE)
+    await handleLevelUpOverlay(page)
+
     console.log(`⚔️ Fight ${i + 1}/${config.fightsPerRun}...`)
 
     const fightBtn = page.locator('button.primary-btn.giant-btn').first()
     const fightStart = Date.now()
-    await fightBtn.click()
+    // Retry FIGHT click with overlay handling in case overlay appears between check and click
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) {
+        await handleLevelUpOverlay(page)
+        await page.waitForTimeout(300)
+      }
+      const clicked = await fightBtn.click({ timeout: 3000 }).then(() => true).catch(() => false)
+      if (clicked) break
+      if (attempt === 2) {
+        // Last attempt: try force click
+        await fightBtn.click({ force: true }).catch(() => {})
+      }
+    }
     console.log('   Fight started, waiting for result...')
 
     await sleep(1000)
@@ -536,8 +585,8 @@ async function runFightSequence(page, runKey, runRecord) {
       await page.waitForTimeout(1500)
     }
 
-    // Dismiss level-up overlay if present (it can block the FIGHT button for the next fight)
-    await dismissLevelUpOverlay(page)
+    // Handle level-up overlay (allocate stat + dismiss) before next fight
+    await handleLevelUpOverlay(page)
   }
 }
 
@@ -636,7 +685,7 @@ async function run() {
     await runFightSequence(page, runKey, runRecord)
 
     // Ensure no overlay is blocking the arena stats before reading
-    await dismissLevelUpOverlay(page)
+    await handleLevelUpOverlay(page)
 
     // Debug screenshot right before stats reading to diagnose W/L capture issues
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-04-stats-debug.png`) })
