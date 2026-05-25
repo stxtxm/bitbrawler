@@ -8,7 +8,7 @@ import {
 } from '../src/utils/timezoneUtils';
 import { supabase } from './supabaseAdmin';
 
-const RESET_SCOPE = (process.env.RESET_SCOPE || 'incremental').toLowerCase();
+const RESET_SCOPE = (process.env.RESET_SCOPE || 'all').toLowerCase();
 const RESET_WINDOW_MINUTES = 45;
 const RESET_WINDOW_LABEL = `00:00-00:${String(RESET_WINDOW_MINUTES).padStart(2, '0')}`;
 
@@ -32,6 +32,7 @@ async function runDailyReset() {
     console.log(`🕒 Current time (UTC): ${now.toISOString()}`);
     console.log(`🕒 Current time (Paris): ${parisNowLabel} ${String(parisNow.hour).padStart(2, '0')}:${String(parisNow.minute).padStart(2, '0')}:${String(parisNow.second).padStart(2, '0')}`);
     console.log(`📆 Target reset day: ${parisResetLabel} (Paris midnight UTC: ${new Date(parisResetMidnightUtc).toISOString()})`);
+    console.log(`📋 Reset scope: ${RESET_SCOPE}${forceRun ? ' (forced)' : ''}`);
 
     try {
         if (!forceRun) {
@@ -62,6 +63,7 @@ async function runDailyReset() {
             if (error) throw error;
             docs = all ?? [];
             scopeLabel = 'full reset';
+            console.log(`📊 Fetched ${docs.length} total characters for full reset.`);
         } else {
             const { data: numericDocs, error: numericError } = await supabase
                 .from('characters')
@@ -83,6 +85,7 @@ async function runDailyReset() {
 
             docs = Array.from(deduped.values());
             scopeLabel = `numeric: ${numericDocs?.length ?? 0}, missing/null: ${nullDocs?.length ?? 0}`;
+            console.log(`📊 Incremental query: ${numericDocs?.length ?? 0} with old reset, ${nullDocs?.length ?? 0} with null reset, ${docs.length} unique.`);
         }
 
         if (docs.length === 0) {
@@ -119,8 +122,12 @@ async function runDailyReset() {
                             .eq('id', doc.id)
                     )
                 );
-                const succeeded = slice.length - results.filter(r => r.error).length;
+                const errors = results.filter(r => r.error);
+                const succeeded = slice.length - errors.length;
                 totalUpdated += succeeded;
+                if (errors.length > 0) {
+                    console.warn(`⚠️ Batch ${batchIndex}: ${errors.length}/${slice.length} updates failed. First error:`, errors[0].error);
+                }
                 console.log(`✅ Batch ${batchIndex} committed (${succeeded}/${slice.length} characters).`);
             } catch (batchError) {
                 console.error(`❌ Batch ${batchIndex} failed (${slice.length} characters):`, batchError);
