@@ -520,6 +520,18 @@ async function runFightSequence(page, runKey, runRecord) {
       await continueBtn.click()
       await page.waitForTimeout(1500)
     }
+
+    // Dismiss level-up overlay if present (it can block the FIGHT button for the next fight)
+    const levelUpOverlay = page.locator('.level-up-pop-overlay').first()
+    if (await levelUpOverlay.isVisible({ timeout: 1000 }).catch(() => false)) {
+      console.log('   Level-up overlay detected, dismissing...')
+      const laterBtn = page.locator('.level-up-later').first()
+      if (await laterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await laterBtn.click()
+        await page.waitForTimeout(500)
+        console.log('   Level-up overlay dismissed')
+      }
+    }
   }
 }
 
