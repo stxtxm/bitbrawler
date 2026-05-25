@@ -108,6 +108,7 @@ async function runDailyReset() {
                                 fights_left: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
                                 last_fight_reset: parisResetMidnightUtc,
                                 fought_today: [],
+                                last_loot_roll: 0,
                             })
                             .eq('id', doc.id)
                     )
