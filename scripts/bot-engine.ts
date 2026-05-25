@@ -18,7 +18,7 @@ import { supabase } from './supabaseAdmin';
 import { INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP } from '../src/utils/persistenceUtils';
 const DB_BATCH_SIZE = 10;
 
-/** Return a human-readable label distinguishing bots from auto-mode human players */
+/** Return a human-readable label for bot-engine-processed characters (all are bots functionally) */
 const logLabel = (c: Character): string => c.isBot ? 'Bot' : 'Player';
 
 // Columns needed for bot processing (all mutating columns + identity)
@@ -312,7 +312,7 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
     const { data: rows, error } = await supabase
         .from('characters')
         .select(BOT_SELECT_COLUMNS)
-        .or('is_bot.eq.true,auto_mode.eq.true');
+        .eq('is_bot', true);
 
     if (error) {
         console.error('❌ Failed to fetch bots:', error);
@@ -325,10 +325,6 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
     }
 
     const bots = rows.map(convertRowToCharacter);
-    const autoModeHumans = bots.filter(b => !b.isBot);
-    if (autoModeHumans.length > 0) {
-        console.log(`👤 Auto-mode humans in pool: ${autoModeHumans.length} (${autoModeHumans.map(b => b.name).join(', ')})`);
-    }
 
     const runNow = Date.now();
     const runParisHour = getZonedParts(new Date(runNow), DAILY_RESET_TIMEZONE).hour;
@@ -382,10 +378,6 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
     for (const bot of bots) {
         try {
             if (!bot.firestoreId) continue;
-
-            if (!bot.isBot) {
-                console.log(`👤 Processing auto-mode human: ${bot.name} (LVL ${bot.level}, energy: ${bot.fightsLeft})`);
-            }
 
             const isProtected = protectionEnabled && protectedIds.has(bot.firestoreId);
             let currentBotState = { ...bot, statPoints: bot.statPoints ?? 0 };
