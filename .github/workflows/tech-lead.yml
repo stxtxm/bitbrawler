@@ -41,101 +41,12 @@ jobs:
       - name: Mark issue scan start
         run: echo "TECH_LEAD_SCAN_START=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
 
-      - name: Merge only one eligible agent PR
+      - name: Merge eligible agent PRs
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
-
-          LATEST_MASTER_CI=$(gh run list --workflow ci.yml --branch master --event push --limit 1 --json databaseId,status,conclusion,url,createdAt)
-          MASTER_CI_COUNT=$(echo "$LATEST_MASTER_CI" | jq 'length')
-          if [ "$MASTER_CI_COUNT" -gt 0 ]; then
-            MASTER_CI_STATUS=$(echo "$LATEST_MASTER_CI" | jq -r '.[0].status // ""')
-            MASTER_CI_CONCLUSION=$(echo "$LATEST_MASTER_CI" | jq -r '.[0].conclusion // ""')
-            MASTER_CI_URL=$(echo "$LATEST_MASTER_CI" | jq -r '.[0].url // ""')
-
-            if [ "$MASTER_CI_STATUS" != "completed" ]; then
-              echo "Latest master push CI is still running: $MASTER_CI_URL"
-              exit 0
-            fi
-
-            if [ "$MASTER_CI_CONCLUSION" != "success" ]; then
-              echo "Latest master push CI is not green yet: $MASTER_CI_URL"
-              exit 0
-            fi
-          else
-            echo "No previous master push CI run found. Continuing."
-          fi
-
-          PR_NUM=$(gh pr list --state open --limit 50 --json number,author,isDraft,labels,createdAt,baseRefName \
-            --jq '[.[]
-              | .author_login = (.author.login // "")
-              | .has_auto_label = ([.labels[]?.name] | index("auto-generated") != null)
-              | .is_agent = (
-                  .has_auto_label or
-                  .author_login == "app/github-actions" or
-                  .author_login == "opencode-agent" or
-                  (.author_login | test("bot"; "i"))
-                )
-              | select(.is_agent == true and .isDraft == false and .baseRefName == "master")
-            ] | sort_by(.createdAt) | .[0].number // empty')
-
-          if [ -z "${PR_NUM:-}" ]; then
-            echo "No eligible agent PR found."
-            exit 0
-          fi
-
-          MERGE_STATE=$(gh pr view "$PR_NUM" --json mergeStateStatus --jq '.mergeStateStatus // ""')
-          if [ "$MERGE_STATE" != "CLEAN" ] && [ "$MERGE_STATE" != "HAS_HOOKS" ]; then
-            echo "PR #$PR_NUM is not mergeable now (state=$MERGE_STATE)."
-            exit 0
-          fi
-
-          BLOCKING=$(gh pr view "$PR_NUM" --json statusCheckRollup --jq '[.statusCheckRollup[]? | select((.status? != "COMPLETED") or (.conclusion? != null and .conclusion != "SUCCESS") or (.state? != null and .state != "SUCCESS"))] | length')
-          if [ "$BLOCKING" -ne 0 ]; then
-            echo "PR #$PR_NUM does not have a fully green check suite yet."
-            exit 0
-          fi
-
-          echo "Approving and merging PR #$PR_NUM..."
-          MERGE_TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          gh pr review --approve "$PR_NUM" || true
-          gh pr merge "$PR_NUM" --squash --delete-branch
-
-          echo "Waiting for post-merge master push CI after PR #$PR_NUM..."
-          CI_RUN_ID=""
-          for _ in $(seq 1 36); do
-            RUNS_JSON=$(gh run list --workflow ci.yml --branch master --event push --limit 20 --json databaseId,createdAt)
-            CI_RUN_ID=$(echo "$RUNS_JSON" | jq -r --arg ts "$MERGE_TS" '[.[] | select(.createdAt >= $ts)] | sort_by(.createdAt) | .[0].databaseId // empty')
-            if [ -n "$CI_RUN_ID" ]; then
-              break
-            fi
-            sleep 10
-          done
-
-          if [ -z "$CI_RUN_ID" ]; then
-            echo "No post-merge CI push run detected after PR #$PR_NUM."
-            exit 1
-          fi
-
-          for _ in $(seq 1 60); do
-            CI_STATUS=$(gh run view "$CI_RUN_ID" --json status --jq '.status // ""')
-            if [ "$CI_STATUS" = "completed" ]; then
-              break
-            fi
-            sleep 10
-          done
-
-          CI_CONCLUSION=$(gh run view "$CI_RUN_ID" --json conclusion,url --jq '.conclusion + " " + .url')
-          CI_RESULT=$(echo "$CI_CONCLUSION" | awk '{print $1}')
-          CI_URL=$(echo "$CI_CONCLUSION" | cut -d' ' -f2-)
-
-          if [ "$CI_RESULT" != "success" ]; then
-            echo "Post-merge master CI failed after PR #$PR_NUM: $CI_URL"
-            exit 1
-          fi
-
-          echo "Post-merge master CI is green after PR #$PR_NUM: $CI_URL"
+          chmod +x scripts/merge-eligible-prs.sh
+          bash scripts/merge-eligible-prs.sh
 
       - name: Run Tech Lead agent
         env:
