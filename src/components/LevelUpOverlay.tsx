@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Character } from '../types/Character';
 import { PixelIcon } from './PixelIcon';
 import { StatKey } from '../utils/statUtils';
@@ -20,6 +21,8 @@ interface LevelUpOverlayProps {
     handleDeferLevelUp: () => void;
 }
 
+const AUTO_DISMISS_MS = 12_000;
+
 const LevelUpOverlay = ({
     shouldShowLevelUp,
     activeCharacter,
@@ -34,11 +37,38 @@ const LevelUpOverlay = ({
     handleCloseLevelUp,
     handleDeferLevelUp,
 }: LevelUpOverlayProps) => {
+    // Auto-dismiss the overlay after AUTO_DISMISS_MS
+    useEffect(() => {
+        if (!shouldShowLevelUp) return;
+
+        const timer = setTimeout(() => {
+            if (canCloseLevelUp) {
+                handleCloseLevelUp();
+            } else {
+                handleDeferLevelUp();
+            }
+        }, AUTO_DISMISS_MS);
+
+        return () => clearTimeout(timer);
+    }, [shouldShowLevelUp, canCloseLevelUp, handleCloseLevelUp, handleDeferLevelUp]);
+
     if (!shouldShowLevelUp) return null;
 
+    const handleOverlayClick = () => {
+        if (canCloseLevelUp) {
+            handleCloseLevelUp();
+        } else {
+            handleDeferLevelUp();
+        }
+    };
+
+    const handleCardClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+    };
+
     return (
-        <div className="level-up-pop-overlay">
-            <div className="level-up-card">
+        <div className="level-up-pop-overlay" onClick={handleOverlayClick}>
+            <div className="level-up-card" onClick={handleCardClick}>
                 <div className="card-shine"></div>
                 <div className="level-up-badge">NEW RANK!</div>
                 <div className="stars-top">★ ★ ★ ★ ★</div>
