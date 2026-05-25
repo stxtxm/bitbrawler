@@ -217,5 +217,58 @@
       "home": 1967,
       "arena": 941
     }
+  },
+  {
+    "date": "2026-05-25T13:01:10.866Z",
+    "run": "2026-05-25",
+    "character": "IRONSHADOW",
+    "character_action": "reused",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 348,
+        "fight_duration_ms": 18333
+      },
+      {
+        "result": "victory",
+        "xp": 348,
+        "fight_duration_ms": 20502
+      },
+      {
+        "result": "victory",
+        "xp": 348,
+        "fight_duration_ms": 14904
+      },
+      {
+        "result": "victory",
+        "xp": 348,
+        "fight_duration_ms": 15823
+      },
+      {
+        "result": "defeat",
+        "xp": 722,
+        "fight_duration_ms": 14221
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Worn Bracers",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "final_stats": {
+      "level": 3,
+      "xp": 32,
+      "wins": 5,
+      "losses": 2
+    },
+    "errors": [],
+    "load_times_ms": {
+      "home": 1357,
+      "arena": 598
+    }
   }
 ]
