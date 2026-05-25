@@ -8,10 +8,16 @@
     @include flex-center;
     z-index: 9999;
     animation: fadeIn 0.3s ease;
-    pointer-events: auto;
+    pointer-events: none;
 }
 
 .level-up-pop-overlay .level-up-card {
+    pointer-events: auto;
+}
+
+.level-up-pop-overlay .stat-add-btn,
+.level-up-pop-overlay .level-up-confirm,
+.level-up-pop-overlay .level-up-later {
     pointer-events: auto;
 }
 
