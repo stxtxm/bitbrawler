@@ -111,10 +111,10 @@ Bitbrawler uses [OpenCode](https://opencode.ai) agents for autonomous developmen
 
 | Agent         | Role                                               |
 | ------------- | -------------------------------------------------- |
-| `dev-agent`   | Default — implements features, creates PRs         |
-| `reviewer`    | Code review (triggered by `/oc review` on PRs)     |
-| `tech-lead`   | Daily merge, QA stats analysis, issue creation     |
-| `qa-tester`   | Playwright E2E tests on the live site              |
+| `dev-agent`   | Implements features, creates PRs (triggered by `/oc`) |
+| `reviewer`    | Auto review + merge on PR (via reviewer.yml)       |
+| `tech-lead`   | Daily analysis, QA stats, strategic issues (via tech-lead.yml) |
+| `qa-tester`   | Playwright E2E tests on the live site (via qa-tester.yml) |
 
 Use `/oc` or `/opencode` in any issue or PR to trigger an agent.
 
