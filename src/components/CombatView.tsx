@@ -5,6 +5,7 @@ import { PixelIcon } from './PixelIcon';
 import { simulateCombat } from '../utils/combatUtils';
 import { getMatchDifficultyLabel } from '../utils/matchmakingUtils';
 import { parseCombatDetail, CombatAction, CombatActionType } from '../utils/combatLogUtils';
+import { calculateFightXp } from '../utils/xpUtils';
 
 interface CombatViewProps {
     player: Character;
@@ -154,24 +155,21 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
         });
     }, [currentRound, phase]);
 
-    const getXpGained = (won: boolean) => {
-        const baseXp = won ? 50 : 20;
-        return Math.round(baseXp * (1 + (opponent.level - player.level) * 0.1));
-    };
-
     const handleFinish = () => {
         if (!combatResult) return;
 
-        const won = combatResult.winner === 'attacker';
-        const xpGained = getXpGained(won);
-
-        onComplete(won, xpGained);
+        onComplete(combatResult.winner === 'attacker', xpGained);
         onClose();
     };
 
     const won = combatResult?.winner === 'attacker';
     const draw = combatResult?.winner === 'draw';
-    const xpPreview = getXpGained(won);
+
+    // Compute XP once per combat result using the real formula so display and reward match
+    const xpGained = useMemo(() => {
+        if (!combatResult) return 0;
+        return calculateFightXp(player.level, combatResult.winner === 'attacker');
+    }, [player.level, combatResult]);
 
     const playerMaxHp = player.maxHp || player.hp;
     const opponentMaxHp = opponent.maxHp || opponent.hp;
@@ -292,7 +290,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
                                     <PixelIcon type="trophy" size={80} />
                                 </div>
                                 <div className="result-message">
-                                    <div className="result-xp victory">+{xpPreview} XP</div>
+                                    <div className="result-xp victory">+{xpGained} XP</div>
                                     <div className="result-sub">Victory over {opponent.name}</div>
                                 </div>
                             </>
@@ -304,7 +302,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
                                     <PixelIcon type="skull" size={72} />
                                 </div>
                                 <div className="result-message">
-                                    <div className="result-xp defeat">+{xpPreview} XP</div>
+                                    <div className="result-xp defeat">+{xpGained} XP</div>
                                     <div className="result-sub">Defeated by {opponent.name}</div>
                                 </div>
                             </>
@@ -316,7 +314,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
                                     <PixelIcon type="swords" size={72} />
                                 </div>
                                 <div className="result-message">
-                                    <div className="result-xp draw">+{xpPreview} XP</div>
+                                    <div className="result-xp draw">+{xpGained} XP</div>
                                     <div className="result-sub">Stalemate vs {opponent.name}</div>
                                 </div>
                             </>
