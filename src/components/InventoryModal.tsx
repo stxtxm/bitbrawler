@@ -4,6 +4,7 @@ import { PixelItemAsset, ItemStats } from '../types/Item';
 import { PixelIcon } from './PixelIcon';
 import { PixelItemIcon } from './PixelItemIcon';
 import { getItemById, getEquipmentBonuses } from '../utils/equipmentUtils';
+import { INVENTORY_CAPACITY } from '../utils/persistenceUtils';
 import { canRollLootbox } from '../utils/lootboxUtils';
 
 type StatIconType = 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence' | 'focus';
@@ -16,8 +17,6 @@ interface InventoryModalProps {
     rollLootbox: () => Promise<PixelItemAsset | null>;
     openModal: (message: string) => void;
 }
-
-const INVENTORY_CAPACITY = 24;
 
 const itemStatMeta: Record<keyof ItemStats, { label: string; icon: StatIconType }> = {
     strength: { label: 'STR', icon: 'strength' },

@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { useState, useEffect, useMemo } from 'react';
 import { useGame } from '../context/GameContext';
 import { useConnectionGate } from '../hooks/useConnectionGate';
@@ -78,9 +78,7 @@ const Arena = () => {
     }, [lastLevelUp]);
 
     if (!activeCharacter) {
-        // Redirection vers la home si pas de perso (ex: après un logout)
-        setTimeout(() => navigate('/'), 100);
-        return <div className="loading-screen">ACCESS DENIED</div>;
+        return <Navigate to="/" replace />;
     }
 
     const effectiveCharacter = applyEquipmentToCharacter(activeCharacter);
@@ -434,7 +432,7 @@ const Arena = () => {
                         <div className="stat-row principal">
                             <span>HP</span>
                             <div className="bar-container">
-                                <div className="bar hp-bar" style={{ width: '100%' }}></div>
+                                <div className="bar hp-bar" style={{ width: `${(effectiveCharacter.hp / effectiveCharacter.maxHp) * 100}%` }}></div>
                             </div>
                             <span className="stat-val">{effectiveCharacter.maxHp}</span>
                         </div>

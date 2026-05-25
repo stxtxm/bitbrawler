@@ -119,7 +119,7 @@ describe('Database Unavailability Handling', () => {
     });
 
     await act(async () => {
-      await expect(result.current.executeFight(true, 50, 'FOE', 'opp-1')).rejects.toThrow('Connection error - fight not counted');
+      await expect(result.current.useFight(true, 50, 'FOE', 'opp-1')).rejects.toThrow('Connection error - fight not counted');
     });
 
     expect(result.current.dbAvailable).toBe(false);
@@ -191,7 +191,7 @@ describe('Database Unavailability Handling', () => {
     expect(loginResult).toBe('Connection error - please check your internet connection and try again');
 
     await act(async () => {
-      await expect(result.current.executeFight(true, 50, 'FOE', 'opp-2')).rejects.toThrow('Connection error - fight not counted');
+      await expect(result.current.useFight(true, 50, 'FOE', 'opp-2')).rejects.toThrow('Connection error - fight not counted');
     });
   });
 
