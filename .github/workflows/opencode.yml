@@ -118,13 +118,11 @@ jobs:
       - name: Trigger CI workflow
         env:
           GH_TOKEN: ${{ github.token }}
-          BRANCH: ${{ env.BRANCH }}
         run: |
           gh workflow run ci.yml --ref "$BRANCH"
 
       - name: Trigger Reviewer workflow
         env:
           GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ steps.pr-create.outputs.number }}
         run: |
-          gh workflow run reviewer.yml -f pr_number="$PR_NUMBER"
+          gh workflow run reviewer.yml -f pr_number="${{ steps.pr_create.outputs.PR_NUMBER }}"
