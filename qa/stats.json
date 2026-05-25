@@ -1,1 +1,505 @@
-[]
+[
+  {
+    "date": "2026-05-24T18:10:44.359Z",
+    "run": "2026-05-24",
+    "character": "QA-BRUTALBOLT",
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "final_stats": null,
+    "errors": [
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('button:has-text(\"FIGHT\"), button:has-text(\"LOGIN\"), button:has-text(\"START\")').first()\n"
+    ],
+    "load_times_ms": {
+      "home": 1119
+    }
+  },
+  {
+    "date": "2026-05-24T18:34:51.001Z",
+    "run": "2026-05-24",
+    "character": "QA-GOLDDRAGON",
+    "fights": [],
+    "lootbox": {
+      "available": false
+    },
+    "auto_mode_enabled": false,
+    "final_stats": {
+      "level": null,
+      "xp": null,
+      "wins": null,
+      "losses": null
+    },
+    "errors": [],
+    "load_times_ms": {
+      "home": 938
+    }
+  },
+  {
+    "date": "2026-05-24T18:52:13.807Z",
+    "run": "2026-05-24",
+    "character": "QA20260524",
+    "character_action": "created",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 100,
+        "fight_duration_ms": 13356
+      },
+      {
+        "result": "defeat",
+        "xp": 100,
+        "fight_duration_ms": 20024
+      }
+    ],
+    "lootbox": {
+      "available": false
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "final_stats": {
+      "level": null,
+      "xp": 40,
+      "wins": null,
+      "losses": null
+    },
+    "errors": [
+      "Fight 3: timeout waiting for result",
+      "Fight 4: timeout waiting for result",
+      "Fight 5: timeout waiting for result"
+    ],
+    "load_times_ms": {
+      "home": 1685,
+      "arena": 2967
+    }
+  },
+  {
+    "date": "2026-05-24T18:56:37.133Z",
+    "run": "2026-05-24",
+    "character": "QA20260524",
+    "character_action": "reused",
+    "fights": [],
+    "lootbox": {
+      "available": false
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "final_stats": {
+      "level": null,
+      "xp": 40,
+      "wins": null,
+      "losses": null
+    },
+    "errors": [
+      "Fight 1: timeout waiting for result",
+      "Fight 2: timeout waiting for result",
+      "Fight 3: timeout waiting for result",
+      "Fight 4: timeout waiting for result",
+      "Fight 5: timeout waiting for result"
+    ],
+    "load_times_ms": {
+      "home": 901,
+      "arena": 483
+    }
+  },
+  {
+    "date": "2026-05-24T19:08:35.773Z",
+    "run": "2026-05-24",
+    "character": "NYXRUIN",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 100,
+        "fight_duration_ms": 12706
+      },
+      {
+        "result": "defeat",
+        "xp": 100,
+        "fight_duration_ms": 12688
+      },
+      {
+        "result": "victory",
+        "xp": 100,
+        "fight_duration_ms": 13207
+      }
+    ],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "final_stats": null,
+    "errors": [
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('button.primary-btn.giant-btn').first()\n    - locator resolved to <button class=\"button primary-btn giant-btn\">FIGHT!</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"card-shine\"></div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"card-shine\"></div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    3 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"card-shine\"></div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"card-shine\"></div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"card-shine\"></div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"card-shine\"></div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n    7 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"card-shine\"></div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n"
+    ],
+    "load_times_ms": {
+      "home": 2158,
+      "arena": 2820
+    }
+  },
+  {
+    "date": "2026-05-24T19:30:53.482Z",
+    "run": "2026-05-24",
+    "character": "NYXRUIN",
+    "character_action": "reused",
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Rusty Sword",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "final_stats": {
+      "level": null,
+      "xp": 20,
+      "wins": null,
+      "losses": null
+    },
+    "errors": [
+      "Fight 1: timeout waiting for result",
+      "Fight 2: timeout waiting for result",
+      "Fight 3: timeout waiting for result",
+      "Fight 4: timeout waiting for result",
+      "Fight 5: timeout waiting for result"
+    ],
+    "load_times_ms": {
+      "home": 1190,
+      "arena": 551
+    }
+  },
+  {
+    "date": "2026-05-25T09:43:26.073Z",
+    "run": "2026-05-25",
+    "character": "IRONSHADOW",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 100,
+        "fight_duration_ms": 14426
+      },
+      {
+        "result": "victory",
+        "xp": 100,
+        "fight_duration_ms": 13770
+      }
+    ],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "final_stats": null,
+    "errors": [
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('button.primary-btn.giant-btn').first()\n    - locator resolved to <button class=\"button primary-btn giant-btn\">FIGHT!</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"card-shine\"></div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"card-shine\"></div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    3 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"card-shine\"></div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"card-shine\"></div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"card-shine\"></div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"card-shine\"></div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n    7 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"card-shine\"></div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n"
+    ],
+    "load_times_ms": {
+      "home": 1978,
+      "arena": 3684
+    }
+  },
+  {
+    "date": "2026-05-25T11:08:33.879Z",
+    "run": "2026-05-25",
+    "character": "IRONSHADOW",
+    "character_action": "reused",
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "final_stats": null,
+    "errors": [
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('button.primary-btn.giant-btn').first()\n    - locator resolved to <button class=\"button primary-btn giant-btn\">FIGHT!</button>\n  - attempting click action\n    - waiting for element to be visible, enabled and stable\n    - element is visible, enabled and stable\n    - scrolling into view if needed\n    - done scrolling\n    - <div class=\"level-up-stat-row\">…</div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n  - retrying click action\n    - waiting for element to be visible, enabled and stable\n    - element is visible, enabled and stable\n    - scrolling into view if needed\n    - done scrolling\n    - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n  - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    3 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"card-shine\"></div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"card-shine\"></div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"card-shine\"></div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"card-shine\"></div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n    3 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"card-shine\"></div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n    5 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <button aria-label=\"Increase LUK\" class=\"button stat-add-btn\">+</button> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n"
+    ],
+    "load_times_ms": {
+      "home": 1967,
+      "arena": 941
+    }
+  },
+  {
+    "date": "2026-05-25T13:01:10.866Z",
+    "run": "2026-05-25",
+    "character": "IRONSHADOW",
+    "character_action": "reused",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 348,
+        "fight_duration_ms": 18333
+      },
+      {
+        "result": "victory",
+        "xp": 348,
+        "fight_duration_ms": 20502
+      },
+      {
+        "result": "victory",
+        "xp": 348,
+        "fight_duration_ms": 14904
+      },
+      {
+        "result": "victory",
+        "xp": 348,
+        "fight_duration_ms": 15823
+      },
+      {
+        "result": "defeat",
+        "xp": 722,
+        "fight_duration_ms": 14221
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Worn Bracers",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "final_stats": {
+      "level": 3,
+      "xp": 32,
+      "wins": 5,
+      "losses": 2
+    },
+    "errors": [],
+    "load_times_ms": {
+      "home": 1357,
+      "arena": 598
+    }
+  },
+  {
+    "date": "2026-05-25T13:50:19.469Z",
+    "run": "2026-05-25",
+    "character": "RIVER",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 100,
+        "fight_duration_ms": 14458,
+        "hp_after": {
+          "current": 164,
+          "max": 164
+        }
+      },
+      {
+        "result": "victory",
+        "xp": 100,
+        "fight_duration_ms": 13716,
+        "hp_after": {
+          "current": 164,
+          "max": 164
+        }
+      },
+      {
+        "result": "victory",
+        "xp": 348,
+        "fight_duration_ms": 13517,
+        "hp_after": {
+          "current": 164,
+          "max": 164
+        }
+      },
+      {
+        "result": "victory",
+        "xp": 348,
+        "fight_duration_ms": 14367,
+        "hp_after": {
+          "current": 164,
+          "max": 164
+        }
+      },
+      {
+        "result": "victory",
+        "xp": 348,
+        "fight_duration_ms": 11333,
+        "hp_after": {
+          "current": 164,
+          "max": 164
+        }
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Oak Staff",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 13,
+      "vit": 8,
+      "dex": 11,
+      "luk": 6,
+      "int": 10,
+      "foc": 12
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_hp": {
+      "current": 164,
+      "max": 164
+    },
+    "final_stats": {
+      "level": 3,
+      "xp": 70,
+      "wins": 5,
+      "losses": 0
+    },
+    "final_character_stats": {
+      "str": 15,
+      "vit": 8,
+      "dex": 11,
+      "luk": 6,
+      "int": 10,
+      "foc": 12
+    },
+    "final_hp": {
+      "current": 164,
+      "max": 164
+    },
+    "level_up_events": [
+      {
+        "fight_number": 2,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      },
+      {
+        "fight_number": 5,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 2,
+        "new_level": 3
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 853,
+      "arena": 3329
+    }
+  },
+  {
+    "date": "2026-05-25T16:01:12.172Z",
+    "run": "2026-05-25",
+    "character": "STORMHYDRA",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 100,
+        "fight_duration_ms": 14191,
+        "hp_after": {
+          "current": 212,
+          "max": 212
+        }
+      },
+      {
+        "result": "defeat",
+        "xp": 100,
+        "fight_duration_ms": 17348,
+        "hp_after": {
+          "current": 212,
+          "max": 212
+        }
+      },
+      {
+        "result": "victory",
+        "xp": 100,
+        "fight_duration_ms": 18401,
+        "hp_after": {
+          "current": 212,
+          "max": 212
+        }
+      },
+      {
+        "result": "defeat",
+        "xp": 348,
+        "fight_duration_ms": 19218,
+        "hp_after": {
+          "current": 212,
+          "max": 212
+        }
+      },
+      {
+        "result": "victory",
+        "xp": 348,
+        "fight_duration_ms": 21203,
+        "hp_after": {
+          "current": 212,
+          "max": 212
+        }
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Worn Bracers",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 10,
+      "vit": 14,
+      "dex": 9,
+      "luk": 10,
+      "int": 10,
+      "foc": 7
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_hp": {
+      "current": 212,
+      "max": 212
+    },
+    "final_stats": {
+      "level": 2,
+      "xp": 188,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 11,
+      "vit": 14,
+      "dex": 9,
+      "luk": 10,
+      "int": 10,
+      "foc": 7
+    },
+    "final_hp": {
+      "current": 212,
+      "max": 212
+    },
+    "level_up_events": [
+      {
+        "fight_number": 3,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1182,
+      "arena": 2890
+    }
+  }
+]
