@@ -51,3 +51,6 @@ actions-runner/
 
 # QA screenshots
 qa/screenshots/
+
+# Generated QA analysis (regenerated every run)
+qa/analysis-latest.json

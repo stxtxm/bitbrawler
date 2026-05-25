@@ -48,6 +48,16 @@ jobs:
           chmod +x scripts/merge-eligible-prs.sh
           bash scripts/merge-eligible-prs.sh
 
+      - name: Run QA Stats Analysis
+        run: |
+          if [ -f qa/stats.json ]; then
+            npx tsx scripts/analyze-qa-stats.ts
+            echo "QA_ANALYSIS_DONE=true" >> "$GITHUB_ENV"
+          else
+            echo "No qa/stats.json found, skipping analysis"
+            echo "QA_ANALYSIS_DONE=false" >> "$GITHUB_ENV"
+          fi
+
       - name: Run Tech Lead agent
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
@@ -59,7 +69,22 @@ jobs:
             "opencode/big-pickle"
           )
 
-          PROMPT="Analyse le repo aujourd'hui. Consulte les stats QA (qa/stats.json), regarde les commits récents, respecte un merge order prudent, et crée des issues avec /oc pour les améliorations à faire."
+          # Read latest QA analysis if available
+          QA_REPORT=""
+          if [ -f qa/analysis-latest.json ]; then
+            QA_REPORT=$(cat qa/analysis-latest.json)
+          fi
+
+          PROMPT="Tu es le tech-lead de Bitbrawler. Analyse le repo aujourd'hui.
+
+          ## QA Stats Analysis (données de jeu réelles)
+          \`\`\`json
+          ${QA_REPORT:-"Pas de données QA disponibles."}
+          \`\`\`
+
+          Si des issues ou suggestions sont listées dans le rapport, crée des issues GitHub avec /oc pour les corriger.
+          Consulte les commits récents, merge les PRs éligibles, et améliore l'équilibrage du jeu à partir des données QA réelles.
+          Si le rapport indique des tendances sur 5 runs (win rate, niveaux), ajuste les suggestions en conséquence."
 
           SUCCESS=0
           for MODEL in "${MODELS[@]}"; do

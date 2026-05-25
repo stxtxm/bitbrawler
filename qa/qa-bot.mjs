@@ -297,6 +297,78 @@ async function syncAutoMode(page, desiredEnabled) {
   return true
 }
 
+/**
+ * Parse character stats (STR, VIT, DEX, LUK, INT, FOC) from the arena page.
+ * Returns an object with stat keys or null if parsing fails.
+ */
+async function parseCharacterStats(page) {
+  try {
+    // Try structured selectors first (fastest, most reliable)
+    const statLabels = page.locator('.compact-stat-label')
+    const statValues = page.locator('.compact-stat-value')
+    const labelCount = await statLabels.count()
+    const valueCount = await statValues.count()
+
+    if (labelCount > 0 && labelCount === valueCount) {
+      const stats = {}
+      for (let i = 0; i < labelCount; i++) {
+        const label = ((await statLabels.nth(i).textContent().catch(() => '')) || '').trim().toLowerCase()
+        const value = parseInt((await statValues.nth(i).textContent().catch(() => '0')) || '0', 10)
+        if (label && !isNaN(value)) {
+          stats[label] = value
+        }
+      }
+      if (Object.keys(stats).length >= 4) return stats
+    }
+
+    // Fallback: parse from body text patterns like "STR 10" / "VIT 12"
+    const text = await page.locator('body').innerText().catch(() => '')
+    const statPatterns = [
+      { key: 'str', patterns: [/STR\s*[:\-]?\s*(\d+)/i, /strength\s*[:\-]?\s*(\d+)/i] },
+      { key: 'vit', patterns: [/VIT\s*[:\-]?\s*(\d+)/i, /vitality\s*[:\-]?\s*(\d+)/i] },
+      { key: 'dex', patterns: [/DEX\s*[:\-]?\s*(\d+)/i, /dexterity\s*[:\-]?\s*(\d+)/i] },
+      { key: 'luk', patterns: [/LUK\s*[:\-]?\s*(\d+)/i, /luck\s*[:\-]?\s*(\d+)/i] },
+      { key: 'int', patterns: [/INT\s*[:\-]?\s*(\d+)/i, /intelligence\s*[:\-]?\s*(\d+)/i] },
+      { key: 'foc', patterns: [/FOC\s*[:\-]?\s*(\d+)/i, /focus\s*[:\-]?\s*(\d+)/i] },
+    ]
+
+    const stats = {}
+    for (const { key, patterns } of statPatterns) {
+      for (const pattern of patterns) {
+        const match = text.match(pattern)
+        if (match) {
+          stats[key] = parseInt(match[1], 10)
+          break
+        }
+      }
+    }
+    if (Object.keys(stats).length >= 4) return stats
+
+    return null
+  } catch (err) {
+    console.log(`   ⚠️ Could not parse character stats: ${err.message}`)
+    return null
+  }
+}
+
+/**
+ * Parse character level from the arena page body text.
+ * Returns the level number or null.
+ */
+function parseLevelFromText(text) {
+  const match = text.match(/LVL\s*(\d+)/i)
+  return match ? parseInt(match[1]) : null
+}
+
+/**
+ * Parse character XP from the arena page body text.
+ * Returns { current, max } or null.
+ */
+function parseXpFromText(text) {
+  const match = text.match(/(\d+)\s*\/\s*(\d+)\s*XP/i)
+  return match ? { current: parseInt(match[1]), max: parseInt(match[2]) } : null
+}
+
 async function handleDailyLootbox(page, runKey) {
   console.log('🎁 Checking lootbox...')
 
@@ -420,8 +492,9 @@ async function maybeReplaceExhaustedCharacter(page, runKey, runRecord, reason) {
 }
 
 /**
- * Handle the level-up popup overlay by allocating a stat point (if any remain)
+ * Handle the level-up popup overlay by allocating ALL stat points
  * and dismissing the overlay so the FIGHT button becomes clickable again.
+ * Loops until all points are allocated, then clicks APPLY.
  * Returns true if the overlay was handled, false if not present.
  */
 async function handleLevelUpOverlay(page) {
@@ -433,36 +506,51 @@ async function handleLevelUpOverlay(page) {
 
   console.log('   Level-up overlay detected, handling...')
 
-  // 1. Allocate one stat point if a stat-add-btn is available
-  const statAddBtn = page.locator('.stat-add-btn').first()
-  if (await statAddBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+  // 1. Loop: allocate ALL stat points until APPLY becomes enabled
+  let allocatedCount = 0
+  for (let attempt = 0; attempt < 10; attempt++) {
+    // Check if APPLY is enabled (no more points to allocate)
+    const applyBtn = page.locator('.level-up-confirm').first()
+    if (await applyBtn.isEnabled({ timeout: 300 }).catch(() => false)) {
+      await applyBtn.click()
+      await page.waitForTimeout(500)
+      console.log(`   ✅ Level-up overlay closed via APPLY (${allocatedCount} point${allocatedCount !== 1 ? 's' : ''} allocated)`)
+      return true
+    }
+
+    // Allocate one point
+    const statAddBtn = page.locator('.stat-add-btn').first()
+    if (!(await statAddBtn.isVisible({ timeout: 300 }).catch(() => false))) {
+      break // No add button and no APPLY = unexpected state
+    }
+
     const ariaLabel = await statAddBtn.getAttribute('aria-label').catch(() => null)
-    console.log(`   Clicking ${ariaLabel || 'stat-add-btn'} to allocate point`)
     await statAddBtn.click()
-    await page.waitForTimeout(800)
-    console.log('   Stat point allocated')
+    allocatedCount++
+    console.log(`   Allocated point #${allocatedCount} (${ariaLabel || 'stat-add-btn'})`)
+    await page.waitForTimeout(600)
   }
 
-  // 2. Try APPLY (primary) if no more points remain
+  // 2. Try APPLY one final time
   const applyBtn = page.locator('.level-up-confirm').first()
-  if (await applyBtn.isEnabled({ timeout: 1000 }).catch(() => false)) {
+  if (await applyBtn.isEnabled({ timeout: 300 }).catch(() => false)) {
     await applyBtn.click()
     await page.waitForTimeout(500)
-    console.log('   Level-up overlay closed via APPLY')
+    console.log(`   ✅ Level-up overlay closed via APPLY (${allocatedCount} point${allocatedCount !== 1 ? 's' : ''} allocated)`)
     return true
   }
 
-  // 3. Fallback: LATER button if still more points
+  // 3. Fallback: LATER button (shouldn't reach here if loop worked)
   const laterBtn = page.locator('.level-up-later').first()
   if (await laterBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
     await laterBtn.click()
     await page.waitForTimeout(500)
-    console.log('   Level-up overlay deferred via LATER')
+    console.log(`   ⚠️ Level-up overlay deferred via LATER (${allocatedCount} point${allocatedCount !== 1 ? 's' : ''} allocated)`)
     return true
   }
 
   // 4. Last resort: force-click the overlay background to auto-dismiss
-  console.log('   Force-dismissing level-up overlay')
+  console.log('   ⚠️ Force-dismissing level-up overlay')
   await levelUpOverlay.click({ force: true })
   await page.waitForTimeout(500)
   return true
@@ -470,6 +558,7 @@ async function handleLevelUpOverlay(page) {
 
 async function runFightSequence(page, runKey, runRecord) {
   let recreatedForExhaustion = false
+  let currentLevel = runRecord.initial_level
 
   // Dismiss any lingering level-up overlay from a previous run (reused character)
   const initialLevelUpOverlay = page.locator('.level-up-pop-overlay').first()
@@ -598,7 +687,27 @@ async function runFightSequence(page, runKey, runRecord) {
     }
 
     // Handle level-up overlay (allocate stat + dismiss) before next fight
-    await handleLevelUpOverlay(page)
+    const hadOverlay = await handleLevelUpOverlay(page)
+
+    // Track level progression if level-up was detected
+    if (hadOverlay) {
+      const postFightText = await page.locator('body').innerText().catch(() => '')
+      const newLevel = parseLevelFromText(postFightText)
+      if (newLevel !== null && currentLevel !== null && newLevel > currentLevel) {
+        const levelsGained = newLevel - currentLevel
+        runRecord.level_up_events.push({
+          fight_number: i + 1,
+          levels_gained: levelsGained,
+          points_to_allocate: levelsGained,
+          previous_level: currentLevel,
+          new_level: newLevel,
+        })
+        console.log(`   ⬆️ Level up: ${currentLevel} → ${newLevel} (+${levelsGained} level${levelsGained > 1 ? 's' : ''})`)
+        currentLevel = newLevel
+      } else if (newLevel !== null) {
+        currentLevel = newLevel
+      }
+    }
   }
 }
 
@@ -668,7 +777,12 @@ async function run() {
     lootbox: null,
     auto_mode_enabled: false,
     auto_mode_sync_ok: false,
-    final_stats: null,
+    initial_stats: null,            // character base stats at start of run
+    initial_level: null,            // character level at start of run
+    initial_xp: null,               // character XP at start of run
+    final_stats: null,              // parsed final stats (level, xp, w/l)
+    final_character_stats: null,    // character base stats at end of run
+    level_up_events: [],            // { fight_number, levels_gained, points_allocated }
     errors: [],
     load_times_ms: {},
   }
@@ -695,6 +809,13 @@ async function run() {
 
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-03-arena.png`) })
 
+    // Capture initial stats before the fight sequence
+    const preFightText = await page.locator('body').innerText().catch(() => '')
+    runRecord.initial_level = parseLevelFromText(preFightText)
+    runRecord.initial_xp = parseXpFromText(preFightText)
+    runRecord.initial_stats = await parseCharacterStats(page)
+    console.log(`   Initial stats: level=${runRecord.initial_level}, xp=${JSON.stringify(runRecord.initial_xp)}, stats=${JSON.stringify(runRecord.initial_stats)}`)
+
     await runFightSequence(page, runKey, runRecord)
 
     // Ensure no overlay is blocking the arena stats before reading
@@ -708,7 +829,6 @@ async function run() {
 
     const levelMatch = finalText.match(/LVL\s*(\d+)/i)
     const xpTotalMatch = finalText.match(/(\d+)\s*\/\s*\d+\s*XP/i)
-    // Use a more specific combined pattern: "W <wins> L <losses>" to avoid false matches
     const recordMatch  = finalText.match(/W\s*(\d+)\s+L\s*(\d+)/i)
 
     runRecord.final_stats = {
@@ -718,6 +838,10 @@ async function run() {
       losses: recordMatch ? parseInt(recordMatch[2]) : null,
     }
     console.log('   Final stats:', JSON.stringify(runRecord.final_stats))
+
+    // Capture final character stats
+    runRecord.final_character_stats = await parseCharacterStats(page)
+    console.log(`   Final character stats: ${JSON.stringify(runRecord.final_character_stats)}`)
 
     const finalArenaStatus = await readArenaStatus(page)
     const fighterExhausted =

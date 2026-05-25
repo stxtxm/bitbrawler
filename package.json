@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "test": "vitest",
     "bots:run": "tsx scripts/bot-engine.ts",
-    "daily-reset:run": "tsx scripts/daily-reset-engine.ts"
+    "daily-reset:run": "tsx scripts/daily-reset-engine.ts",
+    "qa:analyze": "tsx scripts/analyze-qa-stats.ts",
+    "qa:run": "node qa/qa-bot.mjs"
   },
   "dependencies": {
     "@fontsource/press-start-2p": "^5.2.7",
