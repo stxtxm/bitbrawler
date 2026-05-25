@@ -471,6 +471,18 @@ async function handleLevelUpOverlay(page) {
 async function runFightSequence(page, runKey, runRecord) {
   let recreatedForExhaustion = false
 
+  // Dismiss any lingering level-up overlay from a previous run (reused character)
+  const initialLevelUpOverlay = page.locator('.level-up-pop-overlay').first()
+  if (await initialLevelUpOverlay.isVisible({ timeout: 1000 }).catch(() => false)) {
+    console.log('   Level-up overlay detected at start of run, dismissing...')
+    const laterBtn = page.locator('.level-up-later').first()
+    if (await laterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await laterBtn.click()
+      await page.waitForTimeout(500)
+      console.log('   Level-up overlay dismissed at start of run')
+    }
+  }
+
   for (let i = 0; i < config.fightsPerRun; i++) {
     const arenaStatus = await readArenaStatus(page)
 
