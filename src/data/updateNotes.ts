@@ -8,6 +8,25 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '2.2.0',
+    date: '2026-05-25',
+    title: 'Bot-engine rebalance, QA enrichment & codebase cleanup',
+    changes: [
+      'HP tracking now captures max HP growth (character progression) instead of current HP — game restores HP after every fight.',
+      'Lootbox rarity captured in QA stats (.lootbox-result-rarity + .lootbox-stat-value).',
+      'Bot-engine: skipped bots with 0 fights left AND no lootbox AND no daily reset — no wasted DB queries.',
+      'Bot protection rebalanced: protect only ~10 level-1 bots (opponent pool) instead of ~40 — 30+ bots fight and level up each run.',
+      'Newly spawned bots (reserve + growth) are exempt from protection — they fight immediately to provide active opponents.',
+      'New config MIN_LVL1_PROTECTED=5 ensures enough opponents for 1 new player even at minimum population.',
+      'selectProtectedLevelOneBotIds extracted to botBehaviorUtils.ts with proper BotCharacter type (Character + firestoreId + battleCount).',
+      'QA stats analyzer script (scripts/analyze-qa-stats.ts) with HP growth, loot rarity distribution, multi-window trends, min/max/median durations.',
+      'Stats reset: corrupted data from level-up overlay bug removed — fresh start.',
+      'Tech-lead workflow updated with structured 6-section analysis (HP, rarities, trends, stats).',
+      'Removed dead code: scripts/bot-data.ts (unused BOT_LEVEL_TARGETS).',
+      '256 tests passing (was 242), 14 new unit tests for protection logic with exemptFromProtection.',
+    ],
+  },
+  {
     version: '2.1.0',
     date: '2026-05-25',
     title: 'AI-driven fixes, QA automation & flag unification',

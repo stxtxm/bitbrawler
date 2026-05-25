@@ -34,6 +34,7 @@ Ce script va :
 - Les combats ont-ils bien été exécutés ?
 - Les screenshots sont-ils présents dans `qa/screenshots/` ?
 - Le fichier `qa/stats.json` a-t-il été mis à jour ?
+- Les stats incluent désormais : max HP (croissance du personnage), rareté du lootbox, durée des combats
 
 ### Règles
 - Ne modifie pas le script Playwright sans en informer le Tech Lead
