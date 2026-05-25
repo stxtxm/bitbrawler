@@ -389,5 +389,117 @@
       "home": 853,
       "arena": 3329
     }
+  },
+  {
+    "date": "2026-05-25T16:01:12.172Z",
+    "run": "2026-05-25",
+    "character": "STORMHYDRA",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 100,
+        "fight_duration_ms": 14191,
+        "hp_after": {
+          "current": 212,
+          "max": 212
+        }
+      },
+      {
+        "result": "defeat",
+        "xp": 100,
+        "fight_duration_ms": 17348,
+        "hp_after": {
+          "current": 212,
+          "max": 212
+        }
+      },
+      {
+        "result": "victory",
+        "xp": 100,
+        "fight_duration_ms": 18401,
+        "hp_after": {
+          "current": 212,
+          "max": 212
+        }
+      },
+      {
+        "result": "defeat",
+        "xp": 348,
+        "fight_duration_ms": 19218,
+        "hp_after": {
+          "current": 212,
+          "max": 212
+        }
+      },
+      {
+        "result": "victory",
+        "xp": 348,
+        "fight_duration_ms": 21203,
+        "hp_after": {
+          "current": 212,
+          "max": 212
+        }
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Worn Bracers",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 10,
+      "vit": 14,
+      "dex": 9,
+      "luk": 10,
+      "int": 10,
+      "foc": 7
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_hp": {
+      "current": 212,
+      "max": 212
+    },
+    "final_stats": {
+      "level": 2,
+      "xp": 188,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 11,
+      "vit": 14,
+      "dex": 9,
+      "luk": 10,
+      "int": 10,
+      "foc": 7
+    },
+    "final_hp": {
+      "current": 212,
+      "max": 212
+    },
+    "level_up_events": [
+      {
+        "fight_number": 3,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1182,
+      "arena": 2890
+    }
   }
 ]
