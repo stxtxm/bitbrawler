@@ -1,9 +1,8 @@
 name: Bot Activity
 
 on:
-  schedule:
-    # Run every 2 hours (UTC).
-    - cron: '0 */2 * * *'
+  # Cron desactive : utilise cron-job.org (gratuit) pour le declenchement.
+  # Voir scripts/dispatch-bot-activity.sh pour la configuration.
   workflow_dispatch:
 
 jobs:

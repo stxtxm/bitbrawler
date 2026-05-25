@@ -1,16 +1,8 @@
 name: QA Tester
 
 on:
-  schedule:
-    # 5x/day Paris time: 8h, 11h, 14h, 17h, 20h UTC+2
-    # In UTC: 6h, 9h, 12h, 15h, 18h
-    # Note: GitHub Actions cron est ~20% fiable.
-    # Pour une fiabilite 100%, configurer cron-job.org (gratuit) :
-    #   URL: POST https://api.github.com/repos/stxtxm/bitbrawler/actions/workflows/qa-tester.yml/dispatches
-    #   Headers: Authorization: Bearer <PAT>, Content-Type: application/json
-    #   Body: {"ref":"master"}
-    #   Voir scripts/dispatch-qa-tester.sh
-    - cron: '0 6,9,12,15,18 * * *'
+  # Cron desactive : utilise cron-job.org (gratuit) pour le declenchement.
+  # Voir scripts/dispatch-qa-tester.sh pour la configuration.
   workflow_dispatch:
 
 jobs:
