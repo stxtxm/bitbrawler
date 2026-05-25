@@ -25,20 +25,29 @@ async function runDailyReset() {
     console.log(`📆 Target reset day: ${parisResetLabel} (Paris midnight UTC: ${new Date(parisResetMidnightUtc).toISOString()})`);
     console.log(`📋 Reset scope: ${RESET_SCOPE}`);
 
-    // Always check maintenance table to ensure the reset runs only once per Paris day
-    try {
-        const { data: resetState } = await supabase
-            .from('maintenance')
-            .select('last_completed_key')
-            .eq('id', 'dailyReset')
-            .single();
+    // Always check maintenance table to ensure the reset runs only once per Paris day.
+    // Bypass this guard when triggered manually (workflow_dispatch) so the user can
+    // re-run the reset at any time if needed.
+    const eventName = (process.env.GITHUB_EVENT_NAME || '').toLowerCase();
+    const isManual = eventName === 'workflow_dispatch';
 
-        if (resetState?.last_completed_key === parisResetLabel) {
-            console.log(`⏭️ Skipping reset: already completed for Paris day ${parisResetLabel}.`);
-            return;
+    if (!isManual) {
+        try {
+            const { data: resetState } = await supabase
+                .from('maintenance')
+                .select('last_completed_key')
+                .eq('id', 'dailyReset')
+                .single();
+
+            if (resetState?.last_completed_key === parisResetLabel) {
+                console.log(`⏭️ Skipping reset: already completed for Paris day ${parisResetLabel}.`);
+                return;
+            }
+        } catch {
+            console.log('ℹ️ Maintenance state check skipped (table not available).');
         }
-    } catch {
-        console.log('ℹ️ Maintenance state check skipped (table not available).');
+    } else {
+        console.log('🔓 Manual dispatch: bypassing once-per-day guard.');
     }
 
     try {
