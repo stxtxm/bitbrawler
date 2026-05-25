@@ -12,7 +12,7 @@ Tu es l'agent de development principal de Bitbrawler. Tu travailles de maniere a
 
 ## Contexte projet
 - Bitbrawler: arena brawler retro 8-bit avec Supabase (PostgreSQL), React + TypeScript + Vite
-- Tests: vitest (190 tests), npm test
+- Tests: vitest (256 tests, 41 fichiers), npm test
 - Build: tsc && vite build
 - Base de donnees: Supabase (pas Firebase)
 - Deploiement: Vercel

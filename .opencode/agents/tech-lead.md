@@ -25,6 +25,8 @@ Tu es le Tech Lead de Bitbrawler. Tu travailles 1x/jour à 21h pour maintenir le
 - Ouvre `qa/stats.json` et analyse les résultats du jour
 - Vérifie que les QA se sont bien déroulés (pas d'erreurs)
 - Note les winrates, les lootbox obtenues, les temps de chargement
+- Le rapport structuré est dans `qa/analysis-latest.json` (généré par `scripts/analyze-qa-stats.ts`)
+- Sections du rapport : HP growth (max HP), loot rarity distribution, trends multi-fenêtres (last 3/5/10/all-time), min/max/median fight durations
 
 ### 3. Analyse le code
 - Vérifie les fichiers récemment modifiés (git log --oneline -20)

@@ -39,8 +39,7 @@ Bitbrawler is a retro 8-bit arena experience where players create a pixel fighte
 - **Arena fights** with XP gain, level ups, and enhanced combat (crit + magic + focus)
 - **Strict same-level matchmaking** with power balancing, daily opponent rotation, and animated opponent scan
 - **Daily lootbox + inventory** — auto-applied stat bonuses with rarity system
-- **Bot engine** — population management with organic activity pacing
-- **Anti-cheat** — fight reservations ensure pending fights resolve even if the player quits mid-matchmaking
+- **Bot engine** — population management with organic activity pacing, depleted-bot skipping, and protection rebalance (fewer frozen bots, more active level-ups)
 - **Global daily reset** — scripted resets at midnight (Paris) for fights and opponent tracking
 - **Hall of Fame** rankings
 - **PWA** install experience
@@ -55,7 +54,7 @@ Bitbrawler is a retro 8-bit arena experience where players create a pixel fighte
 | -------------- | ----------------------------------------------- |
 | Frontend       | React 18 + TypeScript + Vite                    |
 | Backend / Auth | Supabase (PostgreSQL, real-time, auth)          |
-| Testing        | Vitest + React Testing Library + jsdom          |
+| Testing        | Vitest + React Testing Library + jsdom — **256 tests, 41 files**          |
 | Styling        | Sass (SCSS)                                     |
 | Fonts          | Press Start 2P (via Fontsource)                 |
 | Scripting      | tsx (TypeScript executor)                       |
@@ -88,13 +87,14 @@ Bitbrawler is a retro 8-bit arena experience where players create a pixel fighte
 ## Scripts
 
 ```bash
-npm test               # Run test suite (Vitest)
+npm test               # Run test suite (Vitest) — 256 tests, 41 files
 npm run build          # TypeScript check + Vite production build
 npm run lint           # ESLint check
 npm run dev            # Start Vite dev server
 npm run preview        # Preview production build
 npm run bots:run       # Run bot simulation engine
 npm run daily-reset:run  # Run daily reset script
+npx tsx scripts/analyze-qa-stats.ts  # Analyze QA stats (HP growth, loot rarity, trends)
 ```
 
 ## CI/CD
@@ -109,10 +109,12 @@ npm run daily-reset:run  # Run daily reset script
 
 Bitbrawler uses [OpenCode](https://opencode.ai) agents for autonomous development workflows.
 
-| Agent       | Role                                      |
-| ----------- | ----------------------------------------- |
-| `dev-agent` | Default — implements, reviews, and merges |
-| `reviewer`  | Specialized code review                   |
+| Agent         | Role                                               |
+| ------------- | -------------------------------------------------- |
+| `dev-agent`   | Default — implements features, creates PRs         |
+| `reviewer`    | Code review (triggered by `/oc review` on PRs)     |
+| `tech-lead`   | Daily merge, QA stats analysis, issue creation     |
+| `qa-tester`   | Playwright E2E tests on the live site              |
 
 Use `/oc` or `/opencode` in any issue or PR to trigger an agent.
 
@@ -126,6 +128,16 @@ bitbrawler/
 │   ├── sw.js                # Service worker (PWA)
 │   ├── icon.svg             # App icon
 │   └── icon-*.png           # PWA icons
+├── scripts/
+│   ├── analyze-qa-stats.ts  # QA stats analysis (HP, loot, trends)
+│   ├── bot-engine.ts        # Bot simulation engine
+│   ├── daily-reset-engine.ts # Global daily reset
+│   └── supabaseAdmin.ts     # Supabase admin client (service role)
+├── qa/
+│   ├── qa-bot.mjs           # Playwright E2E QA tester
+│   ├── qa-bot.config.js     # QA bot configuration
+│   ├── stats.json           # Fight stats data
+│   └── analysis-latest.json # Analyzed stats report
 ├── src/
 │   ├── components/          # UI building blocks
 │   │   ├── CombatView.tsx
@@ -152,18 +164,30 @@ bitbrawler/
 │   ├── pages/               # Route pages
 │   │   ├── Arena.tsx
 │   │   ├── CharacterCreation.tsx
-│   │   ├── HomePage.tsx
+│   │   ├── HomePage.tsx      # (homepage with patch notes modal)
 │   │   ├── Login.tsx
 │   │   ├── NotFound.tsx
 │   │   └── Rankings.tsx
 │   ├── routes/              # Lazy loading configuration
 │   │   └── lazyPages.ts
 │   ├── styles/              # Global and page Sass styles
-│   ├── test/                # Vitest test suite
+│   ├── test/                # Vitest test suite — 256 tests, 41 files
 │   ├── types/               # TypeScript type definitions
 │   │   ├── Character.ts
 │   │   └── Item.ts
 │   └── utils/               # Game logic (combat, XP, random, matchmaking, Supabase helpers)
+│       ├── botBehaviorUtils.ts   # Bot logic (reserve, protection, fight budget, activity profiles)
+│       ├── combatUtils.ts
+│       ├── characterUtils.ts
+│       ├── dailyReset.ts
+│       ├── lootboxUtils.ts
+│       ├── matchmakingUtils.ts
+│       ├── persistenceUtils.ts
+│       ├── randomUtils.ts
+│       ├── statUtils.ts
+│       ├── supabaseUtils.ts
+│       ├── timezoneUtils.ts
+│       └── xpUtils.ts
 └── .env.example             # Environment variables template
 ```
 
