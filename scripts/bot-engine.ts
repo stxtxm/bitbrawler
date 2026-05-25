@@ -41,6 +41,7 @@ const OPPONENT_SELECT_COLUMNS = [
 type BotSimulationOptions = {
     skipBotIds?: Set<string>;
     protectedLevelOneCount?: number;
+    exemptFromProtection?: Set<string>;
 };
 
 type PopulationSnapshot = {
@@ -123,6 +124,7 @@ async function runBotLogic() {
             `📊 Population snapshot | bots: ${populations.totalBots}, lvl1 bots: ${populations.levelOneBots}, lvl1 humans: ${populations.levelOneHumans}, reserve target: ${levelOneReserveTarget}`
         );
         const skipBotIds = new Set<string>();
+        const newlySpawnedIds = new Set<string>();
         let totalBots = populations.totalBots;
         let lvl1Bots = populations.levelOneBots;
 
@@ -130,7 +132,8 @@ async function runBotLogic() {
             console.log('📉 Total bot population low. Spawning reinforcements...');
             const needed = GAME_RULES.BOTS.MIN_POPULATION - totalBots;
             for (let i = 0; i < needed; i++) {
-                await createNewBot();
+                const id = await createNewBot();
+                newlySpawnedIds.add(id);
                 totalBots += 1;
                 lvl1Bots += 1;
             }
@@ -140,7 +143,8 @@ async function runBotLogic() {
             console.log(`📉 Lvl 1 reserve low (${lvl1Bots}/${levelOneReserveTarget}). Spawning LVL 1 bots...`);
             const needed = levelOneReserveTarget - lvl1Bots;
             for (let i = 0; i < needed; i++) {
-                await createNewBot(); // Not protected — let it fight immediately and provide opponents for matchmaking
+                const id = await createNewBot();
+                newlySpawnedIds.add(id);
                 totalBots += 1;
                 lvl1Bots += 1;
             }
@@ -148,12 +152,20 @@ async function runBotLogic() {
 
         if (Math.random() <= GAME_RULES.BOTS.GROWTH_CHANCE) {
             console.log('📈 Scheduled bot growth triggered.');
-            await createNewBot(); // Not protected — let it fight immediately
+            const id = await createNewBot();
+            newlySpawnedIds.add(id);
         }
+
+        // Protect enough for opponents but not more — let most bots fight and level up
+        const protectedLevelOneCount = Math.max(
+            GAME_RULES.BOTS.MIN_LVL1_PROTECTED,
+            Math.min(levelOneReserveTarget, GAME_RULES.COMBAT.MAX_DAILY_FIGHTS * 2)
+        );
 
         await simulateBotDailyLife({
             skipBotIds,
-            protectedLevelOneCount: levelOneReserveTarget
+            protectedLevelOneCount,
+            exemptFromProtection: newlySpawnedIds
         });
 
         const finalPop = await measurePopulation();
@@ -261,7 +273,8 @@ function convertRowToCharacter(row: any): Character {
 function selectProtectedLevelOneBotIds(
     bots: Character[],
     skipIds: Set<string>,
-    protectedLevelOneCount: number
+    protectedLevelOneCount: number,
+    exemptFromProtection: Set<string> = new Set()
 ): Set<string> {
     const nextSkip = new Set(skipIds);
     if (protectedLevelOneCount <= 0) return nextSkip;
@@ -279,7 +292,8 @@ function selectProtectedLevelOneBotIds(
         .filter((bot) =>
             bot.level === 1 &&
             !!bot.firestoreId &&
-            !nextSkip.has(bot.firestoreId)
+            !nextSkip.has(bot.firestoreId) &&
+            !exemptFromProtection.has(bot.firestoreId)
         )
         .sort((a, b) => {
             const aBattles = a.battleCount ?? 0;
@@ -304,7 +318,8 @@ function selectProtectedLevelOneBotIds(
 async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
     const {
         skipBotIds = new Set<string>(),
-        protectedLevelOneCount = GAME_RULES.BOTS.MIN_LVL1_BOTS
+        protectedLevelOneCount = GAME_RULES.BOTS.MIN_LVL1_BOTS,
+        exemptFromProtection = new Set<string>()
     } = options;
 
     const { data: rows, error } = await supabase
@@ -327,7 +342,7 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
     const runNow = Date.now();
     const runParisHour = getZonedParts(new Date(runNow), DAILY_RESET_TIMEZONE).hour;
     const endOfDayDrain = isEndOfDayDrainWindow(runParisHour);
-    const protectedIds = selectProtectedLevelOneBotIds(bots, skipBotIds, protectedLevelOneCount);
+    const protectedIds = selectProtectedLevelOneBotIds(bots, skipBotIds, protectedLevelOneCount, exemptFromProtection);
     const protectionEnabled = !endOfDayDrain;
     const fightEligibleBots = protectionEnabled
         ? bots.filter(bot => !protectedIds.has(bot.firestoreId ?? ''))
