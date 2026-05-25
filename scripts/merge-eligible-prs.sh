@@ -56,16 +56,39 @@ for PR_NUM in $PR_NUMS; do
 
   # Check mergeability
   MERGE_STATE=$(gh pr view "$PR_NUM" --json mergeStateStatus --jq '.mergeStateStatus // ""')
-  if [ "$MERGE_STATE" != "CLEAN" ] && [ "$MERGE_STATE" != "HAS_HOOKS" ]; then
+  if [ "$MERGE_STATE" = "CLEAN" ] || [ "$MERGE_STATE" = "HAS_HOOKS" ]; then
+    echo "PR #$PR_NUM merge state is $MERGE_STATE (good)."
+  elif [ "$MERGE_STATE" = "UNKNOWN" ]; then
+    # UNKNOWN often means gh CLI version mismatch or no branch protection.
+    # Check CI status directly and proceed if all checks are green.
+    echo "PR #$PR_NUM has mergeState=UNKNOWN. Checking CI status directly..."
+    BLOCKING=$(gh pr view "$PR_NUM" --json statusCheckRollup --jq '[.statusCheckRollup[]? | select(
+      (.status? != null and .status? != "COMPLETED") or
+      (.state? != null and .state? != "SUCCESS") or
+      (.conclusion? != null and .conclusion? != "SUCCESS")
+    )] | length')
+    if [ "$BLOCKING" -eq 0 ]; then
+      echo "PR #$PR_NUM all checks are green. Proceeding despite UNKNOWN state."
+    else
+      echo "PR #$PR_NUM has $BLOCKING non-green checks. Skipping."
+      continue
+    fi
+  else
     echo "PR #$PR_NUM is not mergeable (state=$MERGE_STATE). Skipping."
     continue
   fi
 
-  # Check CI status
-  BLOCKING=$(gh pr view "$PR_NUM" --json statusCheckRollup --jq '[.statusCheckRollup[]? | select((.status? != "COMPLETED") or (.conclusion? != null and .conclusion != "SUCCESS") or (.state? != null and .state != "SUCCESS"))] | length')
-  if [ "$BLOCKING" -ne 0 ]; then
-    echo "PR #$PR_NUM does not have a fully green check suite. Skipping."
-    continue
+  # Check CI status (skip if already verified via UNKNOWN path above)
+  if [ "$MERGE_STATE" != "UNKNOWN" ]; then
+    BLOCKING=$(gh pr view "$PR_NUM" --json statusCheckRollup --jq '[.statusCheckRollup[]? | select(
+      (.status? != null and .status? != "COMPLETED") or
+      (.state? != null and .state? != "SUCCESS") or
+      (.conclusion? != null and .conclusion? != "SUCCESS")
+    )] | length')
+    if [ "$BLOCKING" -ne 0 ]; then
+      echo "PR #$PR_NUM does not have a fully green check suite. Skipping."
+      continue
+    fi
   fi
 
   PR_TITLE=$(gh pr view "$PR_NUM" --json title --jq '.title // ""')
