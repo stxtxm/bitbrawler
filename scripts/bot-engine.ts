@@ -18,6 +18,9 @@ import { supabase } from './supabaseAdmin';
 import { INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP } from '../src/utils/persistenceUtils';
 const DB_BATCH_SIZE = 10;
 
+/** Return a human-readable label distinguishing bots from auto-mode human players */
+const logLabel = (c: Character): string => c.isBot ? 'Bot' : 'Player';
+
 // Columns needed for bot processing (all mutating columns + identity)
 const BOT_SELECT_COLUMNS = [
     'id', 'name', 'gender', 'seed', 'level', 'hp', 'max_hp',
@@ -398,7 +401,7 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                 currentBotState.lastFightReset = parisMidnightUtc;
                 currentBotState.battleCount = 0;
                 didReset = true;
-                console.log(`🔄 Daily reset for bot ${currentBotState.name}`);
+                console.log(`🔄 Daily reset for ${logLabel(currentBotState)} ${currentBotState.name}`);
             }
 
             if (canRollLootbox(currentBotState.lastLootRoll, runNow)) {
@@ -412,12 +415,12 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                             lastLootRoll: runNow
                         };
                         didLootbox = true;
-                        console.log(`🎁 Bot ${currentBotState.name} opened lootbox: ${item.name} (${item.rarity})`);
+                        console.log(`🎁 ${logLabel(currentBotState)} ${currentBotState.name} opened lootbox: ${item.name} (${item.rarity})`);
                     } else {
-                        console.log(`🎁 Bot ${currentBotState.name} already collected all lootbox items.`);
+                        console.log(`🎁 ${logLabel(currentBotState)} ${currentBotState.name} already collected all lootbox items.`);
                     }
                 } else {
-                    console.log(`📦 Bot ${currentBotState.name} inventory full. Skipping lootbox.`);
+                    console.log(`📦 ${logLabel(currentBotState)} ${currentBotState.name} inventory full. Skipping lootbox.`);
                 }
             }
 
@@ -455,8 +458,8 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                 } else {
                     console.log(
                         endOfDayDrain
-                            ? `⚠️ No opponents available for bot ${currentBotState.name}. Skipping remaining fights.`
-                            : `⚠️ No same-level opponent for bot ${currentBotState.name} (LVL ${currentBotState.level}). Skipping fights.`
+                            ? `⚠️ No opponents available for ${logLabel(currentBotState)} ${currentBotState.name}. Skipping remaining fights.`
+                            : `⚠️ No same-level opponent for ${logLabel(currentBotState)} ${currentBotState.name} (LVL ${currentBotState.level}). Skipping fights.`
                     );
                     break;
                 }
@@ -552,29 +555,28 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
 
                 const levelDiff = currentBotState.level - startLevel;
                 if (actionsTaken > 0) {
-                    console.log(`👊 Bot ${bot.name}: ${actionsTaken}/${fightBudget} fights, +${totalXpGained} XP. ${levelDiff > 0 ? `🆙 LVL UP +${levelDiff}` : ''} Energy left: ${currentBotState.fightsLeft}`);
+                    console.log(`👊 ${logLabel(bot)} ${bot.name}: ${actionsTaken}/${fightBudget} fights, +${totalXpGained} XP. ${levelDiff > 0 ? `🆙 LVL UP +${levelDiff}` : ''} Energy left: ${currentBotState.fightsLeft}`);
                 } else if (didLootbox) {
-                    console.log(`📦 Bot ${bot.name} updated inventory. Energy left: ${currentBotState.fightsLeft}`);
+                    console.log(`📦 ${logLabel(bot)} ${bot.name} updated inventory. Energy left: ${currentBotState.fightsLeft}`);
                 } else if (isProtected && fightsLeft > 0) {
-                    console.log(`🛡️ Bot ${bot.name} kept in protected pool (energy: ${fightsLeft}).`);
+                    console.log(`🛡️ ${logLabel(bot)} ${bot.name} kept in protected pool (energy: ${fightsLeft}).`);
                 } else {
                     const restReason = fightBudget === 0 && fightsLeft > 0 ? 'scheduled rest' : '0 energy';
-                    console.log(`💤 Bot ${bot.name} is resting (${restReason}).`);
+                    console.log(`💤 ${logLabel(bot)} ${bot.name} is resting (${restReason}).`);
                 }
             } else {
                 if (fightsLeft > 0) {
                     if (fightBudget === 0) {
-                        console.log(`💤 Bot ${bot.name} skipped activity this run (energy: ${fightsLeft}).`);
+                        console.log(`💤 ${logLabel(bot)} ${bot.name} skipped activity this run (energy: ${fightsLeft}).`);
                     } else {
-                        console.log(`💤 Bot ${bot.name} found no opponents (energy: ${fightsLeft}).`);
+                        console.log(`💤 ${logLabel(bot)} ${bot.name} found no opponents (energy: ${fightsLeft}).`);
                     }
                 } else {
-                    console.log(`💤 Bot ${bot.name} is resting (0 energy).`);
+                    console.log(`💤 ${logLabel(bot)} ${bot.name} is resting (0 energy).`);
                 }
             }
         } catch (botError) {
-            const botName = bot.name || bot.firestoreId || 'unknown';
-            console.warn(`⚠️ Bot ${botName} skipped due to error:`, botError);
+            console.warn(`⚠️ ${logLabel(bot)} ${bot.name || bot.firestoreId || 'unknown'} skipped due to error:`, botError);
         }
     }
 
