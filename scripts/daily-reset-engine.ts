@@ -4,26 +4,17 @@ import {
     formatZonedDateLabel,
     getZonedParts,
     getZonedMidnightUtc,
-    isWithinZonedMidnightWindow
 } from '../src/utils/timezoneUtils';
 import { supabase } from './supabaseAdmin';
 
 const RESET_SCOPE = (process.env.RESET_SCOPE || 'all').toLowerCase();
-const RESET_WINDOW_MINUTES = 45;
-const RESET_WINDOW_LABEL = `00:00-00:${String(RESET_WINDOW_MINUTES).padStart(2, '0')}`;
 
 async function runDailyReset() {
     console.log('⏳ Starting Global Daily Reset...');
 
     const now = new Date();
-    const forceRun = process.env.RESET_FORCE === '1' || process.env.RESET_FORCE === 'true';
 
     const parisNow = getZonedParts(now, DAILY_RESET_TIMEZONE);
-    if (!forceRun && !isWithinZonedMidnightWindow(now, DAILY_RESET_TIMEZONE, RESET_WINDOW_MINUTES)) {
-        console.log(`⏭️ Skipping reset: outside Paris midnight window (${RESET_WINDOW_LABEL}).`);
-        return;
-    }
-
     const parisResetMidnightUtc = getZonedMidnightUtc(now, DAILY_RESET_TIMEZONE);
     const parisResetDay = getZonedParts(new Date(parisResetMidnightUtc), DAILY_RESET_TIMEZONE);
     const parisNowLabel = formatZonedDateLabel(parisNow);
@@ -32,26 +23,25 @@ async function runDailyReset() {
     console.log(`🕒 Current time (UTC): ${now.toISOString()}`);
     console.log(`🕒 Current time (Paris): ${parisNowLabel} ${String(parisNow.hour).padStart(2, '0')}:${String(parisNow.minute).padStart(2, '0')}:${String(parisNow.second).padStart(2, '0')}`);
     console.log(`📆 Target reset day: ${parisResetLabel} (Paris midnight UTC: ${new Date(parisResetMidnightUtc).toISOString()})`);
-    console.log(`📋 Reset scope: ${RESET_SCOPE}${forceRun ? ' (forced)' : ''}`);
+    console.log(`📋 Reset scope: ${RESET_SCOPE}`);
+
+    // Always check maintenance table to ensure the reset runs only once per Paris day
+    try {
+        const { data: resetState } = await supabase
+            .from('maintenance')
+            .select('last_completed_key')
+            .eq('id', 'dailyReset')
+            .single();
+
+        if (resetState?.last_completed_key === parisResetLabel) {
+            console.log(`⏭️ Skipping reset: already completed for Paris day ${parisResetLabel}.`);
+            return;
+        }
+    } catch {
+        console.log('ℹ️ Maintenance state check skipped (table not available).');
+    }
 
     try {
-        if (!forceRun) {
-            try {
-                const { data: resetState } = await supabase
-                    .from('maintenance')
-                    .select('last_completed_key')
-                    .eq('id', 'dailyReset')
-                    .single();
-
-                if (resetState?.last_completed_key === parisResetLabel) {
-                    console.log(`⏭️ Skipping reset: already completed for Paris day ${parisResetLabel}.`);
-                    return;
-                }
-            } catch {
-                console.log('ℹ️ Maintenance state check skipped (table not available).');
-            }
-        }
-
         let docs: { id: string }[] = [];
         let scopeLabel = '';
 
@@ -166,7 +156,6 @@ async function runDailyReset() {
         const finalStatus = totalUpdated > 0 ? 'completed' : 'no_updates';
         console.log(`✨ ${finalStatus === 'completed' ? `Successfully reset energy for ${totalUpdated} characters.` : 'No characters needed reset.'}`);
         await upsertMaintenanceState(parisResetLabel, now.getTime(), parisResetMidnightUtc, totalUpdated, finalStatus);
-
     } catch (error) {
         console.error('❌ Daily reset failed:', error);
         process.exit(1);
@@ -188,7 +177,7 @@ async function upsertMaintenanceState(
             last_completed_at: lastCompletedAt,
             last_completed_at_utc: new Date(lastCompletedAt).toISOString(),
             target_paris_midnight_utc: targetParisMidnightUtc,
-            reset_window: RESET_WINDOW_LABEL,
+            reset_window: 'manual_or_scheduled',
             scope: RESET_SCOPE,
             updated_characters: updatedCharacters,
             status,
