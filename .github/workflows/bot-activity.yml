@@ -2,8 +2,9 @@ name: Bot Activity
 
 on:
   schedule:
-    # Run every 2 hours (UTC).
-    - cron: '0 */2 * * *'
+    # Run every hour (UTC) — a random gate skips ~50% of triggers,
+    # yielding a random interval of 1-3h between actual bot runs.
+    - cron: '0 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -12,6 +13,26 @@ jobs:
     timeout-minutes: 10
 
     steps:
+      - name: Random schedule gate (1-3h interval)
+        run: |
+          # Each hour we flip a weighted coin: ~50% chance to run.
+          # This creates a geometric distribution with mean 2h.
+          # ≈87.5% of intervals are ≤3h, matching the 1-3h window.
+          ROLL=$(( RANDOM % 100 ))
+          if [ "$ROLL" -lt 50 ]; then
+            echo "🔇 Random skip (roll=$ROLL). Next check in ~1h."
+            echo "SKIP_BOT=true" >> "$GITHUB_ENV"
+          else
+            echo "🎲 Rolling! (roll=$ROLL) Running bot engine."
+          fi
+
+      - name: Random micro-delay (0-30min)
+        if: env.SKIP_BOT != 'true'
+        run: |
+          DELAY=$(( RANDOM % 1800 ))
+          echo "🐌 Sleeping ${DELAY}s to vary execution minute..."
+          sleep "$DELAY"
+
       - name: Checkout Code
         uses: actions/checkout@v3
 
@@ -24,6 +45,7 @@ jobs:
         run: npm ci
 
       - name: Run Bot Engine
+        if: env.SKIP_BOT != 'true'
         id: bot-engine
         continue-on-error: true
         run: npx tsx scripts/bot-engine.ts
@@ -32,7 +54,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: Sanity Check
-        if: always()
+        if: env.SKIP_BOT != 'true'
         run: |
           if [ "${{ steps.bot-engine.outcome }}" = "failure" ]; then
             echo "❌ Bot engine step failed. Level 1 bot pool may be low."
