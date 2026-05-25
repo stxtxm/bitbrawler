@@ -55,14 +55,14 @@ jobs:
               )] | length
             ' 2>/dev/null || echo "3")
             if [ "$CHECKS" -eq 0 ]; then
-              echo "All CI checks passed!"
+              echo "✓ All CI checks passed!"
               exit 0
             fi
-            echo "Waiting... ($i/3, $CHECKS checks remaining)"
+            echo "⏳ Waiting... ($i/3, $CHECKS checks remaining)"
             sleep 10
           done
 
-          echo "Timeout waiting for CI — proceeding with review anyway (assuming Vercel or other slow checks)."
+          echo "⚠ Timeout waiting for CI — proceeding with review anyway (assuming Vercel or other slow checks)."
           # Proceed with review even if some checks are still pending
 
       - name: Configure git

@@ -41,13 +41,14 @@ jobs:
       - name: Mark issue scan start
         run: echo "TECH_LEAD_SCAN_START=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
 
-      - name: Run QA Stats Analysis
+      - name: Analyze QA Stats
         run: |
           if [ -f qa/stats.json ]; then
+            echo "📊 Found qa/stats.json, analyzing..."
             npx tsx scripts/analyze-qa-stats.ts
             echo "QA_ANALYSIS_DONE=true" >> "$GITHUB_ENV"
           else
-            echo "No qa/stats.json found, skipping analysis"
+            echo "⚠ No qa/stats.json found, skipping analysis"
             echo "QA_ANALYSIS_DONE=false" >> "$GITHUB_ENV"
           fi
 
