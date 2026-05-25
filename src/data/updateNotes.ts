@@ -8,6 +8,17 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '2.3.0',
+    date: '2026-05-25',
+    title: 'Workflow documentation & dev-agent refinement',
+    changes: [
+      'Dev-agent workflow updated: explicit PR creation step after pushing to feature branch.',
+      'Agent configs (dev-agent, reviewer, tech-lead, qa-tester) consolidated in opencode.json.',
+      'QA tester and reviewer agent markdown files added with task-specific instructions.',
+      'Tech-lead agent with daily merge + QA analysis workflow defined.',
+    ],
+  },
+  {
     version: '2.2.0',
     date: '2026-05-25',
     title: 'Bot-engine rebalance, QA enrichment & codebase cleanup',
