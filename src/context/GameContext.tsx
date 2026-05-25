@@ -2,7 +2,7 @@ import { createContext, useState, useContext, ReactNode, useEffect, useCallback,
 import { supabase } from '../config/supabase';
 import { Character, IncomingFightHistory, PendingFight, PendingFightOpponent } from '../types/Character';
 import { gainXp } from '../utils/xpUtils';
-import { applyStatPoint, StatKey } from '../utils/statUtils';
+import { applyStatPoint, autoAllocateStatPoints, StatKey } from '../utils/statUtils';
 import { GAME_RULES } from '../config/gameRules';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { findOpponent, MatchmakingResult } from '../utils/matchmakingUtils';
@@ -379,7 +379,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const existingPoints = baseCharacter.statPoints || 0;
     const shouldConsumeEnergy = options?.consumeEnergy ?? !baseCharacter.pendingFight;
 
-    const updatedChar: Character = normalizeCharacter({
+    let updatedChar: Character = normalizeCharacter({
       ...xpResult.updatedCharacter,
       fightsLeft: Math.max(0, (baseCharacter.fightsLeft || 0) - (shouldConsumeEnergy ? 1 : 0)),
       wins: won ? (baseCharacter.wins || 0) + 1 : (baseCharacter.wins || 0),
@@ -390,22 +390,36 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       pendingFight: undefined
     });
 
+    // Auto-allocate stat points in auto-mode (skip UI overlay fragility)
+    if (updatedChar.autoMode && (updatedChar.statPoints || 0) > 0) {
+      updatedChar = normalizeCharacter(
+        autoAllocateStatPoints(updatedChar, updatedChar.statPoints || 0)
+      );
+    }
+
      try {
-       await supabase
-        .from('characters')
-        .update({
-          fights_left: updatedChar.fightsLeft,
-          level: updatedChar.level,
-          experience: updatedChar.experience,
-          wins: updatedChar.wins,
-          losses: updatedChar.losses,
-          fight_history: updatedChar.fightHistory,
-          fought_today: updatedChar.foughtToday,
-          stat_points: updatedChar.statPoints,
-          focus: updatedChar.focus,
-          pending_fight: null
-        })
-        .eq('id', baseCharacter.id!);
+        await supabase
+         .from('characters')
+         .update({
+           fights_left: updatedChar.fightsLeft,
+           level: updatedChar.level,
+           experience: updatedChar.experience,
+           wins: updatedChar.wins,
+           losses: updatedChar.losses,
+           fight_history: updatedChar.fightHistory,
+           fought_today: updatedChar.foughtToday,
+           stat_points: updatedChar.statPoints,
+           strength: updatedChar.strength,
+           vitality: updatedChar.vitality,
+           dexterity: updatedChar.dexterity,
+           luck: updatedChar.luck,
+           intelligence: updatedChar.intelligence,
+           focus: updatedChar.focus,
+           hp: updatedChar.hp,
+           max_hp: updatedChar.maxHp,
+           pending_fight: null
+         })
+         .eq('id', baseCharacter.id!);
 
        persistCharacter(updatedChar);
        initiatedMatchmakingRef.current = false;
@@ -427,7 +441,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
       // Set XP notifications
       setLastXpGain(xpGained);
-      if (xpResult.leveledUp) {
+      if (xpResult.leveledUp && !updatedChar.autoMode) {
         setLastLevelUp({
           levelsGained: xpResult.levelsGained,
           newLevel: xpResult.newLevel
