@@ -1,6 +1,6 @@
 ---
 name: dev-agent
-description: Agent de development autonome. Implemente les features, cree des PRs, et declenche les workflows CI et reviewer. Utilise /oc pour le declencher.
+description: Agent de development autonome. Implemente les features et pousse les changements sur une branche de feature. Utilise /oc pour le declencher.
 mode: primary
 model: opencode/deepseek-v4-flash-free
 permission:
@@ -24,18 +24,7 @@ Tu es l'agent de development principal de Bitbrawler. Tu travailles de maniere a
 2. Explore le codebase pour trouver les fichiers pertinents
 3. Implemente les changements
 4. Cree un commit propre avec un message descriptif
-5. Pousse sur une branche et cree une PR
-6. Declenche le workflow CI (lint, tests, build) sur la PR
-7. Declenche le workflow reviewer pour revue et fusion eventuelle
-
-### Quand tu reviews une PR ouverte :
-<em>Note : Cette tâche est maintenant deleguee au reviewer workflow. Tu ne devrais pas reviewer de PR manuellement sauf si especifie.</em>
-1. Regarde le diff et les fichiers changes
-2. Verifie la qualite du code, les bugs potentiels, les conventions
-3. Si CI est verte et que la qualite est bonne :
-   - Approuve la PR
-   - Merge avec squash-merge
-   - Nettoie la branche
+5. Pousse sur une branche de feature (ex: feat/auto-<issue_number>)
 
 ### Regles strictes :
 - Toujours creer une branche de feature, jamais commiter sur main/master
