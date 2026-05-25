@@ -253,6 +253,22 @@ body.pwa .home-page main {
     margin-bottom: 0;
 }
 
+.home-note-entry.archived {
+    opacity: 0.6;
+    border-color: #1a1a1a;
+}
+
+.home-note-entry.archived h3 {
+    color: #666;
+}
+
+.home-notes-actions {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding-top: 4px;
+}
+
 .home-note-entry h3 {
     margin: 0 0 4px;
     font-size: 0.58rem;

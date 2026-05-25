@@ -6,6 +6,13 @@ import { UPDATE_NOTES } from '../data/updateNotes'
 
 const HomePage = () => {
   const [showUpdateNotes, setShowUpdateNotes] = useState(false)
+  const [showArchived, setShowArchived] = useState(false)
+
+  const visibleNotes = showArchived
+    ? UPDATE_NOTES
+    : UPDATE_NOTES.filter(n => !n.archived)
+
+  const hasArchived = UPDATE_NOTES.some(n => n.archived)
 
   return (
     <div className="container retro-container home-page">
@@ -85,8 +92,8 @@ const HomePage = () => {
             <div className="modal-header">PATCH NOTES</div>
             <div className="modal-body">
               <div className="home-notes-list">
-                {UPDATE_NOTES.map((note) => (
-                  <article key={`${note.version}-${note.date}`} className="home-note-entry">
+                {visibleNotes.map((note) => (
+                  <article key={`${note.version}-${note.date}`} className={`home-note-entry${note.archived ? ' archived' : ''}`}>
                     <h3>{note.version} · {note.date}</h3>
                     <p className="home-note-title">{note.title}</p>
                     <ul>
@@ -97,9 +104,20 @@ const HomePage = () => {
                   </article>
                 ))}
               </div>
-              <button type="button" className="button primary-btn" onClick={() => setShowUpdateNotes(false)}>
-                CLOSE
-              </button>
+              <div className="home-notes-actions">
+                {hasArchived && (
+                  <button
+                    type="button"
+                    className="button secondary"
+                    onClick={() => setShowArchived(!showArchived)}
+                  >
+                    {showArchived ? 'SHOW LESS' : 'SHOW ALL'}
+                  </button>
+                )}
+                <button type="button" className="button primary-btn" onClick={() => setShowUpdateNotes(false)}>
+                  CLOSE
+                </button>
+              </div>
             </div>
           </div>
         </div>

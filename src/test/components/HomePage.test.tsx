@@ -11,9 +11,9 @@ describe('HomePage', () => {
     fireEvent.click(notesButton);
 
     expect(screen.getByRole('button', { name: 'CLOSE' })).toBeInTheDocument();
-    expect(screen.getByText(/Daily reset reliability/i)).toBeInTheDocument();
+    expect(screen.getByText(/AI-driven fixes/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'CLOSE' }));
-    expect(screen.queryByText(/Daily reset reliability/i)).toBeNull();
+    expect(screen.queryByText(/AI-driven fixes/i)).toBeNull();
   });
 });
