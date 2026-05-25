@@ -4,6 +4,7 @@ import { CombatView } from '../../components/CombatView';
 import { Character } from '../../types/Character';
 import * as combatUtils from '../../utils/combatUtils';
 import * as combatLogUtils from '../../utils/combatLogUtils';
+import * as xpUtils from '../../utils/xpUtils';
 
 describe('CombatView Interface', () => {
     const player: Character = {
@@ -172,6 +173,9 @@ describe('CombatView Interface', () => {
             timeline: [{ attackerHp: 100, defenderHp: 90 }]
         });
 
+        // Mock calculateFightXp to return a deterministic value (it normally has random variance)
+        vi.spyOn(xpUtils, 'calculateFightXp').mockReturnValue(132);
+
         render(
             <CombatView
                 player={player}
@@ -190,7 +194,7 @@ describe('CombatView Interface', () => {
             vi.advanceTimersByTime(3000);
         });
 
-        expect(screen.getByText('+50 XP')).toBeInTheDocument();
+        expect(screen.getByText('+132 XP')).toBeInTheDocument();
 
         vi.useRealTimers();
         vi.restoreAllMocks();
