@@ -15,6 +15,7 @@ import { applyEquipmentToCharacter, getEquipmentBonuses, getItemById } from '../
 import { canRollLootbox } from '../utils/lootboxUtils';
 import { INVENTORY_CAPACITY } from '../utils/persistenceUtils';
 import { ItemStats, PixelItemAsset } from '../types/Item';
+import LevelUpOverlay from '../components/LevelUpOverlay';
 
 type SettingsLogEntry = {
     date: number;
@@ -345,77 +346,21 @@ const Arena = () => {
 
     return (
         <div className="container retro-container arena-container">
-            {/* Level Up Notification (Dopamine hit!) */}
-            {shouldShowLevelUp && (
-                <div className="level-up-pop-overlay">
-                    <div className="level-up-card">
-                        <div className="card-shine"></div>
-                        <div className="level-up-badge">NEW RANK!</div>
-                        <div className="stars-top">★ ★ ★ ★ ★</div>
-                        <h2 className="lvl-title">LEVEL UP</h2>
-                        {hasLevelInfo ? (
-                            <div className="lvl-big-number">
-                                <span className="lvl-old">{lastLevelUp!.newLevel - lastLevelUp!.levelsGained}</span>
-                                <span className="lvl-arrow">➜</span>
-                                <span className="lvl-new">{lastLevelUp!.newLevel}</span>
-                            </div>
-                        ) : (
-                            <div className="lvl-big-number">
-                                <span className="lvl-new">LVL {activeCharacter.level}</span>
-                            </div>
-                        )}
-                        <div className="stars-bottom">★ ★ ★ ★ ★</div>
-                        <div className="level-up-points">
-                            <div className="points-label">
-                                {pendingStatPoints > 1 ? 'POINTS TO SPEND' : 'CHOOSE A STAT'}
-                            </div>
-                            {pendingStatPoints > 1 && (
-                                <div className="points-value">{pendingStatPoints}</div>
-                            )}
-                            {isOfflineMode && (
-                                <div className="points-warning">CONNECT TO ASSIGN POINTS</div>
-                            )}
-                        </div>
-                        <div className="level-up-stats">
-                            {statOptions.map((stat) => (
-                                <div key={stat.key} className="level-up-stat-row">
-                                    <span className="stat-icon">
-                                        <PixelIcon type={stat.icon} size={12} />
-                                    </span>
-                                    <span className="stat-label">{stat.label}</span>
-                                    <span className="stat-value">{stat.value}</span>
-                                    <span className="stat-hint">{stat.hint}</span>
-                                    <button
-                                        className="button stat-add-btn"
-                                        onClick={() => handleAllocateStat(stat.key as StatKey)}
-                                        disabled={pendingStatPoints <= 0 || !!allocatingStat || isOfflineMode}
-                                        aria-label={`Increase ${stat.label}`}
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="level-up-actions">
-                            {pendingStatPoints > 0 && (
-                                <button
-                                    className="button secondary-btn level-up-later"
-                                    onClick={handleDeferLevelUp}
-                                >
-                                    LATER
-                                </button>
-                            )}
-                            <button
-                                className="button primary-btn level-up-confirm"
-                                disabled={!canCloseLevelUp}
-                                onClick={handleCloseLevelUp}
-                            >
-                                APPLY
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <LevelUpOverlay
+                shouldShowLevelUp={shouldShowLevelUp}
+                activeCharacter={activeCharacter}
+                effectiveCharacter={effectiveCharacter}
+                lastLevelUp={lastLevelUp}
+                pendingStatPoints={pendingStatPoints}
+                isOfflineMode={isOfflineMode}
+                allocatingStat={allocatingStat}
+                statOptions={statOptions}
+                canCloseLevelUp={canCloseLevelUp}
+                hasLevelInfo={hasLevelInfo}
+                handleAllocateStat={handleAllocateStat}
+                handleCloseLevelUp={handleCloseLevelUp}
+                handleDeferLevelUp={handleDeferLevelUp}
+            />
 
             <header className="arena-header">
                 <div className="char-info">
