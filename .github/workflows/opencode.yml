@@ -111,3 +111,10 @@ jobs:
             --body "Closes #$ISSUE_NUMBER" \
             --base master \
             $LABEL_FLAG || true
+
+      - name: Trigger CI workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ env.BRANCH }}
+        run: |
+          gh workflow run ci.yml --ref "$BRANCH"
