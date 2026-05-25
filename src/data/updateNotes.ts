@@ -8,6 +8,23 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '2.3.0',
+    date: '2026-05-25',
+    title: 'Stats tooltips, XP alignment & code cleanup',
+    changes: [
+      'Stat tooltips: detailed descriptions for all 6 stats (STR/VIT/DEX/LUK/INT/FOC) with retro pixel tooltip component on hover.',
+      'STAT_DESCRIPTIONS lookup table in statUtils.ts with short and long descriptions for each stat.',
+      'Tooltips integrated in Arena compact stats, CharacterCreation stat cards, and LevelUpOverlay.',
+      'Pending fight XP values aligned with GAME_RULES.COMBAT: XP_WIN=100, XP_LOSS=25 (was hardcoded 50/20).',
+      'calculatePendingFightXp moved from GameContext to persistenceUtils for consistency.',
+      'QA bot XP regex improved: targets "+N XP" format for more reliable stat capture.',
+      'Removed orphaned duplicate SCSS file _arena-level-up.scss.',
+      'Tech-lead workflow YAML indentation fixed for reliable parsing.',
+      'Custom pixel tooltip component (_tooltip.scss) with retro border, arrow, multi-line & touch-device support.',
+      '256 tests passing across 41 test files.',
+    ],
+  },
+  {
     version: '2.2.0',
     date: '2026-05-25',
     title: 'Bot-engine rebalance, QA enrichment & codebase cleanup',
