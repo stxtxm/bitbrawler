@@ -7,7 +7,7 @@ describe('Stat Utils', () => {
         name: 'Test',
         gender: 'male',
         seed: 'seed',
-        level: 5,
+        level: 1,
         experience: 0,
         strength: 10,
         vitality: 10,

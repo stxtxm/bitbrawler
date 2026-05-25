@@ -1,5 +1,6 @@
 import { GAME_RULES } from '../config/gameRules';
 import { Character } from '../types/Character';
+import { HP_PER_LEVEL } from './statUtils';
 
 // Configuration constants derived from central rules
 const BASE_XP = 100;
@@ -96,18 +97,15 @@ export function gainXp(character: Character, xpGained: number): {
 
     const levelsGained = level - startingLevel;
 
-    // Auto-distribute stats on level up (1 point per level, simple distribution for now)
-    // In a real app, we might want manual distribution, but here we keep it simple
-    // Note: This modifies the character object returned
-    if (levelsGained > 0) {
-        // Simple balanced auto-leveling: +1 to all stats every few levels
-        // For now, we delegate stat updates to the caller context (backend or frontend) 
-    }
+    // Apply base HP growth on level-up (+5 HP per level gained)
+    const hpBonus = levelsGained > 0 ? levelsGained * HP_PER_LEVEL : 0;
 
     const updatedCharacter: Character = {
         ...character,
         level,
         experience,
+        maxHp: (character.maxHp || 0) + hpBonus,
+        hp: (character.hp || 0) + hpBonus,
     };
 
     return {

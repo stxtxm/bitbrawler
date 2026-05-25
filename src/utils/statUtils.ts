@@ -5,9 +5,10 @@ export type StatKey = typeof STAT_KEYS[number];
 
 const BASE_HP = 100;
 const HP_PER_VITALITY = 8;
+export const HP_PER_LEVEL = 5;
 
-export function getHpForVitality(vitality: number): number {
-    return BASE_HP + (vitality * HP_PER_VITALITY);
+export function getHpForVitality(vitality: number, level: number = 1): number {
+    return BASE_HP + (vitality * HP_PER_VITALITY) + ((level - 1) * HP_PER_LEVEL);
 }
 
 export function grantStatPoints(character: Character, points: number): Character {
@@ -30,7 +31,7 @@ export function applyStatPoint(character: Character, stat: StatKey): Character {
     };
 
     if (stat === 'vitality') {
-        const newMaxHp = getHpForVitality(updated.vitality);
+        const newMaxHp = getHpForVitality(updated.vitality, updated.level);
         const delta = newMaxHp - updated.maxHp;
         updated.maxHp = newMaxHp;
         updated.hp = Math.min(updated.hp + delta, newMaxHp);
