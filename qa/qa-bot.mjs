@@ -352,6 +352,53 @@ async function parseCharacterStats(page) {
 }
 
 /**
+ * Parse current and max HP from the arena page by reading the HP bar width
+ * and the max HP display text. Returns { current, max } or null.
+ */
+async function parseCurrentHp(page) {
+  try {
+    // Method 1: Get HP bar width ratio + max HP text from DOM
+    const hpBar = page.locator('.bar.hp-bar').first()
+    const hpStatVal = page.locator('.stat-val').first()
+
+    const barStyle = await hpBar.getAttribute('style').catch(() => null)
+    const maxHpText = ((await hpStatVal.textContent().catch(() => '')) || '').trim()
+
+    if (barStyle && maxHpText) {
+      const widthMatch = barStyle.match(/width\s*:\s*([\d.]+)%/i)
+      const maxHp = parseInt(maxHpText, 10)
+      if (widthMatch && !isNaN(maxHp) && maxHp > 0) {
+        const ratio = parseFloat(widthMatch[1]) / 100
+        const current = Math.round(ratio * maxHp)
+        return { current, max: maxHp }
+      }
+    }
+
+    // Method 2: Fallback — look for "HP X / Y" or "X / Y" patterns in body text
+    const text = await page.locator('body').innerText().catch(() => '')
+    const hpPatterns = [
+      /HP\s*[:\-]?\s*(\d+)\s*\/\s*(\d+)/i,
+      /(\d+)\s*\/\s*(\d+)\s*HP/i,
+    ]
+    for (const pattern of hpPatterns) {
+      const match = text.match(pattern)
+      if (match) {
+        const current = parseInt(match[1], 10)
+        const max = parseInt(match[2], 10)
+        if (!isNaN(current) && !isNaN(max) && max > 0) {
+          return { current, max }
+        }
+      }
+    }
+
+    return null
+  } catch (err) {
+    console.log(`   ⚠️ Could not parse HP: ${err.message}`)
+    return null
+  }
+}
+
+/**
  * Parse character level from the arena page body text.
  * Returns the level number or null.
  */
@@ -435,10 +482,11 @@ async function handleDailyLootbox(page, runKey) {
   await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-04-lootbox.png`) })
 
   const rewardName = ((await page.locator('.lootbox-result-name').textContent().catch(() => '')) || '').trim()
+  const rewardRarity = ((await page.locator('.lootbox-result-rarity').textContent().catch(() => '')) || '').trim()
   const bodyText = await readBodyText(page)
 
   if (rewardName) {
-    console.log(`   Lootbox opened: ${rewardName}`)
+    console.log(`   Lootbox opened: ${rewardName} (${rewardRarity || 'unknown rarity'})`)
   } else {
     console.log('   Lootbox opened')
   }
@@ -455,10 +503,18 @@ async function handleDailyLootbox(page, runKey) {
     await page.waitForTimeout(500)
   }
 
+  // Parse item stats from lootbox result if visible
+  const statValues = await page.locator('.lootbox-stat-value').allTextContents().catch(() => [])
+  const itemStats = statValues.length > 0
+    ? statValues.map(s => s.trim()).filter(Boolean)
+    : undefined
+
   return {
     available: true,
     opened: true,
     item: rewardName || null,
+    rarity: rewardRarity || null,
+    item_stats: itemStats?.length ? itemStats : undefined,
     raw_text: bodyText.includes('NEW ITEM') ? 'NEW ITEM' : undefined,
   }
 }
@@ -670,11 +726,13 @@ async function runFightSequence(page, runKey, runRecord) {
 
     console.log(`   Result: ${isVictory ? '✅ VICTORY' : isDefeat ? '❌ DEFEAT' : '🤝 DRAW'} (${fightDuration}ms)`)
 
-    runRecord.fights.push({
+    // Temporarily store fight data (HP will be captured after arena is back)
+    const thisFightData = {
       result: isVictory ? 'victory' : isDefeat ? 'defeat' : 'draw',
       xp: xpGained,
       fight_duration_ms: fightDuration,
-    })
+      hp_after: null,                  // populated after CONTINUE + overlay dismiss
+    }
 
     await page.screenshot({
       path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-${isVictory ? 'win' : isDefeat ? 'loss' : 'draw'}.png`),
@@ -688,6 +746,13 @@ async function runFightSequence(page, runKey, runRecord) {
 
     // Handle level-up overlay (allocate stat + dismiss) before next fight
     const hadOverlay = await handleLevelUpOverlay(page)
+
+    // Capture HP after returning to arena (post-fight, post-level-up)
+    thisFightData.hp_after = await parseCurrentHp(page)
+    console.log(`   HP after fight: ${JSON.stringify(thisFightData.hp_after || '(unable to parse)')}`)
+
+    // Push the completed fight data
+    runRecord.fights.push(thisFightData)
 
     // Track level progression if level-up was detected
     if (hadOverlay) {
@@ -777,11 +842,13 @@ async function run() {
     lootbox: null,
     auto_mode_enabled: false,
     auto_mode_sync_ok: false,
-    initial_stats: null,            // character base stats at start of run
+    initial_stats: null,            // character base stats at start of run (STR, VIT, ...)
     initial_level: null,            // character level at start of run
     initial_xp: null,               // character XP at start of run
+    initial_hp: null,               // { current, max } HP at start of run
     final_stats: null,              // parsed final stats (level, xp, w/l)
-    final_character_stats: null,    // character base stats at end of run
+    final_character_stats: null,    // character base stats at end of run (STR, VIT, ...)
+    final_hp: null,                 // { current, max } HP at end of run
     level_up_events: [],            // { fight_number, levels_gained, points_allocated }
     errors: [],
     load_times_ms: {},
@@ -809,12 +876,13 @@ async function run() {
 
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-03-arena.png`) })
 
-    // Capture initial stats before the fight sequence
+    // Capture initial stats and HP before the fight sequence
     const preFightText = await page.locator('body').innerText().catch(() => '')
     runRecord.initial_level = parseLevelFromText(preFightText)
     runRecord.initial_xp = parseXpFromText(preFightText)
     runRecord.initial_stats = await parseCharacterStats(page)
-    console.log(`   Initial stats: level=${runRecord.initial_level}, xp=${JSON.stringify(runRecord.initial_xp)}, stats=${JSON.stringify(runRecord.initial_stats)}`)
+    runRecord.initial_hp = await parseCurrentHp(page)
+    console.log(`   Initial stats: level=${runRecord.initial_level}, xp=${JSON.stringify(runRecord.initial_xp)}, stats=${JSON.stringify(runRecord.initial_stats)}, hp=${JSON.stringify(runRecord.initial_hp)}`)
 
     await runFightSequence(page, runKey, runRecord)
 
@@ -839,9 +907,11 @@ async function run() {
     }
     console.log('   Final stats:', JSON.stringify(runRecord.final_stats))
 
-    // Capture final character stats
+    // Capture final character stats and HP
     runRecord.final_character_stats = await parseCharacterStats(page)
+    runRecord.final_hp = await parseCurrentHp(page)
     console.log(`   Final character stats: ${JSON.stringify(runRecord.final_character_stats)}`)
+    console.log(`   Final HP: ${JSON.stringify(runRecord.final_hp)}`)
 
     const finalArenaStatus = await readArenaStatus(page)
     const fighterExhausted =
