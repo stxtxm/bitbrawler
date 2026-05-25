@@ -99,6 +99,21 @@ async function readBodyText(page) {
   return page.locator('body').innerText().catch(() => '')
 }
 
+async function dismissLevelUpOverlay(page) {
+  const levelUpOverlay = page.locator('.level-up-pop-overlay').first()
+  if (await levelUpOverlay.isVisible({ timeout: 1000 }).catch(() => false)) {
+    console.log('   Level-up overlay detected, dismissing...')
+    const laterBtn = page.locator('.level-up-later').first()
+    if (await laterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await laterBtn.click()
+      await page.waitForTimeout(500)
+      console.log('   Level-up overlay dismissed')
+      return true
+    }
+  }
+  return false
+}
+
 async function readArenaStatus(page) {
   const bodyText = await readBodyText(page)
   const energyMatch = bodyText.match(/(\d+)\s*\/\s*5\s*AVAILABLE/i)
@@ -522,16 +537,7 @@ async function runFightSequence(page, runKey, runRecord) {
     }
 
     // Dismiss level-up overlay if present (it can block the FIGHT button for the next fight)
-    const levelUpOverlay = page.locator('.level-up-pop-overlay').first()
-    if (await levelUpOverlay.isVisible({ timeout: 1000 }).catch(() => false)) {
-      console.log('   Level-up overlay detected, dismissing...')
-      const laterBtn = page.locator('.level-up-later').first()
-      if (await laterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await laterBtn.click()
-        await page.waitForTimeout(500)
-        console.log('   Level-up overlay dismissed')
-      }
-    }
+    await dismissLevelUpOverlay(page)
   }
 }
 
@@ -629,19 +635,25 @@ async function run() {
 
     await runFightSequence(page, runKey, runRecord)
 
+    // Ensure no overlay is blocking the arena stats before reading
+    await dismissLevelUpOverlay(page)
+
+    // Debug screenshot right before stats reading to diagnose W/L capture issues
+    await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-04-stats-debug.png`) })
+
     const finalText = await page.locator('body').innerText()
     console.log('   Raw body text (first 500 chars):', finalText.slice(0, 500))
 
     const levelMatch = finalText.match(/LVL\s*(\d+)/i)
     const xpTotalMatch = finalText.match(/(\d+)\s*\/\s*\d+\s*XP/i)
-    const winsMatch = finalText.match(/\bW\s*(\d+)/i)
-    const lossesMatch = finalText.match(/\bL\s*(\d+)/i)
+    // Use a more specific combined pattern: "W <wins> L <losses>" to avoid false matches
+    const recordMatch  = finalText.match(/W\s*(\d+)\s+L\s*(\d+)/i)
 
     runRecord.final_stats = {
       level: levelMatch ? parseInt(levelMatch[1]) : null,
       xp: xpTotalMatch ? parseInt(xpTotalMatch[1]) : null,
-      wins: winsMatch ? parseInt(winsMatch[1]) : null,
-      losses: lossesMatch ? parseInt(lossesMatch[1]) : null,
+      wins: recordMatch ? parseInt(recordMatch[1]) : null,
+      losses: recordMatch ? parseInt(recordMatch[2]) : null,
     }
     console.log('   Final stats:', JSON.stringify(runRecord.final_stats))
 
