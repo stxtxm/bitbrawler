@@ -702,7 +702,7 @@ async function runFightSequence(page, runKey, runRecord) {
     const isVictory = pageText.includes('VICTORY')
     const isDefeat = pageText.includes('DEFEAT')
 
-    const xpMatch = pageText.match(/(\d+)\s*XP/)
+    const xpMatch = pageText.match(/\+(\d+)\s*XP/)
     const xpGained = xpMatch ? parseInt(xpMatch[1]) : null
 
     console.log(`   Result: ${isVictory ? '✅ VICTORY' : isDefeat ? '❌ DEFEAT' : '🤝 DRAW'} (${fightDuration}ms)`)
