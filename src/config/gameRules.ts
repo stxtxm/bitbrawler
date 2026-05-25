@@ -14,6 +14,7 @@ export const GAME_RULES = {
     BOTS: {
         MIN_POPULATION: 2,
         MIN_LVL1_BOTS: 10, // Ensure at least 10 lvl 1 bots
+        MIN_LVL1_PROTECTED: 5, // Opponent pool: enough for 1 new player (MAX_DAILY_FIGHTS)
         MIN_LVL1_ACTIVE_BOTS: 1, // Keep 1 lvl1 bot progressing (reduced from 2)
         LVL1_RESERVE_PER_HUMAN: 1.5, // Dynamic reserve sizing for real players
         LVL1_RESERVE_BUFFER: 6, // Extra starter buffer even with few humans
