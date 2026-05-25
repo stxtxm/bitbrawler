@@ -27,7 +27,6 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
-      workflows: write
 
     steps:
       - uses: actions/checkout@v4
@@ -108,11 +107,12 @@ jobs:
           git diff --cached --quiet || git commit -m "feat: auto-implement #$ISSUE_NUMBER"
           git push origin "$BRANCH" -f
           gh label get auto-generated 2>/dev/null && LABEL_FLAG="--label auto-generated" || LABEL_FLAG=""
-          PR_NUMBER=$(gh pr create \
+          PR_URL=$(gh pr create \
             --title "$(cat /tmp/issue-title.txt)" \
             --body "Closes #$ISSUE_NUMBER" \
             --base master \
-            $LABEL_FLAG --json number --jq '.number' || true)
+            $LABEL_FLAG)
+          PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$' || true)
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_OUTPUT
 
       - name: Trigger CI workflow
@@ -125,4 +125,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh workflow run reviewer.yml -f pr_number="${{ steps.pr_create.outputs.PR_NUMBER }}"
+          if [ -n "${{ steps.pr_create.outputs.PR_NUMBER }}" ]; then
+            gh workflow run reviewer.yml -f pr_number=${{ steps.pr_create.outputs.PR_NUMBER }}
+          else
+            echo "Warning: PR_NUMBER is empty, skipping reviewer workflow"
+          fi
