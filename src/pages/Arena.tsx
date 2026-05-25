@@ -368,7 +368,7 @@ const Arena = () => {
                     <div className="arena-lvl">
                         <span className="lvl-label">LVL</span>
                         <span className="lvl-chip">{activeCharacter.level}</span>
-                        <span className="arena-record">W {activeCharacter.wins ?? 0} L {activeCharacter.losses ?? 0}</span>
+
                     </div>
                 </div>
                 <div className="header-actions">
