@@ -549,4 +549,47 @@ describe('GameContext Integration', () => {
 
     expect(result.current.activeCharacter).toBeNull();
   });
+
+  it('should sync isBot when setAutoMode toggles', async () => {
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    const row = characterToSupabaseRow(mockCharacter);
+    const builder = createQueryBuilder({ data: row, error: null });
+    mockSupabaseFrom.mockReturnValue(builder);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    // Initially the character has isBot: false, autoMode: false
+    expect(result.current.activeCharacter?.isBot).toBeFalsy();
+    expect(result.current.activeCharacter?.autoMode).toBeFalsy();
+
+    // Enable auto mode — isBot should follow
+    await act(async () => {
+      await result.current.setAutoMode(true);
+    });
+
+    expect(result.current.activeCharacter?.autoMode).toBe(true);
+    expect(result.current.activeCharacter?.isBot).toBe(true);
+
+    // Verify Supabase was called with both fields
+    expect(builder.update).toHaveBeenCalledWith(
+      expect.objectContaining({ auto_mode: true, is_bot: true })
+    );
+
+    // Disable auto mode — isBot should clear too
+    await act(async () => {
+      await result.current.setAutoMode(false);
+    });
+
+    expect(result.current.activeCharacter?.autoMode).toBe(false);
+    expect(result.current.activeCharacter?.isBot).toBe(false);
+    expect(builder.update).toHaveBeenCalledWith(
+      expect.objectContaining({ auto_mode: false, is_bot: false })
+    );
+  });
 });

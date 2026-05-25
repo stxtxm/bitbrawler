@@ -90,13 +90,14 @@ export const useCharacterActions = ({
     }
   }, [activeCharacter, handleDbError, persistCharacter]);
 
-  // Set auto mode
+  // Set auto mode — also syncs isBot since auto-mode characters are functionally bots
   const setAutoMode = useCallback(async (enabled: boolean): Promise<Character | null> => {
     if (!activeCharacter?.id) return null;
 
     const updatedChar = normalizeCharacter({
       ...activeCharacter,
       autoMode: enabled,
+      isBot: enabled,
     });
 
     try {
@@ -104,6 +105,7 @@ export const useCharacterActions = ({
         .from('characters')
         .update({
           auto_mode: enabled,
+          is_bot: enabled,
         })
         .eq('id', activeCharacter.id);
 

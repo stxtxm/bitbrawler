@@ -41,7 +41,7 @@ Lootbox + inventory
 - Inventory modal shows item details on hover/tap and a total bonus summary.
 
 Bots and automation
-- Bot engine: `scripts/bot-engine.ts`.
+- Bot engine: `scripts/bot-engine.ts` — fetches characters where `is_bot = true`.
 - Keeps population above minimums, spawns growth per scheduled run.
 - Same-level fights only; uses shared combat + XP logic for parity.
 - Maintains a dynamic protected reserve of level 1 bots based on current level 1 human demand.
@@ -52,6 +52,13 @@ Bots and automation
 - Bot activity now uses per-bot profiles and run budgets for more organic pacing.
 - Bot action logs now show random target + result and write incoming defense logs for targets.
 - Name generator adds a short letter suffix to avoid duplicates in a session.
+
+Auto mode vs bots (unified flags)
+- `is_bot` and `auto_mode` are kept in sync: toggling auto mode in the UI also flips `is_bot`.
+- A human player enabling auto mode becomes functionally a bot — the bot engine picks them up.
+- The bot engine queries `is_bot = true` (no `.or()` needed — both flags are always aligned).
+- `auto_mode` column is retained for UI state (toggle switch display); `is_bot` drives engine inclusion.
+- The `logLabel` helper in `bot-engine.ts` uses `isBot` — auto-mode humans now log as `'Bot'`.
 
 Offline behavior
 - Home works offline; Rankings show "Connection required" state when offline.

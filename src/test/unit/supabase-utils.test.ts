@@ -222,5 +222,21 @@ describe('convertToSupabase', () => {
     const botChar: Character = { ...character, isBot: true }
     const row = convertToSupabase(botChar)
     expect(row.is_bot).toBe(true)
+    // auto_mode should remain whatever the character has (the base character has autoMode: true)
+    expect(row.auto_mode).toBe(true)
+  })
+
+  it('maps autoMode ON with isBot true (unified state)', () => {
+    const autoChar: Character = { ...character, autoMode: true, isBot: true }
+    const row = convertToSupabase(autoChar)
+    expect(row.is_bot).toBe(true)
+    expect(row.auto_mode).toBe(true)
+  })
+
+  it('maps autoMode OFF with isBot false (unified state)', () => {
+    const manualChar: Character = { ...character, autoMode: false, isBot: false }
+    const row = convertToSupabase(manualChar)
+    expect(row.is_bot).toBe(false)
+    expect(row.auto_mode).toBe(false)
   })
 })

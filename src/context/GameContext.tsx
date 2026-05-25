@@ -708,16 +708,19 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   const setAutoMode = useCallback(async (enabled: boolean) => {
     if (!activeCharacter?.id) return null;
+    // Auto mode makes the character functionally a bot — keep both flags in sync
     const updatedChar = normalizeCharacter({
       ...activeCharacter,
-      autoMode: enabled
+      autoMode: enabled,
+      isBot: enabled,
     });
 
     try {
       await supabase
        .from('characters')
        .update({
-         auto_mode: enabled
+         auto_mode: enabled,
+         is_bot: enabled,
        })
        .eq('id', activeCharacter.id);
       persistCharacter(updatedChar);
