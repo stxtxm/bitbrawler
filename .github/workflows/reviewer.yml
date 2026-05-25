@@ -37,33 +37,33 @@ jobs:
       - name: Install opencode
         run: npm install -g opencode-ai
 
-       - name: Wait briefly for CI checks (max 30 seconds)
-         id: wait-ci
-         env:
-           GH_TOKEN: ${{ github.token }}
-         run: |
-           PR_NUMBER="${{ github.event.pull_request.number || github.event.inputs.pr_number }}"
-           echo "PR number: $PR_NUMBER"
-           echo "PR_NUMBER=$PR_NUMBER" >> "$GITHUB_ENV"
+      - name: Wait briefly for CI checks (max 30 seconds)
+        id: wait-ci
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number || github.event.inputs.pr_number }}"
+          echo "PR number: $PR_NUMBER"
+          echo "PR_NUMBER=$PR_NUMBER" >> "$GITHUB_ENV"
 
-           echo "Waiting briefly for CI checks on PR #$PR_NUMBER (max 30 seconds)..."
-           for i in $(seq 1 3); do
-             # Count checks that are not completed or not successful/neutral
-             CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
-               [.statusCheckRollup[]? | select(
-                 .status? != "COMPLETED" or (.conclusion? != "SUCCESS" and .conclusion? != "NEUTRAL")
-               )] | length
-             ' 2>/dev/null || echo "3")
-             if [ "$CHECKS" -eq 0 ]; then
-               echo "All CI checks passed!"
-               exit 0
-             fi
-             echo "Waiting... ($i/3, $CHECKS checks remaining)"
-             sleep 10
-           done
+          echo "Waiting briefly for CI checks on PR #$PR_NUMBER (max 30 seconds)..."
+          for i in $(seq 1 3); do
+            # Count checks that are not completed or not successful/neutral
+            CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
+              [.statusCheckRollup[]? | select(
+                .status? != "COMPLETED" or (.conclusion? != "SUCCESS" and .conclusion? != "NEUTRAL")
+              )] | length
+            ' 2>/dev/null || echo "3")
+            if [ "$CHECKS" -eq 0 ]; then
+              echo "All CI checks passed!"
+              exit 0
+            fi
+            echo "Waiting... ($i/3, $CHECKS checks remaining)"
+            sleep 10
+          done
 
-           echo "Timeout waiting for CI — proceeding with review anyway (assuming Vercel or other slow checks)."
-           # Proceed with review even if some checks are still pending
+          echo "Timeout waiting for CI — proceeding with review anyway (assuming Vercel or other slow checks)."
+          # Proceed with review even if some checks are still pending
 
       - name: Configure git
         run: |
@@ -97,39 +97,39 @@ jobs:
             "opencode/big-pickle"
           )
 
-           PROMPT="Tu es le reviewer de Bitbrawler. Review la PR #${PR_NUMBER}.
+          PROMPT="Tu es le reviewer de Bitbrawler. Review la PR #${PR_NUMBER}.
 
-           ## PR : ${PR_TITLE}
-           \`\`\`
-           ${PR_DIFF}
-           \`\`\`
+            ## PR : ${PR_TITLE}
+            \`\`\`
+            ${PR_DIFF}
+            \`\`\`
 
-           ## Issue liée #${ISSUE_NUMBER:-"aucune"}
-           Titre: ${ISSUE_TITLE:-"N/A"}
-           Body: ${ISSUE_BODY:-"N/A"}
+            ## Issue liée #${ISSUE_NUMBER:-"aucune"}
+            Titre: ${ISSUE_TITLE:-"N/A"}
+            Body: ${ISSUE_BODY:-"N/A"}
 
-           ## Instructions de review
+            ## Instructions de review
 
-           1. **Pertinence** : le code résout-il le problème décrit dans l'issue liée ? Si pas d'issue liée, le changement a-t-il du sens ?
-           2. **Périmètre** : y a-t-il des modifications non liées à l'issue (scope creep) ?
-           3. **Conventions du projet** :
-              - Pas de commentaires dans le code
-              - Pas de \`any\` TypeScript evade
-              - Imports propres (pas d'imports inutilisés)
-              - Pas de duplication de code
-           4. **Commits** : le message de commit suit conventional commits (feat:/fix:/refactor:/chore:/test:)
-           5. **Tests** : les nouveaux cas sont-ils testés ? Les tests existants passent-ils toujours ?
-           6. **Régression** : le changement peut-il casser une autre partie du projet ?
-           7. **Sécurité** : pas d'injection SQL Supabase, pas de secrets exposés
-           8. **Performance** : pas de boucles inutiles, pas de requêtes N+1 Supabase
+            1. **Pertinence** : le code résout-il le problème décrit dans l'issue liée ? Si pas d'issue liée, le changement a-t-il du sens ?
+            2. **Périmètre** : y a-t-il des modifications non liées à l'issue (scope creep) ?
+            3. **Conventions du projet** :
+               - Pas de commentaires dans le code
+               - Pas de \`any\` TypeScript evade
+               - Imports propres (pas d'imports inutilisés)
+               - Pas de duplication de code
+            4. **Commits** : le message de commit suit conventional commits (feat:/fix:/refactor:/chore:/test:)
+            5. **Tests** : les nouveaux cas sont-ils testés ? Les tests existants passent-ils toujours ?
+            6. **Régression** : le changement peut-il casser une autre partie du projet ?
+            7. **Sécurité** : pas d'injection SQL Supabase, pas de secrets exposés
+            8. **Performance** : pas de boucles inutiles, pas de requêtes N+1 Supabase
 
-           ## Règles
-           - Si CI est verte ✅ et tout est bon → \`gh pr review --approve "$PR_NUMBER"\` puis \`gh pr merge "$PR_NUMBER" --squash --delete-branch\`
-           - Si problèmes → \`gh pr review "$PR_NUMBER" --request-changes --body "feedback..."\`
-           - NE JAMAIS approuver si CI est rouge
-           - NE JAMAIS merge si le code a des problèmes de sécurité
-           - Si le changement semble bon mais mérite un suivi, approuve + crée une issue de suivi avec \`gh issue create\`
-           - Nettoie la branche après merge"
+            ## Règles
+            - Si CI est verte ✅ et tout est bon → \`gh pr review --approve "$PR_NUMBER"\` puis \`gh pr merge "$PR_NUMBER" --squash --delete-branch\`
+            - Si problèmes → \`gh pr review "$PR_NUMBER" --request-changes --body "feedback..."\`
+            - NE JAMAIS approuver si CI est rouge
+            - NE JAMAIS merge si le code a des problèmes de sécurité
+            - Si le changement semble bon mais mérite un suivi, approuve + crée une issue de suivi avec \`gh issue create\`
+            - Nettoie la branche après merge"
 
           SUCCESS=0
           for MODEL in "${MODELS[@]}"; do
