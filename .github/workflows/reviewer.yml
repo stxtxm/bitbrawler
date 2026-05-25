@@ -140,11 +140,48 @@ jobs:
               SUCCESS=1
               break
             fi
-            echo "Model failed: $MODEL"
-          done
+             echo "Model failed: $MODEL"
+           done
 
-          if [ "$SUCCESS" -ne 1 ]; then
-            echo "All model attempts failed."
-            gh pr comment "$PR_NUMBER" --body "❌ Reviewer agent unavailable. Manual review required."
-            exit 1
+           if [ "$SUCCESS" -ne 1 ]; then
+             echo "All model attempts failed."
+             gh pr comment "$PR_NUMBER" --body "❌ Reviewer agent unavailable. Manual review required."
+             exit 1
+           fi
+
+      - name: Auto-close linked issue if not already closed
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number || github.event.inputs.pr_number }}"
+
+          # Get PR body to find "Closes #XYZ"
+          PR_BODY=$(gh pr view "$PR_NUMBER" --json body --jq '.body // ""' 2>/dev/null || echo "")
+
+          # Extract issue number from PR body (Closes #N pattern)
+          ISSUE_NUMBER=$(echo "$PR_BODY" | grep -oiE '(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s+#[0-9]+' | grep -oE '#[0-9]+' | tr -d '#' | head -1 || echo "")
+
+          if [ -z "$ISSUE_NUMBER" ]; then
+            echo "ℹ No linked issue found in PR body"
+            exit 0
           fi
+
+          # Check if PR was merged
+          PR_STATE=$(gh pr view "$PR_NUMBER" --json state --jq '.state' 2>/dev/null || echo "")
+          if [ "$PR_STATE" != "MERGED" ]; then
+            echo "ℹ PR not merged (state: $PR_STATE), skipping issue close"
+            exit 0
+          fi
+
+          # Check if issue is still open
+          ISSUE_STATE=$(gh issue view "$ISSUE_NUMBER" --json state --jq '.state' 2>/dev/null || echo "")
+          if [ "$ISSUE_STATE" = "CLOSED" ]; then
+            echo "✓ Issue #$ISSUE_NUMBER already closed"
+            exit 0
+          fi
+
+          # Close the issue
+          echo "Closing issue #$ISSUE_NUMBER..."
+          gh issue close "$ISSUE_NUMBER" --comment "Resolved by PR #$PR_NUMBER (merged)"
+          echo "✓ Issue #$ISSUE_NUMBER closed"
