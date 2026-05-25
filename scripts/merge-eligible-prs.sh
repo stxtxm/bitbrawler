@@ -95,7 +95,6 @@ for PR_NUM in $PR_NUMS; do
   echo "Approving and merging PR #$PR_NUM: $PR_TITLE"
 
   gh pr review --approve "$PR_NUM" || echo "Approval may have already been given."
-  MERGE_TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
   gh pr merge "$PR_NUM" --squash --delete-branch || {
     echo "Failed to merge PR #$PR_NUM. Skipping."
     continue
@@ -112,44 +111,8 @@ for PR_NUM in $PR_NUMS; do
     done
   fi
 
-  # Wait for post-merge CI
-  echo "Waiting for post-merge master push CI after PR #$PR_NUM..."
-  CI_RUN_ID=""
-  for _ in $(seq 1 36); do
-    RUNS_JSON=$(gh run list --workflow ci.yml --branch master --event push --limit 20 --json databaseId,createdAt 2>/dev/null || echo "[]")
-    CI_RUN_ID=$(echo "$RUNS_JSON" | jq -r --arg ts "$MERGE_TS" '[.[] | select(.createdAt >= $ts)] | sort_by(.createdAt) | .[0].databaseId // empty')
-    if [ -n "$CI_RUN_ID" ]; then
-      break
-    fi
-    sleep 10
-  done
-
-  if [ -z "$CI_RUN_ID" ]; then
-    echo "No post-merge CI push run detected after PR #$PR_NUM."
-    echo "Continuing to next PR."
-    continue
-  fi
-
-  echo "Waiting for CI run #$CI_RUN_ID to complete..."
-  for _ in $(seq 1 60); do
-    CI_STATUS=$(gh run view "$CI_RUN_ID" --json status --jq '.status // ""')
-    if [ "$CI_STATUS" = "completed" ]; then
-      break
-    fi
-    sleep 10
-  done
-
-  CI_CONCLUSION=$(gh run view "$CI_RUN_ID" --json conclusion,url --jq '.conclusion + " " + .url')
-  CI_RESULT=$(echo "$CI_CONCLUSION" | awk '{print $1}')
-  CI_URL=$(echo "$CI_CONCLUSION" | cut -d' ' -f2-)
-
-  if [ "$CI_RESULT" != "success" ]; then
-    echo "WARNING: Post-merge master CI failed after PR #$PR_NUM: $CI_URL"
-    echo "Aborting further merges to avoid compounding issues."
-    exit 1
-  fi
-
-  echo "Post-merge CI is green after PR #$PR_NUM: $CI_URL"
+  # Post-merge CI check skipped : le CI ne s'exécute plus sur push -> master
+  # (les tests sont déjà validés dans la PR avant merge). On continue directement.
   MERGE_COUNT=$((MERGE_COUNT + 1))
 done
 
