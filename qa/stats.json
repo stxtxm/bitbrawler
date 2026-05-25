@@ -270,5 +270,124 @@
       "home": 1357,
       "arena": 598
     }
+  },
+  {
+    "date": "2026-05-25T13:50:19.469Z",
+    "run": "2026-05-25",
+    "character": "RIVER",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 100,
+        "fight_duration_ms": 14458,
+        "hp_after": {
+          "current": 164,
+          "max": 164
+        }
+      },
+      {
+        "result": "victory",
+        "xp": 100,
+        "fight_duration_ms": 13716,
+        "hp_after": {
+          "current": 164,
+          "max": 164
+        }
+      },
+      {
+        "result": "victory",
+        "xp": 348,
+        "fight_duration_ms": 13517,
+        "hp_after": {
+          "current": 164,
+          "max": 164
+        }
+      },
+      {
+        "result": "victory",
+        "xp": 348,
+        "fight_duration_ms": 14367,
+        "hp_after": {
+          "current": 164,
+          "max": 164
+        }
+      },
+      {
+        "result": "victory",
+        "xp": 348,
+        "fight_duration_ms": 11333,
+        "hp_after": {
+          "current": 164,
+          "max": 164
+        }
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Oak Staff",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 13,
+      "vit": 8,
+      "dex": 11,
+      "luk": 6,
+      "int": 10,
+      "foc": 12
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_hp": {
+      "current": 164,
+      "max": 164
+    },
+    "final_stats": {
+      "level": 3,
+      "xp": 70,
+      "wins": 5,
+      "losses": 0
+    },
+    "final_character_stats": {
+      "str": 15,
+      "vit": 8,
+      "dex": 11,
+      "luk": 6,
+      "int": 10,
+      "foc": 12
+    },
+    "final_hp": {
+      "current": 164,
+      "max": 164
+    },
+    "level_up_events": [
+      {
+        "fight_number": 2,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      },
+      {
+        "fight_number": 5,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 2,
+        "new_level": 3
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 853,
+      "arena": 3329
+    }
   }
 ]
