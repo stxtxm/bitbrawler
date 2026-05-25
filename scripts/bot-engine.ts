@@ -140,8 +140,7 @@ async function runBotLogic() {
             console.log(`📉 Lvl 1 reserve low (${lvl1Bots}/${levelOneReserveTarget}). Spawning LVL 1 bots...`);
             const needed = levelOneReserveTarget - lvl1Bots;
             for (let i = 0; i < needed; i++) {
-                const newBotId = await createNewBot();
-                skipBotIds.add(newBotId);
+                await createNewBot(); // Not protected — let it fight immediately and provide opponents for matchmaking
                 totalBots += 1;
                 lvl1Bots += 1;
             }
@@ -149,8 +148,7 @@ async function runBotLogic() {
 
         if (Math.random() <= GAME_RULES.BOTS.GROWTH_CHANCE) {
             console.log('📈 Scheduled bot growth triggered.');
-            const newBotId = await createNewBot();
-            skipBotIds.add(newBotId);
+            await createNewBot(); // Not protected — let it fight immediately
         }
 
         await simulateBotDailyLife({
@@ -396,7 +394,14 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                 console.log(`🔄 Daily reset for ${logLabel(currentBotState)} ${currentBotState.name}`);
             }
 
-            if (canRollLootbox(currentBotState.lastLootRoll, runNow)) {
+            // Early skip: if bot has no fights left AND no lootbox available AND didn't just reset → nothing to do
+            const canRoll = canRollLootbox(currentBotState.lastLootRoll, runNow);
+            if (fightsLeft <= 0 && !canRoll && !didReset) {
+                console.log(`💤 ${logLabel(bot)} ${bot.name} fully depleted (0 energy, no lootbox). Skipping.`);
+                continue;
+            }
+
+            if (canRoll) {
                 const inventory = currentBotState.inventory || [];
                 if (inventory.length < INVENTORY_CAPACITY) {
                     const item = rollLootbox(ITEM_ASSETS, { excludeIds: inventory, level: currentBotState.level });
