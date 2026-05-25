@@ -11,6 +11,7 @@ import { canRollLootbox, rollLootbox } from '../utils/lootboxUtils';
 import { PixelItemAsset } from '../types/Item';
 import { simulateCombat } from '../utils/combatUtils';
 import { convertFromSupabase } from '../utils/supabaseUtils';
+import { INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP } from '../utils/persistenceUtils';
 
 interface GameContextType {
   activeCharacter: Character | null;
@@ -23,13 +24,6 @@ interface GameContextType {
   setCharacter: (char: Character) => void;
   retryConnection: () => Promise<boolean>;
   useFight: (
-    won: boolean,
-    xpGained: number,
-    opponentName: string,
-    opponentId: string,
-    options?: { consumeEnergy?: boolean; characterOverride?: Character }
-  ) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
-  executeFight: (
     won: boolean,
     xpGained: number,
     opponentName: string,
@@ -49,8 +43,6 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 
 // Constants
 const LOCAL_STORAGE_KEY = 'bitbrawler_active_char';
-const INVENTORY_CAPACITY = 24;
-const COMBAT_LOG_HISTORY_CAP = 20;
 
 const normalizeCharacter = (character: Character): Character => {
   return {
@@ -763,7 +755,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setCharacter,
     retryConnection,
     useFight,
-    executeFight: useFight,
     findOpponent: findOpponentForPlayer,
     startMatchmaking: startMatchmakingForPlayer,
     clearXpNotifications,
