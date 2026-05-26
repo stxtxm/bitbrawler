@@ -781,5 +781,96 @@
       "home": 1573,
       "arena": 3403
     }
+  },
+  {
+    "date": "2026-05-26T04:01:12.400Z",
+    "run": "2026-05-26",
+    "character": "NOBLEGROVE",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 24,
+        "fight_duration_ms": 10797,
+        "max_hp": 180
+      },
+      {
+        "result": "victory",
+        "xp": 90,
+        "fight_duration_ms": 17451,
+        "max_hp": 185
+      },
+      {
+        "result": "defeat",
+        "xp": 27,
+        "fight_duration_ms": 14719,
+        "max_hp": 185
+      },
+      {
+        "result": "defeat",
+        "xp": 25,
+        "fight_duration_ms": 14302,
+        "max_hp": 185
+      },
+      {
+        "result": "defeat",
+        "xp": 28,
+        "fight_duration_ms": 14302,
+        "max_hp": 185
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Novice Wrap",
+      "rarity": "UNCOMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 8,
+      "vit": 10,
+      "dex": 10,
+      "luk": 12,
+      "int": 12,
+      "foc": 8
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 180,
+    "final_stats": {
+      "level": 2,
+      "xp": 94,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 9,
+      "vit": 10,
+      "dex": 10,
+      "luk": 12,
+      "int": 12,
+      "foc": 8
+    },
+    "final_max_hp": 185,
+    "level_up_events": [
+      {
+        "fight_number": 2,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1527,
+      "arena": 2993
+    }
   }
 ]
