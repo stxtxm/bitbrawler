@@ -21,7 +21,7 @@ interface LevelUpOverlayProps {
     handleDeferLevelUp: () => void;
 }
 
-const AUTO_DISMISS_MS = 12_000;
+const AUTO_DISMISS_MS = 6_000;
 
 const LevelUpOverlay = ({
     shouldShowLevelUp,
