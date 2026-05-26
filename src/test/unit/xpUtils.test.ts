@@ -144,7 +144,7 @@ describe('XP Utils', () => {
 
     describe('calculateFightXp', () => {
         it('should return positive XP', () => {
-            const xp = calculateFightXp(1, true);
+            const xp = calculateFightXp(true, 1);
             expect(xp).toBeGreaterThan(0);
         });
 
@@ -154,8 +154,8 @@ describe('XP Utils', () => {
             let totalLose = 0;
 
             for (let i = 0; i < 100; i++) {
-                totalWin += calculateFightXp(1, true);
-                totalLose += calculateFightXp(1, false);
+                totalWin += calculateFightXp(true, 1);
+                totalLose += calculateFightXp(false, 1);
             }
 
             expect(totalWin / 100).toBeGreaterThan(totalLose / 100);
@@ -167,8 +167,8 @@ describe('XP Utils', () => {
             let avgLevel10 = 0;
 
             for (let i = 0; i < 100; i++) {
-                avgLevel1 += calculateFightXp(1, true);
-                avgLevel10 += calculateFightXp(10, true);
+                avgLevel1 += calculateFightXp(true, 1);
+                avgLevel10 += calculateFightXp(true, 10);
             }
 
             expect(avgLevel10 / 100).toBeGreaterThan(avgLevel1 / 100);

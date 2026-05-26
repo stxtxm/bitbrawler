@@ -58,17 +58,29 @@ export function getXpProgress(character: Character) {
 
 /**
  * Calculate XP gained from a fight using centralized rules.
+ * Combines player-level scaling, opponent level difference bonus, and small random variance.
  */
-export function calculateFightXp(playerLevel: number, won: boolean): number {
+export function calculateFightXp(
+    won: boolean,
+    playerLevel: number,
+    opponentLevel?: number
+): number {
     const baseXp = won ? GAME_RULES.COMBAT.XP_WIN : GAME_RULES.COMBAT.XP_LOSS;
 
-    // Level scaling: +8% XP per level to keep progression meaningful
-    const scaling = 1 + (playerLevel - 1) * 0.08;
+    // Player-level scaling (+8% per level)
+    const levelScaling = 1 + (playerLevel - 1) * 0.08;
 
-    // Add small random variance (+/- 10%)
+    // Opponent level difference bonus (capped to prevent exploitation)
+    let diffBonus = 0;
+    if (opponentLevel !== undefined) {
+        diffBonus = (opponentLevel - playerLevel) * 0.1;
+        diffBonus = Math.max(-0.5, Math.min(0.5, diffBonus)); // cap at +/- 50%
+    }
+
+    // Small random variance (+/- 10%)
     const variance = 0.9 + Math.random() * 0.2;
 
-    return Math.floor(baseXp * scaling * variance);
+    return Math.floor(baseXp * (levelScaling + diffBonus) * variance);
 }
 
 /**
