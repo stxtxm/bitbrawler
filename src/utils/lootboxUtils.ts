@@ -2,10 +2,10 @@ import { ItemRarity, PixelItemAsset } from '../types/Item';
 import { getDailyResetKey } from './dailyReset';
 
 export const LOOTBOX_RARITY_WEIGHTS: Record<ItemRarity, number> = {
-  common: 0.71,
+  common: 0.69,
   uncommon: 0.18,
   rare: 0.08,
-  epic: 0.03,
+  epic: 0.05,
 };
 
 export const getLootboxRarityWeights = (level: number): Record<ItemRarity, number> => {
