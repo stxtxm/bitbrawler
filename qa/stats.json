@@ -872,5 +872,96 @@
       "home": 1527,
       "arena": 2993
     }
+  },
+  {
+    "date": "2026-05-26T07:01:13.523Z",
+    "run": "2026-05-26",
+    "character": "KEENSYNTH",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 26,
+        "fight_duration_ms": 11991,
+        "max_hp": 172
+      },
+      {
+        "result": "defeat",
+        "xp": 25,
+        "fight_duration_ms": 13200,
+        "max_hp": 172
+      },
+      {
+        "result": "victory",
+        "xp": 104,
+        "fight_duration_ms": 12168,
+        "max_hp": 177
+      },
+      {
+        "result": "defeat",
+        "xp": 26,
+        "fight_duration_ms": 12453,
+        "max_hp": 177
+      },
+      {
+        "result": "victory",
+        "xp": 110,
+        "fight_duration_ms": 10602,
+        "max_hp": 177
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Rusty Sword",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 10,
+      "vit": 9,
+      "dex": 11,
+      "luk": 10,
+      "int": 14,
+      "foc": 6
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 172,
+    "final_stats": {
+      "level": 2,
+      "xp": 191,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 11,
+      "vit": 9,
+      "dex": 11,
+      "luk": 10,
+      "int": 14,
+      "foc": 6
+    },
+    "final_max_hp": 177,
+    "level_up_events": [
+      {
+        "fight_number": 3,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1581,
+      "arena": 3404
+    }
   }
 ]
