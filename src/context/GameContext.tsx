@@ -1,7 +1,7 @@
 import { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../config/supabase';
 import { Character, IncomingFightHistory, PendingFight, PendingFightOpponent } from '../types/Character';
-import { gainXp } from '../utils/xpUtils';
+import { gainXp, calculateFightXp } from '../utils/xpUtils';
 import { applyStatPoint, autoAllocateStatPoints, StatKey } from '../utils/statUtils';
 import { GAME_RULES } from '../config/gameRules';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -11,7 +11,7 @@ import { canRollLootbox, rollLootbox } from '../utils/lootboxUtils';
 import { PixelItemAsset } from '../types/Item';
 import { simulateCombat } from '../utils/combatUtils';
 import { convertFromSupabase } from '../utils/supabaseUtils';
-import { INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP, calculatePendingFightXp } from '../utils/persistenceUtils';
+import { INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP } from '../utils/persistenceUtils';
 
 interface GameContextType {
   activeCharacter: Character | null;
@@ -635,7 +635,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         const opponent = hydratePendingOpponent(matchedPending.opponent!);
         const combatResult = simulateCombat(matchedChar, opponent);
         const won = combatResult.winner === 'attacker';
-        const xpGained = calculatePendingFightXp(matchedChar, opponent, won);
+        const xpGained = calculateFightXp(won, matchedChar.level, opponent.level);
         await useFight(won, xpGained, opponent.name, opponent.id || '', {
           consumeEnergy: false,
           characterOverride: matchedChar
@@ -647,7 +647,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         const opponent = hydratePendingOpponent(pending.opponent);
         const combatResult = simulateCombat(character, opponent);
         const won = combatResult.winner === 'attacker';
-        const xpGained = calculatePendingFightXp(character, opponent, won);
+        const xpGained = calculateFightXp(won, character.level, opponent.level);
         await useFight(won, xpGained, opponent.name, opponent.id || '', {
           consumeEnergy: false,
           characterOverride: character

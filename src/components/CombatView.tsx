@@ -171,7 +171,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
     // Compute XP once per combat result using the real formula so display and reward match
     const xpGained = useMemo(() => {
         if (!combatResult) return 0;
-        return calculateFightXp(player.level, combatResult.winner === 'attacker');
+        return calculateFightXp(combatResult.winner === 'attacker', player.level, opponent.level);
     }, [player.level, combatResult]);
 
     const playerMaxHp = player.maxHp || player.hp;

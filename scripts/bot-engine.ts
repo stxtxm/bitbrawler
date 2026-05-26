@@ -453,7 +453,7 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                     appendIncomingFightHistoryToCache(incomingHistoryCache, opponent.firestoreId, incomingEntry);
                 }
 
-                const xpGained = calculateFightXp(currentBotState.level, won);
+                const xpGained = calculateFightXp(won, currentBotState.level, opponent.level);
                 totalXpGained += xpGained;
 
                 const result = gainXp(currentBotState, xpGained);

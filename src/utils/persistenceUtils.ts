@@ -81,11 +81,6 @@ export const hydratePendingOpponent = (snapshot: PendingFightOpponent): Characte
   });
 };
 
-export const calculatePendingFightXp = (player: Character, opponent: Character, won: boolean): number => {
-  const baseXp = won ? GAME_RULES.COMBAT.XP_WIN : GAME_RULES.COMBAT.XP_LOSS;
-  return Math.round(baseXp * (1 + (opponent.level - player.level) * 0.1));
-};
-
 // ─── Local Storage Persistence ───────────────────────────────────────────────
 
 export const clearLocalData = () => {
