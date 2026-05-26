@@ -1145,5 +1145,96 @@
       "home": 1665,
       "arena": 3584
     }
+  },
+  {
+    "date": "2026-05-26T16:01:12.854Z",
+    "run": "2026-05-26",
+    "character": "ADEPTNOVA",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 23,
+        "fight_duration_ms": 15050,
+        "max_hp": 164
+      },
+      {
+        "result": "defeat",
+        "xp": 24,
+        "fight_duration_ms": 13735,
+        "max_hp": 164
+      },
+      {
+        "result": "defeat",
+        "xp": 23,
+        "fight_duration_ms": 16336,
+        "max_hp": 164
+      },
+      {
+        "result": "victory",
+        "xp": 97,
+        "fight_duration_ms": 16919,
+        "max_hp": 169
+      },
+      {
+        "result": "defeat",
+        "xp": 28,
+        "fight_duration_ms": 10886,
+        "max_hp": 169
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Chipped Wand",
+      "rarity": "UNCOMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 9,
+      "vit": 8,
+      "dex": 11,
+      "luk": 11,
+      "int": 11,
+      "foc": 10
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 164,
+    "final_stats": {
+      "level": 2,
+      "xp": 95,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 10,
+      "vit": 8,
+      "dex": 11,
+      "luk": 11,
+      "int": 11,
+      "foc": 10
+    },
+    "final_max_hp": 169,
+    "level_up_events": [
+      {
+        "fight_number": 4,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1283,
+      "arena": 2920
+    }
   }
 ]
