@@ -1873,5 +1873,96 @@
       "home": 1367,
       "arena": 3517
     }
+  },
+  {
+    "date": "2026-05-27T16:01:17.147Z",
+    "run": "2026-05-27",
+    "character": "GLORYSOLAR",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 108,
+        "fight_duration_ms": 13680,
+        "max_hp": 177
+      },
+      {
+        "result": "defeat",
+        "xp": 28,
+        "fight_duration_ms": 11417,
+        "max_hp": 177
+      },
+      {
+        "result": "victory",
+        "xp": 102,
+        "fight_duration_ms": 11150,
+        "max_hp": 177
+      },
+      {
+        "result": "victory",
+        "xp": 102,
+        "fight_duration_ms": 13736,
+        "max_hp": 177
+      },
+      {
+        "result": "defeat",
+        "xp": 26,
+        "fight_duration_ms": 11935,
+        "max_hp": 177
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Lucky Charm",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 14,
+      "vit": 9,
+      "dex": 7,
+      "luk": 12,
+      "int": 8,
+      "foc": 10
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 172,
+    "final_stats": {
+      "level": 2,
+      "xp": 266,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 15,
+      "vit": 9,
+      "dex": 7,
+      "luk": 12,
+      "int": 8,
+      "foc": 10
+    },
+    "final_max_hp": 177,
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1836,
+      "arena": 3242
+    }
   }
 ]
