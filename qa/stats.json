@@ -1964,5 +1964,96 @@
       "home": 1836,
       "arena": 3242
     }
+  },
+  {
+    "date": "2026-05-27T19:01:17.943Z",
+    "run": "2026-05-27",
+    "character": "GLINTFIELD",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 23,
+        "fight_duration_ms": 14864,
+        "max_hp": 188
+      },
+      {
+        "result": "defeat",
+        "xp": 27,
+        "fight_duration_ms": 13779,
+        "max_hp": 188
+      },
+      {
+        "result": "defeat",
+        "xp": 27,
+        "fight_duration_ms": 15365,
+        "max_hp": 188
+      },
+      {
+        "result": "defeat",
+        "xp": 24,
+        "fight_duration_ms": 11619,
+        "max_hp": 193
+      },
+      {
+        "result": "victory",
+        "xp": 114,
+        "fight_duration_ms": 18382,
+        "max_hp": 193
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Lucky Charm",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 10,
+      "vit": 11,
+      "dex": 9,
+      "luk": 11,
+      "int": 8,
+      "foc": 11
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 188,
+    "final_stats": {
+      "level": 2,
+      "xp": 115,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 11,
+      "vit": 11,
+      "dex": 9,
+      "luk": 11,
+      "int": 8,
+      "foc": 11
+    },
+    "final_max_hp": 193,
+    "level_up_events": [
+      {
+        "fight_number": 4,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1499,
+      "arena": 3950
+    }
   }
 ]
