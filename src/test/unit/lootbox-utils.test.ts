@@ -110,8 +110,9 @@ describe('lootboxUtils', () => {
 
   it('increases rare chances at higher levels', () => {
     const low = getLootboxRarityWeights(1);
+    const mid = getLootboxRarityWeights(4);
     const high = getLootboxRarityWeights(10);
     expect(high.rare).toBeGreaterThan(low.rare);
-    expect(high.epic).toBeGreaterThanOrEqual(low.epic);
+    expect(high.epic).toBeGreaterThan(mid.epic);
   });
 });
