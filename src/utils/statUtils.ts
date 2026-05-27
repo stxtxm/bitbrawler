@@ -74,7 +74,7 @@ function pickLowestStat(character: Character): StatKey {
     // VIT threshold rule: if VIT is below the average of all stats,
     // bias toward VIT 40% of the time to ensure HP growth
     const avgValue = stats.reduce((sum, s) => sum + s.value, 0) / stats.length;
-    if (character.vitality < avgValue && Math.random() < 0.4) {
+    if (character.vitality < avgValue && Math.random() < 0.2) {
         return 'vitality';
     }
 
