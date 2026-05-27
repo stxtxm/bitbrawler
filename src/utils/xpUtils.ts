@@ -109,7 +109,7 @@ export function gainXp(character: Character, xpGained: number): {
 
     const levelsGained = level - startingLevel;
 
-    // Apply base HP growth on level-up (+5 HP per level gained)
+    // Apply base HP growth on level-up (+8 HP per level gained)
     const hpBonus = levelsGained > 0 ? levelsGained * HP_PER_LEVEL : 0;
 
     const updatedCharacter: Character = {
