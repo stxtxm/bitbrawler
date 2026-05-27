@@ -70,6 +70,14 @@ function pickLowestStat(character: Character): StatKey {
     const stats = STAT_KEYS.map((key) => ({ key, value: character[key] }));
     const minValue = Math.min(...stats.map((stat) => stat.value));
     const lowest = stats.filter((stat) => stat.value === minValue);
+
+    // VIT threshold rule: if VIT is below the average of all stats,
+    // bias toward VIT 40% of the time to ensure HP growth
+    const avgValue = stats.reduce((sum, s) => sum + s.value, 0) / stats.length;
+    if (character.vitality < avgValue && Math.random() < 0.4) {
+        return 'vitality';
+    }
+
     const choice = lowest[Math.floor(Math.random() * lowest.length)];
     return choice.key;
 }
