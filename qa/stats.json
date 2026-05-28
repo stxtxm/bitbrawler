@@ -2262,5 +2262,96 @@
       "home": 1393,
       "arena": 2721
     }
+  },
+  {
+    "date": "2026-05-28T10:01:14.464Z",
+    "run": "2026-05-28",
+    "character": "IVORYRIME",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 104,
+        "fight_duration_ms": 14845,
+        "max_hp": 204
+      },
+      {
+        "result": "victory",
+        "xp": 105,
+        "fight_duration_ms": 18702,
+        "max_hp": 204
+      },
+      {
+        "result": "defeat",
+        "xp": 29,
+        "fight_duration_ms": 17901,
+        "max_hp": 204
+      },
+      {
+        "result": "defeat",
+        "xp": 25,
+        "fight_duration_ms": 15819,
+        "max_hp": 204
+      },
+      {
+        "result": "victory",
+        "xp": 115,
+        "fight_duration_ms": 16336,
+        "max_hp": 204
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Lucky Charm",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 9,
+      "vit": 12,
+      "dex": 7,
+      "luk": 11,
+      "int": 11,
+      "foc": 10
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 196,
+    "final_stats": {
+      "level": 2,
+      "xp": 278,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 10,
+      "vit": 12,
+      "dex": 7,
+      "luk": 11,
+      "int": 11,
+      "foc": 10
+    },
+    "final_max_hp": 204,
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1277,
+      "arena": 2910
+    }
   }
 ]
