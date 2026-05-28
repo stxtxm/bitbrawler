@@ -532,6 +532,8 @@ async function maybeReplaceExhaustedCharacter(page, runKey, runRecord, reason) {
  * Handle the level-up popup overlay by allocating ALL stat points
  * and dismissing the overlay so the FIGHT button becomes clickable again.
  * Loops until all points are allocated, then clicks APPLY.
+ * Allocates points randomly across all available stats to simulate
+ * real player behavior and produce balanced QA gameplay data.
  * Returns true if the overlay was handled, false if not present.
  */
 async function handleLevelUpOverlay(page) {
@@ -555,16 +557,19 @@ async function handleLevelUpOverlay(page) {
       return true
     }
 
-    // Allocate one point
-    const statAddBtn = page.locator('.stat-add-btn').first()
-    if (!(await statAddBtn.isVisible({ timeout: 300 }).catch(() => false))) {
-      break // No add button and no APPLY = unexpected state
+    // Allocate one point to a randomly chosen stat
+    const statAddBtns = page.locator('.stat-add-btn')
+    const btnCount = await statAddBtns.count()
+    if (btnCount === 0) {
+      break // No add buttons and no APPLY = unexpected state
     }
 
+    const randomIndex = Math.floor(Math.random() * btnCount)
+    const statAddBtn = statAddBtns.nth(randomIndex)
     const ariaLabel = await statAddBtn.getAttribute('aria-label').catch(() => null)
     await statAddBtn.click()
     allocatedCount++
-    console.log(`   Allocated point #${allocatedCount} (${ariaLabel || 'stat-add-btn'})`)
+    console.log(`   Allocated point #${allocatedCount} (${ariaLabel || `stat-add-btn #${randomIndex}`})`)
     await page.waitForTimeout(600)
   }
 
