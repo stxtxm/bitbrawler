@@ -4,7 +4,7 @@ import { HP_PER_LEVEL } from './statUtils';
 
 // Configuration constants derived from central rules
 const BASE_XP = 100;
-const EXPONENT = 1.8;
+const EXPONENT = 1.6;
 const MAX_LEVEL = 99;
 
 /**
