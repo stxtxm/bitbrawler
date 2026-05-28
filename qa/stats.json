@@ -2146,5 +2146,30 @@
       "home": 1551,
       "arena": 2563
     }
+  },
+  {
+    "date": "2026-05-28T01:01:10.691Z",
+    "run": "2026-05-28",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "page.goto: Navigation to \"https://bitbrawler.vercel.app/create-character\" is interrupted by another navigation to \"https://bitbrawler.vercel.app/\"\nCall log:\n  - navigating to \"https://bitbrawler.vercel.app/create-character\", waiting until \"networkidle\"\n"
+    ],
+    "load_times_ms": {
+      "home": 1661
+    }
   }
 ]
