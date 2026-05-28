@@ -555,12 +555,15 @@ async function handleLevelUpOverlay(page) {
       return true
     }
 
-    // Allocate one point
-    const statAddBtn = page.locator('.stat-add-btn').first()
-    if (!(await statAddBtn.isVisible({ timeout: 300 }).catch(() => false))) {
-      break // No add button and no APPLY = unexpected state
+    // Allocate one point — pick a random stat to simulate realistic player behavior
+    const statAddBtns = page.locator('.stat-add-btn')
+    const btnCount = await statAddBtns.count()
+    if (btnCount === 0) {
+      break // No add buttons and no APPLY = unexpected state
     }
 
+    const randomIndex = Math.floor(Math.random() * btnCount)
+    const statAddBtn = statAddBtns.nth(randomIndex)
     const ariaLabel = await statAddBtn.getAttribute('aria-label').catch(() => null)
     await statAddBtn.click()
     allocatedCount++
