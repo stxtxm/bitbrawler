@@ -240,37 +240,27 @@ export const generateCharacterName = (options: NameGeneratorOptions = {}): strin
  * - Total points remain constant across all characters
  */
 export const generateInitialStats = (name: string, gender: 'male' | 'female'): Character => {
-    const { BASE_VALUE, MIN_VALUE, MAX_VALUE } = GAME_RULES.STATS;
+    const { MIN_VALUE, MAX_VALUE, TOTAL_POINTS } = GAME_RULES.STATS;
     const NUM_STATS = STAT_KEYS.length;
 
-    // Initialize stats
+    // Start all stats at MIN_VALUE for maximum variance
     const stats: Record<StatKey, number> = {
-        strength: BASE_VALUE,
-        vitality: BASE_VALUE,
-        dexterity: BASE_VALUE,
-        luck: BASE_VALUE,
-        intelligence: BASE_VALUE,
-        focus: BASE_VALUE
+        strength: MIN_VALUE,
+        vitality: MIN_VALUE,
+        dexterity: MIN_VALUE,
+        luck: MIN_VALUE,
+        intelligence: MIN_VALUE,
+        focus: MIN_VALUE
     };
 
-    const statKeys = STAT_KEYS;
-
-    // Shuffle stats by exchanging points
-    // We do multiple passes of +1/-1 swaps to ensure random distribution
-    // This guarantees the sum remains constant (50)
-    for (let i = 0; i < 20; i++) {
-        const donorIndex = Math.floor(Math.random() * NUM_STATS);
-        const receiverIndex = Math.floor(Math.random() * NUM_STATS);
-
-        if (donorIndex === receiverIndex) continue;
-
-        const donorKey = statKeys[donorIndex];
-        const receiverKey = statKeys[receiverIndex];
-
-        // Ensure we stay within reasonably balanced bounds
-        if (stats[donorKey] > MIN_VALUE && stats[receiverKey] < MAX_VALUE) {
-            stats[donorKey]--;
-            stats[receiverKey]++;
+    // Distribute remaining points randomly, one at a time
+    // This creates meaningful character identity from the start
+    let pointsToDistribute = TOTAL_POINTS - MIN_VALUE * NUM_STATS;
+    while (pointsToDistribute > 0) {
+        const statKey = STAT_KEYS[Math.floor(Math.random() * NUM_STATS)];
+        if (stats[statKey] < MAX_VALUE) {
+            stats[statKey]++;
+            pointsToDistribute--;
         }
     }
 
