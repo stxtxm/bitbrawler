@@ -23,7 +23,10 @@ describe('lootboxUtils', () => {
   });
 
   it('rolls an uncommon item for high random values', () => {
-    const rng = () => 0.95;
+    // At level 4 with all rarities available, weights are:
+    // common=0.58, uncommon=0.25, rare=0.12, epic=0.05
+    // rng=0.7 lands in the uncommon bucket [0.58, 0.83)
+    const rng = () => 0.7;
     const item = rollLootbox(ITEM_ASSETS, { rng, level: 4 });
     expect(item).not.toBeNull();
     expect(item?.rarity).toBe('uncommon');
