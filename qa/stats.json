@@ -2924,5 +2924,103 @@
       "home": 1891,
       "arena": 3752
     }
+  },
+  {
+    "date": "2026-05-29T10:01:22.650Z",
+    "run": "2026-05-29",
+    "character": "BRAVERIDER",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 101,
+        "fight_duration_ms": 14799,
+        "max_hp": 196
+      },
+      {
+        "result": "victory",
+        "xp": 103,
+        "fight_duration_ms": 15203,
+        "max_hp": 196
+      },
+      {
+        "result": "defeat",
+        "xp": 27,
+        "fight_duration_ms": 14284,
+        "max_hp": 196
+      },
+      {
+        "result": "victory",
+        "xp": 118,
+        "fight_duration_ms": 17437,
+        "max_hp": 196
+      },
+      {
+        "result": "victory",
+        "xp": 105,
+        "fight_duration_ms": 17119,
+        "max_hp": 204
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Chipped Wand",
+      "rarity": "UNCOMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 11,
+      "vit": 11,
+      "dex": 9,
+      "luk": 7,
+      "int": 10,
+      "foc": 12
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 188,
+    "final_stats": {
+      "level": 3,
+      "xp": 51,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 11,
+      "vit": 11,
+      "dex": 9,
+      "luk": 7,
+      "int": 10,
+      "foc": 14
+    },
+    "final_max_hp": 204,
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      },
+      {
+        "fight_number": 5,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 2,
+        "new_level": 3
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 2218,
+      "arena": 3228
+    }
   }
 ]
