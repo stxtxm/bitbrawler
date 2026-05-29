@@ -3302,5 +3302,96 @@
       "home": 2691,
       "arena": 3537
     }
+  },
+  {
+    "date": "2026-05-29T22:01:10.853Z",
+    "run": "2026-05-30",
+    "character": "GOLDAGENT",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 26,
+        "fight_duration_ms": 17778,
+        "max_hp": 196
+      },
+      {
+        "result": "victory",
+        "xp": 90,
+        "fight_duration_ms": 17434,
+        "max_hp": 204
+      },
+      {
+        "result": "victory",
+        "xp": 105,
+        "fight_duration_ms": 16601,
+        "max_hp": 204
+      },
+      {
+        "result": "defeat",
+        "xp": 29,
+        "fight_duration_ms": 23086,
+        "max_hp": 204
+      },
+      {
+        "result": "victory",
+        "xp": 109,
+        "fight_duration_ms": 24669,
+        "max_hp": 204
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Mystic Ring",
+      "rarity": "EPIC",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 8,
+      "vit": 12,
+      "dex": 10,
+      "luk": 11,
+      "int": 7,
+      "foc": 12
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 196,
+    "final_stats": {
+      "level": 2,
+      "xp": 259,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 8,
+      "vit": 12,
+      "dex": 11,
+      "luk": 11,
+      "int": 7,
+      "foc": 12
+    },
+    "final_max_hp": 204,
+    "level_up_events": [
+      {
+        "fight_number": 2,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1262,
+      "arena": 2677
+    }
   }
 ]
