@@ -655,29 +655,60 @@ async function runFightSequence(page, runKey, runRecord) {
         await handleLevelUpOverlay(page)
         await page.waitForTimeout(300)
       }
+      // Try normal click first; if overlay blocks it, fall back to force click immediately
       const clicked = await fightBtn.click({ timeout: 3000 }).then(() => true).catch(() => false)
       if (clicked) break
-      if (attempt === 2) {
-        // Last attempt: try force click
-        await fightBtn.click({ force: true }).catch(() => {})
-      }
+      // Overlay may be intercepting pointer events — retry with force to bypass actionability checks
+      console.log(`   FIGHT click blocked (attempt ${attempt + 1}), retrying with force click...`)
+      await fightBtn.click({ force: true, timeout: 3000 }).then(() => true).catch(() => false).then((ok) => {
+        if (ok) console.log('   Force click succeeded')
+      })
     }
     console.log('   Fight started, waiting for result...')
 
     await sleep(1000)
 
-    try {
-      await page.waitForFunction(
-        () => {
-          const text = document.body.innerText
-          return text.includes('VICTORY') || text.includes('DEFEAT') || text.includes('DRAW')
-        },
-        { timeout: config.fightTimeout }
-      )
-    } catch {
-      console.log(`   Fight result not detected after ${config.fightTimeout}ms timeout, taking screenshot`)
+    // Retry fight result polling with exponential backoff
+    const maxRetries = 3
+    const baseTimeout = Math.floor(config.fightTimeout * 0.5) // First attempt gets 50% of budget
+    let resultDetected = false
+
+    for (let retry = 0; retry < maxRetries; retry++) {
+      if (retry > 0) {
+        const backoff = Math.min(1000 * Math.pow(2, retry - 1), 8000) // 1s, 2s, 4s...
+        console.log(`   Retry ${retry + 1}/${maxRetries}: backoff ${backoff}ms then polling...`)
+        await sleep(backoff)
+
+        // Pre-check: maybe the result appeared during backoff
+        const preText = await page.locator('body').innerText().catch(() => '')
+        if (preText.includes('VICTORY') || preText.includes('DEFEAT') || preText.includes('DRAW')) {
+          resultDetected = true
+          break
+        }
+      }
+
+      const timeout = retry < maxRetries - 1 ? baseTimeout : config.fightTimeout - baseTimeout * (maxRetries - 1)
+      try {
+        await page.waitForFunction(
+          () => {
+            const text = document.body?.innerText || ''
+            return text.includes('VICTORY') || text.includes('DEFEAT') || text.includes('DRAW')
+          },
+          { timeout }
+        )
+        resultDetected = true
+        break
+      } catch {
+        if (retry < maxRetries - 1) {
+          console.log(`   ⚠️ Fight result not yet available after attempt ${retry + 1}`)
+        }
+      }
+    }
+
+    if (!resultDetected) {
+      console.log(`   Fight result not detected after ${config.fightTimeout}ms timeout (${maxRetries} retries), taking screenshot`)
       await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-timeout.png`) })
-      runRecord.errors.push(`Fight ${i + 1}: timeout waiting for result (${config.fightTimeout}ms)`)
+      runRecord.errors.push(`Fight ${i + 1}: timeout waiting for result (${config.fightTimeout}ms, ${maxRetries} retries)`)
 
       const timeoutArenaStatus = await readArenaStatus(page)
       if (
@@ -696,7 +727,9 @@ async function runFightSequence(page, runKey, runRecord) {
         continue
       }
 
-      await page.goto(config.baseUrl, { waitUntil: 'networkidle' }).catch(() => {})
+      // Safer navigation recovery: use evaluate to avoid ERR_ABORTED race conditions
+      await page.evaluate(() => { window.location.href = window.location.origin }).catch(() => {})
+      await page.waitForURL('**', { timeout: 15000 }).catch(() => {})
       await page.waitForTimeout(3000)
       continue
     }
