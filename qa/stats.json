@@ -3022,5 +3022,96 @@
       "home": 2218,
       "arena": 3228
     }
+  },
+  {
+    "date": "2026-05-29T13:01:28.515Z",
+    "run": "2026-05-29",
+    "character": "DREADGHOST",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 26,
+        "fight_duration_ms": 17886,
+        "max_hp": 172
+      },
+      {
+        "result": "victory",
+        "xp": 99,
+        "fight_duration_ms": 14287,
+        "max_hp": 180
+      },
+      {
+        "result": "defeat",
+        "xp": 29,
+        "fight_duration_ms": 16772,
+        "max_hp": 180
+      },
+      {
+        "result": "defeat",
+        "xp": 25,
+        "fight_duration_ms": 24706,
+        "max_hp": 180
+      },
+      {
+        "result": "defeat",
+        "xp": 24,
+        "fight_duration_ms": 16770,
+        "max_hp": 180
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Novice Wrap",
+      "rarity": "UNCOMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 8,
+      "vit": 9,
+      "dex": 14,
+      "luk": 11,
+      "int": 8,
+      "foc": 10
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 172,
+    "final_stats": {
+      "level": 2,
+      "xp": 103,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 8,
+      "vit": 9,
+      "dex": 15,
+      "luk": 11,
+      "int": 8,
+      "foc": 10
+    },
+    "final_max_hp": 180,
+    "level_up_events": [
+      {
+        "fight_number": 2,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 2436,
+      "arena": 3575
+    }
   }
 ]
