@@ -3113,5 +3113,96 @@
       "home": 2436,
       "arena": 3575
     }
+  },
+  {
+    "date": "2026-05-29T16:01:26.208Z",
+    "run": "2026-05-29",
+    "character": "STORMVIGIL",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 25,
+        "fight_duration_ms": 16697,
+        "max_hp": 204
+      },
+      {
+        "result": "victory",
+        "xp": 103,
+        "fight_duration_ms": 16317,
+        "max_hp": 212
+      },
+      {
+        "result": "victory",
+        "xp": 113,
+        "fight_duration_ms": 24919,
+        "max_hp": 212
+      },
+      {
+        "result": "victory",
+        "xp": 111,
+        "fight_duration_ms": 21001,
+        "max_hp": 212
+      },
+      {
+        "result": "defeat",
+        "xp": 26,
+        "fight_duration_ms": 25486,
+        "max_hp": 212
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Worn Bracers",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 7,
+      "vit": 13,
+      "dex": 12,
+      "luk": 8,
+      "int": 11,
+      "foc": 9
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 204,
+    "final_stats": {
+      "level": 2,
+      "xp": 278,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 7,
+      "vit": 13,
+      "dex": 12,
+      "luk": 8,
+      "int": 12,
+      "foc": 9
+    },
+    "final_max_hp": 212,
+    "level_up_events": [
+      {
+        "fight_number": 2,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1322,
+      "arena": 2857
+    }
   }
 ]
