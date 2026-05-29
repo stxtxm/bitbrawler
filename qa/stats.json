@@ -2833,5 +2833,96 @@
     "load_times_ms": {
       "home": 1491
     }
+  },
+  {
+    "date": "2026-05-29T07:01:18.004Z",
+    "run": "2026-05-29",
+    "character": "LAKEMANTIS",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 24,
+        "fight_duration_ms": 20586,
+        "max_hp": 196
+      },
+      {
+        "result": "victory",
+        "xp": 102,
+        "fight_duration_ms": 14266,
+        "max_hp": 204
+      },
+      {
+        "result": "victory",
+        "xp": 112,
+        "fight_duration_ms": 24485,
+        "max_hp": 204
+      },
+      {
+        "result": "defeat",
+        "xp": 28,
+        "fight_duration_ms": 22784,
+        "max_hp": 204
+      },
+      {
+        "result": "defeat",
+        "xp": 24,
+        "fight_duration_ms": 15836,
+        "max_hp": 204
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Rusty Sword",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 8,
+      "vit": 12,
+      "dex": 11,
+      "luk": 9,
+      "int": 11,
+      "foc": 9
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 196,
+    "final_stats": {
+      "level": 2,
+      "xp": 190,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 8,
+      "vit": 12,
+      "dex": 12,
+      "luk": 9,
+      "int": 11,
+      "foc": 9
+    },
+    "final_max_hp": 204,
+    "level_up_events": [
+      {
+        "fight_number": 2,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1891,
+      "arena": 3752
+    }
   }
 ]
