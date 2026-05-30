@@ -5,7 +5,7 @@ export type StatKey = typeof STAT_KEYS[number];
 
 const BASE_HP = 100;
 const HP_PER_VITALITY = 8;
-export const HP_PER_LEVEL = 8;
+export const HP_PER_LEVEL = 12;
 
 export function getHpForVitality(vitality: number, level: number = 1): number {
     return BASE_HP + (vitality * HP_PER_VITALITY) + ((level - 1) * HP_PER_LEVEL);
