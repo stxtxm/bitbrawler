@@ -3,6 +3,15 @@ import { Character } from '../types/Character';
 export const STAT_KEYS = ['strength', 'vitality', 'dexterity', 'luck', 'intelligence', 'focus'] as const;
 export type StatKey = typeof STAT_KEYS[number];
 
+export const STAT_TOOLTIPS: Record<StatKey, string> = {
+    strength: 'Boosts physical damage dealt in combat. Each point increases your offense power for harder-hitting attacks.',
+    vitality: `Increases max HP (+8 HP per point) and improves physical defense, making you tougher to take down.`,
+    dexterity: 'Improves turn order initiative and hit chance for more consistent and faster attacks.',
+    luck: 'Increases critical hit chance and improves loot quality from battles and lootboxes.',
+    intelligence: 'Boosts magic power for stronger magical attacks and special abilities.',
+    focus: 'Reduces damage variance for stable performance and increases surge chance for bonus damage.',
+};
+
 const BASE_HP = 100;
 const HP_PER_VITALITY = 8;
 export const HP_PER_LEVEL = 8;

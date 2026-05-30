@@ -8,7 +8,7 @@ import { PixelCharacter } from '../components/PixelCharacter';
 import { PixelIcon } from '../components/PixelIcon';
 import { PixelItemIcon } from '../components/PixelItemIcon';
 import { getXpProgress, formatXpDisplay, getMaxLevel } from '../utils/xpUtils';
-import { StatKey } from '../utils/statUtils';
+import { StatKey, STAT_TOOLTIPS } from '../utils/statUtils';
 import { CombatView } from '../components/CombatView';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
 import { applyEquipmentToCharacter, getEquipmentBonuses, getItemById } from '../utils/equipmentUtils';
@@ -438,7 +438,7 @@ const Arena = () => {
                         </div>
                         <div className="stats-grid-compact">
                             {statOptions.map((stat) => (
-                                <div key={stat.key} className="compact-stat">
+                                <div key={stat.key} className="compact-stat" title={`${stat.label}: ${STAT_TOOLTIPS[stat.key as StatKey]}`}>
                                     <span className="compact-stat-icon">
                                         <PixelIcon type={stat.icon} size={12} />
                                     </span>
