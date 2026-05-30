@@ -235,8 +235,10 @@ export const generateCharacterName = (options: NameGeneratorOptions = {}): strin
 
 /**
  * Generates initial stats for a new character using GAME_RULES
- * - Ensures balanced total stats
- * - Randomizes distribution within min/max bounds
+ * - Creates natural archetypes via weighted random allocation
+ * - 50% weight → 1 primary stat (chosen randomly per character)
+ * - ~30% weight → 1-2 secondary stats
+ * - ~20% weight → remaining stats
  * - Total points remain constant across all characters
  */
 export const generateInitialStats = (name: string, gender: 'male' | 'female'): Character => {
@@ -253,15 +255,56 @@ export const generateInitialStats = (name: string, gender: 'male' | 'female'): C
         focus: MIN_VALUE
     };
 
-    // Distribute remaining points randomly, one at a time
-    // This creates meaningful character identity from the start
+    // Choose a primary stat (archetype focus) and 1-2 secondary stats
+    const primary = STAT_KEYS[Math.floor(Math.random() * NUM_STATS)];
+    const otherStats = STAT_KEYS.filter(s => s !== primary);
+    const secondaryCount = Math.random() < 0.5 ? 1 : 2;
+    // Shuffle and pick secondary stats
+    for (let i = otherStats.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [otherStats[i], otherStats[j]] = [otherStats[j], otherStats[i]];
+    }
+    const secondaries = otherStats.slice(0, secondaryCount);
+
+    // Distribute remaining points using weighted random allocation.
+    // Weights: primary=6, each secondary=2, each remaining=1.
+    // When a stat hits MAX_VALUE its weight becomes 0, redistributing naturally.
     let pointsToDistribute = TOTAL_POINTS - MIN_VALUE * NUM_STATS;
     while (pointsToDistribute > 0) {
-        const statKey = STAT_KEYS[Math.floor(Math.random() * NUM_STATS)];
-        if (stats[statKey] < MAX_VALUE) {
-            stats[statKey]++;
-            pointsToDistribute--;
+        // Build dynamic weight map, excluding capped stats
+        let totalWeight = 0;
+        const weights: Partial<Record<StatKey, number>> = {};
+        for (const statKey of STAT_KEYS) {
+            if (stats[statKey] >= MAX_VALUE) {
+                weights[statKey] = 0;
+                continue;
+            }
+            if (statKey === primary) {
+                weights[statKey] = 6;
+            } else if (secondaries.includes(statKey)) {
+                weights[statKey] = 2;
+            } else {
+                weights[statKey] = 1;
+            }
+            totalWeight += weights[statKey]!;
         }
+
+        // Fallback: if all stats are capped (shouldn't happen given TOTAL_POINTS)
+        if (totalWeight === 0) break;
+
+        // Weighted random selection
+        let roll = Math.random() * totalWeight;
+        let selected: StatKey = STAT_KEYS[0];
+        for (const statKey of STAT_KEYS) {
+            roll -= weights[statKey] ?? 0;
+            if (roll <= 0) {
+                selected = statKey;
+                break;
+            }
+        }
+
+        stats[selected]++;
+        pointsToDistribute--;
     }
 
     // Calculate HP based on vitality (more consistent)
