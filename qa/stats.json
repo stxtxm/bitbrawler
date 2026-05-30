@@ -3953,5 +3953,96 @@
       "home": 1287,
       "arena": 3046
     }
+  },
+  {
+    "date": "2026-05-30T19:01:07.859Z",
+    "run": "2026-05-30",
+    "character": "QUASARGUST",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 99,
+        "fight_duration_ms": 15400,
+        "max_hp": 180
+      },
+      {
+        "result": "defeat",
+        "xp": 23,
+        "fight_duration_ms": 14768,
+        "max_hp": 188
+      },
+      {
+        "result": "victory",
+        "xp": 112,
+        "fight_duration_ms": 11952,
+        "max_hp": 188
+      },
+      {
+        "result": "defeat",
+        "xp": 29,
+        "fight_duration_ms": 15285,
+        "max_hp": 188
+      },
+      {
+        "result": "defeat",
+        "xp": 27,
+        "fight_duration_ms": 13203,
+        "max_hp": 188
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Rusty Sword",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 11,
+      "vit": 10,
+      "dex": 9,
+      "luk": 10,
+      "int": 12,
+      "foc": 8
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 180,
+    "final_stats": {
+      "level": 2,
+      "xp": 190,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 11,
+      "vit": 10,
+      "dex": 10,
+      "luk": 11,
+      "int": 12,
+      "foc": 8
+    },
+    "final_max_hp": 188,
+    "level_up_events": [
+      {
+        "fight_number": 2,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1241,
+      "arena": 3190
+    }
   }
 ]
