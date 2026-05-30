@@ -3771,5 +3771,96 @@
       "home": 2098,
       "arena": 3244
     }
+  },
+  {
+    "date": "2026-05-30T13:01:22.545Z",
+    "run": "2026-05-30",
+    "character": "ADEPTGUARD",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 93,
+        "fight_duration_ms": 14830,
+        "max_hp": 164
+      },
+      {
+        "result": "defeat",
+        "xp": 23,
+        "fight_duration_ms": 11702,
+        "max_hp": 172
+      },
+      {
+        "result": "defeat",
+        "xp": 26,
+        "fight_duration_ms": 15203,
+        "max_hp": 172
+      },
+      {
+        "result": "victory",
+        "xp": 108,
+        "fight_duration_ms": 16370,
+        "max_hp": 172
+      },
+      {
+        "result": "defeat",
+        "xp": 28,
+        "fight_duration_ms": 11186,
+        "max_hp": 172
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Flint Knife",
+      "rarity": "RARE",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 10,
+      "vit": 8,
+      "dex": 10,
+      "luk": 11,
+      "int": 9,
+      "foc": 12
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 164,
+    "final_stats": {
+      "level": 2,
+      "xp": 178,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 10,
+      "vit": 8,
+      "dex": 10,
+      "luk": 12,
+      "int": 9,
+      "foc": 13
+    },
+    "final_max_hp": 172,
+    "level_up_events": [
+      {
+        "fight_number": 2,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 2060,
+      "arena": 3468
+    }
   }
 ]
