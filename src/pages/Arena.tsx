@@ -13,6 +13,7 @@ import { CombatView } from '../components/CombatView';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
 import { applyEquipmentToCharacter, getEquipmentBonuses, getItemById } from '../utils/equipmentUtils';
 import { canRollLootbox } from '../utils/lootboxUtils';
+import StreakIndicator from '../components/StreakIndicator';
 import { INVENTORY_CAPACITY } from '../utils/persistenceUtils';
 import { ItemStats, PixelItemAsset } from '../types/Item';
 import LevelUpOverlay from '../components/LevelUpOverlay';
@@ -96,6 +97,7 @@ const Arena = () => {
     const inventoryCapacity = INVENTORY_CAPACITY;
     const inventoryFull = inventory.length >= inventoryCapacity;
     const canRollDailyLoot = canRollLootbox(activeCharacter.lastLootRoll, Date.now());
+    const streak = activeCharacter.lootboxStreak ?? 0;
     type StatIconType = 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence' | 'focus';
     const statOptions: Array<{ key: StatKey; label: string; value: number; hint: string; icon: StatIconType }> = [
         { key: 'strength', label: 'STR', value: effectiveCharacter.strength, hint: 'Damage', icon: 'strength' },
@@ -525,6 +527,7 @@ const Arena = () => {
                             <div className="lootbox-status">
                                 {inventory.length}/{inventoryCapacity} SLOTS
                             </div>
+                            <StreakIndicator streak={streak} canRoll={canRollDailyLoot} />
                         </div>
                         <div className="inventory-body">
                             <div className="inventory-grid">

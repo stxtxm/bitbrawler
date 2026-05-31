@@ -30,6 +30,7 @@ describe('convertFromSupabase', () => {
     pending_fight: null,
     inventory: ['sword_01'],
     last_loot_roll: 1700000000000,
+    lootbox_streak: 3,
     incoming_fight_history: [{ attackerName: 'player2', won: false, date: 1700000000000 }],
     is_bot: false,
     auto_mode: false,
@@ -61,6 +62,7 @@ describe('convertFromSupabase', () => {
     expect(char.pendingFight).toBeUndefined()
     expect(char.inventory).toEqual(['sword_01'])
     expect(char.lastLootRoll).toBe(1700000000000)
+    expect(char.lootboxStreak).toBe(3)
     expect(char.incomingFightHistory).toEqual([{ attackerName: 'player2', won: false, date: 1700000000000 }])
     expect(char.isBot).toBe(false)
     expect(char.autoMode).toBe(false)
@@ -134,6 +136,7 @@ describe('convertToSupabase', () => {
     pendingFight: undefined,
     inventory: ['sword_01'],
     lastLootRoll: 1700000000000,
+    lootboxStreak: 5,
     incomingFightHistory: [{ date: 1700000000000, attackerName: 'player2', won: false }],
     isBot: false,
     autoMode: true,
@@ -166,6 +169,7 @@ describe('convertToSupabase', () => {
     expect(row.pending_fight).toBeNull()
     expect(row.inventory).toEqual(['sword_01'])
     expect(row.last_loot_roll).toBe(1700000000000)
+    expect(row.lootbox_streak).toBe(5)
     expect(row.incoming_fight_history).toEqual([{ date: 1700000000000, attackerName: 'player2', won: false }])
     expect(row.is_bot).toBe(false)
     expect(row.auto_mode).toBe(true)
@@ -196,6 +200,7 @@ describe('convertToSupabase', () => {
       pendingFight: undefined as any,
       inventory: undefined as any,
       lastLootRoll: undefined as any,
+      lootboxStreak: undefined as any,
       incomingFightHistory: undefined as any,
       isBot: undefined as any,
       id: 'x',
@@ -213,6 +218,7 @@ describe('convertToSupabase', () => {
     expect(row.pending_fight).toBeNull()
     expect(row.inventory).toEqual([])
     expect(row.last_loot_roll).toBe(0)
+    expect(row.lootbox_streak).toBe(0)
     expect(row.incoming_fight_history).toEqual([])
     expect(row.is_bot).toBe(false)
     expect(row.auto_mode).toBe(false)

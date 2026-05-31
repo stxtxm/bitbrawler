@@ -332,6 +332,7 @@ export const generateInitialStats = (name: string, gender: 'male' | 'female'): C
         lastFightReset: Date.now(),
         statPoints: 0,
         inventory: [],
-        lastLootRoll: 0
+        lastLootRoll: 0,
+        lootboxStreak: 0
     };
 };
