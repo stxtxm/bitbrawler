@@ -6,6 +6,7 @@ import { PixelItemIcon } from './PixelItemIcon';
 import { getItemById, getEquipmentBonuses } from '../utils/equipmentUtils';
 import { INVENTORY_CAPACITY } from '../utils/persistenceUtils';
 import { canRollLootbox } from '../utils/lootboxUtils';
+import StreakIndicator from './StreakIndicator';
 
 type StatIconType = 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence' | 'focus';
 
@@ -55,6 +56,7 @@ const InventoryModal = ({
     const inventory = activeCharacter.inventory || [];
     const inventoryFull = inventory.length >= INVENTORY_CAPACITY;
     const canRollDailyLoot = canRollLootbox(activeCharacter.lastLootRoll, Date.now());
+    const streak = activeCharacter.lootboxStreak ?? 0;
     const previewItemId = inventoryHoveredId ?? inventorySelectedId ?? undefined;
     const previewItem = getItemById(previewItemId);
     const previewStats = previewItem
@@ -137,6 +139,7 @@ const InventoryModal = ({
                     <div className="lootbox-status">
                         {inventory.length}/{INVENTORY_CAPACITY} SLOTS
                     </div>
+                    <StreakIndicator streak={streak} canRoll={canRollDailyLoot} />
                 </div>
                 <div className="inventory-body">
                     <div className="inventory-grid">

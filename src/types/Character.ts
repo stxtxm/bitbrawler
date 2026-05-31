@@ -78,5 +78,6 @@ export interface Character {
   statPoints?: number; // Unspent stat points from level-ups
   inventory?: string[]; // Item ids
   lastLootRoll?: number; // Timestamp (UTC) of daily lootbox roll
+  lootboxStreak?: number; // Consecutive daily lootbox claims
   pendingFight?: PendingFight;
 }

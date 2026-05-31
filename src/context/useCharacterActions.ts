@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { supabase } from '../config/supabase';
 import { Character } from '../types/Character';
 import { applyStatPoint, StatKey } from '../utils/statUtils';
-import { canRollLootbox, rollLootbox } from '../utils/lootboxUtils';
+import { canRollLootbox, computeNextStreak, rollLootbox } from '../utils/lootboxUtils';
 import { ITEM_ASSETS } from '../data/itemAssets';
 import { PixelItemAsset } from '../types/Item';
 import { normalizeCharacter, INVENTORY_CAPACITY } from '../utils/persistenceUtils';
@@ -61,7 +61,14 @@ export const useCharacterActions = ({
       throw new Error('Inventory is full.');
     }
 
-    const item = rollLootbox(ITEM_ASSETS, { excludeIds: inventory, level: activeCharacter.level });
+    const currentStreak = activeCharacter.lootboxStreak ?? 0;
+    const newStreak = computeNextStreak(activeCharacter.lastLootRoll, currentStreak, now);
+
+    const item = rollLootbox(ITEM_ASSETS, {
+      excludeIds: inventory,
+      level: activeCharacter.level,
+      streak: newStreak,
+    });
     if (!item) {
       throw new Error('No new loot available.');
     }
@@ -70,6 +77,7 @@ export const useCharacterActions = ({
       ...activeCharacter,
       inventory: [...inventory, item.id],
       lastLootRoll: now,
+      lootboxStreak: newStreak,
     });
 
     try {
@@ -78,6 +86,7 @@ export const useCharacterActions = ({
         .update({
           inventory: updatedChar.inventory,
           last_loot_roll: updatedChar.lastLootRoll,
+          lootbox_streak: updatedChar.lootboxStreak,
           focus: updatedChar.focus,
         })
         .eq('id', activeCharacter.id!);

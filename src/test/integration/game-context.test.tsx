@@ -21,6 +21,7 @@ vi.mock('../../utils/matchmakingUtils', () => ({
 
 vi.mock('../../utils/lootboxUtils', () => ({
   canRollLootbox: vi.fn(),
+  computeNextStreak: vi.fn(() => 1),
   rollLootbox: vi.fn(),
 }));
 

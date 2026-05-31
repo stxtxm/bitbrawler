@@ -7,7 +7,7 @@ import { GAME_RULES } from '../config/gameRules';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { findOpponent, MatchmakingResult } from '../utils/matchmakingUtils';
 import { ITEM_ASSETS } from '../data/itemAssets';
-import { canRollLootbox, rollLootbox } from '../utils/lootboxUtils';
+import { canRollLootbox, computeNextStreak, rollLootbox } from '../utils/lootboxUtils';
 import { PixelItemAsset } from '../types/Item';
 import { simulateCombat } from '../utils/combatUtils';
 import { convertFromSupabase } from '../utils/supabaseUtils';
@@ -52,6 +52,7 @@ const normalizeCharacter = (character: Character): Character => {
     statPoints: character.statPoints ?? 0,
     inventory: character.inventory ?? [],
     lastLootRoll: character.lastLootRoll ?? 0,
+    lootboxStreak: character.lootboxStreak ?? 0,
     incomingFightHistory: character.incomingFightHistory ?? [],
   };
 };
@@ -679,7 +680,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       throw new Error('Inventory is full.');
     }
 
-    const item = rollLootbox(ITEM_ASSETS, { excludeIds: inventory, level: activeCharacter.level });
+    const currentStreak = activeCharacter.lootboxStreak ?? 0;
+    const newStreak = computeNextStreak(activeCharacter.lastLootRoll, currentStreak, now);
+
+    const item = rollLootbox(ITEM_ASSETS, {
+      excludeIds: inventory,
+      level: activeCharacter.level,
+      streak: newStreak,
+    });
     if (!item) {
       throw new Error('No new loot available.');
     }
@@ -688,6 +696,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       ...activeCharacter,
       inventory: [...inventory, item.id],
       lastLootRoll: now,
+      lootboxStreak: newStreak,
     });
 
      try {
@@ -696,6 +705,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         .update({
           inventory: updatedChar.inventory,
           last_loot_roll: updatedChar.lastLootRoll,
+          lootbox_streak: updatedChar.lootboxStreak,
           focus: updatedChar.focus
         })
         .eq('id', activeCharacter.id!);

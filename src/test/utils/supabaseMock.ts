@@ -74,6 +74,7 @@ export function characterToSupabaseRow(char: any): any {
     pending_fight: char.pendingFight ?? null,
     inventory: char.inventory ?? [],
     last_loot_roll: char.lastLootRoll ?? 0,
+    lootbox_streak: char.lootboxStreak ?? 0,
     incoming_fight_history: char.incomingFightHistory ?? [],
     is_bot: typeof char.isBot === 'boolean' ? char.isBot : false,
     auto_mode: char.autoMode ?? false,
