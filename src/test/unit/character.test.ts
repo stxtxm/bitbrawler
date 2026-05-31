@@ -5,7 +5,7 @@ describe('Character Generation', () => {
     it('should generate a character with the correct initial stat pool', () => {
         const char = generateInitialStats('Test', 'male');
 
-        // Base is 10 for 6 stats (60) total RPG points
+        // Base is minValue (5) * 6 stats + 36 distributed points = 66 total
         const totalRPGStats =
             char.strength +
             char.vitality +
@@ -13,7 +13,7 @@ describe('Character Generation', () => {
             char.luck +
             char.intelligence +
             char.focus;
-        expect(totalRPGStats).toBe(60);
+        expect(totalRPGStats).toBe(66);
     });
 
     it('should calculate HP correctly based on vitality', () => {

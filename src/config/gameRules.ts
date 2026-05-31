@@ -1,9 +1,9 @@
 export const GAME_RULES = {
     STATS: {
-        TOTAL_POINTS: 60,
+        TOTAL_POINTS: 66,
         BASE_VALUE: 10,
-        MIN_VALUE: 6, // Updated based on recent balancing
-        MAX_VALUE: 14,
+        MIN_VALUE: 5, // Increased spread for more unique character builds
+        MAX_VALUE: 15,
         POINTS_PER_LEVEL: 2, // Stat points per level-up
     },
     COMBAT: {
