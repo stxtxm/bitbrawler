@@ -2,10 +2,10 @@ import { ItemRarity, PixelItemAsset } from '../types/Item';
 import { getDailyResetKey } from './dailyReset';
 
 export const LOOTBOX_RARITY_WEIGHTS: Record<ItemRarity, number> = {
-  common: 0.62,
-  uncommon: 0.18,
-  rare: 0.12,
-  epic: 0.08,
+  common: 0.55,
+  uncommon: 0.20,
+  rare: 0.15,
+  epic: 0.10,
 };
 
 export interface StreakBonus {
