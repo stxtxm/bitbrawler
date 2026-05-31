@@ -37,7 +37,34 @@ const LevelUpOverlay = ({
     handleCloseLevelUp,
     handleDeferLevelUp,
 }: LevelUpOverlayProps) => {
-    // Auto-dismiss the overlay after AUTO_DISMISS_MS
+    // Dismiss the overlay when clicking outside interactive elements.
+    // The overlay has `pointer-events: none` to let Playwright click through,
+    // so we catch clicks at the document level instead.
+    useEffect(() => {
+        if (!shouldShowLevelUp) return;
+
+        const handleDocumentClick = (e: MouseEvent) => {
+            // Don't dismiss if the click is on an interactive element inside the overlay
+            // (stat-add-btn, level-up-confirm, level-up-later have pointer-events: auto)
+            const target = e.target as HTMLElement;
+            const interactiveSelector = '.stat-add-btn, .level-up-confirm, .level-up-later';
+            if (target.closest(interactiveSelector)) {
+                return;
+            }
+
+            // Click passed through the overlay — dismiss it
+            if (canCloseLevelUp) {
+                handleCloseLevelUp();
+            } else {
+                handleDeferLevelUp();
+            }
+        };
+
+        document.addEventListener('click', handleDocumentClick);
+        return () => document.removeEventListener('click', handleDocumentClick);
+    }, [shouldShowLevelUp, canCloseLevelUp, handleCloseLevelUp, handleDeferLevelUp]);
+
+    // Auto-dismiss the overlay after AUTO_DISMISS_MS as a fallback
     useEffect(() => {
         if (!shouldShowLevelUp) return;
 
@@ -54,21 +81,9 @@ const LevelUpOverlay = ({
 
     if (!shouldShowLevelUp) return null;
 
-    const handleOverlayClick = () => {
-        if (canCloseLevelUp) {
-            handleCloseLevelUp();
-        } else {
-            handleDeferLevelUp();
-        }
-    };
-
-    const handleCardClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-    };
-
     return (
-        <div className="level-up-pop-overlay" onClick={handleOverlayClick}>
-            <div className="level-up-card" onClick={handleCardClick}>
+        <div className="level-up-pop-overlay">
+            <div className="level-up-card">
                 <div className="card-shine"></div>
                 <div className="level-up-badge">NEW RANK!</div>
                 <div className="stars-top">★ ★ ★ ★ ★</div>
