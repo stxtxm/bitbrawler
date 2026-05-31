@@ -323,8 +323,8 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   // Stats balance
   if (Object.keys(avgInitialStats).length > 0) {
     for (const [key, val] of Object.entries(avgInitialStats)) {
-      if (val < 7) suggestions.push(`Average initial ${key.toUpperCase()} is ${val.toFixed(1)} (min=${Math.round(val)}). Consider raising STATS.MIN_VALUE (currently 6).`)
-      if (val > 13) suggestions.push(`Average initial ${key.toUpperCase()} is ${val.toFixed(1)} (max=${Math.round(val)}). Consider lowering STATS.MAX_VALUE (currently 14).`)
+      if (val < 6) suggestions.push(`Average initial ${key.toUpperCase()} is ${val.toFixed(1)} (min=${Math.round(val)}). Consider raising STATS.MIN_VALUE (currently 5).`)
+      if (val > 14) suggestions.push(`Average initial ${key.toUpperCase()} is ${val.toFixed(1)} (max=${Math.round(val)}). Consider lowering STATS.MAX_VALUE (currently 15).`)
     }
     // Check stat variance (are all stats roughly equal?)
     const vals = Object.values(avgInitialStats)

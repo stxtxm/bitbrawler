@@ -4,7 +4,7 @@ import { generateInitialStats } from '../../utils/characterUtils';
 import { Character } from '../../types/Character';
 
 describe('🤖 Bot & Character Generation System', () => {
-    it('should generate balanced stats with exactly 60 points total', () => {
+    it('should generate balanced stats with exactly 66 points total', () => {
         // Generate 100 characters to verify statistical consistency
         for (let i = 0; i < 100; i++) {
             const char = generateInitialStats(`Bot_${i}`, 'male');
@@ -17,8 +17,8 @@ describe('🤖 Bot & Character Generation System', () => {
                 char.intelligence +
                 char.focus;
 
-            // The new balanced system targets exactly 60 points
-            expect(totalStats).toBe(60);
+            // The balanced system targets exactly 66 points (5 base * 6 + 36 distributed)
+            expect(totalStats).toBe(66);
 
             // Stats should be clamped between 5 and 15
             expect(char.strength).toBeGreaterThan(0);
