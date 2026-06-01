@@ -1,6 +1,6 @@
 import { GAME_RULES } from '../config/gameRules';
 import { Character } from '../types/Character';
-import { HP_PER_LEVEL } from './statUtils';
+import { getHpForVitality } from './statUtils';
 
 // Configuration constants derived from central rules
 const BASE_XP = 100;
@@ -109,15 +109,19 @@ export function gainXp(character: Character, xpGained: number): {
 
     const levelsGained = level - startingLevel;
 
-    // Apply base HP growth on level-up (+8 HP per level gained)
-    const hpBonus = levelsGained > 0 ? levelsGained * HP_PER_LEVEL : 0;
+    // Recalculate maxHp from canonical formula to ensure consistency
+    // after level-ups, avoiding compounding errors from additive approach.
+    const newMaxHp = levelsGained > 0
+        ? getHpForVitality(character.vitality || 0, level)
+        : (character.maxHp || 0);
+    const hpBonus = newMaxHp - (character.maxHp || 0);
 
     const updatedCharacter: Character = {
         ...character,
         level,
         experience,
-        maxHp: (character.maxHp || 0) + hpBonus,
-        hp: (character.hp || 0) + hpBonus,
+        maxHp: newMaxHp,
+        hp: Math.min((character.hp || 0) + hpBonus, newMaxHp),
     };
 
     return {
