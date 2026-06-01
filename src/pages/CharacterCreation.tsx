@@ -171,7 +171,17 @@ const CharacterCreation = () => {
       setIsSubmitting(false)
       setTimeout(() => navigate('/arena'), 2000);
     } catch (error) {
-      console.error('Erreur Critique:', error);
+      // Log the full error for diagnosis
+      const errMsg = error instanceof Object && 'message' in error
+        ? (error as { message: string }).message
+        : String(error);
+      const errCode = error instanceof Object && 'code' in error
+        ? (error as { code: string }).code
+        : 'unknown';
+      const errDetails = error instanceof Object && 'details' in error
+        ? (error as { details: string }).details
+        : '';
+      console.error('❌ Character creation failed:', { code: errCode, message: errMsg, details: errDetails, stats: convertToSupabase({ ...generatedCharacter, name: trimmedName }) });
       setIsSubmitting(false)
       openModal(connectionMessage)
       return
