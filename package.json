@@ -13,6 +13,7 @@
     "daily-reset:run": "tsx scripts/daily-reset-engine.ts",
     "qa:analyze": "tsx scripts/analyze-qa-stats.ts",
     "qa:run": "node qa/qa-bot.mjs",
+    "db:migrate": "tsx scripts/run-migration.ts",
     "db:verify-constraints": "tsx scripts/verify-stat-constraints.ts"
   },
   "dependencies": {
