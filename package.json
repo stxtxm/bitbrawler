@@ -12,7 +12,8 @@
     "bots:run": "tsx scripts/bot-engine.ts",
     "daily-reset:run": "tsx scripts/daily-reset-engine.ts",
     "qa:analyze": "tsx scripts/analyze-qa-stats.ts",
-    "qa:run": "node qa/qa-bot.mjs"
+    "qa:run": "node qa/qa-bot.mjs",
+    "db:verify-constraints": "tsx scripts/verify-stat-constraints.ts"
   },
   "dependencies": {
     "@fontsource/press-start-2p": "^5.2.7",

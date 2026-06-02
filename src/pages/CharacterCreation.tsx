@@ -182,9 +182,16 @@ const CharacterCreation = () => {
         ? (error as { details: string }).details
         : '';
       console.error('❌ Character creation failed:', { code: errCode, message: errMsg, details: errDetails, stats: convertToSupabase({ ...generatedCharacter, name: trimmedName }) });
-      setIsSubmitting(false)
-      openModal(connectionMessage)
-      return
+
+      // Detect CHECK constraint violation (stat range mismatch) vs connection error
+      if (errMsg.includes('violates check constraint') || errMsg.includes('violates row-level')) {
+        setNameError('DATABASE ERROR - Try again later');
+        setShowErrorModal(true);
+      } else {
+        openModal(connectionMessage);
+      }
+      setIsSubmitting(false);
+      return;
     }
   }
 
