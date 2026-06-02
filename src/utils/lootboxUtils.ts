@@ -92,15 +92,17 @@ export const getLootboxRarityWeights = (level: number): Record<ItemRarity, numbe
 /**
  * Applies streak weight bonus to the base rarity weights.
  * Adds `weightBonus` to rare and epic weights.
+ * Clamps weightBonus to a valid non-negative number to avoid NaN propagation.
  */
 export function applyStreakWeights(
   baseWeights: Record<ItemRarity, number>,
   weightBonus: number
 ): Record<ItemRarity, number> {
+  const safeBonus = Number.isFinite(weightBonus) ? Math.max(0, weightBonus) : 0;
   return {
     ...baseWeights,
-    rare: (baseWeights.rare ?? 0) + weightBonus,
-    epic: (baseWeights.epic ?? 0) + weightBonus,
+    rare: (baseWeights.rare ?? 0) + safeBonus,
+    epic: (baseWeights.epic ?? 0) + safeBonus,
   };
 }
 
@@ -188,16 +190,42 @@ function rollSingle(
   const availableWithItems = availableRarities.filter((rarity) => itemsByRarity[rarity].length > 0);
   if (!availableWithItems.length) return null;
 
+  // Determine which rarities have positive configured weights
   const weightedRarities = availableWithItems.filter((rarity) => (weights[rarity] ?? 0) > 0);
-  const selectionRarities = weightedRarities.length ? weightedRarities : availableWithItems;
-  const totalWeight = selectionRarities.reduce((sum, rarity) => sum + (weights[rarity] ?? 1), 0);
 
+  if (weightedRarities.length > 0) {
+    // Standard case: use configured weights for rarity selection
+    const totalWeight = weightedRarities.reduce((sum, rarity) => sum + (weights[rarity] ?? 0), 0);
+    if (totalWeight <= 0) return null;
+
+    const roll = rng() * totalWeight;
+    let cursor = 0;
+    let chosen: ItemRarity = weightedRarities[0];
+
+    for (const rarity of weightedRarities) {
+      const weight = weights[rarity] ?? 0;
+      if (weight <= 0) continue;
+      cursor += weight;
+      if (roll <= cursor) {
+        chosen = rarity;
+        break;
+      }
+    }
+
+    const pool = itemsByRarity[chosen];
+    if (!pool.length) return null;
+    return pickRandomItem(pool, rng);
+  }
+
+  // Fallback: no positive weights — give equal probability to all available rarities
+  const equalWeight = 1;
+  const totalWeight = availableWithItems.length * equalWeight;
   const roll = rng() * totalWeight;
   let cursor = 0;
-  let chosen: ItemRarity = selectionRarities[0];
-  for (const rarity of selectionRarities) {
-    const weight = weights[rarity] ?? 1;
-    cursor += weight;
+  let chosen: ItemRarity = availableWithItems[0];
+
+  for (const rarity of availableWithItems) {
+    cursor += equalWeight;
     if (roll <= cursor) {
       chosen = rarity;
       break;
@@ -230,9 +258,9 @@ export function rollLootbox(
   if (!items.length) return null;
 
   const rng = options.rng ?? Math.random;
-  const level = options.level ?? 1;
+  const level = Math.max(1, options.level ?? 1);
   const excludeIds = options.excludeIds ?? [];
-  const streak = options.streak ?? 0;
+  const streak = Math.max(0, options.streak ?? 0);
   const eligibleItems = getEligibleLootboxItems(items, level, excludeIds);
   if (!eligibleItems.length) return null;
 
