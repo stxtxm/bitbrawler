@@ -12,9 +12,10 @@
 }
 
 .level-up-pop-overlay .level-up-card {
-    // No pointer-events set — inherits `none` from .level-up-pop-overlay
-    // so the card surface does not intercept events.
-    // Only explicit interactive children (buttons) have pointer-events: auto.
+    // Explicitly inherit pointer-events: none so the card surface and its
+    // non-interactive children (card-shine, stat rows, labels, etc.) never
+    // intercept pointer events. Only explicit buttons have pointer-events: auto.
+    pointer-events: none;
 }
 
 .level-up-pop-overlay .stat-add-btn,
@@ -178,6 +179,7 @@
     padding: 4px 6px;
     gap: 5px;
     cursor: help;
+    pointer-events: none;
 }
 
 .level-up-stat-row .stat-icon {

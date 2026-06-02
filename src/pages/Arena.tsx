@@ -8,7 +8,7 @@ import { PixelCharacter } from '../components/PixelCharacter';
 import { PixelIcon } from '../components/PixelIcon';
 import { PixelItemIcon } from '../components/PixelItemIcon';
 import { getXpProgress, formatXpDisplay, getMaxLevel } from '../utils/xpUtils';
-import { StatKey, STAT_TOOLTIPS } from '../utils/statUtils';
+import { StatKey, STAT_TOOLTIPS, autoAllocateStatPoints } from '../utils/statUtils';
 import { CombatView } from '../components/CombatView';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
 import { applyEquipmentToCharacter, getEquipmentBonuses, getItemById } from '../utils/equipmentUtils';
@@ -31,7 +31,7 @@ const formatSettingsLogDate = (timestamp: number) => {
 };
 
 const Arena = () => {
-    const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, allocateStatPoint, rollLootbox, setAutoMode, deleteCharacter } = useGame();
+    const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, allocateStatPoint, rollLootbox, setAutoMode, deleteCharacter, setCharacter } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const navigate = useNavigate();
     const isOnline = useOnlineStatus();
@@ -77,6 +77,17 @@ const Arena = () => {
             setDeferLevelUp(false);
         }
     }, [lastLevelUp]);
+
+    // Auto-allocate stat points in auto-mode to prevent the level-up overlay
+    // from blocking the FIGHT button (QA runs fail 32% of the time otherwise)
+    useEffect(() => {
+        if (!activeCharacter?.autoMode) return;
+        const points = activeCharacter.statPoints || 0;
+        if (points <= 0) return;
+
+        const updated = autoAllocateStatPoints(activeCharacter, points);
+        setCharacter(updated);
+    }, [activeCharacter?.autoMode, activeCharacter?.statPoints, activeCharacter, setCharacter]);
 
     if (!activeCharacter) {
         return <Navigate to="/" replace />;
