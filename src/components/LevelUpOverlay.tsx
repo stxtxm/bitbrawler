@@ -22,6 +22,7 @@ interface LevelUpOverlayProps {
 }
 
 const AUTO_DISMISS_MS = 3_000;
+const OFFLINE_DISMISS_MS = 50; // Instant dismiss for QA bots / offline mode
 
 const LevelUpOverlay = ({
     shouldShowLevelUp,
@@ -64,9 +65,13 @@ const LevelUpOverlay = ({
         return () => document.removeEventListener('click', handleDocumentClick);
     }, [shouldShowLevelUp, canCloseLevelUp, handleCloseLevelUp, handleDeferLevelUp]);
 
-    // Auto-dismiss the overlay after AUTO_DISMISS_MS as a fallback
+    // Auto-dismiss the overlay as a fallback
     useEffect(() => {
         if (!shouldShowLevelUp) return;
+
+        // In offline/auto-mode, dismiss almost instantly so the QA bot
+        // does not get blocked by the overlay between fights
+        const delay = isOfflineMode ? OFFLINE_DISMISS_MS : AUTO_DISMISS_MS;
 
         const timer = setTimeout(() => {
             if (canCloseLevelUp) {
@@ -74,10 +79,10 @@ const LevelUpOverlay = ({
             } else {
                 handleDeferLevelUp();
             }
-        }, AUTO_DISMISS_MS);
+        }, delay);
 
         return () => clearTimeout(timer);
-    }, [shouldShowLevelUp, canCloseLevelUp, handleCloseLevelUp, handleDeferLevelUp]);
+    }, [shouldShowLevelUp, canCloseLevelUp, handleCloseLevelUp, handleDeferLevelUp, isOfflineMode]);
 
     if (!shouldShowLevelUp) return null;
 
