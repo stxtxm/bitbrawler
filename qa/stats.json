@@ -5357,5 +5357,96 @@
       "home": 1450,
       "arena": 3467
     }
+  },
+  {
+    "date": "2026-06-03T16:01:42.516Z",
+    "run": "2026-06-03",
+    "character": "TAMERGHOST",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 25,
+        "fight_duration_ms": 17946,
+        "max_hp": 188
+      },
+      {
+        "result": "victory",
+        "xp": 120,
+        "fight_duration_ms": 14818,
+        "max_hp": 200
+      },
+      {
+        "result": "victory",
+        "xp": 124,
+        "fight_duration_ms": 21967,
+        "max_hp": 200
+      },
+      {
+        "result": "defeat",
+        "xp": 25,
+        "fight_duration_ms": 15786,
+        "max_hp": 200
+      },
+      {
+        "result": "defeat",
+        "xp": 26,
+        "fight_duration_ms": 21052,
+        "max_hp": 200
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Novice Wrap",
+      "rarity": "UNCOMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 8,
+      "vit": 11,
+      "dex": 10,
+      "luk": 9,
+      "int": 13,
+      "foc": 15
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 188,
+    "final_stats": {
+      "level": 2,
+      "xp": 220,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 9,
+      "vit": 11,
+      "dex": 10,
+      "luk": 9,
+      "int": 14,
+      "foc": 15
+    },
+    "final_max_hp": 200,
+    "level_up_events": [
+      {
+        "fight_number": 2,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1837,
+      "arena": 2910
+    }
   }
 ]
