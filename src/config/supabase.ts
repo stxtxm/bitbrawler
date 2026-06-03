@@ -37,6 +37,7 @@ export type CharacterRow = {
   pending_fight: PendingFight | null
   inventory: string[]
   last_loot_roll: number
+  lootbox_streak: number
   incoming_fight_history: IncomingFightHistory[]
   is_bot: boolean
   auto_mode: boolean

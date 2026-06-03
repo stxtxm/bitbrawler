@@ -86,6 +86,7 @@ export const useCharacterActions = ({
         .update({
           inventory: updatedChar.inventory,
           last_loot_roll: updatedChar.lastLootRoll,
+          lootbox_streak: updatedChar.lootboxStreak,
           focus: updatedChar.focus,
         })
         .eq('id', activeCharacter.id!);
