@@ -132,6 +132,30 @@
     animation: pulse 1s ease-in-out infinite;
 }
 
+.level-up-hp {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin: 6px 0;
+    font-size: 0.6rem;
+}
+
+.level-up-hp .hp-icon {
+    color: $accent-red;
+    font-size: 0.7rem;
+}
+
+.level-up-hp .hp-gained {
+    color: $accent-green;
+    font-weight: bold;
+}
+
+.level-up-hp .hp-range {
+    color: #9aa0a6;
+    font-size: 0.45rem;
+}
+
 .level-up-footer {
     color: $accent-green;
     font-size: 0.8rem;
@@ -287,6 +311,20 @@
         font-size: 0.9rem;
     }
 
+    .level-up-hp {
+        font-size: 0.45rem;
+        gap: 4px;
+        margin: 4px 0;
+    }
+
+    .level-up-hp .hp-icon {
+        font-size: 0.55rem;
+    }
+
+    .level-up-hp .hp-range {
+        font-size: 0.38rem;
+    }
+
     .level-up-stats {
         margin-top: 6px;
         gap: 4px;
@@ -393,6 +431,20 @@
         font-size: 1.1rem;
         margin: 2px 0;
         gap: 4px;
+    }
+
+    .level-up-hp {
+        font-size: 0.4rem;
+        gap: 3px;
+        margin: 3px 0;
+    }
+
+    .level-up-hp .hp-icon {
+        font-size: 0.48rem;
+    }
+
+    .level-up-hp .hp-range {
+        font-size: 0.34rem;
     }
 
     .points-label {
