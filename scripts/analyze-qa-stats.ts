@@ -371,6 +371,17 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     }
   }
 
+  // Win-rate swing detection (last 3 vs all time)
+  const last3Trend = trendWindows.find(t => t.label === 'last_3')
+  if (allTimeTrend && last3Trend && last3Trend.count >= 2) {
+    const swing = last3Trend.win_rate - allTimeTrend.win_rate
+    if (swing > 0.20) {
+      issues.push(`Win rate surged from ${(allTimeTrend.win_rate * 100).toFixed(0)}% to ${(last3Trend.win_rate * 100).toFixed(0)}% in last 3 runs. Monitor for over-correction — game may be too easy.`)
+    } else if (swing < -0.20) {
+      issues.push(`Win rate dropped from ${(allTimeTrend.win_rate * 100).toFixed(0)}% to ${(last3Trend.win_rate * 100).toFixed(0)}% in last 3 runs. Investigate bot difficulty or balance changes.`)
+    }
+  }
+
   return {
     generated_at: now,
     total_runs: stats.length,
