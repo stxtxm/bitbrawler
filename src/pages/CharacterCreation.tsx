@@ -38,7 +38,6 @@ const convertToSupabase = (character: Character): Partial<CharacterRow> => {
     pending_fight: character.pendingFight ?? null,
     inventory: character.inventory ?? [],
     last_loot_roll: character.lastLootRoll ?? 0,
-    lootbox_streak: character.lootboxStreak ?? 0,
     incoming_fight_history: character.incomingFightHistory ?? [],
     is_bot: typeof character.isBot === 'boolean' ? character.isBot : false,
     auto_mode: character.autoMode ?? false
