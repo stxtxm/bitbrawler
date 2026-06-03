@@ -173,7 +173,19 @@ async function loginCharacter(page, charName) {
 }
 
 async function openCharacterCreation(page) {
-  await page.goto(getAppUrl('/create-character'), { waitUntil: 'networkidle', timeout: 30000 })
+  const delays = [5000, 15000] // 5s, then 15s backoff
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await page.goto(getAppUrl('/create-character'), { waitUntil: 'networkidle', timeout: 30000 })
+      return // success
+    } catch (err) {
+      if (attempt === 3) {
+        throw new Error(`Site unavailable after 3 retries (last error: ${err.message})`)
+      }
+      console.log(`   ⚠️ Character creation page load failed (attempt ${attempt}/3), retrying in ${delays[attempt - 1] / 1000}s... (${err.message})`)
+      await sleep(delays[attempt - 1])
+    }
+  }
 }
 
 async function generateAppCharacterName(page) {
