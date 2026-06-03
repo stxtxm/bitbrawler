@@ -9,7 +9,7 @@ interface LevelUpOverlayProps {
     shouldShowLevelUp: boolean;
     activeCharacter: Character;
     effectiveCharacter: Character;
-    lastLevelUp: { levelsGained: number; newLevel: number } | null;
+    lastLevelUp: { levelsGained: number; newLevel: number; hpGained: number } | null;
     pendingStatPoints: number;
     isOfflineMode: boolean;
     allocatingStat: StatKey | null;
@@ -102,6 +102,15 @@ const LevelUpOverlay = ({
                 ) : (
                     <div className="lvl-big-number">
                         <span className="lvl-new">LVL {activeCharacter.level}</span>
+                    </div>
+                )}
+                {hasLevelInfo && lastLevelUp!.hpGained > 0 && (
+                    <div className="level-up-hp">
+                        <span className="hp-icon">❤</span>
+                        <span className="hp-gained">+{lastLevelUp!.hpGained} HP</span>
+                        <span className="hp-range">
+                            (max HP: {activeCharacter.maxHp - lastLevelUp!.hpGained} → {activeCharacter.maxHp})
+                        </span>
                     </div>
                 )}
                 <div className="stars-bottom">★ ★ ★ ★ ★</div>

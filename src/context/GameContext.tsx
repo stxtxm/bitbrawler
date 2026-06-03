@@ -2,7 +2,7 @@ import { createContext, useState, useContext, ReactNode, useEffect, useCallback,
 import { supabase } from '../config/supabase';
 import { Character, IncomingFightHistory, PendingFight, PendingFightOpponent } from '../types/Character';
 import { gainXp, calculateFightXp } from '../utils/xpUtils';
-import { applyStatPoint, autoAllocateStatPoints, StatKey } from '../utils/statUtils';
+import { applyStatPoint, autoAllocateStatPoints, HP_PER_LEVEL, StatKey } from '../utils/statUtils';
 import { GAME_RULES } from '../config/gameRules';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { findOpponent, MatchmakingResult } from '../utils/matchmakingUtils';
@@ -18,7 +18,7 @@ interface GameContextType {
   loading: boolean;
   dbAvailable: boolean;
   lastXpGain: number | null;
-  lastLevelUp: { levelsGained: number; newLevel: number } | null;
+  lastLevelUp: { levelsGained: number; newLevel: number; hpGained: number } | null;
   login: (name: string) => Promise<string | null>;
   logout: () => void;
   setCharacter: (char: Character) => void;
@@ -146,7 +146,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [dbAvailable, setDbAvailable] = useState(true);
   const [lastXpGain, setLastXpGain] = useState<number | null>(null);
-  const [lastLevelUp, setLastLevelUp] = useState<{ levelsGained: number; newLevel: number } | null>(null);
+  const [lastLevelUp, setLastLevelUp] = useState<{ levelsGained: number; newLevel: number; hpGained: number } | null>(null);
   const isOnline = useOnlineStatus();
   const initiatedMatchmakingRef = useRef(false);
   const persistCharacter = useCallback((character: Character) => {
@@ -440,7 +440,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       if (xpResult.leveledUp && !updatedChar.autoMode) {
         setLastLevelUp({
           levelsGained: xpResult.levelsGained,
-          newLevel: xpResult.newLevel
+          newLevel: xpResult.newLevel,
+          hpGained: xpResult.levelsGained * HP_PER_LEVEL,
         });
       }
 
