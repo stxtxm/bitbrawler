@@ -78,13 +78,13 @@ export function computeNextStreak(
 
 export const getLootboxRarityWeights = (level: number): Record<ItemRarity, number> => {
   if (level >= 10) {
-    return { common: 0.45, uncommon: 0.3, rare: 0.18, epic: 0.07 };
+    return { common: 0.42, uncommon: 0.28, rare: 0.18, epic: 0.12 };
   }
   if (level >= 7) {
-    return { common: 0.5, uncommon: 0.3, rare: 0.15, epic: 0.05 };
+    return { common: 0.48, uncommon: 0.27, rare: 0.16, epic: 0.09 };
   }
   if (level >= 4) {
-    return { common: 0.58, uncommon: 0.25, rare: 0.12, epic: 0.05 };
+    return { common: 0.53, uncommon: 0.24, rare: 0.15, epic: 0.08 };
   }
   return { ...LOOTBOX_RARITY_WEIGHTS };
 };
