@@ -6015,5 +6015,96 @@
       "home": 1258,
       "arena": 2679
     }
+  },
+  {
+    "date": "2026-06-04T13:01:36.464Z",
+    "run": "2026-06-04",
+    "character": "STRIKERBIT",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 25,
+        "fight_duration_ms": 28361,
+        "max_hp": 220
+      },
+      {
+        "result": "defeat",
+        "xp": 23,
+        "fight_duration_ms": 21581,
+        "max_hp": 220
+      },
+      {
+        "result": "defeat",
+        "xp": 25,
+        "fight_duration_ms": 24284,
+        "max_hp": 220
+      },
+      {
+        "result": "defeat",
+        "xp": 25,
+        "fight_duration_ms": 18986,
+        "max_hp": 220
+      },
+      {
+        "result": "defeat",
+        "xp": 24,
+        "fight_duration_ms": 14686,
+        "max_hp": 240
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Leather Vest",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 6,
+      "vit": 15,
+      "dex": 13,
+      "luk": 10,
+      "int": 7,
+      "foc": 15
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 220,
+    "final_stats": {
+      "level": 2,
+      "xp": 22,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 7,
+      "vit": 16,
+      "dex": 13,
+      "luk": 10,
+      "int": 7,
+      "foc": 15
+    },
+    "final_max_hp": 240,
+    "level_up_events": [
+      {
+        "fight_number": 5,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1532,
+      "arena": 3944
+    }
   }
 ]
