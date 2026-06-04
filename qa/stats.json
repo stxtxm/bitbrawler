@@ -5833,5 +5833,96 @@
       "home": 1834,
       "arena": 2806
     }
+  },
+  {
+    "date": "2026-06-04T07:01:24.025Z",
+    "run": "2026-06-04",
+    "character": "BLOOMGROVE",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 23,
+        "fight_duration_ms": 17846,
+        "max_hp": 172
+      },
+      {
+        "result": "victory",
+        "xp": 123,
+        "fight_duration_ms": 10434,
+        "max_hp": 184
+      },
+      {
+        "result": "victory",
+        "xp": 141,
+        "fight_duration_ms": 16102,
+        "max_hp": 184
+      },
+      {
+        "result": "defeat",
+        "xp": 28,
+        "fight_duration_ms": 12370,
+        "max_hp": 184
+      },
+      {
+        "result": "defeat",
+        "xp": 29,
+        "fight_duration_ms": 15287,
+        "max_hp": 184
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Wooden Talisman",
+      "rarity": "RARE",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 14,
+      "vit": 9,
+      "dex": 10,
+      "luk": 7,
+      "int": 11,
+      "foc": 15
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 172,
+    "final_stats": {
+      "level": 2,
+      "xp": 244,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 14,
+      "vit": 9,
+      "dex": 10,
+      "luk": 9,
+      "int": 11,
+      "foc": 15
+    },
+    "final_max_hp": 184,
+    "level_up_events": [
+      {
+        "fight_number": 2,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1288,
+      "arena": 3578
+    }
   }
 ]
