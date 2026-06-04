@@ -75,18 +75,31 @@ export function autoAllocateStatPointsRandom(
     return updated;
 }
 
-function pickLowestStat(character: Character): StatKey {
-    const stats = STAT_KEYS.map((key) => ({ key, value: character[key] }));
-    const minValue = Math.min(...stats.map((stat) => stat.value));
-    const lowest = stats.filter((stat) => stat.value === minValue);
+const COMBAT_WEIGHTS: Record<StatKey, number> = {
+    strength: 1.3,
+    vitality: 1.2,
+    dexterity: 1.1,
+    luck: 1.0,
+    intelligence: 1.0,
+    focus: 1.0,
+};
 
-    // VIT threshold rule: if VIT is below the average of all stats,
-    // bias toward VIT 40% of the time to ensure HP growth
-    const avgValue = stats.reduce((sum, s) => sum + s.value, 0) / stats.length;
-    if (character.vitality < avgValue && Math.random() < 0.2) {
-        return 'vitality';
+function pickLowestStat(character: Character): StatKey {
+    // Weighted selection: lower stat values get higher priority,
+    // multiplied by combat-weight bias. This creates more distinctive,
+    // combat-effective builds while maintaining archetype variety.
+    const priorities = STAT_KEYS.map((key) => {
+        const basePriority = 1 / (character[key] + 1);
+        return { key, priority: basePriority * COMBAT_WEIGHTS[key] };
+    });
+
+    const totalPriority = priorities.reduce((sum, p) => sum + p.priority, 0);
+    let roll = Math.random() * totalPriority;
+
+    for (const { key, priority } of priorities) {
+        roll -= priority;
+        if (roll <= 0) return key;
     }
 
-    const choice = lowest[Math.floor(Math.random() * lowest.length)];
-    return choice.key;
+    return 'strength';
 }
