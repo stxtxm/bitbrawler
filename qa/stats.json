@@ -6477,5 +6477,103 @@
       "home": 1305,
       "arena": 3512
     }
+  },
+  {
+    "date": "2026-06-05T04:01:20.210Z",
+    "run": "2026-06-05",
+    "character": "DUSKAURORA",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 127,
+        "fight_duration_ms": 17111,
+        "max_hp": 232
+      },
+      {
+        "result": "victory",
+        "xp": 139,
+        "fight_duration_ms": 27000,
+        "max_hp": 232
+      },
+      {
+        "result": "victory",
+        "xp": 140,
+        "fight_duration_ms": 26219,
+        "max_hp": 244
+      },
+      {
+        "result": "defeat",
+        "xp": 29,
+        "fight_duration_ms": 20253,
+        "max_hp": 244
+      },
+      {
+        "result": "defeat",
+        "xp": 28,
+        "fight_duration_ms": 17636,
+        "max_hp": 244
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Mystic Ring",
+      "rarity": "EPIC",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 8,
+      "vit": 15,
+      "dex": 14,
+      "luk": 10,
+      "int": 8,
+      "foc": 11
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 220,
+    "final_stats": {
+      "level": 3,
+      "xp": 60,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 9,
+      "vit": 15,
+      "dex": 15,
+      "luk": 11,
+      "int": 9,
+      "foc": 11
+    },
+    "final_max_hp": 244,
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      },
+      {
+        "fight_number": 3,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 2,
+        "new_level": 3
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1403,
+      "arena": 2720
+    }
   }
 ]
