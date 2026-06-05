@@ -11,6 +11,20 @@
     pointer-events: none;
 }
 
+// Fully remove the overlay from the hit-test tree after a click-through or
+// timer-based dismiss. Unlike pointer-events: none (which only makes the
+// container ignore events but still allows child elements with
+// pointer-events: auto to be detected), visibility: hidden + display: none
+// removes the entire subtree from both rendering and hit-testing. This
+// prevents Playwright's actionability check from detecting child elements
+// (stat-add-btn, level-up-confirm, level-up-later) as intercepting clicks
+// on elements behind the overlay.
+.level-up-pop-overlay--hidden {
+    visibility: hidden !important;
+    display: none !important;
+    pointer-events: none !important;
+}
+
 .level-up-pop-overlay .level-up-card {
     // Explicitly inherit pointer-events: none so the card surface and its
     // non-interactive children (card-shine, stat rows, labels, etc.) never

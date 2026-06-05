@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Character } from '../types/Character';
 import { PixelIcon } from './PixelIcon';
 import { StatKey, STAT_TOOLTIPS } from '../utils/statUtils';
@@ -22,7 +22,6 @@ interface LevelUpOverlayProps {
 }
 
 const AUTO_DISMISS_MS = 3_000;
-const OFFLINE_DISMISS_MS = 50; // Instant dismiss for QA bots / offline mode
 
 const LevelUpOverlay = ({
     shouldShowLevelUp,
@@ -38,6 +37,22 @@ const LevelUpOverlay = ({
     handleCloseLevelUp,
     handleDeferLevelUp,
 }: LevelUpOverlayProps) => {
+    // ── Offline mode: skip rendering entirely ──────────────────────────────────
+    // In offline mode, stat allocation happens automatically so there is no need
+    // to show the level-up overlay. This also prevents Playwright from detecting
+    // the overlay's child elements (stat-add-btn, etc.) as intercepting clicks
+    // on the FIGHT button behind it.
+    if (isOfflineMode) return null;
+
+    // ── Post-dismiss tracking for normal mode ─────────────────────────────────
+    // We need to track the dismissed state with a ref so we can immediately remove
+    // the overlay from the DOM's hit-test tree before React state propagation from
+    // the parent (which flips shouldShowLevelUp → false) takes effect. Without this,
+    // Playwright's actionability check can still detect the overlay's child elements
+    // with pointer-events: auto (stat-add-btn, level-up-confirm, level-up-later) as
+    // intercepting clicks on elements behind the overlay.
+    const [dismissed, setDismissed] = useState(false);
+
     // Dismiss the overlay when clicking outside interactive elements.
     // The overlay has `pointer-events: none` to let Playwright click through,
     // so we catch clicks at the document level instead.
@@ -53,7 +68,10 @@ const LevelUpOverlay = ({
                 return;
             }
 
-            // Click passed through the overlay — dismiss it
+            // Click passed through the overlay — dismiss it.
+            // Mark as dismissed immediately so the overlay is removed from the
+            // hit-test tree before React state propagation completes.
+            setDismissed(true);
             if (canCloseLevelUp) {
                 handleCloseLevelUp();
             } else {
@@ -69,25 +87,30 @@ const LevelUpOverlay = ({
     useEffect(() => {
         if (!shouldShowLevelUp) return;
 
-        // In offline/auto-mode, dismiss almost instantly so the QA bot
-        // does not get blocked by the overlay between fights
-        const delay = isOfflineMode ? OFFLINE_DISMISS_MS : AUTO_DISMISS_MS;
-
         const timer = setTimeout(() => {
+            // Mark as dismissed immediately so the overlay is removed from the
+            // hit-test tree before React state propagation completes.
+            setDismissed(true);
             if (canCloseLevelUp) {
                 handleCloseLevelUp();
             } else {
                 handleDeferLevelUp();
             }
-        }, delay);
+        }, AUTO_DISMISS_MS);
 
         return () => clearTimeout(timer);
-    }, [shouldShowLevelUp, canCloseLevelUp, handleCloseLevelUp, handleDeferLevelUp, isOfflineMode]);
+    }, [shouldShowLevelUp, canCloseLevelUp, handleCloseLevelUp, handleDeferLevelUp]);
 
     if (!shouldShowLevelUp) return null;
 
+    // If dismissed via click-through or timer while waiting for parent state
+    // propagation, hide the overlay from the hit-test tree immediately.
+    const overlayClass = dismissed
+        ? 'level-up-pop-overlay level-up-pop-overlay--hidden'
+        : 'level-up-pop-overlay';
+
     return (
-        <div className="level-up-pop-overlay">
+        <div className={overlayClass}>
             <div className="level-up-card">
                 <div className="card-shine"></div>
                 <div className="level-up-badge">NEW RANK!</div>
@@ -121,9 +144,7 @@ const LevelUpOverlay = ({
                     {pendingStatPoints > 1 && (
                         <div className="points-value">{pendingStatPoints}</div>
                     )}
-                    {isOfflineMode && (
-                        <div className="points-warning">CONNECT TO ASSIGN POINTS</div>
-                    )}
+
                 </div>
                 <div className="level-up-stats">
                     {statOptions.map((stat) => (
@@ -137,7 +158,7 @@ const LevelUpOverlay = ({
                             <button
                                 className="button stat-add-btn"
                                 onClick={() => handleAllocateStat(stat.key as StatKey)}
-                                disabled={pendingStatPoints <= 0 || !!allocatingStat || isOfflineMode}
+                                disabled={pendingStatPoints <= 0 || !!allocatingStat}
                                 aria-label={`Increase ${stat.label}`}
                             >
                                 +
