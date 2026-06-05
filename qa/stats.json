@@ -6386,5 +6386,96 @@
       "home": 2147,
       "arena": 3316
     }
+  },
+  {
+    "date": "2026-06-05T01:01:23.682Z",
+    "run": "2026-06-05",
+    "character": "DREADSKULL",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 23,
+        "fight_duration_ms": 11027,
+        "max_hp": 156
+      },
+      {
+        "result": "defeat",
+        "xp": 25,
+        "fight_duration_ms": 14250,
+        "max_hp": 156
+      },
+      {
+        "result": "defeat",
+        "xp": 23,
+        "fight_duration_ms": 9051,
+        "max_hp": 156
+      },
+      {
+        "result": "defeat",
+        "xp": 25,
+        "fight_duration_ms": 15799,
+        "max_hp": 156
+      },
+      {
+        "result": "defeat",
+        "xp": 24,
+        "fight_duration_ms": 13202,
+        "max_hp": 168
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Rusty Sword",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 11,
+      "vit": 7,
+      "dex": 9,
+      "luk": 14,
+      "int": 12,
+      "foc": 13
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 156,
+    "final_stats": {
+      "level": 2,
+      "xp": 20,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 12,
+      "vit": 7,
+      "dex": 9,
+      "luk": 14,
+      "int": 13,
+      "foc": 13
+    },
+    "final_max_hp": 168,
+    "level_up_events": [
+      {
+        "fight_number": 5,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1305,
+      "arena": 3512
+    }
   }
 ]
