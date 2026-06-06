@@ -7618,5 +7618,96 @@
       "home": 1699,
       "arena": 3416
     }
+  },
+  {
+    "date": "2026-06-06T16:01:20.254Z",
+    "run": "2026-06-06",
+    "character": "PROUDADEPT",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 123,
+        "fight_duration_ms": 12948,
+        "max_hp": 192
+      },
+      {
+        "result": "defeat",
+        "xp": 24,
+        "fight_duration_ms": 12854,
+        "max_hp": 192
+      },
+      {
+        "result": "defeat",
+        "xp": 29,
+        "fight_duration_ms": 11631,
+        "max_hp": 192
+      },
+      {
+        "result": "victory",
+        "xp": 127,
+        "fight_duration_ms": 12685,
+        "max_hp": 192
+      },
+      {
+        "result": "defeat",
+        "xp": 24,
+        "fight_duration_ms": 11665,
+        "max_hp": 192
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Lucky Charm",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 15,
+      "vit": 10,
+      "dex": 10,
+      "luk": 9,
+      "int": 14,
+      "foc": 8
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 180,
+    "final_stats": {
+      "level": 2,
+      "xp": 227,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 15,
+      "vit": 10,
+      "dex": 10,
+      "luk": 9,
+      "int": 14,
+      "foc": 8
+    },
+    "final_max_hp": 192,
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1172,
+      "arena": 2447
+    }
   }
 ]
