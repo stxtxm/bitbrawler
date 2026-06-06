@@ -178,7 +178,7 @@ SUPABASE_URL=${{ secrets.SUPABASE_URL }}
 ### npm Scripts Available
 ```bash
 npm run dev              # Start Vite dev server (port 5173)
-npm test                # Run Vitest (256+ tests, ~10 seconds)
+npm test                # Run Vitest (266+ tests, ~10 seconds)
 npm test -- --watch    # Watch mode
 npm test -- --coverage # Coverage report
 npm run lint            # ESLint check (~2 seconds)
@@ -397,7 +397,7 @@ gh issue close 171
 ☑ npm ci                   # Install dependencies deterministically
 ☑ npm run lint             # ESLint (and --fix if needed)
 ☑ npx tsc --noEmit        # TypeScript compile check
-☑ npm test                # All 256+ tests must PASS
+☑ npm test                # All 266+ tests must PASS
 ☑ npm run build           # Production build must succeed
 ☑ git diff --stat         # Verify files changed (sanity check)
 ☑ git commit -m "feat: ..." # Conventional commit

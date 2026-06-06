@@ -458,7 +458,7 @@ git push origin feature/my-feature
 Your PR automatically runs:
 - ✅ Lint check
 - ✅ Type checking
-- ✅ Unit tests (256+)
+- ✅ Unit tests (266+)
 - ✅ Production build
 
 **All must pass.** If not, fix locally and push again.

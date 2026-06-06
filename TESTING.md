@@ -23,8 +23,8 @@ This document explains **testing strategy**, **test structure**, **how to write 
 
 - **Framework**: Vitest
 - **Component Testing**: React Testing Library
-- **Total Tests**: 256+
-- **Test Files**: 41+
+- **Total Tests**: 266+
+- **Test Files**: 39+
 - **Coverage**: Comprehensive
 
 ### Test Pyramid
@@ -361,8 +361,8 @@ Output:
 ✓ src/components/CombatView.test.tsx (6 tests)
 ...
 
-Test Files  41 passed (41)
-Tests      256 passed (256)
+Test Files  39 passed (39)
+Tests      266 passed (266)
 ```
 
 ### Run Specific Test File

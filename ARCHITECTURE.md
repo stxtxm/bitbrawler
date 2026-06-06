@@ -44,7 +44,7 @@ Bitbrawler is a **full-stack web application** with the following layers:
 | **Frontend Framework** | React 18 | UI rendering, state management |
 | **Type Safety** | TypeScript 5 | Compile-time type checking |
 | **Styling** | Sass (SCSS) | Component styling with nesting |
-| **Testing** | Vitest + RTL | Unit & integration tests (256+ tests) |
+| **Testing** | Vitest + RTL | Unit & integration tests (266+ tests) |
 | **Database** | Supabase (PostgreSQL) | Relational data, real-time subscriptions |
 | **Authentication** | Supabase Auth | Email/password auth with JWT |
 | **CI/CD** | GitHub Actions | Automated testing, building, deployment |
@@ -104,7 +104,7 @@ src/
 ├── styles/                  # Global Sass styles
 │   └── ...
 │
-└── test/                    # Test suite (256+ tests, 41 files)
+└── test/                    # Test suite (266+ tests, 39 files)
     └── ...
 ```
 
@@ -494,7 +494,7 @@ const subscription = supabase
 
 - **Utility functions**: combatUtils, xpUtils, matchmakingUtils, etc.
 - **Framework**: Vitest
-- **Coverage**: 256+ tests, 41 files
+- **Coverage**: 266+ tests, 39 files
 
 ### Integration Tests
 

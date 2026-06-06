@@ -8,6 +8,29 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '2.5.0',
+    date: '2026-06-06',
+    title: 'Pro sound engine, auto mode fix & codebase cleanup',
+    changes: [
+      'Complete sound engine redesign: master gain bus with dynamics compressor, convolution reverb, pitch variation.',
+      'All combat sounds redesigned (hit, crit, magic, miss, counter) with distinct identities — no more samey thuds.',
+      'All UI sounds (VS splash, scan, levelup, lootbox, loot, create) with unique melodic arpeggios — each event has its own tune.',
+      'Victory fanfare and defeat descent with drone bass for dramatic impact.',
+      'Click sound as mobile-style UI sound with capture-phase support — clicks register on every button.',
+      'Casino-style scan tick sounds during matchmaking opponent scan.',
+      'Sound ON/OFF toggle in Arena settings popup — persists to localStorage.',
+      'Auto mode fix: Fight button now disabled when auto mode is on (shows "AUTO MODE" label) — prevents manual fights overwriting bot engine progress.',
+      'Alpha DB reset button restored in Rankings page for testing.',
+      'Dead code removal: PwaInstallPrompt, usePwaInstall, .deploy folder, orphaned SCSS files.',
+      'NotFound route wired in App.tsx with proper lazy loading.',
+      'Duplicate persistence code removed from GameContext.tsx — single source of truth.',
+      'CharacterCreation.tsx cleanup: French comments removed, console.log stripped, proper error typing.',
+      'PixelCharacter.tsx type safety fix: @ts-expect-error resolved.',
+      'CombatView tests fixed for VS phase timing (new intro→vs→combat→result flow).',
+      '266 tests passing across 39 test files.',
+    ],
+  },
+  {
     version: '2.4.0',
     date: '2026-06-03',
     title: 'Lootbox fix, auto stat allocation & QoL improvements',

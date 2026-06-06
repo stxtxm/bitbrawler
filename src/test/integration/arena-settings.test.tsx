@@ -175,4 +175,35 @@ describe('Arena settings modal', () => {
     expect(queryByText(/^NO XP$/i)).toBeNull()
     expect(queryByText(/\+\d+\s*XP/i)).toBeNull()
   })
+
+  it('disables fight button and shows AUTO MODE when auto mode is on', () => {
+    mockUseGame.mockReturnValue({
+      activeCharacter: { ...mockCharacter, autoMode: true },
+      logout: vi.fn(),
+      useFight: vi.fn(),
+      findOpponent: vi.fn(),
+      lastXpGain: null,
+      lastLevelUp: null,
+      clearXpNotifications: vi.fn(),
+      dbAvailable: true,
+      retryConnection: vi.fn(),
+      allocateStatPoint: vi.fn(),
+      rollLootbox: vi.fn(),
+      startMatchmaking: vi.fn(),
+      setAutoMode: vi.fn().mockResolvedValue({ ...mockCharacter, autoMode: true }),
+      deleteCharacter: vi.fn().mockResolvedValue(true),
+    })
+
+    const { getByRole } = renderWithRouter(<Arena />)
+
+    const fightButton = getByRole('button', { name: 'AUTO MODE' })
+    expect(fightButton).toBeDisabled()
+  })
+
+  it('shows FIGHT! when auto mode is off and has energy', () => {
+    const { getByRole } = renderWithRouter(<Arena />)
+
+    const fightButton = getByRole('button', { name: 'FIGHT!' })
+    expect(fightButton).not.toBeDisabled()
+  })
 })
