@@ -7331,5 +7331,103 @@
       "home": 1231,
       "arena": 2925
     }
+  },
+  {
+    "date": "2026-06-06T07:01:19.069Z",
+    "run": "2026-06-06",
+    "character": "VIGILORBIT",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 129,
+        "fight_duration_ms": 16453,
+        "max_hp": 184
+      },
+      {
+        "result": "victory",
+        "xp": 139,
+        "fight_duration_ms": 15769,
+        "max_hp": 184
+      },
+      {
+        "result": "defeat",
+        "xp": 26,
+        "fight_duration_ms": 15869,
+        "max_hp": 184
+      },
+      {
+        "result": "victory",
+        "xp": 134,
+        "fight_duration_ms": 18485,
+        "max_hp": 196
+      },
+      {
+        "result": "defeat",
+        "xp": 29,
+        "fight_duration_ms": 20097,
+        "max_hp": 196
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Chipped Wand",
+      "rarity": "UNCOMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 12,
+      "vit": 8,
+      "dex": 7,
+      "luk": 15,
+      "int": 9,
+      "foc": 15
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 164,
+    "final_stats": {
+      "level": 3,
+      "xp": 54,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 13,
+      "vit": 9,
+      "dex": 8,
+      "luk": 15,
+      "int": 10,
+      "foc": 15
+    },
+    "final_max_hp": 196,
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      },
+      {
+        "fight_number": 4,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 2,
+        "new_level": 3
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 2230,
+      "arena": 3993
+    }
   }
 ]
