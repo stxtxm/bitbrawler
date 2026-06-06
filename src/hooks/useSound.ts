@@ -32,8 +32,12 @@ interface SoundConfig {
 
 const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
   click: {
-    voices: [{ type: 'sine', freq: 880, gain: 0.35 }],
-    decay: 20, gain: 1, reverb: 0,
+    voices: [
+      { type: 'sine', freq: 1200, gain: 0.5 },
+      { type: 'triangle', freq: 400, gain: 0.3 },
+    ],
+    decay: 12, gain: 1, reverb: 0,
+    noise: { gain: 0.15, dur: 0.015 },
   },
   nav: {
     voices: [{ type: 'triangle', freq: 660, gain: 0.3 }],
