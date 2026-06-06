@@ -33,6 +33,7 @@ interface GameContextType {
   findOpponent: () => Promise<MatchmakingResult | null>;
   clearXpNotifications: () => void;
   allocateStatPoint: (stat: StatKey) => Promise<Character | null>;
+  saveStatAllocations: (allocations: Partial<Record<StatKey, number>>) => Promise<Character | null>;
   rollLootbox: () => Promise<PixelItemAsset | null>;
   startMatchmaking: () => Promise<MatchmakingResult | null>;
   setAutoMode: (enabled: boolean) => Promise<Character | null>;
@@ -490,6 +491,43 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
      }
   }, [activeCharacter, handleDbError, persistCharacter]);
 
+  const saveStatAllocations = useCallback(async (allocations: Partial<Record<StatKey, number>>): Promise<Character | null> => {
+    if (!activeCharacter?.id) return null;
+
+    let updatedChar = activeCharacter;
+    const entries = Object.entries(allocations) as [StatKey, number][];
+    for (const [stat, count] of entries) {
+      for (let i = 0; i < count; i++) {
+        updatedChar = applyStatPoint(updatedChar, stat);
+      }
+    }
+
+    updatedChar = normalizeCharacter(updatedChar);
+
+    try {
+      await supabase
+        .from('characters')
+        .update({
+          strength: updatedChar.strength,
+          vitality: updatedChar.vitality,
+          dexterity: updatedChar.dexterity,
+          luck: updatedChar.luck,
+          intelligence: updatedChar.intelligence,
+          focus: updatedChar.focus,
+          hp: updatedChar.hp,
+          max_hp: updatedChar.maxHp,
+          stat_points: updatedChar.statPoints,
+        })
+        .eq('id', activeCharacter.id!);
+
+      persistCharacter(updatedChar);
+      return updatedChar;
+    } catch (error: any) {
+      handleDbError(error, 'stat-allocate');
+      throw new Error("Connection error - stat points not saved. Please check your internet connection.");
+    }
+  }, [activeCharacter, handleDbError, persistCharacter]);
+
   const startMatchmakingForPlayer = useCallback(async (): Promise<MatchmakingResult | null> => {
     if (!activeCharacter?.id) return null;
     if ((activeCharacter.fightsLeft || 0) <= 0) return null;
@@ -779,6 +817,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     startMatchmaking: startMatchmakingForPlayer,
     clearXpNotifications,
     allocateStatPoint,
+    saveStatAllocations,
     rollLootbox: rollLootboxForPlayer,
     setAutoMode,
     deleteCharacter,

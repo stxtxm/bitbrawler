@@ -31,7 +31,7 @@ const formatSettingsLogDate = (timestamp: number) => {
 };
 
 const Arena = () => {
-    const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, allocateStatPoint, rollLootbox, setAutoMode, deleteCharacter, setCharacter } = useGame();
+    const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, saveStatAllocations, rollLootbox, setAutoMode, deleteCharacter, setCharacter } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const navigate = useNavigate();
     const isOnline = useOnlineStatus();
@@ -112,13 +112,17 @@ const Arena = () => {
     const streak = activeCharacter.lootboxStreak ?? 0;
     type StatIconType = 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence' | 'focus';
     const statOptions: Array<{ key: StatKey; label: string; value: number; hint: string; icon: StatIconType }> = [
-        { key: 'strength', label: 'STR', value: effectiveCharacter.strength + (pendingAllocations.strength || 0), hint: 'Damage', icon: 'strength' },
-        { key: 'vitality', label: 'VIT', value: effectiveCharacter.vitality + (pendingAllocations.vitality || 0), hint: 'HP / Defense', icon: 'vitality' },
-        { key: 'dexterity', label: 'DEX', value: effectiveCharacter.dexterity + (pendingAllocations.dexterity || 0), hint: 'Speed', icon: 'dexterity' },
-        { key: 'luck', label: 'LUK', value: effectiveCharacter.luck + (pendingAllocations.luck || 0), hint: 'Crit Chance', icon: 'luck' },
-        { key: 'intelligence', label: 'INT', value: effectiveCharacter.intelligence + (pendingAllocations.intelligence || 0), hint: 'Magic Power', icon: 'intelligence' },
-        { key: 'focus', label: 'FOC', value: effectiveCharacter.focus + (pendingAllocations.focus || 0), hint: 'Accuracy / Control', icon: 'focus' },
+        { key: 'strength', label: 'STR', value: effectiveCharacter.strength, hint: 'Damage', icon: 'strength' },
+        { key: 'vitality', label: 'VIT', value: effectiveCharacter.vitality, hint: 'HP / Defense', icon: 'vitality' },
+        { key: 'dexterity', label: 'DEX', value: effectiveCharacter.dexterity, hint: 'Speed', icon: 'dexterity' },
+        { key: 'luck', label: 'LUK', value: effectiveCharacter.luck, hint: 'Crit Chance', icon: 'luck' },
+        { key: 'intelligence', label: 'INT', value: effectiveCharacter.intelligence, hint: 'Magic Power', icon: 'intelligence' },
+        { key: 'focus', label: 'FOC', value: effectiveCharacter.focus, hint: 'Accuracy / Control', icon: 'focus' },
     ];
+    const projectedStatOptions = statOptions.map(s => ({
+        ...s,
+        value: s.value + (pendingAllocations[s.key as StatKey] || 0),
+    }));
     const itemStatMeta: Record<keyof ItemStats, { label: string; icon: StatIconType }> = {
         strength: { label: 'STR', icon: 'strength' },
         vitality: { label: 'VIT', icon: 'vitality' },
@@ -171,25 +175,29 @@ const Arena = () => {
 
     const handleCloseLevelUp = async () => {
         const entries = Object.entries(pendingAllocations) as [StatKey, number][];
-        for (const [stat, count] of entries) {
-            for (let i = 0; i < count; i++) {
-                try {
-                    await allocateStatPoint(stat);
-                } catch (error: any) {
-                    openModal(error.message || connectionMessage);
-                    setPendingAllocations({});
-                    return;
-                }
-            }
+        if (entries.length === 0) {
+            setShowLevelUp(false);
+            clearXpNotifications();
+            setDeferLevelUp(projectedStatPoints > 0);
+            return;
         }
+
+        if (isOfflineMode) {
+            openModal('Connect to save stat points.');
+            return;
+        }
+
+        try {
+            await saveStatAllocations(pendingAllocations);
+        } catch (error: any) {
+            openModal(error.message || connectionMessage);
+            return;
+        }
+
         setPendingAllocations({});
         setShowLevelUp(false);
         clearXpNotifications();
-        if (projectedStatPoints === 0) {
-            setDeferLevelUp(false);
-        } else {
-            setDeferLevelUp(true);
-        }
+        setDeferLevelUp(projectedStatPoints > 0);
     };
 
     const handleDeferLevelUp = () => {
@@ -371,7 +379,7 @@ const Arena = () => {
                 lastLevelUp={lastLevelUp}
                 pendingStatPoints={projectedStatPoints}
                 isOfflineMode={isOfflineMode}
-                statOptions={statOptions}
+                statOptions={projectedStatOptions}
                 hasLevelInfo={hasLevelInfo}
                 handleAllocateStat={handleAllocateStat}
                 handleCloseLevelUp={handleCloseLevelUp}
