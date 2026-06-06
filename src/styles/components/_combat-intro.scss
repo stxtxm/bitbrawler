@@ -306,3 +306,127 @@
         opacity: 1;
     }
 }
+
+// ============================================
+// VS Splash
+// ============================================
+
+.combat-vs {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    padding: 2rem;
+    min-height: 380px;
+    animation: vsFadeIn 0.4s ease both;
+}
+
+.vs-fighter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.vs-fighter .pixel-character {
+    width: 96px;
+    height: 144px;
+}
+
+.vs-fighter.vs-left {
+    animation: vsSlideLeft 0.5s cubic-bezier(0.3, 1.4, 0.4, 1) both;
+}
+
+.vs-fighter.vs-right {
+    animation: vsSlideRight 0.5s cubic-bezier(0.3, 1.4, 0.4, 1) both;
+}
+
+.vs-fighter-name {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.8rem;
+    color: #fff;
+    text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+.vs-fighter-lvl {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.55rem;
+    color: #4ecdc4;
+}
+
+.vs-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vs-text {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 3rem;
+    font-weight: bold;
+    color: #ffd700;
+    text-shadow:
+        0 0 20px rgba(255, 215, 0, 0.6),
+        0 0 40px rgba(255, 215, 0, 0.3),
+        2px 2px 0 #b8860b;
+    animation: vsPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes vsFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes vsSlideLeft {
+    from {
+        transform: translateX(-60px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes vsSlideRight {
+    from {
+        transform: translateX(60px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes vsPulse {
+    0%, 100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+    50% {
+        transform: scale(1.08);
+        filter: brightness(1.2);
+    }
+}
+
+@media (max-width: 520px) {
+    .combat-vs {
+        gap: 0.8rem;
+        padding: 1rem;
+        min-height: 300px;
+    }
+
+    .vs-fighter .pixel-character {
+        width: 64px;
+        height: 96px;
+    }
+
+    .vs-text {
+        font-size: 2rem;
+    }
+
+    .vs-fighter-name {
+        font-size: 0.6rem;
+    }
+}

@@ -7,6 +7,21 @@ import { getMatchDifficultyLabel } from '../utils/matchmakingUtils';
 import { parseCombatDetail, CombatAction, CombatActionType } from '../utils/combatLogUtils';
 import { calculateFightXp } from '../utils/xpUtils';
 
+function extractDamage(detail: string): number | null {
+    const match = detail.match(/(\d+)\s*DMG/);
+    return match ? parseInt(match[1], 10) : null;
+}
+
+function extractActionColor(detail: string): string {
+    const lower = detail.toLowerCase();
+    if (lower.includes('crit')) return 'crit';
+    if (lower.includes('magic')) return 'magic';
+    if (lower.includes('counter')) return 'counter';
+    if (lower.includes('miss')) return 'miss';
+    if (lower.includes('hit')) return 'hit';
+    return '';
+}
+
 interface CombatViewProps {
     player: Character;
     opponent: Character;
@@ -17,7 +32,7 @@ interface CombatViewProps {
 }
 
 export const CombatView = ({ player, opponent, matchType, onComplete, onClose, candidates = [] }: CombatViewProps) => {
-    const [phase, setPhase] = useState<'intro' | 'combat' | 'result'>('intro');
+    const [phase, setPhase] = useState<'intro' | 'vs' | 'combat' | 'result'>('intro');
     const [combatResult, setCombatResult] = useState<{
         winner: 'attacker' | 'defender' | 'draw';
         rounds: number;
@@ -27,9 +42,12 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
     const [currentRound, setCurrentRound] = useState(0);
     const logRef = useRef<HTMLDivElement | null>(null);
     const [actionPulse, setActionPulse] = useState<CombatAction | null>(null);
+    const [damageNumber, setDamageNumber] = useState<{ value: number; actor: 'player' | 'opponent' } | null>(null);
     const pulseTimeoutRef = useRef<number | null>(null);
+    const damageTimeoutRef = useRef<number | null>(null);
     const [scanIndex, setScanIndex] = useState(0);
     const [scanLocked, setScanLocked] = useState(false);
+    const [fighterEntrance, setFighterEntrance] = useState(false);
     const actionDurations: Record<CombatActionType, number> = {
         hit: 380,
         crit: 560,
@@ -53,18 +71,30 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
 
     const selectedKey = opponent.id || opponent.name;
 
+    // Intro → VS
     useEffect(() => {
-        // Intro phase: 2 seconds
+        if (phase !== 'intro') return;
         const introTimer = setTimeout(() => {
-            setPhase('combat');
-            // Run the simulation
             const result = simulateCombat(player, opponent);
             setCombatResult(result);
+            setPhase('vs');
         }, 2000);
-
         return () => clearTimeout(introTimer);
-    }, [player, opponent]);
+    }, [phase, player, opponent]);
 
+    // VS → Combat (with fighter entrance)
+    useEffect(() => {
+        if (phase !== 'vs') return;
+        const vsTimer = setTimeout(() => {
+            setFighterEntrance(true);
+            setTimeout(() => {
+                setPhase('combat');
+            }, 500);
+        }, 900);
+        return () => clearTimeout(vsTimer);
+    }, [phase]);
+
+    // Scanning animation
     useEffect(() => {
         if (phase !== 'intro') return;
         if (scanList.length <= 1) {
@@ -98,9 +128,9 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
         };
     }, [phase, scanList, selectedKey]);
 
+    // Combat round playback
     useEffect(() => {
         if (phase === 'combat' && combatResult) {
-            // Animate through rounds
             let roundIndex = 0;
             const roundInterval = setInterval(() => {
                 if (roundIndex < combatResult.details.length) {
@@ -117,25 +147,41 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
                             setActionPulse(null);
                             pulseTimeoutRef.current = null;
                         }, duration);
+
+                        // Show floating damage number
+                        const dmg = extractDamage(detail);
+                        if (dmg !== null) {
+                            const receiver = action.actor === 'player' ? 'opponent' : 'player';
+                            setDamageNumber({ value: dmg, actor: receiver });
+                            if (damageTimeoutRef.current !== null) {
+                                window.clearTimeout(damageTimeoutRef.current);
+                            }
+                            damageTimeoutRef.current = window.setTimeout(() => {
+                                setDamageNumber(null);
+                                damageTimeoutRef.current = null;
+                            }, 900);
+                        }
                     }
                     roundIndex++;
                 } else {
                     clearInterval(roundInterval);
-                    // Show result after combat animation
                     setTimeout(() => {
                         setPhase('result');
                     }, 1200);
                 }
-            }, 520); // Slightly slower for readability
+            }, 520);
 
             return () => clearInterval(roundInterval);
         }
-    }, [phase, combatResult]);
+    }, [phase, combatResult, player.name, opponent.name]);
 
     useEffect(() => {
         return () => {
             if (pulseTimeoutRef.current !== null) {
                 window.clearTimeout(pulseTimeoutRef.current);
+            }
+            if (damageTimeoutRef.current !== null) {
+                window.clearTimeout(damageTimeoutRef.current);
             }
         };
     }, []);
@@ -143,6 +189,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
     useEffect(() => {
         if (phase !== 'combat') {
             setActionPulse(null);
+            setDamageNumber(null);
         }
     }, [phase]);
 
@@ -167,8 +214,12 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
 
     const won = combatResult?.winner === 'attacker';
     const draw = combatResult?.winner === 'draw';
+    const totalRounds = combatResult?.details.length ?? 0;
+    const isLastRound = currentRound >= totalRounds - 1;
 
-    // Compute XP once per combat result using the real formula so display and reward match
+    // Detect which side was hit for screen flash
+    const hitSide = actionPulse && actionPulse.type !== 'miss' ? actionPulse.actor : null;
+
     const xpGained = useMemo(() => {
         if (!combatResult) return 0;
         return calculateFightXp(combatResult.winner === 'attacker', player.level, opponent.level);
@@ -223,20 +274,56 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
                     </div>
                 )}
 
+                {/* VS Splash Phase */}
+                {phase === 'vs' && (
+                    <div className="combat-vs">
+                        <div className="vs-fighter vs-left">
+                            <PixelCharacter seed={player.seed} gender={player.gender} scale={8} />
+                            <div className="vs-fighter-name">{player.name}</div>
+                            <div className="vs-fighter-lvl">LVL {player.level}</div>
+                        </div>
+                        <div className="vs-center">
+                            <div className="vs-text">VS</div>
+                        </div>
+                        <div className="vs-fighter vs-right">
+                            <PixelCharacter seed={opponent.seed} gender={opponent.gender} scale={8} />
+                            <div className="vs-fighter-name">{opponent.name}</div>
+                            <div className="vs-fighter-lvl">LVL {opponent.level}</div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Combat Phase */}
                 {phase === 'combat' && combatResult && (
-                    <div className={`combat-action${actionPulse ? ` action-${actionPulse.type}` : ''}`}>
+                    <div className={`combat-action${actionPulse ? ` action-${actionPulse.type}` : ''}${hitSide ? ` hit-${hitSide}` : ''}${fighterEntrance ? ' fighters-entered' : ''}`}>
+                        {totalRounds > 0 && (
+                            <div className="round-counter">
+                                <span className="round-current">{currentRound + 1}</span>
+                                <span className="round-sep">/</span>
+                                <span className="round-total">{totalRounds}</span>
+                            </div>
+                        )}
+                        <div className="damage-numbers">
+                            {damageNumber && damageNumber.actor === 'player' && (
+                                <div className="dmg-num dmg-taken">-{damageNumber.value}</div>
+                            )}
+                            {damageNumber && damageNumber.actor === 'opponent' && (
+                                <div className="dmg-num dmg-dealt">-{damageNumber.value}</div>
+                            )}
+                        </div>
                         <div className="combat-fighters">
                             <div
-                                className={`fighter-side left${
+                                className={`fighter-side left${fighterEntrance ? ' enter-left' : ''}${
                                     actionPulse?.actor === 'player'
                                         ? ` action-${actionPulse.type}`
                                         : reactionType && actionPulse?.actor === 'opponent'
                                             ? ` react-${reactionType}`
                                             : ''
-                                }`}
+                                }${isLastRound && combatResult.winner === 'defender' && actionPulse?.actor === 'opponent' && actionPulse.type !== 'miss' ? ' dying' : ''}`}
                             >
-                                <PixelCharacter seed={player.seed} gender={player.gender} scale={6} />
+                                <div className="fighter-character-wrap">
+                                    <PixelCharacter seed={player.seed} gender={player.gender} scale={6} />
+                                </div>
                                 <div className="fighter-name-small">{player.name}</div>
                                 <div className="fighter-health">
                                     <div className="health-bar">
@@ -249,15 +336,17 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
                                 </div>
                             </div>
                             <div
-                                className={`fighter-side right${
+                                className={`fighter-side right${fighterEntrance ? ' enter-right' : ''}${
                                     actionPulse?.actor === 'opponent'
                                         ? ` action-${actionPulse.type}`
                                         : reactionType && actionPulse?.actor === 'player'
                                             ? ` react-${reactionType}`
                                             : ''
-                                }`}
+                                }${isLastRound && combatResult.winner === 'attacker' && actionPulse?.actor === 'player' && actionPulse.type !== 'miss' ? ' dying' : ''}`}
                             >
-                                <PixelCharacter seed={opponent.seed} gender={opponent.gender} scale={6} />
+                                <div className="fighter-character-wrap">
+                                    <PixelCharacter seed={opponent.seed} gender={opponent.gender} scale={6} />
+                                </div>
                                 <div className="fighter-name-small">{opponent.name}</div>
                                 <div className="fighter-health">
                                     <div className="health-bar">
@@ -274,7 +363,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
                             {combatResult.details.slice(0, currentRound + 1).map((detail, idx) => (
                                 <div
                                     key={idx}
-                                    className={`log-entry ${idx === currentRound ? 'active' : ''}`}
+                                    className={`log-entry ${idx === currentRound ? `active action-${extractActionColor(detail)}` : ''}`}
                                 >
                                     {detail}
                                 </div>

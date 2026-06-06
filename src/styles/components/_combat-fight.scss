@@ -579,3 +579,230 @@
     0%, 100% { transform: scaleX(1); filter: brightness(1); }
     50% { transform: scaleX(1.02); filter: brightness(1.2); }
 }
+
+// ============================================
+// Fighter Entrance Animation
+// ============================================
+
+.fighter-side.enter-left {
+    animation: fighterEnterLeft 0.5s cubic-bezier(0.3, 1.4, 0.4, 1) both;
+}
+
+.fighter-side.enter-right {
+    animation: fighterEnterRight 0.5s cubic-bezier(0.3, 1.4, 0.4, 1) both;
+}
+
+@keyframes fighterEnterLeft {
+    from {
+        transform: translateX(-80px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fighterEnterRight {
+    from {
+        transform: translateX(80px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+// ============================================
+// Dying / KO Animation
+// ============================================
+
+.fighter-side.dying {
+    animation: fighterDeath 0.8s ease forwards;
+    pointer-events: none;
+}
+
+.fighter-side.dying .pixel-character {
+    filter: grayscale(0.6) brightness(0.5);
+    transition: filter 0.8s ease;
+}
+
+@keyframes fighterDeath {
+    0% {
+        transform: translateY(0) scale(1) rotate(0deg);
+        opacity: 1;
+    }
+    30% {
+        transform: translateY(4px) scale(1.02) rotate(1deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(20px) scale(0.9) rotate(3deg);
+        opacity: 0.5;
+    }
+}
+
+// ============================================
+// Floating Damage Numbers
+// ============================================
+
+.damage-numbers {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.dmg-num {
+    position: absolute;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1.2rem;
+    font-weight: bold;
+    pointer-events: none;
+    z-index: 10;
+    animation: dmgFloat 0.9s ease-out forwards;
+}
+
+.dmg-dealt {
+    top: 18%;
+    right: 22%;
+    color: #ffd700;
+    text-shadow:
+        0 0 8px rgba(255, 215, 0, 0.5),
+        2px 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+.dmg-taken {
+    top: 18%;
+    left: 22%;
+    color: #ff6b6b;
+    text-shadow:
+        0 0 8px rgba(255, 107, 107, 0.5),
+        2px 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+@keyframes dmgFloat {
+    0% {
+        transform: translateY(0) scale(0.8);
+        opacity: 0;
+    }
+    15% {
+        transform: translateY(-4px) scale(1.1);
+        opacity: 1;
+    }
+    45% {
+        transform: translateY(-16px) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-32px) scale(0.9);
+        opacity: 0;
+    }
+}
+
+// ============================================
+// Round Counter
+// ============================================
+
+.round-counter {
+    position: absolute;
+    top: 0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 0.25rem 0.6rem;
+    border: 1px solid #4ecdc4;
+    border-radius: 3px;
+}
+
+.round-current {
+    color: #ffd700;
+    font-size: 0.65rem;
+}
+
+.round-sep {
+    color: #666;
+}
+
+.round-total {
+    color: #999;
+}
+
+// ============================================
+// Screen Flash Based on Hit Side
+// ============================================
+
+.combat-action.hit-player {
+    --hit-flash-color: rgba(255, 50, 50, 0.08);
+}
+
+.combat-action.hit-opponent {
+    --hit-flash-color: rgba(50, 255, 50, 0.08);
+}
+
+.combat-action.hit-player::before,
+.combat-action.hit-opponent::before {
+    background:
+        radial-gradient(circle at 50% 45%, var(--hit-flash-color, transparent) 0%, transparent 60%);
+    animation: hitFlash 0.4s ease;
+}
+
+@keyframes hitFlash {
+    0% { opacity: 0; }
+    30% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+// ============================================
+// Color-coded Log Entries
+// ============================================
+
+.log-entry.active.action-hit {
+    color: #ffe066;
+}
+
+.log-entry.active.action-crit {
+    color: #ffd700;
+    text-shadow: 0 0 6px rgba(255, 215, 0, 0.4);
+}
+
+.log-entry.active.action-magic {
+    color: #5eead4;
+    text-shadow: 0 0 6px rgba(94, 234, 212, 0.4);
+}
+
+.log-entry.active.action-miss {
+    color: #9aa0a6;
+}
+
+.log-entry.active.action-counter {
+    color: #ff6b6b;
+    text-shadow: 0 0 6px rgba(255, 107, 107, 0.4);
+}
+
+// Mobile adjustments
+@media (max-width: 520px) {
+    .dmg-num {
+        font-size: 0.9rem;
+    }
+
+    .dmg-dealt {
+        right: 10%;
+    }
+
+    .dmg-taken {
+        left: 10%;
+    }
+
+    .round-counter {
+        font-size: 0.4rem;
+        padding: 0.2rem 0.4rem;
+    }
+}
