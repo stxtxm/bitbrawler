@@ -5,6 +5,7 @@ import { Character } from '../types/Character'
 import { PixelCharacter } from '../components/PixelCharacter'
 import { useGame } from '../context/GameContext'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
+import { useFocusTrap } from '../hooks/useFocusTrap'
 import { convertFromSupabase } from '../utils/supabaseUtils'
 
 const Rankings = () => {
@@ -12,6 +13,8 @@ const Rankings = () => {
     const { dbAvailable, retryConnection } = useGame()
     const [characters, setCharacters] = useState<Character[]>([])
     const [loading, setLoading] = useState(true)
+    const [showResetModal, setShowResetModal] = useState(false)
+    const [resetStatus, setResetStatus] = useState<'confirm' | 'success' | 'error' | null>(null)
     const [loadError, setLoadError] = useState<string | null>(null)
     const isOnline = useOnlineStatus()
 
@@ -49,6 +52,52 @@ const Rankings = () => {
 
         fetchCharacters()
     }, [fetchCharacters, dbAvailable, isOnline])
+
+    // ALPHA TOOL: Reset Function
+    const handleAlphaResetClick = () => {
+        setResetStatus('confirm');
+        setShowResetModal(true);
+    }
+
+    const confirmReset = async () => {
+        setLoading(true);
+        try {
+            if (!isOnline || !dbAvailable) {
+                setLoading(false)
+                return
+            }
+
+            const { error } = await supabase
+                .from('characters')
+                .delete()
+                .neq('id', '00000000-0000-0000-0000-000000000000');
+
+            if (error) throw error;
+
+            setCharacters([]);
+            setResetStatus('success');
+            setTimeout(() => {
+                setShowResetModal(false);
+                setResetStatus(null);
+            }, 2000);
+        } catch (error) {
+            console.error("Error clearing database:", error);
+            setResetStatus('error');
+            setTimeout(() => {
+                setShowResetModal(false);
+                setResetStatus(null);
+            }, 2000);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const cancelReset = () => {
+        setShowResetModal(false);
+        setResetStatus(null);
+    }
+
+    const resetModalRef = useFocusTrap<HTMLDivElement>(showResetModal, resetStatus === 'confirm' ? cancelReset : undefined);
 
     return (
         <div className="container retro-container rankings-page">
@@ -138,7 +187,53 @@ const Rankings = () => {
                 <button className="button secondary" onClick={() => navigate('/')}>
                     BACK TO MENU
                 </button>
+                <button
+                    className="button alpha-reset-btn"
+                    onClick={handleAlphaResetClick}
+                    disabled={!isOnline || !dbAvailable}
+                >
+                    [ALPHA] RESET DB
+                </button>
             </div>
+
+            {showResetModal && (
+                <div className="retro-modal-overlay" role="dialog" aria-modal="true" aria-label={resetStatus === 'confirm' ? 'Confirm database reset' : resetStatus === 'success' ? 'Database reset successful' : 'Database reset error'} ref={resetModalRef}>
+                    <div className="retro-modal" style={{ borderColor: resetStatus === 'error' ? '#ff3333' : '#fff' }}>
+                        {resetStatus === 'confirm' && (
+                            <>
+                                <div className="modal-header" style={{ color: '#ff3333', textShadow: '2px 2px 0 #990000' }}>WARNING</div>
+                                <div className="modal-body">
+                                    <p>YOU ARE ABOUT TO DELETE ALL DATA.</p>
+                                    <h2 style={{ color: '#ff3333', textShadow: 'none' }}>CONFIRM RESET?</h2>
+                                    <p className="sub-text">THIS CANNOT BE UNDONE.</p>
+                                    <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '20px' }}>
+                                        <button className="button" style={{ borderColor: '#ff3333', color: '#ff3333' }} onClick={confirmReset}>DELETE ALL</button>
+                                        <button className="button secondary" onClick={cancelReset}>CANCEL</button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                        {resetStatus === 'success' && (
+                            <>
+                                <div className="modal-header">SUCCESS</div>
+                                <div className="modal-body">
+                                    <p>DATABASE CLEARED</p>
+                                    <h2 className="glitch-text">SYSTEM PURGED</h2>
+                                </div>
+                            </>
+                        )}
+                        {resetStatus === 'error' && (
+                            <>
+                                <div className="modal-header" style={{ color: '#ff3333' }}>ERROR</div>
+                                <div className="modal-body">
+                                    <p>OPERATION FAILED</p>
+                                    <p className="sub-text">CHECK PERMISSIONS</p>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

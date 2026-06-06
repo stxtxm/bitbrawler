@@ -23,7 +23,7 @@ import LevelUpOverlay from '../components/LevelUpOverlay';
 const Arena = () => {
     const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, saveStatAllocations, rollLootbox, setAutoMode, deleteCharacter, setCharacter } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
-    const { play } = useSound();
+    const { play, enabled, setEnabled } = useSound();
     const navigate = useNavigate();
     const isOnline = useOnlineStatus();
     const connectionMessage = 'Connect to battle and sync your progress.';
@@ -742,6 +742,27 @@ const Arena = () => {
                                             </button>
                                         </div>
                                         <div className="settings-hint">Switching off returns full manual control.</div>
+                                    </div>
+
+                                    <div className="settings-divider" />
+
+                                    <div className="settings-section">
+                                        <div className="settings-row">
+                                            <div className="settings-label">
+                                                <span>SOUND</span>
+                                                <span className="settings-sub">Toggle game audio effects.</span>
+                                            </div>
+                                            <button
+                                                className={`pixel-switch ${enabled ? 'on' : 'off'}`}
+                                                onClick={() => setEnabled(!enabled)}
+                                                role="switch"
+                                                aria-checked={enabled}
+                                                aria-label="Sound"
+                                            >
+                                                <span className="switch-knob" />
+                                                <span className="switch-text">{enabled ? 'ON' : 'OFF'}</span>
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <div className="settings-divider" />

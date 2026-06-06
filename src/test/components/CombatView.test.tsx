@@ -38,7 +38,7 @@ describe('CombatView Interface', () => {
         expect(screen.queryByText('Hero')).toBeNull();
     });
 
-    it('should transition to combat phase after intro', async () => {
+    it('should transition to combat phase after intro and vs splash', async () => {
         vi.useFakeTimers();
 
         render(
@@ -51,21 +51,9 @@ describe('CombatView Interface', () => {
             />
         );
 
-        // Intro is 2 seconds
-        act(() => {
-            vi.advanceTimersByTime(2500);
-        });
+        act(() => { vi.advanceTimersByTime(2500); });
+        act(() => { vi.advanceTimersByTime(2000); });
 
-        // Fight logic runs and we should see "Round 1" in logs eventually
-        // We know simulateCombat runs immediately after 2s
-        // Combat animation takes time (400ms per round)
-
-        // Wait for combat animation to start revealing logs
-        act(() => {
-            vi.advanceTimersByTime(1000);
-        });
-
-        // Check if logs container appears
         const logs = document.querySelector('.combat-log');
         expect(logs).toBeInTheDocument();
 
@@ -97,13 +85,9 @@ describe('CombatView Interface', () => {
             />
         );
 
-        act(() => {
-            vi.advanceTimersByTime(2500);
-        });
-
-        act(() => {
-            vi.advanceTimersByTime(600);
-        });
+        act(() => { vi.advanceTimersByTime(2500); });
+        act(() => { vi.advanceTimersByTime(1500); });
+        act(() => { vi.advanceTimersByTime(600); });
 
         const combatAction = container.querySelector('.combat-action.action-crit');
         expect(combatAction).not.toBeNull();
@@ -143,13 +127,9 @@ describe('CombatView Interface', () => {
             />
         );
 
-        act(() => {
-            vi.advanceTimersByTime(2500);
-        });
-
-        act(() => {
-            vi.advanceTimersByTime(600);
-        });
+        act(() => { vi.advanceTimersByTime(2500); });
+        act(() => { vi.advanceTimersByTime(1500); });
+        act(() => { vi.advanceTimersByTime(600); });
 
         const combatAction = container.querySelector('.combat-action.action-miss');
         expect(combatAction).not.toBeNull();
@@ -173,7 +153,6 @@ describe('CombatView Interface', () => {
             timeline: [{ attackerHp: 100, defenderHp: 90 }]
         });
 
-        // Mock calculateFightXp to return a deterministic value (it normally has random variance)
         vi.spyOn(xpUtils, 'calculateFightXp').mockReturnValue(132);
 
         render(
@@ -186,13 +165,9 @@ describe('CombatView Interface', () => {
             />
         );
 
-        act(() => {
-            vi.advanceTimersByTime(2500);
-        });
-
-        act(() => {
-            vi.advanceTimersByTime(3000);
-        });
+        act(() => { vi.advanceTimersByTime(2500); });
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(3000); });
 
         expect(screen.getByText('+132 XP')).toBeInTheDocument();
 
