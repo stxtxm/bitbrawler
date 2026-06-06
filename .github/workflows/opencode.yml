@@ -3,6 +3,8 @@ name: OpenCode Agent
 on:
   issues:
     types: [opened, edited]
+  pull_request_review:
+    types: [submitted]
   workflow_dispatch:
     inputs:
       issue_number:
@@ -20,6 +22,11 @@ jobs:
           contains(github.event.issue.body, '/oc') ||
           contains(github.event.issue.body, '/opencode')
         )
+      ) ||
+      (
+        github.event_name == 'pull_request_review' &&
+        github.event.review.state == 'changes_requested' &&
+        startsWith(github.event.pull_request.head.ref, 'feat/auto-')
       )
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -51,7 +58,27 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER_INPUT: ${{ github.event.inputs.issue_number }}
           ISSUE_NUMBER_EVENT: ${{ github.event.issue.number }}
+          PR_NUMBER_REVIEW: ${{ github.event.pull_request.number }}
         run: |
+          if [ "${{ github.event_name }}" = "pull_request_review" ]; then
+            # Triggered by a review requesting changes on a feat/auto- PR
+            PR_NUMBER="$PR_NUMBER_REVIEW"
+            PR_BODY=$(gh pr view "$PR_NUMBER" --json body --jq '.body // ""')
+            LINKED_ISSUE=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | head -1 | tr -d '#')
+            if [ -n "$LINKED_ISSUE" ]; then
+              ISSUE_NUMBER="$LINKED_ISSUE"
+              gh issue view "$ISSUE_NUMBER" --json body --jq '.body' > /tmp/prompt.txt 2>/dev/null || echo "" > /tmp/prompt.txt
+              gh issue view "$ISSUE_NUMBER" --json title --jq '.title' > /tmp/issue-title.txt 2>/dev/null || echo "Fix PR #$PR_NUMBER" > /tmp/issue-title.txt
+            else
+              ISSUE_NUMBER="$PR_NUMBER"
+              echo "" > /tmp/prompt.txt
+              echo "Fix PR #$PR_NUMBER" > /tmp/issue-title.txt
+            fi
+            echo "ISSUE_NUMBER=$ISSUE_NUMBER" >> "$GITHUB_ENV"
+            echo "Triggered by review on PR #$PR_NUMBER (linked issue: #$LINKED_ISSUE)"
+            exit 0
+          fi
+
           ISSUE_NUMBER="$ISSUE_NUMBER_EVENT"
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             ISSUE_NUMBER="$ISSUE_NUMBER_INPUT"
