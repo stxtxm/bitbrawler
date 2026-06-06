@@ -21,9 +21,6 @@ interface LevelUpOverlayProps {
     handleDeferLevelUp: () => void;
 }
 
-const AUTO_DISMISS_MS = 3_000;
-const OFFLINE_DISMISS_MS = 50; // Instant dismiss for QA bots / offline mode
-
 const LevelUpOverlay = ({
     shouldShowLevelUp,
     activeCharacter,
@@ -38,51 +35,19 @@ const LevelUpOverlay = ({
     handleCloseLevelUp,
     handleDeferLevelUp,
 }: LevelUpOverlayProps) => {
-    // Dismiss the overlay when clicking outside interactive elements.
-    // The overlay has `pointer-events: none` to let Playwright click through,
-    // so we catch clicks at the document level instead.
+    // Dismiss the overlay when clicking outside interactive elements
+    // (only when canCloseLevelUp — all stat points spent).
     useEffect(() => {
         if (!shouldShowLevelUp) return;
 
-        const handleDocumentClick = (e: MouseEvent) => {
-            // Don't dismiss if the click is on an interactive element inside the overlay
-            // (stat-add-btn, level-up-confirm, level-up-later have pointer-events: auto)
-            const target = e.target as HTMLElement;
-            const interactiveSelector = '.stat-add-btn, .level-up-confirm, .level-up-later';
-            if (target.closest(interactiveSelector)) {
-                return;
-            }
-
-            // Click passed through the overlay — dismiss it
-            if (canCloseLevelUp) {
-                handleCloseLevelUp();
-            } else {
-                handleDeferLevelUp();
-            }
+        const handleDocumentClick = () => {
+            if (!canCloseLevelUp) return;
+            handleCloseLevelUp();
         };
 
         document.addEventListener('click', handleDocumentClick);
         return () => document.removeEventListener('click', handleDocumentClick);
-    }, [shouldShowLevelUp, canCloseLevelUp, handleCloseLevelUp, handleDeferLevelUp]);
-
-    // Auto-dismiss the overlay as a fallback
-    useEffect(() => {
-        if (!shouldShowLevelUp) return;
-
-        // In offline/auto-mode, dismiss almost instantly so the QA bot
-        // does not get blocked by the overlay between fights
-        const delay = isOfflineMode ? OFFLINE_DISMISS_MS : AUTO_DISMISS_MS;
-
-        const timer = setTimeout(() => {
-            if (canCloseLevelUp) {
-                handleCloseLevelUp();
-            } else {
-                handleDeferLevelUp();
-            }
-        }, delay);
-
-        return () => clearTimeout(timer);
-    }, [shouldShowLevelUp, canCloseLevelUp, handleCloseLevelUp, handleDeferLevelUp, isOfflineMode]);
+    }, [shouldShowLevelUp, canCloseLevelUp, handleCloseLevelUp]);
 
     if (!shouldShowLevelUp) return null;
 
