@@ -7,140 +7,208 @@ export type SoundType =
   | 'victory' | 'defeat'
   | 'vs' | 'scan' | 'scanTick' | 'create';
 
-interface SoundConfig {
+interface Voice {
   type: OscillatorType;
-  frequencies: number[];
-  durations: number[];
-  delays?: number[];
+  freq: number;
   gain: number;
-  endGain?: number;
-  ramp?: 'linear' | 'expo';
-  noise?: { duration: number; volume: number };
-  altType?: OscillatorType;
-  altFrequencies?: number[];
-  altVolumes?: number[];
+  detune?: number;
+}
+
+interface ArpStep {
+  voice: number;
+  dur: number;
+  delay: number;
+}
+
+interface SoundConfig {
+  voices: Voice[];
+  arp?: ArpStep[];
+  decay: number;
+  gain: number;
+  noise?: { gain: number; dur: number };
+  reverb?: number;
+  pitchVar?: number;
 }
 
 const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
-  // ── UI (gain 0.25–0.35) ──
-  nav: {
-    type: 'triangle', frequencies: [550], durations: [40],
-    gain: 0.25, endGain: 0, ramp: 'expo',
-  },
   click: {
-    type: 'sine', frequencies: [660], durations: [25],
-    gain: 0.3, endGain: 0, ramp: 'expo',
+    voices: [{ type: 'sine', freq: 880, gain: 0.35 }],
+    decay: 20, gain: 1, reverb: 0,
   },
-
-  // ── COMBAT (gain 0.08–0.18 — lowered for headroom) ──
-  hit: {
-    type: 'triangle', frequencies: [75, 140], durations: [55, 35],
-    gain: 0.15, endGain: 0, ramp: 'expo',
-    noise: { duration: 0.03, volume: 0.08 },
-  },
-  crit: {
-    type: 'triangle', frequencies: [90, 180, 260], durations: [70, 45, 35],
-    gain: 0.18, endGain: 0, ramp: 'expo',
-    noise: { duration: 0.04, volume: 0.1 },
-    altType: 'sine', altFrequencies: [700, 1050], altVolumes: [0.05, 0.04],
-  },
-  magic: {
-    type: 'triangle', frequencies: [280, 440, 660], durations: [50, 40, 90],
-    gain: 0.12, endGain: 0, ramp: 'expo',
-    altType: 'sine', altFrequencies: [880], altVolumes: [0.03],
-  },
-  miss: {
-    type: 'sine', frequencies: [200], durations: [25],
-    gain: 0.08, endGain: 0, ramp: 'expo',
-    noise: { duration: 0.02, volume: 0.03 },
-  },
-  counter: {
-    type: 'triangle', frequencies: [440, 280], durations: [35, 45],
-    gain: 0.14, endGain: 0, ramp: 'expo',
-    noise: { duration: 0.02, volume: 0.06 },
-    altType: 'sine', altFrequencies: [980], altVolumes: [0.04],
-  },
-  vs: {
-    type: 'triangle', frequencies: [440, 554.37, 659.25, 880],
-    durations: [60, 60, 60, 200],
-    gain: 0.22, endGain: 0, ramp: 'expo',
-    noise: { duration: 0.05, volume: 0.08 },
-    altType: 'sine', altFrequencies: [110, 110, 110, 110],
-    altVolumes: [0.06, 0.06, 0.06, 0.06],
-  },
-  scan: {
-    type: 'triangle', frequencies: [1046.5, 1318.5, 1568],
-    durations: [40, 40, 200],
-    delays: [0, 40, 80],
-    gain: 0.25, endGain: 0, ramp: 'expo',
-    altType: 'sine', altFrequencies: [523.25, 659.25, 783.99],
-    altVolumes: [0.06, 0.06, 0.06],
-    noise: { duration: 0.06, volume: 0.1 },
+  nav: {
+    voices: [{ type: 'triangle', freq: 660, gain: 0.3 }],
+    decay: 35, gain: 1, reverb: 0,
   },
   scanTick: {
-    type: 'triangle', frequencies: [880],
-    durations: [18],
-    gain: 0.25, endGain: 0, ramp: 'expo',
+    voices: [{ type: 'triangle', freq: 1047, gain: 0.3 }],
+    decay: 15, gain: 1, reverb: 0,
   },
-
-  // ── GAME EVENTS (gain 0.2–0.28) ──
+  hit: {
+    voices: [
+      { type: 'triangle', freq: 80, gain: 0.35 },
+      { type: 'triangle', freq: 150, gain: 0.2 },
+    ],
+    decay: 55, gain: 0.7,
+    noise: { gain: 0.12, dur: 0.03 },
+    reverb: 0.15, pitchVar: 15,
+  },
+  crit: {
+    voices: [
+      { type: 'triangle', freq: 100, gain: 0.35 },
+      { type: 'triangle', freq: 200, gain: 0.25 },
+      { type: 'sine', freq: 800, gain: 0.08 },
+    ],
+    decay: 70, gain: 0.65,
+    noise: { gain: 0.15, dur: 0.04 },
+    reverb: 0.2, pitchVar: 10,
+  },
+  magic: {
+    voices: [
+      { type: 'triangle', freq: 300, gain: 0.25 },
+      { type: 'triangle', freq: 480, gain: 0.15 },
+      { type: 'sine', freq: 900, gain: 0.06 },
+    ],
+    decay: 90, gain: 0.65,
+    reverb: 0.35, pitchVar: 8,
+  },
+  miss: {
+    voices: [{ type: 'sine', freq: 220, gain: 0.15 }],
+    decay: 25, gain: 0.6,
+    noise: { gain: 0.04, dur: 0.02 },
+    reverb: 0.1, pitchVar: 20,
+  },
+  counter: {
+    voices: [
+      { type: 'triangle', freq: 440, gain: 0.2 },
+      { type: 'triangle', freq: 280, gain: 0.15 },
+      { type: 'sine', freq: 980, gain: 0.06 },
+    ],
+    decay: 45, gain: 0.7,
+    noise: { gain: 0.08, dur: 0.02 },
+    reverb: 0.15, pitchVar: 12,
+  },
+  vs: {
+    voices: [
+      { type: 'triangle', freq: 440, gain: 0.25 },
+      { type: 'triangle', freq: 554, gain: 0.2 },
+      { type: 'triangle', freq: 659, gain: 0.15 },
+      { type: 'triangle', freq: 880, gain: 0.12 },
+      { type: 'sine', freq: 110, gain: 0.1 },
+    ],
+    decay: 200, gain: 0.7,
+    noise: { gain: 0.1, dur: 0.05 },
+    reverb: 0.25,
+  },
+  scan: {
+    voices: [
+      { type: 'triangle', freq: 1047, gain: 0.25 },
+      { type: 'triangle', freq: 1319, gain: 0.2 },
+      { type: 'triangle', freq: 1568, gain: 0.15 },
+      { type: 'sine', freq: 523, gain: 0.08 },
+    ],
+    arp: [
+      { voice: 0, dur: 40, delay: 0 },
+      { voice: 1, dur: 40, delay: 40 },
+      { voice: 2, dur: 200, delay: 80 },
+    ],
+    decay: 220, gain: 0.65,
+    noise: { gain: 0.12, dur: 0.06 },
+    reverb: 0.2,
+  },
   levelup: {
-    type: 'triangle', frequencies: [523.25, 659.25, 783.99, 1046.5],
-    durations: [80, 80, 80, 250],
-    delays: [0, 80, 160, 240],
-    gain: 0.22, endGain: 0, ramp: 'expo',
+    voices: [{ type: 'triangle', freq: 523, gain: 0.25 }],
+    arp: [
+      { voice: 0, dur: 80, delay: 0 },
+      { voice: 0, dur: 80, delay: 80 },
+      { voice: 0, dur: 80, delay: 160 },
+      { voice: 0, dur: 250, delay: 240 },
+    ],
+    decay: 300, gain: 0.65,
+    reverb: 0.2,
   },
   lootbox: {
-    type: 'triangle', frequencies: [261.63, 329.63, 392, 523.25],
-    durations: [50, 50, 50, 150],
-    delays: [0, 50, 100, 150],
-    gain: 0.2, endGain: 0, ramp: 'expo',
-    noise: { duration: 0.04, volume: 0.06 },
+    voices: [
+      { type: 'triangle', freq: 262, gain: 0.2 },
+      { type: 'sine', freq: 65, gain: 0.08 },
+    ],
+    arp: [
+      { voice: 0, dur: 50, delay: 0 },
+      { voice: 0, dur: 50, delay: 50 },
+      { voice: 0, dur: 50, delay: 100 },
+      { voice: 0, dur: 150, delay: 150 },
+    ],
+    decay: 200, gain: 0.6,
+    noise: { gain: 0.08, dur: 0.04 },
+    reverb: 0.25,
   },
   loot: {
-    type: 'triangle', frequencies: [783.99, 1046.5, 1318.5],
-    durations: [60, 80, 180],
-    delays: [0, 50, 100],
-    gain: 0.22, endGain: 0, ramp: 'expo',
-    altType: 'sine', altFrequencies: [392, 523.25, 659.25],
-    altVolumes: [0.05, 0.05, 0.05],
+    voices: [
+      { type: 'triangle', freq: 784, gain: 0.2 },
+      { type: 'sine', freq: 392, gain: 0.08 },
+    ],
+    arp: [
+      { voice: 0, dur: 60, delay: 0 },
+      { voice: 0, dur: 80, delay: 50 },
+      { voice: 0, dur: 180, delay: 100 },
+    ],
+    decay: 250, gain: 0.65,
+    reverb: 0.2,
   },
   create: {
-    type: 'triangle', frequencies: [523.25, 659.25, 783.99, 1046.5, 1318.5],
-    durations: [60, 60, 60, 80, 250],
-    delays: [0, 50, 100, 150, 210],
-    gain: 0.22, endGain: 0, ramp: 'expo',
-    altType: 'sine', altFrequencies: [261.63, 329.63, 392, 523.25, 659.25],
-    altVolumes: [0.05, 0.05, 0.05, 0.05, 0.05],
+    voices: [
+      { type: 'triangle', freq: 523, gain: 0.2 },
+      { type: 'sine', freq: 262, gain: 0.08 },
+    ],
+    arp: [
+      { voice: 0, dur: 60, delay: 0 },
+      { voice: 0, dur: 60, delay: 50 },
+      { voice: 0, dur: 60, delay: 100 },
+      { voice: 0, dur: 80, delay: 150 },
+      { voice: 0, dur: 250, delay: 210 },
+    ],
+    decay: 300, gain: 0.65,
+    reverb: 0.2,
   },
   victory: {
-    type: 'triangle', frequencies: [523.25, 659.25, 783.99, 1046.5],
-    durations: [130, 130, 130, 380],
-    delays: [0, 120, 240, 360],
-    gain: 0.25, endGain: 0, ramp: 'expo',
-    altType: 'sine', altFrequencies: [130.81, 164.81, 196, 261.63],
-    altVolumes: [0.06, 0.06, 0.06, 0.06],
+    voices: [
+      { type: 'triangle', freq: 523, gain: 0.25 },
+      { type: 'sine', freq: 131, gain: 0.1 },
+    ],
+    arp: [
+      { voice: 0, dur: 130, delay: 0 },
+      { voice: 0, dur: 130, delay: 120 },
+      { voice: 0, dur: 130, delay: 240 },
+      { voice: 0, dur: 380, delay: 360 },
+    ],
+    decay: 500, gain: 0.7,
+    reverb: 0.3,
   },
   defeat: {
-    type: 'triangle', frequencies: [440, 349.23, 293.66, 220],
-    durations: [150, 150, 150, 400],
-    delays: [0, 140, 280, 420],
-    gain: 0.22, endGain: 0, ramp: 'expo',
+    voices: [{ type: 'triangle', freq: 440, gain: 0.25 }],
+    arp: [
+      { voice: 0, dur: 150, delay: 0 },
+      { voice: 0, dur: 150, delay: 140 },
+      { voice: 0, dur: 150, delay: 280 },
+      { voice: 0, dur: 400, delay: 420 },
+    ],
+    decay: 500, gain: 0.65,
+    reverb: 0.3,
   },
 };
 
-// ── Audio Engine ──
+// ── Engine ──
 const STORAGE_KEY = 'bitbrawler_sound';
 
 interface SoundSettings { enabled: boolean; volume: number; }
-
 const defaultSettings: SoundSettings = { enabled: true, volume: 0.5 };
 
 let settings: SoundSettings = { ...defaultSettings };
 let listeners: Array<(s: SoundSettings) => void> = [];
-let audioCtx: AudioContext | null = null;
-let masterGain: GainNode | null = null;
-let compressor: DynamicsCompressorNode | null = null;
+
+let ctx: AudioContext | null = null;
+let master: GainNode | null = null;
+let conv: ConvolverNode | null = null;
+let dryBus: GainNode | null = null;
 
 try {
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -158,139 +226,171 @@ function persistSettings() {
 }
 function notifyListeners() { listeners.forEach(fn => fn(settings)); }
 
-function getAudioContext(): AudioContext | null {
-  if (typeof AudioContext === 'undefined' && typeof (window as any).webkitAudioContext === 'undefined') return null;
-  const Ctor: typeof AudioContext = typeof AudioContext !== 'undefined' ? AudioContext : (window as any).webkitAudioContext;
-  if (!audioCtx || audioCtx.state === 'closed') {
-    audioCtx = new Ctor();
-    compressor = audioCtx.createDynamicsCompressor();
-    compressor.threshold.setValueAtTime(-18, audioCtx.currentTime);
-    compressor.knee.setValueAtTime(12, audioCtx.currentTime);
-    compressor.ratio.setValueAtTime(6, audioCtx.currentTime);
-    compressor.attack.setValueAtTime(0.003, audioCtx.currentTime);
-    compressor.release.setValueAtTime(0.15, audioCtx.currentTime);
-    masterGain = audioCtx.createGain();
-    masterGain.gain.setValueAtTime(settings.volume, audioCtx.currentTime);
-    compressor.connect(masterGain);
-    masterGain.connect(audioCtx.destination);
+function buildIR(buf: AudioBuffer) {
+  for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i = 0; i < d.length; i++) {
+      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
+    }
   }
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  return audioCtx;
 }
 
-function scheduleTone(
-  ctx: AudioContext, type: OscillatorType, freq: number,
-  durMs: number, vol: number, gain: number, delayMs: number,
-  endGain?: number, ramp?: 'linear' | 'expo',
+function init() {
+  if (ctx) return;
+  const Ctor = typeof AudioContext !== 'undefined' ? AudioContext : (window as any)?.webkitAudioContext;
+  if (!Ctor) return;
+  const c = new Ctor();
+  ctx = c;
+
+  const _comp = c.createDynamicsCompressor();
+  _comp.threshold.setValueAtTime(-18, c.currentTime);
+  _comp.knee.setValueAtTime(12, c.currentTime);
+  _comp.ratio.setValueAtTime(6, c.currentTime);
+  _comp.attack.setValueAtTime(0.003, c.currentTime);
+  _comp.release.setValueAtTime(0.15, c.currentTime);
+
+  const _master = c.createGain();
+  _master.gain.setValueAtTime(settings.volume, c.currentTime);
+  master = _master;
+
+  const _conv = c.createConvolver();
+  const ir = c.createBuffer(2, c.sampleRate * 0.35, c.sampleRate);
+  buildIR(ir);
+  _conv.buffer = ir;
+  conv = _conv;
+
+  const _reverb = c.createGain();
+  _reverb.gain.setValueAtTime(0.35, c.currentTime);
+
+  const _dry = c.createGain();
+  _dry.gain.setValueAtTime(1, c.currentTime);
+  dryBus = _dry;
+
+  _conv.connect(_reverb);
+  _reverb.connect(_comp);
+  _dry.connect(_comp);
+  _comp.connect(_master);
+  _master.connect(c.destination);
+}
+
+function voice(
+  vctx: AudioContext, type: OscillatorType, freq: number,
+  gain: number, detune: number, decay: number, delay: number, reverb: number,
 ) {
-  const osc = ctx.createOscillator();
-  const gainNode = ctx.createGain();
+  const t = vctx.currentTime + delay / 1000;
+  const dur = decay / 1000;
+
+  const osc = vctx.createOscillator();
   osc.type = type;
-  const t = ctx.currentTime + delayMs / 1000;
   osc.frequency.setValueAtTime(freq, t);
-  const g = vol * gain;
-  gainNode.gain.setValueAtTime(g, t);
-  const durSec = durMs / 1000;
-  if (endGain !== undefined) {
-    const gEnd = vol * endGain;
-    if (ramp === 'expo') gainNode.gain.exponentialRampToValueAtTime(Math.max(gEnd, 0.0001), t + durSec);
-    else gainNode.gain.linearRampToValueAtTime(gEnd, t + durSec);
+  if (detune) osc.detune.setValueAtTime(detune, t);
+
+  const env = vctx.createGain();
+  env.gain.setValueAtTime(gain, t);
+  env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+  osc.connect(env);
+
+  if (reverb > 0 && conv) {
+    const dry = vctx.createGain();
+    dry.gain.setValueAtTime(1 - reverb, t);
+    const wet = vctx.createGain();
+    wet.gain.setValueAtTime(reverb, t);
+    env.connect(dry);
+    env.connect(wet);
+    dry.connect(dryBus!);
+    wet.connect(conv);
+  } else {
+    env.connect(dryBus!);
   }
-  osc.connect(gainNode);
-  gainNode.connect(compressor!);
+
   osc.start(t);
-  osc.stop(t + durSec);
+  osc.stop(t + dur + 0.01);
 }
 
-function scheduleNoise(ctx: AudioContext, duration: number, volume: number, delayMs = 0) {
-  const sr = ctx.sampleRate;
-  const bufSize = Math.ceil(sr * duration);
-  const buf = ctx.createBuffer(1, bufSize, sr);
-  const data = buf.getChannelData(0);
-  for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+function noise(nctx: AudioContext, gain: number, dur: number) {
+  const sr = nctx.sampleRate;
+  const len = Math.ceil(sr * dur);
+  const buf = nctx.createBuffer(1, len, sr);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
 
-  const src = ctx.createBufferSource();
+  const src = nctx.createBufferSource();
   src.buffer = buf;
 
-  const gain = ctx.createGain();
-  const filter = ctx.createBiquadFilter();
+  const nGain = nctx.createGain();
+  nGain.gain.setValueAtTime(gain * 0.3, nctx.currentTime + 0.002);
+  nGain.gain.exponentialRampToValueAtTime(gain, nctx.currentTime + 0.006);
+  nGain.gain.exponentialRampToValueAtTime(0.001, nctx.currentTime + dur);
+
+  const filter = nctx.createBiquadFilter();
   filter.type = 'lowpass';
-  const t = ctx.currentTime + delayMs / 1000;
-  filter.frequency.setValueAtTime(4000, t);
-  filter.frequency.exponentialRampToValueAtTime(300, t + duration);
-  gain.gain.setValueAtTime(volume * 0.3, t + 0.002);
-  gain.gain.exponentialRampToValueAtTime(volume, t + 0.006);
-  gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+  filter.frequency.setValueAtTime(4000, nctx.currentTime);
+  filter.frequency.exponentialRampToValueAtTime(300, nctx.currentTime + dur);
 
   src.connect(filter);
-  filter.connect(gain);
-  gain.connect(compressor!);
-  src.start(t);
+  filter.connect(nGain);
+  nGain.connect(dryBus!);
+  src.start();
 }
 
-export function playSound(sound: SoundType) {
+export function playSound(type: SoundType) {
   if (!settings.enabled || settings.volume <= 0) return;
-  const ctx = getAudioContext();
+  init();
   if (!ctx) return;
+  if (ctx.state === 'suspended') ctx.resume();
 
-  const def = SOUND_DEFINITIONS[sound];
+  const def = SOUND_DEFINITIONS[type];
+  const actx = ctx;
 
-  // Primary layer
-  for (let i = 0; i < def.frequencies.length; i++) {
-    const delay = def.delays?.[i] ?? 0;
-    scheduleTone(
-      ctx, def.type, def.frequencies[i], def.durations[i], 1,
-      def.gain, delay,
-      i === def.frequencies.length - 1 ? def.endGain : undefined,
-      i === def.frequencies.length - 1 ? def.ramp : undefined,
-    );
-  }
+  const playAt = (voiceIdx: number, decay: number, delay: number) => {
+    const v = def.voices[voiceIdx];
+    const detune = (v.detune ?? 0) + (def.pitchVar ? (Math.random() - 0.5) * 2 * def.pitchVar : 0);
+    voice(actx, v.type, v.freq, v.gain * def.gain, detune, decay, delay, def.reverb ?? 0);
+  };
 
-  // Secondary oscillator layer
-  if (def.altType && def.altFrequencies) {
-    const altVolumes = def.altVolumes ?? def.altFrequencies.map(() => 0.1);
-    for (let i = 0; i < def.altFrequencies.length; i++) {
-      const delay = def.delays?.[i] ?? 0;
-      scheduleTone(ctx, def.altType, def.altFrequencies[i], def.durations[i] ?? 60, 1, altVolumes[i] ?? 0.1, delay);
+  if (def.arp) {
+    for (const step of def.arp) {
+      playAt(step.voice, step.dur, step.delay);
+    }
+  } else {
+    for (let i = 0; i < def.voices.length; i++) {
+      playAt(i, def.decay, 0);
     }
   }
 
-  // Noise burst
   if (def.noise) {
-    scheduleNoise(ctx, def.noise.duration, def.noise.volume);
+    noise(ctx, def.noise.gain * def.gain, def.noise.dur);
   }
 }
 
-export function setSoundEnabled(enabled: boolean) { settings = { ...settings, enabled }; persistSettings(); notifyListeners(); }
-export function setSoundVolume(volume: number) {
-  settings = { ...settings, volume };
+export function setSoundEnabled(v: boolean) { settings = { ...settings, enabled: v }; persistSettings(); notifyListeners(); }
+export function setSoundVolume(v: number) {
+  settings = { ...settings, volume: v };
   persistSettings();
   notifyListeners();
-  if (masterGain && audioCtx) {
-    masterGain.gain.setValueAtTime(volume, audioCtx.currentTime);
-  }
+  if (master && ctx) master.gain.setValueAtTime(v, ctx.currentTime);
 }
 export function getSoundSettings(): SoundSettings { return { ...settings }; }
 
-// ── React Hook ──
+// ── Hook ──
 function readSettings(): SoundSettings {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || { ...defaultSettings }; } catch { return { ...defaultSettings }; }
 }
 
 export function useSound() {
   const [state, setState] = useState<SoundSettings>(readSettings);
-
   useEffect(() => {
     const fn = (s: SoundSettings) => setState({ ...s });
     listeners.push(fn);
     return () => { listeners = listeners.filter(f => f !== fn); };
   }, []);
-
-  const play = useCallback((sound: SoundType) => playSound(sound), []);
-  const setEnabled = useCallback((v: boolean) => setSoundEnabled(v), []);
-  const setVolume = useCallback((v: number) => setSoundVolume(v), []);
-
-  return { play, enabled: state.enabled, volume: state.volume, setEnabled, setVolume };
+  return {
+    play: useCallback((s: SoundType) => playSound(s), []),
+    enabled: state.enabled, volume: state.volume,
+    setEnabled: useCallback((v: boolean) => setSoundEnabled(v), []),
+    setVolume: useCallback((v: number) => setSoundVolume(v), []),
+  };
 }
 
 // ── Global click gate ──
@@ -300,8 +400,7 @@ function handleClickGate(e: MouseEvent) {
   const el = e.target as HTMLElement;
   const btn = el.closest('button, a.button, [role="button"], [data-click-sound]') as HTMLElement | null;
   if (!btn) return;
-  const sound = btn.getAttribute('data-click-sound') || 'click';
-  playSound(sound as SoundType);
+  playSound((btn.getAttribute('data-click-sound') || 'click') as SoundType);
 }
 
 export function initClickSound() {
