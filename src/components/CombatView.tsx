@@ -6,6 +6,7 @@ import { simulateCombat } from '../utils/combatUtils';
 import { getMatchDifficultyLabel } from '../utils/matchmakingUtils';
 import { parseCombatDetail, CombatAction, CombatActionType } from '../utils/combatLogUtils';
 import { calculateFightXp } from '../utils/xpUtils';
+import { playSound } from '../utils/audioUtils';
 
 function extractDamage(detail: string): number | null {
     const match = detail.match(/(\d+)\s*DMG/);
@@ -175,6 +176,13 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
         }
     }, [phase, combatResult, player.name, opponent.name]);
 
+    // Play sound on each action pulse
+    useEffect(() => {
+        if (actionPulse) {
+            playSound(actionPulse.type);
+        }
+    }, [actionPulse]);
+
     useEffect(() => {
         return () => {
             if (pulseTimeoutRef.current !== null) {
@@ -292,14 +300,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
 
                 {/* Combat Phase */}
                 {phase === 'combat' && combatResult && (
-                    <div className={`combat-action${actionPulse ? ` action-${actionPulse.type}` : ''}${fighterEntrance ? ' fighters-entered' : ''}`}>
-                        {totalRounds > 0 && (
-                            <div className="round-counter">
-                                <span className="round-current">{currentRound + 1}</span>
-                                <span className="round-sep">/</span>
-                                <span className="round-total">{totalRounds}</span>
-                            </div>
-                        )}
+                    <div className={`combat-action${actionPulse ? ` action-${actionPulse.type}` : ''}`}>
                         <div className="damage-numbers">
                             {damageNumber && damageNumber.actor === 'player' && (
                                 <div className="dmg-num dmg-taken">-{damageNumber.value}</div>

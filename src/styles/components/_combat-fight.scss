@@ -593,28 +593,72 @@
 // ============================================
 
 .fighter-side.dying {
-    animation: fighterDeath 0.8s ease forwards;
+    animation: fighterDeath 1s ease forwards;
     pointer-events: none;
 }
 
 .fighter-side.dying .pixel-character {
-    filter: grayscale(0.6) brightness(0.5);
-    transition: filter 0.8s ease;
+    filter: grayscale(0.8) brightness(0.35);
+    animation: deathDesaturate 1s ease forwards;
+}
+
+.fighter-side.dying .pixel-character::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, transparent 0%, #111 100%);
+    opacity: 0;
+    animation: deathVignette 0.8s ease 0.2s forwards;
+}
+
+// Pixel shatter overlay
+.fighter-side.dying::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 3px,
+            rgba(0, 0, 0, 0.08) 3px,
+            rgba(0, 0, 0, 0.08) 4px
+        ),
+        repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 3px,
+            rgba(0, 0, 0, 0.08) 3px,
+            rgba(0, 0, 0, 0.08) 4px
+        );
+    opacity: 0;
+    z-index: 5;
+    animation: deathShatter 1s ease forwards;
 }
 
 @keyframes fighterDeath {
-    0% {
-        transform: translateY(0) scale(1) rotate(0deg);
-        opacity: 1;
-    }
-    30% {
-        transform: translateY(4px) scale(1.02) rotate(1deg);
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(20px) scale(0.9) rotate(3deg);
-        opacity: 0.5;
-    }
+    0% { transform: scale(1) rotate(0deg); opacity: 1; }
+    20% { transform: scale(1.02) rotate(-1deg); opacity: 1; }
+    40% { transform: scale(0.95) rotate(1deg); opacity: 0.9; }
+    70% { transform: scale(0.85) rotate(-0.5deg); opacity: 0.7; }
+    100% { transform: scale(0.75) rotate(0deg); opacity: 0.4; }
+}
+
+@keyframes deathDesaturate {
+    0% { filter: grayscale(0) brightness(1); }
+    30% { filter: grayscale(0.3) brightness(0.7); }
+    100% { filter: grayscale(0.8) brightness(0.35); }
+}
+
+@keyframes deathVignette {
+    0% { opacity: 0; }
+    100% { opacity: 0.6; }
+}
+
+@keyframes deathShatter {
+    0% { opacity: 0; }
+    40% { opacity: 0.4; }
+    100% { opacity: 0; }
 }
 
 // ============================================
@@ -673,40 +717,6 @@
         transform: translateY(-32px) scale(0.9);
         opacity: 0;
     }
-}
-
-// ============================================
-// Round Counter
-// ============================================
-
-.round-counter {
-    position: absolute;
-    top: 0.5rem;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 5;
-    font-family: 'Press Start 2P', monospace;
-    font-size: clamp(0.4rem, 1.5vw, 0.5rem);
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-    background: rgba(0, 0, 0, 0.6);
-    padding: 0.25rem 0.6rem;
-    border: 1px solid #4ecdc4;
-    border-radius: 3px;
-}
-
-.round-current {
-    color: #ffd700;
-    font-size: clamp(0.5rem, 2vw, 0.65rem);
-}
-
-.round-sep {
-    color: #666;
-}
-
-.round-total {
-    color: #999;
 }
 
 // ============================================
