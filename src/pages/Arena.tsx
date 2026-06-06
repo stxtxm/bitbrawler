@@ -87,7 +87,7 @@ const Arena = () => {
 
         const updated = autoAllocateStatPoints(activeCharacter, points);
         setCharacter(updated);
-    }, [activeCharacter?.autoMode, activeCharacter?.statPoints, activeCharacter, setCharacter]);
+    }, [activeCharacter?.autoMode, activeCharacter?.statPoints, setCharacter]);
 
     if (!activeCharacter) {
         return <Navigate to="/" replace />;
@@ -103,7 +103,7 @@ const Arena = () => {
     const pendingStatPoints = activeCharacter.statPoints || 0;
     const totalPendingAlloc = Object.values(pendingAllocations).reduce((a, b) => a + b, 0);
     const projectedStatPoints = pendingStatPoints - totalPendingAlloc;
-    const shouldShowLevelUp = showLevelUp || (projectedStatPoints > 0 && !deferLevelUp);
+    const shouldShowLevelUp = showLevelUp || (pendingStatPoints > 0 && !deferLevelUp);
     const hasLevelInfo = lastLevelUp !== null;
     const inventory = activeCharacter.inventory || [];
     const inventoryCapacity = INVENTORY_CAPACITY;
@@ -473,7 +473,7 @@ const Arena = () => {
                                 </div>
                             ))}
                         </div>
-                        {projectedStatPoints > 0 && (
+                        {pendingStatPoints > 0 && (
                             <button
                                 className="button secondary-btn stat-allocate-btn"
                                 onClick={handleOpenLevelUp}
