@@ -1,6 +1,6 @@
 export type ItemSlot = 'weapon' | 'armor' | 'accessory';
 
-export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic';
+export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 
 export interface ItemStats {
   strength?: number;

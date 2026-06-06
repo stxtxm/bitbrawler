@@ -6,6 +6,7 @@ export const LOOTBOX_RARITY_WEIGHTS: Record<ItemRarity, number> = {
   uncommon: 0.20,
   rare: 0.15,
   epic: 0.10,
+  legendary: 0,
 };
 
 export interface StreakBonus {
@@ -38,6 +39,7 @@ export const RARITY_RANK: Record<ItemRarity, number> = {
   uncommon: 1,
   rare: 2,
   epic: 3,
+  legendary: 4,
 };
 
 /**
@@ -78,13 +80,13 @@ export function computeNextStreak(
 
 export const getLootboxRarityWeights = (level: number): Record<ItemRarity, number> => {
   if (level >= 10) {
-    return { common: 0.42, uncommon: 0.28, rare: 0.18, epic: 0.12 };
+    return { common: 0.38, uncommon: 0.25, rare: 0.18, epic: 0.14, legendary: 0.05 };
   }
   if (level >= 7) {
-    return { common: 0.48, uncommon: 0.27, rare: 0.16, epic: 0.09 };
+    return { common: 0.44, uncommon: 0.25, rare: 0.17, epic: 0.12, legendary: 0.02 };
   }
   if (level >= 4) {
-    return { common: 0.53, uncommon: 0.24, rare: 0.15, epic: 0.08 };
+    return { common: 0.53, uncommon: 0.24, rare: 0.15, epic: 0.08, legendary: 0 };
   }
   return { ...LOOTBOX_RARITY_WEIGHTS };
 };
@@ -170,7 +172,7 @@ function rollSingle(
   rng: () => number,
   minRarity: ItemRarity | null
 ): PixelItemAsset | null {
-  const rarities: ItemRarity[] = ['common', 'uncommon', 'rare', 'epic'];
+  const rarities: ItemRarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
 
   // Filter by minimum rarity if set
   const availableRarities = minRarity
@@ -184,7 +186,8 @@ function rollSingle(
     common: [],
     uncommon: [],
     rare: [],
-    epic: []
+    epic: [],
+    legendary: []
   });
 
   const availableWithItems = availableRarities.filter((rarity) => itemsByRarity[rarity].length > 0);
