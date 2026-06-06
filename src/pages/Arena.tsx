@@ -13,22 +13,11 @@ import { CombatView } from '../components/CombatView';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
 import { applyEquipmentToCharacter, getEquipmentBonuses, getItemById } from '../utils/equipmentUtils';
 import { canRollLootbox } from '../utils/lootboxUtils';
+import { SettingsLogEntry, formatSettingsLogDate } from '../utils/arenaUtils';
 import StreakIndicator from '../components/StreakIndicator';
 import { INVENTORY_CAPACITY } from '../utils/persistenceUtils';
 import { ItemStats, PixelItemAsset } from '../types/Item';
 import LevelUpOverlay from '../components/LevelUpOverlay';
-
-type SettingsLogEntry = {
-    date: number;
-    won: boolean;
-    direction: 'outgoing' | 'incoming';
-    displayName: string;
-};
-
-const formatSettingsLogDate = (timestamp: number) => {
-    const date = new Date(timestamp);
-    return `${date.toLocaleDateString()} ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-};
 
 const Arena = () => {
     const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, saveStatAllocations, rollLootbox, setAutoMode, deleteCharacter, setCharacter } = useGame();
@@ -375,7 +364,6 @@ const Arena = () => {
             <LevelUpOverlay
                 shouldShowLevelUp={shouldShowLevelUp}
                 activeCharacter={activeCharacter}
-                effectiveCharacter={effectiveCharacter}
                 lastLevelUp={lastLevelUp}
                 pendingStatPoints={projectedStatPoints}
                 isOfflineMode={isOfflineMode}

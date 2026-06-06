@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { PixelCharacter } from '../components/PixelCharacter'
 import { Character } from '../types/Character'
-import { supabase, CharacterRow } from '../config/supabase'
+import { supabase } from '../config/supabase'
 import { useGame } from '../context/GameContext'
 import { useConnectionGate } from '../hooks/useConnectionGate'
 import { useFocusTrap } from '../hooks/useFocusTrap'
@@ -11,39 +11,7 @@ import { generateInitialStats, generateCharacterName } from '../utils/characterU
 import { PixelIcon } from '../components/PixelIcon'
 import { prefetchArena } from '../routes/lazyPages'
 import { STAT_TOOLTIPS } from '../utils/statUtils'
-
-// Conversion function for character creation
-const convertToSupabase = (character: Character): Partial<CharacterRow> => {
-  return {
-    name: character.name,
-    gender: character.gender as 'male' | 'female',
-    seed: character.seed,
-    level: character.level,
-    hp: character.hp,
-    max_hp: character.maxHp,
-    strength: character.strength,
-    vitality: character.vitality,
-    dexterity: character.dexterity,
-    luck: character.luck,
-    intelligence: character.intelligence,
-    focus: character.focus ?? 10,
-    experience: character.experience ?? 0,
-    wins: character.wins ?? 0,
-    losses: character.losses ?? 0,
-    fights_left: character.fightsLeft ?? 5,
-    last_fight_reset: character.lastFightReset ?? Date.now(),
-    fight_history: character.fightHistory ?? [],
-    fought_today: character.foughtToday ?? [],
-    stat_points: character.statPoints ?? 0,
-    pending_fight: character.pendingFight ?? null,
-    inventory: character.inventory ?? [],
-    last_loot_roll: character.lastLootRoll ?? 0,
-    lootbox_streak: character.lootboxStreak ?? 0,
-    incoming_fight_history: character.incomingFightHistory ?? [],
-    is_bot: typeof character.isBot === 'boolean' ? character.isBot : false,
-    auto_mode: character.autoMode ?? false
-  };
-};
+import { convertToSupabase } from '../utils/supabaseUtils'
 
 const CharacterCreation = () => {
   const navigate = useNavigate()

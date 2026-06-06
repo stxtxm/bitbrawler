@@ -7,7 +7,6 @@ type StatIconType = 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligen
 interface LevelUpOverlayProps {
     shouldShowLevelUp: boolean;
     activeCharacter: Character;
-    effectiveCharacter: Character;
     lastLevelUp: { levelsGained: number; newLevel: number; hpGained: number } | null;
     pendingStatPoints: number;
     isOfflineMode: boolean;
@@ -73,7 +72,7 @@ const LevelUpOverlay = ({
                 </div>
                 <div className="level-up-stats">
                     {statOptions.map((stat) => (
-                        <div key={stat.key} className="level-up-stat-row" title={`${stat.label}: ${STAT_TOOLTIPS[stat.key as StatKey]}`}>
+                        <div key={stat.key} className="level-up-stat-row" title={`${stat.label}: ${STAT_TOOLTIPS[stat.key]}`}>
                             <span className="stat-icon">
                                 <PixelIcon type={stat.icon} size={12} />
                             </span>
@@ -82,7 +81,7 @@ const LevelUpOverlay = ({
                             <span className="stat-hint">{stat.hint}</span>
                             <button
                                 className="button stat-add-btn"
-                                onClick={() => handleAllocateStat(stat.key as StatKey)}
+                                onClick={() => handleAllocateStat(stat.key)}
                                 disabled={pendingStatPoints <= 0 || isOfflineMode}
                                 aria-label={`Increase ${stat.label}`}
                             >
