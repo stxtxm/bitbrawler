@@ -21,11 +21,13 @@ Tu exécutes une revue de code **rigoureuse** sur les PRs:
 
 ## ✅ Checklist de review
 
-### 1. **Tests** (🔴 critique)
+### 1. **Tests — TDD Compliance** (🔴 critique)
+- Les tests ont-ils été écrits AVANT le code ? (vérifier l'ordre des commits)
 - Les nouveaux fichiers/fonctions ont-ils des tests ?
 - Tous les tests existants passent-ils ?
 - Y a-t-il de nouveaux cas de test pour la nouvelle fonctionnalité ?
 - Les tests couvrent-ils les edge cases ?
+- La feature est-elle testée progressivement (pas un seul test géant) ?
 
 ### 2. **TypeScript** (🔴 critique)
 - Pas d'erreurs TypeScript ?

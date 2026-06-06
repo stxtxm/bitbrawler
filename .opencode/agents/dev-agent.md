@@ -47,17 +47,45 @@ Tu n'as **pas besoin** de créer une PR toi-même.
 - Lis les conventions du projet dans `src/`
 - Comprends la structure (composants, utils, config, db)
 
-### Étape 3: Implémentation
-- Crée des changements propres et logiques
-- Suit les conventions du projet (pas de commentaires, imports propres)
-- N'ajoute pas de code mort ou de TODO non motivés
-- Évite les `any` TypeScript
+### Étape 3: TDD — Écrire les tests AVANT le code
+
+**Règle d'or**: Tu dois **impérativement** coder les tests en premier, puis la feature progressivement.
+
+#### 3a. Identifier les tests
+- Identifie les comportements à tester pour la feature
+- Trouve le fichier de test existant ou crée-en un nouveau
+- Lis les tests existants pour suivre les conventions (mocks, structure `describe`/`it`, pattern d'`act`)
+- Ajoute des cas de test pour: succès, échec, edge cases
+
+#### 3b. Écrire les tests d'abord
+- Écris les tests **avant toute implémentation** de la feature
+- Les tests doivent décrire le comportement attendu (ils vont échouer au début → 🔴 Red)
+- Suis les conventions de test du projet (mêmes helpers, mêmes patterns)
+
+#### 3c. Exécuter les tests → RED
+```bash
+npm test
+```
+- Les nouveaux tests doivent **échouer** (feature pas encore implémentée)
+- Les tests existants doivent **toujours passer**
+- Si un test existant échoue → stoppe, analyse et corrige avant de continuer
+
+#### 3d. Coder le minimum pour passer le premier test
+- Implémente juste assez de code pour faire passer **le premier** test
+- Ne code pas toute la feature d'un coup — va test par test
+- Exécute `npm test` → le test doit passer ✅ (Green)
+
+#### 3e. Itérer (Red → Green → Red → Green → ...)
+- Passe au test suivant (il échoue → Red)
+- Implémente le code minimal pour le faire passer (→ Green)
+- Continue jusqu'à ce que **tous les tests passent**
+- Ne saute pas d'étapes — chaque test guide l'implémentation
 
 ### Étape 4: Vérification locale
-- **Toujours** exécuter `npm test` avant de pousser
+- **Toujours** exécuter `npm test` avant de pousser — vérifie que TOUS les tests sont verts
 - **Toujours** exécuter `npm run build` avant de pousser
-- Si des tests échouent → analyse et corrige
-- Si le build échoue → analyse et corrige
+- Si des tests échouent → ne pousse PAS, analyse et corrige
+- Si le build échoue → ne pousse PAS, analyse et corrige
 
 ### Étape 5: Commit et push
 - `git add -A` puis commit avec un message clair
@@ -66,6 +94,8 @@ Tu n'as **pas besoin** de créer une PR toi-même.
 
 ## 📝 Règles strictes
 
+- ✅ **TDD obligatoire** — Écrire les tests AVANT d'implémenter la feature
+- ✅ **Iterer Red → Green** — Un test à la fois, jamais plusieurs tests d'un coup
 - ✅ Toujours créer une branche de feature, **jamais** commiter sur `master`
 - ✅ Messages de commit: anglais, conventional commits (`feat:`, `fix:`, `chore:`, `refactor:`, `test:`)
 - ✅ Vérifier que les tests passent avant de pousser
@@ -77,12 +107,15 @@ Tu n'as **pas besoin** de créer une PR toi-même.
 
 ## ❌ Ce que tu ne dois PAS faire
 
-- ❌ Ne pas merger les PRs (c'est le reviewer workflow)
-- ❌ Ne pas créer les PRs (c'est le workflow GitHub qui le fait)
-- ❌ Ne pas approuver les PRs (c'est le reviewer workflow)
-- ❌ Ne pas pousser sur `master` ou `main`
-- ❌ Ne pas ignorer les erreurs de test
-- ❌ Ne pas laisser du code cassé, même pour tester
+- ❌ Ne PAS écrire le code avant les tests
+- ❌ Ne PAS implémenter toute la feature d'un coup sans tests intermédiaires
+- ❌ Ne PAS pousser si les nouveaux tests échouent
+- ❌ Ne PAS merger les PRs (c'est le reviewer workflow)
+- ❌ Ne PAS créer les PRs (c'est le workflow GitHub qui le fait)
+- ❌ Ne PAS approuver les PRs (c'est le reviewer workflow)
+- ❌ Ne PAS pousser sur `master` ou `main`
+- ❌ Ne PAS ignorer les erreurs de test
+- ❌ Ne PAS laisser du code cassé, même pour tester
 
 ## 💡 Tips
 
