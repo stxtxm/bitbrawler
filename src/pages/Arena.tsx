@@ -90,7 +90,7 @@ const Arena = () => {
     const isOfflineMode = !isOnline || !dbAvailable;
     const fightsLeft = activeCharacter.fightsLeft || 0;
     const hasPendingFight = !!activeCharacter.pendingFight;
-    const canFight = !isOfflineMode && fightsLeft > 0 && !hasPendingFight;
+    const canFight = !isOfflineMode && fightsLeft > 0 && !hasPendingFight && !activeCharacter?.autoMode;
     const pendingStatPoints = activeCharacter.statPoints || 0;
     const totalPendingAlloc = Object.values(pendingAllocations).reduce((a, b) => a + b, 0);
     const projectedStatPoints = pendingStatPoints - totalPendingAlloc;
@@ -327,7 +327,7 @@ const Arena = () => {
     };
 
     const handleFight = async () => {
-        if (matchmaking || hasPendingFight) return;
+        if (matchmaking || hasPendingFight || activeCharacter?.autoMode) return;
         const canProceed = await ensureConnection(connectionMessage);
         if (!canProceed) return;
 
@@ -506,10 +506,12 @@ const Arena = () => {
                         disabled={!canFight || matchmaking}
                         onClick={handleFight}
                     >
-                        {matchmaking
-                            ? 'SEARCHING...'
-                            : hasPendingFight
-                                ? 'RESOLVING...'
+                    {matchmaking
+                        ? 'SEARCHING...'
+                        : hasPendingFight
+                            ? 'RESOLVING...'
+                            : activeCharacter?.autoMode
+                                ? 'AUTO MODE'
                                 : (isOfflineMode ? 'OFFLINE' : (fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'))}
                     </button>
                 </div>
