@@ -22,6 +22,7 @@ interface ArpStep {
 
 interface SoundConfig {
   voices: Voice[];
+  drone?: Voice[];
   arp?: ArpStep[];
   decay: number;
   gain: number;
@@ -32,16 +33,12 @@ interface SoundConfig {
 
 const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
   click: {
-    voices: [
-      { type: 'sine', freq: 1200, gain: 0.5 },
-      { type: 'triangle', freq: 400, gain: 0.3 },
-    ],
-    decay: 12, gain: 1, reverb: 0,
-    noise: { gain: 0.15, dur: 0.015 },
+    voices: [{ type: 'sine', freq: 1000, gain: 0.45 }],
+    decay: 10, gain: 1, reverb: 0,
   },
   nav: {
-    voices: [{ type: 'triangle', freq: 660, gain: 0.3 }],
-    decay: 35, gain: 1, reverb: 0,
+    voices: [{ type: 'sine', freq: 660, gain: 0.35 }],
+    decay: 15, gain: 1, reverb: 0,
   },
   scanTick: {
     voices: [{ type: 'triangle', freq: 1047, gain: 0.3 }],
@@ -174,28 +171,27 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
     reverb: 0.2,
   },
   victory: {
-    voices: [
-      { type: 'triangle', freq: 523, gain: 0.25 },
-      { type: 'sine', freq: 131, gain: 0.1 },
-    ],
+    voices: [{ type: 'triangle', freq: 523, gain: 0.3 }],
+    drone: [{ type: 'sine', freq: 131, gain: 0.15 }],
     arp: [
       { voice: 0, dur: 130, delay: 0 },
       { voice: 0, dur: 130, delay: 120 },
       { voice: 0, dur: 130, delay: 240 },
       { voice: 0, dur: 380, delay: 360 },
     ],
-    decay: 500, gain: 0.7,
+    decay: 500, gain: 0.9,
     reverb: 0.3,
   },
   defeat: {
-    voices: [{ type: 'triangle', freq: 440, gain: 0.25 }],
+    voices: [{ type: 'triangle', freq: 440, gain: 0.3 }],
+    drone: [{ type: 'sine', freq: 110, gain: 0.12 }],
     arp: [
       { voice: 0, dur: 150, delay: 0 },
       { voice: 0, dur: 150, delay: 140 },
       { voice: 0, dur: 150, delay: 280 },
       { voice: 0, dur: 400, delay: 420 },
     ],
-    decay: 500, gain: 0.65,
+    decay: 500, gain: 0.85,
     reverb: 0.3,
   },
 };
@@ -360,6 +356,12 @@ export function playSound(type: SoundType) {
   } else {
     for (let i = 0; i < def.voices.length; i++) {
       playAt(i, def.decay, 0);
+    }
+  }
+
+  if (def.drone) {
+    for (const d of def.drone) {
+      voice(actx, d.type, d.freq, d.gain * def.gain, d.detune ?? 0, def.decay, 0, def.reverb ?? 0);
     }
   }
 
