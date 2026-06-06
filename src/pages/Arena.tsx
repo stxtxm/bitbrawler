@@ -1,5 +1,5 @@
 import { useNavigate, Navigate } from 'react-router-dom';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useGame } from '../context/GameContext';
 import { useConnectionGate } from '../hooks/useConnectionGate';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -44,6 +44,7 @@ const Arena = () => {
     const [matchmaking, setMatchmaking] = useState(false);
     const [combatData, setCombatData] = useState<MatchmakingResult | null>(null);
     const [allocatingStat, setAllocatingStat] = useState<StatKey | null>(null);
+    const allocatingRef = useRef(false);
     const [deferLevelUp, setDeferLevelUp] = useState(false);
     const [lootboxRolling, setLootboxRolling] = useState(false);
     const [lootboxResult, setLootboxResult] = useState<PixelItemAsset | null>(null);
@@ -164,19 +165,21 @@ const Arena = () => {
     );
 
     const handleAllocateStat = async (stat: StatKey) => {
-        if (allocatingStat || pendingStatPoints <= 0) return;
+        if (allocatingRef.current || pendingStatPoints <= 0) return;
 
         if (isOfflineMode) {
             openModal(connectionMessage);
             return;
         }
 
+        allocatingRef.current = true;
         setAllocatingStat(stat);
         try {
             await allocateStatPoint(stat);
         } catch (error: any) {
             openModal(error.message || connectionMessage);
         } finally {
+            allocatingRef.current = false;
             setAllocatingStat(null);
         }
     };

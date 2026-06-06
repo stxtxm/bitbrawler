@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Character } from '../types/Character';
 import { PixelIcon } from './PixelIcon';
 import { StatKey, STAT_TOOLTIPS } from '../utils/statUtils';
@@ -29,26 +28,11 @@ const LevelUpOverlay = ({
     isOfflineMode,
     allocatingStat,
     statOptions,
-    canCloseLevelUp,
     hasLevelInfo,
     handleAllocateStat,
     handleCloseLevelUp,
     handleDeferLevelUp,
 }: LevelUpOverlayProps) => {
-    // Dismiss the overlay when clicking outside interactive elements
-    // (only when canCloseLevelUp — all stat points spent).
-    useEffect(() => {
-        if (!shouldShowLevelUp) return;
-
-        const handleDocumentClick = () => {
-            if (!canCloseLevelUp) return;
-            handleCloseLevelUp();
-        };
-
-        document.addEventListener('click', handleDocumentClick);
-        return () => document.removeEventListener('click', handleDocumentClick);
-    }, [shouldShowLevelUp, canCloseLevelUp, handleCloseLevelUp]);
-
     if (!shouldShowLevelUp) return null;
 
     return (
