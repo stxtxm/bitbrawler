@@ -3,8 +3,9 @@ import { useCallback, useEffect, useState } from 'react';
 export type SoundType =
   | 'nav' | 'click'
   | 'hit' | 'crit' | 'magic' | 'miss' | 'counter'
-  | 'levelup' | 'lootbox'
-  | 'victory' | 'defeat';
+  | 'levelup' | 'lootbox' | 'loot'
+  | 'victory' | 'defeat'
+  | 'vs' | 'scan' | 'create';
 
 interface SoundConfig {
   type: OscillatorType;
@@ -27,8 +28,8 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
     startGain: 0.15, endGain: 0, ramp: 'expo',
   },
   click: {
-    type: 'triangle', frequencies: [420], durations: [18],
-    startGain: 0.08, endGain: 0, ramp: 'expo',
+    type: 'sine', frequencies: [440], durations: [20],
+    startGain: 0.1, endGain: 0, ramp: 'expo',
   },
 
   // ── COMBAT ──
@@ -59,16 +60,49 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
     noise: { duration: 0.02, volume: 0.06 },
     altType: 'sine', altFrequencies: [980], altVolumes: [0.04],
   },
+  vs: {
+    type: 'triangle', frequencies: [440, 554.37, 659.25, 880],
+    durations: [60, 60, 60, 200],
+    startGain: 0.2, endGain: 0, ramp: 'expo',
+    noise: { duration: 0.05, volume: 0.08 },
+    altType: 'sine', altFrequencies: [110, 110, 110, 110],
+    altVolumes: [0.06, 0.06, 0.06, 0.06],
+  },
+  scan: {
+    type: 'sine', frequencies: [660, 880, 1046.5],
+    durations: [60, 60, 80],
+    startGain: 0.1, endGain: 0, ramp: 'expo',
+  },
 
   // ── GAME EVENTS ──
   levelup: {
-    type: 'triangle', frequencies: [523.25, 659.25, 783.99],
-    durations: [100, 100, 200], startGain: 0.2, endGain: 0, ramp: 'expo',
+    type: 'triangle', frequencies: [523.25, 659.25, 783.99, 1046.5],
+    durations: [80, 80, 80, 250],
+    delays: [0, 80, 160, 240],
+    startGain: 0.2, endGain: 0, ramp: 'expo',
   },
   lootbox: {
-    type: 'triangle', frequencies: [220, 330, 440, 554.37, 659.25],
-    durations: [60, 60, 60, 120, 200],
+    type: 'triangle', frequencies: [261.63, 329.63, 392, 523.25],
+    durations: [50, 50, 50, 150],
+    delays: [0, 50, 100, 150],
     startGain: 0.18, endGain: 0, ramp: 'expo',
+    noise: { duration: 0.04, volume: 0.06 },
+  },
+  loot: {
+    type: 'triangle', frequencies: [783.99, 1046.5, 1318.5],
+    durations: [60, 80, 180],
+    delays: [0, 50, 100],
+    startGain: 0.2, endGain: 0, ramp: 'expo',
+    altType: 'sine', altFrequencies: [392, 523.25, 659.25],
+    altVolumes: [0.05, 0.05, 0.05],
+  },
+  create: {
+    type: 'triangle', frequencies: [523.25, 659.25, 783.99, 1046.5, 1318.5],
+    durations: [60, 60, 60, 80, 250],
+    delays: [0, 50, 100, 150, 210],
+    startGain: 0.2, endGain: 0, ramp: 'expo',
+    altType: 'sine', altFrequencies: [261.63, 329.63, 392, 523.25, 659.25],
+    altVolumes: [0.05, 0.05, 0.05, 0.05, 0.05],
   },
   victory: {
     type: 'triangle', frequencies: [523.25, 659.25, 783.99, 1046.5],

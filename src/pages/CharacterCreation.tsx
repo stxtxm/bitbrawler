@@ -6,6 +6,7 @@ import { supabase } from '../config/supabase'
 import { useGame } from '../context/GameContext'
 import { useConnectionGate } from '../hooks/useConnectionGate'
 import { useFocusTrap } from '../hooks/useFocusTrap'
+import { useSound } from '../hooks/useSound'
 import ConnectionModal from '../components/ConnectionModal'
 import { generateInitialStats, generateCharacterName } from '../utils/characterUtils'
 import { PixelIcon } from '../components/PixelIcon'
@@ -17,6 +18,7 @@ const CharacterCreation = () => {
   const navigate = useNavigate()
   const { setCharacter } = useGame()
   const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate()
+  const { play } = useSound()
   const [name, setName] = useState('')
   const [gender, setGender] = useState<'male' | 'female'>('male')
   const [generatedCharacter, setGeneratedCharacter] = useState<Character | null>(null)
@@ -136,6 +138,7 @@ const CharacterCreation = () => {
       // Ensure error modal is closed and show success
       setShowErrorModal(false);
       setShowSuccessModal(true);
+      play('create');
       setIsSubmitting(false)
       setTimeout(() => navigate('/arena'), 2000);
     } catch (error) {

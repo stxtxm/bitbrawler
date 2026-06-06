@@ -87,6 +87,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
     // VS → Combat (with fighter entrance)
     useEffect(() => {
         if (phase !== 'vs') return;
+        play('vs');
         const vsTimer = setTimeout(() => {
             setFighterEntrance(true);
             setTimeout(() => {
@@ -94,7 +95,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
             }, 500);
         }, 900);
         return () => clearTimeout(vsTimer);
-    }, [phase]);
+    }, [phase, play]);
 
     // Scanning animation
     useEffect(() => {
@@ -122,6 +123,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
             const finalIndex = scanList.findIndex((entry) => (entry.id || entry.name) === selectedKey);
             setScanIndex(finalIndex >= 0 ? finalIndex : 0);
             setScanLocked(true);
+            play('scan');
         }, scanDuration);
 
         return () => {

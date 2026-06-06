@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useGame } from '../context/GameContext';
 import { useConnectionGate } from '../hooks/useConnectionGate';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { useSound } from '../hooks/useSound';
 import ConnectionModal from '../components/ConnectionModal';
 import { PixelCharacter } from '../components/PixelCharacter';
 import { PixelIcon } from '../components/PixelIcon';
@@ -22,6 +23,7 @@ import LevelUpOverlay from '../components/LevelUpOverlay';
 const Arena = () => {
     const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, saveStatAllocations, rollLootbox, setAutoMode, deleteCharacter, setCharacter } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
+    const { play } = useSound();
     const navigate = useNavigate();
     const isOnline = useOnlineStatus();
     const connectionMessage = 'Connect to battle and sync your progress.';
@@ -225,6 +227,13 @@ const Arena = () => {
         }
     }, [settingsOpen]);
 
+    // Level-up sound
+    useEffect(() => {
+        if (shouldShowLevelUp) {
+            play('levelup');
+        }
+    }, [shouldShowLevelUp, play]);
+
     const handleLootboxRoll = async () => {
         if (lootboxRolling) return;
         if (isOfflineMode) {
@@ -236,6 +245,7 @@ const Arena = () => {
 
         setLootboxRolling(true);
         setLootboxResult(null);
+        play('lootbox');
 
         setTimeout(async () => {
             try {
@@ -244,6 +254,7 @@ const Arena = () => {
                     setLootboxResult(item);
                     setInventorySelectedId(item.id);
                     setInventoryHoveredId(item.id);
+                    setTimeout(() => play('loot'), 100);
                 }
             } catch (error: any) {
                 openModal(error.message || connectionMessage);
