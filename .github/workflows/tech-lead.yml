@@ -14,7 +14,7 @@ concurrency:
 jobs:
   tech-lead:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     permissions:
       actions: write
       contents: write
@@ -69,23 +69,51 @@ jobs:
             QA_REPORT=$(cat qa/analysis-latest.json)
           fi
 
-          PROMPT="Tu es le tech-lead de Bitbrawler. Analyse le repo aujourd'hui.
+          PROMPT="Tu es le tech-lead de Bitbrawler. Analyse le repo aujourd'hui en profondeur.
 
-            ## QA Stats Analysis (données de jeu réelles)
+            Tu dois COMBINER analyse des données QA + recherche web pour proposer des améliorations.
+
+            ## 1. QA Stats Analysis (données de jeu réelles)
             \`\`\`json
             ${QA_REPORT:-"Pas de données QA disponibles."}
             \`\`\`
 
-            ### Analyse à partir du rapport QA :
+            À partir du rapport QA :
+            - **Issues** (🔴) : crée des tickets avec /oc pour chaque issue critique
+            - **Suggestions** (💡) : pour chaque suggestion, crée une issue /oc avec modification concrète
+            - **HP Growth** : +5-30 HP/run est sain. Trop bas ou trop haut ? Ajuste.
+            - **Lootbox Rarités** : si rares/epic manquent, ajuste LOOTBOX_RARITY_WEIGHTS
+            - **Trends** : win rate last_3 vs last_5 vs all_time. Baisse +15% = problème
+            - **Stats personnages** : équilibrées ~10, aucune < 7 ou > 13
 
-            1. **Issues** (🔴) : si le rapport liste des issues, crée des tickets GitHub avec /oc pour chaque issue critique (win rate anormal, error rate élevé, survivabilité trop basse).
-            2. **Suggestions** (💡) : pour chaque suggestion du rapport, crée une issue /oc avec une proposition concrète de modification des constantes dans src/config/gameRules.ts.
-            3. **HP Growth (max HP)** : si hp_analysis est présent, vérifie si la croissance des HP max est équilibrée. +5-30 HP/run est sain pour un personnage qui progresse. Trop bas (les persos ne gagnent pas assez de VIT/équipement), trop haut (scaling trop rapide).
-            4. **Lootbox Rarités** : si des raretés rares/epic manquent, suggère d'ajuster LOOTBOX_RARITY_WEIGHTS dans lootboxUtils.ts.
-            5. **Trends** : regarde les tendances last_3 vs last_5 vs all_time. Si la win rate baisse de +15%, c'est un problème. Si elle monte de +15%, l'équilibrage s'améliore.
-            6. **Stats des personnages** : vérifie si les stats initiales sont équilibrées (toutes proches de 10, aucune sous 7 ou au-dessus de 13).
+            ## 2. Recherche web OBLIGATOIRE
 
-            Consulte aussi les commits récents."
+            Tu dois faire AU MOINS 3 recherches web avec l'outil websearch. Cherche des idées concrètes pour améliorer Bitbrawler.
+
+            ### Idées de recherches :
+            1. **Engagement mécaniques** : cherche 'idle mobile game engagement mechanics 2026' ou 'best idle RPG retention systems'
+            2. **Prestige systems** : cherche 'idle game prestige system design' ou 'reset mechanics that work'
+            3. **Weekly events** : cherche 'mobile game weekly event ideas' ou 'limited time events idle games'
+            4. **Collection systems** : cherche 'bestiary collection system mobile game' ou 'item compendium engagement'
+            5. **Combat depth** : cherche 'mobile auto battler depth strategy' ou 'elemental weakness system pixel game'
+            6. **UI/UX trends** : cherche 'pixel art mobile UI trends 2026' ou 'satisfying game juice animations'
+            7. **Monetization** : cherche 'rewarded ads integration indie game' ou 'non-invasive mobile monetization 2026'
+
+            ## 3. Analyser les commits récents
+            - Vérifie les 30 derniers commits (git log --oneline -30)
+            - Regarde les tendances : bugs fréquents, features ajoutées, domaines négligés
+
+            ## 4. Synthèse et création d'issues
+
+            Tu dois créer 3-4 issues AU TOTAL (pas plus) :
+            - **1-2 mineures** avec /oc (ajustements constants, bugs, small features)
+            - **1-2 majeures** SANS /oc avec analyse détaillée (nouvelles mechanics, systèmes)
+
+            Chaque proposition majeure doit inclure :
+            - Pourquoi c'est adapté à Bitbrawler (mobile, pixel, idle)
+            - Impact estimé sur la rétention
+            - Effort estimé (1-5)
+            - Inspiré de quels jeux/recherches"
 
           SUCCESS=0
           for MODEL in "${MODELS[@]}"; do
