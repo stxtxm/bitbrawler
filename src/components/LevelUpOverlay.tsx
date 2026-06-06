@@ -111,14 +111,12 @@ const LevelUpOverlay = ({
                     ))}
                 </div>
                 <div className="level-up-actions">
-                    {pendingStatPoints > 0 && (
-                        <button
-                            className="button secondary-btn level-up-later"
-                            onClick={handleDeferLevelUp}
-                        >
-                            LATER
-                        </button>
-                    )}
+                    <button
+                        className="button secondary-btn level-up-later"
+                        onClick={handleDeferLevelUp}
+                    >
+                        LATER
+                    </button>
                     <button
                         className="button primary-btn level-up-confirm"
                         onClick={handleCloseLevelUp}
