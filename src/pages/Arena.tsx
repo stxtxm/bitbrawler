@@ -78,7 +78,10 @@ const Arena = () => {
 
         const updated = autoAllocateStatPoints(activeCharacter, points);
         setCharacter(updated);
-    }, [activeCharacter?.autoMode, activeCharacter?.statPoints, setCharacter]);
+        setShowLevelUp(false);
+        setDeferLevelUp(false);
+        clearXpNotifications();
+    }, [activeCharacter?.autoMode, activeCharacter?.statPoints, setCharacter, clearXpNotifications]);
 
     if (!activeCharacter) {
         return <Navigate to="/" replace />;
