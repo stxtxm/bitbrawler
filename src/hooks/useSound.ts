@@ -129,93 +129,133 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
   },
 
   // ── FEEDBACK ──
-  // levelup: magical sparkling ascent
+  // levelup: magical sparkling ascent C5-E5-G5-C6-E6
   levelup: {
-    voices: [{ type: 'triangle', freq: 660, gain: 0.28 }],
-    arp: [
-      { voice: 0, dur: 60, delay: 0 },
-      { voice: 0, dur: 60, delay: 70 },
-      { voice: 0, dur: 60, delay: 140 },
-      { voice: 0, dur: 200, delay: 210 },
+    voices: [
+      { type: 'triangle', freq: 523, gain: 0.3 },
+      { type: 'triangle', freq: 659, gain: 0.25 },
+      { type: 'triangle', freq: 784, gain: 0.2 },
+      { type: 'triangle', freq: 1047, gain: 0.15 },
+      { type: 'triangle', freq: 1319, gain: 0.1 },
     ],
-    decay: 280, gain: 0.75,
+    arp: [
+      { voice: 0, dur: 50, delay: 0 },
+      { voice: 1, dur: 50, delay: 60 },
+      { voice: 2, dur: 50, delay: 120 },
+      { voice: 3, dur: 60, delay: 180 },
+      { voice: 4, dur: 200, delay: 250 },
+    ],
+    decay: 300, gain: 0.75,
     reverb: 0.3,
   },
-  // lootbox: slot-machine anticipation
+  // lootbox: slot-machine anticipation C-D-E-F-G-A ascending scale
   lootbox: {
     voices: [
-      { type: 'triangle', freq: 262, gain: 0.2 },
-      { type: 'triangle', freq: 330, gain: 0.15 },
-      { type: 'triangle', freq: 392, gain: 0.12 },
+      { type: 'triangle', freq: 262, gain: 0.22 },
+      { type: 'triangle', freq: 294, gain: 0.2 },
+      { type: 'triangle', freq: 330, gain: 0.18 },
+      { type: 'triangle', freq: 349, gain: 0.16 },
+      { type: 'triangle', freq: 392, gain: 0.14 },
+      { type: 'triangle', freq: 440, gain: 0.12 },
     ],
     arp: [
       { voice: 0, dur: 40, delay: 0 },
-      { voice: 1, dur: 40, delay: 50 },
-      { voice: 2, dur: 40, delay: 100 },
-      { voice: 2, dur: 180, delay: 150 },
+      { voice: 1, dur: 40, delay: 45 },
+      { voice: 2, dur: 40, delay: 90 },
+      { voice: 3, dur: 40, delay: 135 },
+      { voice: 4, dur: 40, delay: 180 },
+      { voice: 5, dur: 180, delay: 225 },
     ],
-    decay: 220, gain: 0.75,
+    decay: 250, gain: 0.75,
     noise: { gain: 0.1, dur: 0.04 },
     reverb: 0.25,
   },
-  // loot: warm reward chime
+  // loot: warm reward chime G4-B4-D5-G5
   loot: {
     voices: [
-      { type: 'triangle', freq: 784, gain: 0.22 },
-      { type: 'sine', freq: 988, gain: 0.12 },
+      { type: 'triangle', freq: 784, gain: 0.25 },
+      { type: 'sine', freq: 988, gain: 0.15 },
+      { type: 'triangle', freq: 1175, gain: 0.12 },
+      { type: 'sine', freq: 1568, gain: 0.08 },
     ],
     arp: [
       { voice: 0, dur: 50, delay: 0 },
-      { voice: 1, dur: 60, delay: 40 },
-      { voice: 0, dur: 200, delay: 100 },
+      { voice: 1, dur: 50, delay: 50 },
+      { voice: 2, dur: 60, delay: 100 },
+      { voice: 3, dur: 220, delay: 160 },
     ],
-    decay: 280, gain: 0.75,
+    decay: 300, gain: 0.75,
     reverb: 0.2,
   },
-  // create: bright optimistic G-major arpeggio
+  // create: bright optimistic G-major arpeggio G4-B4-D5-G5-B5-D6
   create: {
-    voices: [{ type: 'sine', freq: 784, gain: 0.25 }],
-    arp: [
-      { voice: 0, dur: 50, delay: 0 },
-      { voice: 0, dur: 50, delay: 60 },
-      { voice: 0, dur: 50, delay: 120 },
-      { voice: 0, dur: 200, delay: 180 },
+    voices: [
+      { type: 'sine', freq: 784, gain: 0.28 },
+      { type: 'sine', freq: 988, gain: 0.22 },
+      { type: 'sine', freq: 1175, gain: 0.18 },
+      { type: 'sine', freq: 1568, gain: 0.14 },
+      { type: 'sine', freq: 1976, gain: 0.1 },
+      { type: 'sine', freq: 2349, gain: 0.07 },
     ],
-    decay: 280, gain: 0.75,
+    arp: [
+      { voice: 0, dur: 45, delay: 0 },
+      { voice: 1, dur: 45, delay: 55 },
+      { voice: 2, dur: 45, delay: 110 },
+      { voice: 3, dur: 50, delay: 165 },
+      { voice: 4, dur: 60, delay: 220 },
+      { voice: 5, dur: 200, delay: 280 },
+    ],
+    decay: 300, gain: 0.75,
     reverb: 0.25,
   },
-  // victory: triumphant brass fanfare
+  // victory: triumphant brass fanfare C4-E4-G4-C5-E5-G5-C6
   victory: {
     voices: [
       { type: 'triangle', freq: 523, gain: 0.3 },
-      { type: 'sawtooth', freq: 262, gain: 0.08 },
+      { type: 'triangle', freq: 659, gain: 0.25 },
+      { type: 'triangle', freq: 784, gain: 0.2 },
+      { type: 'triangle', freq: 1047, gain: 0.16 },
+      { type: 'triangle', freq: 1319, gain: 0.12 },
+      { type: 'triangle', freq: 1568, gain: 0.08 },
     ],
     drone: [
+      { type: 'sawtooth', freq: 262, gain: 0.08 },
       { type: 'sine', freq: 131, gain: 0.15 },
       { type: 'sine', freq: 65, gain: 0.08 },
     ],
     arp: [
-      { voice: 0, dur: 120, delay: 0 },
-      { voice: 0, dur: 120, delay: 110 },
-      { voice: 0, dur: 120, delay: 220 },
-      { voice: 0, dur: 400, delay: 340 },
+      { voice: 0, dur: 100, delay: 0 },
+      { voice: 1, dur: 100, delay: 100 },
+      { voice: 2, dur: 100, delay: 200 },
+      { voice: 3, dur: 100, delay: 300 },
+      { voice: 4, dur: 120, delay: 400 },
+      { voice: 5, dur: 400, delay: 520 },
     ],
-    decay: 520, gain: 0.9,
+    decay: 550, gain: 0.9,
     reverb: 0.3,
   },
-  // defeat: dark minor descent with wobble
+  // defeat: dark minor descent A4-G4-F4-E4-D4-A3
   defeat: {
     voices: [
       { type: 'triangle', freq: 440, gain: 0.25, detune: -5 },
+      { type: 'triangle', freq: 392, gain: 0.22, detune: -5 },
+      { type: 'triangle', freq: 349, gain: 0.2, detune: -5 },
+      { type: 'triangle', freq: 330, gain: 0.18, detune: -5 },
+      { type: 'triangle', freq: 294, gain: 0.15, detune: -5 },
+      { type: 'triangle', freq: 220, gain: 0.12, detune: -5 },
+    ],
+    drone: [
       { type: 'sine', freq: 110, gain: 0.1 },
     ],
     arp: [
-      { voice: 0, dur: 140, delay: 0 },
-      { voice: 0, dur: 140, delay: 130 },
-      { voice: 0, dur: 140, delay: 270 },
-      { voice: 0, dur: 420, delay: 410 },
+      { voice: 0, dur: 120, delay: 0 },
+      { voice: 1, dur: 120, delay: 120 },
+      { voice: 2, dur: 120, delay: 240 },
+      { voice: 3, dur: 140, delay: 360 },
+      { voice: 4, dur: 160, delay: 500 },
+      { voice: 5, dur: 400, delay: 660 },
     ],
-    decay: 520, gain: 0.85,
+    decay: 550, gain: 0.85,
     reverb: 0.35,
   },
 };
