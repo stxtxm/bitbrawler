@@ -182,9 +182,15 @@ const Arena = () => {
     };
 
     const handleCloseLevelUp = () => {
-        if (!canCloseLevelUp) return;
         setShowLevelUp(false);
         clearXpNotifications();
+        if (canCloseLevelUp) {
+            // all points spent — reset defer so next level-up shows immediately
+            setDeferLevelUp(false);
+        } else {
+            // points remain — defer so the overlay stays hidden until SPEND POINT is clicked
+            setDeferLevelUp(true);
+        }
     };
 
     const handleDeferLevelUp = () => {

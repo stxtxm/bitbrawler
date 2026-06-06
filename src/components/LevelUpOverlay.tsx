@@ -121,7 +121,6 @@ const LevelUpOverlay = ({
                     )}
                     <button
                         className="button primary-btn level-up-confirm"
-                        disabled={!canCloseLevelUp}
                         onClick={handleCloseLevelUp}
                     >
                         APPLY
