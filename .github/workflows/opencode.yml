@@ -107,15 +107,28 @@ jobs:
           git add -A
           git diff --cached --quiet || git commit -m "feat: auto-implement #$ISSUE_NUMBER"
           git push origin "$BRANCH" -f
+
           gh label get auto-generated 2>/dev/null && LABEL_FLAG="--label auto-generated" || LABEL_FLAG=""
-          PR_URL=$(gh pr create \
-            --title "$(cat /tmp/issue-title.txt)" \
-            --body "Closes #$ISSUE_NUMBER" \
-            --base master \
-            $LABEL_FLAG)
-          PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$' || true)
+
+          EXISTING_PR=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number' 2>/dev/null || true)
+          if [ -n "$EXISTING_PR" ]; then
+            echo "PR #$EXISTING_PR already exists for branch $BRANCH — updating"
+            gh pr edit "$EXISTING_PR" \
+              --title "$(cat /tmp/issue-title.txt)" \
+              --body "Closes #$ISSUE_NUMBER" \
+              $LABEL_FLAG
+            PR_NUMBER="$EXISTING_PR"
+            PR_URL="https://github.com/${{ github.repository }}/pull/$EXISTING_PR"
+          else
+            PR_URL=$(gh pr create \
+              --title "$(cat /tmp/issue-title.txt)" \
+              --body "Closes #$ISSUE_NUMBER" \
+              --base master \
+              $LABEL_FLAG)
+            PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$' || true)
+          fi
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_OUTPUT
-          echo "✓ Created PR #$PR_NUMBER: $PR_URL"
+          echo "✓ PR #$PR_NUMBER: $PR_URL"
 
       - name: Trigger CI workflow
         env:
