@@ -12,58 +12,58 @@ interface SoundConfig {
   frequencies: number[];
   durations: number[];
   delays?: number[];
-  startGain?: number;
+  gain: number;
   endGain?: number;
   ramp?: 'linear' | 'expo';
   noise?: { duration: number; volume: number };
-  altType?: OscillatorType;        // second oscillator layer
-  altFrequencies?: number[];       // frequencies for alt layer
-  altVolumes?: number[];           // gain per alt frequency
+  altType?: OscillatorType;
+  altFrequencies?: number[];
+  altVolumes?: number[];
 }
 
 const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
-  // ── UI ──
+  // ── UI (gain 0.25–0.35) ──
   nav: {
     type: 'triangle', frequencies: [550], durations: [40],
-    startGain: 0.15, endGain: 0, ramp: 'expo',
+    gain: 0.25, endGain: 0, ramp: 'expo',
   },
   click: {
     type: 'sine', frequencies: [660], durations: [25],
-    startGain: 0.2, endGain: 0, ramp: 'expo',
+    gain: 0.3, endGain: 0, ramp: 'expo',
   },
 
-  // ── COMBAT ──
+  // ── COMBAT (gain 0.08–0.18 — lowered for headroom) ──
   hit: {
     type: 'triangle', frequencies: [75, 140], durations: [55, 35],
-    startGain: 0.28, endGain: 0, ramp: 'expo',
+    gain: 0.15, endGain: 0, ramp: 'expo',
     noise: { duration: 0.03, volume: 0.08 },
   },
   crit: {
     type: 'triangle', frequencies: [90, 180, 260], durations: [70, 45, 35],
-    startGain: 0.32, endGain: 0, ramp: 'expo',
+    gain: 0.18, endGain: 0, ramp: 'expo',
     noise: { duration: 0.04, volume: 0.1 },
     altType: 'sine', altFrequencies: [700, 1050], altVolumes: [0.05, 0.04],
   },
   magic: {
     type: 'triangle', frequencies: [280, 440, 660], durations: [50, 40, 90],
-    startGain: 0.18, endGain: 0, ramp: 'expo',
+    gain: 0.12, endGain: 0, ramp: 'expo',
     altType: 'sine', altFrequencies: [880], altVolumes: [0.03],
   },
   miss: {
     type: 'sine', frequencies: [200], durations: [25],
-    startGain: 0.1, endGain: 0, ramp: 'expo',
+    gain: 0.08, endGain: 0, ramp: 'expo',
     noise: { duration: 0.02, volume: 0.03 },
   },
   counter: {
     type: 'triangle', frequencies: [440, 280], durations: [35, 45],
-    startGain: 0.22, endGain: 0, ramp: 'expo',
+    gain: 0.14, endGain: 0, ramp: 'expo',
     noise: { duration: 0.02, volume: 0.06 },
     altType: 'sine', altFrequencies: [980], altVolumes: [0.04],
   },
   vs: {
     type: 'triangle', frequencies: [440, 554.37, 659.25, 880],
     durations: [60, 60, 60, 200],
-    startGain: 0.2, endGain: 0, ramp: 'expo',
+    gain: 0.22, endGain: 0, ramp: 'expo',
     noise: { duration: 0.05, volume: 0.08 },
     altType: 'sine', altFrequencies: [110, 110, 110, 110],
     altVolumes: [0.06, 0.06, 0.06, 0.06],
@@ -72,7 +72,7 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
     type: 'triangle', frequencies: [1046.5, 1318.5, 1568],
     durations: [40, 40, 200],
     delays: [0, 40, 80],
-    startGain: 0.25, endGain: 0, ramp: 'expo',
+    gain: 0.25, endGain: 0, ramp: 'expo',
     altType: 'sine', altFrequencies: [523.25, 659.25, 783.99],
     altVolumes: [0.06, 0.06, 0.06],
     noise: { duration: 0.06, volume: 0.1 },
@@ -80,28 +80,28 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
   scanTick: {
     type: 'triangle', frequencies: [880],
     durations: [18],
-    startGain: 0.08, endGain: 0, ramp: 'expo',
+    gain: 0.25, endGain: 0, ramp: 'expo',
   },
 
-  // ── GAME EVENTS ──
+  // ── GAME EVENTS (gain 0.2–0.28) ──
   levelup: {
     type: 'triangle', frequencies: [523.25, 659.25, 783.99, 1046.5],
     durations: [80, 80, 80, 250],
     delays: [0, 80, 160, 240],
-    startGain: 0.2, endGain: 0, ramp: 'expo',
+    gain: 0.22, endGain: 0, ramp: 'expo',
   },
   lootbox: {
     type: 'triangle', frequencies: [261.63, 329.63, 392, 523.25],
     durations: [50, 50, 50, 150],
     delays: [0, 50, 100, 150],
-    startGain: 0.18, endGain: 0, ramp: 'expo',
+    gain: 0.2, endGain: 0, ramp: 'expo',
     noise: { duration: 0.04, volume: 0.06 },
   },
   loot: {
     type: 'triangle', frequencies: [783.99, 1046.5, 1318.5],
     durations: [60, 80, 180],
     delays: [0, 50, 100],
-    startGain: 0.2, endGain: 0, ramp: 'expo',
+    gain: 0.22, endGain: 0, ramp: 'expo',
     altType: 'sine', altFrequencies: [392, 523.25, 659.25],
     altVolumes: [0.05, 0.05, 0.05],
   },
@@ -109,7 +109,7 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
     type: 'triangle', frequencies: [523.25, 659.25, 783.99, 1046.5, 1318.5],
     durations: [60, 60, 60, 80, 250],
     delays: [0, 50, 100, 150, 210],
-    startGain: 0.2, endGain: 0, ramp: 'expo',
+    gain: 0.22, endGain: 0, ramp: 'expo',
     altType: 'sine', altFrequencies: [261.63, 329.63, 392, 523.25, 659.25],
     altVolumes: [0.05, 0.05, 0.05, 0.05, 0.05],
   },
@@ -117,7 +117,7 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
     type: 'triangle', frequencies: [523.25, 659.25, 783.99, 1046.5],
     durations: [130, 130, 130, 380],
     delays: [0, 120, 240, 360],
-    startGain: 0.22, endGain: 0, ramp: 'expo',
+    gain: 0.25, endGain: 0, ramp: 'expo',
     altType: 'sine', altFrequencies: [130.81, 164.81, 196, 261.63],
     altVolumes: [0.06, 0.06, 0.06, 0.06],
   },
@@ -125,11 +125,11 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
     type: 'triangle', frequencies: [440, 349.23, 293.66, 220],
     durations: [150, 150, 150, 400],
     delays: [0, 140, 280, 420],
-    startGain: 0.22, endGain: 0, ramp: 'expo',
+    gain: 0.22, endGain: 0, ramp: 'expo',
   },
 };
 
-// ── Module-level state ──
+// ── Audio Engine ──
 const STORAGE_KEY = 'bitbrawler_sound';
 
 interface SoundSettings { enabled: boolean; volume: number; }
@@ -139,6 +139,8 @@ const defaultSettings: SoundSettings = { enabled: true, volume: 0.5 };
 let settings: SoundSettings = { ...defaultSettings };
 let listeners: Array<(s: SoundSettings) => void> = [];
 let audioCtx: AudioContext | null = null;
+let masterGain: GainNode | null = null;
+let compressor: DynamicsCompressorNode | null = null;
 
 try {
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -159,7 +161,19 @@ function notifyListeners() { listeners.forEach(fn => fn(settings)); }
 function getAudioContext(): AudioContext | null {
   if (typeof AudioContext === 'undefined' && typeof (window as any).webkitAudioContext === 'undefined') return null;
   const Ctor: typeof AudioContext = typeof AudioContext !== 'undefined' ? AudioContext : (window as any).webkitAudioContext;
-  if (!audioCtx || audioCtx.state === 'closed') audioCtx = new Ctor();
+  if (!audioCtx || audioCtx.state === 'closed') {
+    audioCtx = new Ctor();
+    compressor = audioCtx.createDynamicsCompressor();
+    compressor.threshold.setValueAtTime(-18, audioCtx.currentTime);
+    compressor.knee.setValueAtTime(12, audioCtx.currentTime);
+    compressor.ratio.setValueAtTime(6, audioCtx.currentTime);
+    compressor.attack.setValueAtTime(0.003, audioCtx.currentTime);
+    compressor.release.setValueAtTime(0.15, audioCtx.currentTime);
+    masterGain = audioCtx.createGain();
+    masterGain.gain.setValueAtTime(settings.volume, audioCtx.currentTime);
+    compressor.connect(masterGain);
+    masterGain.connect(audioCtx.destination);
+  }
   if (audioCtx.state === 'suspended') audioCtx.resume();
   return audioCtx;
 }
@@ -183,7 +197,7 @@ function scheduleTone(
     else gainNode.gain.linearRampToValueAtTime(gEnd, t + durSec);
   }
   osc.connect(gainNode);
-  gainNode.connect(ctx.destination);
+  gainNode.connect(compressor!);
   osc.start(t);
   osc.stop(t + durSec);
 }
@@ -210,7 +224,7 @@ function scheduleNoise(ctx: AudioContext, duration: number, volume: number, dela
 
   src.connect(filter);
   filter.connect(gain);
-  gain.connect(ctx.destination);
+  gain.connect(compressor!);
   src.start(t);
 }
 
@@ -220,14 +234,13 @@ export function playSound(sound: SoundType) {
   if (!ctx) return;
 
   const def = SOUND_DEFINITIONS[sound];
-  const vol = settings.volume;
 
   // Primary layer
   for (let i = 0; i < def.frequencies.length; i++) {
     const delay = def.delays?.[i] ?? 0;
     scheduleTone(
-      ctx, def.type, def.frequencies[i], def.durations[i], vol,
-      def.startGain ?? 0.3, delay,
+      ctx, def.type, def.frequencies[i], def.durations[i], 1,
+      def.gain, delay,
       i === def.frequencies.length - 1 ? def.endGain : undefined,
       i === def.frequencies.length - 1 ? def.ramp : undefined,
     );
@@ -238,18 +251,25 @@ export function playSound(sound: SoundType) {
     const altVolumes = def.altVolumes ?? def.altFrequencies.map(() => 0.1);
     for (let i = 0; i < def.altFrequencies.length; i++) {
       const delay = def.delays?.[i] ?? 0;
-      scheduleTone(ctx, def.altType, def.altFrequencies[i], def.durations[i] ?? 60, vol, altVolumes[i] ?? 0.1, delay);
+      scheduleTone(ctx, def.altType, def.altFrequencies[i], def.durations[i] ?? 60, 1, altVolumes[i] ?? 0.1, delay);
     }
   }
 
   // Noise burst
   if (def.noise) {
-    scheduleNoise(ctx, def.noise.duration, def.noise.volume * vol);
+    scheduleNoise(ctx, def.noise.duration, def.noise.volume);
   }
 }
 
 export function setSoundEnabled(enabled: boolean) { settings = { ...settings, enabled }; persistSettings(); notifyListeners(); }
-export function setSoundVolume(volume: number) { settings = { ...settings, volume }; persistSettings(); notifyListeners(); }
+export function setSoundVolume(volume: number) {
+  settings = { ...settings, volume };
+  persistSettings();
+  notifyListeners();
+  if (masterGain && audioCtx) {
+    masterGain.gain.setValueAtTime(volume, audioCtx.currentTime);
+  }
+}
 export function getSoundSettings(): SoundSettings { return { ...settings }; }
 
 // ── React Hook ──
