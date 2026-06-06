@@ -23,67 +23,66 @@ interface SoundConfig {
 const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
   // ── UI ──
   nav: {
-    type: 'square', frequencies: [660], durations: [50],
-    startGain: 0.2, endGain: 0, ramp: 'expo',
+    type: 'triangle', frequencies: [550], durations: [40],
+    startGain: 0.15, endGain: 0, ramp: 'expo',
   },
   click: {
-    type: 'square', frequencies: [880], durations: [22],
-    startGain: 0.1, endGain: 0, ramp: 'expo',
+    type: 'triangle', frequencies: [420], durations: [18],
+    startGain: 0.08, endGain: 0, ramp: 'expo',
   },
 
   // ── COMBAT ──
   hit: {
-    type: 'square', frequencies: [100, 200], durations: [60, 40],
-    startGain: 0.3, endGain: 0, ramp: 'expo',
-    noise: { duration: 0.04, volume: 0.18 },
-    altType: 'triangle', altFrequencies: [80], altVolumes: [0.15],
+    type: 'triangle', frequencies: [75, 140], durations: [55, 35],
+    startGain: 0.28, endGain: 0, ramp: 'expo',
+    noise: { duration: 0.03, volume: 0.08 },
   },
   crit: {
-    type: 'square', frequencies: [120, 300, 200], durations: [80, 50, 40],
-    startGain: 0.35, endGain: 0, ramp: 'expo',
-    noise: { duration: 0.06, volume: 0.22 },
-    altType: 'sine', altFrequencies: [900, 1400], altVolumes: [0.08, 0.05],
+    type: 'triangle', frequencies: [90, 180, 260], durations: [70, 45, 35],
+    startGain: 0.32, endGain: 0, ramp: 'expo',
+    noise: { duration: 0.04, volume: 0.1 },
+    altType: 'sine', altFrequencies: [700, 1050], altVolumes: [0.05, 0.04],
   },
   magic: {
-    type: 'triangle', frequencies: [300, 500, 700], durations: [60, 50, 100],
-    startGain: 0.2, endGain: 0, ramp: 'expo',
-    altType: 'sine', altFrequencies: [900], altVolumes: [0.04],
+    type: 'triangle', frequencies: [280, 440, 660], durations: [50, 40, 90],
+    startGain: 0.18, endGain: 0, ramp: 'expo',
+    altType: 'sine', altFrequencies: [880], altVolumes: [0.03],
   },
   miss: {
-    type: 'sine', frequencies: [150], durations: [30],
-    startGain: 0.12, endGain: 0, ramp: 'expo',
-    noise: { duration: 0.03, volume: 0.04 },
+    type: 'sine', frequencies: [200], durations: [25],
+    startGain: 0.1, endGain: 0, ramp: 'expo',
+    noise: { duration: 0.02, volume: 0.03 },
   },
   counter: {
-    type: 'square', frequencies: [600, 300], durations: [40, 50],
-    startGain: 0.3, endGain: 0, ramp: 'expo',
-    noise: { duration: 0.025, volume: 0.12 },
-    altType: 'sine', altFrequencies: [1200], altVolumes: [0.06],
+    type: 'triangle', frequencies: [440, 280], durations: [35, 45],
+    startGain: 0.22, endGain: 0, ramp: 'expo',
+    noise: { duration: 0.02, volume: 0.06 },
+    altType: 'sine', altFrequencies: [980], altVolumes: [0.04],
   },
 
   // ── GAME EVENTS ──
   levelup: {
-    type: 'square', frequencies: [523.25, 659.25, 783.99],
-    durations: [100, 100, 200], startGain: 0.25, endGain: 0, ramp: 'expo',
+    type: 'triangle', frequencies: [523.25, 659.25, 783.99],
+    durations: [100, 100, 200], startGain: 0.2, endGain: 0, ramp: 'expo',
   },
   lootbox: {
-    type: 'square', frequencies: [220, 330, 440, 554.37, 659.25],
+    type: 'triangle', frequencies: [220, 330, 440, 554.37, 659.25],
     durations: [60, 60, 60, 120, 200],
-    startGain: 0.2, endGain: 0, ramp: 'expo',
+    startGain: 0.18, endGain: 0, ramp: 'expo',
   },
   victory: {
     type: 'triangle', frequencies: [523.25, 659.25, 783.99, 1046.5],
     durations: [130, 130, 130, 380],
     delays: [0, 120, 240, 360],
-    startGain: 0.25, endGain: 0, ramp: 'expo',
-    altType: 'square', altFrequencies: [130.81, 164.81, 196, 261.63],
-    altVolumes: [0.08, 0.08, 0.08, 0.08],
+    startGain: 0.22, endGain: 0, ramp: 'expo',
+    altType: 'sine', altFrequencies: [130.81, 164.81, 196, 261.63],
+    altVolumes: [0.06, 0.06, 0.06, 0.06],
   },
   defeat: {
     type: 'triangle', frequencies: [440, 349.23, 293.66, 220],
     durations: [150, 150, 150, 400],
     delays: [0, 140, 280, 420],
-    startGain: 0.25, endGain: 0, ramp: 'expo',
+    startGain: 0.22, endGain: 0, ramp: 'expo',
   },
 };
 
