@@ -20,7 +20,7 @@ const HomePage = () => {
         <nav className="top-nav">
 
           <div className="nav-right">
-            <Link to="/login" className="nav-btn">
+            <Link to="/login" className="nav-btn" data-click-sound="nav">
               <PixelIcon type="user" size={16} />
               <span>LOGIN</span>
             </Link>

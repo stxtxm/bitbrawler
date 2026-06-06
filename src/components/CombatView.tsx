@@ -6,7 +6,7 @@ import { simulateCombat } from '../utils/combatUtils';
 import { getMatchDifficultyLabel } from '../utils/matchmakingUtils';
 import { parseCombatDetail, CombatAction, CombatActionType } from '../utils/combatLogUtils';
 import { calculateFightXp } from '../utils/xpUtils';
-import { playSound } from '../utils/audioUtils';
+import { useSound } from '../hooks/useSound';
 
 function extractDamage(detail: string): number | null {
     const match = detail.match(/(\d+)\s*DMG/);
@@ -33,6 +33,7 @@ interface CombatViewProps {
 }
 
 export const CombatView = ({ player, opponent, matchType, onComplete, onClose, candidates = [] }: CombatViewProps) => {
+    const { play } = useSound();
     const [phase, setPhase] = useState<'intro' | 'vs' | 'combat' | 'result'>('intro');
     const [combatResult, setCombatResult] = useState<{
         winner: 'attacker' | 'defender' | 'draw';
@@ -179,9 +180,9 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
     // Play sound on each action pulse
     useEffect(() => {
         if (actionPulse) {
-            playSound(actionPulse.type);
+            play(actionPulse.type);
         }
-    }, [actionPulse]);
+    }, [actionPulse, play]);
 
     useEffect(() => {
         return () => {
@@ -200,6 +201,13 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
             setDamageNumber(null);
         }
     }, [phase]);
+
+    // Victory / defeat sound
+    useEffect(() => {
+        if (phase === 'result' && combatResult) {
+            play(combatResult.winner === 'attacker' ? 'victory' : 'defeat');
+        }
+    }, [phase, combatResult, play]);
 
     useEffect(() => {
         if (phase !== 'combat') return;

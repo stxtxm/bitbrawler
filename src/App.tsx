@@ -1,11 +1,13 @@
-import { Suspense } from 'react'
+import { Suspense, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useGame } from './context/GameContext'
 import { useOnlineStatus } from './hooks/useOnlineStatus'
+import { initClickSound } from './hooks/useSound'
 import { HomePage, CharacterCreation, Rankings, Login, Arena } from './routes/lazyPages'
 import LoadingScreen from './components/LoadingScreen'
 
 function App() {
+  useEffect(() => { initClickSound() }, [])
   const { activeCharacter, loading, dbAvailable } = useGame()
   const isOnline = useOnlineStatus()
 

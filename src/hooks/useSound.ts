@@ -7,7 +7,10 @@ export type SoundType =
   | 'nav'       // navigation blip
   | 'click'     // button click tick
   | 'hit'       // combat hit impact
-  | 'crit'      // critical hit rise
+  | 'crit'      // critical hit
+  | 'magic'     // magic surge
+  | 'miss'      // attack miss
+  | 'counter'   // counter attack
   | 'levelup'   // level-up jingle
   | 'lootbox'   // lootbox roll + open
   | 'victory'   // victory fanfare
@@ -15,11 +18,12 @@ export type SoundType =
 
 interface SoundConfig {
   type: OscillatorType;
-  frequencies: number[];       // sequence of frequencies (Hz)
-  durations: number[];         // duration per step (ms) – same length as frequencies
-  startGain?: number;          // initial gain (0-1, default 0.3)
-  endGain?: number;            // final gain (optional, for decay)
-  ramp?: 'linear' | 'expo';   // gain ramp style
+  frequencies: number[];
+  durations: number[];
+  startGain?: number;
+  endGain?: number;
+  ramp?: 'linear' | 'expo';
+  noise?: { duration: number; volume: number };
 }
 
 const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
@@ -34,30 +38,58 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
   click: {
     type: 'square',
     frequencies: [880],
-    durations: [30],
-    startGain: 0.15,
+    durations: [25],
+    startGain: 0.12,
     endGain: 0,
     ramp: 'expo',
   },
   hit: {
-    type: 'triangle',
+    type: 'square',
     frequencies: [150, 80],
-    durations: [40, 80],
+    durations: [40, 60],
     startGain: 0.35,
     endGain: 0,
     ramp: 'expo',
+    noise: { duration: 0.05, volume: 0.12 },
   },
   crit: {
     type: 'square',
     frequencies: [500, 800, 1200],
-    durations: [80, 80, 100],
+    durations: [60, 60, 100],
     startGain: 0.3,
     endGain: 0,
     ramp: 'expo',
+    noise: { duration: 0.06, volume: 0.15 },
+  },
+  magic: {
+    type: 'triangle',
+    frequencies: [350, 500, 700, 900],
+    durations: [50, 50, 50, 120],
+    startGain: 0.25,
+    endGain: 0,
+    ramp: 'expo',
+  },
+  miss: {
+    type: 'sine',
+    frequencies: [120],
+    durations: [40],
+    startGain: 0.15,
+    endGain: 0,
+    ramp: 'expo',
+    noise: { duration: 0.04, volume: 0.05 },
+  },
+  counter: {
+    type: 'square',
+    frequencies: [800, 1200, 600],
+    durations: [40, 30, 60],
+    startGain: 0.28,
+    endGain: 0,
+    ramp: 'expo',
+    noise: { duration: 0.03, volume: 0.1 },
   },
   levelup: {
     type: 'square',
-    frequencies: [523.25, 659.25, 783.99], // C5, E5, G5
+    frequencies: [523.25, 659.25, 783.99],
     durations: [100, 100, 200],
     startGain: 0.25,
     endGain: 0,
@@ -65,7 +97,7 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
   },
   lootbox: {
     type: 'square',
-    frequencies: [220, 330, 440, 554.37, 659.25], // A3, E4, A4, C#5, E5 (building tension)
+    frequencies: [220, 330, 440, 554.37, 659.25],
     durations: [60, 60, 60, 120, 200],
     startGain: 0.2,
     endGain: 0,
@@ -73,8 +105,8 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
   },
   victory: {
     type: 'square',
-    frequencies: [523.25, 659.25, 783.99, 1046.5], // C5, E5, G5, C6
-    durations: [120, 120, 120, 300],
+    frequencies: [523.25, 659.25, 783.99, 1046.5],
+    durations: [120, 120, 120, 350],
     startGain: 0.3,
     endGain: 0,
     ramp: 'expo',
@@ -82,7 +114,7 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
   defeat: {
     type: 'triangle',
     frequencies: [350, 260, 180, 100],
-    durations: [120, 120, 120, 300],
+    durations: [120, 120, 120, 350],
     startGain: 0.3,
     endGain: 0,
     ramp: 'expo',
@@ -96,7 +128,7 @@ const STORAGE_KEY = 'bitbrawler_sound';
 
 interface SoundSettings {
   enabled: boolean;
-  volume: number; // 0-1
+  volume: number;
 }
 
 const defaultSettings: SoundSettings = { enabled: true, volume: 0.5 };
@@ -132,10 +164,9 @@ function notifyListeners() {
   }
 }
 
-/** Shared AudioContext – created lazily on first play(). */
 function getAudioContext(): AudioContext | null {
   if (typeof AudioContext === 'undefined' && typeof (window as any).webkitAudioContext === 'undefined') {
-    return null; // server-side / unsupported environment
+    return null;
   }
   const Ctor: typeof AudioContext =
     typeof AudioContext !== 'undefined'
@@ -150,10 +181,6 @@ function getAudioContext(): AudioContext | null {
   return audioCtx;
 }
 
-/**
- * Play a single frequency segment with gain envelope.
- * Returns a Promise that resolves when the segment finishes.
- */
 function playTone(
   ctx: AudioContext,
   type: OscillatorType,
@@ -163,49 +190,72 @@ function playTone(
   startGain: number,
   endGain?: number,
   ramp?: 'linear' | 'expo',
-): Promise<void> {
-  return new Promise((resolve) => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+  delayMs = 0,
+) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
 
-    osc.type = type;
-    osc.frequency.setValueAtTime(frequency, ctx.currentTime);
+  osc.type = type;
+  const t = ctx.currentTime + delayMs / 1000;
+  osc.frequency.setValueAtTime(frequency, t);
 
-    const gStart = volume * startGain;
-    gain.gain.setValueAtTime(gStart, ctx.currentTime);
+  const gStart = volume * startGain;
+  gain.gain.setValueAtTime(gStart, t);
 
-    const durSec = durationMs / 1000;
-    if (endGain !== undefined) {
-      const gEnd = volume * endGain;
-      if (ramp === 'expo') {
-        // Avoid exponential ramp to 0 – use a very small value
-        gain.gain.exponentialRampToValueAtTime(Math.max(gEnd, 0.0001), ctx.currentTime + durSec);
-      } else {
-        gain.gain.linearRampToValueAtTime(gEnd, ctx.currentTime + durSec);
-      }
+  const durSec = durationMs / 1000;
+  if (endGain !== undefined) {
+    const gEnd = volume * endGain;
+    if (ramp === 'expo') {
+      gain.gain.exponentialRampToValueAtTime(Math.max(gEnd, 0.0001), t + durSec);
+    } else {
+      gain.gain.linearRampToValueAtTime(gEnd, t + durSec);
     }
+  }
 
-    osc.connect(gain);
-    gain.connect(ctx.destination);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
 
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + durSec);
-
-    osc.onended = () => resolve();
-    // Fallback resolve if onended doesn't fire
-    setTimeout(resolve, durSec * 1000 + 50);
-  });
+  osc.start(t);
+  osc.stop(t + durSec);
 }
 
-/** Core play function – called by hook. */
-async function playSound(sound: SoundType) {
+function playNoise(ctx: AudioContext, duration: number, volume: number, delayMs = 0) {
+  const bufferSize = Math.ceil(ctx.sampleRate * duration);
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = Math.random() * 2 - 1;
+  }
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+
+  const gain = ctx.createGain();
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+
+  const t = ctx.currentTime + delayMs / 1000;
+  filter.frequency.setValueAtTime(3000, t);
+  filter.frequency.exponentialRampToValueAtTime(200, t + duration);
+
+  gain.gain.setValueAtTime(volume * 0.3, t + 0.002);
+  gain.gain.exponentialRampToValueAtTime(volume, t + 0.008);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+
+  source.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+  source.start(t);
+}
+
+export async function playSound(sound: SoundType) {
   if (!settings.enabled || settings.volume <= 0) return;
   const ctx = getAudioContext();
   if (!ctx) return;
 
   const def = SOUND_DEFINITIONS[sound];
+
   for (let i = 0; i < def.frequencies.length; i++) {
-    await playTone(
+    playTone(
       ctx,
       def.type,
       def.frequencies[i],
@@ -215,6 +265,10 @@ async function playSound(sound: SoundType) {
       i === def.frequencies.length - 1 ? def.endGain : undefined,
       i === def.frequencies.length - 1 ? def.ramp : undefined,
     );
+  }
+
+  if (def.noise) {
+    playNoise(ctx, def.noise.duration, def.noise.volume * settings.volume);
   }
 }
 
@@ -279,4 +333,30 @@ export function useSound() {
     setEnabled,
     setVolume,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Global click listener — attach once after DOM is ready
+// ---------------------------------------------------------------------------
+let clickGateAttached = false;
+
+function handleClickGate(e: MouseEvent) {
+  const el = e.target as HTMLElement;
+  const button = el.closest('button, a.button, [role="button"], [data-click-sound]') as HTMLElement | null;
+  if (!button) return;
+
+  // Skip internal button elements (icons inside buttons)
+  if (el !== button && !button.hasAttribute('data-click-sound')) {
+    const parentButton = button.closest('button, a.button, [role="button"]');
+    if (parentButton && parentButton !== button) return;
+  }
+
+  const sound = button.getAttribute('data-click-sound') || 'click';
+  playSound(sound as SoundType);
+}
+
+export function initClickSound() {
+  if (clickGateAttached) return;
+  clickGateAttached = true;
+  document.addEventListener('click', handleClickGate);
 }
