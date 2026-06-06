@@ -1,6 +1,6 @@
 import { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../config/supabase';
-import { Character, IncomingFightHistory, PendingFight, PendingFightOpponent } from '../types/Character';
+import { Character, IncomingFightHistory, PendingFight } from '../types/Character';
 import { gainXp, calculateFightXp } from '../utils/xpUtils';
 import { applyStatPoint, autoAllocateStatPoints, HP_PER_LEVEL, StatKey } from '../utils/statUtils';
 import { GAME_RULES } from '../config/gameRules';
@@ -11,7 +11,12 @@ import { canRollLootbox, computeNextStreak, rollLootbox } from '../utils/lootbox
 import { PixelItemAsset } from '../types/Item';
 import { simulateCombat } from '../utils/combatUtils';
 import { convertFromSupabase } from '../utils/supabaseUtils';
-import { INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP } from '../utils/persistenceUtils';
+import {
+  INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP,
+  normalizeCharacter, buildPendingOpponent, hydratePendingOpponent,
+  clearLocalData, saveLocalData, loadLocalData,
+  SyncResult,
+} from '../utils/persistenceUtils';
 
 interface GameContextType {
   activeCharacter: Character | null;
@@ -41,106 +46,6 @@ interface GameContextType {
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
-
-// Constants
-const LOCAL_STORAGE_KEY = 'bitbrawler_active_char';
-
-const normalizeCharacter = (character: Character): Character => {
-  return {
-    ...character,
-    focus: character.focus ?? GAME_RULES.STATS.BASE_VALUE,
-    autoMode: character.autoMode ?? false,
-    statPoints: character.statPoints ?? 0,
-    inventory: character.inventory ?? [],
-    lastLootRoll: character.lastLootRoll ?? 0,
-    lootboxStreak: character.lootboxStreak ?? 0,
-    incomingFightHistory: character.incomingFightHistory ?? [],
-  };
-};
-
-const buildPendingOpponent = (opponent: Character): PendingFightOpponent => {
-  const base: PendingFightOpponent = {
-    name: opponent.name,
-    gender: opponent.gender,
-    seed: opponent.seed,
-    level: opponent.level,
-    experience: opponent.experience,
-    strength: opponent.strength,
-    vitality: opponent.vitality,
-    dexterity: opponent.dexterity,
-    luck: opponent.luck,
-    intelligence: opponent.intelligence,
-    focus: opponent.focus ?? GAME_RULES.STATS.BASE_VALUE,
-    hp: opponent.hp,
-    maxHp: opponent.maxHp,
-    wins: opponent.wins || 0,
-    losses: opponent.losses || 0,
-    fightsLeft: opponent.fightsLeft || 0,
-    lastFightReset: opponent.lastFightReset || Date.now(),
-    inventory: opponent.inventory ?? []
-  };
-
-  if (opponent.id) {
-    base.id = opponent.id;
-  }
-
-  if (typeof opponent.isBot === 'boolean') {
-    base.isBot = opponent.isBot;
-  }
-
-  return base;
-};
-
-const hydratePendingOpponent = (snapshot: PendingFightOpponent): Character => {
-  return normalizeCharacter({
-    seed: snapshot.seed,
-    name: snapshot.name,
-    gender: snapshot.gender,
-    level: snapshot.level,
-    experience: snapshot.experience ?? 0,
-    strength: snapshot.strength,
-    vitality: snapshot.vitality,
-    dexterity: snapshot.dexterity,
-    luck: snapshot.luck,
-    intelligence: snapshot.intelligence,
-    focus: snapshot.focus ?? GAME_RULES.STATS.BASE_VALUE,
-    hp: snapshot.hp,
-    maxHp: snapshot.maxHp,
-    wins: snapshot.wins ?? 0,
-    losses: snapshot.losses ?? 0,
-    fightsLeft: snapshot.fightsLeft ?? 0,
-    lastFightReset: snapshot.lastFightReset ?? Date.now(),
-    id: snapshot.id,
-    isBot: snapshot.isBot,
-    inventory: snapshot.inventory ?? []
-  });
-};
-
-// Helper functions
-const clearLocalData = () => {
-  localStorage.removeItem(LOCAL_STORAGE_KEY);
-};
-
-const saveLocalData = (character: Character) => {
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(character));
-};
-
-const loadLocalData = (): Character | null => {
-  const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-  if (!saved) return null;
-
-  try {
-    return JSON.parse(saved);
-  } catch {
-    clearLocalData();
-    return null;
-  }
-};
-
-type SyncResult =
-  | { status: 'ok'; character: Character }
-  | { status: 'missing' }
-  | { status: 'error' };
 
 export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [activeCharacter, setActiveCharacter] = useState<Character | null>(null);

@@ -103,7 +103,6 @@ const CharacterCreation = () => {
     }
 
       try {
-        // 1. Vérifier si le nom existe déjà dans Supabase
         const { data: existing } = await supabase
           .from('characters')
           .select('id')
@@ -117,7 +116,6 @@ const CharacterCreation = () => {
           return;
         }
 
-        // 2. Si le nom est libre, créer le personnage
         const finalCharacter = {
           ...generatedCharacter,
           name: trimmedName
@@ -131,30 +129,16 @@ const CharacterCreation = () => {
 
         if (insertError) throw insertError;
 
-        console.log("Personnage sauvegardé sur Supabase avec l'ID: ", newChar.id);
-
-        // Connecter l'utilisateur immédiatement
         setCharacter({ ...finalCharacter, id: newChar.id });
-      // Ensure error modal is closed and show success
       setShowErrorModal(false);
       setShowSuccessModal(true);
       play('create');
       setIsSubmitting(false)
       setTimeout(() => navigate('/arena'), 2000);
-    } catch (error) {
-      // Log the full error for diagnosis
-      const errMsg = error instanceof Object && 'message' in error
-        ? (error as { message: string }).message
-        : String(error);
-      const errCode = error instanceof Object && 'code' in error
-        ? (error as { code: string }).code
-        : 'unknown';
-      const errDetails = error instanceof Object && 'details' in error
-        ? (error as { details: string }).details
-        : '';
-      console.error('❌ Character creation failed:', { code: errCode, message: errMsg, details: errDetails, stats: convertToSupabase({ ...generatedCharacter, name: trimmedName }) });
+    } catch (error: unknown) {
+      const err = error as { message?: string; code?: string; details?: string };
+      const errMsg = err.message || String(error);
 
-      // Detect CHECK constraint violation (stat range mismatch) vs connection error
       if (errMsg.includes('violates check constraint') || errMsg.includes('violates row-level')) {
         setNameError('DATABASE ERROR - Try again later');
         setShowErrorModal(true);
@@ -162,7 +146,6 @@ const CharacterCreation = () => {
         openModal(connectionMessage);
       }
       setIsSubmitting(false);
-      return;
     }
   }
 

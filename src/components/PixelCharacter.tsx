@@ -17,6 +17,12 @@ export const PixelCharacter: React.FC<PixelCharacterProps> = ({ seed, gender, sc
 
         const pick = <T,>(arr: readonly T[] | T[]) => arr[Math.floor(rng() * arr.length)];
 
+        const headType: keyof typeof PIXEL_HEADS = gender === 'male'
+            ? pick(['male', 'male_bald', 'male_cap', 'male_beard', 'male_mohawk', 'male_sidepart', 'male_spiky'] as const)
+            : pick(['female', 'female_pigtails', 'female_braid', 'female_ponytail', 'female_short', 'female_bob', 'female_waves'] as const);
+
+        const bodyType: keyof typeof PIXEL_BODIES = pick(['basic', 'sleeveless', 'armor', 'jacket', 'vest', 'robe'] as const);
+
         return {
             skinColor: pick(PIXEL_PALETTES.skins) as string,
             hairColor: pick(PIXEL_PALETTES.hair) as string,
@@ -25,12 +31,8 @@ export const PixelCharacter: React.FC<PixelCharacterProps> = ({ seed, gender, sc
             shoesColor: '#333',
             eyeColor: pick(PIXEL_PALETTES.eyes) as string,
             logoColor: pick(PIXEL_PALETTES.clothes) as string,
-            // Randomly select head variation based on gender
-            headType: gender === 'male'
-                ? pick(['male', 'male_bald', 'male_cap', 'male_beard', 'male_mohawk', 'male_sidepart', 'male_spiky'])
-                : pick(['female', 'female_pigtails', 'female_braid', 'female_ponytail', 'female_short', 'female_bob', 'female_waves']),
-            // Randomly select body variation
-            bodyType: pick(['basic', 'sleeveless', 'armor', 'jacket', 'vest', 'robe'])
+            headType,
+            bodyType,
         };
     }, [seed, gender]);
 
@@ -74,9 +76,7 @@ export const PixelCharacter: React.FC<PixelCharacterProps> = ({ seed, gender, sc
         return result;
     }
 
-    // @ts-expect-error - Dynamic index access on const object
     const headGrid = PIXEL_HEADS[features.headType];
-    // @ts-expect-error - Dynamic index access on const object
     const bodyGrid = PIXEL_BODIES[features.bodyType];
 
     // Grid size is roughly 12 wide x 20 high combined

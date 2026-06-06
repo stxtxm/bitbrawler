@@ -5,7 +5,7 @@ import { useSound, setSoundEnabled, setSoundVolume, getSoundSettings, playSound,
 // ---------------------------------------------------------------------------
 // Web Audio API mock
 // ---------------------------------------------------------------------------
-function mockNode() {
+function mockNode(): Record<string, any> {
   return {
     connect: vi.fn(() => mockNode()),
     disconnect: vi.fn(),
@@ -225,9 +225,6 @@ describe('useSound hook', () => {
     act(() => {
       result.current.play('click');
     });
-    // At minimum, createOscillator was called
-    const ctx = new (window as any).AudioContext();
-    // ctx is a mock — just verify no error
     expect(true).toBe(true);
   });
 });
@@ -288,8 +285,6 @@ describe('initClickSound()', () => {
 
 describe('sound definitions', () => {
   it('every sound type has a valid config', () => {
-    const types: Array<keyof typeof import('../../hooks/useSound') & string> = [];
-    // We test via playSound — if it doesn't throw, config is valid
     const allTypes = [
       'nav', 'click', 'scanTick',
       'hit', 'crit', 'magic', 'miss', 'counter',
@@ -303,14 +298,12 @@ describe('sound definitions', () => {
   });
 
   it('arp sound has voices for each step', () => {
-    // Create AudioContext so init runs
     playSound('levelup');
     playSound('victory');
     playSound('defeat');
     playSound('create');
     playSound('loot');
     playSound('lootbox');
-    // No crash = valid voice references in arp
     expect(true).toBe(true);
   });
 });
