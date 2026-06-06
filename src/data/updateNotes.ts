@@ -8,6 +8,23 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '2.4.0',
+    date: '2026-06-03',
+    title: 'Lootbox fix, auto stat allocation & QoL improvements',
+    changes: [
+      'Lootbox probability fix: mid-game epic rate restored (was 5%, now 8-10%) — rare/epic deficit due to weight calculation inconsistencies resolved.',
+      'Combat-weight bias in auto stat allocation: VIT gets 40% bias when below stat average for balanced HP growth.',
+      'Level-up overlay no longer auto-closes: stays open until you click LATER or APPLY.',
+      'Level-up overlay no longer blocks FIGHT button in auto-mode with instant auto-allocate.',
+      'Stat points per level increased: 1 → 2 for faster progression.',
+      'Stat spread increased via 5-15 range CHECK constraint (was 6-14) for more distinctive character builds.',
+      'Archetype-biased initial stat allocation (weighted random) — fighters feel more specialised.',
+      'Daily lootbox streak system with escalating rewards — consecutive claims increase rare/epic odds.',
+      'HP gain shown in level-up overlay for immediate feedback.',
+      'Character creation retry mechanism: auto-retries on navigation failure.',
+    ],
+  },
+  {
     version: '2.3.0',
     date: '2026-05-25',
     title: 'Stats tooltips, XP alignment & code cleanup',
