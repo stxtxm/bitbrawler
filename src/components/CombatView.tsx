@@ -222,8 +222,6 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
 
     const won = combatResult?.winner === 'attacker';
     const draw = combatResult?.winner === 'draw';
-    const totalRounds = combatResult?.details.length ?? 0;
-    const isLastRound = currentRound >= totalRounds - 1;
 
     const xpGained = useMemo(() => {
         if (!combatResult) return 0;
@@ -311,13 +309,14 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
                         </div>
                         <div className="combat-fighters">
                             <div
+                                key={`player-${currentRound}`}
                                 className={`fighter-side left${fighterEntrance ? ' enter-left' : ''}${
                                     actionPulse?.actor === 'player'
                                         ? ` action-${actionPulse.type}`
                                         : reactionType && actionPulse?.actor === 'opponent'
                                             ? ` react-${reactionType}`
                                             : ''
-                                }${isLastRound && combatResult.winner === 'defender' && actionPulse?.actor === 'opponent' && actionPulse.type !== 'miss' ? ' dying' : ''}`}
+                                }`}
                             >
                                 <div className="fighter-character-wrap">
                                     <PixelCharacter seed={player.seed} gender={player.gender} scale={6} />
@@ -334,13 +333,14 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
                                 </div>
                             </div>
                             <div
+                                key={`opponent-${currentRound}`}
                                 className={`fighter-side right${fighterEntrance ? ' enter-right' : ''}${
                                     actionPulse?.actor === 'opponent'
                                         ? ` action-${actionPulse.type}`
                                         : reactionType && actionPulse?.actor === 'player'
                                             ? ` react-${reactionType}`
                                             : ''
-                                }${isLastRound && combatResult.winner === 'attacker' && actionPulse?.actor === 'player' && actionPulse.type !== 'miss' ? ' dying' : ''}`}
+                                }`}
                             >
                                 <div className="fighter-character-wrap">
                                     <PixelCharacter seed={opponent.seed} gender={opponent.gender} scale={6} />
