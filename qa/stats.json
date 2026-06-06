@@ -7800,5 +7800,103 @@
       "home": 1155,
       "arena": 3276
     }
+  },
+  {
+    "date": "2026-06-06T22:01:23.890Z",
+    "run": "2026-06-07",
+    "character": "GLORYMONK",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 26,
+        "fight_duration_ms": 16088,
+        "max_hp": 204
+      },
+      {
+        "result": "defeat",
+        "xp": 27,
+        "fight_duration_ms": 17734,
+        "max_hp": 204
+      },
+      {
+        "result": "victory",
+        "xp": 131,
+        "fight_duration_ms": 18251,
+        "max_hp": 216
+      },
+      {
+        "result": "victory",
+        "xp": 119,
+        "fight_duration_ms": 23234,
+        "max_hp": 216
+      },
+      {
+        "result": "victory",
+        "xp": 127,
+        "fight_duration_ms": 14217,
+        "max_hp": 228
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Rusty Sword",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 13,
+      "vit": 13,
+      "dex": 15,
+      "luk": 8,
+      "int": 9,
+      "foc": 8
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 204,
+    "final_stats": {
+      "level": 3,
+      "xp": 27,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 13,
+      "vit": 13,
+      "dex": 15,
+      "luk": 8,
+      "int": 9,
+      "foc": 8
+    },
+    "final_max_hp": 228,
+    "level_up_events": [
+      {
+        "fight_number": 3,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      },
+      {
+        "fight_number": 5,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 2,
+        "new_level": 3
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1658,
+      "arena": 3352
+    }
   }
 ]
