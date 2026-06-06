@@ -158,17 +158,11 @@
 
 .fighter-side.left {
     animation: none;
-    --react-shift: -6px;
-    --react-shift-strong: -7px;
-    --react-shift-soft: -3px;
 }
 
 .fighter-side.right {
     animation: none;
     --fx-attack: 30%;
-    --react-shift: 6px;
-    --react-shift-strong: 7px;
-    --react-shift-soft: 3px;
 }
 
 .fighter-side::before,
@@ -187,176 +181,195 @@
 }
 
 // ============================================
-// Fighter Action Animations
+// Fighter Action Animations (in-place)
+// Characters stay in their boxes; effects use
+// scale, brightness, and pseudo-element VFX.
 // ============================================
 
-.fighter-side.left.action-hit {
-    animation: strikeRight 0.4s cubic-bezier(0.3, 1.4, 0.4, 1);
-}
-
-.fighter-side.right.action-hit {
-    animation: strikeLeft 0.4s cubic-bezier(0.3, 1.4, 0.4, 1);
+.fighter-side.action-hit {
+    animation: surgeHit 0.3s ease;
 }
 
 .fighter-side.action-crit {
-    animation: critFlash 0.55s steps(2) ease;
+    animation: surgeCrit 0.45s ease;
 }
 
 .fighter-side.action-magic {
-    animation: magicPulse 0.6s ease;
+    animation: surgeMagic 0.5s ease;
 }
 
-.fighter-side.left.action-miss {
-    animation: missWobbleLeft 0.45s ease;
+.fighter-side.action-miss {
+    animation: fumble 0.35s ease;
 }
 
-.fighter-side.right.action-miss {
-    animation: missWobbleRight 0.45s ease;
-}
-
-.fighter-side.left.action-counter {
-    animation: counterJoltRight 0.45s ease;
-}
-
-.fighter-side.right.action-counter {
-    animation: counterJoltLeft 0.45s ease;
+.fighter-side.action-counter {
+    animation: surgeCounter 0.35s ease;
 }
 
 // ============================================
-// Fighter Reaction Animations
+// Fighter Reaction Animations (in-place vibration)
 // ============================================
 
 .fighter-side.react-hit,
 .fighter-side.react-counter {
-    animation: receiveHit 0.38s ease;
+    animation: vibrateHit 0.3s ease;
 }
 
 .fighter-side.react-crit {
-    animation: receiveCrit 0.48s ease;
+    animation: vibrateCrit 0.4s ease;
 }
 
 .fighter-side.react-magic {
-    animation: receiveMagic 0.55s ease;
+    animation: liftMagic 0.45s ease;
 }
 
 // ============================================
-// Fighter Action Visual Effects
+// Fighter VFX — larger, visible impact effects
 // ============================================
+
+// Shared VFX base
+.fighter-side::before,
+.fighter-side::after {
+    content: '';
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    image-rendering: pixelated;
+    z-index: 3;
+    left: var(--fx-attack);
+    top: var(--fx-top);
+    transform: translate(-50%, -50%);
+}
+
+// ::after = main impact flare (center of fighter)
+.fighter-side::after {
+    width: 28px;
+    height: 28px;
+}
+
+// ::before = secondary ring/aura
+.fighter-side::before {
+    width: 20px;
+    height: 20px;
+}
+
+// --- HIT VFX ---
+.fighter-side.action-hit::after {
+    background: transparent;
+    box-shadow:
+        10px 0 0 #ffe066,
+        -10px 0 0 #ffe066,
+        0 10px 0 #ffe066,
+        0 -10px 0 #ffe066,
+        7px 7px 0 #ffe066,
+        -7px 7px 0 #ffe066,
+        7px -7px 0 #ffe066,
+        -7px -7px 0 #ffe066;
+    animation: crossFlare 0.35s ease both;
+}
+
+.fighter-side.action-hit::before {
+    border: 2px solid rgba(255, 224, 102, 0.7);
+    border-radius: 50%;
+    animation: ringBurst 0.35s ease both;
+}
+
+// --- CRIT VFX ---
+.fighter-side.action-crit::after {
+    background: transparent;
+    box-shadow:
+        12px 0 0 #ffd700,
+        -12px 0 0 #ffd700,
+        0 12px 0 #ffd700,
+        0 -12px 0 #ffd700,
+        8px 8px 0 #fff2a6,
+        -8px 8px 0 #fff2a6,
+        8px -8px 0 #fff2a6,
+        -8px -8px 0 #fff2a6;
+    animation: crossFlare 0.5s ease both;
+}
+
+.fighter-side.action-crit::before {
+    border: 2px solid rgba(255, 215, 0, 0.8);
+    border-radius: 50%;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
+    animation: ringBurst 0.5s ease both;
+}
 
 .fighter-side.action-crit .pixel-character {
     filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.55));
+    animation: goldGlow 0.45s ease;
+}
+
+// --- MAGIC VFX ---
+.fighter-side.action-magic::after {
+    background: #5eead4;
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+    box-shadow:
+        16px 0 0 rgba(94, 234, 212, 0.6),
+        -16px 0 0 rgba(94, 234, 212, 0.6),
+        0 16px 0 rgba(94, 234, 212, 0.6),
+        0 -16px 0 rgba(94, 234, 212, 0.6);
+    animation: magicBurst 0.5s ease both;
+}
+
+.fighter-side.action-magic::before {
+    border: 2px solid rgba(94, 234, 212, 0.6);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    box-shadow:
+        0 0 10px rgba(94, 234, 212, 0.4),
+        inset 0 0 8px rgba(94, 234, 212, 0.3);
+    animation: ringExpand 0.5s ease both;
 }
 
 .fighter-side.action-magic .pixel-character {
     filter: drop-shadow(0 0 10px rgba(94, 234, 212, 0.6));
 }
 
-.fighter-side.action-counter .pixel-character {
-    filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.5));
+// --- MISS VFX ---
+.fighter-side.action-miss::after {
+    background: transparent;
+    width: 20px;
+    height: 20px;
+    box-shadow:
+        6px 0 0 #9aa0a6,
+        -6px 0 0 #9aa0a6,
+        0 6px 0 #9aa0a6,
+        0 -6px 0 #9aa0a6;
+    animation: missPop 0.4s ease both;
+}
+
+.fighter-side.action-miss::before {
+    display: none;
 }
 
 .fighter-side.action-miss .pixel-character {
-    filter: brightness(0.9);
+    filter: brightness(0.85);
 }
 
-// Hit spark effects
-.fighter-side.action-hit::after {
-    background: #ffe066;
-    box-shadow:
-        6px 0 0 #ffe066,
-        0 6px 0 #ffe066,
-        -6px 0 0 #ffe066,
-        0 -6px 0 #ffe066;
-    animation: hitSpark 0.4s steps(4) both;
-}
-
-.fighter-side.action-hit::before {
-    width: 16px;
-    height: 2px;
-    background: #fff3b0;
-    box-shadow:
-        0 6px 0 #fff3b0,
-        0 -6px 0 #fff3b0;
-    left: var(--fx-center);
-    top: 22%;
-    animation: hitLines 0.35s ease both;
-}
-
-// Crit spark effects
-.fighter-side.action-crit::after {
-    background: #ffd700;
-    box-shadow:
-        6px 0 0 #ffd700,
-        -6px 0 0 #ffd700,
-        0 6px 0 #ffd700,
-        0 -6px 0 #ffd700,
-        6px 6px 0 #fff2a6,
-        -6px -6px 0 #fff2a6;
-    animation: critSpark 0.55s steps(4) both;
-}
-
-.fighter-side.action-crit::before {
-    width: 14px;
-    height: 14px;
-    border: 2px solid rgba(255, 215, 0, 0.6);
-    box-shadow: 0 0 8px rgba(255, 215, 0, 0.35);
-    left: var(--fx-center);
-    top: 20%;
-    animation: critRing 0.55s ease both;
-}
-
-// Counter spark effects
-.fighter-side.action-counter::before {
-    width: 12px;
-    height: 12px;
-    border: 2px solid rgba(255, 107, 107, 0.6);
-    box-shadow: 0 0 8px rgba(255, 107, 107, 0.35);
-    left: var(--fx-center);
-    top: 22%;
-    animation: counterRing 0.45s ease both;
-}
-
-// Magic effects
-.fighter-side.action-magic::after {
-    background: #5eead4;
-    box-shadow:
-        6px 0 0 #5eead4,
-        -6px 0 0 #5eead4,
-        0 6px 0 #5eead4,
-        0 -6px 0 #5eead4;
-    left: var(--fx-center);
-    top: 18%;
-    animation: magicRune 0.6s ease both;
-}
-
-.fighter-side.action-magic::before {
-    width: 18px;
-    height: 18px;
-    border: 1px solid rgba(94, 234, 212, 0.55);
-    box-shadow:
-        0 0 8px rgba(94, 234, 212, 0.35),
-        inset 0 0 6px rgba(94, 234, 212, 0.35);
-    left: var(--fx-center);
-    top: 18%;
-    animation: magicHalo 0.6s ease both;
-}
-
-// Miss effects
-.fighter-side.action-miss::after {
-    background: #9aa0a6;
-    box-shadow:
-        6px 0 0 #9aa0a6,
-        0 6px 0 #9aa0a6;
-    animation: missPuff 0.45s steps(3) both;
-}
-
-// Counter effects
+// --- COUNTER VFX ---
 .fighter-side.action-counter::after {
-    background: #ff6b6b;
+    background: transparent;
     box-shadow:
-        6px 0 0 #ff6b6b,
-        -6px 0 0 #ff6b6b;
-    animation: counterSpark 0.45s steps(3) both;
+        10px 0 0 #ff6b6b,
+        -10px 0 0 #ff6b6b,
+        0 10px 0 #ff6b6b,
+        0 -10px 0 #ff6b6b;
+    animation: crossFlare 0.38s ease both;
+}
+
+.fighter-side.action-counter::before {
+    border: 2px solid rgba(255, 107, 107, 0.7);
+    border-radius: 50%;
+    animation: ringBurst 0.38s ease both;
+}
+
+.fighter-side.action-counter .pixel-character {
+    filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.5));
 }
 
 // ============================================
@@ -415,7 +428,7 @@
 }
 
 // ============================================
-// Combat Keyframes
+// Combat Keyframes — all in-place, no displacement
 // ============================================
 
 @keyframes flashText {
@@ -423,129 +436,109 @@
     50% { opacity: 0.7; transform: scale(1.05); }
 }
 
-@keyframes strikeRight {
-    0% { transform: translateX(0) scale(1) rotate(0deg); }
-    35% { transform: translateX(7px) scale(1.05) rotate(-1deg); }
-    65% { transform: translateX(3px) scale(1.02) rotate(0deg); }
-    100% { transform: translateX(0) scale(1) rotate(0deg); }
+// Actor power surges (stay in place)
+@keyframes surgeHit {
+    0% { transform: scale(1); filter: brightness(1); }
+    20% { transform: scale(1.06); filter: brightness(1.35); }
+    60% { transform: scale(1.02); filter: brightness(1.1); }
+    100% { transform: scale(1); filter: brightness(1); }
 }
 
-@keyframes strikeLeft {
-    0% { transform: translateX(0) scale(1) rotate(0deg); }
-    35% { transform: translateX(-7px) scale(1.05) rotate(1deg); }
-    65% { transform: translateX(-3px) scale(1.02) rotate(0deg); }
-    100% { transform: translateX(0) scale(1) rotate(0deg); }
+@keyframes surgeCrit {
+    0% { transform: scale(1); filter: brightness(1); }
+    20% { transform: scale(1.09); filter: brightness(1.6); }
+    55% { transform: scale(1.03); filter: brightness(1.2); }
+    100% { transform: scale(1); filter: brightness(1); }
 }
 
-@keyframes critFlash {
-    0% { transform: scale(1) rotate(0deg); filter: brightness(1); }
-    35% { transform: scale(1.1) rotate(-1deg); filter: brightness(1.5); }
-    70% { transform: scale(1.03) rotate(1deg); filter: brightness(1.2); }
-    100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+@keyframes surgeMagic {
+    0% { transform: scale(1); filter: brightness(1); }
+    25% { transform: scale(1.04); filter: brightness(1.25); }
+    65% { transform: scale(1.01); filter: brightness(1.1); }
+    100% { transform: scale(1); filter: brightness(1); }
 }
 
-@keyframes magicPulse {
-    0% { transform: translateY(0) scale(1) rotate(0deg); filter: drop-shadow(0 0 0 rgba(78, 205, 196, 0)); }
-    45% { transform: translateY(-5px) scale(1.04) rotate(-1deg); filter: drop-shadow(0 0 10px rgba(78, 205, 196, 0.9)); }
-    75% { transform: translateY(-2px) scale(1.02) rotate(1deg); filter: drop-shadow(0 0 6px rgba(78, 205, 196, 0.6)); }
-    100% { transform: translateY(0) scale(1) rotate(0deg); filter: drop-shadow(0 0 0 rgba(78, 205, 196, 0)); }
+@keyframes fumble {
+    0% { transform: scale(1) rotate(0deg); }
+    20% { transform: scale(1.03) rotate(-3deg); }
+    50% { transform: scale(1.03) rotate(3deg); }
+    75% { transform: scale(1.01) rotate(-1deg); }
+    100% { transform: scale(1) rotate(0deg); }
 }
 
-@keyframes missWobbleLeft {
-    0% { transform: translateX(0) rotate(0deg); opacity: 1; }
-    50% { transform: translateX(-7px) rotate(-1deg); opacity: 0.7; }
-    100% { transform: translateX(0) rotate(0deg); opacity: 1; }
+@keyframes surgeCounter {
+    0% { transform: scale(1); filter: brightness(1); }
+    18% { transform: scale(1.07); filter: brightness(1.45); }
+    55% { transform: scale(1.02); filter: brightness(1.15); }
+    100% { transform: scale(1); filter: brightness(1); }
 }
 
-@keyframes missWobbleRight {
-    0% { transform: translateX(0) rotate(0deg); opacity: 1; }
-    50% { transform: translateX(7px) rotate(1deg); opacity: 0.7; }
-    100% { transform: translateX(0) rotate(0deg); opacity: 1; }
+// Receiver vibrations (subtle shudder in place)
+@keyframes vibrateHit {
+    0% { transform: translateX(0); filter: brightness(1); }
+    15% { transform: translateX(-2px); filter: brightness(0.7); }
+    30% { transform: translateX(2px); filter: brightness(0.85); }
+    50% { transform: translateX(-1px); filter: brightness(1.15); }
+    70% { transform: translateX(1px); filter: brightness(1); }
+    100% { transform: translateX(0); filter: brightness(1); }
 }
 
-@keyframes counterJoltRight {
-    0% { transform: translateX(0) scale(1) rotate(0deg); }
-    30% { transform: translateX(7px) scale(1.05) rotate(-1deg); }
-    100% { transform: translateX(0) scale(1) rotate(0deg); }
+@keyframes vibrateCrit {
+    0% { transform: translateX(0); filter: brightness(1); }
+    10% { transform: translateX(-3px); filter: brightness(0.5); }
+    25% { transform: translateX(3px); filter: brightness(0.7); }
+    40% { transform: translateX(-2px); filter: brightness(1.3); }
+    60% { transform: translateX(2px); filter: brightness(1.15); }
+    80% { transform: translateX(-1px); filter: brightness(1); }
+    100% { transform: translateX(0); filter: brightness(1); }
 }
 
-@keyframes counterJoltLeft {
-    0% { transform: translateX(0) scale(1) rotate(0deg); }
-    30% { transform: translateX(-7px) scale(1.05) rotate(1deg); }
-    100% { transform: translateX(0) scale(1) rotate(0deg); }
-}
-
-@keyframes receiveHit {
-    0% { transform: translateX(0) scale(1); filter: brightness(1); }
-    40% { transform: translateX(var(--react-shift)) scale(0.98); filter: brightness(1.15); }
-    100% { transform: translateX(0) scale(1); filter: brightness(1); }
-}
-
-@keyframes receiveCrit {
-    0% { transform: translateX(0) scale(1); filter: brightness(1); }
-    35% { transform: translateX(var(--react-shift-strong)) scale(0.96); filter: brightness(1.25); }
-    70% { transform: translateX(var(--react-shift-soft)) scale(0.99); filter: brightness(1.1); }
-    100% { transform: translateX(0) scale(1); filter: brightness(1); }
-}
-
-@keyframes receiveMagic {
+@keyframes liftMagic {
     0% { transform: translateY(0) scale(1); filter: brightness(1); }
-    45% { transform: translateY(2px) scale(0.98); filter: brightness(1.2); }
+    30% { transform: translateY(-3px) scale(1.02); filter: brightness(0.85); }
+    55% { transform: translateY(-5px) scale(1.01); filter: brightness(1.1); }
+    80% { transform: translateY(-1px) scale(1); filter: brightness(1); }
     100% { transform: translateY(0) scale(1); filter: brightness(1); }
 }
 
-@keyframes hitSpark {
-    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-    40% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+// VFX keyframes
+@keyframes crossFlare {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+    30% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+    70% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
     100% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
 }
 
-@keyframes hitLines {
-    0% { opacity: 0; transform: translate(-50%, -50%) scaleX(0.5); }
-    50% { opacity: 0.9; transform: translate(-50%, -50%) scaleX(1); }
-    100% { opacity: 0; transform: translate(-50%, -50%) scaleX(0.6); }
+@keyframes ringBurst {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+    35% { opacity: 0.9; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.2); }
 }
 
-@keyframes critSpark {
-    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6) rotate(0deg); }
-    40% { opacity: 1; transform: translate(-50%, -50%) scale(1.1) rotate(8deg); }
-    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.7) rotate(-8deg); }
-}
-
-@keyframes critRing {
+@keyframes ringExpand {
     0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-    50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.15); }
+    40% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3); }
 }
 
-@keyframes magicRune {
-    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6) rotate(0deg); }
-    50% { opacity: 0.9; transform: translate(-50%, -50%) scale(1) rotate(8deg); }
-    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8) rotate(-8deg); }
+@keyframes magicBurst {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+    25% { opacity: 0.9; transform: translate(-50%, -50%) scale(1); }
+    60% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
 }
 
-@keyframes magicHalo {
-    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
-    50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); }
+@keyframes missPop {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+    30% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.1); }
+    70% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -60%) scale(0.7); }
 }
 
-@keyframes missPuff {
-    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-    45% { opacity: 0.7; transform: translate(-50%, -60%) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -75%) scale(0.7); }
-}
-
-@keyframes counterSpark {
-    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
-    45% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
-    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
-}
-
-@keyframes counterRing {
-    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
-    45% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); }
+@keyframes goldGlow {
+    0% { filter: drop-shadow(0 0 0 rgba(255, 215, 0, 0)); }
+    40% { filter: drop-shadow(0 0 14px rgba(255, 215, 0, 0.7)); }
+    100% { filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.55)); }
 }
 
 @keyframes actionFlash {
@@ -736,29 +729,9 @@
 }
 
 // ============================================
-// Screen Flash Based on Hit Side
+// Screen Flash — action colors already convey
+// hit side via actor/reaction classes on fighters
 // ============================================
-
-.combat-action.hit-player {
-    --hit-flash-color: rgba(255, 50, 50, 0.08);
-}
-
-.combat-action.hit-opponent {
-    --hit-flash-color: rgba(50, 255, 50, 0.08);
-}
-
-.combat-action.hit-player::before,
-.combat-action.hit-opponent::before {
-    background:
-        radial-gradient(circle at 50% 45%, var(--hit-flash-color, transparent) 0%, transparent 60%);
-    animation: hitFlash 0.4s ease;
-}
-
-@keyframes hitFlash {
-    0% { opacity: 0; }
-    30% { opacity: 1; }
-    100% { opacity: 0; }
-}
 
 // ============================================
 // Color-coded Log Entries

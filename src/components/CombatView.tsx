@@ -217,9 +217,6 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
     const totalRounds = combatResult?.details.length ?? 0;
     const isLastRound = currentRound >= totalRounds - 1;
 
-    // Detect which side was hit for screen flash
-    const hitSide = actionPulse && actionPulse.type !== 'miss' ? actionPulse.actor : null;
-
     const xpGained = useMemo(() => {
         if (!combatResult) return 0;
         return calculateFightXp(combatResult.winner === 'attacker', player.level, opponent.level);
@@ -295,7 +292,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
 
                 {/* Combat Phase */}
                 {phase === 'combat' && combatResult && (
-                    <div className={`combat-action${actionPulse ? ` action-${actionPulse.type}` : ''}${hitSide ? ` hit-${hitSide}` : ''}${fighterEntrance ? ' fighters-entered' : ''}`}>
+                    <div className={`combat-action${actionPulse ? ` action-${actionPulse.type}` : ''}${fighterEntrance ? ' fighters-entered' : ''}`}>
                         {totalRounds > 0 && (
                             <div className="round-counter">
                                 <span className="round-current">{currentRound + 1}</span>
