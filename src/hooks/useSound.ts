@@ -32,6 +32,7 @@ interface SoundConfig {
 }
 
 const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
+  // ── UI ──
   click: {
     voices: [{ type: 'sine', freq: 1000, gain: 0.45 }],
     decay: 10, gain: 1, reverb: 0,
@@ -44,6 +45,9 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
     voices: [{ type: 'triangle', freq: 1047, gain: 0.3 }],
     decay: 15, gain: 1, reverb: 0,
   },
+
+  // ── COMBAT ──
+  // hit: short low thud — attacker lands a blow
   hit: {
     voices: [
       { type: 'triangle', freq: 80, gain: 0.35 },
@@ -53,41 +57,47 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
     noise: { gain: 0.12, dur: 0.03 },
     reverb: 0.15, pitchVar: 15,
   },
+  // crit: bright high shimmer — big damage
   crit: {
     voices: [
       { type: 'triangle', freq: 100, gain: 0.35 },
-      { type: 'triangle', freq: 200, gain: 0.25 },
-      { type: 'sine', freq: 800, gain: 0.08 },
+      { type: 'triangle', freq: 200, gain: 0.2 },
+      { type: 'sine', freq: 1400, gain: 0.1 },
+      { type: 'sine', freq: 2000, gain: 0.06 },
     ],
-    decay: 70, gain: 0.65,
-    noise: { gain: 0.15, dur: 0.04 },
+    decay: 70, gain: 0.75,
+    noise: { gain: 0.18, dur: 0.04 },
     reverb: 0.2, pitchVar: 10,
   },
+  // magic: ethereal rising sweep — mystical attack
   magic: {
     voices: [
-      { type: 'triangle', freq: 300, gain: 0.25 },
-      { type: 'triangle', freq: 480, gain: 0.15 },
-      { type: 'sine', freq: 900, gain: 0.06 },
+      { type: 'sine', freq: 280, gain: 0.2 },
+      { type: 'sine', freq: 560, gain: 0.12 },
+      { type: 'triangle', freq: 840, gain: 0.08 },
     ],
-    decay: 90, gain: 0.65,
-    reverb: 0.35, pitchVar: 8,
+    decay: 100, gain: 0.65,
+    reverb: 0.45, pitchVar: 5,
   },
+  // miss: short sad puff — attacker whiffs
   miss: {
-    voices: [{ type: 'sine', freq: 220, gain: 0.15 }],
-    decay: 25, gain: 0.6,
-    noise: { gain: 0.04, dur: 0.02 },
-    reverb: 0.1, pitchVar: 20,
+    voices: [{ type: 'sine', freq: 200, gain: 0.12 }],
+    decay: 20, gain: 0.5,
+    noise: { gain: 0.03, dur: 0.015 },
+    reverb: 0.1, pitchVar: 25,
   },
+  // counter: sharp aggressive snap — reversal
   counter: {
     voices: [
-      { type: 'triangle', freq: 440, gain: 0.2 },
-      { type: 'triangle', freq: 280, gain: 0.15 },
-      { type: 'sine', freq: 980, gain: 0.06 },
+      { type: 'triangle', freq: 500, gain: 0.25 },
+      { type: 'triangle', freq: 300, gain: 0.15 },
+      { type: 'sine', freq: 1100, gain: 0.08 },
     ],
-    decay: 45, gain: 0.7,
-    noise: { gain: 0.08, dur: 0.02 },
-    reverb: 0.15, pitchVar: 12,
+    decay: 40, gain: 0.75,
+    noise: { gain: 0.1, dur: 0.02 },
+    reverb: 0.12, pitchVar: 8,
   },
+  // vs: dramatic chord — opponent reveal
   vs: {
     voices: [
       { type: 'triangle', freq: 440, gain: 0.25 },
@@ -100,6 +110,7 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
     noise: { gain: 0.1, dur: 0.05 },
     reverb: 0.25,
   },
+  // scan: jackpot ding — opponent locked
   scan: {
     voices: [
       { type: 'triangle', freq: 1047, gain: 0.25 },
@@ -116,83 +127,96 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
     noise: { gain: 0.12, dur: 0.06 },
     reverb: 0.2,
   },
+
+  // ── FEEDBACK ──
+  // levelup: magical sparkling ascent
   levelup: {
-    voices: [{ type: 'triangle', freq: 523, gain: 0.25 }],
+    voices: [{ type: 'triangle', freq: 660, gain: 0.28 }],
     arp: [
-      { voice: 0, dur: 80, delay: 0 },
-      { voice: 0, dur: 80, delay: 80 },
-      { voice: 0, dur: 80, delay: 160 },
-      { voice: 0, dur: 250, delay: 240 },
+      { voice: 0, dur: 60, delay: 0 },
+      { voice: 0, dur: 60, delay: 70 },
+      { voice: 0, dur: 60, delay: 140 },
+      { voice: 0, dur: 200, delay: 210 },
     ],
-    decay: 300, gain: 0.65,
-    reverb: 0.2,
+    decay: 280, gain: 0.75,
+    reverb: 0.3,
   },
+  // lootbox: slot-machine anticipation
   lootbox: {
     voices: [
       { type: 'triangle', freq: 262, gain: 0.2 },
-      { type: 'sine', freq: 65, gain: 0.08 },
+      { type: 'triangle', freq: 330, gain: 0.15 },
+      { type: 'triangle', freq: 392, gain: 0.12 },
+    ],
+    arp: [
+      { voice: 0, dur: 40, delay: 0 },
+      { voice: 1, dur: 40, delay: 50 },
+      { voice: 2, dur: 40, delay: 100 },
+      { voice: 2, dur: 180, delay: 150 },
+    ],
+    decay: 220, gain: 0.75,
+    noise: { gain: 0.1, dur: 0.04 },
+    reverb: 0.25,
+  },
+  // loot: warm reward chime
+  loot: {
+    voices: [
+      { type: 'triangle', freq: 784, gain: 0.22 },
+      { type: 'sine', freq: 988, gain: 0.12 },
     ],
     arp: [
       { voice: 0, dur: 50, delay: 0 },
-      { voice: 0, dur: 50, delay: 50 },
-      { voice: 0, dur: 50, delay: 100 },
-      { voice: 0, dur: 150, delay: 150 },
+      { voice: 1, dur: 60, delay: 40 },
+      { voice: 0, dur: 200, delay: 100 },
     ],
-    decay: 200, gain: 0.6,
-    noise: { gain: 0.08, dur: 0.04 },
+    decay: 280, gain: 0.75,
+    reverb: 0.2,
+  },
+  // create: bright optimistic G-major arpeggio
+  create: {
+    voices: [{ type: 'sine', freq: 784, gain: 0.25 }],
+    arp: [
+      { voice: 0, dur: 50, delay: 0 },
+      { voice: 0, dur: 50, delay: 60 },
+      { voice: 0, dur: 50, delay: 120 },
+      { voice: 0, dur: 200, delay: 180 },
+    ],
+    decay: 280, gain: 0.75,
     reverb: 0.25,
   },
-  loot: {
-    voices: [
-      { type: 'triangle', freq: 784, gain: 0.2 },
-      { type: 'sine', freq: 392, gain: 0.08 },
-    ],
-    arp: [
-      { voice: 0, dur: 60, delay: 0 },
-      { voice: 0, dur: 80, delay: 50 },
-      { voice: 0, dur: 180, delay: 100 },
-    ],
-    decay: 250, gain: 0.65,
-    reverb: 0.2,
-  },
-  create: {
-    voices: [
-      { type: 'triangle', freq: 523, gain: 0.2 },
-      { type: 'sine', freq: 262, gain: 0.08 },
-    ],
-    arp: [
-      { voice: 0, dur: 60, delay: 0 },
-      { voice: 0, dur: 60, delay: 50 },
-      { voice: 0, dur: 60, delay: 100 },
-      { voice: 0, dur: 80, delay: 150 },
-      { voice: 0, dur: 250, delay: 210 },
-    ],
-    decay: 300, gain: 0.65,
-    reverb: 0.2,
-  },
+  // victory: triumphant brass fanfare
   victory: {
-    voices: [{ type: 'triangle', freq: 523, gain: 0.3 }],
-    drone: [{ type: 'sine', freq: 131, gain: 0.15 }],
-    arp: [
-      { voice: 0, dur: 130, delay: 0 },
-      { voice: 0, dur: 130, delay: 120 },
-      { voice: 0, dur: 130, delay: 240 },
-      { voice: 0, dur: 380, delay: 360 },
+    voices: [
+      { type: 'triangle', freq: 523, gain: 0.3 },
+      { type: 'sawtooth', freq: 262, gain: 0.08 },
     ],
-    decay: 500, gain: 0.9,
+    drone: [
+      { type: 'sine', freq: 131, gain: 0.15 },
+      { type: 'sine', freq: 65, gain: 0.08 },
+    ],
+    arp: [
+      { voice: 0, dur: 120, delay: 0 },
+      { voice: 0, dur: 120, delay: 110 },
+      { voice: 0, dur: 120, delay: 220 },
+      { voice: 0, dur: 400, delay: 340 },
+    ],
+    decay: 520, gain: 0.9,
     reverb: 0.3,
   },
+  // defeat: dark minor descent with wobble
   defeat: {
-    voices: [{ type: 'triangle', freq: 440, gain: 0.3 }],
-    drone: [{ type: 'sine', freq: 110, gain: 0.12 }],
-    arp: [
-      { voice: 0, dur: 150, delay: 0 },
-      { voice: 0, dur: 150, delay: 140 },
-      { voice: 0, dur: 150, delay: 280 },
-      { voice: 0, dur: 400, delay: 420 },
+    voices: [
+      { type: 'triangle', freq: 440, gain: 0.25, detune: -5 },
+      { type: 'sine', freq: 110, gain: 0.1 },
     ],
-    decay: 500, gain: 0.85,
-    reverb: 0.3,
+    arp: [
+      { voice: 0, dur: 140, delay: 0 },
+      { voice: 0, dur: 140, delay: 130 },
+      { voice: 0, dur: 140, delay: 270 },
+      { voice: 0, dur: 420, delay: 410 },
+    ],
+    decay: 520, gain: 0.85,
+    reverb: 0.35,
   },
 };
 
