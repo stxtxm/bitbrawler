@@ -11,9 +11,7 @@ interface LevelUpOverlayProps {
     lastLevelUp: { levelsGained: number; newLevel: number; hpGained: number } | null;
     pendingStatPoints: number;
     isOfflineMode: boolean;
-    allocatingStat: StatKey | null;
     statOptions: Array<{ key: StatKey; label: string; value: number; hint: string; icon: StatIconType }>;
-    canCloseLevelUp: boolean;
     hasLevelInfo: boolean;
     handleAllocateStat: (stat: StatKey) => void;
     handleCloseLevelUp: () => void;
@@ -26,7 +24,6 @@ const LevelUpOverlay = ({
     lastLevelUp,
     pendingStatPoints,
     isOfflineMode,
-    allocatingStat,
     statOptions,
     hasLevelInfo,
     handleAllocateStat,
@@ -86,7 +83,7 @@ const LevelUpOverlay = ({
                             <button
                                 className="button stat-add-btn"
                                 onClick={() => handleAllocateStat(stat.key as StatKey)}
-                                disabled={pendingStatPoints <= 0 || !!allocatingStat || isOfflineMode}
+                                disabled={pendingStatPoints <= 0 || isOfflineMode}
                                 aria-label={`Increase ${stat.label}`}
                             >
                                 +

@@ -1,5 +1,5 @@
 import { useNavigate, Navigate } from 'react-router-dom';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useGame } from '../context/GameContext';
 import { useConnectionGate } from '../hooks/useConnectionGate';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -43,8 +43,7 @@ const Arena = () => {
     const [inventoryOpen, setInventoryOpen] = useState(false);
     const [matchmaking, setMatchmaking] = useState(false);
     const [combatData, setCombatData] = useState<MatchmakingResult | null>(null);
-    const [allocatingStat, setAllocatingStat] = useState<StatKey | null>(null);
-    const allocatingRef = useRef(false);
+    const [pendingAllocations, setPendingAllocations] = useState<Partial<Record<StatKey, number>>>({});
     const [deferLevelUp, setDeferLevelUp] = useState(false);
     const [lootboxRolling, setLootboxRolling] = useState(false);
     const [lootboxResult, setLootboxResult] = useState<PixelItemAsset | null>(null);
@@ -102,8 +101,9 @@ const Arena = () => {
     const hasPendingFight = !!activeCharacter.pendingFight;
     const canFight = !isOfflineMode && fightsLeft > 0 && !hasPendingFight;
     const pendingStatPoints = activeCharacter.statPoints || 0;
-    const canCloseLevelUp = pendingStatPoints === 0;
-    const shouldShowLevelUp = showLevelUp || (pendingStatPoints > 0 && !deferLevelUp);
+    const totalPendingAlloc = Object.values(pendingAllocations).reduce((a, b) => a + b, 0);
+    const projectedStatPoints = pendingStatPoints - totalPendingAlloc;
+    const shouldShowLevelUp = showLevelUp || (projectedStatPoints > 0 && !deferLevelUp);
     const hasLevelInfo = lastLevelUp !== null;
     const inventory = activeCharacter.inventory || [];
     const inventoryCapacity = INVENTORY_CAPACITY;
@@ -112,12 +112,12 @@ const Arena = () => {
     const streak = activeCharacter.lootboxStreak ?? 0;
     type StatIconType = 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligence' | 'focus';
     const statOptions: Array<{ key: StatKey; label: string; value: number; hint: string; icon: StatIconType }> = [
-        { key: 'strength', label: 'STR', value: effectiveCharacter.strength, hint: 'Damage', icon: 'strength' },
-        { key: 'vitality', label: 'VIT', value: effectiveCharacter.vitality, hint: 'HP / Defense', icon: 'vitality' },
-        { key: 'dexterity', label: 'DEX', value: effectiveCharacter.dexterity, hint: 'Speed', icon: 'dexterity' },
-        { key: 'luck', label: 'LUK', value: effectiveCharacter.luck, hint: 'Crit Chance', icon: 'luck' },
-        { key: 'intelligence', label: 'INT', value: effectiveCharacter.intelligence, hint: 'Magic Power', icon: 'intelligence' },
-        { key: 'focus', label: 'FOC', value: effectiveCharacter.focus, hint: 'Accuracy / Control', icon: 'focus' },
+        { key: 'strength', label: 'STR', value: effectiveCharacter.strength + (pendingAllocations.strength || 0), hint: 'Damage', icon: 'strength' },
+        { key: 'vitality', label: 'VIT', value: effectiveCharacter.vitality + (pendingAllocations.vitality || 0), hint: 'HP / Defense', icon: 'vitality' },
+        { key: 'dexterity', label: 'DEX', value: effectiveCharacter.dexterity + (pendingAllocations.dexterity || 0), hint: 'Speed', icon: 'dexterity' },
+        { key: 'luck', label: 'LUK', value: effectiveCharacter.luck + (pendingAllocations.luck || 0), hint: 'Crit Chance', icon: 'luck' },
+        { key: 'intelligence', label: 'INT', value: effectiveCharacter.intelligence + (pendingAllocations.intelligence || 0), hint: 'Magic Power', icon: 'intelligence' },
+        { key: 'focus', label: 'FOC', value: effectiveCharacter.focus + (pendingAllocations.focus || 0), hint: 'Accuracy / Control', icon: 'focus' },
     ];
     const itemStatMeta: Record<keyof ItemStats, { label: string; icon: StatIconType }> = {
         strength: { label: 'STR', icon: 'strength' },
@@ -164,39 +164,36 @@ const Arena = () => {
         [activeCharacter.fightHistory, activeCharacter.incomingFightHistory]
     );
 
-    const handleAllocateStat = async (stat: StatKey) => {
-        if (allocatingRef.current || pendingStatPoints <= 0) return;
-
-        if (isOfflineMode) {
-            openModal(connectionMessage);
-            return;
-        }
-
-        allocatingRef.current = true;
-        setAllocatingStat(stat);
-        try {
-            await allocateStatPoint(stat);
-        } catch (error: any) {
-            openModal(error.message || connectionMessage);
-        } finally {
-            allocatingRef.current = false;
-            setAllocatingStat(null);
-        }
+    const handleAllocateStat = (stat: StatKey) => {
+        if (projectedStatPoints <= 0) return;
+        setPendingAllocations(prev => ({ ...prev, [stat]: (prev[stat] || 0) + 1 }));
     };
 
-    const handleCloseLevelUp = () => {
+    const handleCloseLevelUp = async () => {
+        const entries = Object.entries(pendingAllocations) as [StatKey, number][];
+        for (const [stat, count] of entries) {
+            for (let i = 0; i < count; i++) {
+                try {
+                    await allocateStatPoint(stat);
+                } catch (error: any) {
+                    openModal(error.message || connectionMessage);
+                    setPendingAllocations({});
+                    return;
+                }
+            }
+        }
+        setPendingAllocations({});
         setShowLevelUp(false);
         clearXpNotifications();
-        if (canCloseLevelUp) {
-            // all points spent — reset defer so next level-up shows immediately
+        if (projectedStatPoints === 0) {
             setDeferLevelUp(false);
         } else {
-            // points remain — defer so the overlay stays hidden until SPEND POINT is clicked
             setDeferLevelUp(true);
         }
     };
 
     const handleDeferLevelUp = () => {
+        setPendingAllocations({});
         setShowLevelUp(false);
         setDeferLevelUp(true);
         clearXpNotifications();
@@ -210,6 +207,7 @@ const Arena = () => {
     useEffect(() => {
         if (pendingStatPoints === 0) {
             setDeferLevelUp(false);
+            setPendingAllocations({});
         }
     }, [pendingStatPoints]);
 
@@ -371,11 +369,9 @@ const Arena = () => {
                 activeCharacter={activeCharacter}
                 effectiveCharacter={effectiveCharacter}
                 lastLevelUp={lastLevelUp}
-                pendingStatPoints={pendingStatPoints}
+                pendingStatPoints={projectedStatPoints}
                 isOfflineMode={isOfflineMode}
-                allocatingStat={allocatingStat}
                 statOptions={statOptions}
-                canCloseLevelUp={canCloseLevelUp}
                 hasLevelInfo={hasLevelInfo}
                 handleAllocateStat={handleAllocateStat}
                 handleCloseLevelUp={handleCloseLevelUp}
@@ -469,7 +465,7 @@ const Arena = () => {
                                 </div>
                             ))}
                         </div>
-                        {pendingStatPoints > 0 && (
+                        {projectedStatPoints > 0 && (
                             <button
                                 className="button secondary-btn stat-allocate-btn"
                                 onClick={handleOpenLevelUp}
