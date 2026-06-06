@@ -7149,5 +7149,96 @@
       "home": 1467,
       "arena": 3106
     }
+  },
+  {
+    "date": "2026-06-06T01:01:29.714Z",
+    "run": "2026-06-06",
+    "character": "COSMOSNOVA",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 24,
+        "fight_duration_ms": 14862,
+        "max_hp": 220
+      },
+      {
+        "result": "victory",
+        "xp": 110,
+        "fight_duration_ms": 24834,
+        "max_hp": 240
+      },
+      {
+        "result": "defeat",
+        "xp": 27,
+        "fight_duration_ms": 16817,
+        "max_hp": 240
+      },
+      {
+        "result": "defeat",
+        "xp": 25,
+        "fight_duration_ms": 15369,
+        "max_hp": 240
+      },
+      {
+        "result": "defeat",
+        "xp": 27,
+        "fight_duration_ms": 16404,
+        "max_hp": 240
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Chipped Wand",
+      "rarity": "UNCOMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 9,
+      "vit": 15,
+      "dex": 9,
+      "luk": 9,
+      "int": 12,
+      "foc": 12
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 220,
+    "final_stats": {
+      "level": 2,
+      "xp": 113,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 9,
+      "vit": 16,
+      "dex": 9,
+      "luk": 9,
+      "int": 13,
+      "foc": 12
+    },
+    "final_max_hp": 240,
+    "level_up_events": [
+      {
+        "fight_number": 2,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1680,
+      "arena": 3727
+    }
   }
 ]
