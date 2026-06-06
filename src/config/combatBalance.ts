@@ -18,8 +18,8 @@ export const COMBAT_BALANCE = {
   roundLimit: 50,
   comeback: {
     hpThresholdRatio: 0.35,
-    hitBonus: 4,
-    damageMultiplier: 1.12,
+    hitBonus: 2,
+    damageMultiplier: 1.06,
   },
   initiative: {
     baseChance: 0.5,
