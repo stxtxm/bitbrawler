@@ -5,6 +5,7 @@ import {
   getEligibleLootboxItems,
   getLootboxRarityWeights,
   getStreakBonus,
+  RARITY_RANK,
   rollLootbox,
 } from '../../utils/lootboxUtils';
 import { ITEM_ASSETS } from '../../data/itemAssets';
@@ -124,6 +125,67 @@ describe('lootboxUtils', () => {
     const high = getLootboxRarityWeights(10);
     expect(high.rare).toBeGreaterThan(low.rare);
     expect(high.epic).toBeGreaterThan(mid.epic);
+  });
+
+  // ─── Legendary Rarity Tests ──────────────────────────────────────────────
+
+  it('includes legendary in RARITY_RANK', () => {
+    expect(RARITY_RANK.legendary).toBe(4);
+  });
+
+  it('includes legendary in getLootboxRarityWeights at level 10+', () => {
+    const weights = getLootboxRarityWeights(10);
+    expect(weights.legendary).toBeGreaterThan(0);
+    expect(weights.legendary).toBe(0.05);
+  });
+
+  it('includes legendary in getLootboxRarityWeights at level 7-9', () => {
+    const weights = getLootboxRarityWeights(7);
+    expect(weights.legendary).toBeGreaterThan(0);
+    expect(weights.legendary).toBe(0.02);
+  });
+
+  it('does not include legendary at level 1-3', () => {
+    const weights = getLootboxRarityWeights(1);
+    expect(weights.legendary).toBe(0);
+  });
+
+  it('rolls a legendary item at high level with favorable RNG', () => {
+    // At level 10: legendary weight = 0.05
+    // Total weight at level 10: 0.38+0.25+0.18+0.14+0.05 = 1.0
+    // legendary is the last bucket, so rng > 0.95 should hit it
+    const rng = () => 0.99;
+    const item = rollLootbox(ITEM_ASSETS, { rng, level: 10 });
+    expect(item).not.toBeNull();
+    expect(item?.rarity).toBe('legendary');
+  });
+
+  it('does not roll legendary at low level (1)', () => {
+    // We need enough rolls to be confident. Since legendary weight at low level
+    // is 0, it should never appear.
+    const rng = mulberry32(99999);
+    for (let i = 0; i < 500; i++) {
+      const item = rollLootbox(ITEM_ASSETS, { rng, level: 1 });
+      if (item) {
+        expect(item.rarity).not.toBe('legendary');
+      }
+    }
+  });
+
+  it('rolls legendary approximately at expected rate at level 10', () => {
+    const rng = mulberry32(123456);
+    let legendaryCount = 0;
+    const totalRolls = 2000;
+
+    for (let i = 0; i < totalRolls; i++) {
+      const item = rollLootbox(ITEM_ASSETS, { rng, level: 10 });
+      if (item?.rarity === 'legendary') legendaryCount += 1;
+    }
+
+    const ratio = legendaryCount / totalRolls;
+    // Expected ~5%, allow some variance
+    expect(ratio).toBeGreaterThan(0.01);
+    expect(ratio).toBeLessThan(0.10);
   });
 
   // ─── Streak System Tests ─────────────────────────────────────────────────
