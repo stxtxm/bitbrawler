@@ -5,7 +5,7 @@ export type SoundType =
   | 'hit' | 'crit' | 'magic' | 'miss' | 'counter'
   | 'levelup' | 'lootbox' | 'loot'
   | 'victory' | 'defeat'
-  | 'vs' | 'scan' | 'create';
+  | 'vs' | 'scan' | 'scanTick' | 'create';
 
 interface SoundConfig {
   type: OscillatorType;
@@ -28,8 +28,8 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
     startGain: 0.15, endGain: 0, ramp: 'expo',
   },
   click: {
-    type: 'sine', frequencies: [440], durations: [20],
-    startGain: 0.1, endGain: 0, ramp: 'expo',
+    type: 'sine', frequencies: [660], durations: [25],
+    startGain: 0.2, endGain: 0, ramp: 'expo',
   },
 
   // ── COMBAT ──
@@ -69,9 +69,18 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
     altVolumes: [0.06, 0.06, 0.06, 0.06],
   },
   scan: {
-    type: 'sine', frequencies: [660, 880, 1046.5],
-    durations: [60, 60, 80],
-    startGain: 0.1, endGain: 0, ramp: 'expo',
+    type: 'triangle', frequencies: [1046.5, 1318.5, 1568],
+    durations: [40, 40, 200],
+    delays: [0, 40, 80],
+    startGain: 0.25, endGain: 0, ramp: 'expo',
+    altType: 'sine', altFrequencies: [523.25, 659.25, 783.99],
+    altVolumes: [0.06, 0.06, 0.06],
+    noise: { duration: 0.06, volume: 0.1 },
+  },
+  scanTick: {
+    type: 'triangle', frequencies: [880],
+    durations: [18],
+    startGain: 0.08, endGain: 0, ramp: 'expo',
   },
 
   // ── GAME EVENTS ──
@@ -278,5 +287,5 @@ function handleClickGate(e: MouseEvent) {
 export function initClickSound() {
   if (gateAttached) return;
   gateAttached = true;
-  document.addEventListener('click', handleClickGate);
+  document.addEventListener('click', handleClickGate, { capture: true });
 }

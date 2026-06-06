@@ -116,6 +116,7 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
         const intervalId = window.setInterval(() => {
             index = (index + 1) % scanList.length;
             setScanIndex(index);
+            play('scanTick');
         }, scanInterval);
 
         const lockTimer = window.setTimeout(() => {
