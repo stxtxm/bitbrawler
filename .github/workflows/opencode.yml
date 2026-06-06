@@ -69,20 +69,33 @@ jobs:
       - name: Create branch
         run: |
           BRANCH="feat/auto-$ISSUE_NUMBER"
-          git checkout -b "$BRANCH"
+          if git ls-remote --exit-code origin "refs/heads/$BRANCH" 2>/dev/null; then
+            echo "Branch $BRANCH already exists on remote — checking out"
+            git fetch origin "$BRANCH"
+            git checkout -b "$BRANCH" "origin/$BRANCH"
+          else
+            git checkout -b "$BRANCH"
+          fi
           echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
 
-      - name: Implement
+      - name: Check for existing PR
+        id: check_pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          EXISTING_PR=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number' 2>/dev/null || true)
+          echo "EXISTING_PR=$EXISTING_PR" >> "$GITHUB_ENV"
+          echo "existing_pr=$EXISTING_PR" >> "$GITHUB_OUTPUT"
+
+      - name: Implement (new PR)
+        if: steps.check_pr.outputs.existing_pr == ''
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         run: |
           PROMPT=$(cat /tmp/prompt.txt | tr -d "'" | sed 's|/oc||g; s|/opencode||g' | xargs)
           MODELS=(
             "opencode/deepseek-v4-flash-free"
-            "opencode/nemotron"
-            "opencode/big-pickle"
           )
-
           SUCCESS=0
           for MODEL in "${MODELS[@]}"; do
             echo "Trying model: $MODEL"
@@ -93,13 +106,82 @@ jobs:
             fi
             echo "Model failed: $MODEL"
           done
-
           if [ "$SUCCESS" -ne 1 ]; then
             echo "All model attempts failed."
             exit 1
           fi
 
-      - name: Push and create PR
+      - name: Implement (fix existing PR)
+        if: steps.check_pr.outputs.existing_pr != ''
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUMBER="${{ steps.check_pr.outputs.existing_pr }}"
+          echo "Existing PR #$PR_NUMBER — fetching CI/review feedback..."
+
+          # Get PR diff, comments, reviews, and CI check results
+          PR_DIFF=$(gh pr diff "$PR_NUMBER" 2>/dev/null || echo "")
+          PR_COMMENTS=$(gh api "/repos/${{ github.repository }}/issues/$PR_NUMBER/comments" --jq '.[].body' 2>/dev/null || echo "")
+          PR_REVIEWS=$(gh api "/repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews" --jq '.[].body' 2>/dev/null || echo "")
+          CI_CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
+            [.statusCheckRollup[]? | select(.conclusion? == "FAILURE" or .conclusion? == "ACTION_REQUIRED") |
+              {name: .name, conclusion: .conclusion}
+            ]' 2>/dev/null || echo "")
+
+          # Get original issue
+          ISSUE_TITLE=$(cat /tmp/issue-title.txt)
+          ISSUE_BODY=$(cat /tmp/prompt.txt)
+
+          PROMPT="
+          Tu dois CORRIGER la PR #$PR_NUMBER. La CI a échoué ou le reviewer a demandé des changements.
+
+          ## Issue originale #$ISSUE_NUMBER
+          Titre: $ISSUE_TITLE
+          Description: $ISSUE_BODY
+
+          ## État actuel de la PR
+          \`\`\`diff
+          $PR_DIFF
+          \`\`\`
+
+          ## Commentaires sur la PR
+          $PR_COMMENTS
+
+          ## Reviews demandant des changements
+          $PR_REVIEWS
+
+          ## Checks CI en échec
+          $CI_CHECKS
+
+          ## Instructions
+          1. Analyse les retours CI et les commentaires de review
+          2. Corrige les problèmes identifiés
+          3. Les tests doivent passer (npm test)
+          4. Le build doit passer (npm run build)
+          5. N'ajoute pas de commentaires dans le code
+          "
+
+          MODELS=(
+            "opencode/deepseek-v4-flash-free"
+          )
+          SUCCESS=0
+          for MODEL in "${MODELS[@]}"; do
+            echo "Trying model: $MODEL"
+            if opencode run --dangerously-skip-permissions --model "$MODEL" "$PROMPT"; then
+              echo "Model selected: $MODEL"
+              SUCCESS=1
+              break
+            fi
+            echo "Model failed: $MODEL"
+          done
+          if [ "$SUCCESS" -ne 1 ]; then
+            echo "All model attempts failed."
+            gh pr comment "$PR_NUMBER" --body "❌ Agent unable to fix issues. Manual intervention required."
+            exit 1
+          fi
+
+      - name: Push and manage PR
         id: pr_create
         env:
           GH_TOKEN: ${{ github.token }}
@@ -110,15 +192,14 @@ jobs:
 
           gh label get auto-generated 2>/dev/null && LABEL_FLAG="--label auto-generated" || LABEL_FLAG=""
 
-          EXISTING_PR=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number' 2>/dev/null || true)
-          if [ -n "$EXISTING_PR" ]; then
-            echo "PR #$EXISTING_PR already exists for branch $BRANCH — updating"
-            gh pr edit "$EXISTING_PR" \
+          PR_NUMBER="${{ steps.check_pr.outputs.existing_pr }}"
+          if [ -n "$PR_NUMBER" ]; then
+            echo "Updating existing PR #$PR_NUMBER — new changes pushed"
+            gh pr edit "$PR_NUMBER" \
               --title "$(cat /tmp/issue-title.txt)" \
               --body "Closes #$ISSUE_NUMBER" \
               $LABEL_FLAG
-            PR_NUMBER="$EXISTING_PR"
-            PR_URL="https://github.com/${{ github.repository }}/pull/$EXISTING_PR"
+            PR_URL="https://github.com/${{ github.repository }}/pull/$PR_NUMBER"
           else
             PR_URL=$(gh pr create \
               --title "$(cat /tmp/issue-title.txt)" \
