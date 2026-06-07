@@ -150,6 +150,63 @@ describe('lootboxUtils', () => {
     expect(weights.legendary).toBe(0);
   });
 
+  it('includes legendary at level 4-6', () => {
+    const weights = getLootboxRarityWeights(4);
+    expect(weights.legendary).toBe(0.01);
+  });
+
+  it('keeps legendary at 0.01 for level 6 (upper edge of tier)', () => {
+    const weights = getLootboxRarityWeights(6);
+    expect(weights.legendary).toBe(0.01);
+  });
+
+  it('reduces common from 0.53 to 0.52 at level 4-6 to compensate for legendary', () => {
+    const weights = getLootboxRarityWeights(4);
+    expect(weights.common).toBe(0.52);
+  });
+
+  it('sum of weights at level 4 equals 1.0', () => {
+    const weights = getLootboxRarityWeights(4);
+    const sum = Object.values(weights).reduce((a, b) => a + b, 0);
+    expect(sum).toBeCloseTo(1.0, 5);
+  });
+
+  it('rolls a legendary item at level 4 with favorable RNG', () => {
+    // At level 4: legendary weight = 0.01, total = 1.0
+    // legendary is the last bucket, so rng > 0.99 should hit it
+    // Use custom pool with a legendary item available at level 4
+    const customItems: PixelItemAsset[] = [
+      { id: 'leg', name: 'Test Legendary', slot: 'weapon', rarity: 'legendary', stats: { strength: 5 }, pixels: [[1]], requiredLevel: 1 },
+      { id: 'common1', name: 'Common', slot: 'weapon', rarity: 'common', stats: { strength: 1 }, pixels: [[1]], requiredLevel: 1 },
+    ];
+    const rng = () => 0.995;
+    const item = rollLootbox(customItems, { rng, level: 4 });
+    expect(item).not.toBeNull();
+    expect(item?.rarity).toBe('legendary');
+  });
+
+  it('rolls legendary approximately at expected rate at level 4', () => {
+    // Custom pool with legendary available at level 4
+    const customItems: PixelItemAsset[] = [
+      { id: 'leg', name: 'Test Legendary', slot: 'weapon', rarity: 'legendary', stats: { strength: 5 }, pixels: [[1]], requiredLevel: 1 },
+      { id: 'common1', name: 'Common 1', slot: 'weapon', rarity: 'common', stats: { strength: 1 }, pixels: [[1]], requiredLevel: 1 },
+      { id: 'common2', name: 'Common 2', slot: 'armor', rarity: 'common', stats: { strength: 1 }, pixels: [[1]], requiredLevel: 1 },
+    ];
+    const rng = mulberry32(98765);
+    let legendaryCount = 0;
+    const totalRolls = 2000;
+
+    for (let i = 0; i < totalRolls; i++) {
+      const item = rollLootbox(customItems, { rng, level: 4 });
+      if (item?.rarity === 'legendary') legendaryCount += 1;
+    }
+
+    const ratio = legendaryCount / totalRolls;
+    // Expected ~1%, allow some variance
+    expect(ratio).toBeGreaterThan(0.001);
+    expect(ratio).toBeLessThan(0.03);
+  });
+
   it('rolls a legendary item at high level with favorable RNG', () => {
     // At level 10: legendary weight = 0.05
     // Total weight at level 10: 0.38+0.25+0.18+0.14+0.05 = 1.0
