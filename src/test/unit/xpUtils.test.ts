@@ -8,6 +8,7 @@ import {
     formatXpDisplay,
     getMaxLevel
 } from '../../utils/xpUtils';
+import { GAME_RULES } from '../../config/gameRules';
 import { Character } from '../../types/Character';
 
 // Helper to create a test character
@@ -172,6 +173,55 @@ describe('XP Utils', () => {
             }
 
             expect(avgLevel10 / 100).toBeGreaterThan(avgLevel1 / 100);
+        });
+    });
+
+    describe('XP tuning — WIN rewards', () => {
+        it('XP_WIN should be 135 for better early progression', () => {
+            expect(GAME_RULES.COMBAT.XP_WIN).toBe(135);
+        });
+
+        it('should yield ~135 XP average per win at level 1', () => {
+            let total = 0;
+            const trials = 200;
+            for (let i = 0; i < trials; i++) {
+                total += calculateFightXp(true, 1);
+            }
+            const avg = total / trials;
+            // With base 135 + variance ±10%: range [121.5, 148.5]
+            expect(avg).toBeGreaterThan(115);
+            expect(avg).toBeLessThan(150);
+        });
+
+        it('should allow reaching level 3 in ~2 daily runs with 46.7% win rate', () => {
+            // Simulate a full daily run (5 fights) with realistic win rate
+            const winsPerRun = Math.round(5 * 0.467); // ~2 wins
+            const lossesPerRun = 5 - winsPerRun;       // ~3 losses
+            const runs = 2;
+
+            let totalXp = 0;
+            // Simulate multiple runs for statistical stability
+            const simulations = 100;
+            for (let sim = 0; sim < simulations; sim++) {
+                let xp = 0;
+                for (let r = 0; r < runs; r++) {
+                    for (let w = 0; w < winsPerRun; w++) {
+                        xp += calculateFightXp(true, 1);
+                    }
+                    for (let l = 0; l < lossesPerRun; l++) {
+                        xp += calculateFightXp(false, 1);
+                    }
+                }
+                totalXp += xp;
+            }
+            const avgXp = totalXp / simulations;
+
+            // XP needed for level 3 = 100 (lvl1) + 303 (lvl2) = 403
+            const xpNeededForLevel3 = getTotalXpForLevel(3);
+            expect(xpNeededForLevel3).toBe(403);
+
+            // With XP_WIN=135, 2 runs should comfortably exceed 403 XP
+            expect(avgXp).toBeGreaterThanOrEqual(403);
         });
     });
 
