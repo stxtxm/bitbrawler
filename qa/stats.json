@@ -8171,5 +8171,103 @@
       "home": 1798,
       "arena": 3694
     }
+  },
+  {
+    "date": "2026-06-07T10:01:27.702Z",
+    "run": "2026-06-07",
+    "character": "COBALTSAGE",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 26,
+        "fight_duration_ms": 12296,
+        "max_hp": 164
+      },
+      {
+        "result": "victory",
+        "xp": 120,
+        "fight_duration_ms": 17769,
+        "max_hp": 176
+      },
+      {
+        "result": "victory",
+        "xp": 142,
+        "fight_duration_ms": 18154,
+        "max_hp": 176
+      },
+      {
+        "result": "victory",
+        "xp": 138,
+        "fight_duration_ms": 19336,
+        "max_hp": 188
+      },
+      {
+        "result": "defeat",
+        "xp": 30,
+        "fight_duration_ms": 13472,
+        "max_hp": 188
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Iron Helm",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 13,
+      "vit": 8,
+      "dex": 9,
+      "luk": 8,
+      "int": 13,
+      "foc": 15
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 164,
+    "final_stats": {
+      "level": 3,
+      "xp": 53,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 13,
+      "vit": 8,
+      "dex": 9,
+      "luk": 8,
+      "int": 13,
+      "foc": 15
+    },
+    "final_max_hp": 188,
+    "level_up_events": [
+      {
+        "fight_number": 2,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      },
+      {
+        "fight_number": 4,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 2,
+        "new_level": 3
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1854,
+      "arena": 3188
+    }
   }
 ]
