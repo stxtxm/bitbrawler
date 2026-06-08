@@ -145,9 +145,25 @@ describe('lootboxUtils', () => {
     expect(weights.legendary).toBe(0.02);
   });
 
-  it('does not include legendary at level 1-3', () => {
+  it('does not include legendary at level 1', () => {
     const weights = getLootboxRarityWeights(1);
     expect(weights.legendary).toBe(0);
+  });
+
+  it('does not include legendary at level 2', () => {
+    const weights = getLootboxRarityWeights(2);
+    expect(weights.legendary).toBe(0);
+  });
+
+  it('includes legendary at level 3 with 0.002 weight', () => {
+    const weights = getLootboxRarityWeights(3);
+    expect(weights.legendary).toBe(0.002);
+  });
+
+  it('sum of weights at level 3 equals 1.0', () => {
+    const weights = getLootboxRarityWeights(3);
+    const sum = Object.values(weights).reduce((a, b) => a + b, 0);
+    expect(sum).toBeCloseTo(1.0, 5);
   });
 
   it('includes legendary at level 4-6', () => {
@@ -169,6 +185,19 @@ describe('lootboxUtils', () => {
     const weights = getLootboxRarityWeights(4);
     const sum = Object.values(weights).reduce((a, b) => a + b, 0);
     expect(sum).toBeCloseTo(1.0, 5);
+  });
+
+  it('rolls a legendary item at level 3 with favorable RNG', () => {
+    // At level 3: legendary weight = 0.002, total = 1.0
+    // legendary is the last bucket, so rng > 0.998 should hit it
+    const customItems: PixelItemAsset[] = [
+      { id: 'leg', name: 'Test Legendary', slot: 'weapon', rarity: 'legendary', stats: { strength: 5 }, pixels: [[1]], requiredLevel: 1 },
+      { id: 'common1', name: 'Common', slot: 'weapon', rarity: 'common', stats: { strength: 1 }, pixels: [[1]], requiredLevel: 1 },
+    ];
+    const rng = () => 0.999;
+    const item = rollLootbox(customItems, { rng, level: 3 });
+    expect(item).not.toBeNull();
+    expect(item?.rarity).toBe('legendary');
   });
 
   it('rolls a legendary item at level 4 with favorable RNG', () => {
