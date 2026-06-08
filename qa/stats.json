@@ -8654,5 +8654,103 @@
       "home": 1176,
       "arena": 2727
     }
+  },
+  {
+    "date": "2026-06-08T01:01:22.665Z",
+    "run": "2026-06-08",
+    "character": "AZUREHYDRA",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 25,
+        "fight_duration_ms": 11611,
+        "max_hp": 164
+      },
+      {
+        "result": "victory",
+        "xp": 133,
+        "fight_duration_ms": 15718,
+        "max_hp": 176
+      },
+      {
+        "result": "victory",
+        "xp": 131,
+        "fight_duration_ms": 15186,
+        "max_hp": 176
+      },
+      {
+        "result": "defeat",
+        "xp": 27,
+        "fight_duration_ms": 14151,
+        "max_hp": 176
+      },
+      {
+        "result": "victory",
+        "xp": 154,
+        "fight_duration_ms": 18319,
+        "max_hp": 188
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Lucky Charm",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 12,
+      "vit": 8,
+      "dex": 7,
+      "luk": 15,
+      "int": 10,
+      "foc": 14
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 164,
+    "final_stats": {
+      "level": 3,
+      "xp": 67,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 12,
+      "vit": 8,
+      "dex": 7,
+      "luk": 15,
+      "int": 10,
+      "foc": 14
+    },
+    "final_max_hp": 188,
+    "level_up_events": [
+      {
+        "fight_number": 2,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      },
+      {
+        "fight_number": 5,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 2,
+        "new_level": 3
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1525,
+      "arena": 3949
+    }
   }
 ]
