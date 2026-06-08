@@ -225,6 +225,29 @@ describe('XP Utils', () => {
         });
     });
 
+    describe('XP tuning — Loss rewards', () => {
+        it('XP_LOSS should be 35 for a more forgiving loss experience', () => {
+            expect(GAME_RULES.COMBAT.XP_LOSS).toBe(35);
+        });
+
+        it('should yield ~35 XP average per loss at level 1', () => {
+            let total = 0;
+            const trials = 200;
+            for (let i = 0; i < trials; i++) {
+                total += calculateFightXp(false, 1);
+            }
+            const avg = total / trials;
+            // With base 35 + variance ±10%: range [31.5, 38.5]
+            expect(avg).toBeGreaterThan(28);
+            expect(avg).toBeLessThan(42);
+        });
+
+        it('should make loss XP feel meaningful — at least 25% of win XP', () => {
+            // The new XP_LOSS=35 should be at least 25% of XP_WIN=135
+            expect(GAME_RULES.COMBAT.XP_LOSS / GAME_RULES.COMBAT.XP_WIN).toBeGreaterThanOrEqual(0.25);
+        });
+    });
+
     describe('formatXpDisplay', () => {
         it('should format XP as "current / needed XP"', () => {
             const char = createTestCharacter(1, 50);
