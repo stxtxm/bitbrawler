@@ -127,6 +127,27 @@ describe('lootboxUtils', () => {
     expect(high.epic).toBeGreaterThan(mid.epic);
   });
 
+  it('has adjusted base weights at level 1 (common 0.50)', () => {
+    const weights = getLootboxRarityWeights(1);
+    expect(weights.common).toBe(0.50);
+  });
+
+  it('has adjusted base weights at level 1 (rare 0.17)', () => {
+    const weights = getLootboxRarityWeights(1);
+    expect(weights.rare).toBe(0.17);
+  });
+
+  it('has adjusted base weights at level 1 (epic 0.13)', () => {
+    const weights = getLootboxRarityWeights(1);
+    expect(weights.epic).toBe(0.13);
+  });
+
+  it('sum of weights at level 1 equals 1.0', () => {
+    const weights = getLootboxRarityWeights(1);
+    const sum = Object.values(weights).reduce((a, b) => a + b, 0);
+    expect(sum).toBeCloseTo(1.0, 5);
+  });
+
   // ─── Legendary Rarity Tests ──────────────────────────────────────────────
 
   it('includes legendary in RARITY_RANK', () => {
