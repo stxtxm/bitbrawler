@@ -9515,5 +9515,96 @@
       "home": 1358,
       "arena": 3676
     }
+  },
+  {
+    "date": "2026-06-09T04:01:30.124Z",
+    "run": "2026-06-09",
+    "character": "CIPHERCHIP",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 37,
+        "fight_duration_ms": 18496,
+        "max_hp": 172
+      },
+      {
+        "result": "defeat",
+        "xp": 33,
+        "fight_duration_ms": 12269,
+        "max_hp": 172
+      },
+      {
+        "result": "defeat",
+        "xp": 38,
+        "fight_duration_ms": 15701,
+        "max_hp": 184
+      },
+      {
+        "result": "defeat",
+        "xp": 35,
+        "fight_duration_ms": 18701,
+        "max_hp": 184
+      },
+      {
+        "result": "defeat",
+        "xp": 40,
+        "fight_duration_ms": 15184,
+        "max_hp": 184
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Lucky Charm",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 7,
+      "vit": 9,
+      "dex": 13,
+      "luk": 15,
+      "int": 10,
+      "foc": 12
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 172,
+    "final_stats": {
+      "level": 2,
+      "xp": 83,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 7,
+      "vit": 9,
+      "dex": 13,
+      "luk": 15,
+      "int": 10,
+      "foc": 12
+    },
+    "final_max_hp": 184,
+    "level_up_events": [
+      {
+        "fight_number": 3,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1807,
+      "arena": 3389
+    }
   }
 ]
