@@ -70,7 +70,7 @@ const Arena = () => {
     }, [lastLevelUp]);
 
     // Auto-allocate stat points in auto-mode to prevent the level-up overlay
-    // from blocking the FIGHT button (QA runs fail 32% of the time otherwise)
+    // from blocking the FIGHT button (QA runs fail 21%+ of the time otherwise)
     useEffect(() => {
         if (!activeCharacter?.autoMode) return;
         const points = activeCharacter.statPoints || 0;
@@ -82,6 +82,20 @@ const Arena = () => {
         setDeferLevelUp(false);
         clearXpNotifications();
     }, [activeCharacter?.autoMode, activeCharacter?.statPoints, setCharacter, clearXpNotifications]);
+
+    // Defensive overlay dismissal: when auto-mode is active and the character
+    // has zero pending stat points, force-dismiss the level-up overlay.
+    // This catches race conditions where the overlay stays visible after
+    // auto-allocation completes (e.g., server-side allocation in useFight,
+    // or stale showLevelUp state that wasn't cleared).
+    useEffect(() => {
+        if (!activeCharacter?.autoMode) return;
+        if ((activeCharacter.statPoints || 0) > 0) return;
+
+        setShowLevelUp(false);
+        setDeferLevelUp(false);
+        clearXpNotifications();
+    }, [activeCharacter?.autoMode, activeCharacter?.statPoints, clearXpNotifications]);
 
     if (!activeCharacter) {
         return <Navigate to="/" replace />;
