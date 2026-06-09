@@ -177,4 +177,59 @@ describe('Arena auto-mode level-up overlay', () => {
     const fightButton = getByRole('button', { name: 'AUTO MODE' })
     expect(fightButton).toBeDisabled()
   })
+
+  it('defensive: does not render level-up overlay when autoMode is on with zero stat points', () => {
+    // Edge case: lastLevelUp is set (triggers showLevelUp=true) but
+    // autoMode is on and statPoints are already 0 (auto-allocated server-side).
+    // The defensive useEffect should dismiss the overlay immediately.
+    mockUseGame.mockReturnValue({
+      activeCharacter: makeCharacter({ autoMode: true, statPoints: 0 }),
+      logout: vi.fn(),
+      useFight: vi.fn(),
+      startMatchmaking: vi.fn(),
+      lastXpGain: null,
+      lastLevelUp: Date.now(),
+      clearXpNotifications: vi.fn(),
+      dbAvailable: true,
+      saveStatAllocations: vi.fn(),
+      rollLootbox: vi.fn(),
+      setAutoMode: vi.fn(),
+      deleteCharacter: vi.fn(),
+      setCharacter: vi.fn(),
+    })
+
+    const { queryByText } = renderWithRouter(<Arena />)
+
+    // The level-up overlay should not be rendered at all
+    expect(queryByText('LEVEL UP')).toBeNull()
+    expect(queryByText('SPEND POINT')).toBeNull()
+  })
+
+  it('defensive: calls clearXpNotifications when autoMode on with stat points already zero', () => {
+    // The defensive useEffect should clear XP notifications
+    // when auto-mode is active and character has no pending stat points
+    // even if the level-up overlay was triggered by a previous event.
+    const clearXpNotifications = vi.fn()
+
+    mockUseGame.mockReturnValue({
+      activeCharacter: makeCharacter({ autoMode: true, statPoints: 0 }),
+      logout: vi.fn(),
+      useFight: vi.fn(),
+      startMatchmaking: vi.fn(),
+      lastXpGain: null,
+      lastLevelUp: Date.now(),
+      clearXpNotifications,
+      dbAvailable: true,
+      saveStatAllocations: vi.fn(),
+      rollLootbox: vi.fn(),
+      setAutoMode: vi.fn(),
+      deleteCharacter: vi.fn(),
+      setCharacter: vi.fn(),
+    })
+
+    renderWithRouter(<Arena />)
+
+    // The defensive useEffect should have called clearXpNotifications
+    expect(clearXpNotifications).toHaveBeenCalled()
+  })
 })

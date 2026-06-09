@@ -16,6 +16,9 @@
     // non-interactive children (card-shine, stat rows, labels, etc.) never
     // intercept pointer events. Only explicit buttons have pointer-events: auto.
     pointer-events: none;
+    // Clip card-shine (which is 200% x 200%) to card boundaries so its
+    // absolute positioning never leaks outside and intercepts clicks.
+    overflow: hidden;
 }
 
 .level-up-pop-overlay .stat-add-btn,
@@ -82,7 +85,10 @@
             rgba(255, 204, 0, 0.1) 50%,
             transparent 70%);
     animation: shine 2s ease-in-out infinite;
-    pointer-events: none;
+    // Use !important to guarantee this decorative element never intercepts
+    // pointer events, even if any ancestor or specificity cascade overrides it.
+    // QA runs confirmed card-shine was intercepting FIGHT button clicks.
+    pointer-events: none !important;
 }
 
 .level-up-badge {
