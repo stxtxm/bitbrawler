@@ -1,7 +1,7 @@
 {
-  "run": "2026-06-10",
-  "character": "SAVAGESTAR",
-  "exhausted": false,
-  "updated_at": "2026-06-10T19:09:50.219Z",
-  "source": "reused"
+  "run": "2026-06-11",
+  "character": "MIGHTYBARD",
+  "exhausted": true,
+  "updated_at": "2026-06-10T22:03:21.098Z",
+  "source": "created"
 }
