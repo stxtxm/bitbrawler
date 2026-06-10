@@ -10325,5 +10325,61 @@
       "home": 2363,
       "arena": 630
     }
+  },
+  {
+    "date": "2026-06-10T07:01:31.145Z",
+    "run": "2026-06-10",
+    "character": "SAVAGESTAR",
+    "character_action": "reused",
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 12,
+      "vit": 10,
+      "dex": 17,
+      "luk": 11,
+      "int": 10,
+      "foc": 9
+    },
+    "initial_level": 2,
+    "initial_xp": {
+      "current": 101,
+      "max": 303
+    },
+    "initial_max_hp": 192,
+    "final_stats": {
+      "level": 2,
+      "xp": 101,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 12,
+      "vit": 10,
+      "dex": 17,
+      "luk": 11,
+      "int": 10,
+      "foc": 9
+    },
+    "final_max_hp": 192,
+    "level_up_events": [],
+    "errors": [
+      "Fight 1: timeout waiting for result (45000ms, 3 retries)",
+      "Fight 2: timeout waiting for result (45000ms, 3 retries)",
+      "Fight 3: timeout waiting for result (45000ms, 3 retries)",
+      "Fight 4: timeout waiting for result (45000ms, 3 retries)",
+      "Fight 5: timeout waiting for result (45000ms, 3 retries)"
+    ],
+    "load_times_ms": {
+      "home": 2138,
+      "arena": 1548
+    }
   }
 ]
