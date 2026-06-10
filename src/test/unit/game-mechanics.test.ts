@@ -17,7 +17,7 @@ describe('🤖 Bot & Character Generation System', () => {
                 char.intelligence +
                 char.focus;
 
-            // The balanced system targets exactly 66 points (5 base * 6 + 36 distributed)
+            // The balanced system targets exactly 66 points (4 base * 6 + 42 distributed)
             expect(totalStats).toBe(66);
 
             // Stats should be clamped between 5 and 15

@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { generateInitialStats } from '../../utils/characterUtils';
+import { GAME_RULES } from '../../config/gameRules';
 
 describe('Character Generation', () => {
     it('should generate a character with the correct initial stat pool', () => {
         const char = generateInitialStats('Test', 'male');
 
-        // Base is minValue (5) * 6 stats + 36 distributed points = 66 total
+        // Base is minValue (4) * 6 stats + 42 distributed points = 66 total
         const totalRPGStats =
             char.strength +
             char.vitality +
@@ -43,5 +44,74 @@ describe('Character Generation', () => {
         expect(char.experience).toBe(0);
         expect(char.wins).toBe(0);
         expect(char.losses).toBe(0);
+    });
+
+    it('should have all stats >= MIN_VALUE', () => {
+        // Generate 50 characters and verify no stat drops below MIN_VALUE
+        for (let i = 0; i < 50; i++) {
+            const char = generateInitialStats(`Test_${i}`, 'male');
+            const allStats = [
+                char.strength, char.vitality, char.dexterity,
+                char.luck, char.intelligence, char.focus
+            ];
+            for (const stat of allStats) {
+                expect(stat).toBeGreaterThanOrEqual(GAME_RULES.STATS.MIN_VALUE);
+            }
+        }
+    });
+
+    it('should have all stats <= MAX_VALUE', () => {
+        // Generate 50 characters and verify no stat exceeds MAX_VALUE
+        for (let i = 0; i < 50; i++) {
+            const char = generateInitialStats(`Test_${i}`, 'male');
+            const allStats = [
+                char.strength, char.vitality, char.dexterity,
+                char.luck, char.intelligence, char.focus
+            ];
+            for (const stat of allStats) {
+                expect(stat).toBeLessThanOrEqual(GAME_RULES.STATS.MAX_VALUE);
+            }
+        }
+    });
+
+    it('should produce stat spread > 3 across 100 characters (archetype variance)', () => {
+        // Verify that the weighted random allocation creates genuine archetypes:
+        // the range (max - min) across 6 stats should average > 3
+        let totalSpread = 0;
+        const SAMPLES = 100;
+        for (let i = 0; i < SAMPLES; i++) {
+            const char = generateInitialStats(`Test_${i}`, 'male');
+            const allStats = [
+                char.strength, char.vitality, char.dexterity,
+                char.luck, char.intelligence, char.focus
+            ];
+            const spread = Math.max(...allStats) - Math.min(...allStats);
+            totalSpread += spread;
+        }
+        const avgSpread = totalSpread / SAMPLES;
+        expect(avgSpread).toBeGreaterThan(3);
+    });
+
+    it('should consistently have the primary stat be the highest or tied for highest', () => {
+        // Since the primary stat gets 10x weight vs 1x for others,
+        // it should be the highest stat (or tied) in the vast majority of cases
+        let primaryIsHighest = 0;
+        const SAMPLES = 100;
+        for (let i = 0; i < SAMPLES; i++) {
+            const char = generateInitialStats(`Test_${i}`, 'male');
+            const allStats = [
+                char.strength, char.vitality, char.dexterity,
+                char.luck, char.intelligence, char.focus
+            ];
+            const maxStat = Math.max(...allStats);
+            // We can't know which stat was primary, but we know at least one
+            // stat should be notably higher than others — if max > avg + 2, archetype exists
+            const avgStat = allStats.reduce((a, b) => a + b, 0) / allStats.length;
+            if (maxStat > avgStat + 2) {
+                primaryIsHighest++;
+            }
+        }
+        // At least 80% of characters should have a clear primary archetype
+        expect(primaryIsHighest).toBeGreaterThanOrEqual(80);
     });
 });

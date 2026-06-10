@@ -236,9 +236,9 @@ export const generateCharacterName = (options: NameGeneratorOptions = {}): strin
 /**
  * Generates initial stats for a new character using GAME_RULES
  * - Creates natural archetypes via weighted random allocation
- * - 50% weight → 1 primary stat (chosen randomly per character)
- * - ~30% weight → 1-2 secondary stats
- * - ~20% weight → remaining stats
+ * - 10x weight → 1 primary stat (chosen randomly per character)
+ * - 3x weight → 1-2 secondary stats
+ * - 1x weight → remaining stats
  * - Total points remain constant across all characters
  */
 export const generateInitialStats = (name: string, gender: 'male' | 'female'): Character => {
@@ -267,7 +267,7 @@ export const generateInitialStats = (name: string, gender: 'male' | 'female'): C
     const secondaries = otherStats.slice(0, secondaryCount);
 
     // Distribute remaining points using weighted random allocation.
-    // Weights: primary=6, each secondary=2, each remaining=1.
+    // Weights: primary=10, each secondary=3, each remaining=1.
     // When a stat hits MAX_VALUE its weight becomes 0, redistributing naturally.
     let pointsToDistribute = TOTAL_POINTS - MIN_VALUE * NUM_STATS;
     while (pointsToDistribute > 0) {
@@ -280,9 +280,9 @@ export const generateInitialStats = (name: string, gender: 'male' | 'female'): C
                 continue;
             }
             if (statKey === primary) {
-                weights[statKey] = 6;
+                weights[statKey] = 10;
             } else if (secondaries.includes(statKey)) {
-                weights[statKey] = 2;
+                weights[statKey] = 3;
             } else {
                 weights[statKey] = 1;
             }
