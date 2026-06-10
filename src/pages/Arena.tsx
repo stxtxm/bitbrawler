@@ -397,6 +397,7 @@ const Arena = () => {
                 isOfflineMode={isOfflineMode}
                 statOptions={projectedStatOptions}
                 hasLevelInfo={hasLevelInfo}
+                autoClose={!!activeCharacter?.autoMode}
                 handleAllocateStat={handleAllocateStat}
                 handleCloseLevelUp={handleCloseLevelUp}
                 handleDeferLevelUp={handleDeferLevelUp}

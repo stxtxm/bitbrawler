@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Character } from '../types/Character';
 import { PixelIcon } from './PixelIcon';
 import { StatKey, STAT_TOOLTIPS } from '../utils/statUtils';
@@ -12,6 +13,7 @@ interface LevelUpOverlayProps {
     isOfflineMode: boolean;
     statOptions: Array<{ key: StatKey; label: string; value: number; hint: string; icon: StatIconType }>;
     hasLevelInfo: boolean;
+    autoClose?: boolean;
     handleAllocateStat: (stat: StatKey) => void;
     handleCloseLevelUp: () => void;
     handleDeferLevelUp: () => void;
@@ -25,10 +27,21 @@ const LevelUpOverlay = ({
     isOfflineMode,
     statOptions,
     hasLevelInfo,
+    autoClose = false,
     handleAllocateStat,
     handleCloseLevelUp,
     handleDeferLevelUp,
 }: LevelUpOverlayProps) => {
+    useEffect(() => {
+        if (!autoClose || !shouldShowLevelUp) return;
+
+        const timer = setTimeout(() => {
+            handleCloseLevelUp();
+        }, 1500);
+
+        return () => clearTimeout(timer);
+    }, [autoClose, shouldShowLevelUp, handleCloseLevelUp]);
+
     if (!shouldShowLevelUp) return null;
 
     return (
