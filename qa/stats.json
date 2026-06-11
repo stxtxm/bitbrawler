@@ -10940,5 +10940,96 @@
       "home": 2039,
       "arena": 3994
     }
+  },
+  {
+    "date": "2026-06-11T10:01:27.377Z",
+    "run": "2026-06-11",
+    "character": "THORNGROVE",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 31,
+        "fight_duration_ms": 15015,
+        "max_hp": 156
+      },
+      {
+        "result": "defeat",
+        "xp": 35,
+        "fight_duration_ms": 14098,
+        "max_hp": 156
+      },
+      {
+        "result": "victory",
+        "xp": 142,
+        "fight_duration_ms": 21952,
+        "max_hp": 168
+      },
+      {
+        "result": "defeat",
+        "xp": 39,
+        "fight_duration_ms": 13333,
+        "max_hp": 168
+      },
+      {
+        "result": "defeat",
+        "xp": 39,
+        "fight_duration_ms": 14119,
+        "max_hp": 168
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Mystic Ring",
+      "rarity": "EPIC",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 9,
+      "vit": 7,
+      "dex": 15,
+      "luk": 15,
+      "int": 9,
+      "foc": 11
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 156,
+    "final_stats": {
+      "level": 2,
+      "xp": 186,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 9,
+      "vit": 7,
+      "dex": 15,
+      "luk": 15,
+      "int": 9,
+      "foc": 11
+    },
+    "final_max_hp": 168,
+    "level_up_events": [
+      {
+        "fight_number": 3,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1447,
+      "arena": 2908
+    }
   }
 ]
