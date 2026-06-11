@@ -11318,5 +11318,96 @@
       "home": 1462,
       "arena": 3644
     }
+  },
+  {
+    "date": "2026-06-11T22:01:22.745Z",
+    "run": "2026-06-12",
+    "character": "LUNARDRONE",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 47,
+        "fight_duration_ms": 15914,
+        "max_hp": 172
+      },
+      {
+        "result": "defeat",
+        "xp": 41,
+        "fight_duration_ms": 18582,
+        "max_hp": 172
+      },
+      {
+        "result": "defeat",
+        "xp": 48,
+        "fight_duration_ms": 13083,
+        "max_hp": 184
+      },
+      {
+        "result": "victory",
+        "xp": 132,
+        "fight_duration_ms": 15417,
+        "max_hp": 184
+      },
+      {
+        "result": "defeat",
+        "xp": 52,
+        "fight_duration_ms": 15000,
+        "max_hp": 184
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Worn Bracers",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 9,
+      "vit": 9,
+      "dex": 15,
+      "luk": 12,
+      "int": 15,
+      "foc": 6
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 172,
+    "final_stats": {
+      "level": 2,
+      "xp": 220,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 9,
+      "vit": 9,
+      "dex": 15,
+      "luk": 12,
+      "int": 15,
+      "foc": 6
+    },
+    "final_max_hp": 184,
+    "level_up_events": [
+      {
+        "fight_number": 3,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1413,
+      "arena": 2906
+    }
   }
 ]
