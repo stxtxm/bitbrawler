@@ -10646,5 +10646,103 @@
       "home": 2034,
       "arena": 2998
     }
+  },
+  {
+    "date": "2026-06-11T01:01:16.489Z",
+    "run": "2026-06-11",
+    "character": "NOVARAPTOR",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 34,
+        "fight_duration_ms": 14080,
+        "max_hp": 164
+      },
+      {
+        "result": "victory",
+        "xp": 131,
+        "fight_duration_ms": 19819,
+        "max_hp": 176
+      },
+      {
+        "result": "victory",
+        "xp": 140,
+        "fight_duration_ms": 14436,
+        "max_hp": 176
+      },
+      {
+        "result": "victory",
+        "xp": 132,
+        "fight_duration_ms": 14619,
+        "max_hp": 188
+      },
+      {
+        "result": "defeat",
+        "xp": 41,
+        "fight_duration_ms": 14386,
+        "max_hp": 188
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Lucky Charm",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 13,
+      "vit": 8,
+      "dex": 7,
+      "luk": 15,
+      "int": 15,
+      "foc": 8
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 164,
+    "final_stats": {
+      "level": 3,
+      "xp": 75,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 13,
+      "vit": 8,
+      "dex": 7,
+      "luk": 15,
+      "int": 15,
+      "foc": 8
+    },
+    "final_max_hp": 188,
+    "level_up_events": [
+      {
+        "fight_number": 2,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      },
+      {
+        "fight_number": 4,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 2,
+        "new_level": 3
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 869,
+      "arena": 4173
+    }
   }
 ]
