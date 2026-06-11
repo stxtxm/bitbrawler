@@ -6,7 +6,7 @@ export const LOOTBOX_RARITY_WEIGHTS: Record<ItemRarity, number> = {
   uncommon: 0.20,
   rare: 0.17,
   epic: 0.13,
-  legendary: 0,
+  legendary: 0.002,
 };
 
 export interface StreakBonus {
