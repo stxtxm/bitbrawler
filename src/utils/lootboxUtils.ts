@@ -5,7 +5,7 @@ export const LOOTBOX_RARITY_WEIGHTS: Record<ItemRarity, number> = {
   common: 0.50,
   uncommon: 0.20,
   rare: 0.17,
-  epic: 0.13,
+  epic: 0.15,
   legendary: 0.002,
 };
 
