@@ -11885,5 +11885,103 @@
       "home": 1547,
       "arena": 3947
     }
+  },
+  {
+    "date": "2026-06-12T16:01:26.274Z",
+    "run": "2026-06-12",
+    "character": "IRONTAMER",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 127,
+        "fight_duration_ms": 13203,
+        "max_hp": 208
+      },
+      {
+        "result": "victory",
+        "xp": 159,
+        "fight_duration_ms": 12854,
+        "max_hp": 208
+      },
+      {
+        "result": "victory",
+        "xp": 157,
+        "fight_duration_ms": 15686,
+        "max_hp": 220
+      },
+      {
+        "result": "victory",
+        "xp": 160,
+        "fight_duration_ms": 18587,
+        "max_hp": 220
+      },
+      {
+        "result": "victory",
+        "xp": 145,
+        "fight_duration_ms": 15151,
+        "max_hp": 220
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Rusty Sword",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 15,
+      "vit": 12,
+      "dex": 9,
+      "luk": 8,
+      "int": 7,
+      "foc": 15
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 196,
+    "final_stats": {
+      "level": 3,
+      "xp": 345,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 15,
+      "vit": 12,
+      "dex": 9,
+      "luk": 8,
+      "int": 7,
+      "foc": 15
+    },
+    "final_max_hp": 220,
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      },
+      {
+        "fight_number": 3,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 2,
+        "new_level": 3
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1763,
+      "arena": 3043
+    }
   }
 ]
