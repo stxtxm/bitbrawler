@@ -11409,5 +11409,96 @@
       "home": 1413,
       "arena": 2906
     }
+  },
+  {
+    "date": "2026-06-12T01:01:19.332Z",
+    "run": "2026-06-12",
+    "character": "BOLDRIDER",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 42,
+        "fight_duration_ms": 14705,
+        "max_hp": 164
+      },
+      {
+        "result": "defeat",
+        "xp": 48,
+        "fight_duration_ms": 17732,
+        "max_hp": 164
+      },
+      {
+        "result": "defeat",
+        "xp": 44,
+        "fight_duration_ms": 14103,
+        "max_hp": 176
+      },
+      {
+        "result": "defeat",
+        "xp": 51,
+        "fight_duration_ms": 18050,
+        "max_hp": 176
+      },
+      {
+        "result": "defeat",
+        "xp": 52,
+        "fight_duration_ms": 17219,
+        "max_hp": 176
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Bone Dagger",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 5,
+      "vit": 8,
+      "dex": 11,
+      "luk": 14,
+      "int": 13,
+      "foc": 15
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 164,
+    "final_stats": {
+      "level": 2,
+      "xp": 137,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 5,
+      "vit": 8,
+      "dex": 11,
+      "luk": 14,
+      "int": 13,
+      "foc": 15
+    },
+    "final_max_hp": 176,
+    "level_up_events": [
+      {
+        "fight_number": 3,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1925,
+      "arena": 3724
+    }
   }
 ]
