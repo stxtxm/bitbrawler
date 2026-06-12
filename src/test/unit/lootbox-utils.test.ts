@@ -197,13 +197,53 @@ describe('lootboxUtils', () => {
     expect(weights.legendary).toBe(0.01);
   });
 
-  it('reduces common from 0.53 to 0.52 at level 4-6 to compensate for legendary', () => {
+  it('reduces common to 0.50 at level 4-6 to compensate for higher epic', () => {
     const weights = getLootboxRarityWeights(4);
-    expect(weights.common).toBe(0.52);
+    expect(weights.common).toBe(0.50);
   });
 
   it('sum of weights at level 4 equals 1.0', () => {
     const weights = getLootboxRarityWeights(4);
+    const sum = Object.values(weights).reduce((a, b) => a + b, 0);
+    expect(sum).toBeCloseTo(1.0, 5);
+  });
+
+  // ─── Epic Rate Progression Tests ──────────────────────────────────────────
+
+  it('epic rate at level 3 should not regress from level 1-2 (no punishment for leveling up)', () => {
+    const low = getLootboxRarityWeights(1);
+    const mid = getLootboxRarityWeights(3);
+    expect(mid.epic).toBeGreaterThanOrEqual(low.epic);
+  });
+
+  it('has epic 0.13 at level 3 (was 0.098 — non-regressing from starting rate)', () => {
+    const weights = getLootboxRarityWeights(3);
+    expect(weights.epic).toBe(0.13);
+  });
+
+  it('has epic 0.10 at level 4-6 (was 0.08 — less severe dip)', () => {
+    const weights = getLootboxRarityWeights(4);
+    expect(weights.epic).toBe(0.10);
+  });
+
+  it('has epic 0.10 at level 5 (middle of 4-6 tier)', () => {
+    const weights = getLootboxRarityWeights(5);
+    expect(weights.epic).toBe(0.10);
+  });
+
+  it('has epic 0.10 at level 6 (upper edge of 4-6 tier)', () => {
+    const weights = getLootboxRarityWeights(6);
+    expect(weights.epic).toBe(0.10);
+  });
+
+  it('epic rate at level 7-9 is higher than at level 4-6', () => {
+    const mid = getLootboxRarityWeights(4);
+    const high = getLootboxRarityWeights(7);
+    expect(high.epic).toBeGreaterThan(mid.epic);
+  });
+
+  it('sum of weights at level 3 equals 1.0 after epic adjustment', () => {
+    const weights = getLootboxRarityWeights(3);
     const sum = Object.values(weights).reduce((a, b) => a + b, 0);
     expect(sum).toBeCloseTo(1.0, 5);
   });
@@ -381,12 +421,13 @@ describe('lootboxUtils', () => {
   describe('rollLootbox with streak', () => {
     it('adds weight bonus to rare/epic for streak 4-7', () => {
       // With streak=5, weightBonus is 0.02
-      // At level 4: rare=0.12, epic=0.05 -> with bonus: rare=0.14, epic=0.07
-      // Common=0.58, uncommon=0.25
-      // Total: 0.58+0.25+0.14+0.07 = 1.04
-      // rare threshold starts at 0.58+0.25 = 0.83, ends at 0.97
-      // So rng=0.9 should hit rare
-      const rng = () => 0.9;
+      // At level 4: common=0.50, uncommon=0.24, rare=0.15, epic=0.10
+      // With bonus: rare=0.17, epic=0.12
+      // Common=0.50, uncommon=0.24, rare=0.17, epic=0.12, legendary=0.01
+      // Total: 1.04
+      // rare threshold: [0.74, 0.91) in roll space
+      // So rng * 1.04 = 0.8 * 1.04 = 0.832 should hit rare
+      const rng = () => 0.8;
       const item = rollLootbox(ITEM_ASSETS, { rng, level: 4, streak: 5 });
       expect(item).not.toBeNull();
       expect(item?.rarity).toBe('rare');
