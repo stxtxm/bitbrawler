@@ -11500,5 +11500,103 @@
       "home": 1925,
       "arena": 3724
     }
+  },
+  {
+    "date": "2026-06-12T04:01:18.585Z",
+    "run": "2026-06-12",
+    "character": "VIGILROGUE",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 140,
+        "fight_duration_ms": 16248,
+        "max_hp": 232
+      },
+      {
+        "result": "victory",
+        "xp": 147,
+        "fight_duration_ms": 20819,
+        "max_hp": 232
+      },
+      {
+        "result": "victory",
+        "xp": 158,
+        "fight_duration_ms": 23985,
+        "max_hp": 244
+      },
+      {
+        "result": "victory",
+        "xp": 161,
+        "fight_duration_ms": 25817,
+        "max_hp": 244
+      },
+      {
+        "result": "defeat",
+        "xp": 50,
+        "fight_duration_ms": 22016,
+        "max_hp": 244
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Novice Wrap",
+      "rarity": "UNCOMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 8,
+      "vit": 15,
+      "dex": 14,
+      "luk": 7,
+      "int": 15,
+      "foc": 7
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": 220,
+    "final_stats": {
+      "level": 3,
+      "xp": 253,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 8,
+      "vit": 15,
+      "dex": 14,
+      "luk": 7,
+      "int": 15,
+      "foc": 7
+    },
+    "final_max_hp": 244,
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 1,
+        "new_level": 2
+      },
+      {
+        "fight_number": 3,
+        "levels_gained": 1,
+        "points_to_allocate": 1,
+        "previous_level": 2,
+        "new_level": 3
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1804,
+      "arena": 3117
+    }
   }
 ]
