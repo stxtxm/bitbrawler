@@ -236,9 +236,10 @@ export const generateCharacterName = (options: NameGeneratorOptions = {}): strin
 /**
  * Generates initial stats for a new character using GAME_RULES
  * - Creates natural archetypes via weighted random allocation
- * - 10x weight → 1 primary stat (chosen randomly per character)
- * - 3x weight → 1-2 secondary stats
+ * - 15x weight → 1 primary stat (chosen randomly per character)
+ * - 5x weight → 1-2 secondary stats
  * - 1x weight → remaining stats
+ * - Non-primary stats capped at MAX_VALUE-1 so the primary stands out
  * - Total points remain constant across all characters
  */
 export const generateInitialStats = (name: string, gender: 'male' | 'female'): Character => {
@@ -267,22 +268,24 @@ export const generateInitialStats = (name: string, gender: 'male' | 'female'): C
     const secondaries = otherStats.slice(0, secondaryCount);
 
     // Distribute remaining points using weighted random allocation.
-    // Weights: primary=10, each secondary=3, each remaining=1.
-    // When a stat hits MAX_VALUE its weight becomes 0, redistributing naturally.
+    // Weights: primary=15, each secondary=5, each remaining=1.
+    // Primary stat can reach MAX_VALUE; all other stats are capped at MAX_VALUE-1
+    // so the primary stat has room to shine.
     let pointsToDistribute = TOTAL_POINTS - MIN_VALUE * NUM_STATS;
     while (pointsToDistribute > 0) {
         // Build dynamic weight map, excluding capped stats
         let totalWeight = 0;
         const weights: Partial<Record<StatKey, number>> = {};
         for (const statKey of STAT_KEYS) {
-            if (stats[statKey] >= MAX_VALUE) {
+            const cap = statKey === primary ? MAX_VALUE : MAX_VALUE - 1;
+            if (stats[statKey] >= cap) {
                 weights[statKey] = 0;
                 continue;
             }
             if (statKey === primary) {
-                weights[statKey] = 10;
+                weights[statKey] = 15;
             } else if (secondaries.includes(statKey)) {
-                weights[statKey] = 3;
+                weights[statKey] = 5;
             } else {
                 weights[statKey] = 1;
             }
