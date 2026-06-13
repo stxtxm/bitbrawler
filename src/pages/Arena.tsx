@@ -22,7 +22,7 @@ import { AffinityBadge } from '../components/AffinityBadge';
 import LevelUpOverlay from '../components/LevelUpOverlay';
 
 const Arena = () => {
-    const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, saveStatAllocations, rollLootbox, setAutoMode, deleteCharacter, setCharacter } = useGame();
+    const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, saveStatAllocations, saveEquipment, rollLootbox, setAutoMode, deleteCharacter, setCharacter } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const { play, enabled, setEnabled } = useSound();
     const navigate = useNavigate();
@@ -247,6 +247,9 @@ const Arena = () => {
         if (!activeCharacter) return;
         const updated = equipItem(activeCharacter, itemId, slot);
         setCharacter(updated);
+        saveEquipment(updated).catch((err) =>
+            console.error('Equipment DB save failed:', err)
+        );
         setInventoryHoveredId(null);
         setInventorySelectedId(null);
     };
@@ -255,6 +258,9 @@ const Arena = () => {
         if (!activeCharacter) return;
         const updated = unequipItem(activeCharacter, slot);
         setCharacter(updated);
+        saveEquipment(updated).catch((err) =>
+            console.error('Equipment DB save failed:', err)
+        );
     };
 
     useEffect(() => {

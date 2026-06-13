@@ -39,6 +39,7 @@ interface GameContextType {
   clearXpNotifications: () => void;
   allocateStatPoint: (stat: StatKey) => Promise<Character | null>;
   saveStatAllocations: (allocations: Partial<Record<StatKey, number>>) => Promise<Character | null>;
+  saveEquipment: (char: Character) => Promise<Character | null>;
   rollLootbox: () => Promise<PixelItemAsset | null>;
   startMatchmaking: () => Promise<MatchmakingResult | null>;
   setAutoMode: (enabled: boolean) => Promise<Character | null>;
@@ -433,6 +434,29 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [activeCharacter, handleDbError, persistCharacter]);
 
+  const saveEquipment = useCallback(async (char: Character): Promise<Character | null> => {
+    if (!char.id) return null;
+
+    const normalized = normalizeCharacter(char);
+
+    try {
+      await supabase
+        .from('characters')
+        .update({
+          inventory: normalized.inventory,
+          equipped_items: normalized.equippedItems,
+        })
+        .eq('id', char.id);
+
+      persistCharacter(normalized);
+      return normalized;
+    } catch (error: any) {
+      handleDbError(error, 'save-equipment');
+      persistCharacter(normalized);
+      throw new Error("Connection error - equipment not saved. Please check your internet connection.");
+    }
+  }, [handleDbError, persistCharacter]);
+
   const startMatchmakingForPlayer = useCallback(async (): Promise<MatchmakingResult | null> => {
     if (!activeCharacter?.id) return null;
     if ((activeCharacter.fightsLeft || 0) <= 0) return null;
@@ -723,6 +747,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     clearXpNotifications,
     allocateStatPoint,
     saveStatAllocations,
+    saveEquipment,
     rollLootbox: rollLootboxForPlayer,
     setAutoMode,
     deleteCharacter,
