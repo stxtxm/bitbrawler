@@ -12669,5 +12669,30 @@
       "home": 1678,
       "arena": 3388
     }
+  },
+  {
+    "date": "2026-06-13T16:01:41.287Z",
+    "run": "2026-06-13",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name NOBLEFANG"
+    ],
+    "load_times_ms": {
+      "home": 1507
+    }
   }
 ]
