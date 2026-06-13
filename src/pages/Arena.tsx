@@ -70,6 +70,14 @@ const Arena = () => {
         }
     }, [lastLevelUp]);
 
+    // Clear level-up notification on unmount to prevent stale popup
+    // when navigating back to Arena after a failed saveStatAllocations
+    useEffect(() => {
+        return () => {
+            clearXpNotifications();
+        };
+    }, [clearXpNotifications]);
+
     // Auto-allocate stat points in auto-mode to prevent the level-up overlay
     // from blocking the FIGHT button (QA runs fail 21%+ of the time otherwise)
     useEffect(() => {
@@ -91,7 +99,9 @@ const Arena = () => {
             if (delta > 0) allocations[key] = delta;
         }
         if (Object.keys(allocations).length > 0) {
-            saveStatAllocations(allocations).catch(() => {});
+            saveStatAllocations(allocations).catch((err) =>
+                console.error('Auto-allocate DB save failed:', err)
+            );
         }
     }, [activeCharacter?.autoMode, activeCharacter?.statPoints, setCharacter, clearXpNotifications, saveStatAllocations]);
 
