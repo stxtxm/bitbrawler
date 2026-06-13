@@ -127,9 +127,9 @@ describe('lootboxUtils', () => {
     expect(high.epic).toBeGreaterThan(mid.epic);
   });
 
-  it('has adjusted base weights at level 1 (common 0.478)', () => {
+  it('has adjusted base weights at level 1 (common 0.458)', () => {
     const weights = getLootboxRarityWeights(1);
-    expect(weights.common).toBe(0.478);
+    expect(weights.common).toBe(0.458);
   });
 
   it('has adjusted base weights at level 1 (rare 0.17)', () => {
@@ -166,14 +166,24 @@ describe('lootboxUtils', () => {
     expect(weights.legendary).toBe(0.02);
   });
 
-  it('includes legendary at level 1 with 0.002 weight', () => {
+  it('includes legendary at level 1 with 0.022 weight', () => {
     const weights = getLootboxRarityWeights(1);
-    expect(weights.legendary).toBe(0.002);
+    expect(weights.legendary).toBe(0.022);
   });
 
-  it('includes legendary at level 2 with 0.002 weight', () => {
+  it('includes legendary at level 2 with 0.022 weight', () => {
     const weights = getLootboxRarityWeights(2);
-    expect(weights.legendary).toBe(0.002);
+    expect(weights.legendary).toBe(0.022);
+  });
+
+  it('can roll an epic item at level 1 with favorable RNG now that epic items exist at level 1', () => {
+    // At level 1: epic weight = 0.15, total = 1.0
+    // epic bucket starts after common+uncommon+rare = 0.458+0.20+0.17 = 0.828
+    // rng = 0.85 should hit epic
+    const rng = () => 0.85;
+    const item = rollLootbox(ITEM_ASSETS, { rng, level: 1 });
+    expect(item).not.toBeNull();
+    expect(item?.rarity).toBe('epic');
   });
 
   it('includes legendary at level 3 with 0.002 weight', () => {
