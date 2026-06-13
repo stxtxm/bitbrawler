@@ -137,15 +137,15 @@ describe('lootboxUtils', () => {
     expect(weights.rare).toBe(0.17);
   });
 
-  it('has adjusted base weights at level 1 (epic 0.13)', () => {
+  it('has adjusted base weights at level 1 (epic 0.15)', () => {
     const weights = getLootboxRarityWeights(1);
-    expect(weights.epic).toBe(0.13);
+    expect(weights.epic).toBe(0.15);
   });
 
-  it('sum of weights at level 1 equals 1.002 (includes legendary)', () => {
+  it('sum of weights at level 1 equals 1.022 (includes legendary)', () => {
     const weights = getLootboxRarityWeights(1);
     const sum = Object.values(weights).reduce((a, b) => a + b, 0);
-    expect(sum).toBeCloseTo(1.002, 5);
+    expect(sum).toBeCloseTo(1.022, 5);
   });
 
   // ─── Legendary Rarity Tests ──────────────────────────────────────────────
