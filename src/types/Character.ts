@@ -35,6 +35,11 @@ export interface PendingFightOpponent {
   lastFightReset: number;
   isBot?: boolean;
   inventory?: string[];
+  equippedItems?: {
+    weapon: string | null;
+    armor: string | null;
+    accessory: string | null;
+  };
 }
 
 export interface PendingFight {
@@ -80,4 +85,9 @@ export interface Character {
   lastLootRoll?: number; // Timestamp (UTC) of daily lootbox roll
   lootboxStreak?: number; // Consecutive daily lootbox claims
   pendingFight?: PendingFight;
+  equippedItems?: {
+    weapon: string | null;
+    armor: string | null;
+    accessory: string | null;
+  };
 }

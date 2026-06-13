@@ -169,6 +169,7 @@ const ITEM_TIERS: ItemTier[] = [
         slot: 'weapon',
         rarity: 'rare',
         stats: { dexterity: 2, luck: 1 },
+        element: 'fire',
         pixels: [
           [0, 0, 0, 4, 0, 0, 0, 0],
           [0, 0, 0, 5, 2, 0, 0, 0],
@@ -186,6 +187,7 @@ const ITEM_TIERS: ItemTier[] = [
         slot: 'accessory',
         rarity: 'epic',
         stats: { intelligence: 1, focus: 1 },
+        element: 'dark',
         pixels: [
           [0, 0, 0, 0, 0, 0, 0, 0],
           [0, 0, 4, 4, 4, 4, 0, 0],
@@ -225,6 +227,7 @@ const ITEM_TIERS: ItemTier[] = [
         slot: 'weapon',
         rarity: 'common',
         stats: { intelligence: 1 },
+        element: 'earth',
         pixels: [
           [0, 0, 0, 7, 7, 0, 0, 0],
           [0, 0, 0, 7, 7, 0, 0, 0],
@@ -242,6 +245,7 @@ const ITEM_TIERS: ItemTier[] = [
         slot: 'armor',
         rarity: 'rare',
         stats: { strength: 1, vitality: 1 },
+        element: 'earth',
         pixels: [
           [0, 0, 0, 0, 0, 0, 0, 0],
           [0, 5, 0, 0, 0, 0, 5, 0],
@@ -281,6 +285,7 @@ const ITEM_TIERS: ItemTier[] = [
         slot: 'accessory',
         rarity: 'uncommon',
         stats: { dexterity: 1, focus: 1 },
+        element: 'wind',
         pixels: [
           [0, 0, 0, 0, 0, 0, 0, 0],
           [0, 0, 9, 9, 0, 9, 9, 0],
@@ -298,6 +303,7 @@ const ITEM_TIERS: ItemTier[] = [
         slot: 'weapon',
         rarity: 'uncommon',
         stats: { dexterity: 2 },
+        element: 'wind',
         pixels: [
           [0, 0, 3, 0, 0, 3, 0, 0],
           [0, 3, 0, 0, 0, 0, 3, 0],
@@ -315,6 +321,7 @@ const ITEM_TIERS: ItemTier[] = [
         slot: 'accessory',
         rarity: 'epic',
         stats: { intelligence: 2, focus: 1, hp: 2 },
+        element: 'light',
         pixels: [
           [0, 0, 0, 0, 0, 0, 0, 0],
           [0, 0, 4, 4, 4, 0, 0, 0],
@@ -354,6 +361,7 @@ const ITEM_TIERS: ItemTier[] = [
         slot: 'armor',
         rarity: 'uncommon',
         stats: { vitality: 1, hp: 3 },
+        element: 'earth',
         pixels: [
           [0, 0, 2, 2, 2, 0, 0, 0],
           [0, 2, 2, 4, 2, 2, 0, 0],
@@ -371,6 +379,7 @@ const ITEM_TIERS: ItemTier[] = [
         slot: 'weapon',
         rarity: 'rare',
         stats: { strength: 3 },
+        element: 'fire',
         pixels: [
           [0, 0, 0, 4, 0, 0, 0, 0],
           [0, 0, 0, 5, 0, 0, 0, 0],
@@ -410,6 +419,7 @@ const ITEM_TIERS: ItemTier[] = [
         slot: 'accessory',
         rarity: 'rare',
         stats: { focus: 2, intelligence: 1 },
+        element: 'wind',
         pixels: [
           [0, 0, 0, 4, 4, 0, 0, 0],
           [0, 0, 4, 7, 7, 4, 0, 0],
@@ -449,6 +459,7 @@ const ITEM_TIERS: ItemTier[] = [
         slot: 'armor',
         rarity: 'rare',
         stats: { dexterity: 1, luck: 2 },
+        element: 'dark',
         pixels: [
           [0, 0, 0, 8, 8, 0, 0, 0],
           [0, 0, 8, 8, 8, 8, 0, 0],
@@ -466,6 +477,7 @@ const ITEM_TIERS: ItemTier[] = [
         slot: 'armor',
         rarity: 'rare',
         stats: { vitality: 2, hp: 4 },
+        element: 'earth',
         pixels: [
           [0, 2, 2, 2, 2, 2, 2, 0],
           [2, 2, 2, 4, 4, 2, 2, 2],
@@ -488,6 +500,7 @@ const ITEM_TIERS: ItemTier[] = [
         slot: 'weapon',
         rarity: 'rare',
         stats: { strength: 2, focus: 1 },
+        element: 'light',
         pixels: [
           [0, 0, 0, 4, 0, 0, 0, 0],
           [0, 0, 0, 4, 0, 0, 0, 0],
@@ -505,6 +518,7 @@ const ITEM_TIERS: ItemTier[] = [
         slot: 'armor',
         rarity: 'rare',
         stats: { intelligence: 2, focus: 1 },
+        element: 'light',
         pixels: [
           [0, 0, 0, 0, 0, 0, 0, 0],
           [0, 7, 7, 0, 0, 7, 7, 0],
@@ -527,6 +541,7 @@ const ITEM_TIERS: ItemTier[] = [
         slot: 'accessory',
         rarity: 'epic',
         stats: { luck: 3, hp: 3 },
+        element: 'fire',
         pixels: [
           [0, 0, 0, 5, 0, 0, 0, 0],
           [0, 0, 5, 5, 5, 0, 0, 0],
@@ -566,6 +581,7 @@ const ITEM_TIERS: ItemTier[] = [
         slot: 'weapon',
         rarity: 'epic',
         stats: { strength: 4, dexterity: 1 },
+        element: 'dark',
         pixels: [
           [0, 0, 8, 8, 0, 0, 0, 0],
           [0, 8, 8, 2, 0, 0, 0, 0],

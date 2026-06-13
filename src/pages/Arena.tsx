@@ -12,12 +12,13 @@ import { getXpProgress, formatXpDisplay, getMaxLevel } from '../utils/xpUtils';
 import { StatKey, STAT_TOOLTIPS, autoAllocateStatPoints } from '../utils/statUtils';
 import { CombatView } from '../components/CombatView';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
-import { applyEquipmentToCharacter, getEquipmentBonuses, getItemById } from '../utils/equipmentUtils';
+import { applyEquipmentToCharacter, getEquipmentBonuses, getItemById, getEquippedItems, equipItem, unequipItem } from '../utils/equipmentUtils';
 import { canRollLootbox } from '../utils/lootboxUtils';
 import { SettingsLogEntry, formatSettingsLogDate } from '../utils/arenaUtils';
 import StreakIndicator from '../components/StreakIndicator';
 import { INVENTORY_CAPACITY } from '../utils/persistenceUtils';
-import { ItemStats, PixelItemAsset } from '../types/Item';
+import { ItemSlot, ItemStats, PixelItemAsset } from '../types/Item';
+import { AffinityBadge } from '../components/AffinityBadge';
 import LevelUpOverlay from '../components/LevelUpOverlay';
 
 const Arena = () => {
@@ -43,6 +44,8 @@ const Arena = () => {
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [settingsView, setSettingsView] = useState<'main' | 'logs'>('main');
     const [autoModeUpdating, setAutoModeUpdating] = useState(false);
+    const [equipmentOpen, setEquipmentOpen] = useState(false);
+    const [equipSlotFilter, setEquipSlotFilter] = useState<ItemSlot | null>(null);
     const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm'>('idle');
     const [deletePending, setDeletePending] = useState(false);
 
@@ -151,6 +154,7 @@ const Arena = () => {
             .filter(([, value]) => typeof value === 'number' && value !== 0) as [keyof ItemStats, number][])
         : [];
     const previewSlotLabel = previewItem ? previewItem.slot.toUpperCase() : '';
+    const equippedItems = getEquippedItems(activeCharacter);
     const totalBonus = getEquipmentBonuses(activeCharacter);
     const bonusOrder: Array<keyof ItemStats> = ['strength', 'vitality', 'dexterity', 'luck', 'intelligence', 'focus', 'hp'];
     const totalBonusEntries = bonusOrder
@@ -502,6 +506,40 @@ const Arena = () => {
                 </div>
 
                 <div className="action-panel">
+                    <div className="loadout-bar">
+                        {(['weapon', 'armor', 'accessory'] as ItemSlot[]).map((slot) => {
+                            const item = equippedItems.find(i => i.slot === slot);
+                            return (
+                                <button
+                                    key={slot}
+                                    className={`loadout-slot ${item ? 'filled' : 'empty'}`}
+                                    onClick={() => {
+                                        setEquipSlotFilter(slot);
+                                        setEquipmentOpen(true);
+                                    }}
+                                    title={item ? `${item.name} (click to unequip/swap)` : `Empty ${slot} slot (click to equip)`}
+                                >
+                                    <span className="loadout-slot-label">{slot === 'weapon' ? '⚔️' : slot === 'armor' ? '🛡️' : '💍'}</span>
+                                    {item ? (
+                                        <div className="loadout-item-wrapper">
+                                            <PixelItemIcon pixels={item.pixels} size={20} />
+                                            {item.element && <AffinityBadge element={item.element} size={10} />}
+                                            <span className={`loadout-item-rarity-dot rarity-${item.rarity}`}></span>
+                                        </div>
+                                    ) : (
+                                        <span className="loadout-empty-text">EMPTY</span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                        <button
+                            className="button icon-btn loadout-edit-btn"
+                            onClick={() => { setEquipSlotFilter(null); setEquipmentOpen(true); }}
+                            title="Manage equipment"
+                        >
+                            <PixelIcon type="gear" size={16} />
+                        </button>
+                    </div>
                     <div className="daily-status-compact">
                         <div className="status-label">
                             <PixelIcon type="sword" size={32} />
@@ -690,6 +728,84 @@ const Arena = () => {
                                 </div>
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {equipmentOpen && (
+                <div className="retro-modal-overlay equipment-overlay" onClick={() => setEquipmentOpen(false)}>
+                    <div className="retro-modal equipment-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="equipment-header">
+                            <h2 className="equipment-title">EQUIPMENT</h2>
+                            <button className="inventory-close" onClick={() => setEquipmentOpen(false)} aria-label="Close equipment">
+                                ×
+                            </button>
+                        </div>
+                        <div className="equipment-body">
+                            <div className="equipped-slots">
+                                {(['weapon', 'armor', 'accessory'] as ItemSlot[]).map((slot) => {
+                                    const item = equippedItems.find(i => i.slot === slot);
+                                    return (
+                                        <div key={slot} className={`equipped-slot ${item ? 'filled' : 'empty'} ${equipSlotFilter === slot ? 'active' : ''}`}>
+                                            <div className="equipped-slot-label">
+                                                {slot === 'weapon' ? '⚔️ WEAPON' : slot === 'armor' ? '🛡️ ARMOR' : '💍 ACCESSORY'}
+                                            </div>
+                                            {item ? (
+                                                <div className="equipped-item-display">
+                                                    <PixelItemIcon pixels={item.pixels} size={28} />
+                                                    <div className="equipped-item-info">
+                                                        <span className="equipped-item-name">{item.name}</span>
+                                                        {item.element && <AffinityBadge element={item.element} size={12} />}
+                                                    </div>
+                                                    <button
+                                                        className="button unequip-btn"
+                                                        onClick={() => {
+                                                            setCharacter(unequipItem(activeCharacter, slot));
+                                                        }}
+                                                        title="Unequip"
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="equipped-empty-text">EMPTY — select item below</div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <div className="equipment-inventory">
+                                <div className="equipment-inventory-title">INVENTORY</div>
+                                <div className="equipment-grid">
+                                    {inventory.length === 0 ? (
+                                        <div className="equipment-empty-inventory">No items in inventory.</div>
+                                    ) : (
+                                        inventory.map((itemId, index) => {
+                                            const item = getItemById(itemId);
+                                            if (!item) return null;
+                                            const alreadyEquipped = equippedItems.some(ei => ei.id === item.id);
+                                            if (equipSlotFilter && item.slot !== equipSlotFilter) return null;
+                                            return (
+                                                <button
+                                                    key={index}
+                                                    className={`equipment-item rarity-${item.rarity} ${alreadyEquipped ? 'equipped' : ''}`}
+                                                    onClick={() => {
+                                                        if (!alreadyEquipped) {
+                                                            setCharacter(equipItem(activeCharacter, item.id, item.slot));
+                                                        }
+                                                    }}
+                                                    disabled={alreadyEquipped}
+                                                    title={alreadyEquipped ? 'Already equipped' : `Equip ${item.name}`}
+                                                >
+                                                    <PixelItemIcon pixels={item.pixels} size={20} />
+                                                    {item.element && <AffinityBadge element={item.element} size={8} />}
+                                                </button>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

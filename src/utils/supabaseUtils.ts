@@ -30,6 +30,7 @@ export function convertFromSupabase(row: CharacterRow): Character {
     incomingFightHistory: row.incoming_fight_history,
     isBot: row.is_bot,
     autoMode: row.auto_mode,
+    equippedItems: row.equipped_items ?? { weapon: null, armor: null, accessory: null },
     id: row.id,
   };
 }
@@ -63,5 +64,6 @@ export function convertToSupabase(character: Character): Partial<CharacterRow> {
     incoming_fight_history: character.incomingFightHistory ?? [],
     is_bot: typeof character.isBot === 'boolean' ? character.isBot : false,
     auto_mode: character.autoMode ?? false,
+    equipped_items: character.equippedItems ?? { weapon: null, armor: null, accessory: null },
   };
 }

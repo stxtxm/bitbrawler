@@ -57,6 +57,9 @@ export const COMBAT_BALANCE = {
     maxChance: 12,
     damageMultiplier: 1.12,
   },
+  affinity: {
+    damageBonus: 0.15,
+  },
 } as const;
 
 export type CombatBalance = typeof COMBAT_BALANCE;

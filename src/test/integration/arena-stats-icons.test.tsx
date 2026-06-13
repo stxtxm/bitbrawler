@@ -93,6 +93,7 @@ describe('Arena stat icons', () => {
       ...mockCharacter,
       strength: 9,
       inventory: ['rusty_sword'],
+      equippedItems: { weapon: 'rusty_sword', armor: null, accessory: null },
     };
 
     mockUseGame.mockReturnValue({

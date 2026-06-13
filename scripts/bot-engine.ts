@@ -18,6 +18,7 @@ import {
 import { Character, IncomingFightHistory } from '../src/types/Character';
 import { supabase } from './supabaseAdmin';
 import { INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP } from '../src/utils/persistenceUtils';
+import { autoEquipBestItems } from '../src/utils/equipmentUtils';
 const DB_BATCH_SIZE = 10;
 
 /** Return a human-readable label for bot-engine-processed characters (all are bots functionally) */
@@ -30,7 +31,7 @@ const BOT_SELECT_COLUMNS = [
     'experience', 'wins', 'losses', 'fights_left', 'last_fight_reset',
     'stat_points', 'inventory', 'last_loot_roll', 'fight_history',
     'fought_today', 'pending_fight', 'incoming_fight_history',
-    'is_bot', 'auto_mode'
+    'is_bot', 'auto_mode', 'equipped_items'
 ].join(',');
 
 // Columns needed for opponent matching and combat (stats-only, no mutation)
@@ -221,7 +222,8 @@ async function createNewBot(): Promise<string> {
         fought_today: [],
         pending_fight: null,
         incoming_fight_history: [],
-        auto_mode: false,
+        auto_mode: true,
+        equipped_items: { weapon: null, armor: null, accessory: null },
     };
 
     const { data, error } = await supabase
@@ -266,9 +268,9 @@ function convertRowToCharacter(row: any): Character {
         lastLootRoll: row.last_loot_roll ?? 0,
         incomingFightHistory: row.incoming_fight_history ?? [],
         isBot: row.is_bot ?? false,
+        equippedItems: row.equipped_items ?? { weapon: null, armor: null, accessory: null },
         battleCount: 0,
         firestoreId: row.id,
-        equipped: {},
     };
 }
 
@@ -351,6 +353,12 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
 
             const isProtected = protectionEnabled && protectedIds.has(bot.firestoreId);
             let currentBotState = { ...bot, statPoints: bot.statPoints ?? 0 };
+
+            // Ensure bots always have best items equipped (for first-run / backward compat)
+            if (!currentBotState.equippedItems || !currentBotState.equippedItems.weapon) {
+                currentBotState = autoEquipBestItems(currentBotState);
+            }
+
             let fightsLeft = currentBotState.fightsLeft;
             let totalXpGained = 0;
             const startLevel = currentBotState.level;
@@ -383,6 +391,7 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                             inventory: [...inventory, item.id],
                             lastLootRoll: runNow
                         };
+                        currentBotState = autoEquipBestItems(currentBotState);
                         didLootbox = true;
                         console.log(`🎁 ${logLabel(currentBotState)} ${currentBotState.name} opened lootbox: ${item.name} (${item.rarity})`);
                     } else {
@@ -509,6 +518,7 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                     stat_points: currentBotState.statPoints,
                     inventory: currentBotState.inventory,
                     last_loot_roll: currentBotState.lastLootRoll,
+                    equipped_items: currentBotState.equippedItems ?? { weapon: null, armor: null, accessory: null },
                 };
 
                 const sanitizedUpdates = Object.fromEntries(

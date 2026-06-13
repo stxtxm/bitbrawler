@@ -48,7 +48,7 @@ describe('Combat System', () => {
 
     it('should include inventory bonuses in combat stats', () => {
         const base = { ...mockCharacter, strength: 10, inventory: [] };
-        const boosted = { ...mockCharacter, strength: 10, inventory: ['rusty_sword'] };
+        const boosted = { ...mockCharacter, strength: 10, inventory: ['rusty_sword'], equippedItems: { weapon: 'rusty_sword', armor: null, accessory: null } };
 
         const baseStats = calculateCombatStats(base as Character);
         const boostedStats = calculateCombatStats(boosted as Character);

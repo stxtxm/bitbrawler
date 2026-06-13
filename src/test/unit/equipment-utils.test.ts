@@ -21,7 +21,8 @@ describe('equipmentUtils', () => {
     losses: 0,
     fightsLeft: 3,
     lastFightReset: Date.now(),
-    inventory: ['rusty_sword', 'leather_vest', 'mana_ring']
+    inventory: ['rusty_sword', 'leather_vest', 'mana_ring'],
+    equippedItems: { weapon: 'rusty_sword', armor: 'leather_vest', accessory: 'mana_ring' },
   };
 
   it('sums equipment stat bonuses', () => {

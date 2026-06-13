@@ -34,6 +34,7 @@ describe('convertFromSupabase', () => {
     incoming_fight_history: [{ attackerName: 'player2', won: false, date: 1700000000000 }],
     is_bot: false,
     auto_mode: false,
+    equipped_items: { weapon: 'rusty_sword', armor: null, accessory: null },
   }
 
   it('maps all CharacterRow fields to Character correctly', () => {
@@ -140,6 +141,7 @@ describe('convertToSupabase', () => {
     incomingFightHistory: [{ date: 1700000000000, attackerName: 'player2', won: false }],
     isBot: false,
     autoMode: true,
+    equippedItems: { weapon: 'rusty_sword', armor: null, accessory: null },
     id: 'abc-123',
   }
 
@@ -203,6 +205,8 @@ describe('convertToSupabase', () => {
       lootboxStreak: undefined as any,
       incomingFightHistory: undefined as any,
       isBot: undefined as any,
+      autoMode: undefined as any,
+      equippedItems: undefined as any,
       id: 'x',
     }
 

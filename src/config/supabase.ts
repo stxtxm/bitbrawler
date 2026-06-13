@@ -41,6 +41,11 @@ export type CharacterRow = {
   incoming_fight_history: IncomingFightHistory[]
   is_bot: boolean
   auto_mode: boolean
+  equipped_items: {
+    weapon: string | null;
+    armor: string | null;
+    accessory: string | null;
+  } | null
 }
 
 export type ServerTimeRow = {

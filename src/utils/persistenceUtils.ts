@@ -19,6 +19,7 @@ export const normalizeCharacter = (character: Character): Character => {
     lastLootRoll: character.lastLootRoll ?? 0,
     lootboxStreak: character.lootboxStreak ?? 0,
     incomingFightHistory: character.incomingFightHistory ?? [],
+    equippedItems: character.equippedItems ?? { weapon: null, armor: null, accessory: null },
   };
 };
 
@@ -43,7 +44,8 @@ export const buildPendingOpponent = (opponent: Character): PendingFightOpponent 
     losses: opponent.losses || 0,
     fightsLeft: opponent.fightsLeft || 0,
     lastFightReset: opponent.lastFightReset || Date.now(),
-    inventory: opponent.inventory ?? []
+    inventory: opponent.inventory ?? [],
+    equippedItems: opponent.equippedItems ?? { weapon: null, armor: null, accessory: null },
   };
 
   if (opponent.id) {
@@ -78,7 +80,8 @@ export const hydratePendingOpponent = (snapshot: PendingFightOpponent): Characte
     lastFightReset: snapshot.lastFightReset ?? Date.now(),
     id: snapshot.id,
     isBot: snapshot.isBot,
-    inventory: snapshot.inventory ?? []
+    inventory: snapshot.inventory ?? [],
+    equippedItems: snapshot.equippedItems ?? { weapon: null, armor: null, accessory: null },
   });
 };
 

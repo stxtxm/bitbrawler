@@ -1,6 +1,7 @@
 import { Character } from '../types/Character'
-import { applyEquipmentToCharacter } from './equipmentUtils'
+import { applyEquipmentToCharacter, getEquippedItems } from './equipmentUtils'
 import { COMBAT_BALANCE } from '../config/combatBalance'
+import { getBotArchetype, getAffinityMultiplier } from './affinityUtils'
 
 export interface CombatStats {
   totalPower: number;
@@ -106,6 +107,16 @@ export function simulateCombat(attacker: Character, defender: Character): {
   const intruder = buildCombatStats(effectiveAttacker)
   const target = buildCombatStats(effectiveDefender)
 
+  const attackerArchetype = getBotArchetype(effectiveAttacker)
+  const defenderArchetype = getBotArchetype(effectiveDefender)
+
+  const attackerWeapon = getEquippedItems(effectiveAttacker).find(i => i.slot === 'weapon')
+  const defenderWeapon = getEquippedItems(effectiveDefender).find(i => i.slot === 'weapon')
+
+  const getAffinity = (actorWeapon: typeof attackerWeapon, targetArchetype: typeof defenderArchetype): number => {
+    return getAffinityMultiplier(actorWeapon?.element, targetArchetype)
+  }
+
   const details: string[] = []
   const timeline: CombatSnapshot[] = []
   let attackerHp = effectiveAttacker.hp
@@ -130,7 +141,8 @@ export function simulateCombat(attacker: Character, defender: Character): {
     actorHp: number,
     targetHp: number,
     round: number,
-    isCounter: boolean
+    isCounter: boolean,
+    affinityMultiplier: number
   ) => {
     const actorComeback = actorHp < (actor.maxHp * COMBAT_BALANCE.comeback.hpThresholdRatio)
       ? COMBAT_BALANCE.comeback.damageMultiplier
@@ -181,16 +193,18 @@ export function simulateCombat(attacker: Character, defender: Character): {
       )
       const damage = Math.max(
         COMBAT_BALANCE.damage.min,
-        Math.round((baseDamage + magicSurge) * varianceFactor * actorComeback * focusSurge)
+        Math.round((baseDamage + magicSurge) * varianceFactor * actorComeback * focusSurge * affinityMultiplier)
       )
       targetHp -= damage
+
+      const affinityMsg = affinityMultiplier > 1 ? ` (super effective!)` : ""
 
       if (isMagic) {
         const magicVerb = isCounter ? "counters with MAGIC SURGE!" : "uses MAGIC SURGE!"
         return {
           actorHp,
           targetHp,
-          detail: `Round ${round}: ${actor.name} ${magicVerb} ${damage} DMG`
+          detail: `Round ${round}: ${actor.name} ${magicVerb} ${damage} DMG${affinityMsg}`
         }
       }
 
@@ -198,7 +212,7 @@ export function simulateCombat(attacker: Character, defender: Character): {
       return {
         actorHp,
         targetHp,
-        detail: `Round ${round}: ${actor.name} ${actionVerb}${msg} ${damage} DMG`
+        detail: `Round ${round}: ${actor.name} ${actionVerb}${msg} ${damage} DMG${affinityMsg}`
       }
     }
 
@@ -222,26 +236,26 @@ export function simulateCombat(attacker: Character, defender: Character): {
     )
 
     if (attackerFirst) {
-      const attackerStrike = resolveAttack(attacker, intruder, target, attackerHp, defenderHp, rounds, false)
+      const attackerStrike = resolveAttack(attacker, intruder, target, attackerHp, defenderHp, rounds, false, getAffinity(attackerWeapon, defenderArchetype))
       attackerHp = attackerStrike.actorHp
       defenderHp = attackerStrike.targetHp
       record(attackerStrike.detail)
 
       if (defenderHp <= 0) break
 
-      const defenderStrike = resolveAttack(defender, target, intruder, defenderHp, attackerHp, rounds, true)
+      const defenderStrike = resolveAttack(defender, target, intruder, defenderHp, attackerHp, rounds, true, getAffinity(defenderWeapon, attackerArchetype))
       defenderHp = defenderStrike.actorHp
       attackerHp = defenderStrike.targetHp
       record(defenderStrike.detail)
     } else {
-      const defenderStrike = resolveAttack(defender, target, intruder, defenderHp, attackerHp, rounds, false)
+      const defenderStrike = resolveAttack(defender, target, intruder, defenderHp, attackerHp, rounds, false, getAffinity(defenderWeapon, attackerArchetype))
       defenderHp = defenderStrike.actorHp
       attackerHp = defenderStrike.targetHp
       record(defenderStrike.detail)
 
       if (attackerHp <= 0) break
 
-      const attackerStrike = resolveAttack(attacker, intruder, target, attackerHp, defenderHp, rounds, true)
+      const attackerStrike = resolveAttack(attacker, intruder, target, attackerHp, defenderHp, rounds, true, getAffinity(attackerWeapon, defenderArchetype))
       attackerHp = attackerStrike.actorHp
       defenderHp = attackerStrike.targetHp
       record(attackerStrike.detail)
