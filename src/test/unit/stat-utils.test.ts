@@ -59,12 +59,36 @@ describe('Stat Utils', () => {
         expect(updated.statPoints).toBe(0);
     });
 
+    it('does not double-grant when character already has stat points', () => {
+        const withPoints: Character = { ...baseCharacter, strength: 8, statPoints: 2 };
+        const updated = autoAllocateStatPoints(withPoints, 2);
+        const totalIncrease =
+            (updated.strength - withPoints.strength) +
+            (updated.vitality - withPoints.vitality) +
+            (updated.dexterity - withPoints.dexterity) +
+            (updated.luck - withPoints.luck) +
+            (updated.intelligence - withPoints.intelligence) +
+            (updated.focus - withPoints.focus);
+
+        expect(totalIncrease).toBe(2);
+        expect(updated.statPoints).toBe(0);
+    });
+
     it('auto-allocates stat points randomly', () => {
         const rng = () => 0; // always pick strength
         const updated = autoAllocateStatPointsRandom(baseCharacter, 2, rng);
 
         expect(updated.strength).toBe(baseCharacter.strength + 2);
         expect(updated.vitality).toBe(baseCharacter.vitality);
+        expect(updated.statPoints).toBe(0);
+    });
+
+    it('random auto-allocate grants shortfall when character lacks points', () => {
+        const rng = () => 0; // always pick strength
+        const withPoints: Character = { ...baseCharacter, statPoints: 1 };
+        const updated = autoAllocateStatPointsRandom(withPoints, 3, rng);
+        // Only 1 available, needs 3 — grant shortfall of 2
+        expect(updated.strength).toBe(baseCharacter.strength + 3);
         expect(updated.statPoints).toBe(0);
     });
 });

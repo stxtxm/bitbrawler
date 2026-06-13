@@ -82,7 +82,18 @@ const Arena = () => {
         setShowLevelUp(false);
         setDeferLevelUp(false);
         clearXpNotifications();
-    }, [activeCharacter?.autoMode, activeCharacter?.statPoints, setCharacter, clearXpNotifications]);
+
+        // Persist auto-allocated stats to the DB so they survive reconnect
+        const allocations: Partial<Record<StatKey, number>> = {};
+        const statKeys: StatKey[] = ['strength', 'vitality', 'dexterity', 'luck', 'intelligence', 'focus'];
+        for (const key of statKeys) {
+            const delta = (updated as any)[key] - (activeCharacter as any)[key];
+            if (delta > 0) allocations[key] = delta;
+        }
+        if (Object.keys(allocations).length > 0) {
+            saveStatAllocations(allocations).catch(() => {});
+        }
+    }, [activeCharacter?.autoMode, activeCharacter?.statPoints, setCharacter, clearXpNotifications, saveStatAllocations]);
 
     // Defensive overlay dismissal: when auto-mode is active and the character
     // has zero pending stat points, force-dismiss the level-up overlay.

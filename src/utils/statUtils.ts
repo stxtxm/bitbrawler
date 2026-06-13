@@ -50,7 +50,11 @@ export function applyStatPoint(character: Character, stat: StatKey): Character {
 }
 
 export function autoAllocateStatPoints(character: Character, points: number): Character {
-    let updated = grantStatPoints(character, points);
+    let updated = character;
+    const available = character.statPoints || 0;
+    if (points > available) {
+        updated = grantStatPoints(character, points - available);
+    }
 
     for (let i = 0; i < points; i++) {
         const stat = pickLowestStat(updated);
@@ -65,7 +69,11 @@ export function autoAllocateStatPointsRandom(
     points: number,
     rng: () => number = Math.random
 ): Character {
-    let updated = grantStatPoints(character, points);
+    let updated = character;
+    const available = character.statPoints || 0;
+    if (points > available) {
+        updated = grantStatPoints(character, points - available);
+    }
 
     for (let i = 0; i < points; i++) {
         const stat = STAT_KEYS[Math.floor(rng() * STAT_KEYS.length)];
