@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Character } from '../../types/Character';
+import { normalizeCharacter } from '../../utils/persistenceUtils';
 
 describe('LocalStorage Persistence', () => {
     const mockChar: Character = {
@@ -50,5 +51,25 @@ describe('LocalStorage Persistence', () => {
         };
 
         expect(getData()).toBeNull();
+    });
+});
+
+describe('normalizeCharacter', () => {
+    it('defaults equippedItems to empty slots when missing', () => {
+        const result = normalizeCharacter({} as Character);
+        expect(result.equippedItems).toEqual({ weapon: null, armor: null, accessory: null });
+    });
+
+    it('preserves existing equippedItems', () => {
+        const result = normalizeCharacter({ equippedItems: { weapon: 'rusty_sword', armor: null, accessory: 'mana_ring' } } as Character);
+        expect(result.equippedItems).toEqual({ weapon: 'rusty_sword', armor: null, accessory: 'mana_ring' });
+    });
+
+    it('defaults inventory and other fields', () => {
+        const result = normalizeCharacter({} as Character);
+        expect(result.inventory).toEqual([]);
+        expect(result.focus).toBe(10);
+        expect(result.autoMode).toBe(false);
+        expect(result.statPoints).toBe(0);
     });
 });

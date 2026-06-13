@@ -21,7 +21,7 @@
 ## ✅ Tests
 - [x] Mocks Supabase (`src/test/utils/supabaseMock.ts`)
 - [x] Tests combat, GameContext, failover adaptés pour Supabase
-- [x] **190 tests passent — 35 fichiers**
+- [x] **353 tests passent — 43 fichiers**
 
 ## ✅ GitHub Actions
 - [x] `bot-activity.yml` — Secrets `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
@@ -31,7 +31,7 @@
 - [x] Build (`npm run build`) — OK
 - [x] Bot engine — 12 bots créés et actifs
 - [x] Daily reset forcé — 13 personnages reset, spot check OK
-- [x] Tests unitaires et d'intégration — 190/190 OK
+- [x] Tests unitaires et d'intégration — 353/353 OK
 
 ## 📋 Notes de production
 - Créer la table `maintenance` dans Supabase SQL Editor :

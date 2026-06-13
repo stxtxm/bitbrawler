@@ -154,6 +154,83 @@ describe('Combat System', () => {
 
         const result = simulateCombat(attacker as Character, defender as Character);
         const magicLog = result.details.find((line) => line.includes('MAGIC SURGE'));
-        expect(magicLog).toBeTruthy();
-    });
+    expect(magicLog).toBeTruthy();
+  });
+
+  // ─── Affinity Tests ─────────────────────────────────────────────────────
+
+  it('includes super effective in logs when fire weapon hits tank archetype', () => {
+    const attacker = {
+      ...mockCharacter,
+      name: 'Pyro',
+      level: 5,
+      strength: 20,
+      vitality: 5,
+      inventory: ['ember_blade'],
+      equippedItems: { weapon: 'ember_blade', armor: null, accessory: null },
+    };
+    const defender = {
+      ...mockCharacter,
+      name: 'Wall',
+      level: 5,
+      strength: 5,
+      vitality: 20,
+      hp: 200,
+      maxHp: 200,
+      inventory: [],
+      equippedItems: { weapon: null, armor: null, accessory: null },
+    };
+
+    // deterministic: attacker wins initiative, hits, no crit, no magic, no focus surge
+    const sequence = [
+      0.4, // initiative (attacker first — 0.4 < 0.5 base)
+      0,   // hit (always hits at rng=0)
+      0.99, // no crit
+      0.99, // no magic
+      0.5,  // variance
+      0.99, // no focus surge
+    ];
+    vi.spyOn(Math, 'random').mockImplementation(() => sequence.shift() ?? 0.99);
+
+    const result = simulateCombat(attacker as Character, defender as Character);
+    const affinityLog = result.details.find((line) => line.includes('super effective'));
+    expect(affinityLog).toBeTruthy();
+  });
+
+  it('does not include super effective when no element matches', () => {
+    const attacker = {
+      ...mockCharacter,
+      name: 'Punchy',
+      level: 5,
+      strength: 20,
+      vitality: 5,
+      inventory: ['ember_blade'],
+      equippedItems: { weapon: 'ember_blade', armor: null, accessory: null },
+    };
+    const defender = {
+      ...mockCharacter,
+      name: 'Bruiser',
+      level: 5,
+      strength: 20, // bruiser archetype (fire not effective vs bruiser)
+      vitality: 5,
+      hp: 200,
+      maxHp: 200,
+      inventory: [],
+      equippedItems: { weapon: null, armor: null, accessory: null },
+    };
+
+    const sequence = [
+      0.4, // initiative (attacker first)
+      0,   // hit
+      0.99, // no crit
+      0.99, // no magic
+      0.5,  // variance
+      0.99, // no focus surge
+    ];
+    vi.spyOn(Math, 'random').mockImplementation(() => sequence.shift() ?? 0.99);
+
+    const result = simulateCombat(attacker as Character, defender as Character);
+    const affinityLog = result.details.find((line) => line.includes('super effective'));
+    expect(affinityLog).toBeFalsy();
+  });
 });

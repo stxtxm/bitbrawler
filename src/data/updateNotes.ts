@@ -8,6 +8,24 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '2.6.0',
+    date: '2026-06-13',
+    title: 'Equipment Loadouts & Weapon Affinity System',
+    changes: [
+      '3-slot equipment loadouts (weapon/armor/accessory): manual equip/unequip from inventory.',
+      '6 weapon elements (fire/water/wind/earth/light/dark) with affinity system — super-effective vs bot archetypes (+15% damage).',
+      '6 bot archetypes (bruiser/tank/rogue/mage/lucky/zen) with element weakness mapping.',
+      'All 15 items now have elemental affinity assigned thematically (Ember Blade→fire, Voidreaper→dark, etc.).',
+      'Backward compatible: old characters without equippedItems auto-equip best items on first load.',
+      'Arena inventory modal redesigned: loadout section at top + grouped item grids by slot type (Weapons/Armor/Accessories).',
+      'Element badges (AffinityBadge component) shown on equipped items and inventory items.',
+      'Combat logs show "(super effective!)" when weapon element counters opponent archetype.',
+      'Bot engine updated: auto_mode=true, auto-equips best items after lootbox and on init.',
+      'Lootbox base weight fixed: common adjusted from 0.50 to 0.478 so all weights sum to 1.0 (was 1.022).',
+      '353 tests passing across 43 test files.',
+    ],
+  },
+  {
     version: '2.5.0',
     date: '2026-06-06',
     title: 'Pro sound engine, auto mode fix & codebase cleanup',

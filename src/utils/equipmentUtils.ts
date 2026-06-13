@@ -46,16 +46,25 @@ export const equipItem = (
   if (!item) return character;
   if (item.slot !== slot) return character;
 
+  const inventory = [...(character.inventory ?? [])];
+
+  // Item must be in inventory (or already equipped in a different slot) to equip it
+  if (!inventory.includes(itemId)) {
+    // Check if it's already equipped in this slot — no-op
+    const currentEquipped = character.equippedItems?.[slot];
+    if (currentEquipped === itemId) return character;
+    return character;
+  }
+
   const equipped = { ...(character.equippedItems ?? { weapon: null, armor: null, accessory: null }) };
   const currentInSlot = equipped[slot];
-  let inventory = [...(character.inventory ?? [])];
 
   // Remove item from inventory
-  inventory = inventory.filter((id) => id !== itemId);
+  const newInventory = inventory.filter((id) => id !== itemId);
 
-  // If there was already an item in that slot, put it back in inventory
-  if (currentInSlot) {
-    inventory.push(currentInSlot);
+  // If slot had an equipped item not already in inventory, put it back
+  if (currentInSlot && !newInventory.includes(currentInSlot)) {
+    newInventory.push(currentInSlot);
   }
 
   equipped[slot] = itemId;
@@ -63,7 +72,7 @@ export const equipItem = (
   return {
     ...character,
     equippedItems: equipped,
-    inventory,
+    inventory: newInventory,
   };
 };
 

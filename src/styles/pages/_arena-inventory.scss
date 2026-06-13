@@ -138,16 +138,22 @@
 
 @media (min-width: 980px) {
     .inventory-body {
+        gap: 12px;
+    }
+
+    .inv-body-content {
         flex-direction: row;
         align-items: stretch;
         gap: 16px;
     }
 
-    .inventory-grid {
+    .inv-groups {
         flex: 1.7;
+    }
+
+    .inv-group-grid {
         grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 12px;
-        padding: 16px;
+        gap: 10px;
     }
 
     .inventory-details {

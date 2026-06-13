@@ -78,6 +78,17 @@ describe('equipItem', () => {
     const result = equipItem(baseCharacter, 'nonexistent', 'weapon');
     expect(result).toBe(baseCharacter);
   });
+
+  it('does nothing when item is not in inventory', () => {
+    const char = {
+      ...baseCharacter,
+      inventory: ['leather_vest', 'mana_ring'],
+      equippedItems: { weapon: null, armor: null, accessory: null },
+    };
+    const result = equipItem(char, 'rusty_sword', 'weapon');
+    expect(result.equippedItems?.weapon).toBeNull();
+    expect(result.inventory).toEqual(['leather_vest', 'mana_ring']);
+  });
 });
 
 describe('unequipItem', () => {
@@ -120,6 +131,30 @@ describe('autoEquipBestItems', () => {
     expect(result.equippedItems?.weapon).toBeNull();
     expect(result.equippedItems?.armor).toBeNull();
     expect(result.equippedItems?.accessory).toBeNull();
+  });
+
+  it('fills only empty slots, keeps already-equipped items', () => {
+    const char = {
+      ...baseCharacter,
+      inventory: ['rusty_sword', 'leather_vest', 'mana_ring'],
+      equippedItems: { weapon: 'rusty_sword', armor: null, accessory: null },
+    };
+    const result = autoEquipBestItems(char);
+    expect(result.equippedItems?.weapon).toBe('rusty_sword'); // unchanged
+    expect(result.equippedItems?.armor).toBe('leather_vest');
+    expect(result.equippedItems?.accessory).toBe('mana_ring');
+  });
+
+  it('does not replace already-best items', () => {
+    const char = {
+      ...baseCharacter,
+      inventory: ['rusty_sword', 'leather_vest', 'mana_ring', 'ember_blade'],
+      equippedItems: { weapon: 'ember_blade', armor: 'leather_vest', accessory: 'mana_ring' },
+    };
+    const result = autoEquipBestItems(char);
+    expect(result.equippedItems?.weapon).toBe('ember_blade'); // ember_blade is best, unchanged
+    expect(result.equippedItems?.armor).toBe('leather_vest');
+    expect(result.equippedItems?.accessory).toBe('mana_ring');
   });
 });
 

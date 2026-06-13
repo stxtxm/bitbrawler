@@ -1,39 +1,60 @@
 @use '../variables' as *;
 
-.loadout-bar {
+// ============================================
+// Integrated Loadout + Grouped Inventory
+// (inside the inventory modal)
+// ============================================
+
+.inv-body-content {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 10px;
-  background: rgba(0, 0, 0, 0.6);
-  border: 2px solid #222;
-  border-left: 4px solid $accent-gold;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
 
   @include mobile {
-    padding: 4px 6px;
-    gap: 4px;
-    border-width: 1px;
-    border-left-width: 2px;
+    gap: 8px;
   }
 }
 
-.loadout-slot {
+.inv-loadout {
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid #222;
+
+  @include mobile {
+    padding: 4px 6px;
+  }
+}
+
+.inv-loadout-label {
+  font-size: 0.45rem;
+  color: $accent-gold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.inv-loadout-slots {
+  display: flex;
+  gap: 6px;
+
+  @include mobile {
+    gap: 4px;
+  }
+}
+
+.inv-loadout-slot {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 4px;
+  padding: 6px 4px;
   background: #111;
   border: 2px solid #333;
-  cursor: pointer;
-  transition: border-color 0.2s;
-  min-height: 48px;
+  min-height: 54px;
   justify-content: center;
-
-  &:hover {
-    border-color: $accent-gold;
-  }
 
   &.filled {
     border-color: #555;
@@ -41,279 +62,160 @@
 
   &.empty {
     border-color: #222;
-    opacity: 0.6;
+    opacity: 0.5;
   }
 
   @include mobile {
-    min-height: 36px;
-    padding: 2px;
+    min-height: 44px;
+    padding: 4px 2px;
     border-width: 1px;
   }
 }
 
-.loadout-slot-label {
-  font-size: 0.5rem;
+.inv-loadout-slot-icon {
+  font-size: 0.6rem;
   line-height: 1;
 }
 
-.loadout-item-wrapper {
+.inv-loadout-item {
   position: relative;
   display: flex;
   align-items: center;
+  gap: 4px;
+  width: 100%;
   justify-content: center;
 }
 
-.loadout-item-rarity-dot {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 6px;
-  height: 6px;
-  border-radius: 0;
+.inv-loadout-item-name {
+  font-size: 0.4rem;
+  color: #ccc;
+  letter-spacing: 0.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 60px;
 
-  &.rarity-common { background: #666; }
-  &.rarity-uncommon { background: #4cd964; }
-  &.rarity-rare { background: #63b3ff; }
-  &.rarity-epic { background: #9b59b6; }
+  @include mobile {
+    display: none;
+  }
 }
 
-.loadout-empty-text {
+.inv-unequip-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  font-size: 0.5rem;
+  line-height: 1;
+  background: #000;
+  color: $accent-red;
+  border: 1px solid $accent-red;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: $accent-red;
+    color: #000;
+  }
+}
+
+.inv-loadout-empty {
   font-size: 0.4rem;
-  color: #555;
+  color: #444;
   letter-spacing: 1px;
 }
 
-.loadout-edit-btn {
-  width: 32px !important;
-  height: 32px !important;
-  min-width: 32px !important;
-  border-color: #444 !important;
-
-  &:hover {
-    border-color: $accent-gold !important;
-  }
-
-  @include mobile {
-    width: 26px !important;
-    height: 26px !important;
-    min-width: 26px !important;
-  }
-}
-
 // ============================================
-// Equipment Modal
+// Grouped Inventory
 // ============================================
 
-.equipment-overlay {
-  backdrop-filter: blur(3px);
-}
-
-.equipment-modal {
-  max-width: 520px;
-  width: 90%;
-  padding: 20px;
-  @include retro-border(4px, $accent-gold);
-  background: radial-gradient(circle at top, #0e0b06 0%, #000 70%);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-height: 84vh;
-  overflow: hidden;
-
-  @include mobile {
-    padding: 12px;
-    border-width: 2px;
-    max-height: 92vh;
-  }
-}
-
-.equipment-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.equipment-title {
-  font-family: $font-pixel;
-  font-size: 0.85rem;
-  letter-spacing: 2px;
-  color: $accent-gold;
-  margin: 0;
-  text-shadow: 2px 2px 0 #000;
-
-  @include mobile {
-    font-size: 0.65rem;
-  }
-}
-
-.equipment-body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.inv-groups {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-}
-
-.equipped-slots {
   display: flex;
   flex-direction: column;
   gap: 8px;
+
+  @include mobile {
+    gap: 6px;
+  }
 }
 
-.equipped-slot {
+.inv-group {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 8px 10px;
-  background: rgba(0, 0, 0, 0.5);
-  border: 2px solid #333;
-  transition: border-color 0.2s;
-
-  &.filled {
-    border-color: #555;
-  }
-
-  &.active {
-    border-color: $accent-gold;
-  }
-
-  @include mobile {
-    padding: 6px 8px;
-    border-width: 1px;
-  }
 }
 
-.equipped-slot-label {
-  font-size: 0.5rem;
+.inv-group-label {
+  font-size: 0.45rem;
   color: #8b8b8b;
   letter-spacing: 1px;
   text-transform: uppercase;
+  padding: 2px 4px;
+  border-bottom: 1px solid #222;
+  position: sticky;
+  top: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 1;
 }
 
-.equipped-item-display {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.equipped-item-info {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.equipped-item-name {
-  font-family: $font-pixel;
-  font-size: 0.6rem;
-  color: #fff;
-  letter-spacing: 1px;
-
-  @include mobile {
-    font-size: 0.5rem;
-  }
-}
-
-.equipped-empty-text {
-  font-size: 0.45rem;
-  color: #555;
-  letter-spacing: 1px;
-  font-style: italic;
-}
-
-.unequip-btn {
-  width: 24px !important;
-  height: 24px !important;
-  min-width: 24px !important;
-  padding: 0 !important;
-  font-size: 0.7rem !important;
-  line-height: 1 !important;
-  background: #000 !important;
-  color: $accent-red !important;
-  border: 2px solid $accent-red !important;
-  cursor: pointer;
-  @include flex-center;
-
-  &:hover {
-    background: $accent-red !important;
-    color: #000 !important;
-  }
-
-  @include mobile {
-    width: 20px !important;
-    height: 20px !important;
-    min-width: 20px !important;
-    border-width: 1px !important;
-    font-size: 0.6rem !important;
-  }
-}
-
-.equipment-inventory {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.equipment-inventory-title {
-  font-size: 0.5rem;
-  color: $accent-gold;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
-
-.equipment-grid {
+.inv-group-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 6px;
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.5);
-  border: 2px solid #222;
-  max-height: 240px;
-  overflow-y: auto;
 
   @include mobile {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    max-height: 180px;
     gap: 4px;
-    padding: 6px;
+  }
+
+  @include small-mobile {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-.equipment-item {
+.inv-group-item {
   position: relative;
   aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #111;
+  background: linear-gradient(145deg, #111 0%, #050505 100%);
   border: 2px solid #333;
+  box-shadow: inset 0 0 0 2px #000;
   cursor: pointer;
-  transition: border-color 0.2s;
-  padding: 4px;
+  transition: border-color 0.15s;
+  padding: 0;
 
-  &:hover:not(:disabled) {
+  &:hover {
     border-color: $accent-gold;
+    box-shadow: inset 0 0 0 2px #000, 0 0 6px rgba(255, 204, 0, 0.25);
   }
 
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+  &.selected {
+    border-color: $accent-gold;
+    box-shadow: inset 0 0 0 2px #000, 0 0 6px rgba(255, 204, 0, 0.35);
   }
 
   &.rarity-common { border-color: #666; }
   &.rarity-uncommon { border-color: #4cd964; }
   &.rarity-rare { border-color: #63b3ff; }
   &.rarity-epic { border-color: #9b59b6; }
-
-  @include mobile {
-    border-width: 1px;
-    padding: 2px;
-  }
 }
 
-.equipment-empty-inventory {
-  grid-column: 1 / -1;
+.inv-group-item .affinity-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+}
+
+.inv-empty {
   text-align: center;
   padding: 20px;
   font-size: 0.5rem;

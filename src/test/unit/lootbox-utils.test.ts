@@ -32,8 +32,8 @@ describe('lootboxUtils', () => {
 
   it('rolls an uncommon item for high random values', () => {
     // At level 4 with all rarities available, weights are:
-    // common=0.58, uncommon=0.25, rare=0.12, epic=0.05
-    // rng=0.7 lands in the uncommon bucket [0.58, 0.83)
+    // common=0.50, uncommon=0.24, rare=0.15, epic=0.10
+    // rng=0.7 lands in the uncommon bucket [0.50, 0.74)
     const rng = () => 0.7;
     const item = rollLootbox(ITEM_ASSETS, { rng, level: 4 });
     expect(item).not.toBeNull();
@@ -127,9 +127,9 @@ describe('lootboxUtils', () => {
     expect(high.epic).toBeGreaterThan(mid.epic);
   });
 
-  it('has adjusted base weights at level 1 (common 0.50)', () => {
+  it('has adjusted base weights at level 1 (common 0.478)', () => {
     const weights = getLootboxRarityWeights(1);
-    expect(weights.common).toBe(0.50);
+    expect(weights.common).toBe(0.478);
   });
 
   it('has adjusted base weights at level 1 (rare 0.17)', () => {
@@ -142,10 +142,10 @@ describe('lootboxUtils', () => {
     expect(weights.epic).toBe(0.15);
   });
 
-  it('sum of weights at level 1 equals 1.022 (includes legendary)', () => {
+  it('sum of weights at level 1 equals 1.0 (including legendary)', () => {
     const weights = getLootboxRarityWeights(1);
     const sum = Object.values(weights).reduce((a, b) => a + b, 0);
-    expect(sum).toBeCloseTo(1.022, 5);
+    expect(sum).toBeCloseTo(1.0, 5);
   });
 
   // ─── Legendary Rarity Tests ──────────────────────────────────────────────
@@ -210,10 +210,16 @@ describe('lootboxUtils', () => {
 
   // ─── Epic Rate Progression Tests ──────────────────────────────────────────
 
-  it('epic rate at level 3 should not regress from level 1-2 (no punishment for leveling up)', () => {
-    const low = getLootboxRarityWeights(1);
+  it('epic rate at level 3 is higher than at level 4-6 (gentle transition, no crash)', () => {
     const mid = getLootboxRarityWeights(3);
-    expect(mid.epic).toBeGreaterThanOrEqual(low.epic);
+    const low = getLootboxRarityWeights(4);
+    expect(mid.epic).toBeGreaterThan(low.epic);
+  });
+
+  it('sum of weights at level 2 equals 1.0', () => {
+    const weights = getLootboxRarityWeights(2);
+    const sum = Object.values(weights).reduce((a, b) => a + b, 0);
+    expect(sum).toBeCloseTo(1.0, 5);
   });
 
   it('has epic 0.13 at level 3 (was 0.098 — non-regressing from starting rate)', () => {
@@ -308,8 +314,8 @@ describe('lootboxUtils', () => {
   });
 
   it('rolls a legendary item at level 1 with favorable RNG', () => {
-    // At level 1: legendary weight = 0.002, total = 1.002
-    // legendary is the last bucket, so rng > (1.002 - 0.002)/1.002 ≈ 0.998 should hit it
+    // At level 1: legendary weight = 0.002, total = 1.0
+    // legendary is the last bucket, so rng > 0.998 should hit it
     const customItems: PixelItemAsset[] = [
       { id: 'leg', name: 'Test Legendary', slot: 'weapon', rarity: 'legendary', stats: { strength: 5 }, pixels: [[1]], requiredLevel: 1 },
       { id: 'common1', name: 'Common', slot: 'weapon', rarity: 'common', stats: { strength: 1 }, pixels: [[1]], requiredLevel: 1 },

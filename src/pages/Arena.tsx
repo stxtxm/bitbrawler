@@ -44,8 +44,6 @@ const Arena = () => {
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [settingsView, setSettingsView] = useState<'main' | 'logs'>('main');
     const [autoModeUpdating, setAutoModeUpdating] = useState(false);
-    const [equipmentOpen, setEquipmentOpen] = useState(false);
-    const [equipSlotFilter, setEquipSlotFilter] = useState<ItemSlot | null>(null);
     const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm'>('idle');
     const [deletePending, setDeletePending] = useState(false);
 
@@ -222,6 +220,20 @@ const Arena = () => {
     const handleOpenLevelUp = () => {
         setShowLevelUp(true);
         setDeferLevelUp(false);
+    };
+
+    const handleEquipItem = (itemId: string, slot: ItemSlot) => {
+        if (!activeCharacter) return;
+        const updated = equipItem(activeCharacter, itemId, slot);
+        setCharacter(updated);
+        setInventoryHoveredId(null);
+        setInventorySelectedId(null);
+    };
+
+    const handleUnequipItem = (slot: ItemSlot) => {
+        if (!activeCharacter) return;
+        const updated = unequipItem(activeCharacter, slot);
+        setCharacter(updated);
     };
 
     useEffect(() => {
@@ -506,40 +518,6 @@ const Arena = () => {
                 </div>
 
                 <div className="action-panel">
-                    <div className="loadout-bar">
-                        {(['weapon', 'armor', 'accessory'] as ItemSlot[]).map((slot) => {
-                            const item = equippedItems.find(i => i.slot === slot);
-                            return (
-                                <button
-                                    key={slot}
-                                    className={`loadout-slot ${item ? 'filled' : 'empty'}`}
-                                    onClick={() => {
-                                        setEquipSlotFilter(slot);
-                                        setEquipmentOpen(true);
-                                    }}
-                                    title={item ? `${item.name} (click to unequip/swap)` : `Empty ${slot} slot (click to equip)`}
-                                >
-                                    <span className="loadout-slot-label">{slot === 'weapon' ? '⚔️' : slot === 'armor' ? '🛡️' : '💍'}</span>
-                                    {item ? (
-                                        <div className="loadout-item-wrapper">
-                                            <PixelItemIcon pixels={item.pixels} size={20} />
-                                            {item.element && <AffinityBadge element={item.element} size={10} />}
-                                            <span className={`loadout-item-rarity-dot rarity-${item.rarity}`}></span>
-                                        </div>
-                                    ) : (
-                                        <span className="loadout-empty-text">EMPTY</span>
-                                    )}
-                                </button>
-                            );
-                        })}
-                        <button
-                            className="button icon-btn loadout-edit-btn"
-                            onClick={() => { setEquipSlotFilter(null); setEquipmentOpen(true); }}
-                            title="Manage equipment"
-                        >
-                            <PixelIcon type="gear" size={16} />
-                        </button>
-                    </div>
                     <div className="daily-status-compact">
                         <div className="status-label">
                             <PixelIcon type="sword" size={32} />
@@ -611,82 +589,134 @@ const Arena = () => {
                             <StreakIndicator streak={streak} canRoll={canRollDailyLoot} />
                         </div>
                         <div className="inventory-body">
-                            <div className="inventory-grid">
-                                {Array.from({ length: inventoryCapacity }).map((_, index) => {
-                                    const itemId = inventory[index];
-                                    const item = getItemById(itemId);
-                                    if (!item) {
-                                        return <div key={index} className="inventory-slot empty" aria-hidden="true" />;
-                                    }
-                                    const isSelected = previewItemId === item.id;
-                                    return (
-                                        <button
-                                            key={index}
-                                            className={`inventory-slot item-slot rarity-${item.rarity} ${isSelected ? 'selected' : ''}`}
-                                            onClick={() => handleSelectItem(item.id)}
-                                            onMouseEnter={() => setInventoryHoveredId(item.id)}
-                                            onMouseLeave={() => setInventoryHoveredId((current) => (current === item.id ? null : current))}
-                                            onFocus={() => setInventoryHoveredId(item.id)}
-                                            onBlur={() => setInventoryHoveredId((current) => (current === item.id ? null : current))}
-                                            onTouchStart={() => setInventorySelectedId(item.id)}
-                                            title={`${item.name} (${item.rarity})`}
-                                            aria-label={`View ${item.name}`}
-                                        >
-                                            <PixelItemIcon pixels={item.pixels} size={24} />
-                                        </button>
-                                    );
-                                })}
+                            <div className="inv-loadout">
+                                <div className="inv-loadout-label">EQUIPPED</div>
+                                <div className="inv-loadout-slots">
+                                    {(['weapon', 'armor', 'accessory'] as ItemSlot[]).map((slot) => {
+                                        const item = equippedItems.find(i => i.slot === slot);
+                                        return (
+                                            <div key={slot} className={`inv-loadout-slot ${item ? 'filled' : 'empty'}`}>
+                                                <span className="inv-loadout-slot-icon">
+                                                    {slot === 'weapon' ? '⚔️' : slot === 'armor' ? '🛡️' : '💍'}
+                                                </span>
+                                                {item ? (
+                                                    <div className="inv-loadout-item">
+                                                        <PixelItemIcon pixels={item.pixels} size={22} />
+                                                        {item.element && <AffinityBadge element={item.element} size={10} />}
+                                                        <div className="inv-loadout-item-name">{item.name}</div>
+                                                        <button
+                                                            className="inv-unequip-btn"
+                                                            onClick={() => handleUnequipItem(slot)}
+                                                            title="Unequip"
+                                                            aria-label={`Unequip ${item.name}`}
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="inv-loadout-empty">EMPTY</div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                            <div className={`inventory-details ${previewItem ? '' : 'empty'}`}>
-                                {previewItem ? (
-                                    <>
-                                        <div className={`inventory-item-head rarity-${previewItem.rarity}`}>
-                                            <PixelItemIcon pixels={previewItem.pixels} size={30} />
-                                            <div className="inventory-item-meta">
-                                                <div className="inventory-item-name">{previewItem.name}</div>
-                                                <div className="inventory-item-sub">
-                                                    <span className="inventory-item-slot">{previewSlotLabel}</span>
-                                                    <span className="inventory-item-rarity">{previewItem.rarity.toUpperCase()}</span>
+                            <div className="inv-body-content">
+                                <div className="inv-groups">
+                                    {(['weapon', 'armor', 'accessory'] as ItemSlot[]).map((slot) => {
+                                        const slotItems = inventory
+                                            .map((id) => getItemById(id))
+                                            .filter((item): item is PixelItemAsset => Boolean(item))
+                                            .filter((item) => item.slot === slot);
+                                        if (slotItems.length === 0) return null;
+                                        return (
+                                            <div key={slot} className="inv-group">
+                                                <div className="inv-group-label">
+                                                    {slot === 'weapon' ? '⚔️ WEAPONS' : slot === 'armor' ? '🛡️ ARMOR' : '💍 ACCESSORIES'}
+                                                </div>
+                                                <div className="inv-group-grid">
+                                                    {slotItems.map((item) => {
+                                                        const isSelected = previewItemId === item.id;
+                                                        return (
+                                                            <button
+                                                                key={item.id}
+                                                                className={`inv-group-item rarity-${item.rarity} ${isSelected ? 'selected' : ''}`}
+                                                                onClick={() => {
+                                                                    handleEquipItem(item.id, slot);
+                                                                    handleSelectItem(item.id);
+                                                                }}
+                                                                onMouseEnter={() => setInventoryHoveredId(item.id)}
+                                                                onMouseLeave={() => setInventoryHoveredId((current) => (current === item.id ? null : current))}
+                                                                onFocus={() => setInventoryHoveredId(item.id)}
+                                                                onBlur={() => setInventoryHoveredId((current) => (current === item.id ? null : current))}
+                                                                onTouchStart={() => setInventorySelectedId(item.id)}
+                                                                title={`Equip ${item.name}`}
+                                                                aria-label={`Equip ${item.name}`}
+                                                            >
+                                                                <PixelItemIcon pixels={item.pixels} size={22} />
+                                                                {item.element && <AffinityBadge element={item.element} size={8} />}
+                                                            </button>
+                                                        );
+                                                    })}
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div className="inventory-item-stats">
-                                            {previewStats.map(([statKey, value]) => {
-                                                const meta = itemStatMeta[statKey];
-                                                if (!meta) return null;
-                                                return (
-                                                    <div key={statKey} className="inventory-stat-row">
-                                                        <span className="inventory-stat-icon">
-                                                            <PixelIcon type={meta.icon} size={12} />
-                                                        </span>
-                                                        <span className="inventory-stat-label">{meta.label}</span>
-                                                        <span className="inventory-stat-value">+{value}</span>
+                                        );
+                                    })}
+                                    {inventory.length === 0 && (
+                                        <div className="inv-empty">No items in inventory. Open the daily lootbox!</div>
+                                    )}
+                                </div>
+                                <div className={`inventory-details ${previewItem ? '' : 'empty'}`}>
+                                    {previewItem ? (
+                                        <>
+                                            <div className={`inventory-item-head rarity-${previewItem.rarity}`}>
+                                                <PixelItemIcon pixels={previewItem.pixels} size={30} />
+                                                <div className="inventory-item-meta">
+                                                    <div className="inventory-item-name">{previewItem.name}</div>
+                                                    <div className="inventory-item-sub">
+                                                        <span className="inventory-item-slot">{previewSlotLabel}</span>
+                                                        <span className="inventory-item-rarity">{previewItem.rarity.toUpperCase()}</span>
                                                     </div>
-                                                );
-                                            })}
+                                                </div>
+                                            </div>
+                                            <div className="inventory-item-stats">
+                                                {previewStats.map(([statKey, value]) => {
+                                                    const meta = itemStatMeta[statKey];
+                                                    if (!meta) return null;
+                                                    return (
+                                                        <div key={statKey} className="inventory-stat-row">
+                                                            <span className="inventory-stat-icon">
+                                                                <PixelIcon type={meta.icon} size={12} />
+                                                            </span>
+                                                            <span className="inventory-stat-label">{meta.label}</span>
+                                                            <span className="inventory-stat-value">+{value}</span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="inventory-empty-details">TAP AN ITEM TO VIEW BONUSES</div>
+                                    )}
+                                    {totalBonusEntries.length > 0 && (
+                                        <div className="inventory-bonus-summary">
+                                            <div className="bonus-title">TOTAL BONUS</div>
+                                            <div className="bonus-list">
+                                                {totalBonusEntries.map((entry) => {
+                                                    const meta = itemStatMeta[entry.key];
+                                                    if (!meta) return null;
+                                                    return (
+                                                        <div key={entry.key} className="bonus-chip">
+                                                            <PixelIcon type={meta.icon} size={10} />
+                                                            <span className="bonus-label">{meta.label}</span>
+                                                            <span className="bonus-value">+{entry.value}</span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
-                                    </>
-                                ) : (
-                                    <div className="inventory-empty-details">TAP AN ITEM TO VIEW BONUSES</div>
-                                )}
-                                {totalBonusEntries.length > 0 && (
-                                    <div className="inventory-bonus-summary">
-                                        <div className="bonus-title">TOTAL BONUS</div>
-                                        <div className="bonus-list">
-                                            {totalBonusEntries.map((entry) => {
-                                                const meta = itemStatMeta[entry.key];
-                                                if (!meta) return null;
-                                                return (
-                                                    <div key={entry.key} className="bonus-chip">
-                                                        <PixelIcon type={meta.icon} size={10} />
-                                                        <span className="bonus-label">{meta.label}</span>
-                                                        <span className="bonus-value">+{entry.value}</span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         </div>
                         {lootboxResult && (
@@ -728,84 +758,6 @@ const Arena = () => {
                                 </div>
                             </div>
                         )}
-                    </div>
-                </div>
-            )}
-
-            {equipmentOpen && (
-                <div className="retro-modal-overlay equipment-overlay" onClick={() => setEquipmentOpen(false)}>
-                    <div className="retro-modal equipment-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="equipment-header">
-                            <h2 className="equipment-title">EQUIPMENT</h2>
-                            <button className="inventory-close" onClick={() => setEquipmentOpen(false)} aria-label="Close equipment">
-                                ×
-                            </button>
-                        </div>
-                        <div className="equipment-body">
-                            <div className="equipped-slots">
-                                {(['weapon', 'armor', 'accessory'] as ItemSlot[]).map((slot) => {
-                                    const item = equippedItems.find(i => i.slot === slot);
-                                    return (
-                                        <div key={slot} className={`equipped-slot ${item ? 'filled' : 'empty'} ${equipSlotFilter === slot ? 'active' : ''}`}>
-                                            <div className="equipped-slot-label">
-                                                {slot === 'weapon' ? '⚔️ WEAPON' : slot === 'armor' ? '🛡️ ARMOR' : '💍 ACCESSORY'}
-                                            </div>
-                                            {item ? (
-                                                <div className="equipped-item-display">
-                                                    <PixelItemIcon pixels={item.pixels} size={28} />
-                                                    <div className="equipped-item-info">
-                                                        <span className="equipped-item-name">{item.name}</span>
-                                                        {item.element && <AffinityBadge element={item.element} size={12} />}
-                                                    </div>
-                                                    <button
-                                                        className="button unequip-btn"
-                                                        onClick={() => {
-                                                            setCharacter(unequipItem(activeCharacter, slot));
-                                                        }}
-                                                        title="Unequip"
-                                                    >
-                                                        ×
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <div className="equipped-empty-text">EMPTY — select item below</div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                            <div className="equipment-inventory">
-                                <div className="equipment-inventory-title">INVENTORY</div>
-                                <div className="equipment-grid">
-                                    {inventory.length === 0 ? (
-                                        <div className="equipment-empty-inventory">No items in inventory.</div>
-                                    ) : (
-                                        inventory.map((itemId, index) => {
-                                            const item = getItemById(itemId);
-                                            if (!item) return null;
-                                            const alreadyEquipped = equippedItems.some(ei => ei.id === item.id);
-                                            if (equipSlotFilter && item.slot !== equipSlotFilter) return null;
-                                            return (
-                                                <button
-                                                    key={index}
-                                                    className={`equipment-item rarity-${item.rarity} ${alreadyEquipped ? 'equipped' : ''}`}
-                                                    onClick={() => {
-                                                        if (!alreadyEquipped) {
-                                                            setCharacter(equipItem(activeCharacter, item.id, item.slot));
-                                                        }
-                                                    }}
-                                                    disabled={alreadyEquipped}
-                                                    title={alreadyEquipped ? 'Already equipped' : `Equip ${item.name}`}
-                                                >
-                                                    <PixelItemIcon pixels={item.pixels} size={20} />
-                                                    {item.element && <AffinityBadge element={item.element} size={8} />}
-                                                </button>
-                                            );
-                                        })
-                                    )}
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             )}

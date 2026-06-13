@@ -8,7 +8,7 @@ Data model (Character)
 - Core fields: `level`, `experience`, stats (STR/VIT/DEX/LUK/INT/FOC), `hp`, `maxHp`, `wins`, `losses`.
 - Daily fields: `fightsLeft`, `lastFightReset`, `fightHistory` (cap 20), `foughtToday` (character IDs).
 - Progression fields: `statPoints` for level-up allocation, `focus` is an active stat, not derived.
-- Inventory fields: `inventory` (item IDs), `lastLootRoll` (timestamp ms).
+- Inventory fields: `inventory` (item IDs), `equippedItems` (weapon/armor/accessory slots), `lastLootRoll` (timestamp ms).
 - Anti-cheat: `pendingFight` holds `status`, `startedAt`, optional `opponent` snapshot, and `matchType`.
 - `pendingFight.opponent.isBot` is only stored when it is a boolean.
 
@@ -22,7 +22,7 @@ Matchmaking + anti-cheat
 - Outgoing fights append an incoming defense log on the target character (no XP/progression impact).
 
 Combat rules (v0.9.0 / v1.0.0)
-- `calculateCombatStats` includes FOC and inventory bonuses; diminishing returns at higher stats.
+- `calculateCombatStats` includes FOC, equipped item bonuses, and weapon affinity multipliers; diminishing returns at higher stats.
 - Combat tuning constants are centralized in `src/config/combatBalance.ts` for quicker balancing edits.
 - Hit chance is DEX/FOC weighted (FOC weight 0.35); crit chance from LUK (capped at 30%), magic surge from INT.
 - Focus surge triggers up to 12% of the time with 1.12x damage multiplier. Surge chance per focus point: 0.30.
@@ -33,12 +33,11 @@ Combat rules (v0.9.0 / v1.0.0)
 
 Lootbox + inventory
 - Daily lootbox gating uses the same Paris day reset as fight energy (`canRollLootbox`).
-- Inventory capacity is 24; items are auto-applied (no manual equip flow).
+- Inventory capacity is 24; items can be manually equipped into weapon/armor/accessory loadout slots, or auto-equipped via autoEquipBestItems.
 - Lootbox rolls exclude items already owned; if all items are owned, no new loot is granted.
-- Items are defined in `src/data/itemAssets.ts` with `common` and `uncommon` rarities.
+- Items are defined in `src/data/itemAssets.ts` with rarities (common, uncommon, rare, epic, legendary), slots (weapon/armor/accessory), and optional elemental affinity (fire/water/wind/earth/light/dark).
 - Added extra low-power level 1 common/uncommon items to diversify early lootbox rewards.
-- `equipmentUtils` aggregates inventory bonuses; arena + combat use `applyEquipmentToCharacter`.
-- Inventory modal shows item details on hover/tap and a total bonus summary.
+- `equipmentUtils` handles equip/unequip/auto-equip management and aggregates loadout bonuses; arena + combat use `applyEquipmentToCharacter`.
 
 Bots and automation
 - Bot engine: `scripts/bot-engine.ts` — fetches characters where `is_bot = true`.
@@ -70,7 +69,7 @@ UI tuning
 - Level-up overlay is responsive, supports deferring stat allocation, and avoids internal scroll.
 - Stat rows compress on very small screens; action buttons remain readable.
 - Matchmaking intro is an animated opponent scan with a lock effect.
-- Inventory modal is larger on desktop, with hover/tap item details and bonus chips.
+- Inventory modal shows loadout section at top + grouped grids by slot type; larger on desktop with item details and bonus chips.
 - Combat actions include subtle 8-bit impact overlays and reaction animations; mobile overlay avoids grid flashes.
 - Arena settings modal owns Auto mode toggle, combat logs, and safe delete actions.
 - Rankings list is read-only, stats hidden, with internal scroll.
@@ -78,11 +77,11 @@ UI tuning
 - Global Footer (`src/components/Footer.tsx`) visible on all pages: copyright, GitHub link, credits, app version. Styled with 8-bit pixel theme (divider, gold accents). Pushed to bottom via `.app-content` flex wrapper in `_layout.scss`.
 
 Testing
-- Unit: combat math, lootbox gating, equipment bonuses, XP, stats, RNG, matchmaking, supabase utils.
+- Unit: combat math, lootbox gating, equipment bonuses & loadout, affinity, XP, stats, RNG, matchmaking, supabase utils, item assets.
 - Unit: lazy route prefetch gating (`canPrefetch`, `prefetchArena`) and end-of-day drain window checks.
-- Integration: matchmaking, pending fights, lootbox persistence, arena inventory/bonuses, offline routing, Supabase failover, and settings combat log privacy rendering.
+- Integration: matchmaking, pending fights, lootbox persistence, arena inventory/loadout/equip, offline routing, Supabase failover, and settings combat log privacy rendering.
 - Router warnings are prevented with shared `renderWithRouter` helper (`src/test/utils/router.tsx`).
-- **197 tests — 36 test files** (`npm test`).
+- **353 tests — 43 test files** (`npm test`).
 
 Infrastructure (v1.0.0)
 - Database migrated from Firebase Firestore to Supabase (PostgreSQL).

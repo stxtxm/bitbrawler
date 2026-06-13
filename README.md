@@ -52,7 +52,7 @@ See [AGENTS.md](AGENTS.md) for autonomous agent workflows and responsibilities.
 - **Character creation** with RPG stats (STR, VIT, DEX, LUK, INT, FOC)
 - **Arena fights** with XP gain, level ups, and enhanced combat (crit + magic + focus)
 - **Strict same-level matchmaking** with power balancing, daily opponent rotation, and animated opponent scan
-- **Daily lootbox + inventory** — auto-applied stat bonuses with rarity system
+- **Daily lootbox + inventory** — equip items into weapon/armor/accessory slots for stat bonuses, with rarity system and weapon affinity
 - **Bot engine** — population management with organic activity pacing, depleted-bot skipping, and protection rebalance
 - **Global daily reset** — scripted resets at midnight (Paris) for fights and opponent tracking
 - **Hall of Fame** rankings with real-time updates
@@ -77,7 +77,7 @@ See [AGENTS.md](AGENTS.md) for autonomous agent workflows and responsibilities.
 | -------------- | ----------------------------------------------- |
 | Frontend       | React 18 + TypeScript + Vite                    |
 | Backend / Auth | Supabase (PostgreSQL, real-time, auth)          |
-| Testing        | Vitest + React Testing Library + jsdom — **266+ tests, 39 files**          |
+| Testing        | Vitest + React Testing Library + jsdom — **353+ tests, 43 files**          |
 | Styling        | Sass (SCSS)                                     |
 | Fonts          | Press Start 2P (via Fontsource)                 |
 | Scripting      | tsx (TypeScript executor)                       |
@@ -124,7 +124,7 @@ npm run dev                        # Start Vite dev server (localhost:5173)
 npm run preview                    # Preview production build
 
 # Testing & Quality
-npm test                           # Run test suite (Vitest — 266+ tests, 39 files)
+npm test                           # Run test suite (Vitest — 353+ tests, 43 files)
 npm run lint                       # ESLint check
 npm run build                      # TypeScript check + Vite production build
 
@@ -212,7 +212,7 @@ bitbrawler/
 │   ├── styles/                     # Global Sass styles
 │   │   └── ...scss files
 │   │
-│   ├── test/                       # Vitest test suite (266+ tests, 39 files)
+│   ├── test/                       # Vitest test suite (353+ tests, 43 files)
 │   │   └── ...test files
 │   │
 │   ├── types/                      # TypeScript type definitions
