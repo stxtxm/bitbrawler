@@ -177,4 +177,114 @@ describe('LevelUpOverlay', () => {
             expect(handleClose).not.toHaveBeenCalled();
         });
     });
+
+    describe('click-outside-to-close behavior', () => {
+        it('closes overlay when clicking outside the level-up card', () => {
+            const handleClose = vi.fn();
+            const { container } = render(
+                <LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />
+            );
+
+            const overlay = container.querySelector('.level-up-pop-overlay')!;
+            expect(overlay).toBeInTheDocument();
+
+            // Click on the overlay itself (outside the card)
+            act(() => {
+                overlay.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            });
+
+            expect(handleClose).toHaveBeenCalledTimes(1);
+        });
+
+        it('does not close when clicking on the level-up card', () => {
+            const handleClose = vi.fn();
+            const { container } = render(
+                <LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />
+            );
+
+            const card = container.querySelector('.level-up-card')!;
+            expect(card).toBeInTheDocument();
+
+            // Click on the card
+            act(() => {
+                card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            });
+
+            expect(handleClose).not.toHaveBeenCalled();
+        });
+
+        it('does not double-close when clicking APPLY button', () => {
+            const handleClose = vi.fn();
+            render(
+                <LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />
+            );
+
+            // Click on the APPLY button — this calls handleCloseLevelUp via the button's own onClick.
+            // The outside-click listener should NOT add an additional call.
+            act(() => {
+                screen.getByText('APPLY').click();
+            });
+
+            // handleCloseLevelUp should be called exactly once (by the button's own handler)
+            expect(handleClose).toHaveBeenCalledTimes(1);
+        });
+
+        it('does not call handleCloseLevelUp when clicking LATER button', () => {
+            const handleClose = vi.fn();
+            render(
+                <LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />
+            );
+
+            // Click on the LATER button — should call handleDeferLevelUp, not handleCloseLevelUp
+            act(() => {
+                screen.getByText('LATER').click();
+            });
+
+            expect(handleClose).not.toHaveBeenCalled();
+        });
+
+        it('does not add click listener when overlay is hidden', () => {
+            const handleClose = vi.fn();
+            const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
+            const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
+
+            render(
+                <LevelUpOverlay
+                    {...defaultProps}
+                    shouldShowLevelUp={false}
+                    handleCloseLevelUp={handleClose}
+                />
+            );
+
+            // Should not have added the click listener since overlay is hidden
+            expect(addEventListenerSpy).not.toHaveBeenCalledWith(
+                'click',
+                expect.any(Function),
+                true
+            );
+
+            addEventListenerSpy.mockRestore();
+            removeEventListenerSpy.mockRestore();
+        });
+
+        it('cleans up click listener on unmount', () => {
+            const handleClose = vi.fn();
+            const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
+
+            const { unmount } = render(
+                <LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />
+            );
+
+            unmount();
+
+            // Should have removed the click listener
+            expect(removeEventListenerSpy).toHaveBeenCalledWith(
+                'click',
+                expect.any(Function),
+                true
+            );
+
+            removeEventListenerSpy.mockRestore();
+        });
+    });
 });

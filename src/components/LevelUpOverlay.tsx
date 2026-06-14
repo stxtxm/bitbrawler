@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Character } from '../types/Character';
 import { PixelIcon } from './PixelIcon';
 import { StatKey, STAT_TOOLTIPS } from '../utils/statUtils';
@@ -32,6 +32,9 @@ const LevelUpOverlay = ({
     handleCloseLevelUp,
     handleDeferLevelUp,
 }: LevelUpOverlayProps) => {
+    const overlayRef = useRef<HTMLDivElement>(null);
+
+    // Auto-close timer
     useEffect(() => {
         if (!autoClose || !shouldShowLevelUp) return;
 
@@ -42,10 +45,29 @@ const LevelUpOverlay = ({
         return () => clearTimeout(timer);
     }, [autoClose, shouldShowLevelUp, handleCloseLevelUp]);
 
+    // Click-outside-to-close: close the overlay when user clicks outside the card.
+    // This allows players to dismiss the level-up overlay by clicking on the
+    // background, which is especially important in auto-mode where the overlay
+    // would otherwise block the FIGHT button until the autoClose timer fires.
+    useEffect(() => {
+        if (!shouldShowLevelUp) return;
+
+        const handleClickOutside = (e: MouseEvent) => {
+            const card = overlayRef.current?.querySelector('.level-up-card');
+            if (card && !card.contains(e.target as Node)) {
+                handleCloseLevelUp();
+            }
+        };
+
+        // Use capture phase so this fires before any target-phase handler
+        window.addEventListener('click', handleClickOutside, true);
+        return () => window.removeEventListener('click', handleClickOutside, true);
+    }, [shouldShowLevelUp, handleCloseLevelUp]);
+
     if (!shouldShowLevelUp) return null;
 
     return (
-        <div className="level-up-pop-overlay">
+        <div className="level-up-pop-overlay" ref={overlayRef}>
             <div className="level-up-card">
                 <div className="card-shine"></div>
                 <div className="level-up-badge">NEW RANK!</div>
