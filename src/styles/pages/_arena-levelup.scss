@@ -12,10 +12,11 @@
 }
 
 .level-up-pop-overlay .level-up-card {
-    // Explicitly inherit pointer-events: none so the card surface and its
-    // non-interactive children (card-shine, stat rows, labels, etc.) never
-    // intercept pointer events. Only explicit buttons have pointer-events: auto.
-    pointer-events: none;
+    // Restore pointer-events on the card so it receives pointer events.
+    // The parent overlay has pointer-events: none so clicks outside the card
+    // pass through to elements beneath (e.g. the FIGHT button), while the card
+    // itself and its interactive children (buttons, stat rows) remain clickable.
+    pointer-events: auto;
     // Clip card-shine (which is 200% x 200%) to card boundaries so its
     // absolute positioning never leaks outside and intercepts clicks.
     overflow: hidden;

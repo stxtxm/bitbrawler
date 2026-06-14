@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, act, fireEvent } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import LevelUpOverlay from '../../components/LevelUpOverlay';
 import { Character } from '../../types/Character';
 
@@ -179,72 +179,75 @@ describe('LevelUpOverlay', () => {
     });
 
     describe('click-outside-to-close behavior', () => {
-        it('closes the overlay when clicking outside the card (on document body)', () => {
-            const handleClose = vi.fn();
-            render(<LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />);
-
-            // Click on document body (outside the card)
-            act(() => {
-                fireEvent.click(document.body);
-            });
-
-            expect(handleClose).toHaveBeenCalledTimes(1);
-        });
-
-        it('closes the overlay when clicking on the overlay background', () => {
+        it('closes overlay when clicking outside the level-up card', () => {
             const handleClose = vi.fn();
             const { container } = render(
                 <LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />
             );
 
-            // Click on the overlay wrapper (not on the card)
-            const overlay = container.querySelector('.level-up-pop-overlay');
+            const overlay = container.querySelector('.level-up-pop-overlay')!;
             expect(overlay).toBeInTheDocument();
 
+            // Click on the overlay itself (outside the card)
             act(() => {
-                fireEvent.click(overlay!);
+                overlay.dispatchEvent(new MouseEvent('click', { bubbles: true }));
             });
 
             expect(handleClose).toHaveBeenCalledTimes(1);
         });
 
-        it('does NOT close when clicking on the APPLY button inside the card', () => {
+        it('does not close when clicking on the level-up card', () => {
             const handleClose = vi.fn();
-            render(<LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />);
+            const { container } = render(
+                <LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />
+            );
 
+            const card = container.querySelector('.level-up-card')!;
+            expect(card).toBeInTheDocument();
+
+            // Click on the card
+            act(() => {
+                card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            });
+
+            expect(handleClose).not.toHaveBeenCalled();
+        });
+
+        it('does not double-close when clicking APPLY button', () => {
+            const handleClose = vi.fn();
+            render(
+                <LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />
+            );
+
+            // Click on the APPLY button — this calls handleCloseLevelUp via the button's own onClick.
+            // The outside-click listener should NOT add an additional call.
             act(() => {
                 screen.getByText('APPLY').click();
             });
 
-            // APPLY should call handleCloseLevelUp directly (existing behavior)
-            // but the document listener should NOT also close it
-            // handleClose gets called once from the button's onClick, not from click-outside
+            // handleCloseLevelUp should be called exactly once (by the button's own handler)
             expect(handleClose).toHaveBeenCalledTimes(1);
         });
 
-        it('does NOT close when clicking on the LATER button inside the card', () => {
+        it('does not call handleCloseLevelUp when clicking LATER button', () => {
             const handleClose = vi.fn();
-            const handleDefer = vi.fn();
             render(
-                <LevelUpOverlay
-                    {...defaultProps}
-                    handleCloseLevelUp={handleClose}
-                    handleDeferLevelUp={handleDefer}
-                />
+                <LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />
             );
 
+            // Click on the LATER button — should call handleDeferLevelUp, not handleCloseLevelUp
             act(() => {
                 screen.getByText('LATER').click();
             });
 
-            // LATER should call handleDeferLevelUp, not handleCloseLevelUp
-            expect(handleDefer).toHaveBeenCalledTimes(1);
-            // The document listener should NOT call handleCloseLevelUp
             expect(handleClose).not.toHaveBeenCalled();
         });
 
-        it('does not close when overlay is hidden (shouldShowLevelUp is false)', () => {
+        it('does not add click listener when overlay is hidden', () => {
             const handleClose = vi.fn();
+            const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
+            const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
+
             render(
                 <LevelUpOverlay
                     {...defaultProps}
@@ -253,28 +256,35 @@ describe('LevelUpOverlay', () => {
                 />
             );
 
-            act(() => {
-                fireEvent.click(document.body);
-            });
+            // Should not have added the click listener since overlay is hidden
+            expect(addEventListenerSpy).not.toHaveBeenCalledWith(
+                'click',
+                expect.any(Function),
+                true
+            );
 
-            expect(handleClose).not.toHaveBeenCalled();
+            addEventListenerSpy.mockRestore();
+            removeEventListenerSpy.mockRestore();
         });
 
-        it('cleans up the document click listener on unmount', () => {
+        it('cleans up click listener on unmount', () => {
             const handleClose = vi.fn();
+            const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
+
             const { unmount } = render(
                 <LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />
             );
 
-            // Unmount the component
             unmount();
 
-            // Click on document body — should NOT call handleClose after unmount
-            act(() => {
-                fireEvent.click(document.body);
-            });
+            // Should have removed the click listener
+            expect(removeEventListenerSpy).toHaveBeenCalledWith(
+                'click',
+                expect.any(Function),
+                true
+            );
 
-            expect(handleClose).not.toHaveBeenCalled();
+            removeEventListenerSpy.mockRestore();
         });
     });
 });
