@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import LevelUpOverlay from '../../components/LevelUpOverlay';
 import { Character } from '../../types/Character';
 
@@ -174,6 +174,106 @@ describe('LevelUpOverlay', () => {
             });
 
             // handleCloseLevelUp should NOT be called since component was unmounted
+            expect(handleClose).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('click-outside-to-close behavior', () => {
+        it('closes the overlay when clicking outside the card (on document body)', () => {
+            const handleClose = vi.fn();
+            render(<LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />);
+
+            // Click on document body (outside the card)
+            act(() => {
+                fireEvent.click(document.body);
+            });
+
+            expect(handleClose).toHaveBeenCalledTimes(1);
+        });
+
+        it('closes the overlay when clicking on the overlay background', () => {
+            const handleClose = vi.fn();
+            const { container } = render(
+                <LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />
+            );
+
+            // Click on the overlay wrapper (not on the card)
+            const overlay = container.querySelector('.level-up-pop-overlay');
+            expect(overlay).toBeInTheDocument();
+
+            act(() => {
+                fireEvent.click(overlay!);
+            });
+
+            expect(handleClose).toHaveBeenCalledTimes(1);
+        });
+
+        it('does NOT close when clicking on the APPLY button inside the card', () => {
+            const handleClose = vi.fn();
+            render(<LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />);
+
+            act(() => {
+                screen.getByText('APPLY').click();
+            });
+
+            // APPLY should call handleCloseLevelUp directly (existing behavior)
+            // but the document listener should NOT also close it
+            // handleClose gets called once from the button's onClick, not from click-outside
+            expect(handleClose).toHaveBeenCalledTimes(1);
+        });
+
+        it('does NOT close when clicking on the LATER button inside the card', () => {
+            const handleClose = vi.fn();
+            const handleDefer = vi.fn();
+            render(
+                <LevelUpOverlay
+                    {...defaultProps}
+                    handleCloseLevelUp={handleClose}
+                    handleDeferLevelUp={handleDefer}
+                />
+            );
+
+            act(() => {
+                screen.getByText('LATER').click();
+            });
+
+            // LATER should call handleDeferLevelUp, not handleCloseLevelUp
+            expect(handleDefer).toHaveBeenCalledTimes(1);
+            // The document listener should NOT call handleCloseLevelUp
+            expect(handleClose).not.toHaveBeenCalled();
+        });
+
+        it('does not close when overlay is hidden (shouldShowLevelUp is false)', () => {
+            const handleClose = vi.fn();
+            render(
+                <LevelUpOverlay
+                    {...defaultProps}
+                    shouldShowLevelUp={false}
+                    handleCloseLevelUp={handleClose}
+                />
+            );
+
+            act(() => {
+                fireEvent.click(document.body);
+            });
+
+            expect(handleClose).not.toHaveBeenCalled();
+        });
+
+        it('cleans up the document click listener on unmount', () => {
+            const handleClose = vi.fn();
+            const { unmount } = render(
+                <LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />
+            );
+
+            // Unmount the component
+            unmount();
+
+            // Click on document body — should NOT call handleClose after unmount
+            act(() => {
+                fireEvent.click(document.body);
+            });
+
             expect(handleClose).not.toHaveBeenCalled();
         });
     });

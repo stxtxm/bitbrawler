@@ -42,6 +42,24 @@ const LevelUpOverlay = ({
         return () => clearTimeout(timer);
     }, [autoClose, shouldShowLevelUp, handleCloseLevelUp]);
 
+    // Click outside the card to close the overlay.
+    // This allows players to dismiss the level-up overlay by clicking on the
+    // background, which is especially important in auto-mode where the overlay
+    // would otherwise block the FIGHT button until the autoClose timer fires.
+    useEffect(() => {
+        if (!shouldShowLevelUp) return;
+
+        const handleDocumentClick = (e: MouseEvent) => {
+            const card = document.querySelector('.level-up-card');
+            if (card && !card.contains(e.target as Node)) {
+                handleCloseLevelUp();
+            }
+        };
+
+        document.addEventListener('click', handleDocumentClick);
+        return () => document.removeEventListener('click', handleDocumentClick);
+    }, [shouldShowLevelUp, handleCloseLevelUp]);
+
     if (!shouldShowLevelUp) return null;
 
     return (
