@@ -85,7 +85,7 @@ export const unequipItem = (
 
   if (!currentInSlot) return character;
 
-  let inventory = [...(character.inventory ?? [])];
+  const inventory = [...(character.inventory ?? [])];
   inventory.push(currentInSlot);
   equipped[slot] = null;
 
