@@ -19,4 +19,12 @@ describe('Combat Balance Config', () => {
     // Fewer guaranteed hits means more variance and tension in fights
     expect(COMBAT_BALANCE.hitChance.max).toBe(88);
   });
+
+  it('should have a reduced base hit chance to lower overall accuracy', () => {
+    // Adjusted from 72 → 68 to increase miss probability for both sides
+    // This creates more dramatic fight swings and slightly favors defenders
+    // QA showed win rate surged to 80% after overlay fix — reducing base hit
+    // chance compensates by making fights less predictable
+    expect(COMBAT_BALANCE.hitChance.base).toBe(68);
+  });
 });

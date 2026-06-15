@@ -28,7 +28,7 @@ export const COMBAT_BALANCE = {
     maxChance: 0.6,
   },
   hitChance: {
-    base: 72,
+    base: 68,
     speedWeight: 0.4,
     focusWeight: 0.35,
     min: 60,
