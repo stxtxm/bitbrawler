@@ -9,7 +9,7 @@ export const GAME_RULES = {
     COMBAT: {
         MAX_DAILY_FIGHTS: 5,
         XP_WIN: 135,
-        XP_LOSS: 45, // Consolation prize — increased from 35 for better loss retention (3.0:1 ratio with XP_WIN=135)
+        XP_LOSS: 55, // Consolation prize — increased from 45 for better loss retention (~2.45:1 ratio with XP_WIN=135)
     },
     BOTS: {
         MIN_POPULATION: 2,
