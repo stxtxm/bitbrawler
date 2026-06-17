@@ -5,7 +5,7 @@ import { convertFromSupabase } from './supabaseUtils';
 
 export interface MatchmakingResult {
     opponent: Character;
-    matchType: 'balanced' | 'similar';
+    matchType: 'balanced' | 'similar' | 'pve';
     candidates: Character[];
 }
 
@@ -108,12 +108,14 @@ async function findOpponentByExactLevel(player: Character): Promise<MatchmakingR
 /**
  * Get match difficulty label
  */
-export function getMatchDifficultyLabel(matchType: 'balanced' | 'similar'): string {
+export function getMatchDifficultyLabel(matchType: 'balanced' | 'similar' | 'pve'): string {
     switch (matchType) {
         case 'balanced':
             return 'BALANCED MATCH';
         case 'similar':
             return 'FAIR MATCH';
+        case 'pve':
+            return 'MONSTER BATTLE';
         default:
             return 'MATCH';
     }

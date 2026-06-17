@@ -1663,6 +1663,40 @@
     }
 }
 
+// ─── PvP / PvE Toggle Row ─────────────────────────────────────────────────
+.pve-toggle-row {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    margin-bottom: 8px;
+
+    .pve-switch {
+        width: clamp(70px, 20vw, 100px);
+        justify-content: center;
+        gap: 4px;
+
+        .switch-text {
+            margin-left: 0;
+            font-size: 0.5rem;
+        }
+
+        .switch-knob {
+            display: none;
+        }
+
+        &.on {
+            border-color: $accent-green;
+            color: $accent-green;
+            background: rgba($accent-green, 0.12);
+        }
+
+        &.off {
+            border-color: #333;
+            color: #666;
+        }
+    }
+}
+
 .danger-zone {
     border: 1px solid rgba($accent-red, 0.3);
     background: rgba(80, 0, 0, 0.12);

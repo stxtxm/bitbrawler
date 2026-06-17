@@ -4,6 +4,7 @@ import { simulateCombat } from '../src/utils/combatUtils';
 import { GAME_RULES } from '../src/config/gameRules';
 import { autoAllocateStatPointsRandom } from '../src/utils/statUtils';
 import { ITEM_ASSETS } from '../src/data/itemAssets';
+import { generateMonster, getRandomMonsterId } from '../src/utils/monsterUtils';
 import { canRollLootbox, rollLootbox } from '../src/utils/lootboxUtils';
 import { DAILY_RESET_TIMEZONE, shouldResetDaily } from '../src/utils/dailyReset';
 import { getZonedMidnightUtc, getZonedParts } from '../src/utils/timezoneUtils';
@@ -28,7 +29,7 @@ const logLabel = (c: Character): string => c.isBot ? 'Bot' : 'Player';
 const BOT_SELECT_COLUMNS = [
     'id', 'name', 'gender', 'seed', 'level', 'hp', 'max_hp',
     'strength', 'vitality', 'dexterity', 'luck', 'intelligence', 'focus',
-    'experience', 'wins', 'losses', 'fights_left', 'last_fight_reset',
+    'experience', 'wins', 'losses', 'fights_left', 'pve_fights_left', 'last_fight_reset',
     'stat_points', 'inventory', 'last_loot_roll', 'fight_history',
     'fought_today', 'pending_fight', 'incoming_fight_history',
     'is_bot', 'auto_mode', 'equipped_items'
@@ -259,6 +260,7 @@ function convertRowToCharacter(row: any): Character {
         wins: row.wins ?? 0,
         losses: row.losses ?? 0,
         fightsLeft: typeof row.fights_left === 'number' && Number.isFinite(row.fights_left) ? row.fights_left : 0,
+        pveFightsLeft: typeof row.pve_fights_left === 'number' && Number.isFinite(row.pve_fights_left) ? row.pve_fights_left : 5,
         lastFightReset: row.last_fight_reset ?? 0,
         fightHistory: row.fight_history ?? [],
         foughtToday: row.fought_today ?? [],
@@ -368,11 +370,14 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
             if (shouldResetDaily(currentBotState.lastFightReset, runNow)) {
                 const parisMidnightUtc = getZonedMidnightUtc(new Date(runNow), DAILY_RESET_TIMEZONE);
                 fightsLeft = GAME_RULES.COMBAT.MAX_DAILY_FIGHTS;
+                currentBotState.pveFightsLeft = GAME_RULES.COMBAT.MAX_DAILY_PVE_FIGHTS;
                 currentBotState.lastFightReset = parisMidnightUtc;
                 currentBotState.battleCount = 0;
                 didReset = true;
                 console.log(`🔄 Daily reset for ${logLabel(currentBotState)} ${currentBotState.name}`);
             }
+
+            let pveFightsLeft = currentBotState.pveFightsLeft ?? GAME_RULES.COMBAT.MAX_DAILY_PVE_FIGHTS;
 
             // Early skip: if bot has no fights left AND no lootbox available AND didn't just reset → nothing to do
             const canRoll = canRollLootbox(currentBotState.lastLootRoll, runNow);
@@ -497,12 +502,63 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                 actionsTaken++;
             }
 
-            const shouldPersist = actionsTaken > 0 || didLootbox || didReset;
+            // PvE fight loop: fight monsters with remaining PvE energy
+            const pveBudget = endOfDayDrain
+                ? pveFightsLeft
+                : Math.min(pveFightsLeft, GAME_RULES.BOTS.MAX_FIGHTS_PER_RUN);
+            let pveActions = 0;
+
+            while (pveFightsLeft > 0 && pveActions < pveBudget) {
+                const monsterId = getRandomMonsterId();
+                const monster = generateMonster(monsterId, currentBotState.level);
+                const combat = simulateCombat(currentBotState, monster);
+                const won = combat.winner === 'attacker';
+                const combatOutcome = won ? 'WIN' : 'LOSS';
+
+                console.log(`⚔️ [PVE] ${currentBotState.name} vs ${monster.name} -> ${combatOutcome}`);
+
+                const xpGained = Math.round(calculateFightXp(won, currentBotState.level, monster.level) * GAME_RULES.PVE.XP_MODIFIER);
+                totalXpGained += xpGained;
+
+                const result = gainXp(currentBotState, xpGained);
+                const pointsGained = result.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL;
+                const updatedBase = {
+                    ...result.updatedCharacter,
+                    statPoints: result.updatedCharacter.statPoints ?? currentBotState.statPoints ?? 0
+                };
+                const withStats = pointsGained > 0
+                    ? autoAllocateStatPointsRandom(updatedBase, pointsGained)
+                    : updatedBase;
+
+                const historyEntry = {
+                    date: Date.now(),
+                    won,
+                    opponentName: monster.name
+                };
+                const existingHistory = currentBotState.fightHistory || [];
+                const newHistory = [historyEntry, ...existingHistory].slice(0, 20);
+
+                currentBotState = {
+                    ...withStats,
+                    pveFightsLeft: pveFightsLeft - 1,
+                    wins: won ? (currentBotState.wins || 0) + 1 : (currentBotState.wins || 0),
+                    losses: won ? (currentBotState.losses || 0) : (currentBotState.losses || 0) + 1,
+                    battleCount: (currentBotState.battleCount || 0) + 1,
+                    fightHistory: newHistory,
+                    statPoints: withStats.statPoints
+                };
+
+                pveFightsLeft--;
+                pveActions++;
+            }
+
+            const shouldPersist = actionsTaken > 0 || pveActions > 0 || didLootbox || didReset;
             if (shouldPersist && bot.firestoreId) {
                 const finalUpdates: Record<string, any> = {
                     experience: currentBotState.experience,
                     level: currentBotState.level,
                     fights_left: currentBotState.fightsLeft,
+                    pve_fights_left: currentBotState.pveFightsLeft ?? GAME_RULES.COMBAT.MAX_DAILY_PVE_FIGHTS,
                     wins: currentBotState.wins,
                     losses: currentBotState.losses,
                     fight_history: currentBotState.fightHistory,
@@ -533,8 +589,9 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
                 });
 
                 const levelDiff = currentBotState.level - startLevel;
-                if (actionsTaken > 0) {
-                    console.log(`👊 ${logLabel(bot)} ${bot.name}: ${actionsTaken}/${fightBudget} fights, +${totalXpGained} XP. ${levelDiff > 0 ? `🆙 LVL UP +${levelDiff}` : ''} Energy left: ${currentBotState.fightsLeft}`);
+                const pveReport = pveActions > 0 ? ` | PvE: ${pveActions} monsters` : '';
+                if (actionsTaken > 0 || pveActions > 0) {
+                    console.log(`👊 ${logLabel(bot)} ${bot.name}: ${actionsTaken}/${fightBudget} fights${pveReport}, +${totalXpGained} XP. ${levelDiff > 0 ? `🆙 LVL UP +${levelDiff}` : ''} Energy left: ${currentBotState.fightsLeft} | PvE left: ${currentBotState.pveFightsLeft}`);
                 } else if (didLootbox) {
                     console.log(`📦 ${logLabel(bot)} ${bot.name} updated inventory. Energy left: ${currentBotState.fightsLeft}`);
                 } else if (isProtected && fightsLeft > 0) {

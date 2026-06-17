@@ -1,0 +1,1 @@
+ALTER TABLE characters ADD COLUMN IF NOT EXISTS pve_fights_left INTEGER DEFAULT 5;

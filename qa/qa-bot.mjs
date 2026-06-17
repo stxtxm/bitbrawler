@@ -915,6 +915,26 @@ async function run() {
     runRecord.initial_max_hp = await parseMaxHp(page)
     console.log(`   Initial stats: level=${runRecord.initial_level}, xp=${JSON.stringify(runRecord.initial_xp)}, stats=${JSON.stringify(runRecord.initial_stats)}, maxHp=${runRecord.initial_max_hp}`)
 
+    // Optional PvE mode when --pve flag is set
+    const pveMode = process.argv.includes('--pve')
+    if (pveMode) {
+      console.log('👹 PvE mode enabled — toggling PvE switch...')
+      try {
+        const pveToggle = page.locator('button[aria-label="PvE mode"]')
+        if (await pveToggle.isVisible({ timeout: 3000 }).catch(() => false)) {
+          const isOn = await pveToggle.getAttribute('aria-checked').then(v => v === 'true')
+          if (!isOn) {
+            await pveToggle.click()
+            console.log('   PvE mode toggled ON')
+          } else {
+            console.log('   PvE mode already ON')
+          }
+        }
+      } catch (err) {
+        console.log(`   ⚠️ Could not toggle PvE mode: ${err.message}`)
+      }
+    }
+
     await runFightSequence(page, runKey, runRecord)
 
     // Ensure no overlay is blocking the arena stats before reading

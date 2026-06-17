@@ -30,6 +30,7 @@ export type CharacterRow = {
   wins: number
   losses: number
   fights_left: number
+  pve_fights_left: number
   last_fight_reset: number
   fight_history: FightHistory[]
   fought_today: string[]

@@ -115,6 +115,7 @@ async function runDailyReset() {
                             .from('characters')
                             .update({
                                 fights_left: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS,
+                                pve_fights_left: GAME_RULES.COMBAT.MAX_DAILY_PVE_FIGHTS,
                                 last_fight_reset: parisResetMidnightUtc,
                                 fought_today: [],
                                 last_loot_roll: 0,

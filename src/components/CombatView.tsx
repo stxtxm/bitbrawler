@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Character } from '../types/Character';
 import { PixelCharacter } from './PixelCharacter';
+import { PixelMonster } from './PixelMonster';
 import { PixelIcon } from './PixelIcon';
 import { simulateCombat } from '../utils/combatUtils';
 import { getMatchDifficultyLabel } from '../utils/matchmakingUtils';
 import { parseCombatDetail, CombatAction, CombatActionType } from '../utils/combatLogUtils';
 import { calculateFightXp } from '../utils/xpUtils';
 import { useSound } from '../hooks/useSound';
+import { MONSTER_ASSETS, MonsterId } from '../data/monsterAssets';
 
 function extractDamage(detail: string): number | null {
     const match = detail.match(/(\d+)\s*DMG/);
@@ -26,13 +28,14 @@ function extractActionColor(detail: string): string {
 interface CombatViewProps {
     player: Character;
     opponent: Character;
-    matchType: 'balanced' | 'similar';
+    matchType: 'balanced' | 'similar' | 'pve';
+    monsterId?: MonsterId;
     onComplete: (won: boolean, xpGained: number) => void;
     onClose: () => void;
     candidates?: Character[];
 }
 
-export const CombatView = ({ player, opponent, matchType, onComplete, onClose, candidates = [] }: CombatViewProps) => {
+export const CombatView = ({ player, opponent, matchType, monsterId, onComplete, onClose, candidates = [] }: CombatViewProps) => {
     const { play } = useSound();
     const [phase, setPhase] = useState<'intro' | 'vs' | 'combat' | 'result'>('intro');
     const [combatResult, setCombatResult] = useState<{
@@ -300,7 +303,19 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
                             <div className="vs-text">VS</div>
                         </div>
                         <div className="vs-fighter vs-right">
-                            <PixelCharacter seed={opponent.seed} gender={opponent.gender} scale={8} />
+                            {matchType === 'pve' && monsterId ? (
+                                <div className="monster-vs-display">
+                                    <PixelMonster monsterId={monsterId} scale={8} />
+                                    {(() => {
+                                        const def = MONSTER_ASSETS.find(m => m.id === monsterId);
+                                        return def ? (
+                                            <div className="monster-specialty">{def.specialty}</div>
+                                        ) : null;
+                                    })()}
+                                </div>
+                            ) : (
+                                <PixelCharacter seed={opponent.seed} gender={opponent.gender} scale={8} />
+                            )}
                             <div className="vs-fighter-name">{opponent.name}</div>
                             <div className="vs-fighter-lvl">LVL {opponent.level}</div>
                         </div>
@@ -354,7 +369,11 @@ export const CombatView = ({ player, opponent, matchType, onComplete, onClose, c
                                 }`}
                             >
                                 <div className="fighter-character-wrap">
-                                    <PixelCharacter seed={opponent.seed} gender={opponent.gender} scale={6} />
+                                    {matchType === 'pve' && monsterId ? (
+                                        <PixelMonster monsterId={monsterId} scale={5} />
+                                    ) : (
+                                        <PixelCharacter seed={opponent.seed} gender={opponent.gender} scale={6} />
+                                    )}
                                 </div>
                                 <div className="fighter-name-small">{opponent.name}</div>
                                 <div className="fighter-health">

@@ -8,8 +8,12 @@ export const GAME_RULES = {
     },
     COMBAT: {
         MAX_DAILY_FIGHTS: 5,
+        MAX_DAILY_PVE_FIGHTS: 5,
         XP_WIN: 135,
         XP_LOSS: 55, // Consolation prize — increased from 45 for better loss retention (~2.45:1 ratio with XP_WIN=135)
+    },
+    PVE: {
+        XP_MODIFIER: 0.8, // PvE awards 80% of PvP XP
     },
     BOTS: {
         MIN_POPULATION: 2,

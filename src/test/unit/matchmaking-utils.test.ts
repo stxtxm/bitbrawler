@@ -10,7 +10,7 @@ vi.mock('../../config/supabase', () => ({
   supabase: { from: mockSupabaseFrom },
 }))
 
-async function getMatchDifficultyLabel(matchType: 'balanced' | 'similar') {
+async function getMatchDifficultyLabel(matchType: 'balanced' | 'similar' | 'pve') {
   const { getMatchDifficultyLabel: fn } = await import('../../utils/matchmakingUtils')
   return fn(matchType)
 }
@@ -60,6 +60,10 @@ describe('getMatchDifficultyLabel', () => {
 
   it('returns FAIR MATCH for similar type', async () => {
     expect(await getMatchDifficultyLabel('similar')).toBe('FAIR MATCH')
+  })
+
+  it('returns MONSTER BATTLE for pve type', async () => {
+    expect(await getMatchDifficultyLabel('pve')).toBe('MONSTER BATTLE')
   })
 
   it('returns MATCH for unknown type', async () => {

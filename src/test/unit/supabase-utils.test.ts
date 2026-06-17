@@ -35,6 +35,7 @@ describe('convertFromSupabase', () => {
     is_bot: false,
     auto_mode: false,
     equipped_items: { weapon: 'rusty_sword', armor: null, accessory: null },
+    pve_fights_left: 5,
   }
 
   it('maps all CharacterRow fields to Character correctly', () => {

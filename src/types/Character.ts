@@ -46,7 +46,7 @@ export interface PendingFight {
   status: 'searching' | 'matched';
   startedAt: number;
   opponent?: PendingFightOpponent;
-  matchType?: 'balanced' | 'similar';
+  matchType?: 'balanced' | 'similar' | 'pve';
 }
 
 export interface Character {
@@ -74,6 +74,7 @@ export interface Character {
 
   // Daily System
   fightsLeft: number;
+  pveFightsLeft?: number; // PvE fights remaining (separate pool)
   lastFightReset: number; // Timestamp
   isBot?: boolean; // To identify automated characters
   autoMode?: boolean; // Human-controlled character delegated to the bot engine

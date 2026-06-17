@@ -20,9 +20,13 @@ import { INVENTORY_CAPACITY } from '../utils/persistenceUtils';
 import { ItemSlot, ItemStats, PixelItemAsset } from '../types/Item';
 import { AffinityBadge } from '../components/AffinityBadge';
 import LevelUpOverlay from '../components/LevelUpOverlay';
+import { GAME_RULES } from '../config/gameRules';
+import { generateMonsterForPlayer, getMonsterDef } from '../utils/monsterUtils';
+import { MonsterId } from '../data/monsterAssets';
+
 
 const Arena = () => {
-    const { activeCharacter, logout, useFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, saveStatAllocations, saveEquipment, rollLootbox, setAutoMode, deleteCharacter, setCharacter } = useGame();
+    const { activeCharacter, logout, useFight, usePveFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, saveStatAllocations, saveEquipment, rollLootbox, setAutoMode, deleteCharacter, setCharacter } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const { play, enabled, setEnabled } = useSound();
     const navigate = useNavigate();
@@ -45,6 +49,8 @@ const Arena = () => {
     const [autoModeUpdating, setAutoModeUpdating] = useState(false);
     const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm'>('idle');
     const [deletePending, setDeletePending] = useState(false);
+    const [pveMode, setPveMode] = useState(false);
+    const [pveMonster, setPveMonster] = useState<{ monsterId: MonsterId; monsterDef: ReturnType<typeof getMonsterDef> } | null>(null);
 
     // Handle XP gain notification
     useEffect(() => {
@@ -124,8 +130,9 @@ const Arena = () => {
     const isMaxLevel = activeCharacter.level >= getMaxLevel();
     const isOfflineMode = !isOnline || !dbAvailable;
     const fightsLeft = activeCharacter.fightsLeft || 0;
+    const pveFightsLeft = activeCharacter.pveFightsLeft ?? 5;
     const hasPendingFight = !!activeCharacter.pendingFight;
-    const canFight = !isOfflineMode && fightsLeft > 0 && !hasPendingFight && !activeCharacter?.autoMode;
+    const canFight = !isOfflineMode && !hasPendingFight && !activeCharacter?.autoMode && (pveMode ? pveFightsLeft > 0 : fightsLeft > 0);
     const pendingStatPoints = activeCharacter.statPoints || 0;
     const totalPendingAlloc = Object.values(pendingAllocations).reduce((a, b) => a + b, 0);
     const projectedStatPoints = pendingStatPoints - totalPendingAlloc;
@@ -383,10 +390,29 @@ const Arena = () => {
         if (!canProceed) return;
 
         if (window.navigator.vibrate) window.navigator.vibrate(80);
+
+        if (pveMode) {
+            setMatchmaking(true);
+            try {
+                const { character, def } = generateMonsterForPlayer(activeCharacter!.level);
+                setPveMonster({ monsterId: def.id, monsterDef: def });
+                setCombatData({
+                    opponent: character,
+                    matchType: 'pve',
+                    candidates: [],
+                });
+                setMatchmaking(false);
+            } catch (error) {
+                console.error('Monster generation failed:', error);
+                openModal(connectionMessage);
+                setMatchmaking(false);
+            }
+            return;
+        }
+
         setMatchmaking(true);
 
         try {
-            // Find an opponent
             const match = await startMatchmaking();
 
             if (!match) {
@@ -395,7 +421,6 @@ const Arena = () => {
                 return;
             }
 
-            // Start combat with the matched opponent
             setCombatData(match);
             setMatchmaking(false);
         } catch (error) {
@@ -408,8 +433,13 @@ const Arena = () => {
     const handleCombatComplete = async (won: boolean, xpGained: number) => {
         try {
             const opponentName = combatData?.opponent.name || 'UNKNOWN';
-            const opponentId = combatData?.opponent.id || '';
-            await useFight(won, xpGained, opponentName, opponentId);
+            if (combatData?.matchType === 'pve') {
+                const pveXp = Math.round(xpGained * GAME_RULES.PVE.XP_MODIFIER);
+                await usePveFight(won, pveXp, opponentName);
+            } else {
+                const opponentId = combatData?.opponent.id || '';
+                await useFight(won, xpGained, opponentName, opponentId);
+            }
         } catch (error: any) {
             console.error('Fight result save failed:', error);
             openModal(error.message || connectionMessage);
@@ -418,6 +448,7 @@ const Arena = () => {
 
     const handleCloseCombat = () => {
         setCombatData(null);
+        setPveMonster(null);
     };
 
 
@@ -536,19 +567,49 @@ const Arena = () => {
                 </div>
 
                 <div className="action-panel">
+                    {/* PvP / PvE Toggle */}
+                    <div className="pve-toggle-row">
+                        <button
+                            className={`pixel-switch pve-switch ${!pveMode ? 'on' : 'off'}`}
+                            onClick={() => !matchmaking && setPveMode(false)}
+                            disabled={matchmaking || combatData !== null}
+                            role="switch"
+                            aria-checked={!pveMode}
+                            aria-label="PvP mode"
+                        >
+                            <span className="switch-knob" />
+                            <span className="switch-text">⚔ PVP</span>
+                        </button>
+                        <button
+                            className={`pixel-switch pve-switch ${pveMode ? 'on' : 'off'}`}
+                            onClick={() => !matchmaking && setPveMode(true)}
+                            disabled={matchmaking || combatData !== null}
+                            role="switch"
+                            aria-checked={pveMode}
+                            aria-label="PvE mode"
+                        >
+                            <span className="switch-knob" />
+                            <span className="switch-text">👹 PVE</span>
+                        </button>
+                    </div>
+
                     <div className="daily-status-compact">
                         <div className="status-label">
-                            <PixelIcon type="sword" size={32} />
+                            <PixelIcon type={pveMode ? "chest" : "sword"} size={32} />
                             <div className="label-text">
-                                <span className="label-main">BATTLE ENERGY</span>
+                                <span className="label-main">{pveMode ? 'MONSTER ENERGY' : 'BATTLE ENERGY'}</span>
                                 <span className="label-sub">
-                                    {isOfflineMode ? 'OFFLINE SNAPSHOT' : `${fightsLeft} / 5 AVAILABLE`}
+                                    {isOfflineMode
+                                        ? 'OFFLINE SNAPSHOT'
+                                        : pveMode
+                                            ? `${pveFightsLeft} / ${GAME_RULES.COMBAT.MAX_DAILY_PVE_FIGHTS} AVAILABLE`
+                                            : `${fightsLeft} / ${GAME_RULES.COMBAT.MAX_DAILY_FIGHTS} AVAILABLE`}
                                 </span>
                             </div>
                         </div>
                         <div className="mini-pips">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                                <div key={i} className={`mini-pip ${i < fightsLeft ? 'active' : 'used'}`}></div>
+                            {Array.from({ length: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS }).map((_, i) => (
+                                <div key={i} className={`mini-pip ${i < (pveMode ? pveFightsLeft : fightsLeft) ? 'active' : 'used'}`}></div>
                             ))}
                         </div>
                     </div>
@@ -559,12 +620,16 @@ const Arena = () => {
                         onClick={handleFight}
                     >
                     {matchmaking
-                        ? 'SEARCHING...'
+                        ? (pveMode ? 'SUMMONING...' : 'SEARCHING...')
                         : hasPendingFight
                             ? 'RESOLVING...'
                             : activeCharacter?.autoMode
                                 ? 'AUTO MODE'
-                                : (isOfflineMode ? 'OFFLINE' : (fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'))}
+                                : (isOfflineMode
+                                    ? 'OFFLINE'
+                                    : (pveMode
+                                        ? (pveFightsLeft > 0 ? 'FIGHT MONSTER' : 'REST NOW')
+                                        : (fightsLeft > 0 ? 'FIGHT!' : 'REST NOW')))}
                     </button>
                 </div>
 
@@ -921,6 +986,7 @@ const Arena = () => {
                     player={applyEquipmentToCharacter(activeCharacter)}
                     opponent={applyEquipmentToCharacter(combatData.opponent)}
                     matchType={combatData.matchType}
+                    monsterId={combatData.matchType === 'pve' ? pveMonster?.monsterId : undefined}
                     candidates={combatData.candidates}
                     onComplete={handleCombatComplete}
                     onClose={handleCloseCombat}

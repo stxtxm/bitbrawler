@@ -79,7 +79,7 @@ See [AGENTS.md](AGENTS.md) for autonomous agent workflows and responsibilities.
 | -------------- | ----------------------------------------------- |
 | Frontend       | React 18 + TypeScript + Vite                    |
 | Backend / Auth | Supabase (PostgreSQL, real-time, auth)          |
-| Testing        | Vitest + React Testing Library + jsdom — **399+ tests, 45 files**          |
+| Testing        | Vitest + React Testing Library + jsdom — **431+ tests, 49 files**          |
 | Styling        | Sass (SCSS)                                     |
 | Fonts          | Press Start 2P (via Fontsource)                 |
 | Scripting      | tsx (TypeScript executor)                       |
@@ -126,7 +126,7 @@ npm run dev                        # Start Vite dev server (localhost:5173)
 npm run preview                    # Preview production build
 
 # Testing & Quality
-npm test                           # Run test suite (Vitest — 399+ tests, 45 files)
+npm test                           # Run test suite (Vitest — 431+ tests, 49 files)
 npm run lint                       # ESLint check
 npm run build                      # TypeScript check + Vite production build
 
