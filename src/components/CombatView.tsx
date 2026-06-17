@@ -79,13 +79,14 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     // Intro → VS
     useEffect(() => {
         if (phase !== 'intro') return;
+        const delay = matchType === 'pve' ? 1200 : 2000;
         const introTimer = setTimeout(() => {
             const result = simulateCombat(player, opponent);
             setCombatResult(result);
             setPhase('vs');
-        }, 2000);
+        }, delay);
         return () => clearTimeout(introTimer);
-    }, [phase, player, opponent]);
+    }, [phase, player, opponent, matchType]);
 
     // VS → Combat (with fighter entrance)
     useEffect(() => {
@@ -267,7 +268,17 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
         <div className="combat-overlay" onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()}>
             <div className="combat-modal">
                 {/* Intro Phase */}
-                {phase === 'intro' && (
+                {phase === 'intro' && (matchType === 'pve' ? (
+                    <div className="combat-intro pve-intro">
+                        <div className="match-type-badge">{getMatchDifficultyLabel(matchType)}</div>
+                        <div className="monster-encounter">
+                            <div className="encounter-text">A WILD</div>
+                            <div className="encounter-name">{opponent.name}</div>
+                            <div className="encounter-text">APPEARS!</div>
+                            <div className="encounter-level">LVL {opponent.level}</div>
+                        </div>
+                    </div>
+                ) : (
                     <div className="combat-intro">
                         <div className="match-type-badge">{getMatchDifficultyLabel(matchType)}</div>
                         <h2 className="combat-title">MATCHMAKING</h2>
@@ -289,7 +300,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                             )}
                         </div>
                     </div>
-                )}
+                ))}
 
                 {/* VS Splash Phase */}
                 {phase === 'vs' && (

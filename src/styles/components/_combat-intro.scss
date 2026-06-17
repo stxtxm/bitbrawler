@@ -185,6 +185,64 @@
 }
 
 // ============================================
+// PvE Monster Encounter
+// ============================================
+
+.pve-intro {
+    text-align: center;
+    padding: 2rem 1rem;
+}
+
+.monster-encounter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    animation: encounterFadeIn 0.5s ease both;
+}
+
+.encounter-text {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1.1rem;
+    color: #ffcc00;
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+    letter-spacing: 2px;
+}
+
+.encounter-name {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1.8rem;
+    color: #ff6b6b;
+    text-shadow:
+        3px 3px 0 #000,
+        0 0 20px rgba(255, 107, 107, 0.6);
+    letter-spacing: 3px;
+    animation: encounterNamePulse 1s ease-in-out infinite;
+}
+
+.encounter-level {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.65rem;
+    color: #4ecdc4;
+    background: rgba(78, 205, 196, 0.2);
+    border: 2px solid #4ecdc4;
+    border-radius: 4px;
+    padding: 0.3rem 0.8rem;
+    display: inline-block;
+    margin-top: 0.4rem;
+}
+
+@keyframes encounterFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes encounterNamePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+// ============================================
 // Combat Title & VS Display
 // ============================================
 
