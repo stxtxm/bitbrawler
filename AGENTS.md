@@ -79,7 +79,9 @@ Original issue description...
          ↓
 [Dev agent explores codebase]
          ↓
-[Dev agent writes code]
+[Dev agent reads issue + comments (tech-lead data)]
+         ↓
+[Dev agent writes code (TDD: tests first)]
          ↓
 [Dev agent runs tests: npm test]
          ↓
@@ -359,6 +361,20 @@ The tech-lead analyzes:
     "last_3": 52,
     "last_5": 50,
     "trend": "stable"
+  },
+  "pve_analysis": {
+    "total_fights": 8,
+    "win_rate": 0.75,
+    "avg_xp_per_fight": 108,
+    "monsters_faced": { "GOBLIN": 3, "OGRE": 3, "WRAITH": 2 }
+  },
+  "equipment": {
+    "runs_with_data": 4,
+    "unique_items": 3
+  },
+  "streak": {
+    "avg_initial": 2.5,
+    "avg_final": 3.0
   }
 }
 ```
@@ -378,33 +394,28 @@ The tech-lead analyzes:
 ✅ **What the QA tester does**:
 1. Navigates to bitbrawler.vercel.app
 2. Creates/loads QA character
-3. Performs 5 fights
-4. Claims daily lootbox
-5. Collects gameplay stats
-6. Saves stats to `qa/stats.json`
-7. Commits stats to repo
+3. Performs **3 PvP fights + 2 PvE fights** (mixed run)
+4. Captures equipment, streak, and initial/final stats
+5. Claims daily lootbox
+6. Collects enriched gameplay stats (fight_type, monster_name, pve_data)
+7. Saves stats to `qa/stats.json`
+8. Commits stats to repo
 
 ### Stats Collected
 
 ```json
 {
-  "timestamp": "2026-05-25T20:00:00Z",
-  "character": {
-    "max_hp": 45,
-    "level": 3,
-    "total_xp": 250
-  },
-  "fights": {
-    "total": 5,
-    "wins": 4,
-    "losses": 1,
-    "avg_duration_ms": 3500
-  },
-  "loot": {
-    "common": 3,
-    "rare": 1,
-    "epic": 0
-  },
+  "timestamp": "2026-06-18T20:00:00Z",
+  "character": { "max_hp": 164, "level": 5, "total_xp": 850 },
+  "fights": [
+    { "result": "victory", "xp": 135, "fight_duration_ms": 4200, "fight_type": "pvp" },
+    { "result": "victory", "xp": 108, "fight_duration_ms": 5100, "fight_type": "pve", "monster_name": "GOBLIN" }
+  ],
+  "pve_data": { "fights": 2, "wins": 2, "xp_total": 216, "monsters_faced": ["GOBLIN", "OGRE"] },
+  "loot": { "common": 3, "rare": 1, "epic": 0 },
+  "initial_equipment": [{ "slot": "⚔️", "name": "Iron Sword" }],
+  "initial_streak": 2,
+  "final_streak": 3,
   "errors": 0
 }
 ```

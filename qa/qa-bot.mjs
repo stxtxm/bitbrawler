@@ -103,6 +103,7 @@ async function readArenaStatus(page) {
   const bodyText = await readBodyText(page)
   const energyMatch = bodyText.match(/(\d+)\s*\/\s*5\s*AVAILABLE/i)
   const fightsAvailable = energyMatch ? parseInt(energyMatch[1], 10) : null
+  const isPveEnergy = bodyText.includes('MONSTER ENERGY')
   const giantFightBtn = page.locator('button.primary-btn.giant-btn').first()
   const fightButtonVisible = await giantFightBtn.isVisible({ timeout: 1000 }).catch(() => false)
   const fightButtonLabel = fightButtonVisible
@@ -115,6 +116,7 @@ async function readArenaStatus(page) {
   return {
     bodyText,
     fightsAvailable,
+    isPveEnergy,
     fightButtonVisible,
     fightButtonLabel,
     isResting,
@@ -543,9 +545,8 @@ async function maybeReplaceExhaustedCharacter(page, runKey, runRecord, reason) {
 /**
  * Handle the level-up popup overlay by allocating ALL stat points
  * and dismissing the overlay so the FIGHT button becomes clickable again.
- * Loops until all points are allocated, then clicks APPLY.
- * Allocates points randomly across all available stats to simulate
- * real player behavior and produce balanced QA gameplay data.
+ * Allocates points via the + buttons (each click saves one point immediately).
+ * Once all points are spent, the overlay auto-closes within 800ms.
  * Returns true if the overlay was handled, false if not present.
  */
 async function handleLevelUpOverlay(page) {
@@ -557,24 +558,13 @@ async function handleLevelUpOverlay(page) {
 
   console.log('   Level-up overlay detected, handling...')
 
-  // 1. Loop: allocate ALL stat points until APPLY becomes enabled
   let allocatedCount = 0
-  for (let attempt = 0; attempt < 10; attempt++) {
-    // Check if APPLY is enabled (no more points to allocate)
-    const applyBtn = page.locator('.level-up-confirm').first()
-    if (await applyBtn.isEnabled({ timeout: 300 }).catch(() => false)) {
-      await applyBtn.click()
-      await page.waitForTimeout(500)
-      console.log(`   ✅ Level-up overlay closed via APPLY (${allocatedCount} point${allocatedCount !== 1 ? 's' : ''} allocated)`)
-      return true
-    }
 
-    // Allocate one point to a randomly chosen stat
+  // 1. Click all available + buttons (each saves one point to DB immediately)
+  for (let attempt = 0; attempt < 10; attempt++) {
     const statAddBtns = page.locator('.stat-add-btn')
     const btnCount = await statAddBtns.count()
-    if (btnCount === 0) {
-      break // No add buttons and no APPLY = unexpected state
-    }
+    if (btnCount === 0) break
 
     const randomIndex = Math.floor(Math.random() * btnCount)
     const statAddBtn = statAddBtns.nth(randomIndex)
@@ -582,32 +572,115 @@ async function handleLevelUpOverlay(page) {
     await statAddBtn.click()
     allocatedCount++
     console.log(`   Allocated point #${allocatedCount} (${ariaLabel || `stat-add-btn #${randomIndex}`})`)
-    await page.waitForTimeout(600)
+    await page.waitForTimeout(400)
   }
 
-  // 2. Try APPLY one final time
-  const applyBtn = page.locator('.level-up-confirm').first()
-  if (await applyBtn.isEnabled({ timeout: 300 }).catch(() => false)) {
-    await applyBtn.click()
+  // 2. Wait for overlay to auto-close (points all spent)
+  if (allocatedCount > 0) {
+    try {
+      await levelUpOverlay.waitFor({ state: 'hidden', timeout: 3000 })
+      console.log(`   ✅ Level-up overlay auto-closed (${allocatedCount} point${allocatedCount !== 1 ? 's' : ''} allocated)`)
+      return true
+    } catch {
+      // Auto-close didn't fire — fall through
+    }
+  }
+
+  // 3. Click CLOSE button as fallback
+  const closeBtn = page.locator('.level-up-confirm').first()
+  if (await closeBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+    await closeBtn.click()
     await page.waitForTimeout(500)
-    console.log(`   ✅ Level-up overlay closed via APPLY (${allocatedCount} point${allocatedCount !== 1 ? 's' : ''} allocated)`)
+    console.log(`   ✅ Level-up overlay closed via CLOSE (${allocatedCount} point${allocatedCount !== 1 ? 's' : ''} allocated)`)
     return true
   }
 
-  // 3. Fallback: LATER button (shouldn't reach here if loop worked)
-  const laterBtn = page.locator('.level-up-later').first()
-  if (await laterBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
-    await laterBtn.click()
-    await page.waitForTimeout(500)
-    console.log(`   ⚠️ Level-up overlay deferred via LATER (${allocatedCount} point${allocatedCount !== 1 ? 's' : ''} allocated)`)
-    return true
-  }
-
-  // 4. Last resort: force-click the overlay background to auto-dismiss
+  // 4. Force-dismiss overlay
   console.log('   ⚠️ Force-dismissing level-up overlay')
   await levelUpOverlay.click({ force: true })
   await page.waitForTimeout(500)
   return true
+}
+
+/**
+ * Toggle PvP or PvE mode by clicking the appropriate switch button.
+ * Returns true on success.
+ */
+async function togglePveMode(page, enablePve) {
+  const label = enablePve ? 'PvE mode' : 'PvP mode'
+  const button = page.locator(`button[aria-label="${label}"]`)
+  if (!(await button.isVisible({ timeout: 3000 }).catch(() => false))) {
+    console.log(`   ${label} switch not found`)
+    return false
+  }
+  const isOn = await button.getAttribute('aria-checked').then(v => v === 'true')
+  if (isOn !== enablePve) {
+    await button.click()
+    await page.waitForTimeout(600)
+    console.log(`   Mode toggled to ${enablePve ? 'PVE' : 'PVP'}`)
+  }
+  return true
+}
+
+/**
+ * Parse equipped item slots visible in the inventory (equipped section).
+ * Returns an array of { slot, name } or empty array.
+ */
+async function parseEquippedItems(page) {
+  try {
+    const invBtn = page.locator('button[aria-label="Inventory"], button[title="Inventory"]').first()
+    if (!(await invBtn.isVisible({ timeout: 2000 }).catch(() => false))) return []
+
+    await invBtn.click()
+    await page.waitForTimeout(800)
+
+    const items = []
+    const filledSlots = page.locator('.inv-loadout-slot.filled')
+    const count = await filledSlots.count().catch(() => 0)
+    for (let i = 0; i < count; i++) {
+      const slot = filledSlots.nth(i)
+      const name = await slot.locator('.inv-loadout-item-name').textContent().catch(() => null)
+      const slotLabel = await slot.locator('.inv-loadout-slot-icon').textContent().catch(() => null)
+      if (name) items.push({ slot: slotLabel?.trim() || '?', name: name.trim() })
+    }
+
+    // Close inventory
+    const closeBtn = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
+    if (await closeBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await closeBtn.click()
+      await page.waitForTimeout(500)
+    }
+
+    return items
+  } catch (err) {
+    console.log(`   ⚠️ Could not parse equipped items: ${err.message}`)
+    return []
+  }
+}
+
+/**
+ * Parse lootbox streak indicator value from the arena page.
+ */
+async function parseStreak(page) {
+  try {
+    const streakEl = page.locator('.streak-indicator, [class*="streak"]').first()
+    if (await streakEl.isVisible({ timeout: 2000 }).catch(() => false)) {
+      const text = await streakEl.textContent().catch(() => '')
+      const match = text.match(/(\d+)/)
+      return match ? parseInt(match[1]) : null
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Simulate a short human-like delay between actions (300-800ms).
+ */
+async function humanDelay(page) {
+  const ms = 300 + Math.floor(Math.random() * 500)
+  await page.waitForTimeout(ms)
 }
 
 async function runFightSequence(page, runKey, runRecord) {
@@ -626,13 +699,24 @@ async function runFightSequence(page, runKey, runRecord) {
     }
   }
 
-  for (let i = 0; i < config.fightsPerRun; i++) {
-    const arenaStatus = await readArenaStatus(page)
+  const pveSwitchIndex = Math.max(0, config.fightsPerRun - (config.pveCount || 0))
+  let isPvePhase = false
 
-    if (
-      arenaStatus.fightsAvailable !== null &&
-      arenaStatus.fightsAvailable <= 0
-    ) {
+  for (let i = 0; i < config.fightsPerRun; i++) {
+    // Toggle PvE phase once we cross the threshold
+    if (!isPvePhase && i >= pveSwitchIndex) {
+      console.log(`👹 Switching to PvE mode for remaining fights (${config.pveCount || 0})...`)
+      await togglePveMode(page, true)
+      isPvePhase = true
+      await handleLevelUpOverlay(page)
+      await humanDelay(page)
+    }
+
+    const arenaStatus = await readArenaStatus(page)
+    const fightsAvailable = isPvePhase ? null : arenaStatus.fightsAvailable
+    const isResting = arenaStatus.isResting
+
+    if (!isPvePhase && fightsAvailable !== null && fightsAvailable <= 0) {
       console.log('   No battle energy available for current fighter')
       if (!recreatedForExhaustion) {
         await maybeReplaceExhaustedCharacter(page, runKey, runRecord, 'exhausted-energy')
@@ -640,6 +724,178 @@ async function runFightSequence(page, runKey, runRecord) {
         i = -1
         continue
       }
+      break
+    }
+
+    if (isResting || !arenaStatus.hasFightCta) {
+      console.log(`   Fight CTA not available (${arenaStatus.fightButtonLabel || 'no label'})`)
+      if (!recreatedForExhaustion) {
+        await maybeReplaceExhaustedCharacter(page, runKey, runRecord, 'missing-fight-cta')
+        recreatedForExhaustion = true
+        i = -1
+        continue
+      }
+      break
+    }
+
+    // Check for level-up overlay right before FIGHT (it may appear asynchronously after CONTINUE)
+    await handleLevelUpOverlay(page)
+
+    console.log(`⚔️ Fight ${i + 1}/${config.fightsPerRun} [${isPvePhase ? 'PVE' : 'PVP'}]...`)
+
+    const fightBtn = page.locator('button.primary-btn.giant-btn').first()
+    const fightStart = Date.now()
+    // Retry FIGHT click with overlay handling in case overlay appears between check and click
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (attempt > 0) {
+        await handleLevelUpOverlay(page)
+        await page.waitForTimeout(300)
+      }
+      const clicked = await fightBtn.click({ timeout: 3000 }).then(() => true).catch(() => false)
+      if (clicked) break
+      console.log(`   FIGHT click blocked (attempt ${attempt + 1}), retrying with force click...`)
+      await fightBtn.click({ force: true, timeout: 3000 }).then(() => true).catch(() => false).then((ok) => {
+        if (ok) console.log('   Force click succeeded')
+      })
+    }
+    console.log('   Fight started, waiting for result...')
+
+    await sleep(1000)
+
+    // Retry fight result polling with exponential backoff
+    const maxRetries = 3
+    const baseTimeout = Math.floor(config.fightTimeout * 0.5)
+    let resultDetected = false
+
+    for (let retry = 0; retry < maxRetries; retry++) {
+      if (retry > 0) {
+        const backoff = Math.min(1000 * Math.pow(2, retry - 1), 8000)
+        console.log(`   Retry ${retry + 1}/${maxRetries}: backoff ${backoff}ms then polling...`)
+        await sleep(backoff)
+
+        const preText = await page.locator('body').innerText().catch(() => '')
+        if (preText.includes('VICTORY') || preText.includes('DEFEAT') || preText.includes('DRAW')) {
+          resultDetected = true
+          break
+        }
+      }
+
+      const timeout = retry < maxRetries - 1 ? baseTimeout : config.fightTimeout - baseTimeout * (maxRetries - 1)
+      try {
+        await page.waitForFunction(
+          () => {
+            const text = document.body?.innerText || ''
+            return text.includes('VICTORY') || text.includes('DEFEAT') || text.includes('DRAW')
+          },
+          { timeout }
+        )
+        resultDetected = true
+        break
+      } catch {
+        if (retry < maxRetries - 1) {
+          console.log(`   ⚠️ Fight result not yet available after attempt ${retry + 1}`)
+        }
+      }
+    }
+
+    if (!resultDetected) {
+      console.log(`   Fight result not detected after ${config.fightTimeout}ms timeout (${maxRetries} retries), taking screenshot`)
+      await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-timeout.png`) })
+      runRecord.errors.push(`Fight ${i + 1}: timeout waiting for result (${config.fightTimeout}ms, ${maxRetries} retries)`)
+
+      const timeoutArenaStatus = await readArenaStatus(page)
+      if (
+        i === 0 &&
+        runRecord.fights.length === 0 &&
+        !recreatedForExhaustion &&
+        (
+          timeoutArenaStatus.isResting ||
+          (timeoutArenaStatus.fightsAvailable !== null && timeoutArenaStatus.fightsAvailable <= 0) ||
+          !timeoutArenaStatus.hasFightCta
+        )
+      ) {
+        await maybeReplaceExhaustedCharacter(page, runKey, runRecord, 'timeout-on-exhausted-fighter')
+        recreatedForExhaustion = true
+        i = -1
+        continue
+      }
+
+      await page.evaluate(() => { window.location.href = window.location.origin }).catch(() => {})
+      await page.waitForURL('**', { timeout: 15000 }).catch(() => {})
+      await page.waitForTimeout(3000)
+      continue
+    }
+
+    const fightDuration = Date.now() - fightStart
+
+    const pageText = await page.locator('body').innerText()
+    const isVictory = pageText.includes('VICTORY')
+    const isDefeat = pageText.includes('DEFEAT')
+
+    const xpMatch = pageText.match(/\+(\d+)\s*XP/)
+    const xpGained = xpMatch ? parseInt(xpMatch[1]) : null
+
+    // Parse PvE monster name from fight intro text if applicable
+    let monsterName = null
+    if (isPvePhase) {
+      const monsterMatch = pageText.match(/A WILD\s+(.+?)\s+APPEARS/i)
+      if (monsterMatch) monsterName = monsterMatch[1].trim()
+    }
+
+    console.log(`   Result: ${isVictory ? '✅ VICTORY' : isDefeat ? '❌ DEFEAT' : '🤝 DRAW'} (${fightDuration}ms) [${isPvePhase ? 'PVE' : 'PVP'}]`)
+
+    const thisFightData = {
+      result: isVictory ? 'victory' : isDefeat ? 'defeat' : 'draw',
+      xp: xpGained,
+      fight_duration_ms: fightDuration,
+      max_hp: null,
+      fight_type: isPvePhase ? 'pve' : 'pvp',
+      monster_name: monsterName,
+    }
+
+    await page.screenshot({
+      path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-${isVictory ? 'win' : isDefeat ? 'loss' : 'draw'}-${isPvePhase ? 'pve' : 'pvp'}.png`),
+    })
+
+    const continueBtn = page.locator('button:has-text("CONTINUE"), button:has-text("CLOSE"), button:has-text("OK")').first()
+    if (await continueBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await continueBtn.click()
+      await page.waitForTimeout(1500)
+    }
+
+    // Handle level-up overlay (allocate stat + dismiss) before next fight
+    const hadOverlay = await handleLevelUpOverlay(page)
+
+    // Capture max HP after returning to arena
+    thisFightData.max_hp = await parseMaxHp(page)
+    console.log(`   max HP after fight: ${thisFightData.max_hp || '(unable to parse)'}`)
+
+    runRecord.fights.push(thisFightData)
+
+    // Track level progression if level-up was detected
+    if (hadOverlay) {
+      const postFightText = await page.locator('body').innerText().catch(() => '')
+      const newLevel = parseLevelFromText(postFightText)
+      if (newLevel !== null && currentLevel !== null && newLevel > currentLevel) {
+        const levelsGained = newLevel - currentLevel
+        runRecord.level_up_events.push({
+          fight_number: i + 1,
+          fight_type: isPvePhase ? 'pve' : 'pvp',
+          levels_gained: levelsGained,
+          points_to_allocate: levelsGained,
+          previous_level: currentLevel,
+          new_level: newLevel,
+        })
+        console.log(`   ⬆️ Level up: ${currentLevel} → ${newLevel} (+${levelsGained} level${levelsGained > 1 ? 's' : ''})`)
+        currentLevel = newLevel
+      } else if (newLevel !== null) {
+        currentLevel = newLevel
+      }
+    }
+
+    // Short human-like delay before next fight
+    await humanDelay(page)
+  }
       break
     }
 
@@ -818,7 +1074,7 @@ async function run() {
   console.log('═══════════════════════════════════════════')
   console.log(`  Config:`)
   console.log(`    baseUrl:        ${config.baseUrl}`)
-    console.log(`    fightsPerRun:   ${config.fightsPerRun}`)
+    console.log(    `    fightsPerRun:   ${config.fightsPerRun} (${config.fightsPerRun - (config.pveCount || 0)} PvP + ${config.pveCount || 0} PvE)`)
     console.log(`    fightTimeout:   ${config.fightTimeout}ms`)
   console.log(`    statsFile:      ${STATS_FILE}`)
   console.log(`    stateFile:      ${STATE_FILE}`)
@@ -827,8 +1083,9 @@ async function run() {
   console.log(`    runKey:         ${runKey}`)
   console.log(`    savedFighter:   ${savedCharacterName || 'none'}`)
   console.log(`    savedExhausted: ${state.run === runKey ? String(state.exhausted === true) : 'false'}`)
-  console.log('    autoMode:       enable after daily fights are exhausted')
-  console.log(`    headless:       ${config.headless}`)
+    console.log('    autoMode:       enable after daily fights are exhausted')
+    console.log(`    pveCount:       ${config.pveCount} (PvE fights mixed into run)`)
+    console.log(`    headless:       ${config.headless}`)
   console.log(`    slowMo:         ${config.slowMo}`)
   console.log(`  CWD: ${process.cwd()}`)
   console.log('───────────────────────────────────────────')
@@ -873,14 +1130,24 @@ async function run() {
     lootbox: null,
     auto_mode_enabled: false,
     auto_mode_sync_ok: false,
-    initial_stats: null,            // character base stats at start of run (STR, VIT, ...)
-    initial_level: null,            // character level at start of run
-    initial_xp: null,               // character XP at start of run
-    initial_max_hp: null,           // max HP at start of run (current=always max due to full heal)
-    final_stats: null,              // parsed final stats (level, xp, w/l)
-    final_character_stats: null,    // character base stats at end of run (STR, VIT, ...)
-    final_max_hp: null,             // max HP at end of run
-    level_up_events: [],            // { fight_number, levels_gained, points_allocated }
+    initial_stats: null,
+    initial_level: null,
+    initial_xp: null,
+    initial_max_hp: null,
+    initial_equipment: null,
+    initial_streak: null,
+    final_stats: null,
+    final_character_stats: null,
+    final_max_hp: null,
+    final_equipment: null,
+    final_streak: null,
+    pve_data: {
+      fights: 0,
+      wins: 0,
+      xp_total: 0,
+      monsters_faced: [],
+    },
+    level_up_events: [],
     errors: [],
     load_times_ms: {},
   }
@@ -907,33 +1174,21 @@ async function run() {
 
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-03-arena.png`) })
 
-    // Capture initial stats and HP before the fight sequence
+    // Capture initial stats, equipment, and streak before the fight sequence
     const preFightText = await page.locator('body').innerText().catch(() => '')
     runRecord.initial_level = parseLevelFromText(preFightText)
     runRecord.initial_xp = parseXpFromText(preFightText)
     runRecord.initial_stats = await parseCharacterStats(page)
     runRecord.initial_max_hp = await parseMaxHp(page)
+    runRecord.initial_equipment = await parseEquippedItems(page)
+    runRecord.initial_streak = await parseStreak(page)
     console.log(`   Initial stats: level=${runRecord.initial_level}, xp=${JSON.stringify(runRecord.initial_xp)}, stats=${JSON.stringify(runRecord.initial_stats)}, maxHp=${runRecord.initial_max_hp}`)
-
-    // Optional PvE mode when --pve flag is set
-    const pveMode = process.argv.includes('--pve')
-    if (pveMode) {
-      console.log('👹 PvE mode enabled — toggling PvE switch...')
-      try {
-        const pveToggle = page.locator('button[aria-label="PvE mode"]')
-        if (await pveToggle.isVisible({ timeout: 3000 }).catch(() => false)) {
-          const isOn = await pveToggle.getAttribute('aria-checked').then(v => v === 'true')
-          if (!isOn) {
-            await pveToggle.click()
-            console.log('   PvE mode toggled ON')
-          } else {
-            console.log('   PvE mode already ON')
-          }
-        }
-      } catch (err) {
-        console.log(`   ⚠️ Could not toggle PvE mode: ${err.message}`)
-      }
+    if (runRecord.initial_equipment.length > 0) {
+      console.log(`   Equipment: ${runRecord.initial_equipment.map(e => `${e.slot}=${e.name}`).join(', ')}`)
     }
+
+    // PvE mixing is handled automatically inside runFightSequence
+    // config.pveCount fights per run will be in PvE mode
 
     await runFightSequence(page, runKey, runRecord)
 
@@ -958,11 +1213,27 @@ async function run() {
     }
     console.log('   Final stats:', JSON.stringify(runRecord.final_stats))
 
-    // Capture final character stats and HP
+    // Capture final character stats, HP, equipment, and streak
     runRecord.final_character_stats = await parseCharacterStats(page)
     runRecord.final_max_hp = await parseMaxHp(page)
+    runRecord.final_equipment = await parseEquippedItems(page)
+    runRecord.final_streak = await parseStreak(page)
     console.log(`   Final character stats: ${JSON.stringify(runRecord.final_character_stats)}`)
     console.log(`   Final max HP: ${runRecord.final_max_hp}`)
+    if (runRecord.final_equipment.length > 0) {
+      console.log(`   Equipment: ${runRecord.final_equipment.map(e => `${e.slot}=${e.name}`).join(', ')}`)
+    }
+
+    // Aggregate PvE data from fight records
+    const pveFights = runRecord.fights.filter(f => f.fight_type === 'pve')
+    if (pveFights.length > 0) {
+      runRecord.pve_data.fights = pveFights.length
+      runRecord.pve_data.wins = pveFights.filter(f => f.result === 'victory').length
+      runRecord.pve_data.xp_total = pveFights.reduce((s, f) => s + (f.xp || 0), 0)
+      runRecord.pve_data.monsters_faced = pveFights
+        .map(f => f.monster_name)
+        .filter((n): n is string => n !== null && n !== undefined)
+      console.log(`   PvE: ${runRecord.pve_data.wins}/${runRecord.pve_data.fights} wins, ${runRecord.pve_data.monsters_faced.join(', ')}`)
 
     const finalArenaStatus = await readArenaStatus(page)
     const fighterExhausted =

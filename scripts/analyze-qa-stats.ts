@@ -23,7 +23,9 @@ interface FightRecord {
   result: 'victory' | 'defeat' | 'draw'
   xp: number | null
   fight_duration_ms: number
-  max_hp?: number | null        // max HP after fight (reflects level/gear growth)
+  max_hp?: number | null
+  fight_type?: 'pvp' | 'pve'   // track PvP vs PvE fights
+  monster_name?: string | null  // PvE monster name if applicable
 }
 
 interface LevelUpEvent {
@@ -58,9 +60,14 @@ interface RunRecord {
   initial_level?: number | null
   initial_xp?: { current: number; max: number } | null
   initial_max_hp?: number | null
+  initial_equipment?: Array<{ slot: string; name: string }> | null
+  initial_streak?: number | null
   final_stats?: { level: number | null; xp: number | null; wins: number | null; losses: number | null } | null
   final_character_stats?: Record<string, number> | null
   final_max_hp?: number | null
+  final_equipment?: Array<{ slot: string; name: string }> | null
+  final_streak?: number | null
+  pve_data?: { fights: number; wins: number; xp_total: number; monsters_faced: string[] }
   level_up_events?: LevelUpEvent[]
   errors: string[]
   load_times_ms?: Record<string, number>
@@ -74,6 +81,26 @@ interface TrendWindow {
   avg_level: number | null
   avg_xp_per_fight: number
   avg_duration_ms: number
+}
+
+interface PveAnalysis {
+  total_fights: number
+  win_rate: number
+  avg_xp_per_fight: number
+  avg_duration_ms: number
+  monsters_faced: Record<string, number>  // monster name → encounter count
+}
+
+interface EquipmentAnalysis {
+  runs_with_data: number
+  item_names: string[]
+  unique_item_count: number
+}
+
+interface StreakAnalysis {
+  avg_initial_streak: number
+  avg_final_streak: number
+  runs_with_data: number
 }
 
 interface HpAnalysis {
@@ -97,8 +124,8 @@ interface AnalysisReport {
   total_runs: number
   total_fights: number
   successful_runs: number
-  halfway_runs: number            // had fights but also errors
-  error_runs: number              // zero fights completed
+  halfway_runs: number
+  error_runs: number
   win_rate: number
   loss_rate: number
   draw_rate: number
@@ -122,7 +149,16 @@ interface AnalysisReport {
     acquire_rate: number
     rarity_distribution: LootRarityDistribution
   }
-  trends: TrendWindow[]           // multiple windows: last 3, 5, 10, all
+  trends: TrendWindow[]
+  pve_analysis: PveAnalysis | null
+  equipment_analysis: EquipmentAnalysis | null
+  streak_analysis: StreakAnalysis | null
+  fight_type_breakdown: {
+    pvp_fights: number
+    pve_fights: number
+    pvp_win_rate: number
+    pve_win_rate: number
+  }
   issues: string[]
   suggestions: string[]
 }
@@ -382,6 +418,89 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     }
   }
 
+  // --- PvE Analysis ---
+  const pveFights = allFights.filter(f => f.fight_type === 'pve')
+  const pvpFights = allFights.filter(f => f.fight_type !== 'pve')
+  let pveAnalysis: PveAnalysis | null = null
+
+  if (pveFights.length > 0) {
+    const pveWins = pveFights.filter(f => f.result === 'victory')
+    const pveXp = pveFights.filter((f): f is FightRecord => f.xp !== null)
+    const monsters: Record<string, number> = {}
+    for (const f of pveFights) {
+      if (f.monster_name) monsters[f.monster_name] = (monsters[f.monster_name] || 0) + 1
+    }
+
+    pveAnalysis = {
+      total_fights: pveFights.length,
+      win_rate: pveFights.length > 0 ? pveWins.length / pveFights.length : 0,
+      avg_xp_per_fight: pveXp.length > 0 ? pveXp.reduce((s, f) => s + (f.xp ?? 0), 0) / pveXp.length : 0,
+      avg_duration_ms: pveFights.length > 0
+        ? pveFights.reduce((s, f) => s + f.fight_duration_ms, 0) / pveFights.length
+        : 0,
+      monsters_faced: monsters,
+    }
+  }
+
+  // --- Equipment Analysis ---
+  const runsWithEquipment = validRuns.filter(
+    (r): r is RunRecord & { initial_equipment: Array<{ slot: string; name: string }> } =>
+      r.initial_equipment !== null && r.initial_equipment !== undefined && r.initial_equipment.length > 0
+  )
+  const allEquippedItems = runsWithEquipment.flatMap(r => r.initial_equipment.map(e => e.name))
+  let equipmentAnalysis: EquipmentAnalysis | null = null
+  if (allEquippedItems.length > 0) {
+    equipmentAnalysis = {
+      runs_with_data: runsWithEquipment.length,
+      item_names: [...new Set(allEquippedItems)],
+      unique_item_count: new Set(allEquippedItems).size,
+    }
+  }
+
+  // --- Streak Analysis ---
+  const runsWithStreak = validRuns.filter(
+    (r): r is RunRecord & { initial_streak: number; final_streak: number } =>
+      typeof r.initial_streak === 'number' && typeof r.final_streak === 'number'
+  )
+  let streakAnalysis: StreakAnalysis | null = null
+  if (runsWithStreak.length > 0) {
+    streakAnalysis = {
+      avg_initial_streak: runsWithStreak.reduce((s, r) => s + r.initial_streak, 0) / runsWithStreak.length,
+      avg_final_streak: runsWithStreak.reduce((s, r) => s + r.final_streak, 0) / runsWithStreak.length,
+      runs_with_data: runsWithStreak.length,
+    }
+  }
+
+  // --- Fight Type Breakdown ---
+  const pvpWins = pvpFights.filter(f => f.result === 'victory')
+  const pveWins = pveFights.filter(f => f.result === 'victory')
+  const fightTypeBreakdown = {
+    pvp_fights: pvpFights.length,
+    pve_fights: pveFights.length,
+    pvp_win_rate: pvpFights.length > 0 ? pvpWins.length / pvpFights.length : 0,
+    pve_win_rate: pveFights.length > 0 ? pveWins.length / pveFights.length : 0,
+  }
+
+  // --- PvE-specific suggestions ---
+  if (pveAnalysis && pveAnalysis.total_fights >= 3) {
+    if (pveAnalysis.win_rate < 0.3) {
+      suggestions.push(`PvE win rate is ${(pveAnalysis.win_rate * 100).toFixed(0)}% — monsters may be too strong. Consider lowering PVE.STAT_MULTIPLIER or PVE.HP_MULTIPLIER.`)
+    }
+    if (pveAnalysis.win_rate > 0.9) {
+      suggestions.push(`PvE win rate is ${(pveAnalysis.win_rate * 100).toFixed(0)}% — monsters may be too weak. Consider raising PVE.STAT_MULTIPLIER or PVE.HP_MULTIPLIER.`)
+    }
+    if (pveAnalysis.avg_duration_ms > 40000) {
+      suggestions.push(`PvE fights avg ${(pveAnalysis.avg_duration_ms / 1000).toFixed(1)}s — may be too long for mobile sessions. Consider reducing monster HP.`)
+    }
+  }
+
+  // --- Streak suggestions ---
+  if (streakAnalysis && streakAnalysis.runs_with_data >= 3) {
+    if (streakAnalysis.avg_initial_streak === 0 && streakAnalysis.avg_final_streak === 0) {
+      suggestions.push(`Lootbox streak is consistently 0 — players may not be claiming daily lootboxes consistently. Check invite flow.`)
+    }
+  }
+
   return {
     generated_at: now,
     total_runs: stats.length,
@@ -415,6 +534,10 @@ function analyze(stats: RunRecord[]): AnalysisReport {
       rarity_distribution: rarityDist,
     },
     trends: trendWindows,
+    pve_analysis: pveAnalysis,
+    equipment_analysis: equipmentAnalysis,
+    streak_analysis: streakAnalysis,
+    fight_type_breakdown: fightTypeBreakdown,
     issues,
     suggestions,
   }
@@ -469,6 +592,39 @@ function printReport(report: AnalysisReport): void {
     console.log(`  Final:          ${finalStr}`)
   }
   console.log('')
+  if (report.fight_type_breakdown.pve_fights > 0 || report.fight_type_breakdown.pvp_fights > 0) {
+    console.log(`  ── ${bold}Fight Type${reset} ──`)
+    console.log(`  PvP:            ${report.fight_type_breakdown.pvp_fights} fights, ${fmtPct(report.fight_type_breakdown.pvp_win_rate)} win rate`)
+    console.log(`  PvE:            ${report.fight_type_breakdown.pve_fights} fights, ${fmtPct(report.fight_type_breakdown.pve_win_rate)} win rate`)
+    console.log('')
+  }
+
+  if (report.pve_analysis && report.pve_analysis.total_fights >= 3) {
+    console.log(`  ── ${bold}PvE Monsters${reset} ──`)
+    const monsterStr = Object.entries(report.pve_analysis.monsters_faced)
+      .map(([name, count]) => `${name}=${count}`)
+      .join(', ')
+    console.log(`  Monsters:       ${monsterStr || 'none'}`)
+    console.log(`  XP/fight:       ${report.pve_analysis.avg_xp_per_fight.toFixed(0)}`)
+    console.log(`  Avg duration:   ${fmtSec(report.pve_analysis.avg_duration_ms)}`)
+    console.log('')
+  }
+
+  if (report.equipment_analysis) {
+    console.log(`  ── ${bold}Equipment${reset} ──`)
+    console.log(`  Runs with data: ${report.equipment_analysis.runs_with_data}`)
+    console.log(`  Unique items:   ${report.equipment_analysis.unique_item_count}`)
+    console.log(`  Items:          ${report.equipment_analysis.item_names.join(', ')}`)
+    console.log('')
+  }
+
+  if (report.streak_analysis) {
+    console.log(`  ── ${bold}Lootbox Streak${reset} ──`)
+    console.log(`  Avg initial:    ${report.streak_analysis.avg_initial_streak.toFixed(1)}`)
+    console.log(`  Avg final:      ${report.streak_analysis.avg_final_streak.toFixed(1)}`)
+    console.log('')
+  }
+
   if (report.hp_analysis) {
     console.log(`  ── ${bold}HP Growth (max HP)${reset} ──`)
     console.log(`  Initial avg:    ${report.hp_analysis.avg_initial_max_hp.toFixed(0)} HP`)

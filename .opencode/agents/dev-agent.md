@@ -29,7 +29,7 @@ Tu n'as **pas besoin** de créer une PR toi-même.
 ## 📋 Contexte projet
 
 - **Stack**: React + TypeScript + Vite
-- **Tests**: vitest (459+ tests, 54 fichiers)
+- **Tests**: vitest (470+ tests, 55 fichiers)
 - **DB**: Supabase (PostgreSQL, pas Firebase)
 - **Déploiement**: Vercel
 - **Linter**: ESLint
@@ -38,7 +38,9 @@ Tu n'as **pas besoin** de créer une PR toi-même.
 ## 🛠️ Workflow d'implémentation
 
 ### Étape 1: Analyse
-- Lis l'issue entièrement
+- Lis l'issue entièrement (titre, description, **ET les commentaires**)
+- Vérifie les commentaires de l'issue — le tech-lead peut avoir ajouté des données QA, des analyses, ou des suggestions d'implémentation
+- Lis les commentaires du reviewer si une PR existe déjà
 - Comprends les contraintes et les règles du projet
 - Identifie les fichiers à modifier
 

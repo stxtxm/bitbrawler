@@ -38,6 +38,16 @@ jobs:
           git config user.name "opencode-agent"
           git config user.email "agent@opencode.ai"
 
+      - name: Fetch existing open issues (for duplicate detection)
+        id: existing-issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue list --state open --limit 100 --json number,title,labels,updatedAt,body \
+            --jq '.[] | {number, title, labels: [.labels[].name], updatedAt}' > /tmp/existing-issues.json 2>/dev/null || echo "[]" > /tmp/existing-issues.json
+          echo "EXISTING_ISSUES=$(cat /tmp/existing-issues.json | wc -l) open issues found"
+          echo "issue_count=$(cat /tmp/existing-issues.json | wc -l)" >> "$GITHUB_OUTPUT"
+
       - name: Mark issue scan start
         run: echo "TECH_LEAD_SCAN_START=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
 
@@ -69,9 +79,24 @@ jobs:
             QA_REPORT=$(cat qa/analysis-latest.json)
           fi
 
+          EXISTING_ISSUES_JSON=$(cat /tmp/existing-issues.json 2>/dev/null || echo "[]")
+
           PROMPT="Tu es le tech-lead de Bitbrawler. Analyse le repo aujourd'hui en profondeur.
 
-            Tu dois COMBINER analyse des données QA + recherche web pour proposer des améliorations.
+            ⚠️ RÈGLE OBLIGATOIRE : VÉRIFIE LES ISSUES EXISTANTES AVANT D'EN CRÉER
+
+            Tu DOIS toujours commencer par lister les issues ouvertes existantes avec:
+            gh issue list --state open --limit 50 --json number,title,labels
+
+            Si une issue similaire existe DÉJÀ :
+            - **Ne crée PAS** une nouvelle issue
+            - **Commente** l'issue existante avec les nouvelles données QA
+            - Si le bug est résolu dans les commits récents → ferme l'issue
+
+            Issues ouvertes existantes:
+            \`\`\`json
+            ${EXISTING_ISSUES_JSON}
+            \`\`\`
 
             ## 1. QA Stats Analysis (données de jeu réelles)
             \`\`\`json
@@ -79,12 +104,13 @@ jobs:
             \`\`\`
 
             À partir du rapport QA :
-            - **Issues** (🔴) : crée des tickets avec /oc pour chaque issue critique
-            - **Suggestions** (💡) : pour chaque suggestion, crée une issue /oc avec modification concrète
-            - **HP Growth** : +5-30 HP/run est sain. Trop bas ou trop haut ? Ajuste.
-            - **Lootbox Rarités** : si rares/epic manquent, ajuste LOOTBOX_RARITY_WEIGHTS
-            - **Trends** : win rate last_3 vs last_5 vs all_time. Baisse +15% = problème
-            - **Stats personnages** : équilibrées ~10, aucune < 7 ou > 13
+            - **PvE Analysis**: win rate PvE, monstres rencontrés, durée des combats
+            - **Equipment**: objets portés, diversité
+            - **Streak**: progression streak journalière
+            - **HP Growth**: +5-30 HP/run est sain. Trop bas ou trop haut ?
+            - **Lootbox Rarités**: si rares/epic manquent, ajuste LOOTBOX_RARITY_WEIGHTS
+            - **Trends**: win rate last_3 vs last_5 vs all_time. Baisse +15% = problème
+            - **Stats personnages**: équilibrées ~10, aucune < 7 ou > 13
 
             ## 2. Recherche web OBLIGATOIRE
 
@@ -100,14 +126,29 @@ jobs:
             7. **Monetization** : cherche 'rewarded ads integration indie game' ou 'non-invasive mobile monetization 2026'
 
             ## 3. Analyser les commits récents
-            - Vérifie les 30 derniers commits (git log --oneline -30)
+            - git log --oneline -30
             - Regarde les tendances : bugs fréquents, features ajoutées, domaines négligés
 
-            ## 4. Synthèse et création d'issues
+            ## 4. Actions à réaliser
 
-            Tu dois créer 3-4 issues AU TOTAL (pas plus) :
-            - **1-2 mineures** avec /oc (ajustements constants, bugs, small features)
-            - **1-2 majeures** SANS /oc avec analyse détaillée (nouvelles mechanics, systèmes)
+            Pour chaque problème/amélioration :
+            1. Vérifie si une issue similaire existe déjà (parcours la liste ci-dessus)
+            2. **Si oui** → commente l'issue existante avec les nouvelles données
+            3. **Si non** → crée une nouvelle issue
+
+            Types d'issues:
+            - **Mineures** avec /oc (ajustements constants, bugs, small features)
+            - **Majeures** SANS /oc avec analyse détaillée
+
+            Tu dois fermer les issues qui sont résolues par les commits récents.
+
+            Format pour commenter une issue existante:
+            gh issue comment #NUM --body '📊 Mise à jour: [date]
+            - Nouvelles données QA: [contexte]
+            - Suggestion: [ajustement si nécessaire]'
+
+            Format pour fermer une issue résolue:
+            gh issue close #NUM --comment 'Fermé: résolu par [commit/PR #]. Les stats QA récentes confirment.'
 
             Chaque proposition majeure doit inclure :
             - Pourquoi c'est adapté à Bitbrawler (mobile, pixel, idle)
