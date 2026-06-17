@@ -14,7 +14,8 @@
     "qa:analyze": "tsx scripts/analyze-qa-stats.ts",
     "qa:run": "node qa/qa-bot.mjs",
     "db:migrate": "tsx scripts/run-migration.ts",
-    "db:verify-constraints": "tsx scripts/verify-stat-constraints.ts"
+    "db:verify-constraints": "tsx scripts/verify-stat-constraints.ts",
+    "db:reset": "tsx scripts/reset-and-migrate.ts"
   },
   "dependencies": {
     "@fontsource/press-start-2p": "^5.2.7",

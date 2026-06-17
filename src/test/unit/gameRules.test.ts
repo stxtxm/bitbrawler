@@ -2,18 +2,6 @@ import { describe, it, expect } from 'vitest';
 import { GAME_RULES } from '../../config/gameRules';
 
 describe('Game rules', () => {
-  it('STATS.MIN_VALUE is at least 5', () => {
-    expect(GAME_RULES.STATS.MIN_VALUE).toBeGreaterThanOrEqual(5);
-  });
-
-  it('STATS.MAX_VALUE is at most 15', () => {
-    expect(GAME_RULES.STATS.MAX_VALUE).toBeLessThanOrEqual(15);
-  });
-
-  it('MIN_VALUE is less than MAX_VALUE', () => {
-    expect(GAME_RULES.STATS.MIN_VALUE).toBeLessThan(GAME_RULES.STATS.MAX_VALUE);
-  });
-
   it('POINTS_PER_LEVEL is positive', () => {
     expect(GAME_RULES.STATS.POINTS_PER_LEVEL).toBeGreaterThan(0);
   });

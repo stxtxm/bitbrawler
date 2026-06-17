@@ -68,15 +68,8 @@ describe('Stat allocation flow (level-up simulation)', () => {
     expect(updated.strength).toBe(10);
   });
 
-  it('does not allocate beyond MAX_VALUE (15)', () => {
-    const char = makeCharacter({ statPoints: 2, strength: 15 });
-    const updated = applyStatPoint(char, 'strength');
-    expect(updated).toBe(char); // no change
-    expect(updated.statPoints).toBe(2); // point not consumed
-  });
-
   it('autoAllocateStatPoints distributes correctly', () => {
-    // All 6 stats well below MAX_VALUE (15) to avoid flaky random-pick races
+    // All 6 stats at same value to avoid flaky random-pick races
     const char = makeCharacter({
       statPoints: 4,
       strength: 5,
@@ -125,19 +118,10 @@ describe('Stat allocation flow (level-up simulation)', () => {
     expect(char.vitality).toBe(8);
   });
 
-  it('allocating to a stat that would exceed MAX_VALUE preserves the point', () => {
-    // Edge case: user tries to allocate to an already-capped stat
-    const char = makeCharacter({ statPoints: 2, strength: 15, dexterity: 8 });
-
-    // Try to allocate to capped stat — should be rejected
-    const afterCapped = applyStatPoint(char, 'strength');
-    expect(afterCapped).toBe(char);
-    expect(afterCapped.strength).toBe(15);
-    expect(afterCapped.statPoints).toBe(2);
-
-    // Allocate to a valid stat instead
-    const afterValid = applyStatPoint(char, 'dexterity');
-    expect(afterValid.statPoints).toBe(1);
-    expect(afterValid.dexterity).toBe(9);
+  it('allocates beyond previous MAX_VALUE (15)', () => {
+    const char = makeCharacter({ statPoints: 2, strength: 15 });
+    const updated = applyStatPoint(char, 'strength');
+    expect(updated.strength).toBe(16);
+    expect(updated.statPoints).toBe(1);
   });
 });

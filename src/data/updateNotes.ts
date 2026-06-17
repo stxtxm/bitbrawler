@@ -8,6 +8,19 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '3.1.0',
+    date: '2026-06-18',
+    title: 'Stat caps removed — limitless character progression',
+    changes: [
+      'Stat caps removed entirely: no more 15-point limit on individual stats — allocate freely without restriction.',
+      'DB CHECK constraints dropped: characters_strength/vitality/dexterity/luck/intelligence/focus_check removed from Supabase schema.',
+      'applyStatPoint no longer refuses allocation — any stat can be improved as long as you have points.',
+      'Character generation updated: weighted random allocation without artificial caps for more natural archetype variance.',
+      '9-6-0 → 9 tests updated/removed across stat-allocation-flow, stat-utils, character, and gameRules test suites.',
+    ],
+    archived: true,
+  },
+  {
     version: '3.0.0',
     date: '2026-06-17',
     title: 'PvE Monster Battles — fight 3 8-bit monsters with separate energy pool',
@@ -32,8 +45,7 @@ export const UPDATE_NOTES: UpdateNote[] = [
     date: '2026-06-17',
     title: 'Stat cap enforcement, DB error handling & bot engine fixes',
     changes: [
-      'Stat caps aligned with DB CHECK constraints (MIN_VALUE=5, MAX_VALUE=15) — prevents silent DB rejections on level-up.',
-      'applyStatPoint now refuses allocation when stat is at MAX_VALUE (15), point stays unallocated instead of lost.',
+      'Stat caps aligned with DB CHECK constraints (MIN_VALUE=5, MAX_VALUE=15) — prevents silent DB rejections on level-up. (Removed in v3.1.0)',
       'PostgREST error handling added to all stat/equip/fight DB writes — errors are now thrown instead of silently swallowed.',
       'Bot engine fixed: equipped_items column migration added (was missing from Supabase schema).',
       'Level-up overlay no longer auto-shows on reconnect for unallocated stat points.',

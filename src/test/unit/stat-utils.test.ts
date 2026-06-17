@@ -74,36 +74,15 @@ describe('Stat Utils', () => {
         expect(updated.statPoints).toBe(0);
     });
 
-    it('refuses to allocate beyond MAX_VALUE (15)', () => {
-        const maxed: Character = {
-            ...baseCharacter,
-            strength: 15,
-            vitality: 15,
-            dexterity: 15,
-            luck: 15,
-            intelligence: 15,
-            focus: 15,
-            statPoints: 5,
-        };
-        const updated = applyStatPoint(maxed, 'strength');
-        expect(updated.strength).toBe(15);
-        expect(updated.statPoints).toBe(5);
-    });
-
-    it('rejects allocation when a single stat is already at MAX_VALUE', () => {
+    it('allocates beyond previous MAX_VALUE (15) without cap', () => {
         const char: Character = {
             ...baseCharacter,
             strength: 15,
-            vitality: 10,
-            statPoints: 2,
+            statPoints: 3,
         };
         const updated = applyStatPoint(char, 'strength');
-        expect(updated.strength).toBe(15);
+        expect(updated.strength).toBe(16);
         expect(updated.statPoints).toBe(2);
-
-        const updated2 = applyStatPoint(updated, 'vitality');
-        expect(updated2.vitality).toBe(11);
-        expect(updated2.statPoints).toBe(1);
     });
 
     it('auto-allocates stat points randomly', () => {

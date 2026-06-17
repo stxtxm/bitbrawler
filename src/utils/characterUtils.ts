@@ -239,21 +239,22 @@ export const generateCharacterName = (options: NameGeneratorOptions = {}): strin
  * - 15x weight → 1 primary stat (chosen randomly per character)
  * - 5x weight → 1-2 secondary stats
  * - 1x weight → remaining stats
- * - Non-primary stats capped at MAX_VALUE-1 so the primary stands out
+ * - No hard caps on any stat — primary naturally stands out via weight bias
  * - Total points remain constant across all characters
  */
 export const generateInitialStats = (name: string, gender: 'male' | 'female'): Character => {
-    const { MIN_VALUE, MAX_VALUE, TOTAL_POINTS } = GAME_RULES.STATS;
+    const { TOTAL_POINTS } = GAME_RULES.STATS;
     const NUM_STATS = STAT_KEYS.length;
+    const START_BASE = 5;
 
-    // Start all stats at MIN_VALUE for maximum variance
+    // Start all stats at a base value for minimum viability
     const stats: Record<StatKey, number> = {
-        strength: MIN_VALUE,
-        vitality: MIN_VALUE,
-        dexterity: MIN_VALUE,
-        luck: MIN_VALUE,
-        intelligence: MIN_VALUE,
-        focus: MIN_VALUE
+        strength: START_BASE,
+        vitality: START_BASE,
+        dexterity: START_BASE,
+        luck: START_BASE,
+        intelligence: START_BASE,
+        focus: START_BASE
     };
 
     // Choose a primary stat (archetype focus) and 1-2 secondary stats
@@ -269,19 +270,11 @@ export const generateInitialStats = (name: string, gender: 'male' | 'female'): C
 
     // Distribute remaining points using weighted random allocation.
     // Weights: primary=15, each secondary=5, each remaining=1.
-    // Primary stat can reach MAX_VALUE; all other stats are capped at MAX_VALUE-1
-    // so the primary stat has room to shine.
-    let pointsToDistribute = TOTAL_POINTS - MIN_VALUE * NUM_STATS;
+    let pointsToDistribute = TOTAL_POINTS - START_BASE * NUM_STATS;
     while (pointsToDistribute > 0) {
-        // Build dynamic weight map, excluding capped stats
         let totalWeight = 0;
         const weights: Partial<Record<StatKey, number>> = {};
         for (const statKey of STAT_KEYS) {
-            const cap = statKey === primary ? MAX_VALUE : MAX_VALUE - 1;
-            if (stats[statKey] >= cap) {
-                weights[statKey] = 0;
-                continue;
-            }
             if (statKey === primary) {
                 weights[statKey] = 15;
             } else if (secondaries.includes(statKey)) {
@@ -291,9 +284,6 @@ export const generateInitialStats = (name: string, gender: 'male' | 'female'): C
             }
             totalWeight += weights[statKey]!;
         }
-
-        // Fallback: if all stats are capped (shouldn't happen given TOTAL_POINTS)
-        if (totalWeight === 0) break;
 
         // Weighted random selection
         let roll = Math.random() * totalWeight;

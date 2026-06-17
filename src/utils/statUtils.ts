@@ -1,5 +1,4 @@
 import { Character } from '../types/Character';
-import { GAME_RULES } from '../config/gameRules';
 
 export const STAT_KEYS = ['strength', 'vitality', 'dexterity', 'luck', 'intelligence', 'focus'] as const;
 export type StatKey = typeof STAT_KEYS[number];
@@ -35,7 +34,6 @@ export function applyStatPoint(character: Character, stat: StatKey): Character {
     if (available <= 0) return character;
 
     const currentVal = character[stat] as number;
-    if (currentVal >= GAME_RULES.STATS.MAX_VALUE) return character;
 
     const updated: Character = {
         ...character,

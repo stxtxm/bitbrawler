@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import { generateInitialStats } from '../../utils/characterUtils';
-import { GAME_RULES } from '../../config/gameRules';
 
 describe('Character Generation', () => {
     it('should generate a character with the correct initial stat pool', () => {
@@ -46,8 +45,8 @@ describe('Character Generation', () => {
         expect(char.losses).toBe(0);
     });
 
-    it('should have all stats >= MIN_VALUE', () => {
-        // Generate 50 characters and verify no stat drops below MIN_VALUE
+    it('should have all stats >= 0 (no negative stats)', () => {
+        // Generate 50 characters and verify no stat is negative
         for (let i = 0; i < 50; i++) {
             const char = generateInitialStats(`Test_${i}`, 'male');
             const allStats = [
@@ -55,21 +54,7 @@ describe('Character Generation', () => {
                 char.luck, char.intelligence, char.focus
             ];
             for (const stat of allStats) {
-                expect(stat).toBeGreaterThanOrEqual(GAME_RULES.STATS.MIN_VALUE);
-            }
-        }
-    });
-
-    it('should have all stats <= MAX_VALUE', () => {
-        // Generate 50 characters and verify no stat exceeds MAX_VALUE
-        for (let i = 0; i < 50; i++) {
-            const char = generateInitialStats(`Test_${i}`, 'male');
-            const allStats = [
-                char.strength, char.vitality, char.dexterity,
-                char.luck, char.intelligence, char.focus
-            ];
-            for (const stat of allStats) {
-                expect(stat).toBeLessThanOrEqual(GAME_RULES.STATS.MAX_VALUE);
+                expect(stat).toBeGreaterThanOrEqual(0);
             }
         }
     });
@@ -115,26 +100,8 @@ describe('Character Generation', () => {
         expect(primaryIsHighest).toBeGreaterThanOrEqual(80);
     });
 
-    it('should cap non-primary stats at MAX_VALUE-1 while primary can reach MAX_VALUE', () => {
-        // Only the primary stat can reach MAX_VALUE (14);
-        // all other stats are capped at MAX_VALUE-1 (13).
-        // Over 100 characters, at most 1 stat should exceed MAX_VALUE-1.
-        const SAMPLES = 100;
-        for (let i = 0; i < SAMPLES; i++) {
-            const char = generateInitialStats(`Test_${i}`, 'male');
-            const allStats = [
-                char.strength, char.vitality, char.dexterity,
-                char.luck, char.intelligence, char.focus
-            ];
-            const statsAboveSecondaryCap = allStats.filter(
-                s => s > GAME_RULES.STATS.MAX_VALUE - 1
-            );
-            expect(statsAboveSecondaryCap.length).toBeLessThanOrEqual(1);
-        }
-    });
-
     it('should produce an average stat spread > 4 with the new weights (stronger archetypes)', () => {
-        // With primary=15x, secondary=5x weights and secondary caps,
+        // With primary=15x, secondary=5x weights,
         // the range (max - min) across 6 stats should average > 4
         let totalSpread = 0;
         const SAMPLES = 100;
