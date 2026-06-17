@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { ITEM_ASSETS, ITEM_PALETTE } from '../../data/itemAssets';
 
 describe('Item assets', () => {
-  it('defines 30 items', () => {
-    expect(ITEM_ASSETS.length).toBe(30);
+  it('defines 33 items', () => {
+    expect(ITEM_ASSETS.length).toBe(33);
   });
 
   it('assigns unlock levels up to 10', () => {
@@ -35,5 +35,15 @@ describe('Item assets', () => {
         expect(paletteKeys.has(String(cell))).toBe(true);
       });
     });
+  });
+
+  it('has at least 2 epic items available at level 1', () => {
+    const level1Epics = ITEM_ASSETS.filter((item) => item.requiredLevel <= 1 && item.rarity === 'epic');
+    expect(level1Epics.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('has at least 2 rare items available at level 1', () => {
+    const level1Rares = ITEM_ASSETS.filter((item) => item.requiredLevel <= 1 && item.rarity === 'rare');
+    expect(level1Rares.length).toBeGreaterThanOrEqual(2);
   });
 });
