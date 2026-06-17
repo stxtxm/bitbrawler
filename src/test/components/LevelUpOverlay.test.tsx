@@ -20,6 +20,7 @@ const mockCharacter: Character = {
     wins: 3,
     losses: 1,
     fightsLeft: 4,
+    statPoints: 2,
     lastFightReset: Date.now(),
 };
 
@@ -27,16 +28,14 @@ const defaultProps = {
     shouldShowLevelUp: true,
     activeCharacter: mockCharacter,
     lastLevelUp: { levelsGained: 1, newLevel: 5, hpGained: 10 },
-    pendingStatPoints: 2,
     isOfflineMode: false,
     statOptions: [
         { key: 'strength' as const, label: 'STR', value: 10, hint: 'Damage', icon: 'strength' as const },
         { key: 'vitality' as const, label: 'VIT', value: 10, hint: 'HP / Defense', icon: 'vitality' as const },
     ],
-    hasLevelInfo: true,
-    handleAllocateStat: vi.fn(),
-    handleCloseLevelUp: vi.fn(),
-    handleDeferLevelUp: vi.fn(),
+    saving: false,
+    onAllocateStat: vi.fn(),
+    onClose: vi.fn(),
 };
 
 describe('LevelUpOverlay', () => {
@@ -52,8 +51,9 @@ describe('LevelUpOverlay', () => {
     it('renders overlay when shouldShowLevelUp is true', () => {
         render(<LevelUpOverlay {...defaultProps} />);
         expect(screen.getByText('LEVEL UP')).toBeInTheDocument();
-        expect(screen.getByText('APPLY')).toBeInTheDocument();
-        expect(screen.getByText('LATER')).toBeInTheDocument();
+        expect(screen.getByText('CLOSE')).toBeInTheDocument();
+        expect(screen.getByText('POINTS TO SPEND')).toBeInTheDocument();
+        expect(screen.getByText('2')).toBeInTheDocument();
     });
 
     it('does not render overlay when shouldShowLevelUp is false', () => {
@@ -61,230 +61,127 @@ describe('LevelUpOverlay', () => {
         expect(screen.queryByText('LEVEL UP')).toBeNull();
     });
 
-    it('calls handleCloseLevelUp when APPLY is clicked', () => {
+    it('calls onClose when CLOSE is clicked', () => {
         const handleClose = vi.fn();
-        render(<LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />);
+        render(<LevelUpOverlay {...defaultProps} onClose={handleClose} />);
         act(() => {
-            screen.getByText('APPLY').click();
+            screen.getByText('CLOSE').click();
         });
         expect(handleClose).toHaveBeenCalledTimes(1);
     });
 
-    it('calls handleDeferLevelUp when LATER is clicked', () => {
-        const handleDefer = vi.fn();
-        render(<LevelUpOverlay {...defaultProps} handleDeferLevelUp={handleDefer} />);
+    it('calls onAllocateStat when + is clicked', () => {
+        const handleAlloc = vi.fn();
+        render(<LevelUpOverlay {...defaultProps} onAllocateStat={handleAlloc} />);
         act(() => {
-            screen.getByText('LATER').click();
+            screen.getAllByText('+')[0].click();
         });
-        expect(handleDefer).toHaveBeenCalledTimes(1);
+        expect(handleAlloc).toHaveBeenCalledWith('strength');
     });
 
-    describe('autoClose behavior', () => {
-        it('calls handleCloseLevelUp after 1500ms when autoClose is true and overlay is visible', () => {
-            const handleClose = vi.fn();
-            render(
-                <LevelUpOverlay
-                    {...defaultProps}
-                    autoClose={true}
-                    handleCloseLevelUp={handleClose}
-                />
-            );
-
-            // Overlay should be visible initially
-            expect(screen.getByText('LEVEL UP')).toBeInTheDocument();
-            expect(handleClose).not.toHaveBeenCalled();
-
-            // Advance timers by 1500ms
-            act(() => {
-                vi.advanceTimersByTime(1500);
-            });
-
-            // handleCloseLevelUp should have been called
-            expect(handleClose).toHaveBeenCalledTimes(1);
-        });
-
-        it('does not call handleCloseLevelUp before 1500ms when autoClose is true', () => {
-            const handleClose = vi.fn();
-            render(
-                <LevelUpOverlay
-                    {...defaultProps}
-                    autoClose={true}
-                    handleCloseLevelUp={handleClose}
-                />
-            );
-
-            // Advance only 1000ms (before the timeout)
-            act(() => {
-                vi.advanceTimersByTime(1000);
-            });
-
-            expect(handleClose).not.toHaveBeenCalled();
-        });
-
-        it('does not call handleCloseLevelUp when autoClose is false', () => {
-            const handleClose = vi.fn();
-            render(
-                <LevelUpOverlay
-                    {...defaultProps}
-                    autoClose={false}
-                    handleCloseLevelUp={handleClose}
-                />
-            );
-
-            act(() => {
-                vi.advanceTimersByTime(2000);
-            });
-
-            expect(handleClose).not.toHaveBeenCalled();
-        });
-
-        it('does not call handleCloseLevelUp when autoClose is true but overlay is not visible', () => {
-            const handleClose = vi.fn();
-            render(
-                <LevelUpOverlay
-                    {...defaultProps}
-                    shouldShowLevelUp={false}
-                    autoClose={true}
-                    handleCloseLevelUp={handleClose}
-                />
-            );
-
-            act(() => {
-                vi.advanceTimersByTime(2000);
-            });
-
-            expect(handleClose).not.toHaveBeenCalled();
-        });
-
-        it('cleans up timeout when component unmounts before autoClose fires', () => {
-            const handleClose = vi.fn();
-            const { unmount } = render(
-                <LevelUpOverlay
-                    {...defaultProps}
-                    autoClose={true}
-                    handleCloseLevelUp={handleClose}
-                />
-            );
-
-            // Unmount before the timeout fires
-            unmount();
-
-            act(() => {
-                vi.advanceTimersByTime(2000);
-            });
-
-            // handleCloseLevelUp should NOT be called since component was unmounted
-            expect(handleClose).not.toHaveBeenCalled();
+    it('disables + buttons when saving is true', () => {
+        render(<LevelUpOverlay {...defaultProps} saving={true} />);
+        const plusButtons = screen.getAllByText('+');
+        plusButtons.forEach((btn) => {
+            expect(btn).toBeDisabled();
         });
     });
 
-    describe('click-outside-to-close behavior', () => {
-        it('closes overlay when clicking outside the level-up card', () => {
-            const handleClose = vi.fn();
-            const { container } = render(
-                <LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />
-            );
+    it('disables + buttons when isOfflineMode is true', () => {
+        render(<LevelUpOverlay {...defaultProps} isOfflineMode={true} />);
+        const plusButtons = screen.getAllByText('+');
+        plusButtons.forEach((btn) => {
+            expect(btn).toBeDisabled();
+        });
+    });
 
-            const overlay = container.querySelector('.level-up-pop-overlay')!;
-            expect(overlay).toBeInTheDocument();
+    it('shows offline warning when isOfflineMode is true', () => {
+        render(<LevelUpOverlay {...defaultProps} isOfflineMode={true} />);
+        expect(screen.getByText('CONNECT TO ASSIGN POINTS')).toBeInTheDocument();
+    });
 
-            // Click on the overlay itself (outside the card)
-            act(() => {
-                overlay.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-            });
+    it('shows ALL POINTS ALLOCATED when no points remaining', () => {
+        const charNoPoints = { ...mockCharacter, statPoints: 0 };
+        render(<LevelUpOverlay {...defaultProps} activeCharacter={charNoPoints} />);
+        expect(screen.getByText('ALL POINTS ALLOCATED')).toBeInTheDocument();
+    });
 
-            expect(handleClose).toHaveBeenCalledTimes(1);
+    it('does not show + buttons when no points remaining', () => {
+        const charNoPoints = { ...mockCharacter, statPoints: 0 };
+        render(<LevelUpOverlay {...defaultProps} activeCharacter={charNoPoints} />);
+        expect(screen.queryAllByText('+')).toHaveLength(0);
+    });
+
+    it('auto-closes after 800ms when statPoints reaches 0', () => {
+        const handleClose = vi.fn();
+        const { rerender } = render(
+            <LevelUpOverlay {...defaultProps} onClose={handleClose} statOptions={defaultProps.statOptions} />
+        );
+
+        expect(handleClose).not.toHaveBeenCalled();
+
+        const charZeroPoints = { ...mockCharacter, statPoints: 0 };
+        rerender(
+            <LevelUpOverlay
+                {...defaultProps}
+                activeCharacter={charZeroPoints}
+                onClose={handleClose}
+                statOptions={defaultProps.statOptions}
+            />
+        );
+
+        act(() => {
+            vi.advanceTimersByTime(800);
         });
 
-        it('does not close when clicking on the level-up card', () => {
-            const handleClose = vi.fn();
-            const { container } = render(
-                <LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />
-            );
+        expect(handleClose).toHaveBeenCalledTimes(1);
+    });
 
-            const card = container.querySelector('.level-up-card')!;
-            expect(card).toBeInTheDocument();
+    it('does not auto-close when statPoints > 0', () => {
+        const handleClose = vi.fn();
+        render(<LevelUpOverlay {...defaultProps} onClose={handleClose} />);
 
-            // Click on the card
-            act(() => {
-                card.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-            });
-
-            expect(handleClose).not.toHaveBeenCalled();
+        act(() => {
+            vi.advanceTimersByTime(2000);
         });
 
-        it('does not double-close when clicking APPLY button', () => {
-            const handleClose = vi.fn();
-            render(
-                <LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />
-            );
+        expect(handleClose).not.toHaveBeenCalled();
+    });
 
-            // Click on the APPLY button — this calls handleCloseLevelUp via the button's own onClick.
-            // The outside-click listener should NOT add an additional call.
-            act(() => {
-                screen.getByText('APPLY').click();
-            });
+    it('does not auto-close when overlay is hidden', () => {
+        const handleClose = vi.fn();
+        render(
+            <LevelUpOverlay
+                {...defaultProps}
+                shouldShowLevelUp={false}
+                onClose={handleClose}
+            />
+        );
 
-            // handleCloseLevelUp should be called exactly once (by the button's own handler)
-            expect(handleClose).toHaveBeenCalledTimes(1);
+        act(() => {
+            vi.advanceTimersByTime(2000);
         });
 
-        it('does not call handleCloseLevelUp when clicking LATER button', () => {
-            const handleClose = vi.fn();
-            render(
-                <LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />
-            );
+        expect(handleClose).not.toHaveBeenCalled();
+    });
 
-            // Click on the LATER button — should call handleDeferLevelUp, not handleCloseLevelUp
-            act(() => {
-                screen.getByText('LATER').click();
-            });
+    it('cleans up auto-close timeout on unmount', () => {
+        const handleClose = vi.fn();
+        const charZeroPoints = { ...mockCharacter, statPoints: 0 };
+        const { unmount } = render(
+            <LevelUpOverlay
+                {...defaultProps}
+                activeCharacter={charZeroPoints}
+                onClose={handleClose}
+            />
+        );
 
-            expect(handleClose).not.toHaveBeenCalled();
+        unmount();
+
+        act(() => {
+            vi.advanceTimersByTime(2000);
         });
 
-        it('does not add click listener when overlay is hidden', () => {
-            const handleClose = vi.fn();
-            const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
-            const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
-
-            render(
-                <LevelUpOverlay
-                    {...defaultProps}
-                    shouldShowLevelUp={false}
-                    handleCloseLevelUp={handleClose}
-                />
-            );
-
-            // Should not have added the click listener since overlay is hidden
-            expect(addEventListenerSpy).not.toHaveBeenCalledWith(
-                'click',
-                expect.any(Function),
-                true
-            );
-
-            addEventListenerSpy.mockRestore();
-            removeEventListenerSpy.mockRestore();
-        });
-
-        it('cleans up click listener on unmount', () => {
-            const handleClose = vi.fn();
-            const removeEventListenerSpy = vi.spyOn(window, 'removeEventListener');
-
-            const { unmount } = render(
-                <LevelUpOverlay {...defaultProps} handleCloseLevelUp={handleClose} />
-            );
-
-            unmount();
-
-            // Should have removed the click listener
-            expect(removeEventListenerSpy).toHaveBeenCalledWith(
-                'click',
-                expect.any(Function),
-                true
-            );
-
-            removeEventListenerSpy.mockRestore();
-        });
+        expect(handleClose).not.toHaveBeenCalled();
     });
 });

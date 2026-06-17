@@ -76,22 +76,22 @@ describe('Stat allocation flow (level-up simulation)', () => {
   });
 
   it('autoAllocateStatPoints distributes correctly', () => {
-    // 3 stats at low values, 3 stats already high
+    // All 6 stats well below MAX_VALUE (15) to avoid flaky random-pick races
     const char = makeCharacter({
       statPoints: 4,
       strength: 5,
       vitality: 5,
       dexterity: 5,
-      luck: 14,
-      intelligence: 14,
-      focus: 14,
+      luck: 5,
+      intelligence: 5,
+      focus: 5,
     });
     const updated = autoAllocateStatPoints(char, 4);
     // All 4 points should be consumed
     expect(updated.statPoints).toBe(0);
     // Total stat sum increased by 4
     expect(updated.strength + updated.vitality + updated.dexterity + updated.luck + updated.intelligence + updated.focus)
-      .toBe(5 + 5 + 5 + 14 + 14 + 14 + 4);
+      .toBe(5 * 6 + 4);
   });
 
   it('HP increases when vitality is allocated', () => {

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { Character } from '../types/Character';
 import { PixelIcon } from './PixelIcon';
 import { StatKey, STAT_TOOLTIPS } from '../utils/statUtils';
@@ -9,65 +9,38 @@ interface LevelUpOverlayProps {
     shouldShowLevelUp: boolean;
     activeCharacter: Character;
     lastLevelUp: { levelsGained: number; newLevel: number; hpGained: number } | null;
-    pendingStatPoints: number;
     isOfflineMode: boolean;
     statOptions: Array<{ key: StatKey; label: string; value: number; hint: string; icon: StatIconType }>;
-    hasLevelInfo: boolean;
-    autoClose?: boolean;
-    handleAllocateStat: (stat: StatKey) => void;
-    handleCloseLevelUp: () => void;
-    handleDeferLevelUp: () => void;
+    saving: boolean;
+    onAllocateStat: (stat: StatKey) => void;
+    onClose: () => void;
 }
 
 const LevelUpOverlay = ({
     shouldShowLevelUp,
     activeCharacter,
     lastLevelUp,
-    pendingStatPoints,
     isOfflineMode,
     statOptions,
-    hasLevelInfo,
-    autoClose = false,
-    handleAllocateStat,
-    handleCloseLevelUp,
-    handleDeferLevelUp,
+    saving,
+    onAllocateStat,
+    onClose,
 }: LevelUpOverlayProps) => {
-    const overlayRef = useRef<HTMLDivElement>(null);
+    const pointsRemaining = activeCharacter.statPoints || 0;
+    const hasLevelInfo = lastLevelUp !== null;
 
-    // Auto-close timer
-    useEffect(() => {
-        if (!autoClose || !shouldShowLevelUp) return;
-
-        const timer = setTimeout(() => {
-            handleCloseLevelUp();
-        }, 1500);
-
-        return () => clearTimeout(timer);
-    }, [autoClose, shouldShowLevelUp, handleCloseLevelUp]);
-
-    // Click-outside-to-close: close the overlay when user clicks outside the card.
-    // This allows players to dismiss the level-up overlay by clicking on the
-    // background, which is especially important in auto-mode where the overlay
-    // would otherwise block the FIGHT button until the autoClose timer fires.
     useEffect(() => {
         if (!shouldShowLevelUp) return;
+        if (pointsRemaining > 0) return;
 
-        const handleClickOutside = (e: MouseEvent) => {
-            const card = overlayRef.current?.querySelector('.level-up-card');
-            if (card && !card.contains(e.target as Node)) {
-                handleCloseLevelUp();
-            }
-        };
-
-        // Use capture phase so this fires before any target-phase handler
-        window.addEventListener('click', handleClickOutside, true);
-        return () => window.removeEventListener('click', handleClickOutside, true);
-    }, [shouldShowLevelUp, handleCloseLevelUp]);
+        const timer = setTimeout(onClose, 800);
+        return () => clearTimeout(timer);
+    }, [pointsRemaining, shouldShowLevelUp, onClose]);
 
     if (!shouldShowLevelUp) return null;
 
     return (
-        <div className="level-up-pop-overlay" ref={overlayRef}>
+        <div className="level-up-pop-overlay">
             <div className="level-up-card">
                 <div className="card-shine"></div>
                 <div className="level-up-badge">NEW RANK!</div>
@@ -96,14 +69,14 @@ const LevelUpOverlay = ({
                 <div className="stars-bottom">★ ★ ★ ★ ★</div>
                 <div className="level-up-points">
                     <div className="points-label">
-                        {pendingStatPoints > 0 ? 'POINTS TO SPEND' : 'ALL POINTS ALLOCATED'}
+                        {pointsRemaining > 0 ? 'POINTS TO SPEND' : 'ALL POINTS ALLOCATED'}
                     </div>
-                    {pendingStatPoints > 0 && (
-                        <div className="points-value">{pendingStatPoints}</div>
+                    {pointsRemaining > 0 && (
+                        <div className="points-value">{pointsRemaining}</div>
                     )}
                     {isOfflineMode && (
                         <div className="points-warning">CONNECT TO ASSIGN POINTS</div>
-                    )} 
+                    )}
                 </div>
                 <div className="level-up-stats">
                     {statOptions.map((stat) => (
@@ -114,11 +87,11 @@ const LevelUpOverlay = ({
                             <span className="stat-label">{stat.label}</span>
                             <span className="stat-value">{stat.value}</span>
                             <span className="stat-hint">{stat.hint}</span>
-                            {pendingStatPoints > 0 && (
+                            {pointsRemaining > 0 && (
                                 <button
                                     className="button stat-add-btn"
-                                    onClick={() => handleAllocateStat(stat.key)}
-                                    disabled={isOfflineMode}
+                                    onClick={() => onAllocateStat(stat.key)}
+                                    disabled={saving || isOfflineMode}
                                     aria-label={`Increase ${stat.label}`}
                                 >
                                     +
@@ -129,16 +102,10 @@ const LevelUpOverlay = ({
                 </div>
                 <div className="level-up-actions">
                     <button
-                        className="button secondary-btn level-up-later"
-                        onClick={handleDeferLevelUp}
-                    >
-                        LATER
-                    </button>
-                    <button
                         className="button primary-btn level-up-confirm"
-                        onClick={handleCloseLevelUp}
+                        onClick={onClose}
                     >
-                        APPLY
+                        CLOSE
                     </button>
                 </div>
             </div>

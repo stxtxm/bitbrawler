@@ -26,7 +26,7 @@ import { MonsterId } from '../data/monsterAssets';
 
 
 const Arena = () => {
-    const { activeCharacter, logout, useFight, usePveFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, saveStatAllocations, saveEquipment, rollLootbox, setAutoMode, deleteCharacter, setCharacter } = useGame();
+    const { activeCharacter, logout, useFight, usePveFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, allocateStatPoint, saveStatAllocations, saveEquipment, rollLootbox, setAutoMode, deleteCharacter, setCharacter } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const { play, enabled, setEnabled } = useSound();
     const navigate = useNavigate();
@@ -39,7 +39,7 @@ const Arena = () => {
     const [inventoryOpen, setInventoryOpen] = useState(false);
     const [matchmaking, setMatchmaking] = useState(false);
     const [combatData, setCombatData] = useState<MatchmakingResult | null>(null);
-    const [pendingAllocations, setPendingAllocations] = useState<Partial<Record<StatKey, number>>>({});
+    const [saving, setSaving] = useState(false);
     const [lootboxRolling, setLootboxRolling] = useState(false);
     const [lootboxResult, setLootboxResult] = useState<PixelItemAsset | null>(null);
     const [inventoryHoveredId, setInventoryHoveredId] = useState<string | null>(null);
@@ -133,11 +133,8 @@ const Arena = () => {
     const pveFightsLeft = activeCharacter.pveFightsLeft ?? 5;
     const hasPendingFight = !!activeCharacter.pendingFight;
     const canFight = !isOfflineMode && !hasPendingFight && !activeCharacter?.autoMode && (pveMode ? pveFightsLeft > 0 : fightsLeft > 0);
-    const pendingStatPoints = activeCharacter.statPoints || 0;
-    const totalPendingAlloc = Object.values(pendingAllocations).reduce((a, b) => a + b, 0);
-    const projectedStatPoints = pendingStatPoints - totalPendingAlloc;
-    const shouldShowLevelUp = showLevelUp;
-    const hasLevelInfo = lastLevelUp !== null;
+    const pointsRemaining = activeCharacter.statPoints || 0;
+    const shouldShowLevelUp = showLevelUp && pointsRemaining > 0;
     const inventory = activeCharacter.inventory || [];
     const inventoryCapacity = INVENTORY_CAPACITY;
     const inventoryFull = inventory.length >= inventoryCapacity;
@@ -152,10 +149,7 @@ const Arena = () => {
         { key: 'intelligence', label: 'INT', value: effectiveCharacter.intelligence, hint: 'Magic Power', icon: 'intelligence' },
         { key: 'focus', label: 'FOC', value: effectiveCharacter.focus, hint: 'Accuracy / Control', icon: 'focus' },
     ];
-    const projectedStatOptions = statOptions.map(s => ({
-        ...s,
-        value: s.value + (pendingAllocations[s.key as StatKey] || 0),
-    }));
+
     const itemStatMeta: Record<keyof ItemStats, { label: string; icon: StatIconType }> = {
         strength: { label: 'STR', icon: 'strength' },
         vitality: { label: 'VIT', icon: 'vitality' },
@@ -202,38 +196,20 @@ const Arena = () => {
         [activeCharacter.fightHistory, activeCharacter.incomingFightHistory]
     );
 
-    const handleAllocateStat = (stat: StatKey) => {
-        if (projectedStatPoints <= 0) return;
-        setPendingAllocations(prev => ({ ...prev, [stat]: (prev[stat] || 0) + 1 }));
-    };
-
-    const handleCloseLevelUp = async () => {
-        const entries = Object.entries(pendingAllocations) as [StatKey, number][];
-        if (entries.length === 0) {
-            setShowLevelUp(false);
-            clearXpNotifications();
-            return;
-        }
-
-        if (isOfflineMode) {
-            openModal('Connect to save stat points.');
-            return;
-        }
-
+    const handleAllocateStat = async (stat: StatKey) => {
+        if (saving) return;
+        if (pointsRemaining <= 0) return;
+        setSaving(true);
         try {
-            await saveStatAllocations(pendingAllocations);
+            await allocateStatPoint(stat);
         } catch (error: any) {
             openModal(error.message || connectionMessage);
-            return;
+        } finally {
+            setSaving(false);
         }
-
-        setPendingAllocations({});
-        setShowLevelUp(false);
-        clearXpNotifications();
     };
 
-    const handleDeferLevelUp = () => {
-        setPendingAllocations({});
+    const handleDismissLevelUp = () => {
         setShowLevelUp(false);
         clearXpNotifications();
     };
@@ -261,12 +237,6 @@ const Arena = () => {
             console.error('Equipment DB save failed:', err)
         );
     };
-
-    useEffect(() => {
-        if (pendingStatPoints === 0) {
-            setPendingAllocations({});
-        }
-    }, [pendingStatPoints]);
 
     useEffect(() => {
         if (!inventoryOpen) {
@@ -458,14 +428,11 @@ const Arena = () => {
                 shouldShowLevelUp={shouldShowLevelUp}
                 activeCharacter={activeCharacter}
                 lastLevelUp={lastLevelUp}
-                pendingStatPoints={projectedStatPoints}
                 isOfflineMode={isOfflineMode}
-                statOptions={projectedStatOptions}
-                hasLevelInfo={hasLevelInfo}
-                autoClose={!!activeCharacter?.autoMode}
-                handleAllocateStat={handleAllocateStat}
-                handleCloseLevelUp={handleCloseLevelUp}
-                handleDeferLevelUp={handleDeferLevelUp}
+                statOptions={statOptions}
+                saving={saving}
+                onAllocateStat={handleAllocateStat}
+                onClose={handleDismissLevelUp}
             />
 
             <header className="arena-header">
@@ -555,7 +522,7 @@ const Arena = () => {
                                 </div>
                             ))}
                         </div>
-                        {pendingStatPoints > 0 && (
+                        {pointsRemaining > 0 && (
                             <button
                                 className="button secondary-btn stat-allocate-btn"
                                 onClick={handleOpenLevelUp}
