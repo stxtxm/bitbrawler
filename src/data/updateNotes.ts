@@ -8,23 +8,6 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
-    version: '2.7.0',
-    date: '2026-06-17',
-    title: 'Stat cap enforcement, DB error handling & bot engine fixes',
-    changes: [
-      'Stat caps aligned with DB CHECK constraints (MIN_VALUE=5, MAX_VALUE=15) — prevents silent DB rejections on level-up.',
-      'applyStatPoint now refuses allocation when stat is at MAX_VALUE (15), point stays unallocated instead of lost.',
-      'PostgREST error handling added to all stat/equip/fight DB writes — errors are now thrown instead of silently swallowed.',
-      'Bot engine fixed: equipped_items column migration added (was missing from Supabase schema).',
-      'Level-up overlay no longer auto-shows on reconnect for unallocated stat points.',
-      'Lootbox rarity redistribution: low-level epic items added, legendary weight increased (0.002 → 0.008).',
-      'Combat win rate rebalanced from 80% to 55-60% for healthier progression.',
-      'XP loss increased from 45 to 55 for better loss retention.',
-      'New test coverage: stat cap enforcement, equipment HP bonuses, item data integrity (slot/rarity/ID uniqueness), legendary level minimums.',
-      '399 tests passing across 45 test files.',
-    ],
-  },
-  {
     version: '3.0.0',
     date: '2026-06-17',
     title: 'PvE Monster Battles — fight 3 8-bit monsters with separate energy pool',
@@ -42,6 +25,23 @@ export const UPDATE_NOTES: UpdateNote[] = [
       'QA tester supports --pve flag to toggle PvE mode during automated runs.',
       '32 new tests: monster data integrity, monster generation/scaling, PvE combat, arena UI integration.',
       '431 tests passing across 49 test files.',
+    ],
+  },
+  {
+    version: '2.7.0',
+    date: '2026-06-17',
+    title: 'Stat cap enforcement, DB error handling & bot engine fixes',
+    changes: [
+      'Stat caps aligned with DB CHECK constraints (MIN_VALUE=5, MAX_VALUE=15) — prevents silent DB rejections on level-up.',
+      'applyStatPoint now refuses allocation when stat is at MAX_VALUE (15), point stays unallocated instead of lost.',
+      'PostgREST error handling added to all stat/equip/fight DB writes — errors are now thrown instead of silently swallowed.',
+      'Bot engine fixed: equipped_items column migration added (was missing from Supabase schema).',
+      'Level-up overlay no longer auto-shows on reconnect for unallocated stat points.',
+      'Lootbox rarity redistribution: low-level epic items added, legendary weight increased (0.002 → 0.008).',
+      'Combat win rate rebalanced from 80% to 55-60% for healthier progression.',
+      'XP loss increased from 45 to 55 for better loss retention.',
+      'New test coverage: stat cap enforcement, equipment HP bonuses, item data integrity (slot/rarity/ID uniqueness), legendary level minimums.',
+      '399 tests passing across 45 test files.',
     ],
   },
   {
