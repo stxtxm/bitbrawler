@@ -50,7 +50,7 @@ describe('GameContext Integration', () => {
     level: 5,
     hp: 150,
     maxHp: 150,
-    strength: 15,
+    strength: 14,
     vitality: 12,
     dexterity: 10,
     luck: 8,
