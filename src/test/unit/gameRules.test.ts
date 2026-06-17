@@ -36,8 +36,20 @@ describe('Game rules', () => {
     expect(GAME_RULES.PVE.STAT_MULTIPLIER).toBeGreaterThan(1);
   });
 
+  it('PVE stat multiplier is balanced for target win rate', () => {
+    expect(GAME_RULES.PVE.STAT_MULTIPLIER).toBe(1.6);
+  });
+
   it('PVE HP multiplier extends fights', () => {
     expect(GAME_RULES.PVE.HP_MULTIPLIER).toBeGreaterThan(1);
+  });
+
+  it('PVE HP multiplier is balanced for longer battles', () => {
+    expect(GAME_RULES.PVE.HP_MULTIPLIER).toBe(2.2);
+  });
+
+  it('PVE level boost stays at 1', () => {
+    expect(GAME_RULES.PVE.LEVEL_BOOST).toBe(1);
   });
 
   it('BOTS config has positive values', () => {
