@@ -127,9 +127,9 @@ describe('lootboxUtils', () => {
     expect(high.epic).toBeGreaterThan(mid.epic);
   });
 
-  it('has adjusted base weights at level 1 (common 0.478)', () => {
+  it('has adjusted base weights at level 1 (common 0.472)', () => {
     const weights = getLootboxRarityWeights(1);
-    expect(weights.common).toBe(0.478);
+    expect(weights.common).toBe(0.472);
   });
 
   it('has adjusted base weights at level 1 (rare 0.17)', () => {
@@ -163,22 +163,22 @@ describe('lootboxUtils', () => {
   it('includes legendary in getLootboxRarityWeights at level 7-9', () => {
     const weights = getLootboxRarityWeights(7);
     expect(weights.legendary).toBeGreaterThan(0);
-    expect(weights.legendary).toBe(0.02);
+    expect(weights.legendary).toBe(0.025);
   });
 
-  it('includes legendary at level 1 with 0.002 weight', () => {
+  it('includes legendary at level 1 with 0.008 weight', () => {
     const weights = getLootboxRarityWeights(1);
-    expect(weights.legendary).toBe(0.002);
+    expect(weights.legendary).toBe(0.008);
   });
 
-  it('includes legendary at level 2 with 0.002 weight', () => {
+  it('includes legendary at level 2 with 0.008 weight', () => {
     const weights = getLootboxRarityWeights(2);
-    expect(weights.legendary).toBe(0.002);
+    expect(weights.legendary).toBe(0.008);
   });
 
-  it('includes legendary at level 3 with 0.002 weight', () => {
+  it('includes legendary at level 3 with 0.008 weight', () => {
     const weights = getLootboxRarityWeights(3);
-    expect(weights.legendary).toBe(0.002);
+    expect(weights.legendary).toBe(0.008);
   });
 
   it('sum of weights at level 3 equals 1.0', () => {
@@ -189,17 +189,17 @@ describe('lootboxUtils', () => {
 
   it('includes legendary at level 4-6', () => {
     const weights = getLootboxRarityWeights(4);
-    expect(weights.legendary).toBe(0.01);
+    expect(weights.legendary).toBe(0.015);
   });
 
-  it('keeps legendary at 0.01 for level 6 (upper edge of tier)', () => {
+  it('keeps legendary at 0.015 for level 6 (upper edge of tier)', () => {
     const weights = getLootboxRarityWeights(6);
-    expect(weights.legendary).toBe(0.01);
+    expect(weights.legendary).toBe(0.015);
   });
 
-  it('reduces common to 0.50 at level 4-6 to compensate for higher epic', () => {
+  it('reduces common to 0.495 at level 4-6 to compensate for higher legendary', () => {
     const weights = getLootboxRarityWeights(4);
-    expect(weights.common).toBe(0.50);
+    expect(weights.common).toBe(0.495);
   });
 
   it('sum of weights at level 4 equals 1.0', () => {

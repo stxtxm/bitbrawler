@@ -35,10 +35,10 @@ export const COMBAT_BALANCE = {
     max: 88,
   },
   damage: {
-    offenseWeight: 1.45,
+    offenseWeight: 1.38,
     defenseWeight: 0.42,
     min: 6,
-    critMultiplier: 1.45,
+    critMultiplier: 1.30,
   },
   magic: {
     baseChance: 5,
