@@ -411,7 +411,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     updatedChar = normalizeCharacter(updatedChar);
 
     try {
-      await supabase
+      const { error } = await supabase
         .from('characters')
         .update({
           strength: updatedChar.strength,
@@ -425,6 +425,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           stat_points: updatedChar.statPoints,
         })
         .eq('id', activeCharacter.id!);
+
+      if (error) throw error;
 
       persistCharacter(updatedChar);
       return updatedChar;
@@ -440,7 +442,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const normalized = normalizeCharacter(char);
 
     try {
-      await supabase
+      const { error } = await supabase
         .from('characters')
         .update({
           inventory: normalized.inventory,
@@ -448,11 +450,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         })
         .eq('id', char.id);
 
+      if (error) throw error;
+
       persistCharacter(normalized);
       return normalized;
     } catch (error: any) {
       handleDbError(error, 'save-equipment');
-      persistCharacter(normalized);
       throw new Error("Connection error - equipment not saved. Please check your internet connection.");
     }
   }, [handleDbError, persistCharacter]);
