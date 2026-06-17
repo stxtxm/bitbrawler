@@ -125,7 +125,7 @@ jobs:
 
             ## Règles
             - Si CI est verte ✅ et tout est bon → \`gh pr review --approve "$PR_NUMBER"\` puis \`gh pr merge "$PR_NUMBER" --squash --delete-branch\`
-            - Si problèmes → \`gh pr review "$PR_NUMBER" --request-changes --body "feedback..."\`
+            - Si CI est rouge → \`gh pr review "$PR_NUMBER" --request-changes --body "feedback..."\` même si l'erreur est préexistante (cela déclenche le dev agent qui corrigera)
             - NE JAMAIS approuver si CI est rouge
             - NE JAMAIS merge si le code a des problèmes de sécurité
             - Si le changement semble bon mais mérite un suivi, approuve + crée une issue de suivi avec \`gh issue create\`

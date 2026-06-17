@@ -12919,5 +12919,530 @@
     "load_times_ms": {
       "home": 1488
     }
+  },
+  {
+    "date": "2026-06-14T22:01:27.904Z",
+    "run": "2026-06-15",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name AMBERTITAN"
+    ],
+    "load_times_ms": {
+      "home": 1680
+    }
+  },
+  {
+    "date": "2026-06-15T01:01:25.289Z",
+    "run": "2026-06-15",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name VECTOR"
+    ],
+    "load_times_ms": {
+      "home": 1416
+    }
+  },
+  {
+    "date": "2026-06-15T04:01:24.106Z",
+    "run": "2026-06-15",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name SAGEAVATAR"
+    ],
+    "load_times_ms": {
+      "home": 1463
+    }
+  },
+  {
+    "date": "2026-06-15T07:01:30.475Z",
+    "run": "2026-06-15",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name GLORYSKULL"
+    ],
+    "load_times_ms": {
+      "home": 1725
+    }
+  },
+  {
+    "date": "2026-06-15T10:01:34.475Z",
+    "run": "2026-06-15",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name STARKWARD"
+    ],
+    "load_times_ms": {
+      "home": 2152
+    }
+  },
+  {
+    "date": "2026-06-15T13:01:35.683Z",
+    "run": "2026-06-15",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name VALORMONK"
+    ],
+    "load_times_ms": {
+      "home": 1861
+    }
+  },
+  {
+    "date": "2026-06-15T16:01:38.966Z",
+    "run": "2026-06-15",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name ROGUEMOON"
+    ],
+    "load_times_ms": {
+      "home": 1503
+    }
+  },
+  {
+    "date": "2026-06-15T19:01:47.911Z",
+    "run": "2026-06-15",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name VIVIDAGENT"
+    ],
+    "load_times_ms": {
+      "home": 1829
+    }
+  },
+  {
+    "date": "2026-06-15T22:01:42.501Z",
+    "run": "2026-06-16",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name ROGUE"
+    ],
+    "load_times_ms": {
+      "home": 1886
+    }
+  },
+  {
+    "date": "2026-06-16T01:01:34.612Z",
+    "run": "2026-06-16",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name PULSEDRONE"
+    ],
+    "load_times_ms": {
+      "home": 1590
+    }
+  },
+  {
+    "date": "2026-06-16T04:01:38.655Z",
+    "run": "2026-06-16",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name DAWNKNIGHT"
+    ],
+    "load_times_ms": {
+      "home": 2155
+    }
+  },
+  {
+    "date": "2026-06-16T07:01:49.618Z",
+    "run": "2026-06-16",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name ARCHERBOLT"
+    ],
+    "load_times_ms": {
+      "home": 1881
+    }
+  },
+  {
+    "date": "2026-06-16T10:01:49.309Z",
+    "run": "2026-06-16",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name WAVEAVATAR"
+    ],
+    "load_times_ms": {
+      "home": 1773
+    }
+  },
+  {
+    "date": "2026-06-16T13:01:41.365Z",
+    "run": "2026-06-16",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name VIVIDSHARK"
+    ],
+    "load_times_ms": {
+      "home": 1693
+    }
+  },
+  {
+    "date": "2026-06-16T16:01:59.525Z",
+    "run": "2026-06-16",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name OMENRAPTOR"
+    ],
+    "load_times_ms": {
+      "home": 2106
+    }
+  },
+  {
+    "date": "2026-06-16T19:01:55.201Z",
+    "run": "2026-06-16",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name ASHENRAVEN"
+    ],
+    "load_times_ms": {
+      "home": 1585
+    }
+  },
+  {
+    "date": "2026-06-16T22:01:57.239Z",
+    "run": "2026-06-17",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name WILD"
+    ],
+    "load_times_ms": {
+      "home": 2298
+    }
+  },
+  {
+    "date": "2026-06-17T01:01:25.397Z",
+    "run": "2026-06-17",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name GILDEDRUNE"
+    ],
+    "load_times_ms": {
+      "home": 1394
+    }
+  },
+  {
+    "date": "2026-06-17T04:01:32.990Z",
+    "run": "2026-06-17",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name ENIGMASAGE"
+    ],
+    "load_times_ms": {
+      "home": 1539
+    }
+  },
+  {
+    "date": "2026-06-17T07:01:45.994Z",
+    "run": "2026-06-17",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name IVORYGUARD"
+    ],
+    "load_times_ms": {
+      "home": 1524
+    }
+  },
+  {
+    "date": "2026-06-17T10:01:34.403Z",
+    "run": "2026-06-17",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name SOLARNOVA"
+    ],
+    "load_times_ms": {
+      "home": 2124
+    }
   }
 ]

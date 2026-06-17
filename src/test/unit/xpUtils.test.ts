@@ -226,24 +226,24 @@ describe('XP Utils', () => {
     });
 
     describe('XP tuning — Loss rewards', () => {
-        it('XP_LOSS should be 45 for better loss retention', () => {
-            expect(GAME_RULES.COMBAT.XP_LOSS).toBe(45);
+        it('XP_LOSS should be 55 for better loss retention (was 45)', () => {
+            expect(GAME_RULES.COMBAT.XP_LOSS).toBe(55);
         });
 
-        it('should yield ~45 XP average per loss at level 1', () => {
+        it('should yield ~55 XP average per loss at level 1', () => {
             let total = 0;
             const trials = 200;
             for (let i = 0; i < trials; i++) {
                 total += calculateFightXp(false, 1);
             }
             const avg = total / trials;
-            // With base 45 + variance ±10%: range [40.5, 49.5]
-            expect(avg).toBeGreaterThan(36);
-            expect(avg).toBeLessThan(54);
+            // With base 55 + variance ±10%: range [49.5, 60.5]
+            expect(avg).toBeGreaterThan(44);
+            expect(avg).toBeLessThan(66);
         });
 
         it('should make loss XP feel meaningful — at least 30% of win XP', () => {
-            // XP_LOSS=45 should be at least 30% of XP_WIN=135 (ratio ~3:1)
+            // XP_LOSS=55 should be at least 30% of XP_WIN=135 (ratio ~2.45:1)
             expect(GAME_RULES.COMBAT.XP_LOSS / GAME_RULES.COMBAT.XP_WIN).toBeGreaterThanOrEqual(0.30);
         });
     });
