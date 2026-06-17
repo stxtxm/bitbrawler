@@ -208,6 +208,18 @@ jobs:
             exit 1
           fi
 
+      - name: Validate code (lint, test, build)
+        run: |
+          echo "🔍 Running lint..."
+          npm run lint || { echo "❌ Lint failed — agent must fix"; exit 1; }
+          echo "✅ Lint passed"
+          echo "🔍 Running tests..."
+          npm test || { echo "❌ Tests failed — agent must fix"; exit 1; }
+          echo "✅ Tests passed"
+          echo "🔍 Running build..."
+          npm run build || { echo "❌ Build failed — agent must fix"; exit 1; }
+          echo "✅ Build passed"
+
       - name: Push and manage PR
         id: pr_create
         env:
