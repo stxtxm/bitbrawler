@@ -96,14 +96,14 @@ const LevelUpOverlay = ({
                 <div className="stars-bottom">★ ★ ★ ★ ★</div>
                 <div className="level-up-points">
                     <div className="points-label">
-                        {pendingStatPoints > 1 ? 'POINTS TO SPEND' : 'CHOOSE A STAT'}
+                        {pendingStatPoints > 0 ? 'POINTS TO SPEND' : 'ALL POINTS ALLOCATED'}
                     </div>
-                    {pendingStatPoints > 1 && (
+                    {pendingStatPoints > 0 && (
                         <div className="points-value">{pendingStatPoints}</div>
                     )}
                     {isOfflineMode && (
                         <div className="points-warning">CONNECT TO ASSIGN POINTS</div>
-                    )}
+                    )} 
                 </div>
                 <div className="level-up-stats">
                     {statOptions.map((stat) => (
@@ -114,14 +114,16 @@ const LevelUpOverlay = ({
                             <span className="stat-label">{stat.label}</span>
                             <span className="stat-value">{stat.value}</span>
                             <span className="stat-hint">{stat.hint}</span>
-                            <button
-                                className="button stat-add-btn"
-                                onClick={() => handleAllocateStat(stat.key)}
-                                disabled={pendingStatPoints <= 0 || isOfflineMode}
-                                aria-label={`Increase ${stat.label}`}
-                            >
-                                +
-                            </button>
+                            {pendingStatPoints > 0 && (
+                                <button
+                                    className="button stat-add-btn"
+                                    onClick={() => handleAllocateStat(stat.key)}
+                                    disabled={isOfflineMode}
+                                    aria-label={`Increase ${stat.label}`}
+                                >
+                                    +
+                                </button>
+                            )}
                         </div>
                     ))}
                 </div>
