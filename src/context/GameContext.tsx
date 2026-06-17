@@ -301,7 +301,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
 
      try {
-        await supabase
+        const { error } = await supabase
          .from('characters')
          .update({
            fights_left: updatedChar.fightsLeft,
@@ -323,6 +323,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
            pending_fight: null
          })
          .eq('id', baseCharacter.id!);
+
+       if (error) throw error;
 
        persistCharacter(updatedChar);
        initiatedMatchmakingRef.current = false;
@@ -378,7 +380,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const updatedChar = normalizeCharacter(applyStatPoint(activeCharacter, stat));
 
      try {
-       await supabase
+       const { error } = await supabase
         .from('characters')
         .update({
           [stat]: (updatedChar as any)[stat],
@@ -388,6 +390,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           focus: updatedChar.focus
         })
         .eq('id', activeCharacter.id!);
+
+       if (error) throw error;
 
        persistCharacter(updatedChar);
        return updatedChar;
