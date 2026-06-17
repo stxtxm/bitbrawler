@@ -19,7 +19,7 @@ export const COMBAT_BALANCE = {
   comeback: {
     hpThresholdRatio: 0.35,
     hitBonus: 2,
-    damageMultiplier: 1.06,
+    damageMultiplier: 1.03,
   },
   initiative: {
     baseChance: 0.5,
@@ -28,17 +28,17 @@ export const COMBAT_BALANCE = {
     maxChance: 0.6,
   },
   hitChance: {
-    base: 72,
+    base: 70,
     speedWeight: 0.4,
     focusWeight: 0.35,
     min: 60,
-    max: 92,
+    max: 88,
   },
   damage: {
-    offenseWeight: 1.52,
+    offenseWeight: 1.38,
     defenseWeight: 0.42,
     min: 6,
-    critMultiplier: 1.45,
+    critMultiplier: 1.30,
   },
   magic: {
     baseChance: 5,

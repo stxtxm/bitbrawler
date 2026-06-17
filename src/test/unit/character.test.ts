@@ -93,7 +93,7 @@ describe('Character Generation', () => {
     });
 
     it('should consistently have the primary stat be the highest or tied for highest', () => {
-        // Since the primary stat gets 10x weight vs 1x for others,
+        // Since the primary stat gets 15x weight vs 1x for others,
         // it should be the highest stat (or tied) in the vast majority of cases
         let primaryIsHighest = 0;
         const SAMPLES = 100;
@@ -113,5 +113,41 @@ describe('Character Generation', () => {
         }
         // At least 80% of characters should have a clear primary archetype
         expect(primaryIsHighest).toBeGreaterThanOrEqual(80);
+    });
+
+    it('should cap non-primary stats at MAX_VALUE-1 while primary can reach MAX_VALUE', () => {
+        // Only the primary stat can reach MAX_VALUE (14);
+        // all other stats are capped at MAX_VALUE-1 (13).
+        // Over 100 characters, at most 1 stat should exceed MAX_VALUE-1.
+        const SAMPLES = 100;
+        for (let i = 0; i < SAMPLES; i++) {
+            const char = generateInitialStats(`Test_${i}`, 'male');
+            const allStats = [
+                char.strength, char.vitality, char.dexterity,
+                char.luck, char.intelligence, char.focus
+            ];
+            const statsAboveSecondaryCap = allStats.filter(
+                s => s > GAME_RULES.STATS.MAX_VALUE - 1
+            );
+            expect(statsAboveSecondaryCap.length).toBeLessThanOrEqual(1);
+        }
+    });
+
+    it('should produce an average stat spread > 4 with the new weights (stronger archetypes)', () => {
+        // With primary=15x, secondary=5x weights and secondary caps,
+        // the range (max - min) across 6 stats should average > 4
+        let totalSpread = 0;
+        const SAMPLES = 100;
+        for (let i = 0; i < SAMPLES; i++) {
+            const char = generateInitialStats(`Test_${i}`, 'male');
+            const allStats = [
+                char.strength, char.vitality, char.dexterity,
+                char.luck, char.intelligence, char.focus
+            ];
+            const spread = Math.max(...allStats) - Math.min(...allStats);
+            totalSpread += spread;
+        }
+        const avgSpread = totalSpread / SAMPLES;
+        expect(avgSpread).toBeGreaterThan(4);
     });
 });
