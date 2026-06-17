@@ -14,10 +14,10 @@ describe('Combat Balance Config', () => {
     expect(COMBAT_BALANCE.damage.critMultiplier).toBe(1.30);
   });
 
-  it('should have a lower base hit chance (70) to increase miss rate', () => {
-    // Adjusted from 72 → 70 so overall accuracy drops slightly
+  it('should have a lower base hit chance (68) to increase miss rate', () => {
+    // Adjusted from 72 → 68 so overall accuracy drops further
     // More misses create more tension and reduce attacker dominance
-    expect(COMBAT_BALANCE.hitChance.base).toBe(70);
+    expect(COMBAT_BALANCE.hitChance.base).toBe(68);
   });
 
   it('should have a dampened comeback multiplier to prevent runaway underdog wins', () => {
