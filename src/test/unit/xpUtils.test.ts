@@ -268,21 +268,40 @@ describe('XP Utils', () => {
 
     describe('XP curve progression', () => {
         it('should have a reasonable early game progression', () => {
-            // Check that early levels are achievable
             const xpLevel1 = getXpRequiredForNextLevel(1);
             const xpLevel5 = getXpRequiredForNextLevel(5);
 
-            expect(xpLevel1).toBeLessThan(200); // Not too grindy at start
-            expect(xpLevel5).toBeLessThan(2000); // Still reasonable at level 5
+            expect(xpLevel1).toBeLessThan(200);
+            expect(xpLevel5).toBeLessThan(2000);
         });
 
         it('should have challenging late game progression', () => {
-            // Check that late levels require significant XP
             const xpLevel50 = getXpRequiredForNextLevel(50);
             const xpLevel90 = getXpRequiredForNextLevel(90);
 
             expect(xpLevel50).toBeGreaterThan(10000);
             expect(xpLevel90).toBeGreaterThan(100000);
+        });
+
+        it('should require ~1-3 wins for level 2 (quick start)', () => {
+            const xpNeeded = getXpRequiredForNextLevel(1);
+            const winXp = calculateFightXp(true, 1);
+            const fights = Math.ceil(xpNeeded / winXp);
+            expect(fights).toBeLessThanOrEqual(3);
+        });
+
+        it('should require 25+ wins per level at level 20 (mid-game grind)', () => {
+            const xpNeeded = getXpRequiredForNextLevel(20);
+            const winXp = calculateFightXp(true, 20);
+            const fights = Math.ceil(xpNeeded / winXp);
+            expect(fights).toBeGreaterThanOrEqual(25);
+        });
+
+        it('should keep level 50 requirement < 100 fights per level (not infinite grind)', () => {
+            const xpNeeded = getXpRequiredForNextLevel(50);
+            const winXp = calculateFightXp(true, 50);
+            const fights = Math.ceil(xpNeeded / winXp);
+            expect(fights).toBeLessThan(100);
         });
     });
 });

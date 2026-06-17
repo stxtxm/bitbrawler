@@ -261,31 +261,36 @@ export const generateInitialStats = (name: string, gender: 'male' | 'female'): C
     const primary = STAT_KEYS[Math.floor(Math.random() * NUM_STATS)];
     const otherStats = STAT_KEYS.filter(s => s !== primary);
     const secondaryCount = Math.random() < 0.5 ? 1 : 2;
-    // Shuffle and pick secondary stats
     for (let i = otherStats.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [otherStats[i], otherStats[j]] = [otherStats[j], otherStats[i]];
     }
     const secondaries = otherStats.slice(0, secondaryCount);
 
-    // Distribute remaining points using weighted random allocation.
-    // Weights: primary=15, each secondary=5, each remaining=1.
+    // Distribute remaining points using weighted random allocation
+    // with dynamic weights that prevent dump stats and extreme outliers:
+    //   - Stats below 7 get 2x weight (pulls them up from floor)
+    //   - Stats above 12 get diminishing weight (naturally limits tops)
+    //   - Base weights: primary=15x, secondary=5x, other=1x
     let pointsToDistribute = TOTAL_POINTS - START_BASE * NUM_STATS;
     while (pointsToDistribute > 0) {
         let totalWeight = 0;
         const weights: Partial<Record<StatKey, number>> = {};
         for (const statKey of STAT_KEYS) {
-            if (statKey === primary) {
-                weights[statKey] = 15;
-            } else if (secondaries.includes(statKey)) {
-                weights[statKey] = 5;
-            } else {
-                weights[statKey] = 1;
-            }
+            const baseWeight = statKey === primary ? 15
+                : secondaries.includes(statKey) ? 5
+                : 1;
+            const currentValue = stats[statKey];
+            // Boost low stats to prevent dump stats
+            const lowBoost = currentValue < 7 ? 2.0 : 1.0;
+            // Diminishing returns above 12
+            const diminishing = currentValue > 12
+                ? Math.max(0.25, 1 - (currentValue - 12) * 0.125)
+                : 1.0;
+            weights[statKey] = baseWeight * lowBoost * diminishing;
             totalWeight += weights[statKey]!;
         }
 
-        // Weighted random selection
         let roll = Math.random() * totalWeight;
         let selected: StatKey = STAT_KEYS[0];
         for (const statKey of STAT_KEYS) {

@@ -100,9 +100,7 @@ describe('Character Generation', () => {
         expect(primaryIsHighest).toBeGreaterThanOrEqual(80);
     });
 
-    it('should produce an average stat spread > 4 with the new weights (stronger archetypes)', () => {
-        // With primary=15x, secondary=5x weights,
-        // the range (max - min) across 6 stats should average > 4
+    it('should produce an average stat spread > 4 (strong archetypes)', () => {
         let totalSpread = 0;
         const SAMPLES = 100;
         for (let i = 0; i < SAMPLES; i++) {
@@ -116,5 +114,55 @@ describe('Character Generation', () => {
         }
         const avgSpread = totalSpread / SAMPLES;
         expect(avgSpread).toBeGreaterThan(4);
+    });
+
+    it('should keep all stats >= 7 on average (anti-dump floor)', () => {
+        const statBuckets: Record<string, number[]> = {
+            strength: [], vitality: [], dexterity: [],
+            luck: [], intelligence: [], focus: []
+        };
+        const SAMPLES = 200;
+        for (let i = 0; i < SAMPLES; i++) {
+            const char = generateInitialStats(`Test_${i}`, 'male');
+            for (const statKey of Object.keys(statBuckets)) {
+                statBuckets[statKey].push((char as any)[statKey]);
+            }
+        }
+        for (const [, vals] of Object.entries(statBuckets)) {
+            const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+            // Every stat should average at least 7 (no dump stats)
+            expect(avg).toBeGreaterThanOrEqual(7);
+        }
+    });
+
+    it('should keep the highest stat below 24 on average (no extreme outlier)', () => {
+        let sumMax = 0;
+        const SAMPLES = 200;
+        for (let i = 0; i < SAMPLES; i++) {
+            const char = generateInitialStats(`Test_${i}`, 'male');
+            const allStats = [
+                char.strength, char.vitality, char.dexterity,
+                char.luck, char.intelligence, char.focus
+            ];
+            sumMax += Math.max(...allStats);
+        }
+        const avgMax = sumMax / SAMPLES;
+        // Primary stat should not exceed 23 on average (controlled by diminishing returns)
+        expect(avgMax).toBeLessThan(24);
+    });
+
+    it('should keep the lowest stat above 6 on average (no dump)', () => {
+        let sumMin = 0;
+        const SAMPLES = 200;
+        for (let i = 0; i < SAMPLES; i++) {
+            const char = generateInitialStats(`Test_${i}`, 'male');
+            const allStats = [
+                char.strength, char.vitality, char.dexterity,
+                char.luck, char.intelligence, char.focus
+            ];
+            sumMin += Math.min(...allStats);
+        }
+        const avgMin = sumMin / SAMPLES;
+        expect(avgMin).toBeGreaterThan(6);
     });
 });
