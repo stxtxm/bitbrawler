@@ -81,7 +81,7 @@ Testing
 - Unit: lazy route prefetch gating (`canPrefetch`, `prefetchArena`) and end-of-day drain window checks.
 - Integration: matchmaking, pending fights, lootbox persistence, arena inventory/loadout/equip, offline routing, Supabase failover, and settings combat log privacy rendering.
 - Router warnings are prevented with shared `renderWithRouter` helper (`src/test/utils/router.tsx`).
-- **353 tests — 43 test files** (`npm test`).
+- **459 tests — 54 test files** (`npm test`).
 
 Infrastructure (v1.0.0)
 - Database migrated from Firebase Firestore to Supabase (PostgreSQL).

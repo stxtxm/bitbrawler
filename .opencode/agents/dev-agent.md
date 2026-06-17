@@ -29,7 +29,7 @@ Tu n'as **pas besoin** de créer une PR toi-même.
 ## 📋 Contexte projet
 
 - **Stack**: React + TypeScript + Vite
-- **Tests**: vitest (266+ tests, 39 fichiers)
+- **Tests**: vitest (459+ tests, 54 fichiers)
 - **DB**: Supabase (PostgreSQL, pas Firebase)
 - **Déploiement**: Vercel
 - **Linter**: ESLint

@@ -44,7 +44,7 @@ Bitbrawler is a **full-stack web application** with the following layers:
 | **Frontend Framework** | React 18 | UI rendering, state management |
 | **Type Safety** | TypeScript 5 | Compile-time type checking |
 | **Styling** | Sass (SCSS) | Component styling with nesting |
-| **Testing** | Vitest + RTL | Unit & integration tests (353+ tests) |
+| **Testing** | Vitest + RTL | Unit & integration tests (459+ tests) |
 | **Database** | Supabase (PostgreSQL) | Relational data, real-time subscriptions |
 | **Authentication** | Supabase Auth | Email/password auth with JWT |
 | **CI/CD** | GitHub Actions | Automated testing, building, deployment |
@@ -60,10 +60,19 @@ Bitbrawler is a **full-stack web application** with the following layers:
 ```
 src/
 ├── components/              # Reusable UI components
+│   ├── AffinityBadge.tsx    # Weapon element badge
 │   ├── CombatView.tsx       # Arena fight display
-│   ├── InventoryModal.tsx   # Item management
-│   ├── PixelCharacter.tsx   # Pixel art rendering
-│   └── ...
+│   ├── ConnectionModal.tsx  # DB connection gate
+│   ├── GameLogo.tsx         # 8-bit SVG logo
+│   ├── LevelUpOverlay.tsx   # Stat allocation on level-up
+│   ├── LoadingScreen.tsx    # Loading spinner
+│   ├── PixelCharacter.tsx   # Seed-based character SVG
+│   ├── PixelIcon.tsx        # Generic 8×8 pixel icon
+│   ├── PixelItemIcon.tsx    # Item sprite SVG
+│   ├── PixelMonster.tsx     # Monster 16×16 SVG
+│   ├── StatusScreen.tsx     # Status display
+│   ├── StreakIndicator.tsx  # Lootbox streak progress
+│   └── ErrorBoundary.tsx    # Error boundary
 │
 ├── pages/                   # Full-page routes
 │   ├── Arena.tsx            # Main game arena
@@ -104,7 +113,7 @@ src/
 ├── styles/                  # Global Sass styles
 │   └── ...
 │
-└── test/                    # Test suite (353+ tests, 43 files)
+└── test/                    # Test suite (431+ tests, 49 files)
     └── ...
 ```
 
@@ -494,7 +503,7 @@ const subscription = supabase
 
 - **Utility functions**: combatUtils, xpUtils, matchmakingUtils, etc.
 - **Framework**: Vitest
-- **Coverage**: 353+ tests, 43 files
+- **Coverage**: 431+ tests, 49 files
 
 ### Integration Tests
 

@@ -51,9 +51,11 @@ See [AGENTS.md](AGENTS.md) for autonomous agent workflows and responsibilities.
 - **8-bit UI** with SVG pixel rendering
 - **Character creation** with RPG stats (STR, VIT, DEX, LUK, INT, FOC)
 - **Arena fights** with XP gain, level ups, and enhanced combat (crit + magic + focus)
+- **PvE Monster Battles** — fight 3 8-bit monsters (Goblin/Ogre/Wraith) with separate energy pool (5 fights/day)
 - **Strict same-level matchmaking** with power balancing, daily opponent rotation, and animated opponent scan
 - **Daily lootbox + inventory** — 33 items across 3 slots (weapon/armor/accessory), 5 rarities (common→legendary), stat bonuses including HP
 - **Equipment loadouts** — manual equip/unequip with 6 weapon elements (fire/water/wind/earth/light/dark), affinity system (+15% damage vs bot archetypes)
+- **6 bot archetypes** (bruiser/tank/rogue/mage/lucky/zen) with elemental weakness mapping
 - **Stat caps (5-15)** — aligned with DB CHECK constraints, prevents over-allocation
 - **Bot engine** — population management with organic activity pacing, depleted-bot skipping, and protection rebalance
 - **Global daily reset** — scripted resets at midnight (Paris) for fights and opponent tracking
@@ -79,7 +81,7 @@ See [AGENTS.md](AGENTS.md) for autonomous agent workflows and responsibilities.
 | -------------- | ----------------------------------------------- |
 | Frontend       | React 18 + TypeScript + Vite                    |
 | Backend / Auth | Supabase (PostgreSQL, real-time, auth)          |
-| Testing        | Vitest + React Testing Library + jsdom — **431+ tests, 49 files**          |
+| Testing        | Vitest + React Testing Library + jsdom — **459+ tests, 54 files**          |
 | Styling        | Sass (SCSS)                                     |
 | Fonts          | Press Start 2P (via Fontsource)                 |
 | Scripting      | tsx (TypeScript executor)                       |
@@ -126,7 +128,7 @@ npm run dev                        # Start Vite dev server (localhost:5173)
 npm run preview                    # Preview production build
 
 # Testing & Quality
-npm test                           # Run test suite (Vitest — 431+ tests, 49 files)
+npm test                           # Run test suite (Vitest — 459+ tests, 54 files)
 npm run lint                       # ESLint check
 npm run build                      # TypeScript check + Vite production build
 
@@ -185,12 +187,24 @@ bitbrawler/
 │   ├── stats.json                  # Fight stats (auto-generated)
 │   └── analysis-latest.json        # Analyzed stats report (auto-generated)
 │
+├── supabase/                        # Database migrations
+│   └── migrations/                  # SQL migration files
+│
 ├── src/
 │   ├── components/                 # UI building blocks
-│   │   ├── CombatView.tsx
-│   │   ├── InventoryModal.tsx
-│   │   ├── ConnectionModal.tsx
-│   │   └── ...
+│   │   ├── AffinityBadge.tsx        # Weapon element badge
+│   │   ├── CombatView.tsx           # Fight overlay (intro/VS/combat/result)
+│   │   ├── ConnectionModal.tsx      # DB connection gate modal
+│   │   ├── GameLogo.tsx             # 8-bit SVG logo
+│   │   ├── LevelUpOverlay.tsx       # Stat allocation on level-up
+│   │   ├── LoadingScreen.tsx        # Loading spinner
+│   │   ├── PixelCharacter.tsx       # Seed-based character SVG
+│   │   ├── PixelIcon.tsx            # Generic 8×8 pixel icon
+│   │   ├── PixelItemIcon.tsx        # Item sprite SVG
+│   │   ├── PixelMonster.tsx         # Monster 16×16 SVG
+│   │   ├── StatusScreen.tsx         # Status display component
+│   │   ├── StreakIndicator.tsx      # Lootbox streak progress
+│   │   └── ErrorBoundary.tsx        # React error boundary
 │   │
 │   ├── config/                     # Game configuration
 │   │   ├── gameRules.ts            # Game constants & balance values
@@ -214,7 +228,7 @@ bitbrawler/
 │   ├── styles/                     # Global Sass styles
 │   │   └── ...scss files
 │   │
-│   ├── test/                       # Vitest test suite (399+ tests, 45 files)
+│   ├── test/                       # Vitest test suite (459+ tests, 54 files)
 │   │   └── ...test files
 │   │
 │   ├── types/                      # TypeScript type definitions
@@ -298,5 +312,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 - **How agents work?** → Read [AGENTS.md](AGENTS.md)
 - **Testing guidelines?** → See [TESTING.md](TESTING.md)
 - **Architecture questions?** → Check [ARCHITECTURE.md](ARCHITECTURE.md)
-
-<!-- Autonomous workflow test - 2026-05-25 -->

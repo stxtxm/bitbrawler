@@ -1,27 +1,27 @@
-# État de la Migration vers Supabase — ✅ Terminée
+# Migration Status: Supabase — ✅ Complete
 
 ## ✅ Configuration
-- [x] Créé `src/config/supabase.ts` avec la configuration Supabase
-- [x] Supprimé `src/config/firebase.ts` (migration terminée)
-- [x] Installé `@supabase/supabase-js`
-- [x] Créé `.env.example` avec les variables Supabase
+- [x] Created `src/config/supabase.ts` with Supabase configuration
+- [x] Removed `src/config/firebase.ts` (migration complete)
+- [x] Installed `@supabase/supabase-js`
+- [x] Created `.env.example` with Supabase variables
 
-## ✅ Code principal
-- [x] `src/context/GameContext.tsx` — Toutes les fonctions adaptées pour Supabase
-- [x] `src/utils/matchmakingUtils.ts` — Requêtes Supabase
-- [x] `src/pages/CharacterCreation.tsx` — Création personnage via Supabase
-- [x] `src/pages/Rankings.tsx` — Classements via Supabase
+## ✅ Core code
+- [x] `src/context/GameContext.tsx` — All functions adapted for Supabase
+- [x] `src/utils/matchmakingUtils.ts` — Supabase queries
+- [x] `src/pages/CharacterCreation.tsx` — Character creation via Supabase
+- [x] `src/pages/Rankings.tsx` — Rankings via Supabase
 
-## ✅ Scripts serveur
-- [x] `scripts/supabaseAdmin.ts` — Configuration Supabase pour les scripts (service_role)
-- [x] `scripts/bot-engine.ts` — Moteur de bots adapté Supabase
-- [x] `scripts/daily-reset-engine.ts` — Reset quotidien adapté Supabase
-- [x] `scripts/firebaseAdmin.ts` — Supprimé (remplacé par supabaseAdmin.ts)
+## ✅ Server scripts
+- [x] `scripts/supabaseAdmin.ts` — Supabase configuration for scripts (service_role)
+- [x] `scripts/bot-engine.ts` — Bot engine adapted for Supabase
+- [x] `scripts/daily-reset-engine.ts` — Daily reset adapted for Supabase
+- [x] `scripts/firebaseAdmin.ts` — Removed (replaced by supabaseAdmin.ts)
 
 ## ✅ Tests
-- [x] Mocks Supabase (`src/test/utils/supabaseMock.ts`)
-- [x] Tests combat, GameContext, failover adaptés pour Supabase
-- [x] **353 tests passent — 43 fichiers**
+- [x] Supabase mocks (`src/test/utils/supabaseMock.ts`)
+- [x] Combat, GameContext, failover tests adapted for Supabase
+- [x] **459+ tests pass — 54 files**
 
 ## ✅ GitHub Actions
 - [x] `bot-activity.yml` — Secrets `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
@@ -29,12 +29,12 @@
 
 ## ✅ Validation
 - [x] Build (`npm run build`) — OK
-- [x] Bot engine — 12 bots créés et actifs
-- [x] Daily reset forcé — 13 personnages reset, spot check OK
-- [x] Tests unitaires et d'intégration — 353/353 OK
+- [x] Bot engine — 12 bots created and active
+- [x] Forced daily reset — 13 characters reset, spot check OK
+- [x] Unit and integration tests — 459/459 OK
 
-## 📋 Notes de production
-- Créer la table `maintenance` dans Supabase SQL Editor :
+## 📋 Production notes
+- Create the `maintenance` table in Supabase SQL Editor:
   ```sql
   CREATE TABLE IF NOT EXISTS maintenance (
     id TEXT PRIMARY KEY,
@@ -50,15 +50,15 @@
   ALTER TABLE maintenance ENABLE ROW LEVEL SECURITY;
   GRANT ALL ON TABLE maintenance TO anon, authenticated, service_role;
   ```
-- Restreindre les politiques RLS pour la production (actuellement ouvert pour le développement).
-- Le champ `firestoreId` est conservé dans le code pour minimiser le diff.
+- Restrict RLS policies for production (currently open for development).
+- The `firestoreId` field is retained in code to minimize diff.
 
 ## ✅ Cleanup (v1.1.0)
-- [x] Supprimé `FirebaseError.tsx`, `CharacterCard.tsx` (composants inutilisés)
-- [x] Supprimé les dépendances `firebase` et `firebase-admin` de `package.json`
-- [x] Supprimé les documents de migration obsolètes (`MIGRATION_COMPLETE.md`, `MIGRATION_SUPABASE.md`, `SCRIPTS_MIGRATION.md`)
-- [x] Renommage `firebaseAvailable` → `dbAvailable` dans tout le code
-- [x] Renommage `handleFirebaseError` → `handleDbError`
-- [x] Extraction de `convertFromSupabase` partagé dans `src/utils/supabaseUtils.ts`
-- [x] Suppression des mocks Firebase obsolètes des tests
-- [x] Ajout de tests pour `matchmakingUtils` et `supabaseUtils` (20 nouveaux tests)
+- [x] Removed `FirebaseError.tsx`, `CharacterCard.tsx` (unused components)
+- [x] Removed `firebase` and `firebase-admin` dependencies from `package.json`
+- [x] Removed obsolete migration docs (`MIGRATION_COMPLETE.md`, `MIGRATION_SUPABASE.md`, `SCRIPTS_MIGRATION.md`)
+- [x] Renamed `firebaseAvailable` → `dbAvailable` throughout codebase
+- [x] Renamed `handleFirebaseError` → `handleDbError`
+- [x] Extracted shared `convertFromSupabase` in `src/utils/supabaseUtils.ts`
+- [x] Removed obsolete Firebase mocks from tests
+- [x] Added matchmakingUtils and supabaseUtils tests (20 new tests)

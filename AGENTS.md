@@ -237,7 +237,7 @@ The reviewer checks:
 
 ```
 ✓ CI Passed (lint, test, build)
-✓ Tests: 266/266 passed
+✓ Tests: 431/431 passed
 ✓ No TypeScript errors
 ✓ Code follows conventions
 ✓ No security issues
@@ -496,7 +496,7 @@ Each agent logs progress to GitHub Actions:
 ✓ Creating branch feat/auto-42
 ✓ Exploring codebase...
 ✓ Running npm test
-  ✓ 266 tests passed
+  ✓ 431 tests passed
 ✓ Running npm run build
   ✓ Build successful
 ✓ Pushing to feat/auto-42

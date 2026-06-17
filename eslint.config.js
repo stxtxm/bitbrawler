@@ -84,7 +84,7 @@ export default [
 
   // Arena has legacy imperative flow with guard returns and non-hook "useFight" naming.
   {
-    files: ['src/pages/Arena.tsx', 'src/context/useCombat.ts'],
+    files: ['src/pages/Arena.tsx'],
     rules: {
       'react-hooks/rules-of-hooks': 'off',
     },

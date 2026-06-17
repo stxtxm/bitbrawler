@@ -10,7 +10,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Types pour les tables
+// Character table row type
 export type CharacterRow = {
   id: string
   created_at: string

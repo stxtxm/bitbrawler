@@ -52,7 +52,7 @@ This document explains all **GitHub Actions workflows**, **OpenCode agent automa
 3. **Install** → `npm ci`
 4. **Lint** → `npm run lint` (ESLint)
 5. **Type Check** → `npx tsc --noEmit` (TypeScript)
-6. **Tests** → `npm test` (Vitest, 266+ tests)
+6. **Tests** → `npm test` (Vitest, 431+ tests)
 7. **Build** → `npm run build` (Vite production build)
 
 **Status Check**:
@@ -65,7 +65,7 @@ This document explains all **GitHub Actions workflows**, **OpenCode agent automa
 Your PR triggers CI:
   ✅ Lint passed
   ✅ Type check passed
-  ✅ Tests passed (266/266)
+   ✅ Tests passed (431/431)
   ✅ Build passed
   → Reviewer workflow triggered automatically
 ```
