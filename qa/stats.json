@@ -13369,5 +13369,30 @@
     "load_times_ms": {
       "home": 1394
     }
+  },
+  {
+    "date": "2026-06-17T04:01:32.990Z",
+    "run": "2026-06-17",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "level_up_events": [],
+    "errors": [
+      "Character creation did not reach arena for generated name ENIGMASAGE"
+    ],
+    "load_times_ms": {
+      "home": 1539
+    }
   }
 ]
