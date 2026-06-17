@@ -36,7 +36,6 @@ const Arena = () => {
     const [matchmaking, setMatchmaking] = useState(false);
     const [combatData, setCombatData] = useState<MatchmakingResult | null>(null);
     const [pendingAllocations, setPendingAllocations] = useState<Partial<Record<StatKey, number>>>({});
-    const [deferLevelUp, setDeferLevelUp] = useState(false);
     const [lootboxRolling, setLootboxRolling] = useState(false);
     const [lootboxResult, setLootboxResult] = useState<PixelItemAsset | null>(null);
     const [inventoryHoveredId, setInventoryHoveredId] = useState<string | null>(null);
@@ -66,7 +65,6 @@ const Arena = () => {
     useEffect(() => {
         if (lastLevelUp !== null) {
             setShowLevelUp(true);
-            setDeferLevelUp(false);
         }
     }, [lastLevelUp]);
 
@@ -88,7 +86,6 @@ const Arena = () => {
         const updated = autoAllocateStatPoints(activeCharacter, points);
         setCharacter(updated);
         setShowLevelUp(false);
-        setDeferLevelUp(false);
         clearXpNotifications();
 
         // Persist auto-allocated stats to the DB so they survive reconnect
@@ -115,7 +112,6 @@ const Arena = () => {
         if ((activeCharacter.statPoints || 0) > 0) return;
 
         setShowLevelUp(false);
-        setDeferLevelUp(false);
         clearXpNotifications();
     }, [activeCharacter?.autoMode, activeCharacter?.statPoints, clearXpNotifications]);
 
@@ -133,7 +129,7 @@ const Arena = () => {
     const pendingStatPoints = activeCharacter.statPoints || 0;
     const totalPendingAlloc = Object.values(pendingAllocations).reduce((a, b) => a + b, 0);
     const projectedStatPoints = pendingStatPoints - totalPendingAlloc;
-    const shouldShowLevelUp = showLevelUp || (pendingStatPoints > 0 && !deferLevelUp);
+    const shouldShowLevelUp = showLevelUp;
     const hasLevelInfo = lastLevelUp !== null;
     const inventory = activeCharacter.inventory || [];
     const inventoryCapacity = INVENTORY_CAPACITY;
@@ -209,7 +205,6 @@ const Arena = () => {
         if (entries.length === 0) {
             setShowLevelUp(false);
             clearXpNotifications();
-            setDeferLevelUp(projectedStatPoints > 0);
             return;
         }
 
@@ -228,19 +223,16 @@ const Arena = () => {
         setPendingAllocations({});
         setShowLevelUp(false);
         clearXpNotifications();
-        setDeferLevelUp(projectedStatPoints > 0);
     };
 
     const handleDeferLevelUp = () => {
         setPendingAllocations({});
         setShowLevelUp(false);
-        setDeferLevelUp(true);
         clearXpNotifications();
     };
 
     const handleOpenLevelUp = () => {
         setShowLevelUp(true);
-        setDeferLevelUp(false);
     };
 
     const handleEquipItem = (itemId: string, slot: ItemSlot) => {
@@ -265,7 +257,6 @@ const Arena = () => {
 
     useEffect(() => {
         if (pendingStatPoints === 0) {
-            setDeferLevelUp(false);
             setPendingAllocations({});
         }
     }, [pendingStatPoints]);
