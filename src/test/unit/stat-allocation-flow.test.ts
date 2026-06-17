@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Character } from '../../types/Character';
-import { applyStatPoint, grantStatPoints, autoAllocateStatPoints } from '../../utils/statUtils';
+import { applyStatPoint, grantStatPoints, autoAllocateStatPoints, StatKey } from '../../utils/statUtils';
 
 function makeCharacter(overrides: Partial<Character> = {}): Character {
   return {
@@ -123,5 +123,43 @@ describe('Stat allocation flow (level-up simulation)', () => {
     const updated = applyStatPoint(char, 'strength');
     expect(updated.strength).toBe(16);
     expect(updated.statPoints).toBe(1);
+  });
+
+  it('allocates at very high values (no cap)', () => {
+    const char = makeCharacter({ statPoints: 5, strength: 50 });
+    const updated = applyStatPoint(char, 'strength');
+    expect(updated.strength).toBe(51);
+    expect(updated.statPoints).toBe(4);
+  });
+
+  it('allocates at 100+', () => {
+    const char = makeCharacter({ statPoints: 3, luck: 100, dexterity: 100, intelligence: 100 });
+    const updated = applyStatPoint(char, 'luck');
+    expect(updated.luck).toBe(101);
+    expect(updated.statPoints).toBe(2);
+  });
+
+  it('sequential allocations across all 6 stats', () => {
+    let char = makeCharacter({ statPoints: 6, strength: 10, vitality: 10, dexterity: 10, luck: 10, intelligence: 10, focus: 10 });
+    const stats: StatKey[] = ['strength', 'vitality', 'dexterity', 'luck', 'intelligence', 'focus'];
+    for (const stat of stats) {
+      char = applyStatPoint(char, stat);
+    }
+    expect(char.statPoints).toBe(0);
+    expect(char.strength).toBe(11);
+    expect(char.vitality).toBe(11);
+    expect(char.dexterity).toBe(11);
+    expect(char.luck).toBe(11);
+    expect(char.intelligence).toBe(11);
+    expect(char.focus).toBe(11);
+  });
+
+  it('does not mutate the original character object', () => {
+    const char = makeCharacter({ statPoints: 1, strength: 10 });
+    const updated = applyStatPoint(char, 'strength');
+    expect(char.strength).toBe(10); // original unchanged
+    expect(char.statPoints).toBe(1);
+    expect(updated.strength).toBe(11);
+    expect(updated.statPoints).toBe(0);
   });
 });

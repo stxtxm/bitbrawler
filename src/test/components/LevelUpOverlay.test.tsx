@@ -87,6 +87,16 @@ describe('LevelUpOverlay', () => {
         });
     });
 
+    it('does not call onAllocateStat when button is disabled (saving guard)', () => {
+        const handleAlloc = vi.fn();
+        render(<LevelUpOverlay {...defaultProps} onAllocateStat={handleAlloc} saving={true} />);
+        const plusButtons = screen.getAllByText('+');
+        act(() => {
+            plusButtons[0].click();
+        });
+        expect(handleAlloc).not.toHaveBeenCalled();
+    });
+
     it('disables + buttons when isOfflineMode is true', () => {
         render(<LevelUpOverlay {...defaultProps} isOfflineMode={true} />);
         const plusButtons = screen.getAllByText('+');
@@ -110,6 +120,21 @@ describe('LevelUpOverlay', () => {
         const charNoPoints = { ...mockCharacter, statPoints: 0 };
         render(<LevelUpOverlay {...defaultProps} activeCharacter={charNoPoints} />);
         expect(screen.queryAllByText('+')).toHaveLength(0);
+    });
+
+    it('shows + buttons again after re-render with new statPoints (simulates partial allocation)', () => {
+        // First render with 1 point, then re-render with 0 points after allocation
+        const { rerender } = render(<LevelUpOverlay {...defaultProps} />);
+        expect(screen.getAllByText('+')).toHaveLength(2);
+
+        const charOnePoint = { ...mockCharacter, statPoints: 1 };
+        rerender(<LevelUpOverlay {...defaultProps} activeCharacter={charOnePoint} />);
+        expect(screen.getAllByText('+')).toHaveLength(2);
+
+        const charZeroPoints = { ...mockCharacter, statPoints: 0 };
+        rerender(<LevelUpOverlay {...defaultProps} activeCharacter={charZeroPoints} />);
+        expect(screen.queryAllByText('+')).toHaveLength(0);
+        expect(screen.getByText('ALL POINTS ALLOCATED')).toBeInTheDocument();
     });
 
     it('auto-closes after 800ms when statPoints reaches 0', () => {
