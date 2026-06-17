@@ -34,12 +34,16 @@ describe('Combat Balance Config', () => {
     expect(COMBAT_BALANCE.damage.critMultiplier).toBe(1.30);
   });
 
-  it('should have hitChance.base set to 70', () => {
-    expect(COMBAT_BALANCE.hitChance.base).toBe(70);
+  it('should have hitChance.base set to 68', () => {
+    expect(COMBAT_BALANCE.hitChance.base).toBe(68);
   });
 
   it('should have comeback.damageMultiplier set to 1.03', () => {
     expect(COMBAT_BALANCE.comeback.damageMultiplier).toBe(1.03);
+  });
+
+  it('should have hitChance.base set to 68', () => {
+    expect(COMBAT_BALANCE.hitChance.base).toBe(68);
   });
 
   it('should have hitChance.max set to 88', () => {
