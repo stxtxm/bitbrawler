@@ -18,7 +18,6 @@ export const UPDATE_NOTES: UpdateNote[] = [
       'Character generation updated: weighted random allocation without artificial caps for more natural archetype variance.',
       '9-6-0 → 9 tests updated/removed across stat-allocation-flow, stat-utils, character, and gameRules test suites.',
     ],
-    archived: true,
   },
   {
     version: '3.0.0',
@@ -44,6 +43,7 @@ export const UPDATE_NOTES: UpdateNote[] = [
     version: '2.7.0',
     date: '2026-06-17',
     title: 'Stat cap enforcement, DB error handling & bot engine fixes',
+    archived: true,
     changes: [
       'Stat caps aligned with DB CHECK constraints (MIN_VALUE=5, MAX_VALUE=15) — prevents silent DB rejections on level-up. (Removed in v3.1.0)',
       'PostgREST error handling added to all stat/equip/fight DB writes — errors are now thrown instead of silently swallowed.',
@@ -60,6 +60,7 @@ export const UPDATE_NOTES: UpdateNote[] = [
     version: '2.6.0',
     date: '2026-06-13',
     title: 'Equipment Loadouts & Weapon Affinity System',
+    archived: true,
     changes: [
       '3-slot equipment loadouts (weapon/armor/accessory): manual equip/unequip from inventory.',
       '6 weapon elements (fire/water/wind/earth/light/dark) with affinity system — super-effective vs bot archetypes (+15% damage).',
@@ -78,6 +79,7 @@ export const UPDATE_NOTES: UpdateNote[] = [
     version: '2.5.0',
     date: '2026-06-06',
     title: 'Pro sound engine, auto mode fix & codebase cleanup',
+    archived: true,
     changes: [
       'Complete sound engine redesign: master gain bus with dynamics compressor, convolution reverb, pitch variation.',
       'All combat sounds redesigned (hit, crit, magic, miss, counter) with distinct identities — no more samey thuds.',
@@ -101,6 +103,7 @@ export const UPDATE_NOTES: UpdateNote[] = [
     version: '2.4.0',
     date: '2026-06-03',
     title: 'Lootbox fix, auto stat allocation & QoL improvements',
+    archived: true,
     changes: [
       'Lootbox probability fix: mid-game epic rate restored (was 5%, now 8-10%) — rare/epic deficit due to weight calculation inconsistencies resolved.',
       'Combat-weight bias in auto stat allocation: VIT gets 40% bias when below stat average for balanced HP growth.',
@@ -118,6 +121,7 @@ export const UPDATE_NOTES: UpdateNote[] = [
     version: '2.3.0',
     date: '2026-05-25',
     title: 'Stats tooltips, XP alignment & code cleanup',
+    archived: true,
     changes: [
       'Stat tooltips: detailed descriptions for all 6 stats (STR/VIT/DEX/LUK/INT/FOC) with retro pixel tooltip component on hover.',
       'STAT_DESCRIPTIONS lookup table in statUtils.ts with short and long descriptions for each stat.',
@@ -135,6 +139,7 @@ export const UPDATE_NOTES: UpdateNote[] = [
     version: '2.2.0',
     date: '2026-05-25',
     title: 'Bot-engine rebalance, QA enrichment & codebase cleanup',
+    archived: true,
     changes: [
       'HP tracking now captures max HP growth (character progression) instead of current HP — game restores HP after every fight.',
       'Lootbox rarity captured in QA stats (.lootbox-result-rarity + .lootbox-stat-value).',
@@ -154,6 +159,7 @@ export const UPDATE_NOTES: UpdateNote[] = [
     version: '2.1.0',
     date: '2026-05-25',
     title: 'AI-driven fixes, QA automation & flag unification',
+    archived: true,
     changes: [
       'Level-up overlay properly handled by QA bot (stat allocation + retry before FIGHT click).',
       '$isBot$ and $autoMode$ flags unified: toggling auto mode now also sets $isBot$, bot engine uses single $is_bot = true$ query.',
@@ -168,6 +174,7 @@ export const UPDATE_NOTES: UpdateNote[] = [
     version: '2.0.0',
     date: '2026-05-24',
     title: 'Autonomous AI development',
+    archived: true,
     changes: [
       'AI now fully drives Bitbrawler development — coding, testing, reviewing, and deploying.',
       'QA E2E testing with Playwright: automated fights, lootbox rolls, and screenshot capture.',

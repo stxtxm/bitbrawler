@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { PixelIcon } from '../components/PixelIcon'
 import { GameLogo } from '../components/GameLogo'
@@ -7,12 +7,23 @@ import { UPDATE_NOTES } from '../data/updateNotes'
 const HomePage = () => {
   const [showUpdateNotes, setShowUpdateNotes] = useState(false)
   const [showArchived, setShowArchived] = useState(false)
+  const notesListRef = useRef<HTMLDivElement>(null)
 
   const visibleNotes = showArchived
     ? UPDATE_NOTES
     : UPDATE_NOTES.filter(n => !n.archived)
 
   const hasArchived = UPDATE_NOTES.some(n => n.archived)
+
+  const handleToggleArchived = () => {
+    setShowArchived(prev => !prev)
+    // Scroll to top when toggling SHOW ALL / SHOW LESS
+    // to prevent the browser from jumping to a weird scroll position
+    // after the list expands or collapses (especially on mobile).
+    requestAnimationFrame(() => {
+      notesListRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    })
+  }
 
   return (
     <div className="container retro-container home-page">
@@ -91,7 +102,7 @@ const HomePage = () => {
           <div className="retro-modal home-notes-modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">PATCH NOTES</div>
             <div className="modal-body">
-              <div className="home-notes-list">
+              <div className="home-notes-list" ref={notesListRef}>
                 {visibleNotes.map((note) => (
                   <article key={`${note.version}-${note.date}`} className={`home-note-entry${note.archived ? ' archived' : ''}`}>
                     <h3>{note.version} · {note.date}</h3>
@@ -109,7 +120,7 @@ const HomePage = () => {
                   <button
                     type="button"
                     className="button secondary"
-                    onClick={() => setShowArchived(!showArchived)}
+                    onClick={handleToggleArchived}
                   >
                     {showArchived ? 'SHOW LESS' : 'SHOW ALL'}
                   </button>
