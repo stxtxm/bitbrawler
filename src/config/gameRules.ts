@@ -16,6 +16,11 @@ export const GAME_RULES = {
         HP_MULTIPLIER: 2.2, // Monster HP multiplier for longer, suspenseful battles
         LEVEL_BOOST: 1, // Monsters fight at playerLevel + this offset
     },
+    IDLE: {
+        XP_MODIFIER: 0.25, // Idle PvE awards 25% of PvP XP (slow but constant progression)
+        COMBAT_INTERVAL_MS: 28000, // One idle combat every 28 seconds
+        OFFLINE_MAX_HOURS: 24, // Max offline accumulation cap
+    },
     BOTS: {
         MIN_POPULATION: 2,
         MIN_LVL1_BOTS: 10, // Ensure at least 10 lvl 1 bots

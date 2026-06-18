@@ -23,6 +23,9 @@ import LevelUpOverlay from '../components/LevelUpOverlay';
 import { GAME_RULES } from '../config/gameRules';
 import { generateMonsterForPlayer, getMonsterDef } from '../utils/monsterUtils';
 import { MonsterId } from '../data/monsterAssets';
+import { useIdleCombat } from '../hooks/useIdleCombat';
+import { IdleRunner } from '../components/IdleRunner';
+
 
 
 const Arena = () => {
@@ -49,8 +52,19 @@ const Arena = () => {
     const [autoModeUpdating, setAutoModeUpdating] = useState(false);
     const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm'>('idle');
     const [deletePending, setDeletePending] = useState(false);
-    const [pveMode, setPveMode] = useState(false);
+    const [pveMode, setPveMode] = useState(true);
     const [pveMonster, setPveMonster] = useState<{ monsterId: MonsterId; monsterDef: ReturnType<typeof getMonsterDef> } | null>(null);
+
+    // Idle combat hook — runs continuously (both PvE and PvP modes)
+    // Uses a dummy character if activeCharacter is null (will be re-rendered when character loads)
+    const { idleState, offlineGains, dismissOfflineRecap } = useIdleCombat(
+        activeCharacter ?? {
+            seed: '', name: '', gender: 'male', level: 1, experience: 0,
+            strength: 0, vitality: 0, dexterity: 0, luck: 0, intelligence: 0, focus: 0,
+            hp: 0, maxHp: 0, wins: 0, losses: 0, fightsLeft: 0, lastFightReset: 0,
+        },
+        setCharacter,
+    );
 
     // Handle XP gain notification
     useEffect(() => {
@@ -130,9 +144,8 @@ const Arena = () => {
     const isMaxLevel = activeCharacter.level >= getMaxLevel();
     const isOfflineMode = !isOnline || !dbAvailable;
     const fightsLeft = activeCharacter.fightsLeft || 0;
-    const pveFightsLeft = activeCharacter.pveFightsLeft ?? 5;
     const hasPendingFight = !!activeCharacter.pendingFight;
-    const canFight = !isOfflineMode && !hasPendingFight && !activeCharacter?.autoMode && (pveMode ? pveFightsLeft > 0 : fightsLeft > 0);
+    const canFight = !isOfflineMode && !hasPendingFight && !activeCharacter?.autoMode && fightsLeft > 0;
     const pointsRemaining = activeCharacter.statPoints || 0;
     const shouldShowLevelUp = showLevelUp && pointsRemaining > 0;
     const inventory = activeCharacter.inventory || [];
@@ -560,47 +573,67 @@ const Arena = () => {
                         </button>
                     </div>
 
-                    <div className="daily-status-compact">
-                        <div className="status-label">
-                            <PixelIcon type={pveMode ? "chest" : "sword"} size={32} />
-                            <div className="label-text">
-                                <span className="label-main">{pveMode ? 'MONSTER ENERGY' : 'BATTLE ENERGY'}</span>
-                                <span className="label-sub">
-                                    {isOfflineMode
-                                        ? 'OFFLINE SNAPSHOT'
-                                        : pveMode
-                                            ? `${pveFightsLeft} / ${GAME_RULES.COMBAT.MAX_DAILY_PVE_FIGHTS} AVAILABLE`
-                                            : `${fightsLeft} / ${GAME_RULES.COMBAT.MAX_DAILY_FIGHTS} AVAILABLE`}
-                                </span>
+                    {pveMode ? (
+                        <IdleRunner character={effectiveCharacter} idleState={idleState} />
+                    ) : (
+                        <>
+                            <div className="daily-status-compact">
+                                <div className="status-label">
+                                    <PixelIcon type="sword" size={32} />
+                                    <div className="label-text">
+                                        <span className="label-main">BATTLE ENERGY</span>
+                                        <span className="label-sub">
+                                            {isOfflineMode
+                                                ? 'OFFLINE SNAPSHOT'
+                                                : `${fightsLeft} / ${GAME_RULES.COMBAT.MAX_DAILY_FIGHTS} AVAILABLE`}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="mini-pips">
+                                    {Array.from({ length: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS }).map((_, i) => (
+                                        <div key={i} className={`mini-pip ${i < fightsLeft ? 'active' : 'used'}`}></div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                        <div className="mini-pips">
-                            {Array.from({ length: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS }).map((_, i) => (
-                                <div key={i} className={`mini-pip ${i < (pveMode ? pveFightsLeft : fightsLeft) ? 'active' : 'used'}`}></div>
-                            ))}
-                        </div>
-                    </div>
 
-                    <button
-                        className="button primary-btn giant-btn"
-                        disabled={!canFight || matchmaking}
-                        onClick={handleFight}
-                    >
-                    {matchmaking
-                        ? (pveMode ? 'SUMMONING...' : 'SEARCHING...')
-                        : hasPendingFight
-                            ? 'RESOLVING...'
-                            : activeCharacter?.autoMode
-                                ? 'AUTO MODE'
-                                : (isOfflineMode
-                                    ? 'OFFLINE'
-                                    : (pveMode
-                                        ? (pveFightsLeft > 0 ? 'FIGHT MONSTER' : 'REST NOW')
-                                        : (fightsLeft > 0 ? 'FIGHT!' : 'REST NOW')))}
-                    </button>
+                            <button
+                                className="button primary-btn giant-btn"
+                                disabled={!canFight || matchmaking}
+                                onClick={handleFight}
+                            >
+                                {matchmaking
+                                    ? 'SEARCHING...'
+                                    : hasPendingFight
+                                        ? 'RESOLVING...'
+                                        : activeCharacter?.autoMode
+                                            ? 'AUTO MODE'
+                                            : (isOfflineMode
+                                                ? 'OFFLINE'
+                                                : (fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'))}
+                            </button>
+                        </>
+                    )}
                 </div>
 
             </div>
+            {offlineGains && (
+                <div className="retro-modal-overlay home-notes-overlay" onClick={dismissOfflineRecap} role="dialog" aria-modal="true" aria-label="Offline recap">
+                    <div className="retro-modal idle-offline-recap" onClick={(e) => e.stopPropagation()}>
+                        <h3>🛌 WELCOME BACK!</h3>
+                        <p>You were away for <strong>{Math.round(offlineGains.elapsedHours * 10) / 10}h</strong>.</p>
+                        <p>Your character fought <strong>{offlineGains.fightsSimulated}</strong> monsters.</p>
+                        <p>Won <strong>{offlineGains.wins}</strong> / {offlineGains.fightsSimulated} fights.</p>
+                        <p className="recap-xp">+{offlineGains.totalXpGained} XP earned!</p>
+                        {offlineGains.levelsGained > 0 && (
+                            <p className="recap-levels">⭐ Gained {offlineGains.levelsGained} level{offlineGains.levelsGained > 1 ? 's' : ''}!</p>
+                        )}
+                        <button type="button" className="button primary-btn" onClick={dismissOfflineRecap} style={{ marginTop: 12 }}>
+                            LET'S GO!
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <ConnectionModal
                 open={connectionModal.open}
                 message={connectionModal.message}

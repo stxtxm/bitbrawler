@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { fireEvent } from '@testing-library/react'
 import Arena from '../../pages/Arena'
 import { useGame } from '../../context/GameContext'
 import { useConnectionGate } from '../../hooks/useConnectionGate'
@@ -16,6 +17,18 @@ vi.mock('../../hooks/useConnectionGate', () => ({
 
 vi.mock('../../hooks/useOnlineStatus', () => ({
   useOnlineStatus: vi.fn(),
+}))
+
+vi.mock('../../hooks/useIdleCombat', () => ({
+  useIdleCombat: () => ({
+    idleState: {
+      isRunning: true, combatLog: [], currentMonsterName: null, currentMonsterId: null,
+      currentResult: null, lastActiveTimestamp: Date.now(), totalIdleXpGained: 0,
+      totalIdleFights: 0, totalIdleWins: 0,
+    },
+    offlineGains: null,
+    dismissOfflineRecap: vi.fn(),
+  }),
 }))
 
 vi.mock('../../utils/statUtils', async (importOriginal) => {
@@ -169,12 +182,17 @@ describe('Arena auto-mode level-up overlay', () => {
       setCharacter: vi.fn(),
     })
 
-    const { getByRole, queryByText } = renderWithRouter(<Arena />)
+    const { getByRole, queryByText, getAllByRole } = renderWithRouter(<Arena />)
 
     // The SPEND POINT button should NOT appear (no pending stat points)
     expect(queryByText('SPEND POINT')).toBeNull()
+
+    // Toggle to PvP mode (default is PvE)
+    fireEvent.click(getByRole('switch', { name: /PvP mode/i }))
+
     // The fight button should show AUTO MODE and be disabled
-    const fightButton = getByRole('button', { name: 'AUTO MODE' })
+    const fightButton = getAllByRole('button').find(b => b.textContent === 'AUTO MODE')
+    expect(fightButton).toBeDefined()
     expect(fightButton).toBeDisabled()
   })
 

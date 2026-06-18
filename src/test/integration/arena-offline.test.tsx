@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render } from '@testing-library/react'
+import { render, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Arena from '../../pages/Arena'
 import { useGame } from '../../context/GameContext'
@@ -17,6 +17,18 @@ vi.mock('../../hooks/useConnectionGate', () => ({
 
 vi.mock('../../hooks/useOnlineStatus', () => ({
   useOnlineStatus: vi.fn(),
+}))
+
+vi.mock('../../hooks/useIdleCombat', () => ({
+  useIdleCombat: () => ({
+    idleState: {
+      isRunning: true, combatLog: [], currentMonsterName: null, currentMonsterId: null,
+      currentResult: null, lastActiveTimestamp: Date.now(), totalIdleXpGained: 0,
+      totalIdleFights: 0, totalIdleWins: 0,
+    },
+    offlineGains: null,
+    dismissOfflineRecap: vi.fn(),
+  }),
 }))
 
 const mockUseGame = useGame as unknown as ReturnType<typeof vi.fn>
@@ -73,14 +85,19 @@ describe('Arena offline mode', () => {
       deleteCharacter: vi.fn(),
     })
 
-    const { getByText, getByRole, queryByRole } = render(
+    const { getByText, getByRole, queryByRole, getAllByRole } = render(
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Arena />
       </MemoryRouter>
     )
 
     expect(getByText('OFFLINE MODE')).toBeInTheDocument()
-    const fightButton = getByRole('button', { name: 'OFFLINE' })
+
+    // Toggle to PvP mode (default is PvE)
+    fireEvent.click(getByRole('switch', { name: /PvP mode/i }))
+
+    const fightButton = getAllByRole('button').find(b => b.textContent === 'OFFLINE')
+    expect(fightButton).toBeDefined()
     expect(fightButton).toBeDisabled()
 
     // Retry button was removed from banner
@@ -105,14 +122,19 @@ describe('Arena offline mode', () => {
       deleteCharacter: vi.fn(),
     })
 
-    const { getByText, getByRole, queryByRole } = render(
+    const { getByText, getByRole, queryByRole, getAllByRole } = render(
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Arena />
       </MemoryRouter>
     )
 
     expect(getByText('OFFLINE MODE')).toBeInTheDocument()
-    const fightButton = getByRole('button', { name: 'OFFLINE' })
+
+    // Toggle to PvP mode (default is PvE)
+    fireEvent.click(getByRole('switch', { name: /PvP mode/i }))
+
+    const fightButton = getAllByRole('button').find(b => b.textContent === 'OFFLINE')
+    expect(fightButton).toBeDefined()
     expect(fightButton).toBeDisabled()
 
     // Retry button was removed from banner

@@ -85,6 +85,7 @@ export interface Character {
   inventory?: string[]; // Item ids
   lastLootRoll?: number; // Timestamp (UTC) of daily lootbox roll
   lootboxStreak?: number; // Consecutive daily lootbox claims
+  lastIdleTimestamp?: number; // Timestamp of last idle combat session (for offline gains)
   pendingFight?: PendingFight;
   equippedItems?: {
     weapon: string | null;

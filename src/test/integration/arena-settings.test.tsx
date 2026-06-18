@@ -19,6 +19,18 @@ vi.mock('../../hooks/useOnlineStatus', () => ({
   useOnlineStatus: vi.fn(),
 }))
 
+vi.mock('../../hooks/useIdleCombat', () => ({
+  useIdleCombat: () => ({
+    idleState: {
+      isRunning: true, combatLog: [], currentMonsterName: null, currentMonsterId: null,
+      currentResult: null, lastActiveTimestamp: Date.now(), totalIdleXpGained: 0,
+      totalIdleFights: 0, totalIdleWins: 0,
+    },
+    offlineGains: null,
+    dismissOfflineRecap: vi.fn(),
+  }),
+}))
+
 const mockUseGame = useGame as unknown as ReturnType<typeof vi.fn>
 const mockUseConnectionGate = useConnectionGate as unknown as ReturnType<typeof vi.fn>
 const mockUseOnlineStatus = useOnlineStatus as unknown as ReturnType<typeof vi.fn>
@@ -164,8 +176,10 @@ describe('Arena settings modal', () => {
   })
 
   it('hides attacker type and xp details in combat logs', () => {
-    const { getByLabelText, getByText, queryByText } = renderWithRouter(<Arena />)
+    const { getByLabelText, getByText, queryByText, getByRole } = renderWithRouter(<Arena />)
 
+    // Toggle to PvP mode (default is PvE)
+    fireEvent.click(getByRole('switch', { name: /PvP mode/i }))
     fireEvent.click(getByLabelText('Settings'))
     fireEvent.click(getByText('VIEW LOGS'))
 
@@ -194,16 +208,24 @@ describe('Arena settings modal', () => {
       deleteCharacter: vi.fn().mockResolvedValue(true),
     })
 
-    const { getByRole } = renderWithRouter(<Arena />)
+    const { getByRole, getAllByRole } = renderWithRouter(<Arena />)
 
-    const fightButton = getByRole('button', { name: 'AUTO MODE' })
+    // Toggle to PvP mode (default is PvE)
+    fireEvent.click(getByRole('switch', { name: /PvP mode/i }))
+
+    const fightButton = getAllByRole('button').find(b => b.textContent === 'AUTO MODE')
+    expect(fightButton).toBeDefined()
     expect(fightButton).toBeDisabled()
   })
 
   it('shows FIGHT! when auto mode is off and has energy', () => {
-    const { getByRole } = renderWithRouter(<Arena />)
+    const { getByRole, getAllByRole } = renderWithRouter(<Arena />)
 
-    const fightButton = getByRole('button', { name: 'FIGHT!' })
+    // Toggle to PvP mode (default is PvE)
+    fireEvent.click(getByRole('switch', { name: /PvP mode/i }))
+
+    const fightButton = getAllByRole('button').find(b => b.textContent === 'FIGHT!')
+    expect(fightButton).toBeDefined()
     expect(fightButton).not.toBeDisabled()
   })
 })
