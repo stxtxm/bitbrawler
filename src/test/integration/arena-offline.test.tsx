@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import Arena from '../../pages/Arena'
 import { useGame } from '../../context/GameContext'
@@ -55,7 +56,7 @@ describe('Arena offline mode', () => {
     })
   })
 
-  it('shows offline banner and disables fight when device is offline', () => {
+  it('shows offline banner and disables fight when device is offline', async () => {
     mockUseOnlineStatus.mockReturnValue(false)
     mockUseGame.mockReturnValue({
       activeCharacter: mockCharacter,
@@ -79,6 +80,10 @@ describe('Arena offline mode', () => {
       </MemoryRouter>
     )
 
+    const user = userEvent.setup()
+    const pvpToggle = screen.getAllByRole('switch', { name: 'PvP mode' })[0]
+    await user.click(pvpToggle)
+
     expect(getByText('OFFLINE MODE')).toBeInTheDocument()
     const fightButton = getByRole('button', { name: 'OFFLINE' })
     expect(fightButton).toBeDisabled()
@@ -87,7 +92,7 @@ describe('Arena offline mode', () => {
     expect(queryByRole('button', { name: /RETRY/i })).toBeNull()
   })
 
-  it('remains in offline mode when database is unavailable', () => {
+  it('remains in offline mode when database is unavailable', async () => {
     mockUseOnlineStatus.mockReturnValue(true)
     mockUseGame.mockReturnValue({
       activeCharacter: mockCharacter,
@@ -110,6 +115,10 @@ describe('Arena offline mode', () => {
         <Arena />
       </MemoryRouter>
     )
+
+    const user = userEvent.setup()
+    const pvpToggle = screen.getAllByRole('switch', { name: 'PvP mode' })[0]
+    await user.click(pvpToggle)
 
     expect(getByText('OFFLINE MODE')).toBeInTheDocument()
     const fightButton = getByRole('button', { name: 'OFFLINE' })

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fireEvent, act } from '@testing-library/react'
+import { fireEvent, act, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import Arena from '../../pages/Arena'
 import { useGame } from '../../context/GameContext'
 import { useConnectionGate } from '../../hooks/useConnectionGate'
@@ -163,8 +164,12 @@ describe('Arena settings modal', () => {
     expect(deleteCharacter).toHaveBeenCalled()
   })
 
-  it('hides attacker type and xp details in combat logs', () => {
+  it('hides attacker type and xp details in combat logs', async () => {
     const { getByLabelText, getByText, queryByText } = renderWithRouter(<Arena />)
+
+    const user = userEvent.setup()
+    const pvpToggle = screen.getAllByRole('switch', { name: 'PvP mode' })[0]
+    await user.click(pvpToggle)
 
     fireEvent.click(getByLabelText('Settings'))
     fireEvent.click(getByText('VIEW LOGS'))
@@ -176,7 +181,7 @@ describe('Arena settings modal', () => {
     expect(queryByText(/\+\d+\s*XP/i)).toBeNull()
   })
 
-  it('disables fight button and shows AUTO MODE when auto mode is on', () => {
+  it('disables fight button and shows AUTO MODE when auto mode is on', async () => {
     mockUseGame.mockReturnValue({
       activeCharacter: { ...mockCharacter, autoMode: true },
       logout: vi.fn(),
@@ -196,12 +201,20 @@ describe('Arena settings modal', () => {
 
     const { getByRole } = renderWithRouter(<Arena />)
 
+    const user = userEvent.setup()
+    const pvpToggle = screen.getAllByRole('switch', { name: 'PvP mode' })[0]
+    await user.click(pvpToggle)
+
     const fightButton = getByRole('button', { name: 'AUTO MODE' })
     expect(fightButton).toBeDisabled()
   })
 
-  it('shows FIGHT! when auto mode is off and has energy', () => {
+  it('shows FIGHT! when auto mode is off and has energy', async () => {
     const { getByRole } = renderWithRouter(<Arena />)
+
+    const user = userEvent.setup()
+    const pvpToggle = screen.getAllByRole('switch', { name: 'PvP mode' })[0]
+    await user.click(pvpToggle)
 
     const fightButton = getByRole('button', { name: 'FIGHT!' })
     expect(fightButton).not.toBeDisabled()

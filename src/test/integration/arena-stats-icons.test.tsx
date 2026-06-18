@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import Arena from '../../pages/Arena';
 import { useGame } from '../../context/GameContext';
@@ -72,12 +73,16 @@ describe('Arena stat icons', () => {
     });
   });
 
-  it('renders pixel icons alongside compact stats', () => {
+  it('renders pixel icons alongside compact stats', async () => {
     const { container, getByText } = render(
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Arena />
       </MemoryRouter>
     );
+
+    const user = userEvent.setup()
+    const pvpToggle = screen.getAllByRole('switch', { name: 'PvP mode' })[0];
+    await user.click(pvpToggle);
 
     const statsGrid = container.querySelector('.stats-grid-compact');
     expect(statsGrid).not.toBeNull();

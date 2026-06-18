@@ -1,0 +1,457 @@
+@use '../variables' as *;
+
+.idle-runner-scene {
+  position: relative;
+  width: 100%;
+  height: clamp(180px, 40vh, 500px);
+  overflow: hidden;
+  border-bottom: 3px solid #333;
+  background-size: cover;
+
+  @include mobile {
+    height: clamp(160px, 35vh, 280px);
+  }
+
+  @include small-mobile {
+    height: clamp(140px, 30vh, 220px);
+  }
+}
+
+// Parallax layers
+.idle-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.idle-layer.mountains {
+  z-index: 1;
+  background-repeat: repeat-x;
+  background-position: 0 60%;
+  background-size: 128px auto;
+
+  .scroll-slow {
+    width: 200%;
+    height: 100%;
+    background: inherit;
+    background-size: 128px auto;
+    background-position: 0 60%;
+    animation: scrollLayer 60s linear infinite;
+  }
+}
+
+.idle-layer.clouds {
+  z-index: 2;
+}
+
+.cloud-instance {
+  position: absolute;
+  width: 64px;
+  height: 32px;
+  background-repeat: no-repeat;
+  background-size: contain;
+  pointer-events: none;
+  animation: cloudDrift 20s linear infinite;
+}
+
+@keyframes cloudDrift {
+  from { transform: translateX(-100px) scaleX(var(--scale, 1)); }
+  to { transform: translateX(calc(100vw + 100px)) scaleX(var(--scale, 1)); }
+}
+
+// Character
+.idle-character-slot {
+  position: absolute;
+  left: clamp(15%, 25%, 30%);
+  top: 38%;
+  z-index: 5;
+  animation: runBounce 0.5s ease-in-out infinite;
+
+  &.attacking {
+    animation: attackLunge 0.4s ease-out;
+  }
+
+  &.victory {
+    animation: victoryJump 0.6s ease-out;
+  }
+
+  @include mobile {
+    left: 20%;
+    top: 40%;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes runBounce {
+  0%, 100% { transform: translateY(0); }
+  25% { transform: translateY(-3px); }
+  50% { transform: translateY(-1px); }
+  75% { transform: translateY(-4px); }
+}
+
+@keyframes attackLunge {
+  0% { transform: translateX(0) scale(1); }
+  30% { transform: translateX(15px) scale(1.05); }
+  60% { transform: translateX(5px) scale(0.95); }
+  100% { transform: translateX(0) scale(1); }
+}
+
+@keyframes victoryJump {
+  0% { transform: translateY(0); }
+  30% { transform: translateY(-10px); }
+  50% { transform: translateY(-12px) scale(1.05); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+// Monster
+.idle-monster-slot {
+  position: absolute;
+  right: -25%;
+  top: 35%;
+  z-index: 4;
+  transition: none;
+
+  &.phase-monster_appears {
+    right: 38%;
+    transition: right 2s cubic-bezier(0.2, 0.8, 0.3, 1);
+  }
+
+  &.phase-combat {
+    right: 38%;
+    animation: monsterHitShake 0.5s ease;
+  }
+
+  &.phase-result {
+    right: 120%;
+    transition: right 2s ease-in;
+  }
+
+  @include mobile {
+    transform: scale(0.7);
+    &.phase-monster_appears { right: 35%; }
+    &.phase-combat { right: 35%; }
+  }
+
+  // Wraith special
+  &[data-monster="wraith"] {
+    &.phase-monster_appears {
+      right: 38%;
+      opacity: 0;
+      animation: wraithMaterialize 2s ease-out forwards;
+    }
+  }
+}
+
+@keyframes monsterHitShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-10px) rotate(-2deg); }
+  40% { transform: translateX(8px) rotate(2deg); }
+  60% { transform: translateX(-5px) rotate(-1deg); }
+  80% { transform: translateX(3px); }
+}
+
+@keyframes wraithMaterialize {
+  0% { opacity: 0; transform: scale(0.5) translateY(20px); filter: brightness(0.3); }
+  50% { opacity: 0.7; transform: scale(1.1) translateY(-8px); filter: brightness(1.4) hue-rotate(20deg); }
+  100% { opacity: 1; transform: scale(1) translateY(0); filter: brightness(1); }
+}
+
+// Combat flash
+.combat-flash {
+  position: absolute;
+  inset: -10%;
+  background: radial-gradient(circle, rgba(255,255,255,0.6), transparent);
+  animation: combatFlash 0.4s ease-out;
+  pointer-events: none;
+  z-index: 10;
+}
+
+@keyframes combatFlash {
+  0% { opacity: 0.8; transform: scale(0.8); }
+  20% { opacity: 0.6; }
+  40% { opacity: 0.3; }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+
+// Combat result text
+.idle-combat-result {
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  animation: floatUp 2s ease-out forwards;
+  text-align: center;
+  pointer-events: none;
+
+  &.win {
+    .result-label { color: $accent-green; }
+    .result-xp { color: $accent-gold; }
+  }
+
+  &.lose {
+    .result-label { color: $accent-red; }
+    .result-xp { color: #ff8888; }
+  }
+
+  .result-label {
+    font-family: $font-pixel;
+    font-size: clamp(0.5rem, 1.2cqi, 0.8rem);
+    text-shadow: 0 0 8px currentColor;
+  }
+
+  .result-xp {
+    font-family: $font-pixel;
+    font-size: clamp(0.4rem, 1cqi, 0.6rem);
+    text-shadow: 0 0 6px currentColor;
+  }
+}
+
+@keyframes floatUp {
+  0% { transform: translateX(-50%) translateY(0) scale(0.8); opacity: 0; }
+  15% { transform: translateX(-50%) translateY(-8px) scale(1.15); opacity: 1; }
+  30% { transform: translateX(-50%) translateY(-16px) scale(1); opacity: 1; }
+  100% { transform: translateX(-50%) translateY(-40px) scale(0.9); opacity: 0; }
+}
+
+// Ground
+.idle-ground-layer {
+  position: absolute;
+  bottom: 0;
+  height: 32px;
+  width: 100%;
+  z-index: 3;
+  background-repeat: repeat-x, repeat-x;
+  background-position: 0 0, 0 16px;
+  background-size: 16px 16px, 16px 16px;
+  pointer-events: none;
+  animation: scrollGround 3s linear infinite;
+
+  @include mobile {
+    height: 24px;
+    background-size: 12px 12px, 12px 12px;
+    animation-duration: 2.5s;
+  }
+}
+
+@keyframes scrollGround {
+  from { background-position: 0 0, 0 16px; }
+  to { background-position: -16px 0, -16px 16px; }
+}
+
+// HUD overlay
+.idle-hud {
+  position: absolute;
+  bottom: 36px;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px clamp(6px, 2vw, 16px);
+  gap: 8px;
+  pointer-events: none;
+
+  @include mobile {
+    bottom: 28px;
+  }
+}
+
+.idle-hp-bar {
+  flex: 1;
+  max-width: 200px;
+  height: clamp(10px, 1.5cqi, 16px);
+  background: #111;
+  border: 1px solid #555;
+  position: relative;
+  overflow: hidden;
+
+  @include mobile {
+    max-width: 140px;
+    height: 8px;
+  }
+}
+
+.idle-hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, $accent-red, #ff6644);
+  transition: width 0.3s ease;
+}
+
+.idle-hp-text {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.4rem;
+  color: #fff;
+  text-shadow: 1px 1px 0 #000;
+  font-family: $font-pixel;
+
+  @include mobile {
+    font-size: 0.35rem;
+  }
+}
+
+.idle-xp-counter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  font-family: $font-pixel;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
+}
+
+.idle-fights {
+  font-size: clamp(0.35rem, 0.8cqi, 0.5rem);
+  color: #aaa;
+}
+
+.idle-xp-total {
+  font-size: clamp(0.4rem, 1cqi, 0.6rem);
+  color: $accent-gold;
+}
+
+// Offline notification
+.idle-offline-notification {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  background: rgba(0,0,0,0.85);
+  border: 2px solid $accent-gold;
+  padding: clamp(6px, 1.5vw, 12px) clamp(12px, 3vw, 24px);
+  text-align: center;
+  font-family: $font-pixel;
+  animation: fadeIn 0.3s ease;
+  pointer-events: auto;
+
+  .offline-title {
+    font-size: clamp(0.4rem, 0.9cqi, 0.6rem);
+    color: $accent-gold;
+    margin-bottom: 4px;
+  }
+
+  .offline-stats {
+    display: flex;
+    gap: clamp(8px, 2vw, 16px);
+    font-size: clamp(0.35rem, 0.8cqi, 0.5rem);
+    color: #fff;
+    justify-content: center;
+  }
+
+  .idle-offline-close {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    background: none;
+    border: none;
+    color: $accent-red;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 2px;
+  }
+}
+
+// Death overlay
+.idle-death-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: deathFadeIn 0.5s ease;
+}
+
+.death-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(10px, 2vw, 20px);
+  padding: 0 clamp(12px, 3vw, 24px);
+}
+
+.death-title {
+  font-family: $font-pixel;
+  font-size: clamp(0.6rem, 1.5cqi, 1.2rem);
+  color: $accent-red;
+  text-shadow: 0 0 12px $accent-red, 2px 2px 0 #000;
+}
+
+.death-stats {
+  font-family: $font-pixel;
+  font-size: clamp(0.35rem, 0.8cqi, 0.55rem);
+  color: #ccc;
+}
+
+.resume-btn {
+  font-family: $font-pixel;
+  font-size: clamp(0.5rem, 1.2cqi, 0.8rem);
+  padding: clamp(8px, 1.5vw, 14px) clamp(16px, 3vw, 32px);
+  background: #000;
+  color: $accent-green;
+  border: 2px solid $accent-green;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  transition: all 0.2s;
+
+  &:hover {
+    background: $accent-green;
+    color: #000;
+  }
+
+  @include mobile {
+    font-size: 0.5rem;
+    padding: 8px 16px;
+  }
+}
+
+@keyframes deathFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+// Particles
+.particle {
+  position: absolute;
+  pointer-events: none;
+  z-index: 15;
+}
+
+// Scrolling layers (low-perf fallback)
+@keyframes scrollLayer {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+// Responsive toggle area under runner
+.idle-footer-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(6px, 1.5vw, 12px);
+  padding: clamp(6px, 1.5vw, 12px);
+  background: rgba(0, 0, 0, 0.5);
+  border-top: 1px solid #333;
+
+  @include mobile {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

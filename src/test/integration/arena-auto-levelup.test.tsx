@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import Arena from '../../pages/Arena'
 import { useGame } from '../../context/GameContext'
 import { useConnectionGate } from '../../hooks/useConnectionGate'
@@ -151,7 +153,7 @@ describe('Arena auto-mode level-up overlay', () => {
     expect(setCharacter).not.toHaveBeenCalled()
   })
 
-  it('shows AUTO MODE button when auto-mode is on with zero stat points after level-up', () => {
+  it('shows AUTO MODE button when auto-mode is on with zero stat points after level-up', async () => {
     // Simulate end state: auto-mode, no stat points (already allocated)
     mockUseGame.mockReturnValue({
       activeCharacter: makeCharacter({ autoMode: true, statPoints: 0 }),
@@ -169,12 +171,16 @@ describe('Arena auto-mode level-up overlay', () => {
       setCharacter: vi.fn(),
     })
 
-    const { getByRole, queryByText } = renderWithRouter(<Arena />)
+    const { queryByText } = renderWithRouter(<Arena />)
+
+    const user = userEvent.setup()
+    const pvpToggle = screen.getAllByRole('switch', { name: 'PvP mode' })[0]
+    await user.click(pvpToggle)
 
     // The SPEND POINT button should NOT appear (no pending stat points)
     expect(queryByText('SPEND POINT')).toBeNull()
     // The fight button should show AUTO MODE and be disabled
-    const fightButton = getByRole('button', { name: 'AUTO MODE' })
+    const fightButton = screen.getByRole('button', { name: 'AUTO MODE' })
     expect(fightButton).toBeDisabled()
   })
 
