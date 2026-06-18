@@ -187,13 +187,8 @@ export function renderTileAsCssUrl(tile: TileDef): string {
   }
   
   svg += '</svg>'
-  const encoded = svg
-    .replace(/%/g, '%25')
-    .replace(/#/g, '%23')
-    .replace(/"/g, "'")
-    .replace(/\s+/g, ' ')
   
-  return `url("data:image/svg+xml,${encoded}")`
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
 }
 
 export function generateGroundSequence(length: number): TileDef[] {

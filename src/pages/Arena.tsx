@@ -544,7 +544,7 @@ const Arena = () => {
                             {isMaxLevel && <span className="max-level-badge">★ MAX LEVEL ★</span>}
                         </div>
                         <div className="stats-grid-compact" style={{ gap: 2 }}>
-                            {statOptions.slice(0, 3).map((stat) => (
+                            {statOptions.map((stat) => (
                                 <div key={stat.key} className="compact-stat" title={`${stat.label}: ${STAT_TOOLTIPS[stat.key as StatKey]}`}>
                                     <span className="compact-stat-icon">
                                         <PixelIcon type={stat.icon} size={10} />
