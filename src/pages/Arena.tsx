@@ -497,6 +497,7 @@ const Arena = () => {
                                 idleXpGained={idle.idleXpGained}
                                 idleFightsCount={idle.idleFightsCount}
                                 currentMonster={idle.currentMonster}
+                                backgroundMonster={idle.backgroundMonster}
                                 scenePhase={idle.scenePhase}
                                 lastCombatResult={idle.lastCombatResult}
                                 lastCombatXp={idle.lastCombatXp}

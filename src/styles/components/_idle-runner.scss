@@ -138,6 +138,21 @@
   }
 
   // Wraith special
+  // Passive state (background monster during running phase)
+  &.passive {
+    right: 5%;
+    bottom: 32px;
+    opacity: 0.3;
+    transform: scale(0.6);
+    transform-origin: bottom center;
+    pointer-events: none;
+
+    @include mobile {
+      bottom: 24px;
+      right: 3%;
+    }
+  }
+
   &[data-monster="wraith"] {
     &.phase-monster_appears {
       right: 38%;
@@ -251,7 +266,7 @@
 // HUD overlay
 .idle-hud {
   position: absolute;
-  bottom: 36px;
+  top: clamp(8px, 2cqi, 16px);
   left: 0;
   right: 0;
   z-index: 6;
@@ -261,10 +276,6 @@
   padding: 4px clamp(6px, 2vw, 16px);
   gap: 8px;
   pointer-events: none;
-
-  @include mobile {
-    bottom: 28px;
-  }
 }
 
 .idle-hp-bar {
@@ -359,8 +370,13 @@
     border: none;
     color: $accent-red;
     cursor: pointer;
-    font-size: 1rem;
-    padding: 2px;
+    font-size: 1.2rem;
+    padding: 8px;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 
@@ -387,21 +403,21 @@
 
 .death-title {
   font-family: $font-pixel;
-  font-size: clamp(0.6rem, 1.5cqi, 1.2rem);
+  font-size: clamp(0.8rem, 2cqi, 1.2rem);
   color: $accent-red;
   text-shadow: 0 0 12px $accent-red, 2px 2px 0 #000;
 }
 
 .death-stats {
   font-family: $font-pixel;
-  font-size: clamp(0.35rem, 0.8cqi, 0.55rem);
+  font-size: clamp(0.5rem, 1.2cqi, 0.7rem);
   color: #ccc;
 }
 
 .resume-btn {
   font-family: $font-pixel;
-  font-size: clamp(0.5rem, 1.2cqi, 0.8rem);
-  padding: clamp(8px, 1.5vw, 14px) clamp(16px, 3vw, 32px);
+  font-size: clamp(0.7rem, 1.8cqi, 1rem);
+  padding: clamp(12px, 2vw, 16px) clamp(20px, 4vw, 36px);
   background: #000;
   color: $accent-green;
   border: 2px solid $accent-green;
@@ -409,15 +425,12 @@
   text-transform: uppercase;
   letter-spacing: 2px;
   transition: all 0.2s;
+  min-width: 140px;
+  min-height: 44px;
 
   &:hover {
     background: $accent-green;
     color: #000;
-  }
-
-  @include mobile {
-    font-size: 0.5rem;
-    padding: 8px 16px;
   }
 }
 

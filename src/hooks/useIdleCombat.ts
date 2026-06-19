@@ -18,6 +18,7 @@ interface UseIdleCombatOptions {
 interface UseIdleCombatReturn {
   combatLog: IdleCombatEntry[]
   currentMonster: MonsterId | null
+  backgroundMonster: MonsterId | null
   isDead: boolean
   idleHp: number
   idleMaxHp: number
@@ -38,6 +39,7 @@ export function useIdleCombat({
 }: UseIdleCombatOptions): UseIdleCombatReturn {
   const [combatLog, setCombatLog] = useState<IdleCombatEntry[]>([])
   const [currentMonster, setCurrentMonster] = useState<MonsterId | null>(null)
+  const [backgroundMonster, setBackgroundMonster] = useState<MonsterId | null>(null)
   const [isDead, setIsDead] = useState(false)
   const [idleHp, setIdleHp] = useState(character?.maxHp ?? 100)
   const [idleMaxHp] = useState(character?.maxHp ?? 100)
@@ -142,6 +144,7 @@ export function useIdleCombat({
     }
 
     setCurrentMonster(monster.def.id)
+    setBackgroundMonster(monster.def.id)
     setScenePhase('monster_appears')
 
     // Phase monster_appears → combat → result
@@ -207,7 +210,7 @@ export function useIdleCombat({
     phaseTimers.current = [t1, t2, t3]
   }, [onCharacterUpdate, saveTimestamp])
 
-  // Timer principal
+  // Trigger first combat immediately, then repeat on interval
   useEffect(() => {
     if (isPaused || isDead) {
       if (timerRef.current) {
@@ -217,9 +220,12 @@ export function useIdleCombat({
       return
     }
 
+    // First combat after scene renders
+    const firstTick = setTimeout(runCombatTick, 1500)
     timerRef.current = setInterval(runCombatTick, IDLE_CONFIG.TIMER_INTERVAL)
 
     return () => {
+      clearTimeout(firstTick)
       if (timerRef.current) {
         clearInterval(timerRef.current)
         timerRef.current = null
@@ -261,6 +267,7 @@ export function useIdleCombat({
   return {
     combatLog,
     currentMonster,
+    backgroundMonster,
     isDead,
     idleHp,
     idleMaxHp,
