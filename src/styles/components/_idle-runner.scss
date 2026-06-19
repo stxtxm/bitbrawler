@@ -62,6 +62,7 @@
   left: 22%;
   bottom: clamp(16px, 5cqi, 32px);
   z-index: 5;
+  display: flex;
   animation: runBounce 0.5s ease-in-out infinite;
 
   &.attacking {
@@ -75,9 +76,9 @@
 
 @keyframes runBounce {
   0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-4px) rotate(-1deg); }
-  50% { transform: translateY(-2px) rotate(0deg); }
-  75% { transform: translateY(-5px) rotate(1deg); }
+  25% { transform: translateY(-2px) rotate(-0.5deg); }
+  50% { transform: translateY(-1px) rotate(0deg); }
+  75% { transform: translateY(-3px) rotate(0.5deg); }
 }
 
 @keyframes attackLunge {
@@ -101,6 +102,7 @@
   right: -22%;
   bottom: clamp(16px, 5cqi, 32px);
   z-index: 4;
+  display: flex;
   transition: right 1.5s cubic-bezier(0.2, 0.8, 0.3, 1);
   transform-origin: bottom center;
 

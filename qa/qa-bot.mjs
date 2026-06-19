@@ -745,7 +745,6 @@ async function runFightSequence(page, runKey, runRecord) {
 
     const fightBtn = page.locator('button.primary-btn.giant-btn').first()
     const fightStart = Date.now()
-    // Retry FIGHT click with overlay handling in case overlay appears between check and click
     for (let attempt = 0; attempt < 3; attempt++) {
       if (attempt > 0) {
         await handleLevelUpOverlay(page)
@@ -762,7 +761,6 @@ async function runFightSequence(page, runKey, runRecord) {
 
     await sleep(1000)
 
-    // Retry fight result polling with exponential backoff
     const maxRetries = 3
     const baseTimeout = Math.floor(config.fightTimeout * 0.5)
     let resultDetected = false
@@ -835,12 +833,8 @@ async function runFightSequence(page, runKey, runRecord) {
     const xpMatch = pageText.match(/\+(\d+)\s*XP/)
     const xpGained = xpMatch ? parseInt(xpMatch[1]) : null
 
-    // Parse PvE monster name from fight intro text if applicable
-    let monsterName = null
-    if (isPvePhase) {
-      const monsterMatch = pageText.match(/A WILD\s+(.+?)\s+APPEARS/i)
-      if (monsterMatch) monsterName = monsterMatch[1].trim()
-    }
+    const monsterMatch = pageText.match(/A WILD\s+(.+?)\s+APPEARS/i)
+    const monsterName = monsterMatch ? monsterMatch[1].trim() : null
 
     console.log(`   Result: ${isVictory ? '✅ VICTORY' : isDefeat ? '❌ DEFEAT' : '🤝 DRAW'} (${fightDuration}ms) [${isPvePhase ? 'PVE' : 'PVP'}]`)
 
@@ -863,16 +857,13 @@ async function runFightSequence(page, runKey, runRecord) {
       await page.waitForTimeout(1500)
     }
 
-    // Handle level-up overlay (allocate stat + dismiss) before next fight
     const hadOverlay = await handleLevelUpOverlay(page)
 
-    // Capture max HP after returning to arena
     thisFightData.max_hp = await parseMaxHp(page)
     console.log(`   max HP after fight: ${thisFightData.max_hp || '(unable to parse)'}`)
 
     runRecord.fights.push(thisFightData)
 
-    // Track level progression if level-up was detected
     if (hadOverlay) {
       const postFightText = await page.locator('body').innerText().catch(() => '')
       const newLevel = parseLevelFromText(postFightText)
@@ -893,175 +884,9 @@ async function runFightSequence(page, runKey, runRecord) {
       }
     }
 
-    // Short human-like delay before next fight
     await humanDelay(page)
   }
-      break
-    }
-
-    if (arenaStatus.isResting || !arenaStatus.hasFightCta) {
-      console.log(`   Fight CTA not available (${arenaStatus.fightButtonLabel || 'no label'})`)
-      if (!recreatedForExhaustion) {
-        await maybeReplaceExhaustedCharacter(page, runKey, runRecord, 'missing-fight-cta')
-        recreatedForExhaustion = true
-        i = -1
-        continue
-      }
-      break
-    }
-
-    // Check for level-up overlay right before FIGHT (it may appear asynchronously after CONTINUE)
-    await handleLevelUpOverlay(page)
-
-    console.log(`⚔️ Fight ${i + 1}/${config.fightsPerRun}...`)
-
-    const fightBtn = page.locator('button.primary-btn.giant-btn').first()
-    const fightStart = Date.now()
-    // Retry FIGHT click with overlay handling in case overlay appears between check and click
-    for (let attempt = 0; attempt < 3; attempt++) {
-      if (attempt > 0) {
-        await handleLevelUpOverlay(page)
-        await page.waitForTimeout(300)
-      }
-      // Try normal click first; if overlay blocks it, fall back to force click immediately
-      const clicked = await fightBtn.click({ timeout: 3000 }).then(() => true).catch(() => false)
-      if (clicked) break
-      // Overlay may be intercepting pointer events — retry with force to bypass actionability checks
-      console.log(`   FIGHT click blocked (attempt ${attempt + 1}), retrying with force click...`)
-      await fightBtn.click({ force: true, timeout: 3000 }).then(() => true).catch(() => false).then((ok) => {
-        if (ok) console.log('   Force click succeeded')
-      })
-    }
-    console.log('   Fight started, waiting for result...')
-
-    await sleep(1000)
-
-    // Retry fight result polling with exponential backoff
-    const maxRetries = 3
-    const baseTimeout = Math.floor(config.fightTimeout * 0.5) // First attempt gets 50% of budget
-    let resultDetected = false
-
-    for (let retry = 0; retry < maxRetries; retry++) {
-      if (retry > 0) {
-        const backoff = Math.min(1000 * Math.pow(2, retry - 1), 8000) // 1s, 2s, 4s...
-        console.log(`   Retry ${retry + 1}/${maxRetries}: backoff ${backoff}ms then polling...`)
-        await sleep(backoff)
-
-        // Pre-check: maybe the result appeared during backoff
-        const preText = await page.locator('body').innerText().catch(() => '')
-        if (preText.includes('VICTORY') || preText.includes('DEFEAT') || preText.includes('DRAW')) {
-          resultDetected = true
-          break
-        }
-      }
-
-      const timeout = retry < maxRetries - 1 ? baseTimeout : config.fightTimeout - baseTimeout * (maxRetries - 1)
-      try {
-        await page.waitForFunction(
-          () => {
-            const text = document.body?.innerText || ''
-            return text.includes('VICTORY') || text.includes('DEFEAT') || text.includes('DRAW')
-          },
-          { timeout }
-        )
-        resultDetected = true
-        break
-      } catch {
-        if (retry < maxRetries - 1) {
-          console.log(`   ⚠️ Fight result not yet available after attempt ${retry + 1}`)
-        }
-      }
-    }
-
-    if (!resultDetected) {
-      console.log(`   Fight result not detected after ${config.fightTimeout}ms timeout (${maxRetries} retries), taking screenshot`)
-      await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-timeout.png`) })
-      runRecord.errors.push(`Fight ${i + 1}: timeout waiting for result (${config.fightTimeout}ms, ${maxRetries} retries)`)
-
-      const timeoutArenaStatus = await readArenaStatus(page)
-      if (
-        i === 0 &&
-        runRecord.fights.length === 0 &&
-        !recreatedForExhaustion &&
-        (
-          timeoutArenaStatus.isResting ||
-          (timeoutArenaStatus.fightsAvailable !== null && timeoutArenaStatus.fightsAvailable <= 0) ||
-          !timeoutArenaStatus.hasFightCta
-        )
-      ) {
-        await maybeReplaceExhaustedCharacter(page, runKey, runRecord, 'timeout-on-exhausted-fighter')
-        recreatedForExhaustion = true
-        i = -1
-        continue
-      }
-
-      // Safer navigation recovery: use evaluate to avoid ERR_ABORTED race conditions
-      await page.evaluate(() => { window.location.href = window.location.origin }).catch(() => {})
-      await page.waitForURL('**', { timeout: 15000 }).catch(() => {})
-      await page.waitForTimeout(3000)
-      continue
-    }
-
-    const fightDuration = Date.now() - fightStart
-
-    const pageText = await page.locator('body').innerText()
-    const isVictory = pageText.includes('VICTORY')
-    const isDefeat = pageText.includes('DEFEAT')
-
-    const xpMatch = pageText.match(/\+(\d+)\s*XP/)
-    const xpGained = xpMatch ? parseInt(xpMatch[1]) : null
-
-    console.log(`   Result: ${isVictory ? '✅ VICTORY' : isDefeat ? '❌ DEFEAT' : '🤝 DRAW'} (${fightDuration}ms)`)
-
-    // Temporarily store fight data (maxHp will be captured after arena is back)
-    const thisFightData = {
-      result: isVictory ? 'victory' : isDefeat ? 'defeat' : 'draw',
-      xp: xpGained,
-      fight_duration_ms: fightDuration,
-      max_hp: null,                    // populated after CONTINUE + overlay dismiss
-    }
-
-    await page.screenshot({
-      path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-${isVictory ? 'win' : isDefeat ? 'loss' : 'draw'}.png`),
-    })
-
-    const continueBtn = page.locator('button:has-text("CONTINUE"), button:has-text("CLOSE"), button:has-text("OK")').first()
-    if (await continueBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await continueBtn.click()
-      await page.waitForTimeout(1500)
-    }
-
-    // Handle level-up overlay (allocate stat + dismiss) before next fight
-    const hadOverlay = await handleLevelUpOverlay(page)
-
-    // Capture max HP after returning to arena (reflects level-ups / equipment changes)
-    thisFightData.max_hp = await parseMaxHp(page)
-    console.log(`   max HP after fight: ${thisFightData.max_hp || '(unable to parse)'}`)
-
-    // Push the completed fight data
-    runRecord.fights.push(thisFightData)
-
-    // Track level progression if level-up was detected
-    if (hadOverlay) {
-      const postFightText = await page.locator('body').innerText().catch(() => '')
-      const newLevel = parseLevelFromText(postFightText)
-      if (newLevel !== null && currentLevel !== null && newLevel > currentLevel) {
-        const levelsGained = newLevel - currentLevel
-        runRecord.level_up_events.push({
-          fight_number: i + 1,
-          levels_gained: levelsGained,
-          points_to_allocate: levelsGained,
-          previous_level: currentLevel,
-          new_level: newLevel,
-        })
-        console.log(`   ⬆️ Level up: ${currentLevel} → ${newLevel} (+${levelsGained} level${levelsGained > 1 ? 's' : ''})`)
-        currentLevel = newLevel
-      } else if (newLevel !== null) {
-        currentLevel = newLevel
-      }
-    }
   }
-}
 
 async function run() {
   const now = new Date()
@@ -1232,8 +1057,9 @@ async function run() {
       runRecord.pve_data.xp_total = pveFights.reduce((s, f) => s + (f.xp || 0), 0)
       runRecord.pve_data.monsters_faced = pveFights
         .map(f => f.monster_name)
-        .filter((n): n is string => n !== null && n !== undefined)
+        .filter((n) => n !== null && n !== undefined)
       console.log(`   PvE: ${runRecord.pve_data.wins}/${runRecord.pve_data.fights} wins, ${runRecord.pve_data.monsters_faced.join(', ')}`)
+    }
 
     const finalArenaStatus = await readArenaStatus(page)
     const fighterExhausted =
