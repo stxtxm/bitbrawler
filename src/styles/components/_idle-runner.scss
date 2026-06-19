@@ -33,16 +33,23 @@
 .idle-layer.mountains {
   z-index: 1;
   background-repeat: repeat-x;
-  background-position: 0 60%;
-  background-size: 128px auto;
+  background-position: 0 100%;
+  background-size: clamp(96px, 20cqi, 160px) auto;
 
   .scroll-slow {
     width: 200%;
     height: 100%;
     background: inherit;
-    background-size: 128px auto;
-    background-position: 0 60%;
+    background-size: clamp(96px, 20cqi, 160px) auto;
+    background-position: 0 100%;
     animation: scrollLayer 60s linear infinite;
+  }
+}
+
+@include mobile {
+  .idle-layer.mountains {
+    background-size: 80px auto;
+    .scroll-slow { background-size: 80px auto; }
   }
 }
 
@@ -88,24 +95,25 @@
 }
 
 @keyframes runBounce {
-  0%, 100% { transform: translateY(0); }
-  25% { transform: translateY(-2px); }
-  50% { transform: translateY(-1px); }
-  75% { transform: translateY(-3px); }
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-4px) rotate(-1deg); }
+  50% { transform: translateY(-2px) rotate(0deg); }
+  75% { transform: translateY(-5px) rotate(1deg); }
 }
 
 @keyframes attackLunge {
-  0% { transform: translateX(0); }
-  30% { transform: translateX(20px); }
-  60% { transform: translateX(5px); }
-  100% { transform: translateX(0); }
+  0% { transform: translateX(0) translateY(0); }
+  30% { transform: translateX(24px) translateY(-2px); }
+  60% { transform: translateX(8px) translateY(0); }
+  100% { transform: translateX(0) translateY(0); }
 }
 
 @keyframes victoryJump {
-  0% { transform: translateY(0); }
-  30% { transform: translateY(-8px); }
-  50% { transform: translateY(-10px); }
-  100% { transform: translateY(0); }
+  0% { transform: translateY(0) scale(1); }
+  20% { transform: translateY(-12px) scale(1.1); }
+  40% { transform: translateY(-16px) scale(1.15); }
+  60% { transform: translateY(-6px) scale(1.05); }
+  100% { transform: translateY(0) scale(1); }
 }
 
 // Monster
@@ -127,14 +135,17 @@
   }
 
   &.phase-result {
-    right: 120%;
-    transition: right 2s ease-in;
+    right: -50%;
+    opacity: 0;
+    transition: right 1.5s ease-in, opacity 1s ease-in 0.3s;
   }
 
   @include mobile {
     bottom: 24px;
+    right: -30%;
     &.phase-monster_appears { right: 35%; }
     &.phase-combat { right: 35%; }
+    &.phase-result { right: -60%; }
   }
 
   // Wraith special
@@ -300,47 +311,55 @@
 // Offline notification
 .idle-offline-notification {
   position: absolute;
-  top: 8px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   z-index: 20;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0,0,0,0.92);
   border: 2px solid $accent-gold;
-  padding: clamp(6px, 1.5vw, 12px) clamp(12px, 3vw, 24px);
+  padding: clamp(16px, 3vw, 24px) clamp(24px, 4vw, 36px);
   text-align: center;
   font-family: $font-pixel;
-  animation: fadeIn 0.3s ease;
+  animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   pointer-events: auto;
+  min-width: clamp(200px, 60vw, 320px);
+  box-shadow: 0 0 20px rgba($accent-gold, 0.3);
 
   .offline-title {
-    font-size: clamp(0.4rem, 0.9cqi, 0.6rem);
+    font-size: clamp(0.65rem, 1.5cqi, 1rem);
     color: $accent-gold;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
+    text-shadow: 0 0 8px rgba($accent-gold, 0.5);
   }
 
   .offline-stats {
     display: flex;
-    gap: clamp(8px, 2vw, 16px);
-    font-size: clamp(0.35rem, 0.8cqi, 0.5rem);
+    gap: clamp(12px, 3vw, 24px);
+    font-size: clamp(0.55rem, 1.2cqi, 0.8rem);
     color: #fff;
     justify-content: center;
   }
 
   .idle-offline-close {
     position: absolute;
-    top: 2px;
-    right: 4px;
+    top: 4px;
+    right: 6px;
     background: none;
     border: none;
     color: $accent-red;
     cursor: pointer;
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     padding: 8px;
     min-width: 44px;
     min-height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  @include mobile {
+    min-width: 70vw;
+    padding: 20px 28px;
   }
 }
 
@@ -349,6 +368,11 @@
 @keyframes fadeIn {
   from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
   to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes popIn {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 // Particles
