@@ -3,18 +3,18 @@
 .idle-runner-scene {
   position: relative;
   width: 100%;
-  height: clamp(180px, 40vh, 500px);
+  height: clamp(180px, 30vh, 350px);
   overflow: hidden;
   border-bottom: 3px solid #333;
   background-size: cover;
   container-type: inline-size;
 
   @include mobile {
-    height: clamp(160px, 35vh, 280px);
+    height: clamp(160px, 22vh, 220px);
   }
 
   @include small-mobile {
-    height: clamp(140px, 30vh, 220px);
+    height: clamp(140px, 20vh, 180px);
   }
 }
 
@@ -64,7 +64,7 @@
 .idle-character-slot {
   position: absolute;
   left: clamp(15%, 25%, 30%);
-  top: 38%;
+  bottom: 32px;
   z-index: 5;
   animation: runBounce 0.5s ease-in-out infinite;
 
@@ -78,37 +78,36 @@
 
   @include mobile {
     left: 20%;
-    top: 40%;
-    transform: scale(0.8);
+    bottom: 24px;
   }
 }
 
 @keyframes runBounce {
   0%, 100% { transform: translateY(0); }
-  25% { transform: translateY(-3px); }
+  25% { transform: translateY(-2px); }
   50% { transform: translateY(-1px); }
-  75% { transform: translateY(-4px); }
+  75% { transform: translateY(-3px); }
 }
 
 @keyframes attackLunge {
-  0% { transform: translateX(0) scale(1); }
-  30% { transform: translateX(15px) scale(1.05); }
-  60% { transform: translateX(5px) scale(0.95); }
-  100% { transform: translateX(0) scale(1); }
+  0% { transform: translateX(0); }
+  30% { transform: translateX(20px); }
+  60% { transform: translateX(5px); }
+  100% { transform: translateX(0); }
 }
 
 @keyframes victoryJump {
   0% { transform: translateY(0); }
-  30% { transform: translateY(-10px); }
-  50% { transform: translateY(-12px) scale(1.05); }
-  100% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(-8px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0); }
 }
 
 // Monster
 .idle-monster-slot {
   position: absolute;
   right: -25%;
-  top: 35%;
+  bottom: 32px;
   z-index: 4;
   transition: none;
 
@@ -128,7 +127,7 @@
   }
 
   @include mobile {
-    transform: scale(0.7);
+    bottom: 24px;
     &.phase-monster_appears { right: 35%; }
     &.phase-combat { right: 35%; }
   }
@@ -145,9 +144,9 @@
 
 @keyframes monsterHitShake {
   0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-10px) rotate(-2deg); }
-  40% { transform: translateX(8px) rotate(2deg); }
-  60% { transform: translateX(-5px) rotate(-1deg); }
+  20% { transform: translateX(-8px) rotate(-2deg); }
+  40% { transform: translateX(6px) rotate(2deg); }
+  60% { transform: translateX(-4px) rotate(-1deg); }
   80% { transform: translateX(3px); }
 }
 
