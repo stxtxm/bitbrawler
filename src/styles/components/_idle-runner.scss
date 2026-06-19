@@ -3,18 +3,23 @@
 .idle-runner-scene {
   position: relative;
   width: 100%;
-  height: clamp(180px, 30vh, 350px);
   overflow: hidden;
-  border-bottom: 3px solid #333;
   background-size: cover;
   container-type: inline-size;
+  min-height: clamp(160px, 25vh, 300px);
 
   @include mobile {
-    height: clamp(160px, 22vh, 220px);
+    min-height: clamp(120px, 20vh, 200px);
   }
 
   @include small-mobile {
-    height: clamp(140px, 20vh, 180px);
+    min-height: clamp(100px, 18vh, 160px);
+  }
+
+  // When inside .character-display (arena-content), fill the flex space
+  .character-display & {
+    flex: 1;
+    height: auto;
   }
 }
 
