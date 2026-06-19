@@ -98,7 +98,7 @@ export function useIdleCombat({
   // Offline gains on mount
   useEffect(() => {
     processOfflineGains()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [processOfflineGains])
 
   const clearOfflineGains = useCallback(() => {
     setOfflineGains(null)

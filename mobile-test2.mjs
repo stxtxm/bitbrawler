@@ -1,6 +1,6 @@
 import { chromium } from 'playwright'
 import { writeFileSync } from 'fs'
-import { join, dirname } from 'url'
+import { join } from 'url'
 
 const SCREENSHOTS_DIR = '/home/timo/dev/bitbrawler/qa/screenshots'
 
