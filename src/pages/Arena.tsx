@@ -491,9 +491,6 @@ const Arena = () => {
                         <div className="character-display">
                             <IdleRunnerScene
                                 character={effectiveCharacter}
-                                isDead={idle.isDead}
-                                idleHp={idle.idleHp}
-                                idleMaxHp={idle.idleMaxHp}
                                 idleXpGained={idle.idleXpGained}
                                 idleFightsCount={idle.idleFightsCount}
                                 currentMonster={idle.currentMonster}
@@ -501,7 +498,6 @@ const Arena = () => {
                                 scenePhase={idle.scenePhase}
                                 lastCombatResult={idle.lastCombatResult}
                                 lastCombatXp={idle.lastCombatXp}
-                                onResume={idle.resume}
                                 offlineGains={idle.offlineGains}
                                 onClearOfflineGains={idle.clearOfflineGains}
                             />

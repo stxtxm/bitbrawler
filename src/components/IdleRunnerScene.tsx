@@ -14,9 +14,6 @@ import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode'
 
 interface IdleRunnerSceneProps {
   character: Character
-  isDead: boolean
-  idleHp: number
-  idleMaxHp: number
   idleXpGained: number
   idleFightsCount: number
   currentMonster: MonsterId | null
@@ -24,15 +21,14 @@ interface IdleRunnerSceneProps {
   scenePhase: ScenePhase
   lastCombatResult: 'win' | 'lose' | null
   lastCombatXp: number
-  onResume: () => void
   offlineGains: { fights: number; xp: number } | null
   onClearOfflineGains: () => void
 }
 
 export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
-  character, isDead, idleHp, idleMaxHp, idleXpGained, idleFightsCount,
+  character, idleXpGained, idleFightsCount,
   currentMonster, backgroundMonster, scenePhase, lastCombatResult, lastCombatXp,
-  onResume, offlineGains, onClearOfflineGains,
+  offlineGains, onClearOfflineGains,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const particlesRef = useRef<ParticleSystem | null>(null)
@@ -85,9 +81,7 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
     prevPhaseRef.current = scenePhase
   }, [scenePhase, lastCombatResult, lowPerf])
 
-  const hpPercent = idleMaxHp > 0 ? (idleHp / idleMaxHp) * 100 : 0
-
-  const characterState = isDead ? 'dead' : scenePhase === 'combat' ? 'attacking' : 'running'
+  const characterState = scenePhase === 'combat' ? 'attacking' : 'running'
 
   const containerStyle: React.CSSProperties = {
     background: skyGradient,
@@ -137,7 +131,7 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
       </div>
 
       {/* Monster: active during combat, passive background during running */}
-      {!isDead && (currentMonster || backgroundMonster) && (
+      {(currentMonster || backgroundMonster) && (
         <div
           className={`idle-monster-slot ${currentMonster ? `phase-${scenePhase}` : 'phase-running'} ${!currentMonster ? 'passive' : ''}`}
           data-monster={currentMonster || backgroundMonster}
@@ -148,7 +142,7 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
       )}
 
       {/* Combat result text */}
-      {scenePhase === 'result' && lastCombatResult && !isDead && (
+      {scenePhase === 'result' && lastCombatResult && (
         <div className={`idle-combat-result ${lastCombatResult}`}>
           <span className="result-label">{lastCombatResult === 'win' ? 'VICTORY' : 'DEFEAT'}</span>
           <span className="result-xp">+{lastCombatXp} XP</span>
@@ -162,10 +156,6 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
 
       {/* HUD overlay */}
       <div className="idle-hud">
-        <div className="idle-hp-bar">
-          <div className="idle-hp-fill" style={{ width: `${hpPercent}%` }} />
-          <span className="idle-hp-text">{idleHp}/{idleMaxHp}</span>
-        </div>
         <div className="idle-xp-counter">
           <span className="idle-fights">{idleFightsCount} FIGHTS</span>
           <span className="idle-xp-total">+{idleXpGained} XP</span>
@@ -180,23 +170,6 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
           <div className="offline-stats">
             <span>{offlineGains.fights} fights</span>
             <span>+{offlineGains.xp} XP</span>
-          </div>
-        </div>
-      )}
-
-      {/* Death overlay */}
-      {isDead && (
-        <div className="idle-death-overlay">
-          <div className="death-content">
-            <div className="death-title">YOU FELL IN BATTLE</div>
-            <div className="death-stats">
-              {idleFightsCount > 0 && (
-                <span>{idleFightsCount} fights • +{idleXpGained} XP</span>
-              )}
-            </div>
-            <button className="resume-btn" onClick={onResume}>
-              ⚔ RESUME ⚔
-            </button>
           </div>
         </div>
       )}

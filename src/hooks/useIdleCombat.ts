@@ -19,14 +19,10 @@ interface UseIdleCombatReturn {
   combatLog: IdleCombatEntry[]
   currentMonster: MonsterId | null
   backgroundMonster: MonsterId | null
-  isDead: boolean
-  idleHp: number
-  idleMaxHp: number
   idleXpGained: number
   lastCombatResult: 'win' | 'lose' | null
   lastCombatXp: number
   scenePhase: ScenePhase
-  resume: () => void
   idleFightsCount: number
   offlineGains: { fights: number; xp: number } | null
   clearOfflineGains: () => void
@@ -40,9 +36,6 @@ export function useIdleCombat({
   const [combatLog, setCombatLog] = useState<IdleCombatEntry[]>([])
   const [currentMonster, setCurrentMonster] = useState<MonsterId | null>(null)
   const [backgroundMonster, setBackgroundMonster] = useState<MonsterId | null>(null)
-  const [isDead, setIsDead] = useState(false)
-  const [idleHp, setIdleHp] = useState(character?.maxHp ?? 100)
-  const [idleMaxHp] = useState(character?.maxHp ?? 100)
   const [idleXpGained, setIdleXpGained] = useState(0)
   const [lastCombatResult, setLastCombatResult] = useState<'win' | 'lose' | null>(null)
   const [lastCombatXp, setLastCombatXp] = useState(0)
@@ -52,14 +45,10 @@ export function useIdleCombat({
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const isPausedRef = useRef(isPaused)
   const charRef = useRef(character)
-  const idleHpRef = useRef(idleHp)
-  const isDeadRef = useRef(isDead)
   const phaseTimers = useRef<ReturnType<typeof setTimeout>[]>([])
 
   isPausedRef.current = isPaused || !character
   charRef.current = character ?? charRef.current
-  idleHpRef.current = idleHp
-  isDeadRef.current = isDead
 
   const saveTimestamp = useCallback(() => {
     try {
@@ -81,11 +70,8 @@ export function useIdleCombat({
 
       let currentChar = character
       let totalXp = 0
-      let hp = character.maxHp
-      let died = false
 
       for (let i = 0; i < fights; i++) {
-        if (hp <= 0) { died = true; break }
         const { character: monster } = generateMonsterForPlayer(currentChar.level)
         const result = simulateCombat(currentChar, monster)
         const won = result.winner === 'attacker'
@@ -95,18 +81,8 @@ export function useIdleCombat({
 
         const xpResult = gainXp(currentChar, idleXp)
         currentChar = xpResult.updatedCharacter
-
-        const lastTimeline = result.timeline[result.timeline.length - 1]
-        if (lastTimeline) {
-          const dmg = won ? monster.maxHp - lastTimeline.defenderHp : currentChar.maxHp - lastTimeline.attackerHp
-          hp -= dmg
-        } else {
-          hp -= 10
-        }
       }
 
-      setIdleHp(Math.max(0, hp))
-      setIsDead(hp <= 0 || died)
       onCharacterUpdate(currentChar)
 
       if (totalXp > 0) {
@@ -125,15 +101,10 @@ export function useIdleCombat({
   }, [])
 
   const runCombatTick = useCallback(() => {
-    if (isDeadRef.current || isPausedRef.current) return
+    if (isPausedRef.current) return
 
     const currentChar = charRef.current
     if (!currentChar) return
-    const hp = idleHpRef.current
-    if (hp <= 0) {
-      setIsDead(true)
-      return
-    }
 
     // Générer monstre
     let monster
@@ -159,21 +130,7 @@ export function useIdleCombat({
       setLastCombatXp(idleXp)
       setIdleXpGained(prev => prev + idleXp)
 
-      const lastTimeline = result.timeline[result.timeline.length - 1]
-      let damageTaken = 0
-      if (lastTimeline) {
-        damageTaken = won
-          ? monster.character.maxHp - lastTimeline.defenderHp
-          : (currentChar.maxHp - lastTimeline.attackerHp)
-      } else {
-        damageTaken = won ? 5 : 15
-      }
-
-      const newHp = Math.max(0, idleHpRef.current - damageTaken)
-      idleHpRef.current = newHp
-      setIdleHp(newHp)
-
-      // Appliquer XP
+      // Appliquer XP (no death, no damage)
       const xpResult = gainXp(currentChar, idleXp)
       onCharacterUpdate(xpResult.updatedCharacter)
 
@@ -184,17 +141,10 @@ export function useIdleCombat({
         monsterName: monster.def.name,
         won,
         xpGained: idleXp,
-        damageTaken,
+        damageTaken: 0,
       }
 
       setCombatLog(prev => [...prev, entry])
-
-      // Vérifier mort
-      if (newHp <= 0) {
-        setIsDead(true)
-        setScenePhase('running')
-        return
-      }
     }, IDLE_CONFIG.MONSTER_APPEAR_DURATION)
 
     const t2 = setTimeout(() => {
@@ -212,7 +162,7 @@ export function useIdleCombat({
 
   // Trigger first combat immediately, then repeat on interval
   useEffect(() => {
-    if (isPaused || isDead) {
+    if (isPaused) {
       if (timerRef.current) {
         clearInterval(timerRef.current)
         timerRef.current = null
@@ -231,7 +181,7 @@ export function useIdleCombat({
         timerRef.current = null
       }
     }
-  }, [isPaused, isDead, runCombatTick])
+  }, [isPaused, runCombatTick])
 
   // Visibility change → save timestamp
   useEffect(() => {
@@ -252,30 +202,14 @@ export function useIdleCombat({
     }
   }, [saveTimestamp])
 
-  const resume = useCallback(() => {
-    const maxHp = charRef.current?.maxHp ?? 100
-    setIsDead(false)
-    idleHpRef.current = maxHp
-    setIdleHp(maxHp)
-    setScenePhase('running')
-    setCurrentMonster(null)
-    setLastCombatResult(null)
-    setLastCombatXp(0)
-    saveTimestamp()
-  }, [saveTimestamp])
-
   return {
     combatLog,
     currentMonster,
     backgroundMonster,
-    isDead,
-    idleHp,
-    idleMaxHp,
     idleXpGained,
     lastCombatResult,
     lastCombatXp,
     scenePhase,
-    resume,
     idleFightsCount: combatLog.length,
     offlineGains,
     clearOfflineGains,

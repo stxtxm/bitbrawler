@@ -278,42 +278,6 @@
   pointer-events: none;
 }
 
-.idle-hp-bar {
-  flex: 1;
-  max-width: 200px;
-  height: clamp(10px, 1.5cqi, 16px);
-  background: #111;
-  border: 1px solid #555;
-  position: relative;
-  overflow: hidden;
-
-  @include mobile {
-    max-width: 140px;
-    height: 8px;
-  }
-}
-
-.idle-hp-fill {
-  height: 100%;
-  background: linear-gradient(90deg, $accent-red, #ff6644);
-  transition: width 0.3s ease;
-}
-
-.idle-hp-text {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.4rem;
-  color: #fff;
-  text-shadow: 1px 1px 0 #000;
-  font-family: $font-pixel;
-
-  @include mobile {
-    font-size: 0.35rem;
-  }
-}
-
 .idle-xp-counter {
   display: flex;
   flex-direction: column;
@@ -380,64 +344,7 @@
   }
 }
 
-// Death overlay
-.idle-death-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 20;
-  background: rgba(0, 0, 0, 0.82);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: deathFadeIn 0.5s ease;
-}
 
-.death-content {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: clamp(10px, 2vw, 20px);
-  padding: 0 clamp(12px, 3vw, 24px);
-}
-
-.death-title {
-  font-family: $font-pixel;
-  font-size: clamp(0.8rem, 2cqi, 1.2rem);
-  color: $accent-red;
-  text-shadow: 0 0 12px $accent-red, 2px 2px 0 #000;
-}
-
-.death-stats {
-  font-family: $font-pixel;
-  font-size: clamp(0.5rem, 1.2cqi, 0.7rem);
-  color: #ccc;
-}
-
-.resume-btn {
-  font-family: $font-pixel;
-  font-size: clamp(0.7rem, 1.8cqi, 1rem);
-  padding: clamp(12px, 2vw, 16px) clamp(20px, 4vw, 36px);
-  background: #000;
-  color: $accent-green;
-  border: 2px solid $accent-green;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  transition: all 0.2s;
-  min-width: 140px;
-  min-height: 44px;
-
-  &:hover {
-    background: $accent-green;
-    color: #000;
-  }
-}
-
-@keyframes deathFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
