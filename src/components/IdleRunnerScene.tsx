@@ -39,11 +39,11 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
   const clouds = useMemo(() => generateCloudPositions(), [])
   const skyGradient = useMemo(() => getSkyGradient(), [])
 
-  // Animation loop 8 FPS
+  // Animation loop 12 FPS
   useEffect(() => {
     const interval = setInterval(() => {
       setAnimFrame(prev => prev + 1)
-    }, 125)
+    }, 80)
     return () => clearInterval(interval)
   }, [])
 
