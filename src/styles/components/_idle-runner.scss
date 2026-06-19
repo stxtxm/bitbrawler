@@ -6,15 +6,6 @@
   overflow: hidden;
   background-size: cover;
   container-type: inline-size;
-  min-height: clamp(160px, 25vh, 300px);
-
-  @include mobile {
-    min-height: clamp(120px, 20vh, 200px);
-  }
-
-  @include small-mobile {
-    min-height: clamp(100px, 18vh, 160px);
-  }
 
   // When inside .character-display (arena-content), fill the flex space
   .character-display & {
@@ -34,22 +25,15 @@
   z-index: 1;
   background-repeat: repeat-x;
   background-position: 0 100%;
-  background-size: clamp(96px, 20cqi, 160px) auto;
+  background-size: clamp(72px, 18cqi, 160px) auto;
 
   .scroll-slow {
     width: 200%;
     height: 100%;
     background: inherit;
-    background-size: clamp(96px, 20cqi, 160px) auto;
+    background-size: clamp(72px, 18cqi, 160px) auto;
     background-position: 0 100%;
     animation: scrollLayer 60s linear infinite;
-  }
-}
-
-@include mobile {
-  .idle-layer.mountains {
-    background-size: 80px auto;
-    .scroll-slow { background-size: 80px auto; }
   }
 }
 
@@ -59,8 +43,8 @@
 
 .cloud-instance {
   position: absolute;
-  width: 64px;
-  height: 32px;
+  width: clamp(40px, 12cqi, 80px);
+  height: clamp(20px, 6cqi, 40px);
   background-repeat: no-repeat;
   background-size: contain;
   pointer-events: none;
@@ -75,8 +59,8 @@
 // Character
 .idle-character-slot {
   position: absolute;
-  left: clamp(15%, 25%, 30%);
-  bottom: 32px;
+  left: 22%;
+  bottom: clamp(16px, 6cqi, 36px);
   z-index: 5;
   animation: runBounce 0.5s ease-in-out infinite;
 
@@ -86,11 +70,6 @@
 
   &.victory {
     animation: victoryJump 0.6s ease-out;
-  }
-
-  @include mobile {
-    left: 20%;
-    bottom: 24px;
   }
 }
 
@@ -119,54 +98,40 @@
 // Monster
 .idle-monster-slot {
   position: absolute;
-  right: -25%;
-  bottom: 32px;
+  right: -22%;
+  bottom: clamp(16px, 6cqi, 36px);
   z-index: 4;
   transition: none;
 
   &.phase-monster_appears {
-    right: 38%;
+    right: 36%;
     transition: right 2s cubic-bezier(0.2, 0.8, 0.3, 1);
   }
 
   &.phase-combat {
-    right: 38%;
+    right: 36%;
     animation: monsterHitShake 0.5s ease;
   }
 
   &.phase-result {
-    right: -50%;
+    right: -45%;
     opacity: 0;
     transition: right 1.5s ease-in, opacity 1s ease-in 0.3s;
   }
 
-  @include mobile {
-    bottom: 24px;
-    right: -30%;
-    &.phase-monster_appears { right: 35%; }
-    &.phase-combat { right: 35%; }
-    &.phase-result { right: -60%; }
-  }
-
-  // Wraith special
   // Passive state (background monster during running phase)
   &.passive {
-    right: 5%;
-    bottom: 32px;
+    right: 4%;
+    bottom: clamp(16px, 6cqi, 36px);
     opacity: 0.3;
     transform: scale(0.6);
     transform-origin: bottom center;
     pointer-events: none;
-
-    @include mobile {
-      bottom: 24px;
-      right: 3%;
-    }
   }
 
   &[data-monster="wraith"] {
     &.phase-monster_appears {
-      right: 38%;
+      right: 36%;
       opacity: 0;
       animation: wraithMaterialize 2s ease-out forwards;
     }
@@ -253,20 +218,14 @@
 .idle-ground-layer {
   position: absolute;
   bottom: 0;
-  height: 32px;
+  height: clamp(16px, 5cqi, 32px);
   width: 100%;
   z-index: 3;
   background-repeat: repeat-x, repeat-x;
-  background-position: 0 0, 0 16px;
-  background-size: 16px 16px, 16px 16px;
+  background-position: 0 0, 0 50%;
+  background-size: clamp(12px, 3cqi, 16px) clamp(12px, 3cqi, 16px);
   pointer-events: none;
   animation: scrollGround 3s linear infinite;
-
-  @include mobile {
-    height: 24px;
-    background-size: 12px 12px, 12px 12px;
-    animation-duration: 2.5s;
-  }
 }
 
 @keyframes scrollGround {

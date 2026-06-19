@@ -58,17 +58,16 @@ export function useIdleCombat({
     }
   }, [])
 
-  // Offline gains on mount
-  useEffect(() => {
+  const processOfflineGains = useCallback(() => {
+    if (!charRef.current) return
     try {
-      if (!character) return
       const lastTimestamp = Number(localStorage.getItem(IDLE_LAST_KEY) || '0')
       if (lastTimestamp <= 0) return
 
       const fights = calculateOfflineFights(lastTimestamp, Date.now())
       if (fights <= 0) return
 
-      let currentChar = character
+      let currentChar = charRef.current
       let totalXp = 0
 
       for (let i = 0; i < fights; i++) {
@@ -87,13 +86,18 @@ export function useIdleCombat({
 
       if (totalXp > 0) {
         setOfflineGains({ fights, xp: totalXp })
-        setIdleXpGained(totalXp)
+        setIdleXpGained(prev => prev + totalXp)
       }
     } catch (err) {
       console.error('Offline gains calculation failed:', err)
     }
 
     saveTimestamp()
+  }, [onCharacterUpdate, saveTimestamp])
+
+  // Offline gains on mount
+  useEffect(() => {
+    processOfflineGains()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const clearOfflineGains = useCallback(() => {
@@ -183,16 +187,18 @@ export function useIdleCombat({
     }
   }, [isPaused, runCombatTick])
 
-  // Visibility change → save timestamp
+  // Visibility change → save timestamp when hidden, process gains when visible
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === 'hidden') {
         saveTimestamp()
+      } else if (document.visibilityState === 'visible') {
+        processOfflineGains()
       }
     }
     document.addEventListener('visibilitychange', handleVisibility)
     return () => document.removeEventListener('visibilitychange', handleVisibility)
-  }, [saveTimestamp])
+  }, [saveTimestamp, processOfflineGains])
 
   // Save on unmount
   useEffect(() => {
