@@ -25,13 +25,13 @@
   z-index: 1;
   background-repeat: repeat-x;
   background-position: 0 100%;
-  background-size: clamp(72px, 18cqi, 160px) auto;
+  background-size: clamp(160px, 40cqi, 320px) auto;
 
   .scroll-slow {
     width: 200%;
     height: 100%;
     background: inherit;
-    background-size: clamp(72px, 18cqi, 160px) auto;
+    background-size: clamp(160px, 40cqi, 320px) auto;
     background-position: 0 100%;
     animation: scrollLayer 60s linear infinite;
   }
@@ -60,7 +60,7 @@
 .idle-character-slot {
   position: absolute;
   left: 22%;
-  bottom: clamp(16px, 6cqi, 36px);
+  bottom: clamp(16px, 5cqi, 32px);
   z-index: 5;
   animation: runBounce 0.5s ease-in-out infinite;
 
@@ -99,9 +99,9 @@
 .idle-monster-slot {
   position: absolute;
   right: -22%;
-  bottom: clamp(16px, 6cqi, 36px);
+  bottom: clamp(16px, 5cqi, 32px);
   z-index: 4;
-  transition: right 2s cubic-bezier(0.2, 0.8, 0.3, 1);
+  transition: right 1.5s cubic-bezier(0.2, 0.8, 0.3, 1);
   transform-origin: bottom center;
 
   // Arrival shadow
@@ -122,11 +122,11 @@
 
   &.phase-monster_appears {
     right: 36%;
-    animation: monsterAppear 2s ease-out forwards;
+    animation: monsterAppear 1.5s ease-out forwards;
 
     &::before {
       opacity: 0;
-      animation: shadowGrow 2s ease-out forwards;
+      animation: shadowGrow 1.5s ease-out forwards;
     }
 
     // Arrival glow ring
@@ -142,7 +142,7 @@
       border: 2px solid rgba(255, 200, 100, 0.6);
       opacity: 0;
       pointer-events: none;
-      animation: arrivalShockwave 2s ease-out forwards;
+      animation: arrivalShockwave 1.5s ease-out forwards;
     }
   }
 
@@ -165,16 +165,17 @@
   // Passive state (background monster during running phase)
   &.passive {
     right: 4%;
-    bottom: clamp(16px, 6cqi, 36px);
+    bottom: clamp(16px, 5cqi, 32px);
     opacity: 0.3;
     transform: scale(0.6);
+    transition: opacity 0.6s ease, transform 0.6s ease;
     pointer-events: none;
   }
 
   &[data-monster="wraith"] {
     &.phase-monster_appears {
       right: 36%;
-      animation: wraithAppear 2s ease-out forwards;
+      animation: wraithAppear 1.5s ease-out forwards;
     }
   }
 }
@@ -309,7 +310,7 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  animation: floatUp 2s ease-out forwards;
+  animation: floatUp 1.5s ease-out forwards;
   text-align: center;
   pointer-events: none;
 
