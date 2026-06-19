@@ -13715,5 +13715,69 @@
       "home": 2419,
       "arena": 2469
     }
+  },
+  {
+    "date": "2026-06-19T19:01:46.636Z",
+    "run": "2026-06-19",
+    "character": "GRIMSYNTH",
+    "character_action": "created-after-missing-fight-cta",
+    "replaced_character": "CLIFFSHARK",
+    "fights": [],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Rusty Sword",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": {
+      "str": 5,
+      "vit": 21,
+      "dex": 16,
+      "luk": 9,
+      "int": 9,
+      "foc": 6
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 100
+    },
+    "initial_max_hp": null,
+    "initial_equipment": [],
+    "initial_streak": null,
+    "final_stats": {
+      "level": 1,
+      "xp": 0,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 8,
+      "vit": 7,
+      "dex": 7,
+      "luk": 7,
+      "int": 22,
+      "foc": 15
+    },
+    "final_max_hp": null,
+    "final_equipment": [],
+    "final_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": []
+    },
+    "level_up_events": [],
+    "errors": [
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('[role=\"switch\"][aria-label=\"Auto mode\"], [role=\"switch\"], .pixel-switch').first()\n    - locator resolved to <button role=\"switch\" aria-checked=\"true\" aria-label=\"PvE mode\" class=\"pixel-switch pve-switch on\">…</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay settings-overlay\">…</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay settings-overlay\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    53 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div class=\"retro-modal-overlay settings-overlay\">…</div> intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n"
+    ],
+    "load_times_ms": {
+      "home": 1313,
+      "arena": 2339
+    }
   }
 ]
