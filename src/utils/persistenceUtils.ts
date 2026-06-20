@@ -9,10 +9,13 @@ export const COMBAT_LOG_HISTORY_CAP = 20;
 
 // ─── Normalization ───────────────────────────────────────────────────────────
 
+const MIGRATION_STAT_POINTS_KEY = 'bitbrawler_migration_statpoints_1';
+const BASE = GAME_RULES.STATS.BASE_VALUE;
+
 export const normalizeCharacter = (character: Character): Character => {
-  return {
+  const normalized = {
     ...character,
-    focus: character.focus ?? GAME_RULES.STATS.BASE_VALUE,
+    focus: character.focus ?? BASE,
     autoMode: character.autoMode ?? false,
     statPoints: character.statPoints ?? 0,
     inventory: character.inventory ?? [],
@@ -26,6 +29,30 @@ export const normalizeCharacter = (character: Character): Character => {
     idleTotalKills: character.idleTotalKills ?? 0,
     idleTotalXp: character.idleTotalXp ?? 0,
   };
+
+  // One-time migration: idle combat never granted stat points before the fix.
+  // If all core stats are at base value (never allocated) and statPoints is 0,
+  // the player leveled up through idle without ever receiving points.
+  const allAtBase =
+    character.strength <= BASE &&
+    character.vitality <= BASE &&
+    character.dexterity <= BASE &&
+    character.luck <= BASE &&
+    character.intelligence <= BASE &&
+    (character.focus ?? BASE) <= BASE;
+
+  if (normalized.statPoints === 0 && normalized.level > 1 && allAtBase) {
+    try {
+      if (!localStorage.getItem(MIGRATION_STAT_POINTS_KEY)) {
+        normalized.statPoints = (normalized.level - 1) * GAME_RULES.STATS.POINTS_PER_LEVEL;
+        localStorage.setItem(MIGRATION_STAT_POINTS_KEY, '1');
+      }
+    } catch {
+      // localStorage may be unavailable
+    }
+  }
+
+  return normalized;
 };
 
 // ─── Pending Fight Helpers ───────────────────────────────────────────────────

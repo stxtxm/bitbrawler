@@ -5,6 +5,7 @@ import { IDLE_CONFIG } from '../config/idleConfig'
 import { generateMonsterForPlayer } from '../utils/monsterUtils'
 import { simulateCombat, calculateCombatStats } from '../utils/combatUtils'
 import { gainXp } from '../utils/xpUtils'
+import { GAME_RULES } from '../config/gameRules'
 import { calculateIdleXp } from '../utils/idleXpUtils'
 import { applyEquipmentToCharacter } from '../utils/equipmentUtils'
 import {
@@ -137,6 +138,7 @@ export function useIdleCombat({
           idleMaxStreak: Math.max(localStreak, (currentChar.idleMaxStreak ?? 0)),
           idleTotalKills: localKills,
           idleTotalXp: localIdleXp,
+          statPoints: (xpResult.updatedCharacter.statPoints || 0) + xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL,
         }
       }
 
@@ -252,6 +254,7 @@ export function useIdleCombat({
         idleMaxStreak: Math.max(newStreak, (currentChar.idleMaxStreak ?? 0)),
         idleTotalKills: newKills,
         idleTotalXp: newIdleXp,
+        statPoints: (xpResult.updatedCharacter.statPoints || 0) + xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL,
       }
       onCharacterUpdate(updatedChar)
       onSyncCharacter?.(updatedChar)

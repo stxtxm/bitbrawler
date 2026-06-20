@@ -116,13 +116,10 @@ export function gainXp(character: Character, xpGained: number): {
         : (character.maxHp || 0);
     const hpBonus = newMaxHp - (character.maxHp || 0);
 
-    const statPointsGained = levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL;
-
     const updatedCharacter: Character = {
         ...character,
         level,
         experience,
-        statPoints: (character.statPoints || 0) + statPointsGained,
         maxHp: newMaxHp,
         hp: Math.min((character.hp || 0) + hpBonus, newMaxHp),
     };
