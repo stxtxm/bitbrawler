@@ -1084,51 +1084,23 @@
     }
 }
 
-// Unified scene box for PvP avatar + PvE idle runner (crossfade)
+// Unified scene box for PvP avatar + PvE idle runner
 .scene-box {
     flex: 1;
-    display: grid;
-    grid-template-areas: "scene";
     @include retro-border(2px, #fff);
     min-height: 150px;
     margin-bottom: 10px;
     overflow: hidden;
     background: radial-gradient(circle, #222 0%, #000 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     @include mobile {
         min-height: 100px;
         margin-bottom: 5px;
         border-width: 1px;
     }
-}
-
-.scene-fade {
-    grid-area: scene;
-    transition: opacity 0.4s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.stats-panel {
-    display: grid;
-    grid-template-areas: "stats";
-    position: relative;
-}
-
-.stats-fade {
-    grid-area: stats;
-    transition: opacity 0.4s ease;
-}
-
-.fade-in {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.fade-out {
-    opacity: 0;
-    pointer-events: none;
 }
 
 .xp-section {
@@ -1269,9 +1241,8 @@
 
 .action-panel {
     flex: 1;
-    display: grid;
-    grid-template-rows: auto 1fr;
-    grid-template-areas: "toggle" "action";
+    display: flex;
+    flex-direction: column;
     gap: 10px;
     min-width: 0;
 
@@ -1282,17 +1253,9 @@
 }
 
 .pve-toggle-row {
-    grid-area: toggle;
     display: flex;
     gap: 4px;
     justify-content: center;
-}
-
-.action-fade {
-    grid-area: action;
-    transition: opacity 0.4s ease;
-    display: flex;
-    flex-direction: column;
 }
 
 .pve-status {

@@ -487,12 +487,9 @@ const Arena = () => {
 
             <div className="arena-content">
                 <div className="character-display">
-                    {/* Scene box (flex:1) — PvP avatar + PvE idle runner, crossfade */}
+                    {/* Scene box (flex:1) — PvP avatar or PvE idle runner */}
                     <div className="scene-box">
-                        <div className={`scene-fade ${pveMode ? 'fade-out' : 'fade-in'}`}>
-                            <PixelCharacter seed={activeCharacter.seed} gender={activeCharacter.gender} scale={window.innerWidth < 600 ? 16 : 12} />
-                        </div>
-                        <div className={`scene-fade ${pveMode ? 'fade-in' : 'fade-out'}`}>
+                        {pveMode ? (
                             <IdleRunnerScene
                                 character={effectiveCharacter}
                                 currentMonster={idle.currentMonster}
@@ -502,7 +499,9 @@ const Arena = () => {
                                 offlineGains={idle.offlineGains}
                                 onClearOfflineGains={idle.clearOfflineGains}
                             />
-                        </div>
+                        ) : (
+                            <PixelCharacter seed={activeCharacter.seed} gender={activeCharacter.gender} scale={window.innerWidth < 600 ? 16 : 12} />
+                        )}
                     </div>
 
                     {/* XP section — always visible */}
@@ -525,59 +524,77 @@ const Arena = () => {
                         {isMaxLevel && <span className="max-level-badge">★ MAX LEVEL ★</span>}
                     </div>
 
-                    {/* Stats panel — content changes with mode, same classes and height */}
+                    {/* Stats panel — content changes with mode */}
                     <div className="stats-panel">
-                        <div className={`stats-fade ${pveMode ? 'fade-out' : 'fade-in'}`}>
-                            <div className="stat-row principal">
-                                <span>HP</span>
-                                <div className="bar-container">
-                                    <div className="bar hp-bar" style={{ width: `${(effectiveCharacter.hp / effectiveCharacter.maxHp) * 100}%` }}></div>
-                                </div>
-                                <span className="stat-val">{effectiveCharacter.maxHp}</span>
-                            </div>
-                            <div className="stats-grid-compact">
-                                {statOptions.map((stat) => (
-                                    <div key={stat.key} className="compact-stat" title={`${stat.label}: ${STAT_TOOLTIPS[stat.key as StatKey]}`}>
-                                        <span className="compact-stat-icon">
-                                            <PixelIcon type={stat.icon} size={12} />
-                                        </span>
-                                        <span className="compact-stat-label">{stat.label}</span>
-                                        <span className="compact-stat-value">{stat.value}</span>
+                        {pveMode ? (
+                            <>
+                                <div className="stat-row principal">
+                                    <span>FIGHTS</span>
+                                    <div className="bar-container">
+                                        <div className="bar idle-fights-bar" style={{ width: `${Math.min(100, idle.idleFightsCount * 10)}%` }} />
                                     </div>
-                                ))}
-                            </div>
-                            {pointsRemaining > 0 && (
-                                <button className="button secondary-btn stat-allocate-btn" onClick={handleOpenLevelUp}>
-                                    SPEND POINT
-                                </button>
-                            )}
-                        </div>
-                        <div className={`stats-fade ${pveMode ? 'fade-in' : 'fade-out'}`}>
-                            <div className="stat-row principal">
-                                <span>FIGHTS</span>
-                                <div className="bar-container">
-                                    <div className="bar idle-fights-bar" style={{ width: `${Math.min(100, idle.idleFightsCount * 10)}%` }} />
+                                    <span className="stat-val">{idle.idleFightsCount}</span>
                                 </div>
-                                <span className="stat-val">{idle.idleFightsCount}</span>
-                            </div>
-                            <div className="stats-grid-compact">
-                                <div className="compact-stat">
-                                    <span className="compact-stat-icon" style={{ color: '#f0c040' }}>XP</span>
-                                    <span className="compact-stat-label">GAINED</span>
-                                    <span className="compact-stat-value" style={{ color: '#f0c040' }}>+{idle.idleXpGained}</span>
+                                <div className="stats-grid-compact">
+                                    <div className="compact-stat">
+                                        <span className="compact-stat-icon" style={{ color: '#f0c040' }}>✦</span>
+                                        <span className="compact-stat-label">XP</span>
+                                        <span className="compact-stat-value" style={{ color: '#f0c040' }}>+{idle.idleXpGained}</span>
+                                    </div>
+                                    <div className="compact-stat">
+                                        <span className="compact-stat-icon">⚡</span>
+                                        <span className="compact-stat-label">LAST</span>
+                                        <span className="compact-stat-value">{idle.lastCombatResult === 'win' ? 'WIN' : idle.lastCombatResult === 'lose' ? 'LOSS' : '—'}</span>
+                                    </div>
+                                    <div className="compact-stat">
+                                        <span className="compact-stat-icon">⬆</span>
+                                        <span className="compact-stat-label">LVL</span>
+                                        <span className="compact-stat-value">{activeCharacter.level}</span>
+                                    </div>
+                                    <div className="compact-stat">
+                                        <span className="compact-stat-icon">⚔</span>
+                                        <span className="compact-stat-label">TOTAL</span>
+                                        <span className="compact-stat-value">{idle.idleFightsCount}</span>
+                                    </div>
+                                    <div className="compact-stat">
+                                        <span className="compact-stat-icon">🎯</span>
+                                        <span className="compact-stat-label">LAST XP</span>
+                                        <span className="compact-stat-value">{idle.lastCombatXp > 0 ? `+${idle.lastCombatXp}` : '—'}</span>
+                                    </div>
+                                    <div className="compact-stat">
+                                        <span className="compact-stat-icon">👾</span>
+                                        <span className="compact-stat-label">MONSTER</span>
+                                        <span className="compact-stat-value">{idle.currentMonster ?? '—'}</span>
+                                    </div>
                                 </div>
-                                <div className="compact-stat">
-                                    <span className="compact-stat-icon">⚡</span>
-                                    <span className="compact-stat-label">LAST</span>
-                                    <span className="compact-stat-value">{idle.lastCombatResult === 'win' ? 'WIN' : idle.lastCombatResult === 'lose' ? 'LOSS' : '—'}</span>
+                            </>
+                        ) : (
+                            <>
+                                <div className="stat-row principal">
+                                    <span>HP</span>
+                                    <div className="bar-container">
+                                        <div className="bar hp-bar" style={{ width: `${(effectiveCharacter.hp / effectiveCharacter.maxHp) * 100}%` }}></div>
+                                    </div>
+                                    <span className="stat-val">{effectiveCharacter.maxHp}</span>
                                 </div>
-                                <div className="compact-stat">
-                                    <span className="compact-stat-icon">⬆</span>
-                                    <span className="compact-stat-label">LVL</span>
-                                    <span className="compact-stat-value">{activeCharacter.level}</span>
+                                <div className="stats-grid-compact">
+                                    {statOptions.map((stat) => (
+                                        <div key={stat.key} className="compact-stat" title={`${stat.label}: ${STAT_TOOLTIPS[stat.key as StatKey]}`}>
+                                            <span className="compact-stat-icon">
+                                                <PixelIcon type={stat.icon} size={12} />
+                                            </span>
+                                            <span className="compact-stat-label">{stat.label}</span>
+                                            <span className="compact-stat-value">{stat.value}</span>
+                                        </div>
+                                    ))}
                                 </div>
-                            </div>
-                        </div>
+                                {pointsRemaining > 0 && (
+                                    <button className="button secondary-btn stat-allocate-btn" onClick={handleOpenLevelUp}>
+                                        SPEND POINT
+                                    </button>
+                                )}
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -605,49 +622,49 @@ const Arena = () => {
                         </button>
                     </div>
 
-                    <div className={`action-fade ${pveMode ? 'fade-out' : 'fade-in'}`}>
-                        <div className="daily-status-compact">
-                            <div className="status-label">
-                                <PixelIcon type="sword" size={32} />
-                                <div className="label-text">
-                                    <span className="label-main">BATTLE ENERGY</span>
-                                    <span className="label-sub">
-                                        {isOfflineMode
-                                            ? 'OFFLINE SNAPSHOT'
-                                            : `${fightsLeft} / ${GAME_RULES.COMBAT.MAX_DAILY_FIGHTS} AVAILABLE`}
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="mini-pips">
-                                {Array.from({ length: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS }).map((_, i) => (
-                                    <div key={i} className={`mini-pip ${i < fightsLeft ? 'active' : 'used'}`}></div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <button
-                            className="button primary-btn giant-btn"
-                            disabled={!canFight || matchmaking}
-                            onClick={handleFight}
-                        >
-                        {matchmaking
-                            ? 'SEARCHING...'
-                            : hasPendingFight
-                                ? 'RESOLVING...'
-                                : activeCharacter?.autoMode
-                                    ? 'AUTO MODE'
-                                    : (isOfflineMode
-                                        ? 'OFFLINE'
-                                        : (fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'))}
-                        </button>
-                    </div>
-
-                    <div className={`action-fade ${pveMode ? 'fade-in' : 'fade-out'}`}>
+                    {pveMode ? (
                         <div className="pve-status">
                             <span className="pve-label">IDLE MODE</span>
                             <span className="pve-sub">{idle.idleFightsCount} fights · +{idle.idleXpGained} XP</span>
                         </div>
-                    </div>
+                    ) : (
+                        <>
+                            <div className="daily-status-compact">
+                                <div className="status-label">
+                                    <PixelIcon type="sword" size={32} />
+                                    <div className="label-text">
+                                        <span className="label-main">BATTLE ENERGY</span>
+                                        <span className="label-sub">
+                                            {isOfflineMode
+                                                ? 'OFFLINE SNAPSHOT'
+                                                : `${fightsLeft} / ${GAME_RULES.COMBAT.MAX_DAILY_FIGHTS} AVAILABLE`}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="mini-pips">
+                                    {Array.from({ length: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS }).map((_, i) => (
+                                        <div key={i} className={`mini-pip ${i < fightsLeft ? 'active' : 'used'}`}></div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <button
+                                className="button primary-btn giant-btn"
+                                disabled={!canFight || matchmaking}
+                                onClick={handleFight}
+                            >
+                            {matchmaking
+                                ? 'SEARCHING...'
+                                : hasPendingFight
+                                    ? 'RESOLVING...'
+                                    : activeCharacter?.autoMode
+                                        ? 'AUTO MODE'
+                                        : (isOfflineMode
+                                            ? 'OFFLINE'
+                                            : (fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'))}
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
             <ConnectionModal

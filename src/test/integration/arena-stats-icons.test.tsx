@@ -93,7 +93,7 @@ describe('Arena stat icons', () => {
     });
   });
 
-  it('applies inventory bonuses to arena stats', () => {
+  it('applies inventory bonuses to arena stats', async () => {
     const boostedCharacter: Character = {
       ...mockCharacter,
       strength: 9,
@@ -122,6 +122,10 @@ describe('Arena stat icons', () => {
         <Arena />
       </MemoryRouter>
     );
+
+    const user = userEvent.setup()
+    const pvpToggle = screen.getAllByRole('switch', { name: 'PvP mode' })[0];
+    await user.click(pvpToggle);
 
     const strengthLabel = getByText('STR');
     const row = strengthLabel.closest('.compact-stat');
