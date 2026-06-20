@@ -500,7 +500,9 @@ const Arena = () => {
                                 onClearOfflineGains={idle.clearOfflineGains}
                             />
                         ) : (
-                            <PixelCharacter seed={activeCharacter.seed} gender={activeCharacter.gender} scale={window.innerWidth < 600 ? 16 : 12} />
+                            <div className="scene-pvp-center">
+                                <PixelCharacter seed={activeCharacter.seed} gender={activeCharacter.gender} scale={window.innerWidth < 600 ? 16 : 12} />
+                            </div>
                         )}
                     </div>
 
