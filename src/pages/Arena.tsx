@@ -167,6 +167,18 @@ const Arena = () => {
         { key: 'focus', label: 'FOC', value: effectiveCharacter.focus, hint: 'Accuracy / Control', icon: 'focus' },
     ];
 
+    const formatDuration = (seconds: number): string => {
+        if (seconds <= 0) return 'now'
+        const m = Math.floor(seconds / 60)
+        const s = seconds % 60
+        if (m >= 60) {
+            const h = Math.floor(m / 60)
+            return `${h}h ${m % 60}m`
+        }
+        if (m > 0) return `${m}m ${s}s`
+        return `${s}s`
+    }
+
     const itemStatMeta: Record<keyof ItemStats, { label: string; icon: StatIconType }> = {
         strength: { label: 'STR', icon: 'strength' },
         vitality: { label: 'VIT', icon: 'vitality' },
@@ -568,8 +580,8 @@ const Arena = () => {
                             ))}
                         </div>
 
-                        {/* HP bar — PvP only */}
-                        <div className="stats-content" aria-hidden={pveMode}>
+                        {/* HP bar — always visible */}
+                        <div className="stats-content">
                             <div className="stat-row principal">
                                 <span>HP</span>
                                 <div className="bar-container">
@@ -578,6 +590,22 @@ const Arena = () => {
                                 <span className="stat-val">{effectiveCharacter.maxHp}</span>
                             </div>
                         </div>
+
+                        {/* Idle efficiency — always visible when data available */}
+                        {idle.efficiencyData && (
+                            <div className="idle-efficiency">
+                                <div className="efficiency-primary">
+                                    <span className="efficiency-xp-min">~{idle.efficiencyData.xpPerMinute} <small>XP/min</small></span>
+                                    {idle.efficiencyData.nextLevelTime != null && (
+                                        <span className="efficiency-next">{formatDuration(idle.efficiencyData.nextLevelTime)}</span>
+                                    )}
+                                </div>
+                                <div className="efficiency-secondary">
+                                    <span>⚡ {idle.efficiencyData.efficiency.toFixed(2)}x</span>
+                                    <span>🎯 {idle.efficiencyData.powerRatio.toFixed(2)}x</span>
+                                </div>
+                            </div>
+                        )}
 
                         {/* PvE-specific row — PvE only */}
                         <div className="stats-content" aria-hidden={!pveMode}>
@@ -601,7 +629,6 @@ const Arena = () => {
                             <div className="pve-extra-stats">
                                 <span className="pve-extra-item">💀 {idle.totalKills} slain</span>
                                 {idle.currentStreak > 0 && <span className="pve-extra-item streak">🔥 {idle.currentStreak}</span>}
-                                {idle.efficiencyData && <span className="pve-extra-item xp-min">~{idle.efficiencyData.xpPerMinute} XP/min</span>}
                             </div>
                         </div>
                     </div>

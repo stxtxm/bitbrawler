@@ -96,6 +96,18 @@ export function computeDisplayData(
   return { xpPerMinute, streakBonus, streakMilestone, totalKills, currentStreak };
 }
 
+function calculateNextLevelTime(
+  xpPerMinute: number,
+  currentXpInLevel: number,
+  xpRequiredForNextLevel: number,
+): number | null {
+  if (xpPerMinute <= 0 || xpRequiredForNextLevel <= 0) return null
+  const remaining = xpRequiredForNextLevel - currentXpInLevel
+  if (remaining <= 0) return null
+  const minutes = remaining / xpPerMinute
+  return Math.round(minutes * 60)
+}
+
 export {
   calculatePowerRatio,
   calculateEfficiency,
@@ -105,4 +117,5 @@ export {
   calculateStreakBonus,
   getStreakMilestone,
   calculateOfflineFightsWithEfficiency,
+  calculateNextLevelTime,
 };

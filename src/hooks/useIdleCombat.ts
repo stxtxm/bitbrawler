@@ -4,7 +4,7 @@ import { IdleCombatEntry, ScenePhase, IdleEfficiencyData } from '../types/IdleCo
 import { IDLE_CONFIG } from '../config/idleConfig'
 import { generateMonsterForPlayer, getReferenceMonster } from '../utils/monsterUtils'
 import { simulateCombat, calculateCombatStats } from '../utils/combatUtils'
-import { gainXp } from '../utils/xpUtils'
+import { gainXp, getXpRequiredForNextLevel, getXpProgress } from '../utils/xpUtils'
 import { GAME_RULES } from '../config/gameRules'
 import { calculateIdleXp } from '../utils/idleXpUtils'
 import { applyEquipmentToCharacter } from '../utils/equipmentUtils'
@@ -12,6 +12,7 @@ import {
   computeEfficiency,
   computeDisplayData,
   calculateOfflineFightsWithEfficiency,
+  calculateNextLevelTime,
 } from '../utils/idleEfficiencyUtils'
 import { MonsterId } from '../data/monsterAssets'
 
@@ -192,19 +193,26 @@ export function useIdleCombat({
     return () => { cancelled = true }
   }, [character?.id, character?.lastActive, onCharacterUpdate, calculateOfflinePreview])
 
-  // Compute stable efficiency data based on player stats (not per-combat monster).
-  // Only changes when level or equipment changes — giving a stable XP/min display.
+  // Compute stable efficiency data — recalculates when character changes (level, stats, equip).
   useEffect(() => {
     if (!character) return
     const effectiveChar = applyEquipmentToCharacter(character)
-    const playerStats = calculateCombatStats(character)
-    const refMonster = getReferenceMonster(character.level)
+    const playerStats = calculateCombatStats(effectiveChar)
+    const refMonster = getReferenceMonster(effectiveChar.level)
     const monsterStats = calculateCombatStats(refMonster)
     const eff = computeEfficiency(playerStats, monsterStats, effectiveChar.dexterity)
     effIntervalRef.current = eff.effectiveInterval
     xpBonusRef.current = eff.xpBonusMultiplier
-    const avgXp = calculateIdleXp(true, character.level)
+    const avgXp = calculateIdleXp(true, effectiveChar.level)
     const display = computeDisplayData(eff.effectiveInterval, avgXp, streakRef.current, killsRef.current)
+    const nextLevelTime = character.level >= 99 ? null : (() => {
+      const progress = getXpProgress(character)
+      return calculateNextLevelTime(
+        display.xpPerMinute,
+        progress.currentXpInLevel,
+        progress.xpForNextLevel,
+      )
+    })()
     setEfficiencyData({
       powerRatio: eff.powerRatio,
       efficiency: eff.efficiency,
@@ -212,8 +220,9 @@ export function useIdleCombat({
       xpPerMinute: display.xpPerMinute,
       streakBonus: display.streakBonus,
       streakMilestone: display.streakMilestone,
+      nextLevelTime,
     })
-  }, [character?.level, character?.equippedItems, character?.strength, character?.dexterity, character?.vitality, character?.luck, character?.intelligence])
+  }, [character])
 
   const clearOfflineGains = useCallback(() => {
     setOfflineGains(null)
