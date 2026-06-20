@@ -141,9 +141,13 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
     <div className="idle-runner-box" ref={containerRef} style={containerStyle}>
       {/* Mountain layer (slow scroll) */}
       {!lowPerf && (
-        <div className="idle-layer mountains" style={{ backgroundImage: mountainCss }}>
-          <div className="idle-layer-inner scroll-slow" />
-        </div>
+        <ProceduralTerrain
+          width={containerRef.current?.clientWidth || 800}
+          height={containerRef.current?.clientHeight || 400}
+          parallaxLayers={1}
+          mobileQuality={lowPerf}
+          seed={character.seed}
+        />
       )}
 
       {/* Cloud layer */}
