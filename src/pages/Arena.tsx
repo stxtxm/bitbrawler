@@ -5,6 +5,7 @@ import { useConnectionGate } from '../hooks/useConnectionGate';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { useSound } from '../hooks/useSound';
 import { useIdleCombat } from '../hooks/useIdleCombat';
+import { useSwipeGesture } from '../hooks/useSwipeGesture';
 import ConnectionModal from '../components/ConnectionModal';
 import { PixelCharacter } from '../components/PixelCharacter';
 import { PixelIcon } from '../components/PixelIcon';
@@ -72,6 +73,11 @@ const Arena = () => {
                 setShowLevelUp(true);
             }
         },
+    });
+
+    const swipeHandlers = useSwipeGesture({
+        onSwipeLeft: () => setPveMode(false),
+        onSwipeRight: () => setPveMode(true),
     });
 
     // Handle XP gain notification
@@ -525,7 +531,7 @@ const Arena = () => {
             <div className="arena-content">
                 <div className="character-display">
                     {/* Scene box (flex:1) — PvP avatar or PvE idle runner */}
-                    <div className="scene-box">
+                    <div className="scene-box" {...swipeHandlers}>
                         {pveMode ? (
                             <IdleRunnerScene
                                 character={effectiveCharacter}
@@ -537,6 +543,9 @@ const Arena = () => {
                                 onClearOfflineGains={idle.clearOfflineGains}
                                 currentStreak={idle.currentStreak}
                                 streakMilestone={idle.efficiencyData?.streakMilestone ?? null}
+                                efficiency={idle.efficiencyData?.efficiency ?? null}
+                                xpPerMinute={idle.efficiencyData?.xpPerMinute ?? null}
+                                powerRatio={idle.efficiencyData?.powerRatio ?? null}
                             />
                         ) : (
                             <div className="scene-pvp-center">

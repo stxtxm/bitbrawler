@@ -25,6 +25,9 @@ interface IdleRunnerSceneProps {
   onClearOfflineGains: () => void
   currentStreak?: number
   streakMilestone?: number | null
+  efficiency?: number | null
+  xpPerMinute?: number | null
+  powerRatio?: number | null
 }
 
 // Re-using randomDamage for particle simulation in IdleScene
@@ -40,6 +43,7 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
   currentMonster, scenePhase, lastCombatResult, lastCombatXp,
   offlineGains, onClearOfflineGains,
   currentStreak = 0, streakMilestone = null,
+  efficiency = null, xpPerMinute = null, powerRatio = null,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const particlesRef = useRef<ParticleSystem | null>(null)
@@ -211,6 +215,19 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
         <div className="idle-streak-indicator">
           <span>🔥</span>
           <span>{currentStreak}</span>
+        </div>
+      )}
+
+      {/* Efficiency overlay */}
+      {scenePhase === 'running' && xpPerMinute != null && (
+        <div className="idle-efficiency-overlay">
+          <span className="eff-xp-rate">⚡ ~{xpPerMinute} XP/min</span>
+          {efficiency != null && efficiency > 1 && (
+            <span className="eff-multiplier">{efficiency.toFixed(1)}x EFF</span>
+          )}
+          {powerRatio != null && powerRatio > 1 && (
+            <span className="eff-power">⚔ {powerRatio.toFixed(1)}x PWR</span>
+          )}
         </div>
       )}
 

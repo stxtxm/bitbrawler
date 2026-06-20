@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import { GameProvider } from './context/GameContext'
+import { NotificationProvider } from './context/NotificationContext'
+import { NotificationDisplay } from './components/NotificationDisplay'
 import ErrorBoundary from './components/ErrorBoundary'
 import './styles/main.scss'
 
@@ -65,9 +67,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       }}
     >
       <ErrorBoundary>
-        <GameProvider>
-          <App />
-        </GameProvider>
+        <NotificationProvider>
+          <GameProvider>
+            <App />
+            <NotificationDisplay />
+          </GameProvider>
+        </NotificationProvider>
       </ErrorBoundary>
     </BrowserRouter>
   </React.StrictMode>,

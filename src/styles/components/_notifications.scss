@@ -1,0 +1,129 @@
+@use '../variables' as *;
+
+// Notifications container
+.notifications-container {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0) + 1rem);
+  right: calc(env(safe-area-inset-right, 0) + 1rem);
+  z-index: 9999;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  @include mobile {
+    top: calc(env(safe-area-inset-top, 0) + 0.5rem);
+    right: calc(env(safe-area-inset-right, 0) + 0.5rem);
+    left: calc(env(safe-area-inset-left, 0) + 0.5rem);
+    width: calc(100% - env(safe-area-inset-left, 0) - env(safe-area-inset-right, 0) - 1rem);
+  }
+}
+
+// Individual notification
+.notification {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: 'Press Start 2P', cursive;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  pointer-events: auto;
+  animation: slideInRight 0.3s ease-out;
+  max-width: 400px;
+
+  @include mobile {
+    max-width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 12px;
+  }
+
+  &__content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+  }
+
+  &__icon {
+    font-weight: bold;
+    flex-shrink: 0;
+  }
+
+  &__message {
+    word-wrap: break-word;
+  }
+
+  &__close {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 1.5rem;
+    padding: 0;
+    flex-shrink: 0;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+
+  // Type variants
+  &--success {
+    background-color: #4a9e3f;
+    color: #ffffff;
+  }
+
+  &--error {
+    background-color: #d32f2f;
+    color: #ffffff;
+  }
+
+  &--warning {
+    background-color: #f57f17;
+    color: #ffffff;
+  }
+
+  &--info {
+    background-color: #1976d2;
+    color: #ffffff;
+  }
+
+  &--xp {
+    background-color: #ffd700;
+    color: #000000;
+  }
+
+  &--level-up {
+    background-color: #9c27b0;
+    color: #ffffff;
+    animation: slideInRight 0.3s ease-out, pulse 0.5s ease-out;
+  }
+}
+
+// Animations
+@keyframes slideInRight {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

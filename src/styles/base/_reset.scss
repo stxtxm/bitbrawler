@@ -21,3 +21,23 @@ textarea,
     user-select: text !important;
     -webkit-touch-callout: default !important;
 }
+
+// Touch targets - ensure minimum 44px for interactive elements
+button,
+[role="button"],
+a {
+    min-height: 44px;
+}
+
+// Combat area - prevent scroll interference during gameplay
+.idle-runner-box,
+.scene-box {
+    touch-action: none;
+}
+
+// Scrollable areas - allow vertical scroll only
+.scrollable {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+}

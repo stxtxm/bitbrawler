@@ -510,6 +510,80 @@
   z-index: 15;
 }
 
+// ── Efficiency overlay ─────────────────────────────
+
+.idle-efficiency-overlay {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: $font-pixel;
+  font-size: clamp(0.35rem, 0.9cqi, 0.5rem);
+  pointer-events: none;
+  opacity: 0.85;
+
+  .eff-xp-rate {
+    color: $accent-gold;
+    text-shadow: 0 0 6px rgba($accent-gold, 0.5);
+  }
+
+  .eff-multiplier {
+    color: $accent-green;
+    text-shadow: 0 0 4px rgba($accent-green, 0.4);
+  }
+
+  .eff-power {
+    color: #ff6b6b;
+    text-shadow: 0 0 4px rgba(#ff6b6b, 0.4);
+  }
+}
+
+// ── Glow effects (Phase 6) ────────────────────────
+
+.glow-xp {
+  filter: drop-shadow(0 0 8px rgba($accent-gold, 0.6));
+}
+
+.glow-victory {
+  filter: drop-shadow(0 0 12px rgba($accent-green, 0.7));
+}
+
+.glow-hit {
+  animation: hitGlow 0.3s ease-out;
+}
+
+@keyframes hitGlow {
+  0% { filter: brightness(1); }
+  30% { filter: brightness(1.8) drop-shadow(0 0 10px rgba(#fff, 0.5)); }
+  100% { filter: brightness(1); }
+}
+
+.glow-levelup {
+  animation: levelupGlow 0.8s ease-out;
+}
+
+@keyframes levelupGlow {
+  0% { filter: brightness(1) drop-shadow(0 0 0 transparent); }
+  25% { filter: brightness(2) drop-shadow(0 0 20px rgba($accent-gold, 0.8)); }
+  50% { filter: brightness(1.5) drop-shadow(0 0 15px rgba($accent-gold, 0.6)); }
+  100% { filter: brightness(1) drop-shadow(0 0 0 transparent); }
+}
+
+// Screen shake utility class
+.shake-screen {
+  animation: screenShake 0.15s ease-in-out;
+}
+
+@keyframes screenShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px) translateY(1px); }
+  50% { transform: translateX(3px) translateY(-1px); }
+  75% { transform: translateX(-1px) translateY(2px); }
+}
+
 // Responsive toggle area under runner
 .idle-footer-controls {
   display: flex;
