@@ -526,8 +526,22 @@ const Arena = () => {
                         {isMaxLevel && <span className="max-level-badge">★ MAX LEVEL ★</span>}
                     </div>
 
-                    {/* Stats panel — both modes always in DOM via grid overlap, smooth fade transition */}
+                    {/* Stats panel */}
                     <div className="stats-panel">
+                        {/* Character stats — always visible */}
+                        <div className="stats-grid-compact">
+                            {statOptions.map((stat) => (
+                                <div key={stat.key} className="compact-stat" title={`${stat.label}: ${STAT_TOOLTIPS[stat.key as StatKey]}`}>
+                                    <span className="compact-stat-icon">
+                                        <PixelIcon type={stat.icon} size={12} />
+                                    </span>
+                                    <span className="compact-stat-label">{stat.label}</span>
+                                    <span className="compact-stat-value">{stat.value}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* HP bar — PvP only */}
                         <div className="stats-content" aria-hidden={pveMode}>
                             <div className="stat-row principal">
                                 <span>HP</span>
@@ -536,46 +550,20 @@ const Arena = () => {
                                 </div>
                                 <span className="stat-val">{effectiveCharacter.maxHp}</span>
                             </div>
-                            <div className="stats-grid-compact">
-                                {statOptions.map((stat) => (
-                                    <div key={stat.key} className="compact-stat" title={`${stat.label}: ${STAT_TOOLTIPS[stat.key as StatKey]}`}>
-                                        <span className="compact-stat-icon">
-                                            <PixelIcon type={stat.icon} size={12} />
-                                        </span>
-                                        <span className="compact-stat-label">{stat.label}</span>
-                                        <span className="compact-stat-value">{stat.value}</span>
-                                    </div>
-                                ))}
-                            </div>
                             {pointsRemaining > 0 && (
                                 <button className="button secondary-btn stat-allocate-btn" onClick={handleOpenLevelUp}>
                                     SPEND POINT
                                 </button>
                             )}
                         </div>
+
+                        {/* PvE-specific row — PvE only */}
                         <div className="stats-content" aria-hidden={!pveMode}>
-                            <div className="stat-row principal">
-                                <span>FIGHTS</span>
-                                <div className="bar-container">
-                                    <div className="bar idle-fights-bar" style={{ width: `${Math.min(100, idle.idleFightsCount * 10)}%` }} />
-                                </div>
-                                <span className="stat-val">{idle.idleFightsCount}</span>
-                            </div>
                             <div className="stats-grid-compact">
                                 <div className="compact-stat">
                                     <span className="compact-stat-icon">👾</span>
                                     <span className="compact-stat-label">MONSTER</span>
                                     <span className="compact-stat-value">{idle.currentMonster ?? '—'}</span>
-                                </div>
-                                <div className="compact-stat">
-                                    <span className="compact-stat-icon">⚡</span>
-                                    <span className="compact-stat-label">LAST</span>
-                                    <span className="compact-stat-value">{idle.lastCombatResult === 'win' ? 'WIN' : idle.lastCombatResult === 'lose' ? 'LOSS' : '—'}</span>
-                                </div>
-                                <div className="compact-stat">
-                                    <span className="compact-stat-icon">⬆</span>
-                                    <span className="compact-stat-label">LVL</span>
-                                    <span className="compact-stat-value">{activeCharacter.level}</span>
                                 </div>
                                 <div className="compact-stat">
                                     <span className="compact-stat-icon">🎯</span>
@@ -586,11 +574,6 @@ const Arena = () => {
                                     <span className="compact-stat-icon">⚔</span>
                                     <span className="compact-stat-label">FIGHTS</span>
                                     <span className="compact-stat-value">{idle.idleFightsCount}</span>
-                                </div>
-                                <div className="compact-stat">
-                                    <span className="compact-stat-icon" style={{ color: '#f0c040' }}>✦</span>
-                                    <span className="compact-stat-label">XP</span>
-                                    <span className="compact-stat-value" style={{ color: '#f0c040' }}>+{idle.idleXpGained}</span>
                                 </div>
                             </div>
                         </div>
@@ -621,12 +604,7 @@ const Arena = () => {
                         </button>
                     </div>
 
-                    {pveMode ? (
-                        <div className="pve-status">
-                            <span className="pve-label">IDLE MODE</span>
-                            <span className="pve-sub">{idle.idleFightsCount} fights · +{idle.idleXpGained} XP</span>
-                        </div>
-                    ) : (
+                    {pveMode ? null : (
                         <>
                             <div className="daily-status-compact">
                                 <div className="status-label">

@@ -1095,7 +1095,7 @@
 
     @include mobile {
         min-height: 100px;
-        max-height: 260px;
+        max-height: 320px;
         margin-bottom: 5px;
         border-width: 1px;
     }
@@ -1110,16 +1110,17 @@
 }
 
 .stats-panel {
-    display: grid;
-    grid-template-areas: "stats";
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .stats-content {
-    grid-area: stats;
+    order: 0;
 }
 
 .stats-content[aria-hidden="true"] {
-    visibility: hidden;
+    display: none;
 }
 
 .xp-header {
