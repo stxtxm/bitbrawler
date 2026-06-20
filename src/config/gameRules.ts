@@ -2,7 +2,7 @@ export const GAME_RULES = {
     STATS: {
         TOTAL_POINTS: 66,
         BASE_VALUE: 10,
-        POINTS_PER_LEVEL: 2, // Stat points per level-up
+        POINTS_PER_LEVEL: 1, // Stat points per level-up
     },
     COMBAT: {
         MAX_DAILY_FIGHTS: 5,
