@@ -128,27 +128,40 @@ function simulateCombat(attacker: Character, defender: Character): CombatResult 
     : { winner: 'defender', hpLoss: Math.max(1, Math.floor(dStats.attack * (0.8 + Math.random() * 0.4) - aStats.defense * 0.3)) }
 }
 
-function xpForLevel(level: number): number {
-  return 100 + (level - 1) * 50
+function xpForNextLevel(level: number): number {
+  if (level >= 99) return Infinity
+  return Math.floor(100 * Math.pow(level, 1.6))
+}
+
+function totalXpForLevel(level: number): number {
+  if (level <= 1) return 0
+  let total = 0
+  for (let i = 1; i < level; i++) total += xpForNextLevel(i)
+  return Math.floor(total)
 }
 
 function gainXp(character: Character, xp: number): { updatedCharacter: Character; levelsGained: number } {
-  let xpAcc = (character.experience || 0) + xp
-  let level = character.level
-  let levelsGained = 0
-  while (xpAcc >= xpForLevel(level)) {
-    xpAcc -= xpForLevel(level)
-    level++
-    levelsGained++
+  let { level, experience } = character
+  const startingLevel = level
+  experience += xp
+
+  while (level < 99) {
+    if (experience >= totalXpForLevel(level + 1)) {
+      level++
+    } else {
+      break
+    }
   }
+
+  const levelsGained = level - startingLevel
   const updatedCharacter: Character = {
     ...character,
     level,
-    experience: xpAcc,
+    experience,
     maxHp: (character.maxHp || 100) + levelsGained * HP_PER_LEVEL,
     hp: (character.hp || 100) + levelsGained * HP_PER_LEVEL,
-    statPoints: (character.statPoints || 0) + levelsGained * POINTS_PER_LEVEL,
   }
+
   return { updatedCharacter, levelsGained }
 }
 
