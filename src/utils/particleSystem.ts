@@ -13,6 +13,24 @@ interface ParticleDef {
   el: HTMLElement | null;
 }
 
+type ParticleSeed = Omit<ParticleDef, 'el'>;
+
+const PARTICLE_COLORS: Record<ParticleType, string[]> = {
+  dust: ['#8B7355', '#A0896C', '#6B5840'],
+  spark: ['#FFD700', '#FFFFFF', '#FFA500'],
+  xp_star: ['#FFD700', '#FFC107'],
+  damage: ['#FF3333', '#FF5555'],
+  hit_ring: ['#FFFFFF', '#FFD700', '#FF6B6B'],
+  crit: ['#FFEC8B', '#FFD700', '#FFEC8B'],
+  miss: ['#CCCCCC', '#EEEEEE', '#FFFFFF'],
+  heal: ['#AFFFAC', '#90EE90', '#7FFF7F'],
+};
+
+const pickColor = (type: ParticleType): string => {
+  const colors = PARTICLE_COLORS[type];
+  return colors[Math.floor(Math.random() * colors.length)];
+};
+
 export class ParticleSystem {
   private particles: ParticleDef[] = [];
   private animFrameId: number | null = null;
@@ -41,9 +59,10 @@ export class ParticleSystem {
     const actualCount = Math.min(count, this.maxParticles - this.particles.length);
     if (actualCount <= 0) return;
 
+    const text = (type === 'damage' || type === 'heal') && value !== undefined ? String(value) : undefined;
+
     for (let i = 0; i < actualCount; i++) {
-      const partialData = { text: (type === 'damage' || type === 'heal') && value !== undefined ? String(value) : undefined };
-      const partial = this.createParticle(type, x, y, i, actualCount, partialData);
+      const partial = this.createParticle(type, x, y, i, actualCount, text);
       if (!partial) continue;
 
       const el = document.createElement('span');
@@ -79,18 +98,7 @@ export class ParticleSystem {
     }
   }
 
-  private createParticle(type: ParticleType, x: number, y: number, index: number, total: number, partialData?: { text?: string }): Omit<ParticleDef, 'el'> | null {
-    const colors: Record<ParticleType, string[]> = {
-      dust: ['#8B7355', '#A0896C', '#6B5840'],
-      spark: ['#FFD700', '#FFFFFF', '#FFA500'],
-      xp_star: ['#FFD700', '#FFC107'],
-      damage: ['#FF3333', '#FF5555'],
-      hit_ring: ['#FFFFFF', '#FFD700', '#FF6B6B'],
-      crit: ['#FFEC8B', '#FFD700', '#FFEC8B'],
-      miss: ['#CCCCCC', '#EEEEEE', '#FFFFFF'],
-      heal: ['#AFFFAC', '#90EE90', '#7FFF7F'],
-    };
-
+  private createParticle(type: ParticleType, x: number, y: number, index: number, total: number, text?: string): ParticleSeed | null {
     switch (type) {
       case 'dust':
         return {
@@ -99,7 +107,7 @@ export class ParticleSystem {
           vx: (Math.random() - 0.5) * 1,
           vy: Math.random() * 0.5 + 0.3,
           life: 600, maxLife: 600, size: 2,
-          color: colors.dust[Math.floor(Math.random() * colors.dust.length)],
+          color: pickColor('dust'),
         };
       case 'spark':
         return {
@@ -108,7 +116,7 @@ export class ParticleSystem {
           vx: (Math.random() - 0.5) * 6,
           vy: (Math.random() - 0.5) * 6 - 1,
           life: 400, maxLife: 400, size: 2,
-          color: colors.spark[Math.floor(Math.random() * colors.spark.length)],
+          color: pickColor('spark'),
         };
       case 'xp_star':
         return {
@@ -116,7 +124,7 @@ export class ParticleSystem {
           vx: 0,
           vy: -1.5,
           life: 2000, maxLife: 2000, size: 3,
-          color: colors.xp_star[0],
+          color: PARTICLE_COLORS.xp_star[0],
           text: '+XP',
         };
       case 'damage':
@@ -125,8 +133,8 @@ export class ParticleSystem {
           vx: (Math.random() - 0.5) * 0.5,
           vy: -1,
           life: 1500, maxLife: 1500, size: 4,
-          color: colors.damage[0],
-          text: String(partialData?.text ?? ''),
+          color: PARTICLE_COLORS.damage[0],
+          text: text ?? '',
         };
       case 'hit_ring': {
         const angle = (index / total) * Math.PI * 2;
@@ -135,50 +143,47 @@ export class ParticleSystem {
           vx: Math.cos(angle) * 3,
           vy: Math.sin(angle) * 3,
           life: 300, maxLife: 300, size: 2,
-          color: colors.hit_ring[Math.floor(Math.random() * colors.hit_ring.length)],
+          color: pickColor('hit_ring'),
         };
       }
-      case 'crit': {
+      case 'crit':
         return {
           x: x + (Math.random() - 0.5) * 6,
           y: y + (Math.random() - 0.5) * 6,
           vx: (Math.random() - 0.5) * 2,
           vy: -2,
           life: 800, maxLife: 800, size: 4,
-          color: colors.crit[Math.floor(Math.random() * colors.crit.length)],
+          color: pickColor('crit'),
           text: 'CRIT!',
         };
-      }
-      case 'miss': {
+      case 'miss':
         return {
           x: x + (Math.random() - 0.5) * 10,
           y: y - 10 + (Math.random() - 0.5) * 5,
           vx: (Math.random() - 0.5) * 0.5,
           vy: -1.2,
           life: 1200, maxLife: 1200, size: 3,
-          color: colors.miss[Math.floor(Math.random() * colors.miss.length)],
+          color: pickColor('miss'),
           text: 'MISS',
         };
-      }
-      case 'heal': {
+      case 'heal':
         return {
           x, y,
           vx: (Math.random() - 0.5) * 0.5,
           vy: -1.5,
           life: 1200, maxLife: 1200, size: 4,
-          color: colors.heal[0],
-          text: String(partialData?.text ?? ''),
+          color: PARTICLE_COLORS.heal[0],
+          text: text ?? '',
         };
-      }
     }
     return null;
   }
 
   clear() {
-    for (const p of this.particles) {
-      if (p.el?.parentNode) p.el.parentNode.removeChild(p.el);
+    for (const particle of this.particles) {
+      if (particle.el?.parentNode) particle.el.parentNode.removeChild(particle.el);
     }
-    this.particles = [];
+    this.particles.length = 0;
   }
 
   stop() {
@@ -200,34 +205,36 @@ export class ParticleSystem {
 
     const delta = Math.min(now - this.lastTime, 50);
     this.lastTime = now;
+    let writeIndex = 0;
 
-    const alive: ParticleDef[] = [];
-    for (const p of this.particles) {
-      p.life -= delta;
-      if (p.life <= 0) {
-        if (p.el?.parentNode) p.el.parentNode.removeChild(p.el);
+    for (let readIndex = 0; readIndex < this.particles.length; readIndex++) {
+      const particle = this.particles[readIndex];
+      particle.life -= delta;
+      if (particle.life <= 0) {
+        if (particle.el?.parentNode) particle.el.parentNode.removeChild(particle.el);
         continue;
       }
 
-      p.x += p.vx * (delta / 16);
-      p.y += p.vy * (delta / 16);
-      const progress = p.life / p.maxLife;
+      particle.x += particle.vx * (delta / 16);
+      particle.y += particle.vy * (delta / 16);
+      const progress = particle.life / particle.maxLife;
 
-      if (p.el) {
-        p.el.style.transform = `translate(${p.x}px,${p.y}px)`;
-        p.el.style.opacity = String(Math.max(0, progress));
+      if (particle.el) {
+        particle.el.style.transform = `translate(${particle.x}px,${particle.y}px)`;
+        particle.el.style.opacity = String(Math.max(0, progress));
       }
 
-      alive.push(p);
+      this.particles[writeIndex] = particle;
+      writeIndex += 1;
     }
 
-    this.particles = alive;
+    this.particles.length = writeIndex;
 
-    if (alive.length > 0) {
+    if (writeIndex > 0) {
       this.animFrameId = requestAnimationFrame(this.tick);
     } else {
       this.running = false;
       this.animFrameId = null;
     }
-  }
+  };
 }

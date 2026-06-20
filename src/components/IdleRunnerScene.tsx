@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Character } from '../types/Character'
 import { MonsterId } from '../data/monsterAssets'
 import { ScenePhase } from '../types/IdleCombat'
@@ -7,13 +7,13 @@ import { PixelMonster } from './PixelMonster'
 import { ProceduralTerrain } from './procedural/ProceduralTerrain'
 import {
   generateCloudPositions,
-  renderTileAsCssUrl, getSkyGradient,
-  GRASS_TILE, DIRT_TILE,
+  renderTileAsCssUrl,
+  getSkyGradient,
+  GRASS_TILE,
+  DIRT_TILE,
 } from '../data/tileAssets'
 import { ParticleSystem } from '../utils/particleSystem'
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode'
-
-
 
 interface IdleRunnerSceneProps {
   character: Character
@@ -30,7 +30,6 @@ interface IdleRunnerSceneProps {
   powerRatio?: number | null
 }
 
-// Re-using randomDamage for particle simulation in IdleScene
 function randomDamage(playerLevel: number): { value: number; isCrit: boolean } {
   const base = 5 + playerLevel * 2
   const variance = Math.floor(base * (0.5 + Math.random() * 1.0))
@@ -38,21 +37,27 @@ function randomDamage(playerLevel: number): { value: number; isCrit: boolean } {
   return { value: isCrit ? variance * 2 : variance, isCrit }
 }
 
-export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
+export const IdleRunnerScene = memo(function IdleRunnerScene({
   character,
-  currentMonster, scenePhase, lastCombatResult, lastCombatXp,
-  offlineGains, onClearOfflineGains,
-  currentStreak = 0, streakMilestone = null,
-  efficiency = null, xpPerMinute = null, powerRatio = null,
-}) => {
+  currentMonster,
+  scenePhase,
+  lastCombatResult,
+  lastCombatXp,
+  offlineGains,
+  onClearOfflineGains,
+  currentStreak = 0,
+  streakMilestone = null,
+  efficiency = null,
+  xpPerMinute = null,
+  powerRatio = null,
+}: IdleRunnerSceneProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const particlesRef = useRef<ParticleSystem | null>(null)
   const [animFrame, setAnimFrame] = useState(0)
   const lowPerf = useLowPerformanceMode()
   const prevPhaseRef = useRef<ScenePhase>('running')
-  // Removed damageNumbers state and related setters
-  // const [damageNumbers, setDamageNumbers] = useState<FloatingDamage[]>([])
-  // const dmgIdRef = useRef(0)
+  const characterLevelRef = useRef(character.level)
+  characterLevelRef.current = character.level
 
   const charScale = useMemo(() => {
     const w = typeof window !== 'undefined' ? window.innerWidth : 768
@@ -61,11 +66,12 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
     return 8
   }, [])
   const monsterScale = useMemo(() => Math.max(3, charScale - 2), [charScale])
-
   const clouds = useMemo(() => generateCloudPositions(), [])
   const skyGradient = useMemo(() => getSkyGradient(), [])
+  const groundCss = useMemo(() => renderTileAsCssUrl(GRASS_TILE), [])
+  const dirtCss = useMemo(() => renderTileAsCssUrl(DIRT_TILE), [])
+  const containerStyle = useMemo(() => ({ background: skyGradient }), [skyGradient])
 
-  // Animation loop 12 FPS
   useEffect(() => {
     const interval = setInterval(() => {
       setAnimFrame(prev => prev + 1)
@@ -73,7 +79,6 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
     return () => clearInterval(interval)
   }, [])
 
-  // Particle system initialization
   useEffect(() => {
     if (!containerRef.current) return
     const ps = new ParticleSystem(lowPerf ? 20 : 60)
@@ -86,60 +91,38 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
     }
   }, [lowPerf])
 
-  // Emit particles on phase changes
   useEffect(() => {
-    const ps = particlesRef.current;
-    if (!ps || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const cx = rect.width * 0.3;
-    const cy = rect.height * 0.55;
+    const ps = particlesRef.current
+    const container = containerRef.current
+    if (!ps || !container) return
 
-    // Handle particles when entering combat phase
+    const rect = container.getBoundingClientRect()
+    const cx = rect.width * 0.3
+    const cy = rect.height * 0.55
+
     if (scenePhase === 'combat' && prevPhaseRef.current === 'monster_appears') {
-      ps.emit('spark', cx, cy, lowPerf ? 2 : 6);
-      ps.emit('hit_ring', cx - 20, cy, lowPerf ? 4 : 12);
-      if (!lowPerf) ps.emit('dust', cx, cy + 30, 2);
+      ps.emit('spark', cx, cy, lowPerf ? 2 : 6)
+      ps.emit('hit_ring', cx - 20, cy, lowPerf ? 4 : 12)
+      if (!lowPerf) ps.emit('dust', cx, cy + 30, 2)
 
-      // Simulate damage and crit for particle emission in IdleRunnerScene
-      // NOTE: In IdleScene, actual combat data isn't readily available, so we simulate
-      // for visual feedback. Actual damage calculation happens in CombatView.
-      const simulatedDmg = randomDamage(character.level);
-      const damageValue = simulatedDmg.value;
-      const isCrit = simulatedDmg.isCrit;
-
-      if (damageValue > 0) {
-        ps.emit('damage', cx, cy, 1, damageValue);
-      }
-      if (isCrit) {
-        ps.emit('crit', cx, cy, 1); // Emit crit particle
-      }
-      // 'miss' particles are harder to simulate accurately here without explicit miss data.
-      // We'll rely on CombatView for miss feedback.
+      const simulatedDmg = randomDamage(characterLevelRef.current)
+      if (simulatedDmg.value > 0) ps.emit('damage', cx, cy, 1, simulatedDmg.value)
+      if (simulatedDmg.isCrit) ps.emit('crit', cx, cy, 1)
     }
 
-    // Emit XP stars on result phase
     if (scenePhase === 'result' && lastCombatResult) {
-      ps.emit('xp_star', cx, cy - 20, lowPerf ? 1 : 3);
+      ps.emit('xp_star', cx, cy - 20, lowPerf ? 1 : 3)
     }
 
-    prevPhaseRef.current = scenePhase;
-  }, [scenePhase, lastCombatResult, lowPerf, character.level, particlesRef.current]); // Added particlesRef.current to deps
+    prevPhaseRef.current = scenePhase
+  }, [scenePhase, lastCombatResult, lowPerf])
 
   const characterState = scenePhase === 'combat' ? 'attacking' : 'running'
-
-  const containerStyle: React.CSSProperties = {
-    background: skyGradient,
-  }
-
-  const groundCss = useMemo(() => renderTileAsCssUrl(GRASS_TILE), [])
-  const dirtCss = useMemo(() => renderTileAsCssUrl(DIRT_TILE), [])
-
   const showBigXp = scenePhase === 'result' && lastCombatXp > 0
   const showStreakBanner = streakMilestone !== null && scenePhase === 'result' && lastCombatResult === 'win'
 
   return (
     <div className="idle-runner-box" ref={containerRef} style={containerStyle}>
-      {/* Mountain layer (slow scroll) */}
       {!lowPerf && (
         <ProceduralTerrain
           width={containerRef.current?.clientWidth || 800}
@@ -150,7 +133,6 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
         />
       )}
 
-      {/* Cloud layer */}
       {!lowPerf && (
         <div className="idle-layer clouds">
           {clouds.map((cloud, i) => (
@@ -169,7 +151,6 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
         </div>
       )}
 
-      {/* Character */}
       <div className={`idle-character-slot ${scenePhase === 'combat' ? 'attacking' : ''} ${scenePhase === 'result' && lastCombatResult === 'win' ? 'victory' : ''}`}>
         <AnimatedPixelCharacter
           seed={character.seed}
@@ -180,20 +161,13 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
         />
       </div>
 
-      {/* Monster */}
       {currentMonster && (
-        <div
-          className={`idle-monster-slot phase-${scenePhase}`}
-          data-monster={currentMonster}
-        >
+        <div className={`idle-monster-slot phase-${scenePhase}`} data-monster={currentMonster}>
           <PixelMonster monsterId={currentMonster} scale={monsterScale} />
           {scenePhase === 'combat' && <div className="combat-flash" />}
-
-          {/* Floating damage numbers - replaced by direct particle emission */}
         </div>
       )}
 
-      {/* Big XP popup */}
       {showBigXp && (
         <div className={`idle-big-xp ${lastCombatResult}`}>
           <span className="big-xp-value">+{lastCombatXp} XP</span>
@@ -201,7 +175,6 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
         </div>
       )}
 
-      {/* Streak milestone banner */}
       {showStreakBanner && (
         <div className="idle-streak-banner">
           <span className="streak-fire">🔥</span>
@@ -210,7 +183,6 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
         </div>
       )}
 
-      {/* Persistent streak indicator (running phase) */}
       {scenePhase === 'running' && currentStreak >= 5 && (
         <div className="idle-streak-indicator">
           <span>🔥</span>
@@ -218,7 +190,6 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
         </div>
       )}
 
-      {/* Efficiency overlay */}
       {scenePhase === 'running' && xpPerMinute != null && (
         <div className="idle-efficiency-overlay">
           <span className="eff-xp-rate">⚡ ~{xpPerMinute} XP/min</span>
@@ -231,12 +202,10 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
         </div>
       )}
 
-      {/* Ground layer */}
       <div className="idle-ground-layer" style={{ backgroundImage: `${groundCss}, ${dirtCss}` }}>
         <div className="idle-ground-inner scroll-fast" />
       </div>
 
-      {/* Offline gains notification */}
       {offlineGains && (
         <div className="idle-offline-notification">
           <button className="idle-offline-close" onClick={onClearOfflineGains} aria-label="Dismiss">×</button>
@@ -250,4 +219,4 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
       )}
     </div>
   )
-}
+})
