@@ -12,6 +12,7 @@ class MockCanvasContext {
     fill = vi.fn();
     stroke = vi.fn();
     arc = vi.fn();
+    quadraticCurveTo = vi.fn();
     fillText = vi.fn();
     measureText = vi.fn(() => ({ width: 0 }));
     save = vi.fn();
@@ -51,6 +52,13 @@ beforeAll(() => {
 
     // Polyfill IntersectionObserver
     window.IntersectionObserver = vi.fn().mockImplementation(() => ({
+        observe: vi.fn(),
+        unobserve: vi.fn(),
+        disconnect: vi.fn(),
+    }));
+
+    // Polyfill ResizeObserver
+    window.ResizeObserver = vi.fn().mockImplementation(() => ({
         observe: vi.fn(),
         unobserve: vi.fn(),
         disconnect: vi.fn(),

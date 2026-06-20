@@ -132,23 +132,42 @@ describe('Terrain Noise Caching', () => {
 // ============================================================================
 
 describe('Terrain Animation', () => {
+  let rafCallbacks: FrameRequestCallback[] = [];
+  let rafId = 0;
+  let fakeTime = 1000;
+
   beforeEach(() => {
     vi.useFakeTimers();
+    fakeTime = 1000;
+    vi.setSystemTime(fakeTime);
+    rafCallbacks = [];
+    rafId = 0;
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+      rafCallbacks.push(cb);
+      return ++rafId;
+    });
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
   });
+
+  const fireRaf = (advanceMs = 16) => {
+    fakeTime += advanceMs;
+    vi.setSystemTime(fakeTime);
+    const cbs = [...rafCallbacks];
+    rafCallbacks = [];
+    cbs.forEach((cb) => cb(fakeTime));
+  };
 
   it('should animate terrain scroll with FPS control', () => {
     const onScroll = vi.fn();
 
     renderHook(() => useTerrainAnimation(60, 1, onScroll, true));
 
-    // Advance by one frame (60 FPS = 16.67ms per frame)
-    act(() => {
-      vi.advanceTimersByTime(20);
-    });
+    fireRaf(20);
 
     expect(onScroll).toHaveBeenCalled();
   });
@@ -158,16 +177,17 @@ describe('Terrain Animation', () => {
 
     renderHook(() => useTerrainAnimation(30, 1, onScroll, true));
 
-    // At 30 FPS, each frame is ~33ms
-    act(() => {
-      vi.advanceTimersByTime(20); // Less than one frame
-    });
+    // First frame at t=1000
+    fireRaf(0);
 
     const firstCallCount = onScroll.mock.calls.length;
 
-    act(() => {
-      vi.advanceTimersByTime(20); // Total 40ms, now exceeds 33ms
-    });
+    // Second frame only 10ms later — should be throttled (30fps = 33ms)
+    fireRaf(10);
+    expect(onScroll.mock.calls.length).toBe(firstCallCount);
+
+    // Third frame 30ms later — total 40ms from start, should fire
+    fireRaf(30);
 
     expect(onScroll.mock.calls.length).toBeGreaterThan(firstCallCount);
   });
@@ -208,20 +228,14 @@ describe('Terrain Animation', () => {
       { initialProps: { speed: 1 } },
     );
 
-    act(() => {
-      vi.advanceTimersByTime(50);
-    });
+    fireRaf(50);
 
     // Change speed
     rerender({ speed: 2 });
     onScroll.mockClear();
 
-    act(() => {
-      vi.advanceTimersByTime(50);
-    });
+    fireRaf(50);
 
-    // Should move faster with speed 2
-    // (This is a relative test, exact values depend on timing)
     expect(onScroll).toHaveBeenCalled();
   });
 });
@@ -231,18 +245,42 @@ describe('Terrain Animation', () => {
 // ============================================================================
 
 describe('Parallax Animation', () => {
+  let rafCallbacks: FrameRequestCallback[] = [];
+  let rafId = 0;
+  let fakeTime = 1000;
+
   beforeEach(() => {
     vi.useFakeTimers();
+    fakeTime = 1000;
+    vi.setSystemTime(fakeTime);
+    rafCallbacks = [];
+    rafId = 0;
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+      rafCallbacks.push(cb);
+      return ++rafId;
+    });
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
   });
+
+  const fireRaf = (advanceMs = 16) => {
+    fakeTime += advanceMs;
+    vi.setSystemTime(fakeTime);
+    const cbs = [...rafCallbacks];
+    rafCallbacks = [];
+    cbs.forEach((cb) => cb(fakeTime));
+  };
 
   it('should generate offsets for multiple layers', () => {
     const { result } = renderHook(() =>
       useParallaxAnimation(60, 1, 4, true),
     );
+
+    fireRaf(20);
 
     expect(result.current).toHaveLength(4);
     result.current.forEach((offset) => {
@@ -255,15 +293,15 @@ describe('Parallax Animation', () => {
       useParallaxAnimation(60, 2, 3, true),
     );
 
-    act(() => {
-      vi.advanceTimersByTime(100);
-    });
+    // Fire enough frames for animation to accumulate
+    for (let i = 0; i < 5; i++) {
+      fireRaf(20);
+    }
 
     const offsets1 = result.current;
 
     // Offsets should be different for each layer
     if (offsets1.length >= 2) {
-      // First layer moves faster than second
       expect(Math.abs(offsets1[0])).toBeGreaterThanOrEqual(Math.abs(offsets1[1]));
     }
   });
@@ -274,16 +312,36 @@ describe('Parallax Animation', () => {
 // ============================================================================
 
 describe('Cloud Animation', () => {
+  let rafCallbacks: FrameRequestCallback[] = [];
+  let rafId = 0;
+
   beforeEach(() => {
     vi.useFakeTimers();
+    rafCallbacks = [];
+    rafId = 0;
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+      rafCallbacks.push(cb);
+      return ++rafId;
+    });
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
   });
+
+  const fireRaf = () => {
+    const cbs = [...rafCallbacks];
+    rafCallbacks = [];
+    cbs.forEach((cb) => cb(Date.now()));
+  };
 
   it('should generate cloud drift animation', () => {
     const { result } = renderHook(() => useCloudAnimation(60, 20, true));
+
+    fireRaf();
+    act(() => { vi.advanceTimersByTime(0); });
 
     expect(typeof result.current).toBe('number');
   });
@@ -291,9 +349,10 @@ describe('Cloud Animation', () => {
   it('should oscillate cloud drift between -driftDistance and +driftDistance', () => {
     const { result } = renderHook(() => useCloudAnimation(60, 20, true));
 
-    act(() => {
-      vi.advanceTimersByTime(1000);
-    });
+    for (let i = 0; i < 50; i++) {
+      fireRaf();
+      act(() => { vi.advanceTimersByTime(20); });
+    }
 
     const drift = result.current;
     expect(drift).toBeGreaterThanOrEqual(-20);
@@ -306,18 +365,38 @@ describe('Cloud Animation', () => {
 // ============================================================================
 
 describe('Grass Sway Animation', () => {
+  let rafCallbacks: FrameRequestCallback[] = [];
+  let rafId = 0;
+
   beforeEach(() => {
     vi.useFakeTimers();
+    rafCallbacks = [];
+    rafId = 0;
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+      rafCallbacks.push(cb);
+      return ++rafId;
+    });
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
   });
+
+  const fireRaf = () => {
+    const cbs = [...rafCallbacks];
+    rafCallbacks = [];
+    cbs.forEach((cb) => cb(Date.now()));
+  };
 
   it('should generate grass sway animation', () => {
     const { result } = renderHook(() =>
       useGrassSwayAnimation(60, 2, 0.5, true),
     );
+
+    fireRaf();
+    act(() => { vi.advanceTimersByTime(0); });
 
     expect(typeof result.current).toBe('number');
   });
@@ -327,9 +406,10 @@ describe('Grass Sway Animation', () => {
       useGrassSwayAnimation(60, 3, 0.5, true),
     );
 
-    act(() => {
-      vi.advanceTimersByTime(5000);
-    });
+    for (let i = 0; i < 100; i++) {
+      fireRaf();
+      act(() => { vi.advanceTimersByTime(50); });
+    }
 
     const sway = result.current;
     expect(sway).toBeGreaterThanOrEqual(-3);

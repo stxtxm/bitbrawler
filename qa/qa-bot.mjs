@@ -359,8 +359,8 @@ async function parseCharacterStats(page) {
     if (Object.keys(stats).length >= 4) return stats
 
     return null
-  } catch (err) {
-    console.log(`   ⚠️ Could not parse character stats: ${err.message}`)
+  } catch {
+    console.log(`   ⚠️ Could not parse character stats`)
     return null
   }
 }
