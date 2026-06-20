@@ -21,6 +21,10 @@ export const normalizeCharacter = (character: Character): Character => {
     pveFightsLeft: character.pveFightsLeft ?? 5,
     incomingFightHistory: character.incomingFightHistory ?? [],
     equippedItems: character.equippedItems ?? { weapon: null, armor: null, accessory: null },
+    idleStreak: character.idleStreak ?? 0,
+    idleMaxStreak: character.idleMaxStreak ?? 0,
+    idleTotalKills: character.idleTotalKills ?? 0,
+    idleTotalXp: character.idleTotalXp ?? 0,
   };
 };
 

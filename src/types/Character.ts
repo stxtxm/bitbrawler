@@ -91,4 +91,10 @@ export interface Character {
     armor: string | null;
     accessory: string | null;
   };
+
+  // Idle/PvE stats
+  idleStreak?: number;
+  idleMaxStreak?: number;
+  idleTotalKills?: number;
+  idleTotalXp?: number;
 }

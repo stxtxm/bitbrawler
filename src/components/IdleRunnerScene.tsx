@@ -12,6 +12,13 @@ import {
 import { ParticleSystem } from '../utils/particleSystem'
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode'
 
+interface FloatingDamage {
+  id: number
+  value: number
+  x: number
+  createdAt: number
+}
+
 interface IdleRunnerSceneProps {
   character: Character
   currentMonster: MonsterId | null
@@ -20,18 +27,30 @@ interface IdleRunnerSceneProps {
   lastCombatXp: number
   offlineGains: { fights: number; xp: number } | null
   onClearOfflineGains: () => void
+  currentStreak?: number
+  streakMilestone?: number | null
+}
+
+function randomDamage(playerLevel: number): { value: number; isCrit: boolean } {
+  const base = 5 + playerLevel * 2
+  const variance = Math.floor(base * (0.5 + Math.random() * 1.0))
+  const isCrit = Math.random() < 0.15
+  return { value: isCrit ? variance * 2 : variance, isCrit }
 }
 
 export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
   character,
   currentMonster, scenePhase, lastCombatResult, lastCombatXp,
   offlineGains, onClearOfflineGains,
+  currentStreak = 0, streakMilestone = null,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const particlesRef = useRef<ParticleSystem | null>(null)
   const [animFrame, setAnimFrame] = useState(0)
   const lowPerf = useLowPerformanceMode()
   const prevPhaseRef = useRef<ScenePhase>('running')
+  const [damageNumbers, setDamageNumbers] = useState<FloatingDamage[]>([])
+  const dmgIdRef = useRef(0)
 
   const charScale = useMemo(() => {
     const w = typeof window !== 'undefined' ? window.innerWidth : 768
@@ -65,7 +84,7 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
     }
   }, [lowPerf])
 
-  // Emit particles on phase changes
+  // Emit particles on phase changes + spawn damage numbers
   useEffect(() => {
     const ps = particlesRef.current
     if (!ps || !containerRef.current) return
@@ -77,14 +96,33 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
       ps.emit('spark', cx, cy, lowPerf ? 2 : 6)
       ps.emit('hit_ring', cx - 20, cy, lowPerf ? 4 : 12)
       if (!lowPerf) ps.emit('dust', cx, cy + 30, 2)
+
+      // Spawn floating damage numbers
+      const count = lowPerf ? 2 : 4 + Math.floor(Math.random() * 3)
+      const newDmgs: FloatingDamage[] = []
+      for (let i = 0; i < count; i++) {
+        const dmg = randomDamage(character.level)
+        newDmgs.push({
+          id: dmgIdRef.current++,
+          value: dmg.value,
+          x: 30 + (Math.random() - 0.5) * 40,
+          createdAt: Date.now(),
+        })
+      }
+      setDamageNumbers(prev => [...prev, ...newDmgs])
+
+      // Remove after animation
+      setTimeout(() => {
+        setDamageNumbers([])
+      }, 1200)
     }
 
     if (scenePhase === 'result' && lastCombatResult) {
-      ps.emit('xp_star', cx, cy - 20, 1)
+      ps.emit('xp_star', cx, cy - 20, lowPerf ? 1 : 3)
     }
 
     prevPhaseRef.current = scenePhase
-  }, [scenePhase, lastCombatResult, lowPerf])
+  }, [scenePhase, lastCombatResult, lowPerf, character.level])
 
   const characterState = scenePhase === 'combat' ? 'attacking' : 'running'
 
@@ -95,6 +133,9 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
   const groundCss = useMemo(() => renderTileAsCssUrl(GRASS_TILE), [])
   const dirtCss = useMemo(() => renderTileAsCssUrl(DIRT_TILE), [])
   const mountainCss = useMemo(() => renderTileAsCssUrl(MOUNTAIN_TILE), [])
+
+  const showBigXp = scenePhase === 'result' && lastCombatXp > 0
+  const showStreakBanner = streakMilestone !== null && scenePhase === 'result' && lastCombatResult === 'win'
 
   return (
     <div className="idle-runner-box" ref={containerRef} style={containerStyle}>
@@ -143,14 +184,45 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
         >
           <PixelMonster monsterId={currentMonster} scale={monsterScale} />
           {scenePhase === 'combat' && <div className="combat-flash" />}
+
+          {/* Floating damage numbers */}
+          {scenePhase === 'combat' && damageNumbers.map(d => (
+            <div
+              key={d.id}
+              className="floating-damage"
+              style={{
+                left: `${d.x}%`,
+                animationDelay: `${(d.id % 3) * 0.15}s`,
+              }}
+            >
+              -{d.value}
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Combat result text */}
-      {scenePhase === 'result' && lastCombatResult && (
-        <div className={`idle-combat-result ${lastCombatResult}`}>
-          <span className="result-label">{lastCombatResult === 'win' ? 'VICTORY' : 'DEFEAT'}</span>
-          <span className="result-xp">+{lastCombatXp} XP</span>
+      {/* Big XP popup */}
+      {showBigXp && (
+        <div className={`idle-big-xp ${lastCombatResult}`}>
+          <span className="big-xp-value">+{lastCombatXp} XP</span>
+          {lastCombatResult === 'win' && <span className="big-xp-label">VICTORY</span>}
+        </div>
+      )}
+
+      {/* Streak milestone banner */}
+      {showStreakBanner && (
+        <div className="idle-streak-banner">
+          <span className="streak-fire">🔥</span>
+          <span className="streak-text">{streakMilestone} WIN STREAK!</span>
+          <span className="streak-fire">🔥</span>
+        </div>
+      )}
+
+      {/* Persistent streak indicator (running phase) */}
+      {scenePhase === 'running' && currentStreak >= 5 && (
+        <div className="idle-streak-indicator">
+          <span>🔥</span>
+          <span>{currentStreak}</span>
         </div>
       )}
 

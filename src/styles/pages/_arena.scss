@@ -973,6 +973,51 @@
         font-size: 0.5rem;
         padding: 1px 4px;
     }
+
+    .stat-points-badge {
+        font-size: 0.45rem;
+        padding: 1px 4px;
+    }
+}
+
+// ── Stat points badge in header ─────────────────────
+
+.stat-points-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 2px 6px;
+    font-size: 0.55rem;
+    font-family: $font-pixel;
+    color: #ffdd44;
+    background: rgba(255, 200, 0, 0.12);
+    border: 1px solid rgba(255, 200, 0, 0.4);
+    cursor: pointer;
+    letter-spacing: 0;
+    text-shadow: 0 0 6px rgba(255, 200, 0, 0.3);
+    transition: border-color 0.2s, background 0.2s;
+    line-height: 1;
+    white-space: nowrap;
+
+    &:hover {
+        background: rgba(255, 200, 0, 0.25);
+        border-color: rgba(255, 200, 0, 0.7);
+    }
+
+    &.pulse {
+        animation: badgePulse 2s ease-in-out infinite;
+    }
+
+    @include mobile {
+        font-size: 0.5rem;
+        padding: 1px 4px;
+    }
+}
+
+@keyframes badgePulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 200, 0, 0.3); }
+    50% { box-shadow: 0 0 0 4px rgba(255, 200, 0, 0); }
 }
 
 .header-actions {
@@ -1247,6 +1292,35 @@
 
     .compact-stat-value {
         font-size: 0.5rem;
+    }
+}
+
+// ── PvE extra stats line (slain, streak, XP/min) ────
+
+.pve-extra-stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 3px;
+    flex-wrap: wrap;
+}
+
+.pve-extra-item {
+    font-size: 0.42rem;
+    color: #666;
+    white-space: nowrap;
+
+    &.streak {
+        color: #ff8800;
+    }
+
+    &.xp-min {
+        color: $accent-gold;
+    }
+
+    @include mobile {
+        font-size: 0.38rem;
     }
 }
 

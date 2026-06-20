@@ -450,7 +450,11 @@ const Arena = () => {
                     <div className="arena-lvl">
                         <span className="lvl-label">LVL</span>
                         <span className="lvl-chip">{activeCharacter.level}</span>
-
+                        {pointsRemaining > 0 && (
+                            <button className="stat-points-badge pulse" onClick={handleOpenLevelUp} title="Unspent stat points">
+                                ⚡+{pointsRemaining}
+                            </button>
+                        )}
                     </div>
                 </div>
                 <div className="header-actions">
@@ -499,6 +503,8 @@ const Arena = () => {
                                 lastCombatXp={idle.lastCombatXp}
                                 offlineGains={idle.offlineGains}
                                 onClearOfflineGains={idle.clearOfflineGains}
+                                currentStreak={idle.currentStreak}
+                                streakMilestone={idle.efficiencyData?.streakMilestone ?? null}
                             />
                         ) : (
                             <div className="scene-pvp-center">
@@ -576,6 +582,11 @@ const Arena = () => {
                                     <span className="compact-stat-label">FIGHTS</span>
                                     <span className="compact-stat-value">{idle.idleFightsCount}</span>
                                 </div>
+                            </div>
+                            <div className="pve-extra-stats">
+                                <span className="pve-extra-item">💀 {idle.totalKills} slain</span>
+                                {idle.currentStreak > 0 && <span className="pve-extra-item streak">🔥 {idle.currentStreak}</span>}
+                                {idle.efficiencyData && <span className="pve-extra-item xp-min">~{idle.efficiencyData.xpPerMinute} XP/min</span>}
                             </div>
                         </div>
                     </div>
