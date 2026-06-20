@@ -27,7 +27,7 @@ interface IdleRunnerSceneProps {
 
 export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
   character, idleXpGained, idleFightsCount,
-  currentMonster, backgroundMonster, scenePhase, lastCombatResult, lastCombatXp,
+  currentMonster, scenePhase, lastCombatResult, lastCombatXp,
   offlineGains, onClearOfflineGains,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -138,13 +138,13 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
         />
       </div>
 
-      {/* Monster: active during combat, passive background during running */}
-      {(currentMonster || backgroundMonster) && (
+      {/* Monster: only visible during combat */}
+      {currentMonster && (
         <div
-          className={`idle-monster-slot ${currentMonster ? `phase-${scenePhase}` : 'phase-running'} ${!currentMonster ? 'passive' : ''}`}
-          data-monster={currentMonster || backgroundMonster}
+          className={`idle-monster-slot phase-${scenePhase}`}
+          data-monster={currentMonster}
         >
-          <PixelMonster monsterId={currentMonster || backgroundMonster!} scale={monsterScale} />
+          <PixelMonster monsterId={currentMonster} scale={monsterScale} />
           {scenePhase === 'combat' && <div className="combat-flash" />}
         </div>
       )}

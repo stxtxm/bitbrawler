@@ -125,13 +125,13 @@
 
 .idle-monster-slot {
   position: absolute;
-  right: -22%;
+  right: 20%;
   bottom: clamp(16px, 5cqi, 32px);
   z-index: 4;
   display: flex;
-  transition: right 0.6s cubic-bezier(0.2, 0.8, 0.3, 1), opacity 0.4s ease;
   transform-origin: bottom center;
-  opacity: 1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 
   &::before {
     content: '';
@@ -144,12 +144,12 @@
     background: radial-gradient(ellipse, rgba(0,0,0,0.4), transparent);
     border-radius: 50%;
     opacity: 0;
-    transition: opacity 0.6s ease;
+    transition: opacity 0.3s ease;
     pointer-events: none;
   }
 
   &.phase-monster_appears {
-    right: 20%;
+    opacity: 1;
 
     &::before {
       opacity: 1;
@@ -157,12 +157,15 @@
   }
 
   &.phase-combat {
-    right: 20%;
+    opacity: 1;
     animation: monsterHitShake 0.5s ease;
+
+    &::before {
+      opacity: 1;
+    }
   }
 
   &.phase-result {
-    right: 20%;
     opacity: 1;
     animation: monsterDefeat 1.5s ease-in forwards;
     pointer-events: none;
@@ -170,16 +173,6 @@
     &::before {
       opacity: 0;
     }
-  }
-
-  &.passive {
-    right: 4%;
-    bottom: clamp(16px, 5cqi, 32px);
-    opacity: 0.3;
-    transform: scale(0.6);
-    transition: opacity 0.6s ease, transform 0.6s ease;
-    pointer-events: none;
-    animation: monsterFloat 3s ease-in-out infinite;
   }
 }
 
