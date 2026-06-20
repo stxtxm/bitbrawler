@@ -140,7 +140,7 @@ export function useIdleCombat({
       localChar = xpResult.updatedCharacter
     }
 
-    if (totalXp > 0) {
+    if (totalXp > 0 || fights > 0) {
       setOfflineGains({ fights, xp: totalXp, levels: totalLevels })
     }
   }, [])
@@ -165,7 +165,7 @@ export function useIdleCombat({
         if (!res.ok || cancelled) return
         const data = await res.json()
         if (cancelled) return
-        if (data.levels > 0 || data.xp > 0) {
+        if (data.fights > 0) {
           if (data.updated) {
             const updatedChar: Character = {
               ...character,

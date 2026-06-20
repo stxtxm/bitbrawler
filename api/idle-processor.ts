@@ -202,7 +202,7 @@ const SELECT_COLUMNS = [
   'idle_streak', 'idle_max_streak', 'idle_total_kills', 'idle_total_xp',
 ].join(',')
 
-function simulateIdleGains(char: Character, idleMs: number): Character | null {
+function simulateIdleGains(char: Character, idleMs: number): { updated: Character; fights: number } | null {
   if (idleMs <= 30_000) return null
 
   const effectiveChar = applyEquipmentToCharacter(char)
@@ -212,15 +212,15 @@ function simulateIdleGains(char: Character, idleMs: number): Character | null {
   const eff = computeEfficiency(playerStats, monsterStats, effectiveChar.dexterity)
   const effectiveInterval = eff.effectiveInterval
 
-  const fights = calculateOfflineFightsWithEfficiency(0, idleMs, effectiveInterval)
-  if (fights <= 0) return null
+  const totalFights = calculateOfflineFightsWithEfficiency(0, idleMs, effectiveInterval)
+  if (totalFights <= 0) return null
 
   let current = { ...char }
   let streak = current.idleStreak ?? 0
   let kills = current.idleTotalKills ?? 0
   let idleTotal = current.idleTotalXp ?? 0
 
-  for (let f = 0; f < fights; f++) {
+  for (let f = 0; f < totalFights; f++) {
     const monsterId = getRandomMonsterId()
     const monster = generateMonster(monsterId, current.level)
     const combat = simulateCombat(current, monster)
@@ -250,7 +250,7 @@ function simulateIdleGains(char: Character, idleMs: number): Character | null {
       : updated
   }
 
-  return current
+  return { updated: current, fights: totalFights }
 }
 
 function toSupabaseUpdates(c: Character, now: string): Record<string, any> {
@@ -307,18 +307,19 @@ async function processCharacter(
     return { updated: null, fights: 0, xp: 0, levels: 0 }
   }
 
-  const updatedChar = simulateIdleGains(candidate.char, idleMs)
-  if (!updatedChar) {
+  const result = simulateIdleGains(candidate.char, idleMs)
+  if (!result) {
     await supabase.from('characters').update({ last_idle_check: now }).eq('id', candidate.id)
     return { updated: null, fights: 0, xp: 0, levels: 0 }
   }
 
+  const { updated: updatedChar, fights: simulatedFights } = result
   const levelDiff = updatedChar.level - candidate.char.level
   const xpDiff = (updatedChar.experience ?? 0) - (candidate.char.experience ?? 0)
   const updates = toSupabaseUpdates(updatedChar, now)
   await supabase.from('characters').update(updates).eq('id', candidate.id)
 
-  return { updated: updatedChar, fights: 0, xp: xpDiff, levels: levelDiff }
+  return { updated: updatedChar, fights: simulatedFights, xp: xpDiff, levels: levelDiff }
 }
 
 function readBody(req: IncomingMessage): Promise<any> {
