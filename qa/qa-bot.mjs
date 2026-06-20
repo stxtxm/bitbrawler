@@ -308,7 +308,19 @@ async function syncAutoMode(page, desiredEnabled) {
     return false
   }
 
-  // Check if the switch is disabled (happens when isOfflineMode or autoModeUpdating)
+  // First, get the current state of the switch — check aria-checked before isDisabled
+  // so that if the switch is already in the desired state (but disabled due to
+  // isOfflineMode), we consider it a success without needing to click.
+  const currentValue = await autoSwitch.getAttribute('aria-checked').catch(() => null)
+  const isEnabled = currentValue === 'true'
+
+  // If the switch is already in the desired state, we're done — no click needed
+  if (isEnabled === desiredEnabled) {
+    console.log(`   Auto mode already ${desiredEnabled ? 'ON' : 'OFF'}`)
+    return await closeSettingsWithFallback(page)
+  }
+
+  // We need to toggle — check if the switch is disabled first
   const isDisabled = await autoSwitch.isDisabled().catch(() => true)
   if (isDisabled) {
     console.log('   Auto mode switch is disabled (likely offline mode) — cannot toggle')
@@ -316,40 +328,34 @@ async function syncAutoMode(page, desiredEnabled) {
     return false
   }
 
-  const currentValue = await autoSwitch.getAttribute('aria-checked').catch(() => null)
-  const isEnabled = currentValue === 'true'
-  if (isEnabled !== desiredEnabled) {
-    // Click with retry logic in case of transient issues
-    let clicked = false
-    for (let attempt = 0; attempt < 4; attempt++) {
-      try {
-        if (attempt < 3) {
-          // First 3 attempts: normal click with actionability checks
-          await autoSwitch.click({ timeout: 5000 })
-        } else {
-          // Last resort: force click bypasses overlay interception checks
-          console.log('   Normal click blocked, attempting force click...')
-          await autoSwitch.click({ force: true, timeout: 5000 })
-        }
-        clicked = true
-        break
-      } catch (err) {
-        if (attempt < 3) {
-          console.log(`   Click attempt ${attempt + 1} failed, retrying in 1s...`)
-          await page.waitForTimeout(1000)
-        }
+  // Click with retry logic in case of transient issues
+  let clicked = false
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      if (attempt < 3) {
+        // First 3 attempts: normal click with actionability checks
+        await autoSwitch.click({ timeout: 5000 })
+      } else {
+        // Last resort: force click bypasses overlay interception checks
+        console.log('   Normal click blocked, attempting force click...')
+        await autoSwitch.click({ force: true, timeout: 5000 })
+      }
+      clicked = true
+      break
+    } catch (err) {
+      if (attempt < 3) {
+        console.log(`   Click attempt ${attempt + 1} failed, retrying in 1s...`)
+        await page.waitForTimeout(1000)
       }
     }
-    if (!clicked) {
-      console.log('   Failed to click auto mode switch after 4 attempts (including force)')
-      await closeSettingsWithFallback(page)
-      return false
-    }
-    await page.waitForTimeout(1000)
-    console.log(`   Auto mode changed to ${desiredEnabled ? 'ON' : 'OFF'} ✅`)
-  } else {
-    console.log(`   Auto mode already ${desiredEnabled ? 'ON' : 'OFF'}`)
   }
+  if (!clicked) {
+    console.log('   Failed to click auto mode switch after 4 attempts (including force)')
+    await closeSettingsWithFallback(page)
+    return false
+  }
+  await page.waitForTimeout(1000)
+  console.log(`   Auto mode changed to ${desiredEnabled ? 'ON' : 'OFF'} ✅`)
 
   return await closeSettingsWithFallback(page)
 }

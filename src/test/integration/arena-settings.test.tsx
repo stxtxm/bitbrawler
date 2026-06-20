@@ -8,6 +8,9 @@ import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 import { Character } from '../../types/Character'
 import { renderWithRouter } from '../utils/router'
 
+// Track openModal calls for offline mode tests
+const mockOpenModal = vi.fn()
+
 vi.mock('../../context/GameContext', () => ({
   useGame: vi.fn(),
 }))
@@ -68,9 +71,10 @@ describe('Arena settings modal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockUseOnlineStatus.mockReturnValue(true)
+    mockOpenModal.mockClear()
     mockUseConnectionGate.mockReturnValue({
       ensureConnection: vi.fn().mockResolvedValue(true),
-      openModal: vi.fn(),
+      openModal: mockOpenModal,
       closeModal: vi.fn(),
       connectionModal: { open: false, message: '' },
     })
@@ -269,5 +273,103 @@ describe('Arena settings modal', () => {
     // setAutoMode should NOT have been called by clicking the sound switch
     const { setAutoMode } = mockUseGame.mock.results[0].value
     expect(setAutoMode).not.toHaveBeenCalled()
+  })
+
+  it('disables auto-mode switch in offline mode (dbAvailable false)', () => {
+    mockUseGame.mockReturnValue({
+      activeCharacter: mockCharacter,
+      logout: vi.fn(),
+      useFight: vi.fn(),
+      findOpponent: vi.fn(),
+      lastXpGain: null,
+      lastLevelUp: null,
+      clearXpNotifications: vi.fn(),
+      dbAvailable: false,
+      retryConnection: vi.fn(),
+      allocateStatPoint: vi.fn(),
+      rollLootbox: vi.fn(),
+      startMatchmaking: vi.fn(),
+      setAutoMode: vi.fn().mockResolvedValue(mockCharacter),
+      deleteCharacter: vi.fn().mockResolvedValue(true),
+    })
+
+    const { getByLabelText, getByRole } = renderWithRouter(<Arena />)
+
+    fireEvent.click(getByLabelText('Settings'))
+    const autoSwitch = getByRole('switch', { name: 'Auto mode' })
+    expect(autoSwitch).toBeDisabled()
+  })
+
+  it('disables auto-mode switch in offline mode (useOnlineStatus false)', () => {
+    mockUseOnlineStatus.mockReturnValue(false)
+
+    const { getByLabelText, getByRole } = renderWithRouter(<Arena />)
+
+    fireEvent.click(getByLabelText('Settings'))
+    const autoSwitch = getByRole('switch', { name: 'Auto mode' })
+    expect(autoSwitch).toBeDisabled()
+  })
+
+  it('does not call setAutoMode when clicking disabled auto-mode switch in offline mode', async () => {
+    mockUseGame.mockReturnValue({
+      activeCharacter: mockCharacter,
+      logout: vi.fn(),
+      useFight: vi.fn(),
+      findOpponent: vi.fn(),
+      lastXpGain: null,
+      lastLevelUp: null,
+      clearXpNotifications: vi.fn(),
+      dbAvailable: false,
+      retryConnection: vi.fn(),
+      allocateStatPoint: vi.fn(),
+      rollLootbox: vi.fn(),
+      startMatchmaking: vi.fn(),
+      setAutoMode: vi.fn().mockResolvedValue(mockCharacter),
+      deleteCharacter: vi.fn().mockResolvedValue(true),
+    })
+
+    const { getByLabelText, getByRole } = renderWithRouter(<Arena />)
+
+    fireEvent.click(getByLabelText('Settings'))
+    const autoSwitch = getByRole('switch', { name: 'Auto mode' })
+
+    // Button is disabled, so its onClick handler won't fire
+    expect(autoSwitch).toBeDisabled()
+
+    // Attempt click — disabled buttons don't trigger handlers in React
+    await act(async () => {
+      fireEvent.click(autoSwitch)
+    })
+
+    // setAutoMode should NOT have been called (disabled button prevents it)
+    const { setAutoMode } = mockUseGame.mock.results[0].value
+    expect(setAutoMode).not.toHaveBeenCalled()
+  })
+
+  it('renders auto-mode switch with correct aria-checked even when disabled in offline mode', () => {
+    mockUseGame.mockReturnValue({
+      activeCharacter: { ...mockCharacter, autoMode: true },
+      logout: vi.fn(),
+      useFight: vi.fn(),
+      findOpponent: vi.fn(),
+      lastXpGain: null,
+      lastLevelUp: null,
+      clearXpNotifications: vi.fn(),
+      dbAvailable: false,
+      retryConnection: vi.fn(),
+      allocateStatPoint: vi.fn(),
+      rollLootbox: vi.fn(),
+      startMatchmaking: vi.fn(),
+      setAutoMode: vi.fn().mockResolvedValue(mockCharacter),
+      deleteCharacter: vi.fn().mockResolvedValue(true),
+    })
+
+    const { getByLabelText, getByRole } = renderWithRouter(<Arena />)
+
+    fireEvent.click(getByLabelText('Settings'))
+    const autoSwitch = getByRole('switch', { name: 'Auto mode' })
+    // Switch should show the correct state (true) even though disabled
+    expect(autoSwitch).toHaveAttribute('aria-checked', 'true')
+    expect(autoSwitch).toBeDisabled()
   })
 })
