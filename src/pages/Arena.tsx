@@ -551,21 +551,6 @@ const Arena = () => {
                                         <span className="compact-stat-label">LVL</span>
                                         <span className="compact-stat-value">{activeCharacter.level}</span>
                                     </div>
-                                    <div className="compact-stat">
-                                        <span className="compact-stat-icon">⚔</span>
-                                        <span className="compact-stat-label">TOTAL</span>
-                                        <span className="compact-stat-value">{idle.idleFightsCount}</span>
-                                    </div>
-                                    <div className="compact-stat">
-                                        <span className="compact-stat-icon">🎯</span>
-                                        <span className="compact-stat-label">LAST XP</span>
-                                        <span className="compact-stat-value">{idle.lastCombatXp > 0 ? `+${idle.lastCombatXp}` : '—'}</span>
-                                    </div>
-                                    <div className="compact-stat">
-                                        <span className="compact-stat-icon">👾</span>
-                                        <span className="compact-stat-label">MONSTER</span>
-                                        <span className="compact-stat-value">{idle.currentMonster ?? '—'}</span>
-                                    </div>
                                 </div>
                             </>
                         ) : (
