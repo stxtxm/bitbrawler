@@ -21,8 +21,8 @@ describe('ParticleSystem', () => {
       (el as any).style = {}; 
       return el;
     });
-    mockAppendChild = vi.spyOn(mockContainer, 'appendChild').mockImplementation(() => {} as any);
-    mockRemoveChild = vi.spyOn(mockContainer, 'removeChild').mockImplementation(() => {} as any);
+    mockAppendChild = vi.spyOn(mockContainer, 'appendChild').mockImplementation(() => document.createElement('div'));
+    mockRemoveChild = vi.spyOn(mockContainer, 'removeChild').mockImplementation(() => document.createElement('div'));
 
     // Mock requestAnimationFrame and cancelAnimationFrame
     mockRequestAnimationFrame = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
