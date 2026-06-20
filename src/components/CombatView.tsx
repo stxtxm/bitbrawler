@@ -9,7 +9,7 @@ import { parseCombatDetail, CombatAction, CombatActionType } from '../utils/comb
 import { calculateFightXp } from '../utils/xpUtils';
 import { useSound } from '../hooks/useSound';
 import { MONSTER_ASSETS, MonsterId } from '../data/monsterAssets';
-import { ParticleSystem } from '../utils/particleSystem'; // Import ParticleSystem
+import { ParticleSystem } from '../utils/particleSystem';
 
 function extractDamage(detail: string): number | null {
     const match = detail.match(/(\d+)\s*DMG/);
@@ -48,11 +48,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const [currentRound, setCurrentRound] = useState(0);
     const logRef = useRef<HTMLDivElement | null>(null);
     const [actionPulse, setActionPulse] = useState<CombatAction | null>(null);
-    // Removed damageNumber state as particles will handle it
-    // const [damageNumber, setDamageNumber] = useState<{ value: number; actor: 'player' | 'opponent' } | null>(null);
     const pulseTimeoutRef = useRef<number | null>(null);
-    // Removed damageTimeoutRef as particles handle their own timing
-    // const damageTimeoutRef = useRef<number | null>(null);
     const [scanIndex, setScanIndex] = useState(0);
     const [scanLocked, setScanLocked] = useState(false);
     const [fighterEntrance, setFighterEntrance] = useState(false);
@@ -64,7 +60,6 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
         counter: 440,
     };
 
-    // Particle system refs
     const particleSystemRef = useRef<ParticleSystem | null>(null);
     const mainContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -83,21 +78,17 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
 
     const selectedKey = opponent.id || opponent.name;
 
-    // Initialize ParticleSystem on mount
     useEffect(() => {
         if (mainContainerRef.current) {
             const ps = new ParticleSystem();
             ps.mount(mainContainerRef.current);
             particleSystemRef.current = ps;
         }
-
-        // Cleanup
         return () => {
             particleSystemRef.current?.destroy();
         };
-    }, []); // Run only on mount
+    }, []);
 
-    // Intro → VS
     useEffect(() => {
         if (phase !== 'intro') return;
         const delay = matchType === 'pve' ? 1200 : 2000;
@@ -109,7 +100,6 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
         return () => clearTimeout(introTimer);
     }, [phase, player, opponent, matchType]);
 
-    // VS → Combat (with fighter entrance)
     useEffect(() => {
         if (phase !== 'vs') return;
         play('vs');
@@ -122,7 +112,6 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
         return () => clearTimeout(vsTimer);
     }, [phase, play]);
 
-    // Scanning animation
     useEffect(() => {
         if (phase !== 'intro') return;
         if (scanList.length <= 1) {
@@ -158,7 +147,6 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
         };
     }, [phase, scanList, selectedKey]);
 
-    // Combat round playback and particle emission
     useEffect(() => {
         if (phase === 'combat' && combatResult) {
             let roundIndex = 0;
@@ -169,9 +157,9 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                     const action = parseCombatDetail(detail, player.name, opponent.name);
                     
                     const ps = particleSystemRef.current;
-                    const playerX = 30; // Relative X for player in combat view
-                    const opponentX = 70; // Relative X for opponent in combat view
-                    const centerY = 55; // Relative Y for center of combat view
+                    const playerX = 30;
+                    const opponentX = 70;
+                    const centerY = 55;
 
                     if (action) {
                         setActionPulse(action);
@@ -184,23 +172,21 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                             pulseTimeoutRef.current = null;
                         }, duration);
 
-                        // Emit particles based on action type and damage
                         const dmg = extractDamage(detail);
                         if (dmg !== null) {
-                            if (action.actor === 'player') { // Player hit opponent
+                            if (action.actor === 'player') {
                                 if (action.type === 'crit') ps?.emit('crit', opponentX, centerY, 1); 
                                 else if (action.type === 'miss') ps?.emit('miss', opponentX, centerY, 1);
                                 else ps?.emit('damage', opponentX, centerY, 1, dmg);
-                            } else { // Opponent hit player
+                            } else {
                                 if (action.type === 'crit') ps?.emit('crit', playerX, centerY, 1); 
                                 else if (action.type === 'miss') ps?.emit('miss', playerX, centerY, 1);
                                 else ps?.emit('damage', playerX, centerY, 1, dmg);
                             }
-                        } else if (action.type === 'miss') { // Handle miss if no damage value but action is miss
+                        } else if (action.type === 'miss') {
                              if (action.actor === 'player') ps?.emit('miss', opponentX, centerY, 1);
                              else ps?.emit('miss', playerX, centerY, 1);
                         }
-                        // Add logic for 'heal' if it becomes relevant in combat view
                     }
                     roundIndex++;
                 } else {
@@ -213,9 +199,8 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
 
             return () => clearInterval(roundInterval);
         }
-    }, [phase, combatResult, player.name, opponent.name, player, opponent, actionDurations, particleSystemRef.current]); // Added dependencies
+    }, [phase, combatResult, player.name, opponent.name, player, opponent, actionDurations, particleSystemRef.current]);
 
-    // Play sound on each action pulse
     useEffect(() => {
         if (actionPulse) {
             play(actionPulse.type);
@@ -227,18 +212,15 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
             if (pulseTimeoutRef.current !== null) {
                 window.clearTimeout(pulseTimeoutRef.current);
             }
-            // Removed damageTimeoutRef cleanup as it's no longer used
         };
     }, []);
 
     useEffect(() => {
         if (phase !== 'combat') {
             setActionPulse(null);
-            // Removed setDamageNumber(null);
         }
     }, [phase]);
 
-    // Victory / defeat sound
     useEffect(() => {
         if (phase === 'result' && combatResult) {
             play(combatResult.winner === 'attacker' ? 'victory' : 'defeat');
@@ -296,7 +278,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     return (
         <div className="combat-overlay" onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()} ref={mainContainerRef}>
             <div className="combat-modal">
-                {/* Intro Phase */}
+                {/* ... (existing JSX for intro/vs/combat) ... */}
                 {phase === 'intro' && (matchType === 'pve' ? (
                     <div className="combat-intro pve-intro">
                         <div className="match-type-badge">{getMatchDifficultyLabel(matchType)}</div>
@@ -330,8 +312,6 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                         </div>
                     </div>
                 ))}
-
-                {/* VS Splash Phase */}
                 {phase === 'vs' && (
                     <div className="combat-vs">
                         <div className="vs-fighter vs-left">
@@ -361,46 +341,20 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                         </div>
                     </div>
                 )}
-
-                {/* Combat Phase */}
                 {phase === 'combat' && combatResult && (
                     <div className={`combat-action${actionPulse ? ` action-${actionPulse.type}` : ''}`}>
-                        {/* Removed old damageNumber display */}
                         <div className="combat-fighters">
-                            <div
-                                key={`player-${currentRound}`}
-                                className={`fighter-side left${fighterEntrance ? ' enter-left' : ''}${
-                                    actionPulse?.actor === 'player'
-                                        ? ` action-${actionPulse.type}`
-                                        : reactionType && actionPulse?.actor === 'opponent'
-                                            ? ` react-${reactionType}`
-                                            : ''
-                                }`}
-                            >
+                            <div key={`player-${currentRound}`} className={`fighter-side left${fighterEntrance ? ' enter-left' : ''}${actionPulse?.actor === 'player' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'opponent' ? ` react-${reactionType}` : ''}`}>
                                 <div className="fighter-character-wrap">
                                     <PixelCharacter seed={player.seed} gender={player.gender} scale={6} />
                                 </div>
                                 <div className="fighter-name-small">{player.name}</div>
                                 <div className="fighter-health">
-                                    <div className="health-bar">
-                                        <div
-                                            className={`health-bar-fill ${playerHpPercent <= 25 ? 'low' : ''}`}
-                                            style={{ width: `${playerHpPercent}%` }}
-                                        />
-                                    </div>
+                                    <div className="health-bar"><div className={`health-bar-fill ${playerHpPercent <= 25 ? 'low' : ''}`} style={{ width: `${playerHpPercent}%` }}/></div>
                                     <div className="health-values">{playerHp} / {playerMaxHp}</div>
                                 </div>
                             </div>
-                            <div
-                                key={`opponent-${currentRound}`}
-                                className={`fighter-side right${fighterEntrance ? ' enter-right' : ''}${
-                                    actionPulse?.actor === 'opponent'
-                                        ? ` action-${actionPulse.type}`
-                                        : reactionType && actionPulse?.actor === 'player'
-                                            ? ` react-${reactionType}`
-                                            : ''
-                                }`}
-                            >
+                            <div key={`opponent-${currentRound}`} className={`fighter-side right${fighterEntrance ? ' enter-right' : ''}${actionPulse?.actor === 'opponent' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'player' ? ` react-${reactionType}` : ''}`}>
                                 <div className="fighter-character-wrap">
                                     {matchType === 'pve' && monsterId ? (
                                         <PixelMonster monsterId={monsterId} scale={5} />
@@ -410,71 +364,26 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                 </div>
                                 <div className="fighter-name-small">{opponent.name}</div>
                                 <div className="fighter-health">
-                                    <div className="health-bar">
-                                        <div
-                                            className={`health-bar-fill ${opponentHpPercent <= 25 ? 'low' : ''}`}
-                                            style={{ width: `${opponentHpPercent}%` }}
-                                        />
-                                    </div>
+                                    <div className="health-bar"><div className={`health-bar-fill ${opponentHpPercent <= 25 ? 'low' : ''}`} style={{ width: `${opponentHpPercent}%` }}/></div>
                                     <div className="health-values">{opponentHp} / {opponentMaxHp}</div>
                                 </div>
                             </div>
                         </div>
                         <div className="combat-log" ref={logRef}>
                             {combatResult.details.slice(0, currentRound + 1).map((detail, idx) => (
-                                <div
-                                    key={idx}
-                                    className={`log-entry ${idx === currentRound ? `active action-${extractActionColor(detail)}` : ''}`}
-                                >
+                                <div key={idx} className={`log-entry ${idx === currentRound ? `active action-${extractActionColor(detail)}` : ''}`}>
                                     {detail}
                                 </div>
                             ))}
                         </div>
                     </div>
                 )}
-
-                {/* Result Phase */}
                 {phase === 'result' && combatResult && (
                     <div className={`combat-result${won ? ' victory' : draw ? ' draw' : ' defeat'}`}>
-                        {won && (
-                            <>
-                                <div className="result-badge victory">VICTORY!</div>
-                                <div className="result-icon pixel victory">
-                                    <PixelIcon type="trophy" size={80} />
-                                </div>
-                                <div className="result-message">
-                                    <div className="result-xp victory">+{xpGained} XP</div>
-                                    <div className="result-sub">Victory over {opponent.name}</div>
-                                </div>
-                            </>
-                        )}
-                        {!won && !draw && (
-                            <>
-                                <div className="result-badge defeat">DEFEAT</div>
-                                <div className="result-icon pixel defeat">
-                                    <PixelIcon type="skull" size={72} />
-                                </div>
-                                <div className="result-message">
-                                    <div className="result-xp defeat">+{xpGained} XP</div>
-                                    <div className="result-sub">Defeated by {opponent.name}</div>
-                                </div>
-                            </>
-                        )}
-                        {draw && (
-                            <>
-                                <div className="result-badge draw">DRAW</div>
-                                <div className="result-icon pixel draw">
-                                    <PixelIcon type="swords" size={72} />
-                                </div>
-                                <div className="result-message">
-                                    <div className="result-xp draw">+{xpGained} XP</div>
-                                    <div className="result-sub">Stalemate vs {opponent.name}</div>
-                                </div>
-                            </>
-                        )}
-                        <button className="button primary-btn result-btn" onClick={handleFinish}>
-                            CONTINUE
-                        </button>
+                        {won && <><div className="result-badge victory">VICTORY!</div><div className="result-icon pixel victory"><PixelIcon type="trophy" size={80}/></div><div className="result-message"><div className="result-xp victory">+{xpGained} XP</div><div className="result-sub">Victory over {opponent.name}</div></div></>}
+                        {!won && !draw && <><div className="result-badge defeat">DEFEAT</div><div className="result-icon pixel defeat"><PixelIcon type="skull" size={72}/></div><div className="result-message"><div className="result-xp defeat">+{xpGained} XP</div><div className="result-sub">Defeated by {opponent.name}</div></div></>}
+                        {draw && <><div className="result-badge draw">DRAW</div><div className="result-icon pixel draw"><PixelIcon type="swords" size={72}/></div><div className="result-message"><div className="result-xp draw">+{xpGained} XP</div><div className="result-sub">Stalemate vs {opponent.name}</div></div></>}
+                        <button className="button primary-btn result-btn" onClick={handleFinish}>CONTINUE</button>
                     </div>
                 )}
             </div>

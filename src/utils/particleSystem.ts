@@ -35,7 +35,6 @@ export class ParticleSystem {
     this.container = null;
   }
 
-  // Added 'value' parameter for damage/heal numbers
   emit(type: ParticleType, x: number, y: number, count = 1, value?: number) {
     if (!this.container) return;
 
@@ -43,7 +42,6 @@ export class ParticleSystem {
     if (actualCount <= 0) return;
 
     for (let i = 0; i < actualCount; i++) {
-      // Pass text/value to createParticle if available
       const partialData = { text: (type === 'damage' || type === 'heal') && value !== undefined ? String(value) : undefined };
       const partial = this.createParticle(type, x, y, i, actualCount, partialData);
       if (!partial) continue;
@@ -57,17 +55,17 @@ export class ParticleSystem {
 
       if (partial.text) {
         el.textContent = partial.text;
-        el.style.fontSize = `${partial.size * 3}px`; // Make text particles larger
+        el.style.fontSize = `${partial.size * 3}px`;
         el.style.color = partial.color;
         el.style.fontFamily = "'Press Start 2P',monospace";
         el.style.whiteSpace = 'nowrap';
-        el.style.zIndex = '20'; // Ensure text is above shapes
+        el.style.zIndex = '20';
       } else {
         el.style.width = `${partial.size}px`;
         el.style.height = `${partial.size}px`;
         el.style.background = partial.color;
-        el.style.borderRadius = partial.size > 2 ? '1px' : '0'; // Slightly rounded for larger particles
-        el.style.zIndex = '15'; // Shapes are behind text
+        el.style.borderRadius = partial.size > 2 ? '1px' : '0';
+        el.style.zIndex = '15';
       }
 
       this.container.appendChild(el);
@@ -81,7 +79,6 @@ export class ParticleSystem {
     }
   }
 
-  // Updated signature to accept partialData
   private createParticle(type: ParticleType, x: number, y: number, index: number, total: number, partialData?: { text?: string }): Omit<ParticleDef, 'el'> | null {
     const colors: Record<ParticleType, string[]> = {
       dust: ['#8B7355', '#A0896C', '#6B5840'],
@@ -89,9 +86,9 @@ export class ParticleSystem {
       xp_star: ['#FFD700', '#FFC107'],
       damage: ['#FF3333', '#FF5555'],
       hit_ring: ['#FFFFFF', '#FFD700', '#FF6B6B'],
-      crit: ['#FFEC8B', '#FFD700', '#FFEC8B'], // Golden yellow for critical hits
-      miss: ['#CCCCCC', '#EEEEEE', '#FFFFFF'], // Light gray/white for misses
-      heal: ['#AFFFAC', '#90EE90', '#7FFF7F'], // Light green for healing
+      crit: ['#FFEC8B', '#FFD700', '#FFEC8B'],
+      miss: ['#CCCCCC', '#EEEEEE', '#FFFFFF'],
+      heal: ['#AFFFAC', '#90EE90', '#7FFF7F'],
     };
 
     switch (type) {
@@ -122,7 +119,7 @@ export class ParticleSystem {
           color: colors.xp_star[0],
           text: '+XP',
         };
-      case 'damage': // Use text from partialData
+      case 'damage':
         return {
           x, y,
           vx: (Math.random() - 0.5) * 0.5,
@@ -141,36 +138,36 @@ export class ParticleSystem {
           color: colors.hit_ring[Math.floor(Math.random() * colors.hit_ring.length)],
         };
       }
-      case 'crit': { // Critical hit particle
+      case 'crit': {
         return {
           x: x + (Math.random() - 0.5) * 6,
           y: y + (Math.random() - 0.5) * 6,
-          vx: (Math.random() - 0.5) * 2, // Slower horizontal spread
-          vy: -2, // Faster upward movement
+          vx: (Math.random() - 0.5) * 2,
+          vy: -2,
           life: 800, maxLife: 800, size: 4,
           color: colors.crit[Math.floor(Math.random() * colors.crit.length)],
           text: 'CRIT!',
         };
       }
-      case 'miss': { // Miss particle
+      case 'miss': {
         return {
           x: x + (Math.random() - 0.5) * 10,
-          y: y - 10 + (Math.random() - 0.5) * 5, // Start slightly higher
+          y: y - 10 + (Math.random() - 0.5) * 5,
           vx: (Math.random() - 0.5) * 0.5,
-          vy: -1.2, // Slow upward drift
+          vy: -1.2,
           life: 1200, maxLife: 1200, size: 3,
           color: colors.miss[Math.floor(Math.random() * colors.miss.length)],
           text: 'MISS',
         };
       }
-      case 'heal': { // Healing particle
+      case 'heal': {
         return {
           x, y,
           vx: (Math.random() - 0.5) * 0.5,
-          vy: -1.5, // Slight upward movement
+          vy: -1.5,
           life: 1200, maxLife: 1200, size: 4,
           color: colors.heal[0],
-          text: String(partialData?.text ?? ''), // Use partialData to pass HP value
+          text: String(partialData?.text ?? ''),
         };
       }
     }
