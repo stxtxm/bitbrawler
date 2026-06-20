@@ -14105,5 +14105,74 @@
       "home": 1819,
       "arena": 2470
     }
+  },
+  {
+    "date": "2026-06-20T13:01:28.535Z",
+    "run": "2026-06-20",
+    "character": "SHARDEXILE",
+    "character_action": "created-after-missing-fight-cta",
+    "replaced_character": "SANDRIDGE",
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": {
+      "str": 20,
+      "vit": 9,
+      "dex": 7,
+      "luk": 12,
+      "int": 8,
+      "foc": 10,
+      "fights": 0
+    },
+    "initial_level": 6,
+    "initial_xp": {
+      "current": 1462,
+      "max": 1758
+    },
+    "initial_max_hp": 232,
+    "initial_equipment": [],
+    "initial_streak": 5,
+    "final_stats": {
+      "level": 2,
+      "xp": 12,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 12,
+      "vit": 11,
+      "dex": 7,
+      "luk": 21,
+      "int": 7,
+      "foc": 8,
+      "last xp": 35,
+      "fights": 4
+    },
+    "final_max_hp": 200,
+    "final_equipment": [],
+    "final_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": []
+    },
+    "level_up_events": [],
+    "idle_stats": {
+      "streak": 1,
+      "xpPerMinute": 188,
+      "slain": 1,
+      "badgePoints": 2,
+      "streakIndicatorActive": false,
+      "streakIndicatorText": null
+    },
+    "errors": [
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('button[aria-label=\"Inventory\"], button[title=\"Inventory\"]').first()\n    - locator resolved to <button title=\"Inventory\" aria-label=\"Inventory\" class=\"button icon-btn inventory-btn\">…</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"level-up-card\">…</div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"level-up-card\">…</div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    56 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div class=\"level-up-card\">…</div> from <div class=\"level-up-pop-overlay\">…</div> subtree intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n"
+    ],
+    "load_times_ms": {
+      "home": 1191,
+      "arena": 2433
+    }
   }
 ]
