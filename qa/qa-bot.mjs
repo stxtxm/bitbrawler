@@ -676,6 +676,45 @@ async function parseStreak(page) {
 }
 
 /**
+ * Parse idle efficiency display data from the PvE area.
+ */
+async function parseIdleStats(page) {
+  try {
+    const streakEl = page.locator('.pve-extra-item.streak').first()
+    const xpMinEl = page.locator('.pve-extra-item.xp-min').first()
+    const slainEl = page.locator('.pve-extra-item').first()
+    const badgeEl = page.locator('.stat-points-badge').first()
+    const streakIndicator = page.locator('.idle-streak-indicator').first()
+
+    const streaText = await streakEl.textContent().catch(() => '') || ''
+    const xpMinText = await xpMinEl.textContent().catch(() => '') || ''
+    const slainText = await slainEl.textContent().catch(() => '') || ''
+    const badgeText = await badgeEl.textContent().catch(() => '') || ''
+    const hasStreakIndicator = await streakIndicator.isVisible({ timeout: 500 }).catch(() => false)
+    const indicatorText = hasStreakIndicator
+      ? ((await streakIndicator.textContent().catch(() => '')) || '').trim()
+      : ''
+
+    const streakMatch = streaText.match(/(\d+)/)
+    const xpMinMatch = xpMinText.match(/([\d.]+)\s*XP/)
+    const slainMatch = slainText.match(/(\d+)/)
+    const badgeMatch = badgeText.match(/\+(\d+)/)
+
+    return {
+      streak: streakMatch ? parseInt(streakMatch[1]) : null,
+      xpPerMinute: xpMinMatch ? parseFloat(xpMinMatch[1]) : null,
+      slain: slainMatch ? parseInt(slainMatch[1]) : null,
+      badgePoints: badgeMatch ? parseInt(badgeMatch[1]) : null,
+      streakIndicatorActive: hasStreakIndicator,
+      streakIndicatorText: indicatorText || null,
+    }
+  } catch (err) {
+    console.log(`   ⚠️ Could not parse idle stats: ${err.message}`)
+    return null
+  }
+}
+
+/**
  * Simulate a short human-like delay between actions (300-800ms).
  */
 async function humanDelay(page) {
@@ -973,6 +1012,7 @@ async function run() {
       monsters_faced: [],
     },
     level_up_events: [],
+    idle_stats: null,
     errors: [],
     load_times_ms: {},
   }
@@ -1019,6 +1059,12 @@ async function run() {
 
     // Ensure no overlay is blocking the arena stats before reading
     await handleLevelUpOverlay(page)
+
+    // Collect idle efficiency stats (streak, XP/min, kills, badge)
+    runRecord.idle_stats = await parseIdleStats(page)
+    if (runRecord.idle_stats) {
+      console.log(`   Idle stats: streak=${runRecord.idle_stats.streak}, XP/min=${runRecord.idle_stats.xpPerMinute}, slain=${runRecord.idle_stats.slain}, badge=${runRecord.idle_stats.badgePoints}, streakIndicator=${runRecord.idle_stats.streakIndicatorActive}`)
+    }
 
     // Debug screenshot right before stats reading to diagnose W/L capture issues
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-04-stats-debug.png`) })
