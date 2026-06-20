@@ -81,7 +81,7 @@ See [AGENTS.md](AGENTS.md) for autonomous agent workflows and responsibilities.
 | -------------- | ----------------------------------------------- |
 | Frontend       | React 18 + TypeScript + Vite                    |
 | Backend / Auth | Supabase (PostgreSQL, real-time, auth)          |
-| Testing        | Vitest + React Testing Library + jsdom — **469+ tests, 55 files**          |
+| Testing        | Vitest + React Testing Library + jsdom — **470+ tests, 55 files**          |
 | Styling        | Sass (SCSS)                                     |
 | Fonts          | Press Start 2P (via Fontsource)                 |
 | Scripting      | tsx (TypeScript executor)                       |

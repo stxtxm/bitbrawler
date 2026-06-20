@@ -44,12 +44,37 @@ Bitbrawler is a **full-stack web application** with the following layers:
 | **Frontend Framework** | React 18 | UI rendering, state management |
 | **Type Safety** | TypeScript 5 | Compile-time type checking |
 | **Styling** | Sass (SCSS) | Component styling with nesting |
-| **Testing** | Vitest + RTL | Unit & integration tests (459+ tests) |
+| **Testing** | Vitest + RTL | Unit & integration tests (531+ tests) |
 | **Database** | Supabase (PostgreSQL) | Relational data, real-time subscriptions |
 | **Authentication** | Supabase Auth | Email/password auth with JWT |
 | **CI/CD** | GitHub Actions | Automated testing, building, deployment |
-| **Hosting** | Vercel | CDN, serverless deployment, preview PRs |
+| **Hosting** | Vercel | CDN, serverless deployment (app + API), preview PRs |
 | **Autonomous Dev** | OpenCode Agents | AI-powered development automation |
+
+### Architecture Layers
+
+```
+┌──────────────────────────────────────────┐
+│         Frontend (React + TypeScript)     │
+│   Vite build → Vercel CDN               │
+│   (Components, Pages, Game Logic)       │
+└──────────────┬───────────────────────────┘
+               │
+         ┌─────▼────────────┐
+         │  Vercel API      │
+         │  api/*.ts        │
+         │  (idle-processor)│
+         └─────┬────────────┘
+               │
+         ┌─────▼────────────┐
+         │  Supabase SDK    │
+         └─────┬────────────┘
+               │
+┌──────────────▼───────────────────────────┐
+│   Supabase Backend (PostgreSQL + Auth)   │
+│   (Database, Real-time, Auth, Storage)   │
+└──────────────────────────────────────────┘
+```
 
 ---
 
@@ -156,6 +181,23 @@ src/
 - Storage (for CDN, file uploads if needed)
 
 ### Scripts & Utilities
+
+#### `api/idle-processor.ts`
+- **Purpose**: Server-side idle combat processing (self-contained Vercel serverless function)
+- **Trigger**: 
+  - On-demand: client POSTs `{ character_id }` on reconnect
+  - Cron: 1-minute cron from cron-job.org (no character_id → processes all stale characters)
+- **Function**: Simulates offline combat, applies XP/levels, updates `last_idle_check` watermark
+- **Output**: Returns `{ fights, xp, levels, updated }` JSON
+- **Why self-contained**: Vercel only compiles `api/` to JS; all utilities (monsters, combat, XP, efficiency) are inlined
+- **XP curve**: `Math.floor(100 * Math.pow(level, 1.6))` — must match `src/utils/xpUtils.ts`
+- **Cron URL**: `https://bitbrawler.vercel.app/api/idle-processor`
+- **Env required**: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+
+#### `scripts/idle-processor.ts`
+- **Purpose**: Local testing version of the idle processor
+- **Trigger**: `npx tsx scripts/idle-processor.ts`
+- **Difference**: Imports utilities from `src/` (not self-contained)
 
 #### `scripts/bot-engine.ts`
 - **Purpose**: Simulate bot activity (fights, leveling, progression)
@@ -302,9 +344,61 @@ max_hp = 20 + (VIT * 2) + random(5-15)
 
 #### XP & Leveling
 
-- **XP per fight**: 25-75 (depends on opponent level)
-- **Level up threshold**: `base_xp * (level ^ 1.5)`
-- **Level up reward**: +1 random stat (1-3 points), heal 25% HP
+- **XP curve**: `100 × level^1.6` (power curve) — defined in `src/utils/xpUtils.ts`
+- **XP per fight**: 25-75 base (depends on opponent level), scales +8% per player level
+- **Level up reward**: +1 stat point, HP recalculated from vitality formula
+- **getXpProgress**: computes current XpInLevel, xpForNextLevel, percentage for display
+- **gainXp**: applies XP and levels up without adding stat points (caller adds them)
+
+### 3. Idle Combat System (PvE)
+
+**Architecture**: Two-tier processing — on-demand + cron fallback
+
+```
+Player returns after idle
+       │
+       ▼
+┌──────────────────┐
+│ Client detects   │
+│ idle > 30s       │
+│ lastActive check │
+└────┬─────────────┘
+     │
+     ├─▶ 1) Preview locally (immediate)
+     │     calculateOfflinePreview() → {fights, xp, levels}
+     │     Shows popup instantly (no server latency)
+     │
+     └─▶ 2) POST /api/idle-processor (async)
+           Body: { character_id }
+           Server applies gains + updates watermarks
+           Returns updated character data
+           Client updates popup with real numbers
+     
+If client POST fails → cron-job.org triggers every 1 min:
+     GET /api/idle-processor (no character_id)
+     → Process all stale characters (last_idle_check > 60s ago)
+     → Catches bots, network failures, lost connections
+```
+
+#### Watermark System (two separate timestamps)
+
+| Watermark | Updated by | Purpose |
+|-----------|-----------|---------|
+| `lastActive` | Client only (visibility change) | Tracks when player was last active |
+| `last_idle_check` | Client ticks + server idle-processor | Tracks last processed idle time |
+
+- On **visibilitychange → hidden**: client advances both watermarks via `onSyncCharacter`
+- On **unmount**: client advances ONLY `lastIdleCheck` (not `lastActive`) — preserves idle time for character switching
+- Server idle-processor advances `last_idle_check` after processing
+
+#### Efficiency & XP/min
+
+- **calculateCombatStats** includes equipment bonuses via `applyEquipmentToCharacter`
+- **computeEfficiency** uses power ratio (player/monster) + dexterity bonus
+- **effectiveInterval**: `BASE_INTERVAL (10s) / efficiency`, clamped to `[4.5s, 10s]`
+- **XP/min**: always visible in stats panel, recalculates on any character change
+- **Next-level ETA**: `remaining_XP / XP_per_minute` displayed as `⬆ Xm Ys`
+- **Efficiency breakdown**: shows `⚡ X.xx` (multiplier) and `🎯 X.xx` (power ratio)
 
 ### 3. Matchmaking
 

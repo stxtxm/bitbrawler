@@ -402,6 +402,72 @@ Type: Proposition majeure (requires architecture changes)
 
 ---
 
+## Idle Processor (Vercel Serverless)
+
+**Not a GitHub Actions workflow** — runs as a Vercel serverless function for low-latency idle combat processing.
+
+### File: `api/idle-processor.ts`
+
+**Purpose**: Process offline/idle combat gains when player is away
+
+**Architecture**: Two-tier system — on-demand + cron fallback
+
+#### On-Demand (Primary)
+
+- **Trigger**: Client detects idle > 30s on mount
+- **Flow**:
+  1. Client immediately shows local preview via `calculateOfflinePreview` (no latency)
+  2. Client fires `POST /api/idle-processor` with `{ character_id }`
+  3. Server simulates fights, applies XP/levels, updates `last_idle_check` watermark
+  4. Server returns `{ fights, xp, levels, updated }`
+  5. Client updates popup with real numbers
+- **Cold start**: < 1s (vs 30s for GitHub Actions)
+
+#### Cron Fallback
+
+- **URL**: `https://bitbrawler.vercel.app/api/idle-processor`
+- **Frequency**: Every 1 minute (configured on cron-job.org)
+- **Behavior**: When no `character_id` provided, processes ALL stale characters (`last_idle_check > 60s ago`)
+- **Purpose**: Catches bots, network failures, lost browser sessions
+
+### Self-Contained Design
+
+Vercel only compiles files in `api/` to JavaScript. The idle processor **inlines** all utilities:
+- Monster generation (matching `src/utils/monsterUtils.ts`)
+- Combat simulation (matching `src/utils/combatUtils.ts`)
+- XP calculation with power curve (`100 × level^1.6`)
+- Efficiency computation (role-specific guard bonuses)
+
+### Watermark System
+
+| Watermark | Updated by | Purpose |
+|-----------|-----------|---------|
+| `lastActive` | Client (visibility change only) | Tracks last player activity |
+| `last_idle_check` | Client + server idle-processor | Tracks last processed idle time |
+
+### Required Environment Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Admin key for direct DB access |
+
+Set these in Vercel dashboard (Project Settings → Environment Variables).
+
+### Testing
+
+```bash
+# Test on-demand (replaces X with a real character_id)
+curl -X POST https://bitbrawler.vercel.app/api/idle-processor \
+  -H "Content-Type: application/json" \
+  -d '{"character_id": "X"}'
+
+# Test cron mode
+curl -X POST https://bitbrawler.vercel.app/api/idle-processor
+```
+
+---
+
 ## How to Trigger Workflows
 
 ### Trigger OpenCode (Dev Agent)

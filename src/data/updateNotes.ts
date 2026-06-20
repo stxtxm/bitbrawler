@@ -8,6 +8,24 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '3.2.0',
+    date: '2026-06-20',
+    title: 'Idle processing overhaul — Vercel serverless, XP curve fix, stat points fix',
+    changes: [
+      'Idle processing moved from GitHub Actions to Vercel serverless function (api/idle-processor.ts) — cold start < 1s instead of 30s.',
+      'On-demand idle processing: client POSTs to /api/idle-processor?character_id=XX on reconnect for instant gains (no more cron wait).',
+      '1-minute cron fallback via cron-job.org (/api/idle-processor without character_id) to catch bots and network failures.',
+      'XP curve corrected: server now uses 100 × level^1.6 (power curve) matching the client — no more XP bar stuck at 0 after reconnect.',
+      'Stat points double-counting fixed: gainXp no longer adds stat points (only the caller does, once per level).',
+      'XP/min now always visible in the stats panel with next-level ETA (⬆ Xm Ys), efficiency multiplier (⚡ X.xx), and power ratio (🎯 X.xx).',
+      'Efficiency recalculates on any character change (level, stats, equipment) — XP/min reflects upgrades instantly.',
+      'Logout bug fixed: unmount no longer syncs watermarks (which re-activated the character via setCharacter).',
+      'Visibility handler improved: only syncs to server in background (no local state updates to avoid offline mode).',
+      'Unmount preserves lastActive: switching characters no longer loses idle time.',
+      '531 tests passing, build clean (tsc + vite).',
+    ],
+  },
+  {
     version: '3.1.0',
     date: '2026-06-18',
     title: 'Stat caps removed — limitless character progression',

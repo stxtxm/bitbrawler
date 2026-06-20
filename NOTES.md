@@ -2,15 +2,41 @@ Project Notes (Latest)
 
 Overview
 - Bitbrawler is a retro 8-bit arena brawler with Supabase (PostgreSQL) as the source of truth.
-- Core loop: create a character, fight in the arena, earn XP, level up, climb rankings.
+- Core loop: create a character, fight in the arena (PvP or PvE idle), earn XP, level up, climb rankings.
 
 Data model (Character)
 - Core fields: `level`, `experience`, stats (STR/VIT/DEX/LUK/INT/FOC), `hp`, `maxHp`, `wins`, `losses`.
-- Daily fields: `fightsLeft`, `lastFightReset`, `fightHistory` (cap 20), `foughtToday` (character IDs).
+- Daily fields: `fightsLeft` (PvP), `pveFightsLeft`, `lastFightReset`, `fightHistory` (cap 20), `foughtToday`.
 - Progression fields: `statPoints` for level-up allocation, `focus` is an active stat, not derived.
-- Inventory fields: `inventory` (item IDs), `equippedItems` (weapon/armor/accessory slots), `lastLootRoll` (timestamp ms).
+- Inventory fields: `inventory` (item IDs), `equippedItems` (weapon/armor/accessory slots), `lastLootRoll`.
 - Anti-cheat: `pendingFight` holds `status`, `startedAt`, optional `opponent` snapshot, and `matchType`.
-- `pendingFight.opponent.isBot` is only stored when it is a boolean.
+- Idle fields: `lastActive` (player visible activity), `last_idle_check` (last processed idle), `idleStreak`, `idleTotalKills`, `idleTotalXp`.
+
+PvE Idle Combat
+- Toggle switch in Arena (👹 PVE / ⚔ PVP). PvE mode enables the idle runner.
+- 5 PvE fights/day (separate from 5 PvP).
+- Monsters: Goblin (wind), Ogre (earth), Wraith (dark) — scale to player level.
+- Idle processing: **Vercel serverless** (`api/idle-processor.ts`), NOT GitHub Actions.
+  - On-demand: client POSTs on reconnect for instant gains.
+  - Cron fallback: cron-job.org every 1 minute processes stale characters.
+  - Self-contained: inlines all combat/XP/monster utilities (Vercel doesn't compile src/).
+- Two watermarks: `lastActive` (client, visibility change) + `last_idle_check` (client + server).
+- Unmount preserves `lastActive` (doesn't advance it) so character switching keeps idle time.
+- XP/min always visible with next-level ETA, efficiency multiplier, power ratio.
+- Efficiency recalculates on any character change (level, stats, equipment).
+
+Idle Efficiency Formula
+- powerRatio = playerTotalPower / monsterTotalPower (clamped 0.5–2.5)
+- efficiency = 1 + max(dex-10, 0) × 0.02 + max(powerRatio-1, 0) × 0.4
+- effectiveInterval = BASE_INTERVAL(10s) / efficiency (clamped 4.5–10s)
+- XP bonus = 1 + (efficiency - 1) × 0.3
+- Streak bonus: +1% per consecutive win, capped at 25%
+
+XP & Leveling
+- XP curve: `100 × level^1.6` (power curve, defined in `src/utils/xpUtils.ts`)
+- Must match in `api/idle-processor.ts` (self-contained copy)
+- gainXp does NOT add stat points — caller does it once per level
+- getXpProgress: currentXpInLevel, xpForNextLevel, percentage
 
 Matchmaking + anti-cheat
 - Strict same-level matchmaking in `src/utils/matchmakingUtils.ts`.
@@ -74,20 +100,25 @@ UI tuning
 - Arena settings modal owns Auto mode toggle, combat logs, and safe delete actions.
 - Rankings list is read-only, stats hidden, with internal scroll.
 - Home page includes a PATCH NOTES button that opens update notes in a modal.
-- Global Footer (`src/components/Footer.tsx`) visible on all pages: copyright, GitHub link, credits, app version. Styled with 8-bit pixel theme (divider, gold accents). Pushed to bottom via `.app-content` flex wrapper in `_layout.scss`.
+- Global Footer (`src/components/Footer.tsx`) visible on all pages: copyright, GitHub link, credits, app version.
+- XP/min efficiency panel always visible (PvE + PvP): shows XP/min, next-level ETA, efficiency x, power ratio.
 
 Testing
 - Unit: combat math, lootbox gating, equipment bonuses & loadout, affinity, XP, stats, RNG, matchmaking, supabase utils, item assets.
-- Unit: lazy route prefetch gating (`canPrefetch`, `prefetchArena`) and end-of-day drain window checks.
-- Integration: matchmaking, pending fights, lootbox persistence, arena inventory/loadout/equip, offline routing, Supabase failover, and settings combat log privacy rendering.
+- Unit: lazy route prefetch gating, end-of-day drain window, idle efficiency, next-level time.
+- Integration: matchmaking, pending fights, lootbox persistence, arena inventory/loadout/equip, offline routing, Supabase failover, arena PvE, idle efficiency display.
 - Router warnings are prevented with shared `renderWithRouter` helper (`src/test/utils/router.tsx`).
-- **459 tests — 54 test files** (`npm test`).
+- **531 tests — 60 test files** (`npm test`).
 
-Infrastructure (v1.0.0)
+Infrastructure (v1.0.0 → v3.2.0)
 - Database migrated from Firebase Firestore to Supabase (PostgreSQL).
 - Scripts (`scripts/bot-engine.ts`, `scripts/daily-reset-engine.ts`) use `@supabase/supabase-js` via `scripts/supabaseAdmin.ts`.
-- GitHub Actions: daily reset scheduled for Paris midnight with a double cron (CET/CEST) and a script-side midnight window guard; bot engine runs every 2 hours (UTC top of even hour).
-- GitHub Actions secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (no longer Firebase).
+- GitHub Actions: daily reset scheduled for Paris midnight with a double cron (CET/CEST); bot engine runs every 2 hours.
+- Idle processing: **Vercel serverless** (`api/idle-processor.ts`) — replaces former GitHub Actions idle-processor workflow.
+  - Cold start < 1s (vs 30s for GHA checkout + npm ci).
+  - Self-contained: all utilities inlined (not imported from src/).
+  - Cron trigger: cron-job.org every 1 min → `POST https://bitbrawler.vercel.app/api/idle-processor`.
+- GitHub Actions secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
 
 Handoff (Next Agent)
 - Arena settings logs are rendered inside the same modal (view switch), not a separate popup.
@@ -95,3 +126,13 @@ Handoff (Next Agent)
 - Lootbox and daily reset are aligned to Paris day, and final bot runs drain remaining fights.
 - Name generator pools were expanded for more variety.
 - Supabase service role key required for scripts (`SUPABASE_SERVICE_ROLE_KEY`). RLS open for dev.
+- **Idle processor** (`api/idle-processor.ts`) is SELF-CONTAINED — no imports from `src/`.
+  Vercel only compiles `api/` files to JS. If you change logic in `src/utils/xpUtils.ts`,
+  `src/utils/combatUtils.ts`, `src/utils/monsterUtils.ts`, you must mirror changes in
+  `api/idle-processor.ts`.
+- Efficiency effect in `useIdleCombat.ts` depends on `[character]` identity — triggers on any change.
+- On-demand idle: client previews locally first, then server call updates with real data.
+- Two watermarks: `lastActive` (client only) + `last_idle_check` (client + server). Don't confuse them.
+- XP curve: `100 × level^1.6` — must be IDENTICAL in both `src/utils/xpUtils.ts` and `api/idle-processor.ts`.
+- gainXp: does NOT give stat points. caller (`simulateIdleGains` in idle-processor, `useFight` in client) gives them.
+- Build must pass: `npm run build` (tsc + vite build). Check before any push.

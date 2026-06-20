@@ -561,6 +561,50 @@ npm test -- --reporter=verbose | grep "FAIL\|✓"
 
 ---
 
-**Last Updated:** 2026-05-25  
+**Last Updated:** 2026-06-20  
 **For Agents:** dev-agent, reviewer-agent, tech-lead-agent, qa-tester-agent  
 **Critical Level:** 🔴 READ BEFORE EVERY RUN
+
+---
+
+## 🧠 CRITICAL ARCHITECTURE CHANGES (v3.2.0+)
+
+### Idle Processing: Vercel Serverless (NOT GitHub Actions)
+
+**File:** `api/idle-processor.ts` — SELF-CONTAINED Vercel serverless function
+
+**Why self-contained:** Vercel only compiles `api/` files to JS. The idle processor inlines ALL utilities (monsters, combat, XP, efficiency). If you change logic in `src/utils/xpUtils.ts`, `src/utils/combatUtils.ts`, or `src/utils/monsterUtils.ts`, you **MUST mirror changes in `api/idle-processor.ts`**.
+
+**Architecture:**
+- Primary: Client POSTs `{ character_id }` on reconnect → instant processing (< 1s cold start)
+- Fallback: cron-job.org every 1 min → processes all stale characters (no character_id)
+- Former GitHub Actions workflow (`idle-processor.yml`) is **DELETED**
+
+**XP Curve:** Must be IDENTICAL in both files:
+- `src/utils/xpUtils.ts`: `Math.floor(100 * Math.pow(level, 1.6))`
+- `api/idle-processor.ts`: `Math.floor(100 * Math.pow(level, 1.6))`
+
+**gainXp:** Does NOT give stat points. Caller (`simulateIdleGains` in idle-processor, `useFight` in client) adds them once per level.
+
+### Watermark System
+
+| Watermark | Updated by | Purpose |
+|-----------|-----------|---------|
+| `lastActive` | Client (visibility change only) | Tracks last player activity |
+| `last_idle_check` | Client + server idle-processor | Tracks last processed idle time |
+
+- Unmount: advances ONLY `lastIdleCheck` (NOT `lastActive`) — preserves idle for character switching
+- Visibility → hidden: advances both via `onSyncCharacter`
+
+### Efficiency Effect
+
+In `useIdleCombat.ts`, the efficiency effect uses `[character]` identity (not individual fields).
+This means it recalculates on ANY character change — level, stats, equipment all trigger refresh.
+
+### Build Verification
+
+```bash
+# MUST pass before any push
+npm run build   # tsc + vite build (checks TypeScript + SCSS)
+npm test        # 531+ tests must pass
+```
