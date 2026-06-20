@@ -286,28 +286,78 @@ async function syncAutoMode(page, desiredEnabled) {
   await settingsBtn.click()
   await page.waitForTimeout(1000)
 
-  const autoSwitch = page.locator('[role="switch"][aria-label="Auto mode"], [role="switch"], .pixel-switch').first()
-  if (!(await autoSwitch.isVisible({ timeout: 5000 }).catch(() => false))) {
-    console.log('   Auto mode switch not found')
+  // Use precise locator: auto mode switch has role="switch" and aria-label="Auto mode"
+  // Do NOT use a generic [role="switch"] fallback — that could match the sound toggle
+  const autoSwitch = page.locator('[role="switch"][aria-label="Auto mode"]').first()
+
+  // Wait for the switch to be present in the DOM
+  try {
+    await autoSwitch.waitFor({ state: 'attached', timeout: 5000 })
+  } catch {
+    console.log('   Auto mode switch not found in DOM')
+    await closeSettingsWithFallback(page)
+    return false
+  }
+
+  // Wait for the switch to be visible
+  try {
+    await autoSwitch.waitFor({ state: 'visible', timeout: 5000 })
+  } catch {
+    console.log('   Auto mode switch is not visible')
+    await closeSettingsWithFallback(page)
+    return false
+  }
+
+  // Check if the switch is disabled (happens when isOfflineMode or autoModeUpdating)
+  const isDisabled = await autoSwitch.isDisabled().catch(() => true)
+  if (isDisabled) {
+    console.log('   Auto mode switch is disabled (likely offline mode) — cannot toggle')
+    await closeSettingsWithFallback(page)
     return false
   }
 
   const currentValue = await autoSwitch.getAttribute('aria-checked').catch(() => null)
   const isEnabled = currentValue === 'true'
   if (isEnabled !== desiredEnabled) {
-    await autoSwitch.click()
+    // Click with retry logic in case of transient issues
+    let clicked = false
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        await autoSwitch.click({ timeout: 5000 })
+        clicked = true
+        break
+      } catch (err) {
+        if (attempt < 2) {
+          console.log(`   Click attempt ${attempt + 1} failed, retrying in 1s...`)
+          await page.waitForTimeout(1000)
+        }
+      }
+    }
+    if (!clicked) {
+      console.log('   Failed to click auto mode switch after 3 attempts')
+      await closeSettingsWithFallback(page)
+      return false
+    }
     await page.waitForTimeout(1000)
     console.log(`   Auto mode changed to ${desiredEnabled ? 'ON' : 'OFF'} ✅`)
   } else {
     console.log(`   Auto mode already ${desiredEnabled ? 'ON' : 'OFF'}`)
   }
 
+  return await closeSettingsWithFallback(page)
+}
+
+/**
+ * Close the settings panel if it is open.
+ * Used both on success and as fallback when something goes wrong.
+ * Returns true to allow chaining in return statements.
+ */
+async function closeSettingsWithFallback(page) {
   const closeSettings = page.locator('button[aria-label="Close settings"], button:has-text("CLOSE"), button:has-text("OK"), .modal-close, .inventory-close').first()
   if (await closeSettings.isVisible({ timeout: 2000 }).catch(() => false)) {
     await closeSettings.click()
     await page.waitForTimeout(500)
   }
-
   return true
 }
 

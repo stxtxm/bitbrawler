@@ -218,4 +218,56 @@ describe('Arena settings modal', () => {
     const fightButton = getByRole('button', { name: 'FIGHT!' })
     expect(fightButton).not.toBeDisabled()
   })
+
+  it('renders auto mode and sound switches as distinct elements in settings', () => {
+    const { getByLabelText } = renderWithRouter(<Arena />)
+
+    fireEvent.click(getByLabelText('Settings'))
+
+    // Both switches should exist with distinct aria-labels
+    const autoSwitch = screen.getByRole('switch', { name: 'Auto mode' })
+    const soundSwitch = screen.getByRole('switch', { name: 'Sound' })
+
+    expect(autoSwitch).toBeInTheDocument()
+    expect(soundSwitch).toBeInTheDocument()
+    expect(autoSwitch).not.toBe(soundSwitch)
+
+    // Auto mode switch has the pixel-switch class
+    expect(autoSwitch.className).toContain('pixel-switch')
+    expect(soundSwitch.className).toContain('pixel-switch')
+
+    // Each switch has aria-checked
+    expect(autoSwitch).toHaveAttribute('aria-checked')
+    expect(soundSwitch).toHaveAttribute('aria-checked')
+  })
+
+  it('sound toggle click does not trigger auto mode change', () => {
+    mockUseGame.mockReturnValue({
+      activeCharacter: mockCharacter,
+      logout: vi.fn(),
+      useFight: vi.fn(),
+      findOpponent: vi.fn(),
+      lastXpGain: null,
+      lastLevelUp: null,
+      clearXpNotifications: vi.fn(),
+      dbAvailable: true,
+      retryConnection: vi.fn(),
+      allocateStatPoint: vi.fn(),
+      rollLootbox: vi.fn(),
+      startMatchmaking: vi.fn(),
+      setAutoMode: vi.fn().mockResolvedValue(mockCharacter),
+      deleteCharacter: vi.fn().mockResolvedValue(true),
+    })
+
+    const { getByLabelText } = renderWithRouter(<Arena />)
+
+    fireEvent.click(getByLabelText('Settings'))
+
+    const soundSwitch = screen.getByRole('switch', { name: 'Sound' })
+    fireEvent.click(soundSwitch)
+
+    // setAutoMode should NOT have been called by clicking the sound switch
+    const { setAutoMode } = mockUseGame.mock.results[0].value
+    expect(setAutoMode).not.toHaveBeenCalled()
+  })
 })
