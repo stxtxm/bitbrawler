@@ -25,17 +25,17 @@
   z-index: 1;
   background-repeat: repeat-x;
   background-position: 0 100%;
-  background-size: clamp(100px, 25cqi, 200px) auto;
+  background-size: clamp(160px, 40cqi, 320px) auto;
   overflow: hidden;
 
   .scroll-slow {
     width: 200%;
     height: 100%;
     background: inherit;
-    background-size: clamp(100px, 25cqi, 200px) auto;
+    background-size: clamp(160px, 40cqi, 320px) auto;
     background-position: 0 100%;
     will-change: transform;
-    animation: scrollParallax 50s linear infinite;
+    animation: scrollParallax 60s linear infinite;
   }
 }
 
@@ -50,12 +50,12 @@
 
 .cloud-instance {
   position: absolute;
-  width: clamp(48px, 14cqi, 100px);
-  height: clamp(24px, 7cqi, 50px);
+  width: clamp(72px, 20cqi, 140px);
+  height: clamp(36px, 10cqi, 70px);
   background-repeat: no-repeat;
   background-size: contain;
   pointer-events: none;
-  animation: cloudDrift 30s linear infinite;
+  animation: cloudDrift 18s linear infinite;
 }
 
 @keyframes cloudDrift {
