@@ -10,7 +10,6 @@ import {
     calculateStreakBonus,
     getStreakMilestone,
     calculateOfflineFightsWithEfficiency,
-    EfficiencyResult,
 } from '../../utils/idleEfficiencyUtils';
 import { CombatStats } from '../../utils/combatUtils';
 import { IDLE_CONFIG } from '../../config/idleConfig';
