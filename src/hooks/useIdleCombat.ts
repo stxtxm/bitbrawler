@@ -66,6 +66,8 @@ export function useIdleCombat({
   const streakRef = useRef(currentStreak)
   const killsRef = useRef(totalKills)
   const idleXpRef = useRef(idleTotalXp)
+  const effIntervalRef = useRef<number>(IDLE_CONFIG.TIMER_INTERVAL)
+  const xpBonusRef = useRef<number>(0)
 
   isPausedRef.current = isPaused || !character
   charRef.current = character ?? charRef.current
@@ -174,6 +176,29 @@ export function useIdleCombat({
     }
   }, [character, processOfflineGains])
 
+  // Compute stable efficiency data based on player stats (not per-combat monster).
+  // Only changes when level or equipment changes — giving a stable XP/min display.
+  useEffect(() => {
+    if (!character) return
+    const effectiveChar = applyEquipmentToCharacter(character)
+    const playerStats = calculateCombatStats(character)
+    const refMonster = generateMonsterForPlayer(character.level)
+    const monsterStats = calculateCombatStats(refMonster.character)
+    const eff = computeEfficiency(playerStats, monsterStats, effectiveChar.dexterity)
+    effIntervalRef.current = eff.effectiveInterval
+    xpBonusRef.current = eff.xpBonusMultiplier
+    const avgXp = calculateIdleXp(true, character.level)
+    const display = computeDisplayData(eff.effectiveInterval, avgXp, streakRef.current, killsRef.current)
+    setEfficiencyData({
+      powerRatio: eff.powerRatio,
+      efficiency: eff.efficiency,
+      effectiveInterval: eff.effectiveInterval,
+      xpPerMinute: display.xpPerMinute,
+      streakBonus: display.streakBonus,
+      streakMilestone: display.streakMilestone,
+    })
+  }, [character?.level, character?.equippedItems, character?.strength, character?.dexterity, character?.vitality, character?.luck, character?.intelligence])
+
   const clearOfflineGains = useCallback(() => {
     setOfflineGains(null)
   }, [])
@@ -186,10 +211,6 @@ export function useIdleCombat({
     const currentChar = charRef.current
     if (!currentChar) return
 
-    // Calculate player combat stats with equipment
-    const effectiveChar = applyEquipmentToCharacter(currentChar)
-    const playerStats = calculateCombatStats(currentChar)
-
     // Generate monster
     let monster
     try {
@@ -197,21 +218,6 @@ export function useIdleCombat({
     } catch {
       return
     }
-    const monsterStats = calculateCombatStats(monster.character)
-
-    // Calculate efficiency and effective interval
-    const eff = computeEfficiency(playerStats, monsterStats, effectiveChar.dexterity)
-    prevEffIntervalRef.current = eff.effectiveInterval
-    const avgXp = calculateIdleXp(true, currentChar.level)
-    const display = computeDisplayData(eff.effectiveInterval, avgXp, streakRef.current, killsRef.current)
-    setEfficiencyData({
-      powerRatio: eff.powerRatio,
-      efficiency: eff.efficiency,
-      effectiveInterval: eff.effectiveInterval,
-      xpPerMinute: display.xpPerMinute,
-      streakBonus: display.streakBonus,
-      streakMilestone: display.streakMilestone,
-    })
 
     setCurrentMonster(monster.def.id)
     setBackgroundMonster(monster.def.id)
@@ -225,7 +231,7 @@ export function useIdleCombat({
 
       // Calculate XP with bonuses
       const baseXp = calculateIdleXp(won, currentChar.level)
-      const xpBonus = eff.xpBonusMultiplier - 1
+      const xpBonus = xpBonusRef.current - 1
       const streakBonus = Math.min(
         streakRef.current * IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_PER_STEP,
         IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_CAP,
@@ -291,14 +297,6 @@ export function useIdleCombat({
     phaseTimers.current = [t1, t2, t3]
   }, [onCharacterUpdate, onSyncCharacter, saveTimestamp, clearPhaseTimers])
 
-  // Update interval ref when efficiency data changes
-  const prevEffIntervalRef = useRef<number>(IDLE_CONFIG.TIMER_INTERVAL)
-  useEffect(() => {
-    if (efficiencyData) {
-      prevEffIntervalRef.current = efficiencyData.effectiveInterval
-    }
-  }, [efficiencyData])
-
   // Trigger first combat immediately, then repeat on dynamic interval
   useEffect(() => {
     if (isPaused) {
@@ -313,7 +311,7 @@ export function useIdleCombat({
       runCombatTick()
       // Schedule next tick with latest effective interval
       if (!isPausedRef.current) {
-        const delay = prevEffIntervalRef.current
+        const delay = effIntervalRef.current
         timerRef.current = setTimeout(tickLoop, delay)
       }
     }
