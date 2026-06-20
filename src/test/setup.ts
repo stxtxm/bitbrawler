@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
-import { beforeAll, afterAll, vi } from 'vitest';
+import { vi } from 'vitest';
 
-// Mock CanvasRenderingContext2D et getContext pour éviter les erreurs JSDOM
+// Mock robuste pour Canvas
 class MockCanvasContext {
     fillRect = vi.fn();
     clearRect = vi.fn();
@@ -19,10 +19,14 @@ class MockCanvasContext {
     translate = vi.fn();
     rotate = vi.fn();
     scale = vi.fn();
+    createLinearGradient = vi.fn().mockReturnValue({ addColorStop: vi.fn() });
 }
 
+// Définition globale
+(global as any).CanvasRenderingContext2D = MockCanvasContext;
+
 beforeAll(() => {
-    // Polyfill HTMLCanvasElement.prototype.getContext
+    // Polyfill HTMLCanvasElement
     HTMLCanvasElement.prototype.getContext = vi.fn().mockImplementation((contextType) => {
         if (contextType === '2d') {
             return new MockCanvasContext();
@@ -45,7 +49,7 @@ beforeAll(() => {
         })),
     });
 
-    // Polyfill IntersectionObserver (nécessaire pour certains composants)
+    // Polyfill IntersectionObserver
     window.IntersectionObserver = vi.fn().mockImplementation(() => ({
         observe: vi.fn(),
         unobserve: vi.fn(),
