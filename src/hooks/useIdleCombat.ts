@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Character } from '../types/Character'
 import { IdleCombatEntry, ScenePhase, IdleEfficiencyData } from '../types/IdleCombat'
 import { IDLE_CONFIG } from '../config/idleConfig'
-import { generateMonsterForPlayer } from '../utils/monsterUtils'
+import { generateMonsterForPlayer, getReferenceMonster } from '../utils/monsterUtils'
 import { simulateCombat, calculateCombatStats } from '../utils/combatUtils'
 import { gainXp } from '../utils/xpUtils'
 import { GAME_RULES } from '../config/gameRules'
@@ -95,10 +95,9 @@ export function useIdleCombat({
       if (lastTimestamp <= 0) return
 
       // Calculate effective interval for offline gains based on current stats
-      const sampleMonster = generateMonsterForPlayer(charRef.current.level)
       const effectiveChar = applyEquipmentToCharacter(charRef.current)
       const playerStats = calculateCombatStats(charRef.current)
-      const monsterStats = calculateCombatStats(sampleMonster.character)
+      const monsterStats = calculateCombatStats(getReferenceMonster(charRef.current.level))
       const eff = computeEfficiency(playerStats, monsterStats, effectiveChar.dexterity)
       const effectiveInterval = eff.effectiveInterval
 
@@ -182,8 +181,8 @@ export function useIdleCombat({
     if (!character) return
     const effectiveChar = applyEquipmentToCharacter(character)
     const playerStats = calculateCombatStats(character)
-    const refMonster = generateMonsterForPlayer(character.level)
-    const monsterStats = calculateCombatStats(refMonster.character)
+    const refMonster = getReferenceMonster(character.level)
+    const monsterStats = calculateCombatStats(refMonster)
     const eff = computeEfficiency(playerStats, monsterStats, effectiveChar.dexterity)
     effIntervalRef.current = eff.effectiveInterval
     xpBonusRef.current = eff.xpBonusMultiplier

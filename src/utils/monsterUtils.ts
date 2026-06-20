@@ -52,6 +52,11 @@ export function generateMonsterForPlayer(playerLevel: number): { character: Char
   return { character: generateMonster(id, playerLevel), def };
 }
 
+/** Deterministic reference monster for stable efficiency calculation (same monster, same level → same stats). */
+export function getReferenceMonster(playerLevel: number): Character {
+  return generateMonster(MONSTER_IDS[0], playerLevel);
+}
+
 export function getMonsterElement(monsterId: MonsterId): Element {
   return getMonsterDef(monsterId)!.element;
 }
