@@ -1084,32 +1084,13 @@
     }
 }
 
-// Unified scene box for PvP avatar + PvE idle runner
-.scene-box {
-    flex: 1;
-    @include retro-border(2px, #fff);
-    min-height: 150px;
-    margin-bottom: 10px;
-    overflow: hidden;
-    background: radial-gradient(circle, #222 0%, #000 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    @include mobile {
-        min-height: 100px;
-        margin-bottom: 5px;
-        border-width: 1px;
-    }
+.stats-panel {
+    display: grid;
+    grid-template-areas: "stats";
 }
 
-.xp-section {
-    width: 100%;
-    margin-bottom: 10px;
-
-    @include mobile {
-        margin-bottom: 5px;
-    }
+.stats-content {
+    grid-area: stats;
 }
 
 .xp-header {
