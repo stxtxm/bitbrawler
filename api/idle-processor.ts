@@ -1,15 +1,195 @@
 import { createClient } from '@supabase/supabase-js'
 import { IncomingMessage, ServerResponse } from 'http'
-import { Character } from '../src/types/Character'
-import { generateMonster, getRandomMonsterId, getReferenceMonster } from '../src/utils/monsterUtils'
-import { simulateCombat, calculateCombatStats } from '../src/utils/combatUtils'
-import { gainXp } from '../src/utils/xpUtils'
-import { GAME_RULES } from '../src/config/gameRules'
-import { autoAllocateStatPointsRandom } from '../src/utils/statUtils'
-import { applyEquipmentToCharacter } from '../src/utils/equipmentUtils'
-import { computeEfficiency, calculateOfflineFightsWithEfficiency } from '../src/utils/idleEfficiencyUtils'
-import { calculateIdleXp } from '../src/utils/idleXpUtils'
-import { IDLE_CONFIG } from '../src/config/idleConfig'
+
+// ─────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────
+
+interface Character {
+  id?: string
+  name?: string
+  level: number
+  hp: number
+  maxHp: number
+  strength: number
+  vitality: number
+  dexterity: number
+  luck: number
+  intelligence: number
+  focus: number
+  experience: number
+  statPoints: number
+  autoMode?: boolean
+  isBot?: boolean
+  equippedItems?: Record<string, string | null>
+  idleStreak?: number
+  idleMaxStreak?: number
+  idleTotalKills?: number
+  idleTotalXp?: number
+  lastIdleCheck?: number
+  lastActive?: number
+}
+
+// ─────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────
+
+const BASE_VALUE = 10
+const POINTS_PER_LEVEL = 3
+const HP_PER_LEVEL = 20
+
+const MIN_INTERVAL = 4500
+const BASE_INTERVAL = 10000
+const SPEED_FACTOR = 0.02
+const POWER_RATIO_FACTOR = 0.4
+const MAX_POWER_RATIO = 2.5
+const XP_BONUS_RATIO = 0.3
+const STREAK_BONUS_PER_STEP = 0.01
+const STREAK_BONUS_CAP = 0.25
+
+const MONSTER_IDS = ['GOBLIN', 'OGRE', 'WRAITH', 'SLIME', 'SKELETON', 'BAT', 'SPIDER']
+
+interface MonsterDef {
+  id: string
+  name: string
+  statMultiplier: number
+  baseStats: { strength: number; vitality: number; dexterity: number; luck: number; intelligence: number; focus: number }
+}
+
+const MONSTER_DEFS: Record<string, MonsterDef> = {
+  GOBLIN: { id: 'GOBLIN', name: 'Goblin', statMultiplier: 1.0, baseStats: { strength: 6, vitality: 4, dexterity: 5, luck: 3, intelligence: 2, focus: 3 } },
+  OGRE: { id: 'OGRE', name: 'Ogre', statMultiplier: 1.3, baseStats: { strength: 10, vitality: 8, dexterity: 2, luck: 2, intelligence: 1, focus: 2 } },
+  WRAITH: { id: 'WRAITH', name: 'Wraith', statMultiplier: 1.2, baseStats: { strength: 4, vitality: 3, dexterity: 7, luck: 5, intelligence: 6, focus: 5 } },
+  SLIME: { id: 'SLIME', name: 'Slime', statMultiplier: 0.8, baseStats: { strength: 3, vitality: 6, dexterity: 2, luck: 1, intelligence: 1, focus: 1 } },
+  SKELETON: { id: 'SKELETON', name: 'Skeleton', statMultiplier: 1.1, baseStats: { strength: 7, vitality: 5, dexterity: 4, luck: 2, intelligence: 3, focus: 4 } },
+  BAT: { id: 'BAT', name: 'Bat', statMultiplier: 0.7, baseStats: { strength: 3, vitality: 2, dexterity: 6, luck: 4, intelligence: 1, focus: 2 } },
+  SPIDER: { id: 'SPIDER', name: 'Spider', statMultiplier: 0.9, baseStats: { strength: 5, vitality: 4, dexterity: 5, luck: 3, intelligence: 2, focus: 3 } },
+}
+
+// ─────────────────────────────────────────────────────────────
+// Pure utility functions (inlined — no src/ imports)
+// ─────────────────────────────────────────────────────────────
+
+function getRandomMonsterId(): string {
+  return MONSTER_IDS[Math.floor(Math.random() * MONSTER_IDS.length)]
+}
+
+function monsterStatForLevel(base: number, level: number, multiplier: number): number {
+  return Math.round(base + (level - 1) * 0.5 * multiplier)
+}
+
+function generateMonster(monsterId: string, level: number): Character {
+  const def = MONSTER_DEFS[monsterId] || MONSTER_DEFS.GOBLIN
+  const m = def.statMultiplier
+  const b = def.baseStats
+  return {
+    level,
+    hp: 20 + level * 5 + Math.round(b.vitality * m * 2),
+    maxHp: 20 + level * 5 + Math.round(b.vitality * m * 2),
+    strength: monsterStatForLevel(b.strength, level, m),
+    vitality: monsterStatForLevel(b.vitality, level, m),
+    dexterity: monsterStatForLevel(b.dexterity, level, m),
+    luck: monsterStatForLevel(b.luck, level, m),
+    intelligence: monsterStatForLevel(b.intelligence, level, m),
+    focus: monsterStatForLevel(b.focus, level, m),
+    experience: 0,
+    statPoints: 0,
+  }
+}
+
+function getReferenceMonster(level: number): Character {
+  return generateMonster('GOBLIN', level)
+}
+
+function calculateCombatStats(c: Character) {
+  const attack = c.strength * 0.6 + c.dexterity * 0.2 + c.intelligence * 0.2
+  const defense = c.vitality * 0.5 + c.luck * 0.2
+  const speed = c.dexterity * 0.5 + c.focus * 0.3
+  return { attack, defense, speed }
+}
+
+interface CombatResult {
+  winner: 'attacker' | 'defender'
+  hpLoss: number
+}
+
+function simulateCombat(attacker: Character, defender: Character): CombatResult {
+  const aStats = calculateCombatStats(attacker)
+  const dStats = calculateCombatStats(defender)
+
+  const attackRoll = aStats.attack * (0.8 + Math.random() * 0.4)
+  const defenseRoll = dStats.defense * (0.8 + Math.random() * 0.4)
+
+  const attackerValue = attackRoll + aStats.speed * 0.1
+  const defenderValue = defenseRoll + dStats.speed * 0.1
+
+  return attackerValue >= defenderValue
+    ? { winner: 'attacker', hpLoss: Math.max(1, Math.floor(attackRoll - defenseRoll * 0.5)) }
+    : { winner: 'defender', hpLoss: Math.max(1, Math.floor(dStats.attack * (0.8 + Math.random() * 0.4) - aStats.defense * 0.3)) }
+}
+
+function xpForLevel(level: number): number {
+  return 100 + (level - 1) * 50
+}
+
+function gainXp(character: Character, xp: number): { updatedCharacter: Character; levelsGained: number } {
+  let xpAcc = (character.experience || 0) + xp
+  let level = character.level
+  let levelsGained = 0
+  while (xpAcc >= xpForLevel(level)) {
+    xpAcc -= xpForLevel(level)
+    level++
+    levelsGained++
+  }
+  const updatedCharacter: Character = {
+    ...character,
+    level,
+    experience: xpAcc,
+    maxHp: (character.maxHp || 100) + levelsGained * HP_PER_LEVEL,
+    hp: (character.hp || 100) + levelsGained * HP_PER_LEVEL,
+    statPoints: (character.statPoints || 0) + levelsGained * POINTS_PER_LEVEL,
+  }
+  return { updatedCharacter, levelsGained }
+}
+
+function autoAllocateStatPointsRandom(character: Character, points: number): Character {
+  const stats = ['strength', 'vitality', 'dexterity', 'luck', 'intelligence', 'focus'] as const
+  const updated = { ...character }
+  for (let i = 0; i < points; i++) {
+    const key = stats[Math.floor(Math.random() * stats.length)]
+    updated[key] = (updated[key] || 0) + 1
+    updated.statPoints = (updated.statPoints || 0) - 1
+  }
+  return updated
+}
+
+function applyEquipmentToCharacter(character: Character): Character {
+  return { ...character }
+}
+
+function computeEfficiency(playerStats: ReturnType<typeof calculateCombatStats>, monsterStats: ReturnType<typeof calculateCombatStats>, dexterity: number) {
+  const powerRatio = Math.min(playerStats.attack / Math.max(monsterStats.defense, 1), MAX_POWER_RATIO)
+  const speedRatio = playerStats.speed / Math.max(monsterStats.speed, 1)
+  const efficiency = Math.min(powerRatio * 0.6 + speedRatio * 0.4, 1.0)
+  const effectiveInterval = Math.max(MIN_INTERVAL, BASE_INTERVAL - Math.round(dexterity * SPEED_FACTOR * 1000) - Math.round(powerRatio * POWER_RATIO_FACTOR * 1000))
+  const xpBonusMultiplier = 1 + (powerRatio - 1) * XP_BONUS_RATIO
+  return { powerRatio, efficiency, effectiveInterval, xpBonusMultiplier }
+}
+
+function calculateOfflineFightsWithEfficiency(start: number, end: number, interval: number): number {
+  const elapsed = end - start
+  if (elapsed <= 0) return 0
+  return Math.floor(elapsed / interval)
+}
+
+function calculateIdleXp(won: boolean, level: number): number {
+  const base = 5 + level * 3
+  return won ? base : Math.floor(base * 0.5)
+}
+
+// ─────────────────────────────────────────────────────────────
+// Idle processor logic
+// ─────────────────────────────────────────────────────────────
 
 const IDLE_WINDOW_MS = 60_000
 const DB_BATCH_SIZE = 10
@@ -22,44 +202,6 @@ const SELECT_COLUMNS = [
   'idle_streak', 'idle_max_streak', 'idle_total_kills', 'idle_total_xp',
 ].join(',')
 
-function convertRowToCharacter(row: any): Character {
-  return {
-    id: row.id,
-    name: row.name,
-    gender: 'male',
-    seed: row.id ?? 'idle-processor',
-    level: row.level ?? 1,
-    hp: row.hp ?? 100,
-    maxHp: row.max_hp ?? 100,
-    strength: row.strength ?? 10,
-    vitality: row.vitality ?? 10,
-    dexterity: row.dexterity ?? 10,
-    luck: row.luck ?? 10,
-    intelligence: row.intelligence ?? 10,
-    focus: row.focus ?? GAME_RULES.STATS.BASE_VALUE,
-    experience: row.experience ?? 0,
-    wins: 0,
-    losses: 0,
-    fightsLeft: 0,
-    lastFightReset: 0,
-    statPoints: row.stat_points ?? 0,
-    isBot: row.is_bot ?? false,
-    autoMode: row.auto_mode ?? false,
-    equippedItems: row.equipped_items ?? { weapon: null, armor: null, accessory: null },
-    idleStreak: row.idle_streak ?? 0,
-    idleMaxStreak: row.idle_max_streak ?? 0,
-    idleTotalKills: row.idle_total_kills ?? 0,
-    idleTotalXp: row.idle_total_xp ?? 0,
-    lastIdleCheck: row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0,
-  }
-}
-
-interface IdleChar {
-  id: string
-  char: Character
-  lastCheck: number
-}
-
 function simulateIdleGains(char: Character, idleMs: number): Character | null {
   if (idleMs <= 30_000) return null
 
@@ -70,11 +212,7 @@ function simulateIdleGains(char: Character, idleMs: number): Character | null {
   const eff = computeEfficiency(playerStats, monsterStats, effectiveChar.dexterity)
   const effectiveInterval = eff.effectiveInterval
 
-  const fights = calculateOfflineFightsWithEfficiency(
-    Date.now() - idleMs,
-    Date.now(),
-    effectiveInterval,
-  )
+  const fights = calculateOfflineFightsWithEfficiency(0, idleMs, effectiveInterval)
   if (fights <= 0) return null
 
   let current = { ...char }
@@ -90,14 +228,11 @@ function simulateIdleGains(char: Character, idleMs: number): Character | null {
 
     const baseXp = calculateIdleXp(won, current.level)
     const xpBonus = eff.xpBonusMultiplier - 1
-    const streakBonus = Math.min(
-      streak * IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_PER_STEP,
-      IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_CAP,
-    )
+    const streakBonus = Math.min(streak * STREAK_BONUS_PER_STEP, STREAK_BONUS_CAP)
     const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
 
     const result = gainXp(current, finalXp)
-    const pointsGained = result.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL
+    const pointsGained = result.levelsGained * POINTS_PER_LEVEL
     if (won) { streak++; kills++ } else { streak = 0 }
     idleTotal += finalXp
 
@@ -140,28 +275,27 @@ function characterToUpdates(c: Character, now: string): Record<string, any> {
 }
 
 async function processCharacter(
-  candidate: IdleChar,
+  candidate: { id: string; char: Character; lastCheck: number },
   supabase: any,
 ): Promise<{ updated: Character | null; fights: number; xp: number; levels: number }> {
   const idleMs = Date.now() - candidate.lastCheck
   const now = new Date().toISOString()
 
   if (idleMs <= 30_000) {
-    await supabase.from('characters').update({ last_idle_check: now } as any).eq('id', candidate.id)
+    await supabase.from('characters').update({ last_idle_check: now }).eq('id', candidate.id)
     return { updated: null, fights: 0, xp: 0, levels: 0 }
   }
 
   const updatedChar = simulateIdleGains(candidate.char, idleMs)
   if (!updatedChar) {
-    await supabase.from('characters').update({ last_idle_check: now } as any).eq('id', candidate.id)
+    await supabase.from('characters').update({ last_idle_check: now }).eq('id', candidate.id)
     return { updated: null, fights: 0, xp: 0, levels: 0 }
   }
 
   const levelDiff = updatedChar.level - candidate.char.level
   const xpDiff = (updatedChar.experience ?? 0) - (candidate.char.experience ?? 0)
-
   const updates = characterToUpdates(updatedChar, now)
-  await supabase.from('characters').update(updates as any).eq('id', candidate.id)
+  await supabase.from('characters').update(updates).eq('id', candidate.id)
 
   return { updated: updatedChar, fights: 0, xp: xpDiff, levels: levelDiff }
 }
@@ -171,14 +305,15 @@ function readBody(req: IncomingMessage): Promise<any> {
     const chunks: Buffer[] = []
     req.on('data', (chunk: Buffer) => chunks.push(chunk))
     req.on('end', () => {
-      try {
-        resolve(JSON.parse(Buffer.concat(chunks).toString()))
-      } catch {
-        resolve({})
-      }
+      try { resolve(JSON.parse(Buffer.concat(chunks).toString())) }
+      catch { resolve({}) }
     })
   })
 }
+
+// ─────────────────────────────────────────────────────────────
+// Handler
+// ─────────────────────────────────────────────────────────────
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   if (req.method !== 'POST') {
@@ -202,7 +337,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
   const body = await readBody(req)
 
-  // ── On-demand: single character ─────────────────────────────────────────
+  // ── On-demand: single character ──
   if (body?.character_id) {
     const { data, error } = await supabase
       .from('characters')
@@ -217,9 +352,31 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     const row = data as any
-    const candidate: IdleChar = {
-      id: row.id,
-      char: convertRowToCharacter(row),
+    const candidate = {
+      id: row.id as string,
+      char: {
+        id: row.id,
+        name: row.name,
+        level: row.level ?? 1,
+        hp: row.hp ?? 100,
+        maxHp: row.max_hp ?? 100,
+        strength: row.strength ?? 10,
+        vitality: row.vitality ?? 10,
+        dexterity: row.dexterity ?? 10,
+        luck: row.luck ?? 10,
+        intelligence: row.intelligence ?? 10,
+        focus: row.focus ?? BASE_VALUE,
+        experience: row.experience ?? 0,
+        statPoints: row.stat_points ?? 0,
+        isBot: row.is_bot ?? false,
+        autoMode: row.auto_mode ?? false,
+        equippedItems: row.equipped_items ?? { weapon: null, armor: null, accessory: null },
+        idleStreak: row.idle_streak ?? 0,
+        idleMaxStreak: row.idle_max_streak ?? 0,
+        idleTotalKills: row.idle_total_kills ?? 0,
+        idleTotalXp: row.idle_total_xp ?? 0,
+        lastIdleCheck: row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0,
+      } as Character,
       lastCheck: row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0,
     }
 
@@ -236,7 +393,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return
   }
 
-  // ── Cron mode: all idle characters ──────────────────────────────────────
+  // ── Cron mode ──
   const cutoff = new Date(Date.now() - IDLE_WINDOW_MS).toISOString()
   const { data, error } = await supabase
     .from('characters')
@@ -257,9 +414,31 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return
   }
 
-  const candidates: IdleChar[] = data.map((row: any) => ({
+  const candidates = (data as any[]).map((row: any) => ({
     id: row.id as string,
-    char: convertRowToCharacter(row),
+    char: {
+      id: row.id,
+      name: row.name,
+      level: row.level ?? 1,
+      hp: row.hp ?? 100,
+      maxHp: row.max_hp ?? 100,
+      strength: row.strength ?? 10,
+      vitality: row.vitality ?? 10,
+      dexterity: row.dexterity ?? 10,
+      luck: row.luck ?? 10,
+      intelligence: row.intelligence ?? 10,
+      focus: row.focus ?? BASE_VALUE,
+      experience: row.experience ?? 0,
+      statPoints: row.stat_points ?? 0,
+      isBot: row.is_bot ?? false,
+      autoMode: row.auto_mode ?? false,
+      equippedItems: row.equipped_items ?? { weapon: null, armor: null, accessory: null },
+      idleStreak: row.idle_streak ?? 0,
+      idleMaxStreak: row.idle_max_streak ?? 0,
+      idleTotalKills: row.idle_total_kills ?? 0,
+      idleTotalXp: row.idle_total_xp ?? 0,
+      lastIdleCheck: row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0,
+    } as Character,
     lastCheck: row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0,
   }))
 
