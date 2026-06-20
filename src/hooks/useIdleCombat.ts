@@ -145,17 +145,47 @@ export function useIdleCombat({
     }
   }, [])
 
-  // Offline preview on mount
+  // On-demand idle processing: call server on reconnect, fallback to local preview
   useEffect(() => {
-    calculateOfflinePreview()
-  }, [calculateOfflinePreview])
+    if (!character) return
+    const lastActive = character.lastActive ?? 0
+    if (lastActive <= 0) return
+    const idleMs = Date.now() - lastActive
+    if (idleMs <= 30_000) return
 
-  // Also calculate offline preview once character becomes available
-  useEffect(() => {
-    if (character) {
-      calculateOfflinePreview()
+    let cancelled = false
+
+    const processOnServer = async () => {
+      try {
+        const res = await fetch('/api/idle-processor', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ character_id: character.id }),
+        })
+        if (!res.ok || cancelled) return
+        const data = await res.json()
+        if (cancelled) return
+        if (data.levels > 0 || data.xp > 0) {
+          if (data.updated) {
+            const updatedChar: Character = {
+              ...character,
+              ...data.updated,
+              lastIdleCheck: Date.now(),
+              lastActive: Date.now(),
+            }
+            onCharacterUpdate(updatedChar)
+          }
+          setOfflineGains({ fights: data.fights, xp: data.xp, levels: data.levels })
+        }
+      } catch {
+        if (!cancelled) calculateOfflinePreview()
+      }
     }
-  }, [character, calculateOfflinePreview])
+
+    processOnServer()
+
+    return () => { cancelled = true }
+  }, [character?.id, character?.lastActive, onCharacterUpdate, calculateOfflinePreview])
 
   // Compute stable efficiency data based on player stats (not per-combat monster).
   // Only changes when level or equipment changes — giving a stable XP/min display.

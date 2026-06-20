@@ -11,7 +11,7 @@ import { computeEfficiency, calculateOfflineFightsWithEfficiency } from '../src/
 import { calculateIdleXp } from '../src/utils/idleXpUtils'
 import { IDLE_CONFIG } from '../src/config/idleConfig'
 
-const IDLE_WINDOW_MINUTES = 2
+const IDLE_WINDOW_MS = 60_000
 const DB_BATCH_SIZE = 10
 
 const SELECT_COLUMNS = [
@@ -60,6 +60,126 @@ interface IdleChar {
   lastCheck: number
 }
 
+function simulateIdleGains(char: Character, idleMs: number): Character | null {
+  if (idleMs <= 30_000) return null
+
+  const effectiveChar = applyEquipmentToCharacter(char)
+  const playerStats = calculateCombatStats(char)
+  const refMonster = getReferenceMonster(char.level)
+  const monsterStats = calculateCombatStats(refMonster)
+  const eff = computeEfficiency(playerStats, monsterStats, effectiveChar.dexterity)
+  const effectiveInterval = eff.effectiveInterval
+
+  const fights = calculateOfflineFightsWithEfficiency(
+    Date.now() - idleMs,
+    Date.now(),
+    effectiveInterval,
+  )
+  if (fights <= 0) return null
+
+  let current = { ...char }
+  let streak = current.idleStreak ?? 0
+  let kills = current.idleTotalKills ?? 0
+  let idleTotal = current.idleTotalXp ?? 0
+
+  for (let f = 0; f < fights; f++) {
+    const monsterId = getRandomMonsterId()
+    const monster = generateMonster(monsterId, current.level)
+    const combat = simulateCombat(current, monster)
+    const won = combat.winner === 'attacker'
+
+    const baseXp = calculateIdleXp(won, current.level)
+    const xpBonus = eff.xpBonusMultiplier - 1
+    const streakBonus = Math.min(
+      streak * IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_PER_STEP,
+      IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_CAP,
+    )
+    const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
+
+    const result = gainXp(current, finalXp)
+    const pointsGained = result.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL
+    if (won) { streak++; kills++ } else { streak = 0 }
+    idleTotal += finalXp
+
+    const updated = {
+      ...result.updatedCharacter,
+      idleStreak: streak,
+      idleMaxStreak: Math.max(streak, current.idleMaxStreak ?? 0),
+      idleTotalKills: kills,
+      idleTotalXp: idleTotal,
+      statPoints: (result.updatedCharacter.statPoints ?? 0) + pointsGained,
+    }
+
+    current = updated.autoMode && pointsGained > 0
+      ? autoAllocateStatPointsRandom(updated, pointsGained)
+      : updated
+  }
+
+  return current
+}
+
+function characterToUpdates(c: Character, now: string): Record<string, any> {
+  return {
+    last_idle_check: now,
+    experience: c.experience,
+    level: c.level,
+    hp: c.hp,
+    max_hp: c.maxHp,
+    strength: c.strength,
+    vitality: c.vitality,
+    dexterity: c.dexterity,
+    luck: c.luck,
+    intelligence: c.intelligence,
+    focus: c.focus,
+    stat_points: c.statPoints,
+    idle_streak: c.idleStreak,
+    idle_max_streak: c.idleMaxStreak,
+    idle_total_kills: c.idleTotalKills,
+    idle_total_xp: c.idleTotalXp,
+  }
+}
+
+async function processCharacter(
+  candidate: IdleChar,
+  supabase: ReturnType<typeof createClient>,
+): Promise<{ updated: Character | null; fights: number; xp: number; levels: number }> {
+  const idleMs = Date.now() - candidate.lastCheck
+  const now = new Date().toISOString()
+
+  if (idleMs <= 30_000) {
+    await supabase.from('characters').update({ last_idle_check: now }).eq('id', candidate.id)
+    return { updated: null, fights: 0, xp: 0, levels: 0 }
+  }
+
+  const updatedChar = simulateIdleGains(candidate.char, idleMs)
+  if (!updatedChar) {
+    await supabase.from('characters').update({ last_idle_check: now }).eq('id', candidate.id)
+    return { updated: null, fights: 0, xp: 0, levels: 0 }
+  }
+
+  const levelDiff = updatedChar.level - candidate.char.level
+  const xpDiff = (updatedChar.experience ?? 0) - (candidate.char.experience ?? 0)
+
+  const updates = characterToUpdates(updatedChar, now)
+  await supabase.from('characters').update(updates).eq('id', candidate.id)
+
+  return { updated: updatedChar, fights: 0, xp: xpDiff, levels: levelDiff }
+}
+
+function readBody(req: IncomingMessage): Promise<any> {
+  return new Promise((resolve) => {
+    const chunks: Buffer[] = []
+    req.on('data', (chunk: Buffer) => chunks.push(chunk))
+    req.on('end', () => {
+      try {
+        resolve(JSON.parse(Buffer.concat(chunks).toString()))
+      } catch {
+        resolve({})
+      }
+    })
+  })
+}
+
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   if (req.method !== 'POST') {
     res.writeHead(405, { 'Content-Type': 'application/json' })
@@ -80,8 +200,43 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     auth: { autoRefreshToken: false, persistSession: false },
   })
 
-  const cutoff = new Date(Date.now() - IDLE_WINDOW_MINUTES * 60 * 1000).toISOString()
+  const body = await readBody(req)
 
+  // ── On-demand: single character ─────────────────────────────────────────
+  if (body?.character_id) {
+    const { data, error } = await supabase
+      .from('characters')
+      .select(SELECT_COLUMNS)
+      .eq('id', body.character_id)
+      .single()
+
+    if (error || !data) {
+      res.writeHead(404, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ error: 'Character not found' }))
+      return
+    }
+
+    const candidate: IdleChar = {
+      id: data.id,
+      char: convertRowToCharacter(data),
+      lastCheck: data.last_idle_check ? new Date(data.last_idle_check).getTime() : 0,
+    }
+
+    const result = await processCharacter(candidate, supabase)
+
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({
+      character_id: body.character_id,
+      updated: result.updated ? characterToUpdates(result.updated, new Date().toISOString()) : null,
+      fights: result.fights,
+      xp: result.xp,
+      levels: result.levels,
+    }))
+    return
+  }
+
+  // ── Cron mode: all idle characters ──────────────────────────────────────
+  const cutoff = new Date(Date.now() - IDLE_WINDOW_MS).toISOString()
   const { data, error } = await supabase
     .from('characters')
     .select(SELECT_COLUMNS)
@@ -108,110 +263,12 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   }))
 
   let processed = 0
-  const results: string[] = []
-
   for (let i = 0; i < candidates.length; i += DB_BATCH_SIZE) {
     const batch = candidates.slice(i, i + DB_BATCH_SIZE)
-    await Promise.all(batch.map(async (candidate) => {
-      const idleMs = Date.now() - candidate.lastCheck
-      if (idleMs <= 30_000) {
-        await supabase
-          .from('characters')
-          .update({ last_idle_check: new Date().toISOString() })
-          .eq('id', candidate.id)
-        return
-      }
-
-      const effectiveChar = applyEquipmentToCharacter(candidate.char)
-      const playerStats = calculateCombatStats(candidate.char)
-      const refMonster = getReferenceMonster(candidate.char.level)
-      const monsterStats = calculateCombatStats(refMonster)
-      const eff = computeEfficiency(playerStats, monsterStats, effectiveChar.dexterity)
-      const effectiveInterval = eff.effectiveInterval
-
-      const fights = calculateOfflineFightsWithEfficiency(
-        idleMs,
-        Date.now(),
-        effectiveInterval,
-      )
-      if (fights <= 0) {
-        await supabase
-          .from('characters')
-          .update({ last_idle_check: new Date().toISOString() })
-          .eq('id', candidate.id)
-        return
-      }
-
-      let current = { ...candidate.char }
-      let streak = current.idleStreak ?? 0
-      let kills = current.idleTotalKills ?? 0
-      let idleTotal = current.idleTotalXp ?? 0
-
-      for (let f = 0; f < fights; f++) {
-        const monsterId = getRandomMonsterId()
-        const monster = generateMonster(monsterId, current.level)
-        const combat = simulateCombat(current, monster)
-        const won = combat.winner === 'attacker'
-
-        const baseXp = calculateIdleXp(won, current.level)
-        const xpBonus = eff.xpBonusMultiplier - 1
-        const streakBonus = Math.min(
-          streak * IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_PER_STEP,
-          IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_CAP,
-        )
-        const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
-
-        const result = gainXp(current, finalXp)
-        const pointsGained = result.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL
-        if (won) { streak++; kills++ } else { streak = 0 }
-        idleTotal += finalXp
-
-        const updated = {
-          ...result.updatedCharacter,
-          idleStreak: streak,
-          idleMaxStreak: Math.max(streak, current.idleMaxStreak ?? 0),
-          idleTotalKills: kills,
-          idleTotalXp: idleTotal,
-          statPoints: (result.updatedCharacter.statPoints ?? 0) + pointsGained,
-        }
-
-        current = updated.autoMode && pointsGained > 0
-          ? autoAllocateStatPointsRandom(updated, pointsGained)
-          : updated
-      }
-
-      const levelDiff = current.level - candidate.char.level
-      const xpDiff = (current.experience ?? 0) - (candidate.char.experience ?? 0)
-
-      const updates: Record<string, any> = {
-        last_idle_check: new Date().toISOString(),
-        experience: current.experience,
-        level: current.level,
-        hp: current.hp,
-        max_hp: current.maxHp,
-        strength: current.strength,
-        vitality: current.vitality,
-        dexterity: current.dexterity,
-        luck: current.luck,
-        intelligence: current.intelligence,
-        focus: current.focus,
-        stat_points: current.statPoints,
-        idle_streak: current.idleStreak,
-        idle_max_streak: current.idleMaxStreak,
-        idle_total_kills: current.idleTotalKills,
-        idle_total_xp: current.idleTotalXp,
-      }
-
-      await supabase.from('characters').update(updates).eq('id', candidate.id)
-
-      const label = levelDiff > 0
-        ? `${candidate.char.name}: LVL +${levelDiff}, +${xpDiff} XP`
-        : `${candidate.char.name}: +${xpDiff} XP`
-      results.push(label)
-    }))
+    await Promise.all(batch.map(c => processCharacter(c, supabase)))
     processed += batch.length
   }
 
   res.writeHead(200, { 'Content-Type': 'application/json' })
-  res.end(JSON.stringify({ processed, results }))
+  res.end(JSON.stringify({ processed }))
 }
