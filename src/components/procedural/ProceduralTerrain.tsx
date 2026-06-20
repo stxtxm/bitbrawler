@@ -28,29 +28,40 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({ width, hei
 
     ctx.clearRect(0, 0, width, height);
 
-    // Draw layers with mountain shape improvement
+    // Draw layers with logic to ensure no overlapping mountains
     for (let i = 0; i < parallaxLayers; i++) {
       const noise = generateNoiseMap(w, h, seedNum + i);
-      ctx.fillStyle = i === 0 ? palette.mountain : i === 1 ? palette.grass : palette.dirt;
       
-      // Improve mountain shape for i === 0
       if (i === 0) {
+        // Mountain layer: Render as a single clean silhouette with no intersections
+        ctx.fillStyle = palette.mountain;
         ctx.beginPath();
         ctx.moveTo(0, h);
-        for (let x = 0; x < w; x++) {
-          // Use noise to create peaky mountain shapes instead of noise dots
-          const mountainNoise = noise[Math.floor(h * 0.4) * w + x];
-          const y = h - (mountainNoise / 255) * (h * 0.6);
+        
+        let lastY = h;
+        for (let x = 0; x <= w; x++) {
+          // Smooth the mountain peaks by averaging noise over a small window
+          let peakNoise = 0;
+          for (let k = -2; k <= 2; k++) {
+            peakNoise += noise[Math.floor(h * 0.3) * w + Math.min(Math.max(x + k, 0), w - 1)];
+          }
+          peakNoise /= 5;
+          
+          const targetY = (h * 0.4) - (peakNoise / 255) * (h * 0.3);
+          // Limit slope to avoid impossible steepness
+          const y = Math.min(Math.max(targetY, lastY - 5), lastY + 5);
           ctx.lineTo(x / scale, y / scale);
+          lastY = y;
         }
         ctx.lineTo(w / scale, h / scale);
         ctx.closePath();
         ctx.fill();
       } else {
-        // Standard procedural layer for other layers
+        // Standard procedural layer for other layers (grass/dirt)
+        ctx.fillStyle = i === 1 ? palette.grass : palette.dirt;
         for (let y = 0; y < h; y++) {
           for (let x = 0; x < w; x++) {
-            if (noise[y * w + x] > 128) {
+            if (noise[y * w + x] > 180) {
               ctx.fillRect(x / scale, y / scale, 1/scale, 1/scale);
             }
           }
