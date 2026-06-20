@@ -3,23 +3,10 @@
 .idle-runner-box {
   position: relative;
   width: 100%;
+  height: 100%;
   overflow: hidden;
   background-size: cover;
   container-type: inline-size;
-  flex: 1;
-  @include retro-border(2px, #fff);
-  min-height: 150px;
-  margin-bottom: 10px;
-
-  @include mobile {
-    border-width: 1px;
-    min-height: 100px;
-    margin-bottom: 5px;
-  }
-}
-
-.idle-runner-info {
-  width: 100%;
 }
 
 .idle-fights-bar {

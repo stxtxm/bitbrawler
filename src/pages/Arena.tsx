@@ -486,15 +486,16 @@ const Arena = () => {
             )}
 
             <div className="arena-content">
-                {pveMode ? (
-                    <>
-                        <div className="character-display">
+                <div className="character-display">
+                    {/* Scene box (flex:1) — PvP avatar + PvE idle runner, crossfade */}
+                    <div className="scene-box">
+                        <div className={`scene-fade ${pveMode ? 'fade-out' : 'fade-in'}`}>
+                            <PixelCharacter seed={activeCharacter.seed} gender={activeCharacter.gender} scale={window.innerWidth < 600 ? 16 : 12} />
+                        </div>
+                        <div className={`scene-fade ${pveMode ? 'fade-in' : 'fade-out'}`}>
                             <IdleRunnerScene
                                 character={effectiveCharacter}
-                                idleXpGained={idle.idleXpGained}
-                                idleFightsCount={idle.idleFightsCount}
                                 currentMonster={idle.currentMonster}
-                                backgroundMonster={idle.backgroundMonster}
                                 scenePhase={idle.scenePhase}
                                 lastCombatResult={idle.lastCombatResult}
                                 lastCombatXp={idle.lastCombatXp}
@@ -502,177 +503,152 @@ const Arena = () => {
                                 onClearOfflineGains={idle.clearOfflineGains}
                             />
                         </div>
-                        <div className="action-panel">
-                            <div className="pve-toggle-row">
-                                <button
-                                    className={`pixel-switch pve-switch ${pveMode ? 'on' : 'off'}`}
-                                    onClick={() => setPveMode(true)}
-                                    role="switch"
-                                    aria-checked={pveMode}
-                                    aria-label="PvE mode"
-                                >
-                                    <span className="switch-knob" />
-                                    <span className="switch-text">👹 PVE</span>
-                                </button>
-                                <button
-                                    className={`pixel-switch pve-switch ${!pveMode ? 'on' : 'off'}`}
-                                    onClick={() => setPveMode(false)}
-                                    role="switch"
-                                    aria-checked={!pveMode}
-                                    aria-label="PvP mode"
-                                >
-                                    <span className="switch-knob" />
-                                    <span className="switch-text">⚔ PVP</span>
-                                </button>
+                    </div>
+
+                    {/* XP section — always visible */}
+                    <div className="xp-section">
+                        <div className="xp-header">
+                            <span className="xp-label">EXP</span>
+                            <span className="xp-text">{formatXpDisplay(activeCharacter)}</span>
+                        </div>
+                        <div className="xp-bar-container">
+                            <div
+                                className={`xp-bar ${xpBarAnimating ? 'animating' : ''} ${isMaxLevel ? 'max-level' : ''}`}
+                                style={{ width: `${xpProgress.percentage}%` }}
+                            >
+                                <div className="xp-bar-shine"></div>
                             </div>
-                            <div className="xp-section" style={{ margin: 0 }}>
-                                <div className="xp-header">
-                                    <span className="xp-label">EXP</span>
-                                    <span className="xp-text">{formatXpDisplay(activeCharacter)}</span>
+                            {showXpGain && lastXpGain && (
+                                <div className="xp-gain-popup">+{lastXpGain} XP</div>
+                            )}
+                        </div>
+                        {isMaxLevel && <span className="max-level-badge">★ MAX LEVEL ★</span>}
+                    </div>
+
+                    {/* Stats panel — content changes with mode, same classes and height */}
+                    <div className="stats-panel">
+                        <div className={`stats-fade ${pveMode ? 'fade-out' : 'fade-in'}`}>
+                            <div className="stat-row principal">
+                                <span>HP</span>
+                                <div className="bar-container">
+                                    <div className="bar hp-bar" style={{ width: `${(effectiveCharacter.hp / effectiveCharacter.maxHp) * 100}%` }}></div>
                                 </div>
-                                <div className="xp-bar-container">
-                                    <div
-                                        className={`xp-bar ${xpBarAnimating ? 'animating' : ''} ${isMaxLevel ? 'max-level' : ''}`}
-                                        style={{ width: `${xpProgress.percentage}%` }}
-                                    >
-                                        <div className="xp-bar-shine"></div>
-                                    </div>
-                                    {showXpGain && lastXpGain && (
-                                        <div className="xp-gain-popup">+{lastXpGain} XP</div>
-                                    )}
-                                </div>
-                                {isMaxLevel && <span className="max-level-badge">★ MAX LEVEL ★</span>}
+                                <span className="stat-val">{effectiveCharacter.maxHp}</span>
                             </div>
-                            <div className="stats-grid-compact" style={{ gap: 2 }}>
+                            <div className="stats-grid-compact">
                                 {statOptions.map((stat) => (
                                     <div key={stat.key} className="compact-stat" title={`${stat.label}: ${STAT_TOOLTIPS[stat.key as StatKey]}`}>
                                         <span className="compact-stat-icon">
-                                            <PixelIcon type={stat.icon} size={10} />
+                                            <PixelIcon type={stat.icon} size={12} />
                                         </span>
                                         <span className="compact-stat-label">{stat.label}</span>
                                         <span className="compact-stat-value">{stat.value}</span>
                                     </div>
                                 ))}
                             </div>
-                        </div>
-                    </>
-                ) : (
-                    <>
-                        <div className="character-display">
-                            <div className="avatar-box">
-                                <PixelCharacter seed={activeCharacter.seed} gender={activeCharacter.gender} scale={window.innerWidth < 600 ? 16 : 12} />
-                            </div>
-
-                            <div className="xp-section">
-                                <div className="xp-header">
-                                    <span className="xp-label">EXP</span>
-                                    <span className="xp-text">{formatXpDisplay(activeCharacter)}</span>
-                                </div>
-                                <div className="xp-bar-container">
-                                    <div
-                                        className={`xp-bar ${xpBarAnimating ? 'animating' : ''} ${isMaxLevel ? 'max-level' : ''}`}
-                                        style={{ width: `${xpProgress.percentage}%` }}
-                                    >
-                                        <div className="xp-bar-shine"></div>
-                                    </div>
-                                    {showXpGain && lastXpGain && (
-                                        <div className="xp-gain-popup">+{lastXpGain} XP</div>
-                                    )}
-                                </div>
-                                {isMaxLevel && <span className="max-level-badge">★ MAX LEVEL ★</span>}
-                            </div>
-
-                            <div className="stats-panel">
-                                <div className="stat-row principal">
-                                    <span>HP</span>
-                                    <div className="bar-container">
-                                        <div className="bar hp-bar" style={{ width: `${(effectiveCharacter.hp / effectiveCharacter.maxHp) * 100}%` }}></div>
-                                    </div>
-                                    <span className="stat-val">{effectiveCharacter.maxHp}</span>
-                                </div>
-                                <div className="stats-grid-compact">
-                                    {statOptions.map((stat) => (
-                                        <div key={stat.key} className="compact-stat" title={`${stat.label}: ${STAT_TOOLTIPS[stat.key as StatKey]}`}>
-                                            <span className="compact-stat-icon">
-                                                <PixelIcon type={stat.icon} size={12} />
-                                            </span>
-                                            <span className="compact-stat-label">{stat.label}</span>
-                                            <span className="compact-stat-value">{stat.value}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                                {pointsRemaining > 0 && (
-                                    <button
-                                        className="button secondary-btn stat-allocate-btn"
-                                        onClick={handleOpenLevelUp}
-                                    >
-                                        SPEND POINT
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="action-panel">
-                            <div className="pve-toggle-row">
-                                <button
-                                    className={`pixel-switch pve-switch ${pveMode ? 'on' : 'off'}`}
-                                    onClick={() => setPveMode(true)}
-                                    role="switch"
-                                    aria-checked={pveMode}
-                                    aria-label="PvE mode"
-                                >
-                                    <span className="switch-knob" />
-                                    <span className="switch-text">👹 PVE</span>
+                            {pointsRemaining > 0 && (
+                                <button className="button secondary-btn stat-allocate-btn" onClick={handleOpenLevelUp}>
+                                    SPEND POINT
                                 </button>
-                                <button
-                                    className={`pixel-switch pve-switch ${!pveMode ? 'on' : 'off'}`}
-                                    onClick={() => setPveMode(false)}
-                                    role="switch"
-                                    aria-checked={!pveMode}
-                                    aria-label="PvP mode"
-                                >
-                                    <span className="switch-knob" />
-                                    <span className="switch-text">⚔ PVP</span>
-                                </button>
-                            </div>
-
-                            <div className="daily-status-compact">
-                                <div className="status-label">
-                                    <PixelIcon type="sword" size={32} />
-                                    <div className="label-text">
-                                        <span className="label-main">BATTLE ENERGY</span>
-                                        <span className="label-sub">
-                                            {isOfflineMode
-                                                ? 'OFFLINE SNAPSHOT'
-                                                : `${fightsLeft} / ${GAME_RULES.COMBAT.MAX_DAILY_FIGHTS} AVAILABLE`}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="mini-pips">
-                                    {Array.from({ length: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS }).map((_, i) => (
-                                        <div key={i} className={`mini-pip ${i < fightsLeft ? 'active' : 'used'}`}></div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <button
-                                className="button primary-btn giant-btn"
-                                disabled={!canFight || matchmaking}
-                                onClick={handleFight}
-                            >
-                            {matchmaking
-                                ? 'SEARCHING...'
-                                : hasPendingFight
-                                    ? 'RESOLVING...'
-                                    : activeCharacter?.autoMode
-                                        ? 'AUTO MODE'
-                                        : (isOfflineMode
-                                            ? 'OFFLINE'
-                                            : (fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'))}
-                            </button>
+                            )}
                         </div>
-                    </>
-                )}
+                        <div className={`stats-fade ${pveMode ? 'fade-in' : 'fade-out'}`}>
+                            <div className="stat-row principal">
+                                <span>FIGHTS</span>
+                                <div className="bar-container">
+                                    <div className="bar idle-fights-bar" style={{ width: `${Math.min(100, idle.idleFightsCount * 10)}%` }} />
+                                </div>
+                                <span className="stat-val">{idle.idleFightsCount}</span>
+                            </div>
+                            <div className="stats-grid-compact">
+                                <div className="compact-stat">
+                                    <span className="compact-stat-icon" style={{ color: '#f0c040' }}>XP</span>
+                                    <span className="compact-stat-label">GAINED</span>
+                                    <span className="compact-stat-value" style={{ color: '#f0c040' }}>+{idle.idleXpGained}</span>
+                                </div>
+                                <div className="compact-stat">
+                                    <span className="compact-stat-icon">⚡</span>
+                                    <span className="compact-stat-label">LAST</span>
+                                    <span className="compact-stat-value">{idle.lastCombatResult === 'win' ? 'WIN' : idle.lastCombatResult === 'lose' ? 'LOSS' : '—'}</span>
+                                </div>
+                                <div className="compact-stat">
+                                    <span className="compact-stat-icon">⬆</span>
+                                    <span className="compact-stat-label">LVL</span>
+                                    <span className="compact-stat-value">{activeCharacter.level}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="action-panel">
+                    <div className="pve-toggle-row">
+                        <button
+                            className={`pixel-switch pve-switch ${pveMode ? 'on' : 'off'}`}
+                            onClick={() => setPveMode(true)}
+                            role="switch"
+                            aria-checked={pveMode}
+                            aria-label="PvE mode"
+                        >
+                            <span className="switch-knob" />
+                            <span className="switch-text">👹 PVE</span>
+                        </button>
+                        <button
+                            className={`pixel-switch pve-switch ${!pveMode ? 'on' : 'off'}`}
+                            onClick={() => setPveMode(false)}
+                            role="switch"
+                            aria-checked={!pveMode}
+                            aria-label="PvP mode"
+                        >
+                            <span className="switch-knob" />
+                            <span className="switch-text">⚔ PVP</span>
+                        </button>
+                    </div>
+
+                    <div className={`action-fade ${pveMode ? 'fade-out' : 'fade-in'}`}>
+                        <div className="daily-status-compact">
+                            <div className="status-label">
+                                <PixelIcon type="sword" size={32} />
+                                <div className="label-text">
+                                    <span className="label-main">BATTLE ENERGY</span>
+                                    <span className="label-sub">
+                                        {isOfflineMode
+                                            ? 'OFFLINE SNAPSHOT'
+                                            : `${fightsLeft} / ${GAME_RULES.COMBAT.MAX_DAILY_FIGHTS} AVAILABLE`}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="mini-pips">
+                                {Array.from({ length: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS }).map((_, i) => (
+                                    <div key={i} className={`mini-pip ${i < fightsLeft ? 'active' : 'used'}`}></div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <button
+                            className="button primary-btn giant-btn"
+                            disabled={!canFight || matchmaking}
+                            onClick={handleFight}
+                        >
+                        {matchmaking
+                            ? 'SEARCHING...'
+                            : hasPendingFight
+                                ? 'RESOLVING...'
+                                : activeCharacter?.autoMode
+                                    ? 'AUTO MODE'
+                                    : (isOfflineMode
+                                        ? 'OFFLINE'
+                                        : (fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'))}
+                        </button>
+                    </div>
+
+                    <div className={`action-fade ${pveMode ? 'fade-in' : 'fade-out'}`}>
+                        <div className="pve-status">
+                            <span className="pve-label">IDLE MODE</span>
+                            <span className="pve-sub">{idle.idleFightsCount} fights · +{idle.idleXpGained} XP</span>
+                        </div>
+                    </div>
+                </div>
             </div>
             <ConnectionModal
                 open={connectionModal.open}

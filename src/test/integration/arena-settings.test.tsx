@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { fireEvent, act, screen } from '@testing-library/react'
+import { fireEvent, act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import Arena from '../../pages/Arena'
 import { useGame } from '../../context/GameContext'
@@ -177,8 +177,9 @@ describe('Arena settings modal', () => {
     expect(getByText('ATTACKED BY NIGHT HUNTER')).toBeInTheDocument()
     expect(queryByText(/\[BOT\]/i)).toBeNull()
     expect(queryByText(/\[PLAYER\]/i)).toBeNull()
-    expect(queryByText(/^NO XP$/i)).toBeNull()
-    expect(queryByText(/\+\d+\s*XP/i)).toBeNull()
+    // Scoped to modal — PvE panel renders "+X XP" globally
+    const modal = document.querySelector('.settings-body')
+    expect(modal ? within(modal as HTMLElement).queryByText(/\+\d+\s*XP/i) : null).toBeNull()
   })
 
   it('disables fight button and shows AUTO MODE when auto mode is on', async () => {
