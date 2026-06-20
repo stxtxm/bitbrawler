@@ -1,24 +1,29 @@
 @use '../variables' as *;
 
-.idle-runner-scene {
+.idle-runner-box {
   position: relative;
   width: 100%;
   overflow: hidden;
   background-size: cover;
   container-type: inline-size;
+  flex: 1;
+  @include retro-border(2px, #fff);
+  min-height: 150px;
+  margin-bottom: 10px;
 
-  .character-display & {
-    flex: 1;
-    height: auto;
-    min-height: 300px;
-    @include retro-border(2px, #fff);
-    overflow: hidden;
-
-    @include mobile {
-      min-height: 200px;
-      border-width: 1px;
-    }
+  @include mobile {
+    border-width: 1px;
+    min-height: 100px;
+    margin-bottom: 5px;
   }
+}
+
+.idle-runner-info {
+  width: 100%;
+}
+
+.idle-fights-bar {
+  background: linear-gradient(90deg, #f0c040, #ff8800) !important;
 }
 
 // ── Parallax layers ─────────────────────────────────
@@ -305,44 +310,6 @@
 @keyframes scrollGround {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
-}
-
-// ── HUD ─────────────────────────────────────────────
-
-.idle-hud {
-  position: absolute;
-  top: clamp(8px, 2cqi, 16px);
-  left: 0;
-  right: 0;
-  z-index: 6;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: clamp(4px, 1cqi, 10px) clamp(8px, 2cqi, 20px);
-  gap: clamp(4px, 1cqi, 12px);
-  pointer-events: none;
-}
-
-.idle-xp-counter {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1px;
-  font-family: $font-pixel;
-  text-shadow: 1px 1px 0 rgba(0,0,0,0.8);
-  background: rgba(0,0,0,0.4);
-  padding: clamp(2px, 0.5cqi, 6px) clamp(6px, 1.5cqi, 14px);
-  border-radius: 4px;
-}
-
-.idle-fights {
-  font-size: clamp(0.4rem, 0.9cqi, 0.6rem);
-  color: #aaa;
-}
-
-.idle-xp-total {
-  font-size: clamp(0.5rem, 1.1cqi, 0.7rem);
-  color: $accent-gold;
 }
 
 // ── Offline notification ──────────────────────────

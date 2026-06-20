@@ -11,6 +11,7 @@ import {
 } from '../data/tileAssets'
 import { ParticleSystem } from '../utils/particleSystem'
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode'
+import { getXpProgress, formatXpDisplay } from '../utils/xpUtils'
 
 interface IdleRunnerSceneProps {
   character: Character
@@ -43,6 +44,7 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
     return 8
   }, [])
   const monsterScale = useMemo(() => Math.max(3, charScale - 2), [charScale])
+  const xpProgress = useMemo(() => getXpProgress(character), [character])
 
   const clouds = useMemo(() => generateCloudPositions(), [])
   const skyGradient = useMemo(() => getSkyGradient(), [])
@@ -100,87 +102,126 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
   const mountainCss = useMemo(() => renderTileAsCssUrl(MOUNTAIN_TILE), [])
 
   return (
-    <div className="idle-runner-scene" ref={containerRef} style={containerStyle}>
-      {/* Mountain layer (slow scroll) */}
-      {!lowPerf && (
-        <div className="idle-layer mountains" style={{ backgroundImage: mountainCss }}>
-          <div className="idle-layer-inner scroll-slow" />
-        </div>
-      )}
+    <>
+      <div className="idle-runner-box" ref={containerRef} style={containerStyle}>
+        {/* Mountain layer (slow scroll) */}
+        {!lowPerf && (
+          <div className="idle-layer mountains" style={{ backgroundImage: mountainCss }}>
+            <div className="idle-layer-inner scroll-slow" />
+          </div>
+        )}
 
-      {/* Cloud layer */}
-      {!lowPerf && (
-        <div className="idle-layer clouds">
-          {clouds.map((cloud, i) => (
-            <div key={i} className="cloud-instance" style={{
-              left: `${cloud.x}%`,
-              top: `${cloud.y}%`,
-              transform: `scaleX(${cloud.scale})`,
-              opacity: cloud.opacity,
-              backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(
-                cloud.type.pixels.map((row, y) =>
-                  row.map((cell, x) => cell ? `<rect x="${x}" y="${y}" width="1" height="1" fill="${cloud.type.palette[cell] || '#fff'}"/>` : '').join('')
-                ).join('')
-              )}")`,
-            }} />
-          ))}
-        </div>
-      )}
+        {/* Cloud layer */}
+        {!lowPerf && (
+          <div className="idle-layer clouds">
+            {clouds.map((cloud, i) => (
+              <div key={i} className="cloud-instance" style={{
+                left: `${cloud.x}%`,
+                top: `${cloud.y}%`,
+                transform: `scaleX(${cloud.scale})`,
+                opacity: cloud.opacity,
+                backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(
+                  cloud.type.pixels.map((row, y) =>
+                    row.map((cell, x) => cell ? `<rect x="${x}" y="${y}" width="1" height="1" fill="${cloud.type.palette[cell] || '#fff'}"/>` : '').join('')
+                  ).join('')
+                )}")`,
+              }} />
+            ))}
+          </div>
+        )}
 
-      {/* Character */}
-      <div className={`idle-character-slot ${scenePhase === 'combat' ? 'attacking' : ''} ${scenePhase === 'result' && lastCombatResult === 'win' ? 'victory' : ''}`}>
-        <AnimatedPixelCharacter
-          seed={character.seed}
-          gender={character.gender}
-          scale={charScale}
-          state={characterState}
-          frame={animFrame}
-        />
+        {/* Character */}
+        <div className={`idle-character-slot ${scenePhase === 'combat' ? 'attacking' : ''} ${scenePhase === 'result' && lastCombatResult === 'win' ? 'victory' : ''}`}>
+          <AnimatedPixelCharacter
+            seed={character.seed}
+            gender={character.gender}
+            scale={charScale}
+            state={characterState}
+            frame={animFrame}
+          />
+        </div>
+
+        {/* Monster */}
+        {currentMonster && (
+          <div
+            className={`idle-monster-slot phase-${scenePhase}`}
+            data-monster={currentMonster}
+          >
+            <PixelMonster monsterId={currentMonster} scale={monsterScale} />
+            {scenePhase === 'combat' && <div className="combat-flash" />}
+          </div>
+        )}
+
+        {/* Combat result text */}
+        {scenePhase === 'result' && lastCombatResult && (
+          <div className={`idle-combat-result ${lastCombatResult}`}>
+            <span className="result-label">{lastCombatResult === 'win' ? 'VICTORY' : 'DEFEAT'}</span>
+            <span className="result-xp">+{lastCombatXp} XP</span>
+          </div>
+        )}
+
+        {/* Ground layer */}
+        <div className="idle-ground-layer" style={{ backgroundImage: `${groundCss}, ${dirtCss}` }}>
+          <div className="idle-ground-inner scroll-fast" />
+        </div>
+
+        {/* Offline gains notification */}
+        {offlineGains && (
+          <div className="idle-offline-notification">
+            <button className="idle-offline-close" onClick={onClearOfflineGains} aria-label="Dismiss">×</button>
+            <div className="offline-title">WELCOME BACK!</div>
+            <div className="offline-stats">
+              <span>{offlineGains.fights} fights</span>
+              <span>+{offlineGains.xp} XP</span>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Monster: only visible during combat */}
-      {currentMonster && (
-        <div
-          className={`idle-monster-slot phase-${scenePhase}`}
-          data-monster={currentMonster}
-        >
-          <PixelMonster monsterId={currentMonster} scale={monsterScale} />
-          {scenePhase === 'combat' && <div className="combat-flash" />}
+      {/* XP section (matches PvP xp-section height) */}
+      <div className="xp-section" style={{ margin: 0 }}>
+        <div className="xp-header">
+          <span className="xp-label">EXP</span>
+          <span className="xp-text">{formatXpDisplay(character)}</span>
         </div>
-      )}
-
-      {/* Combat result text */}
-      {scenePhase === 'result' && lastCombatResult && (
-        <div className={`idle-combat-result ${lastCombatResult}`}>
-          <span className="result-label">{lastCombatResult === 'win' ? 'VICTORY' : 'DEFEAT'}</span>
-          <span className="result-xp">+{lastCombatXp} XP</span>
-        </div>
-      )}
-
-      {/* Ground layer (fast scroll) */}
-      <div className="idle-ground-layer" style={{ backgroundImage: `${groundCss}, ${dirtCss}` }}>
-        <div className="idle-ground-inner scroll-fast" />
-      </div>
-
-      {/* HUD overlay */}
-      <div className="idle-hud">
-        <div className="idle-xp-counter">
-          <span className="idle-fights">{idleFightsCount} FIGHTS</span>
-          <span className="idle-xp-total">+{idleXpGained} XP</span>
-        </div>
-      </div>
-
-      {/* Offline gains notification */}
-      {offlineGains && (
-        <div className="idle-offline-notification">
-          <button className="idle-offline-close" onClick={onClearOfflineGains} aria-label="Dismiss">×</button>
-          <div className="offline-title">WELCOME BACK!</div>
-          <div className="offline-stats">
-            <span>{offlineGains.fights} fights</span>
-            <span>+{offlineGains.xp} XP</span>
+        <div className="xp-bar-container">
+          <div
+            className={`xp-bar ${xpProgress.isMaxLevel ? 'max-level' : ''}`}
+            style={{ width: `${xpProgress.percentage}%` }}
+          >
+            <div className="xp-bar-shine" />
           </div>
         </div>
-      )}
-    </div>
+        {xpProgress.isMaxLevel && <span className="max-level-badge">★ MAX LEVEL ★</span>}
+      </div>
+
+      {/* Idle stats panel (matches PvP stats-panel height using same CSS classes) */}
+      <div className="idle-runner-info">
+        <div className="stat-row principal">
+          <span>FIGHTS</span>
+          <div className="bar-container">
+            <div
+              className="bar idle-fights-bar"
+              style={{ width: `${Math.min(100, idleFightsCount * 10)}%` }}
+            />
+          </div>
+          <span className="stat-val">{idleFightsCount}</span>
+        </div>
+        <div className="stats-grid-compact">
+          <div className="compact-stat">
+            <span className="compact-stat-label">XP</span>
+            <span className="compact-stat-value" style={{ color: '#f0c040' }}>+{idleXpGained}</span>
+          </div>
+          <div className="compact-stat">
+            <span className="compact-stat-label">LAST</span>
+            <span className="compact-stat-value">{lastCombatResult === 'win' ? 'WIN' : lastCombatResult === 'lose' ? 'LOSS' : '—'}</span>
+          </div>
+          <div className="compact-stat">
+            <span className="compact-stat-label">LVL</span>
+            <span className="compact-stat-value">{character.level}</span>
+          </div>
+        </div>
+      </div>
+    </>
   )
 }
