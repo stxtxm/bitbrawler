@@ -1,52 +1,54 @@
 import '@testing-library/jest-dom';
 import { beforeAll, afterAll, vi } from 'vitest';
 
-const originalConsoleError = console.error;
+// Mock CanvasRenderingContext2D et getContext pour éviter les erreurs JSDOM
+class MockCanvasContext {
+    fillRect = vi.fn();
+    clearRect = vi.fn();
+    beginPath = vi.fn();
+    moveTo = vi.fn();
+    lineTo = vi.fn();
+    closePath = vi.fn();
+    fill = vi.fn();
+    stroke = vi.fn();
+    arc = vi.fn();
+    fillText = vi.fn();
+    measureText = vi.fn(() => ({ width: 0 }));
+    save = vi.fn();
+    restore = vi.fn();
+    translate = vi.fn();
+    rotate = vi.fn();
+    scale = vi.fn();
+}
 
 beforeAll(() => {
-    // Suppress expected Supabase error logs
-    console.error = (...args: any[]) => {
-        const message = args[0]?.toString() || '';
-        if (message.includes('Supabase retry failed')) {
-            return;
-        }
-        originalConsoleError.apply(console, args);
-    };
-
     // Polyfill HTMLCanvasElement.prototype.getContext
-    if (typeof HTMLCanvasElement.prototype.getContext !== 'function') {
-        HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({
-            fillRect: vi.fn(),
-            clearRect: vi.fn(),
-            beginPath: vi.fn(),
-            moveTo: vi.fn(),
-            lineTo: vi.fn(),
-            closePath: vi.fn(),
-            fill: vi.fn(),
-            stroke: vi.fn(),
-            arc: vi.fn(),
-        });
-    }
+    HTMLCanvasElement.prototype.getContext = vi.fn().mockImplementation((contextType) => {
+        if (contextType === '2d') {
+            return new MockCanvasContext();
+        }
+        return null;
+    });
 
-    // Polyfill window.matchMedia for jsdom (used by PWA install hook)
-    if (typeof window.matchMedia !== 'function') {
-        Object.defineProperty(window, 'matchMedia', {
-            value: (query: string) => ({
-                matches: false,
-                media: query,
-                onchange: null,
-                addEventListener: vi.fn(),
-                removeEventListener: vi.fn(),
-                addListener: vi.fn(),
-                removeListener: vi.fn(),
-                dispatchEvent: vi.fn(),
-            }),
-            writable: true,
-            configurable: true,
-        });
-    }
-});
+    // Polyfill window.matchMedia
+    Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        value: vi.fn().mockImplementation(query => ({
+            matches: false,
+            media: query,
+            onchange: null,
+            addListener: vi.fn(),
+            removeListener: vi.fn(),
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn(),
+            dispatchEvent: vi.fn(),
+        })),
+    });
 
-afterAll(() => {
-    console.error = originalConsoleError;
+    // Polyfill IntersectionObserver (nécessaire pour certains composants)
+    window.IntersectionObserver = vi.fn().mockImplementation(() => ({
+        observe: vi.fn(),
+        unobserve: vi.fn(),
+        disconnect: vi.fn(),
+    }));
 });

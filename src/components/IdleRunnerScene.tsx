@@ -13,12 +13,7 @@ import {
 import { ParticleSystem } from '../utils/particleSystem'
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode'
 
-interface FloatingDamage {
-  id: number
-  value: number
-  x: number
-  createdAt: number
-}
+
 
 interface IdleRunnerSceneProps {
   character: Character
