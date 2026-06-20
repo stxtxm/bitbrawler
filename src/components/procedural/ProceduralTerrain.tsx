@@ -22,51 +22,37 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({ width, hei
     if (!ctx) return;
 
     const seedNum = parseInt(seed.replace(/\D/g, '') || '0', 10);
-    const scale = mobileQuality ? 0.5 : 1;
-    const w = Math.floor(width * scale);
-    const h = Math.floor(height * scale);
-
     ctx.clearRect(0, 0, width, height);
 
-    // Draw layers with logic to ensure no overlapping mountains
-    for (let i = 0; i < parallaxLayers; i++) {
-      const noise = generateNoiseMap(w, h, seedNum + i);
-      
-      if (i === 0) {
-        // Mountain layer: Render as a single clean silhouette with no intersections
-        ctx.fillStyle = palette.mountain;
-        ctx.beginPath();
-        ctx.moveTo(0, h);
-        
-        let lastY = h;
-        for (let x = 0; x <= w; x++) {
-          // Smooth the mountain peaks by averaging noise over a small window
-          let peakNoise = 0;
-          for (let k = -2; k <= 2; k++) {
-            peakNoise += noise[Math.floor(h * 0.3) * w + Math.min(Math.max(x + k, 0), w - 1)];
-          }
-          peakNoise /= 5;
-          
-          const targetY = (h * 0.4) - (peakNoise / 255) * (h * 0.3);
-          // Limit slope to avoid impossible steepness
-          const y = Math.min(Math.max(targetY, lastY - 5), lastY + 5);
-          ctx.lineTo(x / scale, y / scale);
-          lastY = y;
-        }
-        ctx.lineTo(w / scale, h / scale);
-        ctx.closePath();
-        ctx.fill();
-      } else {
-        // Standard procedural layer for other layers (grass/dirt)
+    // Draw Mountain layer as a single fixed silhouette
+    ctx.fillStyle = palette.mountain;
+    ctx.beginPath();
+    ctx.moveTo(0, height);
+    
+    // Fixed noise calculation for persistent shape
+    const mountainPeaks = 6;
+    for (let i = 0; i <= mountainPeaks; i++) {
+        const x = (width / mountainPeaks) * i;
+        const y = height * (0.3 + Math.sin(i + seedNum) * 0.2);
+        ctx.lineTo(x, y);
+    }
+    
+    ctx.lineTo(width, height);
+    ctx.closePath();
+    ctx.fill();
+
+    // Standard procedural layer for other layers (grass/dirt)
+    for (let i = 1; i < parallaxLayers; i++) {
+        const noise = generateNoiseMap(Math.floor(width/4), Math.floor(height/4), seedNum + i);
         ctx.fillStyle = i === 1 ? palette.grass : palette.dirt;
-        for (let y = 0; y < h; y++) {
-          for (let x = 0; x < w; x++) {
-            if (noise[y * w + x] > 180) {
-              ctx.fillRect(x / scale, y / scale, 1/scale, 1/scale);
+        const cellSize = 4;
+        for (let y = 0; y < height / cellSize; y++) {
+            for (let x = 0; x < width / cellSize; x++) {
+                if (noise[y * Math.floor(width/cellSize) + x] > 200) {
+                    ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                }
             }
-          }
         }
-      }
     }
   }, [width, height, parallaxLayers, mobileQuality, seed, palette]);
 
