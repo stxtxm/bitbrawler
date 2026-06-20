@@ -10,10 +10,13 @@
   .character-display & {
     flex: 1;
     height: auto;
-    min-height: 150px;
+    min-height: 300px;
+    @include retro-border(2px, #fff);
+    overflow: hidden;
 
     @include mobile {
-      min-height: 100px;
+      min-height: 200px;
+      border-width: 1px;
     }
   }
 }
