@@ -321,20 +321,27 @@ async function syncAutoMode(page, desiredEnabled) {
   if (isEnabled !== desiredEnabled) {
     // Click with retry logic in case of transient issues
     let clicked = false
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < 4; attempt++) {
       try {
-        await autoSwitch.click({ timeout: 5000 })
+        if (attempt < 3) {
+          // First 3 attempts: normal click with actionability checks
+          await autoSwitch.click({ timeout: 5000 })
+        } else {
+          // Last resort: force click bypasses overlay interception checks
+          console.log('   Normal click blocked, attempting force click...')
+          await autoSwitch.click({ force: true, timeout: 5000 })
+        }
         clicked = true
         break
       } catch (err) {
-        if (attempt < 2) {
+        if (attempt < 3) {
           console.log(`   Click attempt ${attempt + 1} failed, retrying in 1s...`)
           await page.waitForTimeout(1000)
         }
       }
     }
     if (!clicked) {
-      console.log('   Failed to click auto mode switch after 3 attempts')
+      console.log('   Failed to click auto mode switch after 4 attempts (including force)')
       await closeSettingsWithFallback(page)
       return false
     }
@@ -345,6 +352,29 @@ async function syncAutoMode(page, desiredEnabled) {
   }
 
   return await closeSettingsWithFallback(page)
+}
+
+/**
+ * Dismiss any modal overlays (level-up, inventory, settings) that may be blocking interactions.
+ * Calls handleLevelUpOverlay first, then tries to close inventory/settings panels.
+ */
+async function dismissAllOverlays(page) {
+  // 1. Dismiss level-up overlay (allocates stat points or closes it)
+  await handleLevelUpOverlay(page).catch(() => {})
+
+  // 2. Close any open inventory or settings panels
+  const closePanel = page.locator('button[aria-label="Close inventory"], button[aria-label="Close settings"], .inventory-close').first()
+  if (await closePanel.isVisible({ timeout: 1000 }).catch(() => false)) {
+    await closePanel.click().catch(() => {})
+    await page.waitForTimeout(500)
+  }
+
+  // 3. Force-dismiss any remaining overlay by clicking its backdrop
+  const overlay = page.locator('.retro-modal-overlay, .level-up-pop-overlay, .modal-overlay').first()
+  if (await overlay.isVisible({ timeout: 1000 }).catch(() => false)) {
+    await overlay.click({ force: true }).catch(() => {})
+    await page.waitForTimeout(500)
+  }
 }
 
 /**
@@ -464,13 +494,24 @@ function parseXpFromText(text) {
 async function handleDailyLootbox(page, runKey) {
   console.log('🎁 Checking lootbox...')
 
+  // Dismiss any level-up overlay that may be blocking the inventory button
+  await handleLevelUpOverlay(page)
+
   const inventoryBtn = page.locator('button[aria-label="Inventory"], button[title="Inventory"]').first()
   if (!(await inventoryBtn.isVisible({ timeout: 5000 }).catch(() => false))) {
     console.log('   Inventory button not found')
     return { available: false, opened: false, reason: 'inventory-button-missing' }
   }
 
-  await inventoryBtn.click()
+  // Click with retry in case overlay briefly blocks
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const clicked = await inventoryBtn.click({ timeout: 3000 }).then(() => true).catch(() => false)
+    if (clicked) break
+    if (attempt < 2) {
+      await handleLevelUpOverlay(page)
+      await page.waitForTimeout(500)
+    }
+  }
   await page.waitForTimeout(800)
 
   const lootboxBtn = page.locator('button[aria-label="Daily lootbox roll"], .lootbox-btn').first()
@@ -1161,9 +1202,29 @@ async function run() {
     const fighterExhausted =
       finalArenaStatus.isResting ||
       (finalArenaStatus.fightsAvailable !== null && finalArenaStatus.fightsAvailable <= 0)
+
+    // Dismiss any overlays before opening lootbox / settings
+    await dismissAllOverlays(page)
+    await page.waitForTimeout(500)
+
     runRecord.lootbox = await handleDailyLootbox(page, runKey)
     runRecord.auto_mode_enabled = fighterExhausted
-    runRecord.auto_mode_sync_ok = await syncAutoMode(page, fighterExhausted)
+
+    // Retry syncAutoMode once with page reload if initial attempt fails
+    for (let syncAttempt = 0; syncAttempt < 2; syncAttempt++) {
+      runRecord.auto_mode_sync_ok = await syncAutoMode(page, fighterExhausted)
+      if (runRecord.auto_mode_sync_ok) break
+      if (syncAttempt === 0) {
+        console.log('   syncAutoMode failed, reloading page and retrying...')
+        await page.evaluate(() => { window.location.href = window.location.origin }).catch(() => {})
+        await page.waitForURL('**', { timeout: 15000 }).catch(() => {})
+        await page.waitForTimeout(3000)
+        // After reload, character should be on arena page with auto-mode persistence
+        // Make sure we're on the arena before retrying
+        await waitForArena(page, 15000)
+        await dismissAllOverlays(page)
+      }
+    }
     persistQaState(runKey, runRecord.character, runRecord.character_action, fighterExhausted)
     console.log(`   Fighter exhausted for today: ${fighterExhausted ? 'yes' : 'no'}`)
 
