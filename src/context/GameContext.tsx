@@ -109,6 +109,19 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [handleDbError]);
 
+  const syncCharacterToBackend = useCallback(async (char: Character) => {
+    if (!char.id) return;
+    try {
+      const { error } = await supabase
+        .from('characters')
+        .update(convertToSupabase(char))
+        .eq('id', char.id);
+      if (error) throw error;
+    } catch (error: any) {
+      handleDbError(error, 'sync-character');
+    }
+  }, [handleDbError]);
+
   // Load character on mount
   useEffect(() => {
   const loadCharacter = async () => {
@@ -133,9 +146,18 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
       const syncResult = await syncCharacterWithSupabase(localChar);
       if (syncResult.status === 'ok') {
-        const normalized = normalizeCharacter(syncResult.character);
+        // Keep the character with the most XP — handles the case where
+        // the last idle sync didn't complete before page unload
+        const serverChar = syncResult.character;
+        const hasMoreXp = (localChar.experience ?? 0) > (serverChar.experience ?? 0);
+        const bestChar = hasMoreXp ? localChar : serverChar;
+        const normalized = normalizeCharacter(bestChar);
         persistCharacter(normalized);
         setDbAvailable(true);
+        // If local had more XP, sync it back to Supabase
+        if (hasMoreXp) {
+          syncCharacterToBackend(normalized);
+        }
       } else if (syncResult.status === 'error') {
         setActiveCharacter(normalizeCharacter(localChar));
         setDbAvailable(false);
@@ -150,7 +172,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     };
 
     loadCharacter();
-  }, [isOnline, persistCharacter, syncCharacterWithSupabase]);
+  }, [isOnline, persistCharacter, syncCharacterWithSupabase, syncCharacterToBackend]);
 
 
   // Characters are now reset centrally via GitHub Actions every 24h.
@@ -808,18 +830,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [activeCharacter, handleDbError, persistCharacter]);
 
-  const syncCharacterToBackend = useCallback(async (char: Character) => {
-    if (!char.id) return;
-    try {
-      const { error } = await supabase
-        .from('characters')
-        .update(convertToSupabase(char))
-        .eq('id', char.id);
-      if (error) throw error;
-    } catch (error: any) {
-      handleDbError(error, 'sync-character');
-    }
-  }, [handleDbError]);
 
   const deleteCharacter = useCallback(async () => {
     if (!activeCharacter?.id) return false;

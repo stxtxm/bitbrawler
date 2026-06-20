@@ -103,6 +103,13 @@ export function useIdleCombat({
     processOfflineGains()
   }, [processOfflineGains])
 
+  // Also process offline gains once character becomes available (async load)
+  useEffect(() => {
+    if (character) {
+      processOfflineGains()
+    }
+  }, [character, processOfflineGains])
+
   const clearOfflineGains = useCallback(() => {
     setOfflineGains(null)
   }, [])
