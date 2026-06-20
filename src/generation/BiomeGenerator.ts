@@ -11,14 +11,10 @@ export type BiomeType = typeof BIOME_CONFIG.BIOMES[number];
 export interface BiomeData {
   type: BiomeType;
   noiseValue: number;
-  transitionFactor: number; // 0-1 for smooth blending
+  transitionFactor: number;
 }
 
-/**
- * Determine biome type based on noise value
- */
 function getBiomeTypeFromNoise(noiseValue: number): BiomeType {
-  // noiseValue is 0-1
   if (noiseValue < 0.2) return 'water';
   if (noiseValue < 0.4) return 'desert';
   if (noiseValue < 0.6) return 'meadow';
@@ -27,7 +23,8 @@ function getBiomeTypeFromNoise(noiseValue: number): BiomeType {
 }
 
 /**
- * Get biome at a specific position with smooth transitions
+ * Get biome at a specific position with smooth transitions.
+ * Uses a wider sampling range for visible blending.
  */
 export function getBiomeAt(
   x: number,
@@ -35,38 +32,36 @@ export function getBiomeAt(
   seed: number,
   scrollOffset: number = 0,
 ): BiomeData {
-  const adjustedX = (x + scrollOffset) * 0.01; // Lower scale for larger biome regions
-  const noiseValue = (noise2D(adjustedX, y * 0.01, seed) + 1) / 2; // Normalize to 0-1
+  // Use a coarser scale for biome regions (wider bands)
+  const adjustedX = (x + scrollOffset) * 0.003;
+  const adjustedY = y * 0.005;
+  const noiseValue = (noise2D(adjustedX, adjustedY, seed) + 1) / 2;
 
   const biomeType = getBiomeTypeFromNoise(noiseValue);
 
-  // Transition factor: how close to the boundary between biomes
+  // Smooth transition factor: 0 at boundary, 1 in center
   const biomeValue = noiseValue * 5;
-  const transitionFactor = Math.abs((biomeValue % 1) - 0.5) * 2; // 0 at boundary, 1 in center
+  const transitionFactor = Math.abs((biomeValue % 1) - 0.5) * 2;
 
-  return {
-    type: biomeType,
-    noiseValue,
-    transitionFactor,
-  };
+  return { type: biomeType, noiseValue, transitionFactor };
 }
 
 /**
- * Blend two color values based on transition factor
+ * Blend two hex colors with a factor (0=color2, 1=color1)
  */
 function blendColor(color1: string, color2: string, factor: number): string {
   const c1 = hexToRgb(color1);
   const c2 = hexToRgb(color2);
-
-  const r = Math.round(c1.r + (c2.r - c1.r) * (1 - factor));
-  const g = Math.round(c1.g + (c2.g - c1.g) * (1 - factor));
-  const b = Math.round(c1.b + (c2.b - c1.b) * (1 - factor));
-
+  const t = 1 - factor;
+  const r = Math.round(c1.r + (c2.r - c1.r) * t);
+  const g = Math.round(c1.g + (c2.g - c1.g) * t);
+  const b = Math.round(c1.b + (c2.b - c1.b) * t);
   return rgbToHex(r, g, b);
 }
 
 /**
- * Get color for biome with smooth transitions
+ * Get biome color with smooth blending between adjacent biomes.
+ * Samples at wider offsets (40px) so transitions are visible.
  */
 export function getBiomeColor(
   x: number,
@@ -79,73 +74,37 @@ export function getBiomeColor(
   const biomeColors = BIOME_CONFIG.COLORS[biome.type];
   const color = biomeColors[colorType];
 
-  // Get adjacent biome for smooth blending
-  const adjacentBiome = getBiomeAt(x + 1, y, seed, scrollOffset);
+  // Sample at wider offset for visible blending
+  const blendRange = 40;
+  const adjacentBiome = getBiomeAt(x + blendRange, y, seed, scrollOffset);
   if (adjacentBiome.type !== biome.type) {
     const adjacentColors = BIOME_CONFIG.COLORS[adjacentBiome.type];
     const adjacentColor = adjacentColors[colorType];
     return blendColor(color, adjacentColor, biome.transitionFactor);
   }
 
+  // Also check left side for bidirectional blending
+  const leftBiome = getBiomeAt(x - blendRange, y, seed, scrollOffset);
+  if (leftBiome.type !== biome.type) {
+    const leftColors = BIOME_CONFIG.COLORS[leftBiome.type];
+    const leftColor = leftColors[colorType];
+    return blendColor(color, leftColor, biome.transitionFactor);
+  }
+
   return color;
 }
 
-/**
- * Get all biomes in a region (for rendering optimization)
- */
-export function getBiomesInRegion(
-  startX: number,
-  endX: number,
-  y: number,
-  seed: number,
-  step: number = 100, // Sample every N pixels
-): BiomeData[] {
-  const biomes: BiomeData[] = [];
-  for (let x = startX; x <= endX; x += step) {
-    const biome = getBiomeAt(x, y, seed);
-    if (!biomes.length || biomes[biomes.length - 1].type !== biome.type) {
-      biomes.push(biome);
-    }
-  }
-  return biomes;
-}
-
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
-/**
- * Convert hex color to RGB object
- */
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
-    ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
-      }
+    ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) }
     : { r: 0, g: 0, b: 0 };
 }
 
-/**
- * Convert RGB to hex color
- */
 function rgbToHex(r: number, g: number, b: number): string {
-  return (
-    '#' +
-    [r, g, b]
-      .map((x) => {
-        const hex = x.toString(16);
-        return hex.length === 1 ? '0' + hex : hex;
-      })
-      .join('')
-  );
+  return '#' + [r, g, b].map((x) => x.toString(16).padStart(2, '0')).join('');
 }
 
-/**
- * Get biome name for display
- */
 export function getBiomeName(biomeType: BiomeType): string {
   const names: Record<BiomeType, string> = {
     meadow: 'Meadow',
