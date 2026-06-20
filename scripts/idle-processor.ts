@@ -107,7 +107,7 @@ function simulateIdleGains(
   let streak = current.idleStreak ?? 0;
   let kills = current.idleTotalKills ?? 0;
   let idleTotal = current.idleTotalXp ?? 0;
-  let leveledUp = false;
+  let _leveledUp = false;
 
   for (let i = 0; i < fights; i++) {
     const monsterId = getRandomMonsterId();
@@ -124,7 +124,7 @@ function simulateIdleGains(
     const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus));
 
     const result = gainXp(current, finalXp);
-    if (result.levelsGained > 0) leveledUp = true;
+    if (result.levelsGained > 0) _leveledUp = true;
 
     const pointsGained = result.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL;
 
