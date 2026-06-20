@@ -9,6 +9,7 @@ import { parseCombatDetail, CombatAction, CombatActionType } from '../utils/comb
 import { calculateFightXp } from '../utils/xpUtils';
 import { useSound } from '../hooks/useSound';
 import { MONSTER_ASSETS, MonsterId } from '../data/monsterAssets';
+import { ParticleSystem } from '../utils/particleSystem'; // Import ParticleSystem
 
 function extractDamage(detail: string): number | null {
     const match = detail.match(/(\d+)\s*DMG/);
@@ -47,9 +48,11 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const [currentRound, setCurrentRound] = useState(0);
     const logRef = useRef<HTMLDivElement | null>(null);
     const [actionPulse, setActionPulse] = useState<CombatAction | null>(null);
-    const [damageNumber, setDamageNumber] = useState<{ value: number; actor: 'player' | 'opponent' } | null>(null);
+    // Removed damageNumber state as particles will handle it
+    // const [damageNumber, setDamageNumber] = useState<{ value: number; actor: 'player' | 'opponent' } | null>(null);
     const pulseTimeoutRef = useRef<number | null>(null);
-    const damageTimeoutRef = useRef<number | null>(null);
+    // Removed damageTimeoutRef as particles handle their own timing
+    // const damageTimeoutRef = useRef<number | null>(null);
     const [scanIndex, setScanIndex] = useState(0);
     const [scanLocked, setScanLocked] = useState(false);
     const [fighterEntrance, setFighterEntrance] = useState(false);
@@ -60,6 +63,10 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
         miss: 420,
         counter: 440,
     };
+
+    // Particle system refs
+    const particleSystemRef = useRef<ParticleSystem | null>(null);
+    const mainContainerRef = useRef<HTMLDivElement | null>(null);
 
     const scanList = useMemo(() => {
         const map = new Map<string, Character>();
@@ -75,6 +82,20 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     }, [candidates, opponent]);
 
     const selectedKey = opponent.id || opponent.name;
+
+    // Initialize ParticleSystem on mount
+    useEffect(() => {
+        if (mainContainerRef.current) {
+            const ps = new ParticleSystem();
+            ps.mount(mainContainerRef.current);
+            particleSystemRef.current = ps;
+        }
+
+        // Cleanup
+        return () => {
+            particleSystemRef.current?.destroy();
+        };
+    }, []); // Run only on mount
 
     // Intro → VS
     useEffect(() => {
@@ -137,7 +158,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
         };
     }, [phase, scanList, selectedKey]);
 
-    // Combat round playback
+    // Combat round playback and particle emission
     useEffect(() => {
         if (phase === 'combat' && combatResult) {
             let roundIndex = 0;
@@ -146,6 +167,12 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                     setCurrentRound(roundIndex);
                     const detail = combatResult.details[roundIndex];
                     const action = parseCombatDetail(detail, player.name, opponent.name);
+                    
+                    const ps = particleSystemRef.current;
+                    const playerX = 30; // Relative X for player in combat view
+                    const opponentX = 70; // Relative X for opponent in combat view
+                    const centerY = 55; // Relative Y for center of combat view
+
                     if (action) {
                         setActionPulse(action);
                         if (pulseTimeoutRef.current !== null) {
@@ -157,19 +184,23 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                             pulseTimeoutRef.current = null;
                         }, duration);
 
-                        // Show floating damage number
+                        // Emit particles based on action type and damage
                         const dmg = extractDamage(detail);
                         if (dmg !== null) {
-                            const receiver = action.actor === 'player' ? 'opponent' : 'player';
-                            setDamageNumber({ value: dmg, actor: receiver });
-                            if (damageTimeoutRef.current !== null) {
-                                window.clearTimeout(damageTimeoutRef.current);
+                            if (action.actor === 'player') { // Player hit opponent
+                                if (action.type === 'crit') ps?.emit('crit', opponentX, centerY, 1); 
+                                else if (action.type === 'miss') ps?.emit('miss', opponentX, centerY, 1);
+                                else ps?.emit('damage', opponentX, centerY, 1, dmg);
+                            } else { // Opponent hit player
+                                if (action.type === 'crit') ps?.emit('crit', playerX, centerY, 1); 
+                                else if (action.type === 'miss') ps?.emit('miss', playerX, centerY, 1);
+                                else ps?.emit('damage', playerX, centerY, 1, dmg);
                             }
-                            damageTimeoutRef.current = window.setTimeout(() => {
-                                setDamageNumber(null);
-                                damageTimeoutRef.current = null;
-                            }, 900);
+                        } else if (action.type === 'miss') { // Handle miss if no damage value but action is miss
+                             if (action.actor === 'player') ps?.emit('miss', opponentX, centerY, 1);
+                             else ps?.emit('miss', playerX, centerY, 1);
                         }
+                        // Add logic for 'heal' if it becomes relevant in combat view
                     }
                     roundIndex++;
                 } else {
@@ -182,7 +213,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
 
             return () => clearInterval(roundInterval);
         }
-    }, [phase, combatResult, player.name, opponent.name]);
+    }, [phase, combatResult, player.name, opponent.name, player, opponent, actionDurations, particleSystemRef.current]); // Added dependencies
 
     // Play sound on each action pulse
     useEffect(() => {
@@ -196,16 +227,14 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
             if (pulseTimeoutRef.current !== null) {
                 window.clearTimeout(pulseTimeoutRef.current);
             }
-            if (damageTimeoutRef.current !== null) {
-                window.clearTimeout(damageTimeoutRef.current);
-            }
+            // Removed damageTimeoutRef cleanup as it's no longer used
         };
     }, []);
 
     useEffect(() => {
         if (phase !== 'combat') {
             setActionPulse(null);
-            setDamageNumber(null);
+            // Removed setDamageNumber(null);
         }
     }, [phase]);
 
@@ -265,7 +294,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const reactionType = actionPulse && actionPulse.type !== 'miss' ? actionPulse.type : null;
 
     return (
-        <div className="combat-overlay" onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()}>
+        <div className="combat-overlay" onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()} ref={mainContainerRef}>
             <div className="combat-modal">
                 {/* Intro Phase */}
                 {phase === 'intro' && (matchType === 'pve' ? (
@@ -336,14 +365,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                 {/* Combat Phase */}
                 {phase === 'combat' && combatResult && (
                     <div className={`combat-action${actionPulse ? ` action-${actionPulse.type}` : ''}`}>
-                        <div className="damage-numbers">
-                            {damageNumber && damageNumber.actor === 'player' && (
-                                <div className="dmg-num dmg-taken">-{damageNumber.value}</div>
-                            )}
-                            {damageNumber && damageNumber.actor === 'opponent' && (
-                                <div className="dmg-num dmg-dealt">-{damageNumber.value}</div>
-                            )}
-                        </div>
+                        {/* Removed old damageNumber display */}
                         <div className="combat-fighters">
                             <div
                                 key={`player-${currentRound}`}
