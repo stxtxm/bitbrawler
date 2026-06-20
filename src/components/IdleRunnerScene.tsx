@@ -36,6 +36,14 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
   const lowPerf = useLowPerformanceMode()
   const prevPhaseRef = useRef<ScenePhase>('running')
 
+  const charScale = useMemo(() => {
+    const w = typeof window !== 'undefined' ? window.innerWidth : 768
+    if (w < 480) return 6
+    if (w < 768) return 7
+    return 8
+  }, [])
+  const monsterScale = useMemo(() => Math.max(3, charScale - 2), [charScale])
+
   const clouds = useMemo(() => generateCloudPositions(), [])
   const skyGradient = useMemo(() => getSkyGradient(), [])
 
@@ -124,7 +132,7 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
         <AnimatedPixelCharacter
           seed={character.seed}
           gender={character.gender}
-          scale={4}
+          scale={charScale}
           state={characterState}
           frame={animFrame}
         />
@@ -136,7 +144,7 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
           className={`idle-monster-slot ${currentMonster ? `phase-${scenePhase}` : 'phase-running'} ${!currentMonster ? 'passive' : ''}`}
           data-monster={currentMonster || backgroundMonster}
         >
-          <PixelMonster monsterId={currentMonster || backgroundMonster!} scale={3} />
+          <PixelMonster monsterId={currentMonster || backgroundMonster!} scale={monsterScale} />
           {scenePhase === 'combat' && <div className="combat-flash" />}
         </div>
       )}
