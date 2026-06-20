@@ -13,6 +13,7 @@ interface UseIdleCombatOptions {
   character: Character | null
   isPaused: boolean
   onCharacterUpdate: (char: Character) => void
+  onSyncCharacter?: (char: Character) => void
 }
 
 interface UseIdleCombatReturn {
@@ -32,6 +33,7 @@ export function useIdleCombat({
   character,
   isPaused,
   onCharacterUpdate,
+  onSyncCharacter,
 }: UseIdleCombatOptions): UseIdleCombatReturn {
   const [combatLog, setCombatLog] = useState<IdleCombatEntry[]>([])
   const [currentMonster, setCurrentMonster] = useState<MonsterId | null>(null)
@@ -83,6 +85,7 @@ export function useIdleCombat({
       }
 
       onCharacterUpdate(currentChar)
+      onSyncCharacter?.(currentChar)
 
       if (totalXp > 0) {
         setOfflineGains({ fights, xp: totalXp })
@@ -137,6 +140,7 @@ export function useIdleCombat({
       // Appliquer XP (no death, no damage)
       const xpResult = gainXp(currentChar, idleXp)
       onCharacterUpdate(xpResult.updatedCharacter)
+      onSyncCharacter?.(xpResult.updatedCharacter)
 
       // Log
       const entry: IdleCombatEntry = {

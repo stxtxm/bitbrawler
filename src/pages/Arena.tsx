@@ -28,7 +28,7 @@ import { MonsterId } from '../data/monsterAssets';
 
 
 const Arena = () => {
-    const { activeCharacter, logout, useFight, usePveFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, allocateStatPoint, saveStatAllocations, saveEquipment, rollLootbox, setAutoMode, deleteCharacter, setCharacter } = useGame();
+    const { activeCharacter, logout, useFight, usePveFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, allocateStatPoint, saveStatAllocations, saveEquipment, rollLootbox, setAutoMode, deleteCharacter, setCharacter, syncCharacterToBackend } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const { play, enabled, setEnabled } = useSound();
     const navigate = useNavigate();
@@ -58,6 +58,7 @@ const Arena = () => {
         character: activeCharacter,
         isPaused: !pveMode,
         onCharacterUpdate: setCharacter,
+        onSyncCharacter: syncCharacterToBackend,
     });
 
     // Handle XP gain notification

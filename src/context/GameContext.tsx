@@ -10,7 +10,7 @@ import { ITEM_ASSETS } from '../data/itemAssets';
 import { canRollLootbox, computeNextStreak, rollLootbox } from '../utils/lootboxUtils';
 import { PixelItemAsset } from '../types/Item';
 import { simulateCombat } from '../utils/combatUtils';
-import { convertFromSupabase } from '../utils/supabaseUtils';
+import { convertFromSupabase, convertToSupabase } from '../utils/supabaseUtils';
 import {
   INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP,
   normalizeCharacter, buildPendingOpponent, hydratePendingOpponent,
@@ -50,6 +50,7 @@ interface GameContextType {
   startMatchmaking: () => Promise<MatchmakingResult | null>;
   setAutoMode: (enabled: boolean) => Promise<Character | null>;
   deleteCharacter: () => Promise<boolean>;
+  syncCharacterToBackend: (char: Character) => Promise<void>;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -807,6 +808,19 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [activeCharacter, handleDbError, persistCharacter]);
 
+  const syncCharacterToBackend = useCallback(async (char: Character) => {
+    if (!char.id) return;
+    try {
+      const { error } = await supabase
+        .from('characters')
+        .update(convertToSupabase(char))
+        .eq('id', char.id);
+      if (error) throw error;
+    } catch (error: any) {
+      handleDbError(error, 'sync-character');
+    }
+  }, [handleDbError]);
+
   const deleteCharacter = useCallback(async () => {
     if (!activeCharacter?.id) return false;
     try {
@@ -849,6 +863,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     rollLootbox: rollLootboxForPlayer,
     setAutoMode,
     deleteCharacter,
+    syncCharacterToBackend,
   };
 
   return (
