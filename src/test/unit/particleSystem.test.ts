@@ -1,16 +1,43 @@
 import { ParticleSystem } from '../../utils/particleSystem';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
+describe('ParticleSystem', () => {
+  let ps: ParticleSystem;
+  let mockContainer: HTMLElement;
+  let mockRequestAnimationFrame: any;
+  let mockCancelAnimationFrame: any;
+  let mockPerformanceNow: any;
+  let mockDocumentCreateElement: any;
+  let mockAppendChild: any;
+  let mockRemoveChild: any;
+
+  beforeEach(() => {
+    // Mock DOM elements and APIs
+    mockContainer = document.createElement('div');
+    mockContainer.getBoundingClientRect = vi.fn(() => ({ top: 0, left: 0, width: 800, height: 400 } as DOMRect));
+
+    mockDocumentCreateElement = vi.spyOn(document, 'createElement').mockImplementation((tag) => {
+      const el = document.createElement(tag as any);
+      (el as any).style = {}; 
+      return el;
+    });
+    mockAppendChild = vi.spyOn(mockContainer, 'appendChild').mockImplementation(() => {} as any);
+    mockRemoveChild = vi.spyOn(mockContainer, 'removeChild').mockImplementation(() => {} as any);
+
+    // Mock requestAnimationFrame and cancelAnimationFrame
+    mockRequestAnimationFrame = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      return 1;
+    });
+    mockCancelAnimationFrame = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+
+    // Mock performance.now
+    mockPerformanceNow = vi.spyOn(performance, 'now').mockImplementation(() => Date.now());
 
     // Spy on the internal createParticle method
-    // Note: This might need to be done slightly differently if createParticle is truly private and not accessible via prototype.
-    // If it's a true private method (using #), we'd need a different approach (e.g., testing via public methods like emit).
-    // Assuming it's accessible via prototype for now.
-    // If not, we will test indirectly via the `emit` method.
-
     ps = new ParticleSystem(10); // Use a small maxParticles for testing
     ps.mount(mockContainer);
   });
+
 
   afterEach(() => {
     // Clean up mocks
