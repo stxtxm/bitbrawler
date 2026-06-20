@@ -145,7 +145,8 @@ export function useIdleCombat({
     }
   }, [])
 
-  // On-demand idle processing: call server on reconnect, fallback to local preview
+  // On-demand idle processing: show local preview immediately,
+  // then call server to persist gains and update with real data.
   useEffect(() => {
     if (!character) return
     const lastActive = character.lastActive ?? 0
@@ -153,6 +154,10 @@ export function useIdleCombat({
     const idleMs = Date.now() - lastActive
     if (idleMs <= 30_000) return
 
+    // 1) Show local preview immediately
+    calculateOfflinePreview()
+
+    // 2) Fire server call (async) — updates character + popup with real data
     let cancelled = false
 
     const processOnServer = async () => {
@@ -178,7 +183,7 @@ export function useIdleCombat({
           setOfflineGains({ fights: data.fights, xp: data.xp, levels: data.levels })
         }
       } catch {
-        if (!cancelled) calculateOfflinePreview()
+        // server unreachable — preview from step 1 already visible
       }
     }
 
@@ -363,17 +368,15 @@ export function useIdleCombat({
     return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [onSyncCharacter])
 
-  // Sync watermarks to Supabase on unmount (no local state update — avoids
-  // re-activating the character during logout).
+  // Sync watermarks to Supabase on unmount (no local state update, no lastActive
+  // advance — keeps idle time intact for character switching).
   useEffect(() => {
     return () => {
       const currentChar = charRef.current
       if (currentChar) {
-        const now = Date.now()
         onSyncCharacter?.({
           ...currentChar,
-          lastIdleCheck: now,
-          lastActive: now,
+          lastIdleCheck: Date.now(),
         } as Character)
       }
       clearPhaseTimers()
