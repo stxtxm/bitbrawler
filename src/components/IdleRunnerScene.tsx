@@ -4,10 +4,11 @@ import { MonsterId } from '../data/monsterAssets'
 import { ScenePhase } from '../types/IdleCombat'
 import { AnimatedPixelCharacter } from './AnimatedPixelCharacter'
 import { PixelMonster } from './PixelMonster'
+import { ProceduralTerrain } from './procedural/ProceduralTerrain'
 import {
   generateCloudPositions,
   renderTileAsCssUrl, getSkyGradient,
-  GRASS_TILE, DIRT_TILE, MOUNTAIN_TILE,
+  GRASS_TILE, DIRT_TILE,
 } from '../data/tileAssets'
 import { ParticleSystem } from '../utils/particleSystem'
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode'
@@ -132,7 +133,6 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
 
   const groundCss = useMemo(() => renderTileAsCssUrl(GRASS_TILE), [])
   const dirtCss = useMemo(() => renderTileAsCssUrl(DIRT_TILE), [])
-  const mountainCss = useMemo(() => renderTileAsCssUrl(MOUNTAIN_TILE), [])
 
   const showBigXp = scenePhase === 'result' && lastCombatXp > 0
   const showStreakBanner = streakMilestone !== null && scenePhase === 'result' && lastCombatResult === 'win'
