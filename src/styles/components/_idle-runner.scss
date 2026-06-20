@@ -10,6 +10,11 @@
   .character-display & {
     flex: 1;
     height: auto;
+    min-height: 150px;
+
+    @include mobile {
+      min-height: 100px;
+    }
   }
 }
 
@@ -67,7 +72,7 @@
 
 .idle-character-slot {
   position: absolute;
-  left: 22%;
+  left: 10%;
   bottom: clamp(16px, 5cqi, 32px);
   z-index: 5;
   display: flex;
