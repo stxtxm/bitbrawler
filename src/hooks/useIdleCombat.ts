@@ -32,7 +32,7 @@ interface UseIdleCombatReturn {
   lastCombatXp: number
   scenePhase: ScenePhase
   idleFightsCount: number
-  offlineGains: { fights: number; xp: number } | null
+  offlineGains: { fights: number; xp: number; levels: number } | null
   clearOfflineGains: () => void
   currentStreak: number
   totalKills: number
@@ -53,7 +53,7 @@ export function useIdleCombat({
   const [lastCombatResult, setLastCombatResult] = useState<'win' | 'lose' | null>(null)
   const [lastCombatXp, setLastCombatXp] = useState(0)
   const [scenePhase, setScenePhase] = useState<ScenePhase>('running')
-  const [offlineGains, setOfflineGains] = useState<{ fights: number; xp: number } | null>(null)
+  const [offlineGains, setOfflineGains] = useState<{ fights: number; xp: number; levels: number } | null>(null)
   const [currentStreak, setCurrentStreak] = useState(character?.idleStreak ?? 0)
   const [totalKills, setTotalKills] = useState(character?.idleTotalKills ?? 0)
   const [idleTotalXp, setIdleTotalXp] = useState(character?.idleTotalXp ?? 0)
@@ -105,6 +105,7 @@ export function useIdleCombat({
 
       let currentChar = charRef.current
       let totalXp = 0
+      let totalLevels = 0
       let localStreak = streakRef.current
       let localKills = killsRef.current
       let localIdleXp = idleXpRef.current
@@ -132,6 +133,7 @@ export function useIdleCombat({
         }
 
         const xpResult = gainXp(currentChar, finalXp)
+        totalLevels += xpResult.levelsGained
         currentChar = {
           ...xpResult.updatedCharacter,
           idleStreak: localStreak,
@@ -150,7 +152,7 @@ export function useIdleCombat({
       setIdleTotalXp(localIdleXp)
 
       if (totalXp > 0) {
-        setOfflineGains({ fights, xp: totalXp })
+        setOfflineGains({ fights, xp: totalXp, levels: totalLevels })
         setIdleXpGained(prev => prev + totalXp)
       }
     } catch (err) {

@@ -25,7 +25,7 @@ interface IdleRunnerSceneProps {
   scenePhase: ScenePhase
   lastCombatResult: 'win' | 'lose' | null
   lastCombatXp: number
-  offlineGains: { fights: number; xp: number } | null
+  offlineGains: { fights: number; xp: number; levels: number } | null
   onClearOfflineGains: () => void
   currentStreak?: number
   streakMilestone?: number | null
@@ -239,6 +239,7 @@ export const IdleRunnerScene: React.FC<IdleRunnerSceneProps> = ({
           <div className="offline-stats">
             <span>{offlineGains.fights} fights</span>
             <span>+{offlineGains.xp} XP</span>
+            {offlineGains.levels > 0 && <span>⬆ +{offlineGains.levels} LVL</span>}
           </div>
         </div>
       )}

@@ -557,11 +557,6 @@ const Arena = () => {
                                 </div>
                                 <span className="stat-val">{effectiveCharacter.maxHp}</span>
                             </div>
-                            {pointsRemaining > 0 && (
-                                <button className="button secondary-btn stat-allocate-btn" onClick={handleOpenLevelUp}>
-                                    SPEND POINT
-                                </button>
-                            )}
                         </div>
 
                         {/* PvE-specific row — PvE only */}
