@@ -7,7 +7,7 @@ export type DecorElement = {
   scale: number;
 };
 
-export function generateDecor(width: number, height: number, seed: number, level: number): DecorElement[] {
+export function generateDecor(width: number, height: number, _seed: number, level: number): DecorElement[] {
   const decor: DecorElement[] = [];
   const density = 0.002 + (level * 0.0001);
   const count = Math.floor(width * height * density);
