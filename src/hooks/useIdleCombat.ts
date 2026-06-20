@@ -355,16 +355,25 @@ export function useIdleCombat({
     return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [syncWatermarks])
 
-  // Sync watermarks on unmount
+  // Sync watermarks to Supabase on unmount (no local state update — avoids
+  // re-activating the character during logout).
   useEffect(() => {
     return () => {
-      syncWatermarks()
+      const currentChar = charRef.current
+      if (currentChar) {
+        const now = Date.now()
+        onSyncCharacter?.({
+          ...currentChar,
+          lastIdleCheck: now,
+          lastActive: now,
+        } as Character)
+      }
       clearPhaseTimers()
       if (timerRef.current) {
         clearTimeout(timerRef.current)
       }
     }
-  }, [syncWatermarks, clearPhaseTimers])
+  }, [onSyncCharacter, clearPhaseTimers])
 
   return {
     combatLog,
