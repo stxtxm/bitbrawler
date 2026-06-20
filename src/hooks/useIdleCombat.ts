@@ -4,7 +4,7 @@ import { IdleCombatEntry, ScenePhase, IdleEfficiencyData } from '../types/IdleCo
 import { IDLE_CONFIG } from '../config/idleConfig'
 import { generateMonsterForPlayer, getReferenceMonster } from '../utils/monsterUtils'
 import { simulateCombat, calculateCombatStats } from '../utils/combatUtils'
-import { gainXp, getXpRequiredForNextLevel, getXpProgress } from '../utils/xpUtils'
+import { gainXp, getXpProgress } from '../utils/xpUtils'
 import { GAME_RULES } from '../config/gameRules'
 import { calculateIdleXp } from '../utils/idleXpUtils'
 import { applyEquipmentToCharacter } from '../utils/equipmentUtils'
