@@ -82,7 +82,7 @@ export function useIdleCombat({
   }, [])
 
   // Advance idle/lastActive watermarks and sync to Supabase.
-  // Called on visibility hidden, unmount, and after each combat tick.
+  // Called after each combat tick (both local + server sync).
   const syncWatermarks = useCallback(() => {
     const currentChar = charRef.current
     if (!currentChar) return
@@ -344,16 +344,24 @@ export function useIdleCombat({
     }
   }, [isPaused, runCombatTick])
 
-  // Visibility change → sync watermarks when hidden (no processOfflineGains — server handles it)
+  // Visibility change → sync watermarks to server only (no local update —
+  // avoids triggering dbAvailable=false on background sync failures).
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === 'hidden') {
-        syncWatermarks()
+        const currentChar = charRef.current
+        if (!currentChar) return
+        const now = Date.now()
+        onSyncCharacter?.({
+          ...currentChar,
+          lastIdleCheck: now,
+          lastActive: now,
+        } as Character)
       }
     }
     document.addEventListener('visibilitychange', handleVisibility)
     return () => document.removeEventListener('visibilitychange', handleVisibility)
-  }, [syncWatermarks])
+  }, [onSyncCharacter])
 
   // Sync watermarks to Supabase on unmount (no local state update — avoids
   // re-activating the character during logout).

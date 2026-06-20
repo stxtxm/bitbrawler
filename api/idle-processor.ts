@@ -253,7 +253,7 @@ function simulateIdleGains(char: Character, idleMs: number): Character | null {
   return current
 }
 
-function characterToUpdates(c: Character, now: string): Record<string, any> {
+function toSupabaseUpdates(c: Character, now: string): Record<string, any> {
   return {
     last_idle_check: now,
     experience: c.experience,
@@ -271,6 +271,27 @@ function characterToUpdates(c: Character, now: string): Record<string, any> {
     idle_max_streak: c.idleMaxStreak,
     idle_total_kills: c.idleTotalKills,
     idle_total_xp: c.idleTotalXp,
+  }
+}
+
+function toClientResponse(c: Character, now: string): Record<string, any> {
+  return {
+    lastIdleCheck: now,
+    experience: c.experience,
+    level: c.level,
+    hp: c.hp,
+    maxHp: c.maxHp,
+    strength: c.strength,
+    vitality: c.vitality,
+    dexterity: c.dexterity,
+    luck: c.luck,
+    intelligence: c.intelligence,
+    focus: c.focus,
+    statPoints: c.statPoints,
+    idleStreak: c.idleStreak,
+    idleMaxStreak: c.idleMaxStreak,
+    idleTotalKills: c.idleTotalKills,
+    idleTotalXp: c.idleTotalXp,
   }
 }
 
@@ -294,7 +315,7 @@ async function processCharacter(
 
   const levelDiff = updatedChar.level - candidate.char.level
   const xpDiff = (updatedChar.experience ?? 0) - (candidate.char.experience ?? 0)
-  const updates = characterToUpdates(updatedChar, now)
+  const updates = toSupabaseUpdates(updatedChar, now)
   await supabase.from('characters').update(updates).eq('id', candidate.id)
 
   return { updated: updatedChar, fights: 0, xp: xpDiff, levels: levelDiff }
@@ -385,7 +406,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     res.writeHead(200, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify({
       character_id: body.character_id,
-      updated: result.updated ? characterToUpdates(result.updated, new Date().toISOString()) : null,
+      updated: result.updated ? toClientResponse(result.updated, new Date().toISOString()) : null,
       fights: result.fights,
       xp: result.xp,
       levels: result.levels,
