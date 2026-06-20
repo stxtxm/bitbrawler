@@ -125,13 +125,12 @@
 
 .idle-monster-slot {
   position: absolute;
-  right: 20%;
+  right: 8%;
   bottom: clamp(16px, 5cqi, 32px);
   z-index: 4;
   display: flex;
   transform-origin: bottom center;
   opacity: 0;
-  transition: opacity 0.3s ease;
 
   &::before {
     content: '';
@@ -139,20 +138,19 @@
     bottom: -4px;
     left: 50%;
     translate: -50%;
-    width: 60%;
-    height: 6px;
-    background: radial-gradient(ellipse, rgba(0,0,0,0.4), transparent);
+    width: 40%;
+    height: 5px;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.5), transparent);
     border-radius: 50%;
     opacity: 0;
-    transition: opacity 0.3s ease;
     pointer-events: none;
   }
 
   &.phase-monster_appears {
-    opacity: 1;
+    animation: monsterPopIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 
     &::before {
-      opacity: 1;
+      animation: shadowSlam 0.4s ease-out forwards;
     }
   }
 
@@ -161,7 +159,7 @@
     animation: monsterHitShake 0.5s ease;
 
     &::before {
-      opacity: 1;
+      opacity: 0.6;
     }
   }
 
@@ -174,6 +172,20 @@
       opacity: 0;
     }
   }
+}
+
+@keyframes monsterPopIn {
+  0% { opacity: 0; transform: scale(0.6) translateY(12px); }
+  50% { opacity: 1; transform: scale(1.08) translateY(-3px); }
+  75% { transform: scale(0.97) translateY(1px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes shadowSlam {
+  0% { opacity: 0; width: 10%; }
+  50% { opacity: 0.7; width: 80%; }
+  75% { opacity: 0.5; width: 60%; }
+  100% { opacity: 0.6; width: 40%; }
 }
 
 @keyframes monsterDefeat {
