@@ -165,4 +165,59 @@ describe('Character Generation', () => {
         const avgMin = sumMin / SAMPLES;
         expect(avgMin).toBeGreaterThan(6);
     });
+
+    it('should allow primary stats to reach 20+ (relaxed diminishing returns)', () => {
+        // With the relaxed diminishing returns (threshold 13+ instead of 12+,
+        // factor 0.1 instead of 0.125, floor 0.5 instead of 0.25),
+        // primary stats should be able to reach higher values.
+        // At least 10% of characters should have a stat >= 20.
+        let countHighStat = 0;
+        const SAMPLES = 200;
+        for (let i = 0; i < SAMPLES; i++) {
+            const char = generateInitialStats(`Test_${i}`, 'male');
+            const allStats = [
+                char.strength, char.vitality, char.dexterity,
+                char.luck, char.intelligence, char.focus
+            ];
+            if (Math.max(...allStats) >= 20) {
+                countHighStat++;
+            }
+        }
+        expect(countHighStat / SAMPLES).toBeGreaterThan(0.10);
+    });
+
+    it('should maintain at least 70% characters with a clear archetype (highest stat >= lowest + 8)', () => {
+        // A clear archetype means the primary stat is meaningfully higher than the lowest stat,
+        // giving distinct character builds
+        let clearArchetype = 0;
+        const SAMPLES = 200;
+        for (let i = 0; i < SAMPLES; i++) {
+            const char = generateInitialStats(`Test_${i}`, 'male');
+            const allStats = [
+                char.strength, char.vitality, char.dexterity,
+                char.luck, char.intelligence, char.focus
+            ];
+            const spread = Math.max(...allStats) - Math.min(...allStats);
+            if (spread >= 8) {
+                clearArchetype++;
+            }
+        }
+        expect(clearArchetype / SAMPLES).toBeGreaterThan(0.70);
+    });
+
+    it('should have at least 80% of characters with highest stat >= 16 (strong primary)', () => {
+        let strongPrimary = 0;
+        const SAMPLES = 200;
+        for (let i = 0; i < SAMPLES; i++) {
+            const char = generateInitialStats(`Test_${i}`, 'male');
+            const allStats = [
+                char.strength, char.vitality, char.dexterity,
+                char.luck, char.intelligence, char.focus
+            ];
+            if (Math.max(...allStats) >= 16) {
+                strongPrimary++;
+            }
+        }
+        expect(strongPrimary / SAMPLES).toBeGreaterThan(0.80);
+    });
 });
