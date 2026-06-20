@@ -255,6 +255,12 @@
     border: 2px solid #000 !important;
 }
 
+.stat-add-placeholder {
+    grid-area: action;
+    width: 28px;
+    height: 24px;
+}
+
 .stat-add-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;

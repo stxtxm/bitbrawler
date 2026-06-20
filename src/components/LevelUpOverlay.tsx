@@ -87,7 +87,7 @@ const LevelUpOverlay = ({
                             <span className="stat-label">{stat.label}</span>
                             <span className="stat-value">{stat.value}</span>
                             <span className="stat-hint">{stat.hint}</span>
-                            {pointsRemaining > 0 && (
+                            {pointsRemaining > 0 ? (
                                 <button
                                     className="button stat-add-btn"
                                     onClick={() => onAllocateStat(stat.key)}
@@ -96,6 +96,8 @@ const LevelUpOverlay = ({
                                 >
                                     +
                                 </button>
+                            ) : (
+                                <span className="stat-add-placeholder" />
                             )}
                         </div>
                     ))}

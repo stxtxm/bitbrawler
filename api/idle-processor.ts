@@ -141,19 +141,19 @@ function characterToUpdates(c: Character, now: string): Record<string, any> {
 
 async function processCharacter(
   candidate: IdleChar,
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
 ): Promise<{ updated: Character | null; fights: number; xp: number; levels: number }> {
   const idleMs = Date.now() - candidate.lastCheck
   const now = new Date().toISOString()
 
   if (idleMs <= 30_000) {
-    await supabase.from('characters').update({ last_idle_check: now }).eq('id', candidate.id)
+    await supabase.from('characters').update({ last_idle_check: now } as any).eq('id', candidate.id)
     return { updated: null, fights: 0, xp: 0, levels: 0 }
   }
 
   const updatedChar = simulateIdleGains(candidate.char, idleMs)
   if (!updatedChar) {
-    await supabase.from('characters').update({ last_idle_check: now }).eq('id', candidate.id)
+    await supabase.from('characters').update({ last_idle_check: now } as any).eq('id', candidate.id)
     return { updated: null, fights: 0, xp: 0, levels: 0 }
   }
 
@@ -161,7 +161,7 @@ async function processCharacter(
   const xpDiff = (updatedChar.experience ?? 0) - (candidate.char.experience ?? 0)
 
   const updates = characterToUpdates(updatedChar, now)
-  await supabase.from('characters').update(updates).eq('id', candidate.id)
+  await supabase.from('characters').update(updates as any).eq('id', candidate.id)
 
   return { updated: updatedChar, fights: 0, xp: xpDiff, levels: levelDiff }
 }
@@ -216,10 +216,11 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       return
     }
 
+    const row = data as any
     const candidate: IdleChar = {
-      id: data.id,
-      char: convertRowToCharacter(data),
-      lastCheck: data.last_idle_check ? new Date(data.last_idle_check).getTime() : 0,
+      id: row.id,
+      char: convertRowToCharacter(row),
+      lastCheck: row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0,
     }
 
     const result = await processCharacter(candidate, supabase)
