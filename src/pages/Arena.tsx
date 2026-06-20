@@ -526,9 +526,9 @@ const Arena = () => {
                         {isMaxLevel && <span className="max-level-badge">★ MAX LEVEL ★</span>}
                     </div>
 
-                    {/* Stats panel — both modes always in DOM via grid overlap, instant visibility toggle */}
+                    {/* Stats panel — both modes always in DOM via grid overlap, smooth fade transition */}
                     <div className="stats-panel">
-                        <div className="stats-content" aria-hidden={pveMode} style={{ visibility: pveMode ? 'hidden' : 'visible' }}>
+                        <div className="stats-content" aria-hidden={pveMode}>
                             <div className="stat-row principal">
                                 <span>HP</span>
                                 <div className="bar-container">
@@ -553,7 +553,7 @@ const Arena = () => {
                                 </button>
                             )}
                         </div>
-                        <div className="stats-content" aria-hidden={!pveMode} style={{ visibility: pveMode ? 'visible' : 'hidden' }}>
+                        <div className="stats-content" aria-hidden={!pveMode}>
                             <div className="stat-row principal">
                                 <span>FIGHTS</span>
                                 <div className="bar-container">
