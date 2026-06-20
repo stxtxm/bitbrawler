@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { generateNoiseMap } from '../../generation/Noise';
 import { DAY_PALETTE, NIGHT_PALETTE } from '../../utils/ColorPalette';
 

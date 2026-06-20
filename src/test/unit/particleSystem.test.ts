@@ -1,39 +1,6 @@
-import { ParticleSystem, ParticleType } from '../utils/particleSystem';
+import { ParticleSystem } from '../../utils/particleSystem';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-describe('ParticleSystem', () => {
-  let ps: ParticleSystem;
-  let mockContainer: HTMLElement;
-  let mockCreateParticle: jest.SpyInstance;
-  let mockRequestAnimationFrame: jest.SpyInstance;
-  let mockCancelAnimationFrame: jest.SpyInstance;
-  let mockPerformanceNow: jest.SpyInstance;
-  let mockDocumentCreateElement: jest.SpyInstance;
-  let mockAppendChild: jest.SpyInstance;
-  let mockRemoveChild: jest.SpyInstance;
-
-  beforeEach(() => {
-    // Mock DOM elements and APIs
-    mockContainer = document.createElement('div');
-    mockContainer.getBoundingClientRect = jest.fn(() => ({ top: 0, left: 0, width: 800, height: 400 } as DOMRect));
-
-    mockDocumentCreateElement = jest.spyOn(document, 'createElement').mockImplementation((tag) => {
-      const el = document.createElement(tag);
-      el.style = {}; // Mock style object
-      return el;
-    });
-    mockAppendChild = jest.spyOn(mockContainer, 'appendChild').mockImplementation(() => {});
-    mockRemoveChild = jest.spyOn(mockContainer, 'removeChild').mockImplementation(() => {});
-
-    // Mock requestAnimationFrame and cancelAnimationFrame
-    mockRequestAnimationFrame = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
-      // Immediately call the callback for simplicity in some tests, or return a fake ID
-      // For more controlled timing, we might need to defer this.
-      return 1;
-    });
-    mockCancelAnimationFrame = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
-
-    // Mock performance.now
-    mockPerformanceNow = jest.spyOn(performance, 'now').mockImplementation(() => Date.now());
 
     // Spy on the internal createParticle method
     // Note: This might need to be done slightly differently if createParticle is truly private and not accessible via prototype.
@@ -47,7 +14,7 @@ describe('ParticleSystem', () => {
 
   afterEach(() => {
     // Clean up mocks
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
     ps.unmount();
   });
 
@@ -75,7 +42,7 @@ describe('ParticleSystem', () => {
 
   it('should correctly create particle definitions', () => {
     // Mock createParticle directly to test its output
-    const createParticleSpy = jest.spyOn(ps as any, 'createParticle').mockReturnValue({
+    const createParticleSpy = vi.spyOn(ps as any, 'createParticle').mockReturnValue({
         x: 50, y: 50, vx: 1, vy: 1, life: 1000, maxLife: 1000, size: 3, color: '#FFD700', text: '+XP'
     });
 
@@ -89,7 +56,7 @@ describe('ParticleSystem', () => {
   });
 
   it('should create different particles based on type', () => {
-    const createParticleSpy = jest.spyOn(ps as any, 'createParticle');
+    const createParticleSpy = vi.spyOn(ps as any, 'createParticle');
 
     ps.emit('dust', 10, 10, 2);
     expect(createParticleSpy).toHaveBeenCalledWith('dust', 10, 10, 0, 2, { text: undefined });
@@ -106,10 +73,10 @@ describe('ParticleSystem', () => {
   });
 
   it('should manage particle lifecycle during tick', () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
 
     // Emit a particle with short life
-    const createParticleSpy = jest.spyOn(ps as any, 'createParticle').mockReturnValue({
+    const createParticleSpy = vi.spyOn(ps as any, 'createParticle').mockReturnValue({
         x: 10, y: 10, vx: 0, vy: -1, life: 50, maxLife: 50, size: 2, color: '#FFF', text: ''
     });
     ps.emit('spark', 10, 10, 1);
@@ -142,7 +109,7 @@ describe('ParticleSystem', () => {
     expect(ps.particles.length).toBe(1);
     expect(mockRequestAnimationFrame).toHaveBeenCalledTimes(2); // Called again to start the loop for the new particle
 
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it('should stop and clear particles on unmount', () => {

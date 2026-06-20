@@ -13,6 +13,21 @@ beforeAll(() => {
         originalConsoleError.apply(console, args);
     };
 
+    // Polyfill HTMLCanvasElement.prototype.getContext
+    if (typeof HTMLCanvasElement.prototype.getContext !== 'function') {
+        HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({
+            fillRect: vi.fn(),
+            clearRect: vi.fn(),
+            beginPath: vi.fn(),
+            moveTo: vi.fn(),
+            lineTo: vi.fn(),
+            closePath: vi.fn(),
+            fill: vi.fn(),
+            stroke: vi.fn(),
+            arc: vi.fn(),
+        });
+    }
+
     // Polyfill window.matchMedia for jsdom (used by PWA install hook)
     if (typeof window.matchMedia !== 'function') {
         Object.defineProperty(window, 'matchMedia', {
