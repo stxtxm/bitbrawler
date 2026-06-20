@@ -97,4 +97,9 @@ export interface Character {
   idleMaxStreak?: number;
   idleTotalKills?: number;
   idleTotalXp?: number;
+
+  // Server-side idle processing watermark (timestamp)
+  lastIdleCheck?: number;
+  // Last user activity (for offline popup, timestamp)
+  lastActive?: number;
 }

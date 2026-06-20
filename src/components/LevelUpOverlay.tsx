@@ -8,7 +8,7 @@ type StatIconType = 'strength' | 'vitality' | 'dexterity' | 'luck' | 'intelligen
 interface LevelUpOverlayProps {
     shouldShowLevelUp: boolean;
     activeCharacter: Character;
-    lastLevelUp: { levelsGained: number; newLevel: number; hpGained: number } | null;
+    levelUpData: { levelsGained: number; newLevel: number; hpGained: number } | null;
     isOfflineMode: boolean;
     statOptions: Array<{ key: StatKey; label: string; value: number; hint: string; icon: StatIconType }>;
     saving: boolean;
@@ -19,7 +19,7 @@ interface LevelUpOverlayProps {
 const LevelUpOverlay = ({
     shouldShowLevelUp,
     activeCharacter,
-    lastLevelUp,
+    levelUpData,
     isOfflineMode,
     statOptions,
     saving,
@@ -27,7 +27,7 @@ const LevelUpOverlay = ({
     onClose,
 }: LevelUpOverlayProps) => {
     const pointsRemaining = activeCharacter.statPoints || 0;
-    const hasLevelInfo = lastLevelUp !== null;
+    const hasLevelInfo = levelUpData !== null;
 
     useEffect(() => {
         if (!shouldShowLevelUp) return;
@@ -48,21 +48,21 @@ const LevelUpOverlay = ({
                 <h2 className="lvl-title">LEVEL UP</h2>
                 {hasLevelInfo ? (
                     <div className="lvl-big-number">
-                        <span className="lvl-old">{lastLevelUp!.newLevel - lastLevelUp!.levelsGained}</span>
+                        <span className="lvl-old">{levelUpData!.newLevel - levelUpData!.levelsGained}</span>
                         <span className="lvl-arrow">➜</span>
-                        <span className="lvl-new">{lastLevelUp!.newLevel}</span>
+                        <span className="lvl-new">{levelUpData!.newLevel}</span>
                     </div>
                 ) : (
                     <div className="lvl-big-number">
                         <span className="lvl-new">LVL {activeCharacter.level}</span>
                     </div>
                 )}
-                {hasLevelInfo && lastLevelUp!.hpGained > 0 && (
+                {hasLevelInfo && levelUpData!.hpGained > 0 && (
                     <div className="level-up-hp">
                         <span className="hp-icon">❤</span>
-                        <span className="hp-gained">+{lastLevelUp!.hpGained} HP</span>
+                        <span className="hp-gained">+{levelUpData!.hpGained} HP</span>
                         <span className="hp-range">
-                            (max HP: {activeCharacter.maxHp - lastLevelUp!.hpGained} → {activeCharacter.maxHp})
+                            (max HP: {activeCharacter.maxHp - levelUpData!.hpGained} → {activeCharacter.maxHp})
                         </span>
                     </div>
                 )}

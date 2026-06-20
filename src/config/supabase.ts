@@ -46,7 +46,13 @@ export type CharacterRow = {
     weapon: string | null;
     armor: string | null;
     accessory: string | null;
-  } | null
+  } | null;
+  last_idle_check: string | null;
+  last_active: string | null;
+  idle_streak: number;
+  idle_max_streak: number;
+  idle_total_kills: number;
+  idle_total_xp: number;
 }
 
 export type ServerTimeRow = {

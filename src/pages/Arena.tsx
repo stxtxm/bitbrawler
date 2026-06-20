@@ -1,5 +1,5 @@
 import { useNavigate, Navigate } from 'react-router-dom';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useGame } from '../context/GameContext';
 import { useConnectionGate } from '../hooks/useConnectionGate';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -10,7 +10,7 @@ import { PixelCharacter } from '../components/PixelCharacter';
 import { PixelIcon } from '../components/PixelIcon';
 import { PixelItemIcon } from '../components/PixelItemIcon';
 import { getXpProgress, formatXpDisplay, getMaxLevel } from '../utils/xpUtils';
-import { StatKey, STAT_TOOLTIPS, autoAllocateStatPoints } from '../utils/statUtils';
+import { StatKey, STAT_TOOLTIPS, autoAllocateStatPoints, HP_PER_LEVEL } from '../utils/statUtils';
 import { CombatView } from '../components/CombatView';
 import { IdleRunnerScene } from '../components/IdleRunnerScene';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
@@ -28,7 +28,7 @@ import { MonsterId } from '../data/monsterAssets';
 
 
 const Arena = () => {
-    const { activeCharacter, logout, useFight, usePveFight, startMatchmaking, lastXpGain, lastLevelUp, clearXpNotifications, dbAvailable, allocateStatPoint, saveStatAllocations, saveEquipment, rollLootbox, setAutoMode, deleteCharacter, setCharacter, syncCharacterToBackend } = useGame();
+    const { activeCharacter, logout, useFight, usePveFight, startMatchmaking, lastXpGain, clearXpNotifications, dbAvailable, allocateStatPoint, saveStatAllocations, saveEquipment, rollLootbox, setAutoMode, deleteCharacter, setCharacter, syncCharacterToBackend } = useGame();
     const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
     const { play, enabled, setEnabled } = useSound();
     const navigate = useNavigate();
@@ -37,6 +37,9 @@ const Arena = () => {
 
     const [showXpGain, setShowXpGain] = useState(false);
     const [showLevelUp, setShowLevelUp] = useState(false);
+    const [pendingLevelUp, setPendingLevelUp] = useState<{ levelsGained: number; newLevel: number; hpGained: number } | null>(null);
+    const autoModeRef = useRef(!!activeCharacter?.autoMode);
+    autoModeRef.current = !!activeCharacter?.autoMode;
     const [xpBarAnimating, setXpBarAnimating] = useState(false);
     const [inventoryOpen, setInventoryOpen] = useState(false);
     const [matchmaking, setMatchmaking] = useState(false);
@@ -59,6 +62,16 @@ const Arena = () => {
         isPaused: !pveMode,
         onCharacterUpdate: setCharacter,
         onSyncCharacter: syncCharacterToBackend,
+        onLevelUp: (levelsGained, newLevel) => {
+            if (!autoModeRef.current) {
+                setPendingLevelUp({
+                    levelsGained,
+                    newLevel,
+                    hpGained: levelsGained * HP_PER_LEVEL,
+                });
+                setShowLevelUp(true);
+            }
+        },
     });
 
     // Handle XP gain notification
@@ -75,13 +88,6 @@ const Arena = () => {
             return () => clearTimeout(timer);
         }
     }, [lastXpGain]);
-
-    // Handle Level up notification
-    useEffect(() => {
-        if (lastLevelUp !== null) {
-            setShowLevelUp(true);
-        }
-    }, [lastLevelUp]);
 
     // Clear level-up notification on unmount to prevent stale popup
     // when navigating back to Arena after a failed saveStatAllocations
@@ -101,6 +107,7 @@ const Arena = () => {
         const updated = autoAllocateStatPoints(activeCharacter, points);
         setCharacter(updated);
         setShowLevelUp(false);
+        setPendingLevelUp(null);
         clearXpNotifications();
 
         // Persist auto-allocated stats to the DB so they survive reconnect
@@ -127,6 +134,7 @@ const Arena = () => {
         if ((activeCharacter.statPoints || 0) > 0) return;
 
         setShowLevelUp(false);
+        setPendingLevelUp(null);
         clearXpNotifications();
     }, [activeCharacter?.autoMode, activeCharacter?.statPoints, clearXpNotifications]);
 
@@ -143,7 +151,7 @@ const Arena = () => {
     const hasPendingFight = !!activeCharacter.pendingFight;
     const canFight = !isOfflineMode && !hasPendingFight && !activeCharacter?.autoMode && (pveMode ? pveFightsLeft > 0 : fightsLeft > 0);
     const pointsRemaining = activeCharacter.statPoints || 0;
-    const shouldShowLevelUp = showLevelUp && pointsRemaining > 0;
+    const shouldShowLevelUp = showLevelUp;
     const inventory = activeCharacter.inventory || [];
     const inventoryCapacity = INVENTORY_CAPACITY;
     const inventoryFull = inventory.length >= inventoryCapacity;
@@ -220,10 +228,12 @@ const Arena = () => {
 
     const handleDismissLevelUp = () => {
         setShowLevelUp(false);
+        setPendingLevelUp(null);
         clearXpNotifications();
     };
 
     const handleOpenLevelUp = () => {
+        setPendingLevelUp(null);
         setShowLevelUp(true);
     };
 
@@ -411,13 +421,23 @@ const Arena = () => {
 
     const handleCombatComplete = async (won: boolean, xpGained: number) => {
         try {
+            const isAutoMode = autoModeRef.current;
             const opponentName = combatData?.opponent.name || 'UNKNOWN';
+            let result;
             if (combatData?.matchType === 'pve') {
                 const pveXp = Math.round(xpGained * GAME_RULES.PVE.XP_MODIFIER);
-                await usePveFight(won, pveXp, opponentName);
+                result = await usePveFight(won, pveXp, opponentName);
             } else {
                 const opponentId = combatData?.opponent.id || '';
-                await useFight(won, xpGained, opponentName, opponentId);
+                result = await useFight(won, xpGained, opponentName, opponentId);
+            }
+            if (result?.leveledUp && !isAutoMode) {
+                setPendingLevelUp({
+                    levelsGained: result.levelsGained,
+                    newLevel: result.newLevel,
+                    hpGained: result.levelsGained * HP_PER_LEVEL,
+                });
+                setShowLevelUp(true);
             }
         } catch (error: any) {
             console.error('Fight result save failed:', error);
@@ -436,7 +456,7 @@ const Arena = () => {
             <LevelUpOverlay
                 shouldShowLevelUp={shouldShowLevelUp}
                 activeCharacter={activeCharacter}
-                lastLevelUp={lastLevelUp}
+                levelUpData={pendingLevelUp}
                 isOfflineMode={isOfflineMode}
                 statOptions={statOptions}
                 saving={saving}

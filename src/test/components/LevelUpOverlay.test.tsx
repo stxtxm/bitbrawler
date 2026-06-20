@@ -27,7 +27,7 @@ const mockCharacter: Character = {
 const defaultProps = {
     shouldShowLevelUp: true,
     activeCharacter: mockCharacter,
-    lastLevelUp: { levelsGained: 1, newLevel: 5, hpGained: 10 },
+    levelUpData: { levelsGained: 1, newLevel: 5, hpGained: 10 },
     isOfflineMode: false,
     statOptions: [
         { key: 'strength' as const, label: 'STR', value: 10, hint: 'Damage', icon: 'strength' as const },

@@ -1,10 +1,10 @@
 import { generateInitialStats, generateCharacterName } from '../src/utils/characterUtils';
 import { calculateFightXp, gainXp } from '../src/utils/xpUtils';
-import { simulateCombat, calculateCombatStats } from '../src/utils/combatUtils';
+import { simulateCombat } from '../src/utils/combatUtils';
 import { GAME_RULES } from '../src/config/gameRules';
 import { autoAllocateStatPointsRandom } from '../src/utils/statUtils';
 import { ITEM_ASSETS } from '../src/data/itemAssets';
-import { generateMonster, getRandomMonsterId, getReferenceMonster } from '../src/utils/monsterUtils';
+import { generateMonster, getRandomMonsterId } from '../src/utils/monsterUtils';
 import { canRollLootbox, rollLootbox } from '../src/utils/lootboxUtils';
 import { DAILY_RESET_TIMEZONE, shouldResetDaily } from '../src/utils/dailyReset';
 import { getZonedMidnightUtc, getZonedParts } from '../src/utils/timezoneUtils';
@@ -19,12 +19,7 @@ import {
 import { Character, IncomingFightHistory } from '../src/types/Character';
 import { supabase } from './supabaseAdmin';
 import { INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP } from '../src/utils/persistenceUtils';
-import { autoEquipBestItems, applyEquipmentToCharacter } from '../src/utils/equipmentUtils';
-import { computeEfficiency, calculateOfflineFightsWithEfficiency } from '../src/utils/idleEfficiencyUtils';
-import { IDLE_CONFIG } from '../src/config/idleConfig';
-import { calculateIdleXp } from '../src/utils/idleXpUtils';
-import { readFileSync, writeFileSync, existsSync } from 'fs';
-const IDLE_TRACK_FILE = 'scripts/last-engine-run.json';
+import { autoEquipBestItems } from '../src/utils/equipmentUtils';
 const DB_BATCH_SIZE = 10;
 
 /** Return a human-readable label for bot-engine-processed characters (all are bots functionally) */
@@ -37,7 +32,9 @@ const BOT_SELECT_COLUMNS = [
     'experience', 'wins', 'losses', 'fights_left', 'pve_fights_left', 'last_fight_reset',
     'stat_points', 'inventory', 'last_loot_roll', 'fight_history',
     'fought_today', 'pending_fight', 'incoming_fight_history',
-    'is_bot', 'auto_mode', 'equipped_items'
+    'is_bot', 'auto_mode', 'equipped_items',
+    'last_idle_check', 'last_active',
+    'idle_streak', 'idle_max_streak', 'idle_total_kills', 'idle_total_xp'
 ].join(',');
 
 // Columns needed for opponent matching and combat (stats-only, no mutation)
@@ -121,83 +118,6 @@ async function measurePopulation(): Promise<PopulationSnapshot> {
     const levelOneHumans = Math.max(0, levelOneCharacters - levelOneBots);
 
     return { totalBots, levelOneBots, levelOneHumans };
-}
-
-function loadLastEngineRun(): number {
-    try {
-        const data = readFileSync(IDLE_TRACK_FILE, 'utf-8');
-        return JSON.parse(data).timestamp ?? 0;
-    } catch {
-        return 0;
-    }
-}
-
-function saveLastEngineRun(timestamp: number): void {
-    try {
-        writeFileSync(IDLE_TRACK_FILE, JSON.stringify({ timestamp }));
-    } catch (err) {
-        console.warn('⚠️ Could not save last engine run timestamp:', err);
-    }
-}
-
-/** Simulate idle fights for a bot since its last active time. Returns updated bot or the original if no idle time. */
-function simulateIdlePeriod(bot: Character, idleSeconds: number): Character {
-    if (idleSeconds <= 0) return bot;
-    const idleMs = idleSeconds * 1000;
-
-    // Calculate effective interval based on bot's current stats
-    const effectiveChar = applyEquipmentToCharacter(bot);
-    const playerStats = calculateCombatStats(bot);
-    const refMonster = getReferenceMonster(bot.level);
-    const monsterStats = calculateCombatStats(refMonster);
-    const eff = computeEfficiency(playerStats, monsterStats, effectiveChar.dexterity);
-    const effectiveInterval = eff.effectiveInterval;
-
-    const fights = calculateOfflineFightsWithEfficiency(Date.now() - idleMs, Date.now(), effectiveInterval);
-    if (fights <= 0) return bot;
-
-    if (fights > 0) {
-        console.log(`💤 ${bot.name}: idle for ~${Math.round(idleMs / 60000)}m, simulating ${fights} idle fights...`);
-    }
-
-    let current = { ...bot };
-    let streak = current.idleStreak ?? 0;
-    let kills = current.idleTotalKills ?? 0;
-
-    for (let i = 0; i < fights; i++) {
-        const monsterId = getRandomMonsterId();
-        const monster = generateMonster(monsterId, current.level);
-        const combat = simulateCombat(current, monster);
-        const won = combat.winner === 'attacker';
-
-        const baseXp = calculateIdleXp(won, current.level);
-        const xpBonus = eff.xpBonusMultiplier - 1;
-        const streakBonus = Math.min(streak * IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_PER_STEP, IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_CAP);
-        const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus));
-
-        const result = gainXp(current, finalXp);
-        const pointsGained = result.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL;
-
-        if (won) { streak++; kills++; } else { streak = 0; }
-
-        const updated = {
-            ...result.updatedCharacter,
-            idleStreak: streak,
-            idleMaxStreak: Math.max(streak, current.idleMaxStreak ?? 0),
-            idleTotalKills: kills,
-            idleTotalXp: (current.idleTotalXp ?? 0) + finalXp,
-            statPoints: (result.updatedCharacter.statPoints ?? 0) + pointsGained,
-        };
-
-        current = pointsGained > 0
-            ? autoAllocateStatPointsRandom(updated, pointsGained)
-            : updated;
-    }
-
-    const levelDiff = current.level - bot.level;
-    const xpDiff = (current.experience ?? 0) - (bot.experience ?? 0);
-    console.log(`   Idle results: ${fights} fights, +${xpDiff} XP, ${levelDiff > 0 ? `⬆ LVL +${levelDiff}, ` : ''}streak: ${streak}, kills: ${kills}`);
-    return current;
 }
 
 async function runBotLogic() {
@@ -307,6 +227,12 @@ async function createNewBot(): Promise<string> {
         incoming_fight_history: [],
         auto_mode: true,
         equipped_items: { weapon: null, armor: null, accessory: null },
+        last_idle_check: new Date().toISOString(),
+        last_active: new Date().toISOString(),
+        idle_streak: 0,
+        idle_max_streak: 0,
+        idle_total_kills: 0,
+        idle_total_xp: 0,
     };
 
     const { data, error } = await supabase
@@ -353,6 +279,12 @@ function convertRowToCharacter(row: any): Character {
         incomingFightHistory: row.incoming_fight_history ?? [],
         isBot: row.is_bot ?? false,
         equippedItems: row.equipped_items ?? { weapon: null, armor: null, accessory: null },
+        lastIdleCheck: row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0,
+        lastActive: row.last_active ? new Date(row.last_active).getTime() : 0,
+        idleStreak: row.idle_streak ?? 0,
+        idleMaxStreak: row.idle_max_streak ?? 0,
+        idleTotalKills: row.idle_total_kills ?? 0,
+        idleTotalXp: row.idle_total_xp ?? 0,
         battleCount: 0,
         firestoreId: row.id,
     };
@@ -431,14 +363,6 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
     // Accumulate bot state updates for batched flush
     const pendingBotUpdates: Array<{ id: string; name: string; data: Record<string, any> }> = [];
 
-    // Load last engine run for idle simulation
-    const lastEngineRun = loadLastEngineRun();
-    const engineNow = Date.now();
-    const idleBaselineSeconds = lastEngineRun > 0
-        ? Math.round((engineNow - lastEngineRun) / 1000)
-        : 0;
-    console.log(`⏱️ Last engine run: ${lastEngineRun > 0 ? new Date(lastEngineRun).toISOString() : 'never'}, idle window: ${Math.round(idleBaselineSeconds / 60)}m`);
-
     for (const bot of bots) {
         try {
             if (!bot.firestoreId) continue;
@@ -449,16 +373,6 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
             // Ensure bots always have best items equipped (for first-run / backward compat)
             if (!currentBotState.equippedItems || !currentBotState.equippedItems.weapon) {
                 currentBotState = autoEquipBestItems(currentBotState);
-            }
-
-            // Simulate idle period since last engine run
-            if (idleBaselineSeconds > 60) {
-                // Vary idle time per bot (±40%) to simulate different play patterns
-                const variance = 0.6 + Math.random() * 0.8;
-                const botIdleSeconds = Math.round(idleBaselineSeconds * variance);
-                if (botIdleSeconds > 60) {
-                    currentBotState = simulateIdlePeriod(currentBotState, botIdleSeconds);
-                }
             }
 
             let fightsLeft = currentBotState.fightsLeft;
@@ -735,9 +649,6 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
 
     // Flush accumulated incoming fight histories in parallel batches
     await flushIncomingHistories(incomingHistoryCache);
-
-    // Save engine run timestamp for next idle simulation
-    saveLastEngineRun(Date.now());
 }
 
 runBotLogic();

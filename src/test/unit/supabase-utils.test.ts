@@ -36,6 +36,12 @@ describe('convertFromSupabase', () => {
     auto_mode: false,
     equipped_items: { weapon: 'rusty_sword', armor: null, accessory: null },
     pve_fights_left: 5,
+    last_idle_check: null,
+    last_active: null,
+    idle_streak: 0,
+    idle_max_streak: 0,
+    idle_total_kills: 0,
+    idle_total_xp: 0,
   }
 
   it('maps all CharacterRow fields to Character correctly', () => {
@@ -69,6 +75,12 @@ describe('convertFromSupabase', () => {
     expect(char.isBot).toBe(false)
     expect(char.autoMode).toBe(false)
     expect(char.id).toBe('abc-123')
+    expect(char.lastIdleCheck).toBe(0)
+    expect(char.lastActive).toBe(0)
+    expect(char.idleStreak).toBe(0)
+    expect(char.idleMaxStreak).toBe(0)
+    expect(char.idleTotalKills).toBe(0)
+    expect(char.idleTotalXp).toBe(0)
   })
 
   it('handles a bot character correctly', () => {
@@ -144,6 +156,12 @@ describe('convertToSupabase', () => {
     autoMode: true,
     equippedItems: { weapon: 'rusty_sword', armor: null, accessory: null },
     id: 'abc-123',
+    lastIdleCheck: 0,
+    lastActive: 0,
+    idleStreak: 0,
+    idleMaxStreak: 0,
+    idleTotalKills: 0,
+    idleTotalXp: 0,
   }
 
   it('maps all Character fields to CharacterRow correctly', () => {
@@ -176,6 +194,10 @@ describe('convertToSupabase', () => {
     expect(row.incoming_fight_history).toEqual([{ date: 1700000000000, attackerName: 'player2', won: false }])
     expect(row.is_bot).toBe(false)
     expect(row.auto_mode).toBe(true)
+    expect(row.idle_streak).toBe(0)
+    expect(row.idle_max_streak).toBe(0)
+    expect(row.idle_total_kills).toBe(0)
+    expect(row.idle_total_xp).toBe(0)
   })
 
   it('fills default values for missing optional fields', () => {
@@ -208,6 +230,12 @@ describe('convertToSupabase', () => {
       isBot: undefined as any,
       autoMode: undefined as any,
       equippedItems: undefined as any,
+      lastIdleCheck: undefined as any,
+      lastActive: undefined as any,
+      idleStreak: undefined as any,
+      idleMaxStreak: undefined as any,
+      idleTotalKills: undefined as any,
+      idleTotalXp: undefined as any,
       id: 'x',
     }
 
@@ -227,6 +255,10 @@ describe('convertToSupabase', () => {
     expect(row.incoming_fight_history).toEqual([])
     expect(row.is_bot).toBe(false)
     expect(row.auto_mode).toBe(false)
+    expect(row.idle_streak).toBe(0)
+    expect(row.idle_max_streak).toBe(0)
+    expect(row.idle_total_kills).toBe(0)
+    expect(row.idle_total_xp).toBe(0)
   })
 
   it('handles bot character correctly', () => {

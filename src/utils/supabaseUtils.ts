@@ -33,6 +33,12 @@ export function convertFromSupabase(row: CharacterRow): Character {
     autoMode: row.auto_mode,
     equippedItems: row.equipped_items ?? { weapon: null, armor: null, accessory: null },
     id: row.id,
+    lastIdleCheck: row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0,
+    lastActive: row.last_active ? new Date(row.last_active).getTime() : 0,
+    idleStreak: row.idle_streak ?? 0,
+    idleMaxStreak: row.idle_max_streak ?? 0,
+    idleTotalKills: row.idle_total_kills ?? 0,
+    idleTotalXp: row.idle_total_xp ?? 0,
   };
 }
 
@@ -67,5 +73,11 @@ export function convertToSupabase(character: Character): Partial<CharacterRow> {
     is_bot: typeof character.isBot === 'boolean' ? character.isBot : false,
     auto_mode: character.autoMode ?? false,
     equipped_items: character.equippedItems ?? { weapon: null, armor: null, accessory: null },
+    last_idle_check: character.lastIdleCheck ? new Date(character.lastIdleCheck).toISOString() : null,
+    last_active: character.lastActive ? new Date(character.lastActive).toISOString() : null,
+    idle_streak: character.idleStreak ?? 0,
+    idle_max_streak: character.idleMaxStreak ?? 0,
+    idle_total_kills: character.idleTotalKills ?? 0,
+    idle_total_xp: character.idleTotalXp ?? 0,
   };
 }

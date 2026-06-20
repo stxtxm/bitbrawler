@@ -14,13 +14,13 @@ import {
   calculateOfflineFightsWithEfficiency,
 } from '../utils/idleEfficiencyUtils'
 import { MonsterId } from '../data/monsterAssets'
-const IDLE_LAST_KEY = 'bitbrawler_idle_last'
 
 interface UseIdleCombatOptions {
   character: Character | null
   isPaused: boolean
   onCharacterUpdate: (char: Character) => void
   onSyncCharacter?: (char: Character) => void
+  onLevelUp?: (levelsGained: number, newLevel: number) => void
 }
 
 interface UseIdleCombatReturn {
@@ -45,6 +45,7 @@ export function useIdleCombat({
   isPaused,
   onCharacterUpdate,
   onSyncCharacter,
+  onLevelUp,
 }: UseIdleCombatOptions): UseIdleCombatReturn {
   const [combatLog, setCombatLog] = useState<IdleCombatEntry[]>([])
   const [currentMonster, setCurrentMonster] = useState<MonsterId | null>(null)
@@ -80,100 +81,81 @@ export function useIdleCombat({
     phaseTimers.current = []
   }, [])
 
-  const saveTimestamp = useCallback(() => {
-    try {
-      localStorage.setItem(IDLE_LAST_KEY, String(Date.now()))
-    } catch {
-      // localStorage might be unavailable
+  // Advance idle/lastActive watermarks and sync to Supabase.
+  // Called on visibility hidden, unmount, and after each combat tick.
+  const syncWatermarks = useCallback(() => {
+    const currentChar = charRef.current
+    if (!currentChar) return
+    const now = Date.now()
+    const updated: Character = {
+      ...currentChar,
+      lastIdleCheck: now,
+      lastActive: now,
+    }
+    if (onCharacterUpdate) onCharacterUpdate(updated)
+    onSyncCharacter?.(updated)
+  }, [onCharacterUpdate, onSyncCharacter])
+
+  // Calculate offline gains popup ONCE on mount (read-only, no persistence).
+  // Server-side idle-processor handles actual persistence via Supabase.
+  const calculateOfflinePreview = useCallback(() => {
+    const currentChar = charRef.current
+    if (!currentChar) return
+
+    const lastActive = currentChar.lastActive ?? 0
+    if (lastActive <= 0) return
+
+    const effectiveChar = applyEquipmentToCharacter(currentChar)
+    const playerStats = calculateCombatStats(currentChar)
+    const monsterStats = calculateCombatStats(getReferenceMonster(currentChar.level))
+    const eff = computeEfficiency(playerStats, monsterStats, effectiveChar.dexterity)
+    const effectiveInterval = eff.effectiveInterval
+
+    const fights = calculateOfflineFightsWithEfficiency(lastActive, Date.now(), effectiveInterval)
+    if (fights <= 0) return
+
+    let totalXp = 0
+    let totalLevels = 0
+    let localChar = currentChar
+
+    for (let i = 0; i < fights; i++) {
+      const { character: monster } = generateMonsterForPlayer(localChar.level)
+      const result = simulateCombat(localChar, monster)
+      const won = result.winner === 'attacker'
+      const xpBonus = 1 + computeEfficiency(
+        calculateCombatStats(localChar),
+        calculateCombatStats(monster),
+        localChar.dexterity,
+      ).xpBonusMultiplier - 1
+      const idleXp = Math.floor(calculateIdleXp(won, localChar.level) * (1 + xpBonus))
+      const streakBonus = Math.min(
+        (localChar.idleStreak ?? 0) * IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_PER_STEP,
+        IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_CAP,
+      )
+      const finalXp = Math.floor(idleXp * (1 + streakBonus))
+      totalXp += finalXp
+
+      const xpResult = gainXp(localChar, finalXp)
+      totalLevels += xpResult.levelsGained
+      localChar = xpResult.updatedCharacter
+    }
+
+    if (totalXp > 0) {
+      setOfflineGains({ fights, xp: totalXp, levels: totalLevels })
     }
   }, [])
 
-  const processOfflineGains = useCallback(() => {
-    if (!charRef.current) return
-    try {
-      const lastTimestamp = Number(localStorage.getItem(IDLE_LAST_KEY) || '0')
-      if (lastTimestamp <= 0) return
-
-      // Calculate effective interval for offline gains based on current stats
-      const effectiveChar = applyEquipmentToCharacter(charRef.current)
-      const playerStats = calculateCombatStats(charRef.current)
-      const monsterStats = calculateCombatStats(getReferenceMonster(charRef.current.level))
-      const eff = computeEfficiency(playerStats, monsterStats, effectiveChar.dexterity)
-      const effectiveInterval = eff.effectiveInterval
-
-      const fights = calculateOfflineFightsWithEfficiency(lastTimestamp, Date.now(), effectiveInterval)
-      if (fights <= 0) return
-
-      let currentChar = charRef.current
-      let totalXp = 0
-      let totalLevels = 0
-      let localStreak = streakRef.current
-      let localKills = killsRef.current
-      let localIdleXp = idleXpRef.current
-
-      for (let i = 0; i < fights; i++) {
-        const { character: monster } = generateMonsterForPlayer(currentChar.level)
-        const result = simulateCombat(currentChar, monster)
-        const won = result.winner === 'attacker'
-        const xpBonus = 1 + computeEfficiency(
-          calculateCombatStats(currentChar),
-          calculateCombatStats(monster),
-          currentChar.dexterity,
-        ).xpBonusMultiplier - 1
-        const idleXp = Math.floor(calculateIdleXp(won, currentChar.level) * (1 + xpBonus))
-        const streakBonus = Math.min(localStreak * IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_PER_STEP, IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_CAP)
-        const finalXp = Math.floor(idleXp * (1 + streakBonus))
-
-        totalXp += finalXp
-        localIdleXp += finalXp
-        if (won) {
-          localStreak++
-          localKills++
-        } else {
-          localStreak = 0
-        }
-
-        const xpResult = gainXp(currentChar, finalXp)
-        totalLevels += xpResult.levelsGained
-        currentChar = {
-          ...xpResult.updatedCharacter,
-          idleStreak: localStreak,
-          idleMaxStreak: Math.max(localStreak, (currentChar.idleMaxStreak ?? 0)),
-          idleTotalKills: localKills,
-          idleTotalXp: localIdleXp,
-          statPoints: (xpResult.updatedCharacter.statPoints || 0) + xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL,
-        }
-      }
-
-      onCharacterUpdate(currentChar)
-      onSyncCharacter?.(currentChar)
-
-      setCurrentStreak(localStreak)
-      setTotalKills(localKills)
-      setIdleTotalXp(localIdleXp)
-
-      if (totalXp > 0) {
-        setOfflineGains({ fights, xp: totalXp, levels: totalLevels })
-        setIdleXpGained(prev => prev + totalXp)
-      }
-    } catch (err) {
-      console.error('Offline gains calculation failed:', err)
-    }
-
-    saveTimestamp()
-  }, [onCharacterUpdate, onSyncCharacter, saveTimestamp])
-
-  // Offline gains on mount
+  // Offline preview on mount
   useEffect(() => {
-    processOfflineGains()
-  }, [processOfflineGains])
+    calculateOfflinePreview()
+  }, [calculateOfflinePreview])
 
-  // Also process offline gains once character becomes available (async load)
+  // Also calculate offline preview once character becomes available
   useEffect(() => {
     if (character) {
-      processOfflineGains()
+      calculateOfflinePreview()
     }
-  }, [character, processOfflineGains])
+  }, [character, calculateOfflinePreview])
 
   // Compute stable efficiency data based on player stats (not per-combat monster).
   // Only changes when level or equipment changes — giving a stable XP/min display.
@@ -253,8 +235,9 @@ export function useIdleCombat({
       }
       newIdleXp += finalXp
 
-      // Apply XP with updated idle stats
+      // Apply XP with updated idle stats and watermarks
       const xpResult = gainXp(currentChar, finalXp)
+      const now = Date.now()
       const updatedChar: Character = {
         ...xpResult.updatedCharacter,
         idleStreak: newStreak,
@@ -262,9 +245,14 @@ export function useIdleCombat({
         idleTotalKills: newKills,
         idleTotalXp: newIdleXp,
         statPoints: (xpResult.updatedCharacter.statPoints || 0) + xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL,
+        lastIdleCheck: now,
+        lastActive: now,
       }
       onCharacterUpdate(updatedChar)
       onSyncCharacter?.(updatedChar)
+      if (xpResult.levelsGained > 0) {
+        onLevelUp?.(xpResult.levelsGained, updatedChar.level)
+      }
 
       setCurrentStreak(newStreak)
       setTotalKills(newKills)
@@ -290,11 +278,11 @@ export function useIdleCombat({
     const t3 = setTimeout(() => {
       setCurrentMonster(null)
       setScenePhase('running')
-      saveTimestamp()
+      syncWatermarks()
     }, IDLE_CONFIG.MONSTER_APPEAR_DURATION + IDLE_CONFIG.COMBAT_DURATION + IDLE_CONFIG.RESULT_DURATION)
 
     phaseTimers.current = [t1, t2, t3]
-  }, [onCharacterUpdate, onSyncCharacter, saveTimestamp, clearPhaseTimers])
+  }, [onCharacterUpdate, onSyncCharacter, onLevelUp, syncWatermarks, clearPhaseTimers])
 
   // Trigger first combat immediately, then repeat on dynamic interval
   useEffect(() => {
@@ -326,29 +314,27 @@ export function useIdleCombat({
     }
   }, [isPaused, runCombatTick])
 
-  // Visibility change → save timestamp when hidden, process gains when visible
+  // Visibility change → sync watermarks when hidden (no processOfflineGains — server handles it)
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === 'hidden') {
-        saveTimestamp()
-      } else if (document.visibilityState === 'visible') {
-        processOfflineGains()
+        syncWatermarks()
       }
     }
     document.addEventListener('visibilitychange', handleVisibility)
     return () => document.removeEventListener('visibilitychange', handleVisibility)
-  }, [saveTimestamp, processOfflineGains])
+  }, [syncWatermarks])
 
-  // Save on unmount
+  // Sync watermarks on unmount
   useEffect(() => {
     return () => {
-      saveTimestamp()
+      syncWatermarks()
       clearPhaseTimers()
       if (timerRef.current) {
         clearTimeout(timerRef.current)
       }
     }
-  }, [saveTimestamp, clearPhaseTimers])
+  }, [syncWatermarks, clearPhaseTimers])
 
   return {
     combatLog,

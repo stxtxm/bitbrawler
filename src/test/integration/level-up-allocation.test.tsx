@@ -53,7 +53,7 @@ describe('Level-up → allocation integration', () => {
       <LevelUpOverlay
         shouldShowLevelUp={true}
         activeCharacter={currentChar}
-        lastLevelUp={{ levelsGained: 1, newLevel: 5, hpGained: 10 }}
+        levelUpData={{ levelsGained: 1, newLevel: 5, hpGained: 10 }}
         isOfflineMode={false}
         statOptions={[
           { key: 'strength', label: 'STR', value: currentChar.strength, hint: 'Damage', icon: 'strength' },
@@ -82,7 +82,7 @@ describe('Level-up → allocation integration', () => {
       <LevelUpOverlay
         shouldShowLevelUp={true}
         activeCharacter={currentChar}
-        lastLevelUp={{ levelsGained: 1, newLevel: 5, hpGained: 10 }}
+        levelUpData={{ levelsGained: 1, newLevel: 5, hpGained: 10 }}
         isOfflineMode={false}
         statOptions={[
           { key: 'strength', label: 'STR', value: currentChar.strength, hint: 'Damage', icon: 'strength' },
@@ -104,7 +104,7 @@ describe('Level-up → allocation integration', () => {
       <LevelUpOverlay
         shouldShowLevelUp={true}
         activeCharacter={currentChar}
-        lastLevelUp={{ levelsGained: 1, newLevel: 5, hpGained: 10 }}
+        levelUpData={{ levelsGained: 1, newLevel: 5, hpGained: 10 }}
         isOfflineMode={false}
         statOptions={[
           { key: 'strength', label: 'STR', value: currentChar.strength, hint: 'Damage', icon: 'strength' },
@@ -124,7 +124,7 @@ describe('Level-up → allocation integration', () => {
       <LevelUpOverlay
         shouldShowLevelUp={true}
         activeCharacter={currentChar}
-        lastLevelUp={{ levelsGained: 1, newLevel: 5, hpGained: 10 }}
+        levelUpData={{ levelsGained: 1, newLevel: 5, hpGained: 10 }}
         isOfflineMode={false}
         statOptions={[]}
         saving={false}
@@ -147,7 +147,7 @@ describe('Level-up → allocation integration', () => {
       <LevelUpOverlay
         shouldShowLevelUp={true}
         activeCharacter={char}
-        lastLevelUp={{ levelsGained: 1, newLevel: 5, hpGained: 10 }}
+        levelUpData={{ levelsGained: 1, newLevel: 5, hpGained: 10 }}
         isOfflineMode={false}
         statOptions={[
           { key: 'strength', label: 'STR', value: char.strength, hint: 'Damage', icon: 'strength' },
@@ -167,7 +167,7 @@ describe('Level-up → allocation integration', () => {
       <LevelUpOverlay
         shouldShowLevelUp={true}
         activeCharacter={char}
-        lastLevelUp={{ levelsGained: 1, newLevel: 5, hpGained: 10 }}
+        levelUpData={{ levelsGained: 1, newLevel: 5, hpGained: 10 }}
         isOfflineMode={false}
         statOptions={[
           { key: 'strength', label: 'STR', value: char.strength, hint: 'Damage', icon: 'strength' },
@@ -193,7 +193,7 @@ describe('Level-up → allocation integration', () => {
       <LevelUpOverlay
         shouldShowLevelUp={true}
         activeCharacter={char}
-        lastLevelUp={{ levelsGained: 1, newLevel: 5, hpGained: 10 }}
+        levelUpData={{ levelsGained: 1, newLevel: 5, hpGained: 10 }}
         isOfflineMode={false}
         statOptions={[
           { key: 'strength', label: 'STR', value: char.strength, hint: 'Damage', icon: 'strength' },
