@@ -1088,14 +1088,14 @@
     flex: 1;
     @include retro-border(2px, #fff);
     min-height: 150px;
-    height: 150px; /* Fixed height to prevent layout shifts */
+    max-height: 320px;
     margin-bottom: 10px;
     overflow: hidden;
     background: radial-gradient(circle, #222 0%, #000 100%);
 
     @include mobile {
         min-height: 100px;
-        height: 100px; /* Fixed height for mobile */
+        max-height: 260px;
         margin-bottom: 5px;
         border-width: 1px;
     }
@@ -1116,15 +1116,10 @@
 
 .stats-content {
     grid-area: stats;
-    transition: visibility 0.2s ease, opacity 0.2s ease;
-    opacity: 1;
 }
 
 .stats-content[aria-hidden="true"] {
     visibility: hidden;
-    opacity: 0;
-    position: absolute; /* Prevents space reservation when hidden */
-    width: 100%;
 }
 
 .xp-header {
