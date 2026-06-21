@@ -355,28 +355,27 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
 
     const render = (now: number) => {
       rafId = requestAnimationFrame(render);
-      
-      // Initialize start time on first stable frame
+
       if (animationStartTime.current === null) {
         animationStartTime.current = now;
       }
-      
+
       const elapsedSinceStable = now - animationStartTime.current;
-      
-      // Smooth ramp-up over first 500ms to prevent initial jump
+
       const rampUpFactor = Math.min(1, elapsedSinceStable / 500);
       const effectiveScrollSpeed = 36 * rampUpFactor;
-      
+
       if (animatedRef.current) {
-        const dt = lastTimeRef.current ? (now - lastTimeRef.current) / 1000 : 0;
+        const dt = lastTimeRef.current ? Math.min((now - lastTimeRef.current) / 1000, 0.05) : 0;
         scrollOffsetRef.current += dt * effectiveScrollSpeed;
       }
-      
+
       lastTimeRef.current = now;
       drawFrame(scrollOffsetRef.current);
     };
 
     lastTimeRef.current = 0;
+    animationStartTime.current = null;
     rafId = requestAnimationFrame(render);
 
     return () => {
