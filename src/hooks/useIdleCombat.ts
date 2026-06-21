@@ -11,7 +11,6 @@ import { applyEquipmentToCharacter } from '../utils/equipmentUtils'
 import {
   computeEfficiency,
   computeDisplayData,
-  calculateOfflineFightsWithEfficiency,
   calculateNextLevelTime,
 } from '../utils/idleEfficiencyUtils'
 import { MonsterId } from '../data/monsterAssets'
@@ -33,7 +32,7 @@ interface UseIdleCombatReturn {
   lastCombatXp: number
   scenePhase: ScenePhase
   idleFightsCount: number
-  offlineGains: { fights: number; xp: number; levels: number } | null
+  offlineGains: { fights: number; xp: number; levels: number; essence: number; timeAway: number } | null
   clearOfflineGains: () => void
   currentStreak: number
   totalKills: number
@@ -55,7 +54,7 @@ export function useIdleCombat({
   const [lastCombatResult, setLastCombatResult] = useState<'win' | 'lose' | null>(null)
   const [lastCombatXp, setLastCombatXp] = useState(0)
   const [scenePhase, setScenePhase] = useState<ScenePhase>('running')
-  const [offlineGains, setOfflineGains] = useState<{ fights: number; xp: number; levels: number } | null>(null)
+  const [offlineGains, setOfflineGains] = useState<{ fights: number; xp: number; levels: number; essence: number; timeAway: number } | null>(null)
   const [currentStreak, setCurrentStreak] = useState(character?.idleStreak ?? 0)
   const [totalKills, setTotalKills] = useState(character?.idleTotalKills ?? 0)
   const [idleTotalXp, setIdleTotalXp] = useState(character?.idleTotalXp ?? 0)
@@ -97,57 +96,8 @@ export function useIdleCombat({
     onSyncCharacter?.(updated)
   }, [onCharacterUpdate, onSyncCharacter])
 
-  // Calculate offline gains popup ONCE on mount (read-only, no persistence).
-  // Server-side idle-processor handles actual persistence via Supabase.
-  const calculateOfflinePreview = useCallback(() => {
-    const currentChar = charRef.current
-    if (!currentChar) return
-
-    const lastActive = currentChar.lastActive ?? 0
-    if (lastActive <= 0) return
-
-    const effectiveChar = applyEquipmentToCharacter(currentChar)
-    const playerStats = calculateCombatStats(currentChar)
-    const monsterStats = calculateCombatStats(getReferenceMonster(currentChar.level))
-    const eff = computeEfficiency(playerStats, monsterStats, effectiveChar.dexterity)
-    const effectiveInterval = eff.effectiveInterval
-
-    const fights = calculateOfflineFightsWithEfficiency(lastActive, Date.now(), effectiveInterval)
-    if (fights <= 0) return
-
-    let totalXp = 0
-    let totalLevels = 0
-    let localChar = currentChar
-
-    for (let i = 0; i < fights; i++) {
-      const { character: monster } = generateMonsterForPlayer(localChar.level)
-      const result = simulateCombat(localChar, monster)
-      const won = result.winner === 'attacker'
-      const xpBonus = 1 + computeEfficiency(
-        calculateCombatStats(localChar),
-        calculateCombatStats(monster),
-        localChar.dexterity,
-      ).xpBonusMultiplier - 1
-      const idleXp = Math.floor(calculateIdleXp(won, localChar.level) * (1 + xpBonus))
-      const streakBonus = Math.min(
-        (localChar.idleStreak ?? 0) * IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_PER_STEP,
-        IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_CAP,
-      )
-      const finalXp = Math.floor(idleXp * (1 + streakBonus))
-      totalXp += finalXp
-
-      const xpResult = gainXp(localChar, finalXp)
-      totalLevels += xpResult.levelsGained
-      localChar = xpResult.updatedCharacter
-    }
-
-    if (totalXp > 0 || fights > 0) {
-      setOfflineGains({ fights, xp: totalXp, levels: totalLevels })
-    }
-  }, [])
-
-  // On-demand idle processing: show local preview immediately,
-  // then call server to persist gains and update with real data.
+  // On-demand idle processing: call server to persist gains and show popup.
+  // No local preview to avoid popup flicker — server response is fast (< 1s).
   useEffect(() => {
     if (!character) return
     const lastActive = character.lastActive ?? 0
@@ -155,10 +105,6 @@ export function useIdleCombat({
     const idleMs = Date.now() - lastActive
     if (idleMs <= 30_000) return
 
-    // 1) Show local preview immediately
-    calculateOfflinePreview()
-
-    // 2) Fire server call (async) — updates character + popup with real data
     let cancelled = false
 
     const processOnServer = async () => {
@@ -181,17 +127,25 @@ export function useIdleCombat({
             }
             onCharacterUpdate(updatedChar)
           }
-          setOfflineGains({ fights: data.fights, xp: data.xp, levels: data.levels })
+          const serverEssence = data.essence ?? 0
+          const timeAway = Date.now() - lastActive
+          setOfflineGains({
+            fights: data.fights,
+            xp: data.xp,
+            levels: data.levels,
+            essence: serverEssence,
+            timeAway,
+          })
         }
       } catch {
-        // server unreachable — preview from step 1 already visible
+        // server unreachable — silently ignore, popup won't appear but idle persists on cron
       }
     }
 
     processOnServer()
 
     return () => { cancelled = true }
-  }, [character?.id, character?.lastActive, onCharacterUpdate, calculateOfflinePreview])
+  }, [character?.id, character?.lastActive, onCharacterUpdate])
 
   // Compute stable efficiency data — recalculates when character changes (level, stats, equip).
   useEffect(() => {

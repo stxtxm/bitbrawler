@@ -18,7 +18,7 @@ export interface ArenaIdleViewModel {
   scenePhase: ScenePhase;
   lastCombatResult: 'win' | 'lose' | null;
   lastCombatXp: number;
-  offlineGains: { fights: number; xp: number; levels: number } | null;
+  offlineGains: { fights: number; xp: number; levels: number; essence: number; timeAway: number } | null;
   clearOfflineGains: () => void;
   currentStreak: number;
   streakMilestone: number | null;

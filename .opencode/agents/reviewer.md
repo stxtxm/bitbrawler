@@ -29,7 +29,14 @@ Tu exécutes une revue de code **rigoureuse** sur les PRs:
 - Les tests couvrent-ils les edge cases ?
 - La feature est-elle testée progressivement (pas un seul test géant) ?
 
-### 2. **TypeScript** (🔴 critique)
+### 2. **Database Safety** (🔴 critique)
+- La PR nécessite-t-elle une migration DB (nouvelle table/colonne/contrainte) ?
+- Si oui, l'issue de migration existe-t-elle AVEC la requête SQL exacte copiable ?
+- La migration est-elle marquée SANS `/oc` ?
+- ❌ **REFUSER** si la PR modifie le schéma sans issue de migration dédiée
+- ❌ **REFUSER** si la migration est incluse dans du code automatisé (scripts, CI/CD)
+
+### 3. **TypeScript** (🔴 critique)
 - Pas d'erreurs TypeScript ?
 - Pas de `any` utilisé (sauf justification excellente) ?
 - Types explicites pour les fonctions publiques ?

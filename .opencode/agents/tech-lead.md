@@ -193,6 +193,8 @@ Tu **dois** faire des recherches web à chaque run. Utilise `websearch` et `webf
 - ✅ Max 3-4 issues créées par run (les autres = mises à jour d'existantes)
 - ❌ Ne merge jamais une PR si la CI est rouge
 - ❌ N'ignore jamais `qa/stats.json` s'il existe
+- ✅ **Database Safety**: si une feature nécessite une migration DB, vérifie que l'issue contient la requête SQL exacte (format : `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`)
+- ❌ **NE JAMAIS** suggérer d'exécuter du SQL soi-même — toujours créer une issue de migration SANS `/oc` pour l'humain
 
 ## 💡 Tips
 

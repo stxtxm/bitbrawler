@@ -72,46 +72,48 @@ gh issue create ...
 - ✅ Tu DOIS t'arrêter après avoir créé les sous-issues
 - ✅ Le tag `/oc` signifie TOUJOURS implémenter, mais via sous-issues si nécessaire
 
-## 🗄️ RÈGLE: Migrations base de données
+## 🗄️ RÈGLE ABSOLUE: Migrations base de données
 
-**Les migrations Supabase sont la SEULE chose qui nécessite validation humaine.**
+**⚠️ Les migrations Supabase sont la SEULE chose qui nécessite validation humaine.
+Tu NE DOIS JAMAIS toucher à la base de production directement.**
 
-Si l'implémentation nécessite un changement de schéma Supabase (nouvelle table, nouvelle colonne, nouvelle contrainte):
-1. Implémente tout le code (types, utils, composants, tests) — les migrations DB sont la SEULE exception
-2. **NE FAIS PAS** la migration toi-même
-3. Crée une issue **SANS `/oc`** décrivant exactement la migration nécessaire:
+### Ce que tu dois faire si une migration DB est nécessaire
+
+1. **Écris tout le code** (types, utils, composants, tests) — le code doit fonctionner SANS la migration (champs optionnels `?`, defaults)
+2. **La requête SQL doit être EXACTE et prête à copier-coller** dans Supabase Dashboard > SQL Editor
+3. **Crée une issue SANS `/oc`** décrivant la migration:
 ```bash
 gh issue create \
-  --title "chore: DB migration — [description du changement]" \
+  --title "chore: DB migration — [description]" \
   --body "Migration requise pour l'issue #[parent]
 
 ## Changement
-- Table: ...
-- Colonne: ...
-- Type: ...
-- Défaut: ...
+- Table: \`characters\`
+- Colonne: \`essence\`
+- Type: \`INTEGER\`
+- Défaut: \`0\`
+- Nullable: non
 
 ## Commande SQL
 \`\`\`sql
-ALTER TABLE ...
+ALTER TABLE characters ADD COLUMN IF NOT EXISTS essence INTEGER NOT NULL DEFAULT 0;
 \`\`\`
 
 ## Notes
-- Cette migration est nécessaire pour que le code de #[parent] fonctionne
-- À exécuter dans Supabase Dashboard > SQL Editor > New Query"
+- Code déjà déployé, fonctionnel sans la migration
+- Exécuter dans Supabase Dashboard > SQL Editor > New Query
+- Aucun downtime"
 ```
-4. Cette issue **N'A PAS** `/oc` → elle ne sera PAS auto-implémentée, elle attend validation humaine
-5. Continue d'implémenter tout le code normal (tout ce qui n'est pas une migration DB)
+4. **N'A PAS** `/oc` → attend validation humaine
+5. Continue d'implémenter le code normal
 
-**Exemple**: Si tu ajoutes une colonne `essence` à la table `characters`:
-- ✅ Crée l'issue de migration (SANS /oc)
-- ✅ Ajoute `essence` dans les types TypeScript
-- ✅ Ajoute `essence` dans normalizeCharacter
-- ✅ Ajoute l'UI pour afficher/modifier essence
-- ✅ Écris les tests
-- ❌ NE PAS exécuter `ALTER TABLE` ou modifier le schéma Supabase
+### ❌ Interdictions formelles
+- ❌ NE JAMAIS exécuter `ALTER TABLE`, `CREATE TABLE`, `INSERT`, `UPDATE` sur la prod
+- ❌ NE JAMAIS utiliser `supabase` ou `fetch` pour modifier le schéma
+- ❌ NE JAMAIS inclure de migration dans du code automatisé (scripts, CI/CD)
+- ❌ NE JAMAIS merge une PR dont la migration n'a pas été exécutée
 
-**Rappel**: Le code fonctionne sans la migration (champs optionnels, defaults). La migration est nécessaire pour la persistance.
+**Rappel**: Le code fonctionne sans la migration (champs optionnels, defaults). La migration n'est que pour la persistance en prod. L'humain la copie-colle dans Supabase Dashboard.
 
 ## 📋 Contexte projet
 

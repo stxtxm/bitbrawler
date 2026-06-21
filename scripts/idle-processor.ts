@@ -19,6 +19,7 @@ const SELECT_COLUMNS = [
   'experience', 'stat_points', 'last_idle_check',
   'auto_mode', 'is_bot', 'equipped_items',
   'idle_streak', 'idle_max_streak', 'idle_total_kills', 'idle_total_xp',
+  'essence', 'last_active',
 ].join(',');
 
 function convertRowToCharacter(row: any): Character {
@@ -49,6 +50,8 @@ function convertRowToCharacter(row: any): Character {
     idleMaxStreak: row.idle_max_streak ?? 0,
     idleTotalKills: row.idle_total_kills ?? 0,
     idleTotalXp: row.idle_total_xp ?? 0,
+    essence: row.essence ?? 0,
+    lastActive: row.last_active ? new Date(row.last_active).getTime() : 0,
     lastIdleCheck: row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0,
   };
 }
@@ -107,6 +110,7 @@ function simulateIdleGains(
   let streak = current.idleStreak ?? 0;
   let kills = current.idleTotalKills ?? 0;
   let idleTotal = current.idleTotalXp ?? 0;
+  let essenceAccum = 0;
   let _leveledUp = false;
 
   for (let i = 0; i < fights; i++) {
@@ -122,6 +126,10 @@ function simulateIdleGains(
       IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_CAP,
     );
     const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus));
+
+    const essenceRate = IDLE_CONFIG.ESSENCE.BASE_RATE * (won ? 1 : IDLE_CONFIG.ESSENCE.LOSS_RATIO)
+    const essenceScaling = 1 + (current.level - 1) * IDLE_CONFIG.ESSENCE.LEVEL_SCALE
+    essenceAccum += essenceRate * essenceScaling
 
     const result = gainXp(current, finalXp);
     if (result.levelsGained > 0) _leveledUp = true;
@@ -145,6 +153,11 @@ function simulateIdleGains(
       : updated;
   }
 
+  const essenceDelta = Math.min(Math.floor(essenceAccum), 500 - (current.essence ?? 0))
+  if (essenceDelta > 0) {
+    current = { ...current, essence: (current.essence ?? 0) + essenceDelta }
+  }
+
   return current;
 }
 
@@ -165,9 +178,10 @@ async function processCharacter(candidate: IdleChar): Promise<void> {
 
   const levelDiff = updated.level - candidate.char.level;
   const xpDiff = (updated.experience ?? 0) - (candidate.char.experience ?? 0);
+  const essenceDiff = (updated.essence ?? 0) - (candidate.char.essence ?? 0);
 
   console.log(
-    `  ${candidate.char.name}: ${levelDiff > 0 ? `⬆ LVL +${levelDiff}, ` : ''}+${xpDiff} XP, streak ${updated.idleStreak}, kills ${updated.idleTotalKills}`
+    `  ${candidate.char.name}: ${levelDiff > 0 ? `⬆ LVL +${levelDiff}, ` : ''}+${xpDiff} XP, ${essenceDiff > 0 ? `⚡ +${essenceDiff} Essence, ` : ''}streak ${updated.idleStreak}, kills ${updated.idleTotalKills}`
   );
 
   const updates: Record<string, any> = {
@@ -187,6 +201,7 @@ async function processCharacter(candidate: IdleChar): Promise<void> {
     idle_max_streak: updated.idleMaxStreak,
     idle_total_kills: updated.idleTotalKills,
     idle_total_xp: updated.idleTotalXp,
+    essence: updated.essence,
   };
 
   const { error } = await supabase

@@ -53,7 +53,7 @@ const idle: ArenaIdleViewModel = {
   scenePhase: 'running',
   lastCombatResult: null,
   lastCombatXp: 18,
-  offlineGains: null,
+  offlineGains: null, // { fights: number; xp: number; levels: number; essence: number; timeAway: number } | null
   clearOfflineGains: vi.fn(),
   currentStreak: 6,
   streakMilestone: null,
