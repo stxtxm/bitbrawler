@@ -234,7 +234,7 @@ export const FusionPanel = memo(function FusionPanel({ onClose }: FusionPanelPro
                       return (
                         <button
                           key={item.id}
-                          className={`forge-item-card ${isSelected ? 'selected' : ''} ${fusing ? 'disabled' : ''}`}
+                          className={`forge-item-card ${isSelected ? 'selected' : ''} ${fusing && isSelected ? 'forge-anim-orbit' : ''} ${fusing ? 'disabled' : ''}`}
                           onClick={() => handleToggleItem(item.id)}
                           disabled={fusing}
                           aria-label={`Toggle ${item.name} for fusion`}
@@ -294,7 +294,7 @@ export const FusionPanel = memo(function FusionPanel({ onClose }: FusionPanelPro
       {/* Result overlay */}
       {showResult && (
         <div className="forge-result-overlay" onClick={() => {}}>
-          <div className={`forge-result-card ${fusing ? 'forge-anim-swirl' : ''}`}>
+          <div className={`forge-result-card forge-anim-flash ${fusing ? 'forge-anim-swirl' : ''}`}>
             <div className={`forge-result-rarity ${showResult.rarity}`}>
               {luckyProc ? '✨ LUCKY FUSION! ✨' : 'FUSION SUCCESS!'}
             </div>

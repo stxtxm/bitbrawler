@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react';
 import { ItemSlot, PixelItemAsset } from '../../types/Item';
 import { getItemById } from '../../utils/equipmentUtils';
 import { getItemStatEntries } from '../../hooks/useInventory';
+import { ESSENCE_YIELD } from '../../data/forgeConstants';
 import { AffinityBadge } from '../AffinityBadge';
 import { PixelIcon } from '../PixelIcon';
 import { PixelItemIcon } from '../PixelItemIcon';
@@ -34,6 +35,10 @@ interface InventoryPanelProps {
   onSelectItem: (itemId: string) => void;
   onHoverItem: (id: string | null) => void;
   previewItemId: string | null;
+  // Forge integration
+  itemUpgradeLevels?: Record<string, number>;
+  onSalvage?: (itemId: string) => void;
+  essence?: number;
 }
 
 const ITEM_SLOTS: ItemSlot[] = ['weapon', 'armor', 'accessory'];
@@ -73,6 +78,9 @@ export const InventoryPanel = memo(function InventoryPanel({
   onSelectItem,
   onHoverItem,
   previewItemId,
+  itemUpgradeLevels = {},
+  onSalvage,
+  essence = 0,
 }: InventoryPanelProps) {
   const groupedItems = useMemo(() => {
     const bySlot: Record<ItemSlot, PixelItemAsset[]> = {
@@ -175,7 +183,7 @@ export const InventoryPanel = memo(function InventoryPanel({
                         return (
                           <button
                             key={item.id}
-                            className={`inv-group-item rarity-${item.rarity} ${isSelected ? 'selected' : ''}`}
+                            className={`inv-group-item rarity-${item.rarity} ${isSelected ? 'selected' : ''} ${(itemUpgradeLevels[item.id] ?? 0) > 0 ? 'upgraded' : ''}`}
                             onClick={() => {
                               onEquip(item.id, slot);
                               onSelectItem(item.id);
@@ -185,11 +193,14 @@ export const InventoryPanel = memo(function InventoryPanel({
                             onFocus={() => onHoverItem(item.id)}
                             onBlur={() => onHoverItem(null)}
                             onTouchStart={() => onSelectItem(item.id)}
-                            title={`Equip ${item.name}`}
+                            title={`Equip ${item.name}${(itemUpgradeLevels[item.id] ?? 0) > 0 ? ` (+${itemUpgradeLevels[item.id]})` : ''}`}
                             aria-label={`Equip ${item.name}`}
                           >
                             <PixelItemIcon pixels={item.pixels} size={22} />
                             {item.element && <AffinityBadge element={item.element} size={8} />}
+                            {(itemUpgradeLevels[item.id] ?? 0) > 0 && (
+                              <span className="inv-upgrade-badge">+{itemUpgradeLevels[item.id]}</span>
+                            )}
                           </button>
                         );
                       })}
@@ -212,6 +223,9 @@ export const InventoryPanel = memo(function InventoryPanel({
                       <div className="inventory-item-sub">
                         <span className="inventory-item-slot">{previewSlotLabel}</span>
                         <span className="inventory-item-rarity">{previewItem.rarity.toUpperCase()}</span>
+                        {(itemUpgradeLevels[previewItem.id] ?? 0) > 0 && (
+                          <span className="inventory-item-upgrade">+{itemUpgradeLevels[previewItem.id]}</span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -229,6 +243,28 @@ export const InventoryPanel = memo(function InventoryPanel({
                       );
                     })}
                   </div>
+                  {/* Forge integration: essence yield and salvage */}
+                  {onSalvage && (
+                    <div className="inventory-forge-actions">
+                      <div className="inventory-essence-yield">
+                        <span className="essence-yield-label">SALVAGE YIELD</span>
+                        <span className="essence-yield-value">+{ESSENCE_YIELD[previewItem.rarity]} Essence</span>
+                      </div>
+                      <button
+                        className="forge-action-btn danger"
+                        onClick={() => onSalvage(previewItem.id)}
+                        aria-label={`Salvage ${previewItem.name} for ${ESSENCE_YIELD[previewItem.rarity]} essence`}
+                      >
+                        SALVAGE
+                      </button>
+                    </div>
+                  )}
+                  {essence > 0 && (
+                    <div className="inventory-essence-total">
+                      <span className="essence-total-label">ESSENCE</span>
+                      <span className="essence-total-value">{essence}</span>
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="inventory-empty-details">TAP AN ITEM TO VIEW BONUSES</div>

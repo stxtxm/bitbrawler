@@ -150,6 +150,17 @@ describe('SalvagePanel', () => {
 
     expect(screen.getByText(/essence.*cap|cap.*essence|soft.*cap/i)).toBeInTheDocument();
   });
+
+  it('shows 0 essence state', () => {
+    const char = makeCharacter({ inventory: [RUSTY_SWORD.id], essence: 0 });
+    setupGame({ activeCharacter: char, essence: char.essence });
+    render(<SalvagePanel onClose={vi.fn()} />);
+
+    // Should still show essence as 0 but items are salvageable
+    const essenceValues = screen.getAllByText('0');
+    expect(essenceValues.length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/Rusty Sword/)).toBeInTheDocument();
+  });
 });
 
 // ─── FusionPanel ────────────────────────────────────────────────────────────
@@ -201,6 +212,21 @@ describe('FusionPanel', () => {
 
     // Now the cost should display
     expect(screen.getByText(new RegExp(`Cost: ${FUSION_COST.common} Essence`, 'i'))).toBeInTheDocument();
+  });
+
+  it('shows disabled fuse button with insufficient essence', () => {
+    const char = makeCharacter({
+      inventory: [RUSTY_SWORD.id, WORN_BRACERS.id, LUCKY_CHARM.id],
+      essence: 1, // Not enough for common fusion cost (5)
+    });
+    setupGame({ activeCharacter: char, essence: char.essence });
+    render(<FusionPanel onClose={vi.fn()} />);
+
+    const toggleBtns = screen.getAllByRole('button', { name: /toggle/i });
+    toggleBtns.slice(0, 3).forEach((btn) => fireEvent.click(btn));
+
+    const fuseBtn = screen.getByRole('button', { name: /fuse items/i });
+    expect(fuseBtn).toBeDisabled();
   });
 
   it('shows fusion result toast on success', async () => {
@@ -354,6 +380,34 @@ describe('UpgradePanel', () => {
     render(<UpgradePanel onClose={vi.fn()} />);
 
     expect(screen.getByText(/essence.*cap|cap.*essence|soft.*cap/i)).toBeInTheDocument();
+  });
+
+  it('shows disabled upgrade button with 0 essence', () => {
+    const char = makeCharacter({
+      inventory: [RUSTY_SWORD.id],
+      essence: 0,
+    });
+    setupGame({ activeCharacter: char, essence: char.essence });
+    render(<UpgradePanel onClose={vi.fn()} />);
+
+    const selectBtn = screen.getByRole('button', { name: /select.*rusty sword/i });
+    fireEvent.click(selectBtn);
+
+    const upgradeActionBtn = screen.getByRole('button', { name: /upgrade item/i });
+    expect(upgradeActionBtn).toBeDisabled();
+  });
+
+  it('shows upgrade level on items in the grid', () => {
+    const char = makeCharacter({
+      inventory: [RUSTY_SWORD.id],
+      essence: 100,
+      itemUpgrades: { rusty_sword: 3 },
+    });
+    setupGame({ activeCharacter: char, essence: char.essence });
+    render(<UpgradePanel onClose={vi.fn()} />);
+
+    // The item should show +3 in the grid
+    expect(screen.getByText('+3')).toBeInTheDocument();
   });
 
   it('performs upgrade and shows success toast', async () => {

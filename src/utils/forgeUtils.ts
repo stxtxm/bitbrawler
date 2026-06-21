@@ -35,21 +35,51 @@ const clampEssence = (value: number): number => {
   return Math.min(value, ESSENCE_SOFT_CAP);
 };
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * Returns the upgrade level of an item in the character's inventory.
+ */
+export const getItemUpgradeLevel = (itemId: string, character: Character): number => {
+  return character.itemUpgrades?.[itemId] ?? 0;
+};
+
+/**
+ * Checks if an item can be salvaged:
+ * - Item is in the character's inventory
+ * - Item is not currently equipped
+ */
+export const canSalvageItem = (itemId: string, character: Character): boolean => {
+  const inventory = character.inventory ?? [];
+  if (!inventory.includes(itemId)) {
+    return false;
+  }
+
+  // Check if item is equipped in any slot
+  const equipped = character.equippedItems;
+  if (equipped) {
+    if (equipped.weapon === itemId || equipped.armor === itemId || equipped.accessory === itemId) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
 // ─── Salvage ───────────────────────────────────────────────────────────────
 
 /**
  * Salvages an item from the character's inventory, removing it and adding
  * essence to the character. Returns a new Character object (does not mutate).
- * If the item is not in inventory or not found in allItems, returns the
- * character unchanged.
+ * If the item is not in inventory, not found in allItems, or is equipped,
+ * returns the character unchanged.
  */
 export const salvageItem = (
   itemId: string,
   character: Character,
   allItems: PixelItemAsset[]
 ): Character => {
-  const inventory = character.inventory ?? [];
-  if (!inventory.includes(itemId)) {
+  if (!canSalvageItem(itemId, character)) {
     return character;
   }
 
@@ -59,7 +89,7 @@ export const salvageItem = (
   }
 
   const essenceGain = getEssenceYield(item);
-  const newInventory = inventory.filter((id) => id !== itemId);
+  const newInventory = (character.inventory ?? []).filter((id) => id !== itemId);
   const newEssence = clampEssence((character.essence ?? 0) + essenceGain);
 
   return {
@@ -94,10 +124,16 @@ export const canFuse = (items: PixelItemAsset[], character: Character): boolean 
     return false;
   }
 
-  // All items must be in the character's inventory
+  // All items must be in the character's inventory (count duplicates)
   const inventory = character.inventory ?? [];
-  if (!items.every((item) => inventory.includes(item.id))) {
-    return false;
+  const itemCounts = new Map<string, number>();
+  for (const id of inventory) {
+    itemCounts.set(id, (itemCounts.get(id) || 0) + 1);
+  }
+  for (const item of items) {
+    const count = itemCounts.get(item.id) ?? 0;
+    if (count <= 0) return false;
+    itemCounts.set(item.id, count - 1);
   }
 
   // Must have enough essence
@@ -168,9 +204,20 @@ export const performFusion = (
     ? eligible[Math.floor(rng() * eligible.length)]
     : null;
 
-  // Remove the 3 input items from inventory
-  const inputIds = new Set(items.map((i) => i.id));
-  const newInventory = (character.inventory ?? []).filter((id) => !inputIds.has(id));
+  // Remove the 3 input items from inventory (handle duplicate IDs)
+  const removalCounts = new Map<string, number>();
+  for (const item of items) {
+    removalCounts.set(item.id, (removalCounts.get(item.id) || 0) + 1);
+  }
+  const newInventory = [...(character.inventory ?? [])];
+  for (let i = newInventory.length - 1; i >= 0; i--) {
+    const id = newInventory[i];
+    const count = removalCounts.get(id);
+    if (count && count > 0) {
+      newInventory.splice(i, 1);
+      removalCounts.set(id, count - 1);
+    }
+  }
 
   // Add result item to inventory if found
   const finalInventory = resultItem ? [...newInventory, resultItem.id] : newInventory;

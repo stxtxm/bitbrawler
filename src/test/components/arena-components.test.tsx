@@ -248,4 +248,125 @@ describe('arena extracted components', () => {
     expect(onOpenInventory).toHaveBeenCalled();
     expect(onLogout).toHaveBeenCalled();
   });
+
+  // ─── InventoryPanel Forge Integration ──────────────────────────────────────
+
+  describe('InventoryPanel forge integration', () => {
+    it('displays upgrade level on items when itemUpgradeLevels is provided', () => {
+      const rustySword = getItem('rusty_sword');
+      const wornBracers = getItem('worn_bracers');
+
+      render(
+        <InventoryPanel
+          inventory={[rustySword.id, wornBracers.id]}
+          inventoryCapacity={20}
+          equippedItems={[]}
+          previewItem={null}
+          previewSlotLabel=""
+          previewStats={[]}
+          totalBonusEntries={[]}
+          lootboxResult={null}
+          lootboxRolling={false}
+          canRollDailyLoot
+          inventoryFull={false}
+          streak={0}
+          itemStatMeta={ITEM_STAT_META}
+          isOfflineMode={false}
+          onClose={vi.fn()}
+          onEquip={vi.fn()}
+          onUnequip={vi.fn()}
+          onLootboxRoll={vi.fn()}
+          onCloseLootboxResult={vi.fn()}
+          onSelectItem={vi.fn()}
+          onHoverItem={vi.fn()}
+          previewItemId={null}
+          itemUpgradeLevels={{ rusty_sword: 3 }}
+        />,
+      );
+
+      // The upgraded item name or card should show upgrade info
+      const equipBtn = screen.getByLabelText('Equip Rusty Sword');
+      expect(equipBtn).toBeInTheDocument();
+      // The card should have the upgraded class (VISUALLY)
+      expect(equipBtn.className).toContain('upgraded');
+    });
+
+    it('renders salvage button in detail view when item is selected', () => {
+      const rustySword = getItem('rusty_sword');
+      const onSalvage = vi.fn();
+
+      render(
+        <InventoryPanel
+          inventory={[rustySword.id]}
+          inventoryCapacity={20}
+          equippedItems={[]}
+          previewItem={rustySword}
+          previewSlotLabel="WEAPON"
+          previewStats={getItemStatEntries(rustySword)}
+          totalBonusEntries={[]}
+          lootboxResult={null}
+          lootboxRolling={false}
+          canRollDailyLoot
+          inventoryFull={false}
+          streak={0}
+          itemStatMeta={ITEM_STAT_META}
+          isOfflineMode={false}
+          onClose={vi.fn()}
+          onEquip={vi.fn()}
+          onUnequip={vi.fn()}
+          onLootboxRoll={vi.fn()}
+          onCloseLootboxResult={vi.fn()}
+          onSelectItem={vi.fn()}
+          onHoverItem={vi.fn()}
+          previewItemId={rustySword.id}
+          onSalvage={onSalvage}
+          essence={50}
+        />,
+      );
+
+      // Should show a salvage button in the detail view
+      const salvageBtn = screen.getByRole('button', { name: /salvage/i });
+      expect(salvageBtn).toBeInTheDocument();
+      fireEvent.click(salvageBtn);
+      expect(onSalvage).toHaveBeenCalledWith(rustySword.id);
+    });
+
+    it('shows essence yield on item hover in detail view', () => {
+      const rustySword = getItem('rusty_sword');
+
+      render(
+        <InventoryPanel
+          inventory={[rustySword.id]}
+          inventoryCapacity={20}
+          equippedItems={[]}
+          previewItem={rustySword}
+          previewSlotLabel="WEAPON"
+          previewStats={getItemStatEntries(rustySword)}
+          totalBonusEntries={[]}
+          lootboxResult={null}
+          lootboxRolling={false}
+          canRollDailyLoot
+          inventoryFull={false}
+          streak={0}
+          itemStatMeta={ITEM_STAT_META}
+          isOfflineMode={false}
+          onClose={vi.fn()}
+          onEquip={vi.fn()}
+          onUnequip={vi.fn()}
+          onLootboxRoll={vi.fn()}
+          onCloseLootboxResult={vi.fn()}
+          onSelectItem={vi.fn()}
+          onHoverItem={vi.fn()}
+          previewItemId={rustySword.id}
+          onSalvage={vi.fn()}
+          essence={50}
+        />,
+      );
+
+      // The salvage yield label should be displayed
+      expect(screen.getByText('SALVAGE YIELD')).toBeInTheDocument();
+      // The essence total should be shown
+      expect(screen.getByText('50')).toBeInTheDocument();
+    });
+  });
 });

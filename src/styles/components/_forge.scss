@@ -550,3 +550,379 @@
   letter-spacing: 1px;
   text-align: center;
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// New Animations (added in sub-task 3 polishing)
+// ════════════════════════════════════════════════════════════════════════════
+
+// ─── Fusion: items orbit into center ──────────────────────────────────────
+
+@keyframes forgeOrbitIn {
+  0% {
+    transform: rotate(0deg) translateX(40px) rotate(0deg) scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: rotate(180deg) translateX(20px) rotate(-180deg) scale(0.95);
+    opacity: 0.6;
+    filter: brightness(1.5);
+  }
+  100% {
+    transform: rotate(360deg) translateX(0) rotate(-360deg) scale(1);
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+@keyframes forgeFlash {
+  0% {
+    box-shadow: 0 0 0 rgba(255, 204, 0, 0);
+    background: rgba(0, 0, 0, 0.85);
+  }
+  30% {
+    box-shadow: 0 0 40px rgba(255, 204, 0, 0.8), 0 0 80px rgba(255, 204, 0, 0.4);
+    background: rgba(50, 40, 0, 0.9);
+  }
+  60% {
+    box-shadow: 0 0 20px rgba(255, 204, 0, 0.4);
+    background: rgba(0, 0, 0, 0.85);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(255, 204, 0, 0);
+    background: rgba(0, 0, 0, 0.85);
+  }
+}
+
+.forge-anim-orbit {
+  animation: forgeOrbitIn 0.7s ease-out forwards;
+}
+
+.forge-anim-flash {
+  animation: forgeFlash 0.6s ease-in-out;
+}
+
+// ─── Upgrade: sparkle particles on success ────────────────────────────────
+
+@keyframes forgeSparkle {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2) rotate(180deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(0) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.forge-sparkle-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 5;
+}
+
+.forge-sparkle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: $accent-gold;
+  border-radius: 50%;
+  animation: forgeSparkle 0.8s ease-out forwards;
+
+  @for $i from 1 through 8 {
+    &:nth-child(#{$i}) {
+      top: #{random(80) + 10}%;
+      left: #{random(80) + 10}%;
+      animation-delay: #{$i * 0.08}s;
+      background: if($i % 2 == 0, $accent-green, $accent-gold);
+    }
+  }
+}
+
+// ─── Salvage: break apart animation ───────────────────────────────────────
+
+@keyframes forgeBreakApart {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: brightness(1);
+  }
+  25% {
+    opacity: 0.9;
+    transform: scale(1.1) rotate(5deg);
+    filter: brightness(1.5);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.7) rotate(-8deg);
+    filter: brightness(2);
+  }
+  75% {
+    opacity: 0.3;
+    transform: scale(0.4) rotate(12deg);
+    filter: brightness(2.5);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.1) rotate(20deg) translateY(20px);
+    filter: brightness(3);
+  }
+}
+
+.forge-anim-break {
+  animation: forgeBreakApart 0.7s ease-out forwards;
+}
+
+// ─── Tab transitions: slide/fade between panels ───────────────────────────
+
+@keyframes forgeSlideIn {
+  0% {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes forgeSlideOut {
+  0% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+}
+
+@keyframes forgeFadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.forge-anim-slide-in {
+  animation: forgeSlideIn 0.25s ease-out forwards;
+}
+
+.forge-anim-slide-out {
+  animation: forgeSlideOut 0.2s ease-in forwards;
+}
+
+.forge-anim-fade-in {
+  animation: forgeFadeIn 0.2s ease-out forwards;
+}
+
+// ─── Essence counter: count-up animation ──────────────────────────────────
+
+@keyframes forgeCountUp {
+  0% {
+    transform: scale(1);
+    color: $accent-gold;
+  }
+  30% {
+    transform: scale(1.3);
+    color: #fff;
+  }
+  60% {
+    transform: scale(1.1);
+    color: $accent-gold;
+  }
+  100% {
+    transform: scale(1);
+    color: $accent-gold;
+  }
+}
+
+.forge-essence-count-up {
+  animation: forgeCountUp 0.6s ease-out;
+  display: inline-block;
+}
+
+// ─── Error shake animation ────────────────────────────────────────────────
+
+@keyframes forgeErrorShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-4px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(4px);
+  }
+}
+
+.forge-anim-shake {
+  animation: forgeErrorShake 0.4s ease-in-out;
+}
+
+// ─── Upgraded item glow (used in InventoryPanel) ──────────────────────────
+
+@keyframes upgradedGlow {
+  0%, 100% {
+    box-shadow: 0 0 3px rgba(0, 255, 102, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(0, 255, 102, 0.5), 0 0 20px rgba(0, 255, 102, 0.15);
+  }
+}
+
+// ─── Tab styles ───────────────────────────────────────────────────────────
+
+.forge-tab-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+  border-bottom: 2px solid #222;
+  padding-bottom: 4px;
+}
+
+.forge-tab {
+  flex: 1;
+  padding: 6px 8px;
+  font-family: $font-pixel;
+  font-size: 0.48rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: #000;
+  border: 2px solid #333;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #555;
+    color: #999;
+  }
+
+  &[aria-selected="true"] {
+    border-color: $accent-gold;
+    color: $accent-gold;
+    background: rgba(255, 204, 0, 0.05);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// InventoryPanel forge integration styles
+// ════════════════════════════════════════════════════════════════════════════
+
+// Upgrade badge on item grid buttons
+.inv-upgrade-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  padding: 1px 3px;
+  background: #000;
+  border: 1px solid $accent-green;
+  color: $accent-green;
+  font-size: 0.35rem;
+  font-family: $font-pixel;
+  line-height: 1;
+  z-index: 2;
+  letter-spacing: 0;
+}
+
+// Upgraded item glow on grid items
+.inv-group-item.upgraded {
+  animation: upgradedGlow 2s ease-in-out infinite;
+  border-color: rgba(0, 255, 102, 0.4);
+}
+
+// Upgrade level in detail view sub header
+.inventory-item-upgrade {
+  font-size: 0.4rem;
+  color: $accent-green;
+  letter-spacing: 1px;
+  margin-left: 4px;
+}
+
+// Forge actions area in inventory detail view
+.inventory-forge-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  margin-top: 4px;
+  border: 1px solid #333;
+  background: rgba(0, 0, 0, 0.4);
+
+  .forge-action-btn {
+    padding: 4px 10px;
+    font-size: 0.45rem;
+    letter-spacing: 1px;
+    min-width: 72px;
+    text-align: center;
+
+    &.danger {
+      border-color: $accent-red;
+      color: $accent-red;
+
+      &:hover:not(:disabled) {
+        background: $accent-red;
+        color: #000;
+      }
+    }
+  }
+}
+
+// Essence yield display in inventory detail
+.inventory-essence-yield {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.essence-yield-label {
+  font-size: 0.4rem;
+  color: #666;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.essence-yield-value {
+  font-size: 0.5rem;
+  color: $accent-green;
+  letter-spacing: 1px;
+}
+
+// Essence total display
+.inventory-essence-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  margin-top: 4px;
+  border: 1px solid #333;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.essence-total-label {
+  font-size: 0.45rem;
+  color: #9aa0a6;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.essence-total-value {
+  font-family: $font-pixel;
+  font-size: 0.55rem;
+  color: $accent-gold;
+  letter-spacing: 1px;
+}
