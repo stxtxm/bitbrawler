@@ -39,11 +39,11 @@ const POINTS_PER_LEVEL = 3
 const HP_PER_LEVEL = 20
 
 const MIN_INTERVAL = 4500
-const BASE_INTERVAL = 10000
-const SPEED_FACTOR = 0.02
-const POWER_RATIO_FACTOR = 0.4
+const BASE_INTERVAL = 12000
+const SPEED_FACTOR = 0.015
+const POWER_RATIO_FACTOR = 0.3
 const MAX_POWER_RATIO = 2.5
-const XP_BONUS_RATIO = 0.3
+const XP_BONUS_RATIO = 0.2
 const STREAK_BONUS_PER_STEP = 0.01
 const STREAK_BONUS_CAP = 0.25
 
@@ -130,7 +130,7 @@ function simulateCombat(attacker: Character, defender: Character): CombatResult 
 
 function xpForNextLevel(level: number): number {
   if (level >= 99) return Infinity
-  return Math.floor(100 * Math.pow(level, 1.6))
+  return Math.floor(120 * Math.pow(level, 1.65))
 }
 
 function totalXpForLevel(level: number): number {
@@ -196,8 +196,12 @@ function calculateOfflineFightsWithEfficiency(start: number, end: number, interv
 }
 
 function calculateIdleXp(won: boolean, level: number): number {
-  const base = 5 + level * 3
-  return won ? base : Math.floor(base * 0.5)
+  const baseXp = won ? 125 : 50
+  const levelScaling = 1 + (level - 1) * 0.06
+  const pveModifier = 0.7
+  const idleModifier = 0.18
+  const variance = 0.9 + Math.random() * 0.2
+  return Math.floor(baseXp * levelScaling * pveModifier * idleModifier * variance)
 }
 
 // ─────────────────────────────────────────────────────────────

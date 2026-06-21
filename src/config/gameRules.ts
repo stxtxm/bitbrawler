@@ -7,11 +7,11 @@ export const GAME_RULES = {
     COMBAT: {
         MAX_DAILY_FIGHTS: 5,
         MAX_DAILY_PVE_FIGHTS: 5,
-        XP_WIN: 135,
-        XP_LOSS: 55, // Consolation prize — increased from 45 for better loss retention (~2.45:1 ratio with XP_WIN=135)
+        XP_WIN: 125,
+        XP_LOSS: 50,
     },
     PVE: {
-        XP_MODIFIER: 0.8, // PvE awards 80% of PvP XP
+        XP_MODIFIER: 0.7, // PvE awards 70% of PvP XP
         STAT_MULTIPLIER: 1.6, // Monster stat multiplier for challenging fights
         HP_MULTIPLIER: 2.2, // Monster HP multiplier for longer, suspenseful battles
         LEVEL_BOOST: 1, // Monsters fight at playerLevel + this offset

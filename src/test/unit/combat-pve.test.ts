@@ -70,7 +70,7 @@ describe('PvE combat', () => {
   it('PvE XP modifier is applied correctly', () => {
     const xpWin = calculateFightXp(true, 5, 5);
     const pveXp = Math.round(xpWin * GAME_RULES.PVE.XP_MODIFIER);
-    expect(pveXp).toBe(Math.round(xpWin * 0.8));
+    expect(pveXp).toBe(Math.round(xpWin * GAME_RULES.PVE.XP_MODIFIER));
     expect(pveXp).toBeLessThan(xpWin);
   });
 

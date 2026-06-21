@@ -3,8 +3,8 @@ import { Character } from '../types/Character';
 import { getHpForVitality } from './statUtils';
 
 // Configuration constants derived from central rules
-const BASE_XP = 100;
-const EXPONENT = 1.6;
+const BASE_XP = 120;
+const EXPONENT = 1.65;
 const MAX_LEVEL = 99;
 
 /**
@@ -67,8 +67,7 @@ export function calculateFightXp(
 ): number {
     const baseXp = won ? GAME_RULES.COMBAT.XP_WIN : GAME_RULES.COMBAT.XP_LOSS;
 
-    // Player-level scaling (+8% per level)
-    const levelScaling = 1 + (playerLevel - 1) * 0.08;
+    const levelScaling = 1 + (playerLevel - 1) * 0.06;
 
     // Opponent level difference bonus (capped to prevent exploitation)
     let diffBonus = 0;
