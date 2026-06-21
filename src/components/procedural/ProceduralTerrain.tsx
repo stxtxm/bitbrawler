@@ -182,6 +182,7 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
     }
 
     let rafId: number;
+    let frameCount = 0;
 
     const drawCloud = (cloud: CloudDef, cx: number, cy: number) => {
       const shape = cloud.shape;
@@ -199,6 +200,12 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
     };
 
     const render = () => {
+      // Skip first frames to let canvas sizing stabilise
+      if (frameCount++ < 3) {
+        rafId = requestAnimationFrame(render);
+        return;
+      }
+
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
 
       // Reset transform and set device-pixel ratio scale each frame
@@ -367,14 +374,15 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
   return (
     <div
       ref={containerRef}
-      style={{
-        width: '100%',
-        height: '100%',
-        position: 'absolute',
-        inset: 0,
-        overflow: 'hidden',
-        zIndex: 1,
-      }}
+        style={{
+          width: '100%',
+          height: '100%',
+          position: 'absolute',
+          inset: 0,
+          overflow: 'hidden',
+          zIndex: 1,
+          willChange: 'transform',
+        }}
     >
       <canvas
         ref={canvasRef}
