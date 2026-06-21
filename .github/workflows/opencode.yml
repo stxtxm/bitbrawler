@@ -46,7 +46,7 @@ jobs:
           node-version: 20
 
       - name: Install opencode
-        run: npm install -g opencode
+        run: npm install -g opencode-ai
 
       - name: Install dependencies
         run: npm ci
