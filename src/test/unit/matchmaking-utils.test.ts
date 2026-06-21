@@ -53,6 +53,14 @@ function makePlayer(overrides: Partial<Character> = {}): Character {
   return { ...BASE_CHARACTER, ...overrides }
 }
 
+function makeRow(character: Character) {
+  const row = characterToSupabaseRow(character)
+  return {
+    ...row,
+    level: character.level,
+  }
+}
+
 describe('getMatchDifficultyLabel', () => {
   it('returns BALANCED MATCH for balanced type', async () => {
     expect(await getMatchDifficultyLabel('balanced')).toBe('BALANCED MATCH')
@@ -101,7 +109,7 @@ describe('findOpponent', () => {
   })
 
   it('returns match result with opponent at same level', async () => {
-    const rows = [characterToSupabaseRow(makePlayer({ id: 'opp-1', name: 'Opponent' }))]
+    const rows = [makeRow(makePlayer({ id: 'opp-1', name: 'Opponent' }))]
     const builder = createQueryBuilder({ data: rows })
     mockSupabaseFrom.mockReturnValue(builder)
 
@@ -116,8 +124,8 @@ describe('findOpponent', () => {
 
   it('excludes the player from candidates', async () => {
     const rows = [
-      characterToSupabaseRow(makePlayer({ id: 'player-1', name: 'Self' })),
-      characterToSupabaseRow(makePlayer({ id: 'opp-1', name: 'Opponent' })),
+      makeRow(makePlayer({ id: 'player-1', name: 'Self' })),
+      makeRow(makePlayer({ id: 'opp-1', name: 'Opponent' })),
     ]
     const builder = createQueryBuilder({ data: rows })
     mockSupabaseFrom.mockReturnValue(builder)
@@ -131,8 +139,8 @@ describe('findOpponent', () => {
 
   it('excludes opponents already fought today', async () => {
     const rows = [
-      characterToSupabaseRow(makePlayer({ id: 'opp-1', name: 'Already Fought' })),
-      characterToSupabaseRow(makePlayer({ id: 'opp-2', name: 'Fresh Opponent' })),
+      makeRow(makePlayer({ id: 'opp-1', name: 'Already Fought' })),
+      makeRow(makePlayer({ id: 'opp-2', name: 'Fresh Opponent' })),
     ]
     const builder = createQueryBuilder({ data: rows })
     mockSupabaseFrom.mockReturnValue(builder)
@@ -145,7 +153,7 @@ describe('findOpponent', () => {
   })
 
   it('returns null when all candidates are filtered out', async () => {
-    const rows = [characterToSupabaseRow(makePlayer({ id: 'player-1' }))]
+    const rows = [makeRow(makePlayer({ id: 'player-1' }))]
     const builder = createQueryBuilder({ data: rows })
     mockSupabaseFrom.mockReturnValue(builder)
 
@@ -157,8 +165,8 @@ describe('findOpponent', () => {
 
   it('returns null when all candidates were fought today', async () => {
     const rows = [
-      characterToSupabaseRow(makePlayer({ id: 'opp-1' })),
-      characterToSupabaseRow(makePlayer({ id: 'opp-2' })),
+      makeRow(makePlayer({ id: 'opp-1' })),
+      makeRow(makePlayer({ id: 'opp-2' })),
     ]
     const builder = createQueryBuilder({ data: rows })
     mockSupabaseFrom.mockReturnValue(builder)
@@ -170,7 +178,7 @@ describe('findOpponent', () => {
   })
 
   it('queries characters at the player level', async () => {
-    const builder = createQueryBuilder({ data: [characterToSupabaseRow(makePlayer({ id: 'opp-1' }))] })
+    const builder = createQueryBuilder({ data: [makeRow(makePlayer({ id: 'opp-1' }))] })
     mockSupabaseFrom.mockReturnValue(builder)
 
     const player = makePlayer({ level: 7 })
@@ -181,9 +189,9 @@ describe('findOpponent', () => {
 
   it('sorts candidates by closest combat power', async () => {
     const rows = [
-      characterToSupabaseRow(makePlayer({ id: 'opp-weak', strength: 1, level: 3 })),
-      characterToSupabaseRow(makePlayer({ id: 'opp-mid', strength: 8, level: 3 })),
-      characterToSupabaseRow(makePlayer({ id: 'opp-strong', strength: 15, level: 3 })),
+      makeRow(makePlayer({ id: 'opp-weak', strength: 1, level: 3 })),
+      makeRow(makePlayer({ id: 'opp-mid', strength: 8, level: 3 })),
+      makeRow(makePlayer({ id: 'opp-strong', strength: 15, level: 3 })),
     ]
     const builder = createQueryBuilder({ data: rows })
     mockSupabaseFrom.mockReturnValue(builder)

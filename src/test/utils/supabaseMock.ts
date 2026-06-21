@@ -24,7 +24,7 @@ export function createQueryBuilder(initialValue?: MockSupabaseResolvedValue) {
     finally: vi.fn(),
   };
 
-  const chainMethods = ['select', 'eq', 'neq', 'order', 'limit', 'range', 'or', 'contains', 'overlaps', 'not', 'single'];
+  const chainMethods = ['select', 'eq', 'neq', 'order', 'limit', 'range', 'or', 'contains', 'overlaps', 'not', 'single', 'gte', 'lte', 'gt', 'lt', 'ilike', 'like', 'is', 'in', 'contains', 'containedBy', 'textSearch', 'match', 'notLike', 'gt', 'lt', 'gte', 'lte'];
 
   for (const method of chainMethods) {
     builder[method] = vi.fn(() => builder);
