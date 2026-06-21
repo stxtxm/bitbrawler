@@ -14566,5 +14566,119 @@
       "home": 1393,
       "arena": 2959
     }
+  },
+  {
+    "date": "2026-06-21T07:01:32.110Z",
+    "run": "2026-06-21",
+    "character": "GRITFENCER",
+    "character_action": "reused",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 34,
+        "fight_duration_ms": 59551,
+        "max_hp": 356,
+        "fight_type": "pvp",
+        "monster_name": null
+      },
+      {
+        "result": "victory",
+        "xp": 32,
+        "fight_duration_ms": 78535,
+        "max_hp": 356,
+        "fight_type": "pvp",
+        "monster_name": null
+      },
+      {
+        "result": "victory",
+        "xp": 36,
+        "fight_duration_ms": 78650,
+        "max_hp": 356,
+        "fight_type": "pvp",
+        "monster_name": null
+      },
+      {
+        "result": "victory",
+        "xp": 35,
+        "fight_duration_ms": 89368,
+        "max_hp": 356,
+        "fight_type": "pve",
+        "monster_name": null
+      },
+      {
+        "result": "victory",
+        "xp": 36,
+        "fight_duration_ms": 33129,
+        "max_hp": 356,
+        "fight_type": "pve",
+        "monster_name": null
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": {
+      "str": 9,
+      "vit": 8,
+      "dex": 14,
+      "luk": 9,
+      "int": 8,
+      "foc": 18,
+      "fights": 0
+    },
+    "initial_level": 11,
+    "initial_xp": {
+      "current": 4672,
+      "max": 6273
+    },
+    "initial_max_hp": 356,
+    "initial_equipment": [],
+    "initial_streak": 41,
+    "final_stats": {
+      "level": 11,
+      "xp": 5310,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 9,
+      "vit": 8,
+      "dex": 14,
+      "luk": 9,
+      "int": 8,
+      "foc": 18,
+      "last xp": 14,
+      "fights": 33
+    },
+    "final_max_hp": 356,
+    "final_equipment": [],
+    "final_streak": null,
+    "pve_data": {
+      "fights": 2,
+      "wins": 2,
+      "xp_total": 71,
+      "monsters_faced": []
+    },
+    "level_up_events": [],
+    "idle_stats": {
+      "streak": 1,
+      "xpPerMinute": null,
+      "slain": 900,
+      "badgePoints": 10,
+      "streakIndicatorActive": false,
+      "streakIndicatorText": null
+    },
+    "errors": [
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('[role=\"switch\"][aria-label=\"Auto mode\"], [role=\"switch\"], .pixel-switch').first()\n    - locator resolved to <button role=\"switch\" aria-checked=\"true\" aria-label=\"PvE mode\" class=\"pixel-switch pve-switch on\">…</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay settings-overlay\">…</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay settings-overlay\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    52 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div class=\"retro-modal-overlay settings-overlay\">…</div> intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n"
+    ],
+    "load_times_ms": {
+      "home": 2024,
+      "arena": 953
+    }
   }
 ]
