@@ -298,6 +298,34 @@ Bitbrawler uses [**OpenCode**](https://opencode.ai) agents for **autonomous deve
 
 ---
 
+## 🔧 Offline Idle Processing (Cron)
+
+The idle system uses an external free cron service to process inactive characters in batch.
+
+### Configuration on cron-job.org
+
+| Field | Value |
+|-------|-------|
+| URL | `https://bitbrawler.vercel.app/api/idle-processor` |
+| Method | `POST` |
+| Content-Type | `application/json` |
+| Body | `{}` |
+| Frequency | Every 1 minute |
+| Timeout | 30s |
+
+### How it works
+
+1. **On-demand** (primary) — When a player returns to the game, the frontend calls `POST /api/idle-processor` with `{ character_id }`. This processes idle gains instantly.
+2. **Cron fallback** (secondary) — The cron calls the same endpoint **without** `character_id`, which processes ALL characters with pending idle time. This handles bots and network failures.
+
+### ⚠️ Important
+
+- Reconfigure cron-job.org after each Vercel project URL change
+- The cron is a fallback — idle gains are processed instantly when the player reconnects
+- The `/api/idle-processor` cron mode only picks up characters with `last_idle_check` older than 60s, preventing double-processing
+
+---
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

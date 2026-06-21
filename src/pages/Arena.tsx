@@ -135,8 +135,6 @@ const Arena = () => {
     scenePhase: idle.scenePhase,
     lastCombatResult: idle.lastCombatResult,
     lastCombatXp: idle.lastCombatXp,
-    offlineGains: idle.offlineGains,
-    clearOfflineGains: idle.clearOfflineGains,
     currentStreak: idle.currentStreak,
     streakMilestone: idle.efficiencyData?.streakMilestone ?? null,
     efficiency: idle.efficiencyData?.efficiency ?? null,
@@ -146,14 +144,12 @@ const Arena = () => {
     totalKills: idle.totalKills,
     efficiencyData: idle.efficiencyData,
   }), [
-    idle.clearOfflineGains,
     idle.currentMonster,
     idle.currentStreak,
     idle.efficiencyData,
     idle.idleFightsCount,
     idle.lastCombatResult,
     idle.lastCombatXp,
-    idle.offlineGains,
     idle.scenePhase,
     idle.totalKills,
   ]);

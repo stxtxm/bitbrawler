@@ -589,12 +589,45 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [handleDbError, persistCharacter]);
 
+  // Sync idle gains before a game action.
+  // Ensures offline time is processed even if the user hasn't reloaded the page.
+  const syncIdleBeforeAction = useCallback(async (): Promise<void> => {
+    if (!activeCharacter?.id) return
+    const lastActive = activeCharacter.lastActive ?? 0
+    if (lastActive <= 0) return
+    if (Date.now() - lastActive <= 30_000) return
+
+    try {
+      const res = await fetch('/api/idle-processor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ character_id: activeCharacter.id }),
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      if (data.fights > 0 && data.updated) {
+        const updatedChar = normalizeCharacter({
+          ...activeCharacter,
+          ...data.updated,
+          lastIdleCheck: Date.now(),
+          lastActive: Date.now(),
+        })
+        setActiveCharacter(updatedChar)
+        saveLocalData(updatedChar)
+      }
+    } catch {
+      // silent — idle processing will happen via cron
+    }
+  }, [activeCharacter, normalizeCharacter])
+
   const startMatchmakingForPlayer = useCallback(async (): Promise<MatchmakingResult | null> => {
     if (!activeCharacter?.id) return null;
     if ((activeCharacter.fightsLeft || 0) <= 0) return null;
     if (activeCharacter.pendingFight) {
       throw new Error('Match already in progress.');
     }
+    // Process idle gains before fight
+    await syncIdleBeforeAction();
     initiatedMatchmakingRef.current = true;
 
     const pending: PendingFight = {
@@ -770,6 +803,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const rollLootboxForPlayer = useCallback(async () => {
     if (!activeCharacter?.id) return null;
 
+    // Process idle gains before lootbox
+    await syncIdleBeforeAction();
+
     const now = Date.now();
     if (!canRollLootbox(activeCharacter.lastLootRoll, now)) {
       throw new Error('Daily lootbox already opened.');
@@ -914,6 +950,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const salvageItems = useCallback(async (itemId: string): Promise<Character | null> => {
     if (!activeCharacter?.id) return null;
 
+    // Process idle gains before salvage
+    await syncIdleBeforeAction();
+
     const updatedChar = forgeSalvageItem(itemId, activeCharacter, ITEM_ASSETS);
     if (updatedChar === activeCharacter) return null; // nothing changed
 
@@ -940,6 +979,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   }> => {
     if (!activeCharacter?.id) return { result: null, updatedChar: null };
 
+    // Process idle gains before fusion
+    await syncIdleBeforeAction();
+
     const { result, updatedChar } = performFusion(items, activeCharacter, ITEM_ASSETS);
     if (updatedChar === activeCharacter) return { result: null, updatedChar: null };
 
@@ -963,6 +1005,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   const upgradeItem = useCallback(async (itemId: string): Promise<Character | null> => {
     if (!activeCharacter?.id) return null;
+
+    // Process idle gains before upgrade
+    await syncIdleBeforeAction();
 
     const updatedChar = performUpgrade(itemId, activeCharacter);
     if (updatedChar === activeCharacter) return null; // nothing changed

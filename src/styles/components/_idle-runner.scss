@@ -434,62 +434,6 @@
   to { transform: translateX(-50%); }
 }
 
-// ── Offline notification ──────────────────────────
-
-.idle-offline-notification {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 20;
-  background: rgba(0,0,0,0.92);
-  border: 2px solid $accent-gold;
-  padding: clamp(16px, 3vw, 24px) clamp(24px, 4vw, 36px);
-  text-align: center;
-  font-family: $font-pixel;
-  animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  pointer-events: auto;
-  min-width: clamp(200px, 60vw, 320px);
-  box-shadow: 0 0 20px rgba($accent-gold, 0.3);
-
-  .offline-title {
-    font-size: clamp(0.65rem, 1.5cqi, 1rem);
-    color: $accent-gold;
-    margin-bottom: 8px;
-    text-shadow: 0 0 8px rgba($accent-gold, 0.5);
-  }
-
-  .offline-stats {
-    display: flex;
-    gap: clamp(12px, 3vw, 24px);
-    font-size: clamp(0.55rem, 1.2cqi, 0.8rem);
-    color: #fff;
-    justify-content: center;
-  }
-
-  .idle-offline-close {
-    position: absolute;
-    top: 4px;
-    right: 6px;
-    background: none;
-    border: none;
-    color: $accent-red;
-    cursor: pointer;
-    font-size: 1.4rem;
-    padding: 8px;
-    min-width: 44px;
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  @include mobile {
-    min-width: 70vw;
-    padding: 20px 28px;
-  }
-}
-
 // ── Animations ──────────────────────────────────────
 
 @keyframes fadeIn {

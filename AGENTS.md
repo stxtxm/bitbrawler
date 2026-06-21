@@ -30,6 +30,49 @@ Bitbrawler uses **4 autonomous agents** to automate development, code review, an
 
 ---
 
+## ⚠️ Database Safety — Règle ABSOLUE
+
+**Aucun agent ne doit JAMAIS modifier la base de production Supabase directement.**
+Toute modification de schéma (nouvelle table, colonne, contrainte) doit passer par une issue GitHub avec la requête SQL exacte, que l'humain exécutera dans **Supabase Dashboard > SQL Editor**.
+
+### ✅ Ce que les agents DOIVENT faire
+- Écrire le code TypeScript (champs optionnels `?`, valeurs par défaut, optional chaining)
+- Créer une issue de migration **SANS `/oc`** avec la requête SQL prête à copier-coller
+- Tester que le code fonctionne **avant** l'exécution de la migration (champs optionnels)
+
+### ❌ Interdictions formelles
+- ❌ NE JAMAIS exécuter `ALTER TABLE`, `CREATE TABLE`, `INSERT`, `UPDATE` sur la prod
+- ❌ NE JAMAIS utiliser `supabase` ou un client SQL pour modifier le schéma
+- ❌ NE JAMAIS fusionner une PR dont la migration n'a pas été exécutée
+- ❌ NE JAMAIS inclure de migration SQL dans du code automatisé (scripts, CI/CD)
+
+### Format obligatoire d'une issue de migration
+
+```markdown
+# Migration: [description courte]
+
+## Changement
+- Table: `characters`
+- Colonne: `essence`
+- Type: `INTEGER`
+- Défaut: `0`
+- Nullable: non
+
+## Commande SQL
+\`\`\`sql
+ALTER TABLE characters ADD COLUMN IF NOT EXISTS essence INTEGER NOT NULL DEFAULT 0;
+\`\`\`
+
+## Notes
+- Code déjà déployé, fonctionnel sans la migration (champs optionnels)
+- Exécuter dans Supabase Dashboard > SQL Editor > New Query
+- Aucun downtime nécessaire
+```
+
+---
+
+---
+
 ## Dev Agent
 
 ### File: `.opencode/agents/dev-agent.md`

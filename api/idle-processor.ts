@@ -26,6 +26,7 @@ interface Character {
   idleMaxStreak?: number
   idleTotalKills?: number
   idleTotalXp?: number
+  essence?: number
   lastIdleCheck?: number
   lastActive?: number
 }
@@ -46,6 +47,10 @@ const MAX_POWER_RATIO = 2.5
 const XP_BONUS_RATIO = 0.2
 const STREAK_BONUS_PER_STEP = 0.01
 const STREAK_BONUS_CAP = 0.25
+const ESSENCE_BASE_RATE = 0.003
+const ESSENCE_LOSS_RATIO = 0.3
+const ESSENCE_LEVEL_SCALE = 0.08
+const ESSENCE_SOFT_CAP = 500
 
 const MONSTER_IDS = ['GOBLIN', 'OGRE', 'WRAITH', 'SLIME', 'SKELETON', 'BAT', 'SPIDER']
 
@@ -217,7 +222,14 @@ const SELECT_COLUMNS = [
   'experience', 'stat_points', 'last_idle_check',
   'auto_mode', 'is_bot', 'equipped_items',
   'idle_streak', 'idle_max_streak', 'idle_total_kills', 'idle_total_xp',
+  'essence', 'last_active',
 ].join(',')
+
+function calculateIdleEssence(won: boolean, level: number): number {
+  const baseRate = won ? ESSENCE_BASE_RATE : ESSENCE_BASE_RATE * ESSENCE_LOSS_RATIO
+  const levelScaling = 1 + (level - 1) * ESSENCE_LEVEL_SCALE
+  return baseRate * levelScaling
+}
 
 function simulateIdleGains(char: Character, idleMs: number): { updated: Character; fights: number } | null {
   if (idleMs <= 30_000) return null
@@ -236,6 +248,7 @@ function simulateIdleGains(char: Character, idleMs: number): { updated: Characte
   let streak = current.idleStreak ?? 0
   let kills = current.idleTotalKills ?? 0
   let idleTotal = current.idleTotalXp ?? 0
+  let essenceAccum = 0
 
   for (let f = 0; f < totalFights; f++) {
     const monsterId = getRandomMonsterId()
@@ -247,6 +260,9 @@ function simulateIdleGains(char: Character, idleMs: number): { updated: Characte
     const xpBonus = eff.xpBonusMultiplier - 1
     const streakBonus = Math.min(streak * STREAK_BONUS_PER_STEP, STREAK_BONUS_CAP)
     const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
+
+    const essenceGain = calculateIdleEssence(won, current.level)
+    essenceAccum += essenceGain
 
     const result = gainXp(current, finalXp)
     const pointsGained = result.levelsGained * POINTS_PER_LEVEL
@@ -265,6 +281,11 @@ function simulateIdleGains(char: Character, idleMs: number): { updated: Characte
     current = updated.autoMode && pointsGained > 0
       ? autoAllocateStatPointsRandom(updated, pointsGained)
       : updated
+  }
+
+  const essenceDelta = Math.min(Math.floor(essenceAccum), ESSENCE_SOFT_CAP - (current.essence ?? 0))
+  if (essenceDelta > 0) {
+    current = { ...current, essence: (current.essence ?? 0) + essenceDelta }
   }
 
   return { updated: current, fights: totalFights }
@@ -288,6 +309,7 @@ function toSupabaseUpdates(c: Character, now: string): Record<string, any> {
     idle_max_streak: c.idleMaxStreak,
     idle_total_kills: c.idleTotalKills,
     idle_total_xp: c.idleTotalXp,
+    essence: c.essence,
   }
 }
 
@@ -309,34 +331,53 @@ function toClientResponse(c: Character, now: string): Record<string, any> {
     idleMaxStreak: c.idleMaxStreak,
     idleTotalKills: c.idleTotalKills,
     idleTotalXp: c.idleTotalXp,
+    essence: c.essence,
   }
 }
 
 async function processCharacter(
   candidate: { id: string; char: Character; lastCheck: number },
   supabase: any,
-): Promise<{ updated: Character | null; fights: number; xp: number; levels: number }> {
+): Promise<{ updated: Character | null; fights: number; xp: number; levels: number; essence: number }> {
   const idleMs = Date.now() - candidate.lastCheck
   const now = new Date().toISOString()
 
   if (idleMs <= 30_000) {
     await supabase.from('characters').update({ last_idle_check: now }).eq('id', candidate.id)
-    return { updated: null, fights: 0, xp: 0, levels: 0 }
+    return { updated: null, fights: 0, xp: 0, levels: 0, essence: 0 }
+  }
+
+  // ── Anti-conflit: vérifie que last_idle_check n'a pas changé ──
+  // Empêche le cron d'écraser les données traitées par on-demand
+  const { data: freshRow } = await supabase
+    .from('characters')
+    .select('last_idle_check')
+    .eq('id', candidate.id)
+    .single()
+
+  if (freshRow) {
+    const freshCheck = new Date(freshRow.last_idle_check).getTime()
+    // Si last_idle_check a été mis à jour entre la lecture et maintenant
+    // (par un appel on-demand), on skip pour éviter la race condition
+    if (freshCheck !== candidate.lastCheck && freshCheck > 0) {
+      return { updated: null, fights: 0, xp: 0, levels: 0, essence: 0 }
+    }
   }
 
   const result = simulateIdleGains(candidate.char, idleMs)
   if (!result) {
     await supabase.from('characters').update({ last_idle_check: now }).eq('id', candidate.id)
-    return { updated: null, fights: 0, xp: 0, levels: 0 }
+    return { updated: null, fights: 0, xp: 0, levels: 0, essence: 0 }
   }
 
   const { updated: updatedChar, fights: simulatedFights } = result
   const levelDiff = updatedChar.level - candidate.char.level
   const xpDiff = (updatedChar.experience ?? 0) - (candidate.char.experience ?? 0)
+  const essenceDiff = (updatedChar.essence ?? 0) - (candidate.char.essence ?? 0)
   const updates = toSupabaseUpdates(updatedChar, now)
   await supabase.from('characters').update(updates).eq('id', candidate.id)
 
-  return { updated: updatedChar, fights: simulatedFights, xp: xpDiff, levels: levelDiff }
+  return { updated: updatedChar, fights: simulatedFights, xp: xpDiff, levels: levelDiff, essence: essenceDiff }
 }
 
 function readBody(req: IncomingMessage): Promise<any> {
@@ -414,6 +455,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         idleMaxStreak: row.idle_max_streak ?? 0,
         idleTotalKills: row.idle_total_kills ?? 0,
         idleTotalXp: row.idle_total_xp ?? 0,
+        essence: row.essence ?? 0,
         lastIdleCheck: row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0,
       } as Character,
       lastCheck: row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0,
@@ -428,6 +470,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       fights: result.fights,
       xp: result.xp,
       levels: result.levels,
+      essence: result.essence,
     }))
     return
   }
@@ -476,6 +519,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       idleMaxStreak: row.idle_max_streak ?? 0,
       idleTotalKills: row.idle_total_kills ?? 0,
       idleTotalXp: row.idle_total_xp ?? 0,
+      essence: row.essence ?? 0,
       lastIdleCheck: row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0,
     } as Character,
     lastCheck: row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0,

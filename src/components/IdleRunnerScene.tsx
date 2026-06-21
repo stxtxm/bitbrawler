@@ -13,8 +13,6 @@ interface IdleRunnerSceneProps {
   scenePhase: ScenePhase
   lastCombatResult: 'win' | 'lose' | null
   lastCombatXp: number
-  offlineGains: { fights: number; xp: number; levels: number } | null
-  onClearOfflineGains: () => void
   currentStreak?: number
   streakMilestone?: number | null
   efficiency?: number | null
@@ -35,8 +33,6 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   scenePhase,
   lastCombatResult,
   lastCombatXp,
-  offlineGains,
-  onClearOfflineGains,
   currentStreak = 0,
   streakMilestone = null,
   efficiency = null,
@@ -163,17 +159,6 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
         </div>
       )}
 
-      {offlineGains && (
-        <div className="idle-offline-notification">
-          <button className="idle-offline-close" onClick={onClearOfflineGains} aria-label="Dismiss">×</button>
-          <div className="offline-title">WELCOME BACK!</div>
-          <div className="offline-stats">
-            <span>{offlineGains.fights} fights</span>
-            <span>+{offlineGains.xp} XP</span>
-            {offlineGains.levels > 0 && <span>⬆ +{offlineGains.levels} LVL</span>}
-          </div>
-        </div>
-      )}
     </div>
   )
 })
