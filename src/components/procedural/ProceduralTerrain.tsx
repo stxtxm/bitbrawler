@@ -239,21 +239,21 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
         if (sx < -6 || sx > width + 2) continue;
         const worldX = sx + groundScroll * 0.8;
         const h = Math.sin(worldX * PI2 / 32) * 0.5 + 0.5;
-        const bh = 3 + Math.floor((h * 0.8 + 0.2) * 5);
+        const bh = 2 + Math.floor((h * 0.8 + 0.2) * 3);
         const c = Math.floor(((Math.sin(worldX * PI2 / 64 + seedNum) * 0.5 + 0.5) * 3)) % 3;
         ctx.fillStyle = bladeColors[c];
         ctx.fillRect(Math.round(sx), grassY - bh, 3, bh);
       }
 
-      // ── MUSHROOMS (occasional, ~18% per 128px slot, near grass) ──
+      // ── MUSHROOMS (occasional, ~18% per 128px slot, on grass) ──
       const shroomPhase = groundScroll % 128;
       for (let sx = -(shroomPhase + 128); sx < width + 128; sx += 128) {
-        if (sx < -4 || sx > width + 4) continue;
+        if (sx < -6 || sx > width + 6) continue;
         const worldIdx = Math.floor((sx + groundScroll) / 128);
         const h = (worldIdx * 23 + seedNum * 11) % 101;
         if (h > 18) continue;
 
-        const off = ((worldIdx * 7 + seedNum * 5) % 5) - 2;
+        const off = ((worldIdx * 7 + seedNum * 5) % 7) - 3;
         const mx = Math.round(sx + off);
 
         for (let row = 0; row < MUSHROOM.pixels.length; row++) {
@@ -261,27 +261,27 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
             const v = MUSHROOM.pixels[row][col];
             if (!v) continue;
             ctx.fillStyle = v === 1 ? '#d04030' : v === 2 ? '#f0f0f0' : '#e0d0a0';
-            ctx.fillRect(mx + col * 3, grassY - 9 + row * 3, 3, 3);
+            ctx.fillRect(mx + col * 4, grassY - 12 + row * 4, 4, 4);
           }
         }
       }
 
-      // ── FLOWERS (small color patches on grass, ~30% per 48px slot) ──
+      // ── FLOWERS (color patches on grass, ~40% per 48px slot) ──
       const flowerPhase = groundScroll % 48;
       for (let sx = -(flowerPhase + 48); sx < width + 48; sx += 48) {
-        if (sx < -2 || sx > width + 2) continue;
+        if (sx < -4 || sx > width + 4) continue;
         const worldIdx = Math.floor((sx + groundScroll) / 48);
         const h = (worldIdx * 19 + seedNum * 13) % 101;
-        if (h > 30) continue;
+        if (h > 40) continue;
 
-        const off = ((worldIdx * 11 + seedNum * 3) % 7) - 3;
+        const off = ((worldIdx * 11 + seedNum * 3) % 9) - 4;
         const fx = Math.round(sx + off);
         const colorIdx = h % FLOWER_COLORS.length;
 
         ctx.fillStyle = FLOWER_COLORS[colorIdx];
-        ctx.fillRect(fx, grassY - 1, 2, 2);
-        ctx.fillRect(fx + 3, grassY - 2, 2, 2);
-        ctx.fillRect(fx + 1, grassY - 4, 2, 2);
+        ctx.fillRect(fx, grassY - 2, 3, 3);
+        ctx.fillRect(fx + 4, grassY - 4, 3, 3);
+        ctx.fillRect(fx + 2, grassY - 7, 3, 3);
       }
 
       // ── Ground texture ──
