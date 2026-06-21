@@ -8,6 +8,23 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '3.4.0',
+    date: '2026-06-21',
+    title: 'Equipment Forge — essence salvage, item fusion & stat upgrades',
+    changes: [
+      'Salvage system: dismantle unwanted items into essence currency (common→epic yield scaling).',
+      'Fusion system: combine 3 items of same rarity to forge a higher-rarity item, with 10% lucky proc chance for +2 tier jump.',
+      'Upgrade system: spend essence to boost a stat on any item, up to +5 levels with escalating costs.',
+      'Essence soft-cap at 500, displayed in a purple counter in the arena header.',
+      'Dedicated Forge page (/forge) with SalvagePanel, FusionPanel, and UpgradePanel — lazy-loaded for performance.',
+      'Pixel-animated forge effects: salvage dissolution particles, fusion swirl, upgrade glow, lucky proc sparks.',
+      'Fusion yields items from the global pool matching the target rarity — no fixed recipes, pure chance.',
+      'Salvage essence values: common=5, uncommon=15, rare=40, epic=120, legendary=360 — balanced to keep fusion meaningful.',
+      'Fusion costs scale by rarity: common=5 essence, uncommon=15, rare=40, epic=120 — prevents infinite rare loops.',
+      '764 tests passing across 70 test files.',
+    ],
+  },
+  {
     version: '3.3.0',
     date: '2026-06-21',
     title: 'Terrain overhaul — anti-tearing, larger detailed elements, depth layers & slower scroll',

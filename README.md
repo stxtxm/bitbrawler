@@ -56,7 +56,7 @@ See [AGENTS.md](AGENTS.md) for autonomous agent workflows and responsibilities.
 - **Daily lootbox + inventory** — 33 items across 3 slots (weapon/armor/accessory), 5 rarities (common→legendary), stat bonuses including HP
 - **Equipment loadouts** — manual equip/unequip with 6 weapon elements (fire/water/wind/earth/light/dark), affinity system (+15% damage vs bot archetypes)
 - **6 bot archetypes** (bruiser/tank/rogue/mage/lucky/zen) with elemental weakness mapping
-- **Stat caps (5-15)** — aligned with DB CHECK constraints, prevents over-allocation
+- **Equipment Forge** — salvage unwanted items for essence, fuse 3 same-rarity items for a higher tier, spend essence to upgrade stats up to +5
 - **Bot engine** — population management with organic activity pacing, depleted-bot skipping, and protection rebalance
 - **Global daily reset** — scripted resets at midnight (Paris) for fights and opponent tracking
 - **Hall of Fame** rankings with real-time updates
@@ -81,7 +81,7 @@ See [AGENTS.md](AGENTS.md) for autonomous agent workflows and responsibilities.
 | -------------- | ----------------------------------------------- |
 | Frontend       | React 18 + TypeScript + Vite                    |
 | Backend / Auth | Supabase (PostgreSQL, real-time, auth)          |
-| Testing        | Vitest + React Testing Library + jsdom — **470+ tests, 55 files**          |
+| Testing        | Vitest + React Testing Library + jsdom — **764 tests, 70 files**          |
 | Styling        | Sass (SCSS)                                     |
 | Fonts          | Press Start 2P (via Fontsource)                 |
 | Scripting      | tsx (TypeScript executor)                       |
