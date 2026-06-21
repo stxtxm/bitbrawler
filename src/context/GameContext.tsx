@@ -22,6 +22,13 @@ import {
   performFusion,
   performUpgrade,
 } from '../utils/forgeUtils';
+import {
+  checkMedals as checkMedalProgress,
+  applyMedalReward,
+  getDefaultMedalProgress,
+  getOverallProgress,
+  getUnlockedMedals,
+} from '../utils/medalUtils';
 
 interface GameContextType {
   activeCharacter: Character | null;
@@ -29,6 +36,10 @@ interface GameContextType {
   dbAvailable: boolean;
   lastXpGain: number | null;
   lastLevelUp: { levelsGained: number; newLevel: number; hpGained: number } | null;
+  lastUnlockedMedal: string | null;
+  unlockedMedals: string[];
+  medalProgress: { completed: number; total: number };
+  clearUnlockedMedal: () => void;
   login: (name: string) => Promise<string | null>;
   logout: () => void;
   setCharacter: (char: Character) => void;
@@ -70,6 +81,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [dbAvailable, setDbAvailable] = useState(true);
   const [lastXpGain, setLastXpGain] = useState<number | null>(null);
   const [lastLevelUp, setLastLevelUp] = useState<{ levelsGained: number; newLevel: number; hpGained: number } | null>(null);
+  const [lastUnlockedMedal, setLastUnlockedMedal] = useState<string | null>(null);
   const isOnline = useOnlineStatus();
   const initiatedMatchmakingRef = useRef(false);
   const persistCharacter = useCallback((character: Character) => {
@@ -238,6 +250,39 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setLastLevelUp(null);
   }, []);
 
+  // Clear lastUnlockedMedal (for UI dismissal)
+  const clearUnlockedMedal = useCallback(() => {
+    setLastUnlockedMedal(null);
+  }, []);
+
+  /**
+   * Check medal progress after a game event and apply any newly unlocked medal rewards.
+   * Returns the updated character with medal progress merged in.
+   */
+  const checkAndApplyMedals = useCallback((
+    character: Character,
+    extraContext?: { glassCannonFight?: boolean; pacifistFight?: boolean; luckyDayRoll?: boolean; sessionCount?: number; },
+  ): Character => {
+    const currentProgress = character.medalProgress ?? getDefaultMedalProgress();
+
+    const result = checkMedalProgress(
+      character,
+      currentProgress,
+      ITEM_ASSETS,
+      extraContext,
+    );
+
+    let updatedChar: Character = { ...character, medalProgress: result.progress };
+
+    // Apply rewards for newly unlocked medals
+    for (const medal of result.newlyUnlocked) {
+      updatedChar = { ...updatedChar, ...applyMedalReward(updatedChar, medal.reward) };
+      setLastUnlockedMedal(medal.name);
+    }
+
+    return updatedChar;
+  }, []);
+
   const retryConnection = useCallback(async (): Promise<boolean> => {
     try {
       if (typeof navigator !== 'undefined' && navigator.onLine === false) {
@@ -337,6 +382,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         autoAllocateStatPoints(updatedChar, updatedChar.statPoints || 0)
       );
     }
+
+    // Check medal progress after fight result
+    updatedChar = checkAndApplyMedals(updatedChar);
 
      try {
         const { error } = await supabase
@@ -445,6 +493,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         autoAllocateStatPoints(updatedChar, updatedChar.statPoints || 0)
       );
     }
+
+    // Check medal progress after PvE fight result
+    updatedChar = checkAndApplyMedals(updatedChar);
 
     if (baseCharacter.id) {
       try {
@@ -796,18 +847,21 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       lootboxStreak: newStreak,
     });
 
+    // Check medal progress after lootbox roll
+    const medalUpdatedChar = checkAndApplyMedals(updatedChar);
+
      try {
-       await supabase
-        .from('characters')
-        .update({
-          inventory: updatedChar.inventory,
-          last_loot_roll: updatedChar.lastLootRoll,
-          lootbox_streak: updatedChar.lootboxStreak,
-          focus: updatedChar.focus
-        })
-        .eq('id', activeCharacter.id!);
-       persistCharacter(updatedChar);
-       return item;
+        await supabase
+         .from('characters')
+         .update({
+           inventory: medalUpdatedChar.inventory,
+           last_loot_roll: medalUpdatedChar.lastLootRoll,
+           lootbox_streak: medalUpdatedChar.lootboxStreak,
+           focus: medalUpdatedChar.focus
+         })
+         .eq('id', activeCharacter.id!);
+        persistCharacter(medalUpdatedChar);
+        return item;
      } catch (error: any) {
        handleDbError(error, 'lootbox');
        throw new Error('Connection error - lootbox not saved.');
@@ -936,12 +990,21 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     return await findOpponent(activeCharacter);
   }, [activeCharacter]);
 
+  // Compute medal-derived values
+  const medalProgress = activeCharacter?.medalProgress;
+  const unlockedMedals = getUnlockedMedals(medalProgress);
+  const overallProgress = getOverallProgress(medalProgress);
+
   const value: GameContextType = {
     activeCharacter,
     loading,
     dbAvailable,
     lastXpGain,
     lastLevelUp,
+    lastUnlockedMedal,
+    unlockedMedals,
+    medalProgress: overallProgress,
+    clearUnlockedMedal,
     login,
     logout,
     setCharacter,

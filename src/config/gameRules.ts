@@ -27,5 +27,11 @@ export const GAME_RULES = {
         MAX_FIGHTS_PER_RUN: 2, // Avoid all-energy dumps in a single run (reduced from 3)
         END_OF_DAY_DRAIN_START_HOUR: 22, // Paris hour when bots must finish all remaining fights before reset
         GROWTH_CHANCE: 0.5, // Create a bot every other run (reduced from 1.0)
+    },
+    MEDALS: {
+        UNLOCK_TOAST_DURATION_MS: 5000, // Duration for medal unlock toast notifications
+        FIRST_LOOTBOX_GRACE_PERIOD_MS: 30000, // Time window for "Lucky Day" medal check (30s after char creation)
+        SESSION_TRACKING_KEY: 'medal_session_count', // LocalStorage key for session tracking
+        XP_BONUS_PER_WIN: 1, // XP bonus from veteran medal reward type
     }
 } as const;

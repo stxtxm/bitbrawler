@@ -7,7 +7,12 @@ import {
   calculateLootProgress,
   calculateProgressionProgress,
   applyMedalReward,
+  getMedalProgress,
+  checkNewlyUnlocked,
+  getUnlockedMedals,
+  getOverallProgress,
   MEDAL_IDS,
+  MEDAL_DEFS,
 } from '../../utils/medalUtils';
 import { PixelItemAsset } from '../../types/Item';
 import { Character } from '../../types/Character';
@@ -382,7 +387,8 @@ describe('checkMedals', () => {
     const progress = getDefaultMedalProgress();
     const result = checkMedals(char, progress, items);
     expect(result.newlyUnlocked.some(m => m.id === 'epic_seeker')).toBe(true);
-    expect(result.newlyUnlocked.some(m => m.id === 'rare_hunter')).toBe(false); // only 2 rare+
+    // 3 rare+ items (1 epic + 2 rare) unlocks rare_hunter
+    expect(result.newlyUnlocked.some(m => m.id === 'rare_hunter')).toBe(true);
   });
 
   it('unlocks progression medals at level milestones', () => {
@@ -406,5 +412,133 @@ describe('checkMedals', () => {
     expect(result.progress.first_blood.progress).toBe(1);
     // brawler should show updated progress
     expect(result.progress.brawler.progress).toBe(5);
+  });
+});
+
+describe('getMedalProgress', () => {
+  it('returns progress for a tracked medal', () => {
+    const progress = getDefaultMedalProgress();
+    progress.first_blood = { completed: true, progress: 1, unlockedAt: 100 };
+    const result = getMedalProgress(progress, 'first_blood');
+    expect(result.completed).toBe(true);
+    expect(result.progress).toBe(1);
+  });
+
+  it('returns default progress for an untracked medal', () => {
+    const result = getMedalProgress(undefined, 'first_blood');
+    expect(result.completed).toBe(false);
+    expect(result.progress).toBe(0);
+  });
+
+  it('returns default progress for an unknown medal id', () => {
+    const progress = getDefaultMedalProgress();
+    const result = getMedalProgress(progress, 'nonexistent');
+    expect(result.completed).toBe(false);
+    expect(result.progress).toBe(0);
+  });
+});
+
+describe('checkNewlyUnlocked', () => {
+  it('detects a newly completed medal', () => {
+    const prev = getDefaultMedalProgress();
+    const curr = getDefaultMedalProgress();
+    curr.first_blood = { completed: true, progress: 1, unlockedAt: Date.now() };
+
+    const unlocked = checkNewlyUnlocked(prev, curr);
+    expect(unlocked).toContain('first_blood');
+    expect(unlocked).toHaveLength(1);
+  });
+
+  it('returns empty when no new medals', () => {
+    const prev = getDefaultMedalProgress();
+    prev.first_blood = { completed: true, progress: 1, unlockedAt: 100 };
+    const curr = { ...prev };
+
+    const unlocked = checkNewlyUnlocked(prev, curr);
+    expect(unlocked).toHaveLength(0);
+  });
+
+  it('handles undefined previous progress', () => {
+    const curr = getDefaultMedalProgress();
+    curr.first_blood = { completed: true, progress: 1, unlockedAt: Date.now() };
+
+    const unlocked = checkNewlyUnlocked(undefined, curr);
+    expect(unlocked).toContain('first_blood');
+  });
+
+  it('handles undefined current progress', () => {
+    const unlocked = checkNewlyUnlocked(getDefaultMedalProgress(), undefined);
+    expect(unlocked).toHaveLength(0);
+  });
+
+  it('detects multiple newly completed medals', () => {
+    const prev = getDefaultMedalProgress();
+    const curr = getDefaultMedalProgress();
+    curr.first_blood = { completed: true, progress: 1, unlockedAt: Date.now() };
+    curr.brawler = { completed: true, progress: 10, unlockedAt: Date.now() };
+
+    const unlocked = checkNewlyUnlocked(prev, curr);
+    expect(unlocked).toContain('first_blood');
+    expect(unlocked).toContain('brawler');
+    expect(unlocked).toHaveLength(2);
+  });
+});
+
+describe('getUnlockedMedals', () => {
+  it('returns only completed medal ids', () => {
+    const progress = getDefaultMedalProgress();
+    progress.first_blood = { completed: true, progress: 1, unlockedAt: 100 };
+    progress.growing_strong = { completed: true, progress: 5, unlockedAt: 200 };
+
+    const unlocked = getUnlockedMedals(progress);
+    expect(unlocked).toContain('first_blood');
+    expect(unlocked).toContain('growing_strong');
+    expect(unlocked).not.toContain('brawler');
+    expect(unlocked).not.toContain('warrior');
+  });
+
+  it('returns empty array for no unlocked medals', () => {
+    const progress = getDefaultMedalProgress();
+    const unlocked = getUnlockedMedals(progress);
+    expect(unlocked).toHaveLength(0);
+  });
+
+  it('returns empty array for undefined progress', () => {
+    const unlocked = getUnlockedMedals(undefined);
+    expect(unlocked).toHaveLength(0);
+  });
+});
+
+describe('getOverallProgress', () => {
+  it('returns correct completed/total counts', () => {
+    const progress = getDefaultMedalProgress();
+    progress.first_blood = { completed: true, progress: 1, unlockedAt: 100 };
+    progress.growing_strong = { completed: true, progress: 5, unlockedAt: 200 };
+
+    const result = getOverallProgress(progress);
+    expect(result.completed).toBe(2);
+    expect(result.total).toBe(MEDAL_DEFS.length);
+  });
+
+  it('returns 0 completed for no progress', () => {
+    const progress = getDefaultMedalProgress();
+    const result = getOverallProgress(progress);
+    expect(result.completed).toBe(0);
+    expect(result.total).toBe(MEDAL_DEFS.length);
+  });
+
+  it('returns 0 completed for undefined progress', () => {
+    const result = getOverallProgress(undefined);
+    expect(result.completed).toBe(0);
+    expect(result.total).toBe(MEDAL_DEFS.length);
+  });
+
+  it('completed never exceeds total', () => {
+    const progress = getDefaultMedalProgress();
+    for (const id of MEDAL_IDS) {
+      progress[id] = { completed: true, progress: 1, unlockedAt: Date.now() };
+    }
+    const result = getOverallProgress(progress);
+    expect(result.completed).toBe(result.total);
   });
 });

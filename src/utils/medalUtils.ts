@@ -40,6 +40,8 @@ function getConsecutiveWins(history: Character['fightHistory']): number {
 
 /**
  * Calculate the number of times the player won after 2+ consecutive losses.
+ * fightHistory is stored newest-first, so iterate oldest-to-newest
+ * to detect "win after loss streak" patterns.
  */
 function getComebackCount(history: Character['fightHistory']): number {
   if (!history || history.length < 2) return 0;
@@ -47,8 +49,9 @@ function getComebackCount(history: Character['fightHistory']): number {
   let count = 0;
   let lossStreak = 0;
 
-  // Iterate from newest to oldest
-  for (const entry of history) {
+  // Iterate from oldest to newest to detect comebacks
+  for (let i = history.length - 1; i >= 0; i--) {
+    const entry = history[i];
     if (entry.won) {
       if (lossStreak >= 2) {
         count++;
@@ -303,19 +306,17 @@ export const applyMedalReward = (character: Character, reward: MedalReward): Cha
       break;
     }
     case 'stat_point': {
-      if (reward.stat) {
-        const bonus = reward.value ?? 1;
-        // If the reward is "all stats"
-        if (reward.label?.includes('all stats')) {
-          updated.strength = (updated.strength || 10) + bonus;
-          updated.vitality = (updated.vitality || 10) + bonus;
-          updated.dexterity = (updated.dexterity || 10) + bonus;
-          updated.luck = (updated.luck || 10) + bonus;
-          updated.intelligence = (updated.intelligence || 10) + bonus;
-          updated.focus = (updated.focus || 10) + bonus;
-        } else {
-          updated[reward.stat] = ((updated as any)[reward.stat] || 10) + bonus;
-        }
+      const bonus = reward.value ?? 1;
+      // If the reward is "all stats"
+      if (reward.label?.includes('all stats')) {
+        updated.strength = (updated.strength || 10) + bonus;
+        updated.vitality = (updated.vitality || 10) + bonus;
+        updated.dexterity = (updated.dexterity || 10) + bonus;
+        updated.luck = (updated.luck || 10) + bonus;
+        updated.intelligence = (updated.intelligence || 10) + bonus;
+        updated.focus = (updated.focus || 10) + bonus;
+      } else if (reward.stat) {
+        updated[reward.stat] = ((updated as any)[reward.stat] || 10) + bonus;
       }
       break;
     }
@@ -365,4 +366,60 @@ export const getMedalsByCategory = (): Record<string, MedalDef[]> => {
     grouped[cat].push(def);
   }
   return grouped;
+};
+
+/**
+ * Get the current progress for a single medal based on the character state.
+ * Returns the MedalProgress from the character's medalProgress map,
+ * or a default { completed: false, progress: 0 } if not yet tracked.
+ */
+export const getMedalProgress = (
+  medalProgress: MedalProgressMap | undefined,
+  medalId: string,
+): MedalProgress => {
+  return medalProgress?.[medalId] ?? { completed: false, progress: 0 };
+};
+
+/**
+ * Compare two medal progress maps and return the IDs of medals
+ * that were newly completed in `currentProgress` but not in `previousProgress`.
+ */
+export const checkNewlyUnlocked = (
+  previousProgress: MedalProgressMap | undefined,
+  currentProgress: MedalProgressMap | undefined,
+): string[] => {
+  const prev = previousProgress ?? {};
+  const curr = currentProgress ?? {};
+  const newlyUnlocked: string[] = [];
+
+  for (const id of MEDAL_IDS) {
+    const wasCompleted = prev[id]?.completed ?? false;
+    const isCompleted = curr[id]?.completed ?? false;
+    if (!wasCompleted && isCompleted) {
+      newlyUnlocked.push(id);
+    }
+  }
+
+  return newlyUnlocked;
+};
+
+/**
+ * Get the list of medal IDs that have been completed.
+ */
+export const getUnlockedMedals = (
+  medalProgress: MedalProgressMap | undefined,
+): string[] => {
+  if (!medalProgress) return [];
+  return MEDAL_IDS.filter(id => medalProgress[id]?.completed);
+};
+
+/**
+ * Get the overall completion count as { completed, total }.
+ */
+export const getOverallProgress = (
+  medalProgress: MedalProgressMap | undefined,
+): { completed: number; total: number } => {
+  const completed = getUnlockedCount(medalProgress ?? {});
+  const total = MEDAL_DEFS.length;
+  return { completed, total };
 };

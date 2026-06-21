@@ -28,21 +28,27 @@ class MockCanvasContext {
 
 function ensureResizeObserver() {
     if (typeof window.ResizeObserver === 'undefined') {
-        window.ResizeObserver = vi.fn(() => ({
+        const mockObserver = {
             observe: vi.fn(),
             unobserve: vi.fn(),
             disconnect: vi.fn(),
-        }));
+        };
+        window.ResizeObserver = vi.fn(() => mockObserver) as unknown as typeof ResizeObserver;
     }
 }
 
 function ensureIntersectionObserver() {
     if (typeof window.IntersectionObserver === 'undefined') {
-        window.IntersectionObserver = vi.fn(() => ({
+        const mockObserver = {
             observe: vi.fn(),
             unobserve: vi.fn(),
             disconnect: vi.fn(),
-        }));
+            root: null,
+            rootMargin: '',
+            thresholds: [0],
+            takeRecords: vi.fn(() => []),
+        };
+        window.IntersectionObserver = vi.fn(() => mockObserver) as unknown as typeof IntersectionObserver;
     }
 }
 
