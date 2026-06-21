@@ -116,7 +116,10 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const startTimeRef = useRef(Date.now());
+  const scrollOffsetRef = useRef(0);
+  const lastTimeRef = useRef(0);
+  const animatedRef = useRef(animated);
+  animatedRef.current = animated;
 
   const canvasSize = useResponsiveCanvas(containerRef, canvasRef);
   const width = canvasSize.width || propWidth || 1024;
@@ -198,7 +201,7 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       }
     };
 
-    const drawFrame = (elapsed: number) => {
+    const drawFrame = (groundScroll: number) => {
       if (typeof ctx.setTransform !== 'function') return;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
@@ -212,7 +215,7 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       ctx.fillStyle = sky;
       ctx.fillRect(0, 0, width, height);
 
-      const cloudBaseSpeed = elapsed * 5;
+      const cloudBaseSpeed = groundScroll * (5 / 36);
       for (const cloud of clouds) {
         let cx = (cloud.x * width - cloudBaseSpeed * cloud.speed) % width;
         if (cx < 0) cx += width;
@@ -225,7 +228,6 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       }
 
       const grassY = Math.round(groundTop - 5);
-      const groundScroll = elapsed * 36;
 
       const dPhase = Math.round((groundScroll * 0.25) % depthTileW);
       for (let sx = -dPhase; sx < width; sx += depthTileW) {
@@ -336,29 +338,23 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       return;
     }
 
-    if (!animated) {
-      drawFrame(0);
-      return;
-    }
-
     let rafId: number;
-    let frameCount = 0;
 
-    const render = () => {
-      if (frameCount++ < 3) {
-        rafId = requestAnimationFrame(render);
-        return;
-      }
-      const elapsed = (Date.now() - startTimeRef.current) / 1000;
-      drawFrame(elapsed);
+    const render = (now: number) => {
       rafId = requestAnimationFrame(render);
+      if (animatedRef.current) {
+        const dt = lastTimeRef.current ? (now - lastTimeRef.current) / 1000 : 0;
+        scrollOffsetRef.current += dt * 36;
+      }
+      lastTimeRef.current = now;
+      drawFrame(scrollOffsetRef.current);
     };
 
-    startTimeRef.current = Date.now();
+    lastTimeRef.current = 0;
     rafId = requestAnimationFrame(render);
 
     return () => cancelAnimationFrame(rafId);
-  }, [width, height, seedNum, isMobile, groundTop, clouds, animated]);
+  }, [width, height, seedNum, isMobile, groundTop, clouds]);
 
   return (
     <div
