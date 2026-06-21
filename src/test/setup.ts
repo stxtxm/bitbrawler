@@ -42,13 +42,10 @@ function ensureIntersectionObserver() {
             observe: vi.fn(),
             unobserve: vi.fn(),
             disconnect: vi.fn(),
-<<<<<<< HEAD
-=======
             root: null,
             rootMargin: '',
             thresholds: [],
             takeRecords: vi.fn(),
->>>>>>> origin/master
         })) as unknown as typeof IntersectionObserver;
     }
 }

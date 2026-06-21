@@ -7,13 +7,10 @@ import {
   performFusion,
   canUpgrade,
   performUpgrade,
-<<<<<<< HEAD
   canSalvageItem,
   getItemUpgradeLevel,
-=======
   isFusionLucky,
   getUpgradeCost,
->>>>>>> origin/master
 } from '../../utils/forgeUtils';
 import {
   ESSENCE_YIELD,
@@ -814,7 +811,9 @@ describe('forgeUtils edge cases', () => {
         essence: FUSION_COST.common,
       });
 
-      const { result, updatedChar } = performFusion(items, char, pool);
+      // Use deterministic RNG that never triggers lucky proc
+      const rng = () => LUCKY_PROC_CHANCE;
+      const { result, updatedChar } = performFusion(items, char, pool, rng);
 
       expect(result).not.toBeNull();
       expect(result!.rarity).toBe('uncommon');
@@ -931,6 +930,35 @@ describe('forgeUtils edge cases', () => {
       expect(canUpgrade('rusty_sword', char)).toBe(false);
     });
   });
+
+  describe('fusion edge cases with 0 essence', () => {
+    it('cannot fuse any rarity when essence is 0', () => {
+      const rarities: PixelItemAsset['rarity'][] = ['common', 'uncommon', 'rare', 'epic'];
+      for (const rarity of rarities) {
+        const items = [
+          makeItem(`a_${rarity}`, rarity),
+          makeItem(`b_${rarity}`, rarity),
+          makeItem(`c_${rarity}`, rarity),
+        ];
+        const char = makeCharacter({
+          inventory: [`a_${rarity}`, `b_${rarity}`, `c_${rarity}`],
+          essence: 0,
+        });
+        expect(canFuse(items, char)).toBe(false);
+      }
+    });
+  });
+
+  describe('salvage equipped items edge cases', () => {
+    it('cannot salvage item equipped in any slot even if multiple copies exist', () => {
+      const char = makeCharacter({
+        inventory: ['rusty_sword', 'rusty_sword'],
+        equippedItems: { weapon: 'rusty_sword', armor: null, accessory: null },
+      });
+      // One copy is equipped, one copy in inventory
+      expect(canSalvageItem('rusty_sword', char)).toBe(false);
+    });
+  });
 });
 
 // ─── salvageItems ──────────────────────────────────────────────────────────
@@ -991,6 +1019,119 @@ describe('isFusionLucky', () => {
   it('uses Math.random by default', () => {
     // Cannot control Math.random, just verify it runs without error
     expect(typeof isFusionLucky()).toBe('boolean');
+  });
+});
+
+// ─── canUpgrade with dynamic cost ─────────────────────────────────────────
+
+describe('canUpgrade with dynamic cost', () => {
+  it('uses dynamic cost based on current upgrade level via getUpgradeCost', () => {
+    // Level 0 → cost = 25
+    const charL0 = makeCharacter({
+      inventory: ['rusty_sword'],
+      essence: UPGRADE_BASE_COST,
+      itemUpgrades: {},
+    });
+    expect(canUpgrade('rusty_sword', charL0)).toBe(true);
+
+    // Level 0 with essence = 24 (just below cost) → false
+    const charL0Low = makeCharacter({
+      inventory: ['rusty_sword'],
+      essence: UPGRADE_BASE_COST - 1,
+      itemUpgrades: {},
+    });
+    expect(canUpgrade('rusty_sword', charL0Low)).toBe(false);
+
+    // Level 3 → cost = 25 + 3*10 = 55
+    const charL3 = makeCharacter({
+      inventory: ['rusty_sword'],
+      essence: UPGRADE_BASE_COST + 3 * UPGRADE_COST_SCALING,
+      itemUpgrades: { rusty_sword: 3 },
+    });
+    expect(canUpgrade('rusty_sword', charL3)).toBe(true);
+
+    // Level 3 with essence = 54 → false
+    const charL3Low = makeCharacter({
+      inventory: ['rusty_sword'],
+      essence: UPGRADE_BASE_COST + 3 * UPGRADE_COST_SCALING - 1,
+      itemUpgrades: { rusty_sword: 3 },
+    });
+    expect(canUpgrade('rusty_sword', charL3Low)).toBe(false);
+  });
+
+  it('returns false for all levels when essence is 0', () => {
+    for (let level = 0; level < MAX_UPGRADE_LEVEL; level++) {
+      const char = makeCharacter({
+        inventory: ['rusty_sword'],
+        essence: 0,
+        itemUpgrades: { rusty_sword: level },
+      });
+      expect(canUpgrade('rusty_sword', char)).toBe(false);
+    }
+  });
+
+  it('handles upgrade cost at each level correctly', () => {
+    const item = makeItem('test_weapon', 'rare');
+    for (let level = 0; level < MAX_UPGRADE_LEVEL; level++) {
+      const cost = getUpgradeCost(item, level);
+      expect(cost).toBe(UPGRADE_BASE_COST + level * UPGRADE_COST_SCALING);
+    }
+  });
+});
+
+// ─── Salvage last item edge case ─────────────────────────────────────────
+
+describe('salvageItem last item edge case', () => {
+  it('inventory becomes empty array after salvaging the only item', () => {
+    const item = makeItem('only_item', 'common');
+    const char = makeCharacter({
+      inventory: ['only_item'],
+      essence: 0,
+    });
+
+    const result = salvageItem('only_item', char, [item]);
+
+    expect(result.inventory).toEqual([]);
+    expect(Array.isArray(result.inventory)).toBe(true);
+    expect(result.inventory!.length).toBe(0);
+  });
+});
+
+// ─── Perform upgrade edge cases ──────────────────────────────────────────
+
+describe('performUpgrade dynamic cost edge cases', () => {
+  it('increments level and consumes correct dynamic cost at level 4', () => {
+    const char = makeCharacter({
+      inventory: ['rusty_sword'],
+      essence: 100,
+      itemUpgrades: { rusty_sword: 4 },
+    });
+
+    const result = performUpgrade('rusty_sword', char);
+    // cost at level 4 = 25 + 4*10 = 65
+    expect(result.itemUpgrades?.rusty_sword).toBe(5);
+    expect(result.essence).toBe(100 - 65);
+  });
+
+  it('does nothing when item does not exist in inventory', () => {
+    const char = makeCharacter({
+      inventory: ['some_other_item'],
+      essence: 100,
+    });
+
+    const result = performUpgrade('rusty_sword', char);
+    expect(result).toBe(char);
+  });
+
+  it('handles upgrade from level 0 with exact essence', () => {
+    const char = makeCharacter({
+      inventory: ['rusty_sword'],
+      essence: UPGRADE_BASE_COST,
+    });
+
+    const result = performUpgrade('rusty_sword', char);
+    expect(result.itemUpgrades?.rusty_sword).toBe(1);
+    expect(result.essence).toBe(0);
   });
 });
 

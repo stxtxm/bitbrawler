@@ -11,9 +11,12 @@ import {
   ESSENCE_YIELD,
   FUSION_COST,
   UPGRADE_COST,
+  UPGRADE_COST_SCALING,
+  UPGRADE_BASE_COST,
   MAX_UPGRADE_LEVEL,
   ESSENCE_SOFT_CAP,
 } from '../../data/forgeConstants';
+
 
 // ─── Mocks ──────────────────────────────────────────────────────────────────
 
@@ -408,6 +411,43 @@ describe('UpgradePanel', () => {
 
     // The item should show +3 in the grid
     expect(screen.getByText('+3')).toBeInTheDocument();
+  });
+
+  it('shows dynamic upgrade cost based on current level', () => {
+    const char = makeCharacter({
+      inventory: [RUSTY_SWORD.id],
+      essence: 100,
+      itemUpgrades: { rusty_sword: 3 },
+    });
+    setupGame({ activeCharacter: char, essence: char.essence });
+    render(<UpgradePanel onClose={vi.fn()} />);
+
+    const selectBtn = screen.getByRole('button', { name: /select.*rusty sword/i });
+    fireEvent.click(selectBtn);
+
+    // Cost at level 3 = UPGRADE_BASE_COST + 3 * UPGRADE_COST_SCALING = 25 + 30 = 55
+    const expectedCost = UPGRADE_BASE_COST + 3 * UPGRADE_COST_SCALING;
+    const costElements = screen.getAllByText(new RegExp(`${expectedCost} Essence`, 'i'));
+    expect(costElements.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('shows insufficient essence message with dynamic cost when essence is too low for current level', () => {
+    const char = makeCharacter({
+      inventory: [RUSTY_SWORD.id],
+      essence: 30,
+      itemUpgrades: { rusty_sword: 2 }, // cost at level 2 = 25 + 20 = 45
+    });
+    setupGame({ activeCharacter: char, essence: char.essence });
+    render(<UpgradePanel onClose={vi.fn()} />);
+
+    const selectBtn = screen.getByRole('button', { name: /select.*rusty sword/i });
+    fireEvent.click(selectBtn);
+
+    // Should show "not enough essence" message
+    expect(screen.getByText(/not enough essence/i)).toBeInTheDocument();
+    // Upgrade button should be disabled
+    const upgradeActionBtn = screen.getByRole('button', { name: /upgrade item/i });
+    expect(upgradeActionBtn).toBeDisabled();
   });
 
   it('performs upgrade and shows success toast', async () => {

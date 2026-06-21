@@ -81,6 +81,34 @@ describe('convertFromSupabase', () => {
     expect(char.idleMaxStreak).toBe(0)
     expect(char.idleTotalKills).toBe(0)
     expect(char.idleTotalXp).toBe(0)
+    // Forge persistence fields
+    expect(char.essence).toBe(0)
+    expect(char.itemUpgrades).toEqual({})
+  })
+
+  it('extracts essence and item_upgrades from Supabase row', () => {
+    const rowWithForge: CharacterRow = {
+      ...row,
+      essence: 150,
+      item_upgrades: { rusty_sword: 3, flame_dagger: 1 },
+    }
+    const char = convertFromSupabase(rowWithForge)
+
+    expect(char.essence).toBe(150)
+    expect(char.itemUpgrades).toEqual({ rusty_sword: 3, flame_dagger: 1 })
+  })
+
+  it('handles null essence in Supabase row gracefully', () => {
+    const rowNullEssence: CharacterRow = {
+      ...row,
+      essence: null as unknown as number,
+      item_upgrades: null as unknown as Record<string, number>,
+    }
+    const char = convertFromSupabase(rowNullEssence)
+
+    // normalizeCharacter defaults these
+    expect(char.essence).toBe(0)
+    expect(char.itemUpgrades).toEqual({})
   })
 
   it('handles a bot character correctly', () => {
@@ -198,6 +226,21 @@ describe('convertToSupabase', () => {
     expect(row.idle_max_streak).toBe(0)
     expect(row.idle_total_kills).toBe(0)
     expect(row.idle_total_xp).toBe(0)
+    // Forge persistence fields
+    expect(row.essence).toBe(0)
+    expect(row.item_upgrades).toEqual({})
+  })
+
+  it('includes essence and item_upgrades in convertToSupabase output', () => {
+    const charWithForge: Character = {
+      ...character,
+      essence: 250,
+      itemUpgrades: { rusty_sword: 5, flame_dagger: 2 },
+    }
+    const row = convertToSupabase(charWithForge)
+
+    expect(row.essence).toBe(250)
+    expect(row.item_upgrades).toEqual({ rusty_sword: 5, flame_dagger: 2 })
   })
 
   it('fills default values for missing optional fields', () => {
@@ -236,6 +279,8 @@ describe('convertToSupabase', () => {
       idleMaxStreak: undefined as any,
       idleTotalKills: undefined as any,
       idleTotalXp: undefined as any,
+      essence: undefined as any,
+      itemUpgrades: undefined as any,
       id: 'x',
     }
 

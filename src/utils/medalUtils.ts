@@ -47,11 +47,7 @@ function getComebackCount(history: Character['fightHistory']): number {
   let count = 0;
   let lossStreak = 0;
 
-<<<<<<< HEAD
-  // Iterate from oldest to newest to find wins that follow 2+ consecutive losses
-=======
   // Iterate from oldest to newest to detect wins after loss streaks
->>>>>>> origin/master
   for (let i = history.length - 1; i >= 0; i--) {
     const entry = history[i];
     if (entry.won) {
@@ -309,10 +305,6 @@ export const applyMedalReward = (character: Character, reward: MedalReward): Cha
     }
     case 'stat_point': {
       const bonus = reward.value ?? 1;
-<<<<<<< HEAD
-=======
-      // If the reward is "all stats"
->>>>>>> origin/master
       if (reward.label?.includes('all stats')) {
         updated.strength = (updated.strength || 10) + bonus;
         updated.vitality = (updated.vitality || 10) + bonus;
