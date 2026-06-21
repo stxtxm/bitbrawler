@@ -375,18 +375,24 @@ jobs:
             COMMITS=$(git log --oneline "origin/${BRANCH}..HEAD" 2>/dev/null | wc -l)
             if [ "$COMMITS" -eq 0 ]; then
               if git ls-remote --exit-code origin "refs/heads/${BRANCH}" >/dev/null 2>&1; then
-                echo "No code changes at all — skipping PR creation"
-                echo "PR_NUMBER=" >> $GITHUB_OUTPUT
-                exit 0
+                echo "Branch exists on remote but no new commits locally — checking for existing PR..."
+                EXISTING_PR=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number' 2>/dev/null || true)
+                if [ -n "$EXISTING_PR" ]; then
+                  echo "Found existing PR #$EXISTING_PR — skipping creation"
+                  echo "PR_NUMBER=$EXISTING_PR" >> $GITHUB_OUTPUT
+                  exit 0
+                fi
+                echo "No PR exists — will create from existing remote branch"
+              else
+                # New branch — count commits since branching from master
+                COMMITS=$(git log --oneline origin/master..HEAD 2>/dev/null | wc -l)
+                if [ "$COMMITS" -eq 0 ]; then
+                  echo "No commits found — no changes to push"
+                  echo "PR_NUMBER=" >> $GITHUB_OUTPUT
+                  exit 0
+                fi
+                echo "Found unpushed commits — pushing (new branch)"
               fi
-              # New branch — count commits since branching from master
-              COMMITS=$(git log --oneline origin/master..HEAD 2>/dev/null | wc -l)
-              if [ "$COMMITS" -eq 0 ]; then
-                echo "No code changes at all — skipping PR creation"
-                echo "PR_NUMBER=" >> $GITHUB_OUTPUT
-                exit 0
-              fi
-              echo "Found unpushed commits — pushing (new branch)"
             else
               echo "Found unpushed commits — pushing"
             fi
@@ -419,7 +425,7 @@ jobs:
           echo "✓ PR #$PR_NUMBER: $PR_URL"
 
       - name: Dispatch sub-issues
-        if: always() && github.event.inputs.mode != 'supervisor'
+        if: success() && github.event.inputs.mode != 'supervisor' && steps.pr_create.outputs.PR_NUMBER != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

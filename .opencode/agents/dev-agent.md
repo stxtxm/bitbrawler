@@ -179,10 +179,11 @@ npm test
 - Si des tests échouent → ne pousse PAS, analyse et corrige
 - Si le build échoue → ne pousse PAS, analyse et corrige
 
-### Étape 5: Commit et push
+### Étape 5: Commit (ne PAS push)
 - `git add -A` puis commit avec un message clair
 - Message en anglais, format: `feat: description | fix: description | chore: description`
-- Push sur la branche de feature (`feat/auto-#ISSUE_NUMBER`)
+- **NE PAS push** — le workflow GitHub s'occupe du push et de la création de PR
+- Si tu pushes, le workflow ne pourra pas créer la PR (il verra 0 nouveaux commits)
 
 ## 📝 Règles strictes
 
