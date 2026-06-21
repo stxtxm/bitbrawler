@@ -18,9 +18,12 @@
 @use 'components/idle-runner';
 @use 'components/notifications';
 @use 'components/forge';
+@use 'components/medal-card';
+@use 'components/medal-unlock-toast';
 
 // Pages
 @use 'pages/home';
+@use 'pages/medal-hall';
 @use 'pages/arena';
 @use 'pages/arena-inventory';
 @use 'pages/arena-equipment';

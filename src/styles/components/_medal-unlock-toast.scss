@@ -1,0 +1,143 @@
+@use '../variables' as *;
+
+// ============================================
+// Medal Unlock Toast
+// ============================================
+
+.medal-unlock-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  border: 2px solid $accent-gold;
+  border-radius: 4px;
+  font-family: $font-pixel;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    0 0 10px rgba(255, 204, 0, 0.2);
+  pointer-events: auto;
+  animation: medalToastSlideIn 0.4s ease-out;
+  max-width: 360px;
+  position: relative;
+  overflow: hidden;
+
+  // Glow effect on the left border for unlocked feel
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, $accent-gold, #ffaa00);
+    box-shadow: 0 0 8px rgba(255, 204, 0, 0.4);
+  }
+
+  @include mobile {
+    max-width: 100%;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+}
+
+// ─── Icon ────────────────────────────────────────────────────────────────
+.medal-unlock-toast__icon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 204, 0, 0.3);
+  background: rgba(255, 204, 0, 0.08);
+  animation: medalToastPulse 2s ease-in-out infinite;
+}
+
+// ─── Content ─────────────────────────────────────────────────────────────
+.medal-unlock-toast__content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.medal-unlock-toast__title {
+  font-size: 0.45rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: $accent-gold;
+  font-weight: bold;
+}
+
+.medal-unlock-toast__name {
+  font-size: 0.5rem;
+  letter-spacing: 1px;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.medal-unlock-toast__reward {
+  font-size: 0.38rem;
+  letter-spacing: 0.5px;
+  color: $accent-green;
+  margin-top: 1px;
+}
+
+// ─── Close Button ────────────────────────────────────────────────────────
+.medal-unlock-toast__close {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0 2px;
+  flex-shrink: 0;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  font-family: $font-pixel;
+  align-self: flex-start;
+  line-height: 1;
+
+  &:hover {
+    opacity: 1;
+    color: #fff;
+  }
+}
+
+// ─── Animations ──────────────────────────────────────────────────────────
+@keyframes medalToastSlideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes medalToastPulse {
+  0%, 100% {
+    box-shadow: 0 0 2px rgba(255, 204, 0, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 8px rgba(255, 204, 0, 0.5);
+  }
+}
+
+// ─── Mobile ──────────────────────────────────────────────────────────────
+@include mobile {
+  .medal-unlock-toast__title {
+    font-size: 0.4rem;
+  }
+
+  .medal-unlock-toast__name {
+    font-size: 0.45rem;
+  }
+
+  .medal-unlock-toast__reward {
+    font-size: 0.35rem;
+  }
+}

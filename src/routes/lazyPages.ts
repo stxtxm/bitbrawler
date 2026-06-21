@@ -6,6 +6,7 @@ const rankingsImporter = () => import('../pages/Rankings')
 const loginImporter = () => import('../pages/Login')
 const arenaImporter = () => import('../pages/Arena')
 const notFoundImporter = () => import('../pages/NotFound')
+const medalHallImporter = () => import('../pages/MedalHall')
 
 export const canPrefetch = () => {
   if (typeof navigator === 'undefined') return true
@@ -18,5 +19,6 @@ export const Rankings = lazy(rankingsImporter)
 export const Login = lazy(loginImporter)
 export const Arena = lazy(arenaImporter)
 export const NotFound = lazy(notFoundImporter)
+export const MedalHall = lazy(medalHallImporter)
 
 export const prefetchArena = () => (canPrefetch() ? arenaImporter() : Promise.resolve())

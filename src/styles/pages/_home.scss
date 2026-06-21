@@ -118,6 +118,46 @@
     }
 }
 
+.medal-hall-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.medal-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: $accent-gold;
+    color: #000;
+    font-size: 0.4rem;
+    font-family: $font-pixel;
+    font-weight: bold;
+    line-height: 1;
+    margin-left: 2px;
+}
+
+.medal-count-text {
+    display: block;
+    font-family: $font-pixel;
+    font-size: 0.4rem;
+    color: $accent-gold;
+    margin-top: 4px;
+    letter-spacing: 1px;
+}
+
+.feature-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    padding: 8px;
+}
+
 .features {
     display: grid;
     grid-template-columns: repeat(4, 1fr);

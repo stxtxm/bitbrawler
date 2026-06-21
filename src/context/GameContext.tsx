@@ -22,6 +22,7 @@ import {
   performFusion,
   performUpgrade,
 } from '../utils/forgeUtils';
+import type { MedalDef } from '../data/medals';
 
 interface GameContextType {
   activeCharacter: Character | null;
@@ -60,6 +61,10 @@ interface GameContextType {
   salvageItems: (itemId: string) => Promise<Character | null>;
   fuseItems: (items: PixelItemAsset[]) => Promise<{ result: PixelItemAsset | null; updatedChar: Character | null }>;
   upgradeItem: (itemId: string) => Promise<Character | null>;
+  /** Recently unlocked medals for toast notifications */
+  lastUnlockedMedals: MedalDef[];
+  /** Clear the list of recently unlocked medals */
+  clearLastUnlockedMedals: () => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -70,6 +75,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [dbAvailable, setDbAvailable] = useState(true);
   const [lastXpGain, setLastXpGain] = useState<number | null>(null);
   const [lastLevelUp, setLastLevelUp] = useState<{ levelsGained: number; newLevel: number; hpGained: number } | null>(null);
+  const [lastUnlockedMedals, setLastUnlockedMedals] = useState<MedalDef[]>([]);
   const isOnline = useOnlineStatus();
   const initiatedMatchmakingRef = useRef(false);
   const persistCharacter = useCallback((character: Character) => {
@@ -936,6 +942,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     return await findOpponent(activeCharacter);
   }, [activeCharacter]);
 
+  const clearLastUnlockedMedalsFn = useCallback(() => {
+    setLastUnlockedMedals([]);
+  }, []);
+
   const value: GameContextType = {
     activeCharacter,
     loading,
@@ -962,6 +972,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     salvageItems,
     fuseItems,
     upgradeItem,
+    lastUnlockedMedals,
+    clearLastUnlockedMedals: clearLastUnlockedMedalsFn,
   };
 
   return (
