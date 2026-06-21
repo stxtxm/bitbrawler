@@ -49,6 +49,53 @@ export interface PendingFight {
   matchType?: 'balanced' | 'similar' | 'pve';
 }
 
+import { ItemRarity, PixelItemAsset } from './Item';
+
+// ─── Forge System Types ────────────────────────────────────────────────────
+
+/**
+ * Result from salvaging a single item.
+ */
+export interface SalvageResult {
+  itemId: string;
+  itemName: string;
+  rarity: ItemRarity;
+  essenceYield: number;
+}
+
+/**
+ * Result from performing a fusion of 3 items.
+ */
+export interface FusionResult {
+  success: boolean;
+  resultItem: PixelItemAsset | null;
+  essenceConsumed: number;
+  itemsConsumed: string[];
+  lucky: boolean;
+}
+
+/**
+ * Result from upgrading an item.
+ */
+export interface UpgradeResult {
+  success: boolean;
+  itemId: string;
+  previousLevel: number;
+  newLevel: number;
+  essenceConsumed: number;
+}
+
+/**
+ * Describes a forge recipe — the inputs, cost, and expected output of a fusion.
+ */
+export interface ForgeRecipe {
+  inputItems: PixelItemAsset[];
+  inputRarity: ItemRarity;
+  outputRarity: ItemRarity;
+  essenceCost: number;
+  lucky: boolean;
+}
+
 export interface Character {
   id?: string;
   seed: string;

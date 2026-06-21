@@ -115,7 +115,7 @@ describe('SalvagePanel', () => {
     setupGame({ activeCharacter: char, essence: char.essence });
     render(<SalvagePanel onClose={vi.fn()} />);
 
-    expect(screen.getByText((content) => content.includes('100'))).toBeInTheDocument();
+    expect(screen.getByText((content) => content.includes('250'))).toBeInTheDocument();
     expect(screen.getByText(/Flame Dagger/)).toBeInTheDocument();
   });
 
@@ -200,7 +200,7 @@ describe('FusionPanel', () => {
     toggleBtns.slice(0, 3).forEach((btn) => fireEvent.click(btn));
 
     // Now the cost should display
-    expect(screen.getByText(new RegExp(String(FUSION_COST.common), 'i'))).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(`Cost: ${FUSION_COST.common} Essence`, 'i'))).toBeInTheDocument();
   });
 
   it('shows fusion result toast on success', async () => {

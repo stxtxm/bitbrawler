@@ -2,19 +2,26 @@ import { describe, it, expect } from 'vitest';
 import {
   getEssenceYield,
   salvageItem,
+  salvageItems,
   canFuse,
   performFusion,
   canUpgrade,
   performUpgrade,
+  isFusionLucky,
+  getUpgradeCost,
 } from '../../utils/forgeUtils';
 import {
   ESSENCE_YIELD,
+  SALVAGE_YIELD,
   FUSION_COST,
+  FUSION_ESSENCE_COST,
   FUSION_INPUT_COUNT,
   UPGRADE_COST,
+  UPGRADE_BASE_COST,
   MAX_UPGRADE_LEVEL,
   LUCKY_PROC_CHANCE,
   ESSENCE_SOFT_CAP,
+  UPGRADE_COST_SCALING,
 } from '../../data/forgeConstants';
 import { PixelItemAsset } from '../../types/Item';
 import { Character } from '../../types/Character';
@@ -61,28 +68,50 @@ const makeCharacter = (overrides?: Partial<Character>): Character => ({
 // ─── Constants Structure ──────────────────────────────────────────────────
 
 describe('forgeConstants', () => {
-  it('defines ESSENCE_YIELD for all rarities', () => {
-    const rarities: PixelItemAsset['rarity'][] = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
-    for (const r of rarities) {
-      expect(typeof ESSENCE_YIELD[r]).toBe('number');
-      expect(ESSENCE_YIELD[r]).toBeGreaterThan(0);
-    }
+  describe('ESSENCE_YIELD / SALVAGE_YIELD', () => {
+    it('defines correct salvage values per rarity', () => {
+      expect(ESSENCE_YIELD.common).toBe(5);
+      expect(ESSENCE_YIELD.uncommon).toBe(20);
+      expect(ESSENCE_YIELD.rare).toBe(75);
+      expect(ESSENCE_YIELD.epic).toBe(250);
+      expect(ESSENCE_YIELD.legendary).toBe(1000);
+    });
+
+    it('SALVAGE_YIELD is an alias for ESSENCE_YIELD', () => {
+      expect(SALVAGE_YIELD).toBe(ESSENCE_YIELD);
+    });
   });
 
-  it('defines FUSION_COST for all rarities', () => {
-    const rarities: PixelItemAsset['rarity'][] = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
-    for (const r of rarities) {
-      expect(typeof FUSION_COST[r]).toBe('number');
-      expect(FUSION_COST[r]).toBeGreaterThanOrEqual(0);
-    }
+  describe('FUSION_COST / FUSION_ESSENCE_COST', () => {
+    it('defines correct fusion costs per rarity', () => {
+      expect(FUSION_COST.common).toBe(10);
+      expect(FUSION_COST.uncommon).toBe(40);
+      expect(FUSION_COST.rare).toBe(150);
+      expect(FUSION_COST.epic).toBe(500);
+      expect(FUSION_COST.legendary).toBe(0);
+    });
+
+    it('FUSION_ESSENCE_COST is an alias for FUSION_COST', () => {
+      expect(FUSION_ESSENCE_COST).toBe(FUSION_COST);
+    });
   });
 
   it('defines FUSION_INPUT_COUNT as 3', () => {
     expect(FUSION_INPUT_COUNT).toBe(3);
   });
 
-  it('defines UPGRADE_COST as 25', () => {
-    expect(UPGRADE_COST).toBe(25);
+  describe('UPGRADE_COST / UPGRADE_BASE_COST', () => {
+    it('defines UPGRADE_COST as 25', () => {
+      expect(UPGRADE_COST).toBe(25);
+    });
+
+    it('UPGRADE_BASE_COST is an alias for UPGRADE_COST', () => {
+      expect(UPGRADE_BASE_COST).toBe(UPGRADE_COST);
+    });
+  });
+
+  it('defines UPGRADE_COST_SCALING as 10', () => {
+    expect(UPGRADE_COST_SCALING).toBe(10);
   });
 
   it('defines MAX_UPGRADE_LEVEL as 5', () => {
@@ -269,7 +298,9 @@ describe('performFusion', () => {
       essence: FUSION_COST.common,
     });
 
-    const { result, updatedChar } = performFusion(items, char, pool);
+    // Use controlled RNG to prevent flaky lucky proc
+    const rng = () => 0.5;
+    const { result, updatedChar } = performFusion(items, char, pool, rng);
 
     expect(result).not.toBeNull();
     expect(result!.rarity).toBe('uncommon');
@@ -291,7 +322,9 @@ describe('performFusion', () => {
       essence: FUSION_COST.common,
     });
 
-    const { result, updatedChar } = performFusion(items, char, pool);
+    // Use controlled RNG to prevent flaky lucky proc
+    const rng = () => 0.5;
+    const { result, updatedChar } = performFusion(items, char, pool, rng);
 
     expect(result).not.toBeNull();
     expect(result!.id).toBe('fusion_result');
@@ -445,11 +478,22 @@ describe('canUpgrade', () => {
   it('returns true for item at level 4 (one below max)', () => {
     const char = makeCharacter({
       inventory: ['rusty_sword'],
-      essence: UPGRADE_COST,
+      essence: UPGRADE_BASE_COST + (MAX_UPGRADE_LEVEL - 1) * UPGRADE_COST_SCALING, // cost at level 4
       itemUpgrades: { rusty_sword: MAX_UPGRADE_LEVEL - 1 },
     });
 
     expect(canUpgrade('rusty_sword', char)).toBe(true);
+  });
+
+  it('returns false when enough essence for base cost but not for scaled cost at higher level', () => {
+    const char = makeCharacter({
+      inventory: ['rusty_sword'],
+      essence: UPGRADE_BASE_COST, // 25, enough for level 0 but not level 1 (35)
+      itemUpgrades: { rusty_sword: 1 },
+    });
+
+    // cost at level 1 = 25 + 1*10 = 35, essence is 25, not enough
+    expect(canUpgrade('rusty_sword', char)).toBe(false);
   });
 });
 
@@ -472,14 +516,16 @@ describe('performUpgrade', () => {
   it('increments from level 2 to 3', () => {
     const char = makeCharacter({
       inventory: ['rusty_sword'],
-      essence: UPGRADE_COST * 2,
+      essence: 100,
       itemUpgrades: { rusty_sword: 2 },
     });
 
     const result = performUpgrade('rusty_sword', char);
+    // cost = UPGRADE_BASE_COST + level * UPGRADE_COST_SCALING = 25 + 2*10 = 45
+    // essence after = 100 - 45 = 55
 
     expect(result.itemUpgrades?.rusty_sword).toBe(3);
-    expect(result.essence).toBe(UPGRADE_COST);
+    expect(result.essence).toBe(55);
   });
 
   it('does not exceed MAX_UPGRADE_LEVEL', () => {
@@ -519,5 +565,104 @@ describe('performUpgrade', () => {
     const result = performUpgrade('rusty_sword', char);
 
     expect(result.itemUpgrades?.rusty_sword).toBe(1);
+  });
+});
+
+// ─── salvageItems ──────────────────────────────────────────────────────────
+
+describe('salvageItems', () => {
+  it('returns total essence from multiple items', () => {
+    const items = [
+      makeItem('a', 'common'),
+      makeItem('b', 'uncommon'),
+      makeItem('c', 'rare'),
+    ];
+    const expected = ESSENCE_YIELD.common + ESSENCE_YIELD.uncommon + ESSENCE_YIELD.rare;
+    expect(salvageItems(items)).toBe(expected);
+  });
+
+  it('returns 0 for empty array', () => {
+    expect(salvageItems([])).toBe(0);
+  });
+
+  it('handles single item', () => {
+    const items = [makeItem('legendary_ring', 'legendary')];
+    expect(salvageItems(items)).toBe(ESSENCE_YIELD.legendary);
+  });
+
+  it('handles items of the same rarity', () => {
+    const items = [
+      makeItem('a', 'epic'),
+      makeItem('b', 'epic'),
+      makeItem('c', 'epic'),
+    ];
+    expect(salvageItems(items)).toBe(ESSENCE_YIELD.epic * 3);
+  });
+});
+
+// ─── isFusionLucky ─────────────────────────────────────────────────────────
+
+describe('isFusionLucky', () => {
+  it('returns true when rng < LUCKY_PROC_CHANCE', () => {
+    const rng = () => LUCKY_PROC_CHANCE - 0.01;
+    expect(isFusionLucky(rng)).toBe(true);
+  });
+
+  it('returns false when rng >= LUCKY_PROC_CHANCE', () => {
+    const rng = () => LUCKY_PROC_CHANCE;
+    expect(isFusionLucky(rng)).toBe(false);
+  });
+
+  it('returns false when rng is 1', () => {
+    const rng = () => 1;
+    expect(isFusionLucky(rng)).toBe(false);
+  });
+
+  it('returns true when rng is 0', () => {
+    const rng = () => 0;
+    expect(isFusionLucky(rng)).toBe(true);
+  });
+
+  it('uses Math.random by default', () => {
+    // Cannot control Math.random, just verify it runs without error
+    expect(typeof isFusionLucky()).toBe('boolean');
+  });
+});
+
+// ─── getUpgradeCost ────────────────────────────────────────────────────────
+
+describe('getUpgradeCost', () => {
+  it('returns base cost for a level 0 item', () => {
+    const item = makeItem('test', 'common');
+    expect(getUpgradeCost(item)).toBe(UPGRADE_BASE_COST);
+  });
+
+  it('calculates cost based on item level', () => {
+    const item = makeItem('test', 'rare', {
+      stats: { strength: 1 },
+    });
+    // For a PixelItemAsset without a level property, cost should be base
+    expect(getUpgradeCost(item)).toBe(UPGRADE_BASE_COST);
+  });
+
+  it('scales with upgrade level parameter', () => {
+    // cost = UPGRADE_BASE_COST + level * UPGRADE_COST_SCALING
+    const item = makeItem('test', 'epic');
+    const cost0 = getUpgradeCost(item, 0);
+    expect(cost0).toBe(UPGRADE_BASE_COST);
+  });
+
+  it('cost increases with level', () => {
+    const item = makeItem('test', 'legendary');
+    const cost0 = getUpgradeCost(item, 0);
+    const cost3 = getUpgradeCost(item, 3);
+    expect(cost3).toBeGreaterThan(cost0);
+    expect(cost3).toBe(UPGRADE_BASE_COST + 3 * UPGRADE_COST_SCALING);
+  });
+
+  it('returns cost for max level item (should still charge base + scaling)', () => {
+    const item = makeItem('test', 'common');
+    const cost = getUpgradeCost(item, MAX_UPGRADE_LEVEL - 1);
+    expect(cost).toBe(UPGRADE_BASE_COST + (MAX_UPGRADE_LEVEL - 1) * UPGRADE_COST_SCALING);
   });
 });
