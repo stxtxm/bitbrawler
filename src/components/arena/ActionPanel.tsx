@@ -82,7 +82,7 @@ export const ActionPanel = memo(function ActionPanel({
       <div className="fight-row">
         <button
           className="button primary-btn giant-btn fight-btn"
-          disabled={!canFight || matchmaking}
+          disabled={pveMode || !canFight || matchmaking}
           onClick={onFight}
         >
           {matchmaking
@@ -93,7 +93,9 @@ export const ActionPanel = memo(function ActionPanel({
                 ? 'AUTO MODE'
                 : isOfflineMode
                   ? 'OFFLINE'
-                  : (pveMode ? pveFightsLeft : fightsLeft) > 0 ? 'FIGHT!' : 'REST NOW'}
+                  : pveMode
+                    ? 'BOSS FIGHT'
+                    : fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'}
         </button>
       </div>
     </div>
