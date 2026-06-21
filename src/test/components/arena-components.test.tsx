@@ -220,10 +220,11 @@ describe('arena extracted components', () => {
     expect(within(dialog).getByText('Flame Dagger')).toBeInTheDocument();
   });
 
-  it('ArenaHeader exposes settings, inventory, logout, and stat point actions', () => {
+  it('ArenaHeader exposes settings, inventory, logout, forge, and stat point actions', () => {
     const onOpenLevelUp = vi.fn();
     const onOpenSettings = vi.fn();
     const onOpenInventory = vi.fn();
+    const onOpenForge = vi.fn();
     const onLogout = vi.fn();
 
     render(
@@ -234,6 +235,7 @@ describe('arena extracted components', () => {
         onOpenLevelUp={onOpenLevelUp}
         onOpenSettings={onOpenSettings}
         onOpenInventory={onOpenInventory}
+        onOpenForge={onOpenForge}
         onLogout={onLogout}
       />,
     );
@@ -241,11 +243,13 @@ describe('arena extracted components', () => {
     fireEvent.click(screen.getByTitle('Unspent stat points'));
     fireEvent.click(screen.getByLabelText('Settings'));
     fireEvent.click(screen.getByLabelText('Inventory'));
+    fireEvent.click(screen.getByLabelText('Forge'));
     fireEvent.click(screen.getByTitle('Logout'));
 
     expect(onOpenLevelUp).toHaveBeenCalled();
     expect(onOpenSettings).toHaveBeenCalled();
     expect(onOpenInventory).toHaveBeenCalled();
+    expect(onOpenForge).toHaveBeenCalled();
     expect(onLogout).toHaveBeenCalled();
   });
 });

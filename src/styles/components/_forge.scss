@@ -550,3 +550,224 @@
   letter-spacing: 1px;
   text-align: center;
 }
+
+// ─── Forge Page Layout ─────────────────────────────────────────────────────
+
+.forge-container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+
+  @include mobile {
+    padding: 8px;
+    gap: 6px;
+  }
+}
+
+.forge-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 2px solid #333;
+  background: #000;
+  flex-wrap: wrap;
+
+  @include mobile {
+    padding: 6px 8px;
+    gap: 6px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.forge-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.forge-header-title {
+  font-family: $font-pixel;
+  font-size: 0.9rem;
+  letter-spacing: 3px;
+  color: $accent-gold;
+  text-transform: uppercase;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.forge-header-icon {
+  font-size: 1rem;
+  display: inline-block;
+}
+
+.forge-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-family: $font-pixel;
+  font-size: 0.5rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: 2px solid #666;
+  background: #000;
+  color: #ccc;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: $accent-gold;
+    color: $accent-gold;
+  }
+
+  @include mobile {
+    font-size: 0.45rem;
+    padding: 4px 8px;
+  }
+}
+
+// ─── Decoration ─────────────────────────────────────────────────────────────
+
+.forge-decoration {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 4px 0;
+  opacity: 0.4;
+  user-select: none;
+}
+
+.forge-anvil {
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.forge-sparkles {
+  font-size: 0.6rem;
+  color: $accent-gold;
+  letter-spacing: 6px;
+  animation: forgeSparkle 2s ease-in-out infinite;
+}
+
+@keyframes forgeSparkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.8; }
+}
+
+// ─── Tabs ───────────────────────────────────────────────────────────────────
+
+.forge-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid #222;
+  padding-bottom: 0;
+  background: #000;
+
+  @include mobile {
+    gap: 2px;
+  }
+}
+
+.forge-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 12px;
+  font-family: $font-pixel;
+  font-size: 0.5rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  background: #0a0a0a;
+  color: #666;
+  transition: all 0.2s ease;
+  position: relative;
+  border-top: 2px solid transparent;
+
+  &:hover {
+    color: #aaa;
+    background: #111;
+  }
+
+  &.active {
+    color: $accent-gold;
+    background: #000;
+    border-top: 2px solid $accent-gold;
+    border-left: 2px solid #222;
+    border-right: 2px solid #222;
+  }
+
+  @include mobile {
+    font-size: 0.45rem;
+    padding: 8px 6px;
+    gap: 4px;
+  }
+}
+
+.forge-tab-icon {
+  font-size: 0.7rem;
+
+  @include mobile {
+    font-size: 0.6rem;
+  }
+}
+
+.forge-tab-label {
+  white-space: nowrap;
+}
+
+// ─── Panel Container ────────────────────────────────────────────────────────
+
+.forge-panel-container {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  border: 2px solid #222;
+  background: rgba(0, 0, 0, 0.6);
+
+  @include mobile {
+    border-width: 1px;
+  }
+}
+
+// ─── Footer ─────────────────────────────────────────────────────────────────
+
+.forge-footer {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+  border-top: 2px solid #222;
+  background: #000;
+
+  @include mobile {
+    padding: 6px 0;
+  }
+}
+
+// ─── Essence icon ───────────────────────────────────────────────────────────
+
+.forge-essence-icon {
+  color: $accent-gold;
+  font-size: 0.55rem;
+}
+
+.forge-essence-max {
+  font-size: 0.45rem;
+  color: #555;
+}
+
+.forge-essence-bar.at-cap {
+  border-color: $accent-gold;
+  border-style: double;
+}

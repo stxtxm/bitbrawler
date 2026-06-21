@@ -189,6 +189,7 @@ const Arena = () => {
         onOpenLevelUp={levelUp.handleOpenLevelUp}
         onOpenSettings={settings.openSettings}
         onOpenInventory={inventory.openInventory}
+        onOpenForge={() => navigate('/forge')}
         onLogout={handleLogout}
       />
 

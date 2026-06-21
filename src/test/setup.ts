@@ -28,7 +28,7 @@ class MockCanvasContext {
 
 function ensureResizeObserver() {
     if (typeof window.ResizeObserver === 'undefined') {
-        window.ResizeObserver = vi.fn(() => ({
+        (window as any).ResizeObserver = vi.fn(() => ({
             observe: vi.fn(),
             unobserve: vi.fn(),
             disconnect: vi.fn(),
@@ -38,7 +38,7 @@ function ensureResizeObserver() {
 
 function ensureIntersectionObserver() {
     if (typeof window.IntersectionObserver === 'undefined') {
-        window.IntersectionObserver = vi.fn(() => ({
+        (window as any).IntersectionObserver = vi.fn(() => ({
             observe: vi.fn(),
             unobserve: vi.fn(),
             disconnect: vi.fn(),
