@@ -9,6 +9,20 @@ interface ProceduralTerrainProps {
 
 const PI2 = Math.PI * 2;
 
+// Tiny pixel-art cloud shapes (1 = white, 2 = light grey)
+const CLOUD_SHAPES = [
+  [[0,1,1,0],[1,1,2,1],[0,1,1,0]],
+  [[1,1,0],[1,2,1],[0,1,0]],
+  [[0,1,1,0],[1,1,1,1],[0,1,1,0]],
+];
+
+interface CloudDef {
+  x: number;
+  y: number;
+  shape: number[][];
+  width: number;
+}
+
 export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
   width: propWidth,
   height: propHeight,
@@ -30,13 +44,21 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
   const isMobile = width < 768;
   const groundTop = height * (isMobile ? 0.70 : 0.62);
 
-  // Frequencies chosen so sin patterns perfectly tile at wrap distance
-  // period = 32px → freq = 2π/32 ≈ 0.19635
-  const FREQ_32 = PI2 / 32;
-  // period = 48px → freq = 2π/48 ≈ 0.1309
-  const FREQ_48 = PI2 / 48;
-  // period = 64px → freq = 2π/64 ≈ 0.098175
-  const FREQ_64 = PI2 / 64;
+  // Deterministic clouds from seed
+  const clouds = useMemo(() => {
+    const cs: CloudDef[] = [];
+    const s = seedNum || 42;
+    for (let i = 0; i < 4; i++) {
+      const h = ((s * 13 + i * 7) * 5) % 101;
+      cs.push({
+        x: (i / 4 + (h % 20) * 0.005) % 1,
+        y: 0.04 + ((h * 3) % 11) * 0.035,
+        shape: CLOUD_SHAPES[h % CLOUD_SHAPES.length],
+        width: 28 + (h % 4) * 8,
+      });
+    }
+    return cs;
+  }, [seedNum]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -48,86 +70,105 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
 
     const render = () => {
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
-      // smooth continuous offset, never wraps (36px/s)
-      const groundOffset = elapsed * 36;
 
       ctx.clearRect(0, 0, width, height);
 
-      // ── SKY ──
-      const skyGradient = ctx.createLinearGradient(0, 0, 0, height * 0.65);
-      skyGradient.addColorStop(0, '#4a90d9');
-      skyGradient.addColorStop(0.4, '#87ceeb');
-      skyGradient.addColorStop(1, '#c8e6f5');
-      ctx.fillStyle = skyGradient;
+      // ── SKY (vibrant gradient) ──
+      const sky = ctx.createLinearGradient(0, 0, 0, height);
+      sky.addColorStop(0, '#2b7bc9');
+      sky.addColorStop(0.45, '#6ec3ed');
+      sky.addColorStop(0.75, '#b8e2f5');
+      sky.addColorStop(1, '#d4edf9');
+      ctx.fillStyle = sky;
       ctx.fillRect(0, 0, width, height);
 
-      // ── DIRT BASE ──
-      ctx.fillStyle = '#6b5340';
-      ctx.fillRect(0, groundTop, width, height - groundTop);
+      // ── CLOUDS (canvas-based, works on all devices) ──
+      for (const cloud of clouds) {
+        const cx = Math.round(cloud.x * width);
+        const cy = Math.round(cloud.y * height);
+        const shape = cloud.shape;
+        const rows = shape.length;
+        const cols = shape[0].length;
+        const pw = Math.round(cloud.width / cols);
+        const ph = pw;
 
-      // ── GRASS STRIP ──
-      const grassTop = groundTop - 5;
-      ctx.fillStyle = '#4a8a3a';
-      ctx.fillRect(0, grassTop, width, 8);
-
-      // ── GRASS BLADES (perfectly tile at 32px) ──
-      const grassScroll = groundOffset * 0.8;
-      const bladeColors = ['#3a7a2a', '#4a8a3a', '#5a9a4a'];
-
-      // floor-based approach: each 4px column uses a unique tile position
-      // the scroll moves which 4px column lands on screen
-      const colOffset = Math.floor(grassScroll / 4);
-      const colFrac = (grassScroll % 4);
-
-      for (let col = -4; col <= Math.ceil(width / 4) + 4; col++) {
-        const tileX = (col + colOffset) & 7; // 0-7, because 8 columns × 4px = 32px tile
-        const sx = col * 4 - colFrac;
-
-        if (sx < -6 || sx > width) continue;
-
-        // Use hash of tileX + seedNum for deterministic pattern within the 32px tile
-        const h = ((tileX * 7 + seedNum * 3) & 7);
-        const bh = 3 + (h % 5);
-        const ci = (h + Math.floor(tileX / 3)) % 3;
-
-        ctx.fillStyle = bladeColors[ci];
-        ctx.fillRect(Math.round(sx), grassTop - bh, 3, bh);
-      }
-
-      // ── GROUND TEXTURE (perfectly tile at 48px) ──
-      const texOffset = Math.round(groundOffset % 48);
-      for (let x = 0; x < width; x += 8) {
-        const tx = ((x - texOffset + width + 48) % (width + 48));
-        if (tx < 0 || tx > width) continue;
-        const t = Math.sin(x * FREQ_48 + seedNum) * 0.5 + 0.5;
-        if (t > 0.65) {
-          ctx.fillStyle = 'rgba(0,0,0,0.07)';
-          ctx.fillRect(Math.round(tx), groundTop + 2, 6, 3);
+        for (let row = 0; row < rows; row++) {
+          for (let col = 0; col < cols; col++) {
+            if (!shape[row][col]) continue;
+            ctx.fillStyle = shape[row][col] === 1 ? '#ffffff' : '#e8e8e8';
+            ctx.fillRect(cx + col * pw, cy + row * ph, pw, ph);
+          }
         }
       }
 
-      // ── STONES (tile at 64px) ──
-      const stoneOffset = Math.round((groundOffset * 0.6) % 64);
-      for (let i = 0; i < 4; i++) {
-        const sx = ((i * 64 + (seedNum % 17) - stoneOffset + width + 128) % (width + 128)) - 64;
-        if (sx < -8 || sx > width + 8) continue;
-        ctx.fillStyle = '#8a8070';
-        ctx.fillRect(Math.round(sx), groundTop + 4, 4, 3);
-        ctx.fillStyle = '#6a6050';
-        ctx.fillRect(Math.round(sx) + 1, groundTop + 5, 2, 2);
+      // ── GROUND ──
+      const grassY = Math.round(groundTop - 5);
+      const groundScroll = elapsed * 36;
+
+      // Dirt base
+      ctx.fillStyle = '#6b5340';
+      ctx.fillRect(0, groundTop, width, height - groundTop);
+
+      // Grass strip
+      ctx.fillStyle = '#4a8a3a';
+      ctx.fillRect(0, grassY, width, 8);
+
+      // ── Grass blades ──
+      // Continuous worldX-based pattern, frequencies tile at 32px
+      const bladeStep = 4;
+      const bladePhase = groundScroll * 0.8 % bladeStep;
+      for (let sx = -(bladePhase + bladeStep); sx < width + bladeStep; sx += bladeStep) {
+        if (sx < -6 || sx > width + 2) continue;
+        const worldX = sx + groundScroll * 0.8;
+
+        // sin with period 32px → tiles perfectly
+        const h = Math.sin(worldX * PI2 / 32) * 0.5 + 0.5;
+        const bh = 3 + Math.floor((h * 0.8 + 0.2) * 5);
+        const c = Math.floor(((Math.sin(worldX * PI2 / 64 + seedNum) * 0.5 + 0.5) * 3)) % 3;
+        const bladeColors = ['#3a7a2a', '#4a8a3a', '#5a9a4a'];
+
+        ctx.fillStyle = bladeColors[c];
+        ctx.fillRect(Math.round(sx), grassY - bh, 3, bh);
       }
 
-      // ── BUSHES (tile at 96px) ──
-      const bushOffset = Math.round((groundOffset * 0.5) % 96);
-      for (let i = 0; i < 6; i++) {
-        const bx = ((i * 96 + (seedNum % 47) - bushOffset + width + 192) % (width + 192)) - 96;
-        if (bx < -12 || bx > width + 12) continue;
+      // ── Ground texture dots (period 48px) ──
+      const texPhase = groundScroll * 0.7 % 48;
+      for (let sx = -(texPhase + 48); sx < width + 48; sx += 8) {
+        if (sx < 0 || sx > width) continue;
+        const worldX = sx + groundScroll * 0.7;
+        if ((Math.sin(worldX * PI2 / 48 + seedNum) * 0.5 + 0.5) > 0.65) {
+          ctx.fillStyle = 'rgba(0,0,0,0.07)';
+          ctx.fillRect(Math.round(sx), groundTop + 2, 6, 3);
+        }
+      }
+
+      // ── Stones (period 64px) ──
+      const stonePhase = groundScroll * 0.6 % 64;
+      for (let sx = -(stonePhase + 64); sx < width + 64; sx += 64) {
+        if (sx < -8 || sx > width + 8) continue;
+        const worldIdx = Math.floor((sx + groundScroll * 0.6) / 64);
+        const off = ((worldIdx * 17 + seedNum * 3) % 13) - 6;
+        const stoneX = Math.round(sx + off);
+
+        ctx.fillStyle = '#8a8070';
+        ctx.fillRect(stoneX, groundTop + 4, 4, 3);
+        ctx.fillStyle = '#6a6050';
+        ctx.fillRect(stoneX + 1, groundTop + 5, 2, 2);
+      }
+
+      // ── Bushes (period 96px) ──
+      const bushPhase = groundScroll * 0.5 % 96;
+      for (let sx = -(bushPhase + 96); sx < width + 96; sx += 96) {
+        if (sx < -12 || sx > width + 12) continue;
+        const worldIdx = Math.floor((sx + groundScroll * 0.5) / 96);
+        const off = ((worldIdx * 13 + seedNum * 7) % 19) - 9;
+        const bx = Math.round(sx + off);
 
         ctx.fillStyle = '#4a7a3a';
-        ctx.fillRect(Math.round(bx), grassTop - 7, 6, 4);
-        ctx.fillRect(Math.round(bx) + 1, grassTop - 10, 4, 3);
+        ctx.fillRect(bx, grassY - 7, 6, 4);
+        ctx.fillRect(bx + 1, grassY - 10, 4, 3);
         ctx.fillStyle = '#3a6a2a';
-        ctx.fillRect(Math.round(bx), grassTop - 4, 2, 2);
+        ctx.fillRect(bx, grassY - 4, 2, 2);
       }
 
       rafId = requestAnimationFrame(render);
@@ -137,7 +178,7 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
     rafId = requestAnimationFrame(render);
 
     return () => cancelAnimationFrame(rafId);
-  }, [width, height, seedNum, isMobile, groundTop, FREQ_32, FREQ_48, FREQ_64]);
+  }, [width, height, seedNum, isMobile, groundTop, clouds]);
 
   return (
     <div

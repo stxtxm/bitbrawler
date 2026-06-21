@@ -5,9 +5,6 @@ import { ScenePhase } from '../types/IdleCombat'
 import { AnimatedPixelCharacter } from './AnimatedPixelCharacter'
 import { PixelMonster } from './PixelMonster'
 import { ProceduralTerrain } from './procedural/ProceduralTerrain'
-import {
-  generateCloudPositions,
-} from '../data/tileAssets'
 import { ParticleSystem } from '../utils/particleSystem'
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode'
 
@@ -62,7 +59,6 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     return 8
   }, [])
   const monsterScale = useMemo(() => Math.max(3, charScale - 2), [charScale])
-  const clouds = useMemo(() => generateCloudPositions(character.seed), [character.seed])
   const containerStyle = useMemo(() => ({ background: 'transparent' }), []);
 
   useEffect(() => {
@@ -122,23 +118,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
         seed={character.seed}
       />
 
-      {!lowPerf && (
-        <div className="idle-layer clouds">
-          {clouds.map((cloud, i) => (
-            <div key={i} className="cloud-instance" style={{
-              left: `${cloud.x}%`,
-              top: `${cloud.y}%`,
-              ['--scale' as string]: cloud.scale,
-              opacity: cloud.opacity,
-              backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(
-                cloud.type.pixels.map((row, y) =>
-                  row.map((cell, x) => cell ? `<rect x="${x}" y="${y}" width="1" height="1" fill="${cloud.type.palette[cell] || '#fff'}"/>` : '').join('')
-                ).join('')
-              )}")`,
-            }} />
-          ))}
-        </div>
-      )}
+      {/* clouds rendered inside ProceduralTerrain canvas */}
 
       <div className={`idle-character-slot ${scenePhase === 'combat' ? 'attacking' : ''} ${scenePhase === 'result' && lastCombatResult === 'win' ? 'victory' : ''}`}>
         <AnimatedPixelCharacter
