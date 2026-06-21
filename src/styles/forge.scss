@@ -1,0 +1,209 @@
+@use 'variables' as *;
+
+// ============================================
+// Forge Page Layout
+// ============================================
+
+.forge-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #0a0a0a 0%, #1a0a0a 30%, #0a0a0a 100%);
+  padding-bottom: 24px;
+
+  @include mobile {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
+
+// ─── Header ──────────────────────────────────────────────────────────────────
+
+.forge-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: linear-gradient(180deg, rgba(255, 102, 0, 0.08) 0%, transparent 100%);
+  border-bottom: 2px solid rgba(255, 102, 0, 0.2);
+  gap: 10px;
+
+  @include mobile {
+    padding: 10px 8px;
+  }
+}
+
+.forge-back-btn {
+  padding: 6px 12px;
+  font-family: $font-pixel;
+  font-size: 0.5rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  border: 2px solid #555;
+  background: #000;
+  color: #9aa0a6;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: $accent-gold;
+    color: $accent-gold;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  @include mobile {
+    font-size: 0.4rem;
+    padding: 4px 8px;
+  }
+}
+
+.forge-page-title {
+  font-family: $font-pixel;
+  font-size: 0.85rem;
+  letter-spacing: 3px;
+  color: $accent-gold;
+  text-transform: uppercase;
+  text-shadow: 0 0 20px rgba(255, 204, 0, 0.3), 2px 2px 0 #000;
+  flex-shrink: 0;
+
+  @include mobile {
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+  }
+}
+
+.forge-page-essence {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid $accent-gold;
+  flex-shrink: 0;
+
+  @include mobile {
+    padding: 4px 10px;
+  }
+}
+
+.forge-page-essence-icon {
+  font-size: 0.7rem;
+  line-height: 1;
+
+  @include mobile {
+    font-size: 0.55rem;
+  }
+}
+
+.forge-page-essence-value {
+  font-family: $font-pixel;
+  font-size: 0.65rem;
+  color: $accent-gold;
+  letter-spacing: 1px;
+  min-width: 24px;
+  text-align: right;
+
+  @include mobile {
+    font-size: 0.5rem;
+    min-width: 18px;
+  }
+}
+
+// ─── Tabs ────────────────────────────────────────────────────────────────────
+
+.forge-tabs {
+  display: flex;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.4);
+  border-bottom: 2px solid #222;
+  padding: 0;
+}
+
+.forge-tab {
+  flex: 1;
+  padding: 10px 12px;
+  font-family: $font-pixel;
+  font-size: 0.5rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  background: rgba(0, 0, 0, 0.6);
+  color: #666;
+  transition: all 0.2s ease;
+  position: relative;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+
+  &:hover {
+    color: #9aa0a6;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  &.active {
+    color: $accent-gold;
+    background: rgba(255, 204, 0, 0.05);
+    border-bottom-color: $accent-gold;
+    text-shadow: 0 0 10px rgba(255, 204, 0, 0.2);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent-gold;
+    outline-offset: -2px;
+  }
+
+  @include mobile {
+    font-size: 0.4rem;
+    padding: 8px 6px;
+  }
+
+  @include small-mobile {
+    font-size: 0.35rem;
+    padding: 6px 4px;
+  }
+}
+
+// ─── Tab Content ─────────────────────────────────────────────────────────────
+
+.forge-tab-content {
+  flex: 1;
+  position: relative;
+  min-height: 300px;
+}
+
+.forge-tab-content > div[role="tabpanel"] {
+  animation: forgeTabFadeIn 0.25s ease-out;
+}
+
+@keyframes forgeTabFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ─── Anvil / Fire themed ornament ────────────────────────────────────────────
+
+.forge-page-header::after {
+  content: '🔥';
+  position: absolute;
+  right: 50%;
+  transform: translateX(50%);
+  bottom: -8px;
+  font-size: 0.8rem;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.forge-page-header {
+  position: relative;
+}

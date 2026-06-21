@@ -163,6 +163,10 @@ const Arena = () => {
     setTimeout(() => navigate('/'), 0);
   }, [logout, navigate]);
 
+  const handleOpenForge = useCallback(() => {
+    navigate('/forge');
+  }, [navigate]);
+
   const handleToggleSound = useCallback(() => {
     setEnabled(!enabled);
   }, [enabled, setEnabled]);
@@ -191,6 +195,7 @@ const Arena = () => {
         onOpenLevelUp={levelUp.handleOpenLevelUp}
         onOpenSettings={settings.openSettings}
         onOpenInventory={inventory.openInventory}
+        onOpenForge={handleOpenForge}
         onLogout={handleLogout}
       />
 

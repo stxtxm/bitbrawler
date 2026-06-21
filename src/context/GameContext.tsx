@@ -17,6 +17,7 @@ import {
   clearLocalData, saveLocalData, loadLocalData,
   SyncResult,
 } from '../utils/persistenceUtils';
+import { ESSENCE_SOFT_CAP } from '../data/forgeConstants';
 import {
   salvageItem as forgeSalvageItem,
   performFusion,
@@ -57,6 +58,8 @@ interface GameContextType {
   deleteCharacter: () => Promise<boolean>;
   syncCharacterToBackend: (char: Character) => Promise<void>;
   essence: number;
+  addEssence: (amount: number) => Promise<Character | null>;
+  spendEssence: (amount: number) => Promise<Character | null>;
   salvageItems: (itemId: string) => Promise<Character | null>;
   fuseItems: (items: PixelItemAsset[]) => Promise<{ result: PixelItemAsset | null; updatedChar: Character | null }>;
   upgradeItem: (itemId: string) => Promise<Character | null>;
@@ -855,6 +858,57 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [activeCharacter, handleDbError, logout]);
 
+  // ─── Essence Management ─────────────────────────────────────────────────────
+
+  const addEssence = useCallback(async (amount: number): Promise<Character | null> => {
+    if (!activeCharacter?.id) return null;
+    if (amount <= 0) return null;
+
+    const newEssence = Math.min((activeCharacter.essence ?? 0) + amount, ESSENCE_SOFT_CAP);
+    const updatedChar = normalizeCharacter({
+      ...activeCharacter,
+      essence: newEssence,
+    });
+
+    try {
+      await supabase
+        .from('characters')
+        .update({ essence: newEssence })
+        .eq('id', activeCharacter.id!);
+      persistCharacter(updatedChar);
+      return updatedChar;
+    } catch (error: any) {
+      handleDbError(error, 'add-essence');
+      throw new Error('Connection error - essence not saved.');
+    }
+  }, [activeCharacter, handleDbError, persistCharacter]);
+
+  const spendEssence = useCallback(async (amount: number): Promise<Character | null> => {
+    if (!activeCharacter?.id) return null;
+    if (amount <= 0) return null;
+
+    const currentEssence = activeCharacter.essence ?? 0;
+    if (currentEssence < amount) return null;
+
+    const newEssence = currentEssence - amount;
+    const updatedChar = normalizeCharacter({
+      ...activeCharacter,
+      essence: newEssence,
+    });
+
+    try {
+      await supabase
+        .from('characters')
+        .update({ essence: newEssence })
+        .eq('id', activeCharacter.id!);
+      persistCharacter(updatedChar);
+      return updatedChar;
+    } catch (error: any) {
+      handleDbError(error, 'spend-essence');
+      throw new Error('Connection error - essence not saved.');
+    }
+  }, [activeCharacter, handleDbError, persistCharacter]);
+
   // ─── Forge System ──────────────────────────────────────────────────────────
 
   const salvageItems = useCallback(async (itemId: string): Promise<Character | null> => {
@@ -959,6 +1013,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     deleteCharacter,
     syncCharacterToBackend,
     essence: activeCharacter?.essence ?? 0,
+    addEssence,
+    spendEssence,
     salvageItems,
     fuseItems,
     upgradeItem,

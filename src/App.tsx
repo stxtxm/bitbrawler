@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useGame } from './context/GameContext'
 import { useOnlineStatus } from './hooks/useOnlineStatus'
 import { initClickSound } from './hooks/useSound'
-import { HomePage, CharacterCreation, Rankings, Login, Arena, NotFound } from './routes/lazyPages'
+import { HomePage, CharacterCreation, Rankings, Login, Arena, NotFound, Forge } from './routes/lazyPages'
 import LoadingScreen from './components/LoadingScreen'
 
 function App() {
@@ -45,6 +45,16 @@ function App() {
                 <Arena />
               ) : (
                 (isOnline && dbAvailable) ? <Navigate to="/login" /> : <Navigate to="/" />
+              )
+            }
+          />
+          <Route
+            path="/forge"
+            element={
+              activeCharacter ? (
+                <Forge />
+              ) : (
+                isOnline && dbAvailable ? <Navigate to="/login" /> : <Navigate to="/" />
               )
             }
           />
