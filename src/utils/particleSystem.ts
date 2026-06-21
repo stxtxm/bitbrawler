@@ -1,4 +1,4 @@
-export type ParticleType = 'dust' | 'spark' | 'xp_star' | 'damage' | 'hit_ring' | 'crit' | 'miss' | 'heal' | 'hit';
+export type ParticleType = 'dust' | 'spark' | 'xp_star' | 'damage' | 'hit_ring' | 'crit' | 'miss' | 'heal' | 'hit' | 'magic';
 
 interface ParticleDef {
   x: number;
@@ -22,6 +22,7 @@ const PARTICLE_COLORS: Record<ParticleType, string[]> = {
   damage: ['#FF3333', '#FF5555'],
   hit_ring: ['#FFFFFF', '#FFD700', '#FF6B6B'],
   hit: ['#FFFFFF', '#FFE9A0', '#FFD700'],
+  magic: ['#A0E9FF', '#00D4FF', '#7DF9FF'],
   crit: ['#FFEC8B', '#FFD700', '#FFEC8B'],
   miss: ['#CCCCCC', '#EEEEEE', '#FFFFFF'],
   heal: ['#AFFFAC', '#90EE90', '#7FFF7F'],
@@ -165,6 +166,16 @@ export class ParticleSystem {
           vy: -1.2,
           life: 700, maxLife: 700, size: 3,
           color: pickColor('hit'),
+        };
+      case 'magic':
+        return {
+          x,
+          y,
+          vx: (Math.random() - 0.5) * 3,
+          vy: -2.2,
+          life: 900, maxLife: 900, size: 4,
+          color: pickColor('magic'),
+          text: 'MAGIC!',
         };
       case 'miss':
         return {
