@@ -158,9 +158,9 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                     const action = parseCombatDetail(detail, player.name, opponent.name);
                     
                     const ps = particleSystemRef.current;
-                    const playerX = 30;
-                    const opponentX = 70;
-                    const centerY = 55;
+                    const playerX = 22;
+                    const opponentX = 78;
+                    const centerY = 52;
 
                     if (action) {
                         setActionPulse(action);
