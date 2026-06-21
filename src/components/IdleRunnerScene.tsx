@@ -119,8 +119,6 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
       <ProceduralTerrain
         width={containerRef.current?.clientWidth || 800}
         height={containerRef.current?.clientHeight || 400}
-        parallaxLayers={3}
-        mobileQuality={lowPerf}
         seed={character.seed}
       />
 

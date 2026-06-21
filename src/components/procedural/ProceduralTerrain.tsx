@@ -1,211 +1,118 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { DAY_PALETTE, NIGHT_PALETTE } from '../../utils/ColorPalette';
-import { useResponsiveCanvas, useTerrainAnimation } from '../../hooks/useTerrainAnimation';
-import {
-  SCROLL_CONFIG,
-  DEPTH_CONFIG,
-  getQualitySettings,
-  shouldEnable3d,
-} from '../../config/terrainConfig';
+import { useEffect, useMemo, useRef } from 'react';
+import { useResponsiveCanvas } from '../../hooks/useTerrainAnimation';
 
 interface ProceduralTerrainProps {
   width?: number;
   height?: number;
-  parallaxLayers?: number;
-  mobileQuality?: boolean;
   seed: string;
-  isNight?: boolean;
 }
 
-/**
- * Procedural Terrain Renderer
- * Parallax pixel-art terrain with sky, mountains, and scrolling grass ground
- */
 export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
   width: propWidth,
   height: propHeight,
   seed,
-  isNight = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const startTimeRef = useRef(Date.now());
 
   const canvasSize = useResponsiveCanvas(containerRef, canvasRef);
   const width = canvasSize.width || propWidth || 1024;
   const height = canvasSize.height || propHeight || 512;
-
-  const qualitySettings = useMemo(() => getQualitySettings(width), [width]);
-  const fps = qualitySettings.fps;
-  const enable3d = shouldEnable3d(width);
-
-  const palette = isNight ? NIGHT_PALETTE : DAY_PALETTE;
 
   const seedNum = useMemo(
     () => parseInt(seed.replace(/\D/g, '') || '0', 10),
     [seed],
   );
 
-  const [offset, setOffset] = useState(0);
+  const isMobile = width < 768;
+  const groundTop = height * (isMobile ? 0.70 : 0.62);
+  const scrollSpeed = 0.4;
 
-  useTerrainAnimation(fps, SCROLL_CONFIG.BASE_SPEED, (newOffset) => setOffset(newOffset), true);
-
-  // Draw a smooth mountain ridge using quadratic curves
-  const drawMountainRidge = (
-    ctx: CanvasRenderingContext2D,
-    offsetPx: number,
-    baseY: number,
-    amplitude: number,
-    color: string,
-    peaks: number,
-    seedModifier: number,
-  ) => {
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.moveTo(0, height);
-
-    const segmentWidth = width / peaks;
-    const points: { x: number; y: number }[] = [];
-
-    for (let i = 0; i <= peaks + 2; i++) {
-      const x = (i * segmentWidth - (offsetPx % width) + width * 2) % (width * 2) - segmentWidth;
-      const noise = Math.sin(i * 0.7 + seedModifier) * 0.5 + 0.5;
-      const y = baseY - noise * amplitude;
-      points.push({ x, y });
-    }
-
-    ctx.moveTo(points[0].x, height);
-    ctx.lineTo(points[0].x, points[0].y);
-
-    // Smooth curves between peaks
-    for (let i = 1; i < points.length; i++) {
-      const prev = points[i - 1];
-      const curr = points[i];
-      const cpX = (prev.x + curr.x) / 2;
-      ctx.quadraticCurveTo(prev.x + (curr.x - prev.x) * 0.7, prev.y, cpX, (prev.y + curr.y) / 2);
-    }
-
-    const last = points[points.length - 1];
-    ctx.lineTo(last.x, last.y);
-    ctx.lineTo(last.x, height);
-    ctx.closePath();
-    ctx.fill();
-  };
-
-  // Draw pixel-art ground with scrolling grass
-  const drawPixelGround = (
-    ctx: CanvasRenderingContext2D,
-    groundOffset: number,
-  ) => {
-    const isMobile = width < 768;
-    const groundTop = height * (isMobile ? 0.70 : 0.62);
-
-    // ── 1. Solid dirt base ──
-    ctx.fillStyle = isNight ? '#1a1410' : '#6b5340';
-    ctx.fillRect(0, groundTop, width, height - groundTop);
-
-    // ── 2. Pixel grass strip (parallax scrolling) ──
-    const grassScroll = (groundOffset * 0.8) % 32;
-    const grassTop = groundTop - 5;
-
-    // Solid green strip
-    ctx.fillStyle = isNight ? '#1a3a1a' : '#4a8a3a';
-    ctx.fillRect(0, grassTop, width, 8);
-
-    // Pixel grass blades
-    const bladeColors = isNight
-      ? ['#0f2a0f', '#1a3a1a', '#2a4a2a']
-      : ['#3a7a2a', '#4a8a3a', '#5a9a4a'];
-
-    for (let x = -16; x <= width + 16; x += 4) {
-      const sx = ((x - grassScroll + width + 32) % (width + 32)) - 16;
-      if (sx < -4 || sx > width) continue;
-
-      const bladePhase = Math.sin((x + seedNum) * 0.3) * 0.5 + 0.5;
-      const bladeH = 3 + Math.floor(bladePhase * 5);
-      const colorIdx = Math.floor((Math.sin((x + seedNum) * 0.15) * 0.5 + 0.5) * 3) % 3;
-
-      ctx.fillStyle = bladeColors[colorIdx];
-      ctx.fillRect(sx, grassTop - bladeH, 3, bladeH);
-    }
-
-    // ── 3. Ground surface texture ──
-    for (let x = 0; x < width; x += 6) {
-      const texSeed = Math.sin(x * 0.17 + seedNum * 0.3) * 0.5 + 0.5;
-      if (texSeed > 0.65) {
-        ctx.fillStyle = isNight ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.07)';
-        ctx.fillRect(x, groundTop + 2, 5, 3);
-      }
-    }
-
-    // ── 4. Small pixel bushes ──
-    const bushScroll = (groundOffset * 0.5) % 96;
-    for (let i = 0; i < 8; i++) {
-      const bx = ((i * 96 + (seedNum % 47) - bushScroll + width + 192) % (width + 192)) - 96;
-      if (bx < -12 || bx > width + 12) continue;
-
-      const bushColor = isNight ? '#0f2f0f' : '#4a7a3a';
-      const bushDark = isNight ? '#0a1f0a' : '#3a6a2a';
-
-      ctx.fillStyle = bushColor;
-      ctx.fillRect(bx, grassTop - 7, 6, 4);
-      ctx.fillRect(bx + 1, grassTop - 10, 4, 3);
-
-      ctx.fillStyle = bushDark;
-      ctx.fillRect(bx, grassTop - 4, 2, 2);
-    }
-  };
-
-  // Main render
+  // ── Pixel ground with scrolling grass ──
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    ctx.clearRect(0, 0, width, height);
+    let rafId: number;
 
-    // ── SKY (fill entire canvas to prevent transparent gaps) ──
-    const skyGradient = ctx.createLinearGradient(0, 0, 0, height);
-    if (isNight) {
-      skyGradient.addColorStop(0, '#0a0a1a');
-      skyGradient.addColorStop(0.3, '#0f0c29');
-      skyGradient.addColorStop(0.6, '#1a1a3e');
-      skyGradient.addColorStop(1, '#0d0d1a');
-    } else {
-      skyGradient.addColorStop(0, '#4a90d9');
-      skyGradient.addColorStop(0.3, '#87ceeb');
-      skyGradient.addColorStop(0.6, '#c8e6f5');
-      skyGradient.addColorStop(1, '#a0c8e8');
-    }
-    ctx.fillStyle = skyGradient;
-    ctx.fillRect(0, 0, width, height);
+    const render = () => {
+      const elapsed = (Date.now() - startTimeRef.current) / 1000;
+      const groundOffset = (elapsed * scrollSpeed * 60) % 240;
 
-    // ── FAR MOUNTAINS (0.2x) ──────────────────────────
-    const farMtnOffset = offset * 0.2;
-    drawMountainRidge(
-      ctx, farMtnOffset, height * 0.38, height * 0.18,
-      isNight ? '#1a1a3a' : '#6a7a8a', 8, seedNum + 100,
-    );
+      ctx.clearRect(0, 0, width, height);
 
-    // ── NEAR MOUNTAINS (0.3x) ─────────────────────────
-    const nearMtnOffset = offset * SCROLL_CONFIG.LAYER_MULTIPLIERS.mountains;
-    const mtnColor = isNight ? '#1a1a2e' : palette.mountain;
-    drawMountainRidge(
-      ctx, nearMtnOffset, height * 0.42, height * 0.15,
-      mtnColor, 6, seedNum,
-    );
+      // ── 1. Solid dirt base ──
+      ctx.fillStyle = '#6b5340';
+      ctx.fillRect(0, groundTop, width, height - groundTop);
 
-    // Mountain shadow
-    if (enable3d && DEPTH_CONFIG.SHADOWS_ENABLED) {
-      ctx.fillStyle = `rgba(0, 0, 0, ${DEPTH_CONFIG.SHADOW_OPACITY * 0.5})`;
-      ctx.fillRect(0, height * 0.42, width, 4);
-    }
+      // ── 2. Grass strip ──
+      const grassScroll = Math.round((groundOffset * 0.8) % 32);
+      const grassTop = groundTop - 5;
 
-    // ── PIXEL GROUND (solid base + scrolling grass) ──
-    const groundSpeed = SCROLL_CONFIG.LAYER_MULTIPLIERS.ground;
-    const groundOffset = offset * groundSpeed;
-    drawPixelGround(ctx, groundOffset);
-  }, [width, height, offset, palette, seedNum, enable3d, isNight]);
+      ctx.fillStyle = '#4a8a3a';
+      ctx.fillRect(0, grassTop, width, 8);
+
+      // ── 3. Grass blades (every 4px) ──
+      const bladeColors = ['#3a7a2a', '#4a8a3a', '#5a9a4a'];
+      for (let x = -16; x <= width + 16; x += 4) {
+        const sx = ((x - grassScroll + width + 64) % (width + 64)) - 16;
+        if (sx < -4 || sx > width) continue;
+
+        const phase = Math.sin((x + seedNum) * 0.3) * 0.5 + 0.5;
+        const bh = 3 + Math.floor(phase * 5);
+        const ci = Math.floor((Math.sin((x + seedNum) * 0.15) * 0.5 + 0.5) * 3) % 3;
+
+        ctx.fillStyle = bladeColors[ci];
+        ctx.fillRect(sx, grassTop - bh, 3, bh);
+      }
+
+      // ── 4. Ground texture ──
+      const texScroll = Math.round(groundOffset % 48);
+      for (let x = 0; x < width; x += 8) {
+        const tx = ((x - texScroll + width + 48) % (width + 48)) - 0;
+        if (tx < 0 || tx > width) continue;
+        const t = Math.sin(x * 0.17 + seedNum * 0.3) * 0.5 + 0.5;
+        if (t > 0.65) {
+          ctx.fillStyle = 'rgba(0,0,0,0.07)';
+          ctx.fillRect(tx, groundTop + 2, 6, 3);
+        }
+      }
+
+      // ── 5. Small stones on ground ──
+      const stoneScroll = Math.round((groundOffset * 0.6) % 64);
+      for (let i = 0; i < 4; i++) {
+        const sx = ((i * 64 + (seedNum % 17) - stoneScroll + width + 128) % (width + 128)) - 64;
+        if (sx < -8 || sx > width + 8) continue;
+        ctx.fillStyle = '#8a8070';
+        ctx.fillRect(sx, groundTop + 4, 4, 3);
+        ctx.fillStyle = '#6a6050';
+        ctx.fillRect(sx + 1, groundTop + 5, 2, 2);
+      }
+
+      // ── 6. Bushes on grass ──
+      const bushScroll = Math.round((groundOffset * 0.5) % 96);
+      for (let i = 0; i < 6; i++) {
+        const bx = ((i * 96 + (seedNum % 47) - bushScroll + width + 192) % (width + 192)) - 96;
+        if (bx < -12 || bx > width + 12) continue;
+
+        ctx.fillStyle = '#4a7a3a';
+        ctx.fillRect(bx, grassTop - 7, 6, 4);
+        ctx.fillRect(bx + 1, grassTop - 10, 4, 3);
+        ctx.fillStyle = '#3a6a2a';
+        ctx.fillRect(bx, grassTop - 4, 2, 2);
+      }
+
+      rafId = requestAnimationFrame(render);
+    };
+
+    startTimeRef.current = Date.now();
+    rafId = requestAnimationFrame(render);
+
+    return () => cancelAnimationFrame(rafId);
+  }, [width, height, seedNum, isMobile, groundTop, scrollSpeed]);
 
   return (
     <div
