@@ -9,7 +9,7 @@ interface ProceduralTerrainProps {
 
 const PI2 = Math.PI * 2;
 
-// Cloud shapes (1 = white, 2 = light grey)
+// ── CLOUDS ──
 const CLOUD_SHAPES = [
   [[0,1,1,0],[1,1,2,1],[0,1,1,0]],
   [[1,1,0],[1,2,1],[0,1,0]],
@@ -24,15 +24,17 @@ interface CloudDef {
   speed: number;
 }
 
-// Tree pixel art (1 = dark foliage, 2 = light foliage, 3 = trunk)
+// ── TREES (1=dark foliage, 2=light foliage, 3=trunk) ──
 const TREE_PALETTES: Record<number, string>[] = [
   { 1: '#2d7a2a', 2: '#4a9a3a', 3: '#6b4a2a' },
   { 1: '#1d6a1a', 2: '#3a8a2a', 3: '#5a3a1a' },
   { 1: '#3a8a2a', 2: '#5aaa3a', 3: '#6b4a2a' },
+  { 1: '#2a7a30', 2: '#4aaa40', 3: '#5a3a20' },
+  { 1: '#1a6a20', 2: '#3a9a30', 3: '#6b4a2a' },
 ];
 
 const TREES = [
-  { // Round leafy tree
+  { // Round leafy
     pixels: [
       [0,0,0,1,1,0,0],
       [0,0,1,2,1,0,0],
@@ -56,7 +58,7 @@ const TREES = [
     ],
     paletteIdx: 1,
   },
-  { // Small sapling
+  { // Sapling
     pixels: [
       [0,0,1,1,0,0],
       [0,1,2,2,1,0],
@@ -66,7 +68,44 @@ const TREES = [
     ],
     paletteIdx: 2,
   },
+  { // Wide oak
+    pixels: [
+      [0,0,0,1,1,1,0,0,0],
+      [0,0,1,2,2,2,1,0,0],
+      [0,1,2,2,2,2,2,1,0],
+      [0,1,2,2,2,2,2,1,0],
+      [0,0,1,2,2,2,1,0,0],
+      [0,0,0,0,3,0,0,0,0],
+      [0,0,0,0,3,0,0,0,0],
+    ],
+    paletteIdx: 3,
+  },
+  { // Tall multi-tier
+    pixels: [
+      [0,0,0,0,1,0,0,0,0],
+      [0,0,0,1,2,1,0,0,0],
+      [0,0,1,2,2,2,1,0,0],
+      [0,0,0,1,2,1,0,0,0],
+      [0,0,0,0,1,0,0,0,0],
+      [0,0,0,0,3,0,0,0,0],
+      [0,0,0,0,3,0,0,0,0],
+      [0,0,0,0,3,0,0,0,0],
+    ],
+    paletteIdx: 4,
+  },
 ];
+
+// ── MUSHROOM (1=cap, 2=spots, 3=stem) ──
+const MUSHROOM = {
+  pixels: [
+    [0,1,0],
+    [1,2,1],
+    [0,3,0],
+  ],
+};
+
+// ── FLOWER palette ──
+const FLOWER_COLORS = ['#e05030', '#e0c030', '#4070d0', '#e07090', '#e08020'];
 
 export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
   width: propWidth,
@@ -89,7 +128,7 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
   const isMobile = width < 768;
   const groundTop = height * (isMobile ? 0.70 : 0.62);
 
-  // Deterministic clouds from seed
+  // ── Deterministic clouds from seed ──
   const clouds = useMemo(() => {
     const cs: CloudDef[] = [];
     const s = seedNum || 42;
@@ -100,7 +139,7 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
         y: 0.04 + ((h * 3) % 11) * 0.035,
         shape: CLOUD_SHAPES[h % CLOUD_SHAPES.length],
         width: 28 + (h % 4) * 8,
-        speed: 0.2 + (h % 5) * 0.15,
+        speed: 0.3 + (h % 5) * 0.2,
       });
     }
     return cs;
@@ -120,7 +159,6 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       const cols = shape[0].length;
       const pw = Math.round(cloud.width / cols);
       const ph = pw;
-
       for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
           if (!shape[row][col]) continue;
@@ -132,10 +170,9 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
 
     const render = () => {
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
-
       ctx.clearRect(0, 0, width, height);
 
-      // ── SKY (vibrant gradient) ──
+      // ── SKY ──
       const sky = ctx.createLinearGradient(0, 0, 0, height);
       sky.addColorStop(0, '#2b7bc9');
       sky.addColorStop(0.45, '#6ec3ed');
@@ -144,17 +181,15 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       ctx.fillStyle = sky;
       ctx.fillRect(0, 0, width, height);
 
-      // ── CLOUDS (scrolling slowly) ──
-      const cloudBaseSpeed = elapsed * 2;
+      // ── CLOUDS ──
+      const cloudBaseSpeed = elapsed * 5;
       for (const cloud of clouds) {
         let cx = (cloud.x * width - cloudBaseSpeed * cloud.speed) % width;
         if (cx < 0) cx += width;
         cx = Math.round(cx);
         const cy = Math.round(cloud.y * height);
-        const cloudW = cloud.width;
-
         drawCloud(cloud, cx, cy);
-        if (cx + cloudW > width) {
+        if (cx + cloud.width > width) {
           drawCloud(cloud, cx - width, cy);
         }
       }
@@ -163,21 +198,19 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       const grassY = Math.round(groundTop - 5);
       const groundScroll = elapsed * 36;
 
-      // Dirt base
       ctx.fillStyle = '#6b5340';
       ctx.fillRect(0, groundTop, width, height - groundTop);
 
-      // Grass strip
       ctx.fillStyle = '#4a8a3a';
       ctx.fillRect(0, grassY, width, 8);
 
-      // ── Trees (very rare: ~15% chance per 256px slot) ──
+      // ── TREES (rare: ~18% per 256px slot) ──
       const treePhase = groundScroll % 256;
       for (let sx = -(treePhase + 256); sx < width + 256; sx += 256) {
-        if (sx < -24 || sx > width + 24) continue;
+        if (sx < -28 || sx > width + 28) continue;
         const worldIdx = Math.floor((sx + groundScroll) / 256);
         const h = (worldIdx * 31 + seedNum * 7) % 101;
-        if (h > 15) continue;
+        if (h > 18) continue;
 
         const tree = TREES[h % TREES.length];
         const px = 4;
@@ -198,23 +231,60 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
         }
       }
 
+      // ── MUSHROOMS (occasional, ~18% per 128px slot, near grass) ──
+      const shroomPhase = groundScroll % 128;
+      for (let sx = -(shroomPhase + 128); sx < width + 128; sx += 128) {
+        if (sx < -4 || sx > width + 4) continue;
+        const worldIdx = Math.floor((sx + groundScroll) / 128);
+        const h = (worldIdx * 23 + seedNum * 11) % 101;
+        if (h > 18) continue;
+
+        const off = ((worldIdx * 7 + seedNum * 5) % 5) - 2;
+        const mx = Math.round(sx + off);
+
+        for (let row = 0; row < MUSHROOM.pixels.length; row++) {
+          for (let col = 0; col < MUSHROOM.pixels[row].length; col++) {
+            const v = MUSHROOM.pixels[row][col];
+            if (!v) continue;
+            ctx.fillStyle = v === 1 ? '#d04030' : v === 2 ? '#f0f0f0' : '#e0d0a0';
+            ctx.fillRect(mx + col * 3, grassY - 9 + row * 3, 3, 3);
+          }
+        }
+      }
+
+      // ── FLOWERS (small color patches on grass, ~30% per 48px slot) ──
+      const flowerPhase = groundScroll % 48;
+      for (let sx = -(flowerPhase + 48); sx < width + 48; sx += 48) {
+        if (sx < -2 || sx > width + 2) continue;
+        const worldIdx = Math.floor((sx + groundScroll) / 48);
+        const h = (worldIdx * 19 + seedNum * 13) % 101;
+        if (h > 30) continue;
+
+        const off = ((worldIdx * 11 + seedNum * 3) % 7) - 3;
+        const fx = Math.round(sx + off);
+        const colorIdx = h % FLOWER_COLORS.length;
+
+        ctx.fillStyle = FLOWER_COLORS[colorIdx];
+        ctx.fillRect(fx, grassY - 1, 2, 2);
+        ctx.fillRect(fx + 3, grassY - 2, 2, 2);
+        ctx.fillRect(fx + 1, grassY - 4, 2, 2);
+      }
+
       // ── Grass blades ──
       const bladeStep = 4;
       const bladePhase = groundScroll * 0.8 % bladeStep;
+      const bladeColors = ['#3a7a2a', '#4a8a3a', '#5a9a4a'];
       for (let sx = -(bladePhase + bladeStep); sx < width + bladeStep; sx += bladeStep) {
         if (sx < -6 || sx > width + 2) continue;
         const worldX = sx + groundScroll * 0.8;
-
         const h = Math.sin(worldX * PI2 / 32) * 0.5 + 0.5;
         const bh = 3 + Math.floor((h * 0.8 + 0.2) * 5);
         const c = Math.floor(((Math.sin(worldX * PI2 / 64 + seedNum) * 0.5 + 0.5) * 3)) % 3;
-        const bladeColors = ['#3a7a2a', '#4a8a3a', '#5a9a4a'];
-
         ctx.fillStyle = bladeColors[c];
         ctx.fillRect(Math.round(sx), grassY - bh, 3, bh);
       }
 
-      // ── Ground texture dots (period 48px) ──
+      // ── Ground texture ──
       const texPhase = groundScroll * 0.7 % 48;
       for (let sx = -(texPhase + 48); sx < width + 48; sx += 8) {
         if (sx < 0 || sx > width) continue;
@@ -225,28 +295,26 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
         }
       }
 
-      // ── Stones (period 64px) ──
+      // ── Stones ──
       const stonePhase = groundScroll * 0.6 % 64;
       for (let sx = -(stonePhase + 64); sx < width + 64; sx += 64) {
         if (sx < -8 || sx > width + 8) continue;
         const worldIdx = Math.floor((sx + groundScroll * 0.6) / 64);
         const off = ((worldIdx * 17 + seedNum * 3) % 13) - 6;
         const stoneX = Math.round(sx + off);
-
         ctx.fillStyle = '#8a8070';
         ctx.fillRect(stoneX, groundTop + 4, 4, 3);
         ctx.fillStyle = '#6a6050';
         ctx.fillRect(stoneX + 1, groundTop + 5, 2, 2);
       }
 
-      // ── Bushes (period 96px) ──
+      // ── Bushes ──
       const bushPhase = groundScroll * 0.5 % 96;
       for (let sx = -(bushPhase + 96); sx < width + 96; sx += 96) {
         if (sx < -12 || sx > width + 12) continue;
         const worldIdx = Math.floor((sx + groundScroll * 0.5) / 96);
         const off = ((worldIdx * 13 + seedNum * 7) % 19) - 9;
         const bx = Math.round(sx + off);
-
         ctx.fillStyle = '#4a7a3a';
         ctx.fillRect(bx, grassY - 7, 6, 4);
         ctx.fillRect(bx + 1, grassY - 10, 4, 3);
