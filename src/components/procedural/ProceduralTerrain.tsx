@@ -126,7 +126,7 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
   );
 
   const isMobile = width < 768;
-  const groundTop = height * (isMobile ? 0.70 : 0.62);
+  const groundTop = height * (isMobile ? 0.74 : 0.62);
 
   // ── Deterministic clouds from seed ──
   const clouds = useMemo(() => {
@@ -202,7 +202,7 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       ctx.fillRect(0, groundTop, width, height - groundTop);
 
       ctx.fillStyle = '#4a8a3a';
-      ctx.fillRect(0, grassY, width, 8);
+      ctx.fillRect(0, grassY, width, 6);
 
       // ── TREES (rare: ~18% per 256px slot) ──
       const treePhase = groundScroll % 256;
@@ -229,6 +229,20 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
             );
           }
         }
+      }
+
+      // ── Grass blades ──
+      const bladeStep = 4;
+      const bladePhase = groundScroll * 0.8 % bladeStep;
+      const bladeColors = ['#3a7a2a', '#4a8a3a', '#5a9a4a'];
+      for (let sx = -(bladePhase + bladeStep); sx < width + bladeStep; sx += bladeStep) {
+        if (sx < -6 || sx > width + 2) continue;
+        const worldX = sx + groundScroll * 0.8;
+        const h = Math.sin(worldX * PI2 / 32) * 0.5 + 0.5;
+        const bh = 3 + Math.floor((h * 0.8 + 0.2) * 5);
+        const c = Math.floor(((Math.sin(worldX * PI2 / 64 + seedNum) * 0.5 + 0.5) * 3)) % 3;
+        ctx.fillStyle = bladeColors[c];
+        ctx.fillRect(Math.round(sx), grassY - bh, 3, bh);
       }
 
       // ── MUSHROOMS (occasional, ~18% per 128px slot, near grass) ──
@@ -268,20 +282,6 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
         ctx.fillRect(fx, grassY - 1, 2, 2);
         ctx.fillRect(fx + 3, grassY - 2, 2, 2);
         ctx.fillRect(fx + 1, grassY - 4, 2, 2);
-      }
-
-      // ── Grass blades ──
-      const bladeStep = 4;
-      const bladePhase = groundScroll * 0.8 % bladeStep;
-      const bladeColors = ['#3a7a2a', '#4a8a3a', '#5a9a4a'];
-      for (let sx = -(bladePhase + bladeStep); sx < width + bladeStep; sx += bladeStep) {
-        if (sx < -6 || sx > width + 2) continue;
-        const worldX = sx + groundScroll * 0.8;
-        const h = Math.sin(worldX * PI2 / 32) * 0.5 + 0.5;
-        const bh = 3 + Math.floor((h * 0.8 + 0.2) * 5);
-        const c = Math.floor(((Math.sin(worldX * PI2 / 64 + seedNum) * 0.5 + 0.5) * 3)) % 3;
-        ctx.fillStyle = bladeColors[c];
-        ctx.fillRect(Math.round(sx), grassY - bh, 3, bh);
       }
 
       // ── Ground texture ──
