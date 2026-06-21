@@ -1556,6 +1556,63 @@
     }
 }
 
+.fight-row {
+    display: flex;
+    gap: 8px;
+
+    .fight-btn {
+        flex: 1;
+    }
+
+    .boss-btn {
+        flex: 1;
+        border-color: #555 !important;
+        color: #666 !important;
+        font-size: 1.2rem !important;
+
+        &:disabled {
+            opacity: 0.4;
+        }
+
+        @include mobile {
+            font-size: 0.9rem !important;
+        }
+    }
+
+    @include mobile {
+        gap: 4px;
+    }
+}
+
+.boss-status-compact {
+    border-left-color: $accent-gold !important;
+
+    .boss-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 1.4rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        @include mobile {
+            width: 24px;
+            height: 24px;
+            font-size: 1rem;
+        }
+    }
+
+    .boss-sub {
+        color: $accent-gold !important;
+    }
+
+    .mini-pip.used {
+        border-color: #444;
+        background: #111;
+        box-shadow: none;
+    }
+}
+
 
 
 // History Modal Styles

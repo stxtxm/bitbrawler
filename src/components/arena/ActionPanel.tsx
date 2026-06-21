@@ -10,6 +10,7 @@ interface ActionPanelProps {
   autoMode: boolean;
   isOfflineMode: boolean;
   fightsLeft: number;
+  pveFightsLeft: number;
   onTogglePve: () => void;
   onTogglePvp: () => void;
   onFight: () => void;
@@ -17,7 +18,7 @@ interface ActionPanelProps {
 
 export const ActionPanel = memo(function ActionPanel({
   pveMode, canFight, matchmaking, hasPendingFight, autoMode,
-  isOfflineMode, fightsLeft, onTogglePve, onTogglePvp, onFight,
+  isOfflineMode, fightsLeft, pveFightsLeft, onTogglePve, onTogglePvp, onFight,
 }: ActionPanelProps) {
   return (
     <div className="action-panel">
@@ -44,7 +45,7 @@ export const ActionPanel = memo(function ActionPanel({
         </button>
       </div>
 
-      <div className="daily-status-compact" aria-hidden={pveMode} style={pveMode ? { visibility: 'hidden', pointerEvents: 'none' } : {}}>
+      <div className="daily-status-compact">
         <div className="status-label">
           <PixelIcon type="sword" size={32} />
           <div className="label-text">
@@ -63,24 +64,45 @@ export const ActionPanel = memo(function ActionPanel({
         </div>
       </div>
 
-      <button
-        className="button primary-btn giant-btn"
-        disabled={!canFight || matchmaking}
-        onClick={onFight}
-        aria-hidden={pveMode}
-        style={pveMode ? { visibility: 'hidden', pointerEvents: 'none' } : {}}
-        tabIndex={pveMode ? -1 : 0}
-      >
-        {matchmaking
-          ? 'SEARCHING...'
-          : hasPendingFight
-            ? 'RESOLVING...'
-            : autoMode
-              ? 'AUTO MODE'
-              : isOfflineMode
-                ? 'OFFLINE'
-                : fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'}
-      </button>
+      <div className="daily-status-compact boss-status-compact">
+        <div className="status-label">
+          <span className="boss-icon">👑</span>
+          <div className="label-text">
+            <span className="label-main">BOSS FIGHTS</span>
+            <span className="label-sub boss-sub">{pveFightsLeft} / {GAME_RULES.COMBAT.MAX_DAILY_PVE_FIGHTS} AVAILABLE</span>
+          </div>
+        </div>
+        <div className="mini-pips">
+          {Array.from({ length: GAME_RULES.COMBAT.MAX_DAILY_PVE_FIGHTS }).map((_, i) => (
+            <div key={i} className="mini-pip used"></div>
+          ))}
+        </div>
+      </div>
+
+      <div className="fight-row">
+        <button
+          className="button primary-btn giant-btn fight-btn"
+          disabled={!canFight || matchmaking}
+          onClick={onFight}
+        >
+          {matchmaking
+            ? 'SEARCHING...'
+            : hasPendingFight
+              ? 'RESOLVING...'
+              : autoMode
+                ? 'AUTO MODE'
+                : isOfflineMode
+                  ? 'OFFLINE'
+                  : fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'}
+        </button>
+
+        <button
+          className="button primary-btn giant-btn boss-btn"
+          disabled={true}
+        >
+          BOSS ⛔
+        </button>
+      </div>
     </div>
   );
 });
