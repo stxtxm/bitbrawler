@@ -291,7 +291,8 @@ describe('performFusion', () => {
       essence: FUSION_COST.common,
     });
 
-    const { result, updatedChar } = performFusion(items, char, pool);
+    const rng = () => LUCKY_PROC_CHANCE; // ensure no lucky proc
+    const { result, updatedChar } = performFusion(items, char, pool, rng);
 
     expect(result).not.toBeNull();
     expect(result!.id).toBe('fusion_result');

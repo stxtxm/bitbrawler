@@ -47,8 +47,10 @@ function getComebackCount(history: Character['fightHistory']): number {
   let count = 0;
   let lossStreak = 0;
 
-  // Iterate from newest to oldest
-  for (const entry of history) {
+  // Iterate from oldest to newest so that lossStreak is accumulated before
+  // we encounter the win that breaks the streak
+  for (let i = history.length - 1; i >= 0; i--) {
+    const entry = history[i];
     if (entry.won) {
       if (lossStreak >= 2) {
         count++;
@@ -303,19 +305,17 @@ export const applyMedalReward = (character: Character, reward: MedalReward): Cha
       break;
     }
     case 'stat_point': {
-      if (reward.stat) {
-        const bonus = reward.value ?? 1;
-        // If the reward is "all stats"
-        if (reward.label?.includes('all stats')) {
-          updated.strength = (updated.strength || 10) + bonus;
-          updated.vitality = (updated.vitality || 10) + bonus;
-          updated.dexterity = (updated.dexterity || 10) + bonus;
-          updated.luck = (updated.luck || 10) + bonus;
-          updated.intelligence = (updated.intelligence || 10) + bonus;
-          updated.focus = (updated.focus || 10) + bonus;
-        } else {
-          updated[reward.stat] = ((updated as any)[reward.stat] || 10) + bonus;
-        }
+      const bonus = reward.value ?? 1;
+      // If the reward is "all stats"
+      if (reward.label?.includes('all stats')) {
+        updated.strength = (updated.strength || 10) + bonus;
+        updated.vitality = (updated.vitality || 10) + bonus;
+        updated.dexterity = (updated.dexterity || 10) + bonus;
+        updated.luck = (updated.luck || 10) + bonus;
+        updated.intelligence = (updated.intelligence || 10) + bonus;
+        updated.focus = (updated.focus || 10) + bonus;
+      } else if (reward.stat) {
+        updated[reward.stat] = ((updated as any)[reward.stat] || 10) + bonus;
       }
       break;
     }
