@@ -233,4 +233,81 @@ describe('Arena inventory modal', () => {
     expect(getByText('42')).toBeInTheDocument()
     expect(getByText('ESSENCE')).toBeInTheDocument()
   })
+
+  // ─── Equip/Unequip Rollback Tests ─────────────────────────────────────
+
+  it('rolls back equip when saveEquipment fails', async () => {
+    const saveEquipment = vi.fn().mockRejectedValue(new Error('DB failure'))
+    const setCharacter = vi.fn()
+    const charWithItems: Character = {
+      ...mockCharacter,
+      inventory: ['rusty_sword'],
+      equippedItems: { weapon: null, armor: null, accessory: null },
+    }
+    mockUseGame.mockReturnValue(makeDefaultGameMock({
+      activeCharacter: charWithItems,
+      saveEquipment,
+      setCharacter,
+    }))
+
+    const { getByLabelText } = render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Arena />
+      </MemoryRouter>
+    )
+
+    fireEvent.click(getByLabelText('Inventory'))
+
+    // Click equip on rusty sword
+    fireEvent.click(getByLabelText('Equip Rusty Sword'))
+
+    // Wait for the promise to reject
+    await vi.waitFor(() => {
+      // setCharacter should have been called twice:
+      // 1. Optimistic update with item equipped
+      // 2. Rollback to original state
+      expect(setCharacter.mock.calls.length).toBeGreaterThanOrEqual(2)
+    })
+
+    // Verify the last call (rollback) restored the original state
+    const lastCallArg = setCharacter.mock.calls[setCharacter.mock.calls.length - 1][0]
+    expect(lastCallArg.equippedItems?.weapon).toBeNull()
+    expect(lastCallArg.inventory).toContain('rusty_sword')
+  })
+
+  it('rolls back unequip when saveEquipment fails', async () => {
+    const saveEquipment = vi.fn().mockRejectedValue(new Error('DB failure'))
+    const setCharacter = vi.fn()
+    const charWithEquipped: Character = {
+      ...mockCharacter,
+      inventory: [],
+      equippedItems: { weapon: 'rusty_sword', armor: 'leather_vest', accessory: null },
+    }
+    mockUseGame.mockReturnValue(makeDefaultGameMock({
+      activeCharacter: charWithEquipped,
+      saveEquipment,
+      setCharacter,
+    }))
+
+    const { getByLabelText } = render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Arena />
+      </MemoryRouter>
+    )
+
+    fireEvent.click(getByLabelText('Inventory'))
+
+    // Click unequip on weapon
+    fireEvent.click(getByLabelText('Unequip Rusty Sword'))
+
+    // Wait for the promise to reject
+    await vi.waitFor(() => {
+      expect(setCharacter.mock.calls.length).toBeGreaterThanOrEqual(2)
+    })
+
+    // Verify the last call (rollback) restored equipped state
+    const lastCallArg = setCharacter.mock.calls[setCharacter.mock.calls.length - 1][0]
+    expect(lastCallArg.equippedItems?.weapon).toBe('rusty_sword')
+    expect(lastCallArg.inventory).not.toContain('rusty_sword')
+  })
 })

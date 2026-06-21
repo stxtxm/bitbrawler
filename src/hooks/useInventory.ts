@@ -118,9 +118,11 @@ export const useInventory = ({
     const updated = equipItem(character, itemId, slot);
     if (updated === character) return;
 
+    const previousCharacter = character;
     setCharacter(updated);
     saveEquipment(updated).catch((error: unknown) => {
-      console.error('Equipment DB save failed:', error);
+      console.error('Equipment DB save failed, rolling back:', error);
+      setCharacter(previousCharacter);
     });
     setInventoryHoveredId(null);
     setInventorySelectedId(null);
@@ -131,9 +133,11 @@ export const useInventory = ({
     const updated = unequipItem(character, slot);
     if (updated === character) return;
 
+    const previousCharacter = character;
     setCharacter(updated);
     saveEquipment(updated).catch((error: unknown) => {
-      console.error('Equipment DB save failed:', error);
+      console.error('Equipment DB save failed, rolling back:', error);
+      setCharacter(previousCharacter);
     });
   }, [character, saveEquipment, setCharacter]);
 
