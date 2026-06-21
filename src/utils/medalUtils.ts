@@ -47,8 +47,9 @@ function getComebackCount(history: Character['fightHistory']): number {
   let count = 0;
   let lossStreak = 0;
 
-  // Iterate from newest to oldest
-  for (const entry of history) {
+  // Iterate from oldest to newest so we encounter losses before the win
+  for (let i = history.length - 1; i >= 0; i--) {
+    const entry = history[i];
     if (entry.won) {
       if (lossStreak >= 2) {
         count++;
@@ -110,11 +111,11 @@ export const calculateLootProgress = (
 ): Record<string, MedalProgress> => {
   const uniqueCount = inventory.length;
 
-  // Count rare+ items in inventory
-  const rarePlusCount = itemAssets
+  // Count rare items in inventory (only 'rare' rarity)
+  const rareCount = itemAssets
     ? inventory.filter(id => {
         const asset = itemAssets.find(a => a.id === id);
-        return asset && (asset.rarity === 'rare' || asset.rarity === 'epic' || asset.rarity === 'legendary');
+        return asset && asset.rarity === 'rare';
       }).length
     : 0;
 
@@ -140,8 +141,8 @@ export const calculateLootProgress = (
       progress: Math.min(uniqueCount, 10),
     },
     rare_hunter: {
-      completed: rarePlusCount >= 3,
-      progress: Math.min(rarePlusCount, 3),
+      completed: rareCount >= 3,
+      progress: Math.min(rareCount, 3),
     },
     epic_seeker: {
       completed: epicPlusCount >= 1,
@@ -303,19 +304,16 @@ export const applyMedalReward = (character: Character, reward: MedalReward): Cha
       break;
     }
     case 'stat_point': {
-      if (reward.stat) {
-        const bonus = reward.value ?? 1;
-        // If the reward is "all stats"
-        if (reward.label?.includes('all stats')) {
-          updated.strength = (updated.strength || 10) + bonus;
-          updated.vitality = (updated.vitality || 10) + bonus;
-          updated.dexterity = (updated.dexterity || 10) + bonus;
-          updated.luck = (updated.luck || 10) + bonus;
-          updated.intelligence = (updated.intelligence || 10) + bonus;
-          updated.focus = (updated.focus || 10) + bonus;
-        } else {
-          updated[reward.stat] = ((updated as any)[reward.stat] || 10) + bonus;
-        }
+      const bonus = reward.value ?? 1;
+      if (reward.label?.includes('all stats')) {
+        updated.strength = (updated.strength || 10) + bonus;
+        updated.vitality = (updated.vitality || 10) + bonus;
+        updated.dexterity = (updated.dexterity || 10) + bonus;
+        updated.luck = (updated.luck || 10) + bonus;
+        updated.intelligence = (updated.intelligence || 10) + bonus;
+        updated.focus = (updated.focus || 10) + bonus;
+      } else if (reward.stat) {
+        updated[reward.stat] = ((updated as any)[reward.stat] || 10) + bonus;
       }
       break;
     }

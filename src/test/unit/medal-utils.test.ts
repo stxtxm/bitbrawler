@@ -176,11 +176,11 @@ describe('calculateLootProgress', () => {
     expect(progress.collector.completed).toBe(true);
   });
 
-  it('tracks rare hunter at 3 rare+ items', () => {
+  it('tracks rare hunter at 3 rare items', () => {
     const items = [
       makeItem('rare1', 'rare'),
       makeItem('rare2', 'rare'),
-      makeItem('epic1', 'epic'),
+      makeItem('rare3', 'rare'),
       makeItem('common1', 'common'),
     ];
     const progress = calculateLootProgress(items.map(i => i.id), items);
