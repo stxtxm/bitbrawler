@@ -191,8 +191,9 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                              if (action.actor === 'player') opponentPs?.emit('miss', 50, 40, 1);
                              else playerPs?.emit('miss', 50, 40, 1);
                         } else {
-                             if (action.actor === 'player') opponentPs?.emit(action.type, 50, 40, 1);
-                             else playerPs?.emit(action.type, 50, 40, 1);
+                             const particleType: 'hit' | 'miss' | 'crit' | 'magic' = action.type === 'magic' ? 'magic' : (action.type === 'counter' || action.type === 'hit') ? 'hit' : (action.type === 'crit' ? 'crit' : 'miss');
+                             if (action.actor === 'player') opponentPs?.emit(particleType, 50, 40, 1);
+                             else playerPs?.emit(particleType, 50, 40, 1);
                         }
                     }
                     roundIndex++;
