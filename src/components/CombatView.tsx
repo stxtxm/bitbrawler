@@ -61,7 +61,10 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const [scanLocked, setScanLocked] = useState(false);
     const [fighterEntrance, setFighterEntrance] = useState(false);
 
-    const particleSystemRef = useRef<ParticleSystem | null>(null);
+    const playerParticleSystemRef = useRef<ParticleSystem | null>(null);
+    const opponentParticleSystemRef = useRef<ParticleSystem | null>(null);
+    const playerParticleRef = useRef<HTMLDivElement | null>(null);
+    const opponentParticleRef = useRef<HTMLDivElement | null>(null);
     const modalRef = useRef<HTMLDivElement | null>(null);
 
     const scanList = useMemo(() => {
@@ -80,15 +83,21 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const selectedKey = opponent.id || opponent.name;
 
     useEffect(() => {
-        if (modalRef.current) {
+        if (playerParticleRef.current && !playerParticleSystemRef.current) {
             const ps = new ParticleSystem();
-            ps.mount(modalRef.current);
-            particleSystemRef.current = ps;
+            ps.mount(playerParticleRef.current);
+            playerParticleSystemRef.current = ps;
+        }
+        if (opponentParticleRef.current && !opponentParticleSystemRef.current) {
+            const ps = new ParticleSystem();
+            ps.mount(opponentParticleRef.current);
+            opponentParticleSystemRef.current = ps;
         }
         return () => {
-            particleSystemRef.current?.destroy();
+            playerParticleSystemRef.current?.destroy();
+            opponentParticleSystemRef.current?.destroy();
         };
-    }, []);
+    }, [phase]);
 
     useEffect(() => {
         if (phase !== 'intro') return;
@@ -157,10 +166,8 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                     const detail = combatResult.details[roundIndex];
                     const action = parseCombatDetail(detail, player.name, opponent.name);
                     
-                    const ps = particleSystemRef.current;
-                    const playerX = 22;
-                    const opponentX = 78;
-                    const centerY = 46;
+                    const playerPs = playerParticleSystemRef.current;
+                    const opponentPs = opponentParticleSystemRef.current;
 
                     if (action) {
                         setActionPulse(action);
@@ -176,17 +183,16 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                         const dmg = extractDamage(detail);
                         if (dmg !== null) {
                             if (action.actor === 'player') {
-                                if (action.type === 'crit') ps?.emit('crit', opponentX, centerY, 1);
-                                else if (action.type === 'miss') ps?.emit('miss', opponentX, centerY, 1);
-                                else ps?.emit('damage', opponentX, centerY, 1, dmg);
+                                opponentPs?.emit('damage', 50, 40, 1, dmg);
                             } else {
-                                if (action.type === 'crit') ps?.emit('crit', playerX, centerY, 1);
-                                else if (action.type === 'miss') ps?.emit('miss', playerX, centerY, 1);
-                                else ps?.emit('damage', playerX, centerY, 1, dmg);
+                                playerPs?.emit('damage', 50, 40, 1, dmg);
                             }
                         } else if (action.type === 'miss') {
-                             if (action.actor === 'player') ps?.emit('miss', opponentX, centerY, 1);
-                             else ps?.emit('miss', playerX, centerY, 1);
+                             if (action.actor === 'player') opponentPs?.emit('miss', 50, 40, 1);
+                             else playerPs?.emit('miss', 50, 40, 1);
+                        } else {
+                             if (action.actor === 'player') opponentPs?.emit(action.type, 50, 40, 1);
+                             else playerPs?.emit(action.type, 50, 40, 1);
                         }
                     }
                     roundIndex++;
@@ -345,7 +351,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                 {phase === 'combat' && combatResult && (
                     <div className={`combat-action${actionPulse ? ` action-${actionPulse.type}` : ''}`}>
                         <div className="combat-fighters">
-                            <div key={`player-${currentRound}`} className={`fighter-side left${fighterEntrance ? ' enter-left' : ''}${actionPulse?.actor === 'player' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'opponent' ? ` react-${reactionType}` : ''}`}>
+                            <div key={`player-${currentRound}`} className={`fighter-side left${fighterEntrance ? ' enter-left' : ''}${actionPulse?.actor === 'player' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'opponent' ? ` react-${reactionType}` : ''}`} ref={playerParticleRef}>
                                 <div className="fighter-character-wrap">
                                     <PixelCharacter seed={player.seed} gender={player.gender} scale={6} />
                                 </div>
@@ -355,7 +361,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                     <div className="health-values">{playerHp} / {playerMaxHp}</div>
                                 </div>
                             </div>
-                            <div key={`opponent-${currentRound}`} className={`fighter-side right${fighterEntrance ? ' enter-right' : ''}${actionPulse?.actor === 'opponent' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'player' ? ` react-${reactionType}` : ''}`}>
+                            <div key={`opponent-${currentRound}`} className={`fighter-side right${fighterEntrance ? ' enter-right' : ''}${actionPulse?.actor === 'opponent' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'player' ? ` react-${reactionType}` : ''}`} ref={opponentParticleRef}>
                                 <div className="fighter-character-wrap">
                                     {matchType === 'pve' && monsterId ? (
                                         <PixelMonster monsterId={monsterId} scale={5} />
