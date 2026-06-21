@@ -211,6 +211,7 @@ npm test
 - ❌ Ne PAS laisser du code cassé, même pour tester
 - ❌ Ne PAS coder après avoir créé des sous-issues
 - ❌ Ne PAS exécuter de migration Supabase
+- ❌ **NE PAS toucher aux fichiers `.github/workflows/*.yml`** — ces fichiers sont la configuration du CI/CD et ne doivent JAMAIS être modifiés par l'agent. Toute modification des workflows sera rejetée. Si tu penses qu'un workflow doit être modifié, crée une issue SANS `/oc` pour un humain.
 
 ## 💡 Tips
 

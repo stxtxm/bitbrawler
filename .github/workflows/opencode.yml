@@ -250,6 +250,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           git add -A
+          # Detect and reject any .github/workflows/ changes — agent must never touch these
+          if git diff --cached --name-only | grep -q '^\.github/workflows/'; then
+            echo "⛔ Agent attempted to modify .github/workflows/ files — stripping them from commit"
+            git restore --staged .github/workflows/
+            git checkout -- .github/workflows/ 2>/dev/null || true
+            git add -A
+          fi
           if git diff --cached --quiet; then
             echo "No unstaged changes. Checking for unpushed commits..."
             if [ "$(git rev-list --count HEAD..origin/$BRANCH 2>/dev/null || echo 0)" -eq 0 ]; then
