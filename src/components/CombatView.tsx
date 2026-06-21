@@ -61,10 +61,8 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const [scanLocked, setScanLocked] = useState(false);
     const [fighterEntrance, setFighterEntrance] = useState(false);
 
-    const leftParticleSystemRef = useRef<ParticleSystem | null>(null);
-    const rightParticleSystemRef = useRef<ParticleSystem | null>(null);
-    const leftLayerRef = useRef<HTMLDivElement | null>(null);
-    const rightLayerRef = useRef<HTMLDivElement | null>(null);
+    const particleSystemRef = useRef<ParticleSystem | null>(null);
+    const modalRef = useRef<HTMLDivElement | null>(null);
 
     const scanList = useMemo(() => {
         const map = new Map<string, Character>();
@@ -82,19 +80,14 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const selectedKey = opponent.id || opponent.name;
 
     useEffect(() => {
-        if (leftLayerRef.current && !leftParticleSystemRef.current) {
+        if (modalRef.current && !particleSystemRef.current) {
             const ps = new ParticleSystem();
-            ps.mount(leftLayerRef.current);
-            leftParticleSystemRef.current = ps;
-        }
-        if (rightLayerRef.current && !rightParticleSystemRef.current) {
-            const ps = new ParticleSystem();
-            ps.mount(rightLayerRef.current);
-            rightParticleSystemRef.current = ps;
+            ps.mount(modalRef.current);
+            particleSystemRef.current = ps;
         }
         return () => {
-            leftParticleSystemRef.current?.destroy();
-            rightParticleSystemRef.current?.destroy();
+            particleSystemRef.current?.destroy();
+            particleSystemRef.current = null;
         };
     }, [phase]);
 
@@ -177,15 +170,16 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                         }, duration);
 
                         const dmg = extractDamage(detail);
-                        const ps = action.actor === 'player' ? rightParticleSystemRef.current : leftParticleSystemRef.current;
+                        const ps = particleSystemRef.current;
+                        const x = action.actor === 'player' ? 70 : 30;
 
                         if (dmg !== null) {
-                            ps?.emit('damage', 50, 45, 1, dmg);
+                            ps?.emit('damage', x, 44, 1, dmg);
                         } else if (action.type === 'miss') {
-                            ps?.emit('miss', 50, 45, 1);
+                            ps?.emit('miss', x, 44, 1);
                         } else {
                             const particleType = action.type === 'magic' ? 'magic' : action.type === 'crit' ? 'crit' : action.type === 'counter' ? 'hit' : action.type;
-                            ps?.emit(particleType, 50, 45, 1);
+                            ps?.emit(particleType, x, 44, 1);
                         }
                     }
                     roundIndex++;
@@ -278,8 +272,8 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     return (
         <div className="combat-overlay" onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()}>
             <div className="combat-modal">
-                <div className="particle-layer left" ref={leftLayerRef} />
-                <div className="particle-layer right" ref={rightLayerRef} />
+                <div className="particle-layer left" ref={undefined} />
+                <div className="particle-layer right" ref={undefined} />
                 {phase === 'intro' && (matchType === 'pve' ? (
                     <div className="combat-intro pve-intro">
                         <div className="match-type-badge">{getMatchDifficultyLabel(matchType)}</div>
