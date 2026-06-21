@@ -16,6 +16,14 @@ function extractDamage(detail: string): number | null {
     return match ? parseInt(match[1], 10) : null;
 }
 
+const ACTION_DURATIONS: Record<CombatActionType, number> = {
+  hit: 380,
+  crit: 560,
+  magic: 600,
+  miss: 420,
+  counter: 440,
+};
+
 function extractActionColor(detail: string): string {
     const lower = detail.toLowerCase();
     if (lower.includes('crit')) return 'crit';
@@ -52,13 +60,6 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const [scanIndex, setScanIndex] = useState(0);
     const [scanLocked, setScanLocked] = useState(false);
     const [fighterEntrance, setFighterEntrance] = useState(false);
-    const actionDurations: Record<CombatActionType, number> = {
-        hit: 380,
-        crit: 560,
-        magic: 600,
-        miss: 420,
-        counter: 440,
-    };
 
     const particleSystemRef = useRef<ParticleSystem | null>(null);
     const mainContainerRef = useRef<HTMLDivElement | null>(null);
@@ -166,7 +167,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                         if (pulseTimeoutRef.current !== null) {
                             window.clearTimeout(pulseTimeoutRef.current);
                         }
-                        const duration = actionDurations[action.type] ?? 320;
+                        const duration = ACTION_DURATIONS[action.type] ?? 320;
                         pulseTimeoutRef.current = window.setTimeout(() => {
                             setActionPulse(null);
                             pulseTimeoutRef.current = null;
@@ -199,7 +200,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
 
             return () => clearInterval(roundInterval);
         }
-    }, [phase, combatResult, player.name, opponent.name, player, opponent, actionDurations, particleSystemRef.current]);
+    }, [phase, combatResult, player.name, opponent.name]);
 
     useEffect(() => {
         if (actionPulse) {
