@@ -7,10 +7,6 @@ import { PixelMonster } from './PixelMonster'
 import { ProceduralTerrain } from './procedural/ProceduralTerrain'
 import {
   generateCloudPositions,
-  renderTileAsCssUrl,
-  getSkyGradient,
-  GRASS_TILE,
-  DIRT_TILE,
 } from '../data/tileAssets'
 import { ParticleSystem } from '../utils/particleSystem'
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode'
@@ -67,10 +63,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   }, [])
   const monsterScale = useMemo(() => Math.max(3, charScale - 2), [charScale])
   const clouds = useMemo(() => generateCloudPositions(), [])
-  const skyGradient = useMemo(() => getSkyGradient(), [])
-  const groundCss = useMemo(() => renderTileAsCssUrl(GRASS_TILE), [])
-  const dirtCss = useMemo(() => renderTileAsCssUrl(DIRT_TILE), [])
-  const containerStyle = useMemo(() => ({ background: skyGradient }), [skyGradient])
+  const containerStyle = useMemo(() => ({ background: 'transparent' }), [])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -127,7 +120,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
         <ProceduralTerrain
           width={containerRef.current?.clientWidth || 800}
           height={containerRef.current?.clientHeight || 400}
-          parallaxLayers={1}
+          parallaxLayers={3}
           mobileQuality={lowPerf}
           seed={character.seed}
         />
@@ -201,10 +194,6 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
           )}
         </div>
       )}
-
-      <div className="idle-ground-layer" style={{ backgroundImage: `${groundCss}, ${dirtCss}` }}>
-        <div className="idle-ground-inner scroll-fast" />
-      </div>
 
       {offlineGains && (
         <div className="idle-offline-notification">
