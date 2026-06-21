@@ -266,4 +266,10 @@ describe('Combat Balance Config', () => {
   it('should have lower hitChance.max than previous value (92)', () => {
     expect(COMBAT_BALANCE.hitChance.max).toBeLessThan(92);
   });
+
+  // ── Max Duration ────────────────────────────────────────────────────────
+
+  it('should have maxDurationMs set to 30000', () => {
+    expect(COMBAT_BALANCE.maxDurationMs).toBe(30000);
+  });
 });

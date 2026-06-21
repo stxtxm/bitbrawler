@@ -122,6 +122,7 @@ export function simulateCombat(attacker: Character, defender: Character): {
   let attackerHp = effectiveAttacker.hp
   let defenderHp = effectiveDefender.hp
   let rounds = 0
+  const startTime = Date.now()
 
   const clampHp = (hp: number) => Math.max(0, Math.round(hp))
   const record = (detail: string) => {
@@ -260,6 +261,11 @@ export function simulateCombat(attacker: Character, defender: Character): {
       defenderHp = attackerStrike.targetHp
       record(attackerStrike.detail)
     }
+
+    // Timeout check — break if combat exceeds maxDurationMs
+    if (Date.now() - startTime >= COMBAT_BALANCE.maxDurationMs) {
+      break
+    }
   }
 
   let winner: 'attacker' | 'defender' | 'draw'
@@ -272,9 +278,21 @@ export function simulateCombat(attacker: Character, defender: Character): {
   } else if (defenderHp <= 0) {
     winner = 'attacker'
     record(`${attacker.name} gagne !`)
-  } else {
+  } else if (rounds >= COMBAT_BALANCE.roundLimit) {
     winner = 'draw'
     record("Limite de rounds atteinte !")
+  } else {
+    // Timeout — whichever has more HP wins
+    if (attackerHp > defenderHp) {
+      winner = 'attacker'
+      record(`${attacker.name} gagne (timeout) !`)
+    } else if (defenderHp > attackerHp) {
+      winner = 'defender'
+      record(`${defender.name} gagne (timeout) !`)
+    } else {
+      winner = 'draw'
+      record("Timeout - Match nul !")
+    }
   }
 
   return {

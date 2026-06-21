@@ -16,6 +16,7 @@ export const COMBAT_BALANCE = {
     maxBonus: 0.22,
   },
   roundLimit: 50,
+  maxDurationMs: 30000,
   comeback: {
     hpThresholdRatio: 0.35,
     hitBonus: 2,
