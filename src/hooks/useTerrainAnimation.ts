@@ -231,19 +231,12 @@ export function useResponsiveCanvas(
       const rect = container.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
 
-      // Set canvas resolution (internal)
+      // Force canvas bitmap reset by toggling width
       canvas.width = rect.width * dpr;
       canvas.height = rect.height * dpr;
 
-      // Set canvas display size (CSS)
       canvas.style.width = `${rect.width}px`;
       canvas.style.height = `${rect.height}px`;
-
-      // Scale context for high-DPI displays
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.scale(dpr, dpr);
-      }
 
       setSize({ width: rect.width, height: rect.height });
       onResize?.(rect.width, rect.height);
@@ -258,11 +251,6 @@ export function useResponsiveCanvas(
     canvas.height = rect.height * dpr;
     canvas.style.width = `${rect.width}px`;
     canvas.style.height = `${rect.height}px`;
-
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.scale(dpr, dpr);
-    }
 
     setSize({ width: rect.width, height: rect.height });
     onResize?.(rect.width, rect.height);

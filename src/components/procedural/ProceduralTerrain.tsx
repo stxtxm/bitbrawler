@@ -151,6 +151,36 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Pre-render 32px grass blade tile (most numerous element)
+    const bladeTileW = 32;
+    const bladeTileH = 6;
+    const bladeTile = document.createElement('canvas');
+    bladeTile.width = bladeTileW;
+    bladeTile.height = bladeTileH;
+    const bCtx = bladeTile.getContext('2d')!;
+    const bladeColors = ['#3a7a2a', '#4a8a3a', '#5a9a4a'];
+    for (let x = 0; x < bladeTileW; x += 4) {
+      const h = Math.sin(x * PI2 / 32) * 0.5 + 0.5;
+      const bh = 2 + Math.floor((h * 0.8 + 0.2) * 3);
+      const c = Math.floor(((Math.sin(x * PI2 / 64 + seedNum) * 0.5 + 0.5) * 3)) % 3;
+      bCtx.fillStyle = bladeColors[c];
+      bCtx.fillRect(x, bladeTileH - bh, 3, bh);
+    }
+
+    // Pre-render depth tile (32px, same parallax seam)
+    const depthTileW = 64;
+    const depthTile = document.createElement('canvas');
+    depthTile.width = depthTileW;
+    depthTile.height = 14;
+    const dCtx = depthTile.getContext('2d')!;
+    dCtx.fillStyle = 'rgba(30, 60, 20, 0.3)';
+    for (let x = 0; x < depthTileW; x += 4) {
+      const h = Math.sin(x * PI2 / 64 + seedNum * 0.3) * 0.5 + 0.5;
+      if (h > 0.55) {
+        dCtx.fillRect(x, 8 - h * 4, 4, 5);
+      }
+    }
+
     let rafId: number;
 
     const drawCloud = (cloud: CloudDef, cx: number, cy: number) => {
@@ -170,6 +200,11 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
 
     const render = () => {
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
+
+      // Reset transform and set device-pixel ratio scale each frame
+      const dpr = window.devicePixelRatio || 1;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
       ctx.clearRect(0, 0, width, height);
 
       // ── SKY ──
@@ -199,15 +234,9 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       const groundScroll = elapsed * 36;
 
       // Depth layer: distant horizon foliage (parallax 0.25×)
-      const depthPhase = groundScroll * 0.25 % 64;
-      ctx.fillStyle = 'rgba(30, 60, 20, 0.3)';
-      for (let sx = -(depthPhase + 64); sx < width + 64; sx += 4) {
-        if (sx < -4 || sx > width + 4) continue;
-        const worldX = sx + groundScroll * 0.25;
-        const h = Math.sin(worldX * PI2 / 64 + seedNum * 0.3) * 0.5 + 0.5;
-        if (h > 0.55) {
-          ctx.fillRect(Math.round(sx), grassY - 8 - h * 4, 4, 5);
-        }
+      const dPhase = Math.round((groundScroll * 0.25) % depthTileW);
+      for (let sx = -dPhase; sx < width; sx += depthTileW) {
+        ctx.drawImage(depthTile, Math.round(sx), grassY - 8 - 9);
       }
 
       ctx.fillStyle = '#6b5340';
@@ -243,18 +272,10 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
         }
       }
 
-      // ── Grass blades ──
-      const bladeStep = 4;
-      const bladePhase = groundScroll * 0.8 % bladeStep;
-      const bladeColors = ['#3a7a2a', '#4a8a3a', '#5a9a4a'];
-      for (let sx = -(bladePhase + bladeStep); sx < width + bladeStep; sx += bladeStep) {
-        if (sx < -6 || sx > width + 2) continue;
-        const worldX = sx + groundScroll * 0.8;
-        const h = Math.sin(worldX * PI2 / 32) * 0.5 + 0.5;
-        const bh = 2 + Math.floor((h * 0.8 + 0.2) * 3);
-        const c = Math.floor(((Math.sin(worldX * PI2 / 64 + seedNum) * 0.5 + 0.5) * 3)) % 3;
-        ctx.fillStyle = bladeColors[c];
-        ctx.fillRect(Math.round(sx), grassY - bh, 3, bh);
+      // ── Grass blades (pre-rendered tile, 32px repeat) ──
+      const bladePhase = Math.round((groundScroll * 0.8) % bladeTileW);
+      for (let sx = -bladePhase; sx < width; sx += bladeTileW) {
+        ctx.drawImage(bladeTile, Math.round(sx), grassY - bladeTileH);
       }
 
       // ── MUSHROOMS (occasional, ~18% per 128px slot, on grass) ──
@@ -364,6 +385,7 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
           position: 'absolute',
           top: 0,
           left: 0,
+          imageRendering: 'pixelated',
         }}
       />
     </div>
