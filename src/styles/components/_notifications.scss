@@ -102,6 +102,45 @@
     color: #ffffff;
     animation: slideInRight 0.3s ease-out, pulse 0.5s ease-out;
   }
+
+  // ── Forge Types ──
+  &--salvage {
+    background-color: #2e7d32;
+    color: #ffffff;
+  }
+
+  &--fusion-success {
+    background-color: #7b1fa2;
+    color: #ffffff;
+  }
+
+  &--fusion-lucky {
+    background: linear-gradient(135deg, #f57f17 0%, #ffd700 50%, #f57f17 100%);
+    color: #000000;
+    animation: slideInRight 0.3s ease-out, pulse 0.5s ease-out;
+    border: 2px solid #ffd700;
+    box-shadow: 0 0 16px rgba(255, 215, 0, 0.5);
+  }
+
+  &--upgrade-success {
+    background-color: #1565c0;
+    color: #ffffff;
+  }
+
+  &--upgrade-maxed {
+    background-color: #f57f17;
+    color: #ffffff;
+  }
+
+  &--essence-insufficient {
+    background-color: #c62828;
+    color: #ffffff;
+  }
+
+  &--forge-welcome {
+    background-color: #4a148c;
+    color: #ffffff;
+  }
 }
 
 // Animations

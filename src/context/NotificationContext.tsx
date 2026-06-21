@@ -1,7 +1,10 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useCallback, useState, ReactNode } from 'react';
 
-export type NotificationType = 'success' | 'error' | 'warning' | 'info' | 'xp' | 'level-up';
+export type NotificationType =
+  | 'success' | 'error' | 'warning' | 'info' | 'xp' | 'level-up'
+  | 'salvage' | 'fusion-success' | 'fusion-lucky'
+  | 'upgrade-success' | 'upgrade-maxed' | 'essence-insufficient' | 'forge-welcome';
 
 export interface Notification {
   id: string;
@@ -49,10 +52,14 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
       // Vibration feedback
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        if (type === 'success' || type === 'level-up') {
+        if (type === 'success' || type === 'level-up' || type === 'upgrade-success' || type === 'fusion-lucky') {
           navigator.vibrate(100);
-        } else if (type === 'error') {
+        } else if (type === 'error' || type === 'essence-insufficient') {
           navigator.vibrate([200, 100, 200]);
+        } else if (type === 'salvage' || type === 'fusion-success') {
+          navigator.vibrate(50);
+        } else if (type === 'forge-welcome') {
+          navigator.vibrate([50, 50, 50]);
         }
       }
     },

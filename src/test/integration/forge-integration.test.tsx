@@ -167,7 +167,7 @@ describe('Forge Integration — End to End', () => {
     });
     expect(defaultNotify).toHaveBeenCalledWith(
       expect.stringContaining('Salvaged'),
-      'success',
+      'salvage',
       expect.any(Number),
     );
 
@@ -213,7 +213,7 @@ describe('Forge Integration — End to End', () => {
     });
     expect(defaultNotify).toHaveBeenCalledWith(
       expect.stringContaining('Upgrade success'),
-      'success',
+      'upgrade-success',
       expect.any(Number),
     );
   });

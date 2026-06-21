@@ -228,4 +228,33 @@ describe('Forge Page', () => {
     expect(screen.getByRole('tab', { name: /fusion/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /upgrade/i })).toBeInTheDocument();
   });
+
+  // ─── Dynamic Page Title ────────────────────────────────────────────────────
+
+  it('sets document title to forge salvage by default', () => {
+    setupGame();
+    renderForge();
+
+    expect(document.title).toBe('Forge — Salvage — Bitbrawler');
+  });
+
+  it('updates document title when switching to fusion tab', () => {
+    setupGame();
+    renderForge();
+
+    const fusionTab = screen.getByRole('tab', { name: /fusion/i });
+    fireEvent.click(fusionTab);
+
+    expect(document.title).toBe('Forge — Fusion — Bitbrawler');
+  });
+
+  it('updates document title when switching to upgrade tab', () => {
+    setupGame();
+    renderForge();
+
+    const upgradeTab = screen.getByRole('tab', { name: /upgrade/i });
+    fireEvent.click(upgradeTab);
+
+    expect(document.title).toBe('Forge — Upgrade — Bitbrawler');
+  });
 });

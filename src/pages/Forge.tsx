@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { SalvagePanel } from '../components/forge/SalvagePanel';
@@ -8,10 +8,28 @@ import '../styles/forge.scss';
 
 type ForgeTab = 'salvage' | 'fusion' | 'upgrade';
 
+const TAB_TITLES: Record<ForgeTab, string> = {
+  salvage: 'Salvage',
+  fusion: 'Fusion',
+  upgrade: 'Upgrade',
+};
+
 const Forge = () => {
   const navigate = useNavigate();
   const { essence, activeCharacter } = useGame();
   const [activeTab, setActiveTab] = useState<ForgeTab>('salvage');
+
+  // Dynamic page title based on active tab
+  useEffect(() => {
+    document.title = `Forge — ${TAB_TITLES[activeTab]} — Bitbrawler`;
+  }, [activeTab]);
+
+  // Reset title on unmount
+  useEffect(() => {
+    return () => {
+      document.title = 'Bitbrawler';
+    };
+  }, []);
 
   const handleBack = useCallback(() => {
     navigate('/arena');

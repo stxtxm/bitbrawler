@@ -368,5 +368,80 @@ describe('arena extracted components', () => {
       // The essence total should be shown
       expect(screen.getByText('50')).toBeInTheDocument();
     });
+
+    it('shows forge navigation button when onNavigateForge is provided', () => {
+      const onNavigateForge = vi.fn();
+      const rustySword = getItem('rusty_sword');
+
+      render(
+        <InventoryPanel
+          inventory={[rustySword.id]}
+          inventoryCapacity={20}
+          equippedItems={[]}
+          previewItem={null}
+          previewSlotLabel=""
+          previewStats={[]}
+          totalBonusEntries={[]}
+          lootboxResult={null}
+          lootboxRolling={false}
+          canRollDailyLoot
+          inventoryFull={false}
+          streak={0}
+          itemStatMeta={ITEM_STAT_META}
+          isOfflineMode={false}
+          onClose={vi.fn()}
+          onEquip={vi.fn()}
+          onUnequip={vi.fn()}
+          onLootboxRoll={vi.fn()}
+          onCloseLootboxResult={vi.fn()}
+          onSelectItem={vi.fn()}
+          onHoverItem={vi.fn()}
+          previewItemId={null}
+          onSalvage={vi.fn()}
+          essence={42}
+          onNavigateForge={onNavigateForge}
+        />,
+      );
+
+      const forgeBtn = screen.getByRole('button', { name: /open forge/i });
+      expect(forgeBtn).toBeInTheDocument();
+      expect(forgeBtn).toHaveTextContent(/forge/i);
+
+      fireEvent.click(forgeBtn);
+      expect(onNavigateForge).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not show forge navigation button when onNavigateForge is not provided', () => {
+      const rustySword = getItem('rusty_sword');
+
+      render(
+        <InventoryPanel
+          inventory={[rustySword.id]}
+          inventoryCapacity={20}
+          equippedItems={[]}
+          previewItem={null}
+          previewSlotLabel=""
+          previewStats={[]}
+          totalBonusEntries={[]}
+          lootboxResult={null}
+          lootboxRolling={false}
+          canRollDailyLoot
+          inventoryFull={false}
+          streak={0}
+          itemStatMeta={ITEM_STAT_META}
+          isOfflineMode={false}
+          onClose={vi.fn()}
+          onEquip={vi.fn()}
+          onUnequip={vi.fn()}
+          onLootboxRoll={vi.fn()}
+          onCloseLootboxResult={vi.fn()}
+          onSelectItem={vi.fn()}
+          onHoverItem={vi.fn()}
+          previewItemId={null}
+        />,
+      );
+
+      expect(screen.queryByRole('button', { name: /open forge/i })).not.toBeInTheDocument();
+    });
   });
 });

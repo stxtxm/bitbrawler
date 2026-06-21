@@ -5,7 +5,9 @@ export type SoundType =
   | 'hit' | 'crit' | 'magic' | 'miss' | 'counter'
   | 'levelup' | 'lootbox' | 'loot'
   | 'victory' | 'defeat'
-  | 'vs' | 'scan' | 'scanTick' | 'create';
+  | 'vs' | 'scan' | 'scanTick' | 'create'
+  // Forge sounds
+  | 'salvage' | 'fusion' | 'upgrade' | 'lucky';
 
 interface Voice {
   type: OscillatorType;
@@ -257,6 +259,72 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
     ],
     decay: 550, gain: 0.85,
     reverb: 0.35,
+  },
+
+  // ── FORGE ──
+  // salvage: metallic whoosh — items breaking down
+  salvage: {
+    voices: [
+      { type: 'sawtooth', freq: 200, gain: 0.12 },
+      { type: 'triangle', freq: 400, gain: 0.08 },
+      { type: 'sine', freq: 800, gain: 0.04 },
+    ],
+    decay: 80, gain: 0.55,
+    noise: { gain: 0.08, dur: 0.05 },
+    reverb: 0.2, pitchVar: 20,
+  },
+  // fusion: clang + success chime — items combining
+  fusion: {
+    voices: [
+      { type: 'triangle', freq: 330, gain: 0.2 },
+      { type: 'triangle', freq: 440, gain: 0.18 },
+      { type: 'triangle', freq: 554, gain: 0.15 },
+      { type: 'sine', freq: 659, gain: 0.12 },
+    ],
+    drone: [
+      { type: 'sine', freq: 165, gain: 0.06 },
+    ],
+    arp: [
+      { voice: 0, dur: 40, delay: 0 },
+      { voice: 1, dur: 40, delay: 30 },
+      { voice: 2, dur: 50, delay: 60 },
+      { voice: 3, dur: 200, delay: 110 },
+    ],
+    decay: 250, gain: 0.7,
+    noise: { gain: 0.1, dur: 0.03 },
+    reverb: 0.25,
+  },
+  // upgrade: hammer strike — item enhancement
+  upgrade: {
+    voices: [
+      { type: 'triangle', freq: 150, gain: 0.3 },
+      { type: 'triangle', freq: 300, gain: 0.15 },
+      { type: 'sine', freq: 600, gain: 0.06 },
+    ],
+    decay: 60, gain: 0.65,
+    noise: { gain: 0.12, dur: 0.04 },
+    reverb: 0.1, pitchVar: 10,
+  },
+  // lucky: triumphant fanfare — rare proc success
+  lucky: {
+    voices: [
+      { type: 'triangle', freq: 523, gain: 0.25 },
+      { type: 'triangle', freq: 659, gain: 0.22 },
+      { type: 'triangle', freq: 784, gain: 0.18 },
+      { type: 'sine', freq: 1047, gain: 0.14 },
+      { type: 'sine', freq: 1319, gain: 0.1 },
+      { type: 'sine', freq: 1568, gain: 0.06 },
+    ],
+    arp: [
+      { voice: 0, dur: 60, delay: 0 },
+      { voice: 1, dur: 60, delay: 60 },
+      { voice: 2, dur: 60, delay: 120 },
+      { voice: 3, dur: 80, delay: 180 },
+      { voice: 4, dur: 100, delay: 260 },
+      { voice: 5, dur: 300, delay: 360 },
+    ],
+    decay: 400, gain: 0.85,
+    reverb: 0.3,
   },
 };
 

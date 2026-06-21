@@ -143,7 +143,7 @@ describe('SalvagePanel', () => {
     });
     expect(defaultNotify).toHaveBeenCalledWith(
       expect.stringContaining('Salvaged'),
-      'success',
+      'salvage',
       expect.any(Number),
     );
   });
@@ -266,7 +266,7 @@ describe('FusionPanel', () => {
     });
     expect(defaultNotify).toHaveBeenCalledWith(
       expect.stringContaining('Fusion successful'),
-      'success',
+      'fusion-success',
       expect.any(Number),
     );
   });
@@ -447,7 +447,7 @@ describe('UpgradePanel', () => {
     });
     expect(defaultNotify).toHaveBeenCalledWith(
       expect.stringContaining('Upgrade success'),
-      'success',
+      'upgrade-success',
       expect.any(Number),
     );
   });

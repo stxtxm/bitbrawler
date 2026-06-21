@@ -13,6 +13,13 @@ const TestComponent = () => {
       <button onClick={() => notify('Test success', 'success', 3000)}>Success</button>
       <button onClick={() => notify('Test error', 'error', 3000)}>Error</button>
       <button onClick={() => notify('Test xp', 'xp', 2000)}>XP</button>
+      <button onClick={() => notify('Salvaged 1 item → 5 Essence', 'salvage', 3000)}>Salvage</button>
+      <button onClick={() => notify('Fusion successful! A → B!', 'fusion-success', 3000)}>FusionSuccess</button>
+      <button onClick={() => notify('Lucky Fusion! A → B!', 'fusion-lucky', 4000)}>FusionLucky</button>
+      <button onClick={() => notify('Upgrade success! Sword now +3', 'upgrade-success', 3000)}>UpgradeSuccess</button>
+      <button onClick={() => notify('Item is already max level!', 'upgrade-maxed', 3000)}>UpgradeMaxed</button>
+      <button onClick={() => notify('Not enough essence!', 'essence-insufficient', 3000)}>EssenceInsufficient</button>
+      <button onClick={() => notify('Welcome to the Forge!', 'forge-welcome', 3000)}>ForgeWelcome</button>
     </div>
   );
 };
@@ -178,5 +185,126 @@ describe('NotificationContext', () => {
     expect(screen.getByText('Test xp')).toBeInTheDocument();
     const notification = screen.getByRole('alert');
     expect(notification).toHaveClass('notification--xp');
+  });
+
+  // ─── Forge Notification Types ─────────────────────────────────────────────
+
+  it('should show salvage notification with correct class', () => {
+    render(
+      <NotificationProvider>
+        <NotificationDisplay />
+        <TestComponent />
+      </NotificationProvider>,
+    );
+
+    act(() => {
+      screen.getByText('Salvage').click();
+    });
+
+    expect(screen.getByText('Salvaged 1 item → 5 Essence')).toBeInTheDocument();
+    const notification = screen.getByRole('alert');
+    expect(notification).toHaveClass('notification--salvage');
+  });
+
+  it('should show fusion-success notification with correct class', () => {
+    render(
+      <NotificationProvider>
+        <NotificationDisplay />
+        <TestComponent />
+      </NotificationProvider>,
+    );
+
+    act(() => {
+      screen.getByText('FusionSuccess').click();
+    });
+
+    expect(screen.getByText('Fusion successful! A → B!')).toBeInTheDocument();
+    const notification = screen.getByRole('alert');
+    expect(notification).toHaveClass('notification--fusion-success');
+  });
+
+  it('should show fusion-lucky notification with correct class', () => {
+    render(
+      <NotificationProvider>
+        <NotificationDisplay />
+        <TestComponent />
+      </NotificationProvider>,
+    );
+
+    act(() => {
+      screen.getByText('FusionLucky').click();
+    });
+
+    expect(screen.getByText('Lucky Fusion! A → B!')).toBeInTheDocument();
+    const notification = screen.getByRole('alert');
+    expect(notification).toHaveClass('notification--fusion-lucky');
+  });
+
+  it('should show upgrade-success notification with correct class', () => {
+    render(
+      <NotificationProvider>
+        <NotificationDisplay />
+        <TestComponent />
+      </NotificationProvider>,
+    );
+
+    act(() => {
+      screen.getByText('UpgradeSuccess').click();
+    });
+
+    expect(screen.getByText('Upgrade success! Sword now +3')).toBeInTheDocument();
+    const notification = screen.getByRole('alert');
+    expect(notification).toHaveClass('notification--upgrade-success');
+  });
+
+  it('should show upgrade-maxed notification with correct class', () => {
+    render(
+      <NotificationProvider>
+        <NotificationDisplay />
+        <TestComponent />
+      </NotificationProvider>,
+    );
+
+    act(() => {
+      screen.getByText('UpgradeMaxed').click();
+    });
+
+    expect(screen.getByText('Item is already max level!')).toBeInTheDocument();
+    const notification = screen.getByRole('alert');
+    expect(notification).toHaveClass('notification--upgrade-maxed');
+  });
+
+  it('should show essence-insufficient notification with correct class', () => {
+    render(
+      <NotificationProvider>
+        <NotificationDisplay />
+        <TestComponent />
+      </NotificationProvider>,
+    );
+
+    act(() => {
+      screen.getByText('EssenceInsufficient').click();
+    });
+
+    expect(screen.getByText('Not enough essence!')).toBeInTheDocument();
+    const notification = screen.getByRole('alert');
+    expect(notification).toHaveClass('notification--essence-insufficient');
+  });
+
+  it('should show forge-welcome notification with correct class', () => {
+    render(
+      <NotificationProvider>
+        <NotificationDisplay />
+        <TestComponent />
+      </NotificationProvider>,
+    );
+
+    act(() => {
+      screen.getByText('ForgeWelcome').click();
+    });
+
+    expect(screen.getByText('Welcome to the Forge!')).toBeInTheDocument();
+    const notification = screen.getByRole('alert');
+    expect(notification).toHaveClass('notification--forge-welcome');
   });
 });

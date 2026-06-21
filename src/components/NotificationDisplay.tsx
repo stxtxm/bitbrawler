@@ -21,6 +21,13 @@ export function NotificationDisplay() {
               {notif.type === 'info' && 'ℹ'}
               {notif.type === 'xp' && '✨'}
               {notif.type === 'level-up' && '⬆'}
+              {notif.type === 'salvage' && '⚒'}
+              {notif.type === 'fusion-success' && '🔗'}
+              {notif.type === 'fusion-lucky' && '⭐'}
+              {notif.type === 'upgrade-success' && '⬆'}
+              {notif.type === 'upgrade-maxed' && '⚠'}
+              {notif.type === 'essence-insufficient' && '⛔'}
+              {notif.type === 'forge-welcome' && '⚒'}
             </div>
             <div className="notification__message">{notif.message}</div>
           </div>

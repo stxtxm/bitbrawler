@@ -230,6 +230,7 @@ const Arena = () => {
           itemUpgradeLevels={activeCharacter?.itemUpgrades ?? {}}
           essence={essence}
           onSalvage={salvageItems}
+          onNavigateForge={() => navigate('/forge')}
         />
       )}
 

@@ -153,9 +153,9 @@ export const FusionPanel = memo(function FusionPanel({ onClose }: FusionPanelPro
       setShowResult(result);
 
       if (isLucky) {
-        notify(`✨ Lucky Fusion! ${selectedItems[0].name} → ${result.name}!`, 'success', 4000);
+        notify(`✨ Lucky Fusion! ${selectedItems[0].name} → ${result.name}!`, 'fusion-lucky', 4000);
       } else {
-        notify(`Fusion successful! ${selectedItems[0].name} → ${result.name}!`, 'success', 3000);
+        notify(`Fusion successful! ${selectedItems[0].name} → ${result.name}!`, 'fusion-success', 3000);
       }
 
       // Clear selection after animation

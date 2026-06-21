@@ -72,7 +72,7 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
       if (!result) {
         setShowShake(true);
         if (insufficientEssence) {
-          notify('Not enough essence!', 'error', 3000);
+          notify('Not enough essence!', 'essence-insufficient', 3000);
         } else {
           notify('Upgrade failed. Try again.', 'error', 3000);
         }
@@ -85,7 +85,7 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
       setShowGlow(true);
 
       const newLevel = (result.itemUpgrades?.[selectedId] ?? 0);
-      notify(`Upgrade success! ${selectedItem?.name} now +${newLevel}`, 'success', 3000);
+      notify(`Upgrade success! ${selectedItem?.name} now +${newLevel}`, 'upgrade-success', 3000);
 
       setTimeout(() => {
         setShowGlow(false);

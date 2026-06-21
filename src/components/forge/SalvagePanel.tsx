@@ -99,7 +99,7 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
         if (result) {
           const item = inventoryItems.find((i) => i.id === itemId);
           const yieldAmount = item ? getEssenceYield(item) : 0;
-          notify(`Salvaged 1 item → ${yieldAmount} Essence`, 'success', 3000);
+          notify(`Salvaged 1 item → ${yieldAmount} Essence`, 'salvage', 3000);
           setSalvagedIds((prev) => new Set(prev).add(itemId));
         }
       } catch {
@@ -145,7 +145,7 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
         }
       }
 
-      notify(`Salvaged ${items.length} items → ${totalYield} Essence`, 'success', 3000);
+      notify(`Salvaged ${items.length} items → ${totalYield} Essence`, 'salvage', 3000);
     },
     [activeCharacter, grouped, notify, salvageItems, salvaging, salvagedIds],
   );

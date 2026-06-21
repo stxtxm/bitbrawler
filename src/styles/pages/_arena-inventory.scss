@@ -96,6 +96,57 @@
     }
 }
 
+.inventory-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inventory-forge-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: #000;
+    border: 2px solid $accent-gold;
+    color: $accent-gold;
+    cursor: pointer;
+    font-family: $font-pixel;
+    font-size: 0.5rem;
+    letter-spacing: 1px;
+    line-height: 1;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: $accent-gold;
+        color: #000;
+        transform: translateY(-2px);
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+
+    @include mobile {
+        font-size: 0.4rem;
+        padding: 3px 8px;
+        gap: 4px;
+    }
+}
+
+.inventory-forge-nav-icon {
+    font-size: 0.65rem;
+    line-height: 1;
+
+    @include mobile {
+        font-size: 0.5rem;
+    }
+}
+
+.inventory-forge-nav-label {
+    text-transform: uppercase;
+}
+
 // ============================================
 // Inventory Body & Grid
 // ============================================

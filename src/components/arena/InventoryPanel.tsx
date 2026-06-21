@@ -39,6 +39,7 @@ interface InventoryPanelProps {
   itemUpgradeLevels?: Record<string, number>;
   onSalvage?: (itemId: string) => void;
   essence?: number;
+  onNavigateForge?: () => void;
 }
 
 const ITEM_SLOTS: ItemSlot[] = ['weapon', 'armor', 'accessory'];
@@ -81,6 +82,7 @@ export const InventoryPanel = memo(function InventoryPanel({
   itemUpgradeLevels = {},
   onSalvage,
   essence = 0,
+  onNavigateForge,
 }: InventoryPanelProps) {
   const groupedItems = useMemo(() => {
     const bySlot: Record<ItemSlot, PixelItemAsset[]> = {
@@ -107,9 +109,22 @@ export const InventoryPanel = memo(function InventoryPanel({
       >
         <div className="inventory-header">
           <h2 className="inventory-title">INVENTORY</h2>
-          <button className="inventory-close" onClick={onClose} aria-label="Close inventory">
-            ×
-          </button>
+          <div className="inventory-header-actions">
+            {onNavigateForge && essence !== undefined && (
+              <button
+                className="inventory-forge-nav"
+                onClick={onNavigateForge}
+                aria-label="Open forge"
+                title={`Forge — ${essence} Essence available`}
+              >
+                <span className="inventory-forge-nav-icon">⚒</span>
+                <span className="inventory-forge-nav-label">FORGE</span>
+              </button>
+            )}
+            <button className="inventory-close" onClick={onClose} aria-label="Close inventory">
+              ×
+            </button>
+          </div>
         </div>
 
         <div className="inventory-roll">
