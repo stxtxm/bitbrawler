@@ -35,7 +35,7 @@ jobs:
           node-version: 20
 
       - name: Install opencode
-        run: npm install -g opencode-ai
+        run: npm install -g opencode
 
       - name: Wait briefly for CI checks (max 30 seconds)
         id: wait-ci
