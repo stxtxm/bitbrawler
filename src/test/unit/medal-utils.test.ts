@@ -7,7 +7,6 @@ import {
   calculateLootProgress,
   calculateProgressionProgress,
   applyMedalReward,
-  MEDAL_IDS,
 } from '../../utils/medalUtils';
 import { PixelItemAsset } from '../../types/Item';
 import { Character } from '../../types/Character';

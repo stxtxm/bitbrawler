@@ -38,11 +38,15 @@ function ensureResizeObserver() {
 
 function ensureIntersectionObserver() {
     if (typeof window.IntersectionObserver === 'undefined') {
-        window.IntersectionObserver = vi.fn(() => ({
-            observe: vi.fn(),
-            unobserve: vi.fn(),
-            disconnect: vi.fn(),
-        }));
+        window.IntersectionObserver = class MockIntersectionObserver {
+            root: Element | null = null;
+            rootMargin: string = '0px';
+            thresholds: ReadonlyArray<number> = [];
+            takeRecords = vi.fn(() => []);
+            observe = vi.fn();
+            unobserve = vi.fn();
+            disconnect = vi.fn();
+        } as unknown as typeof IntersectionObserver;
     }
 }
 
