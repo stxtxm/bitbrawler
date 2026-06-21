@@ -1,0 +1,1 @@
+ALTER TABLE characters ADD COLUMN IF NOT EXISTS item_upgrades JSONB NOT NULL DEFAULT '{}'::jsonb;
