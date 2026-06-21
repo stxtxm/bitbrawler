@@ -8,6 +8,22 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '3.3.0',
+    date: '2026-06-21',
+    title: 'Terrain overhaul — anti-tearing, larger detailed elements, depth layers & slower scroll',
+    changes: [
+      'TEARING FIXED: scroll offset locked to integer pixels (scrollPx = Math.round(groundScroll)) — all elements (trees, grass, flowers, mushrooms, bushes, stones, clouds) now render on the same pixel grid.',
+      'ELEMENTS ENLARGED: trees upgraded to 6px/cell with 5 detailed patterns (10-11 rows) and highlight colors. Grass tile doubled to 64×10px with 4-color blades.',
+      'DEPTH STONES: 4 parallax layers of random-sized stones (3-8px with shadow/highlight) scattered across the ground for depth perception.',
+      'MUSHROOMS: two depth variants — tiny (4×4 cell=3, 0.5x scroll) at back, medium (5×4 cell=3, 1.0x scroll) in foreground, both with proper cap/stem colors.',
+      'FLOWERS: redesigned with 5-part bloom (center 4px + 4 petals + stem), 2× frequency, spaced 80px apart.',
+      'BUSHES: enlarged with structured foliage (main body + top + highlights), 128px spacing for clean layout.',
+      'SCROLL SPEED SLOWED: 36→24 px/sec with 800ms ramp-up for smoother motion perception.',
+      'ALL PHASES VERIFIED INTEGER: every element phase (% N) guaranteed non-negative integer — zero sub-pixel jitter between layers.',
+      'New 22-unit test suite (terrain-canvas.test.tsx) covering canvas rendering, element proportions, anti-tearing scroll lock, phase consistency, and initial load stability.',
+    ],
+  },
+  {
     version: '3.2.0',
     date: '2026-06-20',
     title: 'Idle processing overhaul — Vercel serverless, XP curve fix, stat points fix',

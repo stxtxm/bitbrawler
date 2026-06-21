@@ -25,43 +25,50 @@ interface CloudDef {
   speed: number;
 }
 
-// ── TREES (1=dark foliage, 2=light foliage, 3=trunk) ──
+// ── TREES (1=dark foliage, 2=light foliage, 3=trunk, 4=highlight) ──
 const TREE_PALETTES: Record<number, string>[] = [
-  { 1: '#2d7a2a', 2: '#4a9a3a', 3: '#6b4a2a' },
-  { 1: '#1d6a1a', 2: '#3a8a2a', 3: '#5a3a1a' },
-  { 1: '#3a8a2a', 2: '#5aaa3a', 3: '#6b4a2a' },
-  { 1: '#2a7a30', 2: '#4aaa40', 3: '#5a3a20' },
-  { 1: '#1a6a20', 2: '#3a9a30', 3: '#6b4a2a' },
+  { 1: '#2d7a2a', 2: '#4a9a3a', 3: '#6b4a2a', 4: '#5aaa50' },
+  { 1: '#1d6a1a', 2: '#3a8a2a', 3: '#5a3a1a', 4: '#4a9a40' },
+  { 1: '#3a8a2a', 2: '#5aaa3a', 3: '#6b4a2a', 4: '#6aba50' },
+  { 1: '#2a7a30', 2: '#4aaa40', 3: '#5a3a20', 4: '#5aba50' },
+  { 1: '#1a6a20', 2: '#3a9a30', 3: '#6b4a2a', 4: '#4aaa40' },
 ];
 
 const TREES = [
   { // Round leafy
     pixels: [
-      [0,0,0,1,1,0,0],
-      [0,0,1,2,1,0,0],
-      [0,1,2,2,2,1,0],
-      [0,1,2,2,2,1,0],
-      [0,0,1,2,1,0,0],
-      [0,0,0,3,0,0,0],
-      [0,0,0,3,0,0,0],
+      [0,0,0,0,1,1,1,0,0,0,0],
+      [0,0,0,1,2,2,2,1,0,0,0],
+      [0,0,1,2,4,2,4,2,1,0,0],
+      [0,1,2,2,2,2,2,2,2,1,0],
+      [0,1,2,2,2,2,2,2,2,1,0],
+      [0,0,1,2,4,2,4,2,1,0,0],
+      [0,0,0,1,2,2,2,1,0,0,0],
+      [0,0,0,0,1,1,1,0,0,0,0],
+      [0,0,0,0,0,3,0,0,0,0,0],
+      [0,0,0,0,0,3,0,0,0,0,0],
     ],
     paletteIdx: 0,
   },
   { // Pine
     pixels: [
-      [0,0,0,1,0,0,0],
-      [0,0,1,2,1,0,0],
-      [0,1,2,2,2,1,0],
-      [0,0,1,2,1,0,0],
-      [0,0,0,1,0,0,0],
-      [0,0,0,3,0,0,0],
-      [0,0,0,3,0,0,0],
+      [0,0,0,0,1,0,0,0,0],
+      [0,0,0,1,2,1,0,0,0],
+      [0,0,1,2,4,2,1,0,0],
+      [0,1,2,2,2,2,2,1,0],
+      [0,0,1,2,4,2,1,0,0],
+      [0,0,0,1,2,1,0,0,0],
+      [0,0,0,0,1,0,0,0,0],
+      [0,0,0,0,3,0,0,0,0],
+      [0,0,0,0,3,0,0,0,0],
     ],
     paletteIdx: 1,
   },
   { // Sapling
     pixels: [
       [0,0,1,1,0,0],
+      [0,1,2,2,1,0],
+      [1,2,4,4,2,1],
       [0,1,2,2,1,0],
       [0,0,1,2,0,0],
       [0,0,0,3,0,0],
@@ -71,37 +78,53 @@ const TREES = [
   },
   { // Wide oak
     pixels: [
-      [0,0,0,1,1,1,0,0,0],
-      [0,0,1,2,2,2,1,0,0],
-      [0,1,2,2,2,2,2,1,0],
-      [0,1,2,2,2,2,2,1,0],
-      [0,0,1,2,2,2,1,0,0],
-      [0,0,0,0,3,0,0,0,0],
-      [0,0,0,0,3,0,0,0,0],
+      [0,0,0,0,1,1,1,1,0,0,0,0],
+      [0,0,0,1,2,2,2,2,1,0,0,0],
+      [0,0,1,2,4,2,2,4,2,1,0,0],
+      [0,1,2,2,2,2,2,2,2,2,1,0],
+      [0,1,2,2,2,2,2,2,2,2,1,0],
+      [0,0,1,2,2,2,2,2,2,1,0,0],
+      [0,0,0,1,2,4,2,4,2,1,0,0],
+      [0,0,0,0,1,1,1,1,0,0,0,0],
+      [0,0,0,0,0,0,3,0,0,0,0,0],
+      [0,0,0,0,0,0,3,0,0,0,0,0],
     ],
     paletteIdx: 3,
   },
   { // Tall multi-tier
     pixels: [
-      [0,0,0,0,1,0,0,0,0],
-      [0,0,0,1,2,1,0,0,0],
-      [0,0,1,2,2,2,1,0,0],
-      [0,0,0,1,2,1,0,0,0],
-      [0,0,0,0,1,0,0,0,0],
-      [0,0,0,0,3,0,0,0,0],
-      [0,0,0,0,3,0,0,0,0],
-      [0,0,0,0,3,0,0,0,0],
+      [0,0,0,0,0,1,0,0,0,0,0],
+      [0,0,0,0,1,2,1,0,0,0,0],
+      [0,0,0,1,2,4,2,1,0,0,0],
+      [0,0,0,0,1,2,1,0,0,0,0],
+      [0,0,0,0,0,1,0,0,0,0,0],
+      [0,0,0,0,1,2,1,0,0,0,0],
+      [0,0,0,1,2,4,2,1,0,0,0],
+      [0,0,0,0,1,2,1,0,0,0,0],
+      [0,0,0,0,0,3,0,0,0,0,0],
+      [0,0,0,0,0,3,0,0,0,0,0],
+      [0,0,0,0,0,3,0,0,0,0,0],
     ],
     paletteIdx: 4,
   },
 ];
 
-// ── MUSHROOM (1=cap, 2=spots, 3=stem) ──
-const MUSHROOM = {
+// ── MUSHROOM tiny (1=cap, 2=spots, 3=stem) ──
+const MUSHROOM_TINY = {
   pixels: [
-    [0,1,0],
-    [1,2,1],
-    [0,3,0],
+    [0,1,1,0],
+    [1,2,2,1],
+    [0,1,1,0],
+    [0,0,3,0],
+  ],
+};
+// ── MUSHROOM medium (1=cap, 2=spots, 3=stem, 4=highlight) ──
+const MUSHROOM_MED = {
+  pixels: [
+    [0,1,1,1,0],
+    [1,4,2,4,1],
+    [0,1,2,1,0],
+    [0,0,3,0,0],
   ],
 };
 
@@ -159,20 +182,20 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Pre-render 32px grass blade tile (most numerous element)
-    const bladeTileW = 32;
-    const bladeTileH = 6;
+    // Pre-render 64px grass blade tile (bigger/detailed)
+    const bladeTileW = 64;
+    const bladeTileH = 10;
     const bladeTile = document.createElement('canvas');
     bladeTile.width = bladeTileW;
     bladeTile.height = bladeTileH;
     const bCtx = bladeTile.getContext('2d')!;
-    const bladeColors = ['#3a7a2a', '#4a8a3a', '#5a9a4a'];
-    for (let x = 0; x < bladeTileW; x += 4) {
-      const h = Math.sin(x * PI2 / 32) * 0.5 + 0.5;
-      const bh = 2 + Math.floor((h * 0.8 + 0.2) * 3);
-      const c = Math.floor(((Math.sin(x * PI2 / 64 + seedNum) * 0.5 + 0.5) * 3)) % 3;
+    const bladeColors = ['#3a7a2a', '#4a8a3a', '#5a9a4a', '#6aaa50'];
+    for (let x = 0; x < bladeTileW; x += 5) {
+      const h = Math.sin(x * PI2 / 64) * 0.5 + 0.5;
+      const bh = 3 + Math.floor((h * 0.8 + 0.2) * 5);
+      const c = Math.floor(((Math.sin(x * PI2 / 80 + seedNum) * 0.5 + 0.5) * 4)) % 4;
       bCtx.fillStyle = bladeColors[c];
-      bCtx.fillRect(x, bladeTileH - bh, 3, bh);
+      bCtx.fillRect(x, bladeTileH - bh, 4, bh);
     }
 
     // Pre-render depth tile (32px, same parallax seam)
@@ -210,6 +233,9 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
 
       ctx.clearRect(0, 0, width, height);
 
+      // Lock to integer pixels for tear-free pixel-art scrolling
+      const scrollPx = Math.round(groundScroll);
+
       const sky = ctx.createLinearGradient(0, 0, 0, height);
       sky.addColorStop(0, '#2b7bc9');
       sky.addColorStop(0.45, '#6ec3ed');
@@ -218,7 +244,7 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       ctx.fillStyle = sky;
       ctx.fillRect(0, 0, width, height);
 
-      const cloudBaseSpeed = groundScroll * (5 / 36);
+      const cloudBaseSpeed = scrollPx * (5 / 36);
       for (const cloud of clouds) {
         let cx = (cloud.x * width - cloudBaseSpeed * cloud.speed) % width;
         if (cx < 0) cx += width;
@@ -232,7 +258,7 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
 
       const grassY = Math.round(groundTop - 5);
 
-      const dPhase = Math.round((groundScroll * 0.25) % depthTileW);
+      const dPhase = Math.round((scrollPx * 0.25) % depthTileW);
       const depthTilesNeeded = Math.ceil(width / depthTileW) + 2;
       const depthStartX = -dPhase - depthTileW;
       
@@ -248,14 +274,14 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       ctx.fillStyle = '#4a8a3a';
       ctx.fillRect(0, grassY, width, 6);
 
-      const treePhase = groundScroll % 256;
-      for (let sx = -(treePhase + 256); sx < width + 256; sx += 256) {
-        if (sx < -28 || sx > width + 28) continue;
-        const worldIdx = Math.floor((sx + groundScroll) / 256);
+      const treePhase = scrollPx % 320;
+      for (let sx = -(treePhase + 320); sx < width + 320; sx += 320) {
+        if (sx < -44 || sx > width + 44) continue;
+        const worldIdx = Math.floor((sx + scrollPx) / 320);
         const h = (worldIdx * 31 + seedNum * 7) % 101;
-        if (h > 18) continue;
+        if (h > 35) continue;
         const tree = TREES[h % TREES.length];
-        const px = 4;
+        const px = 6;
         const th = tree.pixels.length * px;
         for (let row = 0; row < tree.pixels.length; row++) {
           for (let col = 0; col < tree.pixels[row].length; col++) {
@@ -267,7 +293,7 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
         }
       }
 
-      const bladePhase = Math.round((groundScroll * 0.8) % bladeTileW);
+      const bladePhase = Math.round((scrollPx * 0.8) % bladeTileW);
       const tilesNeeded = Math.ceil(width / bladeTileW) + 2; // +2 for overflow coverage
       const startX = -bladePhase - bladeTileW; // Start earlier to ensure full coverage
       
@@ -277,72 +303,120 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
         ctx.drawImage(bladeTile, Math.round(sx), grassY - bladeTileH);
       }
 
-      const shroomPhase = groundScroll % 128;
-      for (let sx = -(shroomPhase + 128); sx < width + 128; sx += 128) {
-        if (sx < -6 || sx > width + 6) continue;
-        const worldIdx = Math.floor((sx + groundScroll) / 128);
+      // ── Shrooms: tiny (back layer) + medium (foreground) with depth ──
+      const shroomTinyCell = 3;
+      const shroomTinyPhase = scrollPx * 0.5 % 128;
+      for (let sx = -(shroomTinyPhase + 128); sx < width + 128; sx += 128) {
+        if (sx < -10 || sx > width + 10) continue;
+        const worldIdx = Math.floor((sx + scrollPx * 0.5) / 128);
         const h = (worldIdx * 23 + seedNum * 11) % 101;
-        if (h > 18) continue;
+        if (h > 22) continue;
         const off = ((worldIdx * 7 + seedNum * 5) % 7) - 3;
         const mx = Math.round(sx + off);
-        for (let row = 0; row < MUSHROOM.pixels.length; row++) {
-          for (let col = 0; col < MUSHROOM.pixels[row].length; col++) {
-            const v = MUSHROOM.pixels[row][col];
+        for (let row = 0; row < MUSHROOM_TINY.pixels.length; row++) {
+          for (let col = 0; col < MUSHROOM_TINY.pixels[row].length; col++) {
+            const v = MUSHROOM_TINY.pixels[row][col];
             if (!v) continue;
-            ctx.fillStyle = v === 1 ? '#d04030' : v === 2 ? '#f0f0f0' : '#e0d0a0';
-            ctx.fillRect(mx + col * 3, grassY - 9 + row * 3, 3, 3);
+            ctx.fillStyle = v === 1 ? '#c05030' : v === 2 ? '#e0c0a0' : '#b09070';
+            ctx.fillRect(mx + col * shroomTinyCell, grassY - MUSHROOM_TINY.pixels.length * shroomTinyCell + row * shroomTinyCell, shroomTinyCell, shroomTinyCell);
+          }
+        }
+      }
+      const shroomMedCell = 3;
+      const shroomMedPhase = scrollPx % 192;
+      for (let sx = -(shroomMedPhase + 192); sx < width + 192; sx += 192) {
+        if (sx < -10 || sx > width + 10) continue;
+        const worldIdx = Math.floor((sx + scrollPx) / 192);
+        const h = (worldIdx * 29 + seedNum * 13) % 101;
+        if (h > 20) continue;
+        const off = ((worldIdx * 11 + seedNum * 7) % 7) - 3;
+        const mx = Math.round(sx + off);
+        for (let row = 0; row < MUSHROOM_MED.pixels.length; row++) {
+          for (let col = 0; col < MUSHROOM_MED.pixels[row].length; col++) {
+            const v = MUSHROOM_MED.pixels[row][col];
+            if (!v) continue;
+            ctx.fillStyle = v === 1 ? '#d04030' : v === 2 ? '#f0f0f0' : v === 3 ? '#e0d0a0' : '#e06040';
+            ctx.fillRect(mx + col * shroomMedCell, grassY - MUSHROOM_MED.pixels.length * shroomMedCell + row * shroomMedCell, shroomMedCell, shroomMedCell);
           }
         }
       }
 
-      const flowerPhase = groundScroll % 48;
-      for (let sx = -(flowerPhase + 48); sx < width + 48; sx += 48) {
-        if (sx < -4 || sx > width + 4) continue;
-        const worldIdx = Math.floor((sx + groundScroll) / 48);
+      const flowerPhase = scrollPx % 80;
+      for (let sx = -(flowerPhase + 80); sx < width + 80; sx += 80) {
+        if (sx < -12 || sx > width + 12) continue;
+        const worldIdx = Math.floor((sx + scrollPx) / 80);
         const h = (worldIdx * 19 + seedNum * 13) % 101;
-        if (h > 40) continue;
-        const off = ((worldIdx * 11 + seedNum * 3) % 9) - 4;
+        if (h > 45) continue;
+        const off = ((worldIdx * 11 + seedNum * 3) % 11) - 5;
         const fx = Math.round(sx + off);
         const colorIdx = h % FLOWER_COLORS.length;
         ctx.fillStyle = FLOWER_COLORS[colorIdx];
-        ctx.fillRect(fx, grassY - 2, 3, 3);
-        ctx.fillRect(fx + 4, grassY - 4, 3, 3);
-        ctx.fillRect(fx + 2, grassY - 7, 3, 3);
+        // Larger flower: center + 4 petals
+        ctx.fillRect(fx + 2, grassY - 4, 4, 4);               // center
+        ctx.fillRect(fx, grassY - 8, 3, 3);                    // top-left petal
+        ctx.fillRect(fx + 5, grassY - 8, 3, 3);                // top-right petal
+        ctx.fillRect(fx, grassY - 1, 3, 3);                    // bottom-left petal
+        ctx.fillRect(fx + 5, grassY - 1, 3, 3);                // bottom-right petal
+        // Stem
+        ctx.fillStyle = '#3a8a3a';
+        ctx.fillRect(fx + 3, grassY + 1, 2, 4);
       }
 
-      const texPhase = groundScroll * 0.7 % 48;
+      const texPhase = scrollPx * 0.7 % 48;
       for (let sx = -(texPhase + 48); sx < width + 48; sx += 8) {
         if (sx < 0 || sx > width) continue;
-        const worldX = sx + groundScroll * 0.7;
+        const worldX = sx + scrollPx * 0.7;
         if ((Math.sin(worldX * PI2 / 48 + seedNum) * 0.5 + 0.5) > 0.65) {
           ctx.fillStyle = 'rgba(0,0,0,0.07)';
           ctx.fillRect(Math.round(sx), groundTop + 2, 6, 3);
         }
       }
 
-      const stonePhase = groundScroll * 0.6 % 64;
-      for (let sx = -(stonePhase + 64); sx < width + 64; sx += 64) {
-        if (sx < -8 || sx > width + 8) continue;
-        const worldIdx = Math.floor((sx + groundScroll * 0.6) / 64);
-        const off = ((worldIdx * 17 + seedNum * 3) % 13) - 6;
-        const stoneX = Math.round(sx + off);
-        ctx.fillStyle = '#8a8070';
-        ctx.fillRect(stoneX, groundTop + 4, 4, 3);
-        ctx.fillStyle = '#6a6050';
-        ctx.fillRect(stoneX + 1, groundTop + 5, 2, 2);
+      // ── Depth stones: scattered across ground with random sizes ──
+      for (let layer = 0; layer < 4; layer++) {
+        const spacing = 64 + layer * 16;
+        const parallax = 0.4 + layer * 0.08;
+        const phase = scrollPx * parallax % spacing;
+        const baseY = groundTop + 2 + layer * 6;
+        const maxSize = 6 - layer;
+        const opacity = 0.5 + layer * 0.12;
+        
+        for (let sx = -(phase + spacing); sx < width + spacing; sx += spacing) {
+          if (sx < -12 || sx > width + 12) continue;
+          const worldIdx = Math.floor((sx + scrollPx * parallax) / spacing);
+          const r = (worldIdx * 17 + seedNum * (3 + layer * 7)) % 31;
+          const off = (r % 19) - 9;
+          const size = 3 + (r % maxSize);
+          const stoneW = size + (r % 3);
+          const stoneH = Math.max(2, size - 1);
+          const sx2 = Math.round(sx + off);
+          
+          // Shadow
+          ctx.fillStyle = `rgba(0,0,0,${(opacity * 0.15).toFixed(2)})`;
+          ctx.fillRect(sx2 + 1, baseY + 1, stoneW, stoneH);
+          // Base layer
+          ctx.fillStyle = `rgba(90,80,70,${opacity.toFixed(2)})`;
+          ctx.fillRect(sx2, baseY, stoneW, stoneH);
+          // Highlight
+          ctx.fillStyle = `rgba(120,110,100,${(opacity * 0.6).toFixed(2)})`;
+          ctx.fillRect(sx2 + 1, baseY, Math.max(1, stoneW - 2), Math.max(1, stoneH - 1));
+        }
       }
 
-      const bushPhase = groundScroll * 0.5 % 96;
-      for (let sx = -(bushPhase + 96); sx < width + 96; sx += 96) {
-        if (sx < -12 || sx > width + 12) continue;
-        const worldIdx = Math.floor((sx + groundScroll * 0.5) / 96);
-        const off = ((worldIdx * 13 + seedNum * 7) % 19) - 9;
+      const bushPhase = scrollPx * 0.5 % 128;
+      for (let sx = -(bushPhase + 128); sx < width + 128; sx += 128) {
+        if (sx < -16 || sx > width + 16) continue;
+        const worldIdx = Math.floor((sx + scrollPx * 0.5) / 128);
+        const off = ((worldIdx * 13 + seedNum * 7) % 21) - 10;
         const bx = Math.round(sx + off);
         ctx.fillStyle = '#4a7a3a';
-        ctx.fillRect(bx, grassY - 7, 6, 4);
-        ctx.fillRect(bx + 1, grassY - 10, 4, 3);
+        ctx.fillRect(bx, grassY - 10, 10, 6);
+        ctx.fillRect(bx + 2, grassY - 14, 6, 5);
+        ctx.fillStyle = '#5a8a4a';
+        ctx.fillRect(bx + 1, grassY - 8, 4, 3);
+        ctx.fillRect(bx + 5, grassY - 12, 3, 3);
         ctx.fillStyle = '#3a6a2a';
-        ctx.fillRect(bx, grassY - 4, 2, 2);
+        ctx.fillRect(bx + 1, grassY - 3, 8, 3);
       }
     };
 
@@ -362,8 +436,8 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
 
       const elapsedSinceStable = now - animationStartTime.current;
 
-      const rampUpFactor = Math.min(1, elapsedSinceStable / 500);
-      const effectiveScrollSpeed = 36 * rampUpFactor;
+      const rampUpFactor = Math.min(1, elapsedSinceStable / 800);
+      const effectiveScrollSpeed = 24 * rampUpFactor;
 
       if (animatedRef.current) {
         const dt = lastTimeRef.current ? Math.min((now - lastTimeRef.current) / 1000, 0.05) : 0;
@@ -374,8 +448,9 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       drawFrame(scrollOffsetRef.current);
     };
 
-    lastTimeRef.current = 0;
-    animationStartTime.current = null;
+    lastTimeRef.current = performance.now();
+    animationStartTime.current = performance.now();
+    scrollOffsetRef.current = 0;
     rafId = requestAnimationFrame(render);
 
     return () => {
