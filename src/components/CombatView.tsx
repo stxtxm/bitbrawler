@@ -34,12 +34,19 @@ function extractActionColor(detail: string): string {
     return '';
 }
 
+export interface CombatContext {
+  /** Fight was won with less than 10 HP remaining */
+  glassCannon?: boolean;
+  /** Fight was won with 0 damage taken */
+  pacifist?: boolean;
+}
+
 interface CombatViewProps {
     player: Character;
     opponent: Character;
     matchType: 'balanced' | 'similar' | 'pve';
     monsterId?: MonsterId;
-    onComplete: (won: boolean, xpGained: number) => void;
+    onComplete: (won: boolean, xpGained: number, context?: CombatContext) => void;
     onClose: () => void;
     candidates?: Character[];
 }
@@ -241,11 +248,33 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
         });
     }, [currentRound, phase]);
 
+    const getCombatContext = (): CombatContext | undefined => {
+        if (!combatResult) return undefined;
+        const won = combatResult.winner === 'attacker';
+        if (!won) return undefined;
+
+        const timeline = combatResult.timeline;
+        if (!timeline || timeline.length === 0) return undefined;
+
+        const initialHp = timeline[0].attackerHp;
+        const finalHp = timeline[timeline.length - 1].attackerHp;
+
+        // Glass Cannon: won with less than 10 HP remaining
+        const glassCannon = finalHp < 10;
+
+        // Pacifist: won with 0 damage taken (attacker HP never decreased)
+        const damageTaken = initialHp - finalHp;
+        const pacifist = damageTaken <= 0;
+
+        return { glassCannon, pacifist };
+    };
+
     const handleFinish = async () => {
         if (!combatResult) return;
 
         try {
-            await onComplete(combatResult.winner === 'attacker', xpGained);
+            const context = getCombatContext();
+            await onComplete(combatResult.winner === 'attacker', xpGained, context);
         } finally {
             onClose();
         }

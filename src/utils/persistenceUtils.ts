@@ -1,5 +1,6 @@
 import { Character, PendingFightOpponent } from '../types/Character';
 import { GAME_RULES } from '../config/gameRules';
+import { getDefaultMedalProgress } from './medalUtils';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -32,6 +33,10 @@ export const normalizeCharacter = (character: Character): Character => {
     lastActive: character.lastActive ?? 0,
     essence: character.essence ?? 0,
     itemUpgrades: character.itemUpgrades ?? {},
+    medalProgress: character.medalProgress ?? getDefaultMedalProgress(),
+    medalInventoryBonus: character.medalInventoryBonus ?? 0,
+    medalXpBonus: character.medalXpBonus ?? 0,
+    medalAura: character.medalAura ?? false,
   };
 
   // One-time migration: idle combat never granted stat points before the fix.

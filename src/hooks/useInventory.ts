@@ -96,7 +96,8 @@ export const useInventory = ({
   const closeInventory = useCallback(() => setInventoryOpen(false), []);
 
   const inventory = character?.inventory ?? [];
-  const inventoryCapacity = INVENTORY_CAPACITY;
+  const effectiveCapacity = INVENTORY_CAPACITY + (character?.medalInventoryBonus ?? 0);
+  const inventoryCapacity = effectiveCapacity;
   const inventoryFull = inventory.length >= inventoryCapacity;
   const canRollDailyLoot = canRollLootbox(character?.lastLootRoll, Date.now());
   const streak = character?.lootboxStreak ?? 0;

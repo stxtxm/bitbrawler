@@ -40,6 +40,8 @@ function getConsecutiveWins(history: Character['fightHistory']): number {
 
 /**
  * Calculate the number of times the player won after 2+ consecutive losses.
+ * History is stored newest-first, so we iterate in reverse (oldest-first)
+ * to correctly detect wins that follow a loss streak.
  */
 function getComebackCount(history: Character['fightHistory']): number {
   if (!history || history.length < 2) return 0;
@@ -47,8 +49,10 @@ function getComebackCount(history: Character['fightHistory']): number {
   let count = 0;
   let lossStreak = 0;
 
-  // Iterate from newest to oldest
-  for (const entry of history) {
+  // Iterate from oldest to newest (reverse) so that loss streak builds
+  // before checking if a following win counts as a comeback.
+  for (let i = history.length - 1; i >= 0; i--) {
+    const entry = history[i];
     if (entry.won) {
       if (lossStreak >= 2) {
         count++;
@@ -303,19 +307,17 @@ export const applyMedalReward = (character: Character, reward: MedalReward): Cha
       break;
     }
     case 'stat_point': {
-      if (reward.stat) {
-        const bonus = reward.value ?? 1;
-        // If the reward is "all stats"
-        if (reward.label?.includes('all stats')) {
-          updated.strength = (updated.strength || 10) + bonus;
-          updated.vitality = (updated.vitality || 10) + bonus;
-          updated.dexterity = (updated.dexterity || 10) + bonus;
-          updated.luck = (updated.luck || 10) + bonus;
-          updated.intelligence = (updated.intelligence || 10) + bonus;
-          updated.focus = (updated.focus || 10) + bonus;
-        } else {
-          updated[reward.stat] = ((updated as any)[reward.stat] || 10) + bonus;
-        }
+      const bonus = reward.value ?? 1;
+      // If the reward is "all stats" (e.g., peak_performance medal)
+      if (reward.label?.includes('all stats')) {
+        updated.strength = (updated.strength || 10) + bonus;
+        updated.vitality = (updated.vitality || 10) + bonus;
+        updated.dexterity = (updated.dexterity || 10) + bonus;
+        updated.luck = (updated.luck || 10) + bonus;
+        updated.intelligence = (updated.intelligence || 10) + bonus;
+        updated.focus = (updated.focus || 10) + bonus;
+      } else if (reward.stat) {
+        updated[reward.stat] = ((updated as any)[reward.stat] || 10) + bonus;
       }
       break;
     }

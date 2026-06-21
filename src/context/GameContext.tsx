@@ -11,6 +11,7 @@ import { canRollLootbox, computeNextStreak, rollLootbox } from '../utils/lootbox
 import { PixelItemAsset } from '../types/Item';
 import { simulateCombat } from '../utils/combatUtils';
 import { convertFromSupabase, convertToSupabase } from '../utils/supabaseUtils';
+import type { CombatContext } from '../components/CombatView';
 import {
   INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP,
   normalizeCharacter, buildPendingOpponent, hydratePendingOpponent,
@@ -22,6 +23,12 @@ import {
   performFusion,
   performUpgrade,
 } from '../utils/forgeUtils';
+import {
+  checkMedals,
+  applyMedalReward,
+  getDefaultMedalProgress,
+  SpecialMedalContext,
+} from '../utils/medalUtils';
 
 interface GameContextType {
   activeCharacter: Character | null;
@@ -38,13 +45,13 @@ interface GameContextType {
     xpGained: number,
     opponentName: string,
     opponentId: string,
-    options?: { consumeEnergy?: boolean; characterOverride?: Character }
+    options?: { consumeEnergy?: boolean; characterOverride?: Character; combatContext?: CombatContext }
   ) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
   usePveFight: (
     won: boolean,
     xpGained: number,
     monsterName: string,
-    options?: { consumeEnergy?: boolean; characterOverride?: Character }
+    options?: { consumeEnergy?: boolean; characterOverride?: Character; combatContext?: CombatContext }
   ) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
   findOpponent: () => Promise<MatchmakingResult | null>;
   clearXpNotifications: () => void;
@@ -293,13 +300,17 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     xpGained: number,
     opponentName: string,
     opponentId: string,
-    options?: { consumeEnergy?: boolean; characterOverride?: Character }
+    options?: { consumeEnergy?: boolean; characterOverride?: Character; combatContext?: CombatContext }
   ): Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null> => {
     const baseCharacter = options?.characterOverride ?? activeCharacter;
     if (!baseCharacter?.id) return null;
 
+    // Apply medal XP bonus on wins
+    const medalXpBonus = won ? (baseCharacter.medalXpBonus ?? 0) : 0;
+    const totalXp = xpGained + medalXpBonus;
+
     // Process XP gain and level up
-    const xpResult = gainXp(baseCharacter, xpGained);
+    const xpResult = gainXp(baseCharacter, totalXp);
 
     // Prepare history entry
     const historyEntry = {
@@ -364,7 +375,26 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
        if (error) throw error;
 
-       persistCharacter(updatedChar);
+       // ─── Medal Check ──────────────────────────────────────────────────────
+       const combatCtx = options?.combatContext;
+       const medalContext: SpecialMedalContext = {
+         glassCannonFight: combatCtx?.glassCannon,
+         pacifistFight: combatCtx?.pacifist,
+       };
+       const currentProgress = updatedChar.medalProgress ?? getDefaultMedalProgress();
+       const medalResult = checkMedals(updatedChar, currentProgress, ITEM_ASSETS, medalContext);
+
+       // Apply rewards for newly unlocked medals
+       let medalUpdatedChar = updatedChar;
+       for (const medal of medalResult.newlyUnlocked) {
+         medalUpdatedChar = applyMedalReward(medalUpdatedChar, medal.reward);
+       }
+       medalUpdatedChar = normalizeCharacter({
+         ...medalUpdatedChar,
+         medalProgress: medalResult.progress,
+       });
+
+       persistCharacter(medalUpdatedChar);
        initiatedMatchmakingRef.current = false;
 
       if (opponentId && opponentId !== baseCharacter.id) {
@@ -415,12 +445,16 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     won: boolean,
     xpGained: number,
     monsterName: string,
-    options?: { consumeEnergy?: boolean; characterOverride?: Character }
+    options?: { consumeEnergy?: boolean; characterOverride?: Character; combatContext?: CombatContext }
   ): Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null> => {
     const baseCharacter = options?.characterOverride ?? activeCharacter;
     if (!baseCharacter) return null;
 
-    const xpResult = gainXp(baseCharacter, xpGained);
+    // Apply medal XP bonus on wins
+    const medalXpBonus = won ? (baseCharacter.medalXpBonus ?? 0) : 0;
+    const totalXp = xpGained + medalXpBonus;
+
+    const xpResult = gainXp(baseCharacter, totalXp);
 
     const historyEntry = { date: Date.now(), won, opponentName: monsterName };
     const existingHistory = baseCharacter.fightHistory || [];
@@ -446,26 +480,45 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       );
     }
 
+    // ─── Medal Check ──────────────────────────────────────────────────────
+    const combatCtx = options?.combatContext;
+    const medalContext: SpecialMedalContext = {
+      glassCannonFight: combatCtx?.glassCannon,
+      pacifistFight: combatCtx?.pacifist,
+    };
+    const currentProgress = updatedChar.medalProgress ?? getDefaultMedalProgress();
+    const medalResult = checkMedals(updatedChar, currentProgress, ITEM_ASSETS, medalContext);
+
+    // Apply rewards for newly unlocked medals
+    let medalUpdatedChar = updatedChar;
+    for (const medal of medalResult.newlyUnlocked) {
+      medalUpdatedChar = applyMedalReward(medalUpdatedChar, medal.reward);
+    }
+    medalUpdatedChar = normalizeCharacter({
+      ...medalUpdatedChar,
+      medalProgress: medalResult.progress,
+    });
+
     if (baseCharacter.id) {
       try {
         const { error } = await supabase
           .from('characters')
           .update({
-            pve_fights_left: updatedChar.pveFightsLeft,
-            level: updatedChar.level,
-            experience: updatedChar.experience,
-            wins: updatedChar.wins,
-            losses: updatedChar.losses,
-            fight_history: updatedChar.fightHistory,
-            stat_points: updatedChar.statPoints,
-            strength: updatedChar.strength,
-            vitality: updatedChar.vitality,
-            dexterity: updatedChar.dexterity,
-            luck: updatedChar.luck,
-            intelligence: updatedChar.intelligence,
-            focus: updatedChar.focus,
-            hp: updatedChar.hp,
-            max_hp: updatedChar.maxHp,
+            pve_fights_left: medalUpdatedChar.pveFightsLeft,
+            level: medalUpdatedChar.level,
+            experience: medalUpdatedChar.experience,
+            wins: medalUpdatedChar.wins,
+            losses: medalUpdatedChar.losses,
+            fight_history: medalUpdatedChar.fightHistory,
+            stat_points: medalUpdatedChar.statPoints,
+            strength: medalUpdatedChar.strength,
+            vitality: medalUpdatedChar.vitality,
+            dexterity: medalUpdatedChar.dexterity,
+            luck: medalUpdatedChar.luck,
+            intelligence: medalUpdatedChar.intelligence,
+            focus: medalUpdatedChar.focus,
+            hp: medalUpdatedChar.hp,
+            max_hp: medalUpdatedChar.maxHp,
           })
           .eq('id', baseCharacter.id);
 
@@ -476,10 +529,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
-    persistCharacter(updatedChar);
+    persistCharacter(medalUpdatedChar);
 
     setLastXpGain(xpGained);
-    if (xpResult.leveledUp && !updatedChar.autoMode) {
+    if (xpResult.leveledUp && !medalUpdatedChar.autoMode) {
       setLastLevelUp({
         levelsGained: xpResult.levelsGained,
         newLevel: xpResult.newLevel,
@@ -773,7 +826,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const inventory = activeCharacter.inventory || [];
-    if (inventory.length >= INVENTORY_CAPACITY) {
+    const effectiveCapacity = INVENTORY_CAPACITY + (activeCharacter.medalInventoryBonus ?? 0);
+    if (inventory.length >= effectiveCapacity) {
       throw new Error('Inventory is full.');
     }
 
@@ -788,6 +842,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     if (!item) {
       throw new Error('No new loot available.');
     }
+
+    // Determine if this is the first lootbox roll (lucky day context)
+    const isFirstLootbox = !activeCharacter.lastLootRoll || activeCharacter.lastLootRoll === 0;
+    const isEpicPlus = item.rarity === 'epic' || item.rarity === 'legendary';
 
     const updatedChar = normalizeCharacter({
       ...activeCharacter,
@@ -806,7 +864,25 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           focus: updatedChar.focus
         })
         .eq('id', activeCharacter.id!);
-       persistCharacter(updatedChar);
+
+       // ─── Medal Check ──────────────────────────────────────────────────────
+       const medalContext: SpecialMedalContext = {
+         luckyDayRoll: isFirstLootbox && isEpicPlus,
+       };
+       const currentProgress = updatedChar.medalProgress ?? getDefaultMedalProgress();
+       const medalResult = checkMedals(updatedChar, currentProgress, ITEM_ASSETS, medalContext);
+
+       // Apply rewards for newly unlocked medals
+       let medalUpdatedChar = updatedChar;
+       for (const medal of medalResult.newlyUnlocked) {
+         medalUpdatedChar = applyMedalReward(medalUpdatedChar, medal.reward);
+       }
+       medalUpdatedChar = normalizeCharacter({
+         ...medalUpdatedChar,
+         medalProgress: medalResult.progress,
+       });
+
+       persistCharacter(medalUpdatedChar);
        return item;
      } catch (error: any) {
        handleDbError(error, 'lootbox');

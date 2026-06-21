@@ -4,6 +4,7 @@ import { MonsterId } from '../data/monsterAssets';
 import { Character } from '../types/Character';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
 import { generateMonsterForPlayer, getMonsterDef } from '../utils/monsterUtils';
+import type { CombatContext } from '../components/CombatView';
 
 interface FightResult {
   xpGained: number;
@@ -17,12 +18,14 @@ type UseFight = (
   xpGained: number,
   opponentName: string,
   opponentId: string,
+  options?: { consumeEnergy?: boolean; characterOverride?: Character; combatContext?: CombatContext },
 ) => Promise<FightResult | null>;
 
 type UsePveFight = (
   won: boolean,
   xpGained: number,
   monsterName: string,
+  options?: { consumeEnergy?: boolean; characterOverride?: Character; combatContext?: CombatContext },
 ) => Promise<FightResult | null>;
 
 interface UseArenaCombatOptions {
@@ -117,13 +120,13 @@ export const useArenaCombat = ({
     startMatchmaking,
   ]);
 
-  const onCombatComplete = useCallback(async (won: boolean, xpGained: number) => {
+  const onCombatComplete = useCallback(async (won: boolean, xpGained: number, context?: CombatContext) => {
     try {
       const opponentName = combatData?.opponent.name ?? 'UNKNOWN';
       /* eslint-disable react-hooks/rules-of-hooks -- usePveFight/useFight are plain callbacks, not hooks */
       const result = combatData?.matchType === 'pve'
-        ? await usePveFight(won, Math.round(xpGained * GAME_RULES.PVE.XP_MODIFIER), opponentName)
-        : await useFight(won, xpGained, opponentName, combatData?.opponent.id ?? '');
+        ? await usePveFight(won, Math.round(xpGained * GAME_RULES.PVE.XP_MODIFIER), opponentName, { combatContext: context })
+        : await useFight(won, xpGained, opponentName, combatData?.opponent.id ?? '', { combatContext: context });
       /* eslint-enable react-hooks/rules-of-hooks */
 
       if (result?.leveledUp) {
