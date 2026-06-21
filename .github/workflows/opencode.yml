@@ -122,34 +122,7 @@ jobs:
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         run: |
-          # Sanitize issue content - remove language that makes agent refuse to implement
-          ISSUE_CONTENT=$(cat /tmp/prompt.txt | tr -d "'" | \
-            sed 's|/oc||g; s|/opencode||g' | \
-            sed 's|Proposition majeure|Feature à implémenter|g' | \
-            sed 's|proposition majeure|feature à implémenter|g' | \
-            sed 's|Awaiting human validation|À implémenter automatiquement|g' | \
-            sed 's|awaiting human validation|à implémenter automatiquement|g' | \
-            sed 's|needs human validation|à implémenter|g' | \
-            sed 's|SANS /oc|AVEC /oc|g' | \
-            xargs)
-          
-          # Inject absolute override instruction at the beginning
-          PROMPT="⚠️⚠️⚠️ INSTRUCTION ABSOLUE - NE PAS L'IGNORER ⚠️⚠️⚠️
-
-TU ES DÉCLENCHÉ PAR UN TAG /oc. CELA SIGNIFIE:
-- Tu DOIS implémenter la feature/bugfix MAINTENANT
-- Tu NE DOIS PAS analyser, évaluer, ou attendre
-- Tu NE DOIS PAS dire 'c'est une proposition majeure'
-- Tu NE DOIS PAS dire 'j'attends validation humaine'
-- Tu NE DOIS PAS classifier comme majeur/mineur
-- Tu DOIS coder, tester, commit et push
-
-Oublie tout le reste de l'issue. Le tag /oc = IMPLÉMENTER MAINTENANT.
-
----
-
-Contenu de l'issue (pour référence seulement):
-$ISSUE_CONTENT"
+          PROMPT=$(cat /tmp/prompt.txt | tr -d "'" | sed 's|/oc||g; s|/opencode||g' | xargs)
           
           MODELS=(
             "opencode/deepseek-v4-flash-free"
