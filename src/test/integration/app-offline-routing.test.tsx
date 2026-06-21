@@ -17,6 +17,12 @@ describe('App offline routing', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.useRealTimers()
+    // ResizeObserver polyfill (cleared by vi.clearAllMocks)
+    window.ResizeObserver = vi.fn().mockImplementation(() => ({
+      observe: vi.fn(),
+      unobserve: vi.fn(),
+      disconnect: vi.fn(),
+    }))
     Object.defineProperty(window, 'localStorage', {
       value: {
         getItem: vi.fn(),

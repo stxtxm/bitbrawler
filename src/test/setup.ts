@@ -26,6 +26,26 @@ class MockCanvasContext {
 // Définition globale
 (global as any).CanvasRenderingContext2D = MockCanvasContext;
 
+function ensureResizeObserver() {
+    if (typeof window.ResizeObserver === 'undefined') {
+        window.ResizeObserver = vi.fn(() => ({
+            observe: vi.fn(),
+            unobserve: vi.fn(),
+            disconnect: vi.fn(),
+        }));
+    }
+}
+
+function ensureIntersectionObserver() {
+    if (typeof window.IntersectionObserver === 'undefined') {
+        window.IntersectionObserver = vi.fn(() => ({
+            observe: vi.fn(),
+            unobserve: vi.fn(),
+            disconnect: vi.fn(),
+        }));
+    }
+}
+
 beforeAll(() => {
     // Polyfill HTMLCanvasElement
     HTMLCanvasElement.prototype.getContext = vi.fn().mockImplementation((contextType) => {
@@ -50,31 +70,11 @@ beforeAll(() => {
         })),
     });
 
-    // Polyfill IntersectionObserver
-    window.IntersectionObserver = vi.fn().mockImplementation(() => ({
-        observe: vi.fn(),
-        unobserve: vi.fn(),
-        disconnect: vi.fn(),
-    }));
-
-    // Polyfill ResizeObserver
-    // Must be re-applied on each test because vi.restoreAllMocks in some test
-    // files (like app-offline-routing, terrain-canvas) can wipe the polyfill
+    ensureIntersectionObserver();
     ensureResizeObserver();
 });
 
 beforeEach(() => {
-    // Re-apply ResizeObserver before each test as a safety net, since
-    // vi.restoreAllMocks() in afterEach of some tests restores it to undefined
+    ensureIntersectionObserver();
     ensureResizeObserver();
 });
-
-function ensureResizeObserver() {
-    if (typeof window.ResizeObserver === 'undefined') {
-        window.ResizeObserver = vi.fn(() => ({
-            observe: vi.fn(),
-            unobserve: vi.fn(),
-            disconnect: vi.fn(),
-        }));
-    }
-}
