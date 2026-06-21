@@ -326,7 +326,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh workflow run ci.yml --ref "$BRANCH"
+          PR_NUMBER="${{ steps.pr_create.outputs.PR_NUMBER }}"
+          echo "Triggering CI for PR #$PR_NUMBER on branch $BRANCH..."
+          gh workflow run ci.yml --ref "$BRANCH" -f pr_number="$PR_NUMBER"
 
       - name: Trigger Reviewer workflow
         if: steps.pr_create.outputs.PR_NUMBER != ''
