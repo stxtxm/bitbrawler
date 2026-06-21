@@ -285,12 +285,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          echo "🔍 Checking if current issue is a sub-issue..."
-          IS_SUB_ISSUE=$(gh issue view "$ISSUE_NUMBER" --json labels --jq '[.labels[].name] | any(. == "sub-issue")' 2>/dev/null || echo "false")
-          if [ "$IS_SUB_ISSUE" = "true" ]; then
-            echo "⏭️  Issue #$ISSUE_NUMBER is a sub-issue — not dispatching further (prevents cascading)"
-            exit 0
-          fi
           echo "🔍 Checking for sub-issues to dispatch..."
           SUB_ISSUES=$(gh issue list --label auto-generated --state open --json number --jq '.[].number' 2>/dev/null || echo "")
           if [ -z "$SUB_ISSUES" ]; then
@@ -298,6 +292,10 @@ jobs:
             exit 0
           fi
           for ISSUE in $SUB_ISSUES; do
+            if [ "$ISSUE" = "$ISSUE_NUMBER" ]; then
+              echo "⏭️  Skipping current issue #$ISSUE (prevents re-dispatch loop)"
+              continue
+            fi
             HAS_DISPATCHED=$(gh issue view "$ISSUE" --json labels --jq '[.labels[].name] | any(. == "dispatched")' 2>/dev/null || echo "false")
             if [ "$HAS_DISPATCHED" = "true" ]; then
               echo "⏭️  Issue #$ISSUE already dispatched, skipping"
