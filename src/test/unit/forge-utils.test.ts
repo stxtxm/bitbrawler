@@ -485,7 +485,9 @@ describe('performFusion', () => {
       essence: FUSION_COST.common,
     });
 
-    const { result, updatedChar } = performFusion(items, char, pool);
+    // Use deterministic RNG that never triggers lucky proc
+    const rng = () => LUCKY_PROC_CHANCE;
+    const { result, updatedChar } = performFusion(items, char, pool, rng);
 
     expect(result).not.toBeNull();
     // Should have 2 items left: 1 result + 1 remaining copy

@@ -7,7 +7,6 @@ import {
   calculateLootProgress,
   calculateProgressionProgress,
   applyMedalReward,
-  MEDAL_IDS,
 } from '../../utils/medalUtils';
 import { PixelItemAsset } from '../../types/Item';
 import { Character } from '../../types/Character';
@@ -382,7 +381,7 @@ describe('checkMedals', () => {
     const progress = getDefaultMedalProgress();
     const result = checkMedals(char, progress, items);
     expect(result.newlyUnlocked.some(m => m.id === 'epic_seeker')).toBe(true);
-    expect(result.newlyUnlocked.some(m => m.id === 'rare_hunter')).toBe(false); // only 2 rare+
+    expect(result.newlyUnlocked.some(m => m.id === 'rare_hunter')).toBe(true); // 1 epic + 2 rare = 3 rare+
   });
 
   it('unlocks progression medals at level milestones', () => {
