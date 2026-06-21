@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { ActionPanel } from '../components/arena/ActionPanel';
 import { ArenaHeader } from '../components/arena/ArenaHeader';
