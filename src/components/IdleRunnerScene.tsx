@@ -66,7 +66,11 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   const containerStyle = useMemo(() => {
     const w = typeof window !== 'undefined' ? window.innerWidth : 768;
     const isMobile = w < 768;
-    return { background: isMobile ? '#000' : 'transparent' };
+    return {
+      background: isMobile ? 'url(/images/pve-mobile-bg.jpg)' : 'transparent',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center'
+    };
   }, []);
 
   useEffect(() => {
