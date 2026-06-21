@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { ActionPanel } from '../components/arena/ActionPanel';
 import { ArenaHeader } from '../components/arena/ArenaHeader';
@@ -111,6 +111,11 @@ const Arena = () => {
     [activeCharacter],
   );
 
+  const combatOpponent = useMemo(() => {
+    if (!combat.combatData?.opponent) return null;
+    return applyEquipmentToCharacter(combat.combatData.opponent);
+  }, [combat.combatData?.opponent]);
+
   const statOptions: ArenaStatOption[] = useMemo(() => {
     if (!effectiveCharacter) return [];
     return [
@@ -218,10 +223,10 @@ const Arena = () => {
         <SettingsPanel {...settings} soundEnabled={enabled} onToggleSound={handleToggleSound} />
       )}
 
-      {!combat.pveMode && combat.combatData && (
+      {!combat.pveMode && combat.combatData && combatOpponent && (
         <CombatView
           player={effectiveCharacter}
-          opponent={applyEquipmentToCharacter(combat.combatData.opponent)}
+          opponent={combatOpponent}
           matchType={combat.combatData.matchType}
           monsterId={combat.combatData.matchType === 'pve' ? combat.pveMonster?.monsterId : undefined}
           candidates={combat.combatData.candidates}
