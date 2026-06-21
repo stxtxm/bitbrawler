@@ -45,37 +45,37 @@ export const ActionPanel = memo(function ActionPanel({
         </button>
       </div>
 
-      <div className="daily-status-compact" aria-hidden={pveMode} style={pveMode ? { visibility: 'hidden', pointerEvents: 'none' } : {}}>
-        <div className="status-label">
-          <PixelIcon type="sword" size={32} />
-          <div className="label-text">
-            <span className="label-main">BATTLE ENERGY</span>
-            <span className="label-sub">
-              {isOfflineMode
-                ? 'OFFLINE SNAPSHOT'
-                : `${fightsLeft} / ${GAME_RULES.COMBAT.MAX_DAILY_FIGHTS} AVAILABLE`}
-            </span>
+      <div className={`daily-status-compact ${pveMode ? 'boss-status-compact' : ''}`}>
+        {pveMode ? (
+          <div className="status-label">
+            <span className="boss-icon">👑</span>
+            <div className="label-text">
+              <span className="label-main">BOSS FIGHTS</span>
+              <span className="label-sub">{pveFightsLeft} / {GAME_RULES.COMBAT.MAX_DAILY_PVE_FIGHTS} AVAILABLE</span>
+            </div>
           </div>
-        </div>
-        <div className="mini-pips">
-          {Array.from({ length: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS }).map((_, i) => (
-            <div key={i} className={`mini-pip ${i < fightsLeft ? 'active' : 'used'}`}></div>
-          ))}
-        </div>
-      </div>
-
-      <div className="daily-status-compact boss-status-compact" aria-hidden={!pveMode} style={!pveMode ? { visibility: 'hidden', pointerEvents: 'none' } : {}}>
-        <div className="status-label">
-          <span className="boss-icon">👑</span>
-          <div className="label-text">
-            <span className="label-main">BOSS FIGHTS</span>
-            <span className="label-sub boss-sub">{pveFightsLeft} / {GAME_RULES.COMBAT.MAX_DAILY_PVE_FIGHTS} AVAILABLE</span>
+        ) : (
+          <div className="status-label">
+            <PixelIcon type="sword" size={32} />
+            <div className="label-text">
+              <span className="label-main">BATTLE ENERGY</span>
+              <span className="label-sub">
+                {isOfflineMode
+                  ? 'OFFLINE SNAPSHOT'
+                  : `${fightsLeft} / ${GAME_RULES.COMBAT.MAX_DAILY_FIGHTS} AVAILABLE`}
+              </span>
+            </div>
           </div>
-        </div>
+        )}
         <div className="mini-pips">
-          {Array.from({ length: GAME_RULES.COMBAT.MAX_DAILY_PVE_FIGHTS }).map((_, i) => (
-            <div key={i} className="mini-pip used"></div>
-          ))}
+          {pveMode
+            ? Array.from({ length: GAME_RULES.COMBAT.MAX_DAILY_PVE_FIGHTS }).map((_, i) => (
+              <div key={i} className="mini-pip used"></div>
+            ))
+            : Array.from({ length: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS }).map((_, i) => (
+              <div key={i} className={`mini-pip ${i < fightsLeft ? 'active' : 'used'}`}></div>
+            ))
+          }
         </div>
       </div>
 

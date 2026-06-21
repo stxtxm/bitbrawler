@@ -1139,9 +1139,9 @@
     background: radial-gradient(circle, #222 0%, #000 100%);
 
     @include mobile {
-        height: 220px;
-        min-height: 220px;
-        max-height: 220px;
+        height: 300px;
+        min-height: 300px;
+        max-height: 300px;
         margin-bottom: 5px;
         border-width: 1px;
     }
@@ -1603,7 +1603,7 @@
         }
     }
 
-    .boss-sub {
+    .label-sub {
         color: $accent-gold !important;
     }
 
