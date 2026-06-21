@@ -1,6 +1,5 @@
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DAY_PALETTE, NIGHT_PALETTE } from '../../utils/ColorPalette';
-import { useTerrainNoiseMaps } from '../../hooks/useTerrainNoise';
 import { useResponsiveCanvas, useTerrainAnimation } from '../../hooks/useTerrainAnimation';
 import {
   SCROLL_CONFIG,
@@ -8,7 +7,6 @@ import {
   getQualitySettings,
   shouldEnable3d,
 } from '../../config/terrainConfig';
-import { getBiomeColor } from '../../generation/BiomeGenerator';
 
 interface ProceduralTerrainProps {
   width?: number;
@@ -21,12 +19,11 @@ interface ProceduralTerrainProps {
 
 /**
  * Procedural Terrain Renderer
- * 4-layer parallax with organic shapes, biome-aware coloring, smooth scrolling
+ * Parallax pixel-art terrain with sky, mountains, and scrolling grass ground
  */
 export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
   width: propWidth,
   height: propHeight,
-  parallaxLayers: propLayers,
   seed,
   isNight = false,
 }) => {
@@ -38,16 +35,10 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
   const height = canvasSize.height || propHeight || 512;
 
   const qualitySettings = useMemo(() => getQualitySettings(width), [width]);
-
-  const layerCount = propLayers ?? qualitySettings.layers;
   const fps = qualitySettings.fps;
-  const noiseResolution = qualitySettings.noiseResolution;
-  const cellSize = qualitySettings.cellSize;
   const enable3d = shouldEnable3d(width);
 
   const palette = isNight ? NIGHT_PALETTE : DAY_PALETTE;
-
-  const noiseMaps = useTerrainNoiseMaps(width, height, layerCount, seed, noiseResolution);
 
   const seedNum = useMemo(
     () => parseInt(seed.replace(/\D/g, '') || '0', 10),
@@ -100,105 +91,67 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
     ctx.fill();
   };
 
-  // Draw organic ground with noise-driven elevation
-  const drawGround = (
+  // Draw pixel-art ground with scrolling grass
+  const drawPixelGround = (
     ctx: CanvasRenderingContext2D,
-    groundNoise: Uint8Array,
     groundOffset: number,
-    noiseWidth: number,
   ) => {
-    const yStart = Math.floor((height * 0.45) / cellSize);
-    const yEnd = Math.floor(height / cellSize);
+    const groundTop = height * 0.60;
 
-    for (let y = yStart; y < yEnd; y++) {
-      const rowAlpha = Math.min(1, (y - yStart) / 4); // Fade in at top edge
+    // ── 1. Solid dirt base ──
+    ctx.fillStyle = isNight ? '#1a1410' : '#6b5340';
+    ctx.fillRect(0, groundTop, width, height - groundTop);
 
-      for (let nx = 0; nx < noiseWidth; nx++) {
-        const noiseIdx = y * noiseWidth + nx;
-        if (noiseIdx >= groundNoise.length) continue;
-        const noiseVal = groundNoise[noiseIdx];
+    // ── 2. Pixel grass strip (parallax scrolling) ──
+    const grassScroll = (groundOffset * 0.8) % 32;
+    const grassTop = groundTop - 5;
 
-        // Smooth density: higher noise = more solid, lower = transparent
-        const density = (noiseVal - 100) / 155; // Maps 100->0, 255->1
-        if (density <= 0) continue;
+    // Solid green strip
+    ctx.fillStyle = isNight ? '#1a3a1a' : '#4a8a3a';
+    ctx.fillRect(0, grassTop, width, 8);
 
-        const cellAlpha = Math.min(1, density * rowAlpha);
-        const screenX = ((nx * cellSize * noiseResolution - groundOffset + SCROLL_CONFIG.SCROLL_WRAP_DISTANCE * 2) %
-          (SCROLL_CONFIG.SCROLL_WRAP_DISTANCE * 2));
-        const screenY = y * cellSize;
+    // Pixel grass blades
+    const bladeColors = isNight
+      ? ['#0f2a0f', '#1a3a1a', '#2a4a2a']
+      : ['#3a7a2a', '#4a8a3a', '#5a9a4a'];
 
-        if (screenX < -cellSize || screenX > width + cellSize) continue;
+    for (let x = -16; x <= width + 16; x += 4) {
+      const sx = ((x - grassScroll + width + 32) % (width + 32)) - 16;
+      if (sx < -4 || sx > width) continue;
 
-        const color = getBiomeColor(screenX + offset, screenY, seedNum, 'grass', offset);
+      const bladePhase = Math.sin((x + seedNum) * 0.3) * 0.5 + 0.5;
+      const bladeH = 3 + Math.floor(bladePhase * 5);
+      const colorIdx = Math.floor((Math.sin((x + seedNum) * 0.15) * 0.5 + 0.5) * 3) % 3;
 
-        ctx.globalAlpha = cellAlpha;
-        ctx.fillStyle = color;
+      ctx.fillStyle = bladeColors[colorIdx];
+      ctx.fillRect(sx, grassTop - bladeH, 3, bladeH);
+    }
 
-        // Draw rounded cell for organic look
-        const radius = cellSize * 0.4;
-        ctx.beginPath();
-        ctx.roundRect(screenX, screenY, cellSize, cellSize, radius);
-        ctx.fill();
-
-        // Subtle depth shadow
-        if (enable3d && DEPTH_CONFIG.SHADOWS_ENABLED && y % 4 === 0 && density > 0.5) {
-          ctx.globalAlpha = 0.08 * cellAlpha;
-          ctx.fillStyle = '#000';
-          ctx.fillRect(screenX, screenY + cellSize - 1, cellSize, 1);
-        }
+    // ── 3. Ground surface texture ──
+    for (let x = 0; x < width; x += 6) {
+      const texSeed = Math.sin(x * 0.17 + seedNum * 0.3) * 0.5 + 0.5;
+      if (texSeed > 0.65) {
+        ctx.fillStyle = isNight ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.07)';
+        ctx.fillRect(x, groundTop + 2, 5, 3);
       }
     }
-    ctx.globalAlpha = 1;
-  };
 
-  // Draw foliage/trees as organic shapes
-  const drawFoliage = (
-    ctx: CanvasRenderingContext2D,
-    treeNoise: Uint8Array,
-    treeOffset: number,
-    noiseWidth: number,
-  ) => {
-    const yStart = Math.floor((height * 0.28) / cellSize);
-    const yEnd = Math.floor((height * 0.48) / cellSize);
+    // ── 4. Small pixel bushes ──
+    const bushScroll = (groundOffset * 0.5) % 96;
+    for (let i = 0; i < 8; i++) {
+      const bx = ((i * 96 + (seedNum % 47) - bushScroll + width + 192) % (width + 192)) - 96;
+      if (bx < -12 || bx > width + 12) continue;
 
-    for (let y = yStart; y < yEnd; y++) {
-      for (let nx = 0; nx < noiseWidth; nx++) {
-        const noiseIdx = y * noiseWidth + nx;
-        if (noiseIdx >= treeNoise.length) continue;
-        const noiseVal = treeNoise[noiseIdx];
+      const bushColor = isNight ? '#0f2f0f' : '#4a7a3a';
+      const bushDark = isNight ? '#0a1f0a' : '#3a6a2a';
 
-        // Smooth density for foliage
-        const density = (noiseVal - 140) / 115; // 140->0, 255->1
-        if (density <= 0) continue;
+      ctx.fillStyle = bushColor;
+      ctx.fillRect(bx, grassTop - 7, 6, 4);
+      ctx.fillRect(bx + 1, grassTop - 10, 4, 3);
 
-        const screenX = ((nx * cellSize * noiseResolution - treeOffset + SCROLL_CONFIG.SCROLL_WRAP_DISTANCE * 2) %
-          (SCROLL_CONFIG.SCROLL_WRAP_DISTANCE * 2));
-        const screenY = y * cellSize;
-
-        if (screenX < -cellSize * 2 || screenX > width + cellSize * 2) continue;
-
-        const color = getBiomeColor(screenX + offset, screenY, seedNum, 'grass', offset);
-
-        ctx.globalAlpha = Math.min(0.85, density * 0.9);
-        ctx.fillStyle = color;
-
-        // Draw organic blob instead of square
-        const s = cellSize * (0.6 + density * 0.5);
-        ctx.beginPath();
-        ctx.arc(screenX + cellSize / 2, screenY + cellSize / 2, s / 2, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Highlight on top
-        if (enable3d && DEPTH_CONFIG.GLOW_ENABLED && density > 0.6) {
-          ctx.globalAlpha = 0.12;
-          ctx.fillStyle = '#fff';
-          ctx.beginPath();
-          ctx.arc(screenX + cellSize / 2 - 1, screenY + cellSize / 2 - 1, s / 4, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
+      ctx.fillStyle = bushDark;
+      ctx.fillRect(bx, grassTop - 4, 2, 2);
     }
-    ctx.globalAlpha = 1;
   };
 
   // Main render
@@ -247,47 +200,11 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       ctx.fillRect(0, height * 0.42, width, 4);
     }
 
-    // ── FOLIAGE / TREES (0.5x) ────────────────────────
-    const treeSpeed = SCROLL_CONFIG.LAYER_MULTIPLIERS.trees;
-    const treeOffset = (offset * treeSpeed) % (SCROLL_CONFIG.SCROLL_WRAP_DISTANCE * 2);
-    const treeNoiseIndex = Math.min(1, layerCount - 1);
-
-    if (layerCount > 1 && noiseMaps[treeNoiseIndex]) {
-      const treeNoise = noiseMaps[treeNoiseIndex];
-      const noiseWidth = Math.floor((width / noiseResolution) / 4);
-      drawFoliage(ctx, treeNoise, treeOffset, noiseWidth);
-    }
-
-    // ── GROUND (1.0x) ─────────────────────────────────
+    // ── PIXEL GROUND (solid base + scrolling grass) ──
     const groundSpeed = SCROLL_CONFIG.LAYER_MULTIPLIERS.ground;
-    const groundOffset = (offset * groundSpeed) % (SCROLL_CONFIG.SCROLL_WRAP_DISTANCE * 2);
-    const groundNoiseIndex = Math.min(layerCount - 1, 2);
-
-    if (noiseMaps[groundNoiseIndex]) {
-      const groundNoise = noiseMaps[groundNoiseIndex];
-      const noiseWidth = Math.floor((width / noiseResolution) / 4);
-      drawGround(ctx, groundNoise, groundOffset, noiseWidth);
-    }
-
-    // ── DECORATIONS (1.2x) ────────────────────────────
-    if (layerCount > 2) {
-      const accentOffset = (offset * SCROLL_CONFIG.LAYER_MULTIPLIERS.decorations) % (SCROLL_CONFIG.SCROLL_WRAP_DISTANCE * 2);
-
-      for (let x = 0; x < width; x += 80) {
-        const screenX = ((x - accentOffset + SCROLL_CONFIG.SCROLL_WRAP_DISTANCE * 2) %
-          (SCROLL_CONFIG.SCROLL_WRAP_DISTANCE * 2));
-        const accentColor = getBiomeColor(x + offset, height * 0.47, seedNum, 'accent', offset);
-
-        // Small organic decoration dots
-        ctx.globalAlpha = 0.6;
-        ctx.fillStyle = accentColor;
-        ctx.beginPath();
-        ctx.arc(screenX, height * 0.46, 2 + Math.sin(x * 0.1 + seedNum) * 1, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-    }
-  }, [width, height, offset, palette, noiseMaps, seedNum, layerCount, enable3d, isNight]);
+    const groundOffset = offset * groundSpeed;
+    drawPixelGround(ctx, groundOffset);
+  }, [width, height, offset, palette, seedNum, enable3d, isNight]);
 
   return (
     <div
