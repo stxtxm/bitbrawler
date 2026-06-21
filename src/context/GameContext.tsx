@@ -866,10 +866,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       throw new Error('No new loot available.');
     }
 
-    // Determine if this is the first lootbox roll (lucky day context)
-    const isFirstLootbox = !activeCharacter.lastLootRoll || activeCharacter.lastLootRoll === 0;
-    const isEpicPlus = item.rarity === 'epic' || item.rarity === 'legendary';
-
     const updatedChar = normalizeCharacter({
       ...activeCharacter,
       inventory: [...inventory, item.id],
@@ -878,10 +874,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     });
 
     // Check medals after lootbox claim
-    const isFirstLootbox = !activeCharacter.lastLootRoll || inventory.length === 0;
-    const isEpicOrBetter = item.rarity === 'epic' || item.rarity === 'legendary';
+    const isFirstLootbox = !activeCharacter.lastLootRoll || activeCharacter.lastLootRoll === 0;
+    const isEpicPlus = item.rarity === 'epic' || item.rarity === 'legendary';
     const lootMedalContext: SpecialMedalContext = {
-      luckyDayRoll: isFirstLootbox && isEpicOrBetter,
+      luckyDayRoll: isFirstLootbox && isEpicPlus,
       sessionCount: updatedChar.sessionCount ?? 0,
     };
     const charWithMedals = normalizeCharacter(medalCheckAndApply(updatedChar, lootMedalContext));

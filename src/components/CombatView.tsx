@@ -248,27 +248,6 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
         });
     }, [currentRound, phase]);
 
-    const getCombatContext = (): CombatContext | undefined => {
-        if (!combatResult) return undefined;
-        const won = combatResult.winner === 'attacker';
-        if (!won) return undefined;
-
-        const timeline = combatResult.timeline;
-        if (!timeline || timeline.length === 0) return undefined;
-
-        const initialHp = timeline[0].attackerHp;
-        const finalHp = timeline[timeline.length - 1].attackerHp;
-
-        // Glass Cannon: won with less than 10 HP remaining
-        const glassCannon = finalHp < 10;
-
-        // Pacifist: won with 0 damage taken (attacker HP never decreased)
-        const damageTaken = initialHp - finalHp;
-        const pacifist = damageTaken <= 0;
-
-        return { glassCannon, pacifist };
-    };
-
     const handleFinish = async () => {
         if (!combatResult) return;
 
