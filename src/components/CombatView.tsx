@@ -62,7 +62,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const [fighterEntrance, setFighterEntrance] = useState(false);
 
     const particleSystemRef = useRef<ParticleSystem | null>(null);
-    const mainContainerRef = useRef<HTMLDivElement | null>(null);
+    const modalRef = useRef<HTMLDivElement | null>(null);
 
     const scanList = useMemo(() => {
         const map = new Map<string, Character>();
@@ -80,9 +80,9 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const selectedKey = opponent.id || opponent.name;
 
     useEffect(() => {
-        if (mainContainerRef.current) {
+        if (modalRef.current) {
             const ps = new ParticleSystem();
-            ps.mount(mainContainerRef.current);
+            ps.mount(modalRef.current);
             particleSystemRef.current = ps;
         }
         return () => {
@@ -160,7 +160,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                     const ps = particleSystemRef.current;
                     const playerX = 22;
                     const opponentX = 78;
-                    const centerY = 52;
+                    const centerY = 46;
 
                     if (action) {
                         setActionPulse(action);
@@ -176,11 +176,11 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                         const dmg = extractDamage(detail);
                         if (dmg !== null) {
                             if (action.actor === 'player') {
-                                if (action.type === 'crit') ps?.emit('crit', opponentX, centerY, 1); 
+                                if (action.type === 'crit') ps?.emit('crit', opponentX, centerY, 1);
                                 else if (action.type === 'miss') ps?.emit('miss', opponentX, centerY, 1);
                                 else ps?.emit('damage', opponentX, centerY, 1, dmg);
                             } else {
-                                if (action.type === 'crit') ps?.emit('crit', playerX, centerY, 1); 
+                                if (action.type === 'crit') ps?.emit('crit', playerX, centerY, 1);
                                 else if (action.type === 'miss') ps?.emit('miss', playerX, centerY, 1);
                                 else ps?.emit('damage', playerX, centerY, 1, dmg);
                             }
@@ -277,8 +277,8 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const reactionType = actionPulse && actionPulse.type !== 'miss' ? actionPulse.type : null;
 
     return (
-        <div className="combat-overlay" onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()} ref={mainContainerRef}>
-            <div className="combat-modal">
+        <div className="combat-overlay" onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()}>
+            <div className="combat-modal" ref={modalRef}>
                 {/* ... (existing JSX for intro/vs/combat) ... */}
                 {phase === 'intro' && (matchType === 'pve' ? (
                     <div className="combat-intro pve-intro">
