@@ -19,4 +19,8 @@ export const Login = lazy(loginImporter)
 export const Arena = lazy(arenaImporter)
 export const NotFound = lazy(notFoundImporter)
 
+const forgeImporter = () => import('../pages/Forge')
+
+export const Forge = lazy(forgeImporter)
+
 export const prefetchArena = () => (canPrefetch() ? arenaImporter() : Promise.resolve())

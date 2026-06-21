@@ -322,8 +322,7 @@ describe('performFusion', () => {
       essence: FUSION_COST.common,
     });
 
-    // Use controlled RNG to prevent flaky lucky proc
-    const rng = () => 0.5;
+    const rng = () => LUCKY_PROC_CHANCE; // ensure no lucky proc
     const { result, updatedChar } = performFusion(items, char, pool, rng);
 
     expect(result).not.toBeNull();
