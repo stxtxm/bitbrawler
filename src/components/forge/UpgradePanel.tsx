@@ -17,6 +17,7 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [upgrading, setUpgrading] = useState(false);
   const [showGlow, setShowGlow] = useState(false);
+  const [showShake, setShowShake] = useState(false);
 
   const inventoryItems = useMemo(() => {
     if (!activeCharacter) return [];
@@ -64,11 +65,13 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
       const result = await upgradeItem(selectedId);
 
       if (!result) {
+        setShowShake(true);
         if (insufficientEssence) {
           notify('Not enough essence!', 'error', 3000);
         } else {
           notify('Upgrade failed. Try again.', 'error', 3000);
         }
+        setTimeout(() => setShowShake(false), 400);
         setUpgrading(false);
         return;
       }
@@ -169,6 +172,15 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
         })}
       </div>
 
+      {/* Sparkle particles on success */}
+      {showGlow && (
+        <div className="forge-sparkle-container">
+          {Array.from({ length: 8 }, (_, i) => (
+            <div key={i} className="forge-sparkle" />
+          ))}
+        </div>
+      )}
+
       {/* Selected item details */}
       {selectedItem && (
         <div className={`forge-upgrade-details ${showGlow ? 'forge-anim-glow' : ''}`}>
@@ -211,7 +223,7 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
       )}
 
       {/* Action bar */}
-      <div className="forge-action-bar">
+      <div className={`forge-action-bar ${showShake ? 'forge-anim-shake' : ''}`}>
         <div className="forge-action-info">
           {selectedItem ? (
             isMaxLevel ? (

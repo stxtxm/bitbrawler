@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
 import { getInventoryItems } from '../../utils/equipmentUtils';
@@ -42,6 +42,8 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
   const { notify } = useNotification();
   const [salvaging, setSalvaging] = useState<Set<string>>(new Set());
   const [salvagedIds, setSalvagedIds] = useState<Set<string>>(new Set());
+  const [essenceBump, setEssenceBump] = useState(false);
+  const prevEssenceRef = useRef(essence);
 
   const inventoryItems = useMemo(() => {
     if (!activeCharacter) return [];
@@ -51,6 +53,17 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
   const grouped = useMemo(() => groupByRarity(inventoryItems), [inventoryItems]);
 
   const isNearSoftCap = essence >= ESSENCE_SOFT_CAP - 50 && essence < ESSENCE_SOFT_CAP;
+
+  // Trigger count-up animation when essence increases
+  useEffect(() => {
+    if (essence > prevEssenceRef.current) {
+      setEssenceBump(true);
+      const timer = setTimeout(() => setEssenceBump(false), 600);
+      prevEssenceRef.current = essence;
+      return () => clearTimeout(timer);
+    }
+    prevEssenceRef.current = essence;
+  }, [essence]);
 
   const handleSalvage = useCallback(
     async (itemId: string) => {
@@ -103,7 +116,7 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
         </div>
         <div className="forge-essence-bar">
           <span className="forge-essence-label">ESSENCE</span>
-          <span className="forge-essence-value">{essence}</span>
+          <span className={`forge-essence-value ${essenceBump ? 'forge-essence-count-up' : ''}`}>{essence}</span>
         </div>
         <div className="forge-empty-state">
           <div className="forge-empty-text">
@@ -129,7 +142,7 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
 
       <div className="forge-essence-bar">
         <span className="forge-essence-label">CURRENT ESSENCE</span>
-        <span className="forge-essence-value">{essence}</span>
+        <span className={`forge-essence-value ${essenceBump ? 'forge-essence-count-up' : ''}`}>{essence}</span>
       </div>
 
       {isNearSoftCap && (
@@ -162,7 +175,7 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
                   return (
                     <button
                       key={item.id}
-                      className={`forge-item-card ${isSalvaged ? 'salvaged-item' : ''} ${isLoading ? 'forge-anim-dissolve' : ''}`}
+                      className={`forge-item-card ${isSalvaged ? 'salvaged-item' : ''} ${isLoading ? 'forge-anim-break' : ''}`}
                       onClick={() => handleSalvage(item.id)}
                       disabled={isSalvaged || isLoading}
                       aria-label={`Salvage ${item.name}`}
