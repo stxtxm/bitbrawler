@@ -180,7 +180,9 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
 
                         const dmg = extractDamage(detail);
                         const targetPs = action.actor === 'player' ? rightParticleSystemRef.current : leftParticleSystemRef.current;
-                        const x = action.actor === 'player' ? 70 : 30;
+                        const targetLayer = action.actor === 'player' ? rightLayerRef.current : leftLayerRef.current;
+                        const targetLayerWidth = targetLayer?.clientWidth || 300;
+                        const x = action.actor === 'player' ? targetLayerWidth * 0.3 : targetLayerWidth * 0.7;
 
                         if (dmg !== null) {
                             targetPs?.emit('damage', x, 44, 1, dmg);
