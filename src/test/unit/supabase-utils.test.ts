@@ -42,6 +42,8 @@ describe('convertFromSupabase', () => {
     idle_max_streak: 0,
     idle_total_kills: 0,
     idle_total_xp: 0,
+    essence: 50,
+    item_upgrades: { sword_01: 3 },
   }
 
   it('maps all CharacterRow fields to Character correctly', () => {
