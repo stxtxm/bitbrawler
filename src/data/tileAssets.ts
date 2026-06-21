@@ -212,16 +212,25 @@ export interface CloudInstance {
   opacity: number
 }
 
-export function generateCloudPositions(): CloudInstance[] {
-  const count = 3 + Math.floor(Math.random() * 3)
+function seededRandom(seed: number): () => number {
+  let s = seed
+  return () => {
+    s = (s * 16807 + 0) % 2147483647
+    return (s - 1) / 2147483646
+  }
+}
+
+export function generateCloudPositions(seed?: string): CloudInstance[] {
+  const rand = seed ? seededRandom(parseInt(seed.replace(/\D/g, '') || '42', 10)) : Math.random
+  const count = 3 + Math.floor(rand() * 3)
   const clouds: CloudInstance[] = []
   for (let i = 0; i < count; i++) {
     clouds.push({
-      type: CLOUD_TILES[Math.floor(Math.random() * CLOUD_TILES.length)],
-      x: (i / count) * 100 + Math.random() * 10 - 5,
-      y: 2 + Math.random() * 6,
-      scale: 1 + Math.random() * 2,
-      opacity: 0.5 + Math.random() * 0.4,
+      type: CLOUD_TILES[Math.floor(rand() * CLOUD_TILES.length)],
+      x: (i / count) * 100 + rand() * 10 - 5,
+      y: 2 + rand() * 6,
+      scale: 1 + rand() * 2,
+      opacity: 0.5 + rand() * 0.4,
     })
   }
   return clouds

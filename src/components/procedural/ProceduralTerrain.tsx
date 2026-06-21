@@ -96,7 +96,8 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
     ctx: CanvasRenderingContext2D,
     groundOffset: number,
   ) => {
-    const groundTop = height * 0.60;
+    const isMobile = width < 768;
+    const groundTop = height * (isMobile ? 0.70 : 0.62);
 
     // ── 1. Solid dirt base ──
     ctx.fillStyle = isNight ? '#1a1410' : '#6b5340';

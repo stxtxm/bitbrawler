@@ -62,7 +62,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     return 8
   }, [])
   const monsterScale = useMemo(() => Math.max(3, charScale - 2), [charScale])
-  const clouds = useMemo(() => generateCloudPositions(), [])
+  const clouds = useMemo(() => generateCloudPositions(character.seed), [character.seed])
   const containerStyle = useMemo(() => ({ background: 'transparent' }), []);
 
   useEffect(() => {
@@ -130,7 +130,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
             <div key={i} className="cloud-instance" style={{
               left: `${cloud.x}%`,
               top: `${cloud.y}%`,
-              transform: `scaleX(${cloud.scale})`,
+              '--scale': cloud.scale,
               opacity: cloud.opacity,
               backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(
                 cloud.type.pixels.map((row, y) =>
