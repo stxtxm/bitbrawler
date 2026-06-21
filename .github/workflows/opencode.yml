@@ -60,9 +60,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          for LABEL in auto-generated dispatched; do
+          for LABEL in auto-generated dispatched sub-issue; do
+            COLOR="grey"
+            [ "$LABEL" = "sub-issue" ] && COLOR="1d76db"
             gh label get "$LABEL" 2>/dev/null || \
-              gh label create "$LABEL" --color "grey" --description "Auto-managed by OpenCode agent" 2>/dev/null || true
+              gh label create "$LABEL" --color "$COLOR" --description "Auto-managed by OpenCode agent" 2>/dev/null || true
           done
 
       - name: Resolve issue context
@@ -283,6 +285,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          echo "🔍 Checking if current issue is a sub-issue..."
+          IS_SUB_ISSUE=$(gh issue view "$ISSUE_NUMBER" --json labels --jq '[.labels[].name] | any(. == "sub-issue")' 2>/dev/null || echo "false")
+          if [ "$IS_SUB_ISSUE" = "true" ]; then
+            echo "⏭️  Issue #$ISSUE_NUMBER is a sub-issue — not dispatching further (prevents cascading)"
+            exit 0
+          fi
           echo "🔍 Checking for sub-issues to dispatch..."
           SUB_ISSUES=$(gh issue list --label auto-generated --state open --json number --jq '.[].number' 2>/dev/null || echo "")
           if [ -z "$SUB_ISSUES" ]; then
@@ -296,7 +304,7 @@ jobs:
               continue
             fi
             echo "Dispatching sub-issue #$ISSUE..."
-            gh issue add-label "$ISSUE" --label dispatched 2>/dev/null || true
+            gh issue edit "$ISSUE" --add-label dispatched 2>/dev/null || true
             gh workflow run opencode.yml -f issue_number="$ISSUE" --repo "${{ github.repository }}"
             echo "✓ Dispatched #$ISSUE"
             sleep 2
