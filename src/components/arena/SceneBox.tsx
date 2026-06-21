@@ -18,7 +18,7 @@ export const SceneBox = memo(function SceneBox({
   pveMode,
   idle,
 }: SceneBoxProps) {
-  const pvpScale = typeof window !== 'undefined' && window.innerWidth < 600 ? 16 : 12;
+  const pvpScale = typeof window !== 'undefined' && window.innerWidth < 480 ? 6 : 8;
 
   return (
     <div className="scene-box">
