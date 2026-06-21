@@ -128,7 +128,7 @@ jobs:
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
         run: |
-          PROMPT=$(cat /tmp/prompt.txt | tr -d "'" | sed 's|/oc||g; s|/opencode||g' | xargs)
+          PROMPT=$(cat /tmp/prompt.txt | tr -d "'" | xargs)
           
           MODELS=(
             "opencode/deepseek-v4-flash-free"
