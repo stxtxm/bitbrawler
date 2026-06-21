@@ -381,7 +381,7 @@ describe('checkMedals', () => {
     const progress = getDefaultMedalProgress();
     const result = checkMedals(char, progress, items);
     expect(result.newlyUnlocked.some(m => m.id === 'epic_seeker')).toBe(true);
-    expect(result.newlyUnlocked.some(m => m.id === 'rare_hunter')).toBe(true); // 3 rare+ items
+    expect(result.newlyUnlocked.some(m => m.id === 'rare_hunter')).toBe(true); // epic + 2 rares = 3 rare+
   });
 
   it('unlocks progression medals at level milestones', () => {

@@ -47,8 +47,7 @@ function getComebackCount(history: Character['fightHistory']): number {
   let count = 0;
   let lossStreak = 0;
 
-  // Iterate from oldest to newest so that lossStreak is accumulated before
-  // we encounter the win that breaks the streak
+  // Iterate from oldest to newest to detect wins after loss streaks
   for (let i = history.length - 1; i >= 0; i--) {
     const entry = history[i];
     if (entry.won) {
