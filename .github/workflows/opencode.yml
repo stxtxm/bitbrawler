@@ -157,8 +157,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           echo "🔍 Supervisor mode — validating campaign for issue #$ISSUE_NUMBER..."
-          PROMPT="Tu es le superviseur de campagne. Valide et ferme l'issue #$ISSUE_NUMBER.
-          
+          PROMPT="Tu es le superviseur de campagne. Valide la campagne #$ISSUE_NUMBER et mets à jour la documentation.
+
           ## Issue #$ISSUE_NUMBER
           Titre: $(gh issue view "$ISSUE_NUMBER" --json title --jq '.title // ""')
           Body: $(gh issue view "$ISSUE_NUMBER" --json body --jq '.body // ""')
@@ -167,16 +167,30 @@ jobs:
           1. Vérifie que toutes les sous-issues (label campaign-$ISSUE_NUMBER) sont fermées
           2. Trouve les PRs associées à chaque sous-issue
           3. Exécute les tests de validation (npm run lint && npm test && npm run build)
-          4. Poste un rapport récapitulatif sur l'issue #$ISSUE_NUMBER
-          5. Ferme l'issue #$ISSUE_NUMBER si tout est OK
+          4. Met à jour les notes de patch dans src/data/updateNotes.ts :
+             - Lis le dernier numéro de version (ex: 3.3.0) et incrémente (devient 3.4.0)
+             - Ajoute une nouvelle entrée EN HAUT du tableau UPDATE_NOTES
+             - Utilise la date du jour (date +%Y-%m-%d)
+             - Résume les changements à partir des titres et descriptions des PRs mergées
+             - Chaque changement est une ligne de texte lisible par un joueur
+          5. Met à jour README.md si la feature ajoute une capacité joueur notable :
+             - Lis la section '## Features'
+             - Ajoute une ligne décrivant la nouvelle feature dans la liste
+          6. N'oublie PAS le fichier de test src/test/unit/updateNotes.test.ts si la structure change
+          7. Commit les changements:
+             git add src/data/updateNotes.ts README.md src/test/unit/updateNotes.test.ts
+             git commit -m \"docs: add vX.Y.Z patch notes for campaign #$ISSUE_NUMBER\" || true
+             git push origin master
+          8. Poste un rapport récapitulatif sur l'issue #$ISSUE_NUMBER
+          9. Ferme l'issue #$ISSUE_NUMBER si tout est OK
           
-          Ne modifie AUCUN fichier. Tu es superviseur."
+          Tu es superviseur + documentaliste. Tu DOIS modifier les fichiers de documentation et les committer."
           
           opencode run --dangerously-skip-permissions --agent supervisor --model "opencode/deepseek-v4-flash-free" "$PROMPT"
           echo "✅ Supervisor agent completed"
 
       - name: Implement (new PR)
-        if: steps.check_pr.outputs.existing_pr == ''
+        if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr == ''
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GH_TOKEN: ${{ github.token }}
@@ -202,7 +216,7 @@ jobs:
           fi
 
       - name: Implement (fix existing PR)
-        if: steps.check_pr.outputs.existing_pr != ''
+        if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr != ''
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GH_TOKEN: ${{ github.token }}
@@ -272,7 +286,7 @@ jobs:
           fi
 
       - name: Validate and retry (lint → test → build — recall agent on failure)
-        if: github.event.inputs.mode != 'supervisor'
+        if: success() && github.event.inputs.mode != 'supervisor'
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GH_TOKEN: ${{ github.token }}
