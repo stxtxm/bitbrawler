@@ -210,19 +210,21 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
 
     ctx.clearRect(0, 0, width, height);
 
-    // ── SKY ────────────────────────────────────────────
-    const skyGradient = ctx.createLinearGradient(0, 0, 0, height * 0.5);
+    // ── SKY (fill entire canvas to prevent transparent gaps) ──
+    const skyGradient = ctx.createLinearGradient(0, 0, 0, height);
     if (isNight) {
       skyGradient.addColorStop(0, '#0a0a1a');
-      skyGradient.addColorStop(0.5, '#0f0c29');
-      skyGradient.addColorStop(1, '#1a1a3e');
+      skyGradient.addColorStop(0.3, '#0f0c29');
+      skyGradient.addColorStop(0.6, '#1a1a3e');
+      skyGradient.addColorStop(1, '#0d0d1a');
     } else {
       skyGradient.addColorStop(0, '#4a90d9');
-      skyGradient.addColorStop(0.4, '#87ceeb');
-      skyGradient.addColorStop(1, '#c8e6f5');
+      skyGradient.addColorStop(0.3, '#87ceeb');
+      skyGradient.addColorStop(0.6, '#c8e6f5');
+      skyGradient.addColorStop(1, '#a0c8e8');
     }
     ctx.fillStyle = skyGradient;
-    ctx.fillRect(0, 0, width, height * 0.5);
+    ctx.fillRect(0, 0, width, height);
 
     // ── FAR MOUNTAINS (0.2x) ──────────────────────────
     const farMtnOffset = offset * 0.2;

@@ -63,15 +63,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   }, [])
   const monsterScale = useMemo(() => Math.max(3, charScale - 2), [charScale])
   const clouds = useMemo(() => generateCloudPositions(), [])
-  const containerStyle = useMemo(() => {
-    const w = typeof window !== 'undefined' ? window.innerWidth : 768;
-    const isMobile = w < 768;
-    return {
-      background: isMobile ? 'url(/images/pve-mobile-bg.jpg)' : 'transparent',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center'
-    };
-  }, []);
+  const containerStyle = useMemo(() => ({ background: 'transparent' }), []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -124,15 +116,13 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
 
   return (
     <div className="idle-runner-box" ref={containerRef} style={containerStyle}>
-      {!lowPerf && (
-        <ProceduralTerrain
-          width={containerRef.current?.clientWidth || 800}
-          height={containerRef.current?.clientHeight || 400}
-          parallaxLayers={3}
-          mobileQuality={lowPerf}
-          seed={character.seed}
-        />
-      )}
+      <ProceduralTerrain
+        width={containerRef.current?.clientWidth || 800}
+        height={containerRef.current?.clientHeight || 400}
+        parallaxLayers={3}
+        mobileQuality={lowPerf}
+        seed={character.seed}
+      />
 
       {!lowPerf && (
         <div className="idle-layer clouds">
@@ -217,4 +207,4 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     </div>
   )
 })
- // trigger
+
