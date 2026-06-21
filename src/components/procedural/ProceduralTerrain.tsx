@@ -120,26 +120,14 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
   const lastTimeRef = useRef(0);
   const animatedRef = useRef(animated);
   const animationStartTime = useRef<number | null>(null);
-  const stabilizationFrameCount = useRef(0);
-  const stabilizationTimeout = useRef<NodeJS.Timeout | null>(null);
   const [isStable, setIsStable] = useState(false);
   
   animatedRef.current = animated;
 
   const canvasSize = useResponsiveCanvas(containerRef, canvasRef, (width, height) => {
-    // Track stabilization frames
-    stabilizationFrameCount.current++;
-    
-    // Clear any existing timeout
-    if (stabilizationTimeout.current) {
-      clearTimeout(stabilizationTimeout.current);
-    }
-    
-    // If we've had consistent size for 2+ frames, consider stable
-    if (stabilizationFrameCount.current >= 2 && width > 0 && height > 0) {
-      stabilizationTimeout.current = setTimeout(() => {
-        setIsStable(true);
-      }, 50); // Small delay to ensure no more resizes
+    // If we have valid dimensions, consider stable after first resize
+    if (width > 0 && height > 0 && !isStable) {
+      setIsStable(true);
     }
   });
   const width = canvasSize.width || propWidth || 0;
@@ -399,10 +387,6 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
 
     return () => {
       cancelAnimationFrame(rafId);
-      // Cleanup stabilization timeout to prevent memory leaks
-      if (stabilizationTimeout.current) {
-        clearTimeout(stabilizationTimeout.current);
-      }
     };
   }, [isStable, width, height, seedNum, isMobile, groundTop, clouds]);
 
