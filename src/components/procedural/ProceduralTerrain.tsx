@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useResponsiveCanvas } from '../../hooks/useTerrainAnimation';
 
 interface ProceduralTerrainProps {
@@ -120,16 +120,10 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
   const lastTimeRef = useRef(0);
   const animatedRef = useRef(animated);
   const animationStartTime = useRef<number | null>(null);
-  const [hasValidSize, setHasValidSize] = useState(false);
   
   animatedRef.current = animated;
 
-  const canvasSize = useResponsiveCanvas(containerRef, canvasRef, (width, height) => {
-    // Set flag when we have valid dimensions from ResizeObserver
-    if (width > 0 && height > 0 && !hasValidSize) {
-      setHasValidSize(true);
-    }
-  });
+  const canvasSize = useResponsiveCanvas(containerRef, canvasRef);
   const width = canvasSize.width || propWidth || 0;
   const height = canvasSize.height || propHeight || 0;
 
@@ -159,9 +153,7 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
   }, [seedNum]);
 
   useEffect(() => {
-    // Wait for ResizeObserver to provide real size, but also allow rendering
-    // if we have any valid size (fallback to prevent black screen)
-    if ((!hasValidSize && width === 0 && height === 0) || (width === 0 || height === 0)) return;
+    if (width === 0 || height === 0) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -390,7 +382,7 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
     return () => {
       cancelAnimationFrame(rafId);
     };
-  }, [hasValidSize, width, height, seedNum, isMobile, groundTop, clouds]);
+  }, [width, height, seedNum, isMobile, groundTop, clouds]);
 
   return (
     <div
