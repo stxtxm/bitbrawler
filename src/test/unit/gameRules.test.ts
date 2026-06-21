@@ -25,7 +25,7 @@ describe('Game rules', () => {
   });
 
   it('PVE stat multiplier is balanced for target win rate', () => {
-    expect(GAME_RULES.PVE.STAT_MULTIPLIER).toBe(1.6);
+    expect(GAME_RULES.PVE.STAT_MULTIPLIER).toBe(2.0);
   });
 
   it('PVE HP multiplier extends fights', () => {
