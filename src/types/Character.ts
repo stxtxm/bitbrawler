@@ -98,6 +98,10 @@ export interface Character {
   idleTotalKills?: number;
   idleTotalXp?: number;
 
+  // Forge system
+  essence?: number; // Essence resource for forging/upgrading
+  itemUpgrades?: Record<string, number>; // Upgrade levels per item (0-MAX_UPGRADE_LEVEL)
+
   // Server-side idle processing watermark (timestamp)
   lastIdleCheck?: number;
   // Last user activity (for offline popup, timestamp)

@@ -17,6 +17,11 @@ import {
   clearLocalData, saveLocalData, loadLocalData,
   SyncResult,
 } from '../utils/persistenceUtils';
+import {
+  salvageItem as forgeSalvageItem,
+  performFusion,
+  performUpgrade,
+} from '../utils/forgeUtils';
 
 interface GameContextType {
   activeCharacter: Character | null;
@@ -51,6 +56,10 @@ interface GameContextType {
   setAutoMode: (enabled: boolean) => Promise<Character | null>;
   deleteCharacter: () => Promise<boolean>;
   syncCharacterToBackend: (char: Character) => Promise<void>;
+  essence: number;
+  salvageItems: (itemId: string) => Promise<Character | null>;
+  fuseItems: (items: PixelItemAsset[]) => Promise<{ result: PixelItemAsset | null; updatedChar: Character | null }>;
+  upgradeItem: (itemId: string) => Promise<Character | null>;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -846,6 +855,81 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [activeCharacter, handleDbError, logout]);
 
+  // ─── Forge System ──────────────────────────────────────────────────────────
+
+  const salvageItems = useCallback(async (itemId: string): Promise<Character | null> => {
+    if (!activeCharacter?.id) return null;
+
+    const updatedChar = forgeSalvageItem(itemId, activeCharacter, ITEM_ASSETS);
+    if (updatedChar === activeCharacter) return null; // nothing changed
+
+    const normalized = normalizeCharacter(updatedChar);
+    try {
+      await supabase
+        .from('characters')
+        .update({
+          inventory: normalized.inventory,
+          essence: normalized.essence,
+        })
+        .eq('id', activeCharacter.id!);
+      persistCharacter(normalized);
+      return normalized;
+    } catch (error: any) {
+      handleDbError(error, 'salvage');
+      throw new Error('Connection error - salvage not saved.');
+    }
+  }, [activeCharacter, handleDbError, persistCharacter]);
+
+  const fuseItems = useCallback(async (items: PixelItemAsset[]): Promise<{
+    result: PixelItemAsset | null;
+    updatedChar: Character | null;
+  }> => {
+    if (!activeCharacter?.id) return { result: null, updatedChar: null };
+
+    const { result, updatedChar } = performFusion(items, activeCharacter, ITEM_ASSETS);
+    if (updatedChar === activeCharacter) return { result: null, updatedChar: null };
+
+    const normalized = normalizeCharacter(updatedChar);
+    try {
+      await supabase
+        .from('characters')
+        .update({
+          inventory: normalized.inventory,
+          essence: normalized.essence,
+          item_upgrades: normalized.itemUpgrades,
+        })
+        .eq('id', activeCharacter.id!);
+      persistCharacter(normalized);
+      return { result, updatedChar: normalized };
+    } catch (error: any) {
+      handleDbError(error, 'fusion');
+      throw new Error('Connection error - fusion not saved.');
+    }
+  }, [activeCharacter, handleDbError, persistCharacter]);
+
+  const upgradeItem = useCallback(async (itemId: string): Promise<Character | null> => {
+    if (!activeCharacter?.id) return null;
+
+    const updatedChar = performUpgrade(itemId, activeCharacter);
+    if (updatedChar === activeCharacter) return null; // nothing changed
+
+    const normalized = normalizeCharacter(updatedChar);
+    try {
+      await supabase
+        .from('characters')
+        .update({
+          essence: normalized.essence,
+          item_upgrades: normalized.itemUpgrades,
+        })
+        .eq('id', activeCharacter.id!);
+      persistCharacter(normalized);
+      return normalized;
+    } catch (error: any) {
+      handleDbError(error, 'upgrade');
+      throw new Error('Connection error - upgrade not saved.');
+    }
+  }, [activeCharacter, handleDbError, persistCharacter]);
+
   // Find opponent for matchmaking
   const findOpponentForPlayer = useCallback(async (): Promise<MatchmakingResult | null> => {
     if (!activeCharacter) return null;
@@ -874,6 +958,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setAutoMode,
     deleteCharacter,
     syncCharacterToBackend,
+    essence: activeCharacter?.essence ?? 0,
+    salvageItems,
+    fuseItems,
+    upgradeItem,
   };
 
   return (

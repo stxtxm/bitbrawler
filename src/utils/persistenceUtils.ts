@@ -30,6 +30,8 @@ export const normalizeCharacter = (character: Character): Character => {
     idleTotalXp: character.idleTotalXp ?? 0,
     lastIdleCheck: character.lastIdleCheck ?? 0,
     lastActive: character.lastActive ?? 0,
+    essence: character.essence ?? 0,
+    itemUpgrades: character.itemUpgrades ?? {},
   };
 
   // One-time migration: idle combat never granted stat points before the fix.
