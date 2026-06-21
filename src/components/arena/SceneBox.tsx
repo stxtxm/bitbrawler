@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { Character } from '../../types/Character';
 import { IdleRunnerScene } from '../IdleRunnerScene';
 import { PixelCharacter } from '../PixelCharacter';
+import { ProceduralTerrain } from '../procedural/ProceduralTerrain';
 import type { ArenaIdleViewModel } from './arenaTypes';
 
 interface SceneBoxProps {
@@ -21,6 +22,10 @@ export const SceneBox = memo(function SceneBox({
 
   return (
     <div className="scene-box">
+      <ProceduralTerrain
+        seed={character.seed}
+        animated={pveMode}
+      />
       {pveMode ? (
         <IdleRunnerScene
           character={effectiveCharacter}

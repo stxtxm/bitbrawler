@@ -4,7 +4,6 @@ import { MonsterId } from '../data/monsterAssets'
 import { ScenePhase } from '../types/IdleCombat'
 import { AnimatedPixelCharacter } from './AnimatedPixelCharacter'
 import { PixelMonster } from './PixelMonster'
-import { ProceduralTerrain } from './procedural/ProceduralTerrain'
 import { ParticleSystem } from '../utils/particleSystem'
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode'
 
@@ -59,7 +58,6 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     return 8
   }, [])
   const monsterScale = useMemo(() => Math.max(3, charScale - 2), [charScale])
-  const containerStyle = useMemo(() => ({ background: 'transparent' }), []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -111,13 +109,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   const showStreakBanner = streakMilestone !== null && scenePhase === 'result' && lastCombatResult === 'win'
 
   return (
-    <div className="idle-runner-box" ref={containerRef} style={containerStyle}>
-      <ProceduralTerrain
-        width={containerRef.current?.clientWidth || 800}
-        height={containerRef.current?.clientHeight || 400}
-        seed={character.seed}
-      />
-
+    <div className="idle-runner-box" ref={containerRef}>
       {/* clouds rendered inside ProceduralTerrain canvas */}
 
       <div className={`idle-character-slot ${scenePhase === 'combat' ? 'attacking' : ''} ${scenePhase === 'result' && lastCombatResult === 'win' ? 'victory' : ''}`}>
