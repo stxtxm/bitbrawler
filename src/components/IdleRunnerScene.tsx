@@ -130,7 +130,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
             <div key={i} className="cloud-instance" style={{
               left: `${cloud.x}%`,
               top: `${cloud.y}%`,
-              '--scale': cloud.scale,
+              ['--scale' as string]: cloud.scale,
               opacity: cloud.opacity,
               backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(
                 cloud.type.pixels.map((row, y) =>
