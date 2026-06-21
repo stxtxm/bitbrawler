@@ -927,6 +927,226 @@ async function runFightSequence(page, runKey, runRecord) {
   }
   }
 
+/**
+ * Parse essence value from the forge page or body text.
+ */
+async function parseEssence(page) {
+  try {
+    const essenceText = await page.locator('.forge-page-essence-value, .forge-essence-value').textContent().catch(() => '')
+    if (essenceText) {
+      const val = parseInt(essenceText.trim(), 10)
+      if (!isNaN(val)) return val
+    }
+    const bodyText = await page.locator('body').innerText().catch(() => '')
+    const match = bodyText.match(/ESSENCE\s*[:\-]?\s*(\d+)/i)
+    if (match) return parseInt(match[1], 10)
+    return null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Parse item count from forge tab text.
+ */
+async function parseInventoryItemCount(page) {
+  try {
+    const bodyText = await page.locator('body').innerText().catch(() => '')
+    const match = bodyText.match(/(\d+)\s*ITEM/i)
+    if (match) return parseInt(match[1], 10)
+    return null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Navigate to the forge page via the arena header button.
+ */
+async function navigateToForge(page) {
+  const forgeBtn = page.locator('button[aria-label="Forge"]')
+  if (!(await forgeBtn.isVisible({ timeout: 3000 }).catch(() => false))) {
+    console.log('   Forge button not found in arena header')
+    return false
+  }
+  await forgeBtn.click()
+  try {
+    await page.waitForURL('**/forge', { timeout: 8000 })
+    await page.waitForTimeout(1000)
+    return true
+  } catch {
+    // Fallback: direct navigation
+    try {
+      await page.goto(new URL('/forge', config.baseUrl).toString(), { waitUntil: 'networkidle', timeout: 10000 })
+      return true
+    } catch {
+      return false
+    }
+  }
+}
+
+/**
+ * Navigate back from forge to arena.
+ */
+async function leaveForge(page) {
+  const backBtn = page.locator('button[aria-label="Back to Arena"], .forge-back-btn')
+  if (await backBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await backBtn.click()
+    await page.waitForTimeout(1500)
+    return true
+  }
+  // Fallback: navigate directly
+  try {
+    await page.goto(config.baseUrl, { waitUntil: 'networkidle', timeout: 10000 })
+    await page.waitForTimeout(1000)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Test the forge system: salvage, fusion, and upgrade.
+ * Returns an object with forge stats or null if inaccessible.
+ */
+async function testForgeSystem(page, runKey) {
+  console.log('🔨 Testing forge system...')
+
+  const forgeResult = {
+    visited: false,
+    essence_before: null,
+    items_before: null,
+    salvage_attempted: false,
+    salvage_succeeded: false,
+    fusion_attempted: false,
+    fusion_succeeded: false,
+    upgrade_attempted: false,
+    upgrade_succeeded: false,
+    essence_after: null,
+    items_after: null,
+  }
+
+  const navigated = await navigateToForge(page)
+  if (!navigated) {
+    console.log('   ⚠️ Could not navigate to forge page')
+    return forgeResult
+  }
+
+  forgeResult.visited = true
+  await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-06-forge.png`) })
+
+  // Capture essence and item count before forge
+  forgeResult.essence_before = await parseEssence(page)
+  forgeResult.items_before = await parseInventoryItemCount(page)
+  console.log(`   Essence: ${forgeResult.essence_before ?? '?'}, Items: ${forgeResult.items_before ?? '?'}`)
+
+  // ── Attempt Salvage ─────────────────────────────────────────────
+  const salvageCards = page.locator('.forge-item-card:not(.salvaged-item)')
+  const salvageCardCount = await salvageCards.count().catch(() => 0)
+  if (salvageCardCount > 0) {
+    forgeResult.salvage_attempted = true
+    console.log(`   Salvaging first item (${salvageCardCount} items available)...`)
+    try {
+      // Click first salvageable item
+      await salvageCards.first().click({ timeout: 3000 })
+      await page.waitForTimeout(600)
+
+      // Confirm salvage dialog
+      const confirmOk = page.locator('.forge-confirm-ok')
+      if (await confirmOk.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await confirmOk.click()
+        // Wait for salvage animation to complete
+        await page.waitForTimeout(2000)
+        forgeResult.salvage_succeeded = true
+        console.log('   ✅ Item salvaged')
+      }
+    } catch (err) {
+      console.log(`   ⚠️ Salvage attempt failed: ${err.message}`)
+    }
+  } else {
+    console.log('   No items to salvage')
+  }
+
+  // ── Attempt Fusion ──────────────────────────────────────────────
+  const fusionTab = page.locator('button[role="tab"]:has-text("Fusion"), .forge-tab:has-text("Fusion")')
+  if (await fusionTab.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await fusionTab.click()
+    await page.waitForTimeout(800)
+
+    const selectableCards = page.locator('.forge-item-card:not(.disabled)')
+    const selectableCount = await selectableCards.count().catch(() => 0)
+    if (selectableCount >= 3) {
+      forgeResult.fusion_attempted = true
+      console.log(`   Attempting fusion (${selectableCount} items available)...`)
+      try {
+        // Select first 3 items for fusion
+        for (let i = 0; i < 3 && i < selectableCount; i++) {
+          await selectableCards.nth(i).click()
+          await page.waitForTimeout(300)
+        }
+
+        // Click FUSE button
+        const fuseBtn = page.locator('button[aria-label="Fuse items"], .forge-action-btn:has-text("FUSE")')
+        if (await fuseBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+          await fuseBtn.click()
+          await page.waitForTimeout(3000)
+          forgeResult.fusion_succeeded = true
+          console.log('   ✅ Fusion completed')
+        }
+      } catch (err) {
+        console.log(`   ⚠️ Fusion attempt failed: ${err.message}`)
+      }
+    } else {
+      console.log(`   Not enough items for fusion (need 3, have ${selectableCount})`)
+    }
+  }
+
+  // ── Attempt Upgrade ─────────────────────────────────────────────
+  const upgradeTab = page.locator('button[role="tab"]:has-text("Upgrade"), .forge-tab:has-text("Upgrade")')
+  if (await upgradeTab.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await upgradeTab.click()
+    await page.waitForTimeout(800)
+
+    // Check if we have essence for upgrade
+    const currentEssence = await parseEssence(page)
+    const upgradeCards = page.locator('.forge-item-card:not(.maxed):not(.disabled)')
+    const upgradeCardCount = await upgradeCards.count().catch(() => 0)
+
+    if (currentEssence !== null && currentEssence >= 25 && upgradeCardCount > 0) {
+      forgeResult.upgrade_attempted = true
+      console.log(`   Attempting upgrade (essence: ${currentEssence})...`)
+      try {
+        await upgradeCards.first().click()
+        await page.waitForTimeout(500)
+
+        const upgradeBtn = page.locator('button[aria-label="Upgrade item"], .forge-action-btn:has-text("UPGRADE")')
+        if (await upgradeBtn.isVisible({ timeout: 2000 }).catch(() => false) && !(await upgradeBtn.isDisabled().catch(() => true))) {
+          await upgradeBtn.click()
+          await page.waitForTimeout(2000)
+          forgeResult.upgrade_succeeded = true
+          console.log('   ✅ Upgrade completed')
+        }
+      } catch (err) {
+        console.log(`   ⚠️ Upgrade attempt failed: ${err.message}`)
+      }
+    } else {
+      console.log(`   Cannot upgrade: essence=${currentEssence}, items=${upgradeCardCount}`)
+    }
+  }
+
+  // Capture post-forge state
+  forgeResult.essence_after = await parseEssence(page)
+  forgeResult.items_after = await parseInventoryItemCount(page)
+  console.log(`   Post-forge: essence=${forgeResult.essence_after ?? '?'}, items=${forgeResult.items_after ?? '?'}`)
+
+  await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-07-forge-after.png`) })
+
+  // Navigate back to arena
+  await leaveForge(page)
+  console.log('🔨 Forge test complete')
+  return forgeResult
+}
+
 async function run() {
   const now = new Date()
   const runKey = dateKey(now)
@@ -1013,6 +1233,7 @@ async function run() {
     },
     level_up_events: [],
     idle_stats: null,
+    forge: null,
     errors: [],
     load_times_ms: {},
   }
@@ -1116,6 +1337,9 @@ async function run() {
     runRecord.auto_mode_sync_ok = await syncAutoMode(page, fighterExhausted)
     persistQaState(runKey, runRecord.character, runRecord.character_action, fighterExhausted)
     console.log(`   Fighter exhausted for today: ${fighterExhausted ? 'yes' : 'no'}`)
+
+    // Test forge system if we have items or essence
+    runRecord.forge = await testForgeSystem(page, runKey)
 
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-05-final.png`) })
 

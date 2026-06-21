@@ -267,14 +267,18 @@ export const PixelIcon: React.FC<PixelIconProps> = ({ type, size = 32 }) => {
             case 'anvil':
                 return (
                     <svg width={size} height={size} viewBox="0 0 8 8" shapeRendering="crispEdges">
-                        <rect x="2" y="0" width="4" height="1" fill="#555" />
-                        <rect x="1" y="1" width="6" height="1" fill="#666" />
-                        <rect x="1" y="2" width="6" height="3" fill="#777" />
-                        <rect x="0" y="3" width="1" height="2" fill="#666" />
-                        <rect x="7" y="3" width="1" height="2" fill="#666" />
-                        <rect x="1" y="5" width="6" height="1" fill="#555" />
+                        <rect x="3" y="0" width="2" height="1" fill="#999" />
+                        <rect x="2" y="1" width="4" height="1" fill="#ccc" />
+                        <rect x="2" y="2" width="4" height="1" fill="#bbb" />
+                        <rect x="1" y="3" width="6" height="1" fill="#888" />
+                        <rect x="0" y="4" width="8" height="1" fill="#777" />
+                        <rect x="0" y="5" width="8" height="1" fill="#666" />
                         <rect x="2" y="6" width="4" height="1" fill="#444" />
                         <rect x="3" y="7" width="2" height="1" fill="#333" />
+                        <rect x="1" y="0" width="1" height="1" fill="#666" />
+                        <rect x="6" y="0" width="1" height="1" fill="#666" />
+                        <rect x="1" y="3" width="1" height="1" fill="#bbb" />
+                        <rect x="6" y="3" width="1" height="1" fill="#bbb" />
                     </svg>
                 );
             default:
