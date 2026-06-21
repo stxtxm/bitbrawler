@@ -1,12 +1,37 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import { CombatView } from '../../components/CombatView';
 import { Character } from '../../types/Character';
 import * as combatUtils from '../../utils/combatUtils';
 import * as combatLogUtils from '../../utils/combatLogUtils';
 import * as xpUtils from '../../utils/xpUtils';
+import { ParticleSystem, type ParticleType } from '../../utils/particleSystem';
 
 describe('CombatView Interface', () => {
+    const mountedContainers = new Map<ParticleSystem, HTMLElement>();
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mountedContainers.clear();
+        vi.spyOn(ParticleSystem.prototype, 'mount').mockImplementation(function (this: ParticleSystem, container: HTMLElement) {
+            mountedContainers.set(this, container);
+        });
+        vi.spyOn(ParticleSystem.prototype, 'emit').mockImplementation(function (this: ParticleSystem, type: ParticleType, _x: number, _y: number, _count?: number, value?: number) {
+            const container = mountedContainers.get(this);
+            if (!container) return;
+
+            const particle = document.createElement('span');
+            particle.className = `particle particle-${type}`;
+            particle.textContent = type === 'damage' ? String(value) : type === 'miss' ? 'MISS' : type;
+            container.appendChild(particle);
+        });
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
     const player: Character = {
         name: 'Hero',
         level: 5,
@@ -138,9 +163,78 @@ describe('CombatView Interface', () => {
         const playerReact = container.querySelector('.fighter-side.left.react-miss');
         expect(opponentSide).not.toBeNull();
         expect(playerReact).toBeNull();
+    });
 
-        vi.useRealTimers();
-        vi.restoreAllMocks();
+    it('should emit damage particles on the target side layer', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 1,
+            details: ['Hero hits Villain for 12 DMG'],
+            timeline: [{ attackerHp: 100, defenderHp: 88 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit'
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2500); });
+        act(() => { vi.advanceTimersByTime(1500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        const leftLayer = container.querySelector('.particle-layer.left');
+        const rightLayer = container.querySelector('.particle-layer.right');
+
+        expect(leftLayer?.querySelector('.particle-damage')).toBeNull();
+        expect(rightLayer?.querySelector('.particle-damage')?.textContent).toBe('12');
+    });
+
+    it('should emit miss particles on the target side layer', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'defender',
+            rounds: 1,
+            details: ['Villain missed the attack!'],
+            timeline: [{ attackerHp: 100, defenderHp: 100 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'opponent',
+            type: 'miss'
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2500); });
+        act(() => { vi.advanceTimersByTime(1500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        const leftLayer = container.querySelector('.particle-layer.left');
+        const rightLayer = container.querySelector('.particle-layer.right');
+
+        expect(leftLayer?.querySelector('.particle-miss')?.textContent).toBe('MISS');
+        expect(rightLayer?.querySelector('.particle-miss')).toBeNull();
     });
 
     it('should show XP gained in result view', () => {
