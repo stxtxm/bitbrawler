@@ -61,8 +61,10 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const [scanLocked, setScanLocked] = useState(false);
     const [fighterEntrance, setFighterEntrance] = useState(false);
 
-    const particleSystemRef = useRef<ParticleSystem | null>(null);
-    const modalRef = useRef<HTMLDivElement | null>(null);
+    const leftParticleRef = useRef<ParticleSystem | null>(null);
+    const rightParticleRef = useRef<ParticleSystem | null>(null);
+    const leftLayerRef = useRef<HTMLDivElement | null>(null);
+    const rightLayerRef = useRef<HTMLDivElement | null>(null);
 
     const scanList = useMemo(() => {
         const map = new Map<string, Character>();
@@ -80,13 +82,21 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const selectedKey = opponent.id || opponent.name;
 
     useEffect(() => {
-        if (modalRef.current && !particleSystemRef.current) {
+        if (leftLayerRef.current && !leftParticleRef.current) {
             const ps = new ParticleSystem();
-            ps.mount(modalRef.current);
-            particleSystemRef.current = ps;
+            ps.mount(leftLayerRef.current);
+            leftParticleRef.current = ps;
+        }
+        if (rightLayerRef.current && !rightParticleRef.current) {
+            const ps = new ParticleSystem();
+            ps.mount(rightLayerRef.current);
+            rightParticleRef.current = ps;
         }
         return () => {
-            particleSystemRef.current?.destroy();
+            leftParticleRef.current?.destroy();
+            rightParticleRef.current?.destroy();
+            leftParticleRef.current = null;
+            rightParticleRef.current = null;
         };
     }, [phase]);
 
@@ -157,8 +167,6 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                     const detail = combatResult.details[roundIndex];
                     const action = parseCombatDetail(detail, player.name, opponent.name);
                     
-                    const ps = particleSystemRef.current;
-
                     if (action) {
                         setActionPulse(action);
                         if (pulseTimeoutRef.current !== null) {
@@ -171,16 +179,15 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                         }, duration);
 
                         const dmg = extractDamage(detail);
+                        const ps = action.actor === 'player' ? rightParticleRef.current : leftParticleRef.current;
+
                         if (dmg !== null) {
-                            const x = action.actor === 'player' ? 78 : 22;
-                            ps?.emit('damage', x, 46, 1, dmg);
+                            ps?.emit('damage', 50, 45, 1, dmg);
                         } else if (action.type === 'miss') {
-                            const x = action.actor === 'player' ? 78 : 22;
-                            ps?.emit('miss', x, 46, 1);
+                            ps?.emit('miss', 50, 45, 1);
                         } else {
-                            const x = action.actor === 'player' ? 78 : 22;
                             const particleType = action.type === 'magic' ? 'magic' : action.type === 'crit' ? 'crit' : action.type === 'counter' ? 'hit' : action.type;
-                            ps?.emit(particleType, x, 46, 1);
+                            ps?.emit(particleType, 50, 45, 1);
                         }
                     }
                     roundIndex++;
@@ -273,6 +280,8 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     return (
         <div className="combat-overlay" onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()}>
             <div className="combat-modal" ref={modalRef}>
+                <div className="particle-layer left" ref={leftLayerRef} />
+                <div className="particle-layer right" ref={rightLayerRef} />
                 {/* ... (existing JSX for intro/vs/combat) ... */}
                 {phase === 'intro' && (matchType === 'pve' ? (
                     <div className="combat-intro pve-intro">

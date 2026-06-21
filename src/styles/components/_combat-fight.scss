@@ -97,6 +97,10 @@
 
 .combat-fighters .pixel-character { width: 72px; height: 108px; }
 
+.particle-layer { position: absolute; inset: 0; pointer-events: none; z-index: 30; }
+.particle-layer.left { left: 0; }
+.particle-layer.right { right: 0; }
+
 .fighter-side {
     display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
     flex: 1; min-width: 0; max-width: 50%; position: relative;
