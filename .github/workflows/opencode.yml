@@ -39,7 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -98,13 +98,19 @@ jobs:
 
       - name: Create branch
         run: |
+          # Ensure we have the latest master
+          git fetch origin master
+          git checkout master
+          git pull origin master
+          
           BRANCH="feat/auto-$ISSUE_NUMBER"
           if git ls-remote --exit-code origin "refs/heads/$BRANCH" 2>/dev/null; then
             echo "Branch $BRANCH already exists on remote — checking out"
             git fetch origin "$BRANCH"
             git checkout -b "$BRANCH" "origin/$BRANCH"
+            git rebase origin/master || echo "Rebase failed, continuing with existing branch"
           else
-            git checkout -b "$BRANCH"
+            git checkout -b "$BRANCH" master
           fi
           echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
 
