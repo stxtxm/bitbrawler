@@ -56,6 +56,15 @@ jobs:
           git config user.name "opencode-agent"
           git config user.email "agent@opencode.ai"
 
+      - name: Ensure labels exist
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for LABEL in auto-generated dispatched; do
+            gh label get "$LABEL" 2>/dev/null || \
+              gh label create "$LABEL" --color "grey" --description "Auto-managed by OpenCode agent" 2>/dev/null || true
+          done
+
       - name: Resolve issue context
         env:
           GH_TOKEN: ${{ github.token }}
@@ -237,7 +246,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           git add -A
-          git diff --cached --quiet || git commit -m "feat: auto-implement #$ISSUE_NUMBER"
+          if git diff --cached --quiet; then
+            echo "No code changes — skipping PR creation"
+            echo "PR_NUMBER=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          git commit -m "feat: auto-implement #$ISSUE_NUMBER"
           git push origin "$BRANCH" -f
 
           gh label get auto-generated 2>/dev/null && LABEL_FLAG="--label auto-generated" || LABEL_FLAG=""
@@ -260,6 +274,29 @@ jobs:
           fi
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_OUTPUT
           echo "✓ PR #$PR_NUMBER: $PR_URL"
+
+      - name: Dispatch sub-issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "🔍 Checking for sub-issues to dispatch..."
+          SUB_ISSUES=$(gh issue list --label auto-generated --state open --json number --jq '.[].number' 2>/dev/null || echo "")
+          if [ -z "$SUB_ISSUES" ]; then
+            echo "No sub-issues found"
+            exit 0
+          fi
+          for ISSUE in $SUB_ISSUES; do
+            HAS_DISPATCHED=$(gh issue view "$ISSUE" --json labels --jq '[.labels[].name] | any(. == "dispatched")' 2>/dev/null || echo "false")
+            if [ "$HAS_DISPATCHED" = "true" ]; then
+              echo "⏭️  Issue #$ISSUE already dispatched, skipping"
+              continue
+            fi
+            echo "Dispatching sub-issue #$ISSUE..."
+            gh issue add-label "$ISSUE" --label dispatched 2>/dev/null || true
+            gh workflow run opencode.yml -f issue_number="$ISSUE" --repo "${{ github.repository }}"
+            echo "✓ Dispatched #$ISSUE"
+            sleep 2
+          done
 
       - name: Trigger CI workflow
         env:
