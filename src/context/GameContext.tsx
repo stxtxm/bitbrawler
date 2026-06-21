@@ -75,8 +75,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [lastLevelUp, setLastLevelUp] = useState<{ levelsGained: number; newLevel: number; hpGained: number } | null>(null);
   const isOnline = useOnlineStatus();
   const initiatedMatchmakingRef = useRef(false);
+  const charRef = useRef<Character | null>(null);
   const persistCharacter = useCallback((character: Character) => {
     const normalized = normalizeCharacter(character);
+    charRef.current = normalized;
     setActiveCharacter(normalized);
     saveLocalData(normalized);
     return normalized;
@@ -612,6 +614,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           lastIdleCheck: Date.now(),
           lastActive: Date.now(),
         })
+        charRef.current = updatedChar
         setActiveCharacter(updatedChar)
         saveLocalData(updatedChar)
       }
@@ -806,22 +809,26 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     // Process idle gains before lootbox
     await syncIdleBeforeAction();
 
+    // Re-read latest character after sync (sync may have updated it)
+    const char = charRef.current ?? activeCharacter;
+    if (!char?.id) return null;
+
     const now = Date.now();
-    if (!canRollLootbox(activeCharacter.lastLootRoll, now)) {
+    if (!canRollLootbox(char.lastLootRoll, now)) {
       throw new Error('Daily lootbox already opened.');
     }
 
-    const inventory = activeCharacter.inventory || [];
+    const inventory = char.inventory || [];
     if (inventory.length >= INVENTORY_CAPACITY) {
       throw new Error('Inventory is full.');
     }
 
-    const currentStreak = activeCharacter.lootboxStreak ?? 0;
-    const newStreak = computeNextStreak(activeCharacter.lastLootRoll, currentStreak, now);
+    const currentStreak = char.lootboxStreak ?? 0;
+    const newStreak = computeNextStreak(char.lastLootRoll, currentStreak, now);
 
     const item = rollLootbox(ITEM_ASSETS, {
       excludeIds: inventory,
-      level: activeCharacter.level,
+      level: char.level,
       streak: newStreak,
     });
     if (!item) {
@@ -829,29 +836,32 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const updatedChar = normalizeCharacter({
-      ...activeCharacter,
+      ...char,
       inventory: [...inventory, item.id],
       lastLootRoll: now,
       lootboxStreak: newStreak,
     });
 
-     try {
-       await supabase
+    try {
+      const { error } = await supabase
         .from('characters')
         .update({
           inventory: updatedChar.inventory,
           last_loot_roll: updatedChar.lastLootRoll,
           lootbox_streak: updatedChar.lootboxStreak,
-          focus: updatedChar.focus
+          focus: updatedChar.focus,
         })
-        .eq('id', activeCharacter.id!);
-       persistCharacter(updatedChar);
-       return item;
-     } catch (error: any) {
-       handleDbError(error, 'lootbox');
-       throw new Error('Connection error - lootbox not saved.');
-     }
-   }, [activeCharacter, handleDbError, persistCharacter]);
+        .eq('id', char.id);
+
+      if (error) throw error;
+
+      persistCharacter(updatedChar);
+      return item;
+    } catch (error: any) {
+      handleDbError(error, 'lootbox');
+      throw new Error('Connection error - lootbox not saved.');
+    }
+  }, [activeCharacter, handleDbError, persistCharacter]);
 
   const setAutoMode = useCallback(async (enabled: boolean) => {
     if (!activeCharacter?.id) return null;
