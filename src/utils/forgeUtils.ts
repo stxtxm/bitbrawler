@@ -4,7 +4,8 @@ import {
   ESSENCE_YIELD,
   FUSION_COST,
   FUSION_INPUT_COUNT,
-  UPGRADE_COST,
+  UPGRADE_BASE_COST,
+  UPGRADE_COST_SCALING,
   MAX_UPGRADE_LEVEL,
   LUCKY_PROC_CHANCE,
   ESSENCE_SOFT_CAP,
@@ -18,6 +19,13 @@ import { RARITY_RANK } from './lootboxUtils';
  */
 export const getEssenceYield = (item: PixelItemAsset): number => {
   return ESSENCE_YIELD[item.rarity];
+};
+
+/**
+ * Returns the total essence yield from multiple items.
+ */
+export const salvageItems = (items: PixelItemAsset[]): number => {
+  return items.reduce((total, item) => total + getEssenceYield(item), 0);
 };
 
 /**
@@ -180,12 +188,36 @@ export const performFusion = (
   };
 };
 
+// ─── Fusion Lucky Proc ─────────────────────────────────────────────────────
+
+/**
+ * Checks if a fusion lucky proc should trigger (10% chance).
+ * When lucky, fusion skips one rarity tier.
+ *
+ * @param rng - Optional RNG function (defaults to Math.random)
+ */
+export const isFusionLucky = (rng: () => number = Math.random): boolean => {
+  return rng() < LUCKY_PROC_CHANCE;
+};
+
 // ─── Upgrade ───────────────────────────────────────────────────────────────
+
+/**
+ * Calculates the essence cost to upgrade an item.
+ * Cost scales with the item's current upgrade level.
+ *
+ * @param _item - The item being upgraded (used for potential future rarity-based scaling)
+ * @param level - The current upgrade level of the item (default: 0)
+ * @returns The essence cost for the upgrade attempt
+ */
+export const getUpgradeCost = (_item: PixelItemAsset, level: number = 0): number => {
+  return UPGRADE_BASE_COST + level * UPGRADE_COST_SCALING;
+};
 
 /**
  * Checks if an item can be upgraded:
  * - Item is in the character's inventory
- * - Character has enough essence
+ * - Character has enough essence (uses dynamic cost based on current upgrade level)
  * - Item is not already at max upgrade level
  */
 export const canUpgrade = (itemId: string, character: Character): boolean => {
@@ -194,12 +226,16 @@ export const canUpgrade = (itemId: string, character: Character): boolean => {
     return false;
   }
 
-  if ((character.essence ?? 0) < UPGRADE_COST) {
+  const currentLevel = character.itemUpgrades?.[itemId] ?? 0;
+  if (currentLevel >= MAX_UPGRADE_LEVEL) {
     return false;
   }
 
-  const currentLevel = character.itemUpgrades?.[itemId] ?? 0;
-  if (currentLevel >= MAX_UPGRADE_LEVEL) {
+  // Use dynamic cost based on current level
+  // We don't have the item object here, so calculate cost from level alone
+  // cost = UPGRADE_BASE_COST + currentLevel * UPGRADE_COST_SCALING
+  const cost = UPGRADE_BASE_COST + currentLevel * UPGRADE_COST_SCALING;
+  if ((character.essence ?? 0) < cost) {
     return false;
   }
 
@@ -209,6 +245,7 @@ export const canUpgrade = (itemId: string, character: Character): boolean => {
 /**
  * Performs an upgrade on an item, incrementing its upgrade level by 1 and
  * consuming essence. Returns a new Character object (does not mutate).
+ * Uses dynamic upgrade cost based on current upgrade level.
  */
 export const performUpgrade = (itemId: string, character: Character): Character => {
   if (!canUpgrade(itemId, character)) {
@@ -218,12 +255,15 @@ export const performUpgrade = (itemId: string, character: Character): Character 
   const currentUpgrades = character.itemUpgrades ?? {};
   const currentLevel = currentUpgrades[itemId] ?? 0;
 
+  // Calculate dynamic cost
+  const cost = UPGRADE_BASE_COST + currentLevel * UPGRADE_COST_SCALING;
+
   return {
     ...character,
     itemUpgrades: {
       ...currentUpgrades,
       [itemId]: currentLevel + 1,
     },
-    essence: clampEssence((character.essence ?? 0) - UPGRADE_COST),
+    essence: clampEssence((character.essence ?? 0) - cost),
   };
 };
