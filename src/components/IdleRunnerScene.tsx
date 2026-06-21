@@ -7,17 +7,38 @@ import { PixelMonster } from './PixelMonster'
 import { ParticleSystem } from '../utils/particleSystem'
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode'
 
+interface OfflineGainsData {
+  fights: number
+  xp: number
+  levels: number
+  essence: number
+  timeAway: number
+}
+
 interface IdleRunnerSceneProps {
   character: Character
   currentMonster: MonsterId | null
   scenePhase: ScenePhase
   lastCombatResult: 'win' | 'lose' | null
   lastCombatXp: number
+  offlineGains: OfflineGainsData | null
+  onClearOfflineGains: () => void
   currentStreak?: number
   streakMilestone?: number | null
   efficiency?: number | null
   xpPerMinute?: number | null
   powerRatio?: number | null
+}
+
+function formatTimeAway(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000)
+  if (totalSeconds < 60) return `${totalSeconds}s`
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  if (minutes < 60) return `${minutes}m ${seconds}s`
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+  return `${hours}h ${remainingMinutes}m`
 }
 
 function randomDamage(playerLevel: number): { value: number; isCrit: boolean } {
@@ -33,6 +54,8 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   scenePhase,
   lastCombatResult,
   lastCombatXp,
+  offlineGains,
+  onClearOfflineGains,
   currentStreak = 0,
   streakMilestone = null,
   efficiency = null,
@@ -159,6 +182,47 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
         </div>
       )}
 
+      {offlineGains && (
+        <div className="idle-offline-notification">
+          <div className="offline-glow" />
+          <div className="offline-title">
+            <span className="offline-title-icon">⚔</span>
+            WELCOME BACK!
+            <span className="offline-title-icon">⚔</span>
+          </div>
+          <div className="offline-subtitle">
+            Your brawler trained while you were away
+          </div>
+          <div className="offline-time">
+            ⏰ {formatTimeAway(offlineGains.timeAway)}
+          </div>
+          <div className="offline-stats">
+            <div className="offline-stat-item">
+              <span className="offline-stat-value">+{offlineGains.xp}</span>
+              <span className="offline-stat-label">XP</span>
+            </div>
+            {offlineGains.essence > 0 && (
+              <div className="offline-stat-item">
+                <span className="offline-stat-value essence">⚡+{offlineGains.essence}</span>
+                <span className="offline-stat-label">Essence</span>
+              </div>
+            )}
+            <div className="offline-stat-item">
+              <span className="offline-stat-value">{offlineGains.fights}</span>
+              <span className="offline-stat-label">Fights</span>
+            </div>
+            {offlineGains.levels > 0 && (
+              <div className="offline-stat-item">
+                <span className="offline-stat-value levels">⬆+{offlineGains.levels}</span>
+                <span className="offline-stat-label">Levels</span>
+              </div>
+            )}
+          </div>
+          <button className="offline-claim-btn" onClick={onClearOfflineGains}>
+            CLAIM REWARDS
+          </button>
+        </div>
+      )}
     </div>
   )
 })

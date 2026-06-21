@@ -135,6 +135,8 @@ const Arena = () => {
     scenePhase: idle.scenePhase,
     lastCombatResult: idle.lastCombatResult,
     lastCombatXp: idle.lastCombatXp,
+    offlineGains: idle.offlineGains,
+    clearOfflineGains: idle.clearOfflineGains,
     currentStreak: idle.currentStreak,
     streakMilestone: idle.efficiencyData?.streakMilestone ?? null,
     efficiency: idle.efficiencyData?.efficiency ?? null,
@@ -144,12 +146,14 @@ const Arena = () => {
     totalKills: idle.totalKills,
     efficiencyData: idle.efficiencyData,
   }), [
+    idle.clearOfflineGains,
     idle.currentMonster,
     idle.currentStreak,
     idle.efficiencyData,
     idle.idleFightsCount,
     idle.lastCombatResult,
     idle.lastCombatXp,
+    idle.offlineGains,
     idle.scenePhase,
     idle.totalKills,
   ]);
@@ -194,15 +198,6 @@ const Arena = () => {
         onOpenForge={handleOpenForge}
         onLogout={handleLogout}
       />
-
-      {isOfflineMode && (
-        <div className="offline-banner" role="status" aria-live="polite">
-          <div className="offline-row">
-            <div className="offline-title">OFFLINE MODE</div>
-          </div>
-          <div className="offline-sub">Stats are the last synced snapshot. Connect to fight and sync.</div>
-        </div>
-      )}
 
       <div className="arena-content">
         <CharacterDisplay
