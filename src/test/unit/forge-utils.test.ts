@@ -811,7 +811,7 @@ describe('forgeUtils edge cases', () => {
         essence: FUSION_COST.common,
       });
 
-      const { result, updatedChar } = performFusion(items, char, pool);
+      const { result, updatedChar } = performFusion(items, char, pool, () => 0.5);
 
       expect(result).not.toBeNull();
       expect(result!.rarity).toBe('uncommon');
