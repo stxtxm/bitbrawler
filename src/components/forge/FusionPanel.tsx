@@ -280,7 +280,7 @@ export const FusionPanel = memo(function FusionPanel({ onClose }: FusionPanelPro
               )}
             </div>
             <button
-              className={`forge-action-btn ${!canPerformFusion ? '' : ''}`}
+              className="forge-action-btn"
               onClick={handleFusion}
               disabled={!canPerformFusion || fusing || insufficientEssence}
               aria-label="Fuse items"

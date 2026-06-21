@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { vi, beforeAll } from 'vitest';
+import { vi, beforeAll, beforeEach } from 'vitest';
 
 // Mock robuste pour Canvas
 class MockCanvasContext {
@@ -58,9 +58,23 @@ beforeAll(() => {
     }));
 
     // Polyfill ResizeObserver
-    window.ResizeObserver = vi.fn().mockImplementation(() => ({
-        observe: vi.fn(),
-        unobserve: vi.fn(),
-        disconnect: vi.fn(),
-    }));
+    // Must be re-applied on each test because vi.restoreAllMocks in some test
+    // files (like app-offline-routing, terrain-canvas) can wipe the polyfill
+    ensureResizeObserver();
 });
+
+beforeEach(() => {
+    // Re-apply ResizeObserver before each test as a safety net, since
+    // vi.restoreAllMocks() in afterEach of some tests restores it to undefined
+    ensureResizeObserver();
+});
+
+function ensureResizeObserver() {
+    if (typeof window.ResizeObserver === 'undefined') {
+        window.ResizeObserver = vi.fn(() => ({
+            observe: vi.fn(),
+            unobserve: vi.fn(),
+            disconnect: vi.fn(),
+        }));
+    }
+}
