@@ -230,7 +230,8 @@ jobs:
 
       - name: Validate code (lint, test, build)
         run: |
-          echo "🔍 Running lint..."
+          echo "🔍 Running lint (auto-fix first)..."
+          npm run lint -- --fix 2>/dev/null || true
           npm run lint || { echo "❌ Lint failed — agent must fix"; exit 1; }
           echo "✅ Lint passed"
           echo "🔍 Running tests..."
@@ -263,6 +264,7 @@ jobs:
               --title "$(cat /tmp/issue-title.txt)" \
               --body "Closes #$ISSUE_NUMBER" \
               $LABEL_FLAG
+            gh pr merge --auto --squash "$PR_NUMBER" 2>/dev/null || true
             PR_URL="https://github.com/${{ github.repository }}/pull/$PR_NUMBER"
           else
             PR_URL=$(gh pr create \
@@ -271,11 +273,13 @@ jobs:
               --base master \
               $LABEL_FLAG)
             PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$' || true)
+            gh pr merge --auto --squash "$PR_NUMBER" 2>/dev/null || true
           fi
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_OUTPUT
           echo "✓ PR #$PR_NUMBER: $PR_URL"
 
       - name: Dispatch sub-issues
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -299,17 +303,15 @@ jobs:
           done
 
       - name: Trigger CI workflow
+        if: steps.pr_create.outputs.PR_NUMBER != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh workflow run ci.yml --ref "$BRANCH"
 
       - name: Trigger Reviewer workflow
+        if: steps.pr_create.outputs.PR_NUMBER != ''
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if [ -n "${{ steps.pr_create.outputs.PR_NUMBER }}" ]; then
-            gh workflow run reviewer.yml -f pr_number=${{ steps.pr_create.outputs.PR_NUMBER }}
-          else
-            echo "Warning: PR_NUMBER is empty, skipping reviewer workflow"
-          fi
+          gh workflow run reviewer.yml -f pr_number=${{ steps.pr_create.outputs.PR_NUMBER }}
