@@ -3,6 +3,7 @@ import { render, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import App from '../../App'
 import { GameProvider } from '../../context/GameContext'
+import { NotificationProvider } from '../../context/NotificationContext'
 import { prefetchArena } from '../../routes/lazyPages'
 
 vi.mock('../../hooks/useOnlineStatus', () => ({
@@ -61,9 +62,11 @@ describe('App offline routing', () => {
 
     const { getByText } = render(
       <MemoryRouter initialEntries={['/arena']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <GameProvider>
-          <App />
-        </GameProvider>
+        <NotificationProvider>
+          <GameProvider>
+            <App />
+          </GameProvider>
+        </NotificationProvider>
       </MemoryRouter>
     )
 

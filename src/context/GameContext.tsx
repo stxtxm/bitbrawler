@@ -21,7 +21,12 @@ import {
   salvageItem as forgeSalvageItem,
   performFusion,
   performUpgrade,
+  canFuse,
+  canUpgrade,
 } from '../utils/forgeUtils';
+import { ESSENCE_SOFT_CAP, FUSION_COST, UPGRADE_COST, MAX_UPGRADE_LEVEL } from '../data/forgeConstants';
+import { RARITY_RANK } from '../utils/lootboxUtils';
+import { useNotification } from '../hooks/useNotification';
 
 interface GameContextType {
   activeCharacter: Character | null;
@@ -71,12 +76,18 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [lastXpGain, setLastXpGain] = useState<number | null>(null);
   const [lastLevelUp, setLastLevelUp] = useState<{ levelsGained: number; newLevel: number; hpGained: number } | null>(null);
   const isOnline = useOnlineStatus();
+  const { notify } = useNotification();
   const initiatedMatchmakingRef = useRef(false);
   const persistCharacter = useCallback((character: Character) => {
     const normalized = normalizeCharacter(character);
     setActiveCharacter(normalized);
     saveLocalData(normalized);
     return normalized;
+  }, []);
+
+  // Item name helper
+  const getItemName = useCallback((itemId: string): string => {
+    return ITEM_ASSETS.find(a => a.id === itemId)?.name ?? itemId;
   }, []);
 
   // DB error handler
@@ -860,9 +871,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const salvageItems = useCallback(async (itemId: string): Promise<Character | null> => {
     if (!activeCharacter?.id) return null;
 
+    const oldEssence = activeCharacter.essence ?? 0;
     const updatedChar = forgeSalvageItem(itemId, activeCharacter, ITEM_ASSETS);
     if (updatedChar === activeCharacter) return null; // nothing changed
 
+    const essenceGain = (updatedChar.essence ?? 0) - oldEssence;
     const normalized = normalizeCharacter(updatedChar);
     try {
       await supabase
@@ -873,18 +886,38 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         })
         .eq('id', activeCharacter.id!);
       persistCharacter(normalized);
+
+      const itemName = getItemName(itemId);
+      notify(`Salvaged ${itemName} → ${essenceGain} Essence`, 'success');
+
+      // Warning when approaching soft cap
+      if ((normalized.essence ?? 0) > ESSENCE_SOFT_CAP - 100) {
+        notify(`Essence nearing cap (${normalized.essence}/${ESSENCE_SOFT_CAP})`, 'warning');
+      }
+
       return normalized;
     } catch (error: any) {
       handleDbError(error, 'salvage');
       throw new Error('Connection error - salvage not saved.');
     }
-  }, [activeCharacter, handleDbError, persistCharacter]);
+  }, [activeCharacter, handleDbError, persistCharacter, notify, getItemName]);
 
   const fuseItems = useCallback(async (items: PixelItemAsset[]): Promise<{
     result: PixelItemAsset | null;
     updatedChar: Character | null;
   }> => {
     if (!activeCharacter?.id) return { result: null, updatedChar: null };
+
+    // Pre-check for common failure modes
+    if (!canFuse(items, activeCharacter)) {
+      const cost = items.length > 0 ? FUSION_COST[items[0].rarity] : 0;
+      if (cost > 0 && (activeCharacter.essence ?? 0) < cost) {
+        notify('Not enough essence!', 'error');
+      } else if ((activeCharacter.inventory?.length ?? 0) >= INVENTORY_CAPACITY) {
+        notify('Inventory full!', 'error');
+      }
+      return { result: null, updatedChar: null };
+    }
 
     const { result, updatedChar } = performFusion(items, activeCharacter, ITEM_ASSETS);
     if (updatedChar === activeCharacter) return { result: null, updatedChar: null };
@@ -900,15 +933,38 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         })
         .eq('id', activeCharacter.id!);
       persistCharacter(normalized);
+
+      if (result) {
+        const baseRarity = items[0].rarity;
+        const isLucky = RARITY_RANK[result.rarity] > RARITY_RANK[baseRarity] + 1;
+        const itemsStr = items.map(i => i.name).join(' + ');
+        if (isLucky) {
+          notify(`Lucky fusion! ${itemsStr} → ${result.name} ⭐!`, 'success');
+        } else {
+          notify(`Fusion successful! ${itemsStr} → ${result.name}!`, 'success');
+        }
+      }
+
       return { result, updatedChar: normalized };
     } catch (error: any) {
       handleDbError(error, 'fusion');
       throw new Error('Connection error - fusion not saved.');
     }
-  }, [activeCharacter, handleDbError, persistCharacter]);
+  }, [activeCharacter, handleDbError, persistCharacter, notify]);
 
   const upgradeItem = useCallback(async (itemId: string): Promise<Character | null> => {
     if (!activeCharacter?.id) return null;
+
+    // Pre-check for common failure modes
+    if (!canUpgrade(itemId, activeCharacter)) {
+      const currentLevel = activeCharacter.itemUpgrades?.[itemId] ?? 0;
+      if (currentLevel >= MAX_UPGRADE_LEVEL) {
+        notify('Item already at max level!', 'warning');
+      } else if ((activeCharacter.essence ?? 0) < UPGRADE_COST) {
+        notify('Not enough essence!', 'error');
+      }
+      return null;
+    }
 
     const updatedChar = performUpgrade(itemId, activeCharacter);
     if (updatedChar === activeCharacter) return null; // nothing changed
@@ -923,12 +979,17 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         })
         .eq('id', activeCharacter.id!);
       persistCharacter(normalized);
+
+      const newLevel = normalized.itemUpgrades?.[itemId] ?? 0;
+      const itemName = getItemName(itemId);
+      notify(`Upgrade success! ${itemName} now +${newLevel}`, 'success');
+
       return normalized;
     } catch (error: any) {
       handleDbError(error, 'upgrade');
       throw new Error('Connection error - upgrade not saved.');
     }
-  }, [activeCharacter, handleDbError, persistCharacter]);
+  }, [activeCharacter, handleDbError, persistCharacter, notify, getItemName]);
 
   // Find opponent for matchmaking
   const findOpponentForPlayer = useCallback(async (): Promise<MatchmakingResult | null> => {

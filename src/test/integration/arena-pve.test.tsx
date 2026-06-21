@@ -3,6 +3,7 @@ import { ReactNode } from 'react';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { GameProvider, useGame } from '../../context/GameContext';
+import { NotificationProvider } from '../../context/NotificationContext';
 import { Character } from '../../types/Character';
 import { createQueryBuilder, characterToSupabaseRow } from '../utils/supabaseMock';
 import { ROUTER_FUTURE_FLAGS } from '../utils/router';
@@ -83,11 +84,13 @@ afterEach(() => {
 
 const createWrapper = () => {
   return ({ children }: { children: ReactNode }) => (
-    <GameProvider>
-      <MemoryRouter initialEntries={['/arena']} future={ROUTER_FUTURE_FLAGS}>
-        {children}
-      </MemoryRouter>
-    </GameProvider>
+    <NotificationProvider>
+      <GameProvider>
+        <MemoryRouter initialEntries={['/arena']} future={ROUTER_FUTURE_FLAGS}>
+          {children}
+        </MemoryRouter>
+      </GameProvider>
+    </NotificationProvider>
   );
 };
 

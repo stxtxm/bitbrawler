@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { GameProvider, useGame } from '../../context/GameContext';
+import { NotificationProvider } from '../../context/NotificationContext';
 import { Character } from '../../types/Character';
 import { createQueryBuilder, characterToSupabaseRow } from '../../test/utils/supabaseMock';
 import { PixelItemAsset } from '../../types/Item';
@@ -38,7 +39,9 @@ function setupMockCharacter(char: any, options?: { error?: any }) {
 // Wrapper component for testing hooks
 const createWrapper = () => {
   return ({ children }: { children: ReactNode }) => (
-    <GameProvider>{children}</GameProvider>
+    <NotificationProvider>
+      <GameProvider>{children}</GameProvider>
+    </NotificationProvider>
   );
 };
 
