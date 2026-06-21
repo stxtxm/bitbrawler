@@ -198,6 +198,18 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       const grassY = Math.round(groundTop - 5);
       const groundScroll = elapsed * 36;
 
+      // Depth layer: distant horizon foliage (parallax 0.25×)
+      const depthPhase = groundScroll * 0.25 % 64;
+      ctx.fillStyle = 'rgba(30, 60, 20, 0.3)';
+      for (let sx = -(depthPhase + 64); sx < width + 64; sx += 4) {
+        if (sx < -4 || sx > width + 4) continue;
+        const worldX = sx + groundScroll * 0.25;
+        const h = Math.sin(worldX * PI2 / 64 + seedNum * 0.3) * 0.5 + 0.5;
+        if (h > 0.55) {
+          ctx.fillRect(Math.round(sx), grassY - 8 - h * 4, 4, 5);
+        }
+      }
+
       ctx.fillStyle = '#6b5340';
       ctx.fillRect(0, groundTop, width, height - groundTop);
 
@@ -261,7 +273,7 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
             const v = MUSHROOM.pixels[row][col];
             if (!v) continue;
             ctx.fillStyle = v === 1 ? '#d04030' : v === 2 ? '#f0f0f0' : '#e0d0a0';
-            ctx.fillRect(mx + col * 4, grassY - 12 + row * 4, 4, 4);
+            ctx.fillRect(mx + col * 3, grassY - 9 + row * 3, 3, 3);
           }
         }
       }
