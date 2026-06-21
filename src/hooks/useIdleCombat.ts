@@ -32,8 +32,6 @@ interface UseIdleCombatReturn {
   lastCombatXp: number
   scenePhase: ScenePhase
   idleFightsCount: number
-  offlineGains: { fights: number; xp: number; levels: number; essence: number; timeAway: number } | null
-  clearOfflineGains: () => void
   currentStreak: number
   totalKills: number
   idleTotalXp: number
@@ -54,7 +52,6 @@ export function useIdleCombat({
   const [lastCombatResult, setLastCombatResult] = useState<'win' | 'lose' | null>(null)
   const [lastCombatXp, setLastCombatXp] = useState(0)
   const [scenePhase, setScenePhase] = useState<ScenePhase>('running')
-  const [offlineGains, setOfflineGains] = useState<{ fights: number; xp: number; levels: number; essence: number; timeAway: number } | null>(null)
   const [currentStreak, setCurrentStreak] = useState(character?.idleStreak ?? 0)
   const [totalKills, setTotalKills] = useState(character?.idleTotalKills ?? 0)
   const [idleTotalXp, setIdleTotalXp] = useState(character?.idleTotalXp ?? 0)
@@ -96,57 +93,6 @@ export function useIdleCombat({
     onSyncCharacter?.(updated)
   }, [onCharacterUpdate, onSyncCharacter])
 
-  // On-demand idle processing: call server to persist gains and show popup.
-  // No local preview to avoid popup flicker — server response is fast (< 1s).
-  useEffect(() => {
-    if (!character) return
-    const lastActive = character.lastActive ?? 0
-    if (lastActive <= 0) return
-    const idleMs = Date.now() - lastActive
-    if (idleMs <= 30_000) return
-
-    let cancelled = false
-
-    const processOnServer = async () => {
-      try {
-        const res = await fetch('/api/idle-processor', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ character_id: character.id }),
-        })
-        if (!res.ok || cancelled) return
-        const data = await res.json()
-        if (cancelled) return
-        if (data.fights > 0) {
-          if (data.updated) {
-            const updatedChar: Character = {
-              ...character,
-              ...data.updated,
-              lastIdleCheck: Date.now(),
-              lastActive: Date.now(),
-            }
-            onCharacterUpdate(updatedChar)
-          }
-          const serverEssence = data.essence ?? 0
-          const timeAway = Date.now() - lastActive
-          setOfflineGains({
-            fights: data.fights,
-            xp: data.xp,
-            levels: data.levels,
-            essence: serverEssence,
-            timeAway,
-          })
-        }
-      } catch {
-        // server unreachable — silently ignore, popup won't appear but idle persists on cron
-      }
-    }
-
-    processOnServer()
-
-    return () => { cancelled = true }
-  }, [character?.id, character?.lastActive, onCharacterUpdate])
-
   // Compute stable efficiency data — recalculates when character changes (level, stats, equip).
   useEffect(() => {
     if (!character) return
@@ -177,10 +123,6 @@ export function useIdleCombat({
       nextLevelTime,
     })
   }, [character])
-
-  const clearOfflineGains = useCallback(() => {
-    setOfflineGains(null)
-  }, [])
 
   const runCombatTick = useCallback(() => {
     if (isPausedRef.current) return
@@ -358,8 +300,6 @@ export function useIdleCombat({
     lastCombatXp,
     scenePhase,
     idleFightsCount: combatLog.length,
-    offlineGains,
-    clearOfflineGains,
     currentStreak,
     totalKills,
     idleTotalXp,
