@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useResponsiveCanvas } from '../../hooks/useTerrainAnimation';
 
 interface ProceduralTerrainProps {
@@ -119,9 +119,29 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
   const scrollOffsetRef = useRef(0);
   const lastTimeRef = useRef(0);
   const animatedRef = useRef(animated);
+  const animationStartTime = useRef<number | null>(null);
+  const stabilizationFrameCount = useRef(0);
+  const stabilizationTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [isStable, setIsStable] = useState(false);
+  
   animatedRef.current = animated;
 
-  const canvasSize = useResponsiveCanvas(containerRef, canvasRef);
+  const canvasSize = useResponsiveCanvas(containerRef, canvasRef, (width, height) => {
+    // Track stabilization frames
+    stabilizationFrameCount.current++;
+    
+    // Clear any existing timeout
+    if (stabilizationTimeout.current) {
+      clearTimeout(stabilizationTimeout.current);
+    }
+    
+    // If we've had consistent size for 2+ frames, consider stable
+    if (stabilizationFrameCount.current >= 2 && width > 0 && height > 0) {
+      stabilizationTimeout.current = setTimeout(() => {
+        setIsStable(true);
+      }, 50); // Small delay to ensure no more resizes
+    }
+  });
   const width = canvasSize.width || propWidth || 0;
   const height = canvasSize.height || propHeight || 0;
 
@@ -151,7 +171,7 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
   }, [seedNum]);
 
   useEffect(() => {
-    if (width === 0 || height === 0) return;
+    if (!isStable || width === 0 || height === 0) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -231,7 +251,12 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       const grassY = Math.round(groundTop - 5);
 
       const dPhase = Math.round((groundScroll * 0.25) % depthTileW);
-      for (let sx = -dPhase; sx < width; sx += depthTileW) {
+      const depthTilesNeeded = Math.ceil(width / depthTileW) + 2;
+      const depthStartX = -dPhase - depthTileW;
+      
+      for (let i = 0; i < depthTilesNeeded; i++) {
+        const sx = depthStartX + i * depthTileW;
+        if (sx > width) continue;
         ctx.drawImage(depthTile, Math.round(sx), grassY - 8 - 9);
       }
 
@@ -261,7 +286,12 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       }
 
       const bladePhase = Math.round((groundScroll * 0.8) % bladeTileW);
-      for (let sx = -bladePhase; sx < width; sx += bladeTileW) {
+      const tilesNeeded = Math.ceil(width / bladeTileW) + 2; // +2 for overflow coverage
+      const startX = -bladePhase - bladeTileW; // Start earlier to ensure full coverage
+      
+      for (let i = 0; i < tilesNeeded; i++) {
+        const sx = startX + i * bladeTileW;
+        if (sx > width) continue; // No need to render beyond canvas
         ctx.drawImage(bladeTile, Math.round(sx), grassY - bladeTileH);
       }
 
@@ -343,10 +373,23 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
 
     const render = (now: number) => {
       rafId = requestAnimationFrame(render);
+      
+      // Initialize start time on first stable frame
+      if (animationStartTime.current === null) {
+        animationStartTime.current = now;
+      }
+      
+      const elapsedSinceStable = now - animationStartTime.current;
+      
+      // Smooth ramp-up over first 500ms to prevent initial jump
+      const rampUpFactor = Math.min(1, elapsedSinceStable / 500);
+      const effectiveScrollSpeed = 36 * rampUpFactor;
+      
       if (animatedRef.current) {
         const dt = lastTimeRef.current ? (now - lastTimeRef.current) / 1000 : 0;
-        scrollOffsetRef.current += dt * 36;
+        scrollOffsetRef.current += dt * effectiveScrollSpeed;
       }
+      
       lastTimeRef.current = now;
       drawFrame(scrollOffsetRef.current);
     };
@@ -354,8 +397,14 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
     lastTimeRef.current = 0;
     rafId = requestAnimationFrame(render);
 
-    return () => cancelAnimationFrame(rafId);
-  }, [width, height, seedNum, isMobile, groundTop, clouds]);
+    return () => {
+      cancelAnimationFrame(rafId);
+      // Cleanup stabilization timeout to prevent memory leaks
+      if (stabilizationTimeout.current) {
+        clearTimeout(stabilizationTimeout.current);
+      }
+    };
+  }, [isStable, width, height, seedNum, isMobile, groundTop, clouds]);
 
   return (
     <div
