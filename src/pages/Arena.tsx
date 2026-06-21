@@ -40,6 +40,8 @@ const Arena = () => {
     deleteCharacter,
     setCharacter,
     syncCharacterToBackend,
+    essence,
+    salvageItems,
   } = useGame();
   const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
   const { play, enabled, setEnabled } = useSound();
@@ -217,7 +219,14 @@ const Arena = () => {
 
       <ConnectionModal open={connectionModal.open} message={connectionModal.message} onClose={closeModal} />
 
-      {inventory.inventoryOpen && <InventoryPanel {...inventory} />}
+      {inventory.inventoryOpen && (
+        <InventoryPanel
+          {...inventory}
+          itemUpgradeLevels={activeCharacter?.itemUpgrades ?? {}}
+          essence={essence}
+          onSalvage={salvageItems}
+        />
+      )}
 
       {settings.settingsOpen && (
         <SettingsPanel {...settings} soundEnabled={enabled} onToggleSound={handleToggleSound} />
