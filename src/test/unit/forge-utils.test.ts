@@ -7,13 +7,10 @@ import {
   performFusion,
   canUpgrade,
   performUpgrade,
-<<<<<<< HEAD
   canSalvageItem,
   getItemUpgradeLevel,
-=======
   isFusionLucky,
   getUpgradeCost,
->>>>>>> origin/master
 } from '../../utils/forgeUtils';
 import {
   ESSENCE_YIELD,
