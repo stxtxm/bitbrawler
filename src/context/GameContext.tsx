@@ -11,7 +11,7 @@ import { canRollLootbox, computeNextStreak, rollLootbox } from '../utils/lootbox
 import { PixelItemAsset } from '../types/Item';
 import { simulateCombat } from '../utils/combatUtils';
 import { convertFromSupabase, convertToSupabase } from '../utils/supabaseUtils';
-import type { CombatContext } from '../components/CombatView';
+import type { CombatMedalContext } from '../components/CombatView';
 import {
   INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP,
   normalizeCharacter, buildPendingOpponent, hydratePendingOpponent,
@@ -45,13 +45,13 @@ interface GameContextType {
     xpGained: number,
     opponentName: string,
     opponentId: string,
-    options?: { consumeEnergy?: boolean; characterOverride?: Character; combatContext?: CombatContext }
+    options?: { consumeEnergy?: boolean; characterOverride?: Character; medalContext?: CombatMedalContext }
   ) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
   usePveFight: (
     won: boolean,
     xpGained: number,
     monsterName: string,
-    options?: { consumeEnergy?: boolean; characterOverride?: Character; combatContext?: CombatContext }
+    options?: { consumeEnergy?: boolean; characterOverride?: Character; medalContext?: CombatMedalContext }
   ) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
   findOpponent: () => Promise<MatchmakingResult | null>;
   clearXpNotifications: () => void;
@@ -67,6 +67,7 @@ interface GameContextType {
   salvageItems: (itemId: string) => Promise<Character | null>;
   fuseItems: (items: PixelItemAsset[]) => Promise<{ result: PixelItemAsset | null; updatedChar: Character | null }>;
   upgradeItem: (itemId: string) => Promise<Character | null>;
+  recordSession: () => Promise<void>;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -268,6 +269,26 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  /**
+   * Check medals for the current character state and apply any newly unlocked rewards.
+   * Returns the updated character (or the same if no unlocks).
+   */
+  const medalCheckAndApply = useCallback((
+    character: Character,
+    extraContext?: SpecialMedalContext,
+  ): Character => {
+    const currentProgress = character.medalProgress ?? getDefaultMedalProgress();
+    const result = checkMedals(character, currentProgress, ITEM_ASSETS, extraContext);
+
+    if (result.newlyUnlocked.length === 0) return character;
+
+    let updated: Character = { ...character, medalProgress: result.progress };
+    for (const medal of result.newlyUnlocked) {
+      updated = applyMedalReward(updated, medal.reward);
+    }
+    return updated;
+  }, []);
+
   const appendIncomingFightHistory = useCallback(async (
     targetCharacterId: string,
     entry: IncomingFightHistory
@@ -300,7 +321,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     xpGained: number,
     opponentName: string,
     opponentId: string,
-    options?: { consumeEnergy?: boolean; characterOverride?: Character; combatContext?: CombatContext }
+    options?: { consumeEnergy?: boolean; characterOverride?: Character; medalContext?: CombatMedalContext }
   ): Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null> => {
     const baseCharacter = options?.characterOverride ?? activeCharacter;
     if (!baseCharacter?.id) return null;
@@ -349,6 +370,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       );
     }
 
+    // Check medals and apply rewards after combat
+    const medalContext: SpecialMedalContext = {
+      glassCannonFight: options?.medalContext?.glassCannon,
+      pacifistFight: options?.medalContext?.pacifist,
+      sessionCount: updatedChar.sessionCount ?? 0,
+    };
+    updatedChar = normalizeCharacter(medalCheckAndApply(updatedChar, medalContext));
+
      try {
         const { error } = await supabase
          .from('characters')
@@ -369,32 +398,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
            focus: updatedChar.focus,
            hp: updatedChar.hp,
            max_hp: updatedChar.maxHp,
-           pending_fight: null
+           pending_fight: null,
          })
          .eq('id', baseCharacter.id!);
 
        if (error) throw error;
 
-       // ─── Medal Check ──────────────────────────────────────────────────────
-       const combatCtx = options?.combatContext;
-       const medalContext: SpecialMedalContext = {
-         glassCannonFight: combatCtx?.glassCannon,
-         pacifistFight: combatCtx?.pacifist,
-       };
-       const currentProgress = updatedChar.medalProgress ?? getDefaultMedalProgress();
-       const medalResult = checkMedals(updatedChar, currentProgress, ITEM_ASSETS, medalContext);
-
-       // Apply rewards for newly unlocked medals
-       let medalUpdatedChar = updatedChar;
-       for (const medal of medalResult.newlyUnlocked) {
-         medalUpdatedChar = applyMedalReward(medalUpdatedChar, medal.reward);
-       }
-       medalUpdatedChar = normalizeCharacter({
-         ...medalUpdatedChar,
-         medalProgress: medalResult.progress,
-       });
-
-       persistCharacter(medalUpdatedChar);
+       persistCharacter(updatedChar);
        initiatedMatchmakingRef.current = false;
 
       if (opponentId && opponentId !== baseCharacter.id) {
@@ -439,13 +449,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       handleDbError(error, 'use-fight');
       throw new Error("Connection error - fight not counted. Please check your internet connection.");
     }
-  }, [activeCharacter, appendIncomingFightHistory, handleDbError, persistCharacter]);
+  }, [activeCharacter, appendIncomingFightHistory, handleDbError, persistCharacter, medalCheckAndApply]);
 
   const usePveFight = useCallback(async (
     won: boolean,
     xpGained: number,
     monsterName: string,
-    options?: { consumeEnergy?: boolean; characterOverride?: Character; combatContext?: CombatContext }
+    options?: { consumeEnergy?: boolean; characterOverride?: Character; medalContext?: CombatMedalContext }
   ): Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null> => {
     const baseCharacter = options?.characterOverride ?? activeCharacter;
     if (!baseCharacter) return null;
@@ -480,25 +490,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       );
     }
 
-    // ─── Medal Check ──────────────────────────────────────────────────────
-    const combatCtx = options?.combatContext;
-    const medalContext: SpecialMedalContext = {
-      glassCannonFight: combatCtx?.glassCannon,
-      pacifistFight: combatCtx?.pacifist,
+    // Check medals and apply rewards after combat
+    const pveMedalContext: SpecialMedalContext = {
+      glassCannonFight: options?.medalContext?.glassCannon,
+      pacifistFight: options?.medalContext?.pacifist,
+      sessionCount: updatedChar.sessionCount ?? 0,
     };
-    const currentProgress = updatedChar.medalProgress ?? getDefaultMedalProgress();
-    const medalResult = checkMedals(updatedChar, currentProgress, ITEM_ASSETS, medalContext);
-
-    // Apply rewards for newly unlocked medals
-    let medalUpdatedChar = updatedChar;
-    for (const medal of medalResult.newlyUnlocked) {
-      medalUpdatedChar = applyMedalReward(medalUpdatedChar, medal.reward);
-    }
-    medalUpdatedChar = normalizeCharacter({
-      ...medalUpdatedChar,
-      medalProgress: medalResult.progress,
-    });
-
+    const medalUpdatedChar = normalizeCharacter(medalCheckAndApply(updatedChar, pveMedalContext));
     if (baseCharacter.id) {
       try {
         const { error } = await supabase
@@ -546,7 +544,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       levelsGained: xpResult.levelsGained,
       newLevel: xpResult.newLevel,
     };
-  }, [activeCharacter, handleDbError, persistCharacter]);
+  }, [activeCharacter, handleDbError, persistCharacter, medalCheckAndApply]);
 
   const allocateStatPoint = useCallback(async (stat: StatKey): Promise<Character | null> => {
     if (!activeCharacter?.id) return null;
@@ -638,6 +636,31 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       throw new Error("Connection error - equipment not saved. Please check your internet connection.");
     }
   }, [handleDbError, persistCharacter]);
+
+  /**
+   * Record a daily session for the Veteran medal.
+   * Increments sessionCount if today is a new day since the last recorded session.
+   */
+  const recordSession = useCallback(async (): Promise<void> => {
+    if (!activeCharacter?.id) return;
+
+    const now = Date.now();
+    const today = new Date(now).toDateString();
+    const lastSession = activeCharacter.lastSessionDate
+      ? new Date(activeCharacter.lastSessionDate).toDateString()
+      : null;
+
+    // Only increment if it's a new day
+    if (lastSession === today) return;
+
+    const updatedChar = normalizeCharacter({
+      ...activeCharacter,
+      sessionCount: (activeCharacter.sessionCount ?? 0) + 1,
+      lastSessionDate: now,
+    });
+
+    persistCharacter(updatedChar);
+  }, [activeCharacter, persistCharacter]);
 
   const startMatchmakingForPlayer = useCallback(async (): Promise<MatchmakingResult | null> => {
     if (!activeCharacter?.id) return null;
@@ -854,41 +877,32 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       lootboxStreak: newStreak,
     });
 
+    // Check medals after lootbox claim
+    const isFirstLootbox = !activeCharacter.lastLootRoll || inventory.length === 0;
+    const isEpicOrBetter = item.rarity === 'epic' || item.rarity === 'legendary';
+    const lootMedalContext: SpecialMedalContext = {
+      luckyDayRoll: isFirstLootbox && isEpicOrBetter,
+      sessionCount: updatedChar.sessionCount ?? 0,
+    };
+    const charWithMedals = normalizeCharacter(medalCheckAndApply(updatedChar, lootMedalContext));
+
      try {
        await supabase
         .from('characters')
         .update({
-          inventory: updatedChar.inventory,
-          last_loot_roll: updatedChar.lastLootRoll,
-          lootbox_streak: updatedChar.lootboxStreak,
-          focus: updatedChar.focus
+          inventory: charWithMedals.inventory,
+          last_loot_roll: charWithMedals.lastLootRoll,
+          lootbox_streak: charWithMedals.lootboxStreak,
+          focus: charWithMedals.focus,
         })
         .eq('id', activeCharacter.id!);
-
-       // ─── Medal Check ──────────────────────────────────────────────────────
-       const medalContext: SpecialMedalContext = {
-         luckyDayRoll: isFirstLootbox && isEpicPlus,
-       };
-       const currentProgress = updatedChar.medalProgress ?? getDefaultMedalProgress();
-       const medalResult = checkMedals(updatedChar, currentProgress, ITEM_ASSETS, medalContext);
-
-       // Apply rewards for newly unlocked medals
-       let medalUpdatedChar = updatedChar;
-       for (const medal of medalResult.newlyUnlocked) {
-         medalUpdatedChar = applyMedalReward(medalUpdatedChar, medal.reward);
-       }
-       medalUpdatedChar = normalizeCharacter({
-         ...medalUpdatedChar,
-         medalProgress: medalResult.progress,
-       });
-
-       persistCharacter(medalUpdatedChar);
+       persistCharacter(charWithMedals);
        return item;
      } catch (error: any) {
        handleDbError(error, 'lootbox');
        throw new Error('Connection error - lootbox not saved.');
      }
-   }, [activeCharacter, handleDbError, persistCharacter]);
+   }, [activeCharacter, handleDbError, persistCharacter, medalCheckAndApply]);
 
   const setAutoMode = useCallback(async (enabled: boolean) => {
     if (!activeCharacter?.id) return null;
@@ -1038,6 +1052,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     salvageItems,
     fuseItems,
     upgradeItem,
+    recordSession,
   };
 
   return (

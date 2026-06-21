@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { ActionPanel } from '../components/arena/ActionPanel';
 import { ArenaHeader } from '../components/arena/ArenaHeader';
@@ -40,6 +40,7 @@ const Arena = () => {
     deleteCharacter,
     setCharacter,
     syncCharacterToBackend,
+    recordSession,
   } = useGame();
   const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
   const { play, enabled, setEnabled } = useSound();
@@ -164,6 +165,13 @@ const Arena = () => {
   const handleToggleSound = useCallback(() => {
     setEnabled(!enabled);
   }, [enabled, setEnabled]);
+
+  // Record daily session for Veteran medal on mount
+  useEffect(() => {
+    if (activeCharacter && recordSession) {
+      recordSession();
+    }
+  }, []);  
 
   if (!activeCharacter || !effectiveCharacter) {
     return <Navigate to="/" replace />;

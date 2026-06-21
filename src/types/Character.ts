@@ -113,4 +113,6 @@ export interface Character {
   medalXpBonus?: number; // Bonus XP on win from medal rewards
   medalTitle?: string; // Cosmetic title from medal
   medalAura?: boolean; // Cosmetic aura from medal
+  sessionCount?: number; // Daily session count for veteran medal
+  lastSessionDate?: number; // Timestamp of last daily session for veteran medal
 }

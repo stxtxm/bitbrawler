@@ -322,6 +322,366 @@ describe('applyMedalReward', () => {
   });
 });
 
+/**
+ * Simulates a simple fight entry for test purposes.
+ */
+function makeFight(won: boolean): { date: number; opponentName: string; won: boolean } {
+  return { date: Date.now(), opponentName: 'Bot', won };
+}
+
+describe('checkMedals — special combat context', () => {
+  const baseChar = (overrides: Partial<Character> = {}): Character => ({
+    name: 'Hero', gender: 'male', seed: 'abc',
+    level: 1, experience: 0,
+    strength: 10, vitality: 10, dexterity: 10, luck: 10, intelligence: 10, focus: 10,
+    hp: 100, maxHp: 100,
+    wins: 0, losses: 0, fightsLeft: 5, lastFightReset: Date.now(),
+    ...overrides,
+  });
+
+  it('detects glass cannon when won with <10 HP remaining', () => {
+    const char = baseChar({ wins: 1, fightHistory: [makeFight(true)] });
+    const progress = getDefaultMedalProgress();
+    const result = checkMedals(char, progress, [], {
+      glassCannonFight: true,
+    });
+    expect(result.newlyUnlocked.some(m => m.id === 'glass_cannon')).toBe(true);
+    expect(result.progress.glass_cannon.completed).toBe(true);
+  });
+
+  it('detects pacifist when won with 0 damage taken', () => {
+    const char = baseChar({ wins: 1, fightHistory: [makeFight(true)] });
+    const progress = getDefaultMedalProgress();
+    const result = checkMedals(char, progress, [], {
+      pacifistFight: true,
+    });
+    expect(result.newlyUnlocked.some(m => m.id === 'pacifist')).toBe(true);
+    expect(result.progress.pacifist.completed).toBe(true);
+  });
+
+  it('does not unlock glass cannon if not provided in context', () => {
+    const char = baseChar({ wins: 1, fightHistory: [makeFight(true)] });
+    const progress = getDefaultMedalProgress();
+    const result = checkMedals(char, progress, []);
+    expect(result.newlyUnlocked.some(m => m.id === 'glass_cannon')).toBe(false);
+  });
+
+  it('does not unlock pacifist if not provided in context', () => {
+    const char = baseChar({ wins: 1, fightHistory: [makeFight(true)] });
+    const progress = getDefaultMedalProgress();
+    const result = checkMedals(char, progress, []);
+    expect(result.newlyUnlocked.some(m => m.id === 'pacifist')).toBe(false);
+  });
+});
+
+describe('checkMedals — special loot context (lucky day)', () => {
+  const baseChar = (overrides: Partial<Character> = {}): Character => ({
+    name: 'Hero', gender: 'male', seed: 'abc',
+    level: 1, experience: 0,
+    strength: 10, vitality: 10, dexterity: 10, luck: 10, intelligence: 10, focus: 10,
+    hp: 100, maxHp: 100,
+    wins: 0, losses: 0, fightsLeft: 5, lastFightReset: Date.now(),
+    ...overrides,
+  });
+
+  it('detects lucky day when epic obtained from first lootbox', () => {
+    const char = baseChar();
+    const progress = getDefaultMedalProgress();
+    const result = checkMedals(char, progress, [], {
+      luckyDayRoll: true,
+    });
+    expect(result.newlyUnlocked.some(m => m.id === 'lucky_day')).toBe(true);
+    expect(result.progress.lucky_day.completed).toBe(true);
+  });
+
+  it('does not unlock lucky day if context is false', () => {
+    const char = baseChar();
+    const progress = getDefaultMedalProgress();
+    const result = checkMedals(char, progress, []);
+    expect(result.newlyUnlocked.some(m => m.id === 'lucky_day')).toBe(false);
+  });
+
+  it('preserves lucky_day progress if already unlocked', () => {
+    const char = baseChar();
+    const progress = getDefaultMedalProgress();
+    progress.lucky_day = { completed: true, progress: 1, unlockedAt: 100 };
+    const result = checkMedals(char, progress, []);
+    // Should still show as completed (preserved)
+    expect(result.progress.lucky_day.completed).toBe(true);
+    expect(result.newlyUnlocked.some(m => m.id === 'lucky_day')).toBe(false);
+  });
+});
+
+describe('checkMedals — progression/level integration', () => {
+  const baseChar = (overrides: Partial<Character> = {}): Character => ({
+    name: 'Hero', gender: 'male', seed: 'abc',
+    level: 1, experience: 0,
+    strength: 10, vitality: 10, dexterity: 10, luck: 10, intelligence: 10, focus: 10,
+    hp: 100, maxHp: 100,
+    wins: 0, losses: 0, fightsLeft: 5, lastFightReset: Date.now(),
+    ...overrides,
+  });
+
+  it('unlocks growing_strong at level 5', () => {
+    const char = baseChar({ level: 5 });
+    const progress = getDefaultMedalProgress();
+    const result = checkMedals(char, progress, [], { sessionCount: 0 });
+    expect(result.newlyUnlocked.some(m => m.id === 'growing_strong')).toBe(true);
+    expect(result.newlyUnlocked.some(m => m.id === 'peak_performance')).toBe(false);
+  });
+
+  it('unlocks peak_performance at level 10', () => {
+    const char = baseChar({ level: 10 });
+    const progress = getDefaultMedalProgress();
+    const result = checkMedals(char, progress, [], { sessionCount: 0 });
+    expect(result.newlyUnlocked.some(m => m.id === 'growing_strong')).toBe(true);
+    expect(result.newlyUnlocked.some(m => m.id === 'peak_performance')).toBe(true);
+  });
+
+  it('unlocks level_master at level 20', () => {
+    const char = baseChar({ level: 20 });
+    const progress = getDefaultMedalProgress();
+    const result = checkMedals(char, progress, [], { sessionCount: 0 });
+    expect(result.newlyUnlocked.some(m => m.id === 'level_master')).toBe(true);
+  });
+
+  it('unlocks veteran at 10 sessions', () => {
+    const char = baseChar({ level: 1 });
+    const progress = getDefaultMedalProgress();
+    const result = checkMedals(char, progress, [], { sessionCount: 10 });
+    expect(result.newlyUnlocked.some(m => m.id === 'veteran')).toBe(true);
+  });
+});
+
+describe('medal integration — fight → unlock → reward → next fight', () => {
+  const baseChar = (): Character => ({
+    name: 'Hero', gender: 'male', seed: 'abc',
+    level: 1, experience: 0,
+    strength: 10, vitality: 10, dexterity: 10, luck: 10, intelligence: 10, focus: 10,
+    hp: 100, maxHp: 100,
+    wins: 0, losses: 0, fightsLeft: 5, lastFightReset: Date.now(),
+    fightHistory: [],
+  });
+
+  it('applies +1 HP reward after first win (first_blood)', () => {
+    // Start with 0 wins
+    let char = baseChar();
+    const progress = getDefaultMedalProgress();
+
+    // After first win
+    char = { ...char, wins: 1, fightHistory: [makeFight(true)] };
+    const result = checkMedals(char, progress, []);
+
+    // Should unlock first_blood
+    expect(result.newlyUnlocked.some(m => m.id === 'first_blood')).toBe(true);
+    const firstBloodUnlock = result.newlyUnlocked.find(m => m.id === 'first_blood')!;
+
+    // Apply reward
+    char = applyMedalReward(char, firstBloodUnlock.reward);
+    char.medalProgress = result.progress;
+
+    // Check HP increased
+    expect(char.maxHp).toBe(101);
+    expect(char.hp).toBe(101);
+  });
+
+  it('applies +1 STR reward after 10 wins (brawler)', () => {
+    let char = baseChar();
+    const progress = getDefaultMedalProgress();
+
+    // After 10 wins
+    const history = Array.from({ length: 10 }, () => makeFight(true));
+    char = { ...char, wins: 10, fightHistory: history };
+    const result = checkMedals(char, progress, []);
+
+    // Should unlock brawler (and first_blood)
+    const brawlerUnlock = result.newlyUnlocked.find(m => m.id === 'brawler');
+    expect(brawlerUnlock).toBeDefined();
+
+    // Apply reward
+    char = applyMedalReward(char, brawlerUnlock!.reward);
+    expect(char.strength).toBe(11);
+  });
+
+  it('stat bonuses stack additively with base stats', () => {
+    let char = baseChar(); // strength = 10
+    const progress = getDefaultMedalProgress();
+
+    // Simulate unlocking brawler and applying +1 STR
+    const result1 = checkMedals({ ...char, wins: 10 }, progress, []);
+    const brawlerUnlock = result1.newlyUnlocked.find(m => m.id === 'brawler');
+    if (brawlerUnlock) {
+      char = applyMedalReward(char, brawlerUnlock.reward);
+    }
+
+    // Simulate another medal giving +1 STR (glass_cannon)
+    const result2 = checkMedals({ ...char, wins: 10 }, { ...result1.progress }, [], { glassCannonFight: true });
+    const gcUnlock = result2.newlyUnlocked.find(m => m.id === 'glass_cannon');
+    if (gcUnlock) {
+      char = applyMedalReward(char, gcUnlock.reward);
+    }
+
+    // Strength should be 12 (10 base + 1 from brawler + 1 from glass_cannon)
+    expect(char.strength).toBe(12);
+  });
+
+  it('unlocking peak_performance gives +1 to all stats', () => {
+    let char = baseChar(); // all stats = 10
+    const progress = getDefaultMedalProgress();
+
+    const result = checkMedals({ ...char, level: 10 }, progress, []);
+    const peakUnlock = result.newlyUnlocked.find(m => m.id === 'peak_performance');
+    expect(peakUnlock).toBeDefined();
+
+    char = applyMedalReward(char, peakUnlock!.reward);
+    expect(char.strength).toBe(11);
+    expect(char.vitality).toBe(11);
+    expect(char.dexterity).toBe(11);
+    expect(char.luck).toBe(11);
+    expect(char.intelligence).toBe(11);
+    expect(char.focus).toBe(11);
+  });
+
+  it('unlocking collector gives +1 inventory slot', () => {
+    let char = baseChar();
+    const progress = getDefaultMedalProgress();
+
+    const inventory = Array.from({ length: 10 }, (_, i) => `item_${i}`);
+    char = { ...char, inventory };
+    const result = checkMedals(char, progress, []);
+    const collectorUnlock = result.newlyUnlocked.find(m => m.id === 'collector');
+    expect(collectorUnlock).toBeDefined();
+
+    char = applyMedalReward(char, collectorUnlock!.reward);
+    expect(char.medalInventoryBonus).toBe(1);
+  });
+
+  it('unlocking veteran gives +1 bonus XP on win', () => {
+    let char = baseChar();
+    const progress = getDefaultMedalProgress();
+
+    const result = checkMedals(char, progress, [], { sessionCount: 10 });
+    const veteranUnlock = result.newlyUnlocked.find(m => m.id === 'veteran');
+    expect(veteranUnlock).toBeDefined();
+
+    char = applyMedalReward(char, veteranUnlock!.reward);
+    expect(char.medalXpBonus).toBe(1);
+  });
+
+  it('applies medal reward to maxHp AND current hp', () => {
+    let char = baseChar(); // maxHp = 100, hp = 100
+    const defs = getMedalDefs();
+    const firstBlood = defs.find(m => m.id === 'first_blood')!;
+
+    char = applyMedalReward(char, firstBlood.reward);
+    expect(char.maxHp).toBe(101);
+    expect(char.hp).toBe(101);
+  });
+
+  it('applies +5 HP from growing_strong', () => {
+    let char = baseChar(); // maxHp = 100
+    const defs = getMedalDefs();
+    const growingStrong = defs.find(m => m.id === 'growing_strong')!;
+
+    char = applyMedalReward(char, growingStrong.reward);
+    expect(char.maxHp).toBe(105);
+    expect(char.hp).toBe(105);
+  });
+});
+
+describe('medal integration — combat progress + context combined', () => {
+  const baseChar = (overrides: Partial<Character> = {}): Character => ({
+    name: 'Hero', gender: 'male', seed: 'abc',
+    level: 1, experience: 0,
+    strength: 10, vitality: 10, dexterity: 10, luck: 10, intelligence: 10, focus: 10,
+    hp: 100, maxHp: 100,
+    wins: 0, losses: 0, fightsLeft: 5, lastFightReset: Date.now(),
+    fightHistory: [],
+    ...overrides,
+  });
+
+  it('unlocks first_blood and glass_cannon in same check', () => {
+    const char = baseChar({
+      wins: 1,
+      fightHistory: [makeFight(true)],
+    });
+    const progress = getDefaultMedalProgress();
+    const result = checkMedals(char, progress, [], {
+      glassCannonFight: true,
+    });
+    const ids = result.newlyUnlocked.map(m => m.id);
+    expect(ids).toContain('first_blood');
+    expect(ids).toContain('glass_cannon');
+  });
+
+  it('unlocks pacifist alongside brawler', () => {
+    const char = baseChar({
+      wins: 10,
+      fightHistory: Array.from({ length: 10 }, () => makeFight(true)),
+    });
+    const progress = getDefaultMedalProgress();
+    const result = checkMedals(char, progress, [], {
+      pacifistFight: true,
+    });
+    const ids = result.newlyUnlocked.map(m => m.id);
+    expect(ids).toContain('brawler');
+    expect(ids).toContain('pacifist');
+  });
+
+  it('combat medals scale with wins and streak context', () => {
+    const streak = Array.from({ length: 5 }, () => makeFight(true));
+    const char = baseChar({
+      wins: 5,
+      fightHistory: streak,
+    });
+    const progress = getDefaultMedalProgress();
+    const result = checkMedals(char, progress, []);
+
+    expect(result.progress.unstoppable.completed).toBe(true);
+    expect(result.progress.unstoppable.progress).toBe(5);
+    expect(result.progress.brawler.progress).toBe(5);
+    expect(result.progress.brawler.completed).toBe(false); // needs 10
+  });
+});
+
+describe('applyMedalReward — edge cases', () => {
+  const baseChar = (): Character => ({
+    name: 'Hero', gender: 'male', seed: 'abc',
+    level: 1, experience: 0,
+    strength: 10, vitality: 10, dexterity: 10, luck: 10, intelligence: 10, focus: 10,
+    hp: 100, maxHp: 100,
+    wins: 0, losses: 0, fightsLeft: 5, lastFightReset: Date.now(),
+  });
+
+  it('handles missing stat values (undefined) with defaults', () => {
+    const char: Character = {
+      ...baseChar(),
+      strength: undefined as any,
+      vitality: undefined as any,
+      dexterity: undefined as any,
+      luck: undefined as any,
+      intelligence: undefined as any,
+      focus: undefined as any,
+    };
+    const result = applyMedalReward(char, { type: 'stat_point', label: '+1 STR', stat: 'strength', value: 1 });
+    expect(result.strength).toBe(11);
+  });
+
+  it('handles missing medalInventoryBonus default', () => {
+    const char = baseChar();
+    delete (char as any).medalInventoryBonus;
+    const result = applyMedalReward(char, { type: 'inventory_slot', label: '+1 slot', value: 1 });
+    expect(result.medalInventoryBonus).toBe(1);
+  });
+
+  it('handles missing medalXpBonus default', () => {
+    const char = baseChar();
+    delete (char as any).medalXpBonus;
+    const result = applyMedalReward(char, { type: 'xp_bonus', label: '+1 XP', value: 1 });
+    expect(result.medalXpBonus).toBe(1);
+  });
+});
+
 describe('checkMedals', () => {
   const baseChar = (overrides: Partial<Character> = {}): Character => ({
     name: 'Hero',
@@ -382,7 +742,7 @@ describe('checkMedals', () => {
     const progress = getDefaultMedalProgress();
     const result = checkMedals(char, progress, items);
     expect(result.newlyUnlocked.some(m => m.id === 'epic_seeker')).toBe(true);
-    // With 2 rare + 1 epic = 3 rare+ items, rare_hunter is also unlocked
+    // 3 rare+ items (epic + 2 rare) → rare_hunter also unlocks
     expect(result.newlyUnlocked.some(m => m.id === 'rare_hunter')).toBe(true);
   });
 

@@ -34,7 +34,7 @@ function extractActionColor(detail: string): string {
     return '';
 }
 
-export interface CombatContext {
+export interface CombatMedalContext {
   /** Fight was won with less than 10 HP remaining */
   glassCannon?: boolean;
   /** Fight was won with 0 damage taken */
@@ -46,7 +46,7 @@ interface CombatViewProps {
     opponent: Character;
     matchType: 'balanced' | 'similar' | 'pve';
     monsterId?: MonsterId;
-    onComplete: (won: boolean, xpGained: number, context?: CombatContext) => void;
+    onComplete: (won: boolean, xpGained: number, medalContext?: CombatMedalContext) => void;
     onClose: () => void;
     candidates?: Character[];
 }
@@ -272,9 +272,22 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const handleFinish = async () => {
         if (!combatResult) return;
 
+        const won = combatResult.winner === 'attacker';
+        let medalContext: CombatMedalContext | undefined;
+
+        if (won && combatResult.timeline.length >= 2) {
+            const initialHp = combatResult.timeline[0].attackerHp;
+            const finalHp = combatResult.timeline[combatResult.timeline.length - 1].attackerHp;
+            const damageTaken = initialHp - finalHp;
+
+            medalContext = {
+                glassCannon: finalHp < 10,
+                pacifist: damageTaken === 0,
+            };
+        }
+
         try {
-            const context = getCombatContext();
-            await onComplete(combatResult.winner === 'attacker', xpGained, context);
+            await onComplete(won, xpGained, medalContext);
         } finally {
             onClose();
         }

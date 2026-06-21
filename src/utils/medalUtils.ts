@@ -51,6 +51,7 @@ function getComebackCount(history: Character['fightHistory']): number {
 
   // Iterate from oldest to newest (reverse) so that loss streak builds
   // before checking if a following win counts as a comeback.
+  // (history is stored newest-first, so we iterate in reverse)
   for (let i = history.length - 1; i >= 0; i--) {
     const entry = history[i];
     if (entry.won) {
@@ -308,7 +309,8 @@ export const applyMedalReward = (character: Character, reward: MedalReward): Cha
     }
     case 'stat_point': {
       const bonus = reward.value ?? 1;
-      // If the reward is "all stats" (e.g., peak_performance medal)
+      // If the reward is "all stats" (e.g., peak_performance medal),
+      // apply to all stats regardless of whether reward.stat is set
       if (reward.label?.includes('all stats')) {
         updated.strength = (updated.strength || 10) + bonus;
         updated.vitality = (updated.vitality || 10) + bonus;

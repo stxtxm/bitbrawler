@@ -37,6 +37,8 @@ export const normalizeCharacter = (character: Character): Character => {
     medalInventoryBonus: character.medalInventoryBonus ?? 0,
     medalXpBonus: character.medalXpBonus ?? 0,
     medalAura: character.medalAura ?? false,
+    sessionCount: character.sessionCount ?? 0,
+    lastSessionDate: character.lastSessionDate ?? 0,
   };
 
   // One-time migration: idle combat never granted stat points before the fix.
