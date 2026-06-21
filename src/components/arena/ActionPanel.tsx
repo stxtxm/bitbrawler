@@ -45,7 +45,7 @@ export const ActionPanel = memo(function ActionPanel({
         </button>
       </div>
 
-      <div className="daily-status-compact">
+      <div className="daily-status-compact" aria-hidden={pveMode} style={pveMode ? { visibility: 'hidden', pointerEvents: 'none' } : {}}>
         <div className="status-label">
           <PixelIcon type="sword" size={32} />
           <div className="label-text">
@@ -64,7 +64,7 @@ export const ActionPanel = memo(function ActionPanel({
         </div>
       </div>
 
-      <div className="daily-status-compact boss-status-compact">
+      <div className="daily-status-compact boss-status-compact" aria-hidden={!pveMode} style={!pveMode ? { visibility: 'hidden', pointerEvents: 'none' } : {}}>
         <div className="status-label">
           <span className="boss-icon">👑</span>
           <div className="label-text">

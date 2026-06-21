@@ -1139,8 +1139,9 @@
     background: radial-gradient(circle, #222 0%, #000 100%);
 
     @include mobile {
-        min-height: 100px;
-        max-height: 320px;
+        height: 220px;
+        min-height: 220px;
+        max-height: 220px;
         margin-bottom: 5px;
         border-width: 1px;
     }
