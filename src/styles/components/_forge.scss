@@ -926,3 +926,296 @@
   color: $accent-gold;
   letter-spacing: 1px;
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// Salvage: Confirmation Dialog
+// ════════════════════════════════════════════════════════════════════════════
+
+.forge-confirm-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  animation: fadeIn 0.15s ease;
+}
+
+.forge-confirm-dialog {
+  background: #111;
+  border: 2px solid $accent-gold;
+  padding: 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-width: 200px;
+  animation: forgeSlideIn 0.2s ease-out;
+}
+
+.forge-confirm-title {
+  font-family: $font-pixel;
+  font-size: 0.55rem;
+  color: $accent-red;
+  letter-spacing: 2px;
+}
+
+.forge-confirm-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid #333;
+  background: rgba(0, 0, 0, 0.4);
+  width: 100%;
+}
+
+.forge-confirm-item-name {
+  font-size: 0.5rem;
+  color: #c7c7c7;
+  letter-spacing: 1px;
+}
+
+.forge-confirm-item-rarity {
+  font-size: 0.4rem;
+  color: #8b8b8b;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.forge-confirm-yield {
+  font-family: $font-pixel;
+  font-size: 0.5rem;
+  color: $accent-green;
+  letter-spacing: 1px;
+}
+
+.forge-confirm-warning {
+  font-size: 0.4rem;
+  color: #ff6666;
+  letter-spacing: 1px;
+}
+
+.forge-confirm-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.forge-confirm-cancel {
+  padding: 6px 14px;
+  font-family: $font-pixel;
+  font-size: 0.45rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  border: 2px solid #555;
+  background: #000;
+  color: #9aa0a6;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #9aa0a6;
+    color: #fff;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent-gold;
+    outline-offset: 2px;
+  }
+}
+
+.forge-confirm-ok {
+  padding: 6px 14px;
+  font-family: $font-pixel;
+  font-size: 0.45rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  border: 2px solid $accent-red;
+  background: #000;
+  color: $accent-red;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: $accent-red;
+    color: #000;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent-gold;
+    outline-offset: 2px;
+  }
+}
+
+// ─── Bulk salvage button ──────────────────────────────────────────────────
+
+.forge-bulk-btn {
+  padding: 3px 8px;
+  font-family: $font-pixel;
+  font-size: 0.38rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  border: 1px solid $accent-gold;
+  background: rgba(255, 204, 0, 0.08);
+  color: $accent-gold;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background: $accent-gold;
+    color: #000;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    border-color: #555;
+    color: #555;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent-gold;
+    outline-offset: 2px;
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Lucky Proc Animation
+// ════════════════════════════════════════════════════════════════════════════
+
+@keyframes forgeLuckyRainbow {
+  0% {
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.6), 0 0 20px rgba(255, 0, 0, 0.3);
+    border-color: #ff0000;
+  }
+  16% {
+    box-shadow: 0 0 10px rgba(255, 165, 0, 0.6), 0 0 20px rgba(255, 165, 0, 0.3);
+    border-color: #ffa500;
+  }
+  33% {
+    box-shadow: 0 0 10px rgba(255, 255, 0, 0.6), 0 0 20px rgba(255, 255, 0, 0.3);
+    border-color: #ffff00;
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.6), 0 0 20px rgba(0, 255, 0, 0.3);
+    border-color: #00ff00;
+  }
+  66% {
+    box-shadow: 0 0 10px rgba(0, 150, 255, 0.6), 0 0 20px rgba(0, 150, 255, 0.3);
+    border-color: #0096ff;
+  }
+  83% {
+    box-shadow: 0 0 10px rgba(128, 0, 255, 0.6), 0 0 20px rgba(128, 0, 255, 0.3);
+    border-color: #8000ff;
+  }
+  100% {
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.6), 0 0 20px rgba(255, 0, 0, 0.3);
+    border-color: #ff0000;
+  }
+}
+
+@keyframes forgeLuckyParticle {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--dx, 40px), var(--dy, -40px)) scale(0);
+    opacity: 0;
+  }
+}
+
+.forge-lucky-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.forge-lucky-card {
+  animation: forgeLuckyRainbow 1.5s ease-in-out infinite !important;
+  border-width: 3px !important;
+}
+
+.forge-lucky-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.forge-lucky-particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  animation: forgeLuckyParticle 0.8s ease-out forwards;
+
+  @for $i from 1 through 12 {
+    &:nth-child(#{$i}) {
+      top: #{40 + random(20)}%;
+      left: #{30 + random(40)}%;
+      --dx: #{(random(60) - 30)}px;
+      --dy: #{(random(60) - 60)}px;
+      animation-delay: #{$i * 0.07}s;
+      background: if($i % 3 == 0, #ff0, if($i % 3 == 1, #f0f, #0ff));
+    }
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Upgraded item glow — level-based intensity
+// ════════════════════════════════════════════════════════════════════════════
+
+@keyframes upgradedGlowLevel1 {
+  0%, 100% { box-shadow: 0 0 2px rgba(0, 255, 102, 0.15); }
+  50% { box-shadow: 0 0 6px rgba(0, 255, 102, 0.35), 0 0 10px rgba(0, 255, 102, 0.1); }
+}
+
+@keyframes upgradedGlowLevel2 {
+  0%, 100% { box-shadow: 0 0 3px rgba(0, 255, 102, 0.2); }
+  50% { box-shadow: 0 0 8px rgba(0, 255, 102, 0.4), 0 0 15px rgba(0, 255, 102, 0.15); }
+}
+
+@keyframes upgradedGlowLevel3 {
+  0%, 100% { box-shadow: 0 0 4px rgba(0, 255, 102, 0.25); }
+  50% { box-shadow: 0 0 10px rgba(0, 255, 102, 0.5), 0 0 20px rgba(0, 255, 102, 0.2); }
+}
+
+@keyframes upgradedGlowLevel4 {
+  0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 102, 0.3); }
+  50% { box-shadow: 0 0 12px rgba(0, 255, 102, 0.6), 0 0 25px rgba(0, 255, 102, 0.25); }
+}
+
+@keyframes upgradedGlowLevel5 {
+  0%, 100% { box-shadow: 0 0 6px rgba(255, 204, 0, 0.3), 0 0 2px rgba(0, 255, 102, 0.2); }
+  50% { box-shadow: 0 0 14px rgba(255, 204, 0, 0.6), 0 0 30px rgba(0, 255, 102, 0.3); }
+}
+
+.inv-group-item.upgraded {
+  animation: upgradedGlowLevel1 2s ease-in-out infinite;
+  border-color: rgba(0, 255, 102, 0.4);
+}
+
+.inv-group-item.upgraded-level-1 {
+  animation: upgradedGlowLevel1 2s ease-in-out infinite;
+  border-color: rgba(0, 255, 102, 0.35);
+}
+
+.inv-group-item.upgraded-level-2 {
+  animation: upgradedGlowLevel2 2s ease-in-out infinite;
+  border-color: rgba(0, 255, 102, 0.45);
+}
+
+.inv-group-item.upgraded-level-3 {
+  animation: upgradedGlowLevel3 2s ease-in-out infinite;
+  border-color: rgba(0, 255, 102, 0.55);
+}
+
+.inv-group-item.upgraded-level-4 {
+  animation: upgradedGlowLevel4 2s ease-in-out infinite;
+  border-color: rgba(0, 204, 255, 0.55);
+}
+
+.inv-group-item.upgraded-level-5 {
+  animation: upgradedGlowLevel5 2s ease-in-out infinite;
+  border-color: rgba(255, 204, 0, 0.55);
+}
