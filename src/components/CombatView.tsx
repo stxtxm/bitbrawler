@@ -8,7 +8,7 @@ import { getMatchDifficultyLabel } from '../utils/matchmakingUtils';
 import { parseCombatDetail, CombatAction, CombatActionType } from '../utils/combatLogUtils';
 import { calculateFightXp } from '../utils/xpUtils';
 import { useSound } from '../hooks/useSound';
-import { MONSTER_ASSETS, MonsterId } from '../data/monsterAssets';
+import { MonsterId, MONSTER_ASSETS } from '../data/monsterAssets';
 import { ParticleSystem } from '../utils/particleSystem';
 
 function extractDamage(detail: string): number | null {
@@ -61,8 +61,8 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const [scanLocked, setScanLocked] = useState(false);
     const [fighterEntrance, setFighterEntrance] = useState(false);
 
-    const leftParticleRef = useRef<ParticleSystem | null>(null);
-    const rightParticleRef = useRef<ParticleSystem | null>(null);
+    const leftParticleSystemRef = useRef<ParticleSystem | null>(null);
+    const rightParticleSystemRef = useRef<ParticleSystem | null>(null);
     const leftLayerRef = useRef<HTMLDivElement | null>(null);
     const rightLayerRef = useRef<HTMLDivElement | null>(null);
 
@@ -82,21 +82,19 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const selectedKey = opponent.id || opponent.name;
 
     useEffect(() => {
-        if (leftLayerRef.current && !leftParticleRef.current) {
+        if (leftLayerRef.current && !leftParticleSystemRef.current) {
             const ps = new ParticleSystem();
             ps.mount(leftLayerRef.current);
-            leftParticleRef.current = ps;
+            leftParticleSystemRef.current = ps;
         }
-        if (rightLayerRef.current && !rightParticleRef.current) {
+        if (rightLayerRef.current && !rightParticleSystemRef.current) {
             const ps = new ParticleSystem();
             ps.mount(rightLayerRef.current);
-            rightParticleRef.current = ps;
+            rightParticleSystemRef.current = ps;
         }
         return () => {
-            leftParticleRef.current?.destroy();
-            rightParticleRef.current?.destroy();
-            leftParticleRef.current = null;
-            rightParticleRef.current = null;
+            leftParticleSystemRef.current?.destroy();
+            rightParticleSystemRef.current?.destroy();
         };
     }, [phase]);
 
@@ -179,7 +177,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                         }, duration);
 
                         const dmg = extractDamage(detail);
-                        const ps = action.actor === 'player' ? rightParticleRef.current : leftParticleRef.current;
+                        const ps = action.actor === 'player' ? rightParticleSystemRef.current : leftParticleSystemRef.current;
 
                         if (dmg !== null) {
                             ps?.emit('damage', 50, 45, 1, dmg);
@@ -279,10 +277,9 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
 
     return (
         <div className="combat-overlay" onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()}>
-            <div className="combat-modal" ref={modalRef}>
+            <div className="combat-modal">
                 <div className="particle-layer left" ref={leftLayerRef} />
                 <div className="particle-layer right" ref={rightLayerRef} />
-                {/* ... (existing JSX for intro/vs/combat) ... */}
                 {phase === 'intro' && (matchType === 'pve' ? (
                     <div className="combat-intro pve-intro">
                         <div className="match-type-badge">{getMatchDifficultyLabel(matchType)}</div>
@@ -307,7 +304,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                 <div className="scan-level">LVL {scanList[scanIndex]?.level ?? opponent.level}</div>
                             </div>
                             <div className="scan-caption">LEVEL {opponent.level} OPPONENTS</div>
-                            {scanLocked && (
+                            {scanLocked && scanList.length > 1 && (
                                 <div className="scan-lock">
                                     <span className="lock-pulse" aria-hidden="true"></span>
                                     LOCKED
