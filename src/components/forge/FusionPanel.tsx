@@ -293,14 +293,24 @@ export const FusionPanel = memo(function FusionPanel({ onClose }: FusionPanelPro
 
       {/* Result overlay */}
       {showResult && (
-        <div className="forge-result-overlay" onClick={() => {}}>
-          <div className={`forge-result-card forge-anim-flash ${fusing ? 'forge-anim-swirl' : ''}`}>
+        <div className={`forge-result-overlay ${luckyProc ? 'forge-lucky-overlay' : ''}`} onClick={() => {}}>
+          <div className={`forge-result-card forge-anim-flash ${fusing ? 'forge-anim-swirl' : ''} ${luckyProc ? 'forge-lucky-card' : ''}`}>
+            {/* Lucky proc extra particles */}
+            {luckyProc && (
+              <div className="forge-lucky-particles">
+                {Array.from({ length: 12 }, (_, i) => (
+                  <div key={i} className="forge-lucky-particle" />
+                ))}
+              </div>
+            )}
             <div className={`forge-result-rarity ${showResult.rarity}`}>
-              {luckyProc ? '✨ LUCKY FUSION! ✨' : 'FUSION SUCCESS!'}
+              {luckyProc ? '✨⚡ LUCKY FUSION! ⚡✨' : 'FUSION SUCCESS!'}
             </div>
             <div className="forge-result-name">{showResult.name}</div>
             <div className="forge-result-rarity">{showResult.rarity.toUpperCase()}</div>
-            <div className="forge-result-hint">✦</div>
+            <div className="forge-result-hint">
+              {luckyProc ? '★★★' : '✦'}
+            </div>
           </div>
         </div>
       )}

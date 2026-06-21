@@ -127,8 +127,16 @@ describe('SalvagePanel', () => {
     setupGame({ activeCharacter: char, essence: char.essence, salvageItems });
     render(<SalvagePanel onClose={vi.fn()} />);
 
+    // Click salvage button — shows confirmation dialog
     const salvageBtn = screen.getByRole('button', { name: /salvage.*rusty sword/i });
     fireEvent.click(salvageBtn);
+
+    // Confirmation dialog should appear
+    const confirmBtn = screen.getByRole('button', { name: /confirm salvage/i });
+    expect(confirmBtn).toBeInTheDocument();
+
+    // Click confirm
+    fireEvent.click(confirmBtn);
 
     await waitFor(() => {
       expect(salvageItems).toHaveBeenCalledWith(RUSTY_SWORD.id);

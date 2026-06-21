@@ -2,8 +2,8 @@ import { memo, useCallback, useMemo, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
 import { getInventoryItems } from '../../utils/equipmentUtils';
-import { canUpgrade } from '../../utils/forgeUtils';
-import { UPGRADE_COST, MAX_UPGRADE_LEVEL, ESSENCE_SOFT_CAP } from '../../data/forgeConstants';
+import { canUpgrade, getUpgradeCost } from '../../utils/forgeUtils';
+import { UPGRADE_BASE_COST, MAX_UPGRADE_LEVEL, ESSENCE_SOFT_CAP } from '../../data/forgeConstants';
 import '../../styles/components/_forge.scss';
 
 interface UpgradePanelProps {
@@ -41,7 +41,12 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
     return canUpgrade(selectedId, activeCharacter);
   }, [activeCharacter, selectedId]);
 
-  const insufficientEssence = essence < UPGRADE_COST;
+  const upgradeCost = useMemo(() => {
+    if (!selectedItem) return UPGRADE_BASE_COST;
+    return getUpgradeCost(selectedItem, selectedUpgradeLevel);
+  }, [selectedItem, selectedUpgradeLevel]);
+
+  const insufficientEssence = essence < upgradeCost;
 
   const isNearSoftCap = useMemo(() => {
     // For upgrade, we don't gain essence, but warn if they're near cap
@@ -210,7 +215,7 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
           {!isMaxLevel && (
             <div className="forge-upgrade-row">
               <span className="forge-upgrade-label">Cost</span>
-              <span className="forge-upgrade-value">{UPGRADE_COST} Essence</span>
+              <span className="forge-upgrade-value">{upgradeCost} Essence</span>
             </div>
           )}
           {isMaxLevel && (
@@ -230,11 +235,11 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
               <span className="forge-action-label">Item is already at maximum level</span>
             ) : insufficientEssence ? (
               <span className="forge-action-label" style={{ color: '#ff3333' }}>
-                Not enough essence! Need {UPGRADE_COST}, have {essence}.
+                Not enough essence! Need {upgradeCost}, have {essence}.
               </span>
             ) : (
               <span className="forge-action-label">
-                Upgrade cost: {UPGRADE_COST} Essence
+                Upgrade cost: {upgradeCost} Essence
               </span>
             )
           ) : (

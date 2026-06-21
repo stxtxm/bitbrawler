@@ -183,7 +183,7 @@ export const InventoryPanel = memo(function InventoryPanel({
                         return (
                           <button
                             key={item.id}
-                            className={`inv-group-item rarity-${item.rarity} ${isSelected ? 'selected' : ''} ${(itemUpgradeLevels[item.id] ?? 0) > 0 ? 'upgraded' : ''}`}
+                            className={`inv-group-item rarity-${item.rarity} ${isSelected ? 'selected' : ''} ${(itemUpgradeLevels[item.id] ?? 0) > 0 ? `upgraded upgraded-level-${Math.min(itemUpgradeLevels[item.id] ?? 0, 5)}` : ''}`}
                             onClick={() => {
                               onEquip(item.id, slot);
                               onSelectItem(item.id);
