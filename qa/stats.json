@@ -14450,5 +14450,121 @@
       "home": 1862,
       "arena": 2374
     }
+  },
+  {
+    "date": "2026-06-21T04:01:31.542Z",
+    "run": "2026-06-21",
+    "character": "GRITFENCER",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 20,
+        "fight_duration_ms": 14264,
+        "max_hp": 164,
+        "fight_type": "pvp",
+        "monster_name": null
+      },
+      {
+        "result": "victory",
+        "xp": 22,
+        "fight_duration_ms": 10630,
+        "max_hp": 164,
+        "fight_type": "pvp",
+        "monster_name": null
+      },
+      {
+        "result": "victory",
+        "xp": 21,
+        "fight_duration_ms": 10631,
+        "max_hp": 164,
+        "fight_type": "pvp",
+        "monster_name": null
+      },
+      {
+        "result": "victory",
+        "xp": 25,
+        "fight_duration_ms": 10630,
+        "max_hp": 164,
+        "fight_type": "pve",
+        "monster_name": null
+      },
+      {
+        "result": "victory",
+        "xp": 24,
+        "fight_duration_ms": 10630,
+        "max_hp": 176,
+        "fight_type": "pve",
+        "monster_name": null
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Chipped Wand",
+      "rarity": "UNCOMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": {
+      "str": 9,
+      "vit": 8,
+      "dex": 14,
+      "luk": 9,
+      "int": 8,
+      "foc": 18,
+      "fights": 0
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 120
+    },
+    "initial_max_hp": 164,
+    "initial_equipment": [],
+    "initial_streak": null,
+    "final_stats": {
+      "level": 2,
+      "xp": 73,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 9,
+      "vit": 8,
+      "dex": 14,
+      "luk": 9,
+      "int": 8,
+      "foc": 18,
+      "last xp": 27,
+      "fights": 9
+    },
+    "final_max_hp": 176,
+    "final_equipment": [],
+    "final_streak": 8,
+    "pve_data": {
+      "fights": 2,
+      "wins": 2,
+      "xp_total": 49,
+      "monsters_faced": []
+    },
+    "level_up_events": [],
+    "idle_stats": {
+      "streak": 5,
+      "xpPerMinute": null,
+      "slain": 8,
+      "badgePoints": 1,
+      "streakIndicatorActive": false,
+      "streakIndicatorText": null
+    },
+    "errors": [
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('[role=\"switch\"][aria-label=\"Auto mode\"], [role=\"switch\"], .pixel-switch').first()\n    - locator resolved to <button role=\"switch\" aria-checked=\"true\" aria-label=\"PvE mode\" class=\"pixel-switch pve-switch on\">…</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay settings-overlay\">…</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay settings-overlay\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    53 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div class=\"retro-modal-overlay settings-overlay\">…</div> intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n"
+    ],
+    "load_times_ms": {
+      "home": 1393,
+      "arena": 2959
+    }
   }
 ]
