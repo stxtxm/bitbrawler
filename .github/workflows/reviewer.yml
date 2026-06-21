@@ -188,3 +188,35 @@ jobs:
           echo "Closing issue #$ISSUE_NUMBER..."
           gh issue close "$ISSUE_NUMBER" --comment "Resolved by PR #$PR_NUMBER (merged)"
           echo "✓ Issue #$ISSUE_NUMBER closed"
+
+      - name: Check campaign — dispatch supervisor if all sub-issues done
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number || github.event.inputs.pr_number }}"
+          PR_BODY=$(gh pr view "$PR_NUMBER" --json body --jq '.body // ""' 2>/dev/null || echo "")
+          ISSUE_NUMBER=$(echo "$PR_BODY" | grep -oiE '(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s+#[0-9]+' | grep -oE '#[0-9]+' | tr -d '#' | head -1 || echo "")
+          if [ -z "$ISSUE_NUMBER" ]; then
+            echo "ℹ No linked issue — skipping campaign check"
+            exit 0
+          fi
+          # Check if issue has campaign-* labels
+          CAMPAIGN_LABELS=$(gh issue view "$ISSUE_NUMBER" --json labels --jq '[.labels[].name | select(startswith("campaign-"))] | .[]' 2>/dev/null || echo "")
+          if [ -z "$CAMPAIGN_LABELS" ]; then
+            echo "ℹ Issue #$ISSUE_NUMBER is not part of a campaign — skipping"
+            exit 0
+          fi
+          for CAMPAIGN in $CAMPAIGN_LABELS; do
+            PARENT_NUMBER=$(echo "$CAMPAIGN" | sed 's/campaign-//')
+            echo "🔍 Checking campaign $CAMPAIGN (parent issue #$PARENT_NUMBER)..."
+            REMAINING=$(gh issue list --label "$CAMPAIGN" --state open --json number --jq 'length' 2>/dev/null || echo "1")
+            if [ "$REMAINING" -eq 0 ]; then
+              echo "✅ All sub-issues of campaign $CAMPAIGN are closed!"
+              echo "Dispatching supervisor for parent issue #$PARENT_NUMBER..."
+              gh workflow run opencode.yml -f issue_number="$PARENT_NUMBER" -f mode=supervisor --repo "${{ github.repository }}"
+              echo "✓ Supervisor dispatched for #$PARENT_NUMBER"
+            else
+              echo "⏳ $REMAINING sub-issue(s) still open in campaign $CAMPAIGN — waiting"
+            fi
+          done
