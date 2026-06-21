@@ -93,14 +93,7 @@ export const ActionPanel = memo(function ActionPanel({
                 ? 'AUTO MODE'
                 : isOfflineMode
                   ? 'OFFLINE'
-                  : fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'}
-        </button>
-
-        <button
-          className="button primary-btn giant-btn boss-btn"
-          disabled={true}
-        >
-          BOSS ⛔
+                  : (pveMode ? pveFightsLeft : fightsLeft) > 0 ? 'FIGHT!' : 'REST NOW'}
         </button>
       </div>
     </div>
