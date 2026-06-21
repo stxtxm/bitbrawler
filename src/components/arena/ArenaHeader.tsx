@@ -42,7 +42,7 @@ export const ArenaHeader = memo(function ArenaHeader({
         </button>
         {onOpenForge && (
           <button className="button icon-btn forge-btn" onClick={onOpenForge} title="Forge" aria-label="Forge">
-            <PixelIcon type="chest" size={26} />
+            <PixelIcon type="anvil" size={26} />
           </button>
         )}
         <button

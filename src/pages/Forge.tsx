@@ -48,7 +48,7 @@ const Forge = () => {
           aria-selected={activeTab === 'salvage'}
           aria-controls="forge-panel-salvage"
         >
-          🔨 Salvage
+          ⛏ Salvage
         </button>
         <button
           className={`forge-tab ${activeTab === 'fusion' ? 'active' : ''}`}
