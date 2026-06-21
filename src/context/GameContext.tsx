@@ -984,6 +984,18 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [activeCharacter, handleDbError, persistCharacter]);
 
+  // Auto-retry DB connection when user returns to the page after being in background.
+  // Prevents the app getting stuck in offline mode after transient network blips.
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && !dbAvailable) {
+        retryConnection()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [dbAvailable, retryConnection])
+
   // Find opponent for matchmaking
   const findOpponentForPlayer = useCallback(async (): Promise<MatchmakingResult | null> => {
     if (!activeCharacter) return null;
