@@ -35,7 +35,7 @@ interface Character {
 // ─────────────────────────────────────────────────────────────
 
 const BASE_VALUE = 10
-const POINTS_PER_LEVEL = 3
+const POINTS_PER_LEVEL = 1
 const HP_PER_LEVEL = 20
 
 const MIN_INTERVAL = 4500

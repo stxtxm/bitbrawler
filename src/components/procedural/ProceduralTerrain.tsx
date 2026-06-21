@@ -122,8 +122,8 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
   animatedRef.current = animated;
 
   const canvasSize = useResponsiveCanvas(containerRef, canvasRef);
-  const width = canvasSize.width || propWidth || 1024;
-  const height = canvasSize.height || propHeight || 512;
+  const width = canvasSize.width || propWidth || 0;
+  const height = canvasSize.height || propHeight || 0;
 
   const seedNum = useMemo(
     () => parseInt(seed.replace(/\D/g, '') || '0', 10),
@@ -151,6 +151,7 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
   }, [seedNum]);
 
   useEffect(() => {
+    if (width === 0 || height === 0) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
