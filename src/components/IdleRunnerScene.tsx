@@ -63,7 +63,11 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   }, [])
   const monsterScale = useMemo(() => Math.max(3, charScale - 2), [charScale])
   const clouds = useMemo(() => generateCloudPositions(), [])
-  const containerStyle = useMemo(() => ({ background: 'transparent' }), [])
+  const containerStyle = useMemo(() => {
+    const w = typeof window !== 'undefined' ? window.innerWidth : 768;
+    const isMobile = w < 768;
+    return { background: isMobile ? '#000' : 'transparent' };
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
