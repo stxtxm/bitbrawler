@@ -6,6 +6,7 @@ import { AffinityBadge } from '../AffinityBadge';
 import { PixelIcon } from '../PixelIcon';
 import { PixelItemIcon } from '../PixelItemIcon';
 import StreakIndicator from '../StreakIndicator';
+import { MAX_UPGRADE_LEVEL } from '../../data/forgeConstants';
 import type {
   InventoryStatEntry,
   InventoryStatMetaMap,
@@ -34,6 +35,8 @@ interface InventoryPanelProps {
   onSelectItem: (itemId: string) => void;
   onHoverItem: (id: string | null) => void;
   previewItemId: string | null;
+  itemUpgrades?: Record<string, number>;
+  onSalvageItem?: (itemId: string) => void;
 }
 
 const ITEM_SLOTS: ItemSlot[] = ['weapon', 'armor', 'accessory'];
@@ -73,6 +76,8 @@ export const InventoryPanel = memo(function InventoryPanel({
   onSelectItem,
   onHoverItem,
   previewItemId,
+  itemUpgrades = {},
+  onSalvageItem,
 }: InventoryPanelProps) {
   const groupedItems = useMemo(() => {
     const bySlot: Record<ItemSlot, PixelItemAsset[]> = {
@@ -172,25 +177,48 @@ export const InventoryPanel = memo(function InventoryPanel({
                     <div className="inv-group-grid">
                       {slotItems.map((item) => {
                         const isSelected = previewItemId === item.id;
+                        const upgradeLevel = itemUpgrades[item.id] ?? 0;
+                        const isUpgraded = upgradeLevel > 0;
+                        const isMaxUpgraded = upgradeLevel >= MAX_UPGRADE_LEVEL;
+
                         return (
-                          <button
-                            key={item.id}
-                            className={`inv-group-item rarity-${item.rarity} ${isSelected ? 'selected' : ''}`}
-                            onClick={() => {
-                              onEquip(item.id, slot);
-                              onSelectItem(item.id);
-                            }}
-                            onMouseEnter={() => onHoverItem(item.id)}
-                            onMouseLeave={() => onHoverItem(null)}
-                            onFocus={() => onHoverItem(item.id)}
-                            onBlur={() => onHoverItem(null)}
-                            onTouchStart={() => onSelectItem(item.id)}
-                            title={`Equip ${item.name}`}
-                            aria-label={`Equip ${item.name}`}
-                          >
-                            <PixelItemIcon pixels={item.pixels} size={22} />
-                            {item.element && <AffinityBadge element={item.element} size={8} />}
-                          </button>
+                          <div key={item.id} className="inv-group-item-wrapper">
+                            <button
+                              className={`inv-group-item rarity-${item.rarity} ${isSelected ? 'selected' : ''} ${isUpgraded ? 'upgraded' : ''} ${isMaxUpgraded ? 'max-upgraded' : ''}`}
+                              onClick={() => {
+                                onEquip(item.id, slot);
+                                onSelectItem(item.id);
+                              }}
+                              onMouseEnter={() => onHoverItem(item.id)}
+                              onMouseLeave={() => onHoverItem(null)}
+                              onFocus={() => onHoverItem(item.id)}
+                              onBlur={() => onHoverItem(null)}
+                              onTouchStart={() => onSelectItem(item.id)}
+                              title={`Equip ${item.name}${isUpgraded ? ` (+${upgradeLevel})` : ''}`}
+                              aria-label={`Equip ${item.name}`}
+                            >
+                              <PixelItemIcon pixels={item.pixels} size={22} />
+                              {item.element && <AffinityBadge element={item.element} size={8} />}
+                              {isUpgraded && (
+                                <span className={`inv-upgrade-badge ${isMaxUpgraded ? 'max' : ''}`}>
+                                  +{upgradeLevel}
+                                </span>
+                              )}
+                            </button>
+                            {onSalvageItem && (
+                              <button
+                                className="inv-salvage-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onSalvageItem(item.id);
+                                }}
+                                title="Salvage item"
+                                aria-label={`Salvage ${item.name}`}
+                              >
+                                ⛏
+                              </button>
+                            )}
+                          </div>
                         );
                       })}
                     </div>

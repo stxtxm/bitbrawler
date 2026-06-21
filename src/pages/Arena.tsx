@@ -36,6 +36,7 @@ const Arena = () => {
     saveStatAllocations,
     saveEquipment,
     rollLootbox,
+    salvageItems,
     setAutoMode,
     deleteCharacter,
     setCharacter,
@@ -165,6 +166,18 @@ const Arena = () => {
     setEnabled(!enabled);
   }, [enabled, setEnabled]);
 
+  const handleSalvageItem = useCallback(async (itemId: string) => {
+    if (!activeCharacter) return;
+    try {
+      const updatedChar = await salvageItems(itemId);
+      if (updatedChar) {
+        setCharacter(updatedChar);
+      }
+    } catch {
+      // Error handled inside salvageItems
+    }
+  }, [activeCharacter, salvageItems, setCharacter]);
+
   if (!activeCharacter || !effectiveCharacter) {
     return <Navigate to="/" replace />;
   }
@@ -218,7 +231,13 @@ const Arena = () => {
 
       <ConnectionModal open={connectionModal.open} message={connectionModal.message} onClose={closeModal} />
 
-      {inventory.inventoryOpen && <InventoryPanel {...inventory} />}
+      {inventory.inventoryOpen && (
+        <InventoryPanel
+          {...inventory}
+          itemUpgrades={activeCharacter.itemUpgrades ?? {}}
+          onSalvageItem={handleSalvageItem}
+        />
+      )}
 
       {settings.settingsOpen && (
         <SettingsPanel {...settings} soundEnabled={enabled} onToggleSound={handleToggleSound} />

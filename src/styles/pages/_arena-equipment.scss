@@ -222,3 +222,98 @@
   color: #555;
   letter-spacing: 1px;
 }
+
+// ============================================
+// Upgrade Badge & Glow
+// ============================================
+
+.inv-group-item-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.inv-group-item.upgraded {
+  box-shadow: inset 0 0 0 2px #000, 0 0 8px rgba(0, 255, 102, 0.3);
+
+  &:hover {
+    box-shadow: inset 0 0 0 2px #000, 0 0 12px rgba(0, 255, 102, 0.5);
+  }
+
+  &.selected {
+    box-shadow: inset 0 0 0 2px #000, 0 0 10px rgba(0, 255, 102, 0.5);
+  }
+}
+
+.inv-group-item.max-upgraded {
+  box-shadow: inset 0 0 0 2px #000, 0 0 12px rgba(255, 204, 0, 0.4), 0 0 6px rgba(255, 204, 0, 0.2);
+
+  &:hover {
+    box-shadow: inset 0 0 0 2px #000, 0 0 16px rgba(255, 204, 0, 0.6);
+  }
+
+  &.selected {
+    box-shadow: inset 0 0 0 2px #000, 0 0 14px rgba(255, 204, 0, 0.6);
+  }
+}
+
+.inv-upgrade-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: $accent-green;
+  color: #000;
+  font-size: 0.35rem;
+  font-family: $font-pixel;
+  letter-spacing: 0;
+  padding: 1px 3px;
+  line-height: 1;
+  border: 1px solid darken($accent-green, 15%);
+  z-index: 2;
+  white-space: nowrap;
+
+  &.max {
+    background: $accent-gold;
+    border-color: darken($accent-gold, 15%);
+  }
+}
+
+// ============================================
+// Salvage Button
+// ============================================
+
+.inv-salvage-btn {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  font-size: 0.45rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid #555;
+  color: #9aa0a6;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  appearance: none;
+  font-family: inherit;
+
+  &:hover {
+    border-color: $accent-red;
+    color: $accent-red;
+    background: rgba(255, 51, 51, 0.1);
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
+
+  @include mobile {
+    width: 16px;
+    height: 16px;
+    font-size: 0.4rem;
+  }
+}

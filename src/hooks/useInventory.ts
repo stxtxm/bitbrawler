@@ -105,6 +105,7 @@ export const useInventory = ({
   const previewStats = useMemo(() => getItemStatEntries(previewItem), [previewItem]);
   const previewSlotLabel = previewItem ? previewItem.slot.toUpperCase() : '';
   const equippedItems = useMemo(() => character ? getEquippedItems(character) : [], [character]);
+  const itemUpgrades = character?.itemUpgrades ?? {};
   const totalBonusEntries = useMemo(() => {
     if (!character) return [];
     const totalBonus: ItemStats = getEquipmentBonuses(character);
@@ -215,6 +216,7 @@ export const useInventory = ({
     canRollDailyLoot,
     streak,
     equippedItems,
+    itemUpgrades,
     previewItem,
     previewSlotLabel,
     previewStats,

@@ -269,7 +269,7 @@ describe('performFusion', () => {
       essence: FUSION_COST.common,
     });
 
-    const { result, updatedChar } = performFusion(items, char, pool);
+    const { result, updatedChar } = performFusion(items, char, pool, () => 0.5);
 
     expect(result).not.toBeNull();
     expect(result!.rarity).toBe('uncommon');
@@ -291,7 +291,7 @@ describe('performFusion', () => {
       essence: FUSION_COST.common,
     });
 
-    const { result, updatedChar } = performFusion(items, char, pool);
+    const { result, updatedChar } = performFusion(items, char, pool, () => 0.5);
 
     expect(result).not.toBeNull();
     expect(result!.id).toBe('fusion_result');
@@ -309,7 +309,7 @@ describe('performFusion', () => {
       essence: 100,
     });
 
-    const { updatedChar } = performFusion(items, char, items);
+    const { updatedChar } = performFusion(items, char, items, () => 0.5);
 
     expect(updatedChar.essence).toBe(100 - FUSION_COST.common);
   });
@@ -327,7 +327,7 @@ describe('performFusion', () => {
     const originalInventory = [...(char.inventory ?? [])];
     const originalEssence = char.essence;
 
-    performFusion(items, char, items);
+    performFusion(items, char, items, () => 0.5);
 
     expect(char.inventory).toEqual(originalInventory);
     expect(char.essence).toBe(originalEssence);
