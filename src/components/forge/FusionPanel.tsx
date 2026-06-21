@@ -191,7 +191,7 @@ export const FusionPanel = memo(function FusionPanel({ onClose }: FusionPanelPro
 
       <div className="forge-essence-bar">
         <span className="forge-essence-label">ESSENCE</span>
-        <span className="forge-essence-value">{essence}</span>
+        <span key={`essence-${essence}`} className="forge-essence-value forge-essence-animate">{essence}</span>
       </div>
 
       {!hasAnyFusionable && (

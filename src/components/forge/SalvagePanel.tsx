@@ -103,7 +103,7 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
         </div>
         <div className="forge-essence-bar">
           <span className="forge-essence-label">ESSENCE</span>
-          <span className="forge-essence-value">{essence}</span>
+        <span key={`essence-${essence}`} className="forge-essence-value forge-essence-animate">{essence}</span>
         </div>
         <div className="forge-empty-state">
           <div className="forge-empty-text">
@@ -129,7 +129,7 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
 
       <div className="forge-essence-bar">
         <span className="forge-essence-label">CURRENT ESSENCE</span>
-        <span className="forge-essence-value">{essence}</span>
+        <span key={`essence-${essence}`} className="forge-essence-value forge-essence-animate">{essence}</span>
       </div>
 
       {isNearSoftCap && (

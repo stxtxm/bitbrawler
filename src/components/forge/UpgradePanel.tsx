@@ -105,7 +105,7 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
         </div>
         <div className="forge-essence-bar">
           <span className="forge-essence-label">ESSENCE</span>
-          <span className="forge-essence-value">{essence}</span>
+<span key={`essence-${essence}`} className="forge-essence-value forge-essence-animate">{essence}</span>
         </div>
         <div className="forge-empty-state">
           <div className="forge-empty-text">

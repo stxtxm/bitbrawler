@@ -53,6 +53,10 @@ export type CharacterRow = {
   idle_max_streak: number;
   idle_total_kills: number;
   idle_total_xp: number;
+
+  // Forge system
+  essence: number;
+  item_upgrades: Record<string, number> | null;
 }
 
 export type ServerTimeRow = {

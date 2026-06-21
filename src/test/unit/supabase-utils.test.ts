@@ -42,6 +42,8 @@ describe('convertFromSupabase', () => {
     idle_max_streak: 0,
     idle_total_kills: 0,
     idle_total_xp: 0,
+    essence: 0,
+    item_upgrades: null,
   }
 
   it('maps all CharacterRow fields to Character correctly', () => {
@@ -81,6 +83,8 @@ describe('convertFromSupabase', () => {
     expect(char.idleMaxStreak).toBe(0)
     expect(char.idleTotalKills).toBe(0)
     expect(char.idleTotalXp).toBe(0)
+    expect(char.essence).toBe(0)
+    expect(char.itemUpgrades).toEqual({})
   })
 
   it('handles a bot character correctly', () => {
@@ -162,6 +166,8 @@ describe('convertToSupabase', () => {
     idleMaxStreak: 0,
     idleTotalKills: 0,
     idleTotalXp: 0,
+    essence: 0,
+    itemUpgrades: {},
   }
 
   it('maps all Character fields to CharacterRow correctly', () => {
@@ -198,6 +204,8 @@ describe('convertToSupabase', () => {
     expect(row.idle_max_streak).toBe(0)
     expect(row.idle_total_kills).toBe(0)
     expect(row.idle_total_xp).toBe(0)
+    expect(row.essence).toBe(0)
+    expect(row.item_upgrades).toEqual({})
   })
 
   it('fills default values for missing optional fields', () => {
@@ -236,6 +244,8 @@ describe('convertToSupabase', () => {
       idleMaxStreak: undefined as any,
       idleTotalKills: undefined as any,
       idleTotalXp: undefined as any,
+      essence: undefined as any,
+      itemUpgrades: undefined as any,
       id: 'x',
     }
 
@@ -259,6 +269,8 @@ describe('convertToSupabase', () => {
     expect(row.idle_max_streak).toBe(0)
     expect(row.idle_total_kills).toBe(0)
     expect(row.idle_total_xp).toBe(0)
+    expect(row.essence).toBe(0)
+    expect(row.item_upgrades).toEqual({})
   })
 
   it('handles bot character correctly', () => {
