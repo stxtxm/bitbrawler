@@ -1,0 +1,552 @@
+@use '../variables' as *;
+
+// ============================================
+// Forge Panel (shared between salvage/fusion/upgrade)
+// ============================================
+
+.forge-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  max-height: 76vh;
+  overflow-y: auto;
+
+  @include mobile {
+    padding: 10px;
+  }
+}
+
+.forge-panel-title {
+  font-family: $font-pixel;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  color: $accent-gold;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.forge-panel-subtitle {
+  font-size: 0.5rem;
+  color: #9aa0a6;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+// ─── Essence Display ────────────────────────────────────────────────────────
+
+.forge-essence-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid #222;
+  margin-bottom: 8px;
+}
+
+.forge-essence-label {
+  font-size: 0.5rem;
+  letter-spacing: 1px;
+  color: #b5b5b5;
+}
+
+.forge-essence-value {
+  font-family: $font-pixel;
+  font-size: 0.6rem;
+  color: $accent-gold;
+}
+
+.forge-essence-warning {
+  font-size: 0.45rem;
+  color: $accent-red;
+  letter-spacing: 1px;
+  margin-top: 4px;
+  text-align: center;
+}
+
+// ─── Rarity Groups ──────────────────────────────────────────────────────────
+
+.forge-rarity-group {
+  border: 2px solid #222;
+  background: rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.forge-rarity-group.salvaged {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.forge-rarity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid #222;
+}
+
+.forge-rarity-label {
+  font-family: $font-pixel;
+  font-size: 0.5rem;
+  letter-spacing: 1px;
+  color: #c7c7c7;
+  text-transform: uppercase;
+}
+
+.forge-rarity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 6px;
+  padding: 8px;
+}
+
+// ─── Item Cards ─────────────────────────────────────────────────────────────
+
+.forge-item-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 6px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid #333;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.15s ease;
+  position: relative;
+  overflow: hidden;
+  appearance: none;
+  color: #c7c7c7;
+  font-family: inherit;
+  text-align: center;
+
+  &:hover {
+    border-color: $accent-gold;
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &.selected {
+    border-color: $accent-gold;
+    box-shadow: 0 0 8px rgba(255, 204, 0, 0.35);
+  }
+
+  &.disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  &.maxed {
+    border-color: #666;
+    opacity: 0.6;
+  }
+
+  &.salvaged-item {
+    opacity: 0.3;
+    pointer-events: none;
+    filter: grayscale(1);
+  }
+}
+
+.forge-item-name {
+  font-size: 0.45rem;
+  letter-spacing: 1px;
+  color: #c7c7c7;
+  word-break: break-word;
+  line-height: 1.3;
+}
+
+.forge-item-sub {
+  font-size: 0.4rem;
+  color: #8b8b8b;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.forge-item-yield {
+  font-size: 0.4rem;
+  color: $accent-green;
+  letter-spacing: 1px;
+}
+
+// ─── Action Bar (bottom of each panel) ─────────────────────────────────────
+
+.forge-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid #222;
+  margin-top: auto;
+  flex-wrap: wrap;
+
+  @include mobile {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.forge-action-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.forge-action-label {
+  font-size: 0.45rem;
+  color: #9aa0a6;
+  letter-spacing: 1px;
+}
+
+.forge-action-cost {
+  font-size: 0.5rem;
+  color: $accent-gold;
+  letter-spacing: 1px;
+}
+
+.forge-action-btn {
+  padding: 8px 16px;
+  font-family: $font-pixel;
+  font-size: 0.5rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: 2px solid $accent-green;
+  background: #000;
+  color: $accent-green;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background: $accent-green;
+    color: #000;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    border-color: #555;
+    color: #555;
+  }
+
+  &.danger {
+    border-color: $accent-red;
+    color: $accent-red;
+
+    &:hover:not(:disabled) {
+      background: $accent-red;
+      color: #000;
+    }
+  }
+}
+
+.forge-close-btn {
+  width: 28px;
+  height: 28px;
+  background: #000;
+  color: $accent-red;
+  border: 2px solid $accent-red;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, background 0.2s ease;
+  margin-left: auto;
+
+  &:hover {
+    background: $accent-red;
+    color: #000;
+    transform: translateY(-2px);
+  }
+}
+
+.forge-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 32px 16px;
+  text-align: center;
+  border: 2px dashed #333;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.forge-empty-text {
+  font-size: 0.5rem;
+  color: #666;
+  letter-spacing: 1px;
+  line-height: 1.6;
+}
+
+// ─── Fusion Specific ───────────────────────────────────────────────────────
+
+.forge-fusion-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid #333;
+  margin: 6px 0;
+}
+
+.forge-fusion-arrow {
+  font-size: 1rem;
+  color: $accent-gold;
+}
+
+.forge-fusion-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  border: 2px dashed #555;
+  min-width: 80px;
+}
+
+.forge-fusion-result-label {
+  font-size: 0.4rem;
+  color: #9aa0a6;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+// ─── Upgrade Specific ──────────────────────────────────────────────────────
+
+.forge-upgrade-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid #333;
+  margin: 6px 0;
+}
+
+.forge-upgrade-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.forge-upgrade-label {
+  font-size: 0.45rem;
+  color: #9aa0a6;
+  letter-spacing: 1px;
+}
+
+.forge-upgrade-value {
+  font-size: 0.5rem;
+  color: #c7c7c7;
+  letter-spacing: 1px;
+}
+
+.forge-upgrade-level-bar {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.forge-upgrade-dot {
+  width: 10px;
+  height: 10px;
+  border: 1px solid #555;
+  background: #222;
+  transition: background 0.3s ease;
+
+  &.filled {
+    background: $accent-green;
+    border-color: $accent-green;
+  }
+
+  &.current {
+    background: $accent-gold;
+    border-color: $accent-gold;
+  }
+}
+
+// ─── Animations ────────────────────────────────────────────────────────────
+
+@keyframes forgeDissolve {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  30% {
+    opacity: 0.7;
+    transform: scale(1.1);
+    filter: brightness(1.5);
+  }
+  60% {
+    opacity: 0.4;
+    transform: scale(0.8);
+    filter: brightness(2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.2);
+    filter: brightness(3);
+  }
+}
+
+@keyframes forgeSwirl {
+  0% {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: rotate(180deg) scale(1.2);
+    opacity: 0.6;
+    filter: brightness(1.5);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+    opacity: 1;
+    filter: brightness(1);
+  }
+}
+
+@keyframes forgeGlowPulse {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(0, 255, 102, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 255, 102, 0.7), 0 0 40px rgba(0, 255, 102, 0.3);
+  }
+}
+
+.forge-anim-dissolve {
+  animation: forgeDissolve 0.6s ease-out forwards;
+}
+
+.forge-anim-swirl {
+  animation: forgeSwirl 0.8s ease-in-out;
+}
+
+.forge-anim-glow {
+  animation: forgeGlowPulse 0.8s ease-in-out;
+}
+
+// ─── Selection mode for Fusion ─────────────────────────────────────────────
+
+.forge-selection-hint {
+  font-size: 0.45rem;
+  color: #8bd8d2;
+  letter-spacing: 1px;
+  text-align: center;
+  padding: 4px 0;
+}
+
+.forge-count-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 18px;
+  height: 18px;
+  background: $accent-gold;
+  color: #000;
+  font-size: 0.4rem;
+  font-family: $font-pixel;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+// ─── Rarity colors ─────────────────────────────────────────────────────────
+
+.forge-rarity-common {
+  border-left: 3px solid #666;
+}
+.forge-rarity-uncommon {
+  border-left: 3px solid #4cd964;
+}
+.forge-rarity-rare {
+  border-left: 3px solid #63b3ff;
+}
+.forge-rarity-epic {
+  border-left: 3px solid #9b59b6;
+}
+.forge-rarity-legendary {
+  border-left: 3px solid $accent-gold;
+}
+
+.forge-panel-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+// ─── Preview overlay for fusion result ─────────────────────────────────────
+
+.forge-result-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  animation: fadeIn 0.2s ease;
+}
+
+.forge-result-card {
+  padding: 20px;
+  background: radial-gradient(circle at top, #0b0b0b 0%, #000 80%);
+  border: 3px solid $accent-gold;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  animation: forgeSwirl 0.5s ease-in-out;
+
+  .forge-result-name {
+    font-family: $font-pixel;
+    font-size: 0.65rem;
+    color: #fff;
+    letter-spacing: 1px;
+  }
+
+  .forge-result-rarity {
+    font-size: 0.5rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #9aa0a6;
+  }
+
+  .forge-result-hint {
+    font-size: 0.4rem;
+    color: $accent-green;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+}
+
+// ─── Inventory full warning ────────────────────────────────────────────────
+
+.forge-warning-banner {
+  padding: 6px 10px;
+  background: rgba(255, 51, 51, 0.15);
+  border: 1px solid $accent-red;
+  font-size: 0.45rem;
+  color: $accent-red;
+  letter-spacing: 1px;
+  text-align: center;
+}
