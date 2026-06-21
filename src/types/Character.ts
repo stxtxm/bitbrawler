@@ -106,4 +106,11 @@ export interface Character {
   lastIdleCheck?: number;
   // Last user activity (for offline popup, timestamp)
   lastActive?: number;
+
+  // Medal / Achievement system
+  medalProgress?: Record<string, { completed: boolean; progress: number; unlockedAt?: number }>;
+  medalInventoryBonus?: number; // Extra inventory slots from medal rewards
+  medalXpBonus?: number; // Bonus XP on win from medal rewards
+  medalTitle?: string; // Cosmetic title from medal
+  medalAura?: boolean; // Cosmetic aura from medal
 }
