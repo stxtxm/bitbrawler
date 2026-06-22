@@ -45,7 +45,7 @@ describe('PvE combat', () => {
   });
 
   it('player can win against a monster', () => {
-    const strongPlayer = makePlayer({ strength: 15, vitality: 15, dexterity: 15, hp: 200, maxHp: 200 });
+    const strongPlayer = makePlayer({ level: 10, strength: 25, vitality: 20, dexterity: 35, focus: 18, hp: 300, maxHp: 300 });
     const monster = generateMonster('goblin', 1);
     const result = simulateCombat(strongPlayer, monster);
     expect(result.winner).toBe('attacker');
