@@ -359,7 +359,7 @@ async function processCharacter(
     const freshCheck = new Date(freshRow.last_idle_check).getTime()
     // Si last_idle_check a été mis à jour entre la lecture et maintenant
     // (par un appel on-demand), on skip pour éviter la race condition
-    if (freshCheck !== candidate.lastCheck && freshCheck > 0) {
+    if (candidate.lastCheck > 0 && freshCheck !== candidate.lastCheck) {
       return { updated: null, fights: 0, xp: 0, levels: 0, essence: 0 }
     }
   }

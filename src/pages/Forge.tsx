@@ -34,7 +34,7 @@ const Forge = () => {
         </button>
         <h1 className="forge-page-title">⚒ FORGE</h1>
         <div className="forge-page-essence">
-          <span className="forge-page-essence-icon">⚡</span>
+          <span className="forge-page-essence-icon">💎</span>
           <span className="forge-page-essence-value">{essence}</span>
         </div>
       </div>
