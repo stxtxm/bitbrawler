@@ -14899,5 +14899,122 @@
       "home": 1370,
       "arena": 2463
     }
+  },
+  {
+    "date": "2026-06-22T01:01:29.224Z",
+    "run": "2026-06-22",
+    "character": "MYSTICBULL",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 20,
+        "fight_duration_ms": 14923,
+        "max_hp": 292,
+        "fight_type": "pvp",
+        "monster_name": null
+      },
+      {
+        "result": "victory",
+        "xp": 23,
+        "fight_duration_ms": 11541,
+        "max_hp": 292,
+        "fight_type": "pvp",
+        "monster_name": null
+      },
+      {
+        "result": "victory",
+        "xp": 23,
+        "fight_duration_ms": 35277,
+        "max_hp": 292,
+        "fight_type": "pvp",
+        "monster_name": null
+      },
+      {
+        "result": "victory",
+        "xp": 23,
+        "fight_duration_ms": 11009,
+        "max_hp": 304,
+        "fight_type": "pve",
+        "monster_name": null
+      },
+      {
+        "result": "victory",
+        "xp": 23,
+        "fight_duration_ms": 10630,
+        "max_hp": 304,
+        "fight_type": "pve",
+        "monster_name": null
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Leather Vest",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": {
+      "str": 6,
+      "vit": 24,
+      "dex": 8,
+      "luk": 9,
+      "int": 11,
+      "foc": 8,
+      "fights": 0
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 120
+    },
+    "initial_max_hp": 292,
+    "initial_equipment": [],
+    "initial_streak": null,
+    "final_stats": {
+      "level": 2,
+      "xp": 62,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 6,
+      "vit": 24,
+      "dex": 8,
+      "luk": 9,
+      "int": 11,
+      "foc": 8,
+      "last xp": 23,
+      "fights": 10
+    },
+    "final_max_hp": 304,
+    "final_equipment": [],
+    "final_streak": 1,
+    "pve_data": {
+      "fights": 2,
+      "wins": 2,
+      "xp_total": 46,
+      "monsters_faced": []
+    },
+    "level_up_events": [],
+    "idle_stats": {
+      "streak": 3,
+      "xpPerMinute": null,
+      "slain": 7,
+      "badgePoints": 1,
+      "streakIndicatorActive": false,
+      "streakIndicatorText": null
+    },
+    "forge": null,
+    "errors": [
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('[role=\"switch\"][aria-label=\"Auto mode\"], [role=\"switch\"], .pixel-switch').first()\n    - locator resolved to <button role=\"switch\" aria-checked=\"true\" aria-label=\"PvE mode\" class=\"pixel-switch pve-switch on\">…</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay settings-overlay\">…</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay settings-overlay\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    52 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div class=\"retro-modal-overlay settings-overlay\">…</div> intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n    - waiting for element to be visible, enabled and stable\n"
+    ],
+    "load_times_ms": {
+      "home": 1368,
+      "arena": 2410
+    }
   }
 ]
