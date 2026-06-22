@@ -159,6 +159,9 @@ export function useIdleCombat({
     effIntervalRef.current = eff.effectiveInterval
     xpBonusRef.current = eff.xpBonusMultiplier
     const avgXp = calculateIdleXp(true, effectiveChar.level)
+    const avgEssencePerKill = calculateIdleEssence(true, effectiveChar.level) * eff.xpBonusMultiplier
+    const fightsPerMinute = 60000 / eff.effectiveInterval
+    const essencePerMinute = Math.round(avgEssencePerKill * fightsPerMinute * 100) / 100
     const display = computeDisplayData(eff.effectiveInterval, avgXp, streakRef.current, killsRef.current)
     const nextLevelTime = character.level >= 99 ? null : (() => {
       const progress = getXpProgress(character)
@@ -173,6 +176,7 @@ export function useIdleCombat({
       efficiency: eff.efficiency,
       effectiveInterval: eff.effectiveInterval,
       xpPerMinute: display.xpPerMinute,
+      essencePerMinute,
       streakBonus: display.streakBonus,
       streakMilestone: display.streakMilestone,
       nextLevelTime,
@@ -234,8 +238,8 @@ export function useIdleCombat({
       }
       newIdleXp += finalXp
 
-      // Accumulate essence per kill
-      const essenceGain = calculateIdleEssence(won, currentChar.level)
+      // Accumulate essence per kill (scales with power ratio, like XP)
+      const essenceGain = calculateIdleEssence(won, currentChar.level) * xpBonusRef.current
       essenceFracRef.current += essenceGain
       let essenceToAdd = 0
       if (essenceFracRef.current >= 1) {

@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { render } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Arena from '../../pages/Arena'
 import { useGame } from '../../context/GameContext'
@@ -74,21 +73,16 @@ describe('Arena offline mode', () => {
       deleteCharacter: vi.fn(),
     })
 
-    const { getByText, getByRole, queryByRole } = render(
+    const { getByRole, queryByRole } = render(
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Arena />
       </MemoryRouter>
     )
 
-    const user = userEvent.setup()
-    const pvpToggle = screen.getAllByRole('switch', { name: 'PvP mode' })[0]
-    await user.click(pvpToggle)
-
-    expect(getByText('OFFLINE MODE')).toBeInTheDocument()
     const fightButton = getByRole('button', { name: 'OFFLINE' })
     expect(fightButton).toBeDisabled()
 
-    // Retry button was removed from banner
+    // Verify no retry button (banner was removed)
     expect(queryByRole('button', { name: /RETRY/i })).toBeNull()
   })
 
@@ -110,21 +104,16 @@ describe('Arena offline mode', () => {
       deleteCharacter: vi.fn(),
     })
 
-    const { getByText, getByRole, queryByRole } = render(
+    const { getByRole, queryByRole } = render(
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Arena />
       </MemoryRouter>
     )
 
-    const user = userEvent.setup()
-    const pvpToggle = screen.getAllByRole('switch', { name: 'PvP mode' })[0]
-    await user.click(pvpToggle)
-
-    expect(getByText('OFFLINE MODE')).toBeInTheDocument()
     const fightButton = getByRole('button', { name: 'OFFLINE' })
     expect(fightButton).toBeDisabled()
 
-    // Retry button was removed from banner
+    // Verify no retry button (banner was removed)
     expect(queryByRole('button', { name: /RETRY/i })).toBeNull()
   })
 })

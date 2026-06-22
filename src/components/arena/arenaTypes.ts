@@ -24,6 +24,7 @@ export interface ArenaIdleViewModel {
   streakMilestone: number | null;
   efficiency: number | null;
   xpPerMinute: number | null;
+  essencePerMinute: number | null;
   powerRatio: number | null;
   idleFightsCount: number;
   totalKills: number;

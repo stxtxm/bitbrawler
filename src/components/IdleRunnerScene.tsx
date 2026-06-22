@@ -27,6 +27,7 @@ interface IdleRunnerSceneProps {
   streakMilestone?: number | null
   efficiency?: number | null
   xpPerMinute?: number | null
+  essencePerMinute?: number | null
   powerRatio?: number | null
 }
 
@@ -60,6 +61,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   streakMilestone = null,
   efficiency = null,
   xpPerMinute = null,
+  essencePerMinute = null,
   powerRatio = null,
 }: IdleRunnerSceneProps) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -173,6 +175,9 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
       {scenePhase === 'running' && xpPerMinute != null && (
         <div className="idle-efficiency-overlay">
           <span className="eff-xp-rate">⚡ ~{xpPerMinute} XP/min</span>
+          {essencePerMinute != null && essencePerMinute > 0 && (
+            <span className="eff-essence-rate">✦ ~{essencePerMinute} Essence/min</span>
+          )}
           {efficiency != null && efficiency > 1 && (
             <span className="eff-multiplier">{efficiency.toFixed(1)}x EFF</span>
           )}

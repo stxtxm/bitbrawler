@@ -141,6 +141,7 @@ const Arena = () => {
     streakMilestone: idle.efficiencyData?.streakMilestone ?? null,
     efficiency: idle.efficiencyData?.efficiency ?? null,
     xpPerMinute: idle.efficiencyData?.xpPerMinute ?? null,
+    essencePerMinute: idle.efficiencyData?.essencePerMinute ?? null,
     powerRatio: idle.efficiencyData?.powerRatio ?? null,
     idleFightsCount: idle.idleFightsCount,
     totalKills: idle.totalKills,

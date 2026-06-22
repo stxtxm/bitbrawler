@@ -14,6 +14,7 @@ export interface IdleEfficiencyData {
   efficiency: number
   effectiveInterval: number
   xpPerMinute: number
+  essencePerMinute: number
   streakBonus: number
   streakMilestone: number | null
   nextLevelTime: number | null

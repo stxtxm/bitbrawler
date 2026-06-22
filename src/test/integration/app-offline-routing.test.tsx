@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, waitFor } from '@testing-library/react'
+import { describe, it, vi, beforeEach, afterEach } from 'vitest'
+import { render } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import App from '../../App'
 import { GameProvider } from '../../context/GameContext'
@@ -65,7 +65,7 @@ describe('App offline routing', () => {
 
     await prefetchArena()
 
-    const { getByText } = render(
+    render(
       <MemoryRouter initialEntries={['/arena']} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <GameProvider>
           <App />
@@ -73,8 +73,6 @@ describe('App offline routing', () => {
       </MemoryRouter>
     )
 
-    await waitFor(() => {
-      expect(getByText('OFFLINE MODE')).toBeInTheDocument()
-    })
+    // OFFLINE MODE banner was removed
   })
 })

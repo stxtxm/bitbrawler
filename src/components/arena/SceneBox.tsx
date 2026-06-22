@@ -39,6 +39,7 @@ export const SceneBox = memo(function SceneBox({
           streakMilestone={idle.streakMilestone}
           efficiency={idle.efficiency}
           xpPerMinute={idle.xpPerMinute}
+          essencePerMinute={idle.essencePerMinute}
           powerRatio={idle.powerRatio}
         />
       ) : (
