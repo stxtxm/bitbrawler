@@ -25,10 +25,6 @@ interface IdleRunnerSceneProps {
   onClearOfflineGains: () => void
   currentStreak?: number
   streakMilestone?: number | null
-  efficiency?: number | null
-  xpPerMinute?: number | null
-  essencePerMinute?: number | null
-  powerRatio?: number | null
 }
 
 function formatTimeAway(ms: number): string {
@@ -59,10 +55,6 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   onClearOfflineGains,
   currentStreak = 0,
   streakMilestone = null,
-  efficiency = null,
-  xpPerMinute = null,
-  essencePerMinute = null,
-  powerRatio = null,
 }: IdleRunnerSceneProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const particlesRef = useRef<ParticleSystem | null>(null)
@@ -172,20 +164,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
         </div>
       )}
 
-      {scenePhase === 'running' && xpPerMinute != null && (
-        <div className="idle-efficiency-overlay">
-          <span className="eff-xp-rate">⚡ ~{xpPerMinute} XP/min</span>
-          {essencePerMinute != null && essencePerMinute > 0 && (
-            <span className="eff-essence-rate">✦ ~{essencePerMinute} Essence/min</span>
-          )}
-          {efficiency != null && efficiency > 1 && (
-            <span className="eff-multiplier">{efficiency.toFixed(1)}x EFF</span>
-          )}
-          {powerRatio != null && powerRatio > 1 && (
-            <span className="eff-power">⚔ {powerRatio.toFixed(1)}x PWR</span>
-          )}
-        </div>
-      )}
+
 
       {offlineGains && (
         <div className="idle-offline-notification">

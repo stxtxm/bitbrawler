@@ -37,10 +37,6 @@ export const SceneBox = memo(function SceneBox({
           onClearOfflineGains={idle.clearOfflineGains}
           currentStreak={idle.currentStreak}
           streakMilestone={idle.streakMilestone}
-          efficiency={idle.efficiency}
-          xpPerMinute={idle.xpPerMinute}
-          essencePerMinute={idle.essencePerMinute}
-          powerRatio={idle.powerRatio}
         />
       ) : (
         <div className="scene-pvp-center">

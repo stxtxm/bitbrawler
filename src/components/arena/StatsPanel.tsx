@@ -63,6 +63,11 @@ export const StatsPanel = memo(function StatsPanel({
             <span className="efficiency-xp-min">
               ~{idle.efficiencyData.xpPerMinute} <small>XP/min</small>
             </span>
+            {idle.efficiencyData.essencePerMinute > 0 && (
+              <span className="efficiency-essence-min">
+                💎 ~{idle.efficiencyData.essencePerMinute} <small>Essence/min</small>
+              </span>
+            )}
             {idle.efficiencyData.nextLevelTime != null && (
               <span className="efficiency-next">{formatDuration(idle.efficiencyData.nextLevelTime)}</span>
             )}
