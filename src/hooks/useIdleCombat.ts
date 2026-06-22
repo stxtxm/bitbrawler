@@ -6,7 +6,7 @@ import { generateMonsterForPlayer, getReferenceMonster } from '../utils/monsterU
 import { simulateCombat, calculateCombatStats } from '../utils/combatUtils'
 import { gainXp, getXpProgress } from '../utils/xpUtils'
 import { GAME_RULES } from '../config/gameRules'
-import { calculateIdleXp } from '../utils/idleXpUtils'
+import { calculateIdleXp, calculateIdleEssence } from '../utils/idleXpUtils'
 import { applyEquipmentToCharacter } from '../utils/equipmentUtils'
 import {
   computeEfficiency,
@@ -69,6 +69,7 @@ export function useIdleCombat({
   const idleXpRef = useRef(idleTotalXp)
   const effIntervalRef = useRef<number>(IDLE_CONFIG.TIMER_INTERVAL)
   const xpBonusRef = useRef<number>(0)
+  const essenceFracRef = useRef<number>(0)
 
   isPausedRef.current = isPaused || !character
   charRef.current = character ?? charRef.current
@@ -233,11 +234,22 @@ export function useIdleCombat({
       }
       newIdleXp += finalXp
 
+      // Accumulate essence per kill
+      const essenceGain = calculateIdleEssence(won, currentChar.level)
+      essenceFracRef.current += essenceGain
+      let essenceToAdd = 0
+      if (essenceFracRef.current >= 1) {
+        essenceToAdd = Math.floor(essenceFracRef.current)
+        essenceFracRef.current -= essenceToAdd
+      }
+
       // Apply XP with updated idle stats and watermarks
       const xpResult = gainXp(currentChar, finalXp)
       const now = Date.now()
+      const updatedEssence = (currentChar.essence ?? 0) + essenceToAdd
       const updatedChar: Character = {
         ...xpResult.updatedCharacter,
+        essence: updatedEssence,
         idleStreak: newStreak,
         idleMaxStreak: Math.max(newStreak, (currentChar.idleMaxStreak ?? 0)),
         idleTotalKills: newKills,
