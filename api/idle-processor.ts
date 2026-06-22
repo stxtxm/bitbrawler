@@ -335,10 +335,19 @@ function toClientResponse(c: Character, now: string): Record<string, any> {
   }
 }
 
+interface ProcessResult {
+  updated: Character | null
+  conflict?: boolean
+  fights: number
+  xp: number
+  levels: number
+  essence: number
+}
+
 async function processCharacter(
   candidate: { id: string; char: Character; lastCheck: number },
   supabase: any,
-): Promise<{ updated: Character | null; fights: number; xp: number; levels: number; essence: number }> {
+): Promise<ProcessResult> {
   const idleMs = Date.now() - candidate.lastCheck
   const now = new Date().toISOString()
 
@@ -360,7 +369,7 @@ async function processCharacter(
     // Si last_idle_check a été mis à jour entre la lecture et maintenant
     // (par un appel on-demand), on skip pour éviter la race condition
     if (candidate.lastCheck > 0 && freshCheck !== candidate.lastCheck) {
-      return { updated: null, fights: 0, xp: 0, levels: 0, essence: 0 }
+      return { updated: null, conflict: true, fights: 0, xp: 0, levels: 0, essence: 0 }
     }
   }
 
@@ -432,6 +441,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     }
 
     const row = data as any
+    const lastCheckMs = row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0
     const candidate = {
       id: row.id as string,
       char: {
@@ -456,17 +466,24 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
         idleTotalKills: row.idle_total_kills ?? 0,
         idleTotalXp: row.idle_total_xp ?? 0,
         essence: row.essence ?? 0,
-        lastIdleCheck: row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0,
+        lastIdleCheck: lastCheckMs,
       } as Character,
-      lastCheck: row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0,
+      lastCheck: lastCheckMs,
     }
 
     const result = await processCharacter(candidate, supabase)
 
+    const nowStr = new Date().toISOString()
+    const updatedPayload = result.updated
+      ? toClientResponse(result.updated, nowStr)
+      : result.conflict
+        ? null
+        : toClientResponse(candidate.char, nowStr)
+
     res.writeHead(200, { 'Content-Type': 'application/json' })
     res.end(JSON.stringify({
       character_id: body.character_id,
-      updated: result.updated ? toClientResponse(result.updated, new Date().toISOString()) : null,
+      updated: updatedPayload,
       fights: result.fights,
       xp: result.xp,
       levels: result.levels,

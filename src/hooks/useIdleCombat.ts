@@ -118,25 +118,27 @@ export function useIdleCombat({
         if (!res.ok || cancelled) return
         const data = await res.json()
         if (cancelled) return
-        if (data.fights > 0) {
-          if (data.updated) {
-            const updatedChar: Character = {
-              ...character,
-              ...data.updated,
-              lastIdleCheck: Date.now(),
-              lastActive: Date.now(),
-            }
-            onCharacterUpdate(updatedChar)
+        if (data.updated) {
+          const updatedChar: Character = {
+            ...character,
+            ...data.updated,
+            lastIdleCheck: Date.now(),
+            lastActive: Date.now(),
           }
-          const serverEssence = data.essence ?? 0
+          onCharacterUpdate(updatedChar)
           const timeAway = Date.now() - lastActive
-          setOfflineGains({
-            fights: data.fights,
-            xp: data.xp,
-            levels: data.levels,
-            essence: serverEssence,
-            timeAway,
-          })
+          const actualXp = Math.max(0, (data.updated.experience ?? 0) - (character.experience ?? 0))
+          const actualLevels = Math.max(0, (data.updated.level ?? 0) - (character.level ?? 0))
+          const actualEssence = Math.max(0, (data.updated.essence ?? 0) - (character.essence ?? 0))
+          if (actualXp > 0 || actualLevels > 0 || actualEssence > 0 || data.fights > 0) {
+            setOfflineGains({
+              fights: Math.max(data.fights, Math.floor(timeAway / 12000)),
+              xp: actualXp,
+              levels: actualLevels,
+              essence: actualEssence,
+              timeAway,
+            })
+          }
         }
       } catch {
         // server unreachable — silently ignore, popup won't appear but idle persists on cron
