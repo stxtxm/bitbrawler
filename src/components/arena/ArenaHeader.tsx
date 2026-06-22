@@ -4,6 +4,7 @@ import { PixelIcon } from '../PixelIcon';
 interface ArenaHeaderProps {
   characterName: string;
   level: number;
+  essence: number;
   pointsRemaining: number;
   onOpenLevelUp: () => void;
   onOpenSettings: () => void;
@@ -15,6 +16,7 @@ interface ArenaHeaderProps {
 export const ArenaHeader = memo(function ArenaHeader({
   characterName,
   level,
+  essence,
   pointsRemaining,
   onOpenLevelUp,
   onOpenSettings,
@@ -29,6 +31,9 @@ export const ArenaHeader = memo(function ArenaHeader({
         <div className="arena-lvl">
           <span className="lvl-label">LVL</span>
           <span className="lvl-chip">{level}</span>
+          {essence > 0 && (
+            <span className="essence-badge" title="Essence">💎 {essence}</span>
+          )}
           {pointsRemaining > 0 && (
             <button className="stat-points-badge pulse" onClick={onOpenLevelUp} title="Unspent stat points">
               ⚡+{pointsRemaining}

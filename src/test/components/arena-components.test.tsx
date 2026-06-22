@@ -235,6 +235,7 @@ describe('arena extracted components', () => {
         characterName="Header Hero"
         level={7}
         pointsRemaining={2}
+        essence={99}
         onOpenLevelUp={onOpenLevelUp}
         onOpenSettings={onOpenSettings}
         onOpenInventory={onOpenInventory}
@@ -242,6 +243,7 @@ describe('arena extracted components', () => {
       />,
     );
 
+    expect(screen.getByText('💎 99')).toBeInTheDocument();
     fireEvent.click(screen.getByTitle('Unspent stat points'));
     fireEvent.click(screen.getByLabelText('Settings'));
     fireEvent.click(screen.getByLabelText('Inventory'));

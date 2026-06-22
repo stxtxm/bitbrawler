@@ -192,6 +192,7 @@ const Arena = () => {
       <ArenaHeader
         characterName={activeCharacter.name}
         level={activeCharacter.level}
+        essence={essence}
         pointsRemaining={levelUp.pointsRemaining}
         onOpenLevelUp={levelUp.handleOpenLevelUp}
         onOpenSettings={settings.openSettings}

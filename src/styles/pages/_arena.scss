@@ -1009,6 +1009,29 @@
         animation: badgePulse 2s ease-in-out infinite;
     }
 
+}
+
+.essence-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 2px 6px;
+    font-size: 0.55rem;
+    font-family: $font-pixel;
+    color: #c084fc;
+    background: rgba(192, 132, 252, 0.12);
+    border: 1px solid rgba(192, 132, 252, 0.4);
+    letter-spacing: 0;
+    text-shadow: 0 0 6px rgba(192, 132, 252, 0.3);
+    line-height: 1;
+    white-space: nowrap;
+
+    @include mobile {
+        font-size: 0.45rem;
+        padding: 1px 4px;
+    }
+
     @include mobile {
         font-size: 0.5rem;
         padding: 1px 4px;
