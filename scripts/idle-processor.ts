@@ -153,7 +153,7 @@ function simulateIdleGains(
       : updated;
   }
 
-  const essenceDelta = Math.min(Math.round(essenceAccum), 500 - (current.essence ?? 0))
+  const essenceDelta = Math.round(essenceAccum)
   if (essenceDelta > 0) {
     current = { ...current, essence: (current.essence ?? 0) + essenceDelta }
   }

@@ -50,8 +50,6 @@ const STREAK_BONUS_CAP = 0.25
 const ESSENCE_BASE_RATE = 0.2
 const ESSENCE_LOSS_RATIO = 0.3
 const ESSENCE_LEVEL_SCALE = 0.08
-const ESSENCE_SOFT_CAP = 500
-
 const MONSTER_IDS = ['GOBLIN', 'OGRE', 'WRAITH', 'SLIME', 'SKELETON', 'BAT', 'SPIDER']
 
 interface MonsterDef {
@@ -283,7 +281,7 @@ function simulateIdleGains(char: Character, idleMs: number): { updated: Characte
       : updated
   }
 
-  const essenceDelta = Math.min(Math.round(essenceAccum), ESSENCE_SOFT_CAP - (current.essence ?? 0))
+  const essenceDelta = Math.round(essenceAccum)
   if (essenceDelta > 0) {
     current = { ...current, essence: (current.essence ?? 0) + essenceDelta }
   }
