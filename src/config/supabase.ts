@@ -53,7 +53,6 @@ export type CharacterRow = {
   idle_max_streak: number;
   idle_total_kills: number;
   idle_total_xp: number;
-  essence?: number;
 }
 
 export type ServerTimeRow = {
