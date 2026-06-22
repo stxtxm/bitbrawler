@@ -150,7 +150,11 @@ export function useIdleCombat({
     return () => { cancelled = true }
   }, [character?.id, character?.lastActive, onCharacterUpdate])
 
-  // Compute stable efficiency data — recalculates when character changes (level, stats, equip).
+  // Compute stable efficiency data — recalculates only when stats/level/equip change,
+  // NOT on every idle tick (XP, essence, watermarks).
+  const effDepKey = character
+    ? `${character.level}-${character.strength}-${character.vitality}-${character.dexterity}-${character.luck}-${character.intelligence}-${character.focus}-${JSON.stringify(character.equippedItems)}`
+    : null
   useEffect(() => {
     if (!character) return
     const effectiveChar = applyEquipmentToCharacter(character)
@@ -183,7 +187,7 @@ export function useIdleCombat({
       streakMilestone: display.streakMilestone,
       nextLevelTime,
     })
-  }, [character])
+  }, [effDepKey])
 
   const clearOfflineGains = useCallback(() => {
     setOfflineGains(null)
