@@ -12,6 +12,8 @@ import {
   computeEfficiency,
   computeDisplayData,
   calculateNextLevelTime,
+  calculateStatEssenceMultiplier,
+  calculateSpeedEfficiency,
 } from '../utils/idleEfficiencyUtils'
 import { MonsterId } from '../data/monsterAssets'
 
@@ -165,9 +167,11 @@ export function useIdleCombat({
     effIntervalRef.current = eff.effectiveInterval
     xpBonusRef.current = eff.xpBonusMultiplier
     const avgXp = calculateIdleXp(true, effectiveChar.level)
-    const avgEssencePerKill = calculateIdleEssence(true, effectiveChar.level) * eff.xpBonusMultiplier
+    const avgEssencePerKill = calculateIdleEssence(true, effectiveChar.level, effectiveChar.intelligence, effectiveChar.focus) * eff.xpBonusMultiplier
     const fightsPerMinute = 60000 / eff.effectiveInterval
     const essencePerMinute = Math.round(avgEssencePerKill * fightsPerMinute * 100) / 100
+    const speedEfficiency = calculateSpeedEfficiency(playerStats, monsterStats)
+    const statEssenceMultiplier = calculateStatEssenceMultiplier(effectiveChar.intelligence ?? 10, effectiveChar.focus ?? 10)
     const display = computeDisplayData(eff.effectiveInterval, avgXp, streakRef.current, killsRef.current)
     const nextLevelTime = character.level >= 99 ? null : (() => {
       const progress = getXpProgress(character)
@@ -186,6 +190,8 @@ export function useIdleCombat({
       streakBonus: display.streakBonus,
       streakMilestone: display.streakMilestone,
       nextLevelTime,
+      speedEfficiency,
+      statEssenceMultiplier,
     })
   }, [effDepKey])
 
@@ -244,8 +250,8 @@ export function useIdleCombat({
       }
       newIdleXp += finalXp
 
-      // Accumulate essence per kill (scales with power ratio, like XP)
-      const essenceGain = calculateIdleEssence(won, currentChar.level) * xpBonusRef.current
+      // Accumulate essence per kill (scales with power ratio + stats, like XP)
+      const essenceGain = calculateIdleEssence(won, currentChar.level, currentChar.intelligence, currentChar.focus) * xpBonusRef.current
       essenceFracRef.current += essenceGain
       let essenceToAdd = 0
       if (essenceFracRef.current >= 1) {

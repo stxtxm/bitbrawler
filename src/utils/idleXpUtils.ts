@@ -5,10 +5,16 @@ export function calculateIdleXp(won: boolean, playerLevel: number): number {
   return Math.floor(calculateFightXp(won, playerLevel) * IDLE_CONFIG.XP_MODIFIER)
 }
 
-export function calculateIdleEssence(won: boolean, playerLevel: number): number {
+export function calculateIdleEssence(
+  won: boolean,
+  playerLevel: number,
+  intelligence?: number,
+  focus?: number,
+): number {
   const baseRate = won ? IDLE_CONFIG.ESSENCE.BASE_RATE : IDLE_CONFIG.ESSENCE.BASE_RATE * IDLE_CONFIG.ESSENCE.LOSS_RATIO
   const levelScaling = 1 + (playerLevel - 1) * IDLE_CONFIG.ESSENCE.LEVEL_SCALE
-  return baseRate * levelScaling
+  const statMultiplier = Math.max(0.5, 1 + ((intelligence ?? 10) + (focus ?? 10) - 20) * 0.01)
+  return baseRate * levelScaling * statMultiplier
 }
 
 export function calculateOfflineFights(lastTimestamp: number, now: number = Date.now()): number {

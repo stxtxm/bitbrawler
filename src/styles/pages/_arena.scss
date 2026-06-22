@@ -1304,8 +1304,8 @@
 .idle-efficiency {
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    padding: 4px 6px;
+    gap: 3px;
+    padding: 5px 6px;
     margin-bottom: 4px;
     background: rgba(255, 215, 0, 0.04);
     @include retro-border(1px, #444);
@@ -1314,58 +1314,97 @@
 .efficiency-primary {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-}
+    gap: 12px;
 
-.efficiency-xp-min {
-    font-family: $font-pixel;
-    font-size: 0.7rem;
-    color: $accent-gold;
-    letter-spacing: 1px;
-
-    small {
-        font-size: 0.45rem;
-        color: #888;
+    .eff-rate {
+        display: flex;
+        flex-direction: column;
         font-family: $font-pixel;
+
+        small {
+            font-size: 0.4rem;
+            color: #888;
+        }
+        strong {
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+        }
+
+        &.eff-xp strong {
+            color: $accent-gold;
+        }
+        &.eff-essence strong {
+            color: #b8f;
+        }
     }
 
     @include mobile {
-        font-size: 0.55rem;
+        gap: 8px;
+        .eff-rate strong {
+            font-size: 0.55rem;
+        }
     }
 }
 
-.efficiency-next {
-    font-size: 0.45rem;
-    color: #0af;
-    white-space: nowrap;
+.efficiency-breakdown {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
 
-    &::before {
-        content: '⬆ ';
-        opacity: 0.7;
+    .eff-stat {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        font-family: $font-pixel;
+        padding: 1px 4px;
+        background: rgba(255,255,255,0.03);
+        border-radius: 2px;
+
+        small {
+            font-size: 0.38rem;
+            color: #666;
+        }
+        strong {
+            font-size: 0.4rem;
+            white-space: nowrap;
+        }
+
+        &.eff-power strong { color: #ff6b6b; }
+        &.eff-speed strong { color: #4fc; }
+        &.eff-magic strong { color: #b8f; }
+        &.eff-interval strong { color: #aaa; }
     }
 
     @include mobile {
-        font-size: 0.4rem;
+        gap: 4px;
+        .eff-stat {
+            padding: 1px 3px;
+            small { font-size: 0.33rem; }
+            strong { font-size: 0.36rem; }
+        }
     }
 }
 
-.efficiency-secondary {
+.efficiency-footer {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-wrap: wrap;
 
     span {
         font-size: 0.4rem;
-        color: #666;
+        font-family: $font-pixel;
         white-space: nowrap;
     }
 
+    .eff-streak { color: #fa0; }
+    .eff-milestone { color: #f4a; }
+    .eff-next { color: #0af; }
+
     @include mobile {
         gap: 6px;
-        span {
-            font-size: 0.35rem;
-        }
+        span { font-size: 0.35rem; }
     }
 }
 

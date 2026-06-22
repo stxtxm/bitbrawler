@@ -72,6 +72,16 @@ export interface EfficiencyDisplayData {
   currentStreak: number;
 }
 
+export function calculateStatEssenceMultiplier(intelligence: number, focus: number): number {
+  return Math.max(0.5, 1 + ((intelligence + focus - 20) * 0.01))
+}
+
+export function calculateSpeedEfficiency(playerStats: CombatStats, monsterStats: CombatStats): number {
+  if (monsterStats.speed <= 0) return 2
+  const raw = playerStats.speed / monsterStats.speed
+  return clamp(raw, 0.5, 2)
+}
+
 export function computeEfficiency(
   playerStats: CombatStats,
   monsterStats: CombatStats,

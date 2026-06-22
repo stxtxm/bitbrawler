@@ -60,21 +60,43 @@ export const StatsPanel = memo(function StatsPanel({
       {idle.efficiencyData && (
         <div className="idle-efficiency">
           <div className="efficiency-primary">
-            <span className="efficiency-xp-min">
-              ~{idle.efficiencyData.xpPerMinute} <small>XP/min</small>
+            <span className="eff-rate eff-xp">
+              <small>XP/min</small>
+              <strong>~{idle.efficiencyData.xpPerMinute}</strong>
             </span>
-            {idle.efficiencyData.essencePerMinute > 0 && (
-              <span className="efficiency-essence-min">
-                💎 ~{idle.efficiencyData.essencePerMinute} <small>Essence/min</small>
-              </span>
+            <span className="eff-rate eff-essence">
+              <small>Essence/min</small>
+              <strong>💎 ~{idle.efficiencyData.essencePerMinute}</strong>
+            </span>
+          </div>
+          <div className="efficiency-breakdown">
+            <span className="eff-stat eff-power" title="Power ratio (STR/DEX vs monster)">
+              <small>Power</small>
+              <strong>⚔ {idle.efficiencyData.powerRatio.toFixed(2)}x</strong>
+            </span>
+            <span className="eff-stat eff-speed" title="Speed ratio (DEX vs monster)">
+              <small>Speed</small>
+              <strong>⚡ {idle.efficiencyData.speedEfficiency.toFixed(2)}x</strong>
+            </span>
+            <span className="eff-stat eff-magic" title="Essence stat bonus (INT+FOC)">
+              <small>Magic</small>
+              <strong>🧠 {idle.efficiencyData.statEssenceMultiplier.toFixed(2)}x</strong>
+            </span>
+            <span className="eff-stat eff-interval" title="Time per fight">
+              <small>Interval</small>
+              <strong>◈ {(idle.efficiencyData.effectiveInterval / 1000).toFixed(1)}s</strong>
+            </span>
+          </div>
+          <div className="efficiency-footer">
+            {idle.currentStreak > 0 && (
+              <span className="eff-streak">🔥 {idle.currentStreak}-win streak (+{(idle.efficiencyData.streakBonus * 100).toFixed(0)}%)</span>
+            )}
+            {idle.efficiencyData.streakMilestone != null && (
+              <span className="eff-milestone">🎯 {idle.efficiencyData.streakMilestone} milestone!</span>
             )}
             {idle.efficiencyData.nextLevelTime != null && (
-              <span className="efficiency-next">{formatDuration(idle.efficiencyData.nextLevelTime)}</span>
+              <span className="eff-next">⬆ Next: ~{formatDuration(idle.efficiencyData.nextLevelTime)}</span>
             )}
-          </div>
-          <div className="efficiency-secondary">
-            <span>⚡ {idle.efficiencyData.efficiency.toFixed(2)}x</span>
-            <span>🎯 {idle.efficiencyData.powerRatio.toFixed(2)}x</span>
           </div>
         </div>
       )}

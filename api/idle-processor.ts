@@ -223,10 +223,11 @@ const SELECT_COLUMNS = [
   'essence', 'last_active',
 ].join(',')
 
-function calculateIdleEssence(won: boolean, level: number): number {
+function calculateIdleEssence(won: boolean, level: number, intelligence?: number, focus?: number): number {
   const baseRate = won ? ESSENCE_BASE_RATE : ESSENCE_BASE_RATE * ESSENCE_LOSS_RATIO
   const levelScaling = 1 + (level - 1) * ESSENCE_LEVEL_SCALE
-  return baseRate * levelScaling
+  const statMultiplier = Math.max(0.5, 1 + ((intelligence ?? 10) + (focus ?? 10) - 20) * 0.01)
+  return baseRate * levelScaling * statMultiplier
 }
 
 function simulateIdleGains(char: Character, idleMs: number): { updated: Character; fights: number } | null {
@@ -259,7 +260,7 @@ function simulateIdleGains(char: Character, idleMs: number): { updated: Characte
     const streakBonus = Math.min(streak * STREAK_BONUS_PER_STEP, STREAK_BONUS_CAP)
     const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
 
-    const essenceGain = calculateIdleEssence(won, current.level)
+    const essenceGain = calculateIdleEssence(won, current.level, current.intelligence, current.focus)
     essenceAccum += essenceGain
 
     const result = gainXp(current, finalXp)

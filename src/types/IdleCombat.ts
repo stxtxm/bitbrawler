@@ -18,4 +18,6 @@ export interface IdleEfficiencyData {
   streakBonus: number
   streakMilestone: number | null
   nextLevelTime: number | null
+  speedEfficiency: number
+  statEssenceMultiplier: number
 }

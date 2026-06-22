@@ -129,7 +129,8 @@ function simulateIdleGains(
 
     const essenceRate = IDLE_CONFIG.ESSENCE.BASE_RATE * (won ? 1 : IDLE_CONFIG.ESSENCE.LOSS_RATIO)
     const essenceScaling = 1 + (current.level - 1) * IDLE_CONFIG.ESSENCE.LEVEL_SCALE
-    essenceAccum += essenceRate * essenceScaling
+    const statMultiplier = Math.max(0.5, 1 + ((current.intelligence ?? 10) + (current.focus ?? 10) - 20) * 0.01)
+    essenceAccum += essenceRate * essenceScaling * statMultiplier
 
     const result = gainXp(current, finalXp);
     if (result.levelsGained > 0) _leveledUp = true;

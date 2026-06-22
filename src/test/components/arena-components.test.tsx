@@ -72,6 +72,8 @@ const idle: ArenaIdleViewModel = {
     streakBonus: 0,
     streakMilestone: null,
     nextLevelTime: 125,
+    speedEfficiency: 1,
+    statEssenceMultiplier: 1,
   },
 };
 
