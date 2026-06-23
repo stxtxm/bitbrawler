@@ -72,6 +72,7 @@ export function useIdleCombat({
   const effIntervalRef = useRef<number>(IDLE_CONFIG.TIMER_INTERVAL)
   const xpBonusRef = useRef<number>(0)
   const essenceFracRef = useRef<number>(0)
+  const backgroundStartRef = useRef<number>(0)
 
   isPausedRef.current = isPaused || !character
   charRef.current = character ?? charRef.current
@@ -340,11 +341,96 @@ export function useIdleCombat({
     }
   }, [isPaused, runCombatTick])
 
-  // Visibility change → sync watermarks to server only (no local update —
-  // avoids triggering dbAvailable=false on background sync failures).
+  // Catch up missed idle combat when the page returns from background.
+  // Browser throttles setTimeout in background tabs, so essence/XP don't
+  // accumulate properly. This simulates the fights that should have occurred.
+  // Handles gaps < 30s (server handles longer gaps via /api/idle-processor).
+  const catchUpBackgroundFights = useCallback((elapsedMs: number) => {
+    const currentChar = charRef.current
+    if (!currentChar || isPausedRef.current) return
+
+    const effectiveInterval = effIntervalRef.current
+    const numFights = Math.floor(elapsedMs / effectiveInterval)
+    if (numFights <= 0) return
+
+    let char = { ...currentChar }
+    let streak = streakRef.current
+    let kills = killsRef.current
+    let idleTotalXp = idleXpRef.current
+    let essenceFrac = essenceFracRef.current
+    let totalXpGained = 0
+
+    for (let i = 0; i < numFights; i++) {
+      try {
+        const monster = generateMonsterForPlayer(char.level)
+        const result = simulateCombat(char, monster.character)
+        const won = result.winner === 'attacker'
+
+        const baseXp = calculateIdleXp(won, char.level)
+        const xpBonus = xpBonusRef.current - 1
+        const streakBonus = Math.min(
+          streak * IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_PER_STEP,
+          IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_CAP,
+        )
+        const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
+
+        const essenceGain = calculateIdleEssence(won, char.level, char.intelligence, char.focus) * xpBonusRef.current
+        essenceFrac += essenceGain
+
+        if (won) {
+          streak++
+          kills++
+        } else {
+          streak = 0
+        }
+
+        totalXpGained += finalXp
+        idleTotalXp += finalXp
+
+        const xpResult = gainXp(char, finalXp)
+        const pointsGained = xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL
+        char = {
+          ...xpResult.updatedCharacter,
+          statPoints: (xpResult.updatedCharacter.statPoints || 0) + pointsGained,
+        }
+      } catch {
+        continue
+      }
+    }
+
+    const essenceToAdd = Math.floor(essenceFrac)
+    essenceFracRef.current = essenceFrac - essenceToAdd
+
+    const now = Date.now()
+    const updatedChar: Character = {
+      ...char,
+      essence: (currentChar.essence ?? 0) + essenceToAdd,
+      idleStreak: streak,
+      idleMaxStreak: Math.max(streak, char.idleMaxStreak ?? 0),
+      idleTotalKills: kills,
+      idleTotalXp: idleTotalXp,
+      lastIdleCheck: now,
+      lastActive: now,
+    }
+
+    onCharacterUpdate(updatedChar)
+    onSyncCharacter?.(updatedChar)
+    if (char.level > currentChar.level) {
+      onLevelUp?.(char.level - currentChar.level, char.level)
+    }
+
+    setCurrentStreak(streak)
+    setTotalKills(kills)
+    setIdleTotalXp(prev => prev + totalXpGained)
+    setIdleXpGained(prev => prev + totalXpGained)
+  }, [onCharacterUpdate, onSyncCharacter, onLevelUp])
+
+  // Visibility change → track background time, sync watermarks on hide,
+  // catch up missed fights on return (short gaps not handled by server).
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === 'hidden') {
+        backgroundStartRef.current = Date.now()
         const currentChar = charRef.current
         if (!currentChar) return
         const now = Date.now()
@@ -353,11 +439,18 @@ export function useIdleCombat({
           lastIdleCheck: now,
           lastActive: now,
         } as Character)
+      } else if (document.visibilityState === 'visible') {
+        const bgMs = Date.now() - backgroundStartRef.current
+        // Only handle gaps between 5s and 30s — shorter is noise,
+        // longer is handled by the server offline processor.
+        if (bgMs > 5000 && bgMs < 30000) {
+          catchUpBackgroundFights(bgMs)
+        }
       }
     }
     document.addEventListener('visibilitychange', handleVisibility)
     return () => document.removeEventListener('visibilitychange', handleVisibility)
-  }, [onSyncCharacter])
+  }, [onSyncCharacter, catchUpBackgroundFights])
 
   // Sync watermarks to Supabase on unmount (no local state update, no lastActive
   // advance — keeps idle time intact for character switching).
