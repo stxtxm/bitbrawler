@@ -100,58 +100,48 @@ export function useIdleCombat({
     onSyncCharacter?.(updated)
   }, [onCharacterUpdate, onSyncCharacter])
 
-  // On-demand idle processing: call server to persist gains and show popup.
-  // No local preview to avoid popup flicker — server response is fast (< 1s).
+  // Call server idle processor and show popup with gains.
+  // Uses data.essence/xp/levels directly from API (already incremental).
+  const processOfflineOnServer = useCallback(async (timeAway: number) => {
+    const currentChar = charRef.current
+    if (!currentChar || !currentChar.id) return
+    try {
+      const res = await fetch('/api/idle-processor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ character_id: currentChar.id }),
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      if (!data.updated) return
+      const updatedChar: Character = {
+        ...currentChar,
+        ...data.updated,
+        lastIdleCheck: Date.now(),
+        lastActive: Date.now(),
+      }
+      onCharacterUpdate(updatedChar)
+      const fights = data.fights ?? 0
+      const xp = data.xp ?? 0
+      const levels = data.levels ?? 0
+      const essence = data.essence ?? 0
+      if (xp > 0 || levels > 0 || essence > 0 || fights > 0) {
+        setOfflineGains({ fights, xp, levels, essence, timeAway })
+      }
+    } catch {
+      // server unreachable — silently ignore
+    }
+  }, [onCharacterUpdate])
+
+  // On mount: process idle time > 30s and show popup.
   useEffect(() => {
     if (!character) return
     const lastActive = character.lastActive ?? 0
     if (lastActive <= 0) return
     const idleMs = Date.now() - lastActive
     if (idleMs <= 30_000) return
-
-    let cancelled = false
-
-    const processOnServer = async () => {
-      try {
-        const res = await fetch('/api/idle-processor', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ character_id: character.id }),
-        })
-        if (!res.ok || cancelled) return
-        const data = await res.json()
-        if (cancelled) return
-        if (data.updated) {
-          const updatedChar: Character = {
-            ...character,
-            ...data.updated,
-            lastIdleCheck: Date.now(),
-            lastActive: Date.now(),
-          }
-          onCharacterUpdate(updatedChar)
-          const timeAway = Date.now() - lastActive
-          const actualXp = Math.max(0, (data.updated.experience ?? 0) - (character.experience ?? 0))
-          const actualLevels = Math.max(0, (data.updated.level ?? 0) - (character.level ?? 0))
-          const actualEssence = Math.max(0, (data.updated.essence ?? 0) - (character.essence ?? 0))
-          if (actualXp > 0 || actualLevels > 0 || actualEssence > 0 || data.fights > 0) {
-            setOfflineGains({
-              fights: Math.max(data.fights, Math.floor(timeAway / 12000)),
-              xp: actualXp,
-              levels: actualLevels,
-              essence: actualEssence,
-              timeAway,
-            })
-          }
-        }
-      } catch {
-        // server unreachable — silently ignore, popup won't appear but idle persists on cron
-      }
-    }
-
-    processOnServer()
-
-    return () => { cancelled = true }
-  }, [character?.id, character?.lastActive, onCharacterUpdate])
+    processOfflineOnServer(idleMs)
+  }, [character?.id, character?.lastActive, processOfflineOnServer])
 
   // Compute stable efficiency data — recalculates only when stats/level/equip change,
   // NOT on every idle tick (XP, essence, watermarks).
@@ -441,16 +431,16 @@ export function useIdleCombat({
         } as Character)
       } else if (document.visibilityState === 'visible') {
         const bgMs = Date.now() - backgroundStartRef.current
-        // Only handle gaps between 5s and 30s — shorter is noise,
-        // longer is handled by the server offline processor.
         if (bgMs > 5000 && bgMs < 30000) {
           catchUpBackgroundFights(bgMs)
+        } else if (bgMs >= 30000) {
+          processOfflineOnServer(bgMs)
         }
       }
     }
     document.addEventListener('visibilitychange', handleVisibility)
     return () => document.removeEventListener('visibilitychange', handleVisibility)
-  }, [onSyncCharacter, catchUpBackgroundFights])
+  }, [onSyncCharacter, catchUpBackgroundFights, processOfflineOnServer])
 
   // Sync watermarks to Supabase on unmount (no local state update, no lastActive
   // advance — keeps idle time intact for character switching).
