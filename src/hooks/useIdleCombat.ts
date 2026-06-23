@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { saveIdleSnapshot, loadIdleSnapshot, clearIdleSnapshot } from '../utils/idleSnapshotUtils'
 import { Character } from '../types/Character'
 import { IdleCombatEntry, ScenePhase, IdleEfficiencyData } from '../types/IdleCombat'
 import { IDLE_CONFIG } from '../config/idleConfig'
@@ -122,9 +123,25 @@ export function useIdleCombat({
       }
       onCharacterUpdate(updatedChar)
       const fights = data.fights ?? 0
-      const xp = data.xp ?? 0
-      const levels = data.levels ?? 0
-      const essence = data.essence ?? 0
+      let xp = data.xp ?? 0
+      let levels = data.levels ?? 0
+      let essence = data.essence ?? 0
+
+      // Use snapshot to compute total gains across entire absence
+      // (cron may have already processed most of it — snapshot captures pre-absence state)
+      const snapshot = loadIdleSnapshot()
+      if (snapshot && data.updated) {
+        const totalXp = Math.max(0, (data.updated.experience ?? 0) - snapshot.experience)
+        const totalLevels = Math.max(0, (data.updated.level ?? 0) - snapshot.level)
+        const totalEssence = Math.max(0, (data.updated.essence ?? 0) - snapshot.essence)
+        if (totalXp > 0 || totalLevels > 0 || totalEssence > 0) {
+          xp = totalXp
+          levels = totalLevels
+          essence = totalEssence
+        }
+      }
+      clearIdleSnapshot()
+
       if (xp > 0 || levels > 0 || essence > 0 || fights > 0) {
         setOfflineGains({ fights, xp, levels, essence, timeAway })
       }
@@ -423,6 +440,7 @@ export function useIdleCombat({
         backgroundStartRef.current = Date.now()
         const currentChar = charRef.current
         if (!currentChar) return
+        saveIdleSnapshot(currentChar.essence ?? 0, currentChar.experience ?? 0, currentChar.level ?? 1)
         const now = Date.now()
         onSyncCharacter?.({
           ...currentChar,
