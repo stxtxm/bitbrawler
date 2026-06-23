@@ -233,11 +233,11 @@ describe('convertToSupabase', () => {
     expect(row.item_upgrades).toEqual({ axe_01: 5, shield_01: 3 })
   })
 
-  it('defaults essence and item_upgrades when not set on Character', () => {
+  it('omits essence and item_upgrades when not set on Character', () => {
     const row = convertToSupabase(character)
 
-    expect(row.essence).toBe(0)
-    expect(row.item_upgrades).toBeNull()
+    expect(row.essence).toBeUndefined()
+    expect(row.item_upgrades).toBeUndefined()
   })
 
   it('fills default values for missing optional fields', () => {

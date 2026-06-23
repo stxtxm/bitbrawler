@@ -81,7 +81,7 @@ export function convertToSupabase(character: Character): Partial<CharacterRow> {
     idle_max_streak: character.idleMaxStreak ?? 0,
     idle_total_kills: character.idleTotalKills ?? 0,
     idle_total_xp: character.idleTotalXp ?? 0,
-    essence: character.essence ?? 0,
-    item_upgrades: character.itemUpgrades ?? null,
+    ...(character.essence !== undefined ? { essence: character.essence } : {}),
+    ...(character.itemUpgrades !== undefined ? { item_upgrades: character.itemUpgrades } : {}),
   };
 }
