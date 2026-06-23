@@ -42,6 +42,8 @@ describe('convertFromSupabase', () => {
     idle_max_streak: 0,
     idle_total_kills: 0,
     idle_total_xp: 0,
+    essence: 0,
+    item_upgrades: null,
   }
 
   it('maps all CharacterRow fields to Character correctly', () => {
@@ -81,6 +83,25 @@ describe('convertFromSupabase', () => {
     expect(char.idleMaxStreak).toBe(0)
     expect(char.idleTotalKills).toBe(0)
     expect(char.idleTotalXp).toBe(0)
+  })
+
+  it('maps essence and item_upgrades from CharacterRow to Character', () => {
+    const rowWithEssence: CharacterRow = {
+      ...row,
+      essence: 42,
+      item_upgrades: { sword_01: 2, armor_01: 1 },
+    }
+    const char = convertFromSupabase(rowWithEssence)
+
+    expect(char.essence).toBe(42)
+    expect(char.itemUpgrades).toEqual({ sword_01: 2, armor_01: 1 })
+  })
+
+  it('defaults essence to 0 and itemUpgrades to undefined when row has null/0', () => {
+    const char = convertFromSupabase(row)
+
+    expect(char.essence).toBe(0)
+    expect(char.itemUpgrades).toBeUndefined()
   })
 
   it('handles a bot character correctly', () => {
@@ -198,6 +219,25 @@ describe('convertToSupabase', () => {
     expect(row.idle_max_streak).toBe(0)
     expect(row.idle_total_kills).toBe(0)
     expect(row.idle_total_xp).toBe(0)
+  })
+
+  it('maps essence and item_upgrades from Character to CharacterRow', () => {
+    const charWithEssence: Character = {
+      ...character,
+      essence: 137,
+      itemUpgrades: { axe_01: 5, shield_01: 3 },
+    }
+    const row = convertToSupabase(charWithEssence)
+
+    expect(row.essence).toBe(137)
+    expect(row.item_upgrades).toEqual({ axe_01: 5, shield_01: 3 })
+  })
+
+  it('defaults essence and item_upgrades when not set on Character', () => {
+    const row = convertToSupabase(character)
+
+    expect(row.essence).toBe(0)
+    expect(row.item_upgrades).toBeNull()
   })
 
   it('fills default values for missing optional fields', () => {
