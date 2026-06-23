@@ -610,14 +610,30 @@ async function togglePveMode(page, enablePve) {
   const label = enablePve ? 'PvE mode' : 'PvP mode'
   const button = page.locator(`button[aria-label="${label}"]`)
   if (!(await button.isVisible({ timeout: 3000 }).catch(() => false))) {
-    console.log(`   ${label} switch not found`)
+    console.log(`   ${label} switch not found — cannot toggle`)
     return false
   }
   const isOn = await button.getAttribute('aria-checked').then(v => v === 'true')
   if (isOn !== enablePve) {
     await button.click()
     await page.waitForTimeout(600)
-    console.log(`   Mode toggled to ${enablePve ? 'PVE' : 'PVP'}`)
+
+    // Verify the toggle actually took effect
+    const verified = await button.getAttribute('aria-checked').then(v => v === 'true').catch(() => null)
+    if (verified === enablePve) {
+      console.log(`   Mode toggled to ${enablePve ? 'PVE' : 'PVP'} ✅`)
+    } else {
+      console.log(`   ⚠️ First toggle attempt may have failed, retrying...`)
+      await button.click({ force: true }).catch(() => {})
+      await page.waitForTimeout(600)
+      const retryVerified = await button.getAttribute('aria-checked').then(v => v === 'true').catch(() => null)
+      if (retryVerified === enablePve) {
+        console.log(`   Mode toggled to ${enablePve ? 'PVE' : 'PVP'} (after retry) ✅`)
+      } else {
+        console.log(`   ❌ Failed to toggle to ${enablePve ? 'PVE' : 'PVP'} mode`)
+        return false
+      }
+    }
   }
   return true
 }
@@ -738,18 +754,27 @@ async function runFightSequence(page, runKey, runRecord) {
     }
   }
 
-  const pveSwitchIndex = Math.max(0, config.fightsPerRun - (config.pveCount || 0))
-  let isPvePhase = false
+  // Build fight types array — interleave PvE fights evenly across the run
+  const pveCount = Math.min(config.pveCount || 1, config.fightsPerRun)
+  const fightTypes = new Array(config.fightsPerRun).fill('pvp')
+  if (pveCount >= config.fightsPerRun) {
+    fightTypes.fill('pve')
+  } else if (pveCount > 0) {
+    const spacing = config.fightsPerRun / (pveCount + 1)
+    for (let i = 0; i < pveCount; i++) {
+      const pos = Math.min(Math.round((i + 1) * spacing) - 1, config.fightsPerRun - 1)
+      fightTypes[pos] = 'pve'
+    }
+  }
+  console.log(`   Fight types: ${fightTypes.join(' → ')} (${pveCount} PvE, ${config.fightsPerRun - pveCount} PvP)`)
 
   for (let i = 0; i < config.fightsPerRun; i++) {
-    // Toggle PvE phase once we cross the threshold
-    if (!isPvePhase && i >= pveSwitchIndex) {
-      console.log(`👹 Switching to PvE mode for remaining fights (${config.pveCount || 0})...`)
-      await togglePveMode(page, true)
-      isPvePhase = true
-      await handleLevelUpOverlay(page)
-      await humanDelay(page)
-    }
+    const isPvePhase = fightTypes[i] === 'pve'
+
+    // Toggle to the correct mode before each fight
+    await togglePveMode(page, isPvePhase)
+    await handleLevelUpOverlay(page)
+    await humanDelay(page)
 
     const arenaStatus = await readArenaStatus(page)
     const fightsAvailable = isPvePhase ? null : arenaStatus.fightsAvailable
