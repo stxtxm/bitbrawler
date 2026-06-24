@@ -56,6 +56,10 @@
   font-family: $font-pixel;
   font-size: 0.6rem;
   color: $accent-gold;
+
+  @include mobile {
+    font-size: 0.45rem;
+  }
 }
 
 .forge-essence-warning {
@@ -925,6 +929,10 @@
   font-size: 0.55rem;
   color: $accent-gold;
   letter-spacing: 1px;
+
+  @include mobile {
+    font-size: 0.45rem;
+  }
 }
 
 // ════════════════════════════════════════════════════════════════════════════
