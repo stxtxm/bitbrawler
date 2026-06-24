@@ -62,7 +62,7 @@ export const StatsPanel = memo(function StatsPanel({
           <div className="efficiency-primary">
             <span className="eff-rate eff-essence">
               <small>Essence/min</small>
-              <strong>💎 ~{idle.efficiencyData.essencePerMinute}</strong>
+              <strong>💎 ~{idle.efficiencyData.essencePerMinute.toFixed(2)}</strong>
             </span>
             {idle.efficiencyData.nextLevelTime != null && (
               <span className="eff-rate eff-next">

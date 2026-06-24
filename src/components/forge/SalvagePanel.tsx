@@ -189,7 +189,7 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
         </div>
         <div className="forge-essence-bar">
           <span className="forge-essence-label">ESSENCE</span>
-          <span className={`forge-essence-value ${essenceBump ? 'forge-essence-count-up' : ''}`}>{essence}</span>
+          <span className={`forge-essence-value ${essenceBump ? 'forge-essence-count-up' : ''}`}>{essence.toFixed(2)}</span>
         </div>
         <div className="forge-empty-state">
           <div className="forge-empty-text">

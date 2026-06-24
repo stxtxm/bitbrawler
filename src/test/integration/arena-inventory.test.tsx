@@ -230,7 +230,7 @@ describe('Arena inventory modal', () => {
     fireEvent.click(equipBtn)
 
     // Essence total should be visible
-    expect(getByText('42')).toBeInTheDocument()
+    expect(getByText('42.00')).toBeInTheDocument()
     expect(getByText('ESSENCE')).toBeInTheDocument()
   })
 

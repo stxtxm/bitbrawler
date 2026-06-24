@@ -243,7 +243,7 @@ describe('arena extracted components', () => {
       />,
     );
 
-    expect(screen.getByText('💎 99')).toBeInTheDocument();
+    expect(screen.getByText('💎 99.00')).toBeInTheDocument();
     fireEvent.click(screen.getByTitle('Unspent stat points'));
     fireEvent.click(screen.getByLabelText('Settings'));
     fireEvent.click(screen.getByLabelText('Inventory'));
@@ -372,7 +372,7 @@ describe('arena extracted components', () => {
       // The salvage yield label should be displayed
       expect(screen.getByText('SALVAGE YIELD')).toBeInTheDocument();
       // The essence total should be shown
-      expect(screen.getByText('50')).toBeInTheDocument();
+      expect(screen.getByText('50.00')).toBeInTheDocument();
     });
   });
 });

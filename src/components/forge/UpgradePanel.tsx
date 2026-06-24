@@ -113,7 +113,7 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
         </div>
         <div className="forge-essence-bar">
           <span className="forge-essence-label">ESSENCE</span>
-          <span className="forge-essence-value">{essence}</span>
+          <span className="forge-essence-value">{essence.toFixed(2)}</span>
         </div>
         <div className="forge-empty-state">
           <div className="forge-empty-text">
@@ -235,7 +235,7 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
               <span className="forge-action-label">Item is already at maximum level</span>
             ) : insufficientEssence ? (
               <span className="forge-action-label" style={{ color: '#ff3333' }}>
-                Not enough essence! Need {upgradeCost}, have {essence}.
+                Not enough essence! Need {upgradeCost}, have {essence.toFixed(2)}.
               </span>
             ) : (
               <span className="forge-action-label">

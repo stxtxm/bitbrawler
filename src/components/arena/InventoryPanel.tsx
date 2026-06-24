@@ -262,7 +262,7 @@ export const InventoryPanel = memo(function InventoryPanel({
                   {essence > 0 && (
                     <div className="inventory-essence-total">
                       <span className="essence-total-label">ESSENCE</span>
-                      <span className="essence-total-value">{essence}</span>
+                      <span className="essence-total-value">{essence.toFixed(2)}</span>
                     </div>
                   )}
                 </>

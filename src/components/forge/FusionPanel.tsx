@@ -191,7 +191,7 @@ export const FusionPanel = memo(function FusionPanel({ onClose }: FusionPanelPro
 
       <div className="forge-essence-bar">
         <span className="forge-essence-label">ESSENCE</span>
-        <span className="forge-essence-value">{essence}</span>
+          <span className="forge-essence-value">{essence.toFixed(2)}</span>
       </div>
 
       {!hasAnyFusionable && (
@@ -275,7 +275,7 @@ export const FusionPanel = memo(function FusionPanel({ onClose }: FusionPanelPro
               </span>
               {insufficientEssence && selectedRarity && (
                 <span className="forge-essence-warning" style={{ fontSize: '0.45rem', margin: 0, textAlign: 'left' }}>
-                  Not enough essence! Need {fusionCost}, have {essence}.
+                  Not enough essence! Need {fusionCost}, have {essence.toFixed(2)}.
                 </span>
               )}
             </div>

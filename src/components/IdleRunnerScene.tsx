@@ -187,7 +187,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
             </div>
             {offlineGains.essence > 0 && (
               <div className="offline-stat-item">
-                <span className="offline-stat-value essence">💎+{offlineGains.essence % 1 === 0 ? offlineGains.essence : offlineGains.essence.toFixed(1)}</span>
+                <span className="offline-stat-value essence">💎+{offlineGains.essence.toFixed(2)}</span>
                 <span className="offline-stat-label">Essence</span>
               </div>
             )}
