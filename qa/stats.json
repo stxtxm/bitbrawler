@@ -15244,5 +15244,42 @@
       "home": 1805,
       "arena": 3269
     }
+  },
+  {
+    "date": "2026-06-24T16:01:45.059Z",
+    "run": "2026-06-24",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "initial_equipment": null,
+    "initial_streak": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "final_equipment": null,
+    "final_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": []
+    },
+    "level_up_events": [],
+    "idle_stats": null,
+    "forge": null,
+    "errors": [
+      "page.goto: net::ERR_ABORTED at https://bitbrawler.vercel.app/login\nCall log:\n  - navigating to \"https://bitbrawler.vercel.app/login\", waiting until \"networkidle\"\n"
+    ],
+    "load_times_ms": {
+      "home": 1790
+    }
   }
 ]
