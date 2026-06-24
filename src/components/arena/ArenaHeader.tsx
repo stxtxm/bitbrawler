@@ -32,7 +32,7 @@ export const ArenaHeader = memo(function ArenaHeader({
           <span className="lvl-label">LVL</span>
           <span className="lvl-chip">{level}</span>
           {essence > 0 && (
-            <span className="essence-badge" title="Essence">💎 {essence}</span>
+            <span className="essence-badge" title="Essence">💎 {essence % 1 === 0 ? essence : essence.toFixed(1)}</span>
           )}
           {pointsRemaining > 0 && (
             <button className="stat-points-badge pulse" onClick={onOpenLevelUp} title="Unspent stat points">

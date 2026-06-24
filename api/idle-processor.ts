@@ -282,7 +282,7 @@ function simulateIdleGains(char: Character, idleMs: number): { updated: Characte
       : updated
   }
 
-  const essenceDelta = Math.round(essenceAccum)
+  const essenceDelta = essenceAccum
   if (essenceDelta > 0) {
     current = { ...current, essence: (current.essence ?? 0) + essenceDelta }
   }

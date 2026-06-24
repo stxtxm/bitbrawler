@@ -60,14 +60,16 @@ export const StatsPanel = memo(function StatsPanel({
       {idle.efficiencyData && (
         <div className="idle-efficiency">
           <div className="efficiency-primary">
-            <span className="eff-rate eff-xp">
-              <small>XP/min</small>
-              <strong>~{idle.efficiencyData.xpPerMinute}</strong>
-            </span>
             <span className="eff-rate eff-essence">
               <small>Essence/min</small>
               <strong>💎 ~{idle.efficiencyData.essencePerMinute}</strong>
             </span>
+            {idle.efficiencyData.nextLevelTime != null && (
+              <span className="eff-rate eff-next">
+                <small>Next level</small>
+                <strong>⬆ ~{formatDuration(idle.efficiencyData.nextLevelTime)}</strong>
+              </span>
+            )}
           </div>
           <div className="efficiency-breakdown">
             <span className="eff-stat eff-power" title="Power ratio (STR/DEX vs monster)">
@@ -93,9 +95,6 @@ export const StatsPanel = memo(function StatsPanel({
             )}
             {idle.efficiencyData.streakMilestone != null && (
               <span className="eff-milestone">🎯 {idle.efficiencyData.streakMilestone} milestone!</span>
-            )}
-            {idle.efficiencyData.nextLevelTime != null && (
-              <span className="eff-next">⬆ Next: ~{formatDuration(idle.efficiencyData.nextLevelTime)}</span>
             )}
           </div>
         </div>

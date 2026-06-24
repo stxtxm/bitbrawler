@@ -72,7 +72,6 @@ export function useIdleCombat({
   const idleXpRef = useRef(idleTotalXp)
   const effIntervalRef = useRef<number>(IDLE_CONFIG.TIMER_INTERVAL)
   const xpBonusRef = useRef<number>(0)
-  const essenceFracRef = useRef<number>(0)
   const backgroundStartRef = useRef<number>(0)
 
   isPausedRef.current = isPaused || !character
@@ -262,17 +261,11 @@ export function useIdleCombat({
 
       // Accumulate essence per kill (scales with power ratio + stats, like XP)
       const essenceGain = calculateIdleEssence(won, currentChar.level, currentChar.intelligence, currentChar.focus) * xpBonusRef.current
-      essenceFracRef.current += essenceGain
-      let essenceToAdd = 0
-      if (essenceFracRef.current >= 1) {
-        essenceToAdd = Math.floor(essenceFracRef.current)
-        essenceFracRef.current -= essenceToAdd
-      }
 
       // Apply XP with updated idle stats and watermarks
       const xpResult = gainXp(currentChar, finalXp)
       const now = Date.now()
-      const updatedEssence = (currentChar.essence ?? 0) + essenceToAdd
+      const updatedEssence = (currentChar.essence ?? 0) + essenceGain
       const updatedChar: Character = {
         ...xpResult.updatedCharacter,
         essence: updatedEssence,
@@ -366,7 +359,7 @@ export function useIdleCombat({
     let streak = streakRef.current
     let kills = killsRef.current
     let idleTotalXp = idleXpRef.current
-    let essenceFrac = essenceFracRef.current
+    let totalEssenceGain = 0
     let totalXpGained = 0
 
     for (let i = 0; i < numFights; i++) {
@@ -384,7 +377,7 @@ export function useIdleCombat({
         const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
 
         const essenceGain = calculateIdleEssence(won, char.level, char.intelligence, char.focus) * xpBonusRef.current
-        essenceFrac += essenceGain
+        totalEssenceGain += essenceGain
 
         if (won) {
           streak++
@@ -407,13 +400,10 @@ export function useIdleCombat({
       }
     }
 
-    const essenceToAdd = Math.floor(essenceFrac)
-    essenceFracRef.current = essenceFrac - essenceToAdd
-
     const now = Date.now()
     const updatedChar: Character = {
       ...char,
-      essence: (currentChar.essence ?? 0) + essenceToAdd,
+      essence: (currentChar.essence ?? 0) + totalEssenceGain,
       idleStreak: streak,
       idleMaxStreak: Math.max(streak, char.idleMaxStreak ?? 0),
       idleTotalKills: kills,

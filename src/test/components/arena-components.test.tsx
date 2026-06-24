@@ -108,7 +108,7 @@ describe('arena extracted components', () => {
     expect(screen.getByText('STR')).toBeInTheDocument();
     expect(screen.getByText('HP')).toBeInTheDocument();
     expect(screen.getByText('goblin')).toBeInTheDocument();
-    expect(screen.getByText('~12')).toBeInTheDocument();
+    expect(screen.getByText(/~0/)).toBeInTheDocument();
     expect(screen.getByText(/2m 5s/)).toBeInTheDocument();
     expect(screen.getByText('💀 9 slain')).toBeInTheDocument();
   });
