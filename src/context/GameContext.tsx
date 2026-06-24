@@ -608,11 +608,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       if (!res.ok) return
       const data = await res.json()
       if (data.fights > 0 && data.updated) {
+        const essenceDelta = Math.max(0, data.essence ?? 0)
         const updatedChar = normalizeCharacter({
           ...activeCharacter,
           ...data.updated,
           lastIdleCheck: Date.now(),
           lastActive: Date.now(),
+          essence: (activeCharacter.essence ?? 0) + essenceDelta,
         })
         charRef.current = updatedChar
         setActiveCharacter(updatedChar)

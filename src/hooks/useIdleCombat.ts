@@ -115,11 +115,13 @@ export function useIdleCombat({
       if (!res.ok) return
       const data = await res.json()
       if (!data.updated) return
+      const essenceDelta = Math.max(0, data.essence ?? 0)
       const updatedChar: Character = {
         ...currentChar,
         ...data.updated,
         lastIdleCheck: Date.now(),
         lastActive: Date.now(),
+        essence: (currentChar.essence ?? 0) + essenceDelta,
       }
       onCharacterUpdate(updatedChar)
       const fights = data.fights ?? 0
