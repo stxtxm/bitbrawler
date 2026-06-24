@@ -137,14 +137,14 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
 
       <div className="forge-panel-subtitle">Enhance an item&apos;s power with Essence</div>
 
-      <div className="forge-essence-bar">
-        <span className="forge-essence-label">ESSENCE</span>
-        <span className="forge-essence-value">{essence}</span>
-      </div>
+        <div className="forge-essence-bar">
+          <span className="forge-essence-label">ESSENCE</span>
+          <span className="forge-essence-value">{essence.toFixed(2)}</span>
+        </div>
 
-      {isNearSoftCap && (
-        <div className="forge-essence-warning">
-          ⚠ Essence near cap ({ESSENCE_SOFT_CAP}) — spend some before upgrading
+        {isNearSoftCap && (
+          <div className="forge-essence-warning">
+            ⚠ Essence near cap ({ESSENCE_SOFT_CAP}) — spend some before upgrading
         </div>
       )}
 

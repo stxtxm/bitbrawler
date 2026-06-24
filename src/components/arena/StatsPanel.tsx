@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { Character } from '../../types/Character';
 import { STAT_TOOLTIPS } from '../../utils/statUtils';
 import { PixelIcon } from '../PixelIcon';
@@ -29,6 +29,25 @@ export const StatsPanel = memo(function StatsPanel({
   statOptions,
   idle,
 }: StatsPanelProps) {
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+
+  useEffect(() => {
+    const nlt = idle.efficiencyData?.nextLevelTime;
+    if (nlt != null) {
+      setRemainingSeconds(nlt);
+    } else {
+      setRemainingSeconds(null);
+    }
+  }, [idle.efficiencyData?.nextLevelTime]);
+
+  useEffect(() => {
+    if (remainingSeconds == null || remainingSeconds <= 0) return;
+    const interval = setInterval(() => {
+      setRemainingSeconds(s => s != null && s > 0 ? s - 1 : s);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [remainingSeconds]);
+
   const hpPercentage = effectiveCharacter.maxHp > 0
     ? (effectiveCharacter.hp / effectiveCharacter.maxHp) * 100
     : 0;
@@ -64,10 +83,10 @@ export const StatsPanel = memo(function StatsPanel({
               <small>Essence/min</small>
               <strong>💎 ~{idle.efficiencyData.essencePerMinute.toFixed(2)}</strong>
             </span>
-            {idle.efficiencyData.nextLevelTime != null && (
+            {remainingSeconds != null && (
               <span className="eff-rate eff-next">
                 <small>Next level</small>
-                <strong>⬆ ~{formatDuration(idle.efficiencyData.nextLevelTime)}</strong>
+                <strong>⬆ {remainingSeconds > 0 ? formatDuration(remainingSeconds) : 'now'}</strong>
               </span>
             )}
           </div>

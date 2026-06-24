@@ -165,7 +165,7 @@ describe('SalvagePanel', () => {
     render(<SalvagePanel onClose={vi.fn()} />);
 
     // Should still show essence as 0 but items are salvageable
-    const essenceValues = screen.getAllByText('0');
+    const essenceValues = screen.getAllByText(/^0(\.00)?$/);
     expect(essenceValues.length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/Rusty Sword/)).toBeInTheDocument();
   });
