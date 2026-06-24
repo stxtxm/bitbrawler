@@ -29,10 +29,13 @@ export const salvageItems = (items: PixelItemAsset[]): number => {
 };
 
 /**
- * Clamp essence to soft cap.
+ * Clamp essence to soft cap when gaining, but never reduce existing essence.
  */
-const clampEssence = (value: number): number => {
-  return Math.min(value, ESSENCE_SOFT_CAP);
+const clampEssence = (value: number, current: number): number => {
+  if (value > current) {
+    return Math.min(value, Math.max(current, ESSENCE_SOFT_CAP));
+  }
+  return value;
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -88,9 +91,10 @@ export const salvageItem = (
     return character;
   }
 
+  const currentEssence = character.essence ?? 0;
   const essenceGain = getEssenceYield(item);
   const newInventory = (character.inventory ?? []).filter((id) => id !== itemId);
-  const newEssence = clampEssence((character.essence ?? 0) + essenceGain);
+  const newEssence = clampEssence(currentEssence + essenceGain, currentEssence);
 
   return {
     ...character,
@@ -223,7 +227,8 @@ export const performFusion = (
   const finalInventory = resultItem ? [...newInventory, resultItem.id] : newInventory;
 
   // Deduct essence cost and clamp
-  const newEssence = clampEssence((character.essence ?? 0) - cost);
+  const currentEssence = character.essence ?? 0;
+  const newEssence = clampEssence(currentEssence - cost, currentEssence);
 
   return {
     result: resultItem,
@@ -311,6 +316,6 @@ export const performUpgrade = (itemId: string, character: Character): Character 
       ...currentUpgrades,
       [itemId]: currentLevel + 1,
     },
-    essence: clampEssence((character.essence ?? 0) - cost),
+    essence: clampEssence((character.essence ?? 0) - cost, character.essence ?? 0),
   };
 };
