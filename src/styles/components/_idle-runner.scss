@@ -681,6 +681,43 @@
   100% { filter: brightness(1) drop-shadow(0 0 0 transparent); }
 }
 
+// Level-up floating text above character
+.levelup-float-text {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  white-space: nowrap;
+  animation: levelupFloatUp 1.5s ease-out forwards;
+  pointer-events: none;
+  z-index: 20;
+
+  .levelup-float-arrow {
+    font-size: 1.4rem;
+  }
+
+  .levelup-float-lvl {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: $accent-gold;
+    text-shadow: 0 0 8px rgba($accent-gold, 0.6), 0 0 16px rgba($accent-gold, 0.3);
+  }
+}
+
+@keyframes levelupFloatUp {
+  0% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-40px);
+  }
+}
+
 // Screen shake utility class
 .shake-screen {
   animation: screenShake 0.15s ease-in-out;

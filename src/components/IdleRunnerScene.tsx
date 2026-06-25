@@ -23,6 +23,7 @@ interface IdleRunnerSceneProps {
   lastCombatXp: number
   offlineGains: OfflineGainsData | null
   onClearOfflineGains: () => void
+  recentLevelUp: { newLevel: number } | null
   currentStreak?: number
   streakMilestone?: number | null
 }
@@ -53,12 +54,15 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   lastCombatXp,
   offlineGains,
   onClearOfflineGains,
+  recentLevelUp,
   currentStreak = 0,
   streakMilestone = null,
 }: IdleRunnerSceneProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const particlesRef = useRef<ParticleSystem | null>(null)
   const [animFrame, setAnimFrame] = useState(0)
+  const [showLevelUpFx, setShowLevelUpFx] = useState(false)
+  const [levelUpLevel, setLevelUpLevel] = useState(0)
   const lowPerf = useLowPerformanceMode()
   const prevPhaseRef = useRef<ScenePhase>('running')
   const characterLevelRef = useRef(character.level)
@@ -117,6 +121,25 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     prevPhaseRef.current = scenePhase
   }, [scenePhase, lastCombatResult, lowPerf])
 
+  // Level-up visual effect (glow + particles + floating text)
+  useEffect(() => {
+    if (!recentLevelUp) return
+    setShowLevelUpFx(true)
+    setLevelUpLevel(recentLevelUp.newLevel)
+
+    const ps = particlesRef.current
+    const container = containerRef.current
+    if (ps && container) {
+      const rect = container.getBoundingClientRect()
+      const cx = rect.width * 0.3
+      const cy = rect.height * 0.4
+      ps.emit('xp_star', cx, cy, lowPerf ? 3 : 8)
+    }
+
+    const timer = setTimeout(() => setShowLevelUpFx(false), 2000)
+    return () => clearTimeout(timer)
+  }, [recentLevelUp, lowPerf])
+
   const characterState = scenePhase === 'combat' ? 'attacking' : 'running'
   const showBigXp = scenePhase === 'result' && lastCombatXp > 0
   const showStreakBanner = streakMilestone !== null && scenePhase === 'result' && lastCombatResult === 'win'
@@ -125,7 +148,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     <div className="idle-runner-box" ref={containerRef}>
       {/* clouds rendered inside ProceduralTerrain canvas */}
 
-      <div className={`idle-character-slot ${scenePhase === 'combat' ? 'attacking' : ''} ${scenePhase === 'result' && lastCombatResult === 'win' ? 'victory' : ''}`}>
+      <div className={`idle-character-slot ${scenePhase === 'combat' ? 'attacking' : ''} ${scenePhase === 'result' && lastCombatResult === 'win' ? 'victory' : ''} ${showLevelUpFx ? 'glow-levelup' : ''}`}>
         <AnimatedPixelCharacter
           seed={character.seed}
           gender={character.gender}
@@ -133,6 +156,12 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
           state={characterState}
           frame={animFrame}
         />
+        {showLevelUpFx && (
+          <div className="levelup-float-text">
+            <span className="levelup-float-arrow">⬆</span>
+            <span className="levelup-float-lvl">LVL {levelUpLevel}</span>
+          </div>
+        )}
       </div>
 
       {currentMonster && (

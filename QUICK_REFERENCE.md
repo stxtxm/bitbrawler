@@ -27,7 +27,7 @@
 | `PixelCharacter.tsx` | 102 | Procedural character SVG |
 | `PixelMonster.tsx` | - | Procedural monster SVG |
 | `PixelItemIcon.tsx` | - | Equipment icon rendering |
-| `LevelUpOverlay.tsx` | 118 | Level up popup |
+| `IdleRunnerScene.tsx` | 241 | PvE idle scene with level-up FX |
 | `ConnectionModal.tsx` | 39 | Connection error dialog |
 | `StreakIndicator.tsx` | - | Idle streak display |
 | `AnimatedPixelCharacter.tsx` | - | Combat animation |
@@ -159,7 +159,6 @@
 - `etc...`
 
 **Component Tests** (5+ files):
-- `LevelUpOverlay.test.tsx`
 - `PixelMonster.test.tsx`
 - `PixelItemIcon.test.tsx`
 - `NotFound.test.tsx`

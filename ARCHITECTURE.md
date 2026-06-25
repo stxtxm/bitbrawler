@@ -89,7 +89,7 @@ src/
 │   ├── CombatView.tsx       # Arena fight display
 │   ├── ConnectionModal.tsx  # DB connection gate
 │   ├── GameLogo.tsx         # 8-bit SVG logo
-│   ├── LevelUpOverlay.tsx   # Stat allocation on level-up
+│   ├── IdleRunnerScene.tsx  # PvE idle combat scene with level-up FX
 │   ├── LoadingScreen.tsx    # Loading spinner
 │   ├── PixelCharacter.tsx   # Seed-based character SVG
 │   ├── PixelIcon.tsx        # Generic 8×8 pixel icon

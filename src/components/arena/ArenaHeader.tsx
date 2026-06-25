@@ -5,8 +5,6 @@ interface ArenaHeaderProps {
   characterName: string;
   level: number;
   essence: number;
-  pointsRemaining: number;
-  onOpenLevelUp: () => void;
   onOpenSettings: () => void;
   onOpenInventory: () => void;
   onOpenForge?: () => void;
@@ -17,8 +15,6 @@ export const ArenaHeader = memo(function ArenaHeader({
   characterName,
   level,
   essence,
-  pointsRemaining,
-  onOpenLevelUp,
   onOpenSettings,
   onOpenInventory,
   onOpenForge,
@@ -33,11 +29,6 @@ export const ArenaHeader = memo(function ArenaHeader({
           <span className="lvl-chip">{level}</span>
           {essence > 0 && (
             <span className="essence-badge" title="Essence">💎 {essence.toFixed(2)}</span>
-          )}
-          {pointsRemaining > 0 && (
-            <button className="stat-points-badge pulse" onClick={onOpenLevelUp} title="Unspent stat points">
-              ⚡+{pointsRemaining}
-            </button>
           )}
         </div>
       </div>

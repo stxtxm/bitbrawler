@@ -1,7 +1,44 @@
 import { Character } from '../types/Character';
+import { getBotArchetype, type BotArchetype } from './affinityUtils';
 
 export const STAT_KEYS = ['strength', 'vitality', 'dexterity', 'luck', 'intelligence', 'focus'] as const;
 export type StatKey = typeof STAT_KEYS[number];
+
+// Archetype weights for auto-allocation.
+// Primary stat is weighted highest, secondary stats get a moderate boost.
+const ARCHETYPE_WEIGHTS: Record<BotArchetype, Record<StatKey, number>> = {
+  bruiser: { strength: 3, vitality: 1.5, dexterity: 1, luck: 0.5, intelligence: 0.5, focus: 0.5 },
+  tank:    { strength: 1.5, vitality: 3, dexterity: 1, luck: 0.5, intelligence: 0.5, focus: 0.5 },
+  rogue:   { strength: 1, vitality: 0.5, dexterity: 3, luck: 1.5, intelligence: 0.5, focus: 0.5 },
+  mage:    { strength: 0.5, vitality: 0.5, dexterity: 0.5, luck: 0.5, intelligence: 3, focus: 1.5 },
+  lucky:   { strength: 0.5, vitality: 0.5, dexterity: 1.5, luck: 3, intelligence: 0.5, focus: 0.5 },
+  zen:     { strength: 0.5, vitality: 0.5, dexterity: 0.5, luck: 0.5, intelligence: 1.5, focus: 3 },
+};
+
+export function allocateStatByArchetype(character: Character, rng: () => number = Math.random): Character {
+  const available = character.statPoints ?? 0
+  if (available <= 0) return character
+
+  const archetype = getBotArchetype(character)
+  const weights = ARCHETYPE_WEIGHTS[archetype]
+  const totalWeight = STAT_KEYS.reduce((s, k) => s + weights[k], 0)
+
+  let roll = rng() * totalWeight
+  for (const key of STAT_KEYS) {
+    roll -= weights[key]
+    if (roll <= 0) return applyStatPoint(character, key)
+  }
+
+  return applyStatPoint(character, STAT_KEYS[0])
+}
+
+export function allocateStatsByArchetype(character: Character, points: number, rng: () => number = Math.random): Character {
+  let updated = character
+  for (let i = 0; i < points; i++) {
+    updated = allocateStatByArchetype(updated, rng)
+  }
+  return updated
+}
 
 export const STAT_TOOLTIPS: Record<StatKey, string> = {
     strength: 'Boosts physical damage dealt in combat. Each point increases your offense power for harder-hitting attacks.',

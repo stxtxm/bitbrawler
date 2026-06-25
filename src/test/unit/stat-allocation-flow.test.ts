@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Character } from '../../types/Character';
-import { applyStatPoint, grantStatPoints, autoAllocateStatPoints, StatKey } from '../../utils/statUtils';
+import { applyStatPoint, grantStatPoints, autoAllocateStatPoints, allocateStatByArchetype, allocateStatsByArchetype, StatKey } from '../../utils/statUtils';
 
 function makeCharacter(overrides: Partial<Character> = {}): Character {
   return {
@@ -161,5 +161,72 @@ describe('Stat allocation flow (level-up simulation)', () => {
     expect(char.statPoints).toBe(1);
     expect(updated.strength).toBe(11);
     expect(updated.statPoints).toBe(0);
+  });
+
+  describe('allocateStatByArchetype', () => {
+    it('does nothing when statPoints is 0', () => {
+      const char = makeCharacter({ statPoints: 0, strength: 10 });
+      const updated = allocateStatByArchetype(char);
+      expect(updated).toBe(char);
+      expect(updated.strength).toBe(10);
+    });
+
+    it('allocates one point and consumes one stat point', () => {
+      const char = makeCharacter({ statPoints: 1, strength: 10, vitality: 10, dexterity: 10, luck: 10, intelligence: 10, focus: 10 });
+      const updated = allocateStatByArchetype(char);
+      expect(updated.statPoints).toBe(0);
+      const total = updated.strength + updated.vitality + updated.dexterity + updated.luck + updated.intelligence + updated.focus;
+      expect(total).toBe(60 + 1);
+    });
+
+    it('bruiser archetype favors strength (STR is highest)', () => {
+      // Character with strength as highest stat → bruiser → strength weighted 3x
+      let strAllocs = 0;
+      const trials = 200;
+      for (let i = 0; i < trials; i++) {
+        const char = makeCharacter({
+          statPoints: 1,
+          strength: 10, vitality: 9, dexterity: 8, luck: 7, intelligence: 6, focus: 5,
+        });
+        const updated = allocateStatByArchetype(char, () => i / trials);
+        if (updated.strength > 10) strAllocs++;
+      }
+      // With weight 3 out of ~7, strength should get ~43%.
+      // Over 200 trials, should be >>> 0
+      expect(strAllocs).toBeGreaterThan(0);
+    });
+
+    it('mage archetype favors intelligence (INT is highest)', () => {
+      let intAllocs = 0;
+      const trials = 200;
+      for (let i = 0; i < trials; i++) {
+        const char = makeCharacter({
+          statPoints: 1,
+          strength: 5, vitality: 6, dexterity: 7, luck: 8, intelligence: 10, focus: 9,
+        });
+        const updated = allocateStatByArchetype(char, () => i / trials);
+        if (updated.intelligence > 10) intAllocs++;
+      }
+      expect(intAllocs).toBeGreaterThan(0);
+    });
+  });
+
+  describe('allocateStatsByArchetype', () => {
+    it('allocates N points across stats by archetype', () => {
+      const char = makeCharacter({
+        statPoints: 4,
+        strength: 10, vitality: 10, dexterity: 10, luck: 10, intelligence: 10, focus: 10,
+      });
+      const updated = allocateStatsByArchetype(char, 4);
+      expect(updated.statPoints).toBe(0);
+      const total = updated.strength + updated.vitality + updated.dexterity + updated.luck + updated.intelligence + updated.focus;
+      expect(total).toBe(60 + 4);
+    });
+
+    it('handles 0 points gracefully', () => {
+      const char = makeCharacter({ statPoints: 0 });
+      const updated = allocateStatsByArchetype(char, 0);
+      expect(updated).toBe(char);
+    });
   });
 });

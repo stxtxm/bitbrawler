@@ -7,7 +7,7 @@ Overview
 Data model (Character)
 - Core fields: `level`, `experience`, stats (STR/VIT/DEX/LUK/INT/FOC), `hp`, `maxHp`, `wins`, `losses`.
 - Daily fields: `fightsLeft` (PvP), `pveFightsLeft`, `lastFightReset`, `fightHistory` (cap 20), `foughtToday`.
-- Progression fields: `statPoints` for level-up allocation, `focus` is an active stat, not derived.
+- Progression fields: `statPoints` (auto-allocated by archetype on level-up), `focus` is an active stat, not derived.
 - Inventory fields: `inventory` (item IDs), `equippedItems` (weapon/armor/accessory slots), `lastLootRoll`.
 - Anti-cheat: `pendingFight` holds `status`, `startedAt`, optional `opponent` snapshot, and `matchType`.
 - Idle fields: `lastActive` (player visible activity), `last_idle_check` (last processed idle), `idleStreak`, `idleTotalKills`, `idleTotalXp`.
@@ -92,7 +92,7 @@ Offline behavior
 - Service worker caches the app shell and reloads once on update activation.
 
 UI tuning
-- Level-up overlay is responsive, supports deferring stat allocation, and avoids internal scroll.
+- Level-up is automatic — points allocate instantly by archetype (weighted to primary stat) with gold glow FX + floating "⬆ LVL X!" text. No more overlay.
 - Stat rows compress on very small screens; action buttons remain readable.
 - Matchmaking intro is an animated opponent scan with a lock effect.
 - Inventory modal shows loadout section at top + grouped grids by slot type; larger on desktop with item details and bonus chips.

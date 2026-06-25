@@ -21,7 +21,7 @@
 ## ✅ Tests
 - [x] Supabase mocks (`src/test/utils/supabaseMock.ts`)
 - [x] Combat, GameContext, failover tests adapted for Supabase
-- [x] **459+ tests pass — 54 files**
+- [x] **771 tests pass — 69 files**
 
 ## ✅ GitHub Actions
 - [x] `bot-activity.yml` — Secrets `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`

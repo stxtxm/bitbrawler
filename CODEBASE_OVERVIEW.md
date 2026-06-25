@@ -251,12 +251,12 @@ for (let i = 0; i < fights; i++) {
    - Duration: 3 seconds auto-hide
    - Position: Center screen
 
-2. **Level Up Overlay** (`src/components/LevelUpOverlay.tsx`, 118 lines)
-   - Displays level progression (old → new)
-   - Shows HP gained
-   - Lists stat point allocations
-   - Auto-closes after 800ms if no stat points remain
-   - Fully styled with retro badge effect
+2. **Level Up FX** (`src/components/IdleRunnerScene.tsx`)
+   - Triggered by `recentLevelUp` signal from `useArenaLevelUp`
+   - Gold glow on character (`.glow-levelup`, 0.8s animation)
+   - `xp_star` particle burst from `ParticleSystem`
+   - Floating "⬆ LVL X!" text that fades up and out over 1.5s
+   - No overlay — stats auto-allocate instantly by archetype
 
 3. **Connection Modal** (`src/components/ConnectionModal.tsx`)
    - Shows when DB connection fails
@@ -513,7 +513,6 @@ inventory-count: 5 items
 - etc. (~20+ integration tests)
 
 **Component Tests** (src/test/components/):
-- `LevelUpOverlay.test.tsx`
 - `PixelMonster.test.tsx`
 - `PixelItemIcon.test.tsx`
 - `NotFound.test.tsx`

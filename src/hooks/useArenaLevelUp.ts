@@ -1,82 +1,46 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Character } from '../types/Character';
 import { SoundType } from './useSound';
-import { autoAllocateStatPoints, HP_PER_LEVEL, STAT_KEYS, StatKey } from '../utils/statUtils';
+import { STAT_KEYS, StatKey, allocateStatsByArchetype } from '../utils/statUtils';
 
-interface LevelUpData {
-  levelsGained: number;
+interface RecentLevelUp {
   newLevel: number;
-  hpGained: number;
 }
-
-const getErrorMessage = (error: unknown, fallback: string): string => {
-  return error instanceof Error && error.message ? error.message : fallback;
-};
 
 interface UseArenaLevelUpOptions {
   character: Character | null;
   lastXpGain: number | null;
-  connectionMessage: string;
   clearXpNotifications: () => void;
   setCharacter: (character: Character) => void;
-  allocateStatPoint: (stat: StatKey) => Promise<Character | null>;
   saveStatAllocations: (allocations: Partial<Record<StatKey, number>>) => Promise<Character | null>;
-  openModal: (message: string) => void;
   play: (sound: SoundType) => void;
 }
 
 export const useArenaLevelUp = ({
   character,
   lastXpGain,
-  connectionMessage,
   clearXpNotifications,
   setCharacter,
-  allocateStatPoint,
   saveStatAllocations,
-  openModal,
   play,
 }: UseArenaLevelUpOptions) => {
   const [showXpGain, setShowXpGain] = useState(false);
-  const [showLevelUp, setShowLevelUp] = useState(false);
-  const [pendingLevelUp, setPendingLevelUp] = useState<LevelUpData | null>(null);
   const [xpBarAnimating, setXpBarAnimating] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [recentLevelUp, setRecentLevelUp] = useState<RecentLevelUp | null>(null);
+  const levelUpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const pointsRemaining = character?.statPoints ?? 0;
+  const queueLevelUp = useCallback((_levelsGained: number, newLevel: number) => {
+    setRecentLevelUp({ newLevel });
+    play('levelup');
 
-  const queueLevelUp = useCallback((levelsGained: number, newLevel: number) => {
-    if (character?.autoMode) return;
-    setPendingLevelUp({
-      levelsGained,
-      newLevel,
-      hpGained: levelsGained * HP_PER_LEVEL,
-    });
-    setShowLevelUp(true);
-  }, [character?.autoMode]);
+    if (levelUpTimerRef.current) clearTimeout(levelUpTimerRef.current);
+    levelUpTimerRef.current = setTimeout(() => {
+      setRecentLevelUp(null);
+      levelUpTimerRef.current = null;
+    }, 2000);
+  }, [play]);
 
-  const handleAllocateStat = useCallback(async (stat: StatKey) => {
-    if (saving || pointsRemaining <= 0) return;
-    setSaving(true);
-    try {
-      await allocateStatPoint(stat);
-    } catch (error: unknown) {
-      openModal(getErrorMessage(error, connectionMessage));
-    } finally {
-      setSaving(false);
-    }
-  }, [allocateStatPoint, connectionMessage, openModal, pointsRemaining, saving]);
-
-  const handleDismissLevelUp = useCallback(() => {
-    setShowLevelUp(false);
-    setPendingLevelUp(null);
-    clearXpNotifications();
-  }, [clearXpNotifications]);
-
-  const handleOpenLevelUp = useCallback(() => {
-    setPendingLevelUp(null);
-    setShowLevelUp(true);
-  }, []);
-
+  // XP flash timing
   useEffect(() => {
     if (lastXpGain !== null) {
       setShowXpGain(true);
@@ -91,22 +55,24 @@ export const useArenaLevelUp = ({
     }
   }, [lastXpGain]);
 
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       clearXpNotifications();
+      if (levelUpTimerRef.current) clearTimeout(levelUpTimerRef.current);
     };
   }, [clearXpNotifications]);
 
+  // Auto-allocate stat points by archetype whenever statPoints > 0.
+  // This fires after any level-up (idle or PvP) and after offline catch-up.
+  // queueLevelUp only sets the visual signal — this effect handles allocation.
   useEffect(() => {
-    if (!character?.autoMode) return;
+    if (!character) return;
     const points = character.statPoints ?? 0;
     if (points <= 0) return;
 
-    const updated = autoAllocateStatPoints(character, points);
+    const updated = allocateStatsByArchetype(character, points);
     setCharacter(updated);
-    setShowLevelUp(false);
-    setPendingLevelUp(null);
-    clearXpNotifications();
 
     const allocations: Partial<Record<StatKey, number>> = {};
     for (const key of STAT_KEYS) {
@@ -119,31 +85,17 @@ export const useArenaLevelUp = ({
         console.error('Auto-allocate DB save failed:', error);
       });
     }
-  }, [character, clearXpNotifications, saveStatAllocations, setCharacter]);
+  }, [character, saveStatAllocations, setCharacter]);
 
+  // Sound effect for level-up signal
   useEffect(() => {
-    if (!character?.autoMode) return;
-    if ((character.statPoints ?? 0) > 0) return;
-
-    setShowLevelUp(false);
-    setPendingLevelUp(null);
-    clearXpNotifications();
-  }, [character?.autoMode, character?.statPoints, clearXpNotifications]);
-
-  useEffect(() => {
-    if (showLevelUp) play('levelup');
-  }, [play, showLevelUp]);
+    if (recentLevelUp) play('levelup');
+  }, [play, recentLevelUp]);
 
   return {
     showXpGain,
-    showLevelUp,
-    pendingLevelUp,
     xpBarAnimating,
-    saving,
-    pointsRemaining,
+    recentLevelUp,
     queueLevelUp,
-    handleAllocateStat,
-    handleDismissLevelUp,
-    handleOpenLevelUp,
   };
 };

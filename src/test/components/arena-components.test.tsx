@@ -61,6 +61,8 @@ const idle: ArenaIdleViewModel = {
   xpPerMinute: 12,
   essencePerMinute: null,
   powerRatio: 1.4,
+  remainingSeconds: 125,
+  recentLevelUp: null,
   idleFightsCount: 4,
   totalKills: 9,
   efficiencyData: {
@@ -225,7 +227,6 @@ describe('arena extracted components', () => {
   });
 
   it('ArenaHeader exposes settings, inventory, logout, and stat point actions', () => {
-    const onOpenLevelUp = vi.fn();
     const onOpenSettings = vi.fn();
     const onOpenInventory = vi.fn();
     const onLogout = vi.fn();
@@ -234,9 +235,7 @@ describe('arena extracted components', () => {
       <ArenaHeader
         characterName="Header Hero"
         level={7}
-        pointsRemaining={2}
         essence={99}
-        onOpenLevelUp={onOpenLevelUp}
         onOpenSettings={onOpenSettings}
         onOpenInventory={onOpenInventory}
         onLogout={onLogout}
@@ -244,12 +243,10 @@ describe('arena extracted components', () => {
     );
 
     expect(screen.getByText('💎 99.00')).toBeInTheDocument();
-    fireEvent.click(screen.getByTitle('Unspent stat points'));
     fireEvent.click(screen.getByLabelText('Settings'));
     fireEvent.click(screen.getByLabelText('Inventory'));
     fireEvent.click(screen.getByTitle('Logout'));
 
-    expect(onOpenLevelUp).toHaveBeenCalled();
     expect(onOpenSettings).toHaveBeenCalled();
     expect(onOpenInventory).toHaveBeenCalled();
     expect(onLogout).toHaveBeenCalled();

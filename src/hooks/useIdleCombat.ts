@@ -41,6 +41,7 @@ interface UseIdleCombatReturn {
   totalKills: number
   idleTotalXp: number
   efficiencyData: IdleEfficiencyData | null
+  remainingSeconds: number | null
 }
 
 export function useIdleCombat({
@@ -62,6 +63,7 @@ export function useIdleCombat({
   const [totalKills, setTotalKills] = useState(character?.idleTotalKills ?? 0)
   const [idleTotalXp, setIdleTotalXp] = useState(character?.idleTotalXp ?? 0)
   const [efficiencyData, setEfficiencyData] = useState<IdleEfficiencyData | null>(null)
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null)
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isPausedRef = useRef(isPaused)
@@ -73,6 +75,7 @@ export function useIdleCombat({
   const effIntervalRef = useRef<number>(IDLE_CONFIG.TIMER_INTERVAL)
   const xpBonusRef = useRef<number>(0)
   const xpPerMinuteRef = useRef<number>(0)
+  const xpRatePerSecRef = useRef<number>(0)
   const backgroundStartRef = useRef<number>(0)
 
   isPausedRef.current = isPaused || !character
@@ -183,15 +186,18 @@ export function useIdleCombat({
     const speedEfficiency = calculateSpeedEfficiency(playerStats, monsterStats)
     const statEssenceMultiplier = calculateStatEssenceMultiplier(effectiveChar.intelligence ?? 10, effectiveChar.focus ?? 10)
     const display = computeDisplayData(eff.effectiveInterval, avgXp, streakRef.current, killsRef.current)
-    xpPerMinuteRef.current = display.xpPerMinute
+    const xpMinWithBonus = Math.round(display.xpPerMinute * eff.xpBonusMultiplier)
+    xpPerMinuteRef.current = xpMinWithBonus
+    xpRatePerSecRef.current = xpMinWithBonus / 60
     const nextLevelTime = character.level >= 99 ? null : (() => {
       const progress = getXpProgress(character)
       return calculateNextLevelTime(
-        display.xpPerMinute,
+        xpMinWithBonus,
         progress.currentXpInLevel,
         progress.xpForNextLevel,
       )
     })()
+    setRemainingSeconds(nextLevelTime)
     setEfficiencyData({
       powerRatio: eff.powerRatio,
       efficiency: eff.efficiency,
@@ -206,19 +212,15 @@ export function useIdleCombat({
     })
   }, [effDepKey])
 
-  // Recalculate nextLevelTime when XP changes (PvP or idle gains).
-  // Independent of efficiency recalculation to avoid circular deps.
+  // Recompute remainingSeconds when XP or level changes.
+  // No real-time tick — the value only updates on XP/rate events.
   useEffect(() => {
-    if (!character || !efficiencyData) return
-    const nlt = character.level >= 99 ? null : (() => {
-      const progress = getXpProgress(character)
-      return calculateNextLevelTime(
-        xpPerMinuteRef.current,
-        progress.currentXpInLevel,
-        progress.xpForNextLevel,
-      )
-    })()
-    setEfficiencyData(prev => prev ? { ...prev, nextLevelTime: nlt } : null)
+    if (!character || xpRatePerSecRef.current <= 0) return
+    if (character.level >= 99) { setRemainingSeconds(null); return }
+    const progress = getXpProgress(character)
+    const remaining = progress.xpForNextLevel - progress.currentXpInLevel
+    const secs = Math.ceil(remaining / xpRatePerSecRef.current)
+    setRemainingSeconds(remaining > 0 ? secs : null)
   }, [character?.experience, character?.level])
 
   const clearOfflineGains = useCallback(() => {
@@ -502,5 +504,6 @@ export function useIdleCombat({
     totalKills,
     idleTotalXp,
     efficiencyData,
+    remainingSeconds,
   }
 }

@@ -35,7 +35,7 @@ Le script va automatiquement:
 - Se connecter à bitbrawler.vercel.app
 - Créer ou charger un personnage QA
 - Effectuer **3 combats PvP** puis **2 combats PvE** (mixé comme un vrai joueur)
-- Allouer les points de stats dans le level-up overlay
+- Les points de stats sont auto-attribués par archétype à chaque level-up (plus d'overlay)
 - Collecter les équipements et la streak du personnage
 - Vérifier la lootbox quotidienne
 - Activer l'auto mode en fin de run

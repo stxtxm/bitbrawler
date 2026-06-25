@@ -8,6 +8,19 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '3.5.0',
+    date: '2026-06-25',
+    title: 'Auto level-up — stat allocation by archetype + in-scene FX',
+    changes: [
+      'Level-up popup removed entirely — points auto-allocate on level-up with archetype-weighted stat selection (STR→bruiser, VIT→tank, DEX→rogue, INT→mage, LUK→lucky, FOC→zen).',
+      'Archetype-based allocation weights: primary stat 3x, secondary 1.5x, others 0.5x for distinctive builds that reinforce playstyle.',
+      'Visual FX on level-up: gold glow on character (0.8s .glow-levelup), xp_star particles burst, floating "⬆ LVL X!" text that fades up.',
+      'No more stat point badge in header — allocation is instant and seamless.',
+      'Offline level-up gains now trigger the same in-scene FX when reconnecting (recentLevelUp signal).',
+      '771 tests passing across 69 test files.',
+    ],
+  },
+  {
     version: '3.4.0',
     date: '2026-06-21',
     title: 'Equipment Forge — essence salvage, item fusion & stat upgrades',

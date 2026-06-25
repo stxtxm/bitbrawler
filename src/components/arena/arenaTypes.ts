@@ -20,6 +20,7 @@ export interface ArenaIdleViewModel {
   lastCombatXp: number;
   offlineGains: { fights: number; xp: number; levels: number; essence: number; timeAway: number } | null;
   clearOfflineGains: () => void;
+  recentLevelUp: { newLevel: number } | null;
   currentStreak: number;
   streakMilestone: number | null;
   efficiency: number | null;
@@ -29,6 +30,7 @@ export interface ArenaIdleViewModel {
   idleFightsCount: number;
   totalKills: number;
   efficiencyData: IdleEfficiencyData | null;
+  remainingSeconds: number | null;
 }
 
 export type InventoryStatKey = keyof ItemStats;

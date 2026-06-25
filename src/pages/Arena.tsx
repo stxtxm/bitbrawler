@@ -7,7 +7,6 @@ import { InventoryPanel } from '../components/arena/InventoryPanel';
 import { SettingsPanel } from '../components/arena/SettingsPanel';
 import ConnectionModal from '../components/ConnectionModal';
 import { CombatView } from '../components/CombatView';
-import LevelUpOverlay from '../components/LevelUpOverlay';
 import { useGame } from '../context/GameContext';
 import { useArenaCombat } from '../hooks/useArenaCombat';
 import { useArenaLevelUp } from '../hooks/useArenaLevelUp';
@@ -32,7 +31,6 @@ const Arena = () => {
     lastXpGain,
     clearXpNotifications,
     dbAvailable,
-    allocateStatPoint,
     saveStatAllocations,
     saveEquipment,
     rollLootbox,
@@ -52,12 +50,9 @@ const Arena = () => {
   const levelUp = useArenaLevelUp({
     character: activeCharacter,
     lastXpGain,
-    connectionMessage,
     clearXpNotifications,
     setCharacter,
-    allocateStatPoint,
     saveStatAllocations,
-    openModal,
     play,
   });
 
@@ -137,6 +132,7 @@ const Arena = () => {
     lastCombatXp: idle.lastCombatXp,
     offlineGains: idle.offlineGains,
     clearOfflineGains: idle.clearOfflineGains,
+    recentLevelUp: levelUp.recentLevelUp,
     currentStreak: idle.currentStreak,
     streakMilestone: idle.efficiencyData?.streakMilestone ?? null,
     efficiency: idle.efficiencyData?.efficiency ?? null,
@@ -146,6 +142,7 @@ const Arena = () => {
     idleFightsCount: idle.idleFightsCount,
     totalKills: idle.totalKills,
     efficiencyData: idle.efficiencyData,
+    remainingSeconds: idle.remainingSeconds,
   }), [
     idle.clearOfflineGains,
     idle.currentMonster,
@@ -155,8 +152,10 @@ const Arena = () => {
     idle.lastCombatResult,
     idle.lastCombatXp,
     idle.offlineGains,
+    idle.remainingSeconds,
     idle.scenePhase,
     idle.totalKills,
+    levelUp.recentLevelUp,
   ]);
 
   const handleLogout = useCallback(() => {
@@ -178,23 +177,10 @@ const Arena = () => {
 
   return (
     <div className="container retro-container arena-container">
-      <LevelUpOverlay
-        shouldShowLevelUp={levelUp.showLevelUp}
-        activeCharacter={activeCharacter}
-        levelUpData={levelUp.pendingLevelUp}
-        isOfflineMode={isOfflineMode}
-        statOptions={statOptions}
-        saving={levelUp.saving}
-        onAllocateStat={levelUp.handleAllocateStat}
-        onClose={levelUp.handleDismissLevelUp}
-      />
-
       <ArenaHeader
         characterName={activeCharacter.name}
         level={activeCharacter.level}
         essence={essence}
-        pointsRemaining={levelUp.pointsRemaining}
-        onOpenLevelUp={levelUp.handleOpenLevelUp}
         onOpenSettings={settings.openSettings}
         onOpenInventory={inventory.openInventory}
         onOpenForge={handleOpenForge}

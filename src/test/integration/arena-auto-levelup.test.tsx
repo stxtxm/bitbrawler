@@ -1,6 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import Arena from '../../pages/Arena'
 import { useGame } from '../../context/GameContext'
 import { useConnectionGate } from '../../hooks/useConnectionGate'
@@ -19,17 +17,6 @@ vi.mock('../../hooks/useConnectionGate', () => ({
 vi.mock('../../hooks/useOnlineStatus', () => ({
   useOnlineStatus: vi.fn(),
 }))
-
-vi.mock('../../utils/statUtils', async (importOriginal) => {
-  const actual = await importOriginal()
-  return {
-    ...(actual as object),
-    autoAllocateStatPoints: vi.fn((character: Character, _points: number) => ({
-      ...character,
-      statPoints: 0,
-    })),
-  }
-})
 
 const mockUseGame = useGame as unknown as ReturnType<typeof vi.fn>
 const mockUseConnectionGate = useConnectionGate as unknown as ReturnType<typeof vi.fn>
@@ -60,7 +47,7 @@ const makeCharacter = (overrides: Partial<Character> = {}): Character => ({
   ...overrides,
 })
 
-describe('Arena auto-mode level-up overlay', () => {
+describe('Arena auto-level-up', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockUseOnlineStatus.mockReturnValue(true)
@@ -72,12 +59,12 @@ describe('Arena auto-mode level-up overlay', () => {
     })
   })
 
-  it('calls setCharacter and clearXpNotifications when auto-allocating in auto-mode', () => {
+  it('auto-allocates stat points when statPoints > 0 (no autoMode required)', () => {
     const clearXpNotifications = vi.fn()
     const setCharacter = vi.fn()
 
     mockUseGame.mockReturnValue({
-      activeCharacter: makeCharacter({ autoMode: true, statPoints: 3 }),
+      activeCharacter: makeCharacter({ statPoints: 3 }),
       logout: vi.fn(),
       useFight: vi.fn(),
       startMatchmaking: vi.fn(),
@@ -85,7 +72,7 @@ describe('Arena auto-mode level-up overlay', () => {
       lastLevelUp: Date.now(),
       clearXpNotifications,
       dbAvailable: true,
-      saveStatAllocations: vi.fn(),
+      saveStatAllocations: vi.fn().mockResolvedValue(null),
       rollLootbox: vi.fn(),
       setAutoMode: vi.fn(),
       deleteCharacter: vi.fn(),
@@ -94,20 +81,16 @@ describe('Arena auto-mode level-up overlay', () => {
 
     renderWithRouter(<Arena />)
 
-    // The auto-allocate effect should have fired (setCharacter was called)
     expect(setCharacter).toHaveBeenCalled()
     const updatedChar = setCharacter.mock.calls[0][0] as Character
     expect(updatedChar.statPoints).toBe(0)
-
-    // The fix should also call clearXpNotifications to dismiss the overlay
-    expect(clearXpNotifications).toHaveBeenCalled()
   })
 
-  it('does not auto-allocate when auto-mode is off (manual mode)', () => {
+  it('does not auto-allocate when statPoints is 0', () => {
     const setCharacter = vi.fn()
 
     mockUseGame.mockReturnValue({
-      activeCharacter: makeCharacter({ autoMode: false, statPoints: 3 }),
+      activeCharacter: makeCharacter({ statPoints: 0 }),
       logout: vi.fn(),
       useFight: vi.fn(),
       startMatchmaking: vi.fn(),
@@ -115,7 +98,7 @@ describe('Arena auto-mode level-up overlay', () => {
       lastLevelUp: Date.now(),
       clearXpNotifications: vi.fn(),
       dbAvailable: true,
-      saveStatAllocations: vi.fn(),
+      saveStatAllocations: vi.fn().mockResolvedValue(null),
       rollLootbox: vi.fn(),
       setAutoMode: vi.fn(),
       deleteCharacter: vi.fn(),
@@ -124,15 +107,12 @@ describe('Arena auto-mode level-up overlay', () => {
 
     renderWithRouter(<Arena />)
 
-    // Auto-allocate should NOT fire in manual mode
     expect(setCharacter).not.toHaveBeenCalled()
   })
 
-  it('does not auto-allocate when there are no stat points', () => {
-    const setCharacter = vi.fn()
-
+  it('no longer shows level-up overlay or SPEND POINT badge', () => {
     mockUseGame.mockReturnValue({
-      activeCharacter: makeCharacter({ autoMode: true, statPoints: 0 }),
+      activeCharacter: makeCharacter({ statPoints: 0 }),
       logout: vi.fn(),
       useFight: vi.fn(),
       startMatchmaking: vi.fn(),
@@ -140,31 +120,7 @@ describe('Arena auto-mode level-up overlay', () => {
       lastLevelUp: Date.now(),
       clearXpNotifications: vi.fn(),
       dbAvailable: true,
-      saveStatAllocations: vi.fn(),
-      rollLootbox: vi.fn(),
-      setAutoMode: vi.fn(),
-      deleteCharacter: vi.fn(),
-      setCharacter,
-    })
-
-    renderWithRouter(<Arena />)
-
-    // Auto-allocate should NOT fire when statPoints is 0
-    expect(setCharacter).not.toHaveBeenCalled()
-  })
-
-  it('shows AUTO MODE button when auto-mode is on with zero stat points after level-up', async () => {
-    // Simulate end state: auto-mode, no stat points (already allocated)
-    mockUseGame.mockReturnValue({
-      activeCharacter: makeCharacter({ autoMode: true, statPoints: 0 }),
-      logout: vi.fn(),
-      useFight: vi.fn(),
-      startMatchmaking: vi.fn(),
-      lastXpGain: null,
-      lastLevelUp: Date.now(),
-      clearXpNotifications: vi.fn(),
-      dbAvailable: true,
-      saveStatAllocations: vi.fn(),
+      saveStatAllocations: vi.fn().mockResolvedValue(null),
       rollLootbox: vi.fn(),
       setAutoMode: vi.fn(),
       deleteCharacter: vi.fn(),
@@ -173,69 +129,32 @@ describe('Arena auto-mode level-up overlay', () => {
 
     const { queryByText } = renderWithRouter(<Arena />)
 
-    const user = userEvent.setup()
-    const pvpToggle = screen.getAllByRole('switch', { name: 'PvP mode' })[0]
-    await user.click(pvpToggle)
-
-    // The SPEND POINT button should NOT appear (no pending stat points)
-    expect(queryByText('SPEND POINT')).toBeNull()
-    // The fight button should show AUTO MODE and be disabled
-    const fightButton = screen.getByRole('button', { name: 'AUTO MODE' })
-    expect(fightButton).toBeDisabled()
-  })
-
-  it('defensive: does not render level-up overlay when autoMode is on with zero stat points', () => {
-    // Edge case: lastLevelUp is set (triggers showLevelUp=true) but
-    // autoMode is on and statPoints are already 0 (auto-allocated server-side).
-    // The defensive useEffect should dismiss the overlay immediately.
-    mockUseGame.mockReturnValue({
-      activeCharacter: makeCharacter({ autoMode: true, statPoints: 0 }),
-      logout: vi.fn(),
-      useFight: vi.fn(),
-      startMatchmaking: vi.fn(),
-      lastXpGain: null,
-      lastLevelUp: Date.now(),
-      clearXpNotifications: vi.fn(),
-      dbAvailable: true,
-      saveStatAllocations: vi.fn(),
-      rollLootbox: vi.fn(),
-      setAutoMode: vi.fn(),
-      deleteCharacter: vi.fn(),
-      setCharacter: vi.fn(),
-    })
-
-    const { queryByText } = renderWithRouter(<Arena />)
-
-    // The level-up overlay should not be rendered at all
     expect(queryByText('LEVEL UP')).toBeNull()
     expect(queryByText('SPEND POINT')).toBeNull()
   })
 
-  it('defensive: calls clearXpNotifications when autoMode on with stat points already zero', () => {
-    // The defensive useEffect should clear XP notifications
-    // when auto-mode is active and character has no pending stat points
-    // even if the level-up overlay was triggered by a previous event.
-    const clearXpNotifications = vi.fn()
+  it('calls saveStatAllocations with the allocated stats', () => {
+    const saveStatAllocations = vi.fn().mockResolvedValue(null)
+    const setCharacter = vi.fn()
 
     mockUseGame.mockReturnValue({
-      activeCharacter: makeCharacter({ autoMode: true, statPoints: 0 }),
+      activeCharacter: makeCharacter({ statPoints: 1 }),
       logout: vi.fn(),
       useFight: vi.fn(),
       startMatchmaking: vi.fn(),
       lastXpGain: null,
       lastLevelUp: Date.now(),
-      clearXpNotifications,
+      clearXpNotifications: vi.fn(),
       dbAvailable: true,
-      saveStatAllocations: vi.fn(),
+      saveStatAllocations,
       rollLootbox: vi.fn(),
       setAutoMode: vi.fn(),
       deleteCharacter: vi.fn(),
-      setCharacter: vi.fn(),
+      setCharacter,
     })
 
     renderWithRouter(<Arena />)
 
-    // The defensive useEffect should have called clearXpNotifications
-    expect(clearXpNotifications).toHaveBeenCalled()
+    expect(saveStatAllocations).toHaveBeenCalled()
   })
 })

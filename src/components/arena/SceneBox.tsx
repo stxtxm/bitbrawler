@@ -35,6 +35,7 @@ export const SceneBox = memo(function SceneBox({
           lastCombatXp={idle.lastCombatXp}
           offlineGains={idle.offlineGains}
           onClearOfflineGains={idle.clearOfflineGains}
+          recentLevelUp={idle.recentLevelUp}
           currentStreak={idle.currentStreak}
           streakMilestone={idle.streakMilestone}
         />
