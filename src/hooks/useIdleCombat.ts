@@ -9,6 +9,7 @@ import { gainXp, getXpProgress } from '../utils/xpUtils'
 import { GAME_RULES } from '../config/gameRules'
 import { calculateIdleXp, calculateIdleEssence } from '../utils/idleXpUtils'
 import { applyEquipmentToCharacter } from '../utils/equipmentUtils'
+import { COMBAT_BALANCE } from '../config/combatBalance'
 import {
   computeEfficiency,
   computeDisplayData,
@@ -77,6 +78,10 @@ export function useIdleCombat({
   const xpPerMinuteRef = useRef<number>(0)
   const xpRatePerSecRef = useRef<number>(0)
   const backgroundStartRef = useRef<number>(0)
+  /** Tracks when the current fight started (used for hard timeout guard). */
+  const fightStartTimeRef = useRef<number>(0)
+  /** Reference to the hard timeout safety timer for the current fight. */
+  const hardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   isPausedRef.current = isPaused || !character
   charRef.current = character ?? charRef.current
@@ -87,6 +92,10 @@ export function useIdleCombat({
   const clearPhaseTimers = useCallback(() => {
     phaseTimers.current.forEach(t => clearTimeout(t))
     phaseTimers.current = []
+    if (hardTimeoutRef.current !== null) {
+      clearTimeout(hardTimeoutRef.current)
+      hardTimeoutRef.current = null
+    }
   }, [])
 
   // Advance idle/lastActive watermarks and sync to Supabase.
@@ -243,11 +252,32 @@ export function useIdleCombat({
       return
     }
 
+    // Record fight start time for hard timeout watchdog
+    fightStartTimeRef.current = Date.now()
+
     setCurrentMonster(monster.def.id)
     setBackgroundMonster(monster.def.id)
     setScenePhase('monster_appears')
 
+    // Helper: check if fight has exceeded the hard timeout
+    const isHardTimedOut = (): boolean => {
+      const elapsed = Date.now() - fightStartTimeRef.current
+      if (elapsed >= COMBAT_BALANCE.fightHardTimeoutMs) {
+        console.warn(`[IdleCombat] Hard timeout after ${elapsed}ms — force finishing fight`)
+        clearPhaseTimers()
+        syncWatermarks()
+        setCurrentMonster(null)
+        setBackgroundMonster(null)
+        setScenePhase('running')
+        return true
+      }
+      return false
+    }
+
     const t1 = setTimeout(() => {
+      if (isHardTimedOut()) return
+
+      setScenePhase('combat')
       setScenePhase('combat')
 
       const result = simulateCombat(currentChar, monster.character)
@@ -320,14 +350,27 @@ export function useIdleCombat({
     }, IDLE_CONFIG.MONSTER_APPEAR_DURATION)
 
     const t2 = setTimeout(() => {
+      if (isHardTimedOut()) return
+
       setScenePhase('result')
     }, IDLE_CONFIG.MONSTER_APPEAR_DURATION + IDLE_CONFIG.COMBAT_DURATION)
 
     const t3 = setTimeout(() => {
+      if (isHardTimedOut()) return
+
       setCurrentMonster(null)
       setScenePhase('running')
       syncWatermarks()
     }, IDLE_CONFIG.MONSTER_APPEAR_DURATION + IDLE_CONFIG.COMBAT_DURATION + IDLE_CONFIG.RESULT_DURATION)
+
+    // Safety net: hard timeout watchdog that fires regardless of phase timer delays
+    if (hardTimeoutRef.current !== null) {
+      clearTimeout(hardTimeoutRef.current)
+    }
+    hardTimeoutRef.current = setTimeout(() => {
+      isHardTimedOut()
+      hardTimeoutRef.current = null
+    }, COMBAT_BALANCE.fightHardTimeoutMs)
 
     phaseTimers.current = [t1, t2, t3]
   }, [onCharacterUpdate, onSyncCharacter, onLevelUp, syncWatermarks, clearPhaseTimers])
@@ -374,6 +417,9 @@ export function useIdleCombat({
     const numFights = Math.floor(elapsedMs / effectiveInterval)
     if (numFights <= 0) return
 
+    // Cap the number of catch-up fights to prevent processing too many at once
+    const catchUpStart = Date.now()
+    const maxCatchUpDuration = COMBAT_BALANCE.fightHardTimeoutMs
     let char = { ...currentChar }
     let streak = streakRef.current
     let kills = killsRef.current
@@ -382,6 +428,11 @@ export function useIdleCombat({
     let totalXpGained = 0
 
     for (let i = 0; i < numFights; i++) {
+      // Check total catch-up wall-clock time — stop if exceeding hard timeout
+      if (Date.now() - catchUpStart >= maxCatchUpDuration) {
+        console.warn(`[IdleCombat] Catch-up timeout after ${Date.now() - catchUpStart}ms — processed ${i}/${numFights} fights`)
+        break
+      }
       try {
         const monster = generateMonsterForPlayer(char.level)
         const result = simulateCombat(char, monster.character)

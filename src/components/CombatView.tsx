@@ -10,6 +10,7 @@ import { calculateFightXp } from '../utils/xpUtils';
 import { useSound } from '../hooks/useSound';
 import { MonsterId, MONSTER_ASSETS } from '../data/monsterAssets';
 import { ParticleSystem } from '../utils/particleSystem';
+import { COMBAT_BALANCE } from '../config/combatBalance';
 
 function extractDamage(detail: string): number | null {
     const match = detail.match(/(\d+)\s*DMG/);
@@ -99,6 +100,41 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
             rightParticleSystemRef.current = null;
         };
     }, [phase]);
+
+    // Hard timeout watchdog — force-finish the fight if it exceeds the limit.
+    // This prevents the fight UI from hanging indefinitely in any phase.
+    const hardTimeoutRef = useRef<number | null>(null);
+    useEffect(() => {
+        if (phase === 'result') {
+            if (hardTimeoutRef.current !== null) {
+                window.clearTimeout(hardTimeoutRef.current);
+                hardTimeoutRef.current = null;
+            }
+            return;
+        }
+
+        if (hardTimeoutRef.current === null) {
+            hardTimeoutRef.current = window.setTimeout(() => {
+                console.warn(`[CombatView] Hard timeout — forcing result phase after ${COMBAT_BALANCE.fightHardTimeoutMs}ms`);
+                hardTimeoutRef.current = null;
+                // If combat result hasn't been set yet, create a fallback result
+                setCombatResult(prev => prev ?? {
+                    winner: 'draw',
+                    rounds: 0,
+                    details: ['Fight timed out'],
+                    timeline: [{ attackerHp: player.hp, defenderHp: opponent.hp }],
+                });
+                setPhase('result');
+            }, COMBAT_BALANCE.fightHardTimeoutMs);
+        }
+
+        return () => {
+            if (hardTimeoutRef.current !== null) {
+                window.clearTimeout(hardTimeoutRef.current);
+                hardTimeoutRef.current = null;
+            }
+        };
+    }, [phase, player.hp, opponent.hp]);
 
     useEffect(() => {
         if (phase !== 'intro') return;
