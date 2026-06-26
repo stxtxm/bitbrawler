@@ -268,4 +268,52 @@ describe('CombatView Interface', () => {
         vi.useRealTimers();
         vi.restoreAllMocks();
     });
+
+    it('should force-finish the fight when hard timeout is exceeded', () => {
+        vi.useFakeTimers();
+
+        // Mock simulateCombat to return a normal result quickly
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 5,
+            details: ['Round 1: Hero hits Villain', 'Round 2: Hero crits Villain', 'Round 3: Villain hits Hero', 'Round 4: Hero hits Villain', 'Round 5: Hero defeats Villain'],
+            timeline: [
+                { attackerHp: 100, defenderHp: 85 },
+                { attackerHp: 100, defenderHp: 65 },
+                { attackerHp: 85, defenderHp: 65 },
+                { attackerHp: 85, defenderHp: 40 },
+                { attackerHp: 85, defenderHp: 0 },
+            ]
+        });
+
+        vi.spyOn(xpUtils, 'calculateFightXp').mockReturnValue(75);
+
+        const onComplete = vi.fn();
+        const onClose = vi.fn();
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={onComplete}
+                onClose={onClose}
+            />
+        );
+
+        // Advance past intro / vs splash into combat
+        act(() => { vi.advanceTimersByTime(2500); });
+        act(() => { vi.advanceTimersByTime(2000); });
+
+        // The combat animation is playing - now advance far beyond the hard timeout
+        // (fightHardTimeoutMs = 60000, we've already used ~4.5s)
+        act(() => { vi.advanceTimersByTime(61000); });
+
+        // After the hard timeout, the fight should have been force-finished
+        // The result phase should show XP
+        expect(screen.getByText('+75 XP')).toBeInTheDocument();
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
 });
