@@ -24,16 +24,16 @@ describe('Game rules', () => {
     expect(GAME_RULES.PVE.STAT_MULTIPLIER).toBeGreaterThan(1);
   });
 
-  it('PVE stat multiplier is balanced for target win rate', () => {
-    expect(GAME_RULES.PVE.STAT_MULTIPLIER).toBe(2.5);
+  it('PVE stat multiplier makes monsters challenging (target win rate ~60-70%)', () => {
+    expect(GAME_RULES.PVE.STAT_MULTIPLIER).toBe(3.5);
   });
 
   it('PVE HP multiplier extends fights', () => {
     expect(GAME_RULES.PVE.HP_MULTIPLIER).toBeGreaterThan(1);
   });
 
-  it('PVE HP multiplier is balanced for longer battles', () => {
-    expect(GAME_RULES.PVE.HP_MULTIPLIER).toBe(3.0);
+  it('PVE HP multiplier extends battles for more challenge', () => {
+    expect(GAME_RULES.PVE.HP_MULTIPLIER).toBe(4.0);
   });
 
   it('PVE level boost provides challenge', () => {
