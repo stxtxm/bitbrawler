@@ -60,13 +60,15 @@ interface RunRecord {
   initial_level?: number | null
   initial_xp?: { current: number; max: number } | null
   initial_max_hp?: number | null
-  initial_equipment?: Array<{ slot: string; name: string }> | null
+  initial_equipment?: Array<{ slot: string; name: string; rarity?: string }> | null
   initial_streak?: number | null
   final_stats?: { level: number | null; xp: number | null; wins: number | null; losses: number | null } | null
   final_character_stats?: Record<string, number> | null
   final_max_hp?: number | null
-  final_equipment?: Array<{ slot: string; name: string }> | null
+  final_equipment?: Array<{ slot: string; name: string; rarity?: string }> | null
   final_streak?: number | null
+  lootbox_equipment?: Array<{ slot: string; name: string; rarity?: string }> | null
+  lootbox_streak?: number | null
   pve_data?: { fights: number; wins: number; xp_total: number; monsters_faced: string[] }
   level_up_events?: LevelUpEvent[]
   errors: string[]
@@ -443,31 +445,45 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   }
 
   // --- Equipment Analysis ---
+  // Gather from both initial_equipment and lootbox_equipment
   const runsWithEquipment = validRuns.filter(
     (r): r is RunRecord & { initial_equipment: Array<{ slot: string; name: string }> } =>
       r.initial_equipment !== null && r.initial_equipment !== undefined && r.initial_equipment.length > 0
   )
-  const allEquippedItems = runsWithEquipment.flatMap(r => r.initial_equipment.map(e => e.name))
+  const runsWithLootboxEquipment = validRuns.filter(
+    (r): r is RunRecord & { lootbox_equipment: Array<{ slot: string; name: string }> } =>
+      r.lootbox_equipment !== null && r.lootbox_equipment !== undefined && r.lootbox_equipment.length > 0
+  )
+  const allEquippedItems = [
+    ...runsWithEquipment.flatMap(r => r.initial_equipment.map(e => e.name)),
+    ...runsWithLootboxEquipment.flatMap(r => r.lootbox_equipment.map(e => e.name)),
+  ]
   let equipmentAnalysis: EquipmentAnalysis | null = null
   if (allEquippedItems.length > 0) {
     equipmentAnalysis = {
-      runs_with_data: runsWithEquipment.length,
+      runs_with_data: runsWithEquipment.length + runsWithLootboxEquipment.length,
       item_names: [...new Set(allEquippedItems)],
       unique_item_count: new Set(allEquippedItems).size,
     }
   }
 
   // --- Streak Analysis ---
-  const runsWithStreak = validRuns.filter(
-    (r): r is RunRecord & { initial_streak: number; final_streak: number } =>
-      typeof r.initial_streak === 'number' && typeof r.final_streak === 'number'
-  )
+  // Use initial_streak, final_streak, and lootbox_streak
+  const runsWithInitStreak = validRuns.filter((r): r is RunRecord & { initial_streak: number } => typeof r.initial_streak === 'number')
+  const runsWithFinalStreak = validRuns.filter((r): r is RunRecord & { final_streak: number } => typeof r.final_streak === 'number')
+  const runsWithLootboxStreak = validRuns.filter((r): r is RunRecord & { lootbox_streak: number } => typeof r.lootbox_streak === 'number')
   let streakAnalysis: StreakAnalysis | null = null
-  if (runsWithStreak.length > 0) {
+  if (runsWithInitStreak.length > 0 || runsWithLootboxStreak.length > 0) {
     streakAnalysis = {
-      avg_initial_streak: runsWithStreak.reduce((s, r) => s + r.initial_streak, 0) / runsWithStreak.length,
-      avg_final_streak: runsWithStreak.reduce((s, r) => s + r.final_streak, 0) / runsWithStreak.length,
-      runs_with_data: runsWithStreak.length,
+      avg_initial_streak: runsWithInitStreak.length > 0
+        ? runsWithInitStreak.reduce((s, r) => s + r.initial_streak, 0) / runsWithInitStreak.length
+        : 0,
+      avg_final_streak: runsWithFinalStreak.length > 0
+        ? runsWithFinalStreak.reduce((s, r) => s + r.final_streak, 0) / runsWithFinalStreak.length
+        : (runsWithLootboxStreak.length > 0
+          ? runsWithLootboxStreak.reduce((s, r) => s + r.lootbox_streak, 0) / runsWithLootboxStreak.length
+          : 0),
+      runs_with_data: Math.max(runsWithInitStreak.length, runsWithLootboxStreak.length),
     }
   }
 
