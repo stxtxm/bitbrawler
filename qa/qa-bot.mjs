@@ -640,7 +640,10 @@ async function togglePveMode(page, enablePve) {
 
 /**
  * Parse equipped item slots visible in the inventory (equipped section).
- * Returns an array of { slot, name } or empty array.
+ * Returns an array of { slot, name, rarity? } or empty array.
+ *
+ * Rarity is obtained by clicking each equipped item to reveal the detail panel
+ * where `.inventory-item-rarity` is visible.
  */
 async function parseEquippedItems(page) {
   try {
@@ -657,7 +660,19 @@ async function parseEquippedItems(page) {
       const slot = filledSlots.nth(i)
       const name = await slot.locator('.inv-loadout-item-name').textContent().catch(() => null)
       const slotLabel = await slot.locator('.inv-loadout-slot-icon').textContent().catch(() => null)
-      if (name) items.push({ slot: slotLabel?.trim() || '?', name: name.trim() })
+
+      // Click the equipped item to show detail panel (reveals rarity)
+      let rarity = null
+      if (name) {
+        const clickTarget = slot.locator('.inv-loadout-item').first()
+        if (await clickTarget.isVisible({ timeout: 1000 }).catch(() => false)) {
+          await clickTarget.click()
+          await page.waitForTimeout(400)
+          rarity = ((await page.locator('.inventory-item-rarity').textContent().catch(() => '')) || '').trim() || null
+        }
+      }
+
+      if (name) items.push({ slot: slotLabel?.trim() || '?', name: name.trim(), ...(rarity ? { rarity } : {}) })
     }
 
     // Close inventory
@@ -675,17 +690,50 @@ async function parseEquippedItems(page) {
 }
 
 /**
- * Parse lootbox streak indicator value from the arena page.
+ * Parse lootbox streak indicator value.
+ *
+ * The streak indicator (`.streak-indicator`) lives inside the inventory panel,
+ * so we may need to open inventory first.  If the indicator is visible directly
+ * on the page (compact variant) we read it; otherwise we open inventory, read
+ * the streak, and close inventory.
+ *
+ * Returns the streak number or null.
  */
 async function parseStreak(page) {
   try {
-    const streakEl = page.locator('.streak-indicator, [class*="streak"]').first()
+    // 1. Try to read streak directly from the page (compact variant on arena)
+    const directEl = page.locator('.streak-indicator.compact, .idle-streak-indicator, .streak-indicator').first()
+    if (await directEl.isVisible({ timeout: 1000 }).catch(() => false)) {
+      const text = await directEl.textContent().catch(() => '')
+      const match = text.match(/(\d+)/)
+      if (match) return parseInt(match[1], 10)
+    }
+
+    // 2. The full streak indicator is inside the inventory panel – open it
+    const invBtn = page.locator('button[aria-label="Inventory"], button[title="Inventory"]').first()
+    if (!(await invBtn.isVisible({ timeout: 2000 }).catch(() => false))) {
+      return null
+    }
+    await invBtn.click()
+    await page.waitForTimeout(800)
+
+    // 3. Read streak from the now-visible full indicator
+    const streakEl = page.locator('.streak-indicator .streak-count').first()
+    let streak = null
     if (await streakEl.isVisible({ timeout: 2000 }).catch(() => false)) {
       const text = await streakEl.textContent().catch(() => '')
       const match = text.match(/(\d+)/)
-      return match ? parseInt(match[1]) : null
+      if (match) streak = parseInt(match[1], 10)
     }
-    return null
+
+    // 4. Close inventory
+    const closeBtn = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
+    if (await closeBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await closeBtn.click()
+      await page.waitForTimeout(500)
+    }
+
+    return streak
   } catch {
     return null
   }
@@ -897,7 +945,12 @@ async function runFightSequence(page, runKey, runRecord) {
     const xpMatch = pageText.match(/\+(\d+)\s*XP/)
     const xpGained = xpMatch ? parseInt(xpMatch[1]) : null
 
-    const monsterMatch = pageText.match(/A WILD\s+(.+?)\s+APPEARS/i)
+    // Parse monster name from the fight result screen.
+    // During PvE fights the result screen shows "Victory over Goblin!" or "Defeated by Ogre".
+    // Fall back to the intro text pattern if result text is missing.
+    const monsterMatch =
+      pageText.match(/(?:Victory\s+over|Defeated\s+by)\s+(.+?)(?:!|\.|$)/i) ||
+      pageText.match(/A WILD\s+(.+?)\s+APPEARS/i)
     const monsterName = monsterMatch ? monsterMatch[1].trim() : null
 
     console.log(`   Result: ${isVictory ? '✅ VICTORY' : isDefeat ? '❌ DEFEAT' : '🤝 DRAW'} (${fightDuration}ms) [${isPvePhase ? 'PVE' : 'PVP'}]`)
@@ -1250,6 +1303,8 @@ async function run() {
     final_max_hp: null,
     final_equipment: null,
     final_streak: null,
+    lootbox_equipment: null,
+    lootbox_streak: null,
     pve_data: {
       fights: 0,
       wins: 0,
@@ -1358,6 +1413,19 @@ async function run() {
       finalArenaStatus.isResting ||
       (finalArenaStatus.fightsAvailable !== null && finalArenaStatus.fightsAvailable <= 0)
     runRecord.lootbox = await handleDailyLootbox(page, runKey)
+
+    // Capture equipment and streak right after lootbox (the lootbox may have
+    // granted a new item).  The inventory has been closed by the lootbox handler,
+    // so parseStreak will re-open it if needed.
+    runRecord.lootbox_equipment = await parseEquippedItems(page)
+    if (runRecord.lootbox_equipment.length > 0) {
+      console.log(`   Lootbox equipment: ${runRecord.lootbox_equipment.map(e => `${e.slot}=${e.name}${e.rarity ? ` (${e.rarity})` : ''}`).join(', ')}`)
+    }
+    runRecord.lootbox_streak = await parseStreak(page)
+    if (runRecord.lootbox_streak !== null) {
+      console.log(`   Lootbox streak: ${runRecord.lootbox_streak}`)
+    }
+
     runRecord.auto_mode_enabled = fighterExhausted
     runRecord.auto_mode_sync_ok = await syncAutoMode(page, fighterExhausted)
     persistQaState(runKey, runRecord.character, runRecord.character_action, fighterExhausted)
