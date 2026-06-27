@@ -644,14 +644,29 @@ async function togglePveMode(page, enablePve) {
  *
  * Rarity is obtained by clicking each equipped item to reveal the detail panel
  * where `.inventory-item-rarity` is visible.
+ *
+ * Also attempts body-text fallback if DOM-based parsing fails.
  */
 async function parseEquippedItems(page) {
   try {
-    const invBtn = page.locator('button[aria-label="Inventory"], button[title="Inventory"]').first()
-    if (!(await invBtn.isVisible({ timeout: 2000 }).catch(() => false))) return []
+    // ── Strategy 1: DOM-based parsing via inventory panel ──
+    const invBtn = page.locator('button[aria-label="Inventory"], button[title="Inventory"], button.icon-btn.inventory-btn').first()
+    if (!(await invBtn.isVisible({ timeout: 2000 }).catch(() => false))) {
+      console.log('   Inventory button not found, trying body text fallback')
+      return await parseEquippedItemsFromBody(page)
+    }
 
     await invBtn.click()
-    await page.waitForTimeout(800)
+
+    // Wait for inventory panel to fully open
+    try {
+      await page.locator('.inv-loadout-slots').waitFor({ state: 'visible', timeout: 3000 })
+    } catch {
+      console.log('   Inventory panel did not open, trying body text fallback')
+      return await parseEquippedItemsFromBody(page)
+    }
+
+    await page.waitForTimeout(400)
 
     const items = []
     const filledSlots = page.locator('.inv-loadout-slot.filled')
@@ -675,6 +690,12 @@ async function parseEquippedItems(page) {
       if (name) items.push({ slot: slotLabel?.trim() || '?', name: name.trim(), ...(rarity ? { rarity } : {}) })
     }
 
+    // If DOM-based parsing found nothing, try body text fallback
+    if (items.length === 0) {
+      const bodyItems = await parseEquippedItemsFromBody(page)
+      if (bodyItems.length > 0) return bodyItems
+    }
+
     // Close inventory
     const closeBtn = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
     if (await closeBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -684,7 +705,85 @@ async function parseEquippedItems(page) {
 
     return items
   } catch (err) {
-    console.log(`   ⚠️ Could not parse equipped items: ${err.message}`)
+    console.log(`   ⚠️ Could not parse equipped items via DOM: ${err.message}`)
+    return await parseEquippedItemsFromBody(page)
+  }
+}
+
+/**
+ * Fallback: Parse equipped items from body text patterns.
+ * Scans for slot icons (⚔️, 🛡, 📿, etc.) followed by item names.
+ */
+async function parseEquippedItemsFromBody(page) {
+  try {
+    const bodyText = await page.locator('body').innerText().catch(() => '')
+
+    // Known slot icons used in the game UI
+    const lines = bodyText.split('\n')
+    const items = []
+
+    // Track whether we are inside the EQUIPPED section
+    let inEquippedSection = false
+    const slotNames = ['⚔️', '🛡', '📿', '💍', '👑', '🧤', '👢', '🦅', '🔮', '🌟', '🗡️', '🪄', '⛓️']
+
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (!trimmed) continue
+
+      // Detect the EQUIPPED section header
+      if (trimmed.toUpperCase() === 'EQUIPPED') {
+        inEquippedSection = true
+        continue
+      }
+
+      // Detect end of equipped section (next section header)
+      if (inEquippedSection && (trimmed.toUpperCase() === 'INVENTORY' || trimmed.includes('SLOTS'))) {
+        break
+      }
+
+      if (inEquippedSection) {
+        for (const slotIcon of slotNames) {
+          if (trimmed.includes(slotIcon)) {
+            // Extract slot name (the icon character) and item name (text after icon)
+            const itemNameMatch = trimmed.match(new RegExp(`${slotIcon}\\s*(.+?)(?:\\s*×|$)`))
+            if (itemNameMatch) {
+              const itemName = itemNameMatch[1].trim()
+              // Skip "EMPTY" slots
+              if (itemName && itemName.toUpperCase() !== 'EMPTY') {
+                items.push({ slot: slotIcon, name: itemName })
+              }
+            }
+            break
+          }
+        }
+      }
+    }
+
+    // If equipped section parsing didn't work, try a broader pattern:
+    // Look for item names that appear with common equipment keywords
+    if (items.length === 0) {
+      const equipmentKeywords = ['SWORD', 'ARMOR', 'SHIELD', 'RING', 'AMULET', 'STAFF', 'WAND', 'BOW',
+        'DAGGER', 'HELMET', 'BOOTS', 'GLOVES', 'CLOAK', 'ROBE', 'CHARM']
+      for (const keyword of equipmentKeywords) {
+        const idx = bodyText.toUpperCase().indexOf(keyword)
+        if (idx !== -1) {
+          // Extract the surrounding text as item name
+          const start = Math.max(0, bodyText.lastIndexOf('\n', idx) + 1)
+          const end = bodyText.indexOf('\n', idx)
+          const line = bodyText.substring(start, end !== -1 ? end : bodyText.length).trim()
+          if (line && line.length < 40) {
+            items.push({ slot: '?', name: line })
+          }
+        }
+      }
+    }
+
+    if (items.length > 0) {
+      console.log(`   Parsed ${items.length} equipment item(s) from body text: ${items.map(i => i.name).join(', ')}`)
+    }
+    return items
+  } catch (err) {
+    console.log(`   ⚠️ Could not parse equipped items from body text: ${err.message}`)
     return []
   }
 }
@@ -697,44 +796,112 @@ async function parseEquippedItems(page) {
  * on the page (compact variant) we read it; otherwise we open inventory, read
  * the streak, and close inventory.
  *
+ * Falls back to body text pattern scanning if DOM-based parsing fails.
+ *
  * Returns the streak number or null.
  */
 async function parseStreak(page) {
   try {
-    // 1. Try to read streak directly from the page (compact variant on arena)
-    const directEl = page.locator('.streak-indicator.compact, .idle-streak-indicator, .streak-indicator').first()
-    if (await directEl.isVisible({ timeout: 1000 }).catch(() => false)) {
+    // ── Strategy 1: Read from DOM elements ──
+
+    // 1a. Try to read streak directly from the page (compact variant on arena)
+    const directSelector = '.streak-indicator.compact, .idle-streak-indicator, .streak-indicator:not(.compact)'
+    const directEl = page.locator(directSelector).first()
+    if (await directEl.isVisible({ timeout: 500 }).catch(() => false)) {
       const text = await directEl.textContent().catch(() => '')
-      const match = text.match(/(\d+)/)
-      if (match) return parseInt(match[1], 10)
+      if (text) {
+        const match = text.match(/(\d+)/)
+        if (match) {
+          const streak = parseInt(match[1], 10)
+          console.log(`   Streak from DOM element: ${streak}`)
+          return streak
+        }
+      }
     }
 
-    // 2. The full streak indicator is inside the inventory panel – open it
-    const invBtn = page.locator('button[aria-label="Inventory"], button[title="Inventory"]').first()
-    if (!(await invBtn.isVisible({ timeout: 2000 }).catch(() => false))) {
-      return null
+    // 1b. The full streak indicator is inside the inventory panel – open it
+    const invBtn = page.locator('button[aria-label="Inventory"], button[title="Inventory"], button.icon-btn.inventory-btn').first()
+    if (!(await invBtn.isVisible({ timeout: 1000 }).catch(() => false))) {
+      return await parseStreakFromBody(page)
     }
     await invBtn.click()
     await page.waitForTimeout(800)
 
-    // 3. Read streak from the now-visible full indicator
+    // Wait for inventory panel to open
+    try {
+      await page.locator('.inv-loadout-slots').waitFor({ state: 'visible', timeout: 3000 })
+    } catch {
+      // Inventory didn't open
+      return await parseStreakFromBody(page)
+    }
+
+    // Read streak from the now-visible full indicator
     const streakEl = page.locator('.streak-indicator .streak-count').first()
     let streak = null
     if (await streakEl.isVisible({ timeout: 2000 }).catch(() => false)) {
       const text = await streakEl.textContent().catch(() => '')
-      const match = text.match(/(\d+)/)
-      if (match) streak = parseInt(match[1], 10)
+      if (text) {
+        const match = text.match(/(\d+)/)
+        if (match) streak = parseInt(match[1], 10)
+      }
     }
 
-    // 4. Close inventory
+    // Close inventory
     const closeBtn = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
     if (await closeBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
       await closeBtn.click()
       await page.waitForTimeout(500)
     }
 
-    return streak
-  } catch {
+    if (streak !== null) {
+      console.log(`   Streak from inventory panel: ${streak}`)
+      return streak
+    }
+
+    // ── Strategy 2: Body text fallback ──
+    return await parseStreakFromBody(page)
+  } catch (err) {
+    console.log(`   ⚠️ Could not parse streak via DOM: ${err.message}`)
+    return await parseStreakFromBody(page)
+  }
+}
+
+/**
+ * Fallback: Parse streak value from body text patterns.
+ */
+async function parseStreakFromBody(page) {
+  try {
+    const bodyText = await page.locator('body').innerText().catch(() => '')
+
+    // Pattern 1: "STREAK X DAYS" (full indicator)
+    let match = bodyText.match(/STREAK\s+(\d+)\s+DAYS/i)
+    if (match) {
+      const streak = parseInt(match[1], 10)
+      console.log(`   Streak from body text (STREAK X DAYS): ${streak}`)
+      return streak
+    }
+
+    // Pattern 2: "STREAK" label followed by a number on the same or next line
+    match = bodyText.match(/STREAK[^]*?(\d+)/i)
+    if (match) {
+      const streak = parseInt(match[1], 10)
+      console.log(`   Streak from body text (STREAK + number): ${streak}`)
+      return streak
+    }
+
+    // Pattern 3: Look for a small number next to a trophy icon (compact indicator)
+    // In the arena, the compact streak shows just the number next to a trophy.
+    // Use the trophy PixelIcon pattern: "🏆5" or similar
+    match = bodyText.match(/(?:🏆|trophy)\s*(\d+)/i)
+    if (match) {
+      const streak = parseInt(match[1], 10)
+      console.log(`   Streak from body text (trophy + number): ${streak}`)
+      return streak
+    }
+
+    return null
+  } catch (err) {
+    console.log(`   ⚠️ Could not parse streak from body text: ${err.message}`)
     return null
   }
 }
@@ -945,13 +1112,57 @@ async function runFightSequence(page, runKey, runRecord) {
     const xpMatch = pageText.match(/\+(\d+)\s*XP/)
     const xpGained = xpMatch ? parseInt(xpMatch[1]) : null
 
-    // Parse monster name from the fight result screen.
-    // During PvE fights the result screen shows "Victory over Goblin!" or "Defeated by Ogre".
-    // Fall back to the intro text pattern if result text is missing.
-    const monsterMatch =
-      pageText.match(/(?:Victory\s+over|Defeated\s+by)\s+(.+?)(?:!|\.|$)/i) ||
-      pageText.match(/A WILD\s+(.+?)\s+APPEARS/i)
-    const monsterName = monsterMatch ? monsterMatch[1].trim() : null
+    // ── Monster name parsing ──
+    // Strategy 1: Read from .result-sub element directly (most reliable).
+    // The .result-sub contains text like "Victory over Goblin", "Defeated by Ogre",
+    // or "Stalemate vs Wraith". We give a small delay for rendering to complete.
+    let monsterName = null
+    try {
+      await page.waitForTimeout(200)
+      const resultSubEl = page.locator('.result-sub').first()
+      if (await resultSubEl.isVisible({ timeout: 1500 }).catch(() => false)) {
+        const resultSubText = ((await resultSubEl.textContent().catch(() => '')) || '').trim()
+        if (resultSubText) {
+          const match = resultSubText.match(
+            /(?:Victory\s+over|Defeated\s+by|Stalemate\s+vs)\s+(.+?)(?:\s*!?\s*)?$/i
+          )
+          if (match) monsterName = match[1].trim()
+        }
+      }
+    } catch {
+      // Fall through to body text parsing
+    }
+
+    // Strategy 2: Body text regex (fallback, still handles intro text patterns)
+    if (!monsterName) {
+      const monsterMatch =
+        pageText.match(/(?:Victory\s+over|Defeated\s+by|Stalemate\s+vs)\s+(.+?)(?:!|\.|$)/i) ||
+        pageText.match(/A WILD\s+(.+?)\s+APPEARS/i)
+      if (monsterMatch) monsterName = monsterMatch[1].trim()
+    }
+
+    // Strategy 3: Read from .encounter-name element (intro text might still be in DOM
+    // if fight resolution was very fast and the intro phase hasn't been fully replaced)
+    if (!monsterName) {
+      try {
+        const encounterNameText = ((await page.locator('.encounter-name').textContent().catch(() => '')) || '').trim()
+        if (encounterNameText) monsterName = encounterNameText
+      } catch {
+        // ignore
+      }
+    }
+
+    // Strategy 4: Scan for common monster names in body text as last resort
+    if (!monsterName && isPvePhase) {
+      const knownMonsters = ['GOBLIN', 'OGRE', 'WRAITH', 'ORC', 'TROLL', 'SLIME', 'BAT', 'SKELETON', 'ZOMBIE', 'WOLF']
+      for (const m of knownMonsters) {
+        if (pageText.toUpperCase().includes(m)) {
+          // Capitalize first letter, rest lower
+          monsterName = m.charAt(0).toUpperCase() + m.slice(1).toLowerCase()
+          break
+        }
+      }
+    }
 
     console.log(`   Result: ${isVictory ? '✅ VICTORY' : isDefeat ? '❌ DEFEAT' : '🤝 DRAW'} (${fightDuration}ms) [${isPvePhase ? 'PVE' : 'PVP'}]`)
 
