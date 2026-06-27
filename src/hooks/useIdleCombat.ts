@@ -278,7 +278,6 @@ export function useIdleCombat({
       if (isHardTimedOut()) return
 
       setScenePhase('combat')
-      setScenePhase('combat')
 
       const result = simulateCombat(currentChar, monster.character)
       const won = result.winner === 'attacker'
