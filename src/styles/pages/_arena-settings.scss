@@ -132,14 +132,15 @@
     background: radial-gradient(circle at top, #101010 0%, #000 70%);
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     max-height: 90vh;
     overflow: hidden;
 
     @include mobile {
-        padding: 16px;
+        padding: 12px;
         border-width: 2px;
-        max-height: 92vh;
+        max-height: 94vh;
+        gap: 10px;
     }
 }
 
@@ -186,12 +187,16 @@
 .settings-body {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     text-align: left;
     flex: 1;
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
+
+    @include mobile {
+        gap: 10px;
+    }
 }
 
 .settings-body--padded {
@@ -392,19 +397,27 @@
 
 .settings-medals-categories {
     display: flex;
-    flex-wrap: wrap;
     gap: 6px;
     margin-bottom: 4px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 .settings-medals-category-btn {
-    flex: 1;
-    min-width: 0;
-    padding: 6px 10px;
+    flex-shrink: 0;
+    padding: 6px 12px;
     font-family: $font-pixel;
-    font-size: 0.45rem;
+    font-size: 0.4rem;
     letter-spacing: 0.5px;
     text-transform: uppercase;
+    white-space: nowrap;
     color: #888;
     background: #050505;
     border: 2px solid #333;
@@ -420,6 +433,11 @@
     &:hover:not(.active) {
         color: #ccc;
         border-color: #666;
+    }
+
+    @include mobile {
+        padding: 6px 10px;
+        font-size: 0.35rem;
     }
 }
 

@@ -155,4 +155,30 @@ $medal-gold-light: #ffe680;
     display: inline-block;
     transition: filter 0.3s ease;
   }
+
+  @include mobile {
+    padding: 10px;
+    gap: 6px;
+
+    &__icon {
+      width: 30px;
+      height: 30px;
+    }
+
+    &__name {
+      font-size: 11px;
+    }
+
+    &__description {
+      font-size: 10px;
+    }
+
+    &__progress-bar {
+      height: 16px;
+    }
+
+    &__progress-text {
+      font-size: 9px;
+    }
+  }
 }
