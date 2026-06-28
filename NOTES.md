@@ -15,7 +15,7 @@ Data model (Character)
 PvE Idle Combat
 - Toggle switch in Arena (👹 PVE / ⚔ PVP). PvE mode enables the idle runner.
 - 5 PvE fights/day (separate from 5 PvP).
-- Monsters: Goblin (wind), Ogre (earth), Wraith (dark) — scale to player level.
+- Monsters: Goblin (wind), Ogre (earth), Wraith (dark), Slime (water, lvl 1-8), Wolf (fire, lvl 5-18), Skeleton (dark, lvl 10-28), Chimera (fire, lvl 20-40), Dragon Spawn (fire, lvl 30-50) — scale to player level with tiered difficulty.
 - Idle processing: **Vercel serverless** (`api/idle-processor.ts`), NOT GitHub Actions.
   - On-demand: client POSTs on reconnect for instant gains.
   - Cron fallback: cron-job.org every 1 minute processes stale characters.
@@ -62,8 +62,9 @@ Lootbox + inventory
 - Inventory capacity is 24; items can be manually equipped into weapon/armor/accessory loadout slots, or auto-equipped via autoEquipBestItems.
 - Lootbox rolls exclude items already owned; if all items are owned, no new loot is granted.
 - Items are defined in `src/data/itemAssets.ts` with rarities (common, uncommon, rare, epic, legendary), slots (weapon/armor/accessory), and optional elemental affinity (fire/water/wind/earth/light/dark).
-- Added extra low-power level 1 common/uncommon items to diversify early lootbox rewards.
+- 50 items across 10 tiers (levels 1-10) with all 6 elements covered including water.
 - `equipmentUtils` handles equip/unequip/auto-equip management and aggregates loadout bonuses; arena + combat use `applyEquipmentToCharacter`.
+- `getEquipmentBonuses` reads `character.itemUpgrades` — forge upgrades apply to all stats including HP.
 
 Bots and automation
 - Bot engine: `scripts/bot-engine.ts` — fetches characters where `is_bot = true`.
@@ -112,7 +113,7 @@ Testing
 - Unit: lazy route prefetch gating, end-of-day drain window, idle efficiency, next-level time.
 - Integration: matchmaking, pending fights, lootbox persistence, arena inventory/loadout/equip, offline routing, Supabase failover, arena PvE, idle efficiency display.
 - Router warnings are prevented with shared `renderWithRouter` helper (`src/test/utils/router.tsx`).
-- **771 tests — 69 test files** (`npm test`).
+- **781 tests — 71 test files** (`npm test`).
 
 Infrastructure (v1.0.0 → v3.2.0)
 - Database migrated from Firebase Firestore to Supabase (PostgreSQL).

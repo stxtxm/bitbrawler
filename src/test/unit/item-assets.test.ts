@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { ITEM_ASSETS, ITEM_PALETTE } from '../../data/itemAssets';
 
 describe('Item assets', () => {
-  it('defines 33 items', () => {
-    expect(ITEM_ASSETS.length).toBe(33);
+  it('defines 50 items', () => {
+    expect(ITEM_ASSETS.length).toBe(50);
   });
 
   it('assigns unlock levels up to 10', () => {
@@ -61,13 +61,13 @@ describe('Item assets', () => {
     });
   });
 
-  it('each slot type has at least 10 items', () => {
+  it('each slot type has at least 14 items', () => {
     const weapons = ITEM_ASSETS.filter((i) => i.slot === 'weapon');
     const armors = ITEM_ASSETS.filter((i) => i.slot === 'armor');
     const accessories = ITEM_ASSETS.filter((i) => i.slot === 'accessory');
-    expect(weapons.length).toBeGreaterThanOrEqual(10);
-    expect(armors.length).toBeGreaterThanOrEqual(10);
-    expect(accessories.length).toBeGreaterThanOrEqual(10);
+    expect(weapons.length).toBeGreaterThanOrEqual(14);
+    expect(armors.length).toBeGreaterThanOrEqual(14);
+    expect(accessories.length).toBeGreaterThanOrEqual(14);
   });
 
   it('all items have unique IDs', () => {
@@ -75,10 +75,11 @@ describe('Item assets', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('legendary items exist only at high levels (7+)', () => {
+  it('legendary items exist at various levels starting from level 5', () => {
     const legendaries = ITEM_ASSETS.filter((i) => i.rarity === 'legendary');
+    expect(legendaries.length).toBeGreaterThanOrEqual(3);
     legendaries.forEach((item) => {
-      expect(item.requiredLevel).toBeGreaterThanOrEqual(7);
+      expect(item.requiredLevel).toBeGreaterThanOrEqual(5);
     });
   });
 
@@ -90,5 +91,26 @@ describe('Item assets', () => {
         expect(v).toBeGreaterThan(0);
       });
     });
+  });
+
+  it('has water element items', () => {
+    const waterItems = ITEM_ASSETS.filter((i) => i.element === 'water');
+    expect(waterItems.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('has at least one legendary at each of levels 5, 8, and 10', () => {
+    expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 5)).toBe(true);
+    expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 8)).toBe(true);
+    expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 10)).toBe(true);
+  });
+
+  it('tier 10 has at least 3 items (was 1)', () => {
+    const tier10 = ITEM_ASSETS.filter((i) => i.requiredLevel === 10);
+    expect(tier10.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('covers all 6 elements across items', () => {
+    const elements = ITEM_ASSETS.filter((i) => i.element).map((i) => i.element);
+    expect(new Set(elements).size).toBeGreaterThanOrEqual(6);
   });
 });

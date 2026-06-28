@@ -75,4 +75,67 @@ describe('equipmentUtils', () => {
       expect(bonus[key]).toBe(expected[key]);
     }
   });
+
+  it('applies upgrade bonus to stats when item has upgrades', () => {
+    const upgradedChar: Character = {
+      ...baseCharacter,
+      equippedItems: { weapon: 'rusty_sword', armor: null, accessory: null },
+      itemUpgrades: { rusty_sword: 3 },
+    };
+    const boosted = applyEquipmentToCharacter(upgradedChar);
+    // rusty_sword: STR+1 base, +3 upgrade = STR+4 total
+    expect(boosted.strength).toBe(baseCharacter.strength + 1 + 3);
+  });
+
+  it('applies upgrade bonus to each stat the item gives', () => {
+    const flameChar: Character = {
+      ...baseCharacter,
+      equippedItems: { weapon: 'flame_dagger', armor: null, accessory: null },
+      itemUpgrades: { flame_dagger: 2 },
+    };
+    const boosted = applyEquipmentToCharacter(flameChar);
+    // flame_dagger: DEX+2, STR+1 base, +2 upgrade each = DEX+4, STR+3 total
+    expect(boosted.dexterity).toBe(baseCharacter.dexterity + 2 + 2);
+    expect(boosted.strength).toBe(baseCharacter.strength + 1 + 2);
+  });
+
+  it('does not apply upgrade bonus when no upgrades exist', () => {
+    const noUpgradeChar: Character = {
+      ...baseCharacter,
+      equippedItems: { weapon: 'rusty_sword', armor: null, accessory: null },
+      itemUpgrades: {},
+    };
+    const boosted = applyEquipmentToCharacter(noUpgradeChar);
+    // rusty_sword: STR+1, no upgrades
+    expect(boosted.strength).toBe(baseCharacter.strength + 1);
+  });
+
+  it('applies upgrade bonus from multiple upgraded items', () => {
+    const multiUpgradedChar: Character = {
+      ...baseCharacter,
+      equippedItems: { weapon: 'rusty_sword', armor: 'leather_vest', accessory: 'mana_ring' },
+      itemUpgrades: { rusty_sword: 2, leather_vest: 1, mana_ring: 3 },
+    };
+    const boosted = applyEquipmentToCharacter(multiUpgradedChar);
+    // rusty_sword: STR+1 + 2 = STR+3
+    // leather_vest: VIT+1 + 1 = VIT+2
+    // mana_ring: INT+2 + 3 = INT+5
+    expect(boosted.strength).toBe(baseCharacter.strength + 1 + 2);
+    expect(boosted.vitality).toBe(baseCharacter.vitality + 1 + 1);
+    expect(boosted.intelligence).toBe(baseCharacter.intelligence + 2 + 3);
+  });
+
+  it('applies upgrade bonus to HP items correctly', () => {
+    const hpChar: Character = {
+      ...baseCharacter,
+      hp: 150,
+      maxHp: 150,
+      equippedItems: { weapon: null, armor: 'iron_helm', accessory: null },
+      itemUpgrades: { iron_helm: 2 },
+    };
+    const boosted = applyEquipmentToCharacter(hpChar);
+    // iron_helm: VIT+1, HP+2 → +2 upgrade = VIT+3, HP+4
+    expect(boosted.vitality).toBe(baseCharacter.vitality + 1 + 2);
+    expect(boosted.maxHp).toBe(150 + 2 + 2); // base 150 + base HP 2 + upgrade HP 2 (upgradeLevel 2)
+  });
 });

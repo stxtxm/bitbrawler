@@ -8,6 +8,22 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '4.0.0',
+    date: '2026-06-28',
+    title: '17 new items, upgrade fix, lootbox double-roll fix & water element',
+    changes: [
+      '17 new items added across all 10 tiers: 6 weapons (tidal blade, hunter bow, thunder bow, wand of storms, sun spear, dusk blade), 5 armor (shadow cloak, aqua shield, golem plate, celestial robe, shadow boots), 6 accessories (spirit orb, tsunami orb, storm amulet, life amulet, phoenix talisman, eternal crown).',
+      'All 6 elements now covered: water element items (tidal blade, aqua shield, tsunami orb) join fire/wind/earth/light/dark.',
+      'Legendary items expanded: Thunder Bow (lvl 5), Eternal Crown (lvl 8), Doom Scythe (lvl 10) — 3 legendaries across 3 endgame tiers.',
+      'Tier 10 expanded from 1 to 3 items: Voidreaper (epic), Doom Scythe (legendary), Aegis Plate (epic) for proper endgame loadout variety.',
+      'Equipment upgrade fix: applyEquipmentToCharacter now reads character.itemUpgrades, so forge upgrade bonuses (STR, VIT, HP, etc.) apply in combat.',
+      'Lootbox double-roll fix: server revalidation + optimistic lock prevents duplicate rare items being rolled simultaneously.',
+      'Forge essence rounding: .toFixed(2) applied consistently across SalvagePanel, FusionPanel, UpgradePanel, and ArenaHeader for fractional essence display.',
+      'Lootbox weight adjustment for level 10+: increased rare (0.25→0.30), epic (0.08→0.12), legendary (0.008→0.015) for better endgame rewards.',
+      '781 tests passing across 71 test files.',
+    ],
+  },
+  {
     version: '3.6.0',
     date: '2026-06-28',
     title: 'QA overhaul — idle PvE/PvP observation, offline gains & enriched stats',

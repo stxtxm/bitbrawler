@@ -28,10 +28,12 @@ export const getEquippedItems = (character: Character): PixelItemAsset[] => {
 
 export const getEquipmentBonuses = (character: Character): ItemStats => {
   const equippedItems = getEquippedItems(character);
+  const upgrades = character.itemUpgrades ?? {};
   return equippedItems.reduce<ItemStats>((acc, item) => {
+    const upgradeLevel = upgrades[item.id] ?? 0;
     Object.entries(item.stats).forEach(([key, value]) => {
       const statKey = key as keyof ItemStats;
-      acc[statKey] = (acc[statKey] || 0) + (value || 0);
+      acc[statKey] = (acc[statKey] || 0) + (value || 0) + upgradeLevel;
     });
     return acc;
   }, {});
