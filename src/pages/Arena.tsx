@@ -213,7 +213,12 @@ const Arena = () => {
       )}
 
       {settings.settingsOpen && (
-        <SettingsPanel {...settings} soundEnabled={enabled} onToggleSound={handleToggleSound} />
+        <SettingsPanel
+          {...settings}
+          soundEnabled={enabled}
+          onToggleSound={handleToggleSound}
+          medalProgress={activeCharacter?.medalProgress}
+        />
       )}
 
       {!combat.pveMode && combat.combatData && combatOpponent && (

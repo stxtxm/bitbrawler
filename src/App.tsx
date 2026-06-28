@@ -3,7 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useGame } from './context/GameContext'
 import { useOnlineStatus } from './hooks/useOnlineStatus'
 import { initClickSound } from './hooks/useSound'
-import { HomePage, CharacterCreation, Rankings, Login, Arena, NotFound, Forge, MedalHall, Achievements } from './routes/lazyPages'
+import { HomePage, CharacterCreation, Rankings, Login, Arena, NotFound, Forge, Achievements } from './routes/lazyPages'
 import LoadingScreen from './components/LoadingScreen'
 import { MedalUnlockToast } from './components/MedalUnlockToast'
 
@@ -60,7 +60,6 @@ function App() {
             }
           />
           <Route path="/rankings" element={<Rankings />} />
-          <Route path="/medal-hall" element={<MedalHall />} />
           <Route path="/achievements" element={<Achievements />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Character } from '../types/Character';
 import { SettingsLogEntry } from '../utils/arenaUtils';
 
-type SettingsView = 'main' | 'logs';
+type SettingsView = 'main' | 'logs' | 'medals';
 type DeleteStep = 'idle' | 'confirm';
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
@@ -61,6 +61,7 @@ export const useSettings = ({
   const openSettings = useCallback(() => setSettingsOpen(true), []);
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const handleOpenHistoryFromSettings = useCallback(() => setSettingsView('logs'), []);
+  const handleOpenMedals = useCallback(() => setSettingsView('medals'), []);
   const handleReturnToSettings = useCallback(() => setSettingsView('main'), []);
 
   const handleToggleAutoMode = useCallback(async () => {
@@ -150,11 +151,13 @@ export const useSettings = ({
     handleToggleAutoMode,
     handleDeleteCharacter,
     handleOpenHistoryFromSettings,
+    handleOpenMedals,
     handleReturnToSettings,
     onClose: closeSettings,
     onToggleAutoMode: handleToggleAutoMode,
     onDeleteCharacter: handleDeleteCharacter,
     onOpenLogs: handleOpenHistoryFromSettings,
+    onOpenMedals: handleOpenMedals,
     onReturnToMain: handleReturnToSettings,
     onSetDeleteStep: setDeleteStep,
   };

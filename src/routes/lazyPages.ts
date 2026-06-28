@@ -20,10 +20,8 @@ export const Arena = lazy(arenaImporter)
 export const NotFound = lazy(notFoundImporter)
 
 const forgeImporter = () => import('../pages/Forge')
-const medalHallImporter = () => import('../pages/MedalHall')
 
 export const Forge = lazy(forgeImporter)
-export const MedalHall = lazy(medalHallImporter)
 
 const achievementsImporter = () => import('../pages/Achievements')
 
