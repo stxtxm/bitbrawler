@@ -283,9 +283,9 @@ export const generateInitialStats = (name: string, gender: 'male' | 'female'): C
             const currentValue = stats[statKey];
             // Boost low stats to prevent dump stats
             const lowBoost = currentValue < 7 ? 2.0 : 1.0;
-            // Diminishing returns above 12
-            const diminishing = currentValue > 12
-                ? Math.max(0.25, 1 - (currentValue - 12) * 0.125)
+            // Diminishing returns above 13 (relaxed threshold for more distinct archetypes)
+            const diminishing = currentValue > 13
+                ? Math.max(0.50, 1 - (currentValue - 13) * 0.10)
                 : 1.0;
             weights[statKey] = baseWeight * lowBoost * diminishing;
             totalWeight += weights[statKey]!;
