@@ -377,8 +377,8 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const showOpponentDefeat = (phase === 'combat' && isLastRound && combatResult?.winner === 'attacker') || opponentDefeated;
 
     // Character animation states
-    const playerCharState = playerDefeated ? 'dead' : actionPulse?.actor === 'player' ? 'attacking' : 'running';
-    const opponentCharState = opponentDefeated ? 'dead' : actionPulse?.actor === 'opponent' ? 'attacking' : 'running';
+    const playerCharState = playerDefeated ? 'dead' : actionPulse?.actor === 'player' ? 'attacking' : 'idle';
+    const opponentCharState = opponentDefeated ? 'dead' : actionPulse?.actor === 'opponent' ? 'attacking' : 'idle';
 
     return (
         <div className="combat-overlay" onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()}>
@@ -421,7 +421,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                 {phase === 'vs' && (
                     <div className="combat-vs">
                         <div className="vs-fighter vs-left">
-                            <AnimatedPixelCharacter seed={player.seed} gender={player.gender} scale={8} state="running" frame={animFrame} />
+                            <AnimatedPixelCharacter seed={player.seed} gender={player.gender} scale={8} state="idle" frame={animFrame} />
                             <div className="vs-fighter-name">{player.name}</div>
                             <div className="vs-fighter-lvl">LVL {player.level}</div>
                         </div>
@@ -440,7 +440,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                     })()}
                                 </div>
                             ) : (
-                                <AnimatedPixelCharacter seed={opponent.seed} gender={opponent.gender} scale={8} state="running" frame={animFrame} />
+                                <AnimatedPixelCharacter seed={opponent.seed} gender={opponent.gender} scale={8} state="idle" frame={animFrame} />
                             )}
                             <div className="vs-fighter-name">{opponent.name}</div>
                             <div className="vs-fighter-lvl">LVL {opponent.level}</div>

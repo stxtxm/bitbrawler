@@ -7,7 +7,7 @@ interface AnimatedPixelCharacterProps {
   seed: string
   gender: 'male' | 'female'
   scale?: number
-  state: 'running' | 'attacking' | 'dead'
+  state: 'idle' | 'running' | 'attacking' | 'dead'
   equippedWeapon?: PixelItemAsset | null
   className?: string
   frame?: number
@@ -51,7 +51,7 @@ function getCharacterFeatures(seed: string, gender: 'male' | 'female'): Characte
 }
 
 function getBodyFrame(bodyType: string, state: string, frame: number): number[][] {
-  if (state === 'dead') {
+  if (state === 'idle' || state === 'dead') {
     return PIXEL_BODIES[bodyType as keyof typeof PIXEL_BODIES] || PIXEL_BODIES.basic
   }
   if (state === 'attacking') {

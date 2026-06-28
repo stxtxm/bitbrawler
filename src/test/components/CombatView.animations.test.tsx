@@ -113,7 +113,7 @@ describe('CombatView Animation Overhaul', () => {
 
     // ─── Stage 2: AnimatedPixelCharacter states ────────────
 
-    it('should render AnimatedPixelCharacter with char-running state idle', () => {
+    it('should render AnimatedPixelCharacter with char-idle state when standing still', () => {
         vi.useFakeTimers();
 
         vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
@@ -139,7 +139,7 @@ describe('CombatView Animation Overhaul', () => {
         const charSvgs = container.querySelectorAll('.pixel-character-animated');
         expect(charSvgs.length).toBeGreaterThan(0);
         charSvgs.forEach(svg => {
-            expect(svg.classList.contains('char-running')).toBe(true);
+            expect(svg.classList.contains('char-idle')).toBe(true);
         });
     });
 
