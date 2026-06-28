@@ -6,17 +6,7 @@ import { AnimatedPixelCharacter } from './AnimatedPixelCharacter'
 import { PixelMonster } from './PixelMonster'
 import { ParticleSystem } from '../utils/particleSystem'
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode'
-
-const MONSTER_VISUAL_SCALE: Record<MonsterId, number> = {
-  slime: 0.7,
-  wolf: 0.85,
-  goblin: 0.9,
-  skeleton: 0.95,
-  wraith: 1.0,
-  ogre: 1.2,
-  chimera: 1.3,
-  dragon_spawn: 1.5,
-}
+import { MONSTER_VISUAL_SCALE } from '../data/monsterVisualScale'
 
 function monsterScaleFor(monsterId: MonsterId, charScale: number): number {
   return Math.round((charScale + 2) * MONSTER_VISUAL_SCALE[monsterId])
@@ -60,12 +50,6 @@ function randomDamage(playerLevel: number): { value: number; isCrit: boolean } {
   const isCrit = Math.random() < 0.15
   return { value: isCrit ? variance * 2 : variance, isCrit }
 }
-
-export function getMonsterVisualScale(monsterId: MonsterId, charScale: number): number {
-  return monsterScaleFor(monsterId, charScale)
-}
-
-export { MONSTER_VISUAL_SCALE }
 
 export const IdleRunnerScene = memo(function IdleRunnerScene({
   character,
