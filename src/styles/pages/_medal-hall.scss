@@ -1,0 +1,106 @@
+@use '../variables' as *;
+
+$medal-border: #333;
+$medal-text: #fff;
+$medal-text-muted: rgba(255, 255, 255, 0.6);
+$medal-gold-light: #ffe680;
+
+.medal-hall-page {
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+.medal-hall-header {
+  text-align: center;
+  padding: 28px 16px 12px;
+
+  &__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+  }
+
+  .medal-hall-title {
+    font-size: 20px;
+    color: $medal-text;
+    margin: 0;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+.medal-hall-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: $medal-text-muted;
+  text-decoration: none;
+  border: 1px solid $medal-border;
+  border-radius: 4px;
+  padding: 4px 8px;
+  transition: color 0.2s, border-color 0.2s;
+
+  &:hover {
+    color: $medal-text;
+    border-color: $medal-text-muted;
+  }
+}
+
+.medal-hall-counter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: $accent-gold;
+
+  &__text {
+    font-weight: bold;
+  }
+}
+
+.medal-hall-subtitle {
+  font-size: 12px;
+  color: $medal-text-muted;
+  margin: 32px 0 0;
+}
+
+.medal-hall-content {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.medal-hall-section {
+  margin-bottom: 32px;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid $medal-border;
+  }
+
+  &__title {
+    font-size: 14px;
+    color: $medal-gold-light;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  &__count {
+    font-size: 12px;
+    color: $medal-text-muted;
+  }
+}
+
+.medal-hall-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}

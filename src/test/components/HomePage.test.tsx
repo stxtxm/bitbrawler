@@ -1,9 +1,39 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import HomePage from '../../pages/HomePage';
 import { renderWithRouter } from '../utils/router';
+import { useGame } from '../../context/GameContext';
+
+vi.mock('../../context/GameContext', () => ({
+  useGame: vi.fn(),
+}));
 
 describe('HomePage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (useGame as ReturnType<typeof vi.fn>).mockReturnValue({
+      activeCharacter: null,
+    });
+  });
+
+  it('renders MEDAL HALL button', () => {
+    renderWithRouter(<HomePage />);
+    expect(screen.getByText('MEDAL HALL')).toBeInTheDocument();
+  });
+
+  it('renders medal badge with count when medals unlocked', () => {
+    (useGame as ReturnType<typeof vi.fn>).mockReturnValue({
+      activeCharacter: {
+        medalProgress: {
+          first_blood: { completed: true, progress: 1, unlockedAt: Date.now() },
+        },
+      },
+    });
+    renderWithRouter(<HomePage />);
+    expect(screen.getByText('MEDAL HALL')).toBeInTheDocument();
+    expect(screen.getByText('1')).toBeInTheDocument();
+  });
+
   it('opens and closes patch notes modal', () => {
     renderWithRouter(<HomePage />);
 

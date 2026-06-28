@@ -1,0 +1,100 @@
+@use '../variables' as *;
+
+$medal-surface: #111;
+$medal-border: #333;
+$medal-text: #fff;
+$medal-text-muted: rgba(255, 255, 255, 0.6);
+$medal-gold-light: #ffe680;
+
+.medal-unlock-toast {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: $medal-surface;
+  border: 2px solid $accent-gold;
+  border-radius: 10px;
+  padding: 14px 18px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  animation: medal-toast-enter 0.35s ease-out;
+  max-width: 340px;
+
+  @keyframes medal-toast-enter {
+    from {
+      opacity: 0;
+      transform: translateX(80px) scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba($accent-gold, 0.15);
+    border-radius: 8px;
+    border: 1px solid rgba($accent-gold, 0.4);
+    animation: medal-icon-glow 2s ease-in-out infinite;
+  }
+
+  @keyframes medal-icon-glow {
+    0%, 100% { box-shadow: 0 0 6px rgba($accent-gold, 0.3); }
+    50% { box-shadow: 0 0 16px rgba($accent-gold, 0.6); }
+  }
+
+  &__content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: $accent-gold;
+    margin-bottom: 2px;
+  }
+
+  &__name {
+    font-size: 14px;
+    font-weight: bold;
+    color: $medal-text;
+    margin-bottom: 2px;
+  }
+
+  &__reward {
+    font-size: 11px;
+    color: $medal-gold-light;
+  }
+
+  &__close {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid $medal-border;
+    color: $medal-text-muted;
+    font-size: 16px;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, border-color 0.2s;
+    padding: 0;
+
+    &:hover {
+      color: $medal-text;
+      border-color: $medal-text-muted;
+    }
+  }
+}

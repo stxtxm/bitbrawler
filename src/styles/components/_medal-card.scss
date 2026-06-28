@@ -1,0 +1,158 @@
+@use '../variables' as *;
+
+$medal-surface: #111;
+$medal-border: #333;
+$medal-text: #fff;
+$medal-text-muted: rgba(255, 255, 255, 0.6);
+$medal-gold-light: #ffe680;
+
+.medal-card {
+  background: $medal-surface;
+  border: 2px solid $medal-border;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: opacity 0.3s ease, border-color 0.3s ease;
+
+  &--locked {
+    opacity: 0.55;
+
+    .medal-card__name,
+    .medal-card__description {
+      filter: grayscale(0.6);
+    }
+  }
+
+  &--in-progress {
+    border-color: $accent-gold;
+    opacity: 0.85;
+
+    .medal-card__name {
+      color: $medal-gold-light;
+    }
+  }
+
+  &--unlocked {
+    border-color: $accent-gold;
+    opacity: 1;
+
+    .medal-card__name {
+      color: $medal-gold-light;
+    }
+
+    .medal-card__progress-bar {
+      border-color: $accent-gold;
+    }
+
+    .medal-card__progress-fill {
+      background: linear-gradient(90deg, $accent-gold, $medal-gold-light);
+    }
+  }
+
+  &--hidden {
+    .medal-card__name {
+      filter: blur(4px);
+      user-select: none;
+    }
+    .medal-card__description {
+      filter: blur(2px);
+      user-select: none;
+    }
+    .medal-card__reward-text {
+      filter: blur(2px);
+      user-select: none;
+    }
+  }
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: $bg-dark;
+    border-radius: 6px;
+    border: 1px solid $medal-border;
+  }
+
+  &__info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__name {
+    font-size: 13px;
+    margin: 0 0 2px;
+    color: $medal-text;
+    transition: color 0.3s ease;
+  }
+
+  &__description {
+    font-size: 11px;
+    margin: 0;
+    color: $medal-text-muted;
+    line-height: 1.3;
+    transition: filter 0.3s ease;
+  }
+
+  &__progress {
+    display: flex;
+    align-items: center;
+  }
+
+  &__progress-bar {
+    flex: 1;
+    height: 18px;
+    background: $bg-dark;
+    border: 1px solid $medal-border;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  &__progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, $accent-gold, $medal-gold-light);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+
+  &__progress-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    color: $medal-text;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    z-index: 1;
+  }
+
+  &__reward {
+    text-align: center;
+  }
+
+  &__reward-text {
+    font-size: 10px;
+    color: $accent-gold;
+    background: rgba($accent-gold, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    transition: filter 0.3s ease;
+  }
+}
