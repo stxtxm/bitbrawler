@@ -42,9 +42,16 @@ describe('Footer', () => {
     expect(divider).toBeInTheDocument();
   });
 
+  it('renders a link to the Achievements page', () => {
+    renderWithRouter(<Footer />);
+    const achievementsLink = screen.getByText('Achievements');
+    expect(achievementsLink).toBeInTheDocument();
+    expect(achievementsLink.closest('a')).toHaveAttribute('href', '/achievements');
+  });
+
   it('renders separator elements', () => {
     renderWithRouter(<Footer />);
     const separators = document.querySelectorAll('.footer-separator');
-    expect(separators.length).toBeGreaterThanOrEqual(3);
+    expect(separators.length).toBeGreaterThanOrEqual(4);
   });
 });

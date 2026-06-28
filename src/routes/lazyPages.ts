@@ -23,4 +23,8 @@ const forgeImporter = () => import('../pages/Forge')
 
 export const Forge = lazy(forgeImporter)
 
+const achievementsImporter = () => import('../pages/Achievements')
+
+export const Achievements = lazy(achievementsImporter)
+
 export const prefetchArena = () => (canPrefetch() ? arenaImporter() : Promise.resolve())

@@ -602,3 +602,4 @@ export const applyAchievementReward = (character: Character, reward: Achievement
 
   return updated;
 };
+
