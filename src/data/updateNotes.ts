@@ -8,6 +8,24 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '3.6.0',
+    date: '2026-06-28',
+    title: 'QA overhaul — idle PvE/PvP observation, offline gains & enriched stats',
+    changes: [
+      'QA bot fully rewritten: 30s idle PvE combat observation (monster phases, XP popup, streak banner, level-up FX), then PvP fights.',
+      'New efficiency panel parsing: essence/min, next-level ETA, power/speed/magic ratios, streak bonus — all captured per run.',
+      'Essence badge verification: fractional value read from header (e.g. 💎 0.53) confirming .toFixed(2) display.',
+      'Level-up FX detection: .glow-levelup class + .levelup-float-text verified in-scene (no overlay).',
+      'Offline gains popup test: page reload triggers .idle-offline-notification, data captured and claimed automatically.',
+      'Legacy overlay verification: asserts .level-up-pop-overlay and .stat-points-badge are permanently absent.',
+      'Fight timeout watchdog added: hard 95s cap prevents indefinite fight hangs (outlier detection).',
+      'PvE monster difficulty rebalanced: STAT_MULTIPLIER 2.5→3.5, HP_MULTIPLIER 3.0→4.0 for tougher idle encounters.',
+      'Idle PvE XP buffed: XP_MODIFIER 0.35→0.50 to compensate for harder monsters and sustain progression.',
+      'QA data collection gaps fixed: PvE monsters captured from .result-sub element, equipment from loadout slots, streak from indicator.',
+      '771 tests passing across 69 test files.',
+    ],
+  },
+  {
     version: '3.5.0',
     date: '2026-06-25',
     title: 'Auto level-up — stat allocation by archetype + in-scene FX',

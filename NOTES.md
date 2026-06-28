@@ -92,7 +92,7 @@ Offline behavior
 - Service worker caches the app shell and reloads once on update activation.
 
 UI tuning
-- Level-up is automatic — points allocate instantly by archetype (weighted to primary stat) with gold glow FX + floating "⬆ LVL X!" text. No more overlay.
+- Level-up is automatic — points allocate instantly by archetype (weighted primary 3x, secondary 1.5x, others 0.5x) with gold glow FX + floating "⬆ LVL X!" text. No more overlay.
 - Stat rows compress on very small screens; action buttons remain readable.
 - Matchmaking intro is an animated opponent scan with a lock effect.
 - Inventory modal shows loadout section at top + grouped grids by slot type; larger on desktop with item details and bonus chips.
@@ -101,14 +101,18 @@ UI tuning
 - Rankings list is read-only, stats hidden, with internal scroll.
 - Home page includes a PATCH NOTES button that opens update notes in a modal.
 - Global Footer (`src/components/Footer.tsx`) visible on all pages: copyright, GitHub link, credits, app version.
-- XP/min efficiency panel always visible (PvE + PvP): shows XP/min, next-level ETA, efficiency x, power ratio.
+- XP/min efficiency panel always visible (PvE + PvP): shows XP/min, next-level ETA, efficiency x, power ratio, speed ratio, magic mult, interval.
+- Essence badge in header (purple 💎 counter, fractional .toFixed(2) display).
+- Offline gains popup on reconnect: shows fights, XP, essence, levels earned while away with CLAIM REWARDS button.
+- Idle PvE scene phases: monster_appears → combat (attacking class) → result (victory/defeat class) with XP popup (+N XP) and streak banner on milestones.
+- Fight timeout watchdog: hard 95s cap prevents indefinite hangs with outlier detection.
 
 Testing
 - Unit: combat math, lootbox gating, equipment bonuses & loadout, affinity, XP, stats, RNG, matchmaking, supabase utils, item assets.
 - Unit: lazy route prefetch gating, end-of-day drain window, idle efficiency, next-level time.
 - Integration: matchmaking, pending fights, lootbox persistence, arena inventory/loadout/equip, offline routing, Supabase failover, arena PvE, idle efficiency display.
 - Router warnings are prevented with shared `renderWithRouter` helper (`src/test/utils/router.tsx`).
-- **531 tests — 60 test files** (`npm test`).
+- **771 tests — 69 test files** (`npm test`).
 
 Infrastructure (v1.0.0 → v3.2.0)
 - Database migrated from Firebase Firestore to Supabase (PostgreSQL).

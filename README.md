@@ -51,12 +51,15 @@ See [AGENTS.md](AGENTS.md) for autonomous agent workflows and responsibilities.
 - **8-bit UI** with SVG pixel rendering
 - **Character creation** with RPG stats (STR, VIT, DEX, LUK, INT, FOC)
 - **Arena fights** with XP gain, level ups, and enhanced combat (crit + magic + focus)
-- **PvE Monster Battles** — fight 3 8-bit monsters (Goblin/Ogre/Wraith) with separate energy pool (5 fights/day)
+- **PvE Monster Battles** — fight 3 8-bit monsters (Goblin/Ogre/Wraith) with separate energy pool (5 fights/day), idle combat scene with phase animations (monster appears → combat → result) and auto-resolve
+- **Auto level-up** — stat points auto-allocate by archetype weights (primary 3×, secondary 1.5×, others 0.5×) with in-scene gold glow FX + floating "⬆ LVL X!" text
 - **Strict same-level matchmaking** with power balancing, daily opponent rotation, and animated opponent scan
 - **Daily lootbox + inventory** — 33 items across 3 slots (weapon/armor/accessory), 5 rarities (common→legendary), stat bonuses including HP
 - **Equipment loadouts** — manual equip/unequip with 6 weapon elements (fire/water/wind/earth/light/dark), affinity system (+15% damage vs bot archetypes)
 - **6 bot archetypes** (bruiser/tank/rogue/mage/lucky/zen) with elemental weakness mapping
-- **Equipment Forge** — salvage unwanted items for essence, fuse 3 same-rarity items for a higher tier, spend essence to upgrade stats up to +5
+- **Equipment Forge** — salvage unwanted items for essence (fractional counter in header), fuse 3 same-rarity items for a higher tier, spend essence to upgrade stats up to +5
+- **Efficiency panel** — always visible XP/min with next-level ETA, power/speed/magic ratios, and streak bonus
+- **Offline gains** — when reconnecting, popup shows fights/XP/essence/levels earned while away, claim with one click
 - **Bot engine** — population management with organic activity pacing, depleted-bot skipping, and protection rebalance
 - **Global daily reset** — scripted resets at midnight (Paris) for fights and opponent tracking
 - **Hall of Fame** rankings with real-time updates
@@ -81,7 +84,7 @@ See [AGENTS.md](AGENTS.md) for autonomous agent workflows and responsibilities.
 | -------------- | ----------------------------------------------- |
 | Frontend       | React 18 + TypeScript + Vite                    |
 | Backend / Auth | Supabase (PostgreSQL, real-time, auth)          |
-| Testing        | Vitest + React Testing Library + jsdom — **764 tests, 70 files**          |
+| Testing        | Vitest + React Testing Library + jsdom — **771 tests, 69 files**          |
 | Styling        | Sass (SCSS)                                     |
 | Fonts          | Press Start 2P (via Fontsource)                 |
 | Scripting      | tsx (TypeScript executor)                       |
@@ -128,7 +131,7 @@ npm run dev                        # Start Vite dev server (localhost:5173)
 npm run preview                    # Preview production build
 
 # Testing & Quality
-npm test                           # Run test suite (Vitest — 469+ tests, 55 files)
+npm test                           # Run test suite (Vitest — 771 tests, 69 files)
 npm run lint                       # ESLint check
 npm run build                      # TypeScript check + Vite production build
 
@@ -228,7 +231,7 @@ bitbrawler/
 │   ├── styles/                     # Global Sass styles
 │   │   └── ...scss files
 │   │
-│   ├── test/                       # Vitest test suite (469+ tests, 55 files)
+│   ├── test/                       # Vitest test suite (771 tests, 69 files)
 │   │   └── ...test files
 │   │
 │   ├── types/                      # TypeScript type definitions
