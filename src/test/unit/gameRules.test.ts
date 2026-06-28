@@ -15,25 +15,26 @@ describe('Game rules', () => {
     expect(GAME_RULES.COMBAT.MAX_DAILY_PVE_FIGHTS).toBeGreaterThan(0);
   });
 
-  it('PVE XP modifier is between 0 and 1', () => {
+  it('PVE XP modifier gives 85% of PvP XP', () => {
     expect(GAME_RULES.PVE.XP_MODIFIER).toBeGreaterThan(0);
     expect(GAME_RULES.PVE.XP_MODIFIER).toBeLessThan(1);
+    expect(GAME_RULES.PVE.XP_MODIFIER).toBe(0.85);
   });
 
   it('PVE stat multiplier makes monsters harder', () => {
     expect(GAME_RULES.PVE.STAT_MULTIPLIER).toBeGreaterThan(1);
   });
 
-  it('PVE stat multiplier makes monsters challenging (target win rate ~60-70%)', () => {
-    expect(GAME_RULES.PVE.STAT_MULTIPLIER).toBe(3.5);
+  it('PVE stat multiplier makes monsters challenging (target win rate ~65-75%)', () => {
+    expect(GAME_RULES.PVE.STAT_MULTIPLIER).toBe(4.5);
   });
 
   it('PVE HP multiplier extends fights', () => {
     expect(GAME_RULES.PVE.HP_MULTIPLIER).toBeGreaterThan(1);
   });
 
-  it('PVE HP multiplier extends battles for more challenge', () => {
-    expect(GAME_RULES.PVE.HP_MULTIPLIER).toBe(4.0);
+  it('PVE HP multiplier extends battles for more challenge (target ~70% win rate)', () => {
+    expect(GAME_RULES.PVE.HP_MULTIPLIER).toBe(5.0);
   });
 
   it('PVE level boost provides challenge', () => {
