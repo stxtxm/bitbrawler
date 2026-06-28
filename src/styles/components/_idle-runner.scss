@@ -124,8 +124,8 @@
 
 .idle-monster-slot {
   position: absolute;
-  right: 8%;
-  bottom: clamp(16px, 5cqi, 32px);
+  right: 2%;
+  bottom: clamp(10px, 3cqi, 20px);
   z-index: 4;
   display: flex;
   transform-origin: bottom center;
@@ -134,12 +134,12 @@
   &::before {
     content: '';
     position: absolute;
-    bottom: -4px;
+    bottom: -6px;
     left: 50%;
     translate: -50%;
-    width: 40%;
-    height: 5px;
-    background: radial-gradient(ellipse, rgba(0,0,0,0.5), transparent);
+    width: 70%;
+    height: 8px;
+    background: radial-gradient(ellipse, rgba(0,0,0,0.7), transparent);
     border-radius: 50%;
     opacity: 0;
     pointer-events: none;

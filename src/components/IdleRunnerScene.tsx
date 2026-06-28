@@ -74,7 +74,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     if (w < 768) return 7
     return 8
   }, [])
-  const monsterScale = useMemo(() => Math.max(3, charScale - 2), [charScale])
+  const monsterScale = useMemo(() => charScale + 2, [charScale])
 
   useEffect(() => {
     const interval = setInterval(() => {
