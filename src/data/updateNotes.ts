@@ -8,6 +8,25 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '4.1.0',
+    date: '2026-06-28',
+    title: 'PvP combat animation overhaul — defeat collapse, ground shadows, enriched particles, XP popup, screen shake & AnimatedPixelCharacter',
+    changes: [
+      'PvP combat animations upgraded to match PvE quality: 13 animation improvements across all phases.',
+      'Defeat collapse animation on losing fighter: scale-bounce-shrink-fade with rotation (.defeatCollapse keyframe, 600ms).',
+      'Ground shadows on both fighters (.fighter-shadow: ellipse radial gradient, shrinks on defeat for depth cue).',
+      'AnimatedPixelCharacter replaces static PixelCharacter for PvP — running/attacking/dead states with 80ms frame timer.',
+      'Enriched combat particles: hit_ring + dust on crit, dust on hit, hit/magic/crit explicit types on damage-less actions.',
+      'Spark particles on fighter VS entrance (both sides, 3 sparks each).',
+      'XP popup float animation on victory: +N XP text with .result-xp-popup class (pop in + float up, 2s).',
+      'Screen shake on defeat/draw result (.combat-result-shake, 250ms shake on .combat-result container).',
+      'Victory particles on result: xp_star (5) + spark (3) burst on winning side.',
+      'All animations include @include small-mobile responsive variants (reduced intensity, smaller font).',
+      '13 new TDD tests covering defeat classes, particle emission types, ground shadows, entrance sparks, XP popup class, screen shake presence, and victory particle bursts.',
+      '799 tests passing across 73 test files.',
+    ],
+  },
+  {
     version: '4.0.0',
     date: '2026-06-28',
     title: '17 new items, upgrade fix, lootbox double-roll fix & water element',

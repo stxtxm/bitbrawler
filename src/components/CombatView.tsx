@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Character } from '../types/Character';
-import { PixelCharacter } from './PixelCharacter';
+import { AnimatedPixelCharacter } from './AnimatedPixelCharacter';
 import { PixelMonster } from './PixelMonster';
 import { PixelIcon } from './PixelIcon';
 import { simulateCombat } from '../utils/combatUtils';
@@ -9,8 +9,9 @@ import { parseCombatDetail, CombatAction, CombatActionType } from '../utils/comb
 import { calculateFightXp } from '../utils/xpUtils';
 import { useSound } from '../hooks/useSound';
 import { MonsterId, MONSTER_ASSETS } from '../data/monsterAssets';
-import { ParticleSystem } from '../utils/particleSystem';
+import { ParticleSystem, type ParticleType } from '../utils/particleSystem';
 import { COMBAT_BALANCE } from '../config/combatBalance';
+import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode';
 
 function extractDamage(detail: string): number | null {
     const match = detail.match(/(\d+)\s*DMG/);
@@ -47,6 +48,7 @@ interface CombatViewProps {
 
 export const CombatView = ({ player, opponent, matchType, monsterId, onComplete, onClose, candidates = [] }: CombatViewProps) => {
     const { play } = useSound();
+    const lowPerf = useLowPerformanceMode();
     const [phase, setPhase] = useState<'intro' | 'vs' | 'combat' | 'result'>('intro');
     const [combatResult, setCombatResult] = useState<{
         winner: 'attacker' | 'defender' | 'draw';
@@ -61,6 +63,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const [scanIndex, setScanIndex] = useState(0);
     const [scanLocked, setScanLocked] = useState(false);
     const [fighterEntrance, setFighterEntrance] = useState(false);
+    const [animFrame, setAnimFrame] = useState(0);
 
     const leftLayerRef = useRef<HTMLDivElement | null>(null);
     const rightLayerRef = useRef<HTMLDivElement | null>(null);
@@ -82,6 +85,15 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
 
     const selectedKey = opponent.id || opponent.name;
 
+    // Animation frame counter for character animation
+    useEffect(() => {
+        if (phase !== 'combat' && phase !== 'vs') return;
+        const interval = setInterval(() => {
+            setAnimFrame(prev => prev + 1);
+        }, 80);
+        return () => clearInterval(interval);
+    }, [phase]);
+
     useEffect(() => {
         if (leftLayerRef.current && !leftParticleSystemRef.current) {
             const ps = new ParticleSystem();
@@ -102,7 +114,6 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     }, [phase]);
 
     // Hard timeout watchdog — force-finish the fight if it exceeds the limit.
-    // This prevents the fight UI from hanging indefinitely in any phase.
     const hardTimeoutRef = useRef<number | null>(null);
     useEffect(() => {
         if (phase === 'result') {
@@ -117,7 +128,6 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
             hardTimeoutRef.current = window.setTimeout(() => {
                 console.warn(`[CombatView] Hard timeout — forcing result phase after ${COMBAT_BALANCE.fightHardTimeoutMs}ms`);
                 hardTimeoutRef.current = null;
-                // If combat result hasn't been set yet, create a fallback result
                 setCombatResult(prev => prev ?? {
                     winner: 'draw',
                     rounds: 0,
@@ -152,12 +162,23 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
         play('vs');
         const vsTimer = setTimeout(() => {
             setFighterEntrance(true);
+
+            // Emit spark particles on fighter entrance
+            const leftPs = leftParticleSystemRef.current;
+            const rightPs = rightParticleSystemRef.current;
+            if (leftPs && rightPs) {
+                if (!lowPerf) {
+                    leftPs.emit('spark', 80, 50, 3);
+                    rightPs.emit('spark', 80, 50, 3);
+                }
+            }
+
             setTimeout(() => {
                 setPhase('combat');
             }, 500);
         }, 900);
         return () => clearTimeout(vsTimer);
-    }, [phase, play]);
+    }, [phase, play, lowPerf]);
 
     useEffect(() => {
         if (phase !== 'intro') return;
@@ -202,7 +223,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                     setCurrentRound(roundIndex);
                     const detail = combatResult.details[roundIndex];
                     const action = parseCombatDetail(detail, player.name, opponent.name);
-                    
+
                     if (action) {
                         setActionPulse(action);
                         if (pulseTimeoutRef.current !== null) {
@@ -220,13 +241,30 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                         const targetLayerWidth = targetLayer?.clientWidth || 300;
                         const x = action.actor === 'player' ? targetLayerWidth * 0.3 : targetLayerWidth * 0.7;
 
+                        // Damage number
+                        // Always emit action-specific VFX
+                        const actionParticleType: ParticleType =
+                            action.type === 'magic' ? 'magic' :
+                            action.type === 'crit' ? 'crit' :
+                            action.type === 'hit' ? 'hit' :
+                            action.type === 'counter' ? 'hit' : 'hit';
+
+                        if (!lowPerf) {
+                            if (action.type === 'crit') {
+                                targetPs?.emit('hit_ring', x, 36, 1);
+                                targetPs?.emit('dust', x, 50, 2);
+                            } else if (action.type !== 'miss') {
+                                targetPs?.emit('dust', x, 50, 1);
+                            }
+                        }
+
+                        // Damage number (always, even alongside crit FX)
                         if (dmg !== null) {
                             targetPs?.emit('damage', x, 44, 1, dmg);
                         } else if (action.type === 'miss') {
                             targetPs?.emit('miss', x, 44, 1);
                         } else {
-                            const particleType = action.type === 'magic' ? 'magic' : action.type === 'crit' ? 'crit' : action.type === 'counter' ? 'hit' : action.type;
-                            targetPs?.emit(particleType, x, 44, 1);
+                            targetPs?.emit(actionParticleType, x, 44, 1);
                         }
                     }
                     roundIndex++;
@@ -234,13 +272,27 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                     clearInterval(roundInterval);
                     setTimeout(() => {
                         setPhase('result');
+
+                        // Victory particles
+                        const leftPs = leftParticleSystemRef.current;
+                        const rightPs = rightParticleSystemRef.current;
+                        const winner = combatResult.winner;
+                        if (winner === 'attacker' || winner === 'defender') {
+                            const winningSide = winner === 'attacker' ? rightPs : leftPs;
+                            const winningLayer = winner === 'attacker' ? rightLayerRef.current : leftLayerRef.current;
+                            const w = winningLayer?.clientWidth || 300;
+                            if (winningSide) {
+                                winningSide.emit('xp_star', w * 0.3, 30, lowPerf ? 2 : 5);
+                                winningSide.emit('spark', w * 0.5, 40, lowPerf ? 1 : 3);
+                            }
+                        }
                     }, 1200);
                 }
             }, 520);
 
             return () => clearInterval(roundInterval);
         }
-    }, [phase, combatResult, player.name, opponent.name]);
+    }, [phase, combatResult, player.name, opponent.name, lowPerf]);
 
     useEffect(() => {
         if (actionPulse) {
@@ -316,6 +368,18 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const opponentHpPercent = Math.max(0, Math.min(100, (opponentHp / opponentMaxHp) * 100));
     const reactionType = actionPulse && actionPulse.type !== 'miss' ? actionPulse.type : null;
 
+    // Defeat detection
+    const playerDefeated = phase === 'result' && !won && !draw;
+    const opponentDefeated = phase === 'result' && won;
+    const isLastRound = phase === 'result' ||
+        (combatResult && currentRound >= combatResult.details.length - 1);
+    const showPlayerDefeat = (phase === 'combat' && isLastRound && combatResult?.winner === 'defender') || playerDefeated;
+    const showOpponentDefeat = (phase === 'combat' && isLastRound && combatResult?.winner === 'attacker') || opponentDefeated;
+
+    // Character animation states
+    const playerCharState = playerDefeated ? 'dead' : actionPulse?.actor === 'player' ? 'attacking' : 'running';
+    const opponentCharState = opponentDefeated ? 'dead' : actionPulse?.actor === 'opponent' ? 'attacking' : 'running';
+
     return (
         <div className="combat-overlay" onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()}>
             <div className="combat-modal">
@@ -339,7 +403,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                             <div className={`scan-card ${scanLocked ? 'locked' : 'scanning'}`}>
                                 <div className="scan-subtitle">{scanLocked ? 'OPPONENT FOUND' : 'SCANNING...'}</div>
                                 <div className="scan-avatar">
-                                    <PixelCharacter seed={scanList[scanIndex]?.seed || opponent.seed} gender={scanList[scanIndex]?.gender || opponent.gender} scale={8} />
+                                    <AnimatedPixelCharacter seed={scanList[scanIndex]?.seed || opponent.seed} gender={scanList[scanIndex]?.gender || opponent.gender} scale={8} state="running" frame={animFrame} />
                                 </div>
                                 <div className="scan-name">{scanList[scanIndex]?.name || opponent.name}</div>
                                 <div className="scan-level">LVL {scanList[scanIndex]?.level ?? opponent.level}</div>
@@ -357,7 +421,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                 {phase === 'vs' && (
                     <div className="combat-vs">
                         <div className="vs-fighter vs-left">
-                            <PixelCharacter seed={player.seed} gender={player.gender} scale={8} />
+                            <AnimatedPixelCharacter seed={player.seed} gender={player.gender} scale={8} state="running" frame={animFrame} />
                             <div className="vs-fighter-name">{player.name}</div>
                             <div className="vs-fighter-lvl">LVL {player.level}</div>
                         </div>
@@ -376,7 +440,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                     })()}
                                 </div>
                             ) : (
-                                <PixelCharacter seed={opponent.seed} gender={opponent.gender} scale={8} />
+                                <AnimatedPixelCharacter seed={opponent.seed} gender={opponent.gender} scale={8} state="running" frame={animFrame} />
                             )}
                             <div className="vs-fighter-name">{opponent.name}</div>
                             <div className="vs-fighter-lvl">LVL {opponent.level}</div>
@@ -386,9 +450,10 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                 {phase === 'combat' && combatResult && (
                     <div className={`combat-action${actionPulse ? ` action-${actionPulse.type}` : ''}`}>
                         <div className="combat-fighters">
-                            <div key={`player-${currentRound}`} className={`fighter-side left${fighterEntrance ? ' enter-left' : ''}${actionPulse?.actor === 'player' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'opponent' ? ` react-${reactionType}` : ''}`}>
+                            <div key={`player-${currentRound}`} className={`fighter-side left${fighterEntrance ? ' enter-left' : ''}${actionPulse?.actor === 'player' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'opponent' ? ` react-${reactionType}` : ''}${showPlayerDefeat ? ' defeated' : ''}`}>
                                 <div className="fighter-character-wrap">
-                                    <PixelCharacter seed={player.seed} gender={player.gender} scale={6} />
+                                    <AnimatedPixelCharacter seed={player.seed} gender={player.gender} scale={6} state={playerCharState} frame={animFrame} />
+                                    <div className="fighter-shadow" />
                                 </div>
                                 <div className="fighter-name-small">{player.name}</div>
                                 <div className="fighter-health">
@@ -396,13 +461,14 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                     <div className="health-values">{playerHp} / {playerMaxHp}</div>
                                 </div>
                             </div>
-                            <div key={`opponent-${currentRound}`} className={`fighter-side right${fighterEntrance ? ' enter-right' : ''}${actionPulse?.actor === 'opponent' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'player' ? ` react-${reactionType}` : ''}`}>
+                            <div key={`opponent-${currentRound}`} className={`fighter-side right${fighterEntrance ? ' enter-right' : ''}${actionPulse?.actor === 'opponent' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'player' ? ` react-${reactionType}` : ''}${showOpponentDefeat ? ' defeated' : ''}`}>
                                 <div className="fighter-character-wrap">
                                     {matchType === 'pve' && monsterId ? (
                                         <PixelMonster monsterId={monsterId} scale={5} />
                                     ) : (
-                                        <PixelCharacter seed={opponent.seed} gender={opponent.gender} scale={6} />
+                                        <AnimatedPixelCharacter seed={opponent.seed} gender={opponent.gender} scale={6} state={opponentCharState} frame={animFrame} />
                                     )}
+                                    <div className="fighter-shadow" />
                                 </div>
                                 <div className="fighter-name-small">{opponent.name}</div>
                                 <div className="fighter-health">
@@ -421,10 +487,10 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                     </div>
                 )}
                 {phase === 'result' && combatResult && (
-                    <div className={`combat-result${won ? ' victory' : draw ? ' draw' : ' defeat'}`}>
-                        {won && <><div className="result-badge victory">VICTORY!</div><div className="result-icon pixel victory"><PixelIcon type="trophy" size={80}/></div><div className="result-message"><div className="result-xp victory">+{xpGained} XP</div><div className="result-sub">Victory over {opponent.name}</div></div></>}
-                        {!won && !draw && <><div className="result-badge defeat">DEFEAT</div><div className="result-icon pixel defeat"><PixelIcon type="skull" size={72}/></div><div className="result-message"><div className="result-xp defeat">+{xpGained} XP</div><div className="result-sub">Defeated by {opponent.name}</div></div></>}
-                        {draw && <><div className="result-badge draw">DRAW</div><div className="result-icon pixel draw"><PixelIcon type="swords" size={72}/></div><div className="result-message"><div className="result-xp draw">+{xpGained} XP</div><div className="result-sub">Stalemate vs {opponent.name}</div></div></>}
+                    <div className={`combat-result${won ? ' victory' : draw ? ' draw' : ' defeat'}${!won ? ' combat-result-shake' : ''}`}>
+                        {won && <><div className="result-badge victory">VICTORY!</div><div className="result-icon pixel victory"><PixelIcon type="trophy" size={80}/></div><div className="result-message"><div className="result-xp victory result-xp-popup">+{xpGained} XP</div><div className="result-sub">Victory over {opponent.name}</div></div></>}
+                        {!won && !draw && <><div className="result-badge defeat">DEFEAT</div><div className="result-icon pixel defeat"><PixelIcon type="skull" size={72}/></div><div className="result-message"><div className="result-xp defeat result-xp-popup">+{xpGained} XP</div><div className="result-sub">Defeated by {opponent.name}</div></div></>}
+                        {draw && <><div className="result-badge draw">DRAW</div><div className="result-icon pixel draw"><PixelIcon type="swords" size={72}/></div><div className="result-message"><div className="result-xp draw result-xp-popup">+{xpGained} XP</div><div className="result-sub">Stalemate vs {opponent.name}</div></div></>}
                         <button className="button primary-btn result-btn" onClick={handleFinish}>CONTINUE</button>
                     </div>
                 )}
