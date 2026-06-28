@@ -411,6 +411,383 @@ function parseXpFromText(text) {
   return match ? { current: parseInt(match[1]), max: parseInt(match[2]) } : null
 }
 
+/**
+ * Parse the idle efficiency panel (essence/min, next level ETA, ratios).
+ * Returns structured data or null if panel not visible.
+ */
+async function parseEfficiencyPanel(page) {
+  try {
+    const panel = page.locator('.idle-efficiency').first()
+    if (!(await panel.isVisible({ timeout: 1000 }).catch(() => false))) {
+      return null
+    }
+
+    const essenceMinEl = page.locator('.eff-rate.eff-essence strong').first()
+    const nextLevelEl = page.locator('.eff-rate.eff-next strong').first()
+    const powerEl = page.locator('.eff-stat.eff-power strong').first()
+    const speedEl = page.locator('.eff-stat.eff-speed strong').first()
+    const magicEl = page.locator('.eff-stat.eff-magic strong').first()
+    const intervalEl = page.locator('.eff-stat.eff-interval strong').first()
+    const streakBonusEl = page.locator('.eff-streak').first()
+
+    const essenceMinText = ((await essenceMinEl.textContent().catch(() => '')) || '').trim()
+    const nextLevelText = ((await nextLevelEl.textContent().catch(() => '')) || '').trim()
+    const powerText = ((await powerEl.textContent().catch(() => '')) || '').trim()
+    const speedText = ((await speedEl.textContent().catch(() => '')) || '').trim()
+    const magicText = ((await magicEl.textContent().catch(() => '')) || '').trim()
+    const intervalText = ((await intervalEl.textContent().catch(() => '')) || '').trim()
+    const streakText = ((await streakBonusEl.textContent().catch(() => '')) || '').trim()
+
+    const essenceMatch = essenceMinText.match(/[\d.]+/)
+    const intervalMatch = intervalText.match(/[\d.]+/)
+
+    return {
+      visible: true,
+      essence_per_min: essenceMatch ? parseFloat(essenceMatch[0]) : null,
+      next_level_eta: nextLevelText || null,
+      power_ratio: powerText || null,
+      speed_ratio: speedText || null,
+      magic_mult: magicText || null,
+      interval: intervalMatch ? intervalMatch[0] + 's' : null,
+      streak_bonus: streakText || null,
+    }
+  } catch (err) {
+    console.log(`   ⚠️ Could not parse efficiency panel: ${err.message}`)
+    return null
+  }
+}
+
+/**
+ * Parse the essence badge value from the arena header.
+ * Returns { visible, value, displayed } or null if not visible.
+ */
+async function parseEssenceBadge(page) {
+  try {
+    const badge = page.locator('.essence-badge').first()
+    if (!(await badge.isVisible({ timeout: 1000 }).catch(() => false))) {
+      return { badge_visible: false, value: null, displayed_as_fractional: false }
+    }
+
+    const text = ((await badge.textContent().catch(() => '')) || '').trim()
+    const cleaned = text.replace(/[^\d.]/g, '')
+    const value = cleaned ? parseFloat(cleaned) : null
+    const isFractional = cleaned.includes('.')
+
+    return {
+      badge_visible: true,
+      value,
+      displayed_as_fractional: isFractional,
+    }
+  } catch {
+    return { badge_visible: false, value: null, displayed_as_fractional: false }
+  }
+}
+
+/**
+ * Check if level-up FX elements are currently visible in the idle scene.
+ */
+async function parseLevelUpFx(page) {
+  try {
+    const charSlot = page.locator('.idle-character-slot').first()
+    const hasGlow = (await charSlot.getAttribute('class').catch(() => '')) || ''
+    const glowApplied = hasGlow.includes('glow-levelup')
+
+    const floatText = page.locator('.levelup-float-text').first()
+    const floatVisible = await floatText.isVisible({ timeout: 300 }).catch(() => false)
+
+    let level = null
+    if (floatVisible) {
+      const lvlText = await page.locator('.levelup-float-lvl').first().textContent().catch(() => '')
+      const match = (lvlText || '').match(/(\d+)/)
+      level = match ? parseInt(match[1]) : null
+    }
+
+    return {
+      detected: glowApplied || floatVisible,
+      glow_class_applied: glowApplied,
+      float_text_shown: floatVisible,
+      level,
+    }
+  } catch {
+    return { detected: false, glow_class_applied: false, float_text_shown: false, level: null }
+  }
+}
+
+/**
+ * Verify that legacy overlay elements do NOT exist in the DOM.
+ * Returns { level_up_pop_overlay, stat_points_badge, all_clear }.
+ */
+async function verifyNoLegacyOverlay(page) {
+  const levelUpOverlay = page.locator('.level-up-pop-overlay').first()
+  const statPointsBadge = page.locator('.stat-points-badge').first()
+
+  const overlayExists = await levelUpOverlay.isVisible({ timeout: 300 }).catch(() => false)
+  const badgeExists = await statPointsBadge.isVisible({ timeout: 300 }).catch(() => false)
+
+  return {
+    level_up_pop_overlay: overlayExists,
+    stat_points_badge: badgeExists,
+    all_clear: !overlayExists && !badgeExists,
+  }
+}
+
+/**
+ * Capture a single snapshot of the idle PvE scene state at this moment.
+ * Returns { phase, monster, xpPopup, streakBanner, levelUpFx, ... }.
+ */
+async function captureIdleCycleSnapshot(page) {
+  const snapshot = {
+    timestamp: Date.now(),
+    phase: 'unknown',
+    monster: null,
+    xp_popup_visible: false,
+    xp_value: null,
+    xp_label: null,
+    streak_banner_visible: false,
+    streak_text: null,
+    level_up_detected: false,
+  }
+
+  try {
+    // Determine current phase from monster slot class
+    const monsterSlot = page.locator('.idle-monster-slot').first()
+    const monsterVisible = await monsterSlot.isVisible({ timeout: 200 }).catch(() => false)
+
+    if (!monsterVisible) {
+      return snapshot
+    }
+
+    const classAttr = (await monsterSlot.getAttribute('class').catch(() => '')) || ''
+    if (classAttr.includes('phase-monster_appears')) snapshot.phase = 'monster_appears'
+    else if (classAttr.includes('phase-combat')) snapshot.phase = 'combat'
+    else if (classAttr.includes('phase-result')) snapshot.phase = 'result'
+    else snapshot.phase = 'running'
+
+    snapshot.monster = await monsterSlot.getAttribute('data-monster').catch(() => null)
+
+    // XP popup
+    const xpPopup = page.locator('.idle-big-xp').first()
+    snapshot.xp_popup_visible = await xpPopup.isVisible({ timeout: 100 }).catch(() => false)
+    if (snapshot.xp_popup_visible) {
+      const xpValueText = await page.locator('.big-xp-value').first().textContent().catch(() => '')
+      const match = (xpValueText || '').match(/(\d+)/)
+      snapshot.xp_value = match ? parseInt(match[1]) : null
+      snapshot.xp_label = (await page.locator('.big-xp-label').first().textContent().catch(() => '') || '').trim()
+    }
+
+    // Streak banner
+    const streakBanner = page.locator('.idle-streak-banner').first()
+    snapshot.streak_banner_visible = await streakBanner.isVisible({ timeout: 100 }).catch(() => false)
+    if (snapshot.streak_banner_visible) {
+      snapshot.streak_text = (await page.locator('.streak-text').first().textContent().catch(() => '') || '').trim()
+    }
+
+    // Level-up FX
+    const fx = await parseLevelUpFx(page)
+    snapshot.level_up_detected = fx.detected
+  } catch {
+    // Partial data better than none
+  }
+
+  return snapshot
+}
+
+/**
+ * Observe idle PvE combat for a fixed duration.
+ * Toggles PvE mode ON, waits for runner, polls every 500ms,
+ * captures phase transitions, XP, streak, level-up FX.
+ * Toggles PvE OFF at the end.
+ * Returns aggregated idle_runner data.
+ */
+async function observeIdleCombat(page, durationMs = 30000) {
+  console.log(`👁️ Observing idle PvE combat for ${durationMs}ms...`)
+
+  const result = {
+    observation_duration_ms: 0,
+    cycles_observed: 0,
+    monsters_faced: [],
+    victories: 0,
+    defeats: 0,
+    xp_total: 0,
+    xp_events: [],
+    streak_banner_shown: false,
+    level_up_fx_detected: false,
+    level_up_events: [],
+    phase_transition_times_ms: [],
+  }
+
+  // Toggle PvE ON
+  await togglePveMode(page, true)
+  await page.waitForTimeout(1000)
+
+  // Wait for idle runner to appear
+  const runnerBox = page.locator('.idle-runner-box').first()
+  try {
+    await runnerBox.waitFor({ state: 'visible', timeout: 8000 })
+    console.log('   Idle runner scene visible')
+  } catch {
+    console.log('   ⚠️ Idle runner scene did not appear within 8s')
+    await togglePveMode(page, false)
+    return result
+  }
+
+  // Wait for first monster to appear
+  try {
+    await page.waitForFunction(
+      () => {
+        const slot = document.querySelector('.idle-monster-slot')
+        return slot && slot.getAttribute('data-monster')
+      },
+      { timeout: 8000 }
+    )
+    console.log('   First monster appeared')
+  } catch {
+    console.log('   ⚠️ No monster appeared within 8s')
+    await togglePveMode(page, false)
+    return result
+  }
+
+  // Polling loop
+  const startTime = Date.now()
+  const endTime = startTime + durationMs
+  let previousMonster = null
+  let previousPhase = 'unknown'
+  const countedXpKeys = new Set()
+
+  while (Date.now() < endTime) {
+    await page.waitForTimeout(500)
+
+    const snapshot = await captureIdleCycleSnapshot(page)
+    if (!snapshot.monster) continue
+
+    // Detect new cycle (monster change)
+    if (snapshot.monster !== previousMonster) {
+      if (previousMonster !== null) {
+        result.cycles_observed++
+      }
+      previousMonster = snapshot.monster
+      if (!result.monsters_faced.includes(snapshot.monster)) {
+        result.monsters_faced.push(snapshot.monster)
+      }
+    }
+
+    // Track phase transition time
+    if (snapshot.phase !== previousPhase) {
+      result.phase_transition_times_ms.push(Date.now() - startTime)
+      previousPhase = snapshot.phase
+    }
+
+    // Capture XP on result phase (deduped by monster+value key)
+    if (snapshot.phase === 'result' && snapshot.xp_popup_visible && snapshot.xp_value !== null) {
+      const xpKey = `${snapshot.monster}-${snapshot.xp_value}`
+      if (!countedXpKeys.has(xpKey)) {
+        countedXpKeys.add(xpKey)
+        result.xp_total += snapshot.xp_value
+        result.xp_events.push({
+          time_ms: Date.now() - startTime,
+          xp: snapshot.xp_value,
+          monster: snapshot.monster,
+          result: snapshot.xp_label || 'unknown',
+        })
+        if (snapshot.xp_label?.toUpperCase().includes('VICTORY')) result.victories++
+        else result.defeats++
+      }
+    }
+
+    // Track streak banner
+    if (snapshot.streak_banner_visible) {
+      result.streak_banner_shown = true
+    }
+
+    // Track level-up FX
+    if (snapshot.level_up_detected) {
+      result.level_up_fx_detected = true
+      result.level_up_events.push({
+        time_ms: Date.now() - startTime,
+        monster: snapshot.monster,
+      })
+    }
+  }
+
+  result.observation_duration_ms = Date.now() - startTime
+  console.log(`   Observation complete: ${result.cycles_observed} cycles, ${result.victories}W/${result.defeats}L, ${result.xp_total} XP, FX:${result.level_up_fx_detected}`)
+
+  // Toggle PvE OFF
+  await togglePveMode(page, false)
+  await page.waitForTimeout(1000)
+
+  return result
+}
+
+/**
+ * Reload the page and check for offline gains notification.
+ * If found, captures the data and clicks claim.
+ * Returns offline gains data.
+ */
+async function checkOfflineGains(page, runKey) {
+  console.log('💤 Checking offline gains notification...')
+
+  const result = {
+    notification_shown: false,
+    offline_time: null,
+    fights: null,
+    xp_gained: null,
+    essence_gained: null,
+    levels_gained: null,
+    claimed: false,
+  }
+
+  try {
+    await page.reload({ waitUntil: 'networkidle', timeout: 30000 })
+    await page.waitForTimeout(2000)
+
+    const notification = page.locator('.idle-offline-notification').first()
+    const visible = await notification.isVisible({ timeout: 8000 }).catch(() => false)
+
+    if (!visible) {
+      console.log('   No offline gains notification shown')
+      return result
+    }
+
+    result.notification_shown = true
+    console.log('   Offline gains notification detected')
+
+    // Capture offline time
+    const timeEl = page.locator('.offline-time').first()
+    result.offline_time = ((await timeEl.textContent().catch(() => '')) || '').trim()
+
+    // Capture stat values
+    const statValues = page.locator('.offline-stat-value')
+    const statCount = await statValues.count().catch(() => 0)
+    for (let i = 0; i < statCount; i++) {
+      const text = ((await statValues.nth(i).textContent().catch(() => '')) || '').trim()
+      const label = ((await page.locator('.offline-stat-label').nth(i).textContent().catch(() => '')) || '').trim().toLowerCase()
+      const numMatch = text.match(/[\d.]+/)
+      const num = numMatch ? parseFloat(numMatch[0]) : null
+
+      if (label.includes('xp') && num !== null) result.xp_gained = num
+      else if (label.includes('essence') && num !== null) result.essence_gained = num
+      else if (label.includes('fight') && num !== null) result.fights = num
+      else if (label.includes('level') && num !== null) result.levels_gained = num
+    }
+
+    // Click claim
+    const claimBtn = page.locator('.offline-claim-btn').first()
+    if (await claimBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await claimBtn.click()
+      await page.waitForTimeout(2000)
+      result.claimed = true
+      console.log('   Offline rewards claimed')
+    }
+
+    await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-offline-gains.png`) })
+  } catch (err) {
+    console.log(`   ⚠️ Offline gains check failed: ${err.message}`)
+  }
+
+  return result
+}
+
 async function handleDailyLootbox(page, runKey) {
   console.log('🎁 Checking lootbox...')
 
@@ -542,65 +919,6 @@ async function maybeReplaceExhaustedCharacter(page, runKey, runRecord, reason) {
   await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-03-arena-replacement.png`) })
 }
 
-/**
- * Handle the level-up popup overlay by allocating ALL stat points
- * and dismissing the overlay so the FIGHT button becomes clickable again.
- * Allocates points via the + buttons (each click saves one point immediately).
- * Once all points are spent, the overlay auto-closes within 800ms.
- * Returns true if the overlay was handled, false if not present.
- */
-async function handleLevelUpOverlay(page) {
-  const OVERLAY_TIMEOUT = 2000
-  const levelUpOverlay = page.locator('.level-up-pop-overlay').first()
-  if (!(await levelUpOverlay.isVisible({ timeout: OVERLAY_TIMEOUT }).catch(() => false))) {
-    return false
-  }
-
-  console.log('   Level-up overlay detected, handling...')
-
-  let allocatedCount = 0
-
-  // 1. Click all available + buttons (each saves one point to DB immediately)
-  for (let attempt = 0; attempt < 10; attempt++) {
-    const statAddBtns = page.locator('.stat-add-btn')
-    const btnCount = await statAddBtns.count()
-    if (btnCount === 0) break
-
-    const randomIndex = Math.floor(Math.random() * btnCount)
-    const statAddBtn = statAddBtns.nth(randomIndex)
-    const ariaLabel = await statAddBtn.getAttribute('aria-label').catch(() => null)
-    await statAddBtn.click()
-    allocatedCount++
-    console.log(`   Allocated point #${allocatedCount} (${ariaLabel || `stat-add-btn #${randomIndex}`})`)
-    await page.waitForTimeout(400)
-  }
-
-  // 2. Wait for overlay to auto-close (points all spent)
-  if (allocatedCount > 0) {
-    try {
-      await levelUpOverlay.waitFor({ state: 'hidden', timeout: 3000 })
-      console.log(`   ✅ Level-up overlay auto-closed (${allocatedCount} point${allocatedCount !== 1 ? 's' : ''} allocated)`)
-      return true
-    } catch {
-      // Auto-close didn't fire — fall through
-    }
-  }
-
-  // 3. Click CLOSE button as fallback
-  const closeBtn = page.locator('.level-up-confirm').first()
-  if (await closeBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
-    await closeBtn.click()
-    await page.waitForTimeout(500)
-    console.log(`   ✅ Level-up overlay closed via CLOSE (${allocatedCount} point${allocatedCount !== 1 ? 's' : ''} allocated)`)
-    return true
-  }
-
-  // 4. Force-dismiss overlay
-  console.log('   ⚠️ Force-dismissing level-up overlay')
-  await levelUpOverlay.click({ force: true })
-  await page.waitForTimeout(500)
-  return true
-}
 
 /**
  * Toggle PvP or PvE mode by clicking the appropriate switch button.
@@ -907,45 +1225,6 @@ async function parseStreakFromBody(page) {
 }
 
 /**
- * Parse idle efficiency display data from the PvE area.
- */
-async function parseIdleStats(page) {
-  try {
-    const streakEl = page.locator('.pve-extra-item.streak').first()
-    const xpMinEl = page.locator('.pve-extra-item.xp-min').first()
-    const slainEl = page.locator('.pve-extra-item').first()
-    const badgeEl = page.locator('.stat-points-badge').first()
-    const streakIndicator = page.locator('.idle-streak-indicator').first()
-
-    const streaText = await streakEl.textContent().catch(() => '') || ''
-    const xpMinText = await xpMinEl.textContent().catch(() => '') || ''
-    const slainText = await slainEl.textContent().catch(() => '') || ''
-    const badgeText = await badgeEl.textContent().catch(() => '') || ''
-    const hasStreakIndicator = await streakIndicator.isVisible({ timeout: 500 }).catch(() => false)
-    const indicatorText = hasStreakIndicator
-      ? ((await streakIndicator.textContent().catch(() => '')) || '').trim()
-      : ''
-
-    const streakMatch = streaText.match(/(\d+)/)
-    const xpMinMatch = xpMinText.match(/([\d.]+)\s*XP/)
-    const slainMatch = slainText.match(/(\d+)/)
-    const badgeMatch = badgeText.match(/\+(\d+)/)
-
-    return {
-      streak: streakMatch ? parseInt(streakMatch[1]) : null,
-      xpPerMinute: xpMinMatch ? parseFloat(xpMinMatch[1]) : null,
-      slain: slainMatch ? parseInt(slainMatch[1]) : null,
-      badgePoints: badgeMatch ? parseInt(badgeMatch[1]) : null,
-      streakIndicatorActive: hasStreakIndicator,
-      streakIndicatorText: indicatorText || null,
-    }
-  } catch (err) {
-    console.log(`   ⚠️ Could not parse idle stats: ${err.message}`)
-    return null
-  }
-}
-
-/**
  * Simulate a short human-like delay between actions (300-800ms).
  */
 async function humanDelay(page) {
@@ -957,45 +1236,14 @@ async function runFightSequence(page, runKey, runRecord) {
   let recreatedForExhaustion = false
   let currentLevel = runRecord.initial_level
 
-  // Dismiss any lingering level-up overlay from a previous run (reused character)
-  const initialLevelUpOverlay = page.locator('.level-up-pop-overlay').first()
-  if (await initialLevelUpOverlay.isVisible({ timeout: 1000 }).catch(() => false)) {
-    console.log('   Level-up overlay detected at start of run, dismissing...')
-    const laterBtn = page.locator('.level-up-later').first()
-    if (await laterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await laterBtn.click()
-      await page.waitForTimeout(500)
-      console.log('   Level-up overlay dismissed at start of run')
-    }
-  }
-
-  // Build fight types array — interleave PvE fights evenly across the run
-  const pveCount = Math.min(config.pveCount || 1, config.fightsPerRun)
-  const fightTypes = new Array(config.fightsPerRun).fill('pvp')
-  if (pveCount >= config.fightsPerRun) {
-    fightTypes.fill('pve')
-  } else if (pveCount > 0) {
-    const spacing = config.fightsPerRun / (pveCount + 1)
-    for (let i = 0; i < pveCount; i++) {
-      const pos = Math.min(Math.round((i + 1) * spacing) - 1, config.fightsPerRun - 1)
-      fightTypes[pos] = 'pve'
-    }
-  }
-  console.log(`   Fight types: ${fightTypes.join(' → ')} (${pveCount} PvE, ${config.fightsPerRun - pveCount} PvP)`)
-
   for (let i = 0; i < config.fightsPerRun; i++) {
-    const isPvePhase = fightTypes[i] === 'pve'
-
-    // Toggle to the correct mode before each fight
-    await togglePveMode(page, isPvePhase)
-    await handleLevelUpOverlay(page)
     await humanDelay(page)
 
     const arenaStatus = await readArenaStatus(page)
-    const fightsAvailable = isPvePhase ? null : arenaStatus.fightsAvailable
+    const fightsAvailable = arenaStatus.fightsAvailable
     const isResting = arenaStatus.isResting
 
-    if (!isPvePhase && fightsAvailable !== null && fightsAvailable <= 0) {
+    if (fightsAvailable !== null && fightsAvailable <= 0) {
       console.log('   No battle energy available for current fighter')
       if (!recreatedForExhaustion) {
         await maybeReplaceExhaustedCharacter(page, runKey, runRecord, 'exhausted-energy')
@@ -1017,18 +1265,11 @@ async function runFightSequence(page, runKey, runRecord) {
       break
     }
 
-    // Check for level-up overlay right before FIGHT (it may appear asynchronously after CONTINUE)
-    await handleLevelUpOverlay(page)
-
-    console.log(`⚔️ Fight ${i + 1}/${config.fightsPerRun} [${isPvePhase ? 'PVE' : 'PVP'}]...`)
+    console.log(`⚔️ PvP Fight ${i + 1}/${config.fightsPerRun}...`)
 
     const fightBtn = page.locator('button.primary-btn.giant-btn').first()
     const fightStart = Date.now()
     for (let attempt = 0; attempt < 3; attempt++) {
-      if (attempt > 0) {
-        await handleLevelUpOverlay(page)
-        await page.waitForTimeout(300)
-      }
       const clicked = await fightBtn.click({ timeout: 3000 }).then(() => true).catch(() => false)
       if (clicked) break
       console.log(`   FIGHT click blocked (attempt ${attempt + 1}), retrying with force click...`)
@@ -1112,71 +1353,19 @@ async function runFightSequence(page, runKey, runRecord) {
     const xpMatch = pageText.match(/\+(\d+)\s*XP/)
     const xpGained = xpMatch ? parseInt(xpMatch[1]) : null
 
-    // ── Monster name parsing ──
-    // Strategy 1: Read from .result-sub element directly (most reliable).
-    // The .result-sub contains text like "Victory over Goblin", "Defeated by Ogre",
-    // or "Stalemate vs Wraith". We give a small delay for rendering to complete.
-    let monsterName = null
-    try {
-      await page.waitForTimeout(200)
-      const resultSubEl = page.locator('.result-sub').first()
-      if (await resultSubEl.isVisible({ timeout: 1500 }).catch(() => false)) {
-        const resultSubText = ((await resultSubEl.textContent().catch(() => '')) || '').trim()
-        if (resultSubText) {
-          const match = resultSubText.match(
-            /(?:Victory\s+over|Defeated\s+by|Stalemate\s+vs)\s+(.+?)(?:\s*!?\s*)?$/i
-          )
-          if (match) monsterName = match[1].trim()
-        }
-      }
-    } catch {
-      // Fall through to body text parsing
-    }
-
-    // Strategy 2: Body text regex (fallback, still handles intro text patterns)
-    if (!monsterName) {
-      const monsterMatch =
-        pageText.match(/(?:Victory\s+over|Defeated\s+by|Stalemate\s+vs)\s+(.+?)(?:!|\.|$)/i) ||
-        pageText.match(/A WILD\s+(.+?)\s+APPEARS/i)
-      if (monsterMatch) monsterName = monsterMatch[1].trim()
-    }
-
-    // Strategy 3: Read from .encounter-name element (intro text might still be in DOM
-    // if fight resolution was very fast and the intro phase hasn't been fully replaced)
-    if (!monsterName) {
-      try {
-        const encounterNameText = ((await page.locator('.encounter-name').textContent().catch(() => '')) || '').trim()
-        if (encounterNameText) monsterName = encounterNameText
-      } catch {
-        // ignore
-      }
-    }
-
-    // Strategy 4: Scan for common monster names in body text as last resort
-    if (!monsterName && isPvePhase) {
-      const knownMonsters = ['GOBLIN', 'OGRE', 'WRAITH', 'ORC', 'TROLL', 'SLIME', 'BAT', 'SKELETON', 'ZOMBIE', 'WOLF']
-      for (const m of knownMonsters) {
-        if (pageText.toUpperCase().includes(m)) {
-          // Capitalize first letter, rest lower
-          monsterName = m.charAt(0).toUpperCase() + m.slice(1).toLowerCase()
-          break
-        }
-      }
-    }
-
-    console.log(`   Result: ${isVictory ? '✅ VICTORY' : isDefeat ? '❌ DEFEAT' : '🤝 DRAW'} (${fightDuration}ms) [${isPvePhase ? 'PVE' : 'PVP'}]`)
+    console.log(`   Result: ${isVictory ? '✅ VICTORY' : isDefeat ? '❌ DEFEAT' : '🤝 DRAW'} (${fightDuration}ms) [PVP]`)
 
     const thisFightData = {
       result: isVictory ? 'victory' : isDefeat ? 'defeat' : 'draw',
       xp: xpGained,
       fight_duration_ms: fightDuration,
       max_hp: null,
-      fight_type: isPvePhase ? 'pve' : 'pvp',
-      monster_name: monsterName,
+      fight_type: 'pvp',
+      monster_name: null,
     }
 
     await page.screenshot({
-      path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-${isVictory ? 'win' : isDefeat ? 'loss' : 'draw'}-${isPvePhase ? 'pve' : 'pvp'}.png`),
+      path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-${isVictory ? 'win' : isDefeat ? 'loss' : 'draw'}-pvp.png`),
     })
 
     const continueBtn = page.locator('button:has-text("CONTINUE"), button:has-text("CLOSE"), button:has-text("OK")').first()
@@ -1185,36 +1374,32 @@ async function runFightSequence(page, runKey, runRecord) {
       await page.waitForTimeout(1500)
     }
 
-    const hadOverlay = await handleLevelUpOverlay(page)
-
     thisFightData.max_hp = await parseMaxHp(page)
     console.log(`   max HP after fight: ${thisFightData.max_hp || '(unable to parse)'}`)
 
     runRecord.fights.push(thisFightData)
 
-    if (hadOverlay) {
-      const postFightText = await page.locator('body').innerText().catch(() => '')
-      const newLevel = parseLevelFromText(postFightText)
-      if (newLevel !== null && currentLevel !== null && newLevel > currentLevel) {
-        const levelsGained = newLevel - currentLevel
-        runRecord.level_up_events.push({
-          fight_number: i + 1,
-          fight_type: isPvePhase ? 'pve' : 'pvp',
-          levels_gained: levelsGained,
-          points_to_allocate: levelsGained,
-          previous_level: currentLevel,
-          new_level: newLevel,
-        })
-        console.log(`   ⬆️ Level up: ${currentLevel} → ${newLevel} (+${levelsGained} level${levelsGained > 1 ? 's' : ''})`)
-        currentLevel = newLevel
-      } else if (newLevel !== null) {
-        currentLevel = newLevel
-      }
+    // Track level-up from body text (auto-allocated, no overlay to detect)
+    const postFightText = await page.locator('body').innerText().catch(() => '')
+    const newLevel = parseLevelFromText(postFightText)
+    if (newLevel !== null && currentLevel !== null && newLevel > currentLevel) {
+      const levelsGained = newLevel - currentLevel
+      runRecord.level_up_events.push({
+        fight_number: i + 1,
+        fight_type: 'pvp',
+        levels_gained,
+        previous_level: currentLevel,
+        new_level: newLevel,
+      })
+      console.log(`   ⬆️ Level up: ${currentLevel} → ${newLevel} (+${levelsGained} level${levelsGained > 1 ? 's' : ''})`)
+      currentLevel = newLevel
+    } else if (newLevel !== null) {
+      currentLevel = newLevel
     }
 
     await humanDelay(page)
   }
-  }
+}
 
 /**
  * Parse essence value from the forge page or body text.
@@ -1447,8 +1632,9 @@ async function run() {
   console.log('═══════════════════════════════════════════')
   console.log(`  Config:`)
   console.log(`    baseUrl:        ${config.baseUrl}`)
-    console.log(    `    fightsPerRun:   ${config.fightsPerRun} (${config.fightsPerRun - (config.pveCount || 0)} PvP + ${config.pveCount || 0} PvE)`)
-    console.log(`    fightTimeout:   ${config.fightTimeout}ms`)
+  console.log(`    fightsPerRun:   ${config.fightsPerRun} (PvP only)`)
+  console.log(`    fightTimeout:   ${config.fightTimeout}ms`)
+  console.log(`    idleObserveMs:  30000 (PvE idle observation)`)
   console.log(`    statsFile:      ${STATS_FILE}`)
   console.log(`    stateFile:      ${STATE_FILE}`)
   console.log(`    screenshotsDir: ${SCREENSHOTS_DIR}`)
@@ -1456,9 +1642,9 @@ async function run() {
   console.log(`    runKey:         ${runKey}`)
   console.log(`    savedFighter:   ${savedCharacterName || 'none'}`)
   console.log(`    savedExhausted: ${state.run === runKey ? String(state.exhausted === true) : 'false'}`)
-    console.log('    autoMode:       enable after daily fights are exhausted')
-    console.log(`    pveCount:       ${config.pveCount} (PvE fights mixed into run)`)
-    console.log(`    headless:       ${config.headless}`)
+  console.log('    autoMode:       enable after daily fights are exhausted')
+  console.log('    offlineCheck:   after forge (page reload)')
+  console.log(`    headless:       ${config.headless}`)
   console.log(`    slowMo:         ${config.slowMo}`)
   console.log(`  CWD: ${process.cwd()}`)
   console.log('───────────────────────────────────────────')
@@ -1523,7 +1709,12 @@ async function run() {
       monsters_faced: [],
     },
     level_up_events: [],
-    idle_stats: null,
+    idle_runner: null,
+    efficiency_panel: null,
+    essence: null,
+    level_up_fx: null,
+    offline_gains: null,
+    no_legacy_overlay: null,
     forge: null,
     errors: [],
     load_times_ms: {},
@@ -1551,7 +1742,7 @@ async function run() {
 
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-03-arena.png`) })
 
-    // Capture initial stats, equipment, and streak before the fight sequence
+    // ── Capture initial stats ─────────────────────────────────────
     const preFightText = await page.locator('body').innerText().catch(() => '')
     runRecord.initial_level = parseLevelFromText(preFightText)
     runRecord.initial_xp = parseXpFromText(preFightText)
@@ -1564,22 +1755,53 @@ async function run() {
       console.log(`   Equipment: ${runRecord.initial_equipment.map(e => `${e.slot}=${e.name}`).join(', ')}`)
     }
 
-    // PvE mixing is handled automatically inside runFightSequence
-    // config.pveCount fights per run will be in PvE mode
+    // ── PvE Idle Observation ──────────────────────────────────────
+    console.log('')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('  🎮 PvE Idle Combat Observation')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+
+    runRecord.idle_runner = await observeIdleCombat(page, 30000)
+
+    await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-04-pve-idle.png`) })
+
+    // Capture efficiency panel and essence after idle observation
+    runRecord.efficiency_panel = await parseEfficiencyPanel(page)
+    if (runRecord.efficiency_panel) {
+      console.log(`   Efficiency: essence/min=${runRecord.efficiency_panel.essence_per_min}, ETA=${runRecord.efficiency_panel.next_level_eta}, power=${runRecord.efficiency_panel.power_ratio}, interval=${runRecord.efficiency_panel.interval}`)
+    }
+
+    runRecord.essence = await parseEssenceBadge(page)
+    if (runRecord.essence.badge_visible) {
+      console.log(`   Essence badge: ${runRecord.essence.value} (fractional: ${runRecord.essence.displayed_as_fractional})`)
+    }
+
+    // Capture level-up FX state after idle
+    runRecord.level_up_fx = await parseLevelUpFx(page)
+    if (runRecord.level_up_fx.detected) {
+      console.log(`   Level-up FX: glow=${runRecord.level_up_fx.glow_class_applied}, text=${runRecord.level_up_fx.float_text_shown}, level=${runRecord.level_up_fx.level}`)
+    }
+
+    // Verify no legacy overlay elements exist
+    runRecord.no_legacy_overlay = await verifyNoLegacyOverlay(page)
+    if (!runRecord.no_legacy_overlay.all_clear) {
+      console.log(`   ⚠️ Legacy overlay elements still present: ${JSON.stringify(runRecord.no_legacy_overlay)}`)
+    }
+
+    // Ensure PvP mode for fight sequence
+    await togglePveMode(page, false)
+    await page.waitForTimeout(500)
+
+    // ── PvP Fight Sequence ────────────────────────────────────────
+    console.log('')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('  ⚔️ PvP Fight Sequence')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
     await runFightSequence(page, runKey, runRecord)
 
-    // Ensure no overlay is blocking the arena stats before reading
-    await handleLevelUpOverlay(page)
-
-    // Collect idle efficiency stats (streak, XP/min, kills, badge)
-    runRecord.idle_stats = await parseIdleStats(page)
-    if (runRecord.idle_stats) {
-      console.log(`   Idle stats: streak=${runRecord.idle_stats.streak}, XP/min=${runRecord.idle_stats.xpPerMinute}, slain=${runRecord.idle_stats.slain}, badge=${runRecord.idle_stats.badgePoints}, streakIndicator=${runRecord.idle_stats.streakIndicatorActive}`)
-    }
-
-    // Debug screenshot right before stats reading to diagnose W/L capture issues
-    await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-04-stats-debug.png`) })
+    // ── Final Stats ───────────────────────────────────────────────
+    await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-05-stats-debug.png`) })
 
     const finalText = await page.locator('body').innerText()
     console.log('   Raw body text (first 500 chars):', finalText.slice(0, 500))
@@ -1596,7 +1818,6 @@ async function run() {
     }
     console.log('   Final stats:', JSON.stringify(runRecord.final_stats))
 
-    // Capture final character stats, HP, equipment, and streak
     runRecord.final_character_stats = await parseCharacterStats(page)
     runRecord.final_max_hp = await parseMaxHp(page)
     runRecord.final_equipment = await parseEquippedItems(page)
@@ -1607,18 +1828,15 @@ async function run() {
       console.log(`   Equipment: ${runRecord.final_equipment.map(e => `${e.slot}=${e.name}`).join(', ')}`)
     }
 
-    // Aggregate PvE data from fight records
-    const pveFights = runRecord.fights.filter(f => f.fight_type === 'pve')
-    if (pveFights.length > 0) {
-      runRecord.pve_data.fights = pveFights.length
-      runRecord.pve_data.wins = pveFights.filter(f => f.result === 'victory').length
-      runRecord.pve_data.xp_total = pveFights.reduce((s, f) => s + (f.xp || 0), 0)
-      runRecord.pve_data.monsters_faced = pveFights
-        .map(f => f.monster_name)
-        .filter((n) => n !== null && n !== undefined)
-      console.log(`   PvE: ${runRecord.pve_data.wins}/${runRecord.pve_data.fights} wins, ${runRecord.pve_data.monsters_faced.join(', ')}`)
+    // Populate pve_data from idle_runner for backward compatibility
+    if (runRecord.idle_runner && runRecord.idle_runner.monsters_faced.length > 0) {
+      runRecord.pve_data.fights = runRecord.idle_runner.cycles_observed
+      runRecord.pve_data.wins = runRecord.idle_runner.victories
+      runRecord.pve_data.xp_total = runRecord.idle_runner.xp_total
+      runRecord.pve_data.monsters_faced = runRecord.idle_runner.monsters_faced
     }
 
+    // ── Lootbox ───────────────────────────────────────────────────
     const finalArenaStatus = await readArenaStatus(page)
     const fighterExhausted =
       finalArenaStatus.isResting ||
@@ -1642,11 +1860,23 @@ async function run() {
     persistQaState(runKey, runRecord.character, runRecord.character_action, fighterExhausted)
     console.log(`   Fighter exhausted for today: ${fighterExhausted ? 'yes' : 'no'}`)
 
-    // Test forge system if we have items or essence
+    // ── Forge ─────────────────────────────────────────────────────
     runRecord.forge = await testForgeSystem(page, runKey)
 
-    await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-05-final.png`) })
+    // ── Offline Gains ─────────────────────────────────────────────
+    console.log('')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('  💤 Offline Gains Check')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
+    runRecord.offline_gains = await checkOfflineGains(page, runKey)
+    if (runRecord.offline_gains.notification_shown) {
+      console.log(`   Offline time: ${runRecord.offline_gains.offline_time}, XP=${runRecord.offline_gains.xp_gained}, essence=${runRecord.offline_gains.essence_gained}, claimed=${runRecord.offline_gains.claimed}`)
+    }
+
+    await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-06-final.png`) })
+
+    // ── Save ──────────────────────────────────────────────────────
     const stats = loadStats()
     stats.push(runRecord)
     saveStats(stats)
