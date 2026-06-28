@@ -23,6 +23,12 @@ import {
   performFusion,
   performUpgrade,
 } from '../utils/forgeUtils';
+import {
+  checkMedals,
+  applyMedalReward,
+  getDefaultMedalProgress,
+} from '../utils/medalUtils';
+import type { MedalDef, SpecialMedalContext } from '../utils/medalUtils';
 
 interface GameContextType {
   activeCharacter: Character | null;
@@ -63,6 +69,8 @@ interface GameContextType {
   salvageItems: (itemId: string) => Promise<Character | null>;
   fuseItems: (items: PixelItemAsset[]) => Promise<{ result: PixelItemAsset | null; updatedChar: Character | null }>;
   upgradeItem: (itemId: string) => Promise<Character | null>;
+  lastUnlockedMedal: MedalDef | null;
+  clearMedalNotification: () => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -73,6 +81,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [dbAvailable, setDbAvailable] = useState(true);
   const [lastXpGain, setLastXpGain] = useState<number | null>(null);
   const [lastLevelUp, setLastLevelUp] = useState<{ levelsGained: number; newLevel: number; hpGained: number } | null>(null);
+  const [lastUnlockedMedal, setLastUnlockedMedal] = useState<MedalDef | null>(null);
   const isOnline = useOnlineStatus();
   const initiatedMatchmakingRef = useRef(false);
   const charRef = useRef<Character | null>(null);
@@ -243,6 +252,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     setLastLevelUp(null);
   }, []);
 
+  // Clear medal notification
+  const clearMedalNotification = useCallback(() => {
+    setLastUnlockedMedal(null);
+  }, []);
+
   const retryConnection = useCallback(async (): Promise<boolean> => {
     try {
       if (typeof navigator !== 'undefined' && navigator.onLine === false) {
@@ -263,6 +277,35 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       console.error('Supabase retry failed:', error);
       setDbAvailable(false);
       return false;
+    }
+  }, []);
+
+  // Non-blocking medal/achievement check.
+  // Fires after a game action (fight, lootbox, forge) to check and apply medal unlocks.
+  // Returns the updated character (with medal progress/rewards applied) or the original
+  // character if the check fails — the main action must never be blocked by medal logic.
+  const checkAndApplyMedals = useCallback(async (
+    character: Character,
+    extraContext?: SpecialMedalContext,
+  ): Promise<Character> => {
+    try {
+      const currentProgress = character.medalProgress ?? getDefaultMedalProgress();
+      const result = checkMedals(character, currentProgress, ITEM_ASSETS, extraContext);
+
+      if (result.newlyUnlocked.length > 0) {
+        let updatedChar: Character = { ...character, medalProgress: result.progress };
+        for (const medal of result.newlyUnlocked) {
+          updatedChar = applyMedalReward(updatedChar, medal.reward);
+          setLastUnlockedMedal(medal);
+        }
+        return normalizeCharacter(updatedChar);
+      }
+
+      // Update progress even without new unlocks
+      return { ...character, medalProgress: result.progress };
+    } catch (error) {
+      console.warn('Medal check failed (non-blocking):', error);
+      return character;
     }
   }, []);
 
@@ -371,6 +414,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
        persistCharacter(updatedChar);
        initiatedMatchmakingRef.current = false;
+
+      // Non-blocking medal/achievement check after PvP fight
+      checkAndApplyMedals(updatedChar, {}).then(charWithMedals => {
+        persistCharacter(charWithMedals);
+        syncCharacterToBackend(charWithMedals).catch(() => {});
+      }).catch(() => {});
 
       if (opponentId && opponentId !== baseCharacter.id) {
         const incomingEntry: IncomingFightHistory = {
@@ -482,6 +531,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
 
     persistCharacter(updatedChar);
+
+    // Non-blocking medal/achievement check after PvE fight
+    checkAndApplyMedals(updatedChar, {}).then(charWithMedals => {
+      persistCharacter(charWithMedals);
+      syncCharacterToBackend(charWithMedals).catch(() => {});
+    }).catch(() => {});
 
     setLastXpGain(xpGained);
     if (xpResult.leveledUp && !updatedChar.autoMode) {
@@ -884,6 +939,18 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       }
 
       persistCharacter(updatedChar);
+
+      // Non-blocking medal/achievement check after lootbox
+      const isFirstLootbox = (char.lastLootRoll ?? 0) === 0 && newStreak > 0;
+      const isEpicOrLegendary = item.rarity === 'epic' || item.rarity === 'legendary';
+      const lootboxCtx: SpecialMedalContext = {
+        luckyDayRoll: isFirstLootbox && isEpicOrLegendary,
+      };
+      checkAndApplyMedals(updatedChar, lootboxCtx).then(charWithMedals => {
+        persistCharacter(charWithMedals);
+        syncCharacterToBackend(charWithMedals).catch(() => {});
+      }).catch(() => {});
+
       return item;
     } catch (error: any) {
       if (error instanceof Error && error.message !== 'Connection error - lootbox not saved.') {
@@ -1006,6 +1073,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         })
         .eq('id', activeCharacter.id!);
       persistCharacter(normalized);
+
+      // Non-blocking medal/achievement check after salvage
+      checkAndApplyMedals(normalized, {}).then(charWithMedals => {
+        persistCharacter(charWithMedals);
+        syncCharacterToBackend(charWithMedals).catch(() => {});
+      }).catch(() => {});
+
       return normalized;
     } catch (error: any) {
       handleDbError(error, 'salvage');
@@ -1036,6 +1110,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         })
         .eq('id', activeCharacter.id!);
       persistCharacter(normalized);
+
+      // Non-blocking medal/achievement check after fusion
+      checkAndApplyMedals(normalized, {}).then(charWithMedals => {
+        persistCharacter(charWithMedals);
+        syncCharacterToBackend(charWithMedals).catch(() => {});
+      }).catch(() => {});
+
       return { result, updatedChar: normalized };
     } catch (error: any) {
       handleDbError(error, 'fusion');
@@ -1062,6 +1143,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         })
         .eq('id', activeCharacter.id!);
       persistCharacter(normalized);
+
+      // Non-blocking medal/achievement check after upgrade
+      checkAndApplyMedals(normalized, {}).then(charWithMedals => {
+        persistCharacter(charWithMedals);
+        syncCharacterToBackend(charWithMedals).catch(() => {});
+      }).catch(() => {});
+
       return normalized;
     } catch (error: any) {
       handleDbError(error, 'upgrade');
@@ -1115,6 +1203,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     salvageItems,
     fuseItems,
     upgradeItem,
+    lastUnlockedMedal,
+    clearMedalNotification,
   };
 
   return (

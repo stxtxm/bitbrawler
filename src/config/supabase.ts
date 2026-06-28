@@ -55,6 +55,11 @@ export type CharacterRow = {
   idle_total_xp: number;
   essence: number;
   item_upgrades: Record<string, number> | null;
+  medal_progress?: Record<string, { completed: boolean; progress: number; unlockedAt?: number }> | null;
+  medal_inventory_bonus?: number;
+  medal_xp_bonus?: number;
+  medal_title?: string | null;
+  medal_aura?: boolean;
 }
 
 export type ServerTimeRow = {

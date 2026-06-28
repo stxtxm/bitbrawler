@@ -94,7 +94,9 @@ export function gainXp(character: Character, xpGained: number): {
     let { level, experience } = character;
     const startingLevel = level;
 
-    experience += xpGained;
+    // Add medal/achievement XP bonus (from permanent medal rewards like "Veteran")
+    const medalBonus = character.medalXpBonus ?? 0;
+    experience += xpGained + medalBonus;
 
     // Check for level ups
     while (level < MAX_LEVEL) {
