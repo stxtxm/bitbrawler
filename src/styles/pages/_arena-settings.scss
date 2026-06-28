@@ -190,7 +190,12 @@
     text-align: left;
     flex: 1;
     min-height: 0;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.settings-body--padded {
+    padding-right: 4px;
 }
 
 .settings-section {
@@ -376,57 +381,63 @@
 }
 
 // ============================================
-// Medals Grid (inside settings modal)
+// Medals (inside settings modal)
 // ============================================
 
 .settings-medals-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.settings-medals-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.settings-medals-category-btn {
     flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: $accent-gold #111;
-    padding-right: 4px;
+    min-width: 0;
+    padding: 6px 10px;
+    font-family: $font-pixel;
+    font-size: 0.45rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: #888;
+    background: #050505;
+    border: 2px solid #333;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
 
-    &::-webkit-scrollbar {
-        width: 6px;
+    &.active {
+        color: $accent-gold;
+        border-color: $accent-gold;
+        background: rgba($accent-gold, 0.08);
     }
 
-    &::-webkit-scrollbar-track {
-        background: #111;
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background: $accent-gold;
+    &:hover:not(.active) {
+        color: #ccc;
+        border-color: #666;
     }
 }
 
 .settings-medals-section {
-    margin-bottom: 20px;
-}
-
-.settings-medals-section-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 0;
-    margin-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.settings-medals-section-title {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: $accent-gold;
+    margin-bottom: 0;
 }
 
 .settings-medals-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 10px;
 
+    @include tablet {
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    }
+
     @include mobile {
-        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        grid-template-columns: 1fr;
         gap: 8px;
     }
 }

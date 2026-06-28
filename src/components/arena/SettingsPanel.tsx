@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { PixelIcon } from '../PixelIcon';
 import { MedalCard } from '../MedalCard';
 import { SettingsLogEntry, formatSettingsLogDate } from '../../utils/arenaUtils';
@@ -44,6 +44,15 @@ export const SettingsPanel = memo(function SettingsPanel({
   const unlockedCount = useMemo(() => getUnlockedCount(medalProgress ?? {}), [medalProgress]);
   const totalCount = useMemo(() => getTotalMedalCount(), []);
 
+  const visibleCategories = useMemo(
+    () => CATEGORY_ORDERS.filter(c => (groupedMedals[c]?.length ?? 0) > 0),
+    [groupedMedals],
+  );
+
+  const [selectedCategory, setSelectedCategory] = useState<MedalCategory | null>(
+    visibleCategories[0] ?? null,
+  );
+
   return (
     <div className="retro-modal-overlay settings-overlay" onClick={onClose}>
       <div className="retro-modal settings-modal" onClick={(e) => e.stopPropagation()}>
@@ -62,7 +71,7 @@ export const SettingsPanel = memo(function SettingsPanel({
           </button>
         </div>
 
-        <div className="settings-body">
+        <div className={`settings-body ${settingsView === 'medals' ? 'settings-body--padded' : ''}`}>
           {settingsView === 'logs' ? (
             <>
               <div className="history-list settings-history-list">
@@ -92,23 +101,29 @@ export const SettingsPanel = memo(function SettingsPanel({
             </>
           ) : settingsView === 'medals' ? (
             <div className="settings-medals-list">
-              {CATEGORY_ORDERS.map((category) => {
-                const medals = groupedMedals[category] || [];
-                if (medals.length === 0) return null;
-                return (
-                  <div key={category} className="settings-medals-section">
-                    <div className="settings-medals-section-header">
-                      <span className="settings-medals-section-title">{CATEGORY_LABELS[category]}</span>
-                    </div>
-                    <div className="settings-medals-grid">
-                      {medals.map((medalDef) => {
-                        const progress = medalProgress?.[medalDef.id] ?? { completed: false, progress: 0 };
-                        return <MedalCard key={medalDef.id} medalDef={medalDef} progress={progress} />;
-                      })}
-                    </div>
+              <div className="settings-medals-categories">
+                {visibleCategories.map((cat) => (
+                  <button
+                    key={cat}
+                    className={`settings-medals-category-btn ${selectedCategory === cat ? 'active' : ''}`}
+                    onClick={() => setSelectedCategory(cat)}
+                  >
+                    {CATEGORY_LABELS[cat]}
+                  </button>
+                ))}
+              </div>
+
+              {selectedCategory && (
+                <div className="settings-medals-section">
+                  <div className="settings-medals-grid">
+                    {(groupedMedals[selectedCategory] ?? []).map((medalDef) => {
+                      const progress = medalProgress?.[medalDef.id] ?? { completed: false, progress: 0 };
+                      return <MedalCard key={medalDef.id} medalDef={medalDef} progress={progress} />;
+                    })}
                   </div>
-                );
-              })}
+                </div>
+              )}
+
               <div className="inventory-footer">MEDALS: {unlockedCount} / {totalCount}</div>
             </div>
           ) : (
