@@ -1,11 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
   canRollLootbox,
-  computeNextStreak,
   getEligibleLootboxItems,
   getLootboxRarityWeights,
   getStreakBonus,
-  RARITY_RANK,
   rollLootbox,
 } from '../../utils/lootboxUtils';
 import { ITEM_ASSETS } from '../../data/itemAssets';
