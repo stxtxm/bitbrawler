@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { version } from '../../package.json'
 
 const GITHUB_URL = 'https://github.com/stxtxm/bitbrawler'
@@ -12,6 +13,10 @@ const Footer = () => {
         <span className="footer-item">
           &copy; {CURRENT_YEAR} Bitbrawler
         </span>
+        <span className="footer-separator" aria-hidden="true">|</span>
+        <Link to="/achievements" className="footer-link">
+          Achievements
+        </Link>
         <span className="footer-separator" aria-hidden="true">|</span>
         <a
           href={GITHUB_URL}
