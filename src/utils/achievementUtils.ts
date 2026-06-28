@@ -588,7 +588,13 @@ export const applyAchievementReward = (character: Character, reward: Achievement
     case 'stat_point': {
       const value = reward.value ?? 1;
       if (reward.stat) {
-        updated[reward.stat] = ((updated as any)[reward.stat] ?? 10) + value;
+        const base = 10;
+        if (reward.stat === 'strength') updated.strength = (updated.strength ?? base) + value;
+        if (reward.stat === 'vitality') updated.vitality = (updated.vitality ?? base) + value;
+        if (reward.stat === 'dexterity') updated.dexterity = (updated.dexterity ?? base) + value;
+        if (reward.stat === 'luck') updated.luck = (updated.luck ?? base) + value;
+        if (reward.stat === 'intelligence') updated.intelligence = (updated.intelligence ?? base) + value;
+        if (reward.stat === 'focus') updated.focus = (updated.focus ?? base) + value;
       }
       break;
     }
