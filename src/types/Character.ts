@@ -160,4 +160,11 @@ export interface Character {
   medalXpBonus?: number; // Bonus XP on win from medal rewards
   medalTitle?: string; // Cosmetic title from medal
   medalAura?: boolean; // Cosmetic aura from medal
+
+  // Achievement system
+  achievementProgress?: Record<string, { completed: boolean; progress: number; target: number; unlockedAt?: number }>;
+  achievementTitle?: string | null; // Cosmetic title prefix shown in Hall of Fame
+  achievementXpBonus?: number; // Permanent XP bonus per win from achievements
+  achievementEssenceBonus?: number; // One-time essence bonus tracking (not the essence itself)
+  achievementCosmetics?: string[]; // Unlocked cosmetic flags
 }
