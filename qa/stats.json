@@ -15607,5 +15607,144 @@
       "home": 2148,
       "arena": 3275
     }
+  },
+  {
+    "date": "2026-06-28T22:01:36.253Z",
+    "run": "2026-06-29",
+    "character": "NIMBLEGRID",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 71,
+        "fight_duration_ms": 33805,
+        "max_hp": 224,
+        "fight_type": "pvp",
+        "monster_name": null
+      }
+    ],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": {
+      "str": 22,
+      "vit": 14,
+      "dex": 8,
+      "luk": 8,
+      "int": 7,
+      "foc": 7,
+      "fights": 0
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 120
+    },
+    "initial_max_hp": 212,
+    "initial_equipment": [
+      {
+        "slot": "🛡",
+        "name": "️"
+      }
+    ],
+    "initial_streak": 0,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "final_equipment": null,
+    "final_streak": null,
+    "lootbox_equipment": null,
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": []
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 57095,
+      "cycles_observed": 2,
+      "monsters_faced": [
+        "goblin",
+        "slime",
+        "ogre"
+      ],
+      "victories": 2,
+      "defeats": 1,
+      "xp_total": 109,
+      "xp_events": [
+        {
+          "time_ms": 14924,
+          "xp": 25,
+          "monster": "goblin",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15440,
+          "xp": 60,
+          "monster": "slime",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 57095,
+          "xp": 24,
+          "monster": "ogre",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": true,
+      "level_up_events": [
+        {
+          "time_ms": 57095,
+          "monster": "ogre"
+        }
+      ],
+      "phase_transition_times_ms": [
+        513,
+        1537,
+        14924,
+        24018,
+        25553,
+        57095
+      ]
+    },
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.03,
+      "next_level_eta": "⬆ 1m 5s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 0.95x",
+      "interval": "12.0s",
+      "streak_bonus": null
+    },
+    "essence": {
+      "badge_visible": true,
+      "value": 0.6,
+      "displayed_as_fractional": true
+    },
+    "level_up_fx": {
+      "detected": true,
+      "glow_class_applied": true,
+      "float_text_shown": true,
+      "level": 2
+    },
+    "offline_gains": null,
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": null,
+    "errors": [
+      "levels_gained is not defined"
+    ],
+    "load_times_ms": {
+      "home": 1834,
+      "arena": 3216
+    }
   }
 ]
