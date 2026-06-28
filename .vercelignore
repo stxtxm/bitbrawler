@@ -4,3 +4,4 @@ dist
 coverage
 qa
 .vercel
+actions-runner
