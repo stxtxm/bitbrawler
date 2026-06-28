@@ -9,8 +9,19 @@ export function getMonsterDef(id: MonsterId): MonsterDef | undefined {
   return MONSTER_ASSETS.find(m => m.id === id);
 }
 
-export function getRandomMonsterId(exclude?: MonsterId): MonsterId {
-  const pool = exclude ? MONSTER_IDS.filter(id => id !== exclude) : MONSTER_IDS;
+export function getRandomMonsterId(playerLevel: number, exclude?: MonsterId): MonsterId {
+  const pool = MONSTER_IDS.filter(id => {
+    if (id === exclude) return false;
+    const def = getMonsterDef(id);
+    if (!def) return false;
+    if (def.minLevel !== undefined && playerLevel < def.minLevel) return false;
+    if (def.maxLevel !== undefined && playerLevel > def.maxLevel) return false;
+    return true;
+  });
+  if (pool.length === 0) {
+    const fallback = exclude ? MONSTER_IDS.filter(id => id !== exclude) : MONSTER_IDS;
+    return fallback[Math.floor(Math.random() * fallback.length)];
+  }
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
@@ -47,7 +58,7 @@ export function generateMonster(monsterId: MonsterId, playerLevel: number): Char
 }
 
 export function generateMonsterForPlayer(playerLevel: number): { character: Character; def: MonsterDef } {
-  const id = getRandomMonsterId();
+  const id = getRandomMonsterId(playerLevel);
   const def = getMonsterDef(id)!;
   return { character: generateMonster(id, playerLevel), def };
 }

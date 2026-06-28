@@ -90,7 +90,7 @@ describe('Forge Page', () => {
     // Header
     expect(screen.getByText('⚒ FORGE')).toBeInTheDocument();
     // Essence appears both in the page header and in the salvage panel
-    const essenceElements = screen.getAllByText('245');
+    const essenceElements = screen.getAllByText('245.00');
     expect(essenceElements.length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole('button', { name: /back to arena/i })).toBeInTheDocument();
 
@@ -137,7 +137,7 @@ describe('Forge Page', () => {
     renderForge();
 
     // Essence appears both in page header and salvage panel
-    const essenceElements = screen.getAllByText('500');
+    const essenceElements = screen.getAllByText('500.00');
     expect(essenceElements.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -145,7 +145,7 @@ describe('Forge Page', () => {
     setupGame({ essence: 0, activeCharacter: makeCharacter({ essence: 0 }) });
     renderForge();
 
-    const essenceElements = screen.getAllByText('0');
+    const essenceElements = screen.getAllByText('0.00');
     expect(essenceElements.length).toBeGreaterThanOrEqual(1);
   });
 

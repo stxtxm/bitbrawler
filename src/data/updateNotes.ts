@@ -22,7 +22,10 @@ export const UPDATE_NOTES: UpdateNote[] = [
       'PvE monster difficulty rebalanced: STAT_MULTIPLIER 2.5→3.5, HP_MULTIPLIER 3.0→4.0 for tougher idle encounters.',
       'Idle PvE XP buffed: XP_MODIFIER 0.35→0.50 to compensate for harder monsters and sustain progression.',
       'QA data collection gaps fixed: PvE monsters captured from .result-sub element, equipment from loadout slots, streak from indicator.',
-      '771 tests passing across 69 test files.',
+      '5 new monsters: Slime (water, lvl 1-8), Wolf (fire, lvl 5-18), Skeleton (dark, lvl 10-28), Chimera (fire, lvl 20-40), Dragon Spawn (fire, lvl 30-50).',
+      'Level-based monster selection: min/max player level per monster — early players face Slimes, mid Wolves/Skeletons, endgame Chimeras/Dragon Spawns.',
+      'Goblin/Ogre/Wraith remain at all levels. Dragon Spawn is the toughest: base 100 HP, 2.5 VIT growth, lvl 30+.',
+      '802 tests passing across 71 test files.',
     ],
   },
   {
