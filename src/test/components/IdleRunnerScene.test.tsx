@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getMonsterVisualScale, MONSTER_VISUAL_SCALE } from '../../data/monsterVisualScale'
+import { getMonsterVisualScale, MONSTER_VISUAL_SCALE } from '../../utils/monsterVisualScale'
 
 describe('getMonsterVisualScale', () => {
   it('returns 0.7x for slime at any screen width', () => {

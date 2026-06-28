@@ -41,6 +41,11 @@ export function convertFromSupabase(row: CharacterRow): Character {
     idleTotalXp: row.idle_total_xp ?? 0,
     essence: row.essence ?? 0,
     itemUpgrades: row.item_upgrades ?? undefined,
+    medalProgress: row.medal_progress ?? undefined,
+    medalInventoryBonus: row.medal_inventory_bonus ?? 0,
+    medalXpBonus: row.medal_xp_bonus ?? 0,
+    medalTitle: row.medal_title ?? undefined,
+    medalAura: row.medal_aura ?? false,
   };
 }
 
@@ -83,5 +88,10 @@ export function convertToSupabase(character: Character): Partial<CharacterRow> {
     idle_total_xp: character.idleTotalXp ?? 0,
     ...(character.essence !== undefined ? { essence: character.essence } : {}),
     ...(character.itemUpgrades !== undefined ? { item_upgrades: character.itemUpgrades } : {}),
+    ...(character.medalProgress !== undefined ? { medal_progress: character.medalProgress } : {}),
+    ...(character.medalInventoryBonus !== undefined ? { medal_inventory_bonus: character.medalInventoryBonus } : {}),
+    ...(character.medalXpBonus !== undefined ? { medal_xp_bonus: character.medalXpBonus } : {}),
+    ...(character.medalTitle !== undefined ? { medal_title: character.medalTitle } : {}),
+    ...(character.medalAura !== undefined ? { medal_aura: character.medalAura } : {}),
   };
 }

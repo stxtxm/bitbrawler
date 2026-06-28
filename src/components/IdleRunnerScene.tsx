@@ -6,11 +6,7 @@ import { AnimatedPixelCharacter } from './AnimatedPixelCharacter'
 import { PixelMonster } from './PixelMonster'
 import { ParticleSystem } from '../utils/particleSystem'
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode'
-import { MONSTER_VISUAL_SCALE } from '../data/monsterVisualScale'
-
-function monsterScaleFor(monsterId: MonsterId, charScale: number): number {
-  return Math.round((charScale + 2) * MONSTER_VISUAL_SCALE[monsterId])
-}
+import { monsterScaleFor } from '../utils/monsterVisualScale'
 
 interface OfflineGainsData {
   fights: number
