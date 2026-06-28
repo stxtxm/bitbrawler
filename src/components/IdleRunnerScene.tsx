@@ -18,6 +18,10 @@ const MONSTER_VISUAL_SCALE: Record<MonsterId, number> = {
   dragon_spawn: 1.5,
 }
 
+function monsterScaleFor(monsterId: MonsterId, charScale: number): number {
+  return Math.round((charScale + 2) * MONSTER_VISUAL_SCALE[monsterId])
+}
+
 interface OfflineGainsData {
   fights: number
   xp: number
@@ -57,6 +61,12 @@ function randomDamage(playerLevel: number): { value: number; isCrit: boolean } {
   return { value: isCrit ? variance * 2 : variance, isCrit }
 }
 
+export function getMonsterVisualScale(monsterId: MonsterId, charScale: number): number {
+  return monsterScaleFor(monsterId, charScale)
+}
+
+export { MONSTER_VISUAL_SCALE }
+
 export const IdleRunnerScene = memo(function IdleRunnerScene({
   character,
   currentMonster,
@@ -74,6 +84,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   const [animFrame, setAnimFrame] = useState(0)
   const [showLevelUpFx, setShowLevelUpFx] = useState(false)
   const [levelUpLevel, setLevelUpLevel] = useState(0)
+  const [screenShake, setScreenShake] = useState(false)
   const lowPerf = useLowPerformanceMode()
   const prevPhaseRef = useRef<ScenePhase>('running')
   const characterLevelRef = useRef(character.level)
@@ -126,11 +137,25 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     }
 
     if (scenePhase === 'result' && lastCombatResult) {
-      ps.emit('xp_star', cx, cy - 20, lowPerf ? 1 : 3)
+      ps.emit('xp_star', cx, cy - 20, lowPerf ? 3 : 8)
+      if (!lowPerf) {
+        ps.emit('spark', cx, cy, 4)
+        ps.emit('hit_ring', cx - 20, cy, 6)
+      }
     }
 
     prevPhaseRef.current = scenePhase
   }, [scenePhase, lastCombatResult, lowPerf])
+
+  // Screen shake on monster defeat
+  useEffect(() => {
+    if (scenePhase === 'result' && lastCombatResult === 'win') {
+      setScreenShake(true)
+      const t = setTimeout(() => setScreenShake(false), 300)
+      return () => clearTimeout(t)
+    }
+    setScreenShake(false)
+  }, [scenePhase, lastCombatResult])
 
   // Level-up visual effect (glow + particles + floating text)
   useEffect(() => {
@@ -156,7 +181,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   const showStreakBanner = streakMilestone !== null && scenePhase === 'result' && lastCombatResult === 'win'
 
   return (
-    <div className="idle-runner-box" ref={containerRef}>
+    <div className={`idle-runner-box${screenShake ? ' shake-screen' : ''}`} ref={containerRef}>
       {/* clouds rendered inside ProceduralTerrain canvas */}
 
       <div className={`idle-character-slot ${scenePhase === 'combat' ? 'attacking' : ''} ${scenePhase === 'result' && lastCombatResult === 'win' ? 'victory' : ''} ${showLevelUpFx ? 'glow-levelup' : ''}`}>
@@ -177,7 +202,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
 
       {currentMonster && (
         <div className={`idle-monster-slot phase-${scenePhase}`} data-monster={currentMonster}>
-          <PixelMonster monsterId={currentMonster} scale={Math.round((charScale + 2) * MONSTER_VISUAL_SCALE[currentMonster])} />
+          <PixelMonster monsterId={currentMonster} scale={monsterScaleFor(currentMonster, charScale)} />
           {scenePhase === 'combat' && <div className="combat-flash" />}
         </div>
       )}
