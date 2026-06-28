@@ -7,6 +7,17 @@ import { PixelMonster } from './PixelMonster'
 import { ParticleSystem } from '../utils/particleSystem'
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode'
 
+const MONSTER_VISUAL_SCALE: Record<MonsterId, number> = {
+  slime: 0.7,
+  wolf: 0.85,
+  goblin: 0.9,
+  skeleton: 0.95,
+  wraith: 1.0,
+  ogre: 1.2,
+  chimera: 1.3,
+  dragon_spawn: 1.5,
+}
+
 interface OfflineGainsData {
   fights: number
   xp: number
@@ -70,11 +81,11 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
 
   const charScale = useMemo(() => {
     const w = typeof window !== 'undefined' ? window.innerWidth : 768
-    if (w < 480) return 6
+    if (w < 480) return 5
+    if (w < 640) return 6
     if (w < 768) return 7
     return 8
   }, [])
-  const monsterScale = useMemo(() => charScale + 2, [charScale])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -166,7 +177,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
 
       {currentMonster && (
         <div className={`idle-monster-slot phase-${scenePhase}`} data-monster={currentMonster}>
-          <PixelMonster monsterId={currentMonster} scale={monsterScale} />
+          <PixelMonster monsterId={currentMonster} scale={Math.round((charScale + 2) * MONSTER_VISUAL_SCALE[currentMonster])} />
           {scenePhase === 'combat' && <div className="combat-flash" />}
         </div>
       )}
