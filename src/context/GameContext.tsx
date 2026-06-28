@@ -815,8 +815,24 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const char = charRef.current ?? activeCharacter;
     if (!char?.id) return null;
 
+    // Re-fetch from server to get the actual last_loot_roll (cross-tab guard)
+    let serverLastRoll: number | null = null;
+    try {
+      const { data, error } = await supabase
+        .from('characters')
+        .select('last_loot_roll')
+        .eq('id', char.id)
+        .single();
+      if (!error && data && typeof data.last_loot_roll === 'number') {
+        serverLastRoll = data.last_loot_roll;
+      }
+    } catch {
+      // Server unavailable — fall through to use local value
+    }
+
+    const effectiveLastRoll = serverLastRoll ?? char.lastLootRoll ?? null;
     const now = Date.now();
-    if (!canRollLootbox(char.lastLootRoll, now)) {
+    if (!canRollLootbox(effectiveLastRoll, now)) {
       throw new Error('Daily lootbox already opened.');
     }
 
@@ -826,7 +842,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const currentStreak = char.lootboxStreak ?? 0;
-    const newStreak = computeNextStreak(char.lastLootRoll, currentStreak, now);
+    const newStreak = computeNextStreak(effectiveLastRoll, currentStreak, now);
 
     const item = rollLootbox(ITEM_ASSETS, {
       excludeIds: inventory,
@@ -845,7 +861,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     });
 
     try {
-      const { error } = await supabase
+      // Optimistic lock: only update if last_loot_roll hasn't changed server-side
+      const { data: updatedRows, error } = await supabase
         .from('characters')
         .update({
           inventory: updatedChar.inventory,
@@ -853,15 +870,26 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           lootbox_streak: updatedChar.lootboxStreak,
           focus: updatedChar.focus,
         })
-        .eq('id', char.id);
+        .eq('id', char.id)
+        .eq('last_loot_roll', effectiveLastRoll ?? 0)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        handleDbError(error, 'lootbox');
+        throw new Error('Connection error - lootbox not saved.');
+      }
+
+      if (!updatedRows || updatedRows.length === 0) {
+        throw new Error('Daily lootbox already opened in another tab.');
+      }
 
       persistCharacter(updatedChar);
       return item;
     } catch (error: any) {
-      handleDbError(error, 'lootbox');
-      throw new Error('Connection error - lootbox not saved.');
+      if (error instanceof Error && error.message !== 'Connection error - lootbox not saved.') {
+        handleDbError(error, 'lootbox');
+      }
+      throw error;
     }
   }, [activeCharacter, handleDbError, persistCharacter]);
 

@@ -248,20 +248,32 @@ describe('Forge Integration — End to End', () => {
     setupGame({ activeCharacter: char, essence: char.essence });
     renderForge();
 
-    // Page header shows essence
-    const essenceElements = screen.getAllByText('42');
+    // Page header shows essence with 2 decimal places
+    const essenceElements = screen.getAllByText('42.00');
     expect(essenceElements.length).toBeGreaterThanOrEqual(1);
 
     // Switch to fusion tab
     const fusionTab = screen.getByRole('tab', { name: /fusion/i });
     fireEvent.click(fusionTab);
-    // Essence still shown
-    expect(screen.getAllByText('42').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('42.00').length).toBeGreaterThanOrEqual(1);
 
     // Switch to upgrade tab
     const upgradeTab = screen.getByRole('tab', { name: /upgrade/i });
     fireEvent.click(upgradeTab);
-    expect(screen.getAllByText('42').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('42.00').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('shows fractional essence with 2 decimal places in page header', () => {
+    const char = makeCharacter({
+      inventory: [RUSTY_SWORD.id],
+      essence: 42.5,
+    });
+    setupGame({ activeCharacter: char, essence: char.essence });
+    renderForge();
+
+    // Essence appears in page header + salvage panel (both use .toFixed(2))
+    const elements = screen.getAllByText('42.50');
+    expect(elements.length).toBeGreaterThanOrEqual(2);
   });
 
   it('handles salvage error gracefully with toast', async () => {

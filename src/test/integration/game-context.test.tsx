@@ -406,6 +406,56 @@ describe('GameContext Integration', () => {
     expect(mockSupabaseFrom).toHaveBeenCalledWith('characters');
   });
 
+  it('should prevent double roll when server last_loot_roll changed (cross-tab race)', async () => {
+    const yesterday = Date.now() - 86400000 * 2;
+    const now = new Date('2025-01-01T00:00:00Z');
+    vi.setSystemTime(now);
+
+    const charWithOldRoll = {
+      ...mockCharacter,
+      lastLootRoll: yesterday,
+      inventory: [],
+    };
+
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(charWithOldRoll));
+    const builder = setupMockCharacter(charWithOldRoll);
+
+    const mockItem: PixelItemAsset = {
+      id: 'test-item',
+      name: 'Test Item',
+      rarity: 'common',
+      slot: 'weapon',
+      stats: { strength: 1 },
+      pixels: [[1]],
+      requiredLevel: 1,
+    };
+
+    // canRollLootbox returns false when called with today's timestamp
+    (canRollLootbox as any).mockImplementation((lastRoll: unknown) => {
+      if (typeof lastRoll === 'number' && lastRoll >= now.getTime()) return false;
+      return true;
+    });
+    (rollLootbox as any).mockReturnValue(mockItem);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    // After initial load, change server data to simulate another tab having rolled
+    builder._setResult({
+      ...characterToSupabaseRow(charWithOldRoll),
+      last_loot_roll: now.getTime(),
+    });
+
+    await act(async () => {
+      await expect(result.current.rollLootbox()).rejects.toThrow('Daily lootbox already opened.');
+    });
+  });
+
   it('should handle logout correctly', async () => {
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
     setupMockCharacter(mockCharacter);
