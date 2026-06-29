@@ -1225,6 +1225,36 @@ async function parseStreakFromBody(page) {
 }
 
 /**
+ * Handle the level-up pop-overlay that appears after a fight where the
+ * character gains a level.  If the overlay is visible, allocate one stat
+ * point (click the first "+" button) then wait for the overlay to dismiss.
+ * Returns true if the overlay was handled.
+ */
+async function handleLevelUpOverlay(page) {
+  const levelUpOverlay = page.locator('.level-up-pop-overlay')
+  const overlayVisible = await levelUpOverlay.isVisible({ timeout: 2000 }).catch(() => false)
+  if (!overlayVisible) return false
+
+  console.log('   ⬆️ Level-up overlay detected, allocating stat point...')
+
+  const statAddBtn = page.locator('.stat-add-btn').first()
+  if (await statAddBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await statAddBtn.click()
+    await page.waitForTimeout(300)
+  } else {
+    console.log('   ⚠️ Stat add button not found on level-up overlay')
+  }
+
+  // Wait for the overlay to be dismissed
+  await page.waitForSelector('.level-up-pop-overlay', { state: 'hidden', timeout: 5000 }).catch(() => {
+    console.log('   ⚠️ Level-up overlay did not disappear within 5s, continuing')
+  })
+
+  await page.waitForTimeout(300)
+  return true
+}
+
+/**
  * Simulate a short human-like delay between actions (300-800ms).
  */
 async function humanDelay(page) {
@@ -1373,6 +1403,9 @@ async function runFightSequence(page, runKey, runRecord) {
       await continueBtn.click()
       await page.waitForTimeout(1500)
     }
+
+    // Handle level-up overlay that may appear after a fight result
+    await handleLevelUpOverlay(page)
 
     thisFightData.max_hp = await parseMaxHp(page)
     console.log(`   max HP after fight: ${thisFightData.max_hp || '(unable to parse)'}`)
