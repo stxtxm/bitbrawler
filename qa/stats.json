@@ -15746,5 +15746,125 @@
       "home": 1834,
       "arena": 3216
     }
+  },
+  {
+    "date": "2026-06-29T22:01:35.416Z",
+    "run": "2026-06-30",
+    "character": "LONENANO",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 73,
+        "fight_duration_ms": 67277,
+        "max_hp": 284,
+        "fight_type": "pvp",
+        "monster_name": null
+      }
+    ],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": {
+      "str": 10,
+      "vit": 19,
+      "dex": 16,
+      "luk": 9,
+      "int": 5,
+      "foc": 7,
+      "fights": 0
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 120
+    },
+    "initial_max_hp": 252,
+    "initial_equipment": [
+      {
+        "slot": "🛡",
+        "name": "️"
+      }
+    ],
+    "initial_streak": 0,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "final_equipment": null,
+    "final_streak": null,
+    "lootbox_equipment": null,
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": []
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 33084,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "wraith"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 27,
+      "xp_events": [
+        {
+          "time_ms": 33084,
+          "xp": 27,
+          "monster": "wraith",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        513,
+        1540,
+        33084
+      ]
+    },
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.02,
+      "next_level_eta": "⬆ 9s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 0.92x",
+      "interval": "11.0s",
+      "streak_bonus": null
+    },
+    "essence": {
+      "badge_visible": true,
+      "value": 0.34,
+      "displayed_as_fractional": true
+    },
+    "level_up_fx": {
+      "detected": true,
+      "glow_class_applied": true,
+      "float_text_shown": true,
+      "level": 2
+    },
+    "offline_gains": null,
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": null,
+    "errors": [
+      "Fight 1: timeout waiting for result (45000ms, 3 retries)",
+      "Fight 2: timeout waiting for result (45000ms, 3 retries)",
+      "Fight 3: timeout waiting for result (45000ms, 3 retries)",
+      "levels_gained is not defined"
+    ],
+    "load_times_ms": {
+      "home": 2168,
+      "arena": 3198
+    }
   }
 ]
