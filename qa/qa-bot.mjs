@@ -1262,12 +1262,85 @@ async function humanDelay(page) {
   await page.waitForTimeout(ms)
 }
 
+/**
+ * Determine whether the next fight should be PvP or PvE, and update
+ * the `pvpSinceLastPve` counter accordingly.
+ *
+ * @param {number} pvpSinceLastPve - Number of consecutive PvP fights since last PvE.
+ * @param {number} pveRatio - Fraction of fights that should be PvE (e.g. 0.33).
+ * @param {boolean} pveOnly - If true, always return PvE.
+ * @returns {{ type: 'pvp'|'pve', pvpSinceLastPve: number }}
+ */
+function determineNextFightType(pvpSinceLastPve, pveRatio, pveOnly) {
+  if (pveOnly) {
+    return { type: 'pve', pvpSinceLastPve: 0 }
+  }
+  if (pveRatio <= 0) {
+    return { type: 'pvp', pvpSinceLastPve: pvpSinceLastPve + 1 }
+  }
+  const pvpPerPve = Math.max(1, Math.round(1 / pveRatio) - 1)
+  if (pvpSinceLastPve >= pvpPerPve) {
+    return { type: 'pve', pvpSinceLastPve: 0 }
+  }
+  return { type: 'pvp', pvpSinceLastPve: pvpSinceLastPve + 1 }
+}
+
+/**
+ * Parse monster name from the fight result screen (`.result-sub` element).
+ * Patterns: "Victory over Goblin", "Defeated by Ogre", "Stalemate vs Wraith".
+ * Returns the monster name or null.
+ */
+async function parseMonsterNameFromResult(page) {
+  try {
+    // Check .result-sub element first (most reliable)
+    const resultSub = page.locator('.result-sub').first()
+    if (await resultSub.isVisible({ timeout: 1000 }).catch(() => false)) {
+      const text = ((await resultSub.textContent().catch(() => '')) || '').trim()
+      const match = text.match(/^(?:Victory over|Defeated by|Stalemate vs)\s+(.+)$/i)
+      if (match) {
+        const name = match[1].trim()
+        if (name) return name
+      }
+    }
+
+    // Fallback: parse from body text
+    const bodyText = await page.locator('body').innerText().catch(() => '')
+    const bodyMatch = bodyText.match(/(?:Victory over|Defeated by|Stalemate vs)\s+(.+?)(?:\n|$)/i)
+    if (bodyMatch) {
+      const name = bodyMatch[1].trim()
+      if (name && name.length < 40) return name
+    }
+
+    return null
+  } catch {
+    return null
+  }
+}
+
 async function runFightSequence(page, runKey, runRecord) {
   let recreatedForExhaustion = false
   let currentLevel = runRecord.initial_level
+  let pvpSinceLastPve = 0
 
   for (let i = 0; i < config.fightsPerRun; i++) {
     await humanDelay(page)
+
+    // Determine if this fight should be PvE
+    const fightType = determineNextFightType(pvpSinceLastPve, config.pveRatio, config.pveOnly)
+    const isPve = fightType.type === 'pve'
+    pvpSinceLastPve = fightType.pvpSinceLastPve
+
+    // Toggle to PvE mode if needed
+    if (isPve) {
+      const toggled = await togglePveMode(page, true)
+      if (!toggled) {
+        console.log('   ⚠️ Could not toggle PvE mode, falling back to PvP')
+        pvpSinceLastPve = pvpSinceLastPve // keep counter as-is (pve attempt didn't consume)
+        // Re-evaluate as PvP
+      } else {
+        await page.waitForTimeout(600)
+      }
+    }
 
     const arenaStatus = await readArenaStatus(page)
     const fightsAvailable = arenaStatus.fightsAvailable
@@ -1276,26 +1349,30 @@ async function runFightSequence(page, runKey, runRecord) {
     if (fightsAvailable !== null && fightsAvailable <= 0) {
       console.log('   No battle energy available for current fighter')
       if (!recreatedForExhaustion) {
+        if (isPve) await togglePveMode(page, false)
         await maybeReplaceExhaustedCharacter(page, runKey, runRecord, 'exhausted-energy')
         recreatedForExhaustion = true
         i = -1
         continue
       }
+      if (isPve) await togglePveMode(page, false)
       break
     }
 
     if (isResting || !arenaStatus.hasFightCta) {
       console.log(`   Fight CTA not available (${arenaStatus.fightButtonLabel || 'no label'})`)
       if (!recreatedForExhaustion) {
+        if (isPve) await togglePveMode(page, false)
         await maybeReplaceExhaustedCharacter(page, runKey, runRecord, 'missing-fight-cta')
         recreatedForExhaustion = true
         i = -1
         continue
       }
+      if (isPve) await togglePveMode(page, false)
       break
     }
 
-    console.log(`⚔️ PvP Fight ${i + 1}/${config.fightsPerRun}...`)
+    console.log(`⚔️ ${isPve ? 'PvE' : 'PvP'} Fight ${i + 1}/${config.fightsPerRun}...`)
 
     const fightBtn = page.locator('button.primary-btn.giant-btn').first()
     const fightStart = Date.now()
@@ -1362,6 +1439,7 @@ async function runFightSequence(page, runKey, runRecord) {
           !timeoutArenaStatus.hasFightCta
         )
       ) {
+        if (isPve) await togglePveMode(page, false)
         await maybeReplaceExhaustedCharacter(page, runKey, runRecord, 'timeout-on-exhausted-fighter')
         recreatedForExhaustion = true
         i = -1
@@ -1371,6 +1449,7 @@ async function runFightSequence(page, runKey, runRecord) {
       await page.evaluate(() => { window.location.href = window.location.origin }).catch(() => {})
       await page.waitForURL('**', { timeout: 15000 }).catch(() => {})
       await page.waitForTimeout(3000)
+      if (isPve) await togglePveMode(page, false)
       continue
     }
 
@@ -1383,19 +1462,25 @@ async function runFightSequence(page, runKey, runRecord) {
     const xpMatch = pageText.match(/\+(\d+)\s*XP/)
     const xpGained = xpMatch ? parseInt(xpMatch[1]) : null
 
-    console.log(`   Result: ${isVictory ? '✅ VICTORY' : isDefeat ? '❌ DEFEAT' : '🤝 DRAW'} (${fightDuration}ms) [PVP]`)
+    // Capture monster name for PvE fights
+    let monsterName = null
+    if (isPve) {
+      monsterName = await parseMonsterNameFromResult(page)
+    }
+
+    console.log(`   Result: ${isVictory ? '✅ VICTORY' : isDefeat ? '❌ DEFEAT' : '🤝 DRAW'} (${fightDuration}ms) [${isPve ? 'PVE' : 'PVP'}]${monsterName ? ` vs ${monsterName}` : ''}`)
 
     const thisFightData = {
       result: isVictory ? 'victory' : isDefeat ? 'defeat' : 'draw',
       xp: xpGained,
       fight_duration_ms: fightDuration,
       max_hp: null,
-      fight_type: 'pvp',
-      monster_name: null,
+      fight_type: isPve ? 'pve' : 'pvp',
+      monster_name: monsterName,
     }
 
     await page.screenshot({
-      path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-${isVictory ? 'win' : isDefeat ? 'loss' : 'draw'}-pvp.png`),
+      path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-${isVictory ? 'win' : isDefeat ? 'loss' : 'draw'}-${isPve ? 'pve' : 'pvp'}.png`),
     })
 
     const continueBtn = page.locator('button:has-text("CONTINUE"), button:has-text("CLOSE"), button:has-text("OK")').first()
@@ -1419,7 +1504,7 @@ async function runFightSequence(page, runKey, runRecord) {
       const levelsGained = newLevel - currentLevel
       runRecord.level_up_events.push({
         fight_number: i + 1,
-        fight_type: 'pvp',
+        fight_type: isPve ? 'pve' : 'pvp',
         levels_gained,
         previous_level: currentLevel,
         new_level: newLevel,
@@ -1428,6 +1513,12 @@ async function runFightSequence(page, runKey, runRecord) {
       currentLevel = newLevel
     } else if (newLevel !== null) {
       currentLevel = newLevel
+    }
+
+    // Toggle back to PvP mode after a PvE fight
+    if (isPve) {
+      await togglePveMode(page, false)
+      await page.waitForTimeout(500)
     }
 
     await humanDelay(page)
@@ -1665,7 +1756,9 @@ async function run() {
   console.log('═══════════════════════════════════════════')
   console.log(`  Config:`)
   console.log(`    baseUrl:        ${config.baseUrl}`)
-  console.log(`    fightsPerRun:   ${config.fightsPerRun} (PvP only)`)
+  console.log(`    fightsPerRun:   ${config.fightsPerRun} (${config.pveOnly ? 'PvE only' : config.pveRatio > 0 ? 'mixed PvP/PvE' : 'PvP only'})`)
+  console.log(`    pveRatio:       ${config.pveRatio}`)
+  console.log(`    pveOnly:        ${config.pveOnly}`)
   console.log(`    fightTimeout:   ${config.fightTimeout}ms`)
   console.log(`    idleObserveMs:  30000 (PvE idle observation)`)
   console.log(`    statsFile:      ${STATS_FILE}`)
@@ -1821,14 +1914,14 @@ async function run() {
       console.log(`   ⚠️ Legacy overlay elements still present: ${JSON.stringify(runRecord.no_legacy_overlay)}`)
     }
 
-    // Ensure PvP mode for fight sequence
+    // Ensure PvP mode for start of fight sequence
     await togglePveMode(page, false)
     await page.waitForTimeout(500)
 
-    // ── PvP Fight Sequence ────────────────────────────────────────
+    // ── Fight Sequence (mixed PvP/PvE) ────────────────────────────
     console.log('')
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-    console.log('  ⚔️ PvP Fight Sequence')
+    console.log(`  ⚔️ Fight Sequence (${config.pveOnly ? 'PvE only' : config.pveRatio > 0 ? `PvP/PvE ratio: ${config.pveRatio}` : 'PvP only'})`)
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
     await runFightSequence(page, runKey, runRecord)
