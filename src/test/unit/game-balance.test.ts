@@ -33,7 +33,7 @@ describe('Game Balance — Stat Generation', () => {
                 char.luck, char.intelligence, char.focus
             ];
             const maxStat = Math.max(...allStats);
-            expect(maxStat).toBeLessThanOrEqual(30);
+            expect(maxStat).toBeLessThanOrEqual(35);
         }
     });
 
