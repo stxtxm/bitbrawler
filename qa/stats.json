@@ -15866,5 +15866,49 @@
       "home": 2168,
       "arena": 3198
     }
+  },
+  {
+    "date": "2026-06-30T04:01:33.564Z",
+    "run": "2026-06-30",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "initial_equipment": null,
+    "initial_streak": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "final_equipment": null,
+    "final_streak": null,
+    "lootbox_equipment": null,
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": []
+    },
+    "level_up_events": [],
+    "idle_runner": null,
+    "efficiency_panel": null,
+    "essence": null,
+    "level_up_fx": null,
+    "offline_gains": null,
+    "no_legacy_overlay": null,
+    "forge": null,
+    "errors": [
+      "page.goto: net::ERR_ABORTED at https://bitbrawler.vercel.app/login\nCall log:\n  - navigating to \"https://bitbrawler.vercel.app/login\", waiting until \"networkidle\"\n"
+    ],
+    "load_times_ms": {
+      "home": 1482
+    }
   }
 ]
