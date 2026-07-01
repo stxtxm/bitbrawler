@@ -31,7 +31,7 @@ export const salvageItems = (items: PixelItemAsset[]): number => {
 /**
  * Clamp essence to soft cap when gaining, but never reduce existing essence.
  */
-const clampEssence = (value: number, current: number): number => {
+export const clampEssence = (value: number, current: number): number => {
   if (value > current) {
     return Math.min(value, Math.max(current, ESSENCE_SOFT_CAP));
   }

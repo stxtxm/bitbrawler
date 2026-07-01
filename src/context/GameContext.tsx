@@ -9,7 +9,7 @@ import { findOpponent, MatchmakingResult } from '../utils/matchmakingUtils';
 import { ITEM_ASSETS } from '../data/itemAssets';
 import { canRollLootbox, computeNextStreak, rollLootbox } from '../utils/lootboxUtils';
 import { ItemSlot, PixelItemAsset } from '../types/Item';
-import { unequipItem } from '../utils/equipmentUtils';
+import { getItemById } from '../utils/equipmentUtils';
 import { simulateCombat } from '../utils/combatUtils';
 import { convertFromSupabase, convertToSupabase } from '../utils/supabaseUtils';
 import {
@@ -20,7 +20,8 @@ import {
 } from '../utils/persistenceUtils';
 import { ESSENCE_SOFT_CAP } from '../data/forgeConstants';
 import {
-  salvageItem as forgeSalvageItem,
+  getEssenceYield,
+  clampEssence,
   performFusion,
   performUpgrade,
 } from '../utils/forgeUtils';
@@ -1061,21 +1062,38 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     // Process idle gains before salvage
     await syncIdleBeforeAction();
 
-    // Unequip the item first if it's currently equipped — an equipped item
-    // cannot be salvaged directly, so composing unequip + salvage lets the
-    // player salvage straight from the inventory without a manual unequip step.
-    let baseChar = activeCharacter;
-    const equipped = baseChar.equippedItems;
-    if (equipped) {
-      const slot = (['weapon', 'armor', 'accessory'] as ItemSlot[])
-        .find((s) => equipped[s] === itemId);
-      if (slot) baseChar = unequipItem(baseChar, slot);
+    const item = getItemById(itemId, ITEM_ASSETS);
+    if (!item) return null;
+
+    const inventory = [...(activeCharacter.inventory ?? [])];
+    const equipped = {
+      ...(activeCharacter.equippedItems ?? { weapon: null, armor: null, accessory: null }),
+    };
+    const invIdx = inventory.indexOf(itemId);
+    const equippedSlot = (['weapon', 'armor', 'accessory'] as ItemSlot[])
+      .find((s) => equipped[s] === itemId);
+
+    // Prefer salvaging an unequipped copy from the bag: remove a single
+    // occurrence and leave the equipped item untouched. Only when the item is
+    // solely equipped (no spare in the bag) do we clear the slot and salvage it.
+    // This prevents destroying the equipped item when an identical spare exists.
+    if (invIdx !== -1) {
+      inventory.splice(invIdx, 1);
+    } else if (equippedSlot) {
+      equipped[equippedSlot] = null;
+    } else {
+      return null; // nothing to salvage
     }
 
-    const updatedChar = forgeSalvageItem(itemId, baseChar, ITEM_ASSETS);
-    if (updatedChar === baseChar) return null; // nothing changed
+    const currentEssence = activeCharacter.essence ?? 0;
+    const newEssence = clampEssence(currentEssence + getEssenceYield(item), currentEssence);
 
-    const normalized = normalizeCharacter(updatedChar);
+    const normalized = normalizeCharacter({
+      ...activeCharacter,
+      inventory,
+      equippedItems: equipped,
+      essence: newEssence,
+    });
     try {
       await supabase
         .from('characters')
