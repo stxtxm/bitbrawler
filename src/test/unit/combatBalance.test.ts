@@ -38,16 +38,16 @@ describe('Combat Balance Config', () => {
     expect(COMBAT_BALANCE.hitChance.base).toBe(68);
   });
 
-  it('should have comeback.damageMultiplier set to 1.01', () => {
-    expect(COMBAT_BALANCE.comeback.damageMultiplier).toBe(1.01);
+  it('should have comeback.damageMultiplier set to 0.98', () => {
+    expect(COMBAT_BALANCE.comeback.damageMultiplier).toBe(0.98);
   });
 
   it('should have hitChance.max set to 88', () => {
     expect(COMBAT_BALANCE.hitChance.max).toBe(88);
   });
 
-  it('should have diminishingExponent set to 0.80', () => {
-    expect(COMBAT_BALANCE.diminishingExponent).toBe(0.80);
+  it('should have diminishingExponent set to 0.85', () => {
+    expect(COMBAT_BALANCE.diminishingExponent).toBe(0.85);
   });
 
   // ── Behavioral Impact: Damage Output ───────────────────────────────────
@@ -89,17 +89,17 @@ describe('Combat Balance Config', () => {
     expect(damages.length).toBeGreaterThan(0);
 
     // Calculate expected damage with the updated balance parameters
-    // scaleStat(20): 10 + (20-10)^0.80 = 10 + 10^0.80 = 10 + 6.310 = 16.310
-    // scaleStat(15): 10 + (15-10)^0.80 = 10 + 5^0.80 = 10 + 3.624 = 13.624
+    // scaleStat(20): 10 + (20-10)^0.85 = 10 + 10^0.85 = 10 + 7.079 = 17.079
+    // scaleStat(15): 10 + (15-10)^0.85 = 10 + 5^0.85 = 10 + 3.928 = 13.928
     // level 5: levelMultiplier = 1 + min(0.22, 4*0.012) = 1 + 0.048 = 1.048
-    // offense = 16.310 * 1.85 * 1.048 = 31.631
-    // defense = 13.624 * 2.0 * 1.048 = 28.556
-    // baseDamage = 31.631 * 1.42 - 28.556 * 0.42 = 44.917 - 11.994 = 32.923
+    // offense = 17.079 * 1.85 * 1.048 = 33.113
+    // defense = 13.928 * 2.0 * 1.048 = 29.193
+    // baseDamage = 33.113 * 1.42 - 29.193 * 0.42 = 47.020 - 12.261 = 34.759
     // With variance at 0.5: varianceRange = 0.2 - min(0.08, 10*0.002) = 0.2 - 0.02 = 0.18
     // varianceFactor = (1 - 0.09) + 0.5*0.18 = 0.91 + 0.09 = 1.0
     // No comeback (HP > 35%), no focus surge, no affinity
-    // damage = max(6, round(32.923 * 1.0)) = 33
-    expect(damages[0]).toBe(33);
+    // damage = max(6, round(34.759 * 1.0)) = 35
+    expect(damages[0]).toBe(35);
   });
 
   // ── Behavioral Impact: Comeback ────────────────────────────────────────
@@ -154,16 +154,16 @@ describe('Combat Balance Config', () => {
     expect(match).not.toBeNull();
     const damage = parseInt(match![1], 10);
 
-    // With comeback active (hp < 35%) and diminished returns exponent 0.80:
+    // With comeback active (hp < 35%) and diminished returns exponent 0.85:
     // level 5: levelMultiplier = 1.048
-    // scaleStat(15) = 10 + 5^0.80 = 13.624
-    // offense = 13.624 * 1.85 * 1.048 ≈ 26.424
-    // scaleStat(20) = 10 + 10^0.80 = 16.310
-    // defense = 16.310 * 2.0 * 1.048 = 34.186
-    // baseDamage = 26.424 * 1.42 - 34.186 * 0.42 = 37.522 - 14.358 = 23.164
-    // comebackMultiplier = 1.01
+    // scaleStat(15) = 10 + 5^0.85 = 13.928
+    // offense = 13.928 * 1.85 * 1.048 ≈ 27.004
+    // scaleStat(20) = 10 + 10^0.85 = 17.079
+    // defense = 17.079 * 2.0 * 1.048 = 35.798
+    // baseDamage = 27.004 * 1.42 - 35.798 * 0.42 = 38.346 - 15.035 = 23.311
+    // comebackMultiplier = 0.98
     // varianceFactor at 0.5 = 1.0 (same as above)
-    // damage = max(6, round(23.164 * 1.0 * 1.01)) = max(6, round(23.40)) = 23
+    // damage = max(6, round(23.311 * 1.0 * 0.98)) = max(6, round(22.84)) = 23
     expect(damage).toBe(23);
   });
 
@@ -271,8 +271,8 @@ describe('Combat Balance Config', () => {
     expect(COMBAT_BALANCE.comeback.damageMultiplier).toBeLessThan(1.03);
   });
 
-  it('should have lower diminishingExponent than previous value (0.85)', () => {
-    expect(COMBAT_BALANCE.diminishingExponent).toBeLessThan(0.85);
+  it('should have diminishingExponent reverted back to pre-June value (0.85)', () => {
+    expect(COMBAT_BALANCE.diminishingExponent).toBe(0.85);
   });
 
   it('should have lower hitChance.max than previous value (92)', () => {

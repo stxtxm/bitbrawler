@@ -1,6 +1,6 @@
 export const COMBAT_BALANCE = {
   statBaseline: 10,
-  diminishingExponent: 0.80,
+  diminishingExponent: 0.85,
   statWeights: {
     offense: 1.85,
     defense: 2.0,
@@ -24,7 +24,7 @@ export const COMBAT_BALANCE = {
   comeback: {
     hpThresholdRatio: 0.35,
     hitBonus: 2,
-    damageMultiplier: 1.01,
+    damageMultiplier: 0.98,
   },
   initiative: {
     baseChance: 0.5,
