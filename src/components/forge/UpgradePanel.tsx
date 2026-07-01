@@ -1,10 +1,16 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
-import { getInventoryItems } from '../../utils/equipmentUtils';
+import { getInventoryItems, getEquippedItems } from '../../utils/equipmentUtils';
 import { canUpgrade, getUpgradeCost } from '../../utils/forgeUtils';
 import { UPGRADE_BASE_COST, MAX_UPGRADE_LEVEL, ESSENCE_SOFT_CAP } from '../../data/forgeConstants';
+import { PixelItemAsset } from '../../types/Item';
 import '../../styles/components/_forge.scss';
+
+interface UpgradeableItem {
+  item: PixelItemAsset;
+  equipped: boolean;
+}
 
 interface UpgradePanelProps {
   onClose: () => void;
@@ -19,15 +25,27 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
   const [showGlow, setShowGlow] = useState(false);
   const [showShake, setShowShake] = useState(false);
 
-  const inventoryItems = useMemo(() => {
+  // Upgradeable items = bag items + equipped items, deduped by id.
+  // Upgrade levels are keyed by item id, so a single entry per id is shown;
+  // equipped copies are tagged so the player can upgrade gear on their fighter.
+  const upgradeableItems = useMemo<UpgradeableItem[]>(() => {
     if (!activeCharacter) return [];
-    return getInventoryItems(activeCharacter);
+    const byId = new Map<string, UpgradeableItem>();
+    for (const item of getEquippedItems(activeCharacter)) {
+      byId.set(item.id, { item, equipped: true });
+    }
+    for (const item of getInventoryItems(activeCharacter)) {
+      if (!byId.has(item.id)) {
+        byId.set(item.id, { item, equipped: false });
+      }
+    }
+    return Array.from(byId.values());
   }, [activeCharacter]);
 
   const selectedItem = useMemo(() => {
     if (!selectedId) return null;
-    return inventoryItems.find((item) => item.id === selectedId) ?? null;
-  }, [selectedId, inventoryItems]);
+    return upgradeableItems.find((entry) => entry.item.id === selectedId)?.item ?? null;
+  }, [selectedId, upgradeableItems]);
 
   const selectedUpgradeLevel = useMemo(() => {
     if (!selectedId || !activeCharacter) return 0;
@@ -101,8 +119,8 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
     return null;
   }
 
-  // Empty inventory
-  if (inventoryItems.length === 0) {
+  // No upgradeable items (nothing in the bag and nothing equipped)
+  if (upgradeableItems.length === 0) {
     return (
       <div className="forge-panel">
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
@@ -154,7 +172,7 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
 
       {/* Inventory grid */}
       <div className="forge-rarity-grid">
-        {inventoryItems.map((item) => {
+        {upgradeableItems.map(({ item, equipped }) => {
           const isSelected = selectedId === item.id;
           const level = activeCharacter.itemUpgrades?.[item.id] ?? 0;
           const isMaxed = level >= MAX_UPGRADE_LEVEL;
@@ -165,8 +183,9 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
               className={`forge-item-card forge-rarity-${item.rarity} ${isSelected ? 'selected' : ''} ${isMaxed ? 'maxed' : ''} ${upgrading ? 'disabled' : ''}`}
               onClick={() => handleSelect(item.id)}
               disabled={upgrading}
-              aria-label={`Select ${item.name} for upgrade`}
+              aria-label={`Select ${item.name}${equipped ? ' (equipped)' : ''} for upgrade`}
             >
+              {equipped && <span className="forge-item-equipped-badge">EQUIPPED</span>}
               <span className="forge-item-name">{item.name}</span>
               <span className="forge-item-sub">{item.slot.toUpperCase()}</span>
               <span className="forge-item-yield">
