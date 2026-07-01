@@ -26,7 +26,7 @@ describe('Game rules', () => {
   });
 
   it('PVE stat multiplier makes monsters challenging (target win rate ~65-75%)', () => {
-    expect(GAME_RULES.PVE.STAT_MULTIPLIER).toBe(4.5);
+    expect(GAME_RULES.PVE.STAT_MULTIPLIER).toBe(5.5);
   });
 
   it('PVE HP multiplier extends fights', () => {
@@ -34,7 +34,7 @@ describe('Game rules', () => {
   });
 
   it('PVE HP multiplier extends battles for more challenge (target ~70% win rate)', () => {
-    expect(GAME_RULES.PVE.HP_MULTIPLIER).toBe(5.0);
+    expect(GAME_RULES.PVE.HP_MULTIPLIER).toBe(6.0);
   });
 
   it('PVE level boost provides challenge', () => {
