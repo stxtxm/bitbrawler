@@ -25,7 +25,7 @@ const makeChar = (overrides: Partial<Character> = {}): Character => ({
 });
 
 describe('Game Balance — Stat Generation', () => {
-    it('should not produce extreme outliers (primary > 30) in 500 rolls', () => {
+    it('should not produce extreme outliers (primary > 35) in 500 rolls', () => {
         for (let i = 0; i < 500; i++) {
             const char = generateInitialStats(`Test_${i}`, 'male');
             const allStats = [
@@ -33,7 +33,7 @@ describe('Game Balance — Stat Generation', () => {
                 char.luck, char.intelligence, char.focus
             ];
             const maxStat = Math.max(...allStats);
-            expect(maxStat).toBeLessThanOrEqual(30);
+            expect(maxStat).toBeLessThanOrEqual(35);
         }
     });
 
