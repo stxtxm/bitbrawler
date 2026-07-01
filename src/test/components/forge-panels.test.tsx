@@ -320,6 +320,67 @@ describe('UpgradePanel', () => {
     expect(screen.getByText(/Rusty Sword/)).toBeInTheDocument();
   });
 
+  it('displays equipped items with an EQUIPPED badge and allows selecting them', () => {
+    const char = makeCharacter({
+      inventory: [],
+      essence: 100,
+      equippedItems: { weapon: RUSTY_SWORD.id, armor: null, accessory: null },
+    });
+    setupGame({ activeCharacter: char, essence: char.essence });
+    render(<UpgradePanel onClose={vi.fn()} />);
+
+    // Not treated as empty even though the bag is empty.
+    expect(screen.queryByText(/no items|nothing to upgrade/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/Rusty Sword/)).toBeInTheDocument();
+    expect(screen.getByText(/EQUIPPED/)).toBeInTheDocument();
+
+    const selectBtn = screen.getByRole('button', { name: /select.*rusty sword.*equipped.*upgrade/i });
+    expect(selectBtn).toBeEnabled();
+  });
+
+  it('upgrades an equipped item when selected', async () => {
+    const upgradeItem = vi.fn().mockResolvedValue(
+      makeCharacter({
+        inventory: [],
+        essence: 75,
+        equippedItems: { weapon: RUSTY_SWORD.id, armor: null, accessory: null },
+        itemUpgrades: { rusty_sword: 1 },
+      }),
+    );
+    const char = makeCharacter({
+      inventory: [],
+      essence: 100,
+      equippedItems: { weapon: RUSTY_SWORD.id, armor: null, accessory: null },
+    });
+    setupGame({ activeCharacter: char, essence: char.essence, upgradeItem });
+    render(<UpgradePanel onClose={vi.fn()} />);
+
+    const selectBtn = screen.getByRole('button', { name: /select.*rusty sword.*equipped.*upgrade/i });
+    fireEvent.click(selectBtn);
+
+    const upgradeActionBtn = screen.getByRole('button', { name: /upgrade item/i });
+    fireEvent.click(upgradeActionBtn);
+
+    await waitFor(() => {
+      expect(upgradeItem).toHaveBeenCalledWith(RUSTY_SWORD.id);
+    });
+  });
+
+  it('shows a single card for an item that is both equipped and in the bag', () => {
+    const char = makeCharacter({
+      inventory: [RUSTY_SWORD.id],
+      essence: 100,
+      equippedItems: { weapon: RUSTY_SWORD.id, armor: null, accessory: null },
+    });
+    setupGame({ activeCharacter: char, essence: char.essence });
+    render(<UpgradePanel onClose={vi.fn()} />);
+
+    // Deduped by id: exactly one selectable card, tagged as equipped.
+    const cards = screen.getAllByRole('button', { name: /select.*rusty sword.*upgrade/i });
+    expect(cards).toHaveLength(1);
+    expect(screen.getByText(/EQUIPPED/)).toBeInTheDocument();
+  });
+
   it('shows upgrade details when item is selected', () => {
     const char = makeCharacter({
       inventory: [RUSTY_SWORD.id],

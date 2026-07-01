@@ -551,6 +551,27 @@ describe('canUpgrade', () => {
     expect(canUpgrade('rusty_sword', char)).toBe(false);
   });
 
+  it('returns true when item is equipped (not in inventory) and enough essence', () => {
+    const char = makeCharacter({
+      inventory: [],
+      essence: UPGRADE_COST,
+      equippedItems: { weapon: 'rusty_sword', armor: null, accessory: null },
+    });
+
+    expect(canUpgrade('rusty_sword', char)).toBe(true);
+  });
+
+  it('returns false when equipped item is already at max upgrade level', () => {
+    const char = makeCharacter({
+      inventory: [],
+      essence: UPGRADE_COST,
+      equippedItems: { weapon: 'rusty_sword', armor: null, accessory: null },
+      itemUpgrades: { rusty_sword: MAX_UPGRADE_LEVEL },
+    });
+
+    expect(canUpgrade('rusty_sword', char)).toBe(false);
+  });
+
   it('returns false when not enough essence', () => {
     const char = makeCharacter({
       inventory: ['rusty_sword'],

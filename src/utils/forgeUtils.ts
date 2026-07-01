@@ -268,13 +268,15 @@ export const getUpgradeCost = (_item: PixelItemAsset, level: number = 0): number
 
 /**
  * Checks if an item can be upgraded:
- * - Item is in the character's inventory
+ * - Item is in the character's inventory OR currently equipped
  * - Character has enough essence (uses dynamic cost based on current upgrade level)
  * - Item is not already at max upgrade level
  */
 export const canUpgrade = (itemId: string, character: Character): boolean => {
   const inventory = character.inventory ?? [];
-  if (!inventory.includes(itemId)) {
+  const equipped = character.equippedItems ?? { weapon: null, armor: null, accessory: null };
+  const isEquipped = Object.values(equipped).includes(itemId);
+  if (!inventory.includes(itemId) && !isEquipped) {
     return false;
   }
 
