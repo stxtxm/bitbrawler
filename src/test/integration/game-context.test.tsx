@@ -27,6 +27,7 @@ vi.mock('../../utils/lootboxUtils', () => ({
 
 import { findOpponent } from '../../utils/matchmakingUtils';
 import { canRollLootbox, rollLootbox } from '../../utils/lootboxUtils';
+import { ESSENCE_YIELD } from '../../data/forgeConstants';
 
 function setupMockCharacter(char: any, options?: { error?: any }) {
   const row = characterToSupabaseRow(char);
@@ -525,6 +526,145 @@ describe('GameContext Integration', () => {
     expect(salvaged!.inventory).not.toContain('rusty_sword');
     expect(salvaged!.equippedItems?.weapon).toBe('rusty_sword');
     expect(salvaged!.essence ?? 0).toBeGreaterThan(0);
+  });
+
+  it('should remove exactly one bag copy when three identical items exist (1 equipped, 2 in bag)', async () => {
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    setupMockCharacter(mockCharacter);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    // Three identical items: one equipped, two spares in the bag.
+    const charWithTriples: Character = {
+      ...mockCharacter,
+      inventory: ['rusty_sword', 'rusty_sword'],
+      essence: 0,
+      equippedItems: { weapon: 'rusty_sword', armor: null, accessory: null },
+    };
+
+    await act(async () => {
+      result.current.setCharacter(charWithTriples);
+    });
+
+    let salvaged: Character | null = null;
+    await act(async () => {
+      salvaged = await result.current.salvageItems('rusty_sword');
+    });
+
+    expect(salvaged).not.toBeNull();
+    // Exactly one bag copy consumed: one spare remains, equipped preserved.
+    expect((salvaged!.inventory ?? []).filter((id) => id === 'rusty_sword')).toHaveLength(1);
+    expect(salvaged!.equippedItems?.weapon).toBe('rusty_sword');
+    expect(salvaged!.essence ?? 0).toBe(ESSENCE_YIELD.common);
+  });
+
+  it('should remove exactly one bag copy when two identical items exist and none equipped', async () => {
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    setupMockCharacter(mockCharacter);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    // Two identical items in the bag, none equipped.
+    const charWithTwoInBag: Character = {
+      ...mockCharacter,
+      inventory: ['rusty_sword', 'rusty_sword'],
+      essence: 0,
+      equippedItems: { weapon: null, armor: null, accessory: null },
+    };
+
+    await act(async () => {
+      result.current.setCharacter(charWithTwoInBag);
+    });
+
+    let salvaged: Character | null = null;
+    await act(async () => {
+      salvaged = await result.current.salvageItems('rusty_sword');
+    });
+
+    expect(salvaged).not.toBeNull();
+    // Only one occurrence removed; the other spare remains.
+    expect((salvaged!.inventory ?? []).filter((id) => id === 'rusty_sword')).toHaveLength(1);
+    expect(salvaged!.essence ?? 0).toBe(ESSENCE_YIELD.common);
+  });
+
+  it('should salvage an equipped accessory-slot item and yield essence by rarity', async () => {
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    setupMockCharacter(mockCharacter);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    // A rare accessory worn in the accessory slot, no bag copy.
+    const charWithAccessory: Character = {
+      ...mockCharacter,
+      inventory: [],
+      essence: 0,
+      equippedItems: { weapon: null, armor: null, accessory: 'storm_amulet' },
+    };
+
+    await act(async () => {
+      result.current.setCharacter(charWithAccessory);
+    });
+
+    let salvaged: Character | null = null;
+    await act(async () => {
+      salvaged = await result.current.salvageItems('storm_amulet');
+    });
+
+    expect(salvaged).not.toBeNull();
+    expect(salvaged!.equippedItems?.accessory).toBeNull();
+    expect(salvaged!.essence ?? 0).toBe(ESSENCE_YIELD.rare);
+  });
+
+  it('should be a no-op when salvaging an item that is neither in the bag nor equipped', async () => {
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    setupMockCharacter(mockCharacter);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    const charWithoutItem: Character = {
+      ...mockCharacter,
+      inventory: ['rusty_sword'],
+      essence: 42,
+      equippedItems: { weapon: null, armor: null, accessory: null },
+    };
+
+    await act(async () => {
+      result.current.setCharacter(charWithoutItem);
+    });
+
+    let salvaged: Character | null = null;
+    await act(async () => {
+      salvaged = await result.current.salvageItems('storm_amulet');
+    });
+
+    // Nothing to salvage: no essence gained, inventory untouched.
+    expect(salvaged).toBeNull();
+    expect(result.current.activeCharacter?.inventory).toEqual(['rusty_sword']);
+    expect(result.current.activeCharacter?.essence).toBe(42);
   });
 
   it('should handle logout correctly', async () => {
