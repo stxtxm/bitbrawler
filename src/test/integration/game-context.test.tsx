@@ -468,9 +468,10 @@ describe('GameContext Integration', () => {
       expect(result.current.loading).toBe(false);
     });
 
+    // Equipped-only: the item is worn and no longer in the bag.
     const charWithEquipped: Character = {
       ...mockCharacter,
-      inventory: ['rusty_sword'],
+      inventory: [],
       essence: 0,
       equippedItems: { weapon: 'rusty_sword', armor: null, accessory: null },
     };
@@ -487,6 +488,42 @@ describe('GameContext Integration', () => {
     expect(salvaged).not.toBeNull();
     expect(salvaged!.inventory).not.toContain('rusty_sword');
     expect(salvaged!.equippedItems?.weapon).toBeNull();
+    expect(salvaged!.essence ?? 0).toBeGreaterThan(0);
+  });
+
+  it('should salvage the bag copy and keep the equipped duplicate', async () => {
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    setupMockCharacter(mockCharacter);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    // Two identical items: one equipped, one spare in the bag.
+    const charWithDuplicate: Character = {
+      ...mockCharacter,
+      inventory: ['rusty_sword'],
+      essence: 0,
+      equippedItems: { weapon: 'rusty_sword', armor: null, accessory: null },
+    };
+
+    await act(async () => {
+      result.current.setCharacter(charWithDuplicate);
+    });
+
+    let salvaged: Character | null = null;
+    await act(async () => {
+      salvaged = await result.current.salvageItems('rusty_sword');
+    });
+
+    expect(salvaged).not.toBeNull();
+    // The bag copy is consumed, the equipped item is preserved.
+    expect(salvaged!.inventory).not.toContain('rusty_sword');
+    expect(salvaged!.equippedItems?.weapon).toBe('rusty_sword');
     expect(salvaged!.essence ?? 0).toBeGreaterThan(0);
   });
 
