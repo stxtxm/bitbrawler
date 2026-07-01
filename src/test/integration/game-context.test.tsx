@@ -456,6 +456,40 @@ describe('GameContext Integration', () => {
     });
   });
 
+  it('should salvage an equipped item by unequipping it first', async () => {
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    setupMockCharacter(mockCharacter);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    const charWithEquipped: Character = {
+      ...mockCharacter,
+      inventory: ['rusty_sword'],
+      essence: 0,
+      equippedItems: { weapon: 'rusty_sword', armor: null, accessory: null },
+    };
+
+    await act(async () => {
+      result.current.setCharacter(charWithEquipped);
+    });
+
+    let salvaged: Character | null = null;
+    await act(async () => {
+      salvaged = await result.current.salvageItems('rusty_sword');
+    });
+
+    expect(salvaged).not.toBeNull();
+    expect(salvaged!.inventory).not.toContain('rusty_sword');
+    expect(salvaged!.equippedItems?.weapon).toBeNull();
+    expect(salvaged!.essence ?? 0).toBeGreaterThan(0);
+  });
+
   it('should handle logout correctly', async () => {
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
     setupMockCharacter(mockCharacter);

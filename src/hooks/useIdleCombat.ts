@@ -313,9 +313,19 @@ export function useIdleCombat({
       // Apply XP with updated idle stats and watermarks
       const xpResult = gainXp(currentChar, finalXp)
       const now = Date.now()
-      const updatedEssence = (currentChar.essence ?? 0) + essenceGain
+      // Re-read the freshest character: a discrete user action (lootbox roll,
+      // salvage, equip) may have run during this multi-second tick. Preserving
+      // its fields prevents the idle write-back from reverting them — e.g.
+      // reverting lastLootRoll would let the daily lootbox be claimed twice.
+      const latest = charRef.current ?? currentChar
+      const updatedEssence = (latest.essence ?? currentChar.essence ?? 0) + essenceGain
       const updatedChar: Character = {
         ...xpResult.updatedCharacter,
+        inventory: latest.inventory,
+        lastLootRoll: latest.lastLootRoll,
+        lootboxStreak: latest.lootboxStreak,
+        equippedItems: latest.equippedItems,
+        itemUpgrades: latest.itemUpgrades,
         essence: updatedEssence,
         idleStreak: newStreak,
         idleMaxStreak: Math.max(newStreak, (currentChar.idleMaxStreak ?? 0)),

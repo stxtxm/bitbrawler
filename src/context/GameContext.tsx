@@ -8,7 +8,8 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { findOpponent, MatchmakingResult } from '../utils/matchmakingUtils';
 import { ITEM_ASSETS } from '../data/itemAssets';
 import { canRollLootbox, computeNextStreak, rollLootbox } from '../utils/lootboxUtils';
-import { PixelItemAsset } from '../types/Item';
+import { ItemSlot, PixelItemAsset } from '../types/Item';
+import { unequipItem } from '../utils/equipmentUtils';
 import { simulateCombat } from '../utils/combatUtils';
 import { convertFromSupabase, convertToSupabase } from '../utils/supabaseUtils';
 import {
@@ -1060,8 +1061,19 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     // Process idle gains before salvage
     await syncIdleBeforeAction();
 
-    const updatedChar = forgeSalvageItem(itemId, activeCharacter, ITEM_ASSETS);
-    if (updatedChar === activeCharacter) return null; // nothing changed
+    // Unequip the item first if it's currently equipped — an equipped item
+    // cannot be salvaged directly, so composing unequip + salvage lets the
+    // player salvage straight from the inventory without a manual unequip step.
+    let baseChar = activeCharacter;
+    const equipped = baseChar.equippedItems;
+    if (equipped) {
+      const slot = (['weapon', 'armor', 'accessory'] as ItemSlot[])
+        .find((s) => equipped[s] === itemId);
+      if (slot) baseChar = unequipItem(baseChar, slot);
+    }
+
+    const updatedChar = forgeSalvageItem(itemId, baseChar, ITEM_ASSETS);
+    if (updatedChar === baseChar) return null; // nothing changed
 
     const normalized = normalizeCharacter(updatedChar);
     try {
@@ -1070,6 +1082,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         .update({
           inventory: normalized.inventory,
           essence: normalized.essence,
+          equipped_items: normalized.equippedItems,
         })
         .eq('id', activeCharacter.id!);
       persistCharacter(normalized);
