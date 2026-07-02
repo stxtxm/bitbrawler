@@ -115,29 +115,20 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     }, [phase]);
 
     // Hard timeout watchdog — force-finish the fight if it exceeds the limit.
+    // Set once on mount, NOT reset on phase transitions or HP changes.
     const hardTimeoutRef = useRef<number | null>(null);
     useEffect(() => {
-        if (phase === 'result') {
-            if (hardTimeoutRef.current !== null) {
-                window.clearTimeout(hardTimeoutRef.current);
-                hardTimeoutRef.current = null;
-            }
-            return;
-        }
-
-        if (hardTimeoutRef.current === null) {
-            hardTimeoutRef.current = window.setTimeout(() => {
-                console.warn(`[CombatView] Hard timeout — forcing result phase after ${COMBAT_BALANCE.fightHardTimeoutMs}ms`);
-                hardTimeoutRef.current = null;
-                setCombatResult(prev => prev ?? {
-                    winner: 'draw',
-                    rounds: 0,
-                    details: ['Fight timed out'],
-                    timeline: [{ attackerHp: player.hp, defenderHp: opponent.hp }],
-                });
-                setPhase('result');
-            }, COMBAT_BALANCE.fightHardTimeoutMs);
-        }
+        hardTimeoutRef.current = window.setTimeout(() => {
+            console.warn(`[CombatView] Hard timeout — forcing result phase after ${COMBAT_BALANCE.fightHardTimeoutMs}ms`);
+            hardTimeoutRef.current = null;
+            setCombatResult(prev => prev ?? {
+                winner: 'draw',
+                rounds: 0,
+                details: ['Fight timed out'],
+                timeline: [{ attackerHp: player.hp, defenderHp: opponent.hp }],
+            });
+            setPhase('result');
+        }, COMBAT_BALANCE.fightHardTimeoutMs);
 
         return () => {
             if (hardTimeoutRef.current !== null) {
@@ -145,7 +136,15 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                 hardTimeoutRef.current = null;
             }
         };
-    }, [phase, player.hp, opponent.hp]);
+    }, []); // mount only — never resets
+
+    // Clear the timeout when the fight completes naturally (result phase reached)
+    useEffect(() => {
+        if (phase === 'result' && hardTimeoutRef.current !== null) {
+            window.clearTimeout(hardTimeoutRef.current);
+            hardTimeoutRef.current = null;
+        }
+    }, [phase]);
 
     useEffect(() => {
         if (phase !== 'intro') return;
