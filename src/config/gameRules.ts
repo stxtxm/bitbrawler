@@ -12,8 +12,8 @@ export const GAME_RULES = {
     },
     PVE: {
         XP_MODIFIER: 0.85, // PvE awards 85% of PvP XP
-        STAT_MULTIPLIER: 5.5, // Monster stat multiplier for challenging fights (target ~65-75% win rate)
-        HP_MULTIPLIER: 6.0, // Monster HP multiplier for longer, suspenseful battles
+        STAT_MULTIPLIER: 6.5, // Monster stat multiplier for challenging fights (target ~65-75% win rate)
+        HP_MULTIPLIER: 7.0, // Monster HP multiplier for longer, suspenseful battles
         LEVEL_BOOST: 2, // Monsters fight at playerLevel + this offset
     },
     BOTS: {
