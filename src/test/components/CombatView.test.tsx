@@ -272,18 +272,24 @@ describe('CombatView Interface', () => {
     it('should force-finish the fight when hard timeout is exceeded', () => {
         vi.useFakeTimers();
 
-        // Mock simulateCombat to return a normal result quickly
+        // Mock simulateCombat with enough rounds to prevent early auto-completion
+        const rounds = 200;
+        const details = Array.from({ length: rounds }, (_, i) => `Round ${i + 1}: Hero hits Villain for ${5 + i} DMG`);
+        const timeline = Array.from({ length: rounds }, (_, i) => ({
+            attackerHp: Math.max(100 - i * 2, 10),
+            defenderHp: Math.max(100 - i * 3, 5),
+        }));
+
         vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
             winner: 'attacker',
-            rounds: 5,
-            details: ['Round 1: Hero hits Villain', 'Round 2: Hero crits Villain', 'Round 3: Villain hits Hero', 'Round 4: Hero hits Villain', 'Round 5: Hero defeats Villain'],
-            timeline: [
-                { attackerHp: 100, defenderHp: 85 },
-                { attackerHp: 100, defenderHp: 65 },
-                { attackerHp: 85, defenderHp: 65 },
-                { attackerHp: 85, defenderHp: 40 },
-                { attackerHp: 85, defenderHp: 0 },
-            ]
+            rounds,
+            details,
+            timeline,
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit',
         });
 
         vi.spyOn(xpUtils, 'calculateFightXp').mockReturnValue(75);
@@ -312,6 +318,63 @@ describe('CombatView Interface', () => {
         // After the hard timeout, the fight should have been force-finished
         // The result phase should show XP
         expect(screen.getByText('+75 XP')).toBeInTheDocument();
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should fire hard timeout from mount time, not reset on phase transitions', () => {
+        vi.useFakeTimers();
+
+        // Many rounds so combat does NOT auto-finish before the hard timeout
+        const rounds = 200;
+        const details = Array.from({ length: rounds }, (_, i) => `Hero hits Villain for ${5 + i} DMG`);
+        const timeline = Array.from({ length: rounds }, (_, i) => ({
+            attackerHp: Math.max(100 - i * 2, 10),
+            defenderHp: Math.max(100 - i * 3, 5),
+        }));
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds,
+            details,
+            timeline,
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit',
+        });
+
+        vi.spyOn(xpUtils, 'calculateFightXp').mockReturnValue(50);
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        // Advance through intro (2000ms) and vs (1400ms) = ~3400ms total, now in combat
+        act(() => { vi.advanceTimersByTime(3500); });
+
+        // Advance 57000ms more during combat.
+        // Total elapsed from mount: 3500 + 57000 = 60500ms.
+        //
+        // With the FIX (mount-level timeout fires at 60000ms):
+        //   We are at 60500ms, 500ms AFTER the timeout → result should be visible.
+        //
+        // With the BUG (timeout resets on each phase change):
+        //   Timeout was reset at combat start (3500ms from mount).
+        //   It would fire at 3500 + 60000 = 63500ms.
+        //   We are at 60500ms, 3000ms BEFORE the timeout → result should NOT be visible.
+        act(() => { vi.advanceTimersByTime(57000); });
+
+        // The hard timeout (mount-level) should have fired, force-finishing the fight
+        expect(screen.getByText('+50 XP')).toBeInTheDocument();
 
         vi.useRealTimers();
         vi.restoreAllMocks();
