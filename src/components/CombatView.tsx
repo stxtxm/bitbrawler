@@ -87,10 +87,10 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
 
     // Animation frame counter for character animation
     useEffect(() => {
-        if (phase !== 'combat' && phase !== 'vs') return;
+        if (phase !== 'intro' && phase !== 'combat' && phase !== 'vs') return;
         const interval = setInterval(() => {
             setAnimFrame(prev => prev + 1);
-        }, 80);
+        }, phase === 'intro' ? 140 : 80);
         return () => clearInterval(interval);
     }, [phase]);
 
