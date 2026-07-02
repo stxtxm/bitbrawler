@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Character } from '../types/Character';
 import { AnimatedPixelCharacter } from './AnimatedPixelCharacter';
+import { PixelCharacter } from './PixelCharacter';
 import { PixelMonster } from './PixelMonster';
 import { PixelIcon } from './PixelIcon';
 import { simulateCombat } from '../utils/combatUtils';
@@ -87,10 +88,10 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
 
     // Animation frame counter for character animation
     useEffect(() => {
-        if (phase !== 'intro' && phase !== 'combat' && phase !== 'vs') return;
+        if (phase !== 'combat' && phase !== 'vs') return;
         const interval = setInterval(() => {
             setAnimFrame(prev => prev + 1);
-        }, phase === 'intro' ? 140 : 80);
+        }, 80);
         return () => clearInterval(interval);
     }, [phase]);
 
@@ -403,7 +404,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                             <div className={`scan-card ${scanLocked ? 'locked' : 'scanning'}`}>
                                 <div className="scan-subtitle">{scanLocked ? 'OPPONENT FOUND' : 'SCANNING...'}</div>
                                 <div className="scan-avatar">
-                                    <AnimatedPixelCharacter seed={scanList[scanIndex]?.seed || opponent.seed} gender={scanList[scanIndex]?.gender || opponent.gender} scale={8} state="running" frame={animFrame} />
+                                    <PixelCharacter seed={scanList[scanIndex]?.seed || opponent.seed} gender={scanList[scanIndex]?.gender || opponent.gender} scale={8} />
                                 </div>
                                 <div className="scan-name">{scanList[scanIndex]?.name || opponent.name}</div>
                                 <div className="scan-level">LVL {scanList[scanIndex]?.level ?? opponent.level}</div>
