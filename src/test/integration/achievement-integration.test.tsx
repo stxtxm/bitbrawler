@@ -209,7 +209,7 @@ describe('Achievement/Medal Integration', () => {
       builder.select.mockReturnValue(builder);
       // The lootbox code does .eq('last_loot_roll', ...).select()
       // We need the chain to eventually resolve
-      (rollLootbox as any).mockReturnValue(RUSTY_SWORD);
+      (rollLootbox as any).mockReturnValue({ item: RUSTY_SWORD, pityCount: 0, pityTriggered: false });
 
       const { result } = renderHook(() => useGame(), {
         wrapper: createWrapper(),

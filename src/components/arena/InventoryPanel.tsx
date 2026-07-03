@@ -35,6 +35,7 @@ interface InventoryPanelProps {
   onSelectItem: (itemId: string) => void;
   onHoverItem: (id: string | null) => void;
   previewItemId: string | null;
+  pityCount?: number;
   // Forge integration
   itemUpgradeLevels?: Record<string, number>;
   onSalvage?: (itemId: string) => void;
@@ -78,6 +79,7 @@ export const InventoryPanel = memo(function InventoryPanel({
   onSelectItem,
   onHoverItem,
   previewItemId,
+  pityCount = 0,
   itemUpgradeLevels = {},
   onSalvage,
   essence = 0,
@@ -131,7 +133,12 @@ export const InventoryPanel = memo(function InventoryPanel({
             </span>
           </button>
           <div className="lootbox-status">
-            {inventory.length}/{inventoryCapacity} SLOTS
+            <span>{inventory.length}/{inventoryCapacity} SLOTS</span>
+            {pityCount > 0 && canRollDailyLoot && (
+              <span className="lootbox-pity-counter" title="Consecutive lootboxes without a legendary">
+                🎯 {pityCount}/{75}
+              </span>
+            )}
           </div>
           <StreakIndicator streak={streak} canRoll={canRollDailyLoot} />
         </div>

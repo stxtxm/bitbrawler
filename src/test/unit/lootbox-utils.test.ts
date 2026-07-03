@@ -5,6 +5,7 @@ import {
   getLootboxRarityWeights,
   getStreakBonus,
   rollLootbox,
+  PITY_THRESHOLD,
 } from '../../utils/lootboxUtils';
 import { ITEM_ASSETS } from '../../data/itemAssets';
 import { mulberry32 } from '../../utils/randomUtils';
@@ -23,26 +24,26 @@ describe('lootboxUtils', () => {
 
   it('rolls a common item for low random values', () => {
     const rng = () => 0.05;
-    const item = rollLootbox(ITEM_ASSETS, { rng, level: 1 });
-    expect(item).not.toBeNull();
-    expect(item?.rarity).toBe('common');
+    const result = rollLootbox(ITEM_ASSETS, { rng, level: 1 });
+    expect(result.item).not.toBeNull();
+    expect(result.item?.rarity).toBe('common');
   });
 
   it('rolls a legendary for very high random values at level 10+', () => {
     const rng = () => 0.995;
-    const item = rollLootbox(ITEM_ASSETS, { rng, level: 10 });
-    expect(item).not.toBeNull();
-    expect(item?.rarity).toBe('legendary');
+    const result = rollLootbox(ITEM_ASSETS, { rng, level: 10 });
+    expect(result.item).not.toBeNull();
+    expect(result.item?.rarity).toBe('legendary');
   });
 
   it('rolls only items with requiredLevel <= player level', () => {
-    const items = rollLootbox(ITEM_ASSETS, { level: 1 });
-    expect(items!.requiredLevel).toBeLessThanOrEqual(1);
+    const result = rollLootbox(ITEM_ASSETS, { level: 1 });
+    expect(result.item!.requiredLevel).toBeLessThanOrEqual(1);
   });
 
   it('respects excludeIds filter', () => {
-    const items50 = rollLootbox(ITEM_ASSETS, { level: 10, excludeIds: ['voidreaper'] });
-    expect(items50).not.toBeNull();
+    const result = rollLootbox(ITEM_ASSETS, { level: 10, excludeIds: ['voidreaper'] });
+    expect(result.item).not.toBeNull();
     // After adding new items, voidreaper should still be excludable
   });
 
@@ -68,7 +69,7 @@ describe('lootboxUtils', () => {
 
   it('getLootboxRarityWeights at level 10+ returns improved endgame weights', () => {
     const weights = getLootboxRarityWeights(10);
-    expect(weights.legendary).toBeGreaterThanOrEqual(0.05);
+    expect(weights.legendary).toBeGreaterThanOrEqual(0.07);
     expect(weights.common).toBeLessThanOrEqual(0.38);
   });
 
@@ -83,8 +84,8 @@ describe('lootboxUtils', () => {
     const rolled: PixelItemAsset[] = [];
     // Roll many times to cover diverse outcomes
     for (let i = 0; i < 100; i++) {
-      const item = rollLootbox(ITEM_ASSETS, { rng: () => rng(), level: 10 });
-      if (item) rolled.push(item);
+      const result = rollLootbox(ITEM_ASSETS, { rng: () => rng(), level: 10 });
+      if (result.item) rolled.push(result.item);
     }
     const waterItems = rolled.filter((i) => i.element === 'water');
     // With new items, water items should eventually appear
@@ -104,5 +105,121 @@ describe('lootboxUtils', () => {
     const w1 = getLootboxRarityWeights(1);
     expect(w10.legendary).toBeGreaterThan(w1.legendary);
     expect(w10.common).toBeLessThan(w1.common);
+  });
+
+  // ─── Pity System Tests ──────────────────────────────────────────────────
+
+  it('pity counter starts at 0 by default', () => {
+    const result = rollLootbox(ITEM_ASSETS, { level: 10 });
+    expect(result.pityCount).toBeGreaterThanOrEqual(0);
+  });
+
+  it('pity counter increments when rolling a non-legendary item', () => {
+    // Use a seed that consistently gives a non-legendary result
+    const rng = mulberry32(42);
+    let pityCount = 0;
+    for (let i = 0; i < 5; i++) {
+      const result = rollLootbox(ITEM_ASSETS, { rng: () => rng(), level: 10, pityCount });
+      pityCount = result.pityCount;
+    }
+    // After 5 low-probability rolls, we almost certainly didn't get a legendary
+    // (0.93^5 ≈ 0.70 chance of no legendary — not guaranteed, but with seeded RNG it's deterministic)
+    expect(pityCount).toBeGreaterThan(0);
+  });
+
+  it('pity counter resets to 0 when rolling a legendary', () => {
+    // Use a high RNG value that guarantees legendary
+    const rng = () => 0.999;
+    const result = rollLootbox(ITEM_ASSETS, { rng, level: 10, pityCount: 30 });
+    expect(result.item?.rarity).toBe('legendary');
+    expect(result.pityCount).toBe(0);
+  });
+
+  it('pity guarantees a legendary when threshold is reached', () => {
+    const rng = () => 0.001; // Would normally produce a common item
+    const result = rollLootbox(ITEM_ASSETS, { rng, level: 10, pityCount: PITY_THRESHOLD });
+    expect(result.item).not.toBeNull();
+    expect(result.item!.rarity).toBe('legendary');
+    expect(result.pityTriggered).toBe(true);
+    expect(result.pityCount).toBe(0);
+  });
+
+  it('pity triggers at exactly PITY_THRESHOLD, not before', () => {
+    // At pityCount = PITY_THRESHOLD - 1 (74), the 75th roll is normal
+    const rng = () => 0.001; // Would produce common
+    const normalResult = rollLootbox(ITEM_ASSETS, { rng, level: 10, pityCount: PITY_THRESHOLD - 1 });
+    expect(normalResult.item).not.toBeNull();
+    expect(normalResult.item!.rarity).toBe('common');
+    expect(normalResult.pityTriggered).toBe(false);
+    expect(normalResult.pityCount).toBe(PITY_THRESHOLD); // 75
+
+    // At pityCount = PITY_THRESHOLD (75), the 76th roll is guaranteed legendary
+    const pityResult = rollLootbox(ITEM_ASSETS, { rng, level: 10, pityCount: PITY_THRESHOLD });
+    expect(pityResult.item).not.toBeNull();
+    expect(pityResult.item!.rarity).toBe('legendary');
+    expect(pityResult.pityTriggered).toBe(true);
+    expect(pityResult.pityCount).toBe(0);
+  });
+
+  it('pity does not trigger before threshold', () => {
+    const rng = () => 0.001; // Would produce common
+    const result = rollLootbox(ITEM_ASSETS, { rng, level: 10, pityCount: PITY_THRESHOLD - 2 });
+    expect(result.item).not.toBeNull();
+    expect(result.item!.rarity).toBe('common');
+    expect(result.pityTriggered).toBe(false);
+    expect(result.pityCount).toBe(PITY_THRESHOLD - 1);
+  });
+
+  it('pityCount defaults to 0 when not provided', () => {
+    const rng = () => 0.001;
+    const result = rollLootbox(ITEM_ASSETS, { rng, level: 10 });
+    expect(result.pityCount).toBe(1); // Incremented from 0 since result is common
+  });
+
+  it('pity cannot trigger at level 1 since no legendary items exist', () => {
+    // Legendary items start at requiredLevel 5, so at level 1 pity can't force one
+    const rng = () => 0.001; // Would produce common
+    const result = rollLootbox(ITEM_ASSETS, { rng, level: 1, pityCount: PITY_THRESHOLD });
+    // Pity attempted but no legendary items available — falls through to normal roll
+    expect(result.item).not.toBeNull();
+    expect(result.item!.rarity).toBe('common');
+    expect(result.pityTriggered).toBe(true); // Pity was "triggered" but couldn't find legendary item
+    expect(result.pityCount).toBe(PITY_THRESHOLD + 1); // Increments since item is common
+  });
+
+  it('pityCount returns correct value in RollLootboxResult', () => {
+    const rng = () => 0.001; // Always common
+    const result = rollLootbox(ITEM_ASSETS, { rng, level: 10, pityCount: 50 });
+    expect(result.item?.rarity).toBe('common');
+    // Since pityThreshold is 75 and we're at 50, should increment to 51
+    expect(result.pityCount).toBe(51);
+    expect(result.pityTriggered).toBe(false);
+  });
+
+  // ─── New Weight Tests ──────────────────────────────────────────────────
+
+  it('has legendary weight 0.04 at level 3-6 (midgame)', () => {
+    const w3 = getLootboxRarityWeights(3);
+    const w6 = getLootboxRarityWeights(6);
+    expect(w3.legendary).toBeCloseTo(0.04, 3);
+    expect(w6.legendary).toBeCloseTo(0.04, 3);
+  });
+
+  it('has legendary weight 0.04 at level 7-9 (late-midgame)', () => {
+    const w7 = getLootboxRarityWeights(7);
+    const w9 = getLootboxRarityWeights(9);
+    expect(w7.legendary).toBeCloseTo(0.04, 3);
+    expect(w9.legendary).toBeCloseTo(0.04, 3);
+  });
+
+  it('has legendary weight 0.07 at level 10+ (endgame)', () => {
+    const w10 = getLootboxRarityWeights(10);
+    const w20 = getLootboxRarityWeights(20);
+    expect(w10.legendary).toBeCloseTo(0.07, 3);
+    expect(w20.legendary).toBeCloseTo(0.07, 3);
+  });
+
+  it('PITY_THRESHOLD is 75', () => {
+    expect(PITY_THRESHOLD).toBe(75);
   });
 });

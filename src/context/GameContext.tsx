@@ -73,6 +73,7 @@ interface GameContextType {
   upgradeItem: (itemId: string) => Promise<Character | null>;
   lastUnlockedMedal: MedalDef | null;
   clearMedalNotification: () => void;
+  pityCount: number;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -84,6 +85,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [lastXpGain, setLastXpGain] = useState<number | null>(null);
   const [lastLevelUp, setLastLevelUp] = useState<{ levelsGained: number; newLevel: number; hpGained: number } | null>(null);
   const [lastUnlockedMedal, setLastUnlockedMedal] = useState<MedalDef | null>(null);
+  const [lootboxPityCount, setLootboxPityCount] = useState(0);
   const isOnline = useOnlineStatus();
   const initiatedMatchmakingRef = useRef(false);
   const charRef = useRef<Character | null>(null);
@@ -901,18 +903,20 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const currentStreak = char.lootboxStreak ?? 0;
     const newStreak = computeNextStreak(effectiveLastRoll, currentStreak, now);
 
-    const item = rollLootbox(ITEM_ASSETS, {
+    const result = rollLootbox(ITEM_ASSETS, {
       excludeIds: inventory,
       level: char.level,
       streak: newStreak,
+      pityCount: lootboxPityCount,
     });
-    if (!item) {
+    if (!result.item) {
       throw new Error('No new loot available.');
     }
+    setLootboxPityCount(result.pityCount);
 
     const updatedChar = normalizeCharacter({
       ...char,
-      inventory: [...inventory, item.id],
+      inventory: [...inventory, result.item.id],
       lastLootRoll: now,
       lootboxStreak: newStreak,
     });
@@ -944,7 +948,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
       // Non-blocking medal/achievement check after lootbox
       const isFirstLootbox = (char.lastLootRoll ?? 0) === 0 && newStreak > 0;
-      const isEpicOrLegendary = item.rarity === 'epic' || item.rarity === 'legendary';
+      const isEpicOrLegendary = result.item.rarity === 'epic' || result.item.rarity === 'legendary';
       const lootboxCtx: SpecialMedalContext = {
         luckyDayRoll: isFirstLootbox && isEpicOrLegendary,
       };
@@ -953,14 +957,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         syncCharacterToBackend(charWithMedals).catch(() => {});
       }).catch(() => {});
 
-      return item;
+      return result.item;
     } catch (error: any) {
       if (error instanceof Error && error.message !== 'Connection error - lootbox not saved.') {
         handleDbError(error, 'lootbox');
       }
       throw error;
     }
-  }, [activeCharacter, handleDbError, persistCharacter]);
+  }, [activeCharacter, handleDbError, lootboxPityCount, persistCharacter]);
 
   const setAutoMode = useCallback(async (enabled: boolean) => {
     if (!activeCharacter?.id) return null;
@@ -1236,6 +1240,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     upgradeItem,
     lastUnlockedMedal,
     clearMedalNotification,
+    pityCount: lootboxPityCount,
   };
 
   return (
