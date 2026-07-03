@@ -38,6 +38,7 @@ const Arena = () => {
     deleteCharacter,
     setCharacter,
     syncCharacterToBackend,
+    pityCount,
     essence,
     salvageItems,
   } = useGame();
@@ -206,6 +207,7 @@ const Arena = () => {
       {inventory.inventoryOpen && (
         <InventoryPanel
           {...inventory}
+          pityCount={pityCount}
           itemUpgradeLevels={activeCharacter?.itemUpgrades ?? {}}
           essence={essence}
           onSalvage={salvageItems}

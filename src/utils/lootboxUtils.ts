@@ -6,8 +6,11 @@ export const LOOTBOX_RARITY_WEIGHTS: Record<ItemRarity, number> = {
   uncommon: 0.20,
   rare: 0.17,
   epic: 0.15,
-  legendary: 0.022,
+  legendary: 0.04,
 };
+
+/** Number of consecutive lootboxes without a legendary before pity forces one. */
+export const PITY_THRESHOLD = 75;
 
 export interface StreakBonus {
   weightBonus: number;      // Extra weight added to rare/epic
@@ -80,16 +83,16 @@ export function computeNextStreak(
 
 export const getLootboxRarityWeights = (level: number): Record<ItemRarity, number> => {
   if (level >= 10) {
-    return { common: 0.38, uncommon: 0.25, rare: 0.18, epic: 0.14, legendary: 0.05 };
+    return { common: 0.38, uncommon: 0.25, rare: 0.18, epic: 0.14, legendary: 0.07 };
   }
   if (level >= 7) {
-    return { common: 0.435, uncommon: 0.25, rare: 0.17, epic: 0.12, legendary: 0.025 };
+    return { common: 0.435, uncommon: 0.25, rare: 0.17, epic: 0.12, legendary: 0.04 };
   }
   if (level >= 4) {
-    return { common: 0.488, uncommon: 0.24, rare: 0.15, epic: 0.10, legendary: 0.022 };
+    return { common: 0.488, uncommon: 0.24, rare: 0.15, epic: 0.10, legendary: 0.04 };
   }
   if (level >= 3) {
-    return { common: 0.498, uncommon: 0.20, rare: 0.15, epic: 0.13, legendary: 0.022 };
+    return { common: 0.498, uncommon: 0.20, rare: 0.15, epic: 0.13, legendary: 0.04 };
   }
   return { ...LOOTBOX_RARITY_WEIGHTS };
 };
@@ -162,6 +165,13 @@ export interface RollLootboxOptions {
   excludeIds?: string[];
   level?: number;
   streak?: number; // Current streak for bonus application
+  pityCount?: number; // Current pity counter (consecutive non-legendary rolls)
+}
+
+export interface RollLootboxResult {
+  item: PixelItemAsset | null;
+  pityCount: number;
+  pityTriggered: boolean;
 }
 
 function pickRandomItem(pool: PixelItemAsset[], rng: () => number): PixelItemAsset {
@@ -257,34 +267,75 @@ function pickBetterItem(a: PixelItemAsset, b: PixelItemAsset): PixelItemAsset {
   return statsA >= statsB ? a : b;
 }
 
+/**
+ * Forces a legendary roll when pity threshold is reached.
+ * Picks a random legendary item from the eligible pool.
+ */
+function forceLegendaryRoll(eligibleItems: PixelItemAsset[], rng: () => number): PixelItemAsset | null {
+  const legendaryItems = eligibleItems.filter((i) => i.rarity === 'legendary');
+  if (!legendaryItems.length) return null;
+  return pickRandomItem(legendaryItems, rng);
+}
+
+/**
+ * Computes the new pity count after a lootbox roll.
+ * Resets to 0 on legendary, increments otherwise.
+ */
+function computePity(item: PixelItemAsset | null, currentPity: number): number {
+  if (!item) return currentPity + 1;
+  return item.rarity === 'legendary' ? 0 : currentPity + 1;
+}
+
 export function rollLootbox(
   items: PixelItemAsset[],
   options: RollLootboxOptions = {}
-): PixelItemAsset | null {
-  if (!items.length) return null;
+): RollLootboxResult {
+  if (!items.length) return { item: null, pityCount: 0, pityTriggered: false };
 
   const rng = options.rng ?? Math.random;
   const level = Math.max(1, options.level ?? 1);
   const excludeIds = options.excludeIds ?? [];
   const streak = Math.max(0, options.streak ?? 0);
+  const currentPity = Math.max(0, options.pityCount ?? 0);
   const eligibleItems = getEligibleLootboxItems(items, level, excludeIds);
-  if (!eligibleItems.length) return null;
+  if (!eligibleItems.length) return { item: null, pityCount: currentPity + 1, pityTriggered: false };
+
+  // ─── Pity check: force legendary if threshold reached ─────────────────
+  if (currentPity >= PITY_THRESHOLD) {
+    const forcedItem = forceLegendaryRoll(eligibleItems, rng);
+    if (forcedItem) {
+      return { item: forcedItem, pityCount: 0, pityTriggered: true };
+    }
+    // No legendary items available — fall through to normal roll
+  }
 
   // Compute streak bonus
   const bonus = getStreakBonus(streak);
   const baseWeights = getLootboxRarityWeights(level);
   const weights = applyStreakWeights(baseWeights, bonus.weightBonus);
 
+  let item: PixelItemAsset | null;
+
   // Handle double roll
   if (bonus.doubleRoll) {
     const first = rollSingle(eligibleItems, weights, rng, bonus.minRarity);
     const second = rollSingle(eligibleItems, weights, rng, bonus.minRarity);
-    if (!first && !second) return null;
-    if (!first) return second;
-    if (!second) return first;
-    return pickBetterItem(first, second);
+    if (!first && !second) {
+      item = null;
+    } else if (!first) {
+      item = second;
+    } else if (!second) {
+      item = first;
+    } else {
+      item = pickBetterItem(first, second);
+    }
+  } else {
+    // Single roll with streak bonuses
+    item = rollSingle(eligibleItems, weights, rng, bonus.minRarity);
   }
 
-  // Single roll with streak bonuses
-  return rollSingle(eligibleItems, weights, rng, bonus.minRarity);
+  const pityCount = computePity(item, currentPity);
+  const pityTriggered = currentPity >= PITY_THRESHOLD;
+
+  return { item, pityCount, pityTriggered };
 }

@@ -388,7 +388,7 @@ describe('GameContext Integration', () => {
     };
 
     (canRollLootbox as any).mockReturnValue(true);
-    (rollLootbox as any).mockReturnValue(mockItem);
+    (rollLootbox as any).mockReturnValue({ item: mockItem, pityCount: 0, pityTriggered: false });
 
     const { result } = renderHook(() => useGame(), {
       wrapper: createWrapper()
@@ -436,7 +436,7 @@ describe('GameContext Integration', () => {
       if (typeof lastRoll === 'number' && lastRoll >= now.getTime()) return false;
       return true;
     });
-    (rollLootbox as any).mockReturnValue(mockItem);
+    (rollLootbox as any).mockReturnValue({ item: mockItem, pityCount: 0, pityTriggered: false });
 
     const { result } = renderHook(() => useGame(), {
       wrapper: createWrapper()

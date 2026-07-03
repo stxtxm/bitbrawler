@@ -295,6 +295,21 @@
     color: #9aa0a6;
     letter-spacing: 1px;
     text-transform: uppercase;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    white-space: nowrap;
+}
+
+.lootbox-pity-counter {
+    font-size: 0.5rem;
+    color: #e8b84b;
+    letter-spacing: 0.5px;
+    background: rgba(232, 184, 75, 0.1);
+    padding: 1px 6px;
+    border-radius: 3px;
+    border: 1px solid rgba(232, 184, 75, 0.25);
     white-space: nowrap;
 }
 

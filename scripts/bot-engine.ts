@@ -403,7 +403,8 @@ async function simulateBotDailyLife(options: BotSimulationOptions = {}) {
             if (canRoll) {
                 const inventory = currentBotState.inventory || [];
                 if (inventory.length < INVENTORY_CAPACITY) {
-                    const item = rollLootbox(ITEM_ASSETS, { excludeIds: inventory, level: currentBotState.level });
+                    const result = rollLootbox(ITEM_ASSETS, { excludeIds: inventory, level: currentBotState.level });
+                    const item = result.item;
                     if (item) {
                         currentBotState = {
                             ...currentBotState,
