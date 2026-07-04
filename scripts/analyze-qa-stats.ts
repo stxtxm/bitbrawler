@@ -46,6 +46,12 @@ interface LootboxResult {
   raw_text?: string
 }
 
+interface IdleFightRecord {
+  result: 'victory' | 'defeat'
+  xp: number | null
+  essence: number | null
+}
+
 interface RunRecord {
   date: string
   run: string
@@ -53,6 +59,7 @@ interface RunRecord {
   character_action?: string | null
   replaced_character?: string | null
   fights: FightRecord[]
+  idle_fights?: IdleFightRecord[]
   lootbox?: LootboxResult | null
   auto_mode_enabled?: boolean
   auto_mode_sync_ok?: boolean
@@ -62,15 +69,18 @@ interface RunRecord {
   initial_max_hp?: number | null
   initial_equipment?: Array<{ slot: string; name: string; rarity?: string }> | null
   initial_streak?: number | null
+  initial_essence?: number | null
   final_stats?: { level: number | null; xp: number | null; wins: number | null; losses: number | null } | null
   final_character_stats?: Record<string, number> | null
   final_max_hp?: number | null
   final_equipment?: Array<{ slot: string; name: string; rarity?: string }> | null
   final_streak?: number | null
+  final_essence?: number | null
   lootbox_equipment?: Array<{ slot: string; name: string; rarity?: string }> | null
   lootbox_streak?: number | null
   pve_data?: { fights: number; wins: number; xp_total: number; monsters_faced: string[] }
   level_up_events?: LevelUpEvent[]
+  progression_curve?: { level: number; total_xp: number; xp_for_next: number; percent: number }
   errors: string[]
   load_times_ms?: Record<string, number>
 }
@@ -121,6 +131,29 @@ interface LootRarityDistribution {
   unknown: number
 }
 
+interface EssenceAnalysis {
+  runs_with_essence_data: number
+  avg_essence_gained_per_run: number
+  avg_initial_essence: number
+  avg_final_essence: number
+}
+
+interface IdleAnalysis {
+  runs_with_idle_data: number
+  total_idle_fights: number
+  idle_win_rate: number
+  avg_idle_xp_per_fight: number
+  avg_idle_essence_per_fight: number
+  total_idle_essence: number
+}
+
+interface ProgressionCurveSummary {
+  runs_with_data: number
+  avg_level: number
+  avg_xp_progress_percent: number
+  avg_xp_for_next: number
+}
+
 interface AnalysisReport {
   generated_at: string
   total_runs: number
@@ -145,6 +178,9 @@ interface AnalysisReport {
   avg_initial_stats: Record<string, number> | null
   avg_final_stats: Record<string, number> | null
   hp_analysis: HpAnalysis | null
+  essence_analysis: EssenceAnalysis | null
+  idle_analysis: IdleAnalysis | null
+  progression_curve: ProgressionCurveSummary | null
   lootbox: {
     runs_with_lootbox: number
     lootboxes_opened: number
@@ -384,6 +420,39 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     suggestions.push(`No rare or epic items found in ${lootboxOpened.length} lootbox opens. Consider adjusting LOOTBOX_RARITY_WEIGHTS.`)
   }
 
+  // Essence
+  if (essenceAnalysis && essenceAnalysis.runs_with_essence_data >= 3) {
+    if (essenceAnalysis.avg_essence_gained_per_run > 20) {
+      suggestions.push(`High essence gain (avg +${essenceAnalysis.avg_essence_gained_per_run.toFixed(1)}/run). Consider adjusting ESSENCE_SOFT_CAP or salvage yields.`)
+    }
+    if (essenceAnalysis.avg_essence_gained_per_run < 1 && essenceAnalysis.avg_initial_essence > 50) {
+      suggestions.push(`Low essence gain (avg +${essenceAnalysis.avg_essence_gained_per_run.toFixed(1)}/run). Players may be hoarding essence.`)
+    }
+  }
+
+  // Idle
+  if (idleAnalysis && idleAnalysis.runs_with_idle_data >= 3) {
+    if (idleAnalysis.avg_idle_essence_per_fight > 0.5) {
+      suggestions.push(`High idle essence (${idleAnalysis.avg_idle_essence_per_fight.toFixed(2)}/fight). Consider reducing IDLE_CONFIG.ESSENCE.BASE_RATE or LEVEL_SCALE.`)
+    }
+    if (idleAnalysis.idle_win_rate < 0.4) {
+      suggestions.push(`Low idle win rate (${(idleAnalysis.idle_win_rate * 100).toFixed(0)}%). Idle monsters may be too strong.`)
+    }
+    if (idleAnalysis.idle_win_rate > 0.9) {
+      suggestions.push(`High idle win rate (${(idleAnalysis.idle_win_rate * 100).toFixed(0)}%). Idle monsters may be too weak.`)
+    }
+  }
+
+  // Progression curve
+  if (progressionCurve && progressionCurve.runs_with_data >= 3) {
+    if (progressionCurve.avg_xp_progress_percent > 90) {
+      suggestions.push(`Players are close to leveling (avg ${progressionCurve.avg_xp_progress_percent.toFixed(0)}% of next level). XP curve may be too flat.`)
+    }
+    if (progressionCurve.avg_xp_progress_percent < 10 && progressionCurve.avg_level > 5) {
+      suggestions.push(`Players are far from leveling (avg ${progressionCurve.avg_xp_progress_percent.toFixed(0)}% progress at level ${progressionCurve.avg_level.toFixed(0)}). XP curve may be too steep.`)
+    }
+  }
+
   // Error rate
   const errorRate = stats.length > 0 ? errorRuns.length / stats.length : 0
   const totalErrorRate = stats.length > 0 ? (errorRuns.length + halfwayRuns.length) / stats.length : 0
@@ -517,6 +586,64 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     }
   }
 
+  // --- Essence Analysis ---
+  const runsWithEssenceData = validRuns.filter(
+    (r): r is RunRecord & { initial_essence: number; final_essence: number } =>
+      typeof r.initial_essence === 'number' && typeof r.final_essence === 'number'
+  )
+  let essenceAnalysis: EssenceAnalysis | null = null
+  if (runsWithEssenceData.length > 0) {
+    const avgInitial = runsWithEssenceData.reduce((s, r) => s + r.initial_essence, 0) / runsWithEssenceData.length
+    const avgFinal = runsWithEssenceData.reduce((s, r) => s + r.final_essence, 0) / runsWithEssenceData.length
+    essenceAnalysis = {
+      runs_with_essence_data: runsWithEssenceData.length,
+      avg_essence_gained_per_run: Math.round((avgFinal - avgInitial) * 100) / 100,
+      avg_initial_essence: Math.round(avgInitial * 10) / 10,
+      avg_final_essence: Math.round(avgFinal * 10) / 10,
+    }
+  }
+
+  // --- Idle Analysis ---
+  const runsWithIdleData = validRuns.filter(
+    (r): r is RunRecord & { idle_fights: IdleFightRecord[] } =>
+      r.idle_fights !== null && r.idle_fights !== undefined && r.idle_fights.length > 0
+  )
+  let idleAnalysis: IdleAnalysis | null = null
+  if (runsWithIdleData.length > 0) {
+    const allIdleFights = runsWithIdleData.flatMap(r => r.idle_fights)
+    const idleWins = allIdleFights.filter(f => f.result === 'victory')
+    const idleXpFights = allIdleFights.filter((f): f is IdleFightRecord & { xp: number } => f.xp !== null)
+    const idleEssenceFights = allIdleFights.filter((f): f is IdleFightRecord & { essence: number } => f.essence !== null)
+
+    idleAnalysis = {
+      runs_with_idle_data: runsWithIdleData.length,
+      total_idle_fights: allIdleFights.length,
+      idle_win_rate: allIdleFights.length > 0 ? idleWins.length / allIdleFights.length : 0,
+      avg_idle_xp_per_fight: idleXpFights.length > 0
+        ? Math.round((idleXpFights.reduce((s, f) => s + f.xp, 0) / idleXpFights.length) * 100) / 100
+        : 0,
+      avg_idle_essence_per_fight: idleEssenceFights.length > 0
+        ? Math.round((idleEssenceFights.reduce((s, f) => s + f.essence, 0) / idleEssenceFights.length) * 100) / 100
+        : 0,
+      total_idle_essence: Math.round(idleEssenceFights.reduce((s, f) => s + f.essence, 0) * 100) / 100,
+    }
+  }
+
+  // --- Progression Curve ---
+  const runsWithCurve = validRuns.filter(
+    (r): r is RunRecord & { progression_curve: { level: number; total_xp: number; xp_for_next: number; percent: number } } =>
+      r.progression_curve !== null && r.progression_curve !== undefined
+  )
+  let progressionCurve: ProgressionCurveSummary | null = null
+  if (runsWithCurve.length > 0) {
+    progressionCurve = {
+      runs_with_data: runsWithCurve.length,
+      avg_level: Math.round((runsWithCurve.reduce((s, r) => s + r.progression_curve.level, 0) / runsWithCurve.length) * 10) / 10,
+      avg_xp_progress_percent: Math.round((runsWithCurve.reduce((s, r) => s + r.progression_curve.percent, 0) / runsWithCurve.length) * 10) / 10,
+      avg_xp_for_next: Math.round(runsWithCurve.reduce((s, r) => s + r.progression_curve.xp_for_next, 0) / runsWithCurve.length),
+    }
+  }
+
   return {
     generated_at: now,
     total_runs: stats.length,
@@ -543,6 +670,9 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     avg_initial_stats: Object.keys(avgInitialStats).length > 0 ? avgInitialStats : null,
     avg_final_stats: Object.keys(avgFinalStats).length > 0 ? avgFinalStats : null,
     hp_analysis: hpAnalysis,
+    essence_analysis: essenceAnalysis,
+    idle_analysis: idleAnalysis,
+    progression_curve: progressionCurve,
     lootbox: {
       runs_with_lootbox: runsWithLootbox.length,
       lootboxes_opened: lootboxOpened.length,
@@ -649,6 +779,33 @@ function printReport(report: AnalysisReport): void {
     console.log(`  Data from:      ${report.hp_analysis.runs_with_hp_data} run(s)`)
     console.log('')
   }
+  if (report.essence_analysis) {
+    console.log(`  ── ${bold}Essence${reset} ──`)
+    console.log(`  Avg initial:    ${report.essence_analysis.avg_initial_essence.toFixed(1)}`)
+    console.log(`  Avg final:      ${report.essence_analysis.avg_final_essence.toFixed(1)}`)
+    console.log(`  Gained/run:     +${report.essence_analysis.avg_essence_gained_per_run.toFixed(2)}`)
+    console.log(`  Data from:      ${report.essence_analysis.runs_with_essence_data} run(s)`)
+    console.log('')
+  }
+
+  if (report.idle_analysis) {
+    console.log(`  ── ${bold}Idle Combat${reset} ──`)
+    console.log(`  Fights:         ${report.idle_analysis.total_idle_fights} (${report.idle_analysis.runs_with_idle_data} runs)`)
+    console.log(`  Win rate:       ${fmtPct(report.idle_analysis.idle_win_rate)}`)
+    console.log(`  Avg XP/fight:   ${report.idle_analysis.avg_idle_xp_per_fight.toFixed(1)}`)
+    console.log(`  Avg essence/f:  ${report.idle_analysis.avg_idle_essence_per_fight.toFixed(3)}`)
+    console.log(`  Total essence:  ${report.idle_analysis.total_idle_essence.toFixed(1)}`)
+    console.log('')
+  }
+
+  if (report.progression_curve) {
+    console.log(`  ── ${bold}Progression Curve${reset} ──`)
+    console.log(`  Avg level:      ${report.progression_curve.avg_level.toFixed(1)}`)
+    console.log(`  Avg progress:   ${report.progression_curve.avg_xp_progress_percent.toFixed(1)}%`)
+    console.log(`  Avg XP next:    ${report.progression_curve.avg_xp_for_next}`)
+    console.log('')
+  }
+
   console.log(`  ── ${bold}Lootbox${reset} ──`)
   console.log(`  Available:      ${report.lootbox.runs_with_lootbox} run(s)`)
   console.log(`  Opened:         ${report.lootbox.lootboxes_opened} (${fmtPct(report.lootbox.acquire_rate)})`)

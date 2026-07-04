@@ -107,6 +107,7 @@ Chaque run de QA génère des statistiques enrichies :
   "initial_level": 1,
   "initial_stats": { "str": 11, "vit": 17, "dex": 7, "luk": 9, "int": 13, "foc": 9 },
   "initial_max_hp": 236,
+  "initial_essence": 0,
   "idle_runner": {
     "observation_duration_ms": 30000,
     "cycles_observed": 3,
@@ -136,6 +137,13 @@ Chaque run de QA génère des statistiques enrichies :
     "float_text_shown": true,
     "level": 2
   },
+  "idle_fights": [
+    {
+      "result": "victory",
+      "xp": 45,
+      "essence": 0.15
+    }
+  ],
   "fights": [
     {
       "result": "victory",
@@ -145,6 +153,13 @@ Chaque run de QA génère des statistiques enrichies :
       "fight_type": "pvp"
     }
   ],
+  "progression_curve": {
+    "level": 3,
+    "total_xp": 496,
+    "xp_for_next": 376,
+    "percent": 45.2
+  },
+  "final_essence": 5,
   "offline_gains": {
     "notification_shown": false,
     "offline_time": null,

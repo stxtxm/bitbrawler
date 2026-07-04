@@ -15,10 +15,10 @@ describe('Game rules', () => {
     expect(GAME_RULES.COMBAT.MAX_DAILY_PVE_FIGHTS).toBeGreaterThan(0);
   });
 
-  it('PVE XP modifier gives 85% of PvP XP', () => {
+  it('PVE XP modifier gives 60% of PvP XP', () => {
     expect(GAME_RULES.PVE.XP_MODIFIER).toBeGreaterThan(0);
     expect(GAME_RULES.PVE.XP_MODIFIER).toBeLessThan(1);
-    expect(GAME_RULES.PVE.XP_MODIFIER).toBe(0.85);
+    expect(GAME_RULES.PVE.XP_MODIFIER).toBe(0.60);
   });
 
   it('PVE stat multiplier makes monsters harder', () => {

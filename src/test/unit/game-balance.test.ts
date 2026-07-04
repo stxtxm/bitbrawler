@@ -108,7 +108,7 @@ describe('Game Balance — Combat Power Ratio', () => {
 });
 
 describe('Game Balance — XP Progression Feasibility', () => {
-    it('should allow reaching level 10 in under 80 total wins (reasonable early grind)', () => {
+    it('should allow reaching level 10 in under 200 total wins (reasonable early grind)', () => {
         let cumulativeXp = 0;
         let wins = 0;
         for (let level = 1; level < 10; level++) {
@@ -118,10 +118,10 @@ describe('Game Balance — XP Progression Feasibility', () => {
                 wins++;
             }
         }
-        expect(wins).toBeLessThan(120);
+        expect(wins).toBeLessThan(200);
     });
 
-    it('should make level 40+ slow but not impossible (< 80 wins per level)', () => {
+    it('should make level 40+ slow but not impossible (< 250 wins per level)', () => {
         const fightsPerLevel: number[] = [];
         for (let level = 40; level < 45; level++) {
             const xpNeeded = getXpRequiredForNextLevel(level);
@@ -129,7 +129,7 @@ describe('Game Balance — XP Progression Feasibility', () => {
             fightsPerLevel.push(Math.ceil(xpNeeded / winXp));
         }
         for (const fights of fightsPerLevel) {
-            expect(fights).toBeLessThan(200);
+            expect(fights).toBeLessThan(250);
         }
     });
 });

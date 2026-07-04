@@ -123,9 +123,9 @@ describe('forgeConstants', () => {
   it('defines LUCKY_PROC_CHANCE as 0.1', () => {
     expect(LUCKY_PROC_CHANCE).toBe(0.1);
   });
+  it('defines ESSENCE_SOFT_CAP as 250', () => {
 
-  it('defines ESSENCE_SOFT_CAP as 500', () => {
-    expect(ESSENCE_SOFT_CAP).toBe(500);
+    expect(ESSENCE_SOFT_CAP).toBe(250);
   });
 });
 

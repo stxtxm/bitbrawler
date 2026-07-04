@@ -53,10 +53,19 @@ Lis le rapport QA complet. Les sections importantes:
 
 - **HP Growth**: vérifie si les HP max augmentent correctement
 - **Lootbox Rarity**: distribution des raretés (common, rare, epic)
-- **Win Rate**: last_3 vs last_5 vs all_time
+- **Win Rate**: last_3 vs last_5 vs all_time (seuil d'alerte: win rate > 75% = trop facile, < 35% = trop dur)
 - **PvE Analysis**: win rate PvE, monstres rencontrés, durée des combats PvE
+- **Idle Analysis** (NOUVEAU): idle fights, idle win rate, idle essence/run, idle XP/run
+  - Si idle win rate > 85% → monstres idle trop faibles
+  - Si idle essence/run > 15 → essence idle trop généreuse
+- **Essence Analysis** (NOUVEAU): essence gagnée par run, essence initiale vs finale
+  - Si avg essence gained > 20/run → taux trop haut
+  - Si avg essence gained < 1 et avg essence > 50 → les joueurs thésaurisent
 - **Equipment**: objets portés par le perso QA, diversité
 - **Streak**: progression de la streak journalière
+- **Progression Curve** (NOUVEAU): avg XP progress, niveau moyen, XP nécessaire pour next level
+  - Si avg progress > 90% → courbe XP trop plate
+  - Si avg progress < 10% et level > 5 → courbe XP trop pentue
 - **Character Stats**: équilibre des stats (aucune < 7 ou > 13)
 - **Error Rate**: crashes, timeouts
 

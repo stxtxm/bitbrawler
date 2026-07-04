@@ -177,27 +177,27 @@ describe('XP Utils', () => {
     });
 
     describe('XP tuning — WIN rewards', () => {
-        it('XP_WIN should be 125', () => {
-            expect(GAME_RULES.COMBAT.XP_WIN).toBe(125);
+        it('XP_WIN should be 90', () => {
+            expect(GAME_RULES.COMBAT.XP_WIN).toBe(90);
         });
 
-        it('should yield ~125 XP average per win at level 1', () => {
+        it('should yield ~90 XP average per win at level 1', () => {
             let total = 0;
             const trials = 200;
             for (let i = 0; i < trials; i++) {
                 total += calculateFightXp(true, 1);
             }
             const avg = total / trials;
-            // With base 125 + variance ±10%: range [112.5, 137.5]
-            expect(avg).toBeGreaterThan(105);
-            expect(avg).toBeLessThan(145);
+            // With base 90 + variance ±10%: range [81, 99]
+            expect(avg).toBeGreaterThan(76);
+            expect(avg).toBeLessThan(104);
         });
 
-        it('should allow reaching level 3 in ~3 daily runs with 46.7% win rate', () => {
+        it('should require ~4 daily runs to reach level 3 with 46.7% win rate', () => {
             // Simulate a full daily run (5 fights) with realistic win rate
             const winsPerRun = Math.round(5 * 0.467); // ~2 wins
             const lossesPerRun = 5 - winsPerRun;       // ~3 losses
-            const runs = 3;
+            const runs = 4;
 
             let totalXp = 0;
             // Simulate multiple runs for statistical stability
@@ -225,24 +225,24 @@ describe('XP Utils', () => {
     });
 
     describe('XP tuning — Loss rewards', () => {
-        it('XP_LOSS should be 50', () => {
-            expect(GAME_RULES.COMBAT.XP_LOSS).toBe(50);
+        it('XP_LOSS should be 30', () => {
+            expect(GAME_RULES.COMBAT.XP_LOSS).toBe(30);
         });
 
-        it('should yield ~50 XP average per loss at level 1', () => {
+        it('should yield ~30 XP average per loss at level 1', () => {
             let total = 0;
             const trials = 200;
             for (let i = 0; i < trials; i++) {
                 total += calculateFightXp(false, 1);
             }
             const avg = total / trials;
-            // With base 50 + variance ±10%: range [45, 55]
-            expect(avg).toBeGreaterThan(40);
-            expect(avg).toBeLessThan(60);
+            // With base 30 + variance ±10%: range [27, 33]
+            expect(avg).toBeGreaterThan(24);
+            expect(avg).toBeLessThan(36);
         });
 
         it('should make loss XP feel meaningful — at least 30% of win XP', () => {
-            // XP_LOSS=50 should be 40% of XP_WIN=125 (ratio 2.5:1)
+            // XP_LOSS=30 should be 33% of XP_WIN=90 (ratio 3:1)
             expect(GAME_RULES.COMBAT.XP_LOSS / GAME_RULES.COMBAT.XP_WIN).toBeGreaterThanOrEqual(0.30);
         });
     });
@@ -282,25 +282,25 @@ describe('XP Utils', () => {
             expect(xpLevel90).toBeGreaterThan(100000);
         });
 
-        it('should require 1-2 wins for level 2 (quick start)', () => {
+        it('should require 2 wins for level 2 (not instant)', () => {
             const xpNeeded = getXpRequiredForNextLevel(1);
             const winXp = calculateFightXp(true, 1);
             const fights = Math.ceil(xpNeeded / winXp);
-            expect(fights).toBeLessThanOrEqual(2);
+            expect(fights).toBe(2);
         });
 
-        it('should require 50+ wins per level at level 20 (mid-game grind)', () => {
+        it('should require 80+ wins per level at level 20 (mid-game grind)', () => {
             const xpNeeded = getXpRequiredForNextLevel(20);
             const winXp = calculateFightXp(true, 20);
             const fights = Math.ceil(xpNeeded / winXp);
-            expect(fights).toBeGreaterThanOrEqual(50);
+            expect(fights).toBeGreaterThanOrEqual(80);
         });
 
-        it('should keep level 50 requirement < 200 fights per level', () => {
+        it('should keep level 50 requirement < 250 fights per level', () => {
             const xpNeeded = getXpRequiredForNextLevel(50);
             const winXp = calculateFightXp(true, 50);
             const fights = Math.ceil(xpNeeded / winXp);
-            expect(fights).toBeLessThan(200);
+            expect(fights).toBeLessThan(250);
         });
     });
 });

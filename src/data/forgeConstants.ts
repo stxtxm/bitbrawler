@@ -67,4 +67,4 @@ export const LUCKY_PROC_CHANCE = 0.1;
 /**
  * Soft cap for essence — excess beyond this is discarded.
  */
-export const ESSENCE_SOFT_CAP = 500;
+export const ESSENCE_SOFT_CAP = 250;
