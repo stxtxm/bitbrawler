@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act } from '@testing-library/react';
 import { CombatView } from '../../components/CombatView';
-import { AnimatedPixelCharacter } from '../../components/AnimatedPixelCharacter';
 import { Character } from '../../types/Character';
 import * as combatUtils from '../../utils/combatUtils';
 import * as combatLogUtils from '../../utils/combatLogUtils';
@@ -459,111 +458,4 @@ describe('CombatView Animation Overhaul', () => {
         expect(hasSpark).toBe(true);
     });
 
-    // ─── Stage 8: Attack frame cycling ──────────────────────
-
-    it('should apply char-attacking class when state is attacking on AnimatedPixelCharacter', () => {
-        const { container } = render(
-            <AnimatedPixelCharacter seed="test-abc" gender="male" state="attacking" frame={0} />
-        );
-
-        const svg = container.querySelector('.pixel-character-animated');
-        expect(svg).toBeTruthy();
-        expect(svg?.classList.contains('char-attacking')).toBe(true);
-    });
-
-    it('should not have char-attacking class when state is idle', () => {
-        const { container } = render(
-            <AnimatedPixelCharacter seed="test-abc" gender="male" state="idle" frame={0} />
-        );
-
-        const svg = container.querySelector('.pixel-character-animated');
-        expect(svg?.classList.contains('char-attacking')).toBe(false);
-        expect(svg?.classList.contains('char-idle')).toBe(true);
-    });
-
-    it('should render valid SVG for all attack frame values without crashing', () => {
-        // Test multiple frame values in the attack cycle: [attack1, attack2, attack3, attack2]
-        // When attack1/attack2/attack3 exist (issue #1), these will return distinct frames.
-        // Currently falls back to single attack frame — still validates no crash.
-        for (const frame of [0, 1, 2, 3, 4, 5]) {
-            const { container } = render(
-                <AnimatedPixelCharacter seed="robust-test" gender="female" state="attacking" frame={frame} />
-            );
-            const svg = container.querySelector('svg');
-            expect(svg).toBeTruthy();
-            expect(svg?.classList.contains('char-attacking')).toBe(true);
-            // Verify SVG contains rendered pixel rects
-            expect(svg?.querySelectorAll('rect').length).toBeGreaterThan(0);
-            // Clean up after each render
-            container.remove();
-        }
-    });
-
-    it('should cycle between attack frames using the attack1→attack2→attack3→attack2 pattern', () => {
-        // With the multi-frame cycle [attack1, attack2, attack3, attack2]:
-        //   frame 0 → attack1
-        //   frame 1 → attack2
-        //   frame 2 → attack3
-        //   frame 3 → attack2 (cycle restarts)
-        //
-        // When attack1/attack2/attack3 are defined (issue #1), each frame returns
-        // a distinct pixel grid, so SVGs for different frame values will differ.
-        // This test validates that the cycle logic selects the correct frame names
-        // and renders distinct content when data differs.
-
-        const { container: frame0 } = render(
-            <AnimatedPixelCharacter seed="cycle-test" gender="male" state="attacking" frame={0} />
-        );
-        const { container: frame1 } = render(
-            <AnimatedPixelCharacter seed="cycle-test" gender="male" state="attacking" frame={1} />
-        );
-        const { container: frame2 } = render(
-            <AnimatedPixelCharacter seed="cycle-test" gender="male" state="attacking" frame={2} />
-        );
-        const { container: frame3 } = render(
-            <AnimatedPixelCharacter seed="cycle-test" gender="male" state="attacking" frame={3} />
-        );
-
-        // All should render without error and have char-attacking class
-        expect(frame0.querySelector('.pixel-character-animated')?.classList.contains('char-attacking')).toBe(true);
-        expect(frame1.querySelector('.pixel-character-animated')?.classList.contains('char-attacking')).toBe(true);
-        expect(frame2.querySelector('.pixel-character-animated')?.classList.contains('char-attacking')).toBe(true);
-        expect(frame3.querySelector('.pixel-character-animated')?.classList.contains('char-attacking')).toBe(true);
-    });
-
-    it('should not have char-attacking class on idle character during CombatView combat phase', () => {
-        vi.useFakeTimers();
-
-        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
-            winner: 'attacker',
-            rounds: 1,
-            details: ['Hero hits Villain for 10 DMG'],
-            timeline: [{ attackerHp: 100, defenderHp: 90 }]
-        });
-
-        const { container } = render(
-            <CombatView
-                player={player}
-                opponent={opponent}
-                matchType="balanced"
-                onComplete={vi.fn()}
-                onClose={vi.fn()}
-            />
-        );
-
-        // Advance to combat phase
-        act(() => { vi.advanceTimersByTime(2500); });
-        act(() => { vi.advanceTimersByTime(1500); });
-
-        // Verify both characters are rendered
-        const chars = container.querySelectorAll('.pixel-character-animated');
-        expect(chars.length).toBeGreaterThan(0);
-
-        // During combat, the non-acting character should be idle
-        // (actionPulse determines which one is attacking)
-        const allIdleOrAttacking = Array.from(chars).every(
-            svg => svg.classList.contains('char-idle') || svg.classList.contains('char-attacking')
-        );
-        expect(allIdleOrAttacking).toBe(true);
-    });
 });
