@@ -8,6 +8,18 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '4.2.0',
+    date: '2026-07-04',
+    title: 'XP/essence rebalance, static PixelCharacter, container-scale combat animations',
+    changes: [
+      'XP curve rebalancing: XP_WIN 125→90, XP_LOSS 50→30, PvE modifier 0.85→0.60, idle modifier 0.50→0.35.',
+      'Essence idle nerf: BASE_RATE 0.2→0.1, LEVEL_SCALE 0.08→0.05. Soft cap 500→250.',
+      'AnimatedPixelCharacter supprimé — retour au PixelCharacter statique en PvP et idle runner (plus d\'animation de bras/jambes).',
+      'Container-scale combat animations: idle bob (translateY 1px), attack lunge (translateX ±5-7px), hit squash (scaleX/Y).',
+      'Tests mis à jour : 978 tests passants, 81 test files.',
+    ],
+  },
+  {
     version: '4.1.0',
     date: '2026-06-28',
     title: 'PvP combat animation overhaul — defeat collapse, ground shadows, enriched particles, XP popup, screen shake & AnimatedPixelCharacter',

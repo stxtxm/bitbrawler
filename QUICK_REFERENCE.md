@@ -30,7 +30,6 @@
 | `IdleRunnerScene.tsx` | 241 | PvE idle scene with level-up FX |
 | `ConnectionModal.tsx` | 39 | Connection error dialog |
 | `StreakIndicator.tsx` | - | Idle streak display |
-| `AnimatedPixelCharacter.tsx` | - | Combat animation |
 | `LoadingScreen.tsx` | - | Page loading spinner |
 | `GameLogo.tsx` | - | Title screen logo |
 | `AffinityBadge.tsx` | - | Item affinity display |
