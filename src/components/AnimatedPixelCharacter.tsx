@@ -56,7 +56,11 @@ function getBodyFrame(bodyType: string, state: string, frame: number): number[][
   }
   if (state === 'attacking') {
     const runData = (PIXEL_BODIES_RUN as any)[bodyType]
-    if (runData?.attack) return runData.attack
+    if (runData) {
+      const frames = ['attack1', 'attack2', 'attack3', 'attack2']
+      const frameName = frames[frame % frames.length] as 'attack1' | 'attack2' | 'attack3'
+      return runData[frameName] || PIXEL_BODIES[bodyType as keyof typeof PIXEL_BODIES] || PIXEL_BODIES.basic
+    }
     return PIXEL_BODIES[bodyType as keyof typeof PIXEL_BODIES] || PIXEL_BODIES.basic
   }
   // running: cycle through frames
