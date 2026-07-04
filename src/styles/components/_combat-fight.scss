@@ -528,6 +528,23 @@
 }
 
 // ============================================
+// Attacking Animation — synchronized with frame cycle
+// 4 frames × 80ms = 320ms per cycle (attack1→attack2→attack3→attack2)
+// ============================================
+
+.char-attacking.pixel-character-animated {
+    animation: attackSurge 0.32s ease infinite;
+}
+
+@keyframes attackSurge {
+    0%   { transform: translateX(0) scale(1); }
+    25%  { transform: translateX(1px) scale(1.04); } /* attack1 wind-up */
+    50%  { transform: translateX(2px) scale(1.01); } /* attack2 strike */
+    75%  { transform: translateX(1px) scale(0.98); } /* attack3 recovery */
+    100% { transform: translateX(0) scale(1); }
+}
+
+// ============================================
 // Fighter Entrance
 // ============================================
 
