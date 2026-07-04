@@ -6,7 +6,7 @@ describe('Idle Combat Hard Timeout', () => {
   it('should have fightHardTimeoutMs defined in COMBAT_BALANCE', () => {
     expect(COMBAT_BALANCE.fightHardTimeoutMs).toBeDefined();
     expect(COMBAT_BALANCE.fightHardTimeoutMs).toBeGreaterThan(0);
-    expect(COMBAT_BALANCE.fightHardTimeoutMs).toBe(60000);
+    expect(COMBAT_BALANCE.fightHardTimeoutMs).toBe(45000);
   });
 
   it('should have fightHardTimeoutMs longer than maxDurationMs', () => {
@@ -14,8 +14,8 @@ describe('Idle Combat Hard Timeout', () => {
     expect(COMBAT_BALANCE.fightHardTimeoutMs).toBeGreaterThan(COMBAT_BALANCE.maxDurationMs);
   });
 
-  it('should have fightHardTimeoutMs at 2x maxDurationMs', () => {
-    // 60s hard timeout is 2x the 30s combat simulation timeout
-    expect(COMBAT_BALANCE.fightHardTimeoutMs).toBe(COMBAT_BALANCE.maxDurationMs * 2);
+  it('should have fightHardTimeoutMs at 1.5x maxDurationMs', () => {
+    // 45s hard timeout is 1.5x the 30s combat simulation timeout (reduced from 60s for better UX)
+    expect(COMBAT_BALANCE.fightHardTimeoutMs).toBe(COMBAT_BALANCE.maxDurationMs * 1.5);
   });
 });

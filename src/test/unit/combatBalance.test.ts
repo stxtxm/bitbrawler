@@ -287,7 +287,7 @@ describe('Combat Balance Config', () => {
 
   // ── Hard Timeout ────────────────────────────────────────────────────────
 
-  it('should have fightHardTimeoutMs set to 60000', () => {
-    expect(COMBAT_BALANCE.fightHardTimeoutMs).toBe(60000);
+  it('should have fightHardTimeoutMs set to 45000', () => {
+    expect(COMBAT_BALANCE.fightHardTimeoutMs).toBe(45000);
   });
 });
