@@ -74,10 +74,38 @@ function generateRun3(base: Grid): Grid {
   return g
 }
 
-function generateAttack(base: Grid): Grid {
+function generateAttack1(base: Grid): Grid {
   const g = cloneGrid(base)
-  // Bras droit levé (colonne 9 → monte vers le haut)
-  // Corps légèrement penché avant
+  // Wind-up : personnage en position de charge, bras en arrière, poids du corps déplacé vers l'arrière
+  // Décaler le torse vers la droite (préparation)
+  for (let row = 1; row <= 5; row++) {
+    for (let col = 11; col > 0; col--) {
+      g[row][col] = base[row]?.[col - 1] ?? 0
+    }
+    g[row][0] = 0
+  }
+  // Bras droit tiré en arrière (cols 9-10)
+  if (g[2][8] !== 0) {
+    g[1][9] = g[2][8]
+    g[2][9] = g[2][8]
+    g[3][9] = g[3][8]
+    g[3][10] = g[3][8]
+  }
+  // Poids sur la jambe arrière (droite), jambe avant légère
+  g[6][1] = 0; g[6][2] = 0;
+  g[7][1] = 0; g[7][2] = 0;
+  g[8][1] = 0; g[8][2] = 0;
+  // Jambe arrière bien plantée
+  g[6][6] = g[6][6]; g[6][7] = g[6][6];
+  g[7][6] = g[7][6]; g[7][7] = g[7][6];
+  g[8][6] = g[8][6]; g[8][7] = g[8][6];
+  return g
+}
+
+function generateAttack2(base: Grid): Grid {
+  const g = cloneGrid(base)
+  // Strike : frame de frappe active (contenu actuel de generateAttack)
+  // Bras droit levé, corps penché avant, fente avant
   for (let row = 1; row <= 5; row++) {
     for (let col = 0; col < 11; col++) {
       g[row][col] = base[row]?.[col + 1] ?? 0
@@ -96,6 +124,37 @@ function generateAttack(base: Grid): Grid {
   g[6][3] = g[6][2]; g[6][4] = g[6][2]; g[6][6] = g[6][7]; g[6][7] = 0;
   g[7][3] = g[7][2]; g[7][4] = g[7][2]; g[7][6] = g[7][7]; g[7][7] = 0;
   g[8][3] = g[8][2]; g[8][4] = g[8][2]; g[8][6] = g[8][7]; g[8][7] = 0;
+  return g
+}
+
+function generateAttack3(base: Grid): Grid {
+  const g = cloneGrid(base)
+  // Recovery : retour progressif vers la position idle, bras qui redescend
+  // Torse centré (position de base)
+  for (let row = 1; row <= 5; row++) {
+    for (let col = 0; col < 11; col++) {
+      g[row][col] = base[row]?.[col] ?? 0
+    }
+    g[row][11] = 0
+  }
+  // Bras en position intermédiaire (mi-hauteur, en train de redescendre)
+  if (g[3][8] !== 0) {
+    g[2][8] = g[3][8]
+    g[2][9] = g[3][8]
+    g[1][9] = g[3][8]
+    g[3][9] = g[3][8]
+    g[0][8] = 0
+    g[0][9] = 0
+    g[1][8] = 0
+  }
+  // Jambes en retour de fente (position resserrée)
+  g[6][3] = g[6][2]; g[6][4] = 0;
+  g[7][3] = g[7][2]; g[7][4] = 0;
+  g[8][3] = g[8][2]; g[8][4] = 0;
+  // Jambe droite revient
+  g[6][6] = g[6][7];
+  g[7][6] = g[7][7];
+  g[8][6] = g[8][7];
   return g
 }
 
@@ -177,17 +236,21 @@ function generateBodyBlock(name: string, base: Grid): string {
   const run1 = generateRun1(base)
   const run2 = generateRun2(base)
   const run3 = generateRun3(base)
-  const attack = generateAttack(base)
+  const attack1 = generateAttack1(base)
+  const attack2 = generateAttack2(base)
+  const attack3 = generateAttack3(base)
   return `  ${name}: {\n` +
     `    run1: ${gridToTsString(run1, '      ')},\n` +
     `    run2: ${gridToTsString(run2, '      ')},\n` +
     `    run3: ${gridToTsString(run3, '      ')},\n` +
-    `    attack: ${gridToTsString(attack, '      ')},\n` +
+    `    attack1: ${gridToTsString(attack1, '      ')},\n` +
+    `    attack2: ${gridToTsString(attack2, '      ')},\n` +
+    `    attack3: ${gridToTsString(attack3, '      ')},\n` +
     `  }`
 }
 
 const blocks = BODY_TYPES.map(bt => generateBodyBlock(bt.name, bt.pixels))
 
-console.log(`export const PIXEL_BODIES_RUN: Record<string, { run1: number[][]; run2: number[][]; run3: number[][]; attack: number[][] }> = {`)
+console.log(`export const PIXEL_BODIES_RUN: Record<string, { run1: number[][]; run2: number[][]; run3: number[][]; attack1: number[][]; attack2: number[][]; attack3: number[][] }> = {`)
 console.log(blocks.join(',\n'))
 console.log('};')
