@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, fireEvent } from '@testing-library/react';
 import { CombatView } from '../../components/CombatView';
 import { Character } from '../../types/Character';
 import * as combatUtils from '../../utils/combatUtils';
@@ -312,7 +312,7 @@ describe('CombatView Interface', () => {
         act(() => { vi.advanceTimersByTime(2000); });
 
         // The combat animation is playing - now advance far beyond the hard timeout
-        // (fightHardTimeoutMs = 60000, we've already used ~4.5s)
+        // (fightHardTimeoutMs = 45000, we've already used ~4.5s)
         act(() => { vi.advanceTimersByTime(61000); });
 
         // After the hard timeout, the fight should have been force-finished
@@ -375,6 +375,232 @@ describe('CombatView Interface', () => {
 
         // The hard timeout (mount-level) should have fired, force-finishing the fight
         expect(screen.getByText('+50 XP')).toBeInTheDocument();
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    // ─── Phase 1: Round counter & Progress bar ────────────
+
+    it('should display round counter during combat phase', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 5,
+            details: Array.from({ length: 5 }, (_, i) => `Round ${i + 1}: Hero hits Villain`),
+            timeline: Array.from({ length: 5 }, (_, i) => ({
+                attackerHp: Math.max(100 - i * 20, 20),
+                defenderHp: Math.max(100 - i * 25, 0),
+            })),
+        });
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2500); });
+        act(() => { vi.advanceTimersByTime(1500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        const roundCounter = document.querySelector('.round-counter');
+        expect(roundCounter).not.toBeNull();
+        expect(roundCounter?.textContent).toMatch(/ROUND/i);
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should render combat progress bar with correct width', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 10,
+            details: Array.from({ length: 10 }, (_, i) => `Round ${i + 1}: Hero hits Villain`),
+            timeline: Array.from({ length: 10 }, (_, i) => ({
+                attackerHp: Math.max(100 - i * 10, 10),
+                defenderHp: Math.max(100 - i * 12, 0),
+            })),
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit',
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2500); });
+        act(() => { vi.advanceTimersByTime(1500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        const progressFill = container.querySelector('.combat-progress-fill') as HTMLElement;
+        expect(progressFill).not.toBeNull();
+        const width = progressFill?.style.width;
+        expect(width).toBeTruthy();
+        expect(parseFloat(width || '0')).toBeGreaterThan(0);
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    // ─── Phase 2: Auto-resolve warning at 30s ────────────
+
+    it('should not show auto-resolve warning before 30s of combat', () => {
+        vi.useFakeTimers();
+
+        const rounds = 200;
+        const details = Array.from({ length: rounds }, (_, i) => `Round ${i + 1}: Hero hits Villain for ${5 + i} DMG`);
+        const timeline = Array.from({ length: rounds }, (_, i) => ({
+            attackerHp: Math.max(100 - i * 2, 10),
+            defenderHp: Math.max(100 - i * 3, 5),
+        }));
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds,
+            details,
+            timeline,
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit',
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        // Step through phases gradually so React commits state at each step
+        act(() => { vi.advanceTimersByTime(2000); }); // intro fires → phase='vs'
+        act(() => { vi.advanceTimersByTime(1000); }); // vs timer fires at ~900ms into vs
+        act(() => { vi.advanceTimersByTime(1000); }); // entrance timer → phase='combat'
+        act(() => { vi.advanceTimersByTime(5000); }); // 5s into combat, before 30s warning
+
+        expect(container.querySelector('.auto-resolve-banner')).toBeNull();
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should show auto-resolve warning after 30s of combat', () => {
+        vi.useFakeTimers();
+
+        const rounds = 200;
+        const details = Array.from({ length: rounds }, (_, i) => `Round ${i + 1}: Hero hits Villain for ${5 + i} DMG`);
+        const timeline = Array.from({ length: rounds }, (_, i) => ({
+            attackerHp: Math.max(100 - i * 2, 10),
+            defenderHp: Math.max(100 - i * 3, 5),
+        }));
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'defender',
+            rounds,
+            details,
+            timeline,
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit',
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        // Step through phases gradually
+        act(() => { vi.advanceTimersByTime(2000); }); // intro fires → phase='vs'
+        act(() => { vi.advanceTimersByTime(1000); }); // vs timer fires → fighterEntrance + nested timer
+        act(() => { vi.advanceTimersByTime(1000); }); // nested timer → phase='combat'
+        // Now combat phase auto-resolve timer is set at current time (~4000ms) for 30000ms
+        act(() => { vi.advanceTimersByTime(30000); }); // auto-resolve fires at ~34000ms (4000+30000)
+
+        const banner = container.querySelector('.auto-resolve-banner') as HTMLElement;
+        expect(banner).not.toBeNull();
+
+        // Hard timeout at 45000ms hasn't fired yet ✓
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should skip to result phase when auto-resolve is clicked', () => {
+        vi.useFakeTimers();
+
+        const rounds = 200;
+        const details = Array.from({ length: rounds }, (_, i) => `Round ${i + 1}: Hero hits Villain for ${5 + i} DMG`);
+        const timeline = Array.from({ length: rounds }, (_, i) => ({
+            attackerHp: Math.max(100 - i * 2, 10),
+            defenderHp: Math.max(100 - i * 3, 5),
+        }));
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds,
+            details,
+            timeline,
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit',
+        });
+
+        vi.spyOn(xpUtils, 'calculateFightXp').mockReturnValue(75);
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); }); // intro fires → phase='vs'
+        act(() => { vi.advanceTimersByTime(1000); }); // vs timer fires
+        act(() => { vi.advanceTimersByTime(1000); }); // phase='combat'
+        act(() => { vi.advanceTimersByTime(30000); }); // auto-resolve fires
+
+        const autoResolveBtn = container.querySelector('.auto-resolve-btn') as HTMLElement;
+        expect(autoResolveBtn).not.toBeNull();
+
+        act(() => {
+            fireEvent.click(autoResolveBtn);
+        });
+
+        // After auto-resolve, the result phase should show XP
+        expect(screen.getByText('+75 XP')).toBeInTheDocument();
 
         vi.useRealTimers();
         vi.restoreAllMocks();

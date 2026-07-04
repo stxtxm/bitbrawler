@@ -65,6 +65,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const [scanLocked, setScanLocked] = useState(false);
     const [fighterEntrance, setFighterEntrance] = useState(false);
     const [animFrame, setAnimFrame] = useState(0);
+    const [showAutoResolve, setShowAutoResolve] = useState(false);
 
     const leftLayerRef = useRef<HTMLDivElement | null>(null);
     const rightLayerRef = useRef<HTMLDivElement | null>(null);
@@ -144,6 +145,20 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
             window.clearTimeout(hardTimeoutRef.current);
             hardTimeoutRef.current = null;
         }
+    }, [phase]);
+
+    // Auto-resolve warning timer — shows "Le combat s'éternise..." after 30s in combat phase
+    useEffect(() => {
+        if (phase !== 'combat') {
+            setShowAutoResolve(false);
+            return;
+        }
+
+        const warningTimer = window.setTimeout(() => {
+            setShowAutoResolve(true);
+        }, COMBAT_BALANCE.autoResolveWarningMs);
+
+        return () => window.clearTimeout(warningTimer);
     }, [phase]);
 
     useEffect(() => {
@@ -329,6 +344,11 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
         });
     }, [currentRound, phase]);
 
+    const handleAutoResolve = () => {
+        if (phase !== 'combat') return;
+        setPhase('result');
+    };
+
     const handleFinish = async () => {
         if (!combatResult) return;
 
@@ -477,6 +497,15 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                 </div>
                             </div>
                         </div>
+                        <div className="combat-progress-section">
+                            <div className="round-counter">
+                                <span className="round-label">ROUND</span>
+                                <span className="round-value">{Math.min(currentRound + 1, combatResult.details.length)}/{combatResult.details.length}</span>
+                            </div>
+                            <div className="combat-progress-bar">
+                                <div className="combat-progress-fill" style={{ width: `${Math.min(100, ((currentRound + 1) / combatResult.details.length) * 100)}%` }} />
+                            </div>
+                        </div>
                         <div className="combat-log" ref={logRef}>
                             {combatResult.details.slice(0, currentRound + 1).map((detail, idx) => (
                                 <div key={idx} className={`log-entry ${idx === currentRound ? `active action-${extractActionColor(detail)}` : ''}`}>
@@ -484,6 +513,14 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                 </div>
                             ))}
                         </div>
+                        {showAutoResolve && (
+                            <div className="auto-resolve-banner">
+                                <span className="auto-resolve-text">⚔️ Le combat s'éternise...</span>
+                                <button className="auto-resolve-btn" onClick={handleAutoResolve}>
+                                    Auto-resolve ⏩
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
                 {phase === 'result' && combatResult && (

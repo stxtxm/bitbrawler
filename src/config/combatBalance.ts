@@ -19,8 +19,12 @@ export const COMBAT_BALANCE = {
   maxDurationMs: 30000,
   /** Hard watchdog timeout for the overall fight cycle (incl. UI animation).
    *  If a fight exceeds this wall-clock limit, the combat loop force-finishes
-   *  and resets the scene to prevent indefinite hangs. */
-  fightHardTimeoutMs: 60000,
+   *  and resets the scene to prevent indefinite hangs.
+   *  Reduced from 60s to 45s for better UX — fewer QA timeouts. */
+  fightHardTimeoutMs: 45000,
+  /** Threshold (in ms) after which an auto-resolve warning appears during combat.
+   *  When combat exceeds this duration, players see a suggestion to skip to result. */
+  autoResolveWarningMs: 30000,
   comeback: {
     hpThresholdRatio: 0.35,
     hitBonus: 2,

@@ -588,3 +588,107 @@
 .log-entry.active.action-magic   { color: #5eead4; text-shadow: 0 0 6px rgba(94,234,212,0.4); }
 .log-entry.active.action-miss    { color: #9aa0a6; }
 .log-entry.active.action-counter { color: #ff6b6b; text-shadow: 0 0 6px rgba(255,107,107,0.4); }
+
+// ============================================
+// Round Counter & Combat Progress Bar
+// ============================================
+
+.combat-progress-section {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.25rem 1rem 0;
+}
+
+.round-counter {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: 'Press Start 2P', monospace;
+    white-space: nowrap;
+}
+
+.round-label {
+    font-size: 0.5rem;
+    color: #ffd700;
+    letter-spacing: 1px;
+}
+
+.round-value {
+    font-size: 0.6rem;
+    color: #fff;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+}
+
+.combat-progress-bar {
+    flex: 1;
+    height: 6px;
+    border: 1px solid #333;
+    background: #1b1b1b;
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: inset 0 0 4px rgba(0,0,0,0.5);
+}
+
+.combat-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffd700 0%, #ffed4e 100%);
+    border-radius: 2px;
+    transition: width 0.35s ease;
+    box-shadow: 0 0 6px rgba(255,215,0,0.5);
+}
+
+// ============================================
+// Auto-resolve Warning Banner
+// ============================================
+
+.auto-resolve-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 0.6rem 1rem;
+    background: rgba(255, 107, 107, 0.15);
+    border: 2px solid #ff6b6b;
+    border-radius: 4px;
+    animation: warningPulse 1.5s ease-in-out infinite;
+}
+
+.auto-resolve-text {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.55rem;
+    color: #ff6b6b;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+    letter-spacing: 1px;
+}
+
+.auto-resolve-btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+    color: #fff;
+    border: 2px solid #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auto-resolve-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 12px rgba(255, 107, 107, 0.6);
+}
+
+.auto-resolve-btn:active {
+    transform: scale(0.95);
+}
+
+@keyframes warningPulse {
+    0%, 100% {
+        box-shadow: 0 0 6px rgba(255, 107, 107, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 14px rgba(255, 107, 107, 0.4);
+    }
+}
