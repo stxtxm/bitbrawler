@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Character } from '../types/Character'
 import { MonsterId } from '../data/monsterAssets'
 import { ScenePhase } from '../types/IdleCombat'
-import { AnimatedPixelCharacter } from './AnimatedPixelCharacter'
+import { PixelCharacter } from './PixelCharacter'
 import { PixelMonster } from './PixelMonster'
 import { ParticleSystem } from '../utils/particleSystem'
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode'
@@ -61,7 +61,6 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
 }: IdleRunnerSceneProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const particlesRef = useRef<ParticleSystem | null>(null)
-  const [animFrame, setAnimFrame] = useState(0)
   const [showLevelUpFx, setShowLevelUpFx] = useState(false)
   const [levelUpLevel, setLevelUpLevel] = useState(0)
   const [screenShake, setScreenShake] = useState(false)
@@ -76,13 +75,6 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     if (w < 640) return 6
     if (w < 768) return 7
     return 8
-  }, [])
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setAnimFrame(prev => prev + 1)
-    }, 80)
-    return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {
@@ -156,7 +148,6 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     return () => clearTimeout(timer)
   }, [recentLevelUp, lowPerf])
 
-  const characterState = scenePhase === 'combat' ? 'attacking' : 'running'
   const showBigXp = scenePhase === 'result' && lastCombatXp > 0
   const showStreakBanner = streakMilestone !== null && scenePhase === 'result' && lastCombatResult === 'win'
 
@@ -165,12 +156,10 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
       {/* clouds rendered inside ProceduralTerrain canvas */}
 
       <div className={`idle-character-slot ${scenePhase === 'combat' ? 'attacking' : ''} ${scenePhase === 'result' && lastCombatResult === 'win' ? 'victory' : ''} ${showLevelUpFx ? 'glow-levelup' : ''}`}>
-        <AnimatedPixelCharacter
+        <PixelCharacter
           seed={character.seed}
           gender={character.gender}
           scale={charScale}
-          state={characterState}
-          frame={animFrame}
         />
         {showLevelUpFx && (
           <div className="levelup-float-text">

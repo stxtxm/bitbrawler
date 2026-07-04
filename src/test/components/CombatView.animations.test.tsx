@@ -112,9 +112,9 @@ describe('CombatView Animation Overhaul', () => {
         expect(rightFighter?.classList.contains('defeated')).toBe(true);
     });
 
-    // ─── Stage 2: AnimatedPixelCharacter states ────────────
+    // ─── Stage 2: PixelCharacter rendering ────────────
 
-    it('should render AnimatedPixelCharacter with char-idle state when standing still', () => {
+    it('should render PixelCharacter for fighters in combat', () => {
         vi.useFakeTimers();
 
         vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
@@ -137,11 +137,8 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(2500); });
         act(() => { vi.advanceTimersByTime(1500); });
 
-        const charSvgs = container.querySelectorAll('.pixel-character-animated');
+        const charSvgs = container.querySelectorAll('.pixel-character');
         expect(charSvgs.length).toBeGreaterThan(0);
-        charSvgs.forEach(svg => {
-            expect(svg.classList.contains('char-idle')).toBe(true);
-        });
     });
 
     it('should apply defeated class to losing fighter during combat phase', () => {

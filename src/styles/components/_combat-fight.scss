@@ -95,8 +95,7 @@
     border: 2px solid #4ecdc4; border-radius: 4px;
 }
 
-.combat-fighters .pixel-character,
-.combat-fighters .pixel-character-animated { width: 72px; height: 108px; }
+.combat-fighters .pixel-character { width: 72px; height: 108px; }
 
 .fighter-character-wrap {
     position: relative;
@@ -298,7 +297,7 @@
     pointer-events: none;
 }
 
-.fighter-side.defeated .pixel-character-animated {
+.fighter-side.defeated .pixel-character {
     filter: grayscale(0.6) brightness(0.5);
 }
 
@@ -508,43 +507,6 @@
     50% { transform: scaleX(1.02); filter: brightness(1.2); }
 }
 
-// ============================================
-// Idle Breathing Animation
-// ============================================
-
-.char-idle.pixel-character-animated {
-    animation: idleBreath 3s ease-in-out infinite;
-}
-
-@keyframes idleBreath {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-1px); }
-}
-
-@include small-mobile {
-    .char-idle.pixel-character-animated {
-        animation: idleBreath 4s ease-in-out infinite;
-    }
-}
-
-// ============================================
-// Attacking Animation — synchronized with frame cycle
-// 4 frames × 80ms = 320ms per cycle (attack1→attack2→attack3→attack2)
-// ============================================
-
-.char-attacking.pixel-character-animated {
-    animation: attackSurge 0.32s ease infinite;
-}
-
-@keyframes attackSurge {
-    0%   { transform: translateX(0) scale(1); }
-    25%  { transform: translateX(1px) scale(1.04); } /* attack1 wind-up */
-    50%  { transform: translateX(2px) scale(1.01); } /* attack2 strike */
-    75%  { transform: translateX(1px) scale(0.98); } /* attack3 recovery */
-    100% { transform: translateX(0) scale(1); }
-}
-
-// ============================================
 // Fighter Entrance
 // ============================================
 

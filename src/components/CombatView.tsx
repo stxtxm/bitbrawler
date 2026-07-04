@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Character } from '../types/Character';
-import { AnimatedPixelCharacter } from './AnimatedPixelCharacter';
 import { PixelCharacter } from './PixelCharacter';
 import { PixelMonster } from './PixelMonster';
 import { PixelIcon } from './PixelIcon';
@@ -64,7 +63,6 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const [scanIndex, setScanIndex] = useState(0);
     const [scanLocked, setScanLocked] = useState(false);
     const [fighterEntrance, setFighterEntrance] = useState(false);
-    const [animFrame, setAnimFrame] = useState(0);
     const [showAutoResolve, setShowAutoResolve] = useState(false);
 
     const leftLayerRef = useRef<HTMLDivElement | null>(null);
@@ -86,15 +84,6 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     }, [candidates, opponent]);
 
     const selectedKey = opponent.id || opponent.name;
-
-    // Animation frame counter for character animation
-    useEffect(() => {
-        if (phase !== 'combat' && phase !== 'vs') return;
-        const interval = setInterval(() => {
-            setAnimFrame(prev => prev + 1);
-        }, 80);
-        return () => clearInterval(interval);
-    }, [phase]);
 
     useEffect(() => {
         if (leftLayerRef.current && !leftParticleSystemRef.current) {
@@ -396,10 +385,6 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const showPlayerDefeat = (phase === 'combat' && isLastRound && combatResult?.winner === 'defender') || playerDefeated;
     const showOpponentDefeat = (phase === 'combat' && isLastRound && combatResult?.winner === 'attacker') || opponentDefeated;
 
-    // Character animation states
-    const playerCharState = playerDefeated ? 'dead' : actionPulse?.actor === 'player' ? 'attacking' : 'idle';
-    const opponentCharState = opponentDefeated ? 'dead' : actionPulse?.actor === 'opponent' ? 'attacking' : 'idle';
-
     return (
         <div className="combat-overlay" onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()}>
             <div className="combat-modal">
@@ -441,7 +426,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                 {phase === 'vs' && (
                     <div className="combat-vs">
                         <div className="vs-fighter vs-left">
-                            <AnimatedPixelCharacter seed={player.seed} gender={player.gender} scale={8} state="idle" frame={animFrame} />
+                            <PixelCharacter seed={player.seed} gender={player.gender} scale={8} />
                             <div className="vs-fighter-name">{player.name}</div>
                             <div className="vs-fighter-lvl">LVL {player.level}</div>
                         </div>
@@ -460,7 +445,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                     })()}
                                 </div>
                             ) : (
-                                <AnimatedPixelCharacter seed={opponent.seed} gender={opponent.gender} scale={8} state="idle" frame={animFrame} />
+                                <PixelCharacter seed={opponent.seed} gender={opponent.gender} scale={8} />
                             )}
                             <div className="vs-fighter-name">{opponent.name}</div>
                             <div className="vs-fighter-lvl">LVL {opponent.level}</div>
@@ -472,7 +457,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                         <div className="combat-fighters">
                             <div key={`player-${currentRound}`} className={`fighter-side left${fighterEntrance ? ' enter-left' : ''}${actionPulse?.actor === 'player' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'opponent' ? ` react-${reactionType}` : ''}${showPlayerDefeat ? ' defeated' : ''}`}>
                                 <div className="fighter-character-wrap">
-                                    <AnimatedPixelCharacter seed={player.seed} gender={player.gender} scale={6} state={playerCharState} frame={animFrame} />
+                                    <PixelCharacter seed={player.seed} gender={player.gender} scale={6} />
                                     <div className="fighter-shadow" />
                                 </div>
                                 <div className="fighter-name-small">{player.name}</div>
@@ -486,7 +471,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                     {matchType === 'pve' && monsterId ? (
                                         <PixelMonster monsterId={monsterId} scale={5} />
                                     ) : (
-                                        <AnimatedPixelCharacter seed={opponent.seed} gender={opponent.gender} scale={6} state={opponentCharState} frame={animFrame} />
+                                        <PixelCharacter seed={opponent.seed} gender={opponent.gender} scale={6} />
                                     )}
                                     <div className="fighter-shadow" />
                                 </div>
