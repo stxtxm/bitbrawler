@@ -286,6 +286,46 @@ function computePity(item: PixelItemAsset | null, currentPity: number): number {
   return item.rarity === 'legendary' ? 0 : currentPity + 1;
 }
 
+/**
+ * Simplified lootbox roll — no streak bonus, no pity, no double roll.
+ * Used by the shop for the Coffre Mystère purchase.
+ * Uses level-based rarity weights and a simple single roll.
+ */
+export function rollSimpleLootbox(
+  items: PixelItemAsset[],
+  level: number,
+  rng?: () => number,
+): PixelItemAsset | null {
+  const rand = rng ?? Math.random;
+  const eligible = items.filter((item) => item.requiredLevel <= level);
+  if (!eligible.length) return null;
+
+  const weights = getLootboxRarityWeights(level);
+  const rarities: ItemRarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
+
+  const itemsByRarity = rarities.reduce<Record<ItemRarity, PixelItemAsset[]>>((acc, r) => {
+    acc[r] = eligible.filter((item) => item.rarity === r);
+    return acc;
+  }, {} as Record<ItemRarity, PixelItemAsset[]>);
+
+  const available = rarities.filter((r) => itemsByRarity[r].length > 0 && (weights[r] ?? 0) > 0);
+  if (!available.length) return null;
+
+  const totalWeight = available.reduce((sum, r) => sum + (weights[r] ?? 0), 0);
+  const roll = rand() * totalWeight;
+  let cursor = 0;
+
+  for (const rarity of available) {
+    cursor += weights[rarity] ?? 0;
+    if (roll <= cursor) {
+      const pool = itemsByRarity[rarity];
+      return pool[Math.floor(rand() * pool.length)];
+    }
+  }
+
+  return null;
+}
+
 export function rollLootbox(
   items: PixelItemAsset[],
   options: RollLootboxOptions = {}

@@ -68,6 +68,6 @@ export const LUCKY_PROC_CHANCE = 0.1;
 
 /**
  * Soft cap for essence — excess beyond this is discarded.
- * Raised to 500 to accommodate higher quadratic upgrade costs.
+ * Raised to 750 to accommodate shop purchases (up to 500) + upgrade costs.
  */
-export const ESSENCE_SOFT_CAP = 500;
+export const ESSENCE_SOFT_CAP = 750;

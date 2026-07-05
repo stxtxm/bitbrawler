@@ -4,9 +4,10 @@ import { useGame } from '../context/GameContext';
 import { SalvagePanel } from '../components/forge/SalvagePanel';
 import { FusionPanel } from '../components/forge/FusionPanel';
 import { UpgradePanel } from '../components/forge/UpgradePanel';
+import { ShopPanel } from '../components/forge/ShopPanel';
 import '../styles/forge.scss';
 
-type ForgeTab = 'salvage' | 'fusion' | 'upgrade';
+type ForgeTab = 'salvage' | 'fusion' | 'upgrade' | 'shop';
 
 const Forge = () => {
   const navigate = useNavigate();
@@ -68,6 +69,15 @@ const Forge = () => {
         >
           ✨ Upgrade
         </button>
+        <button
+          className={`forge-tab ${activeTab === 'shop' ? 'active' : ''}`}
+          onClick={() => handleTabChange('shop')}
+          role="tab"
+          aria-selected={activeTab === 'shop'}
+          aria-controls="forge-panel-shop"
+        >
+          🏪 Shop
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -92,6 +102,13 @@ const Forge = () => {
           hidden={activeTab !== 'upgrade'}
         >
           {activeTab === 'upgrade' && <UpgradePanel onClose={handleBack} />}
+        </div>
+        <div
+          id="forge-panel-shop"
+          role="tabpanel"
+          hidden={activeTab !== 'shop'}
+        >
+          {activeTab === 'shop' && <ShopPanel onClose={handleBack} />}
         </div>
       </div>
     </div>

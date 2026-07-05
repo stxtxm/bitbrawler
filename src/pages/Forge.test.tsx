@@ -202,15 +202,16 @@ describe('Forge Page', () => {
 
     // Get all tabpanels
     const tabpanels = screen.getAllByRole('tabpanel', { hidden: true });
-    // There should be 3 tabpanels
-    expect(tabpanels.length).toBe(3);
+    // There should be 4 tabpanels
+    expect(tabpanels.length).toBe(4);
 
     // First tabpanel (salvage) should be visible (no hidden attr)
     expect(tabpanels[0]).not.toHaveAttribute('hidden');
 
-    // Second and third should be hidden
+    // Second, third and fourth should be hidden
     expect(tabpanels[1]).toHaveAttribute('hidden');
     expect(tabpanels[2]).toHaveAttribute('hidden');
+    expect(tabpanels[3]).toHaveAttribute('hidden');
   });
 
   it('renders correctly on mobile viewport', () => {
