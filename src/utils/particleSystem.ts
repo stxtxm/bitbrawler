@@ -1,4 +1,4 @@
-export type ParticleType = 'dust' | 'spark' | 'xp_star' | 'damage' | 'hit_ring' | 'crit' | 'miss' | 'heal' | 'hit' | 'magic' | 'rare_reveal' | 'confetti' | 'combo' | 'xp_burst';
+export type ParticleType = 'dust' | 'spark' | 'xp_star' | 'damage' | 'hit_ring' | 'crit' | 'miss' | 'heal' | 'hit' | 'magic' | 'rare_reveal' | 'confetti' | 'combo' | 'xp_burst' | 'spark_burst' | 'blood_pixel' | 'blocked' | 'counter_text' | 'dodge';
 
 interface ParticleDef {
   x: number;
@@ -30,6 +30,11 @@ const PARTICLE_COLORS: Record<ParticleType, string[]> = {
   confetti: ['#FFD700', '#FFC107', '#FF8C00', '#FFA500', '#FF6B35'],
   combo: ['#FFD700', '#FF6B6B', '#FF69B4', '#00D4FF'],
   xp_burst: ['#FFD700', '#FFC107', '#FFA500', '#FF6B6B'],
+  spark_burst: ['#FFD700', '#FFFFFF', '#FFA500', '#FF6B6B'],
+  blood_pixel: ['#CC0000', '#FF0000', '#8B0000', '#DC143C'],
+  blocked: ['#9AA0A6', '#B0B0B0', '#808080'],
+  counter_text: ['#FF8C00', '#FFA500', '#FF6B00'],
+  dodge: ['#4FC3F7', '#29B6F6', '#03A9F4'],
 };
 
 const pickColor = (type: ParticleType): string => {
@@ -249,6 +254,55 @@ export class ParticleSystem {
           color: pickColor('xp_burst'),
         };
       }
+      case 'spark_burst': {
+        const burstAngle = (index / total) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
+        const burstSpeed = 3 + Math.random() * 4;
+        return {
+          x, y,
+          vx: Math.cos(burstAngle) * burstSpeed,
+          vy: Math.sin(burstAngle) * burstSpeed - 1,
+          life: 350, maxLife: 350, size: 2 + Math.random() * 2,
+          color: pickColor('spark_burst'),
+        };
+      }
+      case 'blood_pixel': {
+        const bloodAngle = (index / total) * Math.PI + Math.random() * 0.5;
+        const bloodSpeed = 1.5 + Math.random() * 2;
+        return {
+          x, y,
+          vx: Math.cos(bloodAngle) * bloodSpeed,
+          vy: Math.sin(bloodAngle) * bloodSpeed - 2,
+          life: 600, maxLife: 600, size: 2 + Math.random() * 2,
+          color: pickColor('blood_pixel'),
+        };
+      }
+      case 'blocked':
+        return {
+          x, y,
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: -0.8,
+          life: 1200, maxLife: 1200, size: 3,
+          color: PARTICLE_COLORS.blocked[0],
+          text: 'BLOCKED!',
+        };
+      case 'counter_text':
+        return {
+          x, y,
+          vx: (Math.random() - 0.5) * 0.5,
+          vy: -1.5,
+          life: 1000, maxLife: 1000, size: 3,
+          color: PARTICLE_COLORS.counter_text[0],
+          text: 'COUNTER!',
+        };
+      case 'dodge':
+        return {
+          x, y,
+          vx: (Math.random() - 0.5) * 1.5,
+          vy: -1.8,
+          life: 1100, maxLife: 1100, size: 3,
+          color: PARTICLE_COLORS.dodge[0],
+          text: 'DODGE!',
+        };
     }
     return null;
   }

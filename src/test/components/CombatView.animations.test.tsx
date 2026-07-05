@@ -573,7 +573,6 @@ describe('CombatView Animation Overhaul', () => {
 
     it('should show screen-flash element on crit action', () => {
         vi.useFakeTimers();
-        // Use many rounds so the crit round is not the KO blow
         const details = Array.from({ length: 10 }, (_, i) =>
             i === 0 ? 'Hero crits Villain for 25 DMG' : `Hero hits Villain for ${5 + i} DMG`
         );
@@ -603,19 +602,14 @@ describe('CombatView Animation Overhaul', () => {
             />
         );
 
-        // Advance to combat phase
         act(() => { vi.advanceTimersByTime(2000); });
         act(() => { vi.advanceTimersByTime(900); });
         act(() => { vi.advanceTimersByTime(500); });
-        // Advance just enough for one combat interval to fire (520ms) but not enough for
-        // the 80ms screen flash timeout to have been cleared yet
         act(() => { vi.advanceTimersByTime(520); });
 
-        // The crit screen-flash should be visible before the 80ms timeout fires
         const flash = container.querySelector('.screen-flash.flash-crit');
         expect(flash).not.toBeNull();
 
-        // Advance past the flash timeout to verify it cleans up
         act(() => { vi.advanceTimersByTime(100); });
         const flashAfter = container.querySelector('.screen-flash.flash-crit');
         expect(flashAfter).toBeNull();
@@ -655,7 +649,6 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(600); });
 
         const combatAction = container.querySelector('.combat-action') as HTMLElement;
-        // When player attacks, shake direction should be -1 (toward player's side, left)
         const shakeDir = combatAction?.style.getPropertyValue('--shake-dir');
         expect(shakeDir).toBe('-1');
 
@@ -694,7 +687,6 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(600); });
 
         const combatAction = container.querySelector('.combat-action') as HTMLElement;
-        // When opponent attacks, shake direction should be 1 (toward opponent's side, right)
         const shakeDir = combatAction?.style.getPropertyValue('--shake-dir');
         expect(shakeDir).toBe('1');
 
@@ -775,5 +767,242 @@ describe('CombatView Animation Overhaul', () => {
         vi.useRealTimers();
         vi.restoreAllMocks();
     });
+
+    // ─── Stage 9: Two-stage health bar ─────────────────────
+
+    it('should render ghost health bar element alongside main fill', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 1,
+            details: ['Hero hits Villain for 20 DMG'],
+            timeline: [{ attackerHp: 100, defenderHp: 80 }]
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        const ghostBars = container.querySelectorAll('.health-bar-ghost');
+        expect(ghostBars.length).toBe(2);
+    });
+
+    it('should have ghost bar with width matching player HP initially', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 0,
+            details: [],
+            timeline: [{ attackerHp: 100, defenderHp: 100 }]
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        const ghostBars = container.querySelectorAll('.health-bar-ghost');
+        expect(ghostBars.length).toBe(2);
+        expect((ghostBars[0] as HTMLElement).style.width).toBe('100%');
+        expect((ghostBars[1] as HTMLElement).style.width).toBe('100%');
+    });
+
+    // ─── Stage 10: Enhanced hit sparks ─────────────────────
+
+    it('should emit spark_burst particles on crit action', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'defender',
+            rounds: 1,
+            details: ['Villain crits Hero for 25 DMG'],
+            timeline: [{ attackerHp: 75, defenderHp: 100 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'opponent',
+            type: 'crit'
+        });
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('spark_burst', expect.any(Number), expect.any(Number), expect.any(Number));
+    });
+
+    it('should emit blood_pixel particles when opponent HP is below 25%', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 1,
+            details: ['Hero hits Villain for 80 DMG'],
+            timeline: [
+                { attackerHp: 100, defenderHp: 100 },
+                { attackerHp: 100, defenderHp: 20 }
+            ]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit'
+        });
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('blood_pixel', expect.any(Number), expect.any(Number), expect.any(Number));
+    });
+
+    // ─── Stage 11: Special floating text ────────────────────
+
+    it('should emit counter_text particle on counter action', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'defender',
+            rounds: 1,
+            details: ['Villain counter 12 DMG'],
+            timeline: [{ attackerHp: 88, defenderHp: 100 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'opponent',
+            type: 'counter'
+        });
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('counter_text', expect.any(Number), expect.any(Number), expect.any(Number));
+    });
+
+    it('should emit blocked particle on regular hit action', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 1,
+            details: ['Hero hits Villain for 12 DMG'],
+            timeline: [{ attackerHp: 100, defenderHp: 88 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit'
+        });
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('blocked', expect.any(Number), expect.any(Number), expect.any(Number));
+    });
+
+    it('should emit dodge particle on miss action', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'defender',
+            rounds: 1,
+            details: ['Villain missed!'],
+            timeline: [{ attackerHp: 100, defenderHp: 100 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'opponent',
+            type: 'miss'
+        });
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('dodge', expect.any(Number), expect.any(Number), expect.any(Number));
+    });
+
+    // ─── Stage 12: Low performance mode ────────────────────
+    // Note: Low-perf testing is done via the existing mock infrastructure.
+    // The spark_burst emission is only expected when !lowPerf (default).
+    // When lowPerf is true (mocked), the CombatView skips all non-damage VFX.
 
 });
