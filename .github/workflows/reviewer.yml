@@ -91,6 +91,38 @@ jobs:
           git config user.name "opencode-agent"
           git config user.email "agent@opencode.ai"
 
+      - name: Verify branch integrity before review
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number || github.event.inputs.pr_number }}"
+          HEAD_REF=$(gh pr view "$PR_NUMBER" --json headRefName --jq '.headRefName // ""' 2>/dev/null || echo "")
+
+          if [ -z "$HEAD_REF" ]; then
+            echo "⚠ Could not determine head ref — skipping integrity check"
+            exit 0
+          fi
+
+          echo "🔍 Checking out PR branch: $HEAD_REF"
+          git fetch origin "$HEAD_REF"
+          git checkout "$HEAD_REF" 2>/dev/null || git checkout -b "$HEAD_REF" "origin/$HEAD_REF"
+
+          echo "🔍 Checking for merge conflict markers..."
+          if grep -rn '<<<<<<<\|=======\|>>>>>>>' --include='*.ts' --include='*.tsx' --include='*.json' src/; then
+            echo "❌ Conflict markers found — requesting changes"
+            gh pr review "$PR_NUMBER" --request-changes --body "❌ Des marqueurs de conflit (\`<<<<<<<\`) sont présents dans le code. Le merge auto a échoué. Merci de rebase manuellement sur master et de résoudre les conflits."
+            exit 1
+          fi
+          echo "✅ No conflict markers found"
+
+          echo "🔍 Checking TypeScript compilation..."
+          if ! npx tsc --noEmit; then
+            echo "❌ TypeScript errors — preventing merge"
+            gh pr review "$PR_NUMBER" --request-changes --body "❌ Le code contient des erreurs TypeScript. Le merge automatique a probablement corrompu des fichiers (conflits silencieux). Merci de corriger et repousser."
+            exit 1
+          fi
+          echo "✅ TypeScript compilation clean — branch ready for review"
+
       - name: Run Reviewer agent
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}

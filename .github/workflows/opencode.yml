@@ -133,6 +133,22 @@ jobs:
           fi
           echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
 
+      - name: Verify rebase integrity
+        run: |
+          echo "🔍 Checking for merge conflict markers..."
+          if grep -rn '<<<<<<<\|=======\|>>>>>>>' --include='*.ts' --include='*.tsx' src/; then
+            echo "❌ Merge conflict markers found after rebase — aborting to prevent corrupted push"
+            exit 1
+          fi
+          echo "✅ No conflict markers found"
+
+          echo "🔍 Checking TypeScript compilation..."
+          if ! npx tsc --noEmit; then
+            echo "❌ TypeScript errors detected after rebase — merge auto may have corrupted files"
+            exit 1
+          fi
+          echo "✅ TypeScript compilation clean"
+
       - name: Check for existing PR
         id: check_pr
         env:
@@ -339,6 +355,9 @@ jobs:
             npm run lint -- --fix 2>/dev/null || true
             npm run lint > /tmp/lint_out.txt 2>&1 && LINT_OK=true || LINT_OK=false
 
+            # TypeScript check
+            npx tsc --noEmit > /tmp/tsc_out.txt 2>&1 && TSC_OK=true || TSC_OK=false
+
             # Tests
             npm test > /tmp/test_out.txt 2>&1 && TEST_OK=true || TEST_OK=false
 
@@ -347,10 +366,11 @@ jobs:
 
             # Print results
             [ "$LINT_OK" = true ] && echo "✅ Lint passed" || echo "❌ Lint failed"
+            [ "$TSC_OK" = true ] && echo "✅ TypeScript check passed" || echo "❌ TypeScript check failed"
             [ "$TEST_OK" = true ] && echo "✅ Tests passed" || echo "❌ Tests failed"
             [ "$BUILD_OK" = true ] && echo "✅ Build passed" || echo "❌ Build failed"
 
-            if [ "$LINT_OK" = true ] && [ "$TEST_OK" = true ] && [ "$BUILD_OK" = true ]; then
+            if [ "$LINT_OK" = true ] && [ "$TSC_OK" = true ] && [ "$TEST_OK" = true ] && [ "$BUILD_OK" = true ]; then
               echo "✅ All checks passed!"
               exit 0
             fi
@@ -358,6 +378,7 @@ jobs:
             if [ "$ATTEMPT" -ge "$MAX_RETRIES" ]; then
               echo "❌ Validation failed after $((MAX_RETRIES+1)) attempts — giving up"
               cat /tmp/lint_out.txt
+              cat /tmp/tsc_out.txt
               cat /tmp/test_out.txt
               cat /tmp/build_out.txt
               exit 1
@@ -376,6 +397,11 @@ jobs:
             if [ "$LINT_OK" != true ]; then
               echo "### ❌ Lint errors" >> /tmp/fix_prompt.txt
               cat /tmp/lint_out.txt >> /tmp/fix_prompt.txt
+              echo "" >> /tmp/fix_prompt.txt
+            fi
+            if [ "$TSC_OK" != true ]; then
+              echo "### ❌ TypeScript errors" >> /tmp/fix_prompt.txt
+              cat /tmp/tsc_out.txt >> /tmp/fix_prompt.txt
               echo "" >> /tmp/fix_prompt.txt
             fi
             if [ "$TEST_OK" != true ]; then
