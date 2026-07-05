@@ -150,6 +150,9 @@ jobs:
             gh label create "campaign-$ISSUE_NUMBER" --color "fbca04" --description "Campaign parent: #$ISSUE_NUMBER" 2>/dev/null || true
           echo "✓ campaign-$ISSUE_NUMBER label ready"
 
+      - name: Mark issue scan start
+        run: echo "SCAN_START=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+
       - name: Run Supervisor agent
         if: github.event.inputs.mode == 'supervisor'
         env:
@@ -194,9 +197,43 @@ jobs:
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ env.ISSUE_NUMBER }}
         run: |
-          PROMPT=$(cat /tmp/prompt.txt | tr -d "'" | xargs)
-          
+          ISSUE_BODY=$(cat /tmp/prompt.txt)
+          ISSUE_TITLE=$(cat /tmp/issue-title.txt)
+
+          PROMPT="
+          Tu es le dev agent de Bitbrawler.
+
+          ## Issue #${ISSUE_NUMBER}
+          Titre: ${ISSUE_TITLE}
+          Description: ${ISSUE_BODY}
+
+          ## Règles
+          - Écris du code clean, testé, sans commentaires
+          - Exécute les tests (npm test) et le build (npm run build)
+          - Ne modifie PAS .github/workflows/*.yml
+
+          ## Feature complexe ? Crée une campagne
+          Si le changement demandé nécessite PLUSIEURS étapes ou fichiers (ex: nouvelle fonctionnalité complète) :
+          1. Découpe en sous-tâches (issues GitHub) via gh issue create
+          2. Chaque sous-tâche DOIT contenir /oc dans son body pour être auto-dispatchée
+          3. Ajoute le label campaign-${ISSUE_NUMBER} à chaque sous-tâche
+          4. Ne code QUE ce qui peut être fait en un seul bloc logique
+          5. Le reste sera traité automatiquement via les sous-issues
+
+          Exemple de sous-issue :
+          gh issue create \\
+            --title \"feat: ajouter le système de quêtes quotidiennes - base de données\" \\
+            --label \"campaign-${ISSUE_NUMBER}\" \\
+            --body 'Créer les tables Supabase pour les quêtes quotidiennes... /oc'
+
+          ## Instructions techniques
+          - N'ajoute PAS de commentaires dans le code
+          - N'utilise PAS le type 'any'
+          - Suis les conventions du projet (fichiers voisins, structure existante)
+          "
+
           MODELS=(
             "opencode/deepseek-v4-flash-free"
           )
@@ -438,33 +475,45 @@ jobs:
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_OUTPUT
           echo "✓ PR #$PR_NUMBER: $PR_URL"
 
-      - name: Dispatch sub-issues
-        if: success() && github.event.inputs.mode != 'supervisor' && steps.pr_create.outputs.PR_NUMBER != ''
+      - name: Dispatch newly created /oc issues
+        if: success() && github.event.inputs.mode != 'supervisor'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          echo "🔍 Checking for sub-issues to dispatch..."
-          SUB_ISSUES=$(gh issue list --label auto-generated --state open --json number --jq '.[].number' 2>/dev/null || echo "")
-          if [ -z "$SUB_ISSUES" ]; then
-            echo "No sub-issues found"
-            exit 0
-          fi
-          for ISSUE in $SUB_ISSUES; do
-            if [ "$ISSUE" = "$ISSUE_NUMBER" ]; then
-              echo "⏭️  Skipping current issue #$ISSUE (prevents re-dispatch loop)"
+          echo "🔍 Scanning for new issues with /oc created by agent..."
+          ISSUES_FILE=/tmp/opencode-fresh-issues.txt
+
+          gh api "repos/${GITHUB_REPOSITORY}/issues?state=open&sort=created&direction=desc&per_page=100&since=${SCAN_START}" \
+            --jq '.[] | select(.pull_request | not) | @base64' > "$ISSUES_FILE"
+
+          FOUND=0
+          while IFS= read -r row; do
+            [ -z "$row" ] && continue
+
+            json=$(printf '%s' "$row" | base64 --decode)
+            number=$(echo "$json" | jq -r '.number')
+            body=$(echo "$json" | jq -r '.body // ""')
+
+            # Skip the current issue (prevent re-dispatch loop)
+            [ "$number" = "$ISSUE_NUMBER" ] && continue
+
+            # Only dispatch if body contains /oc or /opencode
+            if ! printf '%s' "$body" | grep -qiE '(^|[[:space:]])/(oc|opencode)($|[[:space:]])'; then
               continue
             fi
-            HAS_DISPATCHED=$(gh issue view "$ISSUE" --json labels --jq '[.labels[].name] | any(. == "dispatched")' 2>/dev/null || echo "false")
-            if [ "$HAS_DISPATCHED" = "true" ]; then
-              echo "⏭️  Issue #$ISSUE already dispatched, skipping"
-              continue
-            fi
-            echo "Dispatching sub-issue #$ISSUE..."
-            gh issue edit "$ISSUE" --add-label dispatched 2>/dev/null || true
-            gh workflow run opencode.yml -f issue_number="$ISSUE" --repo "${{ github.repository }}"
-            echo "✓ Dispatched #$ISSUE"
+
+            # Mark as dispatched and trigger workflow
+            echo "Dispatching issue #$number..."
+            gh issue edit "$number" --add-label dispatched 2>/dev/null || true
+            gh workflow run opencode.yml -f issue_number="$number" --repo "${{ github.repository }}"
+            echo "✓ Dispatched #$number"
+            FOUND=1
             sleep 2
-          done
+          done < "$ISSUES_FILE"
+
+          if [ "$FOUND" -eq 0 ]; then
+            echo "ℹ No new /oc issues found since scan start"
+          fi
 
       - name: Trigger CI workflow
         if: steps.pr_create.outputs.PR_NUMBER != ''

@@ -67,7 +67,21 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   const lowPerf = useLowPerformanceMode()
   const prevPhaseRef = useRef<ScenePhase>('running')
   const characterLevelRef = useRef(character.level)
+  const [animKey, setAnimKey] = useState(0)
   characterLevelRef.current = character.level
+
+  // Browsers freeze CSS @keyframes when tab is hidden and don't always
+  // resume them on return. Force a remount of the character slot to
+  // restart the running animation cleanly.
+  useEffect(() => {
+    const handler = () => {
+      if (document.visibilityState === 'visible') {
+        setAnimKey(prev => prev + 1)
+      }
+    }
+    document.addEventListener('visibilitychange', handler)
+    return () => document.removeEventListener('visibilitychange', handler)
+  }, [])
 
   const charScale = useMemo(() => {
     const w = typeof window !== 'undefined' ? window.innerWidth : 768
@@ -155,7 +169,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     <div className={`idle-runner-box${screenShake ? ' shake-screen' : ''}`} ref={containerRef}>
       {/* clouds rendered inside ProceduralTerrain canvas */}
 
-      <div className={`idle-character-slot ${scenePhase === 'combat' ? 'attacking' : ''} ${scenePhase === 'result' && lastCombatResult === 'win' ? 'victory' : ''} ${showLevelUpFx ? 'glow-levelup' : ''}`}>
+      <div key={animKey} className={`idle-character-slot ${scenePhase === 'combat' ? 'attacking' : ''} ${scenePhase === 'result' && lastCombatResult === 'win' ? 'victory' : ''} ${showLevelUpFx ? 'glow-levelup' : ''}`}>
         <PixelCharacter
           seed={character.seed}
           gender={character.gender}
