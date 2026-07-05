@@ -300,12 +300,12 @@ export const InventoryPanel = memo(function InventoryPanel({
 
         {lootboxResult && (
           <div
-            className="lootbox-result-overlay"
+            className={`lootbox-result-overlay ${lootboxResult.rarity === 'legendary' ? 'lootbox-result-overlay-legendary' : ''}`}
             role="dialog"
             aria-label="Lootbox reward"
             onClick={onCloseLootboxResult}
           >
-            <div className={`lootbox-result-card rarity-${lootboxResult.rarity}`} onClick={onCloseLootboxResult}>
+            <div className={`lootbox-result-card rarity-${lootboxResult.rarity} ${lootboxResult.rarity === 'epic' ? 'rare-reveal-epic' : ''} ${lootboxResult.rarity === 'legendary' ? 'rare-reveal-legendary' : ''}`} onClick={onCloseLootboxResult}>
               <div className="lootbox-result-glow" />
               <div className="lootbox-result-title">NEW ITEM</div>
               <div className="lootbox-result-item">

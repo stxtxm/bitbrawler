@@ -18,3 +18,7 @@ export function useLowPerformanceMode(): boolean {
     return false
   }, [])
 }
+
+export function useRichEffects(): boolean {
+  return !useLowPerformanceMode();
+}
