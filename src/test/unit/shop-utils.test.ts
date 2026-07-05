@@ -55,6 +55,8 @@ function getTodayStr(): string {
 
 describe('shop-utils (TDD)', () => {
   beforeEach(async () => {
+    const storage = await import('../../utils/shopStorage');
+    storage.clearShopPurchases();
     const mod = await import('../../utils/shopUtils');
     buyShopOffer = mod.buyShopOffer;
     getShopOffers = mod.getShopOffers;
@@ -206,9 +208,10 @@ describe('shop-utils (TDD)', () => {
       expect(isOfferSoldOut(0, char, getTodayStr())).toBe(false);
     });
 
-    it('returns true after purchasing the same offer today', () => {
-      const char = makeCharacter({} as any);
-      (char as any).shopPurchases = { [getTodayStr()]: [true, false, false] };
+    it('returns true after the offer was purchased today (via shopStorage)', async () => {
+      const storage = await import('../../utils/shopStorage');
+      storage.markOfferPurchased('test-char', 0, getTodayStr());
+      const char = makeCharacter({});
       expect(isOfferSoldOut(0, char, getTodayStr())).toBe(true);
     });
 
@@ -220,25 +223,16 @@ describe('shop-utils (TDD)', () => {
   });
 
   describe('resetDailyPurchases', () => {
-    it('does not modify character if today already exists', () => {
-      const char = makeCharacter({} as any);
-      (char as any).shopPurchases = { [getTodayStr()]: [false, false, false] };
+    it('returns the character unchanged (no-op — purchases stored in shopStorage)', () => {
+      const char = makeCharacter({});
       const result = resetDailyPurchases(char, getTodayStr());
       expect(result).toBe(char);
     });
 
-    it('initializes shopPurchases for today if missing', () => {
-      const char = makeCharacter({} as any);
+    it('does not add shopPurchases to the character object', () => {
+      const char = makeCharacter({});
       const result = resetDailyPurchases(char, getTodayStr());
-      expect((result as any).shopPurchases[getTodayStr()]).toEqual([false, false, false]);
-    });
-
-    it('keeps old purchase history when adding new day', () => {
-      const char = makeCharacter({} as any);
-      (char as any).shopPurchases = { '2026-07-04': [true, false, false] };
-      const result = resetDailyPurchases(char, getTodayStr());
-      expect((result as any).shopPurchases['2026-07-04']).toEqual([true, false, false]);
-      expect((result as any).shopPurchases[getTodayStr()]).toEqual([false, false, false]);
+      expect((result as any).shopPurchases).toBeUndefined();
     });
   });
 
@@ -261,10 +255,12 @@ describe('shop-utils (TDD)', () => {
       expect(result!.inventory).toHaveLength(1);
     });
 
-    it('marks the offer as purchased for today', () => {
+    it('marks the offer as purchased for today in shopStorage', async () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
       const result = buyShopOffer(0, char, ITEM_ASSETS, getTodayStr(), () => 0);
-      expect((result as any).shopPurchases[getTodayStr()][0]).toBe(true);
+      expect(result).not.toBeNull();
+      const storage = await import('../../utils/shopStorage');
+      expect(storage.isOfferPurchased('test-char', 0, getTodayStr())).toBe(true);
     });
 
     it('returns null when not enough essence', () => {

@@ -2,6 +2,7 @@ import { Character } from '../types/Character';
 import { PixelItemAsset } from '../types/Item';
 import { SHOP_OFFERS } from '../data/shopConstants';
 import { rollSimpleLootbox } from './lootboxUtils';
+import { isOfferPurchased, markOfferPurchased, loadShopPurchases, saveShopPurchases } from './shopStorage';
 
 export interface ShopOffer {
   index: number;
@@ -110,37 +111,33 @@ export function canBuyOffer(index: number, character: Character): boolean {
 }
 
 /**
- * Check if an offer has already been purchased today.
+ * Check if an offer has already been purchased today (persisted in localStorage).
  */
 export function isOfferSoldOut(
   index: number,
   character: Character,
   dateStr?: string,
 ): boolean {
-  const today = dateStr ?? new Date().toISOString().slice(0, 10);
-  const purchases = (character as any).shopPurchases?.[today];
-  if (!purchases) return false;
-  return purchases[index] === true;
+  return isOfferPurchased(character.id ?? character.seed, index, dateStr);
 }
 
 /**
- * Ensure today's purchase slots exist.
+ * Ensure today's purchase slots exist (no-op with localStorage-backed storage).
  */
 export function resetDailyPurchases(
   character: Character,
-  dateStr?: string,
+  _dateStr?: string,
 ): Character {
-  const today = dateStr ?? new Date().toISOString().slice(0, 10);
-  const shopPurchases = { ...((character as any).shopPurchases ?? {}) };
-  if (shopPurchases[today]) return character;
-
-  return {
-    ...character,
-    shopPurchases: {
-      ...shopPurchases,
-      [today]: [false, false, false],
-    },
-  } as Character;
+  // No-op: purchases stored in localStorage separately.
+  // Only ensure the local storage entry exists for today.
+  const today = _dateStr ?? new Date().toISOString().slice(0, 10);
+  const charId = character.id ?? character.seed;
+  const purchases = loadShopPurchases(charId);
+  if (!purchases[today]) {
+    purchases[today] = [false, false, false];
+    saveShopPurchases(charId, purchases);
+  }
+  return character;
 }
 
 /**
@@ -161,32 +158,28 @@ export function buyShopOffer(
   const offer = SHOP_OFFERS[index];
   if (!offer) return null;
 
-  // Ensure daily purchases tracking
-  const withReset = resetDailyPurchases(character, today);
-
   const cost = offer.price;
-  const newEssence = (withReset.essence ?? 0) - cost;
+  const newEssence = (character.essence ?? 0) - cost;
 
   let newInventory: string[];
   if (offer.type === 'lootbox') {
     const rolled = rollSimpleLootbox(items, character.level, rng);
     if (!rolled) return null;
-    newInventory = [...(withReset.inventory ?? []), rolled.id];
+    newInventory = [...(character.inventory ?? []), rolled.id];
   } else {
     const offers = getShopOffers(character, items, today, rng);
     const shopItem = offers[index].item;
     if (!shopItem) return null;
-    newInventory = [...(withReset.inventory ?? []), shopItem.id];
+    newInventory = [...(character.inventory ?? []), shopItem.id];
   }
 
-  const shopPurchases = { ...(withReset as any).shopPurchases };
-  shopPurchases[today] = [...shopPurchases[today]];
-  shopPurchases[today][index] = true;
+  // Persist purchase to localStorage after successful computation
+  const charId = character.id ?? character.seed;
+  markOfferPurchased(charId, index, today);
 
   return {
-    ...withReset,
+    ...character,
     essence: newEssence,
     inventory: newInventory,
-    shopPurchases,
   } as Character;
 }

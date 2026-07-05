@@ -5,6 +5,7 @@ import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
 import type { Character } from '../../types/Character';
 import { SHOP_OFFERS } from '../../data/shopConstants';
+import { clearShopPurchases, markOfferPurchased } from '../../utils/shopStorage';
 
 vi.mock('../../context/GameContext', () => ({
   useGame: vi.fn(),
@@ -18,6 +19,7 @@ const mockUseGame = useGame as unknown as ReturnType<typeof vi.fn>;
 const mockUseNotification = useNotification as unknown as ReturnType<typeof vi.fn>;
 
 const makeCharacter = (overrides?: Partial<Character>): Character => ({
+  id: 'test-char',
   seed: 'test-seed',
   name: 'Test Hero',
   gender: 'male',
@@ -65,6 +67,7 @@ function setupNotify() {
 describe('ShopPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearShopPurchases();
     setupNotify();
   });
 
@@ -224,8 +227,8 @@ describe('ShopPanel', () => {
 
   it('shows sold state when offer is already purchased', () => {
     const dateStr = new Date().toISOString().slice(0, 10);
+    markOfferPurchased('test-char', 0, dateStr);
     const char = makeCharacter({ essence: 500 });
-    (char as any).shopPurchases = { [dateStr]: [true, false, false] };
     setupGame({ activeCharacter: char, essence: 500 });
     render(<ShopPanel onClose={vi.fn()} />);
     const soldBtns = screen.getAllByText('SOLD');
