@@ -573,6 +573,728 @@ describe('CombatView Animation Overhaul', () => {
 
     it('should show screen-flash element on crit action', () => {
         vi.useFakeTimers();
+        const details = Array.from({ length: 10 }, (_, i) =>
+            i === 0 ? 'Hero crits Villain for 25 DMG' : `Hero hits Villain for ${5 + i} DMG`
+        );
+        const timeline = Array.from({ length: 10 }, (_, i) => ({
+            attackerHp: 100,
+            defenderHp: Math.max(100 - i * 10, 10),
+        }));
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 10,
+            details,
+            timeline,
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail')
+            .mockReturnValueOnce({ actor: 'player', type: 'crit' })
+            .mockReturnValue({ actor: 'player', type: 'hit' });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(520); });
+
+        const flash = container.querySelector('.screen-flash.flash-crit');
+        expect(flash).not.toBeNull();
+
+        act(() => { vi.advanceTimersByTime(100); });
+        const flashAfter = container.querySelector('.screen-flash.flash-crit');
+        expect(flashAfter).toBeNull();
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should set shake direction inline style based on actor', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 1,
+            details: ['Hero hits Villain for 12 DMG'],
+            timeline: [{ attackerHp: 100, defenderHp: 88 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit'
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        const combatAction = container.querySelector('.combat-action') as HTMLElement;
+        const shakeDir = combatAction?.style.getPropertyValue('--shake-dir');
+        expect(shakeDir).toBe('-1');
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should set shake direction toward right when opponent attacks', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'defender',
+            rounds: 1,
+            details: ['Villain hits Hero for 12 DMG'],
+            timeline: [{ attackerHp: 88, defenderHp: 100 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'opponent',
+            type: 'hit'
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        const combatAction = container.querySelector('.combat-action') as HTMLElement;
+        const shakeDir = combatAction?.style.getPropertyValue('--shake-dir');
+        expect(shakeDir).toBe('1');
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should apply action-ko class on KO blow', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 1,
+            details: ['Hero crits Villain for 100 DMG'],
+            timeline: [{ attackerHp: 100, defenderHp: 0 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'crit'
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        const combatAction = container.querySelector('.combat-action');
+        expect(combatAction?.classList.contains('action-ko')).toBe(true);
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should show screen-flash for KO on defeat blow', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 1,
+            details: ['Hero crits Villain for 100 DMG'],
+            timeline: [{ attackerHp: 100, defenderHp: 0 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'crit'
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        const flash = container.querySelector('.screen-flash.flash-ko');
+        expect(flash).not.toBeNull();
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    // ─── Stage 9: Two-stage health bar ─────────────────────
+
+    it('should render ghost health bar element alongside main fill', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 1,
+            details: ['Hero hits Villain for 20 DMG'],
+            timeline: [{ attackerHp: 100, defenderHp: 80 }]
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        const ghostBars = container.querySelectorAll('.health-bar-ghost');
+        expect(ghostBars.length).toBe(2);
+    });
+
+    it('should have ghost bar with width matching player HP initially', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 0,
+            details: [],
+            timeline: [{ attackerHp: 100, defenderHp: 100 }]
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        const ghostBars = container.querySelectorAll('.health-bar-ghost');
+        expect(ghostBars.length).toBe(2);
+        expect((ghostBars[0] as HTMLElement).style.width).toBe('100%');
+        expect((ghostBars[1] as HTMLElement).style.width).toBe('100%');
+    });
+
+    // ─── Stage 10: Enhanced hit sparks ─────────────────────
+
+    it('should emit spark_burst particles on crit action', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'defender',
+            rounds: 1,
+            details: ['Villain crits Hero for 25 DMG'],
+            timeline: [{ attackerHp: 75, defenderHp: 100 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'opponent',
+            type: 'crit'
+        });
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('spark_burst', expect.any(Number), expect.any(Number), expect.any(Number));
+    });
+
+    it('should emit blood_pixel particles when opponent HP is below 25%', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 1,
+            details: ['Hero hits Villain for 80 DMG'],
+            timeline: [
+                { attackerHp: 100, defenderHp: 100 },
+                { attackerHp: 100, defenderHp: 20 }
+            ]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit'
+        });
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('blood_pixel', expect.any(Number), expect.any(Number), expect.any(Number));
+    });
+
+    // ─── Stage 11: Special floating text ────────────────────
+
+    it('should emit counter_text particle on counter action', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'defender',
+            rounds: 1,
+            details: ['Villain counter 12 DMG'],
+            timeline: [{ attackerHp: 88, defenderHp: 100 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'opponent',
+            type: 'counter'
+        });
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('counter_text', expect.any(Number), expect.any(Number), expect.any(Number));
+    });
+
+    it('should emit blocked particle on regular hit action', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 1,
+            details: ['Hero hits Villain for 12 DMG'],
+            timeline: [{ attackerHp: 100, defenderHp: 88 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit'
+        });
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('blocked', expect.any(Number), expect.any(Number), expect.any(Number));
+    });
+
+    it('should emit dodge particle on miss action', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'defender',
+            rounds: 1,
+            details: ['Villain missed!'],
+            timeline: [{ attackerHp: 100, defenderHp: 100 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'opponent',
+            type: 'miss'
+        });
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('dodge', expect.any(Number), expect.any(Number), expect.any(Number));
+    });
+
+    // ─── Stage 12: Low performance mode ────────────────────
+    // Note: Low-perf testing is done via the existing mock infrastructure.
+    // The spark_burst emission is only expected when !lowPerf (default).
+    // When lowPerf is true (mocked), the CombatView skips all non-damage VFX.
+
+});
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        const ghostBars = container.querySelectorAll('.health-bar-ghost');
+        expect(ghostBars.length).toBe(2);
+    });
+
+    it('should have ghost bar with width matching player HP initially', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 0,
+            details: [],
+            timeline: [{ attackerHp: 100, defenderHp: 100 }]
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        const ghostBars = container.querySelectorAll('.health-bar-ghost');
+        expect(ghostBars.length).toBe(2);
+        expect((ghostBars[0] as HTMLElement).style.width).toBe('100%');
+        expect((ghostBars[1] as HTMLElement).style.width).toBe('100%');
+    });
+
+    // ─── Stage 9: Enhanced hit sparks ──────────────────────
+
+    it('should emit spark_burst particles on crit action', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'defender',
+            rounds: 1,
+            details: ['Villain crits Hero for 25 DMG'],
+            timeline: [{ attackerHp: 75, defenderHp: 100 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'opponent',
+            type: 'crit'
+        });
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('spark_burst', expect.any(Number), expect.any(Number), expect.any(Number));
+    });
+
+    it('should emit blood_pixel particles when opponent HP is below 25%', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 1,
+            details: ['Hero hits Villain for 80 DMG'],
+            timeline: [
+                { attackerHp: 100, defenderHp: 100 },
+                { attackerHp: 100, defenderHp: 20 }
+            ]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit'
+        });
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('blood_pixel', expect.any(Number), expect.any(Number), expect.any(Number));
+    });
+
+    // ─── Stage 10: Special floating text ────────────────────
+
+    it('should emit counter_text particle on counter action', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'defender',
+            rounds: 1,
+            details: ['Villain counter 12 DMG'],
+            timeline: [{ attackerHp: 88, defenderHp: 100 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'opponent',
+            type: 'counter'
+        });
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('counter_text', expect.any(Number), expect.any(Number), expect.any(Number));
+    });
+
+    it('should emit blocked particle on regular hit action', () => {
+>>>>>>> c109ba6 (feat: [3/4] two-stage health bar, enhanced combat VFX, particle types)
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 1,
+            details: ['Hero hits Villain for 12 DMG'],
+            timeline: [{ attackerHp: 100, defenderHp: 88 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit'
+        });
+
+<<<<<<< HEAD
+        const { container } = render(
+=======
+        render(
+>>>>>>> c109ba6 (feat: [3/4] two-stage health bar, enhanced combat VFX, particle types)
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+<<<<<<< HEAD
+        const combatAction = container.querySelector('.combat-action');
+        expect(combatAction?.classList.contains('hit-stop')).toBe(true);
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should apply hit-stop class on crit action', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 1,
+            details: ['Hero crits Villain for 25 DMG'],
+            timeline: [{ attackerHp: 100, defenderHp: 75 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'crit'
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        const combatAction = container.querySelector('.combat-action');
+        expect(combatAction?.classList.contains('hit-stop')).toBe(true);
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should NOT apply hit-stop class on miss action', () => {
+=======
+        expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('blocked', expect.any(Number), expect.any(Number), expect.any(Number));
+    });
+
+    it('should emit dodge particle on miss action', () => {
+>>>>>>> c109ba6 (feat: [3/4] two-stage health bar, enhanced combat VFX, particle types)
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'defender',
+            rounds: 1,
+<<<<<<< HEAD
+            details: ['Villain missed the attack!'],
+=======
+            details: ['Villain missed!'],
+>>>>>>> c109ba6 (feat: [3/4] two-stage health bar, enhanced combat VFX, particle types)
+            timeline: [{ attackerHp: 100, defenderHp: 100 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'opponent',
+            type: 'miss'
+        });
+
+<<<<<<< HEAD
+        const { container } = render(
+=======
+        render(
+>>>>>>> c109ba6 (feat: [3/4] two-stage health bar, enhanced combat VFX, particle types)
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+<<<<<<< HEAD
+        const combatAction = container.querySelector('.combat-action');
+        expect(combatAction?.classList.contains('hit-stop')).toBe(false);
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should show screen-flash element on crit action', () => {
+        vi.useFakeTimers();
         // Use many rounds so the crit round is not the KO blow
         const details = Array.from({ length: 10 }, (_, i) =>
             i === 0 ? 'Hero crits Villain for 25 DMG' : `Hero hits Villain for ${5 + i} DMG`
@@ -775,5 +1497,14 @@ describe('CombatView Animation Overhaul', () => {
         vi.useRealTimers();
         vi.restoreAllMocks();
     });
+=======
+        expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('dodge', expect.any(Number), expect.any(Number), expect.any(Number));
+    });
+
+    // ─── Stage 11: Low performance mode ────────────────────
+    // Note: Low-perf testing is done via the existing mock infrastructure.
+    // The spark_burst emission is only expected when !lowPerf (default).
+    // When lowPerf is true (mocked), the CombatView skips all non-damage VFX.
+>>>>>>> c109ba6 (feat: [3/4] two-stage health bar, enhanced combat VFX, particle types)
 
 });

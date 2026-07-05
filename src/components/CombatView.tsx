@@ -88,6 +88,14 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const hitStopTimerRef = useRef<number | null>(null);
     const flashTimerRef = useRef<number | null>(null);
 
+    // Two-stage health bar state (track percentages for the ghost bar)
+    const initialPlayerPct = player.maxHp > 0 ? (player.hp / player.maxHp) * 100 : 100;
+    const initialOpponentPct = opponent.maxHp > 0 ? (opponent.hp / opponent.maxHp) * 100 : 100;
+    const [ghostPlayerHpPct, setGhostPlayerHpPct] = useState(initialPlayerPct);
+    const [ghostOpponentHpPct, setGhostOpponentHpPct] = useState(initialOpponentPct);
+    const prevPlayerHpPctRef = useRef(initialPlayerPct);
+    const prevOpponentHpPctRef = useRef(initialOpponentPct);
+
     const leftLayerRef = useRef<HTMLDivElement | null>(null);
     const rightLayerRef = useRef<HTMLDivElement | null>(null);
     const leftParticleSystemRef = useRef<ParticleSystem | null>(null);
@@ -333,8 +341,31 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                             if (action.type === 'crit') {
                                 targetPs?.emit('hit_ring', x, 36, 1);
                                 targetPs?.emit('dust', x, 50, 2);
+                                targetPs?.emit('spark_burst', x, 40, 6);
                             } else if (action.type !== 'miss') {
                                 targetPs?.emit('dust', x, 50, 1);
+                            }
+
+                            // Special floating text based on action type
+                            if (action.type === 'counter') {
+                                targetPs?.emit('counter_text', x, 30, 1);
+                            } else if (action.type === 'miss') {
+                                targetPs?.emit('dodge', x, 30, 1);
+                            } else if (action.type === 'hit') {
+                                targetPs?.emit('blocked', x, 30, 1);
+                            }
+
+                            // Blood pixel splatter when target HP is below 25%
+                            // Use timeline data to check post-action HP
+                            const timelineIndex = roundIndex + 1;
+                            const postActionHp = combatResult.timeline[timelineIndex];
+                            if (postActionHp) {
+                                const targetPostHp = action.actor === 'player' ? postActionHp.defenderHp : postActionHp.attackerHp;
+                                const targetMax = action.actor === 'player' ? opponentMaxHp : playerMaxHp;
+                                const targetHpPercent = targetMax > 0 ? (targetPostHp / targetMax) * 100 : 100;
+                                if (targetHpPercent <= 25 && action.type !== 'miss') {
+                                    targetPs?.emit('blood_pixel', x, 44, 3);
+                                }
                             }
                         }
 
@@ -478,6 +509,29 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const opponentHpPercent = Math.max(0, Math.min(100, (opponentHp / opponentMaxHp) * 100));
     const reactionType = actionPulse && actionPulse.type !== 'miss' ? actionPulse.type : null;
 
+    // Manage ghost bar transitions — when HP changes, ghost first snaps to old then transitions to new
+    // Placed here after variable definitions so all dependencies are available
+    useEffect(() => {
+        const pctCompute = (hp: number, maxHp: number) => maxHp > 0 ? Math.max(0, Math.min(100, (hp / maxHp) * 100)) : 100;
+        const currPlayerPct = pctCompute(playerHp, playerMaxHp);
+        const currOpponentPct = pctCompute(opponentHp, opponentMaxHp);
+        const prevP = prevPlayerHpPctRef.current;
+        const prevO = prevOpponentHpPctRef.current;
+        prevPlayerHpPctRef.current = currPlayerPct;
+        prevOpponentHpPctRef.current = currOpponentPct;
+
+        if (prevP !== currPlayerPct || prevO !== currOpponentPct) {
+            // Snap ghost to previous value instantly
+            setGhostPlayerHpPct(prevP);
+            setGhostOpponentHpPct(prevO);
+            // On next frame, set ghost to current — CSS transition handles the smooth animation
+            requestAnimationFrame(() => {
+                setGhostPlayerHpPct(currPlayerPct);
+                setGhostOpponentHpPct(currOpponentPct);
+            });
+        }
+    }, [playerHp, opponentHp, playerMaxHp, opponentMaxHp]);
+
     // Defeat detection
     const playerDefeated = phase === 'result' && !won && !draw;
     const opponentDefeated = phase === 'result' && won;
@@ -579,7 +633,10 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                 </div>
                                 <div className="fighter-name-small">{player.name}</div>
                                 <div className="fighter-health">
-                                    <div className="health-bar"><div className={`health-bar-fill ${playerHpPercent <= 25 ? 'low' : ''}`} style={{ width: `${playerHpPercent}%` }}/></div>
+                                    <div className="health-bar">
+                                        <div className="health-bar-ghost" style={{ width: `${ghostPlayerHpPct}%` }} />
+                                        <div className={`health-bar-fill ${playerHpPercent <= 25 ? 'low' : ''}`} style={{ width: `${playerHpPercent}%` }}/>
+                                    </div>
                                     <div className="health-values">{playerHp} / {playerMaxHp}</div>
                                 </div>
                             </div>
@@ -594,7 +651,10 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                 </div>
                                 <div className="fighter-name-small">{opponent.name}</div>
                                 <div className="fighter-health">
-                                    <div className="health-bar"><div className={`health-bar-fill ${opponentHpPercent <= 25 ? 'low' : ''}`} style={{ width: `${opponentHpPercent}%` }}/></div>
+                                    <div className="health-bar">
+                                        <div className="health-bar-ghost" style={{ width: `${ghostOpponentHpPct}%` }} />
+                                        <div className={`health-bar-fill ${opponentHpPercent <= 25 ? 'low' : ''}`} style={{ width: `${opponentHpPercent}%` }}/>
+                                    </div>
                                     <div className="health-values">{opponentHp} / {opponentMaxHp}</div>
                                 </div>
                             </div>
