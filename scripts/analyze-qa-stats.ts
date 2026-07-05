@@ -420,29 +420,6 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     suggestions.push(`No rare or epic items found in ${lootboxOpened.length} lootbox opens. Consider adjusting LOOTBOX_RARITY_WEIGHTS.`)
   }
 
-  // Essence
-  if (essenceAnalysis && essenceAnalysis.runs_with_essence_data >= 3) {
-    if (essenceAnalysis.avg_essence_gained_per_run > 20) {
-      suggestions.push(`High essence gain (avg +${essenceAnalysis.avg_essence_gained_per_run.toFixed(1)}/run). Consider adjusting ESSENCE_SOFT_CAP or salvage yields.`)
-    }
-    if (essenceAnalysis.avg_essence_gained_per_run < 1 && essenceAnalysis.avg_initial_essence > 50) {
-      suggestions.push(`Low essence gain (avg +${essenceAnalysis.avg_essence_gained_per_run.toFixed(1)}/run). Players may be hoarding essence.`)
-    }
-  }
-
-  // Idle
-  if (idleAnalysis && idleAnalysis.runs_with_idle_data >= 3) {
-    if (idleAnalysis.avg_idle_essence_per_fight > 0.5) {
-      suggestions.push(`High idle essence (${idleAnalysis.avg_idle_essence_per_fight.toFixed(2)}/fight). Consider reducing IDLE_CONFIG.ESSENCE.BASE_RATE or LEVEL_SCALE.`)
-    }
-    if (idleAnalysis.idle_win_rate < 0.4) {
-      suggestions.push(`Low idle win rate (${(idleAnalysis.idle_win_rate * 100).toFixed(0)}%). Idle monsters may be too strong.`)
-    }
-    if (idleAnalysis.idle_win_rate > 0.9) {
-      suggestions.push(`High idle win rate (${(idleAnalysis.idle_win_rate * 100).toFixed(0)}%). Idle monsters may be too weak.`)
-    }
-  }
-
   // Progression curve
   if (progressionCurve && progressionCurve.runs_with_data >= 3) {
     if (progressionCurve.avg_xp_progress_percent > 90) {
@@ -641,6 +618,29 @@ function analyze(stats: RunRecord[]): AnalysisReport {
       avg_level: Math.round((runsWithCurve.reduce((s, r) => s + r.progression_curve.level, 0) / runsWithCurve.length) * 10) / 10,
       avg_xp_progress_percent: Math.round((runsWithCurve.reduce((s, r) => s + r.progression_curve.percent, 0) / runsWithCurve.length) * 10) / 10,
       avg_xp_for_next: Math.round(runsWithCurve.reduce((s, r) => s + r.progression_curve.xp_for_next, 0) / runsWithCurve.length),
+    }
+  }
+
+  // Essence suggestions
+  if (essenceAnalysis && essenceAnalysis.runs_with_essence_data >= 3) {
+    if (essenceAnalysis.avg_essence_gained_per_run > 20) {
+      suggestions.push(`High essence gain (avg +${essenceAnalysis.avg_essence_gained_per_run.toFixed(1)}/run). Consider adjusting ESSENCE_SOFT_CAP or salvage yields.`)
+    }
+    if (essenceAnalysis.avg_essence_gained_per_run < 1 && essenceAnalysis.avg_initial_essence > 50) {
+      suggestions.push(`Low essence gain (avg +${essenceAnalysis.avg_essence_gained_per_run.toFixed(1)}/run). Players may be hoarding essence.`)
+    }
+  }
+
+  // Idle suggestions
+  if (idleAnalysis && idleAnalysis.runs_with_idle_data >= 3) {
+    if (idleAnalysis.avg_idle_essence_per_fight > 0.5) {
+      suggestions.push(`High idle essence (${idleAnalysis.avg_idle_essence_per_fight.toFixed(2)}/fight). Consider reducing IDLE_CONFIG.ESSENCE.BASE_RATE or LEVEL_SCALE.`)
+    }
+    if (idleAnalysis.idle_win_rate < 0.4) {
+      suggestions.push(`Low idle win rate (${(idleAnalysis.idle_win_rate * 100).toFixed(0)}%). Idle monsters may be too strong.`)
+    }
+    if (idleAnalysis.idle_win_rate > 0.9) {
+      suggestions.push(`High idle win rate (${(idleAnalysis.idle_win_rate * 100).toFixed(0)}%). Idle monsters may be too weak.`)
     }
   }
 
