@@ -950,6 +950,388 @@ const ITEM_TIERS: ItemTier[] = [
       },
     ],
   },
+  { level: 11, items: [
+    { id: 'iron_rapier', name: 'Iron Rapier', slot: 'weapon', rarity: 'common', stats: { strength: 2 }, pixels: [
+      [0,0,0,0,2,0,0,0],[0,0,0,0,2,0,0,0],[0,0,0,0,2,0,0,0],[0,0,0,0,2,0,0,0],
+      [0,0,0,1,1,1,0,0],[0,0,0,0,2,0,0,0],[0,0,0,0,2,0,0,0],[0,0,0,0,1,0,0,0],
+    ]},
+    { id: 'studded_vest', name: 'Studded Vest', slot: 'armor', rarity: 'uncommon', stats: { vitality: 1, hp: 5 }, pixels: [
+      [0,0,0,0,0,0,0,0],[0,9,9,0,0,9,9,0],[9,9,9,9,9,9,9,9],[9,4,9,9,9,9,4,9],
+      [9,9,9,9,9,9,9,9],[0,9,9,9,9,9,9,0],[0,0,9,9,9,9,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'moonstone_ring', name: 'Moonstone Ring', slot: 'accessory', rarity: 'rare', stats: { focus: 2, intelligence: 1 }, element: 'light', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,4,4,0,0,0],[0,0,4,7,7,4,0,0],[0,4,7,1,1,7,4,0],
+      [0,4,7,7,7,7,4,0],[0,0,4,7,7,4,0,0],[0,0,0,4,4,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'flamberge', name: 'Flamberge', slot: 'weapon', rarity: 'epic', stats: { strength: 3, dexterity: 2 }, element: 'fire', pixels: [
+      [0,0,0,5,0,0,0,0],[0,0,5,4,5,0,0,0],[0,0,0,5,5,0,0,0],[0,0,5,5,0,0,0,0],
+      [0,0,1,1,1,0,0,0],[0,0,0,9,0,0,0,0],[0,0,0,9,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+    { id: 'mithril_coat', name: 'Mithril Coat', slot: 'armor', rarity: 'legendary', stats: { vitality: 3, hp: 10, dexterity: 1 }, element: 'light', pixels: [
+      [0,0,0,0,0,0,0,0],[0,2,2,0,0,2,2,0],[2,2,7,2,2,7,2,2],[2,2,2,2,2,2,2,2],
+      [2,2,2,2,2,2,2,2],[0,2,2,2,2,2,2,0],[0,0,2,2,2,2,0,0],[0,0,0,2,2,0,0,0],
+    ]},
+  ]},
+  { level: 12, items: [
+    { id: 'iron_cuirass', name: 'Iron Cuirass', slot: 'armor', rarity: 'common', stats: { vitality: 1, hp: 5 }, pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,2,2,2,2,0,0],[0,2,2,2,2,2,2,0],[2,2,2,2,2,2,2,2],
+      [2,2,2,1,1,2,2,2],[0,2,2,2,2,2,2,0],[0,0,2,2,2,2,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'opal_pendant', name: 'Opal Pendant', slot: 'accessory', rarity: 'uncommon', stats: { intelligence: 2 }, element: 'light', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,4,0,0,0,0],[0,0,4,7,4,0,0,0],[0,4,7,7,7,4,0,0],
+      [0,0,4,7,4,0,0,0],[0,0,0,4,0,0,0,0],[0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'war_scythe', name: 'War Scythe', slot: 'weapon', rarity: 'rare', stats: { strength: 3, dexterity: 1 }, element: 'wind', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,0,0,2,2,0],[0,0,0,0,2,2,0,0],[0,0,0,2,2,0,0,0],
+      [0,0,1,1,1,0,0,0],[0,0,0,3,0,0,0,0],[0,0,0,3,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+    { id: 'obsidian_idol', name: 'Obsidian Idol', slot: 'accessory', rarity: 'epic', stats: { luck: 3, focus: 2, hp: 5 }, element: 'dark', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,8,0,0,0,0],[0,0,8,8,8,0,0,0],[0,8,8,4,8,8,0,0],
+      [0,8,8,8,8,8,0,0],[0,0,8,8,8,0,0,0],[0,0,0,8,0,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'inferno_brand', name: 'Inferno Brand', slot: 'weapon', rarity: 'legendary', stats: { strength: 5, dexterity: 3 }, element: 'fire', pixels: [
+      [0,0,0,0,4,5,0,0],[0,0,0,4,5,0,0,0],[0,0,0,5,4,0,0,0],[0,0,0,5,5,0,0,0],
+      [0,0,1,1,1,0,0,0],[0,0,0,9,0,0,0,0],[0,0,0,9,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+  ]},
+  { level: 13, items: [
+    { id: 'spiked_club', name: 'Spiked Club', slot: 'weapon', rarity: 'common', stats: { strength: 3 }, pixels: [
+      [0,0,0,3,3,0,0,0],[0,0,3,3,3,3,0,0],[0,0,0,3,3,0,0,0],[0,0,0,3,3,0,0,0],
+      [0,0,1,3,3,1,0,0],[0,0,0,3,0,0,0,0],[0,0,0,3,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+    { id: 'scale_mail', name: 'Scale Mail', slot: 'armor', rarity: 'uncommon', stats: { vitality: 2, hp: 3 }, pixels: [
+      [0,0,0,0,0,0,0,0],[0,2,0,2,2,0,2,0],[2,2,2,2,2,2,2,2],[2,0,2,2,2,2,0,2],
+      [2,2,2,2,2,2,2,2],[0,2,2,2,2,2,2,0],[0,0,2,2,2,2,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'amber_bead', name: 'Amber Bead', slot: 'accessory', rarity: 'rare', stats: { luck: 3, focus: 1 }, element: 'earth', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,4,0,0,0,0],[0,0,4,4,4,0,0,0],[0,4,4,4,4,4,0,0],
+      [0,0,4,4,4,0,0,0],[0,0,0,4,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'frostbrand', name: 'Frostbrand', slot: 'weapon', rarity: 'epic', stats: { dexterity: 4, intelligence: 2 }, element: 'water', pixels: [
+      [0,0,0,0,7,0,0,0],[0,0,0,7,7,0,0,0],[0,0,7,7,7,0,0,0],[0,0,0,7,7,0,0,0],
+      [0,0,1,1,1,0,0,0],[0,0,0,7,0,0,0,0],[0,0,0,7,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+    { id: 'demon_hide', name: 'Demon Hide', slot: 'armor', rarity: 'legendary', stats: { vitality: 4, strength: 2, hp: 8 }, element: 'dark', pixels: [
+      [0,0,0,0,0,0,0,0],[0,5,5,0,0,5,5,0],[5,5,8,5,5,8,5,5],[5,5,5,5,5,5,5,5],
+      [5,5,5,5,5,5,5,5],[0,5,8,5,5,8,5,0],[0,0,5,5,5,5,0,0],[0,0,0,5,5,0,0,0],
+    ]},
+  ]},
+  { level: 14, items: [
+    { id: 'copper_band', name: 'Copper Band', slot: 'accessory', rarity: 'common', stats: { luck: 2 }, pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,9,9,9,9,0,0],[0,9,9,9,9,9,9,0],[0,9,9,1,1,9,9,0],
+      [0,9,9,1,1,9,9,0],[0,0,9,9,9,9,0,0],[0,0,0,9,9,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'curved_scimitar', name: 'Curved Scimitar', slot: 'weapon', rarity: 'uncommon', stats: { dexterity: 2, strength: 1 }, pixels: [
+      [0,0,0,0,2,0,0,0],[0,0,0,2,2,0,0,0],[0,0,2,2,0,0,0,0],[0,0,0,2,2,0,0,0],
+      [0,0,0,1,1,1,0,0],[0,0,0,0,9,0,0,0],[0,0,0,0,9,0,0,0],[0,0,0,0,1,0,0,0],
+    ]},
+    { id: 'dragonhide_vest', name: 'Dragonhide Vest', slot: 'armor', rarity: 'rare', stats: { vitality: 3, dexterity: 1, hp: 5 }, element: 'fire', pixels: [
+      [0,0,0,0,0,0,0,0],[0,6,6,0,0,6,6,0],[6,6,4,6,6,4,6,6],[6,6,6,6,6,6,6,6],
+      [6,6,6,6,6,6,6,6],[0,6,6,4,4,6,6,0],[0,0,6,6,6,6,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'sapphire_orb', name: 'Sapphire Orb', slot: 'accessory', rarity: 'epic', stats: { intelligence: 4, focus: 2 }, element: 'water', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,7,7,0,0,0],[0,0,7,7,7,7,0,0],[0,7,7,7,7,7,7,0],
+      [0,7,7,7,7,7,7,0],[0,0,7,7,7,7,0,0],[0,0,0,7,7,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'heavens_edge', name: 'Heaven\'s Edge', slot: 'weapon', rarity: 'legendary', stats: { strength: 5, dexterity: 2, focus: 2 }, element: 'light', pixels: [
+      [0,0,0,0,4,0,0,0],[0,0,0,4,7,0,0,0],[0,0,0,4,7,0,0,0],[0,0,0,4,7,0,0,0],
+      [0,0,4,4,4,4,0,0],[0,0,0,4,0,0,0,0],[0,0,0,4,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+  ]},
+  { level: 15, items: [
+    { id: 'linen_robe', name: 'Linen Robe', slot: 'armor', rarity: 'common', stats: { focus: 2 }, pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,7,7,0,0,7,7,0],[7,7,7,7,7,7,7,7],
+      [7,7,7,7,7,7,7,7],[0,7,7,7,7,7,7,0],[0,0,7,7,7,7,0,0],[0,0,0,7,7,0,0,0],
+    ]},
+    { id: 'iron_mace', name: 'Iron Mace', slot: 'weapon', rarity: 'uncommon', stats: { strength: 3 }, pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,2,2,2,0,0,0],[0,0,2,2,2,0,0,0],[0,0,2,2,2,0,0,0],
+      [0,0,1,2,1,0,0,0],[0,0,0,2,0,0,0,0],[0,0,0,2,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+    { id: 'garnet_ring', name: 'Garnet Ring', slot: 'accessory', rarity: 'rare', stats: { luck: 2, strength: 2 }, element: 'fire', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,4,4,4,0,0,0],[0,4,5,5,5,4,0,0],[0,4,5,4,5,4,0,0],
+      [0,4,5,5,5,4,0,0],[0,0,4,4,4,0,0,0],[0,0,0,4,0,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'tempest_blade', name: 'Tempest Blade', slot: 'weapon', rarity: 'epic', stats: { dexterity: 4, intelligence: 2 }, element: 'wind', pixels: [
+      [0,0,0,0,7,0,0,0],[0,0,0,7,4,0,0,0],[0,0,7,4,0,0,0,0],[0,0,0,7,4,0,0,0],
+      [0,0,1,1,1,0,0,0],[0,0,0,7,0,0,0,0],[0,0,0,7,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+    { id: 'titan_plate', name: 'Titan Plate', slot: 'armor', rarity: 'legendary', stats: { vitality: 5, hp: 15, strength: 2 }, element: 'earth', pixels: [
+      [0,0,0,0,0,0,0,0],[0,4,4,0,0,4,4,0],[4,4,3,4,4,3,4,4],[4,4,4,4,4,4,4,4],
+      [4,4,4,4,4,4,4,4],[0,4,4,4,4,4,4,0],[0,0,4,4,4,4,0,0],[0,0,0,4,4,0,0,0],
+    ]},
+  ]},
+  { level: 16, items: [
+    { id: 'short_spear', name: 'Short Spear', slot: 'weapon', rarity: 'common', stats: { dexterity: 2, strength: 1 }, pixels: [
+      [0,0,0,0,2,0,0,0],[0,0,0,2,2,2,0,0],[0,0,0,0,2,0,0,0],[0,0,0,0,2,0,0,0],
+      [0,0,0,1,1,1,0,0],[0,0,0,0,3,0,0,0],[0,0,0,0,3,0,0,0],[0,0,0,0,1,0,0,0],
+    ]},
+    { id: 'chainmail_coif', name: 'Chainmail Coif', slot: 'armor', rarity: 'uncommon', stats: { vitality: 2, hp: 5 }, pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,2,2,2,2,0,0],[0,2,2,2,2,2,2,0],[2,2,2,2,2,2,2,2],
+      [2,2,2,0,0,2,2,2],[2,2,2,0,0,2,2,2],[0,2,2,2,2,2,2,0],[0,0,2,2,2,2,0,0],
+    ]},
+    { id: 'jade_amulet', name: 'Jade Amulet', slot: 'accessory', rarity: 'rare', stats: { focus: 3, intelligence: 2 }, element: 'earth', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,6,0,0,0,0],[0,0,6,6,6,0,0,0],[0,6,6,4,6,6,0,0],
+      [0,0,6,6,6,0,0,0],[0,0,0,6,0,0,0,0],[0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'void_robe', name: 'Void Robe', slot: 'armor', rarity: 'epic', stats: { intelligence: 4, focus: 2, hp: 5 }, element: 'dark', pixels: [
+      [0,0,0,0,0,0,0,0],[0,8,8,0,0,8,8,0],[8,8,8,8,8,8,8,8],[8,8,8,8,8,8,8,8],
+      [8,8,8,8,8,8,8,8],[0,8,8,8,8,8,8,0],[0,0,8,8,8,8,0,0],[0,0,0,8,8,0,0,0],
+    ]},
+    { id: 'starfall_bow', name: 'Starfall Bow', slot: 'weapon', rarity: 'legendary', stats: { dexterity: 6, intelligence: 3 }, element: 'light', pixels: [
+      [0,0,4,0,0,4,0,0],[0,4,7,0,0,7,4,0],[4,7,0,0,0,0,7,4],[0,4,7,0,0,7,4,0],
+      [0,0,4,0,0,4,0,0],[0,0,0,4,4,0,0,0],[0,0,0,7,7,0,0,0],[0,0,0,1,1,0,0,0],
+    ]},
+  ]},
+  { level: 17, items: [
+    { id: 'tin_charm', name: 'Tin Charm', slot: 'accessory', rarity: 'common', stats: { luck: 3 }, pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,2,0,0,0,0],[0,0,2,2,2,0,0,0],[0,2,2,2,2,2,0,0],
+      [0,0,2,2,2,0,0,0],[0,0,0,2,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'broad_axe', name: 'Broad Axe', slot: 'weapon', rarity: 'uncommon', stats: { strength: 3 }, pixels: [
+      [0,0,0,2,2,0,0,0],[0,0,2,2,2,0,0,0],[0,0,2,2,2,0,0,0],[0,0,0,2,2,0,0,0],
+      [0,0,0,1,1,1,0,0],[0,0,0,0,3,0,0,0],[0,0,0,0,3,0,0,0],[0,0,0,0,1,0,0,0],
+    ]},
+    { id: 'bone_plate', name: 'Bone Plate', slot: 'armor', rarity: 'rare', stats: { vitality: 3, hp: 8 }, element: 'earth', pixels: [
+      [0,0,0,0,0,0,0,0],[0,2,2,0,0,2,2,0],[2,2,2,2,2,2,2,2],[2,2,2,2,2,2,2,2],
+      [2,2,2,2,2,2,2,2],[0,2,2,2,2,2,2,0],[0,0,2,2,2,2,0,0],[0,0,0,2,2,0,0,0],
+    ]},
+    { id: 'rift_crystal', name: 'Rift Crystal', slot: 'accessory', rarity: 'epic', stats: { focus: 4, intelligence: 3 }, element: 'dark', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,8,0,0,0,0],[0,0,8,8,8,0,0,0],[0,8,8,8,8,8,0,0],
+      [0,0,8,8,8,0,0,0],[0,0,0,8,8,0,0,0],[0,0,0,0,8,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'soulreaper', name: 'Soulreaper', slot: 'weapon', rarity: 'legendary', stats: { strength: 6, dexterity: 3, hp: 10 }, element: 'dark', pixels: [
+      [0,0,8,8,0,0,0,0],[0,8,8,5,8,0,0,0],[8,8,5,5,8,0,0,0],[0,0,8,8,8,0,0,0],
+      [0,0,1,1,1,0,0,0],[0,0,0,8,0,0,0,0],[0,0,0,8,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+  ]},
+  { level: 18, items: [
+    { id: 'iron_knuckles', name: 'Iron Knuckles', slot: 'weapon', rarity: 'common', stats: { strength: 3 }, pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,2,2,0,0,2,2,0],[0,2,2,2,2,2,2,0],
+      [0,0,1,2,2,1,0,0],[0,0,0,2,2,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'brigandine', name: 'Brigandine', slot: 'armor', rarity: 'uncommon', stats: { vitality: 3, hp: 5 }, pixels: [
+      [0,0,0,0,0,0,0,0],[0,2,2,0,0,2,2,0],[2,2,9,2,2,9,2,2],[2,2,2,2,2,2,2,2],
+      [2,2,2,2,2,2,2,2],[0,2,2,9,9,2,2,0],[0,0,2,2,2,2,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'ruby_ring', name: 'Ruby Ring', slot: 'accessory', rarity: 'rare', stats: { luck: 3, strength: 2 }, element: 'fire', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,4,4,4,0,0,0],[0,4,5,5,5,4,0,0],[0,4,5,5,5,4,0,0],
+      [0,4,5,5,5,4,0,0],[0,0,4,4,4,0,0,0],[0,0,0,4,0,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'sage_robe', name: 'Sage Robe', slot: 'armor', rarity: 'epic', stats: { intelligence: 5, focus: 3 }, element: 'water', pixels: [
+      [0,0,0,0,0,0,0,0],[0,7,7,0,0,7,7,0],[7,7,7,7,7,7,7,7],[7,7,7,7,7,7,7,7],
+      [7,7,4,7,7,4,7,7],[0,7,7,7,7,7,7,0],[0,0,7,7,7,7,0,0],[0,0,0,7,7,0,0,0],
+    ]},
+    { id: 'worldsplitter', name: 'Worldsplitter', slot: 'weapon', rarity: 'legendary', stats: { strength: 7, vitality: 3, hp: 10 }, element: 'earth', pixels: [
+      [0,0,0,0,4,0,0,0],[0,0,0,4,3,0,0,0],[0,0,4,3,4,0,0,0],[0,0,0,4,3,0,0,0],
+      [0,0,1,1,1,0,0,0],[0,0,0,4,0,0,0,0],[0,0,0,4,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+  ]},
+  { level: 19, items: [
+    { id: 'iron_greaves', name: 'Iron Greaves', slot: 'armor', rarity: 'common', stats: { vitality: 2, hp: 8 }, pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,2,2,2,2,0,0],[0,2,2,2,2,2,2,0],
+      [0,2,2,0,0,2,2,0],[0,2,2,0,0,2,2,0],[0,0,2,2,2,2,0,0],[0,0,0,2,2,0,0,0],
+    ]},
+    { id: 'pearl_necklace', name: 'Pearl Necklace', slot: 'accessory', rarity: 'uncommon', stats: { focus: 3 }, element: 'water', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,2,0,0,2,0,0],[0,2,2,0,0,2,2,0],
+      [2,2,0,0,0,0,2,2],[0,2,0,0,0,0,2,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'glaive', name: 'Glaive', slot: 'weapon', rarity: 'rare', stats: { dexterity: 4, strength: 2 }, element: 'wind', pixels: [
+      [0,0,0,0,0,2,2,0],[0,0,0,0,2,2,2,0],[0,0,0,2,2,0,0,0],[0,0,0,0,2,0,0,0],
+      [0,0,1,1,1,0,0,0],[0,0,0,3,0,0,0,0],[0,0,0,3,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+    { id: 'pyrite_orb', name: 'Pyrite Orb', slot: 'accessory', rarity: 'epic', stats: { luck: 5, focus: 2, hp: 5 }, element: 'fire', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,4,4,0,0,0],[0,0,4,4,4,4,0,0],[0,4,4,4,4,4,4,0],
+      [0,4,4,4,4,4,4,0],[0,0,4,4,4,4,0,0],[0,0,0,4,4,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'celestial_mantle', name: 'Celestial Mantle', slot: 'armor', rarity: 'legendary', stats: { intelligence: 6, focus: 4, hp: 10 }, element: 'light', pixels: [
+      [0,0,0,0,0,0,0,0],[0,4,7,0,0,7,4,0],[7,7,7,7,7,7,7,7],[7,7,7,7,7,7,7,7],
+      [7,7,7,7,7,7,7,7],[0,7,7,4,4,7,7,0],[0,0,7,7,7,7,0,0],[0,0,0,7,7,0,0,0],
+    ]},
+  ]},
+  { level: 20, items: [
+    { id: 'brass_ring', name: 'Brass Ring', slot: 'accessory', rarity: 'common', stats: { luck: 3 }, pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,4,4,4,0,0,0],[0,4,4,4,4,4,0,0],[0,4,4,0,0,4,4,0],
+      [0,4,4,0,0,4,4,0],[0,0,4,4,4,0,0,0],[0,0,0,4,0,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'warpick', name: 'Warpick', slot: 'weapon', rarity: 'uncommon', stats: { strength: 4 }, pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,2,2,2,0,0],[0,0,0,0,2,2,0,0],[0,0,0,0,2,0,0,0],
+      [0,0,0,1,1,1,0,0],[0,0,0,0,2,0,0,0],[0,0,0,0,2,0,0,0],[0,0,0,0,1,0,0,0],
+    ]},
+    { id: 'adamant_plate', name: 'Adamant Plate', slot: 'armor', rarity: 'rare', stats: { vitality: 4, hp: 10 }, element: 'earth', pixels: [
+      [0,0,0,0,0,0,0,0],[0,2,2,0,0,2,2,0],[2,2,2,2,2,2,2,2],[2,2,2,2,2,2,2,2],
+      [2,2,1,2,2,1,2,2],[0,2,2,2,2,2,2,0],[0,0,2,2,2,2,0,0],[0,0,0,2,2,0,0,0],
+    ]},
+    { id: 'witchblade', name: 'Witchblade', slot: 'weapon', rarity: 'epic', stats: { intelligence: 5, dexterity: 3 }, element: 'dark', pixels: [
+      [0,0,0,0,8,0,0,0],[0,0,0,8,4,0,0,0],[0,0,8,4,8,0,0,0],[0,0,0,8,8,0,0,0],
+      [0,0,1,1,1,0,0,0],[0,0,0,8,0,0,0,0],[0,0,0,8,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+    { id: 'sovereign_crown', name: 'Sovereign Crown', slot: 'accessory', rarity: 'legendary', stats: { strength: 4, intelligence: 4, focus: 4, luck: 4 }, element: 'light', pixels: [
+      [0,4,0,4,0,4,0,0],[0,4,7,4,7,4,0,0],[0,4,4,4,4,4,0,0],[0,0,4,4,4,4,0,0],
+      [0,0,4,4,4,4,0,0],[0,0,0,4,4,0,0,0],[0,0,0,4,4,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+  ]},
+  { level: 25, items: [
+    { id: 'dire_cleaver', name: 'Dire Cleaver', slot: 'weapon', rarity: 'rare', stats: { strength: 5, vitality: 2, hp: 10 }, element: 'earth', pixels: [
+      [0,0,0,2,2,0,0,0],[0,0,2,2,2,0,0,0],[0,0,2,2,2,0,0,0],[0,0,0,2,2,0,0,0],
+      [0,0,1,1,1,1,0,0],[0,0,0,4,0,0,0,0],[0,0,0,4,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+    { id: 'wardens_plate', name: 'Warden\'s Plate', slot: 'armor', rarity: 'epic', stats: { vitality: 5, hp: 15, focus: 2 }, element: 'earth', pixels: [
+      [0,0,0,0,0,0,0,0],[0,3,3,0,0,3,3,0],[3,3,4,3,3,4,3,3],[3,3,3,3,3,3,3,3],
+      [3,3,3,3,3,3,3,3],[0,3,3,4,4,3,3,0],[0,0,3,3,3,3,0,0],[0,0,0,3,3,0,0,0],
+    ]},
+    { id: 'rune_stone', name: 'Rune Stone', slot: 'accessory', rarity: 'epic', stats: { luck: 4, focus: 4, intelligence: 3 }, element: 'wind', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,4,4,0,0,0],[0,0,4,4,4,4,0,0],[0,4,4,4,4,4,4,0],
+      [0,4,4,4,4,4,4,0],[0,0,4,4,4,4,0,0],[0,0,0,4,4,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'eclipse_blade', name: 'Eclipse Blade', slot: 'weapon', rarity: 'legendary', stats: { strength: 7, dexterity: 5 }, element: 'dark', pixels: [
+      [0,0,0,0,4,0,0,0],[0,0,0,4,8,0,0,0],[0,0,4,8,8,0,0,0],[0,0,0,4,8,0,0,0],
+      [0,0,1,1,1,0,0,0],[0,0,0,8,0,0,0,0],[0,0,0,8,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+  ]},
+  { level: 30, items: [
+    { id: 'guardian_helm', name: 'Guardian Helm', slot: 'armor', rarity: 'rare', stats: { vitality: 5, hp: 15 }, element: 'earth', pixels: [
+      [0,0,2,2,2,2,0,0],[0,2,2,2,2,2,2,0],[2,2,2,2,2,2,2,2],[2,2,2,1,1,2,2,2],
+      [2,2,2,2,2,2,2,2],[0,2,2,2,2,2,2,0],[0,0,2,2,2,2,0,0],[0,0,0,2,2,0,0,0],
+    ]},
+    { id: 'bloodfang', name: 'Bloodfang', slot: 'weapon', rarity: 'epic', stats: { strength: 7, dexterity: 3, hp: 10 }, element: 'fire', pixels: [
+      [0,0,0,0,5,0,0,0],[0,0,0,5,4,0,0,0],[0,0,5,4,5,0,0,0],[0,0,0,5,5,0,0,0],
+      [0,0,1,1,1,0,0,0],[0,0,0,5,0,0,0,0],[0,0,0,5,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+    { id: 'starlight_crystal', name: 'Starlight Crystal', slot: 'accessory', rarity: 'epic', stats: { intelligence: 5, focus: 5, luck: 3 }, element: 'light', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,7,0,0,0,0],[0,0,7,4,7,0,0,0],[0,7,4,4,4,7,0,0],
+      [0,0,7,4,7,0,0,0],[0,0,0,7,0,0,0,0],[0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'dragonscale_mail', name: 'Dragonscale Mail', slot: 'armor', rarity: 'legendary', stats: { vitality: 7, strength: 4, hp: 20 }, element: 'fire', pixels: [
+      [0,0,0,0,0,0,0,0],[0,5,5,0,0,5,5,0],[5,5,4,5,5,4,5,5],[5,5,5,5,5,5,5,5],
+      [5,5,5,5,5,5,5,5],[0,5,5,4,4,5,5,0],[0,0,5,5,5,5,0,0],[0,0,0,5,5,0,0,0],
+    ]},
+  ]},
+  { level: 40, items: [
+    { id: 'golden_talisman', name: 'Golden Talisman', slot: 'accessory', rarity: 'rare', stats: { luck: 6, focus: 4 }, element: 'light', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,4,4,0,0,0],[0,0,4,4,4,4,0,0],[0,4,4,4,4,4,4,0],
+      [0,4,4,1,1,4,4,0],[0,0,4,4,4,4,0,0],[0,0,0,4,4,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'frost_reaver', name: 'Frost Reaver', slot: 'weapon', rarity: 'epic', stats: { dexterity: 7, strength: 4, intelligence: 3 }, element: 'water', pixels: [
+      [0,0,0,0,7,0,0,0],[0,0,0,7,7,0,0,0],[0,0,7,7,4,0,0,0],[0,0,0,7,7,0,0,0],
+      [0,0,1,1,1,0,0,0],[0,0,0,7,0,0,0,0],[0,0,0,7,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+    { id: 'rune_cuirass', name: 'Rune Cuirass', slot: 'armor', rarity: 'epic', stats: { vitality: 6, hp: 20, focus: 3 }, element: 'wind', pixels: [
+      [0,0,0,0,0,0,0,0],[0,7,7,0,0,7,7,0],[7,7,7,7,7,7,7,7],[7,7,7,7,7,7,7,7],
+      [7,7,4,7,7,4,7,7],[0,7,7,7,7,7,7,0],[0,0,7,7,7,7,0,0],[0,0,0,7,7,0,0,0],
+    ]},
+    { id: 'apocalypse_hammer', name: 'Apocalypse Hammer', slot: 'weapon', rarity: 'legendary', stats: { strength: 10, vitality: 5, hp: 15 }, element: 'earth', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,4,4,4,4,0,0],[0,4,4,4,4,4,4,0],[0,4,4,4,4,4,4,0],
+      [0,0,4,4,4,4,0,0],[0,0,0,1,1,0,0,0],[0,0,0,4,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+  ]},
+  { level: 50, items: [
+    { id: 'bone_mail', name: 'Bone Mail', slot: 'armor', rarity: 'rare', stats: { vitality: 6, hp: 20 }, element: 'dark', pixels: [
+      [0,0,0,0,0,0,0,0],[0,2,2,0,0,2,2,0],[2,2,2,2,2,2,2,2],[2,2,2,2,2,2,2,2],
+      [2,2,2,2,2,2,2,2],[0,2,2,2,2,2,2,0],[0,0,2,2,2,2,0,0],[0,0,0,2,2,0,0,0],
+    ]},
+    { id: 'thunderstrike', name: 'Thunderstrike', slot: 'weapon', rarity: 'epic', stats: { strength: 8, dexterity: 5 }, element: 'wind', pixels: [
+      [0,0,0,0,7,0,0,0],[0,0,0,7,4,0,0,0],[0,0,7,4,7,0,0,0],[0,0,0,7,7,0,0,0],
+      [0,0,1,1,1,0,0,0],[0,0,0,4,0,0,0,0],[0,0,0,4,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+    { id: 'soul_crystal', name: 'Soul Crystal', slot: 'accessory', rarity: 'epic', stats: { intelligence: 6, focus: 6, luck: 4 }, element: 'dark', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,8,0,0,0,0],[0,0,8,8,8,0,0,0],[0,8,8,4,8,8,0,0],
+      [0,8,8,8,8,8,0,0],[0,0,8,8,8,0,0,0],[0,0,0,8,0,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'primordial_plate', name: 'Primordial Plate', slot: 'armor', rarity: 'legendary', stats: { vitality: 10, strength: 5, hp: 25 }, element: 'earth', pixels: [
+      [0,0,0,0,0,0,0,0],[0,3,3,0,0,3,3,0],[3,3,4,3,3,4,3,3],[3,3,3,3,3,3,3,3],
+      [3,3,3,3,3,3,3,3],[0,3,3,4,4,3,3,0],[0,0,3,3,3,3,0,0],[0,0,0,3,3,0,0,0],
+    ]},
+  ]},
+  { level: 60, items: [
+    { id: 'shadow_orb', name: 'Shadow Orb', slot: 'accessory', rarity: 'rare', stats: { focus: 7, intelligence: 5 }, element: 'dark', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,8,8,0,0,0],[0,0,8,8,8,8,0,0],[0,8,8,8,8,8,8,0],
+      [0,8,8,8,8,8,8,0],[0,0,8,8,8,8,0,0],[0,0,0,8,8,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'starforged_blade', name: 'Starforged Blade', slot: 'weapon', rarity: 'epic', stats: { strength: 9, dexterity: 6, intelligence: 3 }, element: 'light', pixels: [
+      [0,0,0,0,7,0,0,0],[0,0,0,7,4,0,0,0],[0,0,0,7,7,0,0,0],[0,0,0,4,7,0,0,0],
+      [0,0,1,1,1,0,0,0],[0,0,0,4,0,0,0,0],[0,0,0,4,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+    { id: 'arcane_bulwark', name: 'Arcane Bulwark', slot: 'armor', rarity: 'epic', stats: { vitality: 8, hp: 25, intelligence: 4 }, element: 'light', pixels: [
+      [0,0,0,0,0,0,0,0],[0,7,7,0,0,7,7,0],[7,7,4,7,7,4,7,7],[7,7,7,7,7,7,7,7],
+      [7,7,7,7,7,7,7,7],[0,7,7,7,7,7,7,0],[0,0,7,7,7,7,0,0],[0,0,0,7,7,0,0,0],
+    ]},
+    { id: 'cosmic_seal', name: 'Cosmic Seal', slot: 'accessory', rarity: 'legendary', stats: { strength: 5, vitality: 5, dexterity: 5, luck: 5, intelligence: 5, focus: 5 }, element: 'light', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,4,4,4,4,0,0],[0,4,7,5,6,7,4,0],[0,4,5,4,4,6,4,0],
+      [0,4,7,6,5,7,4,0],[0,0,4,4,4,4,0,0],[0,0,0,4,0,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+  ]},
+  { level: 70, items: [
+    { id: 'hellfire_claymore', name: 'Hellfire Claymore', slot: 'weapon', rarity: 'rare', stats: { strength: 8, dexterity: 4 }, element: 'fire', pixels: [
+      [0,0,0,5,0,0,0,0],[0,0,5,4,5,0,0,0],[0,0,0,5,5,0,0,0],[0,0,5,5,0,0,0,0],
+      [0,0,1,1,1,0,0,0],[0,0,0,9,0,0,0,0],[0,0,0,9,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+    { id: 'tempest_robe', name: 'Tempest Robe', slot: 'armor', rarity: 'epic', stats: { intelligence: 8, focus: 6, hp: 15 }, element: 'wind', pixels: [
+      [0,0,0,0,0,0,0,0],[0,7,7,0,0,7,7,0],[7,7,4,7,7,4,7,7],[7,7,7,7,7,7,7,7],
+      [7,7,7,7,7,7,7,7],[0,7,7,4,4,7,7,0],[0,0,7,7,7,7,0,0],[0,0,0,7,7,0,0,0],
+    ]},
+    { id: 'iron_will_ring', name: 'Iron Will Ring', slot: 'accessory', rarity: 'epic', stats: { vitality: 7, strength: 5, hp: 20 }, element: 'earth', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,2,2,2,2,0,0],[0,2,2,2,2,2,2,0],[0,2,2,4,4,2,2,0],
+      [0,2,2,2,2,2,2,0],[0,0,2,2,2,2,0,0],[0,0,0,2,2,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'genesis_scythe', name: 'Genesis Scythe', slot: 'weapon', rarity: 'legendary', stats: { strength: 12, dexterity: 7, hp: 15 }, element: 'dark', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,0,8,8,0,0],[0,0,0,8,8,4,0,0],[0,0,8,8,4,0,0,0],
+      [0,0,1,1,1,0,0,0],[0,0,0,8,0,0,0,0],[0,0,0,8,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+  ]},
+  { level: 80, items: [
+    { id: 'leviathan_scale', name: 'Leviathan Scale', slot: 'armor', rarity: 'rare', stats: { vitality: 8, hp: 25 }, element: 'water', pixels: [
+      [0,0,0,0,0,0,0,0],[0,7,7,0,0,7,7,0],[7,7,7,7,7,7,7,7],[7,7,7,7,7,7,7,7],
+      [7,7,7,7,7,7,7,7],[0,7,7,7,7,7,7,0],[0,0,7,7,7,7,0,0],[0,0,0,7,7,0,0,0],
+    ]},
+    { id: 'sundering_axe', name: 'Sundering Axe', slot: 'weapon', rarity: 'epic', stats: { strength: 11, vitality: 5 }, element: 'earth', pixels: [
+      [0,0,0,4,4,0,0,0],[0,0,4,4,4,0,0,0],[0,0,4,4,4,0,0,0],[0,0,0,4,4,0,0,0],
+      [0,0,1,1,1,0,0,0],[0,0,0,4,0,0,0,0],[0,0,0,4,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+    { id: 'timekeepers_orb', name: 'Timekeeper\'s Orb', slot: 'accessory', rarity: 'epic', stats: { intelligence: 8, focus: 8, dexterity: 5 }, element: 'light', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,4,4,0,0,0],[0,0,4,7,7,4,0,0],[0,4,7,4,7,7,4,0],
+      [0,4,7,7,4,7,4,0],[0,0,4,7,7,4,0,0],[0,0,0,4,4,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'godsend_plate', name: 'Godsend Plate', slot: 'armor', rarity: 'legendary', stats: { vitality: 12, strength: 6, hp: 30 }, element: 'light', pixels: [
+      [0,0,0,0,0,0,0,0],[0,4,4,0,0,4,4,0],[4,4,7,4,4,7,4,4],[4,4,4,4,4,4,4,4],
+      [4,4,4,4,4,4,4,4],[0,4,4,7,7,4,4,0],[0,0,4,4,4,4,0,0],[0,0,0,4,4,0,0,0],
+    ]},
+  ]},
+  { level: 90, items: [
+    { id: 'void_stone', name: 'Void Stone', slot: 'accessory', rarity: 'rare', stats: { luck: 8, focus: 7 }, element: 'dark', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,8,8,0,0,0],[0,0,8,8,8,8,0,0],[0,8,8,8,8,8,8,0],
+      [0,8,8,8,8,8,8,0],[0,0,8,8,8,8,0,0],[0,0,0,8,8,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'worldeater', name: 'Worldeater', slot: 'weapon', rarity: 'epic', stats: { strength: 13, dexterity: 6, hp: 15 }, element: 'dark', pixels: [
+      [0,0,0,0,8,0,0,0],[0,0,0,8,8,0,0,0],[0,0,8,8,5,0,0,0],[0,0,0,8,8,0,0,0],
+      [0,0,1,1,1,0,0,0],[0,0,0,5,0,0,0,0],[0,0,0,5,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+    { id: 'ethereal_shroud', name: 'Ethereal Shroud', slot: 'armor', rarity: 'epic', stats: { intelligence: 9, focus: 7, dexterity: 5 }, element: 'wind', pixels: [
+      [0,0,0,0,0,0,0,0],[0,7,7,0,0,7,7,0],[7,7,4,7,7,4,7,7],[7,7,7,7,7,7,7,7],
+      [7,7,7,7,7,7,7,7],[0,7,7,4,4,7,7,0],[0,0,7,7,7,7,0,0],[0,0,0,7,7,0,0,0],
+    ]},
+    { id: 'ultima_blade', name: 'Ultima Blade', slot: 'weapon', rarity: 'legendary', stats: { strength: 15, dexterity: 10, intelligence: 5 }, element: 'light', pixels: [
+      [0,0,0,0,4,7,0,0],[0,0,0,4,7,0,0,0],[0,0,4,7,4,0,0,0],[0,0,0,4,7,0,0,0],
+      [0,0,1,1,1,0,0,0],[0,0,0,4,0,0,0,0],[0,0,0,4,0,0,0,0],[0,0,0,1,0,0,0,0],
+    ]},
+  ]},
+  { level: 99, items: [
+    { id: 'maelstrom_spear', name: 'Maelstrom Spear', slot: 'weapon', rarity: 'rare', stats: { dexterity: 9, strength: 6 }, element: 'water', pixels: [
+      [0,0,0,0,7,0,0,0],[0,0,0,7,7,7,0,0],[0,0,0,0,7,0,0,0],[0,0,0,0,7,0,0,0],
+      [0,0,0,1,1,1,0,0],[0,0,0,0,7,0,0,0],[0,0,0,0,7,0,0,0],[0,0,0,0,1,0,0,0],
+    ]},
+    { id: 'immortal_vestments', name: 'Immortal Vestments', slot: 'armor', rarity: 'epic', stats: { vitality: 10, hp: 30, intelligence: 6, focus: 5 }, element: 'light', pixels: [
+      [0,0,0,0,0,0,0,0],[0,4,4,0,0,4,4,0],[4,4,7,4,4,7,4,4],[4,4,4,4,4,4,4,4],
+      [4,4,4,4,4,4,4,4],[0,4,4,7,7,4,4,0],[0,0,4,4,4,4,0,0],[0,0,0,4,4,0,0,0],
+    ]},
+    { id: 'nexus_crown', name: 'Nexus Crown', slot: 'accessory', rarity: 'epic', stats: { intelligence: 10, focus: 8, luck: 6 }, element: 'wind', pixels: [
+      [0,4,0,4,0,4,0,0],[0,4,7,4,7,4,0,0],[4,4,4,7,4,4,4,0],[0,4,4,4,4,4,0,0],
+      [0,0,4,4,4,4,0,0],[0,0,0,4,4,0,0,0],[0,0,0,4,4,0,0,0],[0,0,0,0,0,0,0,0],
+    ]},
+    { id: 'gods_tear', name: 'God\'s Tear', slot: 'accessory', rarity: 'legendary', stats: { strength: 8, vitality: 8, dexterity: 8, luck: 8, intelligence: 8, focus: 8, hp: 20 }, element: 'light', pixels: [
+      [0,0,0,0,0,0,0,0],[0,0,0,4,4,0,0,0],[0,0,4,7,7,4,0,0],[0,4,7,7,7,7,4,0],
+      [0,4,7,7,7,7,4,0],[0,0,4,7,7,4,0,0],[0,0,0,4,4,0,0,0],[0,0,0,0,4,0,0,0],
+    ]},
+  ]},
 ];
 
 export const ITEM_ASSETS: PixelItemAsset[] = ITEM_TIERS.flatMap((tier) =>

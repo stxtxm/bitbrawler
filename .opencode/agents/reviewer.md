@@ -139,3 +139,9 @@ Merci de corriger ces points."
 - **Sois pragmatique** → petits problèmes peuvent être fixés dans un follow-up
 - **Explique tes demandes** → aide à faire mieux la prochaine fois
 - **Squash merge** → garder l'historique propre
+
+## 🏪 Shop-specific review checks
+- Vérifier que `buyShopOffer` dans GameContext persiste bien essence + inventory à Supabase
+- Vérifier que le daily reset (`shopPurchases.date`) fonctionne correctement
+- Vérifier que `rollSimpleLootbox()` est utilisé pour la lootbox du shop (pas de streak/pity)
+- Vérifier que les prix (200/350/500) sont bien alignés avec `ESSENCE_SOFT_CAP` (750)

@@ -50,8 +50,9 @@ describe('lootboxUtils', () => {
   it('getting lvl 10 items at player level 10', () => {
     const items = getEligibleLootboxItems(ITEM_ASSETS, 10, []);
     expect(items.every((i) => i.requiredLevel <= 10)).toBe(true);
-    // Should have all items since all are requiredLevel <= 10
-    expect(items.length).toBe(ITEM_ASSETS.length);
+    // Should only have items up to level 10
+    const totalUpTo10 = ITEM_ASSETS.filter((i) => i.requiredLevel <= 10).length;
+    expect(items.length).toBe(totalUpTo10);
   });
 
   it('level 1 only gets level 1 items', () => {
@@ -92,12 +93,11 @@ describe('lootboxUtils', () => {
     expect(waterItems.length).toBeGreaterThan(0);
   });
 
-  it('high-level player can get all item tiers', () => {
+  it('high-level player can get items up to their level', () => {
     const items = getEligibleLootboxItems(ITEM_ASSETS, 20, []);
-    expect(items.length).toBe(ITEM_ASSETS.length);
-    const levels = [...new Set(items.map((i) => i.requiredLevel))];
-    // All 10 tiers should be accessible
-    expect(levels.length).toBe(10);
+    expect(items.every((i) => i.requiredLevel <= 20)).toBe(true);
+    const totalUpTo20 = ITEM_ASSETS.filter((i) => i.requiredLevel <= 20).length;
+    expect(items.length).toBe(totalUpTo20);
   });
 
   it('has increased legendary chance at level 10+', () => {

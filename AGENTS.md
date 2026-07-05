@@ -26,7 +26,7 @@ Bitbrawler uses **4 autonomous agents** to automate development, code review, an
 | **dev-agent** | Implement features | Issue with `/oc` | On-demand |
 | **reviewer** | Review & merge PRs | PR created | On-demand |
 | **tech-lead** | Daily analysis | Scheduled @ 21h | Daily |
-| **qa-tester** | E2E tests | Manual / scheduled | Manual or scheduled |
+| **qa-tester** | E2E tests + Shop testing | Manual / scheduled | Manual or scheduled |
 
 ---
 
@@ -440,9 +440,11 @@ The tech-lead analyzes:
 3. Performs **3 PvP fights + 2 PvE fights** (mixed run)
 4. Captures equipment, streak, and initial/final stats
 5. Claims daily lootbox
-6. Collects enriched gameplay stats (fight_type, monster_name, pve_data)
-7. Saves stats to `qa/stats.json`
-8. Commits stats to repo
+6. Tests forge system (salvage, fusion, upgrade)
+7. Tests **Shop** (8-Bit Emporium) — navigates to Shop tab, reads 3 offers, attempts to buy cheapest
+8. Collects enriched gameplay stats (fight_type, monster_name, pve_data, shop purchases)
+9. Saves stats to `qa/stats.json`
+10. Commits stats to repo
 
 ### Stats Collected
 

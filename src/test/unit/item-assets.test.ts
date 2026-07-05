@@ -2,21 +2,24 @@ import { describe, it, expect } from 'vitest';
 import { ITEM_ASSETS, ITEM_PALETTE } from '../../data/itemAssets';
 
 describe('Item assets', () => {
-  it('defines 50 items', () => {
-    expect(ITEM_ASSETS.length).toBe(50);
+  it('defines 136 items', () => {
+    expect(ITEM_ASSETS.length).toBe(136);
   });
 
-  it('assigns unlock levels up to 10', () => {
+  it('assigns unlock levels up to 99', () => {
     const levels = ITEM_ASSETS.map((item) => item.requiredLevel);
     levels.forEach((level) => {
       expect(typeof level).toBe('number');
       expect(level).toBeGreaterThanOrEqual(1);
-      expect(level).toBeLessThanOrEqual(10);
+      expect(level).toBeLessThanOrEqual(99);
     });
 
     for (let level = 1; level <= 10; level += 1) {
       expect(levels.includes(level)).toBe(true);
     }
+    expect(levels.includes(25)).toBe(true);
+    expect(levels.includes(50)).toBe(true);
+    expect(levels.includes(99)).toBe(true);
   });
 
   it('uses valid 8x8 pixel grids', () => {
@@ -61,13 +64,13 @@ describe('Item assets', () => {
     });
   });
 
-  it('each slot type has at least 14 items', () => {
+  it('each slot type has at least 40 items', () => {
     const weapons = ITEM_ASSETS.filter((i) => i.slot === 'weapon');
     const armors = ITEM_ASSETS.filter((i) => i.slot === 'armor');
     const accessories = ITEM_ASSETS.filter((i) => i.slot === 'accessory');
-    expect(weapons.length).toBeGreaterThanOrEqual(14);
-    expect(armors.length).toBeGreaterThanOrEqual(14);
-    expect(accessories.length).toBeGreaterThanOrEqual(14);
+    expect(weapons.length).toBeGreaterThanOrEqual(40);
+    expect(armors.length).toBeGreaterThanOrEqual(40);
+    expect(accessories.length).toBeGreaterThanOrEqual(40);
   });
 
   it('all items have unique IDs', () => {
@@ -98,15 +101,23 @@ describe('Item assets', () => {
     expect(waterItems.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('has at least one legendary at each of levels 5, 8, and 10', () => {
+  it('has at least one legendary at each of levels 5, 8, 10, 25, 50, and 99', () => {
     expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 5)).toBe(true);
     expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 8)).toBe(true);
     expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 10)).toBe(true);
+    expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 25)).toBe(true);
+    expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 50)).toBe(true);
+    expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 99)).toBe(true);
   });
 
-  it('tier 10 has at least 3 items (was 1)', () => {
+  it('tier 10 has at least 3 items', () => {
     const tier10 = ITEM_ASSETS.filter((i) => i.requiredLevel === 10);
     expect(tier10.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('tier 99 has at least 4 items', () => {
+    const tier99 = ITEM_ASSETS.filter((i) => i.requiredLevel === 99);
+    expect(tier99.length).toBeGreaterThanOrEqual(4);
   });
 
   it('covers all 6 elements across items', () => {

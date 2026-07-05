@@ -184,6 +184,16 @@ Chaque run de QA génère des statistiques enrichies :
     "essence_before": 15,
     "essence_after": 20
   },
+  "shop": {
+    "visited": true,
+    "offers_count": 3,
+    "purchased": false,
+    "offer_type": "item",
+    "item_rarity": "RARE",
+    "cost": 200,
+    "essence_before": 500,
+    "essence_after": 300
+  },
   "errors": []
 }
 ```
@@ -216,4 +226,5 @@ Chaque run de QA génère des statistiques enrichies :
 - ✅ **PvE observation idle** 30s avec phases, XP, streak, FX
 - ✅ **Offline gains** testé avec reload + claim
 - ✅ **Forge** testée automatiquement après lootbox
+- ✅ **Shop** (8-Bit Emporium) testé après la forge — navigation onglet, lecture offres, achat si assez d'essence
 - ✅ **Plus d'overlay legacy** vérifié à chaque run

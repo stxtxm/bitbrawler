@@ -61,6 +61,17 @@ Lis le rapport QA complet. Les sections importantes:
 - **Essence Analysis** (NOUVEAU): essence gagnée par run, essence initiale vs finale
   - Si avg essence gained > 20/run → taux trop haut
   - Si avg essence gained < 1 et avg essence > 50 → les joueurs thésaurisent
+- **Shop Analysis** (NOUVEAU): analyser les métriques du shop depuis `qa/stats.json.shop`
+  - Lire `shop.purchased`, `shop.cost`, `shop.item_rarity`, `shop.essence_before`, `shop.essence_after`
+  - **purchase_rate** = runs_with_purchase / total_runs (sur 5+ jours)
+    - Si purchase_rate < 10% → prix trop élevés, créer issue avec `/oc` pour ↓ prix de 10%
+    - Si purchase_rate > 60% → prix trop bas, créer issue avec `/oc` pour ↑ prix de 10%
+  - **avg_essence_before** : moyenne essence avant achat
+    - Si < 100 → soft cap (750) trop bas ou essence drops insuffisants
+  - **lootbox_purchases** : si la lootbox (offre 3) est achetée plus souvent que les items
+    - Sur 7+ jours, créer issue pour ↓ prix lootbox ou ↓ drop rate
+  - **item_rarity_avg** : rareté moyenne des items achetés
+    - Si common pendant 7 jours → augmenter la qualité du pool de l'offre 1
 - **Equipment**: objets portés par le perso QA, diversité
 - **Streak**: progression de la streak journalière
 - **Progression Curve** (NOUVEAU): avg XP progress, niveau moyen, XP nécessaire pour next level

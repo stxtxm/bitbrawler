@@ -217,6 +217,19 @@ npm test
 - ❌ Ne PAS exécuter de migration Supabase
 - ❌ **NE PAS toucher aux fichiers `.github/workflows/*.yml`** — ces fichiers sont la configuration du CI/CD et ne doivent JAMAIS être modifiés par l'agent. Toute modification des workflows sera rejetée. Si tu penses qu'un workflow doit être modifié, crée une issue SANS `/oc` pour un humain.
 
+## 🏪 Shop Panel
+
+Le **ShopPanel** suit les mêmes conventions que SalvagePanel/FusionPanel/UpgradePanel :
+- Utilise `useGame()` pour `buyShopOffer()` et `essence`
+- Utilise `useNotification()` pour les toasts
+- Appelle `getShopOffers(char, ITEM_ASSETS)` pour générer les 3 offres quotidiennes
+- Vérifie `isOfferSoldOut()` et `canBuyOffer()` avant achat
+- `SHOP_OFFERS` : 200 / 350 / 500 💎 (Marchandise / Pièce rare / Coffre mystère)
+- 1 achat par offre par jour (reset quotidien via `shopPurchases` sur le Character)
+- Le design 8-bit bois sombre utilise les classes `.shop-*` dans `_forge.scss`
+- La lootbox du shop utilise `rollSimpleLootbox()` (sans streak/pity)
+- Persisté via `GameContext.buyShopOffer()` → sync idle → `buyShopOffer` util → Supabase → medal check
+
 ## 💡 Tips
 
 - Si un test échoue, c'est **normal** — lis l'erreur et corrige

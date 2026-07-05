@@ -1604,6 +1604,99 @@ async function leaveForge(page) {
 }
 
 /**
+ * Navigate to the Shop tab, read offers, and attempt to purchase the cheapest.
+ * Returns an object with shop stats or null if inaccessible.
+ */
+async function testShopSystem(page, runKey) {
+  console.log('🏪 Testing shop system...')
+
+  const shopResult = {
+    visited: false,
+    offers_count: 0,
+    purchased: false,
+    offer_type: null,
+    item_rarity: null,
+    cost: null,
+    essence_before: null,
+    essence_after: null,
+  }
+
+  const navigated = await navigateToForge(page)
+  if (!navigated) {
+    console.log('   ⚠️ Could not navigate to forge page')
+    return shopResult
+  }
+
+  // Click Shop tab
+  const shopTab = page.locator('button[role="tab"]:has-text("Shop"), .forge-tab:has-text("Shop")')
+  if (!(await shopTab.isVisible({ timeout: 3000 }).catch(() => false))) {
+    console.log('   ⚠️ Shop tab not found')
+    await leaveForge(page)
+    return shopResult
+  }
+
+  await shopTab.click()
+  await page.waitForTimeout(800)
+  shopResult.visited = true
+
+  // Count offers
+  const offerCards = page.locator('.shop-offer-card')
+  shopResult.offers_count = await offerCards.count().catch(() => 0)
+  console.log(`   Found ${shopResult.offers_count} shop offers`)
+
+  // Capture essence before
+  shopResult.essence_before = await parseEssence(page)
+  console.log(`   Essence before: ${shopResult.essence_before ?? '?'}`)
+
+  // Try to buy the first available (cheapest) offer
+  const buyBtns = page.locator('.shop-buy-btn:not(.shop-sold-btn):not(:disabled)')
+  const buyBtnCount = await buyBtns.count().catch(() => 0)
+
+  if (buyBtnCount > 0) {
+    try {
+      await buyBtns.first().click()
+      await page.waitForTimeout(500)
+
+      // Confirm purchase dialog
+      const confirmBtn = page.locator('button[aria-label="Confirm purchase"], .forge-confirm-ok')
+      if (await confirmBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await confirmBtn.click()
+        await page.waitForTimeout(2000)
+
+        shopResult.purchased = true
+        shopResult.cost = shopResult.essence_before !== null
+          ? shopResult.essence_before - (await parseEssence(page) ?? shopResult.essence_before)
+          : null
+
+        console.log(`   ✅ Shop purchase completed (cost: ${shopResult.cost ?? '?'} essence)`)
+
+        // Try to read item rarity from the purchased offer (now sold)
+        const soldLabel = page.locator('.shop-offer-card.shop-sold .shop-offer-rarity')
+        if (await soldLabel.isVisible({ timeout: 1000 }).catch(() => false)) {
+          shopResult.item_rarity = await soldLabel.textContent().catch(() => null)
+          shopResult.item_rarity = shopResult.item_rarity ? shopResult.item_rarity.trim() : null
+        }
+        shopResult.offer_type = 'item'
+      }
+    } catch (err) {
+      console.log(`   ⚠️ Shop purchase failed: ${err.message}`)
+    }
+  } else {
+    console.log('   No purchasable offers (already bought or insufficient essence)')
+  }
+
+  // Capture essence after
+  shopResult.essence_after = await parseEssence(page)
+  console.log(`   Post-shop: essence=${shopResult.essence_after ?? '?'}`)
+
+  await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-08-shop.png`) })
+
+  await leaveForge(page)
+  console.log('🏪 Shop test complete')
+  return shopResult
+}
+
+/**
  * Test the forge system: salvage, fusion, and upgrade.
  * Returns an object with forge stats or null if inaccessible.
  */
@@ -1842,6 +1935,7 @@ async function run() {
     offline_gains: null,
     no_legacy_overlay: null,
     forge: null,
+    shop: null,
     errors: [],
     load_times_ms: {},
   }
@@ -1988,6 +2082,17 @@ async function run() {
 
     // ── Forge ─────────────────────────────────────────────────────
     runRecord.forge = await testForgeSystem(page, runKey)
+
+    // ── Shop ──────────────────────────────────────────────────────
+    console.log('')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('  🏪 8-Bit Emporium')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+
+    runRecord.shop = await testShopSystem(page, runKey)
+    if (runRecord.shop.purchased) {
+      console.log(`   ✅ Purchased offer (cost: ${runRecord.shop.cost}, rarity: ${runRecord.shop.item_rarity ?? 'N/A'})`)
+    }
 
     // ── Offline Gains ─────────────────────────────────────────────
     console.log('')
