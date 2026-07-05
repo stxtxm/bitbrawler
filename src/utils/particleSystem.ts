@@ -1,4 +1,4 @@
-export type ParticleType = 'dust' | 'spark' | 'xp_star' | 'damage' | 'hit_ring' | 'crit' | 'miss' | 'heal' | 'hit' | 'magic';
+export type ParticleType = 'dust' | 'spark' | 'xp_star' | 'damage' | 'hit_ring' | 'crit' | 'miss' | 'heal' | 'hit' | 'magic' | 'rare_reveal' | 'confetti';
 
 interface ParticleDef {
   x: number;
@@ -26,6 +26,8 @@ const PARTICLE_COLORS: Record<ParticleType, string[]> = {
   crit: ['#FFEC8B', '#FFD700', '#FFEC8B'],
   miss: ['#CCCCCC', '#EEEEEE', '#FFFFFF'],
   heal: ['#AFFFAC', '#90EE90', '#7FFF7F'],
+  rare_reveal: ['#FFD700', '#FFEC8B', '#FFFFFF', '#FFA500'],
+  confetti: ['#FFD700', '#FFC107', '#FF8C00', '#FFA500', '#FF6B35'],
 };
 
 const pickColor = (type: ParticleType): string => {
@@ -196,6 +198,32 @@ export class ParticleSystem {
           color: PARTICLE_COLORS.heal[0],
           text: text ?? '',
         };
+      case 'rare_reveal': {
+        const angle = (index / total) * Math.PI * 2 + Math.random() * 0.5;
+        const speed = 1 + Math.random() * 2;
+        return {
+          x: x + (Math.random() - 0.5) * 6,
+          y: y + (Math.random() - 0.5) * 6,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 0.5,
+          life: 800 + Math.random() * 400,
+          maxLife: 1200,
+          size: 2 + Math.random() * 2,
+          color: pickColor('rare_reveal'),
+        };
+      }
+      case 'confetti': {
+        return {
+          x: x + (Math.random() - 0.5) * 30,
+          y: y + (Math.random() - 0.5) * 10,
+          vx: (Math.random() - 0.5) * 3,
+          vy: -1.5 - Math.random() * 2,
+          life: 1500 + Math.random() * 1000,
+          maxLife: 2500,
+          size: 2 + Math.random() * 2,
+          color: pickColor('confetti'),
+        };
+      }
     }
     return null;
   }

@@ -24,7 +24,7 @@ interface IdleRunnerSceneProps {
   lastCombatXp: number
   offlineGains: OfflineGainsData | null
   onClearOfflineGains: () => void
-  recentLevelUp: { newLevel: number } | null
+  recentLevelUp: { newLevel: number; isMilestone?: boolean } | null
   currentStreak?: number
   streakMilestone?: number | null
 }
@@ -64,6 +64,9 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   const [showLevelUpFx, setShowLevelUpFx] = useState(false)
   const [levelUpLevel, setLevelUpLevel] = useState(0)
   const [screenShake, setScreenShake] = useState(false)
+  const [levelUpFlash, setLevelUpFlash] = useState(false)
+  const [levelUpShockwave, setLevelUpShockwave] = useState(false)
+  const [isMilestoneCeremony, setIsMilestoneCeremony] = useState(false)
   const lowPerf = useLowPerformanceMode()
   const prevPhaseRef = useRef<ScenePhase>('running')
   const characterLevelRef = useRef(character.level)
@@ -143,11 +146,13 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     setScreenShake(false)
   }, [scenePhase, lastCombatResult])
 
-  // Level-up visual effect (glow + particles + floating text)
+  // Level-up visual effect (glow + particles + floating text + flash + shockwave)
   useEffect(() => {
     if (!recentLevelUp) return
+    const isMilestone = recentLevelUp.isMilestone ?? false
     setShowLevelUpFx(true)
     setLevelUpLevel(recentLevelUp.newLevel)
+    setIsMilestoneCeremony(isMilestone)
 
     const ps = particlesRef.current
     const container = containerRef.current
@@ -155,10 +160,33 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
       const rect = container.getBoundingClientRect()
       const cx = rect.width * 0.3
       const cy = rect.height * 0.4
-      ps.emit('xp_star', cx, cy, lowPerf ? 3 : 8)
+      ps.emit('xp_star', cx, cy, lowPerf ? 1 : (isMilestone ? 6 : 3))
+      if (!lowPerf) {
+        ps.emit('confetti', cx, cy, isMilestone ? 20 : 10)
+      }
     }
 
-    const timer = setTimeout(() => setShowLevelUpFx(false), 2000)
+    // Screen flash
+    if (!lowPerf) {
+      setLevelUpFlash(true)
+      if (isMilestone) {
+        // Double flash for milestone
+        setTimeout(() => setLevelUpFlash(false), 150)
+        setTimeout(() => setLevelUpFlash(true), 200)
+        setTimeout(() => setLevelUpFlash(false), 500)
+      } else {
+        setTimeout(() => setLevelUpFlash(false), 300)
+      }
+
+      // Shockwave ring
+      setLevelUpShockwave(true)
+      setTimeout(() => setLevelUpShockwave(false), 600)
+    }
+
+    const timer = setTimeout(() => {
+      setShowLevelUpFx(false)
+      setIsMilestoneCeremony(false)
+    }, 2000)
     return () => clearTimeout(timer)
   }, [recentLevelUp, lowPerf])
 
@@ -166,10 +194,11 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   const showStreakBanner = streakMilestone !== null && scenePhase === 'result' && lastCombatResult === 'win'
 
   return (
-    <div className={`idle-runner-box${screenShake ? ' shake-screen' : ''}`} ref={containerRef}>
+    <div className={`idle-runner-box${screenShake ? ' shake-screen' : ''}${levelUpFlash ? ' level-up-flash' : ''}`} ref={containerRef}>
+      {levelUpShockwave && <div className={`level-up-shockwave${isMilestoneCeremony ? ' milestone' : ''}`} />}
       {/* clouds rendered inside ProceduralTerrain canvas */}
 
-      <div key={animKey} className={`idle-character-slot ${scenePhase === 'combat' ? 'attacking' : ''} ${scenePhase === 'result' && lastCombatResult === 'win' ? 'victory' : ''} ${showLevelUpFx ? 'glow-levelup' : ''}`}>
+      <div key={animKey} className={`idle-character-slot ${scenePhase === 'combat' ? 'attacking' : ''} ${scenePhase === 'result' && lastCombatResult === 'win' ? 'victory' : ''} ${showLevelUpFx ? 'glow-levelup' : ''} ${isMilestoneCeremony ? 'ceremony-milestone' : ''}`}>
         <PixelCharacter
           seed={character.seed}
           gender={character.gender}

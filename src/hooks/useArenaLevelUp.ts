@@ -3,9 +3,14 @@ import { Character } from '../types/Character';
 import { SoundType } from './useSound';
 import { STAT_KEYS, StatKey, allocateStatsByArchetype } from '../utils/statUtils';
 
-interface RecentLevelUp {
+export interface RecentLevelUp {
   newLevel: number;
+  isMilestone?: boolean;
 }
+
+export const isMilestoneLevel = (level: number): boolean => {
+  return level > 0 && level % 5 === 0;
+};
 
 interface UseArenaLevelUpOptions {
   character: Character | null;
@@ -30,7 +35,7 @@ export const useArenaLevelUp = ({
   const levelUpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const queueLevelUp = useCallback((_levelsGained: number, newLevel: number) => {
-    setRecentLevelUp({ newLevel });
+    setRecentLevelUp({ newLevel, isMilestone: isMilestoneLevel(newLevel) });
     play('levelup');
 
     if (levelUpTimerRef.current) clearTimeout(levelUpTimerRef.current);
