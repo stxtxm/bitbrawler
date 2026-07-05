@@ -4,6 +4,7 @@ import { useNotification } from '../../hooks/useNotification';
 import { SHOP_OFFERS } from '../../data/shopConstants';
 import { ITEM_ASSETS } from '../../data/itemAssets';
 import { getShopOffers, canBuyOffer, isOfferSoldOut, ShopOffer } from '../../utils/shopUtils';
+import { PixelItemIcon } from '../PixelItemIcon';
 import '../../styles/components/_forge.scss';
 
 interface ShopPanelProps {
@@ -103,11 +104,24 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
         <span className="forge-essence-value">{essence.toFixed(2)}</span>
       </div>
 
+      {/* Canopy / Awning */}
+      <div className="shop-canopy">
+        {Array.from({ length: 16 }, (_, i) => (
+          <div key={i} className="shop-canopy-stripe" />
+        ))}
+      </div>
+
       {/* Shop sign */}
       <div className="shop-sign">
         <span className="shop-sign-text">~ 8-BIT EMPORIUM ~</span>
         <span className="shop-sign-sub">Daily Wares</span>
       </div>
+
+      <div className="shop-welcome">Welcome, traveler! Browse my wares...</div>
+
+      {/* Candle decorations */}
+      <div className="shop-candle shop-candle-left" />
+      <div className="shop-candle shop-candle-right" />
 
       {/* Offers grid */}
       <div className="shop-vitrine">
@@ -122,11 +136,18 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
               className={`shop-offer-card forge-rarity-${offer.item?.rarity ?? 'common'} ${isSold ? 'shop-sold' : ''} ${purchasedIndex === index && showItemGlow ? 'shop-anim-purchased' : ''}`}
             >
               {/* Item preview area */}
-              <div className="shop-offer-preview">
+              <div className={`shop-offer-preview shop-rarity-bg-${offer.item?.rarity ?? 'common'}`}>
                 {offer.type === 'lootbox' ? (
                   <div className="shop-lootbox-icon">📦</div>
                 ) : (
-                  <div className="shop-item-placeholder" />
+                  (() => {
+                    const itemData = ITEM_ASSETS.find(a => a.id === offer.item!.id);
+                    return itemData ? (
+                      <PixelItemIcon pixels={itemData.pixels} size={48} />
+                    ) : (
+                      <div className="shop-item-placeholder" />
+                    );
+                  })()
                 )}
               </div>
 

@@ -1241,159 +1241,263 @@
 }
 
 // ════════════════════════════════════════════════════════════════════════════
-// Shop Panel — 8-bit Emporium
+// Shop Panel — 8-bit Emporium (boutique redesign)
 // ════════════════════════════════════════════════════════════════════════════
 
 .shop-panel {
   position: relative;
-  background: radial-gradient(ellipse at top, #1a0f0a 0%, #0d0805 100%);
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 15%, rgba(60, 35, 15, 0.3) 0%, transparent 100%),
+    radial-gradient(ellipse at top, #1f120a 0%, #0d0805 100%);
   border: 3px solid #5c3a1e;
-  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(92, 58, 30, 0.3);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.9), 0 0 20px rgba(92, 58, 30, 0.4);
+  overflow: hidden;
 }
 
-// Wood-grain background pattern
+// Warm candle-light gradient overlay
 .shop-panel::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: repeating-linear-gradient(
-    90deg,
-    transparent 0px,
-    transparent 3px,
-    rgba(92, 58, 30, 0.08) 3px,
-    rgba(92, 58, 30, 0.08) 4px
-  );
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 3px,
+      rgba(92, 58, 30, 0.06) 3px,
+      rgba(92, 58, 30, 0.06) 4px
+    ),
+    radial-gradient(ellipse 60% 30% at 30% 10%, rgba(255, 180, 80, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 30% at 70% 10%, rgba(255, 180, 80, 0.04) 0%, transparent 60%);
   pointer-events: none;
+  z-index: 0;
 }
 
-.shop-sign {
-  text-align: center;
-  padding: 10px 16px;
-  margin-bottom: 12px;
-  border: 2px solid #7a4e2a;
-  background: linear-gradient(180deg, #2a1a0e 0%, #1a0f08 100%);
-  position: relative;
+// ─── Canopy / Awning at top ────────────────────────────────────────────────
 
+.shop-canopy {
+  display: flex;
+  margin: -16px -16px 12px -16px;
+  height: 24px;
+  overflow: hidden;
+}
+
+.shop-canopy-stripe {
+  flex: 1;
+  &:nth-child(odd) { background: #7a1a1a; }
+  &:nth-child(even) { background: #c49a2a; }
+}
+
+// ─── Shop Sign ──────────────────────────────────────────────────────────────
+
+.shop-sign {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 12px 16px 10px;
+  margin: 0 16px 14px;
+  border: 3px solid #7a4e2a;
+  background: linear-gradient(180deg, #2a1a0e 0%, #1a0f08 100%);
+  box-shadow: 0 4px 0 #3a2010, inset 0 2px 4px rgba(212, 165, 90, 0.1);
+
+  // Hanging chains (left & right)
+  &::before,
+  &::after {
+    content: '⛓';
+    position: absolute;
+    top: -18px;
+    font-size: 0.7rem;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
+  }
+  &::before { left: 20px; }
+  &::after { right: 20px; }
+
+  // Pointy bottom tail
   &::after {
     content: '';
     position: absolute;
-    bottom: -8px;
+    bottom: -10px;
     left: 50%;
     transform: translateX(-50%);
     width: 0;
     height: 0;
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-top: 8px solid #7a4e2a;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid #5a3a1a;
   }
 }
 
 .shop-sign-text {
   font-family: $font-pixel;
-  font-size: 0.55rem;
-  letter-spacing: 3px;
-  color: #d4a55a;
-  text-shadow: 2px 2px 0 #000, 0 0 10px rgba(212, 165, 90, 0.3);
+  font-size: 0.6rem;
+  letter-spacing: 4px;
+  color: #e8c86a;
+  text-shadow:
+    3px 3px 0 #000,
+    0 0 15px rgba(232, 200, 106, 0.25);
   display: block;
 }
 
 .shop-sign-sub {
   font-size: 0.4rem;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   color: #8b7355;
-  margin-top: 4px;
+  margin-top: 6px;
+  display: block;
 }
 
+// ─── Vitrine (the 3 offer shelves) ──────────────────────────────────────────
+
 .shop-vitrine {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  padding: 4px 0;
+  gap: 12px;
+  padding: 8px 4px 16px;
 }
+
+// ─── Offer Card — like an item on a shelf ───────────────────────────────────
 
 .shop-offer-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  padding: 12px 8px;
-  background: linear-gradient(180deg, rgba(20, 12, 8, 0.9) 0%, rgba(10, 6, 4, 0.95) 100%);
+  padding: 14px 8px 12px;
+  background: linear-gradient(180deg, rgba(24, 14, 8, 0.95) 0%, rgba(14, 8, 4, 0.98) 100%);
   border: 2px solid #3a2818;
   border-left-width: 5px;
+  border-bottom-width: 4px;
+  border-bottom-color: #2a1a0e;
   position: relative;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  box-shadow:
+    0 4px 0 #1a0e08,
+    inset 0 1px 0 rgba(212, 165, 90, 0.08);
+
+  // Wooden shelf surface at bottom
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: -2px;
+    right: -2px;
+    height: 6px;
+    background: linear-gradient(180deg, #3a2818 0%, #2a1a0e 100%);
+    border: 2px solid #2a1a0e;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+  }
 
   &:hover {
-    border-color: #7a4e2a;
-    box-shadow: 0 0 12px rgba(122, 78, 42, 0.3);
-    transform: translateY(-2px);
+    border-color: #8a5e3a;
+    box-shadow:
+      0 4px 0 #1a0e08,
+      0 0 16px rgba(138, 94, 58, 0.35),
+      inset 0 1px 0 rgba(212, 165, 90, 0.15);
+    transform: translateY(-1px);
   }
 }
 
 .shop-offer-card.shop-sold {
-  opacity: 0.5;
-  filter: grayscale(0.7);
+  opacity: 0.45;
+  filter: grayscale(0.8) brightness(0.7);
   pointer-events: none;
 
   .shop-buy-btn.shop-sold-btn {
-    border-color: #555;
+    border-color: #444;
     color: #555;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.4);
+  }
+
+  &::after {
+    background: linear-gradient(180deg, #2a1a10 0%, #1a0e08 100%);
   }
 }
 
+// ─── Item preview — pixel art display ───────────────────────────────────────
+
 .shop-offer-preview {
-  width: 56px;
-  height: 56px;
+  width: 60px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   border: 2px solid #3a2818;
-  margin-bottom: 2px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  transition: box-shadow 0.3s ease;
+
+  svg {
+    filter: drop-shadow(0 0 4px rgba(212, 165, 90, 0.2));
+  }
 }
 
+.shop-offer-card:hover .shop-offer-preview {
+  box-shadow: 0 0 10px rgba(212, 165, 90, 0.15);
+}
+
+// Rarity-tinted backgrounds for preview
+.shop-rarity-bg-common   { box-shadow: inset 0 0 12px rgba(102, 102, 102, 0.15); }
+.shop-rarity-bg-uncommon { box-shadow: inset 0 0 12px rgba(76, 217, 100, 0.12); }
+.shop-rarity-bg-rare     { box-shadow: inset 0 0 12px rgba(99, 179, 255, 0.12); }
+.shop-rarity-bg-epic     { box-shadow: inset 0 0 12px rgba(155, 89, 182, 0.12); }
+.shop-rarity-bg-legendary { box-shadow: inset 0 0 16px rgba(255, 204, 0, 0.18); }
+
 .shop-item-placeholder {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border: 1px dashed #5c3a1e;
   opacity: 0.5;
 }
 
 .shop-lootbox-icon {
-  font-size: 1.8rem;
-  filter: drop-shadow(0 0 6px rgba(212, 165, 90, 0.4));
+  font-size: 2rem;
+  animation: shopLootboxBob 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 8px rgba(232, 200, 106, 0.4));
 }
+
+@keyframes shopLootboxBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+// ─── Offer info ─────────────────────────────────────────────────────────────
 
 .shop-offer-label {
   font-family: $font-pixel;
   font-size: 0.42rem;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
   color: #d4a55a;
   text-transform: uppercase;
   text-align: center;
+  text-shadow: 1px 1px 0 #000;
 }
 
 .shop-offer-name {
   font-size: 0.45rem;
-  color: #c7c7c7;
+  color: #ddd;
   letter-spacing: 1px;
   text-align: center;
   word-break: break-word;
   line-height: 1.3;
+  text-shadow: 1px 1px 0 #000;
 }
 
 .shop-offer-rarity {
   font-size: 0.38rem;
   letter-spacing: 2px;
   text-transform: uppercase;
+  text-shadow: 1px 1px 0 #000;
 }
 
-.shop-rarity-common { color: #888; }
+.shop-rarity-common { color: #999; }
 .shop-rarity-uncommon { color: #4cd964; }
 .shop-rarity-rare { color: #63b3ff; }
-.shop-rarity-epic { color: #9b59b6; }
-.shop-rarity-legendary { color: $accent-gold; }
+.shop-rarity-epic { color: #b87fd6; }
+.shop-rarity-legendary { color: $accent-gold; text-shadow: 0 0 8px rgba(255, 204, 0, 0.3); }
 
 .shop-offer-desc {
   font-size: 0.38rem;
@@ -1408,16 +1512,21 @@
   flex-wrap: wrap;
   gap: 3px;
   justify-content: center;
+  min-height: 18px;
 }
 
 .shop-stat {
   font-size: 0.35rem;
   color: #7ec8e3;
   letter-spacing: 1px;
-  padding: 1px 4px;
-  background: rgba(0, 0, 0, 0.4);
+  padding: 2px 5px;
+  background: rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(126, 200, 227, 0.2);
+  border-radius: 2px;
+  text-shadow: 1px 1px 0 #000;
 }
+
+// ─── Price tag ──────────────────────────────────────────────────────────────
 
 .shop-price {
   font-family: $font-pixel;
@@ -1425,57 +1534,126 @@
   color: $accent-gold;
   letter-spacing: 1px;
   margin-top: 2px;
-  text-shadow: 1px 1px 0 #000;
+  text-shadow: 2px 2px 0 #000, 0 0 8px rgba(255, 204, 0, 0.2);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 2px 10px;
+  border: 1px solid rgba(255, 204, 0, 0.15);
+  border-radius: 3px;
 }
 
+// ─── Buy / Sold button ──────────────────────────────────────────────────────
+
 .shop-buy-btn {
-  padding: 6px 16px;
+  padding: 7px 16px;
   font-family: $font-pixel;
   font-size: 0.45rem;
   letter-spacing: 2px;
   cursor: pointer;
   border: 2px solid $accent-gold;
-  background: rgba(255, 204, 0, 0.08);
+  background: rgba(255, 204, 0, 0.1);
   color: $accent-gold;
   transition: all 0.2s ease;
   text-transform: uppercase;
   width: 100%;
+  text-shadow: 1px 1px 0 #000;
+  box-shadow: 0 2px 0 #1a0e08;
 
   &:hover:not(:disabled) {
     background: $accent-gold;
     color: #000;
+    text-shadow: none;
+    box-shadow: 0 2px 0 #3a2818;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: 0 1px 0 #1a0e08;
   }
 
   &:disabled {
-    opacity: 0.4;
+    opacity: 0.35;
     cursor: not-allowed;
-    border-color: #555;
+    border-color: #444;
     color: #555;
+    box-shadow: none;
   }
 }
 
 .shop-buy-btn.shop-sold-btn {
-  border-color: #555;
+  border-color: #444;
   color: #555;
   background: rgba(0, 0, 0, 0.3);
   cursor: default;
+  box-shadow: none;
 }
 
+// ─── Animations ─────────────────────────────────────────────────────────────
+
 @keyframes shopPurchaseGlow {
-  0% { box-shadow: 0 0 5px rgba(255, 204, 0, 0.3); border-color: $accent-gold; }
-  50% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.7), 0 0 40px rgba(255, 204, 0, 0.3); border-color: #fff; }
-  100% { box-shadow: 0 0 5px rgba(255, 204, 0, 0.3); border-color: $accent-gold; }
+  0% { box-shadow: 0 0 5px rgba(255, 204, 0, 0.3), 0 4px 0 #1a0e08; border-color: $accent-gold; }
+  30% { box-shadow: 0 0 25px rgba(255, 204, 0, 0.7), 0 0 50px rgba(255, 204, 0, 0.3), 0 4px 0 #1a0e08; border-color: #fff; }
+  60% { box-shadow: 0 0 15px rgba(255, 204, 0, 0.5), 0 4px 0 #1a0e08; border-color: $accent-gold; }
+  100% { box-shadow: 0 0 5px rgba(255, 204, 0, 0.3), 0 4px 0 #1a0e08; border-color: $accent-gold; }
 }
 
 .shop-anim-purchased {
-  animation: shopPurchaseGlow 1s ease-in-out;
+  animation: shopPurchaseGlow 1.2s ease-in-out;
 }
 
-// Mobile: stack offers vertically
+// Idle shimmer on legendary items
+@keyframes shopLegendaryShimmer {
+  0%, 100% { box-shadow: 0 0 5px rgba(255, 204, 0, 0.2), 0 4px 0 #1a0e08; }
+  50% { box-shadow: 0 0 12px rgba(255, 204, 0, 0.35), 0 0 20px rgba(255, 204, 0, 0.1), 0 4px 0 #1a0e08; }
+}
+
+.shop-offer-card:not(.shop-sold) .forge-rarity-legendary {
+  animation: shopLegendaryShimmer 3s ease-in-out infinite;
+}
+
+// ─── Candle decorations (left & right of vitrine) ──────────────────────────
+
+.shop-candle {
+  position: absolute;
+  bottom: 30px;
+  z-index: 0;
+  font-size: 1rem;
+  animation: shopCandleFlicker 1.5s ease-in-out infinite alternate;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.shop-candle-left { left: 8px; }
+.shop-candle-right { right: 8px; }
+.shop-candle-left::after { content: '🕯'; }
+.shop-candle-right::after { content: '🕯'; }
+
+@keyframes shopCandleFlicker {
+  0% { opacity: 0.4; transform: scaleY(1) rotate(-1deg); }
+  25% { opacity: 0.7; transform: scaleY(1.1) rotate(1deg); }
+  50% { opacity: 0.5; transform: scaleY(0.95) rotate(-0.5deg); }
+  75% { opacity: 0.8; transform: scaleY(1.05) rotate(0.5deg); }
+  100% { opacity: 0.4; transform: scaleY(1) rotate(0deg); }
+}
+
+// ─── Welcome text ───────────────────────────────────────────────────────────
+
+.shop-welcome {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  font-size: 0.4rem;
+  color: #7a5a3a;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+  font-style: italic;
+}
+
+// ─── Mobile: stack offers vertically ─────────────────────────────────────────
+
 @include mobile {
   .shop-vitrine {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 12px;
   }
 
   .shop-offer-card {
@@ -1484,8 +1662,8 @@
     padding: 10px;
 
     .shop-offer-preview {
-      width: 44px;
-      height: 44px;
+      width: 48px;
+      height: 48px;
     }
 
     .shop-offer-label {
@@ -1496,5 +1674,9 @@
       width: auto;
       padding: 4px 12px;
     }
+  }
+
+  .shop-candle {
+    display: none;
   }
 }
