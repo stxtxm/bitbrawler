@@ -47,6 +47,12 @@ function extractActionColor(detail: string): string {
     return '';
 }
 
+function getComboClass(count: number): string {
+    if (count >= 5) return 'combo-large';
+    if (count >= 3) return 'combo-medium';
+    return 'combo-small';
+}
+
 interface CombatViewProps {
     player: Character;
     opponent: Character;
@@ -55,9 +61,10 @@ interface CombatViewProps {
     onComplete: (won: boolean, xpGained: number) => void;
     onClose: () => void;
     candidates?: Character[];
+    comboCount?: number;
 }
 
-export const CombatView = ({ player, opponent, matchType, monsterId, onComplete, onClose, candidates = [] }: CombatViewProps) => {
+export const CombatView = ({ player, opponent, matchType, monsterId, onComplete, onClose, candidates = [], comboCount = 0 }: CombatViewProps) => {
     const { play } = useSound();
     const lowPerf = useLowPerformanceMode();
     const [phase, setPhase] = useState<'intro' | 'vs' | 'combat' | 'result'>('intro');
@@ -193,12 +200,20 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                 }
             }
 
+            // Emit combo burst particles if combo is active
+            if (comboCount >= 2 && !lowPerf) {
+                const leftPsCombo = leftParticleSystemRef.current;
+                const rightPsCombo = rightParticleSystemRef.current;
+                if (leftPsCombo) leftPsCombo.emit('combo', 80, 50, Math.min(comboCount * 2, 16));
+                if (rightPsCombo) rightPsCombo.emit('combo', 80, 50, Math.min(comboCount * 2, 16));
+            }
+
             setTimeout(() => {
                 setPhase('combat');
             }, 500);
         }, 900);
         return () => clearTimeout(vsTimer);
-    }, [phase, play, lowPerf]);
+    }, [phase, play, lowPerf, comboCount]);
 
     useEffect(() => {
         if (phase !== 'intro') return;
@@ -350,6 +365,14 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                 winningSide.emit('xp_star', w * 0.3, 30, lowPerf ? 2 : 5);
                                 winningSide.emit('spark', w * 0.5, 40, lowPerf ? 1 : 3);
                             }
+
+                            // Streak milestone burst at comboCount 3/5/10
+                            if (!lowPerf && (comboCount === 3 || comboCount === 5 || comboCount === 10)) {
+                                const milestonePs = winner === 'attacker' ? rightPs : leftPs;
+                                if (milestonePs) {
+                                    milestonePs.emit('xp_burst', w * 0.5, 40, 8);
+                                }
+                            }
                         }
                     }, 1200);
                 }
@@ -357,7 +380,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
 
             return () => clearInterval(roundInterval);
         }
-    }, [phase, combatResult, player.name, opponent.name, lowPerf]);
+    }, [phase, combatResult, player.name, opponent.name, lowPerf, comboCount]);
 
     useEffect(() => {
         if (actionPulse) {
@@ -470,6 +493,12 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                 <div className="particle-layer right" ref={rightLayerRef} />
                 {phase === 'intro' && (matchType === 'pve' ? (
                     <div className="combat-intro pve-intro">
+                        {comboCount >= 2 && (
+                            <div className={`combo-ring ${getComboClass(comboCount)}`}>
+                                <span className="combo-count">{comboCount}</span>
+                                <span className="combo-label">COMBO</span>
+                            </div>
+                        )}
                         <div className="match-type-badge">{getMatchDifficultyLabel(matchType)}</div>
                         <div className="monster-encounter">
                             <div className="encounter-text">A WILD</div>
@@ -480,6 +509,12 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                     </div>
                 ) : (
                     <div className="combat-intro">
+                        {comboCount >= 2 && (
+                            <div className={`combo-ring ${getComboClass(comboCount)}`}>
+                                <span className="combo-count">{comboCount}</span>
+                                <span className="combo-label">COMBO</span>
+                            </div>
+                        )}
                         <div className="match-type-badge">{getMatchDifficultyLabel(matchType)}</div>
                         <h2 className="combat-title">MATCHMAKING</h2>
                         <div className="matchmaking-stage">

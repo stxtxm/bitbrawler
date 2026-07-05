@@ -553,6 +553,141 @@ describe('CombatView Interface', () => {
         vi.restoreAllMocks();
     });
 
+    // ─── Phase 3: Combo Ring ──────────────────────────
+
+    it('should show combo ring when comboCount >= 2', () => {
+        vi.useFakeTimers();
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                comboCount={3}
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        const comboRing = container.querySelector('.combo-ring');
+        expect(comboRing).not.toBeNull();
+        expect(comboRing?.textContent).toContain('3');
+        expect(comboRing?.textContent).toContain('COMBO');
+
+        vi.useRealTimers();
+    });
+
+    it('should not show combo ring when comboCount < 2', () => {
+        vi.useFakeTimers();
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                comboCount={1}
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        expect(container.querySelector('.combo-ring')).toBeNull();
+
+        vi.useRealTimers();
+    });
+
+    it('should apply correct combo size class for count 3', () => {
+        vi.useFakeTimers();
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                comboCount={3}
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        const comboRing = container.querySelector('.combo-ring');
+        expect(comboRing).not.toBeNull();
+        expect(comboRing?.classList.contains('combo-medium')).toBe(true);
+        expect(comboRing?.classList.contains('combo-small')).toBe(false);
+        expect(comboRing?.classList.contains('combo-large')).toBe(false);
+
+        vi.useRealTimers();
+    });
+
+    it('should apply combo-large class for count 5+', () => {
+        vi.useFakeTimers();
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                comboCount={7}
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        const comboRing = container.querySelector('.combo-ring');
+        expect(comboRing).not.toBeNull();
+        expect(comboRing?.classList.contains('combo-large')).toBe(true);
+
+        vi.useRealTimers();
+    });
+
+    it('should emit combo particles on vs transition when combo active', () => {
+        vi.useFakeTimers();
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                comboCount={3}
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        // Advance past intro (2000ms) + VS timer (900ms) to trigger particle emission
+        act(() => { vi.advanceTimersByTime(2500); });
+        act(() => { vi.advanceTimersByTime(1000); });
+
+        // Combo emit should have been called with 'combo' type
+        const emitSpy = vi.mocked(ParticleSystem.prototype.emit);
+        const comboEmitCalls = emitSpy.mock.calls.filter(([type]) => type === 'combo');
+        expect(comboEmitCalls.length).toBeGreaterThanOrEqual(2);
+
+        vi.useRealTimers();
+    });
+
+    it('should show combo ring in PvE intro when comboCount >= 2', () => {
+        vi.useFakeTimers();
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="pve"
+                monsterId="goblin"
+                comboCount={2}
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        const comboRing = container.querySelector('.combo-ring');
+        expect(comboRing).not.toBeNull();
+        expect(comboRing?.classList.contains('combo-small')).toBe(true);
+
+        vi.useRealTimers();
+    });
+
     it('should skip to result phase when auto-resolve is clicked', () => {
         vi.useFakeTimers();
 

@@ -230,6 +230,7 @@ const Arena = () => {
           matchType={combat.combatData.matchType}
           monsterId={combat.combatData.matchType === 'pve' ? combat.pveMonster?.monsterId : undefined}
           candidates={combat.combatData.candidates}
+          comboCount={idle.currentStreak}
           onComplete={combat.onCombatComplete}
           onClose={combat.onCloseCombat}
         />

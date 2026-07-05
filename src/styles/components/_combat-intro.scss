@@ -488,3 +488,162 @@
         font-size: 0.6rem;
     }
 }
+
+// ============================================
+// Combo Ring (intro phase)
+// ============================================
+
+.combo-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 25;
+    animation: comboAppear 0.4s cubic-bezier(0.3, 1.4, 0.4, 1) both;
+}
+
+.combo-ring::before {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    border: 3px solid #ffd700;
+    animation: comboRingPulse 1s ease-out 0.3s both;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.4), inset 0 0 12px rgba(255, 215, 0, 0.2);
+}
+
+.combo-ring.combo-small::before {
+    width: 60px;
+    height: 60px;
+}
+
+.combo-ring.combo-medium::before {
+    width: 90px;
+    height: 90px;
+    border-width: 4px;
+    border-color: #c0c0c0;
+    box-shadow: 0 0 16px rgba(192, 192, 192, 0.5), inset 0 0 16px rgba(192, 192, 192, 0.3);
+}
+
+.combo-ring.combo-large::before {
+    width: 130px;
+    height: 130px;
+    border-width: 5px;
+    border-color: #ffd700;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.7), inset 0 0 30px rgba(255, 215, 0, 0.4);
+    animation: comboRingPulseLarge 1.2s ease-out 0.3s both;
+}
+
+.combo-count {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1.8rem;
+    color: #ffd700;
+    text-shadow:
+        2px 2px 0 #000,
+        0 0 20px rgba(255, 215, 0, 0.6);
+    z-index: 1;
+    line-height: 1;
+}
+
+.combo-ring.combo-medium .combo-count {
+    font-size: 2.2rem;
+    color: #c0c0c0;
+    text-shadow:
+        2px 2px 0 #000,
+        0 0 20px rgba(192, 192, 192, 0.6);
+}
+
+.combo-ring.combo-large .combo-count {
+    font-size: 2.8rem;
+    color: #ffd700;
+    text-shadow:
+        3px 3px 0 #000,
+        0 0 30px rgba(255, 215, 0, 0.8),
+        0 0 60px rgba(255, 215, 0, 0.4);
+    animation: comboCountGlow 1.5s ease-in-out infinite;
+}
+
+.combo-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.45rem;
+    color: #ffd700;
+    letter-spacing: 2px;
+    text-shadow: 1px 1px 0 #000;
+    z-index: 1;
+    margin-top: 2px;
+}
+
+.combo-ring.combo-medium .combo-label {
+    color: #c0c0c0;
+}
+
+.combo-ring.combo-large .combo-label {
+    color: #ffd700;
+    font-size: 0.5rem;
+    animation: comboLabelPulse 1s ease-in-out infinite;
+}
+
+@keyframes comboAppear {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.3);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes comboRingPulse {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.8;
+    }
+    60% {
+        transform: scale(1.3);
+        opacity: 0.3;
+    }
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+@keyframes comboRingPulseLarge {
+    0% {
+        transform: scale(0.8) rotate(0deg);
+        opacity: 0.9;
+    }
+    50% {
+        transform: scale(1.4) rotate(8deg);
+        opacity: 0.4;
+    }
+    100% {
+        transform: scale(1.8) rotate(-4deg);
+        opacity: 0;
+    }
+}
+
+@keyframes comboCountGlow {
+    0%, 100% {
+        filter: brightness(1);
+        transform: scale(1);
+    }
+    50% {
+        filter: brightness(1.3);
+        transform: scale(1.05);
+    }
+}
+
+@keyframes comboLabelPulse {
+    0%, 100% {
+        opacity: 0.7;
+    }
+    50% {
+        opacity: 1;
+    }
+}

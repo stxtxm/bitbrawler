@@ -44,14 +44,27 @@ function getTierLabel(bonus: StreakBonus): string {
   return 'BASE';
 }
 
+function getStreakColorClass(streak: number): string {
+  if (streak >= 10) return 'streak-rainbow';
+  if (streak >= 5) return 'streak-gold';
+  if (streak >= 3) return 'streak-silver';
+  return 'streak-gray';
+}
+
+function isMilestone(streak: number): boolean {
+  return streak === 3 || streak === 5 || streak === 10;
+}
+
 const StreakIndicator: React.FC<StreakIndicatorProps> = ({ streak, canRoll, compact = false }) => {
   const bonus = getStreakBonus(streak);
   const nextTier = getNextTier(streak);
   const progress = getTierProgress(streak);
+  const streakColorClass = getStreakColorClass(streak);
+  const showMilestone = isMilestone(streak);
 
   if (compact) {
     return (
-      <div className={`streak-indicator compact ${!canRoll ? 'streak-idle' : ''}`}>
+      <div className={`streak-indicator compact ${streakColorClass} ${!canRoll ? 'streak-idle' : ''}`}>
         <PixelIcon type="trophy" size={12} />
         <span className="streak-count">{streak}</span>
       </div>
@@ -59,7 +72,7 @@ const StreakIndicator: React.FC<StreakIndicatorProps> = ({ streak, canRoll, comp
   }
 
   return (
-    <div className={`streak-indicator ${!canRoll ? 'streak-idle' : ''}`}>
+    <div className={`streak-indicator ${streakColorClass} ${!canRoll ? 'streak-idle' : ''}`}>
       <div className="streak-header">
         <PixelIcon type="trophy" size={14} />
         <span className="streak-title">STREAK</span>
@@ -69,6 +82,19 @@ const StreakIndicator: React.FC<StreakIndicatorProps> = ({ streak, canRoll, comp
       <div className="streak-tier-label">
         {getTierLabel(bonus)}
       </div>
+
+      {showMilestone && (
+        <div className="streak-milestone-burst" aria-hidden="true">
+          <span className="burst-star s1">✦</span>
+          <span className="burst-star s2">✦</span>
+          <span className="burst-star s3">✦</span>
+          <span className="burst-star s4">✦</span>
+          <span className="burst-star s5">✦</span>
+          <span className="burst-star s6">✦</span>
+          <span className="burst-star s7">✦</span>
+          <span className="burst-star s8">✦</span>
+        </div>
+      )}
 
       {nextTier && progress && progress.max > 0 && (
         <div className="streak-progress-container">
