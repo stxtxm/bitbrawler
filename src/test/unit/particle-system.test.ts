@@ -52,7 +52,7 @@ describe('ParticleSystem - new particle types', () => {
     });
 
     it('should register combo as a valid ParticleType', () => {
-        const validTypes: ParticleType[] = ['combo', 'xp_burst', 'dust', 'spark', 'xp_star', 'damage', 'hit_ring'];
+        const validTypes: ParticleType[] = ['combo', 'xp_burst', 'rare_reveal', 'confetti', 'dust', 'spark', 'xp_star', 'damage', 'hit_ring'];
         expect(validTypes).toContain('combo');
         expect(validTypes).toContain('xp_burst');
     });
