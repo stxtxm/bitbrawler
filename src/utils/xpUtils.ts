@@ -5,6 +5,7 @@ import { getHpForVitality } from './statUtils';
 // Configuration constants derived from central rules
 const BASE_XP = 120;
 const EXPONENT = 1.65;
+const EARLY_SHIFT = 2;
 const MAX_LEVEL = 99;
 
 /**
@@ -25,7 +26,8 @@ export function getTotalXpForLevel(level: number): number {
  */
 export function getXpRequiredForNextLevel(level: number): number {
     if (level >= MAX_LEVEL) return Infinity;
-    return Math.floor(BASE_XP * Math.pow(level, EXPONENT));
+    const shifted = Math.max(1, level - EARLY_SHIFT);
+    return Math.floor(BASE_XP * Math.pow(shifted, EXPONENT));
 }
 
 /**

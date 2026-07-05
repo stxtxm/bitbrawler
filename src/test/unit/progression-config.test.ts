@@ -6,12 +6,12 @@ import {
 } from '../../config/progressionConfig';
 
 describe('progressionConfig', () => {
-  it('PVP_UNLOCK_LEVEL is 5', () => {
-    expect(PROGRESSION_GATES.PVP_UNLOCK_LEVEL).toBe(5);
+  it('PVP_UNLOCK_LEVEL is 1', () => {
+    expect(PROGRESSION_GATES.PVP_UNLOCK_LEVEL).toBe(1);
   });
 
-  it('FORGE_UNLOCK_LEVEL is 10', () => {
-    expect(PROGRESSION_GATES.FORGE_UNLOCK_LEVEL).toBe(10);
+  it('FORGE_UNLOCK_LEVEL is 1', () => {
+    expect(PROGRESSION_GATES.FORGE_UNLOCK_LEVEL).toBe(1);
   });
 
   it('FUSION_UNLOCK_LEVEL is 15', () => {

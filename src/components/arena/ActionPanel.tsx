@@ -1,7 +1,6 @@
 import { memo } from 'react';
 import { PixelIcon } from '../PixelIcon';
 import { GAME_RULES } from '../../config/gameRules';
-import { PROGRESSION_GATES, isFeatureUnlocked } from '../../config/progressionConfig';
 
 interface ActionPanelProps {
   pveMode: boolean;
@@ -12,7 +11,6 @@ interface ActionPanelProps {
   isOfflineMode: boolean;
   fightsLeft: number;
   pveFightsLeft: number;
-  level: number;
   onTogglePve: () => void;
   onTogglePvp: () => void;
   onFight: () => void;
@@ -20,9 +18,8 @@ interface ActionPanelProps {
 
 export const ActionPanel = memo(function ActionPanel({
   pveMode, canFight, matchmaking, hasPendingFight, autoMode,
-  isOfflineMode, fightsLeft, pveFightsLeft, level, onTogglePve, onTogglePvp, onFight,
+  isOfflineMode, fightsLeft, pveFightsLeft, onTogglePve, onTogglePvp, onFight,
 }: ActionPanelProps) {
-  const pvpUnlocked = isFeatureUnlocked(level, PROGRESSION_GATES.PVP_UNLOCK_LEVEL);
 
   return (
     <div className="action-panel">
@@ -38,16 +35,15 @@ export const ActionPanel = memo(function ActionPanel({
           <span className="switch-text">👹 PVE</span>
         </button>
         <button
-          className={`pixel-switch pve-switch ${!pveMode ? 'on' : 'off'}${!pvpUnlocked ? ' locked' : ''}`}
-          onClick={pvpUnlocked ? onTogglePvp : undefined}
+          className={`pixel-switch pve-switch ${!pveMode ? 'on' : 'off'}`}
+          onClick={onTogglePvp}
           role="switch"
-          aria-checked={!pveMode && pvpUnlocked}
+          aria-checked={!pveMode}
           aria-label="PvP mode"
-          disabled={!pvpUnlocked}
-          title={pvpUnlocked ? 'PvP mode' : `Unlocks at LVL ${PROGRESSION_GATES.PVP_UNLOCK_LEVEL}`}
+          title="PvP mode"
         >
           <span className="switch-knob" />
-          <span className="switch-text">{pvpUnlocked ? '⚔ PVP' : `🔒 PVP LVL ${PROGRESSION_GATES.PVP_UNLOCK_LEVEL}`}</span>
+          <span className="switch-text">⚔ PVP</span>
         </button>
       </div>
 

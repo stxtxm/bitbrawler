@@ -216,11 +216,11 @@ describe('XP Utils', () => {
             }
             const avgXp = totalXp / simulations;
 
-            // XP needed for level 3 = 120 (lvl1) + 376 (lvl2) = 496
+            // XP needed for level 3 = 120 + 120 = 240 (with EARLY_SHIFT=2)
             const xpNeededForLevel3 = getTotalXpForLevel(3);
-            expect(xpNeededForLevel3).toBe(496);
+            expect(xpNeededForLevel3).toBe(240);
 
-            expect(avgXp).toBeGreaterThanOrEqual(496);
+            expect(avgXp).toBeGreaterThanOrEqual(240);
         });
     });
 
@@ -289,11 +289,11 @@ describe('XP Utils', () => {
             expect(fights).toBe(2);
         });
 
-        it('should require 80+ wins per level at level 20 (mid-game grind)', () => {
+        it('should require 60+ wins per level at level 20 (mid-game grind)', () => {
             const xpNeeded = getXpRequiredForNextLevel(20);
             const winXp = calculateFightXp(true, 20);
             const fights = Math.ceil(xpNeeded / winXp);
-            expect(fights).toBeGreaterThanOrEqual(80);
+            expect(fights).toBeGreaterThanOrEqual(60);
         });
 
         it('should keep level 50 requirement < 250 fights per level', () => {

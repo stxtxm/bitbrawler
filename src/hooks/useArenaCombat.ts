@@ -150,7 +150,6 @@ export const useArenaCombat = ({
     isOfflineMode,
     fightsLeft,
     pveFightsLeft,
-    level: character?.level ?? 1,
     onTogglePve,
     onTogglePvp,
     onFight,
@@ -166,7 +165,6 @@ export const useArenaCombat = ({
     onTogglePve,
     onTogglePvp,
     pveMode,
-    character?.level,
   ]);
 
   return {

@@ -25,9 +25,9 @@ describe('idleBackgroundEssence', () => {
       }
 
       expect(totalEssence).toBeGreaterThan(0)
-      // Each fight at level 10 gives: 0.1 * (1 + 9 * 0.05) * (1 + 0 * 0.01) = 0.1 * 1.45 = 0.145
-      // 5 fights: ~0.725
-      expect(totalEssence).toBeCloseTo(0.725, 1)
+      // Each fight at level 10 gives: 0.2 * (1 + 9 * 0.08) = 0.2 * 1.72 = 0.344
+      // 5 fights: ~1.72
+      expect(totalEssence).toBeCloseTo(1.72, 1)
     })
 
     it('should produce less essence on loss than on win', () => {
@@ -73,11 +73,11 @@ describe('idleBackgroundEssence', () => {
         totalEssence += calculateIdleEssence(true, level, intel, focus)
       }
 
-      // Essence per fight at level 25: 0.1 * (1 + 24*0.05) * (1 + (15+12-20)*0.01)
-      // = 0.1 * (1 + 1.2) * (1 + 0.07)
-      // = 0.1 * 2.2 * 1.07
-      // = 0.2354
-      // 100 fights: ~23.54
+      // Essence per fight at level 25: 0.2 * (1 + 24*0.08) * (1 + (15+12-20)*0.01)
+      // = 0.2 * (1 + 1.92) * (1 + 0.07)
+      // = 0.2 * 2.92 * 1.07
+      // = 0.6249
+      // 100 fights: ~62.49
       expect(totalEssence).toBeGreaterThan(20)
     })
   })
@@ -126,9 +126,9 @@ describe('idleBackgroundEssence', () => {
         totalEssence += essence
       }
 
-      // 10 fights * 0.145 essence ≈ 1.45
-      expect(totalEssence).toBeGreaterThan(1)
-      expect(totalEssence).toBeLessThan(2)
+      // 10 fights * 0.344 essence ≈ 3.44
+      expect(totalEssence).toBeGreaterThan(2)
+      expect(totalEssence).toBeLessThan(6)
     })
   })
 })
