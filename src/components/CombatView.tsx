@@ -13,6 +13,17 @@ import { ParticleSystem, type ParticleType } from '../utils/particleSystem';
 import { COMBAT_BALANCE } from '../config/combatBalance';
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode';
 
+const HIT_STOP_DURATION: Record<string, number> = {
+  hit: 100,
+  crit: 150,
+  ko: 150,
+};
+
+const SCREEN_FLASH_DURATION: Record<string, number> = {
+  crit: 80,
+  ko: 150,
+};
+
 function extractDamage(detail: string): number | null {
     const match = detail.match(/(\d+)\s*DMG/);
     return match ? parseInt(match[1], 10) : null;
@@ -64,6 +75,11 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const [scanLocked, setScanLocked] = useState(false);
     const [fighterEntrance, setFighterEntrance] = useState(false);
     const [showAutoResolve, setShowAutoResolve] = useState(false);
+    const [hitStop, setHitStop] = useState(false);
+    const [screenFlash, setScreenFlash] = useState<'none' | 'crit' | 'ko'>('none');
+    const [isKO, setIsKO] = useState(false);
+    const hitStopTimerRef = useRef<number | null>(null);
+    const flashTimerRef = useRef<number | null>(null);
 
     const leftLayerRef = useRef<HTMLDivElement | null>(null);
     const rightLayerRef = useRef<HTMLDivElement | null>(null);
@@ -239,6 +255,51 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                             pulseTimeoutRef.current = null;
                         }, duration);
 
+                        // --- Hit Stop & Screen Shake / Flash ---
+                        if (!lowPerf && action.type !== 'miss') {
+                            const lastRound = roundIndex >= combatResult.details.length - 1;
+                            const koBlow = lastRound && (
+                                (action.actor === 'player' && combatResult.winner === 'attacker') ||
+                                (action.actor === 'opponent' && combatResult.winner === 'defender')
+                            );
+
+                            if (koBlow) {
+                                setIsKO(true);
+                                setHitStop(true);
+                                setScreenFlash('ko');
+                                if (hitStopTimerRef.current !== null) window.clearTimeout(hitStopTimerRef.current);
+                                hitStopTimerRef.current = window.setTimeout(() => {
+                                    setHitStop(false);
+                                    hitStopTimerRef.current = null;
+                                }, HIT_STOP_DURATION.ko);
+                                if (flashTimerRef.current !== null) window.clearTimeout(flashTimerRef.current);
+                                flashTimerRef.current = window.setTimeout(() => {
+                                    setScreenFlash('none');
+                                    flashTimerRef.current = null;
+                                }, SCREEN_FLASH_DURATION.ko);
+                            } else if (action.type === 'crit') {
+                                setHitStop(true);
+                                setScreenFlash('crit');
+                                if (hitStopTimerRef.current !== null) window.clearTimeout(hitStopTimerRef.current);
+                                hitStopTimerRef.current = window.setTimeout(() => {
+                                    setHitStop(false);
+                                    hitStopTimerRef.current = null;
+                                }, HIT_STOP_DURATION.crit);
+                                if (flashTimerRef.current !== null) window.clearTimeout(flashTimerRef.current);
+                                flashTimerRef.current = window.setTimeout(() => {
+                                    setScreenFlash('none');
+                                    flashTimerRef.current = null;
+                                }, SCREEN_FLASH_DURATION.crit);
+                            } else if (action.type === 'hit') {
+                                setHitStop(true);
+                                if (hitStopTimerRef.current !== null) window.clearTimeout(hitStopTimerRef.current);
+                                hitStopTimerRef.current = window.setTimeout(() => {
+                                    setHitStop(false);
+                                    hitStopTimerRef.current = null;
+                                }, HIT_STOP_DURATION.hit);
+                            }
+                        }
+
                         const dmg = extractDamage(detail);
                         const targetPs = action.actor === 'player' ? rightParticleSystemRef.current : leftParticleSystemRef.current;
                         const targetLayer = action.actor === 'player' ? rightLayerRef.current : leftLayerRef.current;
@@ -309,12 +370,29 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
             if (pulseTimeoutRef.current !== null) {
                 window.clearTimeout(pulseTimeoutRef.current);
             }
+            if (hitStopTimerRef.current !== null) {
+                window.clearTimeout(hitStopTimerRef.current);
+            }
+            if (flashTimerRef.current !== null) {
+                window.clearTimeout(flashTimerRef.current);
+            }
         };
     }, []);
 
     useEffect(() => {
         if (phase !== 'combat') {
             setActionPulse(null);
+            setHitStop(false);
+            setScreenFlash('none');
+            setIsKO(false);
+            if (hitStopTimerRef.current !== null) {
+                window.clearTimeout(hitStopTimerRef.current);
+                hitStopTimerRef.current = null;
+            }
+            if (flashTimerRef.current !== null) {
+                window.clearTimeout(flashTimerRef.current);
+                flashTimerRef.current = null;
+            }
         }
     }, [phase]);
 
@@ -453,7 +531,11 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                     </div>
                 )}
                 {phase === 'combat' && combatResult && (
-                    <div className={`combat-action${actionPulse ? ` action-${actionPulse.type}` : ''}`}>
+                    <div
+                        className={`combat-action${actionPulse ? ` action-${actionPulse.type}` : ''}${hitStop ? ' hit-stop' : ''}${isKO ? ' action-ko' : ''}`}
+                        style={{ '--shake-dir': actionPulse?.actor === 'player' ? -1 : 1 } as React.CSSProperties}
+                    >
+                        {screenFlash !== 'none' && <div className={`screen-flash flash-${screenFlash}`} />}
                         <div className="combat-fighters">
                             <div key={`player-${currentRound}`} className={`fighter-side left${fighterEntrance ? ' enter-left' : ''}${actionPulse?.actor === 'player' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'opponent' ? ` react-${reactionType}` : ''}${showPlayerDefeat ? ' defeated' : ''}`}>
                                 <div className="fighter-character-wrap">
