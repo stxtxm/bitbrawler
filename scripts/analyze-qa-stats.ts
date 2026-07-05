@@ -420,16 +420,6 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     suggestions.push(`No rare or epic items found in ${lootboxOpened.length} lootbox opens. Consider adjusting LOOTBOX_RARITY_WEIGHTS.`)
   }
 
-  // Progression curve
-  if (progressionCurve && progressionCurve.runs_with_data >= 3) {
-    if (progressionCurve.avg_xp_progress_percent > 90) {
-      suggestions.push(`Players are close to leveling (avg ${progressionCurve.avg_xp_progress_percent.toFixed(0)}% of next level). XP curve may be too flat.`)
-    }
-    if (progressionCurve.avg_xp_progress_percent < 10 && progressionCurve.avg_level > 5) {
-      suggestions.push(`Players are far from leveling (avg ${progressionCurve.avg_xp_progress_percent.toFixed(0)}% progress at level ${progressionCurve.avg_level.toFixed(0)}). XP curve may be too steep.`)
-    }
-  }
-
   // Error rate
   const errorRate = stats.length > 0 ? errorRuns.length / stats.length : 0
   const totalErrorRate = stats.length > 0 ? (errorRuns.length + halfwayRuns.length) / stats.length : 0
@@ -618,6 +608,16 @@ function analyze(stats: RunRecord[]): AnalysisReport {
       avg_level: Math.round((runsWithCurve.reduce((s, r) => s + r.progression_curve.level, 0) / runsWithCurve.length) * 10) / 10,
       avg_xp_progress_percent: Math.round((runsWithCurve.reduce((s, r) => s + r.progression_curve.percent, 0) / runsWithCurve.length) * 10) / 10,
       avg_xp_for_next: Math.round(runsWithCurve.reduce((s, r) => s + r.progression_curve.xp_for_next, 0) / runsWithCurve.length),
+    }
+  }
+
+  // Progression curve suggestions
+  if (progressionCurve && progressionCurve.runs_with_data >= 3) {
+    if (progressionCurve.avg_xp_progress_percent > 90) {
+      suggestions.push(`Players are close to leveling (avg ${progressionCurve.avg_xp_progress_percent.toFixed(0)}% of next level). XP curve may be too flat.`)
+    }
+    if (progressionCurve.avg_xp_progress_percent < 10 && progressionCurve.avg_level > 5) {
+      suggestions.push(`Players are far from leveling (avg ${progressionCurve.avg_xp_progress_percent.toFixed(0)}% progress at level ${progressionCurve.avg_level.toFixed(0)}). XP curve may be too steep.`)
     }
   }
 
