@@ -143,6 +143,7 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
   const lastTimeRef = useRef(0);
   const animatedRef = useRef(animated);
   const animationStartTime = useRef<number | null>(null);
+  const bgPausedRef = useRef(false);
   
   animatedRef.current = animated;
 
@@ -425,9 +426,23 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       return;
     }
 
+    // Handle background tab — pause rAF when hidden, resume when visible
+    const onVisibility = () => {
+      bgPausedRef.current = document.visibilityState === 'hidden';
+      if (document.visibilityState === 'visible') {
+        lastTimeRef.current = performance.now();
+        animationStartTime.current = null;
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
     let rafId: number;
 
     const render = (now: number) => {
+      if (bgPausedRef.current) {
+        rafId = requestAnimationFrame(render);
+        return;
+      }
       rafId = requestAnimationFrame(render);
 
       if (animationStartTime.current === null) {
@@ -454,6 +469,7 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
     rafId = requestAnimationFrame(render);
 
     return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
       cancelAnimationFrame(rafId);
     };
   }, [width, height, seedNum, isMobile, groundTop, clouds]);

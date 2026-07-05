@@ -87,6 +87,9 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const [isKO, setIsKO] = useState(false);
     const hitStopTimerRef = useRef<number | null>(null);
     const flashTimerRef = useRef<number | null>(null);
+    const [visibilityKey, setVisibilityKey] = useState(0);
+    const bgStartRef = useRef<number | null>(null);
+    const roundIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     // Two-stage health bar state (track percentages for the ghost bar)
     const initialPlayerPct = player.maxHp > 0 ? (player.hp / player.maxHp) * 100 : 100;
@@ -166,6 +169,54 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
             hardTimeoutRef.current = null;
         }
     }, [phase]);
+
+    // Visibility change — pause/resume fight when tab goes to background
+    useEffect(() => {
+        const handleVisibility = () => {
+            if (document.visibilityState === 'hidden') {
+                bgStartRef.current = Date.now();
+            } else if (document.visibilityState === 'visible' && bgStartRef.current !== null) {
+                const elapsed = Date.now() - bgStartRef.current;
+                bgStartRef.current = null;
+
+                if (elapsed > 2000) {
+                    // Force CSS animations to restart by remounting key elements
+                    setVisibilityKey(k => k + 1);
+
+                    if (phase === 'combat' && combatResult) {
+                        // Clear the round interval
+                        if (roundIntervalRef.current !== null) {
+                            clearInterval(roundIntervalRef.current);
+                            roundIntervalRef.current = null;
+                        }
+                        // Fast-forward: show all rounds and go to result
+                        setCurrentRound(combatResult.details.length - 1);
+                        setTimeout(() => {
+                            setPhase('result');
+                            const winner = combatResult.winner;
+                            if (winner === 'attacker' || winner === 'defender') {
+                                const winningSide = winner === 'attacker' ? rightParticleSystemRef.current : leftParticleSystemRef.current;
+                                const winningLayer = winner === 'attacker' ? rightLayerRef.current : leftLayerRef.current;
+                                const w = winningLayer?.clientWidth || 300;
+                                if (winningSide) {
+                                    winningSide.emit('xp_star', w * 0.3, 30, lowPerf ? 2 : 5);
+                                    winningSide.emit('spark', w * 0.5, 40, lowPerf ? 1 : 3);
+                                }
+                            }
+                        }, 300);
+                    } else if ((phase === 'intro' || phase === 'vs') && combatResult) {
+                        // Skip to combat if we've been away long enough
+                        setFighterEntrance(true);
+                        setTimeout(() => {
+                            setPhase('combat');
+                        }, 200);
+                    }
+                }
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibility);
+        return () => document.removeEventListener('visibilitychange', handleVisibility);
+    }, [phase, combatResult, lowPerf]);
 
     // Auto-resolve warning timer — shows "Le combat s'éternise..." after 30s in combat phase
     useEffect(() => {
@@ -262,6 +313,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
         if (phase === 'combat' && combatResult) {
             let roundIndex = 0;
             const roundInterval = setInterval(() => {
+                roundIntervalRef.current = roundInterval;
                 if (roundIndex < combatResult.details.length) {
                     setCurrentRound(roundIndex);
                     const detail = combatResult.details[roundIndex];
@@ -409,7 +461,10 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                 }
             }, 520);
 
-            return () => clearInterval(roundInterval);
+            return () => {
+                roundIntervalRef.current = null;
+                clearInterval(roundInterval);
+            };
         }
     }, [phase, combatResult, player.name, opponent.name, lowPerf, comboCount]);
 
@@ -591,7 +646,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                     </div>
                 ))}
                 {phase === 'vs' && (
-                    <div className="combat-vs">
+                    <div key={`combat-vs-${visibilityKey}`} className="combat-vs">
                         <div className="vs-fighter vs-left">
                             <PixelCharacter seed={player.seed} gender={player.gender} scale={8} />
                             <div className="vs-fighter-name">{player.name}</div>
@@ -620,7 +675,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                     </div>
                 )}
                 {phase === 'combat' && combatResult && (
-                    <div
+                    <div key={`combat-action-${visibilityKey}`}
                         className={`combat-action${actionPulse ? ` action-${actionPulse.type}` : ''}${hitStop ? ' hit-stop' : ''}${isKO ? ' action-ko' : ''}`}
                         style={{ '--shake-dir': actionPulse?.actor === 'player' ? -1 : 1 } as React.CSSProperties}
                     >
@@ -686,7 +741,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                     </div>
                 )}
                 {phase === 'result' && combatResult && (
-                    <div className={`combat-result${won ? ' victory' : draw ? ' draw' : ' defeat'}${!won ? ' combat-result-shake' : ''}`}>
+                    <div key={`combat-result-${visibilityKey}`} className={`combat-result${won ? ' victory' : draw ? ' draw' : ' defeat'}${!won ? ' combat-result-shake' : ''}`}>
                         {won && <><div className="result-badge victory">VICTORY!</div><div className="result-icon pixel victory"><PixelIcon type="trophy" size={80}/></div><div className="result-message"><div className="result-xp victory result-xp-popup">+{xpGained} XP</div><div className="result-sub">Victory over {opponent.name}</div></div></>}
                         {!won && !draw && <><div className="result-badge defeat">DEFEAT</div><div className="result-icon pixel defeat"><PixelIcon type="skull" size={72}/></div><div className="result-message"><div className="result-xp defeat result-xp-popup">+{xpGained} XP</div><div className="result-sub">Defeated by {opponent.name}</div></div></>}
                         {draw && <><div className="result-badge draw">DRAW</div><div className="result-icon pixel draw"><PixelIcon type="swords" size={72}/></div><div className="result-message"><div className="result-xp draw result-xp-popup">+{xpGained} XP</div><div className="result-sub">Stalemate vs {opponent.name}</div></div></>}

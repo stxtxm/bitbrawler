@@ -19,6 +19,7 @@ export function useTerrainAnimation(
   const lastFrameTimeRef = useRef<number>(Date.now());
   const offsetRef = useRef<number>(0);
   const frameDurationRef = useRef<number>(getFrameDuration(fps));
+  const bgPausedRef = useRef(false);
 
   // Update frame duration if fps changes
   useEffect(() => {
@@ -42,7 +43,19 @@ export function useTerrainAnimation(
 
     lastFrameTimeRef.current = Date.now();
 
+    const onVisibility = () => {
+      bgPausedRef.current = document.visibilityState === 'hidden';
+      if (document.visibilityState === 'visible') {
+        lastFrameTimeRef.current = Date.now();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
     const animate = () => {
+      if (bgPausedRef.current) {
+        rafIdRef.current = requestAnimationFrame(animate);
+        return;
+      }
       const now = Date.now();
       const elapsed = now - lastFrameTimeRef.current;
 
@@ -62,6 +75,7 @@ export function useTerrainAnimation(
 
     // Cleanup
     return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
       if (rafIdRef.current !== null) {
         cancelAnimationFrame(rafIdRef.current);
         rafIdRef.current = null;
@@ -90,9 +104,22 @@ export function useParallaxAnimation(
 
     let rafId: number | null = null;
     let lastTime = Date.now();
+    let bgPaused = false;
     const frameDuration = getFrameDuration(fps);
 
+    const onVisibility = () => {
+      bgPaused = document.visibilityState === 'hidden';
+      if (document.visibilityState === 'visible') {
+        lastTime = Date.now();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
     const animate = () => {
+      if (bgPaused) {
+        rafId = requestAnimationFrame(animate);
+        return;
+      }
       const now = Date.now();
       const elapsed = now - lastTime;
 
@@ -113,6 +140,7 @@ export function useParallaxAnimation(
     rafId = requestAnimationFrame(animate);
 
     return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
       if (rafId !== null) {
         cancelAnimationFrame(rafId);
       }
@@ -138,9 +166,22 @@ export function useCloudAnimation(
     let rafId: number | null = null;
     let lastTime = Date.now();
     let angle = 0;
+    let bgPaused = false;
     const frameDuration = getFrameDuration(fps);
 
+    const onVisibility = () => {
+      bgPaused = document.visibilityState === 'hidden';
+      if (document.visibilityState === 'visible') {
+        lastTime = Date.now();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
     const animate = () => {
+      if (bgPaused) {
+        rafId = requestAnimationFrame(animate);
+        return;
+      }
       const now = Date.now();
       const elapsed = now - lastTime;
 
@@ -157,6 +198,7 @@ export function useCloudAnimation(
     rafId = requestAnimationFrame(animate);
 
     return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
       if (rafId !== null) {
         cancelAnimationFrame(rafId);
       }
@@ -184,8 +226,21 @@ export function useGrassSwayAnimation(
     let rafId: number | null = null;
     const frameDuration = getFrameDuration(fps);
     let lastTime = Date.now();
+    let bgPaused = false;
+
+    const onVisibility = () => {
+      bgPaused = document.visibilityState === 'hidden';
+      if (document.visibilityState === 'visible') {
+        lastTime = Date.now();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
 
     const animate = () => {
+      if (bgPaused) {
+        rafId = requestAnimationFrame(animate);
+        return;
+      }
       const now = Date.now();
       const elapsed = now - lastTime;
 
@@ -202,6 +257,7 @@ export function useGrassSwayAnimation(
     rafId = requestAnimationFrame(animate);
 
     return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
       if (rafId !== null) {
         cancelAnimationFrame(rafId);
       }
