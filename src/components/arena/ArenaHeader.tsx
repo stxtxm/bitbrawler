@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { PixelIcon } from '../PixelIcon';
+import { PROGRESSION_GATES, isFeatureUnlocked } from '../../config/progressionConfig';
 
 interface ArenaHeaderProps {
   characterName: string;
@@ -20,6 +21,8 @@ export const ArenaHeader = memo(function ArenaHeader({
   onOpenForge,
   onLogout,
 }: ArenaHeaderProps) {
+  const forgeUnlocked = isFeatureUnlocked(level, PROGRESSION_GATES.FORGE_UNLOCK_LEVEL);
+
   return (
     <header className="arena-header">
       <div className="char-info">
@@ -37,9 +40,15 @@ export const ArenaHeader = memo(function ArenaHeader({
           <PixelIcon type="gear" size={26} />
         </button>
         {onOpenForge && (
-          <button className="button icon-btn forge-btn" onClick={onOpenForge} title="Forge" aria-label="Forge">
-            <PixelIcon type="anvil" size={26} />
-          </button>
+          forgeUnlocked ? (
+            <button className="button icon-btn forge-btn" onClick={onOpenForge} title="Forge" aria-label="Forge">
+              <PixelIcon type="anvil" size={26} />
+            </button>
+          ) : (
+            <button className="button icon-btn forge-btn locked" disabled title={`Unlocks at LVL ${PROGRESSION_GATES.FORGE_UNLOCK_LEVEL}`} aria-label="Forge locked">
+              🔒
+            </button>
+          )
         )}
         <button
           className="button icon-btn inventory-btn"

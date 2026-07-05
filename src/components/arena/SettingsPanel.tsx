@@ -10,9 +10,10 @@ const CATEGORY_LABELS: Record<MedalCategory, string> = {
   loot: 'Loot',
   progression: 'Progression',
   special: 'Special',
+  pve: 'PvE',
 };
 
-const CATEGORY_ORDERS: MedalCategory[] = ['combat', 'loot', 'progression', 'special'];
+const CATEGORY_ORDERS: MedalCategory[] = ['combat', 'loot', 'progression', 'special', 'pve'];
 
 interface SettingsPanelProps {
   settingsView: 'main' | 'logs' | 'medals';

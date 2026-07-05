@@ -5,6 +5,7 @@ import { SalvagePanel } from '../components/forge/SalvagePanel';
 import { FusionPanel } from '../components/forge/FusionPanel';
 import { UpgradePanel } from '../components/forge/UpgradePanel';
 import { ShopPanel } from '../components/forge/ShopPanel';
+import { PROGRESSION_GATES, isFeatureUnlocked } from '../config/progressionConfig';
 import '../styles/forge.scss';
 
 type ForgeTab = 'salvage' | 'fusion' | 'upgrade' | 'shop';
@@ -14,13 +15,19 @@ const Forge = () => {
   const { essence, activeCharacter } = useGame();
   const [activeTab, setActiveTab] = useState<ForgeTab>('salvage');
 
+  const level = activeCharacter?.level ?? 1;
+  const fusionUnlocked = isFeatureUnlocked(level, PROGRESSION_GATES.FUSION_UNLOCK_LEVEL);
+  const shopUnlocked = isFeatureUnlocked(level, PROGRESSION_GATES.SHOP_UNLOCK_LEVEL);
+
   const handleBack = useCallback(() => {
     navigate('/arena');
   }, [navigate]);
 
   const handleTabChange = useCallback((tab: ForgeTab) => {
+    if (tab === 'fusion' && !fusionUnlocked) return;
+    if (tab === 'shop' && !shopUnlocked) return;
     setActiveTab(tab);
-  }, []);
+  }, [fusionUnlocked, shopUnlocked]);
 
   if (!activeCharacter) {
     return <Navigate to="/" replace />;
@@ -52,13 +59,15 @@ const Forge = () => {
           ⛏ Salvage
         </button>
         <button
-          className={`forge-tab ${activeTab === 'fusion' ? 'active' : ''}`}
+          className={`forge-tab ${!fusionUnlocked ? 'locked' : ''} ${activeTab === 'fusion' ? 'active' : ''}`}
           onClick={() => handleTabChange('fusion')}
           role="tab"
           aria-selected={activeTab === 'fusion'}
           aria-controls="forge-panel-fusion"
+          disabled={!fusionUnlocked}
+          title={fusionUnlocked ? 'Fusion' : `Unlocks at LVL ${PROGRESSION_GATES.FUSION_UNLOCK_LEVEL}`}
         >
-          🔗 Fusion
+          {fusionUnlocked ? '🔗 Fusion' : `🔒 Fusion LVL ${PROGRESSION_GATES.FUSION_UNLOCK_LEVEL}`}
         </button>
         <button
           className={`forge-tab ${activeTab === 'upgrade' ? 'active' : ''}`}
@@ -70,13 +79,15 @@ const Forge = () => {
           ✨ Upgrade
         </button>
         <button
-          className={`forge-tab ${activeTab === 'shop' ? 'active' : ''}`}
+          className={`forge-tab ${!shopUnlocked ? 'locked' : ''} ${activeTab === 'shop' ? 'active' : ''}`}
           onClick={() => handleTabChange('shop')}
           role="tab"
           aria-selected={activeTab === 'shop'}
           aria-controls="forge-panel-shop"
+          disabled={!shopUnlocked}
+          title={shopUnlocked ? 'Shop' : `Unlocks at LVL ${PROGRESSION_GATES.SHOP_UNLOCK_LEVEL}`}
         >
-          🏪 Shop
+          {shopUnlocked ? '🏪 Shop' : `🔒 Shop LVL ${PROGRESSION_GATES.SHOP_UNLOCK_LEVEL}`}
         </button>
       </div>
 

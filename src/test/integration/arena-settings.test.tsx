@@ -28,7 +28,7 @@ const mockCharacter: Character = {
   seed: 'test-seed',
   name: 'Auto Hero',
   gender: 'male',
-  level: 4,
+  level: 25,
   experience: 160,
   strength: 8,
   vitality: 7,

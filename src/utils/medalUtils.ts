@@ -156,6 +156,46 @@ export const calculateLootProgress = (
 };
 
 /**
+ * Calculate PvE medal progress from monster kill counts and PvE streak.
+ */
+export const calculatePveProgress = (
+  monsterKills: Record<string, number> = {},
+  pveStreak: number = 0,
+): Record<string, MedalProgress> => {
+  const getKills = (id: string) => monsterKills[id] ?? 0;
+
+  const monsterIds = ['goblin', 'ogre', 'wraith', 'slime', 'wolf', 'skeleton', 'chimera', 'dragon_spawn'];
+  const result: Record<string, MedalProgress> = {};
+
+  for (const id of monsterIds) {
+    const kills = getKills(id);
+    result[`hunter_${id}_5`] = {
+      completed: kills >= 5,
+      progress: Math.min(kills, 5),
+    };
+    result[`hunter_${id}_25`] = {
+      completed: kills >= 25,
+      progress: Math.min(kills, 25),
+    };
+  }
+
+  result.pve_streak_3 = {
+    completed: pveStreak >= 3,
+    progress: Math.min(pveStreak, 3),
+  };
+  result.pve_streak_5 = {
+    completed: pveStreak >= 5,
+    progress: Math.min(pveStreak, 5),
+  };
+  result.pve_streak_10 = {
+    completed: pveStreak >= 10,
+    progress: Math.min(pveStreak, 10),
+  };
+
+  return result;
+};
+
+/**
  * Calculate progression medal progress.
  */
 export const calculateProgressionProgress = (
@@ -178,6 +218,30 @@ export const calculateProgressionProgress = (
     veteran: {
       completed: sessionCount >= 10,
       progress: Math.min(sessionCount, 10),
+    },
+    high_level_30: {
+      completed: level >= 30,
+      progress: Math.min(level, 30),
+    },
+    high_level_50: {
+      completed: level >= 50,
+      progress: Math.min(level, 50),
+    },
+    high_level_75: {
+      completed: level >= 75,
+      progress: Math.min(level, 75),
+    },
+    high_level_100: {
+      completed: level >= 100,
+      progress: Math.min(level, 100),
+    },
+    high_level_150: {
+      completed: level >= 150,
+      progress: Math.min(level, 150),
+    },
+    high_level_200: {
+      completed: level >= 200,
+      progress: Math.min(level, 200),
     },
   };
 };
@@ -205,6 +269,10 @@ export interface SpecialMedalContext {
   luckyDayRoll?: boolean;
   /** Number of daily sessions completed */
   sessionCount?: number;
+  /** Monster kill counts per type for PvE hunter medals */
+  monsterKills?: Record<string, number>;
+  /** Current PvE win streak */
+  pveStreak?: number;
 }
 
 export const checkMedals = (
@@ -222,6 +290,10 @@ export const checkMedals = (
     character.level || 1,
     extraContext?.sessionCount ?? 0,
   );
+  const pveProgress = calculatePveProgress(
+    extraContext?.monsterKills ?? character.monsterKills ?? {},
+    extraContext?.pveStreak ?? 0,
+  );
 
   // Merge calculated progress with existing progress
   const updatedProgress: MedalProgressMap = { ...currentProgress };
@@ -231,6 +303,7 @@ export const checkMedals = (
     ...combatProgress,
     ...lootProgress,
     ...progressionProgress,
+    ...pveProgress,
   };
 
   // For special medals, handle extra context

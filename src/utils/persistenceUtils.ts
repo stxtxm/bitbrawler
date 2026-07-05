@@ -37,6 +37,7 @@ export const normalizeCharacter = (character: Character): Character => {
     medalXpBonus: character.medalXpBonus ?? 0,
     medalTitle: character.medalTitle ?? undefined,
     medalAura: character.medalAura ?? false,
+    monsterKills: character.monsterKills ?? {},
     achievementProgress: character.achievementProgress ?? {},
     achievementTitle: character.achievementTitle ?? undefined,
     achievementXpBonus: character.achievementXpBonus ?? 0,

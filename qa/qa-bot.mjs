@@ -91,6 +91,15 @@ function saveState(state) {
   }
 }
 
+/**
+ * Parse character level from body text.
+ * Falls back to null if not found.
+ */
+function parseLevelFromText(text) {
+  const match = text.match(/LVL\s*(\d+)/i)
+  return match ? parseInt(match[1]) : null
+}
+
 async function sleep(ms) {
   return new Promise(r => setTimeout(r, ms))
 }
@@ -391,15 +400,6 @@ async function parseMaxHp(page) {
     console.log(`   ⚠️ Could not parse max HP: ${err.message}`)
     return null
   }
-}
-
-/**
- * Parse character level from the arena page body text.
- * Returns the level number or null.
- */
-function parseLevelFromText(text) {
-  const match = text.match(/LVL\s*(\d+)/i)
-  return match ? parseInt(match[1]) : null
 }
 
 /**
@@ -1269,9 +1269,15 @@ async function humanDelay(page) {
  * @param {number} pvpSinceLastPve - Number of consecutive PvP fights since last PvE.
  * @param {number} pveRatio - Fraction of fights that should be PvE (e.g. 0.33).
  * @param {boolean} pveOnly - If true, always return PvE.
+ * @param {number|null} [characterLevel] - Current character level. If below PvP unlock, forces PvE.
+ * @param {number} [pvpUnlockLevel=5] - Level at which PvP becomes available.
  * @returns {{ type: 'pvp'|'pve', pvpSinceLastPve: number }}
  */
-function determineNextFightType(pvpSinceLastPve, pveRatio, pveOnly) {
+function determineNextFightType(pvpSinceLastPve, pveRatio, pveOnly, characterLevel = null, pvpUnlockLevel = 5) {
+  // Force PvE if character level is below PvP unlock threshold
+  if (characterLevel !== null && characterLevel < pvpUnlockLevel) {
+    return { type: 'pve', pvpSinceLastPve: 0 }
+  }
   if (pveOnly) {
     return { type: 'pve', pvpSinceLastPve: 0 }
   }
@@ -1326,7 +1332,7 @@ async function runFightSequence(page, runKey, runRecord) {
     await humanDelay(page)
 
     // Determine if this fight should be PvE
-    const fightType = determineNextFightType(pvpSinceLastPve, config.pveRatio, config.pveOnly)
+    const fightType = determineNextFightType(pvpSinceLastPve, config.pveRatio, config.pveOnly, currentLevel, config.pvpUnlockLevel)
     const isPve = fightType.type === 'pve'
     pvpSinceLastPve = fightType.pvpSinceLastPve
 
@@ -1515,8 +1521,8 @@ async function runFightSequence(page, runKey, runRecord) {
       currentLevel = newLevel
     }
 
-    // Toggle back to PvP mode after a PvE fight
-    if (isPve) {
+    // Toggle back to PvP mode after a PvE fight (skip if PvP is level-gated)
+    if (isPve && (currentLevel === null || currentLevel >= config.pvpUnlockLevel)) {
       await togglePveMode(page, false)
       await page.waitForTimeout(500)
     }
@@ -1606,9 +1612,30 @@ async function leaveForge(page) {
 /**
  * Navigate to the Shop tab, read offers, and attempt to purchase the cheapest.
  * Returns an object with shop stats or null if inaccessible.
+ * @param {import('playwright').Page} page
+ * @param {string} runKey
+ * @param {number|null} [characterLevel] - Current character level for gate checks
  */
-async function testShopSystem(page, runKey) {
+async function testShopSystem(page, runKey, characterLevel = null) {
   console.log('🏪 Testing shop system...')
+
+  // Check level gate
+  if (characterLevel !== null && characterLevel < config.shopUnlockLevel) {
+    console.log(`   ⏭️ Shop locked until LVL ${config.shopUnlockLevel} (current: ${characterLevel}), skipping`)
+    const shopResult = {
+      visited: false,
+      offers_count: 0,
+      purchased: false,
+      offer_type: null,
+      item_rarity: null,
+      cost: null,
+      essence_before: null,
+      essence_after: null,
+      skipped: true,
+      skip_reason: `shop requires LVL ${config.shopUnlockLevel}`,
+    }
+    return shopResult
+  }
 
   const shopResult = {
     visited: false,
@@ -1619,6 +1646,8 @@ async function testShopSystem(page, runKey) {
     cost: null,
     essence_before: null,
     essence_after: null,
+    skipped: false,
+    skip_reason: null,
   }
 
   const navigated = await navigateToForge(page)
@@ -1699,9 +1728,33 @@ async function testShopSystem(page, runKey) {
 /**
  * Test the forge system: salvage, fusion, and upgrade.
  * Returns an object with forge stats or null if inaccessible.
+ * @param {import('playwright').Page} page
+ * @param {string} runKey
+ * @param {number|null} [characterLevel] - Current character level for gate checks
  */
-async function testForgeSystem(page, runKey) {
+async function testForgeSystem(page, runKey, characterLevel = null) {
   console.log('🔨 Testing forge system...')
+
+  // Check level gate
+  if (characterLevel !== null && characterLevel < config.forgeUnlockLevel) {
+    console.log(`   ⏭️ Forge locked until LVL ${config.forgeUnlockLevel} (current: ${characterLevel}), skipping`)
+    const forgeResult = {
+      visited: false,
+      essence_before: null,
+      items_before: null,
+      salvage_attempted: false,
+      salvage_succeeded: false,
+      fusion_attempted: false,
+      fusion_succeeded: false,
+      upgrade_attempted: false,
+      upgrade_succeeded: false,
+      essence_after: null,
+      items_after: null,
+      skipped: true,
+      skip_reason: `forge requires LVL ${config.forgeUnlockLevel}`,
+    }
+    return forgeResult
+  }
 
   const forgeResult = {
     visited: false,
@@ -1715,6 +1768,8 @@ async function testForgeSystem(page, runKey) {
     upgrade_succeeded: false,
     essence_after: null,
     items_after: null,
+    skipped: false,
+    skip_reason: null,
   }
 
   const navigated = await navigateToForge(page)
@@ -1842,7 +1897,8 @@ async function run() {
   const now = new Date()
   const runKey = dateKey(now)
   const state = loadState()
-  const savedCharacterName = state.run === runKey && state.exhausted !== true ? state.character : null
+  const isCurrentRun = state.run === runKey
+  const savedCharacterName = state.character && (!isCurrentRun || state.exhausted !== true) ? state.character : null
 
   console.log('═══════════════════════════════════════════')
   console.log('  🤖 QA Bot starting')
@@ -2008,9 +2064,14 @@ async function run() {
       console.log(`   ⚠️ Legacy overlay elements still present: ${JSON.stringify(runRecord.no_legacy_overlay)}`)
     }
 
-    // Ensure PvP mode for start of fight sequence
-    await togglePveMode(page, false)
-    await page.waitForTimeout(500)
+    // Ensure PvP mode for start of fight sequence (skip if PvP is level-gated)
+    const preFightLevel = parseLevelFromText(await page.locator('body').innerText().catch(() => ''))
+    if (preFightLevel === null || preFightLevel >= config.pvpUnlockLevel) {
+      await togglePveMode(page, false)
+      await page.waitForTimeout(500)
+    } else {
+      console.log(`   ⏭️ PvP locked until LVL ${config.pvpUnlockLevel} (character level: ${preFightLevel}), staying in PvE mode`)
+    }
 
     // ── Fight Sequence (mixed PvP/PvE) ────────────────────────────
     console.log('')
@@ -2019,6 +2080,16 @@ async function run() {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
     await runFightSequence(page, runKey, runRecord)
+
+    // Populate pve_data from fight sequence (captures monster names from PvE results)
+    const pveFights = runRecord.fights.filter(f => f.fight_type === 'pve')
+    if (pveFights.length > 0) {
+      runRecord.pve_data.fights = pveFights.length
+      runRecord.pve_data.wins = pveFights.filter(f => f.result === 'victory').length
+      runRecord.pve_data.xp_total = pveFights.reduce((sum, f) => sum + (f.xp || 0), 0)
+      const monsters = pveFights.map(f => f.monster_name).filter(Boolean)
+      runRecord.pve_data.monsters_faced = [...new Set(monsters)]
+    }
 
     // ── Final Stats ───────────────────────────────────────────────
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-05-stats-debug.png`) })
@@ -2048,12 +2119,14 @@ async function run() {
       console.log(`   Equipment: ${runRecord.final_equipment.map(e => `${e.slot}=${e.name}`).join(', ')}`)
     }
 
-    // Populate pve_data from idle_runner for backward compatibility
+    // Populate pve_data from idle_runner for backward compatibility (merge with fight data)
     if (runRecord.idle_runner && runRecord.idle_runner.monsters_faced.length > 0) {
-      runRecord.pve_data.fights = runRecord.idle_runner.cycles_observed
-      runRecord.pve_data.wins = runRecord.idle_runner.victories
-      runRecord.pve_data.xp_total = runRecord.idle_runner.xp_total
-      runRecord.pve_data.monsters_faced = runRecord.idle_runner.monsters_faced
+      runRecord.pve_data.fights = Math.max(runRecord.pve_data.fights, runRecord.idle_runner.cycles_observed)
+      runRecord.pve_data.wins = Math.max(runRecord.pve_data.wins, runRecord.idle_runner.victories)
+      runRecord.pve_data.xp_total = Math.max(runRecord.pve_data.xp_total, runRecord.idle_runner.xp_total)
+      runRecord.pve_data.monsters_faced = [
+        ...new Set([...runRecord.pve_data.monsters_faced, ...runRecord.idle_runner.monsters_faced])
+      ]
     }
 
     // ── Lootbox ───────────────────────────────────────────────────
@@ -2081,7 +2154,8 @@ async function run() {
     console.log(`   Fighter exhausted for today: ${fighterExhausted ? 'yes' : 'no'}`)
 
     // ── Forge ─────────────────────────────────────────────────────
-    runRecord.forge = await testForgeSystem(page, runKey)
+    const forgeLevel = runRecord.final_stats?.level ?? runRecord.initial_level
+    runRecord.forge = await testForgeSystem(page, runKey, forgeLevel)
 
     // ── Shop ──────────────────────────────────────────────────────
     console.log('')
@@ -2089,7 +2163,8 @@ async function run() {
     console.log('  🏪 8-Bit Emporium')
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
-    runRecord.shop = await testShopSystem(page, runKey)
+    const shopLevel = runRecord.final_stats?.level ?? runRecord.initial_level
+    runRecord.shop = await testShopSystem(page, runKey, shopLevel)
     if (runRecord.shop.purchased) {
       console.log(`   ✅ Purchased offer (cost: ${runRecord.shop.cost}, rarity: ${runRecord.shop.item_rarity ?? 'N/A'})`)
     }

@@ -13,4 +13,10 @@ export default {
   timeZone: process.env.QA_TIME_ZONE || 'Europe/Paris',
   headless: process.env.QA_HEADLESS !== 'false',
   slowMo: parseInt(process.env.QA_SLOW_MO || '0', 10),
+  /** Level at which PvP mode becomes available */
+  pvpUnlockLevel: 5,
+  /** Level at which Forge (Salvage) becomes available */
+  forgeUnlockLevel: 10,
+  /** Level at which Shop becomes available */
+  shopUnlockLevel: 20,
 }

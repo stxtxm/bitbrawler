@@ -36,7 +36,7 @@ const makeCharacter = (overrides?: Partial<Character>): Character => ({
   seed: 'test-seed',
   name: 'Test Hero',
   gender: 'male',
-  level: 5,
+  level: 25,
   experience: 100,
   strength: 10,
   vitality: 10,

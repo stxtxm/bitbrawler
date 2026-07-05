@@ -161,6 +161,9 @@ export interface Character {
   medalTitle?: string; // Cosmetic title from medal
   medalAura?: boolean; // Cosmetic aura from medal
 
+  // Monster kill tracking (per monster type for PvE medals)
+  monsterKills?: Record<string, number>;
+
   // Achievement system
   achievementProgress?: Record<string, { completed: boolean; progress: number; target: number; unlockedAt?: number }>;
   achievementTitle?: string | null; // Cosmetic title prefix shown in Hall of Fame

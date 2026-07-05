@@ -23,6 +23,7 @@ type UsePveFight = (
   won: boolean,
   xpGained: number,
   monsterName: string,
+  options?: { consumeEnergy?: boolean; characterOverride?: Character; monsterId?: string },
 ) => Promise<FightResult | null>;
 
 interface UseArenaCombatOptions {
@@ -122,7 +123,7 @@ export const useArenaCombat = ({
       const opponentName = combatData?.opponent.name ?? 'UNKNOWN';
       /* eslint-disable react-hooks/rules-of-hooks -- usePveFight/useFight are plain callbacks, not hooks */
       const result = combatData?.matchType === 'pve'
-        ? await usePveFight(won, Math.round(xpGained * GAME_RULES.PVE.XP_MODIFIER), opponentName)
+        ? await usePveFight(won, Math.round(xpGained * GAME_RULES.PVE.XP_MODIFIER), opponentName, { monsterId: pveMonster?.monsterId })
         : await useFight(won, xpGained, opponentName, combatData?.opponent.id ?? '');
       /* eslint-enable react-hooks/rules-of-hooks */
 
@@ -149,6 +150,7 @@ export const useArenaCombat = ({
     isOfflineMode,
     fightsLeft,
     pveFightsLeft,
+    level: character?.level ?? 1,
     onTogglePve,
     onTogglePvp,
     onFight,
@@ -164,6 +166,7 @@ export const useArenaCombat = ({
     onTogglePve,
     onTogglePvp,
     pveMode,
+    character?.level,
   ]);
 
   return {

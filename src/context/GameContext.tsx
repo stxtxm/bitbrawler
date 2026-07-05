@@ -54,7 +54,7 @@ interface GameContextType {
     won: boolean,
     xpGained: number,
     monsterName: string,
-    options?: { consumeEnergy?: boolean; characterOverride?: Character }
+    options?: { consumeEnergy?: boolean; characterOverride?: Character; monsterId?: string }
   ) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
   findOpponent: () => Promise<MatchmakingResult | null>;
   clearXpNotifications: () => void;
@@ -475,7 +475,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     won: boolean,
     xpGained: number,
     monsterName: string,
-    options?: { consumeEnergy?: boolean; characterOverride?: Character }
+    options?: { consumeEnergy?: boolean; characterOverride?: Character; monsterId?: string }
   ): Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null> => {
     const baseCharacter = options?.characterOverride ?? activeCharacter;
     if (!baseCharacter) return null;
@@ -489,6 +489,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const pointsGained = xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL;
     const existingPoints = baseCharacter.statPoints || 0;
     const shouldConsumeEnergy = options?.consumeEnergy ?? true;
+    const monsterId = options?.monsterId;
+
+    // Track monster kills for PvE hunter medals
+    let updatedMonsterKills = baseCharacter.monsterKills ?? {};
+    if (won && monsterId) {
+      const currentKills = updatedMonsterKills[monsterId] ?? 0;
+      updatedMonsterKills = { ...updatedMonsterKills, [monsterId]: currentKills + 1 };
+    }
 
     let updatedChar: Character = normalizeCharacter({
       ...xpResult.updatedCharacter,
@@ -498,6 +506,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       losses: won ? (baseCharacter.losses || 0) : (baseCharacter.losses || 0) + 1,
       fightHistory: newHistory,
       statPoints: existingPoints + pointsGained,
+      monsterKills: updatedMonsterKills,
     });
 
     if (updatedChar.autoMode && (updatedChar.statPoints || 0) > 0) {
@@ -539,7 +548,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     persistCharacter(updatedChar);
 
     // Non-blocking medal/achievement check after PvE fight
-    checkAndApplyMedals(updatedChar, {}).then(charWithMedals => {
+    checkAndApplyMedals(updatedChar, {
+      monsterKills: updatedMonsterKills,
+      pveStreak: won ? (baseCharacter.idleStreak ?? 0) : 0,
+    }).then(charWithMedals => {
       persistCharacter(charWithMedals);
       syncCharacterToBackend(charWithMedals).catch(() => {});
     }).catch(() => {});
