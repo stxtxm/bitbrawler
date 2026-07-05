@@ -3,6 +3,7 @@ import { simulateCombat } from '../../utils/combatUtils';
 import { generateMonster } from '../../utils/monsterUtils';
 import { calculateFightXp } from '../../utils/xpUtils';
 import { GAME_RULES } from '../../config/gameRules';
+import { COMBAT_BALANCE } from '../../config/combatBalance';
 
 const makePlayer = (overrides: Record<string, any> = {}) => ({
   seed: 'player-test',
@@ -33,7 +34,7 @@ describe('PvE combat', () => {
     expect(result.winner).toBeDefined();
     expect(['attacker', 'defender', 'draw']).toContain(result.winner);
     expect(result.rounds).toBeGreaterThan(0);
-    expect(result.rounds).toBeLessThanOrEqual(50);
+    expect(result.rounds).toBeLessThanOrEqual(COMBAT_BALANCE.roundLimit);
   });
 
   it('monster can win against a weak player', () => {
