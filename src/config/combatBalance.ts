@@ -15,7 +15,7 @@ export const COMBAT_BALANCE = {
     perLevel: 0.012,
     maxBonus: 0.22,
   },
-  roundLimit: 18,
+  roundLimit: 15,
   maxDurationMs: 30000,
   /** Hard watchdog timeout for the overall fight cycle (incl. UI animation).
    *  If a fight exceeds this wall-clock limit, the combat loop force-finishes
@@ -44,8 +44,8 @@ export const COMBAT_BALANCE = {
     max: 96,
   },
   damage: {
-    offenseWeight: 2.5,
-    defenseWeight: 0.15,
+    offenseWeight: 1.8,
+    defenseWeight: 0.35,
     min: 20,
     critMultiplier: 1.30,
   },
