@@ -39,9 +39,9 @@ export const FUSION_ESSENCE_COST = FUSION_COST;
 export const FUSION_INPUT_COUNT = 3;
 
 /**
- * Base essence cost to upgrade an item by one level.
+ * Base essence cost to upgrade an item by one level (level 0→1).
  */
-export const UPGRADE_COST = 25;
+export const UPGRADE_COST = 50;
 
 /**
  * Alias for UPGRADE_COST.
@@ -49,10 +49,12 @@ export const UPGRADE_COST = 25;
 export const UPGRADE_BASE_COST = UPGRADE_COST;
 
 /**
- * Essence cost scaling per upgrade level.
- * Final cost = UPGRADE_BASE_COST + level * UPGRADE_COST_SCALING
+ * Essence cost scaling per upgrade level (quadratic).
+ * Final cost = UPGRADE_BASE_COST + level² × UPGRADE_COST_SCALING
+ *    0→1:  50      1→2:  75      2→3: 150
+ *    3→4: 275      4→5: 450
  */
-export const UPGRADE_COST_SCALING = 10;
+export const UPGRADE_COST_SCALING = 25;
 
 /**
  * Maximum upgrade level for an item (0-5).
@@ -66,5 +68,6 @@ export const LUCKY_PROC_CHANCE = 0.1;
 
 /**
  * Soft cap for essence — excess beyond this is discarded.
+ * Raised to 500 to accommodate higher quadratic upgrade costs.
  */
-export const ESSENCE_SOFT_CAP = 250;
+export const ESSENCE_SOFT_CAP = 500;

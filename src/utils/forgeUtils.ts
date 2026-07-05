@@ -263,7 +263,7 @@ export const isFusionLucky = (rng: () => number = Math.random): boolean => {
  * @returns The essence cost for the upgrade attempt
  */
 export const getUpgradeCost = (_item: PixelItemAsset, level: number = 0): number => {
-  return UPGRADE_BASE_COST + level * UPGRADE_COST_SCALING;
+  return UPGRADE_BASE_COST + level * level * UPGRADE_COST_SCALING;
 };
 
 /**
@@ -285,10 +285,9 @@ export const canUpgrade = (itemId: string, character: Character): boolean => {
     return false;
   }
 
-  // Use dynamic cost based on current level
-  // We don't have the item object here, so calculate cost from level alone
-  // cost = UPGRADE_BASE_COST + currentLevel * UPGRADE_COST_SCALING
-  const cost = UPGRADE_BASE_COST + currentLevel * UPGRADE_COST_SCALING;
+  // Use dynamic cost based on current level (quadratic)
+  // cost = UPGRADE_BASE_COST + level² × UPGRADE_COST_SCALING
+  const cost = UPGRADE_BASE_COST + currentLevel * currentLevel * UPGRADE_COST_SCALING;
   if ((character.essence ?? 0) < cost) {
     return false;
   }
@@ -309,8 +308,8 @@ export const performUpgrade = (itemId: string, character: Character): Character 
   const currentUpgrades = character.itemUpgrades ?? {};
   const currentLevel = currentUpgrades[itemId] ?? 0;
 
-  // Calculate dynamic cost
-  const cost = UPGRADE_BASE_COST + currentLevel * UPGRADE_COST_SCALING;
+  // Calculate dynamic cost (quadratic)
+  const cost = UPGRADE_BASE_COST + currentLevel * currentLevel * UPGRADE_COST_SCALING;
 
   return {
     ...character,
