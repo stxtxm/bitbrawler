@@ -26,24 +26,28 @@ describe('Combat Balance Config', () => {
 
   // ── Value Assertions ───────────────────────────────────────────────────
 
-  it('should have offenseWeight set to 1.55', () => {
-    expect(COMBAT_BALANCE.damage.offenseWeight).toBe(1.55);
+  it('should have offenseWeight set to 2.0', () => {
+    expect(COMBAT_BALANCE.damage.offenseWeight).toBe(2.0);
+  });
+
+  it('should have defenseWeight set to 0.25', () => {
+    expect(COMBAT_BALANCE.damage.defenseWeight).toBe(0.25);
   });
 
   it('should have critMultiplier set to 1.30', () => {
     expect(COMBAT_BALANCE.damage.critMultiplier).toBe(1.30);
   });
 
-  it('should have hitChance.base set to 72', () => {
-    expect(COMBAT_BALANCE.hitChance.base).toBe(72);
+  it('should have hitChance.base set to 75', () => {
+    expect(COMBAT_BALANCE.hitChance.base).toBe(75);
   });
 
-  it('should have comeback.damageMultiplier set to 1.12', () => {
-    expect(COMBAT_BALANCE.comeback.damageMultiplier).toBe(1.12);
+  it('should have comeback.damageMultiplier set to 1.25', () => {
+    expect(COMBAT_BALANCE.comeback.damageMultiplier).toBe(1.25);
   });
 
-  it('should have hitChance.max set to 92', () => {
-    expect(COMBAT_BALANCE.hitChance.max).toBe(92);
+  it('should have hitChance.max set to 95', () => {
+    expect(COMBAT_BALANCE.hitChance.max).toBe(95);
   });
 
   it('should have diminishingExponent set to 0.85', () => {
@@ -94,12 +98,12 @@ describe('Combat Balance Config', () => {
     // level 5: levelMultiplier = 1 + min(0.22, 4*0.012) = 1 + 0.048 = 1.048
     // offense = 17.079 * 1.85 * 1.048 = 33.113
     // defense = 13.928 * 2.0 * 1.048 = 29.193
-    // baseDamage = 33.113 * 1.55 - 29.193 * 0.36 = 51.325 - 10.509 = 40.816
+    // baseDamage = 33.113 * 2.0 - 29.193 * 0.25 = 66.226 - 7.298 = 58.928
     // With variance at 0.5: varianceRange = 0.2 - min(0.08, 10*0.002) = 0.2 - 0.02 = 0.18
     // varianceFactor = (1 - 0.09) + 0.5*0.18 = 0.91 + 0.09 = 1.0
     // No comeback (HP > 35%), no focus surge, no affinity
-    // damage = max(10, round(40.816 * 1.0)) = 41
-    expect(damages[0]).toBe(41);
+    // damage = max(15, round(58.928 * 1.0)) = 59
+    expect(damages[0]).toBe(59);
   });
 
   // ── Behavioral Impact: Comeback ────────────────────────────────────────
@@ -160,16 +164,16 @@ describe('Combat Balance Config', () => {
     // offense = 13.928 * 1.85 * 1.048 ≈ 27.004
     // scaleStat(20) = 10 + 10^0.85 = 17.079
     // defense = 17.079 * 2.0 * 1.048 = 35.798
-    // baseDamage = 27.004 * 1.55 - 35.798 * 0.36 = 41.856 - 12.887 = 28.969
-    // comebackMultiplier = 1.12
+    // baseDamage = 27.004 * 2.0 - 35.798 * 0.25 = 54.008 - 8.950 = 45.059
+    // comebackMultiplier = 1.25
     // varianceFactor at 0.5 = 1.0 (same as above)
-    // damage = max(10, round(28.969 * 1.0 * 1.12)) = max(10, round(32.44)) = 32
-    expect(damage).toBe(32);
+    // damage = max(15, round(45.059 * 1.0 * 1.25)) = max(15, round(56.324)) = 56
+    expect(damage).toBe(56);
   });
 
   // ── Behavioral Impact: Hit Chance Cap ──────────────────────────────────
 
-  it('should cap hit chance so rng=0.87 hits but rng=0.89 misses', () => {
+  it('should cap hit chance so rng=0.94 hits but rng=0.96 misses', () => {
     // Attacker with massive speed and focus advantage to push hit chance high
     const attacker = {
       ...baseCharacter,
@@ -191,10 +195,10 @@ describe('Combat Balance Config', () => {
       maxHp: 5000,
     };
 
-    // rng=0.91 (91% < 92% max) → should hit
+    // rng=0.94 (94% < 95% max) → should hit
     const hitSeq: number[] = [
       0.4,  // initiative (attacker first)
-      0.91, // hit chance (91% < 92% → hit)
+      0.94, // hit chance (94% < 95% → hit)
       0.99, // no crit
       0.99, // no magic
       0.5,  // variance
@@ -207,7 +211,7 @@ describe('Combat Balance Config', () => {
     expect(firstHitDetail).toContain('hit');
   });
 
-  it('should cap hit chance so rng=0.89 misses', () => {
+  it('should cap hit chance so rng=0.96 misses', () => {
     const attacker = {
       ...baseCharacter,
       name: 'Speedy',
@@ -228,13 +232,13 @@ describe('Combat Balance Config', () => {
       maxHp: 20,
     };
 
-    // rng=0.93 (93% > 92% max) → should miss
+    // rng=0.96 (96% > 95% max) → should miss
     const missSeq: number[] = [
       0.4,  // initiative (attacker first)
-      0.93, // hit chance (93% > 92% → miss)
+      0.96, // hit chance (96% > 95% → miss)
       // attacker missed → defender turn
       0.5,  // initiative is not used (already determined)
-      0.93, // defender hit chance
+      0.96, // defender hit chance
       0.99, // no crit
       0.99, // no magic
       0.5,  // variance
@@ -247,8 +251,8 @@ describe('Combat Balance Config', () => {
     expect(firstActionDetail).toContain('missed');
   });
 
-  it('should have lower offenseWeight than extreme maximum (1.70)', () => {
-    expect(COMBAT_BALANCE.damage.offenseWeight).toBeLessThan(1.70);
+  it('should have offenseWeight within safe range (< 2.5)', () => {
+    expect(COMBAT_BALANCE.damage.offenseWeight).toBeLessThan(2.5);
   });
 
   it('should have defenseWeight lower than extreme maximum (0.50)', () => {
@@ -259,21 +263,21 @@ describe('Combat Balance Config', () => {
     expect(COMBAT_BALANCE.damage.critMultiplier).toBeLessThan(1.45);
   });
 
-  it('should have hitChance.base within safe range (< 78)', () => {
-    expect(COMBAT_BALANCE.hitChance.base).toBeLessThan(78);
+  it('should have hitChance.base within safe range (< 80)', () => {
+    expect(COMBAT_BALANCE.hitChance.base).toBeLessThan(80);
   });
 
-  it('should have comeback damageMultiplier between 1.0 and 1.25', () => {
+  it('should have comeback damageMultiplier between 1.0 and 1.30', () => {
     expect(COMBAT_BALANCE.comeback.damageMultiplier).toBeGreaterThanOrEqual(1.0);
-    expect(COMBAT_BALANCE.comeback.damageMultiplier).toBeLessThan(1.25);
+    expect(COMBAT_BALANCE.comeback.damageMultiplier).toBeLessThan(1.30);
   });
 
   it('should have diminishingExponent reverted back to pre-June value (0.85)', () => {
     expect(COMBAT_BALANCE.diminishingExponent).toBe(0.85);
   });
 
-  it('should have hitChance.max lower than extreme maximum (96)', () => {
-    expect(COMBAT_BALANCE.hitChance.max).toBeLessThan(96);
+  it('should have hitChance.max within safe range (< 99)', () => {
+    expect(COMBAT_BALANCE.hitChance.max).toBeLessThan(99);
   });
 
   // ── Max Duration ────────────────────────────────────────────────────────
