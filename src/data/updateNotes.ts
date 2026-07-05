@@ -8,6 +8,22 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.0.0',
+    date: '2026-07-05',
+    title: '8-Bit Emporium, PvE Engagement Boost, early progression overhaul',
+    changes: [
+      '🏪 8-Bit Emporium (Shop) : nouvel onglet dans la Forge — achète items, équipement et ressources contre de l\'essence. 3 offres quotidiennes avec raretés communes à épiques.',
+      '🏅 Système de médailles PvE : 16 médailles de chasseur (8 monstres × 2 paliers : 5/25 kills), 3 médailles de streak PvE (3/5/10 victoires consécutives), 6 médailles de haute progression (niveaux 30/50/75/100/150/200).',
+      '🐾 Tracking de monstres : chaque combat PvE enregistre le monstre affronté. Les kills sont cumulés et débloquent les médailles de chasseur automatiquement.',
+      '🔓 Progression déverrouillée dès le level 1 : PvP et Forge accessibles immédiatement. Les joueurs peuvent améliorer leur stuff et combattre en arène dès la création du personnage.',
+      '⚡ Courbe XP early-game (EARLY_SHIFT=2) — les niveaux 1-4 ne coûtent que 120 XP chacun (au lieu de 120/376/746/1209). Le level 5 est atteignable en ~2 jours au lieu de 5-6.',
+      '💎 Essence doublée en early game : BASE_RATE 0.1→0.2, LEVEL_SCALE 0.05→0.08. Les nouveaux joueurs accumulent 2× plus d\'essence dès les premiers combats.',
+      '🎯 PvE XP buffé : XP_MODIFIER 0.60→0.80 (80% du PvP). Les combats PvE sont désormais aussi gratifiants que le PvP.',
+      '🤖 QA bot adapté : persistance cross-day du personnage, détection des niveau gates, capture des noms de monstres dans pve_data.monsters_faced, skip des features verrouillées.',
+      '1066 tests passants, 85 test files, build zéro warning.',
+    ],
+  },
+  {
     version: '4.2.0',
     date: '2026-07-04',
     title: 'XP/essence rebalance, static PixelCharacter, container-scale combat animations',

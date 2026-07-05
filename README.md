@@ -51,13 +51,19 @@ See [AGENTS.md](AGENTS.md) for autonomous agent workflows and responsibilities.
 - **8-bit UI** with SVG pixel rendering
 - **Character creation** with RPG stats (STR, VIT, DEX, LUK, INT, FOC)
 - **Arena fights** with XP gain, level ups, and enhanced combat (crit + magic + focus)
-- **PvE Monster Battles** — fight 3 8-bit monsters (Goblin/Ogre/Wraith) with separate energy pool (5 fights/day), idle combat scene with phase animations (monster appears → combat → result) and auto-resolve
+- **PvE Monster Battles** — fight 8 8-bit monsters (Goblin/Ogre/Wraith/Slime/Wolf/Skeleton/Chimera/Dragon Spawn) with separate energy pool (5 fights/day), idle combat scene with phase animations (monster appears → combat → result) and auto-resolve
 - **Auto level-up** — stat points auto-allocate by archetype weights (primary 3×, secondary 1.5×, others 0.5×) with in-scene gold glow FX + floating "⬆ LVL X!" text
 - **Strict same-level matchmaking** with power balancing, daily opponent rotation, and animated opponent scan
 - **Daily lootbox + inventory** — 50 items across 3 slots (weapon/armor/accessory), 5 rarities (common→legendary), stat bonuses including HP
 - **Equipment loadouts** — manual equip/unequip with 6 weapon elements (fire/water/wind/earth/light/dark), affinity system (+15% damage vs bot archetypes)
 - **6 bot archetypes** (bruiser/tank/rogue/mage/lucky/zen) with elemental weakness mapping
 - **Equipment Forge** — salvage unwanted items for essence (fractional counter in header with .toFixed(2) display), fuse 3 same-rarity items for a higher tier, spend essence to upgrade stats up to +5
+- **🏪 8-Bit Emporium (Shop)** — onglet Shop dans la Forge : 3 offres quotidiennes d'items, équipement et ressources achetable contre de l'essence, avec raretés communes à épiques. Les offres changent chaque jour.
+- **🏅 PvE Medal System** — 25 médailles PvE : 16 médailles de chasseur (8 monstres × 2 paliers : 5/25 kills), 3 médailles de streak PvE (3/5/10 victoires consécutives), 6 médailles de progression haute (niveaux 30/50/75/100/150/200). Les médailles sont vérifiées automatiquement après chaque combat.
+- **Monster kill tracking** — chaque monstre affronté en PvE est enregistré. Les kills cumulés débloquent les médailles de chasseur. Visible dans le panneau des médailles.
+- **Progression déverrouillée dès le level 1** — PvP et Forge accessibles immédiatement après la création du personnage. Plus de paliers de déblocage.
+- **Courbe XP early-game boostée** (EARLY_SHIFT=2) — les niveaux 1-4 ne coûtent que 120 XP chacun, rendant la progression initiale 2 à 3× plus rapide.
+- **Essence doublée en début de jeu** — les nouveaux joueurs accumulent 2× plus d'essence pour forger et acheter au Shop dès leurs premiers combats.
 - **8 pixel monsters** — Goblin, Ogre, Wraith (all levels), Slime (1-8), Wolf (5-18), Skeleton (10-28), Chimera (20-40), Dragon Spawn (30-50) with tiered difficulty and specialty growth rates
 - **Efficiency panel** — always visible XP/min with next-level ETA, power/speed/magic ratios, and streak bonus
 - **Offline gains** — when reconnecting, popup shows fights/XP/essence/levels earned while away, claim with one click
@@ -85,7 +91,7 @@ See [AGENTS.md](AGENTS.md) for autonomous agent workflows and responsibilities.
 | -------------- | ----------------------------------------------- |
 | Frontend       | React 18 + TypeScript + Vite                    |
 | Backend / Auth | Supabase (PostgreSQL, real-time, auth)          |
-| Testing        | Vitest + React Testing Library + jsdom — **799 tests, 73 files**          |
+| Testing        | Vitest + React Testing Library + jsdom — **1066 tests, 85 files**          |
 | Styling        | Sass (SCSS)                                     |
 | Fonts          | Press Start 2P (via Fontsource)                 |
 | Scripting      | tsx (TypeScript executor)                       |
@@ -132,7 +138,7 @@ npm run dev                        # Start Vite dev server (localhost:5173)
 npm run preview                    # Preview production build
 
 # Testing & Quality
-npm test                           # Run test suite (Vitest — 799 tests, 73 files)
+npm test                           # Run test suite (Vitest — 1066 tests, 85 files)
 npm run lint                       # ESLint check
 npm run build                      # TypeScript check + Vite production build
 
@@ -212,6 +218,8 @@ bitbrawler/
 │   │
 │   ├── config/                     # Game configuration
 │   │   ├── gameRules.ts            # Game constants & balance values
+│   │   ├── idleConfig.ts           # Idle/essence/efficiency config
+│   │   ├── progressionConfig.ts    # Feature unlock thresholds
 │   │   ├── combatBalance.ts        # Combat formulas & scaling
 │   │   └── supabase.ts             # Supabase client initialization
 │   │
@@ -232,7 +240,7 @@ bitbrawler/
 │   ├── styles/                     # Global Sass styles
 │   │   └── ...scss files
 │   │
-│   ├── test/                       # Vitest test suite (799 tests, 73 files)
+│   ├── test/                       # Vitest test suite (1066 tests, 85 files)
 │   │   └── ...test files
 │   │
 │   ├── types/                      # TypeScript type definitions
