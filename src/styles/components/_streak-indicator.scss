@@ -12,10 +12,48 @@
   border: 1px solid #333;
   background: rgba(0, 0, 0, 0.4);
   min-width: 0;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
 
   &.streak-idle {
     opacity: 0.7;
   }
+}
+
+// Streak color transitions
+.streak-indicator.streak-gray {
+  border-color: #666;
+}
+
+.streak-indicator.streak-silver {
+  border-color: #c0c0c0;
+  box-shadow: 0 0 6px rgba(192, 192, 192, 0.15);
+}
+
+.streak-indicator.streak-gold {
+  border-color: #ffd700;
+  box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+}
+
+.streak-indicator.streak-rainbow {
+  border-color: #ffd700;
+  box-shadow: 0 0 12px rgba(255, 215, 0, 0.3);
+  animation: streakRainbowBorder 3s linear infinite;
+}
+
+.streak-gray .streak-count {
+  color: #9aa0a6;
+}
+
+.streak-silver .streak-count {
+  color: #c0c0c0;
+}
+
+.streak-gold .streak-count {
+  color: #ffd700;
+}
+
+.streak-rainbow .streak-count {
+  animation: streakRainbowText 3s linear infinite;
 }
 
 .streak-header {
@@ -37,6 +75,7 @@
   font-weight: bold;
   color: $accent-gold;
   letter-spacing: 1px;
+  transition: color 0.4s ease;
 }
 
 .streak-tier-label {
@@ -63,6 +102,18 @@
   transition: width 0.3s ease;
 }
 
+.streak-silver .streak-progress-bar {
+  background: linear-gradient(90deg, #c0c0c0, #e0e0e0);
+}
+
+.streak-gold .streak-progress-bar {
+  background: linear-gradient(90deg, #ffd700, #ffaa00);
+}
+
+.streak-rainbow .streak-progress-bar {
+  animation: streakRainbowBar 3s linear infinite;
+}
+
 .streak-progress-text {
   position: absolute;
   inset: 0;
@@ -85,6 +136,137 @@
   color: $accent-red;
   text-transform: uppercase;
   animation: streakPulse 1.5s ease-in-out infinite;
+}
+
+// ============================================
+// Streak Milestone Burst
+// ============================================
+
+.streak-milestone-burst {
+  position: relative;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.burst-star {
+  position: absolute;
+  font-size: 0.6rem;
+  color: #ffd700;
+  text-shadow: 0 0 4px rgba(255, 215, 0, 0.6);
+  animation: burstFly 1s ease-out both;
+}
+
+.streak-silver .burst-star {
+  color: #c0c0c0;
+  text-shadow: 0 0 4px rgba(192, 192, 192, 0.5);
+}
+
+.streak-gold .burst-star {
+  color: #ffd700;
+  text-shadow: 0 0 6px rgba(255, 215, 0, 0.7);
+}
+
+.streak-rainbow .burst-star {
+  animation: burstFly 1s ease-out both, starRainbow 3s linear infinite;
+}
+
+.burst-star.s1 { animation-delay: 0s; }
+.burst-star.s2 { animation-delay: 0.05s; }
+.burst-star.s3 { animation-delay: 0.1s; }
+.burst-star.s4 { animation-delay: 0.15s; }
+.burst-star.s5 { animation-delay: 0.2s; }
+.burst-star.s6 { animation-delay: 0.25s; }
+.burst-star.s7 { animation-delay: 0.3s; }
+.burst-star.s8 { animation-delay: 0.35s; }
+
+@keyframes burstFly {
+  0% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  20% {
+    transform: translate(0, 0) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--bx, 20px), var(--by, -20px)) scale(0.3);
+    opacity: 0;
+  }
+}
+
+.burst-star.s1 { --bx: -20px; --by: -10px; }
+.burst-star.s2 { --bx: -12px; --by: -18px; }
+.burst-star.s3 { --bx: 0px; --by: -22px; }
+.burst-star.s4 { --bx: 12px; --by: -18px; }
+.burst-star.s5 { --bx: 20px; --by: -10px; }
+.burst-star.s6 { --bx: 16px; --by: 4px; }
+.burst-star.s7 { --bx: -16px; --by: 4px; }
+.burst-star.s8 { --bx: 0px; --by: 8px; }
+
+// ============================================
+// Rainbow Animations
+// ============================================
+
+@keyframes streakRainbowBorder {
+  0% { border-color: #ff0000; }
+  16% { border-color: #ff8800; }
+  33% { border-color: #ffff00; }
+  50% { border-color: #00ff00; }
+  66% { border-color: #0088ff; }
+  83% { border-color: #8800ff; }
+  100% { border-color: #ff0000; }
+}
+
+@keyframes streakRainbowText {
+  0% { color: #ff0000; }
+  16% { color: #ff8800; }
+  33% { color: #ffff00; }
+  50% { color: #00ff00; }
+  66% { color: #0088ff; }
+  83% { color: #8800ff; }
+  100% { color: #ff0000; }
+}
+
+@keyframes streakRainbowBar {
+  0% { background: linear-gradient(90deg, #ff0000, #ff8800); }
+  16% { background: linear-gradient(90deg, #ff8800, #ffff00); }
+  33% { background: linear-gradient(90deg, #ffff00, #00ff00); }
+  50% { background: linear-gradient(90deg, #00ff00, #0088ff); }
+  66% { background: linear-gradient(90deg, #0088ff, #8800ff); }
+  83% { background: linear-gradient(90deg, #8800ff, #ff0000); }
+  100% { background: linear-gradient(90deg, #ff0000, #ff8800); }
+}
+
+@keyframes starRainbow {
+  0% { color: #ff0000; }
+  16% { color: #ff8800; }
+  33% { color: #ffff00; }
+  50% { color: #00ff00; }
+  66% { color: #0088ff; }
+  83% { color: #8800ff; }
+  100% { color: #ff0000; }
+}
+
+// ============================================
+// Streak Color Transitions for Compact
+// ============================================
+
+.streak-indicator.compact.streak-gray .streak-count {
+  color: #9aa0a6;
+}
+
+.streak-indicator.compact.streak-silver .streak-count {
+  color: #c0c0c0;
+}
+
+.streak-indicator.compact.streak-gold .streak-count {
+  color: #ffd700;
+}
+
+.streak-indicator.compact.streak-rainbow .streak-count {
+  animation: streakRainbowText 3s linear infinite;
 }
 
 // Compact variant (for mobile / tight spaces)
@@ -136,6 +318,14 @@
 
   .streak-warning {
     font-size: 0.4rem;
+  }
+
+  .streak-milestone-burst {
+    height: 16px;
+  }
+
+  .burst-star {
+    font-size: 0.5rem;
   }
 }
 

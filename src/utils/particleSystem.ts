@@ -1,4 +1,4 @@
-export type ParticleType = 'dust' | 'spark' | 'xp_star' | 'damage' | 'hit_ring' | 'crit' | 'miss' | 'heal' | 'hit' | 'magic' | 'rare_reveal' | 'confetti';
+export type ParticleType = 'dust' | 'spark' | 'xp_star' | 'damage' | 'hit_ring' | 'crit' | 'miss' | 'heal' | 'hit' | 'magic' | 'rare_reveal' | 'confetti' | 'combo' | 'xp_burst';
 
 interface ParticleDef {
   x: number;
@@ -28,6 +28,8 @@ const PARTICLE_COLORS: Record<ParticleType, string[]> = {
   heal: ['#AFFFAC', '#90EE90', '#7FFF7F'],
   rare_reveal: ['#FFD700', '#FFEC8B', '#FFFFFF', '#FFA500'],
   confetti: ['#FFD700', '#FFC107', '#FF8C00', '#FFA500', '#FF6B35'],
+  combo: ['#FFD700', '#FF6B6B', '#FF69B4', '#00D4FF'],
+  xp_burst: ['#FFD700', '#FFC107', '#FFA500', '#FF6B6B'],
 };
 
 const pickColor = (type: ParticleType): string => {
@@ -222,6 +224,29 @@ export class ParticleSystem {
           maxLife: 2500,
           size: 2 + Math.random() * 2,
           color: pickColor('confetti'),
+        };
+      }
+      case 'combo': {
+        const angle = (index / total) * Math.PI * 2;
+        const speed = 2 + (index % 3) * 0.5;
+        return {
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 800, maxLife: 800, size: 3,
+          color: pickColor('combo'),
+        };
+      }
+      case 'xp_burst': {
+        const burstAngle = (index / total) * Math.PI * 2;
+        const burstSpeed = 1.5 + Math.random() * 2;
+        return {
+          x: x + (Math.random() - 0.5) * 4,
+          y: y + (Math.random() - 0.5) * 4,
+          vx: Math.cos(burstAngle) * burstSpeed,
+          vy: Math.sin(burstAngle) * burstSpeed - 0.5,
+          life: 1200, maxLife: 1200, size: 2,
+          color: pickColor('xp_burst'),
         };
       }
     }
