@@ -50,6 +50,11 @@ const STREAK_BONUS_CAP = 0.25
 const ESSENCE_BASE_RATE = 0.2
 const ESSENCE_LOSS_RATIO = 0.3
 const ESSENCE_LEVEL_SCALE = 0.08
+
+// Aligned with src/config idleConfig.ts and src/utils/xpUtils.ts
+const EARLY_SHIFT = 2
+const IDLE_MODIFIER = 0.35
+const MAX_IDLE_FIGHTS = 50
 const MONSTER_IDS = ['GOBLIN', 'OGRE', 'WRAITH', 'SLIME', 'SKELETON', 'BAT', 'SPIDER']
 
 interface MonsterDef {
@@ -133,7 +138,8 @@ function simulateCombat(attacker: Character, defender: Character): CombatResult 
 
 function xpForNextLevel(level: number): number {
   if (level >= 99) return Infinity
-  return Math.floor(120 * Math.pow(level, 1.65))
+  const shifted = Math.max(1, level - EARLY_SHIFT)
+  return Math.floor(120 * Math.pow(shifted, 1.65))
 }
 
 function totalXpForLevel(level: number): number {
@@ -195,16 +201,15 @@ function computeEfficiency(playerStats: ReturnType<typeof calculateCombatStats>,
 function calculateOfflineFightsWithEfficiency(start: number, end: number, interval: number): number {
   const elapsed = end - start
   if (elapsed <= 0) return 0
-  return Math.floor(elapsed / interval)
+  const fights = Math.floor(elapsed / interval)
+  return Math.min(fights, MAX_IDLE_FIGHTS)
 }
 
 function calculateIdleXp(won: boolean, level: number): number {
-  const baseXp = won ? 125 : 50
+  const baseXp = won ? 90 : 30
   const levelScaling = 1 + (level - 1) * 0.06
-  const pveModifier = 0.7
-  const idleModifier = 0.18
   const variance = 0.9 + Math.random() * 0.2
-  return Math.floor(baseXp * levelScaling * pveModifier * idleModifier * variance)
+  return Math.floor(baseXp * levelScaling * IDLE_MODIFIER * variance)
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -260,7 +265,7 @@ function simulateIdleGains(char: Character, idleMs: number): { updated: Characte
     const streakBonus = Math.min(streak * STREAK_BONUS_PER_STEP, STREAK_BONUS_CAP)
     const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
 
-    const essenceGain = calculateIdleEssence(won, current.level, current.intelligence, current.focus)
+    const essenceGain = calculateIdleEssence(won, current.level, current.intelligence, current.focus) * eff.xpBonusMultiplier
     essenceAccum += essenceGain
 
     const result = gainXp(current, finalXp)

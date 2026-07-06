@@ -113,41 +113,134 @@ export function useIdleCombat({
     onSyncCharacter?.(updated)
   }, [onCharacterUpdate, onSyncCharacter])
 
+  // Run local catch-up for offline gains (fallback when server is unreachable).
+  // Returns computed gains or null if nothing happened.
+  const runLocalCatchUp = useCallback((idleMs: number, currentChar: Character): {
+    fights: number; xp: number; levels: number; essence: number; updatedChar: Character
+  } | null => {
+    const effectiveInterval = effIntervalRef.current
+    const numFights = Math.min(
+      Math.floor(idleMs / effectiveInterval),
+      IDLE_CONFIG.MAX_IDLE_FIGHTS,
+    )
+    if (numFights <= 0) return null
+
+    let char = { ...currentChar }
+    let streak = currentChar.idleStreak ?? 0
+    let kills = currentChar.idleTotalKills ?? 0
+    let idleXpTotal = currentChar.idleTotalXp ?? 0
+    let totalEssenceGain = 0
+    let totalXpGained = 0
+
+    for (let i = 0; i < numFights; i++) {
+      try {
+        const monster = generateMonsterForPlayer(char.level)
+        const result = simulateCombat(char, monster.character)
+        const won = result.winner === 'attacker'
+
+        const baseXp = calculateIdleXp(won, char.level)
+        const xpBonus = xpBonusRef.current - 1
+        const streakBonus = Math.min(
+          streak * IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_PER_STEP,
+          IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_CAP,
+        )
+        const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
+
+        const essenceGain = calculateIdleEssence(won, char.level, char.intelligence, char.focus) * xpBonusRef.current
+        totalEssenceGain += essenceGain
+
+        if (won) { streak++; kills++ } else { streak = 0 }
+        totalXpGained += finalXp
+        idleXpTotal += finalXp
+
+        const xpResult = gainXp(char, finalXp)
+        const pointsGained = xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL
+        char = {
+          ...xpResult.updatedCharacter,
+          statPoints: (xpResult.updatedCharacter.statPoints || 0) + pointsGained,
+        }
+      } catch {
+        continue
+      }
+    }
+
+    const now = Date.now()
+    const levelsGained = (char.level ?? 1) - (currentChar.level ?? 1)
+    const updatedChar: Character = {
+      ...char,
+      essence: (currentChar.essence ?? 0) + totalEssenceGain,
+      idleStreak: streak,
+      idleMaxStreak: Math.max(streak, char.idleMaxStreak ?? 0),
+      idleTotalKills: kills,
+      idleTotalXp: idleXpTotal,
+      lastIdleCheck: now,
+      lastActive: now,
+    }
+
+    return { fights: numFights, xp: totalXpGained, levels: levelsGained, essence: totalEssenceGain, updatedChar }
+  }, [])
+
   // Call server idle processor and show popup with gains.
-  // Uses data.essence/xp/levels directly from API (already incremental).
+  // Falls back to local processing when the API is unreachable.
   const processOfflineOnServer = useCallback(async (timeAway: number) => {
     const currentChar = charRef.current
     if (!currentChar || !currentChar.id) return
+
+    const snapshot = loadIdleSnapshot()
+
+    // ── Attempt server-side processing ──
+    let serverSuccess = false
+    let serverData: any = null
     try {
       const res = await fetch('/api/idle-processor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ character_id: currentChar.id }),
       })
-      if (!res.ok) return
-      const data = await res.json()
-      if (!data.updated) return
-      const essenceDelta = Math.max(0, data.essence ?? 0)
+      if (res.ok) {
+        serverData = await res.json()
+        if (serverData?.updated) serverSuccess = true
+        else console.warn('[IdleCombat] Server returned no updated char', serverData?.conflict ? '(conflict)' : '')
+      } else {
+        console.warn('[IdleCombat] Server returned', res.status)
+      }
+    } catch (err) {
+      console.warn('[IdleCombat] Server unreachable, using local fallback:', err)
+    }
+
+    if (serverSuccess && serverData) {
+      // Merge server-processed character with local state, keeping the higher
+      // of each field to avoid regression (local may be ahead due to debounce).
+      const sd = serverData
       const updatedChar: Character = {
         ...currentChar,
-        ...data.updated,
+        ...sd.updated,
+        experience: Math.max(currentChar.experience ?? 0, sd.updated.experience ?? 0),
+        level: Math.max(currentChar.level ?? 1, sd.updated.level ?? 1),
+        maxHp: Math.max(currentChar.maxHp ?? 100, sd.updated.maxHp ?? 100),
+        hp: Math.max(currentChar.hp ?? 100, sd.updated.hp ?? 100),
+        statPoints: Math.max(currentChar.statPoints ?? 0, sd.updated.statPoints ?? 0),
+        essence: Math.max(currentChar.essence ?? 0, sd.updated.essence ?? 0),
+        idleStreak: Math.max(currentChar.idleStreak ?? 0, sd.updated.idleStreak ?? 0),
+        idleMaxStreak: Math.max(currentChar.idleMaxStreak ?? 0, sd.updated.idleMaxStreak ?? 0),
+        idleTotalKills: Math.max(currentChar.idleTotalKills ?? 0, sd.updated.idleTotalKills ?? 0),
+        idleTotalXp: Math.max(currentChar.idleTotalXp ?? 0, sd.updated.idleTotalXp ?? 0),
         lastIdleCheck: Date.now(),
         lastActive: Date.now(),
-        essence: (currentChar.essence ?? 0) + essenceDelta,
       }
       onCharacterUpdate(updatedChar)
-      const fights = data.fights ?? 0
-      let xp = data.xp ?? 0
-      let levels = data.levels ?? 0
-      let essence = data.essence ?? 0
+
+      const fights = sd.fights ?? 0
+      let xp = sd.xp ?? 0
+      let levels = sd.levels ?? 0
+      let essence = sd.essence ?? 0
 
       // Use snapshot to compute total gains across entire absence
       // (cron may have already processed most of it — snapshot captures pre-absence state)
-      const snapshot = loadIdleSnapshot()
-      if (snapshot && data.updated) {
-        const totalXp = Math.max(0, (data.updated.experience ?? 0) - snapshot.experience)
-        const totalLevels = Math.max(0, (data.updated.level ?? 0) - snapshot.level)
-        const totalEssence = Math.max(0, (data.updated.essence ?? 0) - snapshot.essence)
+      if (snapshot && sd.updated) {
+        const totalXp = Math.max(0, (sd.updated.experience ?? 0) - snapshot.experience)
+        const totalLevels = Math.max(0, (sd.updated.level ?? 0) - snapshot.level)
+        const totalEssence = Math.max(0, (sd.updated.essence ?? 0) - snapshot.essence)
         if (totalXp > 0 || totalLevels > 0 || totalEssence > 0) {
           xp = totalXp
           levels = totalLevels
@@ -159,10 +252,27 @@ export function useIdleCombat({
       if (xp > 0 || levels > 0 || essence > 0 || fights > 0) {
         setOfflineGains({ fights, xp, levels, essence, timeAway })
       }
-    } catch {
-      // server unreachable — silently ignore
+      return
     }
-  }, [onCharacterUpdate])
+
+    // ── Fallback: local processing ──
+    clearIdleSnapshot()
+    const result = runLocalCatchUp(timeAway, currentChar)
+    if (!result) return
+    onCharacterUpdate(result.updatedChar)
+    if (result.levels > 0) {
+      onLevelUp?.(result.levels, result.updatedChar.level)
+    }
+    if (result.xp > 0 || result.levels > 0 || result.essence > 0 || result.fights > 0) {
+      setOfflineGains({
+        fights: result.fights,
+        xp: result.xp,
+        levels: result.levels,
+        essence: result.essence,
+        timeAway,
+      })
+    }
+  }, [onCharacterUpdate, onLevelUp, runLocalCatchUp])
 
   // On mount: process idle time > 30s and show popup.
   useEffect(() => {
