@@ -107,6 +107,39 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     return 8
   }, [])
 
+  // ── Combat animation timing ──────────────────────────────────────────
+  // The .attacking / .victory classes override runCycle via a more specific
+  // selector, but their one-shot animations (350ms / 500ms) finish long
+  // before the phase ends (~1.5s each). After the animation completes,
+  // there's no active animation — the character freezes mid-phase.
+  // Toggle the class with a timeout so runCycle resumes immediately.
+  const [isAttacking, setIsAttacking] = useState(false)
+  const [isVictory, setIsVictory] = useState(false)
+  const prevPhaseRef2 = useRef<ScenePhase>('running')
+  useEffect(() => {
+    if (prevPhaseRef2.current !== 'combat' && scenePhase === 'combat') {
+      setIsAttacking(true)
+      const t = setTimeout(() => setIsAttacking(false), 350)
+      return () => clearTimeout(t)
+    }
+    if (prevPhaseRef2.current !== 'result' && scenePhase === 'result' && lastCombatResult === 'win') {
+      setIsVictory(true)
+      const t = setTimeout(() => setIsVictory(false), 500)
+      return () => clearTimeout(t)
+    }
+    prevPhaseRef2.current = scenePhase
+  }, [scenePhase, lastCombatResult])
+
+  // Force clean remount of the character slot each cycle transition
+  // to result→running, giving the CSS animations a clean slate.
+  const prevPhaseForRemount = useRef<ScenePhase>('running')
+  useEffect(() => {
+    if (prevPhaseForRemount.current === 'result' && scenePhase === 'running') {
+      setAnimKey(prev => prev + 1)
+    }
+    prevPhaseForRemount.current = scenePhase
+  }, [scenePhase])
+
   useEffect(() => {
     if (!containerRef.current) return
     const ps = new ParticleSystem(lowPerf ? 20 : 60)
@@ -211,7 +244,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
       {levelUpShockwave && <div className={`level-up-shockwave${isMilestoneCeremony ? ' milestone' : ''}`} />}
       {/* clouds rendered inside ProceduralTerrain canvas */}
 
-      <div key={animKey} className={`idle-character-slot${animRun ? '' : ' anim-paused'} ${scenePhase === 'combat' ? 'attacking' : ''} ${scenePhase === 'result' && lastCombatResult === 'win' ? 'victory' : ''} ${showLevelUpFx ? 'glow-levelup' : ''} ${isMilestoneCeremony ? 'ceremony-milestone' : ''}`}>
+      <div key={animKey} className={`idle-character-slot${animRun ? '' : ' anim-paused'} ${isAttacking ? 'attacking' : ''} ${isVictory ? 'victory' : ''} ${showLevelUpFx ? 'glow-levelup' : ''} ${isMilestoneCeremony ? 'ceremony-milestone' : ''}`}>
         <PixelCharacter
           seed={character.seed}
           gender={character.gender}
