@@ -81,6 +81,10 @@
   display: flex;
   animation: runCycle 0.32s ease-in-out infinite;
 
+  &.anim-paused {
+    animation-play-state: paused !important;
+  }
+
   &.attacking {
     animation: attackLunge 0.35s ease-out;
   }

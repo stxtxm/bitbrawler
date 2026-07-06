@@ -71,15 +71,28 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   const prevPhaseRef = useRef<ScenePhase>('running')
   const characterLevelRef = useRef(character.level)
   const [animKey, setAnimKey] = useState(0)
+  const [animRun, setAnimRun] = useState(true)
   characterLevelRef.current = character.level
 
   // Browsers freeze CSS @keyframes when tab is hidden and don't always
   // resume them on return. Force a remount of the character slot to
   // restart the running animation cleanly.
+  // Mobile lock screen / background needs extra care: the visibilitychange
+  // fires before the browser has fully restored rendering. Using rAF ensures
+  // the DOM update happens when the browser is ready to paint, giving the
+  // CSS animation a clean restart.
   useEffect(() => {
+    let rafPending = false
     const handler = () => {
-      if (document.visibilityState === 'visible') {
-        setAnimKey(prev => prev + 1)
+      if (document.visibilityState === 'hidden') {
+        setAnimRun(false)
+      } else if (document.visibilityState === 'visible' && !rafPending) {
+        rafPending = true
+        requestAnimationFrame(() => {
+          rafPending = false
+          setAnimRun(true)
+          setAnimKey(prev => prev + 1)
+        })
       }
     }
     document.addEventListener('visibilitychange', handler)
@@ -198,7 +211,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
       {levelUpShockwave && <div className={`level-up-shockwave${isMilestoneCeremony ? ' milestone' : ''}`} />}
       {/* clouds rendered inside ProceduralTerrain canvas */}
 
-      <div key={animKey} className={`idle-character-slot ${scenePhase === 'combat' ? 'attacking' : ''} ${scenePhase === 'result' && lastCombatResult === 'win' ? 'victory' : ''} ${showLevelUpFx ? 'glow-levelup' : ''} ${isMilestoneCeremony ? 'ceremony-milestone' : ''}`}>
+      <div key={animKey} className={`idle-character-slot${animRun ? '' : ' anim-paused'} ${scenePhase === 'combat' ? 'attacking' : ''} ${scenePhase === 'result' && lastCombatResult === 'win' ? 'victory' : ''} ${showLevelUpFx ? 'glow-levelup' : ''} ${isMilestoneCeremony ? 'ceremony-milestone' : ''}`}>
         <PixelCharacter
           seed={character.seed}
           gender={character.gender}
