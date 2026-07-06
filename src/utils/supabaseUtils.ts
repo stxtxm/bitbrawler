@@ -49,8 +49,8 @@ export function convertFromSupabase(row: CharacterRow): Character {
   };
 }
 
-export function convertToSupabase(character: Character): Partial<CharacterRow> {
-  return {
+export function convertToSupabase(character: Character, fields?: string[]): Partial<CharacterRow> {
+  const allFields: Partial<CharacterRow> = {
     name: character.name,
     gender: character.gender as 'male' | 'female',
     seed: character.seed,
@@ -94,4 +94,10 @@ export function convertToSupabase(character: Character): Partial<CharacterRow> {
     ...(character.medalTitle !== undefined ? { medal_title: character.medalTitle } : {}),
     ...(character.medalAura !== undefined ? { medal_aura: character.medalAura } : {}),
   };
+  if (fields) {
+    return Object.fromEntries(
+      Object.entries(allFields).filter(([key]) => fields.includes(key))
+    ) as Partial<CharacterRow>;
+  }
+  return allFields;
 }

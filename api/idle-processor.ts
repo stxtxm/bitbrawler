@@ -211,7 +211,7 @@ function calculateIdleXp(won: boolean, level: number): number {
 // Idle processor logic
 // ─────────────────────────────────────────────────────────────
 
-const IDLE_WINDOW_MS = 60_000
+const IDLE_WINDOW_MS = 600_000
 const DB_BATCH_SIZE = 10
 
 const SELECT_COLUMNS = [

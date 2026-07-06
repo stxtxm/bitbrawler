@@ -138,18 +138,59 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [handleDbError]);
 
-  const syncCharacterToBackend = useCallback(async (char: Character) => {
-    if (!char.id) return;
+  const hasMedalChanges = (before: Character, after: Character): boolean => {
+    return after.medalInventoryBonus !== before.medalInventoryBonus
+      || after.medalXpBonus !== before.medalXpBonus
+      || after.medalTitle !== before.medalTitle
+      || after.medalAura !== before.medalAura
+  }
+
+  // ─── Debounced sync ─────────────────────────────────────────────────────
+  const DEBOUNCE_SYNC_MS = 30_000
+  const pendingSyncCharRef = useRef<Character | null>(null)
+  const syncToBackendTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const flushSyncToBackend = useCallback(async () => {
+    const toSync = pendingSyncCharRef.current
+    pendingSyncCharRef.current = null
+    syncToBackendTimeoutRef.current = null
+    if (!toSync?.id) return
     try {
       const { error } = await supabase
         .from('characters')
-        .update(convertToSupabase(char))
-        .eq('id', char.id);
-      if (error) throw error;
+        .update(convertToSupabase(toSync))
+        .eq('id', toSync.id)
+      if (error) throw error
     } catch (error: any) {
-      handleDbError(error, 'sync-character');
+      handleDbError(error, 'sync-character')
     }
-  }, [handleDbError]);
+  }, [handleDbError])
+
+  const syncCharacterToBackend = useCallback(async (char: Character) => {
+    if (!char.id) return
+    pendingSyncCharRef.current = char
+    if (syncToBackendTimeoutRef.current === null) {
+      syncToBackendTimeoutRef.current = setTimeout(() => {
+        flushSyncToBackend()
+      }, DEBOUNCE_SYNC_MS)
+    }
+  }, [flushSyncToBackend])
+
+  // Flush pending sync when page is hidden (navigating away, closing tab)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden') {
+        flushSyncToBackend()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
+      if (syncToBackendTimeoutRef.current !== null) {
+        clearTimeout(syncToBackendTimeoutRef.current)
+      }
+    }
+  }, [flushSyncToBackend])
 
   // Load character on mount
   useEffect(() => {
@@ -424,7 +465,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       // Non-blocking medal/achievement check after PvP fight
       checkAndApplyMedals(updatedChar, {}).then(charWithMedals => {
         persistCharacter(charWithMedals);
-        syncCharacterToBackend(charWithMedals).catch(() => {});
+        if (hasMedalChanges(updatedChar, charWithMedals)) {
+          syncCharacterToBackend(charWithMedals).catch(() => {});
+        }
       }).catch(() => {});
 
       if (opponentId && opponentId !== baseCharacter.id) {
@@ -553,7 +596,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       pveStreak: won ? (baseCharacter.idleStreak ?? 0) : 0,
     }).then(charWithMedals => {
       persistCharacter(charWithMedals);
-      syncCharacterToBackend(charWithMedals).catch(() => {});
+      if (hasMedalChanges(updatedChar, charWithMedals)) {
+        syncCharacterToBackend(charWithMedals).catch(() => {});
+      }
     }).catch(() => {});
 
     setLastXpGain(xpGained);
@@ -968,7 +1013,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       };
       checkAndApplyMedals(updatedChar, lootboxCtx).then(charWithMedals => {
         persistCharacter(charWithMedals);
-        syncCharacterToBackend(charWithMedals).catch(() => {});
+        if (hasMedalChanges(updatedChar, charWithMedals)) {
+          syncCharacterToBackend(charWithMedals).catch(() => {});
+        }
       }).catch(() => {});
 
       return result.item;
@@ -1126,7 +1173,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       // Non-blocking medal/achievement check after salvage
       checkAndApplyMedals(normalized, {}).then(charWithMedals => {
         persistCharacter(charWithMedals);
-        syncCharacterToBackend(charWithMedals).catch(() => {});
+        if (hasMedalChanges(normalized, charWithMedals)) {
+          syncCharacterToBackend(charWithMedals).catch(() => {});
+        }
       }).catch(() => {});
 
       return normalized;
@@ -1163,7 +1212,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       // Non-blocking medal/achievement check after fusion
       checkAndApplyMedals(normalized, {}).then(charWithMedals => {
         persistCharacter(charWithMedals);
-        syncCharacterToBackend(charWithMedals).catch(() => {});
+        if (hasMedalChanges(normalized, charWithMedals)) {
+          syncCharacterToBackend(charWithMedals).catch(() => {});
+        }
       }).catch(() => {});
 
       return { result, updatedChar: normalized };
@@ -1196,7 +1247,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       // Non-blocking medal/achievement check after upgrade
       checkAndApplyMedals(normalized, {}).then(charWithMedals => {
         persistCharacter(charWithMedals);
-        syncCharacterToBackend(charWithMedals).catch(() => {});
+        if (hasMedalChanges(normalized, charWithMedals)) {
+          syncCharacterToBackend(charWithMedals).catch(() => {});
+        }
       }).catch(() => {});
 
       return normalized;
@@ -1230,7 +1283,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       // Non-blocking medal/achievement check
       checkAndApplyMedals(normalized, {}).then(charWithMedals => {
         persistCharacter(charWithMedals);
-        syncCharacterToBackend(charWithMedals).catch(() => {});
+        if (hasMedalChanges(normalized, charWithMedals)) {
+          syncCharacterToBackend(charWithMedals).catch(() => {});
+        }
       }).catch(() => {});
 
       return normalized;

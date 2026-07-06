@@ -4,7 +4,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 
 export default [
   // Ignore build output and dependencies
-  { ignores: ['dist/**', 'node_modules/**', 'actions-runner/**'] },
+  { ignores: ['dist/**', 'node_modules/**', 'actions-runner/**', '.vercel/**'] },
 
   // TypeScript recommended rules (flat config)
   // Sets up @typescript-eslint/parser, registers plugin, applies TS-specific rules
