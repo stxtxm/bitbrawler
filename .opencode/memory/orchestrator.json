@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "orchestrator",
-  "last_session": null,
+  "last_session": "2026-07-09T18:30:00Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne jamais créer de sub-issue qui modifie .github/workflows/",
@@ -15,5 +15,24 @@
     "linear_chain": "Sub-issue 1 (no deps) → Sub-issue 2 (depends-on #1) → Sub-issue 3 (depends-on #2)",
     "parallel_fork": "Sub-issue A (no deps), Sub-issue B (no deps) → Sub-issue C (depends-on #A, #B)"
   },
-  "session_notes": []
+  "session_notes": [
+    {
+      "session": "2026-07-09T18:30:00Z",
+      "parent_issue": 476,
+      "title": "Essence Economy & Shop Balance",
+      "sub_issues_created": [478, 479, 480, 481, 482, 483],
+      "sub_issues_dispatched": [478, 479, 480, 481, 482],
+      "lessons_learned": [
+        "Ne pas utiliser 'agent' comme paramètre — le workflow opencode.yml utilise 'mode'",
+        "Vérifier les labels existants avant création car des conflits peuvent arriver",
+        "Issue #472 couvre Phase 1 partiellement — créer nos propres sub-issues QA est plus fiable",
+        "L'Option C (Prestige) dépend de #321 et #309 — cross-campaign blocker",
+        "La Phase 2 (#483) nécessite 7 jours de données après merge de #478+#479"
+      ],
+      "issues_encountered": [
+        "gh label create campaign-476 a dû utiliser --force car label déjà existant dans l'API",
+        "gh workflow run a rejeté 'agent' comme input — a dû utiliser uniquement issue_number"
+      ]
+    }
+  ]
 }
