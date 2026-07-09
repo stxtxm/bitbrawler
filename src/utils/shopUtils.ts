@@ -48,8 +48,59 @@ function pickItem(pool: PixelItemAsset[], rng: () => number): PixelItemAsset | n
 }
 
 /**
+ * Generate a single shop offer from a given config index, reusing the helper.
+ */
+function buildOffer(
+  configIndex: number,
+  character: Character,
+  items: PixelItemAsset[],
+  rand: () => number,
+): ShopOffer {
+  const config = SHOP_OFFERS[configIndex];
+  if (config.type === 'lootbox') {
+    return {
+      index: configIndex,
+      type: 'lootbox' as const,
+      price: config.price,
+      label: config.label,
+      item: null,
+    };
+  }
+
+  const charLevel = character.level;
+
+  // Filter items by level eligibility
+  const eligible = items.filter(
+    (item) => item.requiredLevel <= charLevel && item.rarity !== 'legendary',
+  );
+
+  // Filter by rarity pool for this offer
+  const pool = eligible.filter((item) =>
+    config.rarityPool ? config.rarityPool.includes(item.rarity) : true,
+  );
+
+  // Ensure we don't offer items already owned
+  const owned = new Set(character.inventory ?? []);
+  const fresh = pool.filter((item) => !owned.has(item.id));
+
+  const source = fresh.length > 0 ? fresh : pool;
+  const picked = pickItem(source, rand);
+
+  return {
+    index: configIndex,
+    type: 'item' as const,
+    price: config.price,
+    label: config.label,
+    item: picked ? { id: picked.id, name: picked.name, rarity: picked.rarity } : null,
+  };
+}
+
+/**
  * Array of length 3 (one per offer) — same day + same char = same offers.
  * Offers are deterministic per day (seeded by char id + date).
+ * Guarantees exactly 1 epic-rarity item among the 3 daily offers:
+ * - If Pièce rare (index 1) naturally rolls epic, the 3 standard offers are used.
+ * - Otherwise, Pièce rare is replaced by Objet épique (index 3, epic-only).
  */
 export function getShopOffers(
   character: Character,
@@ -61,44 +112,21 @@ export function getShopOffers(
   const seed = getDailySeed(character.id ?? character.seed, today);
   const rand = rng ?? seededRandom(seed);
 
-  const charLevel = character.level;
+  // Build the first 3 standard offers (config indices 0, 1, 2)
+  const standardOffers: ShopOffer[] = [0, 1, 2].map((i) => buildOffer(i, character, items, rand));
 
-  return SHOP_OFFERS.map((config, index) => {
-    if (config.type === 'lootbox') {
-      return {
-        index,
-        type: 'lootbox' as const,
-        price: config.price,
-        label: config.label,
-        item: null,
-      };
-    }
+  // Check if any item offer among the standard 3 is epic
+  const hasNaturalEpic = standardOffers.some(
+    (o) => o.type === 'item' && o.item?.rarity === 'epic',
+  );
 
-    // Filter items by level eligibility
-    const eligible = items.filter(
-      (item) => item.requiredLevel <= charLevel && item.rarity !== 'legendary',
-    );
+  if (hasNaturalEpic) {
+    return standardOffers;
+  }
 
-    // Filter by rarity pool for this offer
-    const pool = eligible.filter((item) =>
-      config.rarityPool ? config.rarityPool.includes(item.rarity) : true,
-    );
-
-    // Ensure we don't offer items already owned
-    const owned = new Set(character.inventory ?? []);
-    const fresh = pool.filter((item) => !owned.has(item.id));
-
-    const source = fresh.length > 0 ? fresh : pool;
-    const picked = pickItem(source, rand);
-
-    return {
-      index,
-      type: 'item' as const,
-      price: config.price,
-      label: config.label,
-      item: picked ? { id: picked.id, name: picked.name, rarity: picked.rarity } : null,
-    };
-  });
+  // No epic found — replace the second offer (Pièce rare, index 1) with Objet épique (index 3)
+  const epicOffer = buildOffer(3, character, items, rand);
+  return [standardOffers[0], epicOffer, standardOffers[2]];
 }
 
 /**
@@ -168,7 +196,7 @@ export function buyShopOffer(
     newInventory = [...(character.inventory ?? []), rolled.id];
   } else {
     const offers = getShopOffers(character, items, today, rng);
-    const shopItem = offers[index].item;
+    const shopItem = offers.find(o => o.index === index)?.item;
     if (!shopItem) return null;
     newInventory = [...(character.inventory ?? []), shopItem.id];
   }
