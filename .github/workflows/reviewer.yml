@@ -172,10 +172,12 @@ jobs:
 
           if [ "$ALL_RESOLVED" = false ]; then
             echo "⏳ Dependencies not yet resolved — posting comment and skipping review"
-            gh pr comment "$PR_NUMBER" --body "⏳ **En attente de dépendances** — Cette PR sera mergée automatiquement quand les dépendances suivantes seront fermées :
-$(echo "$DEPS" | while read -r D; do echo "- #$D"; done)
-
-Le reviewer repassera automatiquement dès que toutes les dépendances seront résolues."
+            BODY="⏳ **En attente de dépendances** — Cette PR sera mergée automatiquement quand les dépendances suivantes seront fermées :"
+            while read -r D; do
+              BODY="$BODY"$'\n'"- #$D"
+            done <<< "$(echo "$DEPS")"
+            BODY="$BODY"$'\n\n'"Le reviewer repassera automatiquement dès que toutes les dépendances seront résolues."
+            gh pr comment "$PR_NUMBER" --body "$BODY"
             # Remove auto-merge if set (prevent premature merge)
             gh pr merge --disable-auto "$PR_NUMBER" 2>/dev/null || true
             echo "DEPS_BLOCKED=true" >> "$GITHUB_ENV"
