@@ -176,15 +176,28 @@ describe('lootboxUtils', () => {
     expect(result.pityCount).toBe(1); // Incremented from 0 since result is common
   });
 
-  it('pity cannot trigger at level 1 since no legendary items exist', () => {
+  it('pity counter resets to 0 when no legendary items are available (level < 5)', () => {
     // Legendary items start at requiredLevel 5, so at level 1 pity can't force one
+    // Pity should reset to 0 instead of growing unbounded
     const rng = () => 0.001; // Would produce common
     const result = rollLootbox(ITEM_ASSETS, { rng, level: 1, pityCount: PITY_THRESHOLD });
-    // Pity attempted but no legendary items available — falls through to normal roll
     expect(result.item).not.toBeNull();
     expect(result.item!.rarity).toBe('common');
-    expect(result.pityTriggered).toBe(true); // Pity was "triggered" but couldn't find legendary item
-    expect(result.pityCount).toBe(PITY_THRESHOLD + 1); // Increments since item is common
+    // Pity resets: recursive call with pityCount=0 → increments to 1 after common roll
+    expect(result.pityCount).toBe(1);
+    expect(result.pityTriggered).toBe(false);
+  });
+
+  it('pity counter does not exceed PITY_THRESHOLD when no legendaries are available', () => {
+    // Simulate many rolls at level 1 (no legendary items available)
+    let pityCount = PITY_THRESHOLD - 2; // Start near threshold
+    const rng = () => 0.001;
+    for (let i = 0; i < 10; i++) {
+      const result = rollLootbox(ITEM_ASSETS, { rng, level: 1, pityCount });
+      pityCount = result.pityCount;
+      // Pity should never exceed PITY_THRESHOLD - 1 at level 1 since it resets
+      expect(pityCount).toBeLessThanOrEqual(PITY_THRESHOLD);
+    }
   });
 
   it('pityCount returns correct value in RollLootboxResult', () => {

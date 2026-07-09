@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-07-09T19:16:24Z",
+  "last_session": "2026-07-09T20:51:38Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -30,6 +30,11 @@
     {
       "lesson": "PR #487 CI fix: Remote feat/auto-483 branch was polluted with unrelated workflow file changes (.github/workflows/opencode.yml, reviewer.yml) that violate project rules and break CI. Solution: rebased local clean branch on master and force-pushed to overwrite. The inline reviewer in master's opencode.yml (commit baf7302) automatically detected the clean PR and merged it. Root cause of original CI failure: ci.yml dispatch step tries to run gh workflow run reviewer.yml which fails because workflow_dispatch is not recognized on master. Master's fix (baf7302) bypasses this with inline review in opencode.yml.",
       "issue": "#487",
+      "date": "2026-07-09"
+    },
+    {
+      "lesson": "Pity counter unbounded growth fix: When forceLegendaryRoll() returns null (no legendary items in eligible pool at low levels), the pity counter must be reset via recursive rollLootbox() call with pityCount=0 to prevent unbounded growth. Simple fall-through to normal roll would keep incrementing the counter forever.",
+      "issue": "#496",
       "date": "2026-07-09"
     }
   ]
