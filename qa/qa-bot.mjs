@@ -1501,6 +1501,14 @@ async function runFightSequence(page, runKey, runRecord) {
     thisFightData.max_hp = await parseMaxHp(page)
     console.log(`   max HP after fight: ${thisFightData.max_hp || '(unable to parse)'}`)
 
+    // Capture essence badge after fight
+    const postFightEssence = await parseEssenceBadge(page)
+    thisFightData.essence_after = postFightEssence.value
+    runRecord.essence.per_fight.push(postFightEssence.value)
+    if (postFightEssence.badge_visible) {
+      console.log(`   Essence after fight: ${postFightEssence.value}`)
+    }
+
     runRecord.fights.push(thisFightData)
 
     // Track level-up from body text (auto-allocated, no overlay to detect)
@@ -1750,6 +1758,7 @@ async function testForgeSystem(page, runKey, characterLevel = null) {
       upgrade_succeeded: false,
       essence_after: null,
       items_after: null,
+      salvage_essence_gained: null,
       skipped: true,
       skip_reason: `forge requires LVL ${config.forgeUnlockLevel}`,
     }
@@ -1768,6 +1777,7 @@ async function testForgeSystem(page, runKey, characterLevel = null) {
     upgrade_succeeded: false,
     essence_after: null,
     items_after: null,
+    salvage_essence_gained: null,
     skipped: false,
     skip_reason: null,
   }
@@ -1883,7 +1893,13 @@ async function testForgeSystem(page, runKey, characterLevel = null) {
   // Capture post-forge state
   forgeResult.essence_after = await parseEssence(page)
   forgeResult.items_after = await parseInventoryItemCount(page)
-  console.log(`   Post-forge: essence=${forgeResult.essence_after ?? '?'}, items=${forgeResult.items_after ?? '?'}`)
+  // Compute essence gained from salvage (essence diff when salvage was the primary operation)
+  if (forgeResult.salvage_succeeded && forgeResult.essence_before !== null && forgeResult.essence_after !== null) {
+    forgeResult.salvage_essence_gained = forgeResult.essence_after - forgeResult.essence_before
+  } else {
+    forgeResult.salvage_essence_gained = null
+  }
+  console.log(`   Post-forge: essence=${forgeResult.essence_after ?? '?'}, items=${forgeResult.items_after ?? '?'}${forgeResult.salvage_essence_gained !== null ? `, salvage_gained=${forgeResult.salvage_essence_gained}` : ''}`)
 
   await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-07-forge-after.png`) })
 
@@ -1986,7 +2002,13 @@ async function run() {
     level_up_events: [],
     idle_runner: null,
     efficiency_panel: null,
-    essence: null,
+    essence: {
+      initial: null,
+      per_fight: [],
+      after_forge: null,
+      after_shop: null,
+      final: null,
+    },
     level_up_fx: null,
     offline_gains: null,
     no_legacy_overlay: null,
@@ -2047,9 +2069,10 @@ async function run() {
       console.log(`   Efficiency: essence/min=${runRecord.efficiency_panel.essence_per_min}, ETA=${runRecord.efficiency_panel.next_level_eta}, power=${runRecord.efficiency_panel.power_ratio}, interval=${runRecord.efficiency_panel.interval}`)
     }
 
-    runRecord.essence = await parseEssenceBadge(page)
-    if (runRecord.essence.badge_visible) {
-      console.log(`   Essence badge: ${runRecord.essence.value} (fractional: ${runRecord.essence.displayed_as_fractional})`)
+    const initialEssenceBadge = await parseEssenceBadge(page)
+    runRecord.essence.initial = initialEssenceBadge.value
+    if (initialEssenceBadge.badge_visible) {
+      console.log(`   Initial essence badge: ${initialEssenceBadge.value} (fractional: ${initialEssenceBadge.displayed_as_fractional})`)
     }
 
     // Capture level-up FX state after idle
@@ -2156,6 +2179,10 @@ async function run() {
     // ── Forge ─────────────────────────────────────────────────────
     const forgeLevel = runRecord.final_stats?.level ?? runRecord.initial_level
     runRecord.forge = await testForgeSystem(page, runKey, forgeLevel)
+    runRecord.essence.after_forge = runRecord.forge.essence_after
+    if (runRecord.forge.salvage_essence_gained !== null) {
+      console.log(`   🔨 Essence gained from salvage: ${runRecord.forge.salvage_essence_gained}`)
+    }
 
     // ── Shop ──────────────────────────────────────────────────────
     console.log('')
@@ -2165,8 +2192,16 @@ async function run() {
 
     const shopLevel = runRecord.final_stats?.level ?? runRecord.initial_level
     runRecord.shop = await testShopSystem(page, runKey, shopLevel)
+    runRecord.essence.after_shop = runRecord.shop.essence_after
     if (runRecord.shop.purchased) {
       console.log(`   ✅ Purchased offer (cost: ${runRecord.shop.cost}, rarity: ${runRecord.shop.item_rarity ?? 'N/A'})`)
+    }
+
+    // ── Capture final essence ─────────────────────────────────────
+    const finalEssenceBadge = await parseEssenceBadge(page)
+    runRecord.essence.final = finalEssenceBadge.value
+    if (finalEssenceBadge.badge_visible) {
+      console.log(`   💎 Final essence: ${finalEssenceBadge.value}`)
     }
 
     // ── Offline Gains ─────────────────────────────────────────────
