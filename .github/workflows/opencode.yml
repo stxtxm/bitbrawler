@@ -409,8 +409,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           PR_NUMBER="${{ steps.check_pr.outputs.existing_pr }}"
-          echo "✅ PR #$PR_NUMBER already has all CI green — triggering reviewer directly"
-          gh workflow run reviewer.yml -f pr_number="$PR_NUMBER" --repo "${{ github.repository }}" 2>/dev/null || true
+          echo "✅ PR #$PR_NUMBER already has all CI green — triggering reviewer"
+          # Close & reopen to trigger pull_request event (workaround for workflow_dispatch bug)
+          gh pr close "$PR_NUMBER" --comment "⏳ Re-triggering reviewer..." 2>/dev/null || true
+          sleep 3
+          gh pr reopen "$PR_NUMBER" 2>/dev/null || true
+          gh pr ready "$PR_NUMBER" 2>/dev/null || true
 
       - name: Implement (fix existing PR)
         if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr != '' && env.SKIP_DEV_AGENT != 'true'
