@@ -346,7 +346,8 @@ export function rollLootbox(
     if (forcedItem) {
       return { item: forcedItem, pityCount: 0, pityTriggered: true };
     }
-    // No legendary items available — fall through to normal roll
+    // No legendary items available — reset pity counter to avoid unbounded growth
+    return rollLootbox(items, { ...options, pityCount: 0 });
   }
 
   // Compute streak bonus
