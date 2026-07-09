@@ -338,8 +338,8 @@ jobs:
 
            ## Mémoire des sessions précédentes
            Consulte ta mémoire individuelle et la mémoire commune avant de coder :
-           Mémoire DEV : ${{ env.DEV_MEMORY }}
-           Mémoire commune : ${{ env.SHARED_MEMORY }}
+           Mémoire DEV : $(cat .opencode/memory/dev.json 2>/dev/null || echo "{}")
+           Mémoire commune : $(cat .opencode/memory/shared.json 2>/dev/null || echo "{}")
 
            ## Feature complexe ? Crée une campagne
           Si le changement demandé nécessite PLUSIEURS étapes ou fichiers (ex: nouvelle fonctionnalité complète) :

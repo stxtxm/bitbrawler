@@ -227,8 +227,8 @@ jobs:
             Body: ${ISSUE_BODY:-"N/A"}
 
             ## Mémoire des sessions précédentes
-            Mémoire REVIEWER : ${{ env.REVIEWER_MEMORY }}
-            Mémoire commune : ${{ env.SHARED_MEMORY }}
+            Mémoire REVIEWER : $(cat .opencode/memory/reviewer.json 2>/dev/null || echo "{}")
+            Mémoire commune : $(cat .opencode/memory/shared.json 2>/dev/null || echo "{}")
 
             ## Instructions de review
 
