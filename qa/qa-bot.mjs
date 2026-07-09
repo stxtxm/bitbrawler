@@ -1641,6 +1641,7 @@ async function testShopSystem(page, runKey, characterLevel = null) {
       essence_after: null,
       skipped: true,
       skip_reason: `shop requires LVL ${config.shopUnlockLevel}`,
+      shop_data: { offers: [], purchased_offer: null, essence_after_purchase: null },
     }
     return shopResult
   }
@@ -1656,6 +1657,7 @@ async function testShopSystem(page, runKey, characterLevel = null) {
     essence_after: null,
     skipped: false,
     skip_reason: null,
+    shop_data: { offers: [], purchased_offer: null, essence_after_purchase: null },
   }
 
   const navigated = await navigateToForge(page)
@@ -1681,17 +1683,41 @@ async function testShopSystem(page, runKey, characterLevel = null) {
   shopResult.offers_count = await offerCards.count().catch(() => 0)
   console.log(`   Found ${shopResult.offers_count} shop offers`)
 
+  // Parse individual offers (name, rarity, price) from each card
+  const offersArr = []
+  for (let i = 0; i < shopResult.offers_count; i++) {
+    const card = offerCards.nth(i)
+    const label = ((await card.locator('.shop-offer-label').textContent().catch(() => '')) || '').trim()
+    const itemName = ((await card.locator('.shop-offer-name').textContent().catch(() => '')) || '').trim()
+    const rarity = ((await card.locator('.shop-offer-rarity').textContent().catch(() => '')) || '').trim()
+    const priceText = ((await card.locator('.shop-price').textContent().catch(() => '')) || '').trim()
+    const priceMatch = priceText.match(/([\d.]+)/)
+    const price = priceMatch ? parseInt(priceMatch[1], 10) : null
+    const name = itemName || label
+    offersArr.push({ name, rarity: rarity || null, price })
+    console.log(`   Offer ${i + 1}: ${name} (${rarity || 'lootbox'}) — ${price ?? '?'} 💎`)
+  }
+  shopResult.shop_data.offers = offersArr
+
   // Capture essence before
   shopResult.essence_before = await parseEssence(page)
   console.log(`   Essence before: ${shopResult.essence_before ?? '?'}`)
 
   // Try to buy the first available (cheapest) offer
-  const buyBtns = page.locator('.shop-buy-btn:not(.shop-sold-btn):not(:disabled)')
-  const buyBtnCount = await buyBtns.count().catch(() => 0)
+  let purchasedIndex = null
+  let purchaseBtn = null
+  for (let i = 0; i < shopResult.offers_count; i++) {
+    const btn = offerCards.nth(i).locator('.shop-buy-btn:not(.shop-sold-btn):not(:disabled)')
+    if (await btn.count().catch(() => 0) > 0) {
+      purchasedIndex = i
+      purchaseBtn = btn.first()
+      break
+    }
+  }
 
-  if (buyBtnCount > 0) {
+  if (purchasedIndex !== null && purchaseBtn !== null) {
     try {
-      await buyBtns.first().click()
+      await purchaseBtn.click()
       await page.waitForTimeout(500)
 
       // Confirm purchase dialog
@@ -1701,6 +1727,7 @@ async function testShopSystem(page, runKey, characterLevel = null) {
         await page.waitForTimeout(2000)
 
         shopResult.purchased = true
+        shopResult.shop_data.purchased_offer = purchasedIndex
         shopResult.cost = shopResult.essence_before !== null
           ? shopResult.essence_before - (await parseEssence(page) ?? shopResult.essence_before)
           : null
@@ -1724,6 +1751,7 @@ async function testShopSystem(page, runKey, characterLevel = null) {
 
   // Capture essence after
   shopResult.essence_after = await parseEssence(page)
+  shopResult.shop_data.essence_after_purchase = shopResult.essence_after
   console.log(`   Post-shop: essence=${shopResult.essence_after ?? '?'}`)
 
   await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-08-shop.png`) })
@@ -2193,8 +2221,12 @@ async function run() {
     const shopLevel = runRecord.final_stats?.level ?? runRecord.initial_level
     runRecord.shop = await testShopSystem(page, runKey, shopLevel)
     runRecord.essence.after_shop = runRecord.shop.essence_after
+    runRecord.shop_data = runRecord.shop.shop_data
     if (runRecord.shop.purchased) {
-      console.log(`   ✅ Purchased offer (cost: ${runRecord.shop.cost}, rarity: ${runRecord.shop.item_rarity ?? 'N/A'})`)
+      console.log(`   ✅ Purchased offer #${(runRecord.shop_data?.purchased_offer ?? 0) + 1} (cost: ${runRecord.shop.cost}, rarity: ${runRecord.shop.item_rarity ?? 'N/A'})`)
+    }
+    if (runRecord.shop_data?.offers?.length > 0) {
+      console.log(`   📋 Shop offers tracked: ${runRecord.shop_data.offers.length} offers`)
     }
 
     // ── Capture final essence ─────────────────────────────────────
