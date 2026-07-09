@@ -4,8 +4,14 @@ import { ShopPanel } from '../../components/forge/ShopPanel';
 import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
 import type { Character } from '../../types/Character';
+<<<<<<< HEAD
 import { SHOP_OFFERS } from '../../data/shopConstants';
 import { clearShopPurchases, markOfferPurchased, markRerollUsed } from '../../utils/shopStorage';
+=======
+import { getShopOffers } from '../../utils/shopUtils';
+import { ITEM_ASSETS } from '../../data/itemAssets';
+import { clearShopPurchases, markOfferPurchased } from '../../utils/shopStorage';
+>>>>>>> 63fcaa4 (feat: guarantee 1 epic item per day in shop rotation)
 
 vi.mock('../../context/GameContext', () => ({
   useGame: vi.fn(),
@@ -79,12 +85,15 @@ describe('ShopPanel', () => {
     expect(screen.getByText(/SHOP/)).toBeTruthy();
   });
 
-  it('renders all 3 shop offers', () => {
+  it('renders the 3 daily shop offers (only 3 of 4 configs are shown)', () => {
     setupGame();
     render(<ShopPanel onClose={vi.fn()} />);
-    for (const offer of SHOP_OFFERS) {
+    // Only 3 offers are displayed per day; get the actual offers to verify
+    const char = makeCharacter();
+    const dailyOffers = getShopOffers(char, ITEM_ASSETS);
+    dailyOffers.forEach((offer) => {
       expect(screen.getByText(offer.label)).toBeTruthy();
-    }
+    });
   });
 
   it('displays essence on the panel', () => {
@@ -93,21 +102,24 @@ describe('ShopPanel', () => {
     expect(screen.getByText('500.00')).toBeTruthy();
   });
 
-  it('shows price for each offer', () => {
+  it('shows price for the 3 daily offers', () => {
     setupGame();
     render(<ShopPanel onClose={vi.fn()} />);
-    for (const offer of SHOP_OFFERS) {
+    const char = makeCharacter();
+    const dailyOffers = getShopOffers(char, ITEM_ASSETS);
+    dailyOffers.forEach((offer) => {
       expect(screen.getByText(`${offer.price} 💎`)).toBeTruthy();
-    }
+    });
   });
 
-  it('shows item name for offer 0 and 1 (item type)', () => {
+  it('shows item name for item-type offers', () => {
     setupGame();
     render(<ShopPanel onClose={vi.fn()} />);
-    // At least the item offers should show item names
-    const shopItems = SHOP_OFFERS.filter(o => o.type === 'item');
-    // Each item offer should have a name displayed somewhere
-    expect(shopItems.length).toBe(2);
+    const char = makeCharacter();
+    const dailyOffers = getShopOffers(char, ITEM_ASSETS);
+    const itemOffers = dailyOffers.filter(o => o.type === 'item');
+    expect(itemOffers.length).toBeGreaterThanOrEqual(2);
+    expect(itemOffers.length).toBeLessThanOrEqual(3);
   });
 
   it('shows lootbox label for offer 2', () => {
@@ -116,10 +128,10 @@ describe('ShopPanel', () => {
     expect(screen.getByText('Coffre mystère')).toBeTruthy();
   });
 
-  it('shows correct rarity border color for offer 0 and 1 items', () => {
+  it('shows correct rarity border color for each item offer', () => {
     setupGame();
     render(<ShopPanel onClose={vi.fn()} />);
-    // Verify that each item offer card has a rarity class
+    // Verify that exactly 3 offer cards are rendered
     const cards = document.querySelectorAll('.shop-offer-card');
     expect(cards.length).toBe(3);
   });

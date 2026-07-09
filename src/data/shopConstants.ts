@@ -20,9 +20,16 @@ export interface ShopOfferConfig {
  * - Prices maintain purchasing power relative to new essence economy
  */
 export const SHOP_OFFERS: ShopOfferConfig[] = [
+<<<<<<< HEAD
   { type: 'item', price: 150, label: 'Marchandise', rarityPool: ['common', 'uncommon', 'rare'] },
   { type: 'item', price: 250, label: 'Pièce rare', rarityPool: ['rare', 'epic'] },
   { type: 'lootbox', price: 350, label: 'Coffre mystère', rarityPool: null },
+=======
+  { type: 'item', price: 200, label: 'Marchandise', rarityPool: ['common', 'uncommon', 'rare'] },
+  { type: 'item', price: 350, label: 'Pièce rare', rarityPool: ['rare', 'epic'] },
+  { type: 'lootbox', price: 500, label: 'Coffre mystère', rarityPool: null },
+  { type: 'item', price: 450, label: 'Objet épique', rarityPool: ['epic'] },
+>>>>>>> 63fcaa4 (feat: guarantee 1 epic item per day in shop rotation)
 ];
 
 export const SHOP_OFFER_COUNT = SHOP_OFFERS.length;

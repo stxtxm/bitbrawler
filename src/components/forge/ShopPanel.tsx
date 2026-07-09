@@ -22,7 +22,7 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
 
   const [buying, setBuying] = useState(false);
   const [confirmIndex, setConfirmIndex] = useState<number | null>(null);
-  const [soldOut, setSoldOut] = useState<boolean[]>([false, false, false]);
+  const [soldOut, setSoldOut] = useState<boolean[]>([]);
   const [purchasedIndex, setPurchasedIndex] = useState<number | null>(null);
   const [showItemGlow, setShowItemGlow] = useState(false);
   const [showRerollConfirm, setShowRerollConfirm] = useState(false);
@@ -37,18 +37,22 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
   }, [activeCharacter, rerolledOffers]);
 
   useEffect(() => {
-    if (!activeCharacter) return;
-    const newSoldOut = SHOP_OFFERS.map((_, i) => isOfferSoldOut(i, activeCharacter));
+    if (!activeCharacter || offers.length === 0) return;
+    const newSoldOut = offers.map((o) => isOfferSoldOut(o.index, activeCharacter));
     setSoldOut(newSoldOut);
+<<<<<<< HEAD
     const charId = activeCharacter.id ?? activeCharacter.seed;
     setRerollUsed(isRerollUsed(charId));
     // Reset rerolled offers if character changes
     setRerolledOffers(null);
   }, [activeCharacter]);
+=======
+  }, [activeCharacter, offers]);
+>>>>>>> 63fcaa4 (feat: guarantee 1 epic item per day in shop rotation)
 
-  const handleBuyClick = useCallback((index: number) => {
-    if (buying || soldOut[index]) return;
-    setConfirmIndex(index);
+  const handleBuyClick = useCallback((offerIndex: number, arrayIndex: number) => {
+    if (buying || soldOut[arrayIndex]) return;
+    setConfirmIndex(offerIndex);
   }, [buying, soldOut]);
 
   const handleConfirm = useCallback(async () => {
@@ -57,10 +61,11 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
     try {
       const result = await buyShopOffer(confirmIndex);
       if (result) {
+        const arrIndex = offers.findIndex(o => o.index === confirmIndex);
         const updatedSoldOut = [...soldOut];
-        updatedSoldOut[confirmIndex] = true;
+        if (arrIndex >= 0) updatedSoldOut[arrIndex] = true;
         setSoldOut(updatedSoldOut);
-        setPurchasedIndex(confirmIndex);
+        setPurchasedIndex(arrIndex);
         setShowItemGlow(true);
         notify(`${SHOP_OFFERS[confirmIndex].label} purchased!`, 'success', 3000);
         setTimeout(() => {
@@ -76,7 +81,7 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
       setBuying(false);
       setConfirmIndex(null);
     }
-  }, [confirmIndex, buying, buyShopOffer, notify, soldOut]);
+  }, [confirmIndex, buying, buyShopOffer, notify, soldOut, offers]);
 
   const handleCancel = useCallback(() => {
     setConfirmIndex(null);
@@ -188,7 +193,7 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
       <div className="shop-vitrine">
         {offers.map((offer, index) => {
           const isSold = soldOut[index];
-          const canBuy = canBuyOffer(index, activeCharacter) && !isSold && !buying;
+          const canBuy = canBuyOffer(offer.index, activeCharacter) && !isSold && !buying;
           const isPurchasing = confirmIndex === index;
 
           return (
@@ -249,7 +254,7 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
               {/* Buy / Sold button */}
               <button
                 className={`shop-buy-btn ${isSold ? 'shop-sold-btn' : ''}`}
-                onClick={() => handleBuyClick(index)}
+                onClick={() => handleBuyClick(offer.index, index)}
                 disabled={!canBuy}
                 title={!canBuy && !isSold ? 'Not enough essence' : ''}
                 aria-label={`Buy ${offer.label}`}
