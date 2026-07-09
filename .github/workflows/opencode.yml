@@ -447,8 +447,8 @@ jobs:
 
           # --- SQL migration check (exclude workflow/config files) ---
           PR_DIFF=$(gh pr diff "$PR_NUMBER" 2>/dev/null || echo "")
-          SQL_FILES=$(echo "$PR_DIFF" | grep '^diff --git' | grep -vE '\.(yml|yaml|json|md)$' || true)
-          if [ -n "$SQL_FILES" ] && echo "$PR_DIFF" | grep -qiE '(ALTER TABLE|CREATE TABLE|DROP TABLE|CREATE INDEX|ALTER COLUMN)'; then
+          SQL_CONTENT=$(echo "$PR_DIFF" | awk '/^diff --git/{f=0} /^diff --git.*\.(ts|tsx|sql)$/{f=1} f' | grep -qiE '(ALTER TABLE|CREATE TABLE|DROP TABLE|CREATE INDEX|ALTER COLUMN)' && echo "yes" || echo "")
+          if [ -n "$SQL_CONTENT" ]; then
             echo "⛔ SQL migration detected — not merging"
             gh pr comment "$PR_NUMBER" --body "⛔ Migration SQL détectée — merge bloqué. Crée une issue de migration."
             exit 0
