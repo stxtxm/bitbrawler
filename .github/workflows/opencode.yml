@@ -169,6 +169,30 @@ jobs:
           echo "EXISTING_PR=$EXISTING_PR" >> "$GITHUB_ENV"
           echo "existing_pr=$EXISTING_PR" >> "$GITHUB_OUTPUT"
 
+      - name: Check if existing PR already has clean CI
+        id: check_pr_ci
+        if: steps.check_pr.outputs.existing_pr != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUMBER="${{ steps.check_pr.outputs.existing_pr }}"
+          # Count passing/neutral checks vs failing/pending
+          CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
+            [.statusCheckRollup[]? | select(.status? == "COMPLETED") | select(.conclusion? == "SUCCESS" or .conclusion? == "NEUTRAL")] | length
+          ' 2>/dev/null || echo "0")
+          TOTAL=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
+            [.statusCheckRollup[]? | select(.status? == "COMPLETED")] | length
+          ' 2>/dev/null || echo "0")
+          echo "PR #$PR_NUMBER: $CHECKS/$TOTAL checks passing"
+
+          if [ "$TOTAL" -gt 0 ] && [ "$CHECKS" -eq "$TOTAL" ]; then
+            echo "✅ All CI checks green — no dev fix needed, skip to reviewer trigger"
+            echo "SKIP_DEV_AGENT=true" >> "$GITHUB_ENV"
+          else
+            echo "⚠ Some checks failing or pending — dev agent will attempt fix"
+            echo "SKIP_DEV_AGENT=false" >> "$GITHUB_ENV"
+          fi
+
       - name: Create campaign label for this issue
         env:
           GH_TOKEN: ${{ github.token }}
@@ -379,8 +403,17 @@ jobs:
             exit 1
           fi
 
+      - name: Skip dev — existing PR already clean, trigger reviewer
+        if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr != '' && env.SKIP_DEV_AGENT == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUMBER="${{ steps.check_pr.outputs.existing_pr }}"
+          echo "✅ PR #$PR_NUMBER already has all CI green — triggering reviewer directly"
+          gh workflow run reviewer.yml -f pr_number="$PR_NUMBER" --repo "${{ github.repository }}" 2>/dev/null || true
+
       - name: Implement (fix existing PR)
-        if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr != ''
+        if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr != '' && env.SKIP_DEV_AGENT != 'true'
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GH_TOKEN: ${{ github.token }}
