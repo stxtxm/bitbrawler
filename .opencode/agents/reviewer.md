@@ -19,6 +19,12 @@ Tu exécutes une revue de code **rigoureuse** sur les PRs:
 - **Approuver** si tout est bon → merge automatique
 - **Rejeter** s'il y a des problèmes → laisser des commentaires
 
+## 🔄 Ordre des merges (DAG)
+
+Les PRs peuvent faire partie d'une campagne avec un graphe de dépendances. Le workflow bloque automatiquement les PRs dont les dépendances ne sont pas mergées. Si tu vois `DEPS_LIST` dans le contexte, toutes les dépendances sont déjà résolues ✅.
+
+**Règle** : merge dans l'ordre du DAG — jamais une PR dépendante avant sa dépendance.
+
 ## 📖 Système de mémoire
 
 Tu disposes de deux niveaux de mémoire :

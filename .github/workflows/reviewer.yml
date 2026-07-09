@@ -140,36 +140,50 @@ jobs:
 
           if [ -z "$ISSUE_NUMBER" ]; then
             echo "ℹ No linked issue — skipping dependency check"
+            echo "DEPS_BLOCKED=false" >> "$GITHUB_ENV"
             exit 0
           fi
 
-          # Extract depends-on from issue body
-          DEPS=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body' 2>/dev/null | grep -oiE 'depends-on:\s*#[0-9]+' | grep -oE '#[0-9]+' | tr -d '#' || echo "")
+          # Extract all depends-on from issue body (supports "depends-on: #a, #b, #c")
+          DEPS=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body' 2>/dev/null | grep -oiE 'depends-on:\s*#[0-9]+([,\s]*#[0-9]+)*' | grep -oE '#[0-9]+' | tr -d '#' || echo "")
+          echo "DEPS_LIST=$(echo "$DEPS" | tr '\n' ',')" >> "$GITHUB_ENV"
 
           if [ -z "$DEPS" ]; then
             echo "ℹ Issue #$ISSUE_NUMBER has no dependencies"
+            echo "DEPS_BLOCKED=false" >> "$GITHUB_ENV"
             exit 0
           fi
 
           echo "🔍 Dependencies found: #$(echo "$DEPS" | tr '\n' ' ')"
+          ALL_RESOLVED=true
           for DEP in $DEPS; do
-            # Check if the dependency issue itself is closed
             DEP_STATE=$(gh issue view "$DEP" --json state --jq '.state' 2>/dev/null || echo "OPEN")
             if [ "$DEP_STATE" != "CLOSED" ]; then
-              echo "⛔ Dependency #$DEP is still open — blocking PR #$PR_NUMBER"
-              gh pr review "$PR_NUMBER" --request-changes --body \
-                "⛔ Cette PR dépend de #$DEP qui n'est pas encore fermée. Merge bloqué dans l'ordre du DAG."
-              exit 1
-            fi
-            # Check that the dependency has a merged PR
-            DEP_PR=$(gh pr list --state merged --head "feat/auto-$DEP" --json number --jq '.[0].number' 2>/dev/null || echo "")
-            if [ -z "$DEP_PR" ]; then
-              echo "⚠ Dependency #$DEP is closed but no merged PR found — manual check advised"
+              echo "⛔ Dependency #$DEP is still open — PR #$PR_NUMBER blocked"
+              ALL_RESOLVED=false
             else
-              echo "✓ Dependency #$DEP resolved by PR #$DEP_PR"
+              DEP_PR=$(gh pr list --state merged --head "feat/auto-$DEP" --json number --jq '.[0].number' 2>/dev/null || echo "")
+              if [ -z "$DEP_PR" ]; then
+                echo "⚠ Dependency #$DEP is closed but no merged PR found — manual check advised"
+              else
+                echo "✓ Dependency #$DEP resolved by PR #$DEP_PR"
+              fi
             fi
           done
-          echo "✅ All dependencies resolved"
+
+          if [ "$ALL_RESOLVED" = false ]; then
+            echo "⏳ Dependencies not yet resolved — posting comment and skipping review"
+            gh pr comment "$PR_NUMBER" --body "⏳ **En attente de dépendances** — Cette PR sera mergée automatiquement quand les dépendances suivantes seront fermées :
+$(echo "$DEPS" | while read -r D; do echo "- #$D"; done)
+
+Le reviewer repassera automatiquement dès que toutes les dépendances seront résolues."
+            # Remove auto-merge if set (prevent premature merge)
+            gh pr merge --disable-auto "$PR_NUMBER" 2>/dev/null || true
+            echo "DEPS_BLOCKED=true" >> "$GITHUB_ENV"
+          else
+            echo "✅ All dependencies resolved"
+            echo "DEPS_BLOCKED=false" >> "$GITHUB_ENV"
+          fi
 
       - name: Detect SQL migration in PR
         env:
@@ -187,11 +201,18 @@ jobs:
           fi
           echo "✅ No SQL migration detected"
 
+      - name: Skip reviewer if dependencies blocked
+        if: env.DEPS_BLOCKED == 'true'
+        run: |
+          echo "⏳ Dependencies not resolved — reviewer skipped. Will re-trigger when dependencies merge."
+
       - name: Run Reviewer agent
+        if: env.DEPS_BLOCKED != 'true'
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GH_TOKEN: ${{ github.token }}
           SKIP_APPROVAL: ${{ env.SKIP_APPROVAL }}
+          DEPS_LIST: ${{ env.DEPS_LIST }}
         run: |
           PR_DIFF=$(gh pr diff "$PR_NUMBER" 2>/dev/null || echo "")
           PR_TITLE=$(gh pr view "$PR_NUMBER" --json title --jq '.title // ""' 2>/dev/null || echo "")
@@ -229,6 +250,10 @@ jobs:
             ## Mémoire des sessions précédentes
             Mémoire REVIEWER : $(cat .opencode/memory/reviewer.json 2>/dev/null || echo "{}")
             Mémoire commune : $(cat .opencode/memory/shared.json 2>/dev/null || echo "{}")
+
+            ## Dépendances de cette PR
+            Dépendances déclarées : $DEPS_LIST
+            Toutes les dépendances sont résolues ✅ — cette PR peut être mergée dans l'ordre du DAG.
 
             ## Instructions de review
 
@@ -310,6 +335,51 @@ jobs:
           echo "Closing issue #$ISSUE_NUMBER..."
           gh issue close "$ISSUE_NUMBER" --comment "Resolved by PR #$PR_NUMBER (merged)"
           echo "✓ Issue #$ISSUE_NUMBER closed"
+
+      - name: Re-trigger reviewer for dependant PRs (DAG order)
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number || github.event.inputs.pr_number }}"
+          PR_STATE=$(gh pr view "$PR_NUMBER" --json state --jq '.state' 2>/dev/null || echo "")
+          if [ "$PR_STATE" != "MERGED" ]; then
+            echo "ℹ PR not merged — skipping dependant re-dispatch"
+            exit 0
+          fi
+
+          # Get the issue that this PR closed
+          PR_BODY=$(gh pr view "$PR_NUMBER" --json body --jq '.body // ""' 2>/dev/null || echo "")
+          CLOSED_ISSUE=$(echo "$PR_BODY" | grep -oiE '(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s+#[0-9]+' | grep -oE '#[0-9]+' | tr -d '#' | head -1 || echo "")
+          if [ -z "$CLOSED_ISSUE" ]; then
+            echo "ℹ No linked issue found — skipping dependant re-dispatch"
+            exit 0
+          fi
+
+          echo "🔍 PR #$PR_NUMBER merged — looking for PRs that depend on #$CLOSED_ISSUE..."
+          # Find open issues whose body contains "depends-on: ... #CLOSED_ISSUE ..." (comma-separated lists supported)
+          DEPENDANT_ISSUES=$(gh issue list --state open --json number,body --jq '
+            .[] | select(.body | test("depends-on:\\s*(#[0-9]+[,\\s]*)*#'"$CLOSED_ISSUE"'", "i")) | .number
+          ' 2>/dev/null || echo "")
+
+          if [ -z "$DEPENDANT_ISSUES" ]; then
+            echo "ℹ No open issues depend on #$CLOSED_ISSUE"
+            exit 0
+          fi
+
+          echo "📋 Found dependant issues: #$(echo "$DEPENDANT_ISSUES" | tr '\n' ' ')"
+          for DEP_ISSUE in $DEPENDANT_ISSUES; do
+            # Find the open PR for this issue
+            DEP_PR=$(gh pr list --state open --head "feat/auto-$DEP_ISSUE" --json number --jq '.[0].number' 2>/dev/null || echo "")
+            if [ -z "$DEP_PR" ]; then
+              echo "⚠ No open PR found for issue #$DEP_ISSUE"
+              continue
+            fi
+            echo "🔄 Re-triggering reviewer for PR #$DEP_PR (issue #$DEP_ISSUE) — dependency #$CLOSED_ISSUE now resolved"
+            gh workflow run reviewer.yml -f pr_number="$DEP_PR" --repo "${{ github.repository }}"
+            echo "✓ Reviewer re-triggered for PR #$DEP_PR"
+            sleep 3
+          done
 
       - name: Save reviewer session memory
         if: always()
