@@ -74,9 +74,9 @@ describe('forgeConstants', () => {
     it('defines correct salvage values per rarity', () => {
       expect(ESSENCE_YIELD.common).toBe(5);
       expect(ESSENCE_YIELD.uncommon).toBe(20);
-      expect(ESSENCE_YIELD.rare).toBe(75);
-      expect(ESSENCE_YIELD.epic).toBe(250);
-      expect(ESSENCE_YIELD.legendary).toBe(1000);
+      expect(ESSENCE_YIELD.rare).toBe(50);
+      expect(ESSENCE_YIELD.epic).toBe(80);
+      expect(ESSENCE_YIELD.legendary).toBe(400);
     });
 
     it('SALVAGE_YIELD is an alias for ESSENCE_YIELD', () => {

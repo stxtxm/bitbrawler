@@ -115,7 +115,7 @@ describe('SalvagePanel', () => {
     setupGame({ activeCharacter: char, essence: char.essence });
     render(<SalvagePanel onClose={vi.fn()} />);
 
-    expect(screen.getByText((content) => content.includes('250'))).toBeInTheDocument();
+    expect(screen.getByText((content) => content.includes('80'))).toBeInTheDocument();
     expect(screen.getByText(/Flame Dagger/)).toBeInTheDocument();
   });
 

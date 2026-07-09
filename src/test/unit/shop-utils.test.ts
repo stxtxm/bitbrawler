@@ -243,7 +243,7 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
       const result = buyShopOffer(0, char, ITEM_ASSETS, getTodayStr(), () => 0);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(300); // 500 - 200
+      expect(result!.essence).toBe(350); // 500 - 150
       expect(result!.inventory).toHaveLength(1);
     });
 
@@ -251,7 +251,7 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
       const result = buyShopOffer(1, char, ITEM_ASSETS, getTodayStr(), () => 0.5);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(150); // 500 - 350
+      expect(result!.essence).toBe(250); // 500 - 250
       expect(result!.inventory).toHaveLength(1);
     });
 
@@ -301,33 +301,33 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
       const result = buyShopOffer(2, char, ITEM_ASSETS, getTodayStr(), () => 0);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(0); // 500 - 500
+      expect(result!.essence).toBe(150); // 500 - 350
       expect(result!.inventory).toHaveLength(1);
       const itemData = ITEM_ASSETS.find(a => a.id === result!.inventory![0]);
       expect(itemData).toBeDefined();
     });
 
-    it('lootbox offer charges full 500 essence', () => {
+    it('lootbox offer charges full 350 essence', () => {
       const char = makeCharacter({ essence: 600, inventory: [] });
       const result = buyShopOffer(2, char, ITEM_ASSETS, getTodayStr(), () => 0.5);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(100);
+      expect(result!.essence).toBe(250); // 600 - 350
     });
   });
 
   // ─── getShopPrice ────────────────────────────────────────────────────────
 
   describe('getShopPrice', () => {
-    it('returns 200 for offer 0', () => {
-      expect(getShopPrice(0)).toBe(200);
+    it('returns 150 for offer 0', () => {
+      expect(getShopPrice(0)).toBe(150);
     });
 
-    it('returns 350 for offer 1', () => {
-      expect(getShopPrice(1)).toBe(350);
+    it('returns 250 for offer 1', () => {
+      expect(getShopPrice(1)).toBe(250);
     });
 
-    it('returns 500 for offer 2', () => {
-      expect(getShopPrice(2)).toBe(500);
+    it('returns 350 for offer 2', () => {
+      expect(getShopPrice(2)).toBe(350);
     });
 
     it('throws for invalid index', () => {
