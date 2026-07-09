@@ -7,8 +7,11 @@ This document explains **OpenCode autonomous agents**, how they work, their resp
 ## Table of Contents
 
 - [Agents Overview](#agents-overview)
+- [Memory System](#memory-system)
 - [Dev Agent](#dev-agent)
 - [Reviewer Agent](#reviewer-agent)
+- [Orchestrator Agent](#orchestrator-agent)
+- [Supervisor Agent](#supervisor-agent)
 - [Tech Lead Agent](#tech-lead-agent)
 - [QA Tester Agent](#qa-tester-agent)
 - [How to Trigger Agents](#how-to-trigger-agents)
@@ -19,12 +22,14 @@ This document explains **OpenCode autonomous agents**, how they work, their resp
 
 ## Agents Overview
 
-Bitbrawler uses **4 autonomous agents** to automate development, code review, analysis, and testing.
+Bitbrawler uses **6 autonomous agents** to automate development, planning, code review, supervision, analysis, and testing.
 
 | Agent | Role | Trigger | Frequency |
 |-------|------|---------|-----------|
 | **dev-agent** | Implement features | Issue with `/oc` | On-demand |
 | **reviewer** | Review & merge PRs | PR created | On-demand |
+| **orchestrator** | Decompose complex issues | Issue with `/proposal` or `proposition` label | On-demand |
+| **supervisor** | Validate campaigns, update docs | All campaign sub-issues closed | End of campaign |
 | **tech-lead** | Daily analysis | Scheduled @ 21h | Daily |
 | **qa-tester** | E2E tests + Shop testing | Manual / scheduled | Manual or scheduled |
 
@@ -70,6 +75,55 @@ ALTER TABLE characters ADD COLUMN IF NOT EXISTS essence INTEGER NOT NULL DEFAULT
 ```
 
 ---
+
+---
+
+## Memory System
+
+### File: `.opencode/memory/`
+
+### Role
+
+**Shared and per-agent memory** to ensure agents learn from past mistakes and don't repeat them.
+
+### Structure
+
+```
+.opencode/memory/
+├── shared.json          ← Common memory: known issues, cross-agent constraints, patterns
+├── dev.json             ← Dev agent's personal memory: failures, limitations, session notes
+├── reviewer.json        ← Reviewer's personal memory
+├── orchestrator.json    ← Orchestrator's personal memory
+├── supervisor.json      ← Supervisor's personal memory
+├── tech-lead.json       ← Tech lead's personal memory
+└── qa-tester.json       ← QA tester's personal memory
+```
+
+### How It Works
+
+1. **At session start**: Each agent reads its own memory + shared memory from the prompt context
+2. **During work**: Agent can reference past failures and known patterns to avoid repeat bugs
+3. **At session end**: If agent writes to `/tmp/agent-session-notes.json`, the workflow saves it automatically
+4. **Memory is versioned** with `version` field for future migrations
+
+### Example: Dev agent's recent failures
+
+```json
+{
+  "version": 1,
+  "agent": "dev",
+  "known_limitations": [
+    "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
+    "Ne pas générer de SQL ALTER TABLE — créer une issue migration"
+  ]
+}
+```
+
+### When to Update Memory
+
+- **Agent discovers a new limitation** → add to `known_limitations`
+- **Agent encounters a recurring bug** → add to `known_issues` in `shared.json`
+- **Agent learns a preferred pattern** → add to `preferred_patterns`
 
 ---
 
@@ -304,6 +358,99 @@ Please fix these issues and push again.
 
 ---
 
+## Orchestrator Agent
+
+### File: `.opencode/agents/orchestrator.md`
+
+### Role
+
+**Autonomous campaign planner**. Analyzes complex issues, decomposes them into ordered sub-issues, creates dependency graphs (DAG), and tracks progress.
+
+### Trigger
+
+Use `/proposal` in issue body or add the `proposition` label:
+
+```markdown
+# Proposition: Add Daily Challenge System
+
+Add daily quests to increase engagement...
+
+/proposal
+```
+
+Complex issues with keywords like `Phase`, `Effort: 4+` also trigger the orchestrator automatically.
+
+### Workflow
+
+```
+[Issue with /proposal or proposition label]
+         ↓
+[Orchestrator reads issue + memory]
+         ↓
+[If campaign already exists → track progress, dispatch ready sub-issues]
+         ↓
+[If NEW → analyze scope, create dependency graph (DAG)]
+         ↓
+[Create sub-issues with depends-on: #N and /oc]
+         ↓
+[Label each: campaign-PARENT_NUMBER + sub-issue]
+         ↓
+[Post plan to parent issue]
+         ↓
+[Dispatch Level 0 sub-issues → each triggers dev-agent]
+```
+
+### Dependency Graph
+
+```mermaid
+graph TD
+    A[Sub-issue 1: DB schema] --> B[Sub-issue 2: Core logic]
+    A --> C[Sub-issue 3: API types]
+    B --> D[Sub-issue 4: Service layer]
+    C --> D
+    D --> E[Sub-issue 5: UI]
+```
+
+### Sub-issue Format
+
+```markdown
+## Description
+Brief description of this specific sub-task
+
+## Dependencies
+depends-on: #PARENT
+
+/oc
+```
+
+---
+
+## Supervisor Agent
+
+### File: `.opencode/agents/supervisor.md`
+
+### Role
+
+**Campaign validator**. Triggered when all sub-issues of a campaign are merged. Validates integration, updates patch notes, and creates a documentation PR.
+
+### Responsibilities
+
+✅ **What the supervisor does**:
+1. Verifies all sub-issues (label `campaign-N`) are closed
+2. Fetches merged PR info for each sub-issue
+3. Runs `npm run lint && npm test && npm run build`
+4. Updates `src/data/updateNotes.ts` with new version
+5. Updates `README.md` if needed
+6. **Creates a PR** `docs/campaign-N` (never pushes to master directly)
+7. Posts a summary report on the parent issue
+8. Closes the parent issue
+
+### Key Change from Original Design
+
+The supervisor **no longer pushes directly to master**. Instead, it creates a PR from branch `docs/campaign-N`, which goes through the normal reviewer workflow.
+
+---
+
 ## Tech Lead Agent
 
 ### File: `.opencode/agents/tech-lead.md`
@@ -497,9 +644,9 @@ Stats are used by **tech-lead** for:
 
 ### Trigger Dev Agent (Auto-Implement)
 
-**Option 1**: Create new issue with `/oc`
+**Option 1**: Create new issue with `/oc` (case-insensitive)
 ```bash
-# Via GitHub UI: Create issue with /oc in body
+# Via GitHub UI: Create issue with /oc, /Oc, /OC, or /oC in body
 ```
 
 **Option 2**: Edit existing issue to add `/oc`
@@ -512,6 +659,17 @@ Stats are used by **tech-lead** for:
 gh workflow run opencode.yml -f issue_number=42
 ```
 
+### Trigger Orchestrator Agent
+
+**Option 1**: Create new issue with `/proposal`
+```bash
+# Via GitHub UI: Create issue with /proposal in body
+```
+
+**Option 2**: Add `proposition` label to issue
+
+**Option 3**: Use keywords `Phase` or `Effort: 4+` in title/body
+
 ### Trigger Reviewer Agent
 
 Automatic when PR is created.
@@ -520,6 +678,10 @@ Manual trigger:
 ```bash
 gh workflow run reviewer.yml -f pr_number=123
 ```
+
+### Trigger Supervisor Agent
+
+Automatic when all sub-issues of a campaign are closed (label `campaign-N`).
 
 ### Trigger Tech Lead Agent
 

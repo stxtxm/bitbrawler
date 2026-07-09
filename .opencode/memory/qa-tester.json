@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "agent": "qa-tester",
+  "last_session": null,
+  "recent_failures": [],
+  "known_limitations": [
+    "Le site est à https://bitbrawler.vercel.app",
+    "Créer un personnage QA si pas existant",
+    "3 PvP + 2 PvE par run",
+    "Collecter equipment, streak, shop offers",
+    "Sauver dans qa/stats.json et commit",
+    "Le site peut être déployé (attendre quelques secondes si besoin)"
+  ],
+  "session_notes": []
+}

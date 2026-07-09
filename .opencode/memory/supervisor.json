@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "agent": "supervisor",
+  "last_session": null,
+  "recent_failures": [],
+  "known_limitations": [
+    "Ne JAMAIS push sur master directement — créer une PR docs/campaign-N",
+    "Vérifier que toutes les sub-issues sont fermées avant de créer la PR doc",
+    "Incrémenter correctement le numéro de version dans updateNotes.ts",
+    "Lire le fichier existant pour trouver la dernière version (ex: 3.2.0 → 3.3.0)"
+  ],
+  "session_notes": []
+}

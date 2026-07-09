@@ -28,13 +28,17 @@ jobs:
         github.event_name == 'issues' &&
         (
           contains(github.event.issue.body, '/oc') ||
-          contains(github.event.issue.body, '/opencode')
+          contains(github.event.issue.body, '/Oc') ||
+          contains(github.event.issue.body, '/OC') ||
+          contains(github.event.issue.body, '/oC') ||
+          contains(github.event.issue.body, '/opencode') ||
+          contains(github.event.issue.body, '/proposal')
         )
       ) ||
       (
         github.event_name == 'pull_request_review' &&
         github.event.review.state == 'changes_requested' &&
-        startsWith(github.event.pull_request.head.ref, 'feat/auto-')
+        contains(github.event.pull_request.head.ref, 'feat/auto-')
       )
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -58,6 +62,13 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Load agent memory context
+        run: |
+          echo "📖 Loading memory context..."
+          echo "DEV_MEMORY=$(cat .opencode/memory/dev.json 2>/dev/null | tr -d '\n' || echo '{}')" >> "$GITHUB_ENV"
+          echo "SHARED_MEMORY=$(cat .opencode/memory/shared.json 2>/dev/null | tr -d '\n' || echo '{}')" >> "$GITHUB_ENV"
+          echo "✅ Memory loaded"
 
       - name: Configure git
         run: |
@@ -136,7 +147,7 @@ jobs:
       - name: Verify rebase integrity
         run: |
           echo "🔍 Checking for merge conflict markers..."
-          if grep -rn '<<<<<<<\|=======\|>>>>>>>' --include='*.ts' --include='*.tsx' src/; then
+          if grep -rnP '^<<<<<<< |^=======$|^>>>>>>> ' --include='*.ts' --include='*.tsx' --include='*.json' src/; then
             echo "❌ Merge conflict markers found after rebase — aborting to prevent corrupted push"
             exit 1
           fi
@@ -196,20 +207,115 @@ jobs:
              - Lis la section '## Features'
              - Ajoute une ligne décrivant la nouvelle feature dans la liste
           6. N'oublie PAS le fichier de test src/test/unit/updateNotes.test.ts si la structure change
-          7. Commit les changements:
-             git add src/data/updateNotes.ts README.md src/test/unit/updateNotes.test.ts
-             git commit -m \"docs: add vX.Y.Z patch notes for campaign #$ISSUE_NUMBER\" || true
-             git push origin master
-          8. Poste un rapport récapitulatif sur l'issue #$ISSUE_NUMBER
-          9. Ferme l'issue #$ISSUE_NUMBER si tout est OK
+           7. Commit les changements:
+              git add src/data/updateNotes.ts README.md src/test/unit/updateNotes.test.ts
+              git commit -m \"docs: add vX.Y.Z patch notes for campaign #$ISSUE_NUMBER\" || true
+              git push origin HEAD:docs/campaign-$ISSUE_NUMBER
+           8. Crée une PR depuis docs/campaign-$ISSUE_NUMBER vers master:
+              gh pr create --title \"docs: vX.Y.Z patch notes for campaign #$ISSUE_NUMBER\" \\
+                --body \"Documentation mise à jour pour la campagne #$ISSUE_NUMBER\" \\
+                --base master --head docs/campaign-$ISSUE_NUMBER
+           9. Poste un rapport récapitulatif sur l'issue #$ISSUE_NUMBER
+           10. Ferme l'issue #$ISSUE_NUMBER si tout est OK
           
           Tu es superviseur + documentaliste. Tu DOIS modifier les fichiers de documentation et les committer."
           
           opencode run --dangerously-skip-permissions --agent supervisor --model "opencode/deepseek-v4-flash-free" "$PROMPT"
           echo "✅ Supervisor agent completed"
 
-      - name: Implement (new PR)
+      - name: Run Orchestrator agent (for proposals / complex issues)
         if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr == ''
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ env.ISSUE_NUMBER }}
+        run: |
+          ISSUE_BODY=$(cat /tmp/prompt.txt)
+          ISSUE_TITLE=$(cat /tmp/issue-title.txt)
+          ISSUE_LABELS=$(gh issue view "$ISSUE_NUMBER" --json labels --jq '[.[].name] | join(",")' 2>/dev/null || echo "")
+
+          IS_PROPOSAL=false
+          IS_COMPLEX=false
+
+          # /proposal trigger
+          if echo "$ISSUE_BODY" | grep -qiE '(^|[[:space:]])/proposal($|[[:space:]])'; then
+            IS_PROPOSAL=true
+          fi
+
+          # proposition label → orchestrator
+          if echo "$ISSUE_LABELS" | grep -qiE '(^|,)proposition(,|$)'; then
+            IS_PROPOSAL=true
+          fi
+
+          # Keywords signaling complexity
+          if echo "$ISSUE_TITLE $ISSUE_BODY" | grep -qiE '(Phase|Effort:\s*[4-9]|Effort:\s*[1-9][0-9])'; then
+            IS_COMPLEX=true
+          fi
+
+          # sub-issue → skip orchestrator (already decomposed)
+          if echo "$ISSUE_LABELS" | grep -qiE '(^|,)sub-issue(,|$)'; then
+            echo "✓ Sub-issue #$ISSUE_NUMBER — skipping orchestrator, proceeding with dev agent"
+            echo "ORCHESTRATOR_SKIP=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          # Already a campaign with open sub-issues → orchestrator just tracks progress
+          EXISTING_SUBS=$(gh issue list --label "campaign-$ISSUE_NUMBER" --state open --json number --jq 'length' 2>/dev/null || echo 0)
+          if [ "$EXISTING_SUBS" -gt 0 ] && [ "$IS_PROPOSAL" = false ] && [ "$IS_COMPLEX" = false ]; then
+            echo "✓ Campaign #$ISSUE_NUMBER already has $EXISTING_SUBS sub-issues — skipping orchestrator"
+            echo "ORCHESTRATOR_SKIP=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          if [ "$IS_PROPOSAL" = true ] || [ "$IS_COMPLEX" = true ]; then
+            echo "🔍 Orchestrating complex issue #$ISSUE_NUMBER..."
+            echo "ORCHESTRATOR_SKIP=false" >> "$GITHUB_ENV"
+
+            PROMPT="
+            Tu es l'orchestrator agent de Bitbrawler.
+            Analyse l'issue suivante et décompose-la en sous-issues.
+
+            ## Issue #${ISSUE_NUMBER}
+            Titre: ${ISSUE_TITLE}
+            Body: ${ISSUE_BODY}
+            Labels: ${ISSUE_LABELS}
+
+            ## Contraintes
+            - Chaque sous-issue = 1-2 fichiers max
+            - Chaque body contient /oc
+            - Chaque body mentionne 'depends-on: #N' quand dépendant
+            - Utilise gh issue create avec --label campaign-${ISSUE_NUMBER},sub-issue
+            - Ne code RIEN, planifie seulement
+
+            ## Création des sous-issues avec gh
+            gh issue create --title \"feat: ...\" \\
+              --label \"campaign-${ISSUE_NUMBER}\" \\
+              --label \"sub-issue\" \\
+              --body 'Description... /oc\ndepends-on: #N' \\
+              --repo \"\${{ github.repository }}\"
+            "
+
+            opencode run --dangerously-skip-permissions --agent orchestrator --model "opencode/deepseek-v4-flash-free" "$PROMPT"
+            echo "✅ Orchestrator completed — sub-issues created"
+
+            # Dispatch each new sub-issue with /oc
+            gh api "repos/\${{ github.repository }}/issues?state=open&labels=campaign-${ISSUE_NUMBER},sub-issue&sort=created&direction=desc" \
+              --jq '.[] | select(.pull_request | not) | .number' 2>/dev/null | while read -r SUB; do
+                gh workflow run opencode.yml -f issue_number="$SUB" --repo "\${{ github.repository }}"
+                echo "✓ Dispatched sub-issue #$SUB"
+                sleep 2
+              done
+
+            # Prevent normal Implement step from running
+            echo "ORCHESTRATOR_DID_RUN=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          echo "ℹ Issue #$ISSUE_NUMBER is simple — proceeding with dev agent"
+          echo "ORCHESTRATOR_SKIP=true" >> "$GITHUB_ENV"
+
+      - name: Implement (new PR)
+        if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr == '' && env.ORCHESTRATOR_DID_RUN != 'true'
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GH_TOKEN: ${{ github.token }}
@@ -230,7 +336,12 @@ jobs:
           - Exécute les tests (npm test) et le build (npm run build)
           - Ne modifie PAS .github/workflows/*.yml
 
-          ## Feature complexe ? Crée une campagne
+           ## Mémoire des sessions précédentes
+           Consulte ta mémoire individuelle et la mémoire commune avant de coder :
+           Mémoire DEV : ${{ env.DEV_MEMORY }}
+           Mémoire commune : ${{ env.SHARED_MEMORY }}
+
+           ## Feature complexe ? Crée une campagne
           Si le changement demandé nécessite PLUSIEURS étapes ou fichiers (ex: nouvelle fonctionnalité complète) :
           1. Découpe en sous-tâches (issues GitHub) via gh issue create
           2. Chaque sous-tâche DOIT contenir /oc dans son body pour être auto-dispatchée
@@ -310,6 +421,11 @@ jobs:
 
           ## Checks CI en échec
           $CI_CHECKS
+
+          ## Contexte du système de mémoire
+          Consulte ta mémoire individuelle et la mémoire commune avant de coder :
+          $(cat .opencode/memory/dev.json 2>/dev/null || echo "Pas de mémoire individuelle")
+          $(cat .opencode/memory/shared.json 2>/dev/null || echo "Pas de mémoire commune")
 
           ## Instructions
           1. Analyse les retours CI et les commentaires de review
@@ -432,6 +548,22 @@ jobs:
             opencode run --dangerously-skip-permissions --model "opencode/deepseek-v4-flash-free" "$FIX_PROMPT"
           done
 
+      - name: Save agent session memory
+        if: success() && github.event.inputs.mode != 'supervisor'
+        run: |
+          if [ -f /tmp/agent-session-notes.json ]; then
+            NOTES=$(cat /tmp/agent-session-notes.json)
+            CURRENT=$(cat .opencode/memory/dev.json 2>/dev/null || echo '{}')
+            UPDATED=$(echo "$CURRENT" | jq --argjson notes "$NOTES" --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
+              .last_session = $date | .session_notes += [$notes]
+            ')
+            echo "$UPDATED" > .opencode/memory/dev.json
+            git add .opencode/memory/dev.json && git commit -m "chore: update dev memory [skip ci]" || true
+            echo "✅ Dev memory updated"
+          else
+            echo "ℹ No session notes found"
+          fi
+
       - name: Push and manage PR
         id: pr_create
         if: success() && github.event.inputs.mode != 'supervisor'
@@ -523,8 +655,8 @@ jobs:
             # Skip the current issue (prevent re-dispatch loop)
             [ "$number" = "$ISSUE_NUMBER" ] && continue
 
-            # Only dispatch if body contains /oc or /opencode
-            if ! printf '%s' "$body" | grep -qiE '(^|[[:space:]])/(oc|opencode)($|[[:space:]])'; then
+            # Only dispatch if body contains /oc, /opencode, or /proposal
+            if ! printf '%s' "$body" | grep -qiE '(^|[[:space:]])/(oc|opencode|proposal)($|[[:space:]])'; then
               continue
             fi
 
@@ -541,18 +673,7 @@ jobs:
             echo "ℹ No new /oc issues found since scan start"
           fi
 
-      - name: Trigger CI workflow
-        if: steps.pr_create.outputs.PR_NUMBER != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          PR_NUMBER="${{ steps.pr_create.outputs.PR_NUMBER }}"
-          echo "Triggering CI for PR #$PR_NUMBER on branch $BRANCH..."
-          gh workflow run ci.yml --ref "$BRANCH" -f pr_number="$PR_NUMBER"
-
-      - name: Trigger Reviewer workflow
-        if: steps.pr_create.outputs.PR_NUMBER != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh workflow run reviewer.yml -f pr_number=${{ steps.pr_create.outputs.PR_NUMBER }}
+      # CI et Reviewer sont déclenchés automatiquement par les events GitHub :
+      # - pull_request [opened, synchronize] → CI (ci.yml)
+      # - CI success → reviewer dispatché par ci.yml
+      # Pas besoin de dispatch manuel ici.

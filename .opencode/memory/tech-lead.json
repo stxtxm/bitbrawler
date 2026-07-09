@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "agent": "tech-lead",
+  "last_session": null,
+  "recent_failures": [],
+  "known_limitations": [
+    "Les stats QA sont dans qa/stats.json",
+    "Les analyses HP, loot, win rate doivent être basées sur les données du fichier",
+    "Créer des issues avec /oc pour les bugs critiques et ajustements d'équilibrage",
+    "Créer des issues SANS /oc pour les propositions majeures (label proposition)",
+    "Toujours référencer les données QA dans les issues créées"
+  ],
+  "session_notes": []
+}

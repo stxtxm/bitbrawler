@@ -86,6 +86,13 @@ jobs:
           fi
           echo "PR_NUMBER=$PR_NUMBER" >> "$GITHUB_ENV"
 
+      - name: Load agent memory context
+        run: |
+          echo "📖 Loading memory context..."
+          echo "REVIEWER_MEMORY=$(cat .opencode/memory/reviewer.json 2>/dev/null | tr -d '\n' || echo '{}')" >> "$GITHUB_ENV"
+          echo "SHARED_MEMORY=$(cat .opencode/memory/shared.json 2>/dev/null | tr -d '\n' || echo '{}')" >> "$GITHUB_ENV"
+          echo "✅ Memory loaded"
+
       - name: Configure git
         run: |
           git config user.name "opencode-agent"
@@ -108,7 +115,7 @@ jobs:
           git checkout "$HEAD_REF" 2>/dev/null || git checkout -b "$HEAD_REF" "origin/$HEAD_REF"
 
           echo "🔍 Checking for merge conflict markers..."
-          if grep -rn '<<<<<<<\|=======\|>>>>>>>' --include='*.ts' --include='*.tsx' --include='*.json' src/; then
+          if grep -rnP '^<<<<<<< |^=======$|^>>>>>>> ' --include='*.ts' --include='*.tsx' --include='*.json' src/; then
             echo "❌ Conflict markers found — requesting changes"
             gh pr review "$PR_NUMBER" --request-changes --body "❌ Des marqueurs de conflit (\`<<<<<<<\`) sont présents dans le code. Le merge auto a échoué. Merci de rebase manuellement sur master et de résoudre les conflits."
             exit 1
@@ -122,6 +129,63 @@ jobs:
             exit 1
           fi
           echo "✅ TypeScript compilation clean — branch ready for review"
+
+      - name: Check dependencies (depends-on resolution)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number || github.event.inputs.pr_number }}"
+          PR_BODY=$(gh pr view "$PR_NUMBER" --json body --jq '.body // ""' 2>/dev/null || echo "")
+          ISSUE_NUMBER=$(echo "$PR_BODY" | grep -oiE '(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s+#[0-9]+' | grep -oE '#[0-9]+' | tr -d '#' | head -1 || echo "")
+
+          if [ -z "$ISSUE_NUMBER" ]; then
+            echo "ℹ No linked issue — skipping dependency check"
+            exit 0
+          fi
+
+          # Extract depends-on from issue body
+          DEPS=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body' 2>/dev/null | grep -oiE 'depends-on:\s*#[0-9]+' | grep -oE '#[0-9]+' | tr -d '#' || echo "")
+
+          if [ -z "$DEPS" ]; then
+            echo "ℹ Issue #$ISSUE_NUMBER has no dependencies"
+            exit 0
+          fi
+
+          echo "🔍 Dependencies found: #$(echo "$DEPS" | tr '\n' ' ')"
+          for DEP in $DEPS; do
+            # Check if the dependency issue itself is closed
+            DEP_STATE=$(gh issue view "$DEP" --json state --jq '.state' 2>/dev/null || echo "OPEN")
+            if [ "$DEP_STATE" != "CLOSED" ]; then
+              echo "⛔ Dependency #$DEP is still open — blocking PR #$PR_NUMBER"
+              gh pr review "$PR_NUMBER" --request-changes --body \
+                "⛔ Cette PR dépend de #$DEP qui n'est pas encore fermée. Merge bloqué dans l'ordre du DAG."
+              exit 1
+            fi
+            # Check that the dependency has a merged PR
+            DEP_PR=$(gh pr list --state merged --head "feat/auto-$DEP" --json number --jq '.[0].number' 2>/dev/null || echo "")
+            if [ -z "$DEP_PR" ]; then
+              echo "⚠ Dependency #$DEP is closed but no merged PR found — manual check advised"
+            else
+              echo "✓ Dependency #$DEP resolved by PR #$DEP_PR"
+            fi
+          done
+          echo "✅ All dependencies resolved"
+
+      - name: Detect SQL migration in PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number || github.event.inputs.pr_number }}"
+          PR_DIFF=$(gh pr diff "$PR_NUMBER" 2>/dev/null || echo "")
+
+          # Check for SQL ALTER TABLE / CREATE TABLE statements
+          if echo "$PR_DIFF" | grep -qiE '(ALTER TABLE|CREATE TABLE|DROP TABLE|CREATE INDEX|ALTER COLUMN)'; then
+            echo "⛔ SQL migration detected in PR #$PR_NUMBER — blocking merge"
+            gh pr review "$PR_NUMBER" --request-changes --body \
+              "⛔ **Migration SQL détectée dans le code.** Conformément aux règles du projet, toute modification de schéma doit passer par une issue de migration séparée, exécutée manuellement dans Supabase Dashboard.\n\nMerci de retirer les instructions SQL de cette PR et de créer une issue de migration avec le format décrit dans AGENTS.md."
+            exit 1
+          fi
+          echo "✅ No SQL migration detected"
 
       - name: Run Reviewer agent
         env:
@@ -161,6 +225,10 @@ jobs:
             ## Issue liée #${ISSUE_NUMBER:-"aucune"}
             Titre: ${ISSUE_TITLE:-"N/A"}
             Body: ${ISSUE_BODY:-"N/A"}
+
+            ## Mémoire des sessions précédentes
+            Mémoire REVIEWER : ${{ env.REVIEWER_MEMORY }}
+            Mémoire commune : ${{ env.SHARED_MEMORY }}
 
             ## Instructions de review
 
@@ -242,6 +310,23 @@ jobs:
           echo "Closing issue #$ISSUE_NUMBER..."
           gh issue close "$ISSUE_NUMBER" --comment "Resolved by PR #$PR_NUMBER (merged)"
           echo "✓ Issue #$ISSUE_NUMBER closed"
+
+      - name: Save reviewer session memory
+        if: always()
+        run: |
+          if [ -f /tmp/agent-session-notes.json ]; then
+            NOTES=$(cat /tmp/agent-session-notes.json)
+            CURRENT=$(cat .opencode/memory/reviewer.json 2>/dev/null || echo '{}')
+            UPDATED=$(echo "$CURRENT" | jq --argjson notes "$NOTES" --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
+              .last_session = $date | .session_notes += [$notes]
+            ')
+            echo "$UPDATED" > .opencode/memory/reviewer.json
+            git add .opencode/memory/reviewer.json && git commit -m "chore: update reviewer memory [skip ci]" || true
+            echo "✅ Reviewer memory updated"
+          else
+            echo "ℹ No session notes found"
+          fi
+        shell: bash
 
       - name: Check campaign — dispatch supervisor if all sub-issues done
         if: always()

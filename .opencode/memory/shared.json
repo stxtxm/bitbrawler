@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "last_updated": "2026-07-09T18:00:00Z",
+  "known_issues": [
+    {
+      "id": "grep-conflict-markers",
+      "title": "Le grep '=======' dans opencode.yml matche les commentaires '// ===='",
+      "impact": "Bloquait 100% des runs OpenCode Agent",
+      "status": "fixed",
+      "fix_workflow": "opencode.yml:143, reviewer.yml:111 — regex changée en ^=======$ avec ancrage début de ligne",
+      "fixed_date": "2026-07-09"
+    },
+    {
+      "id": "case-sensitive-oc",
+      "title": "/Oc avec O majuscule non détecté par contains(body, '/oc')",
+      "impact": "Issue #476 non dispatchée",
+      "status": "fixed",
+      "fix_workflow": "opencode.yml:31-34 — ajout de contains pour /Oc, /OC, /oC",
+      "fixed_date": "2026-07-09"
+    },
+    {
+      "id": "redundant-ci-reviewer-dispatch",
+      "title": "Dispatch manuel CI + Reviewer dans opencode.yml après push",
+      "impact": "Workflows dupliqués, confusion dans les statuts",
+      "status": "fixed",
+      "fix_workflow": "opencode.yml:553-556 — remplacé par commentaire, GitHub events gèrent auto",
+      "fixed_date": "2026-07-09"
+    }
+  ],
+  "cross_agent_constraints": [
+    "Le dev agent ne doit JAMAIS modifier .github/workflows/*.yml",
+    "Les migrations SQL passent par une issue, jamais exécutées directement",
+    "Chaque sub-issue doit déclarer depends-on: #N dans son body",
+    "Les PR docs/campaign-* sont créées par le supervisor et mergées par le reviewer",
+    "Toute modification de schéma DB nécessite une issue de migration sans /oc"
+  ],
+  "patterns": {
+    "error_recovery": "Quand un workflow échoue, vérifier d'abord shared.json pour les problèmes connus",
+    "sub_issue_scope": "Max 1-2 fichiers par sub-issue, jamais de changement schema + logique dans la même",
+    "orchestrator_dispatch": "Les sub-issues Level 0 sont dispatchées immédiatement, les autres attendent leur dépendance",
+    "supervisor_pr": "Le supervisor ne push plus sur master directement — crée une PR docs/campaign-N"
+  },
+  "agents": {
+    "dev": "Implémente le code défini dans les issues. Lit dev.json au début, écrit dedans à la fin.",
+    "reviewer": "Review les PRs. Bloque si dépendance non mergée ou migration SQL détectée.",
+    "orchestrator": "Planifie les campagnes complexes. Crée des sub-issues avec DAG.",
+    "supervisor": "Valide les campagnes. Crée des PR docs au lieu de push direct.",
+    "tech-lead": "Analyse quotidienne des stats QA et des tendances.",
+    "qa-tester": "Tests E2E sur le site live, collecte de stats."
+  }
+}

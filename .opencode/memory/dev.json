@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "agent": "dev",
+  "last_session": null,
+  "recent_failures": [],
+  "known_limitations": [
+    "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
+    "Ne pas générer de SQL ALTER TABLE — créer une issue migration",
+    "Le build peut échouer si on touche à des fichiers de typages sans mettre à jour les déclarations",
+    "Toujours vérifier que npm test && npm run build passent avant de commit"
+  ],
+  "preferred_patterns": {
+    "naming": "camelCase pour variables, PascalCase pour types/interfaces",
+    "imports": "Imports absolus depuis src/",
+    "tests": "TDD : écrire le test avant l'implémentation",
+    "error_handling": "Utiliser try/catch avec fallback, pas de throw non géré",
+    "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
+  },
+  "session_notes": []
+}

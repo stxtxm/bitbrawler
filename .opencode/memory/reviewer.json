@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "agent": "reviewer",
+  "last_session": null,
+  "recent_failures": [],
+  "known_limitations": [
+    "Ne pas merger si des marqueurs de conflit sont présents",
+    "Ne pas merger si des erreurs TypeScript sont détectées",
+    "Ne pas merger si une migration SQL est dans la PR",
+    "Vérifier les dépendances (depends-on) avant d'approuver",
+    "Les PR auto-générées (github-actions[bot]) peuvent être mergées sans approval"
+  ],
+  "checklist": [
+    "Tests passent",
+    "TypeScript clean",
+    "Pas de conflit",
+    "Pas de SQL migration",
+    "Dépendances résolues",
+    "Pas de any",
+    "Pas de commentaires superflus"
+  ],
+  "session_notes": []
+}

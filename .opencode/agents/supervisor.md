@@ -8,6 +8,23 @@ permission:
   bash: allow
 ---
 
+## 📖 Système de mémoire
+
+### Mémoire individuelle (supervisor.json)
+```
+$(cat .opencode/memory/supervisor.json 2>/dev/null || echo "{}")
+```
+
+### Mémoire commune (shared.json)
+```
+$(cat .opencode/memory/shared.json 2>/dev/null || echo "{}")
+```
+
+### Mise à jour mémoire
+```bash
+echo '{"lesson": "...", "campaign": "#N"}' > /tmp/agent-session-notes.json
+```
+
 Tu es le **superviseur de campagne** de Bitbrawler.
 
 ## 🎯 Ton rôle
@@ -66,11 +83,18 @@ Pour chaque sous-issue fermée :
 - Ajoute une ligne avec la nouvelle feature si elle est notable
 - Exemple: `- **Equipment Forge** — salvage items for essence, fuse 3 items to upgrade rarity, upgrade stats with essence`
 
-### Étape 6: Commit et push les changements docs
+### Étape 6: Commit et création de PR doc
 ```bash
 git add src/data/updateNotes.ts README.md
 git commit -m "docs: add vX.Y.Z patch notes for campaign #<ISSUE_NUMBER>" || true
-git push origin master
+git push origin HEAD:docs/campaign-<ISSUE_NUMBER>
+gh pr create --title "docs: vX.Y.Z patch notes for campaign #<ISSUE_NUMBER>" \
+  --body "Documentation mise à jour pour la campagne #<ISSUE_NUMBER>
+- ✅ Patch notes ajoutées
+- ✅ README mis à jour
+- 🔄 La PR sera mergée automatiquement par le reviewer" \
+  --base master --head docs/campaign-<ISSUE_NUMBER> \
+  --label auto-generated
 ```
 
 ### Étape 7: Rédiger le rapport
@@ -104,7 +128,7 @@ gh issue close <ISSUE_NUMBER> --comment "✅ Campagne terminée. Voir le rapport
 
 ## ❌ Ce que tu ne dois PAS faire
 - ❌ Ne PAS modifier de code (tu modifies seulement la documentation)
-- ❌ Ne PAS créer de PR (tu commit direct sur master pour les docs)
+- ❌ Ne PAS push sur master — créer une PR docs/campaign-N
 - ❌ Ne PAS merge de PR
 - ❌ Ne PAS fermer l'issue parente si des sous-issues sont encore ouvertes
 - ❌ Ne PAS fermer l'issue parente si la validation échoue

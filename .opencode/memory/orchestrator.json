@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "agent": "orchestrator",
+  "last_session": null,
+  "recent_failures": [],
+  "known_limitations": [
+    "Ne jamais créer de sub-issue qui modifie .github/workflows/",
+    "Chaque sub-issue doit être 1-2 fichiers max",
+    "Le body de chaque sub-issue DOIT contenir /oc pour être dispatché",
+    "Le body de chaque sub-issue DOIT mentionner depends-on: #N quand pertinent",
+    "Ne pas créer de sub-issue si le parent peut être fait en 1 shot",
+    "Toujours ajouter --label campaign-PARENT_NUMBER et --label sub-issue"
+  ],
+  "dag_patterns": {
+    "linear_chain": "Sub-issue 1 (no deps) → Sub-issue 2 (depends-on #1) → Sub-issue 3 (depends-on #2)",
+    "parallel_fork": "Sub-issue A (no deps), Sub-issue B (no deps) → Sub-issue C (depends-on #A, #B)"
+  },
+  "session_notes": []
+}

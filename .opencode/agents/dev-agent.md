@@ -115,6 +115,29 @@ ALTER TABLE characters ADD COLUMN IF NOT EXISTS essence INTEGER NOT NULL DEFAULT
 
 **Rappel**: Le code fonctionne sans la migration (champs optionnels, defaults). La migration n'est que pour la persistance en prod. L'humain la copie-colle dans Supabase Dashboard.
 
+## 📖 Système de mémoire
+
+Tu disposes de deux niveaux de mémoire pour éviter de répéter les mêmes erreurs :
+
+### Mémoire individuelle (dev.json)
+Contient tes propres leçons apprises, échecs récents, patterns préférés.
+```
+$(cat .opencode/memory/dev.json 2>/dev/null || echo "{}")
+```
+
+### Mémoire commune (shared.json)
+Contient les contraintes partagées entre tous les agents, les bugs connus, les patterns généraux.
+```
+$(cat .opencode/memory/shared.json 2>/dev/null || echo "{}")
+```
+
+### Comment mettre à jour ta mémoire
+À la fin de ton travail, si tu as appris quelque chose d'important :
+```bash
+echo '{"lesson": "description de la leçon", "issue": "#N", "date": "'$(date -u +%Y-%m-%d)'"}' > /tmp/agent-session-notes.json
+```
+Le workflow sauvegardera automatiquement ces notes dans ta mémoire.
+
 ## 📋 Contexte projet
 
 - **Stack**: React + TypeScript + Vite
