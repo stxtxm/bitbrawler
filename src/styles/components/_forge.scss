@@ -1587,6 +1587,58 @@
   box-shadow: none;
 }
 
+// ─── Reroll row & button ──────────────────────────────────────────────────────
+
+.shop-reroll-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+  margin-bottom: 4px;
+}
+
+.shop-reroll-btn {
+  padding: 8px 24px;
+  font-family: $font-pixel;
+  font-size: 0.45rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  border: 2px solid #5b8c5a;
+  background: rgba(91, 140, 90, 0.1);
+  color: #7ab87a;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  text-shadow: 1px 1px 0 #000;
+  box-shadow: 0 2px 0 #1a0e08;
+
+  &:hover:not(:disabled) {
+    background: #5b8c5a;
+    color: #000;
+    text-shadow: none;
+    box-shadow: 0 2px 0 #2d4a2c;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: 0 1px 0 #1a0e08;
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    border-color: #444;
+    color: #555;
+    box-shadow: none;
+  }
+}
+
+.shop-reroll-btn.shop-reroll-used {
+  border-color: #444;
+  color: #555;
+  background: rgba(0, 0, 0, 0.3);
+  cursor: default;
+  box-shadow: none;
+}
+
 // ─── Animations ─────────────────────────────────────────────────────────────
 
 @keyframes shopPurchaseGlow {

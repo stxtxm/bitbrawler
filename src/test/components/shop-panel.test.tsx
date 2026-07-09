@@ -5,7 +5,7 @@ import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
 import type { Character } from '../../types/Character';
 import { SHOP_OFFERS } from '../../data/shopConstants';
-import { clearShopPurchases, markOfferPurchased } from '../../utils/shopStorage';
+import { clearShopPurchases, markOfferPurchased, markRerollUsed } from '../../utils/shopStorage';
 
 vi.mock('../../context/GameContext', () => ({
   useGame: vi.fn(),
@@ -45,6 +45,7 @@ const makeCharacter = (overrides?: Partial<Character>): Character => ({
 
 const defaultNotify = vi.fn();
 const defaultBuyShopOffer = vi.fn();
+const defaultRerollShopOffers = vi.fn();
 
 function setupGame(overrides: Record<string, unknown> = {}) {
   const defaults = {
@@ -53,6 +54,7 @@ function setupGame(overrides: Record<string, unknown> = {}) {
     dbAvailable: true,
     essence: 500,
     buyShopOffer: defaultBuyShopOffer,
+    rerollShopOffers: defaultRerollShopOffers,
     ...overrides,
   };
   mockUseGame.mockReturnValue(defaults);
@@ -239,5 +241,193 @@ describe('ShopPanel', () => {
     setupGame();
     render(<ShopPanel onClose={vi.fn()} />);
     expect(screen.getByRole('button', { name: /close shop/i })).toBeTruthy();
+  });
+
+  // ─── Reroll ──────────────────────────────────────────────────────────────────
+
+  describe('reroll', () => {
+    it('shows reroll button', () => {
+      setupGame({ essence: 100, activeCharacter: makeCharacter({ essence: 100 }) });
+      render(<ShopPanel onClose={vi.fn()} />);
+      expect(screen.getByRole('button', { name: /reroll shop offers/i })).toBeTruthy();
+    });
+
+    it('shows reroll button text with cost', () => {
+      setupGame({ essence: 100, activeCharacter: makeCharacter({ essence: 100 }) });
+      render(<ShopPanel onClose={vi.fn()} />);
+      expect(screen.getByText(/RELANCE.*25/)).toBeTruthy();
+    });
+
+    it('reroll button is disabled when character has less than 25 essence', () => {
+      setupGame({ essence: 10, activeCharacter: makeCharacter({ essence: 10 }) });
+      render(<ShopPanel onClose={vi.fn()} />);
+      const rerollBtn = screen.getByRole('button', { name: /reroll shop offers/i });
+      expect(rerollBtn).toBeDisabled();
+    });
+
+    it('reroll button is disabled when reroll already used today', () => {
+      markRerollUsed('test-char');
+      setupGame({ essence: 100, activeCharacter: makeCharacter({ essence: 100 }) });
+      render(<ShopPanel onClose={vi.fn()} />);
+      const rerollBtn = screen.getByRole('button', { name: /reroll shop offers/i });
+      expect(rerollBtn).toBeDisabled();
+    });
+
+    it('shows REROLLED text when reroll already used', () => {
+      markRerollUsed('test-char');
+      setupGame({ essence: 100, activeCharacter: makeCharacter({ essence: 100 }) });
+      render(<ShopPanel onClose={vi.fn()} />);
+      expect(screen.getByText('REROLLED')).toBeTruthy();
+    });
+
+    it('opens confirmation dialog when clicking reroll button', () => {
+      setupGame({ essence: 100, activeCharacter: makeCharacter({ essence: 100 }) });
+      render(<ShopPanel onClose={vi.fn()} />);
+      const rerollBtn = screen.getByRole('button', { name: /reroll shop offers/i });
+      fireEvent.click(rerollBtn);
+      expect(screen.getByText('Confirm Reroll')).toBeTruthy();
+      expect(screen.getByRole('button', { name: /confirm reroll/i })).toBeTruthy();
+    });
+
+    it('opens confirmation dialog when clicking reroll button shows cancel option', () => {
+      setupGame({ essence: 100, activeCharacter: makeCharacter({ essence: 100 }) });
+      render(<ShopPanel onClose={vi.fn()} />);
+      const rerollBtn = screen.getByRole('button', { name: /reroll shop offers/i });
+      fireEvent.click(rerollBtn);
+      expect(screen.getByText('Cancel')).toBeTruthy();
+    });
+
+    it('closes confirmation dialog when cancelling', () => {
+      setupGame({ essence: 100, activeCharacter: makeCharacter({ essence: 100 }) });
+      render(<ShopPanel onClose={vi.fn()} />);
+      const rerollBtn = screen.getByRole('button', { name: /reroll shop offers/i });
+      fireEvent.click(rerollBtn);
+      const cancelBtn = screen.getByText('Cancel');
+      fireEvent.click(cancelBtn);
+      expect(screen.queryByText('Confirm Reroll')).toBeNull();
+    });
+
+    const mockRerollOffers = [
+      { index: 0, type: 'item', price: 200, label: 'Marchandise', item: { id: 'rusty_sword', name: 'Rusty Sword', rarity: 'common' } },
+      { index: 1, type: 'item', price: 350, label: 'Pièce rare', item: { id: 'wooden_talisman', name: 'Wooden Talisman', rarity: 'rare' } },
+      { index: 2, type: 'lootbox', price: 500, label: 'Coffre mystère', item: null },
+    ];
+
+    it('calls rerollShopOffers when confirming reroll', async () => {
+      const rerollShopOffers = vi.fn().mockResolvedValue(mockRerollOffers);
+      setupGame({
+        essence: 100,
+        activeCharacter: makeCharacter({ essence: 100 }),
+        rerollShopOffers,
+      });
+      render(<ShopPanel onClose={vi.fn()} />);
+      const rerollBtn = screen.getByRole('button', { name: /reroll shop offers/i });
+      fireEvent.click(rerollBtn);
+      const confirmBtn = screen.getByRole('button', { name: /confirm reroll/i });
+      fireEvent.click(confirmBtn);
+      await waitFor(() => {
+        expect(rerollShopOffers).toHaveBeenCalled();
+      });
+    });
+
+    it('shows success toast after reroll', async () => {
+      const rerollShopOffers = vi.fn().mockResolvedValue(mockRerollOffers);
+      setupGame({
+        essence: 100,
+        activeCharacter: makeCharacter({ essence: 100 }),
+        rerollShopOffers,
+      });
+      render(<ShopPanel onClose={vi.fn()} />);
+      const rerollBtn = screen.getByRole('button', { name: /reroll shop offers/i });
+      fireEvent.click(rerollBtn);
+      const confirmBtn = screen.getByRole('button', { name: /confirm reroll/i });
+      fireEvent.click(confirmBtn);
+      await waitFor(() => {
+        expect(defaultNotify).toHaveBeenCalledWith(
+          expect.stringContaining('rerolled'),
+          'success',
+          expect.any(Number),
+        );
+      });
+    });
+
+    it('shows error toast when reroll fails', async () => {
+      const rerollShopOffers = vi.fn().mockResolvedValue(null);
+      setupGame({
+        essence: 100,
+        activeCharacter: makeCharacter({ essence: 100 }),
+        rerollShopOffers,
+      });
+      render(<ShopPanel onClose={vi.fn()} />);
+      const rerollBtn = screen.getByRole('button', { name: /reroll shop offers/i });
+      fireEvent.click(rerollBtn);
+      const confirmBtn = screen.getByRole('button', { name: /confirm reroll/i });
+      fireEvent.click(confirmBtn);
+      await waitFor(() => {
+        expect(defaultNotify).toHaveBeenCalledWith(
+          expect.stringContaining('failed'),
+          'error',
+          expect.any(Number),
+        );
+      });
+    });
+
+    it('shows error toast when reroll throws', async () => {
+      const rerollShopOffers = vi.fn().mockRejectedValue(new Error('Network error'));
+      setupGame({
+        essence: 100,
+        activeCharacter: makeCharacter({ essence: 100 }),
+        rerollShopOffers,
+      });
+      render(<ShopPanel onClose={vi.fn()} />);
+      const rerollBtn = screen.getByRole('button', { name: /reroll shop offers/i });
+      fireEvent.click(rerollBtn);
+      const confirmBtn = screen.getByRole('button', { name: /confirm reroll/i });
+      fireEvent.click(confirmBtn);
+      await waitFor(() => {
+        expect(defaultNotify).toHaveBeenCalledWith(
+          expect.stringContaining('Failed'),
+          'error',
+          expect.any(Number),
+        );
+      });
+    });
+
+    it('shows insufficient essence notification when clicking reroll with < 25 essence', async () => {
+      setupGame({ essence: 10, activeCharacter: makeCharacter({ essence: 10 }) });
+      render(<ShopPanel onClose={vi.fn()} />);
+      const rerollBtn = screen.getByRole('button', { name: /reroll shop offers/i });
+      // Button is disabled, clicking won't trigger handleRerollClick
+      // We verify the notification is not called (button click is no-op when disabled)
+      fireEvent.click(rerollBtn);
+      // Should not open confirmation since button is disabled
+      expect(screen.queryByText('Confirm Reroll')).toBeNull();
+    });
+
+    it('does not open reroll confirmation when already rerolled today', () => {
+      markRerollUsed('test-char');
+      setupGame({ essence: 100, activeCharacter: makeCharacter({ essence: 100 }) });
+      render(<ShopPanel onClose={vi.fn()} />);
+      const rerollBtn = screen.getByRole('button', { name: /reroll shop offers/i });
+      fireEvent.click(rerollBtn);
+      expect(screen.queryByText('Confirm Reroll')).toBeNull();
+    });
+
+    it('updates button to REROLLED after successful reroll', async () => {
+      const rerollShopOffers = vi.fn().mockResolvedValue(mockRerollOffers);
+      setupGame({
+        essence: 100,
+        activeCharacter: makeCharacter({ essence: 100 }),
+        rerollShopOffers,
+      });
+      render(<ShopPanel onClose={vi.fn()} />);
+      const rerollBtn = screen.getByRole('button', { name: /reroll shop offers/i });
+      fireEvent.click(rerollBtn);
+      const confirmBtn = screen.getByRole('button', { name: /confirm reroll/i });
+      fireEvent.click(confirmBtn);
+      await waitFor(() => {
+        expect(screen.getByText('REROLLED')).toBeTruthy();
+      });
+    });
   });
 });

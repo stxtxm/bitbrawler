@@ -1,7 +1,7 @@
 const STORAGE_KEY = 'bitbrawler_shop_purchases';
 
 interface ShopPurchases {
-  [date: string]: boolean[];
+  [date: string]: boolean[] | boolean;
 }
 
 /**
@@ -78,13 +78,44 @@ export function clearShopPurchases(characterId?: string): void {
 }
 
 /**
+ * Check if reroll was already used today.
+ */
+export function isRerollUsed(characterId: string, dateStr?: string): boolean {
+  const today = dateStr ?? new Date().toISOString().slice(0, 10);
+  const purchases = loadShopPurchases(characterId);
+  return purchases[`${today}_reroll`] === true;
+}
+
+/**
+ * Mark reroll as used today.
+ */
+export function markRerollUsed(characterId: string, dateStr?: string): void {
+  const today = dateStr ?? new Date().toISOString().slice(0, 10);
+  const purchases = loadShopPurchases(characterId);
+  purchases[`${today}_reroll`] = true;
+  saveShopPurchases(characterId, purchases);
+}
+
+/**
+ * Clear reroll flag for tests.
+ */
+export function clearRerollUsed(characterId?: string, dateStr?: string): void {
+  if (characterId) {
+    const today = dateStr ?? new Date().toISOString().slice(0, 10);
+    const purchases = loadShopPurchases(characterId);
+    delete purchases[`${today}_reroll`];
+    saveShopPurchases(characterId, purchases);
+  }
+}
+
+/**
  * Check if a specific offer was purchased today.
  */
 export function isOfferPurchased(characterId: string, index: number, dateStr?: string): boolean {
   const today = dateStr ?? new Date().toISOString().slice(0, 10);
   const purchases = loadShopPurchases(characterId);
   const day = purchases[today];
-  if (!day) return false;
+  if (!day || typeof day === 'boolean') return false;
   return day[index] === true;
 }
 
@@ -94,9 +125,9 @@ export function isOfferPurchased(characterId: string, index: number, dateStr?: s
 export function markOfferPurchased(characterId: string, index: number, dateStr?: string): void {
   const today = dateStr ?? new Date().toISOString().slice(0, 10);
   const purchases = loadShopPurchases(characterId);
-  if (!purchases[today]) {
+  if (!purchases[today] || typeof purchases[today] === 'boolean') {
     purchases[today] = [false, false, false];
   }
-  purchases[today][index] = true;
+  (purchases[today] as boolean[])[index] = true;
   saveShopPurchases(characterId, purchases);
 }
