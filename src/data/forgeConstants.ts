@@ -6,9 +6,9 @@ import { ItemRarity } from '../types/Item';
 export const ESSENCE_YIELD: Record<ItemRarity, number> = {
   common: 5,
   uncommon: 20,
-  rare: 75,
-  epic: 250,
-  legendary: 1000,
+  rare: 50,
+  epic: 80,
+  legendary: 400,
 };
 
 /**
