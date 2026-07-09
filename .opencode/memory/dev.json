@@ -21,6 +21,11 @@
       "lesson": "QA stats shop purchase field is null for legacy runs - cannot compute purchase rates from historical data alone. Essence per run must be computed from lootbox item rarities and ESSENCE_YIELD, not from actual forge activity which isnt tracked.",
       "issue": "#483",
       "date": "2026-07-09"
+    },
+    {
+      "lesson": "PR #487 fix: completed missing shop price adjustment (150/250/350) based on essence economy ratio (13.1/18.5 ≈ 0.708). Purchase rate 0% < 10% threshold triggered price reduction. Updated shopConstants.ts, shop-utils.test.ts, shop-panel.test.tsx.",
+      "issue": "#487",
+      "date": "2026-07-09"
     }
   ]
 }
