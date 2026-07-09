@@ -784,6 +784,22 @@ jobs:
             echo "ℹ No new /oc issues found since scan start"
           fi
 
+      - name: Auto-merge pending docs PRs (bot-authored, reviewer skipped)
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "🔍 Checking for pending docs PRs from bot..."
+          DOCS_PR=$(gh pr list --head "docs/" --state open --json number,mergeable,author --jq '
+            .[] | select(.author.is_bot == true and .mergeable == "MERGEABLE") | .number
+          ' 2>/dev/null || echo "")
+          if [ -n "$DOCS_PR" ]; then
+            echo "✅ Merging docs PR #$DOCS_PR (bot-authored, mergeable)"
+            gh pr merge "$DOCS_PR" --squash --delete-branch
+          else
+            echo "ℹ No pending docs PRs to merge"
+          fi
+
       # CI et Reviewer sont déclenchés automatiquement par les events GitHub :
       # - pull_request [opened, synchronize] → CI (ci.yml)
       # - CI success → reviewer dispatché par ci.yml
