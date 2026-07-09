@@ -8,6 +8,21 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.1.0',
+    date: '2026-07-09',
+    title: 'Essence Economy & Shop Balance — data-driven pricing, epic daily item, shop reroll, essence hard cap',
+    changes: [
+      '🔬 QA bot now tracks essence metrics: essence gained via salvage, spent at shop, and balance before/after each run for data-driven economy tuning.',
+      '🛒 Shop offerings and purchases tracked by QA bot — item rarities, prices, and purchase behavior are now recorded for analysis.',
+      '✨ 1 epic item guaranteed per day in the 8-Bit Emporium shop rotation alongside the regular 3 offers.',
+      '🔄 Shop reroll feature: spend 25 essence to refresh all 3 daily shop offers for a chance at better loot.',
+      '📊 Essence hard cap at 1000 with a visual EssenceGauge bar showing progress toward soft cap (750) and hard cap (1000) — green/orange/red indicator.',
+      '💰 Data-driven shop price reduction: offers now cost 150/250/350 essence (down from 200/350/500) based on QA data analysis.',
+      '⚖️ Essence salvage yields rebalanced: rare 75→50, epic 250→80, legendary 1000→400 for a healthier sink-to-source ratio.',
+      '1151 tests passing across 88 test files.',
+    ],
+  },
+  {
     version: '5.0.0',
     date: '2026-07-05',
     title: '8-Bit Emporium, PvE Engagement Boost, early progression overhaul',
