@@ -138,7 +138,7 @@ jobs:
             echo "Branch $BRANCH already exists on remote — checking out"
             git fetch origin "$BRANCH"
             git checkout -b "$BRANCH" "origin/$BRANCH"
-            git rebase origin/master || echo "Rebase failed, continuing with existing branch"
+            git rebase origin/master || { git rebase --abort; echo "Rebase aborted — using existing branch as-is"; }
           else
             git checkout -b "$BRANCH" master
           fi
@@ -455,13 +455,24 @@ jobs:
 
           # --- Approve & merge ---
           echo "✅ All checks passed — merging PR #$PR_NUMBER"
+
+          # If PR has merge conflicts, rebase it first
+          MERGEABLE=$(gh pr view "$PR_NUMBER" --json mergeable --jq '.mergeable' 2>/dev/null || echo "")
+          if [ "$MERGEABLE" = "CONFLICTING" ]; then
+            echo "⚠ PR has merge conflicts — attempting rebase..."
+            gh pr checkout "$PR_NUMBER" 2>/dev/null || git fetch origin "refs/pull/$PR_NUMBER/head:pr-$PR_NUMBER" && git checkout "pr-$PR_NUMBER"
+            git rebase origin/master || { echo "Rebase failed, cannot merge"; exit 1; }
+            git push origin HEAD:"$(gh pr view "$PR_NUMBER" --json headRefName --jq '.headRefName' 2>/dev/null)" --force-with-lease
+            sleep 5
+          fi
+
           IS_BOT=$(gh pr view "$PR_NUMBER" --json author --jq '.author.is_bot // false' 2>/dev/null || echo "false")
           if [ "$IS_BOT" = "true" ]; then
             echo "ℹ Auto-authored PR — merging directly (skip approval)"
           else
             gh pr review --approve "$PR_NUMBER" --body "✅ Revue automatique: CI verte, dépendances résolues, pas de migration SQL."
           fi
-          gh pr merge "$PR_NUMBER" --squash --delete-branch
+          gh pr merge "$PR_NUMBER" --squash --delete-branch || { echo "Merge still failing — check manually"; exit 1; }
           echo "✓ PR #$PR_NUMBER merged"
 
           # --- Post-merge: re-trigger dependant PRs ---
