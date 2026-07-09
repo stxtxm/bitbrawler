@@ -1,6 +1,6 @@
 import { Character } from '../types/Character';
 import { PixelItemAsset } from '../types/Item';
-import { SHOP_OFFERS } from '../data/shopConstants';
+import { SHOP_OFFERS, SHOP_OFFER_COUNT } from '../data/shopConstants';
 import { rollSimpleLootbox } from './lootboxUtils';
 import { isOfferPurchased, markOfferPurchased, isRerollUsed, markRerollUsed, loadShopPurchases, saveShopPurchases } from './shopStorage';
 
@@ -162,7 +162,7 @@ export function resetDailyPurchases(
   const charId = character.id ?? character.seed;
   const purchases = loadShopPurchases(charId);
   if (!purchases[today]) {
-    purchases[today] = [false, false, false];
+    purchases[today] = Array.from({ length: SHOP_OFFER_COUNT }, () => false);
     saveShopPurchases(charId, purchases);
   }
   return character;
