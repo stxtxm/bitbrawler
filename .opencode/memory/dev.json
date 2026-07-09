@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": null,
+  "last_session": "2026-07-09T18:56:30Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -16,5 +16,12 @@
     "error_handling": "Utiliser try/catch avec fallback, pas de throw non géré",
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
-  "session_notes": []
+  "session_notes": [
+    {
+      "lesson": "Le reviewer workflow a echoue car depends-on: #476 pointait vers l issue parente de campagne (OPEN). La solution etait de fermer l issue #476 (dont la PR #484 etait deja mergee) puis de re-declencher le reviewer via rerun-failed-jobs API. Le reviewer utilise le workflow depuis master (qui a deja le fix DAG), donc le comportement change automatiquement.",
+      "issue": "#485",
+      "date": "2026-07-09",
+      "fix": "gh issue close 476 && gh api repos/stxtxm/bitbrawler/actions/runs/<RUN_ID>/rerun-failed-jobs --method POST"
+    }
+  ]
 }
