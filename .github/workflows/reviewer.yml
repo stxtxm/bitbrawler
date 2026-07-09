@@ -75,9 +75,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           PR_NUMBER="${{ github.event.pull_request.number || github.event.inputs.pr_number }}"
-          AUTHOR=$(gh pr view "$PR_NUMBER" --json author --jq '.author.login // ""' 2>/dev/null || echo "")
-          echo "PR author: $AUTHOR"
-          if [ "$AUTHOR" = "github-actions" ] || [ "$AUTHOR" = "github-actions[bot]" ]; then
+          IS_BOT=$(gh pr view "$PR_NUMBER" --json author --jq '.author.is_bot // false' 2>/dev/null || echo "false")
+          if [ "$IS_BOT" = "true" ]; then
             echo "Auto-authored PR — will merge directly without approval"
             echo "SKIP_APPROVAL=true" >> "$GITHUB_ENV"
           else
