@@ -71,3 +71,9 @@ export const LUCKY_PROC_CHANCE = 0.1;
  * Raised to 750 to accommodate shop purchases (up to 500) + upgrade costs.
  */
 export const ESSENCE_SOFT_CAP = 750;
+
+/**
+ * Hard cap for essence — absolute maximum a character can hold.
+ * Beyond this, no essence gains are allowed.
+ */
+export const ESSENCE_HARD_CAP = 1000;

@@ -1732,3 +1732,64 @@
     display: none;
   }
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// Essence Gauge — progression bar with palier colors
+// ════════════════════════════════════════════════════════════════════════════
+
+.essence-gauge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
+.essence-gauge-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid #333;
+  overflow: hidden;
+  position: relative;
+}
+
+.essence-gauge-fill {
+  height: 100%;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.essence-gauge-green {
+  background: linear-gradient(90deg, #2d8a4e, #4cd964);
+}
+
+.essence-gauge-orange {
+  background: linear-gradient(90deg, #d4a017, #ff8c00);
+}
+
+.essence-gauge-red {
+  background: linear-gradient(90deg, #cc3333, #ff4444);
+  animation: essenceGaugePulse 1s ease-in-out infinite;
+}
+
+@keyframes essenceGaugePulse {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(255, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(255, 68, 68, 0.7);
+  }
+}
+
+.essence-gauge-text {
+  font-size: 0.4rem;
+  color: #9aa0a6;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  font-family: $font-pixel;
+}
+
+.forge-essence-hard-cap {
+  font-weight: bold;
+  animation: essenceGaugePulse 1s ease-in-out infinite;
+}

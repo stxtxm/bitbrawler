@@ -2,10 +2,12 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
 import { SHOP_OFFERS } from '../../data/shopConstants';
+import { ESSENCE_HARD_CAP } from '../../data/forgeConstants';
 import { ITEM_ASSETS } from '../../data/itemAssets';
 import { getShopOffers, canBuyOffer, isOfferSoldOut, type ShopOffer } from '../../utils/shopUtils';
 import { isRerollUsed } from '../../utils/shopStorage';
 import { PixelItemIcon } from '../PixelItemIcon';
+import { EssenceGauge } from '../EssenceGauge';
 import '../../styles/components/_forge.scss';
 
 const REROLL_COST = 25;
@@ -130,6 +132,12 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
           <span className="forge-essence-label">ESSENCE</span>
           <span className="forge-essence-value">{essence.toFixed(2)}</span>
         </div>
+        {essence > 0 && <EssenceGauge current={essence} />}
+        {essence >= ESSENCE_HARD_CAP && (
+          <div className="forge-essence-warning forge-essence-hard-cap">
+            🔴 Essence au maximum! ({ESSENCE_HARD_CAP}/{ESSENCE_HARD_CAP})
+          </div>
+        )}
         <div className="forge-empty-state">
           <div className="forge-empty-text">No offers available today.</div>
         </div>
@@ -150,6 +158,12 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
         <span className="forge-essence-label">ESSENCE</span>
         <span className="forge-essence-value">{essence.toFixed(2)}</span>
       </div>
+      {essence > 0 && <EssenceGauge current={essence} />}
+      {essence >= ESSENCE_HARD_CAP && (
+        <div className="forge-essence-warning forge-essence-hard-cap">
+          🔴 Essence au maximum! ({ESSENCE_HARD_CAP}/{ESSENCE_HARD_CAP})
+        </div>
+      )}
 
       {/* Canopy / Awning */}
       <div className="shop-canopy">
