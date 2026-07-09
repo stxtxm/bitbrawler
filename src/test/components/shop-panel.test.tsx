@@ -4,14 +4,10 @@ import { ShopPanel } from '../../components/forge/ShopPanel';
 import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
 import type { Character } from '../../types/Character';
-<<<<<<< HEAD
 import { SHOP_OFFERS } from '../../data/shopConstants';
-import { clearShopPurchases, markOfferPurchased, markRerollUsed } from '../../utils/shopStorage';
-=======
 import { getShopOffers } from '../../utils/shopUtils';
 import { ITEM_ASSETS } from '../../data/itemAssets';
-import { clearShopPurchases, markOfferPurchased } from '../../utils/shopStorage';
->>>>>>> 63fcaa4 (feat: guarantee 1 epic item per day in shop rotation)
+import { clearShopPurchases, markOfferPurchased, markRerollUsed } from '../../utils/shopStorage';
 
 vi.mock('../../context/GameContext', () => ({
   useGame: vi.fn(),

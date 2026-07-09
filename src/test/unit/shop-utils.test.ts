@@ -307,11 +307,7 @@ describe('shop-utils (TDD)', () => {
       const targetIdx = offers[1].index; // Config index of the offer at array position 1
       const result = buyShopOffer(targetIdx, char, ITEM_ASSETS, dateStr, () => 0.5);
       expect(result).not.toBeNull();
-<<<<<<< HEAD
-      expect(result!.essence).toBe(250); // 500 - 250
-=======
       expect(result!.essence).toBe(500 - SHOP_OFFERS[targetIdx].price);
->>>>>>> 63fcaa4 (feat: guarantee 1 epic item per day in shop rotation)
       expect(result!.inventory).toHaveLength(1);
     });
 
