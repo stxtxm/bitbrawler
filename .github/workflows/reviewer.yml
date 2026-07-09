@@ -191,8 +191,9 @@ Le reviewer repassera automatiquement dès que toutes les dépendances seront r�
           PR_NUMBER="${{ github.event.pull_request.number || github.event.inputs.pr_number }}"
           PR_DIFF=$(gh pr diff "$PR_NUMBER" 2>/dev/null || echo "")
 
-          # Check for SQL ALTER TABLE / CREATE TABLE statements
-          if echo "$PR_DIFF" | grep -qiE '(ALTER TABLE|CREATE TABLE|DROP TABLE|CREATE INDEX|ALTER COLUMN)'; then
+          # Check for SQL ALTER TABLE / CREATE TABLE statements (exclude lint/comment files)
+          SQL_FILES=$(echo "$PR_DIFF" | grep '^diff --git' | grep -vE '\.(yml|yaml|json|md)$' || true)
+          if [ -n "$SQL_FILES" ] && echo "$PR_DIFF" | grep -qiE '(ALTER TABLE|CREATE TABLE|DROP TABLE|CREATE INDEX|ALTER COLUMN)'; then
             echo "⛔ SQL migration detected in PR #$PR_NUMBER — blocking merge"
             gh pr review "$PR_NUMBER" --request-changes --body \
               "⛔ **Migration SQL détectée dans le code.** Conformément aux règles du projet, toute modification de schéma doit passer par une issue de migration séparée, exécutée manuellement dans Supabase Dashboard.\n\nMerci de retirer les instructions SQL de cette PR et de créer une issue de migration avec le format décrit dans AGENTS.md."
