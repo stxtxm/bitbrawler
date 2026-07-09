@@ -403,18 +403,75 @@ jobs:
             exit 1
           fi
 
-      - name: Skip dev — existing PR already clean, trigger reviewer
+      - name: Skip dev — existing PR already clean, auto-merge inline
         if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr != '' && env.SKIP_DEV_AGENT == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           PR_NUMBER="${{ steps.check_pr.outputs.existing_pr }}"
-          echo "✅ PR #$PR_NUMBER already has all CI green — triggering reviewer"
-          # Close & reopen to trigger pull_request event (workaround for workflow_dispatch bug)
-          gh pr close "$PR_NUMBER" --comment "⏳ Re-triggering reviewer..." 2>/dev/null || true
-          sleep 3
-          gh pr reopen "$PR_NUMBER" 2>/dev/null || true
-          gh pr ready "$PR_NUMBER" 2>/dev/null || true
+          ISSUE_NUMBER="${{ env.ISSUE_NUMBER }}"
+          echo "✅ PR #$PR_NUMBER already has all CI green — auto-merging via inline reviewer"
+
+          # --- DAG dependency check ---
+          DEPS=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body' 2>/dev/null | grep -oiE 'depends-on:\s*#[0-9]+([,\s]*#[0-9]+)*' | grep -oE '#[0-9]+' | tr -d '#' || echo "")
+          if [ -n "$DEPS" ]; then
+            ALL_RESOLVED=true
+            for DEP in $DEPS; do
+              DEP_STATE=$(gh issue view "$DEP" --json state --jq '.state' 2>/dev/null || echo "OPEN")
+              if [ "$DEP_STATE" != "CLOSED" ]; then
+                echo "⛔ Dependency #$DEP still open — blocking merge"
+                ALL_RESOLVED=false
+                break
+              fi
+            done
+            if [ "$ALL_RESOLVED" = false ]; then
+              echo "⏳ Dependencies not resolved — skipping merge"
+              gh pr comment "$PR_NUMBER" --body "⏳ **En attente de dépendances** — merge automatique quand toutes les dépendances seront fermées."
+              exit 0
+            fi
+            echo "✅ All dependencies resolved"
+          fi
+
+          # --- Check CI status ---
+          CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
+            [.statusCheckRollup[]? | select(.status? == "COMPLETED") | select(.conclusion? == "SUCCESS" or .conclusion? == "NEUTRAL")] | length
+          ' 2>/dev/null || echo "0")
+          TOTAL=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
+            [.statusCheckRollup[]? | select(.status? == "COMPLETED")] | length
+          ' 2>/dev/null || echo "0")
+
+          if [ "$TOTAL" -gt 0 ] && [ "$CHECKS" -ne "$TOTAL" ]; then
+            echo "❌ CI checks failing ($CHECKS/$TOTAL) — not merging"
+            exit 0
+          fi
+
+          # --- SQL migration check ---
+          PR_DIFF=$(gh pr diff "$PR_NUMBER" 2>/dev/null || echo "")
+          if echo "$PR_DIFF" | grep -qiE '(ALTER TABLE|CREATE TABLE|DROP TABLE|CREATE INDEX|ALTER COLUMN)'; then
+            echo "⛔ SQL migration detected — not merging"
+            gh pr comment "$PR_NUMBER" --body "⛔ Migration SQL détectée — merge bloqué. Crée une issue de migration."
+            exit 0
+          fi
+
+          # --- Approve & merge ---
+          echo "✅ All checks passed — approving and merging PR #$PR_NUMBER"
+          gh pr review --approve "$PR_NUMBER" --body "✅ Revue automatique: CI verte, dépendances résolues, pas de migration SQL."
+          gh pr merge "$PR_NUMBER" --squash --delete-branch
+          echo "✓ PR #$PR_NUMBER merged"
+
+          # --- Post-merge: re-trigger dependant PRs ---
+          echo "🔍 Looking for PRs that depend on #$ISSUE_NUMBER..."
+          DEPENDANT_ISSUES=$(gh issue list --state open --json number,body --jq '
+            .[] | select(.body | test("depends-on:\\s*(#[0-9]+[,\\s]*)*#'"$ISSUE_NUMBER"'", "i")) | .number
+          ' 2>/dev/null || echo "")
+          for DEP_ISSUE in $DEPENDANT_ISSUES; do
+            DEP_PR=$(gh pr list --state open --head "feat/auto-$DEP_ISSUE" --json number --jq '.[0].number' 2>/dev/null || echo "")
+            if [ -n "$DEP_PR" ]; then
+              echo "🔄 Re-dispatching opencode.yml for PR #$DEP_PR (issue #$DEP_ISSUE)"
+              gh workflow run opencode.yml -f issue_number="$DEP_ISSUE" --repo "${{ github.repository }}"
+              sleep 3
+            fi
+          done
 
       - name: Implement (fix existing PR)
         if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr != '' && env.SKIP_DEV_AGENT != 'true'
