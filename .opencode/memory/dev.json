@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-07-09T18:31:04Z",
+  "last_session": "2026-07-09T19:16:24Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -24,6 +24,11 @@
     },
     {
       "lesson": "PR #487 fix: completed missing shop price adjustment (150/250/350) based on essence economy ratio (13.1/18.5 ≈ 0.708). Purchase rate 0% < 10% threshold triggered price reduction. Updated shopConstants.ts, shop-utils.test.ts, shop-panel.test.tsx.",
+      "issue": "#487",
+      "date": "2026-07-09"
+    },
+    {
+      "lesson": "PR #487 CI fix: Remote feat/auto-483 branch was polluted with unrelated workflow file changes (.github/workflows/opencode.yml, reviewer.yml) that violate project rules and break CI. Solution: rebased local clean branch on master and force-pushed to overwrite. The inline reviewer in master's opencode.yml (commit baf7302) automatically detected the clean PR and merged it. Root cause of original CI failure: ci.yml dispatch step tries to run gh workflow run reviewer.yml which fails because workflow_dispatch is not recognized on master. Master's fix (baf7302) bypasses this with inline review in opencode.yml.",
       "issue": "#487",
       "date": "2026-07-09"
     }
