@@ -1,6 +1,17 @@
 {
   "version": 1,
   "last_updated": "2026-07-09T18:00:00Z",
+  "active_campaigns": [
+    {
+      "parent_issue": 476,
+      "title": "Essence Economy & Shop Balance",
+      "sub_issues": [478, 479, 480, 481, 482, 483],
+      "level_0_dispatched": true,
+      "level_0_sub_issues": [478, 479, 480, 481, 482],
+      "level_1_sub_issues": [483],
+      "created": "2026-07-09T18:30:00Z"
+    }
+  ],
   "known_issues": [
     {
       "id": "grep-conflict-markers",
