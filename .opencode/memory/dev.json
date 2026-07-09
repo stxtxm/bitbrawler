@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": null,
+  "last_session": "2026-07-09T18:31:04Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -16,5 +16,11 @@
     "error_handling": "Utiliser try/catch avec fallback, pas de throw non géré",
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
-  "session_notes": []
+  "session_notes": [
+    {
+      "lesson": "QA stats shop purchase field is null for legacy runs - cannot compute purchase rates from historical data alone. Essence per run must be computed from lootbox item rarities and ESSENCE_YIELD, not from actual forge activity which isnt tracked.",
+      "issue": "#483",
+      "date": "2026-07-09"
+    }
+  ]
 }
