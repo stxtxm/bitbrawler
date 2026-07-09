@@ -18,7 +18,6 @@ import {
   clearLocalData, saveLocalData, loadLocalData,
   SyncResult,
 } from '../utils/persistenceUtils';
-import { ESSENCE_SOFT_CAP } from '../data/forgeConstants';
 import {
   getEssenceYield,
   clampEssence,
@@ -1075,7 +1074,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     if (!activeCharacter?.id) return null;
     if (amount <= 0) return null;
 
-    const newEssence = Math.min((activeCharacter.essence ?? 0) + amount, ESSENCE_SOFT_CAP);
+    const newEssence = clampEssence((activeCharacter.essence ?? 0) + amount, activeCharacter.essence ?? 0);
     const updatedChar = normalizeCharacter({
       ...activeCharacter,
       essence: newEssence,

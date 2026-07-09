@@ -8,7 +8,7 @@ import {
   UPGRADE_COST_SCALING,
   MAX_UPGRADE_LEVEL,
   LUCKY_PROC_CHANCE,
-  ESSENCE_SOFT_CAP,
+  ESSENCE_HARD_CAP,
 } from '../data/forgeConstants';
 import { RARITY_RANK } from './lootboxUtils';
 
@@ -29,11 +29,13 @@ export const salvageItems = (items: PixelItemAsset[]): number => {
 };
 
 /**
- * Clamp essence to soft cap when gaining, but never reduce existing essence.
+ * Clamp essence to hard cap when gaining, but never reduce existing essence.
+ * Soft cap (750) is used for visual warnings only — hard cap (1000) is the
+ * absolute maximum.
  */
 export const clampEssence = (value: number, current: number): number => {
   if (value > current) {
-    return Math.min(value, Math.max(current, ESSENCE_SOFT_CAP));
+    return Math.min(value, Math.max(current, ESSENCE_HARD_CAP));
   }
   return value;
 };
