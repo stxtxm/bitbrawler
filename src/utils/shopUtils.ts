@@ -2,7 +2,7 @@ import { Character } from '../types/Character';
 import { PixelItemAsset } from '../types/Item';
 import { SHOP_OFFERS } from '../data/shopConstants';
 import { rollSimpleLootbox } from './lootboxUtils';
-import { isOfferPurchased, markOfferPurchased, loadShopPurchases, saveShopPurchases } from './shopStorage';
+import { isOfferPurchased, markOfferPurchased, isRerollUsed, markRerollUsed, loadShopPurchases, saveShopPurchases } from './shopStorage';
 
 export interface ShopOffer {
   index: number;
@@ -182,4 +182,80 @@ export function buyShopOffer(
     essence: newEssence,
     inventory: newInventory,
   } as Character;
+}
+
+const REROLL_COST = 25;
+
+/**
+ * Reroll today's shop offers for 25 essence.
+ * Checks that the player has enough essence and has not already rerolled today.
+ * Returns the updated character (with essence deducted) and new offers, or null.
+ */
+export function rerollShopOffers(
+  character: Character,
+  items: PixelItemAsset[],
+  dateStr?: string,
+): { character: Character; offers: ShopOffer[] } | null {
+  const today = dateStr ?? new Date().toISOString().slice(0, 10);
+  const charId = character.id ?? character.seed;
+
+  // Check essence
+  if ((character.essence ?? 0) < REROLL_COST) return null;
+
+  // Check reroll not already used today
+  if (isRerollUsed(charId, today)) return null;
+
+  // Generate new offers with a reroll seed (append '-reroll')
+  const rerollSeed = getDailySeed(charId, `${today}-reroll`);
+  const rand = seededRandom(rerollSeed);
+
+  const charLevel = character.level;
+
+  const offers: ShopOffer[] = SHOP_OFFERS.map((config, index) => {
+    if (config.type === 'lootbox') {
+      return {
+        index,
+        type: 'lootbox' as const,
+        price: config.price,
+        label: config.label,
+        item: null,
+      };
+    }
+
+    const eligible = items.filter(
+      (item) => item.requiredLevel <= charLevel && item.rarity !== 'legendary',
+    );
+
+    const pool = eligible.filter((item) =>
+      config.rarityPool ? config.rarityPool.includes(item.rarity) : true,
+    );
+
+    const owned = new Set(character.inventory ?? []);
+    const fresh = pool.filter((item) => !owned.has(item.id));
+
+    const source = fresh.length > 0 ? fresh : pool;
+    const picked = pickItem(source, rand);
+
+    return {
+      index,
+      type: 'item' as const,
+      price: config.price,
+      label: config.label,
+      item: picked ? { id: picked.id, name: picked.name, rarity: picked.rarity } : null,
+    };
+  });
+
+  // Deduct essence
+  const newEssence = (character.essence ?? 0) - REROLL_COST;
+
+  // Mark reroll used
+  markRerollUsed(charId, today);
+
+  return {
+    character: {
+      ...character,
+      essence: newEssence,
+    } as Character,
+    offers,
+  };
 }

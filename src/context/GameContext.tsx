@@ -25,7 +25,7 @@ import {
   performFusion,
   performUpgrade,
 } from '../utils/forgeUtils';
-import { buyShopOffer as buyShopOfferUtil } from '../utils/shopUtils';
+import { buyShopOffer as buyShopOfferUtil, rerollShopOffers as rerollShopOffersUtil, type ShopOffer } from '../utils/shopUtils';
 import {
   checkMedals,
   applyMedalReward,
@@ -73,6 +73,7 @@ interface GameContextType {
   fuseItems: (items: PixelItemAsset[]) => Promise<{ result: PixelItemAsset | null; updatedChar: Character | null }>;
   upgradeItem: (itemId: string) => Promise<Character | null>;
   buyShopOffer: (index: number) => Promise<Character | null>;
+  rerollShopOffers: () => Promise<ShopOffer[] | null>;
   lastUnlockedMedal: MedalDef | null;
   clearMedalNotification: () => void;
   pityCount: number;
@@ -1295,6 +1296,39 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [activeCharacter, handleDbError, persistCharacter]);
 
+  const rerollShopOffersAction = useCallback(async (): Promise<ShopOffer[] | null> => {
+    if (!activeCharacter?.id) return null;
+
+    await syncIdleBeforeAction();
+
+    const result = rerollShopOffersUtil(activeCharacter, ITEM_ASSETS);
+    if (!result) return null;
+
+    const normalized = normalizeCharacter(result.character);
+
+    try {
+      await supabase
+        .from('characters')
+        .update({
+          essence: normalized.essence,
+        })
+        .eq('id', activeCharacter.id!);
+      persistCharacter(normalized);
+
+      checkAndApplyMedals(normalized, {}).then(charWithMedals => {
+        persistCharacter(charWithMedals);
+        if (hasMedalChanges(normalized, charWithMedals)) {
+          syncCharacterToBackend(charWithMedals).catch(() => {});
+        }
+      }).catch(() => {});
+
+      return result.offers;
+    } catch (error: any) {
+      handleDbError(error, 'shop-reroll');
+      throw new Error('Connection error - reroll not saved.');
+    }
+  }, [activeCharacter, handleDbError, persistCharacter]);
+
   // Auto-retry DB connection when user returns to the page after being in background.
   // Prevents the app getting stuck in offline mode after transient network blips.
   useEffect(() => {
@@ -1342,6 +1376,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     fuseItems,
     upgradeItem,
     buyShopOffer: buyShopOfferAction,
+    rerollShopOffers: rerollShopOffersAction,
     lastUnlockedMedal,
     clearMedalNotification,
     pityCount: lootboxPityCount,

@@ -3,16 +3,19 @@ import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
 import { SHOP_OFFERS } from '../../data/shopConstants';
 import { ITEM_ASSETS } from '../../data/itemAssets';
-import { getShopOffers, canBuyOffer, isOfferSoldOut, ShopOffer } from '../../utils/shopUtils';
+import { getShopOffers, canBuyOffer, isOfferSoldOut, type ShopOffer } from '../../utils/shopUtils';
+import { isRerollUsed } from '../../utils/shopStorage';
 import { PixelItemIcon } from '../PixelItemIcon';
 import '../../styles/components/_forge.scss';
+
+const REROLL_COST = 25;
 
 interface ShopPanelProps {
   onClose: () => void;
 }
 
 export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
-  const { activeCharacter, essence, buyShopOffer } = useGame();
+  const { activeCharacter, essence, buyShopOffer, rerollShopOffers } = useGame();
   const { notify } = useNotification();
 
   const [buying, setBuying] = useState(false);
@@ -20,16 +23,25 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
   const [soldOut, setSoldOut] = useState<boolean[]>([false, false, false]);
   const [purchasedIndex, setPurchasedIndex] = useState<number | null>(null);
   const [showItemGlow, setShowItemGlow] = useState(false);
+  const [showRerollConfirm, setShowRerollConfirm] = useState(false);
+  const [rerolling, setRerolling] = useState(false);
+  const [rerolledOffers, setRerolledOffers] = useState<ShopOffer[] | null>(null);
+  const [rerollUsed, setRerollUsed] = useState(false);
 
   const offers = useMemo<ShopOffer[]>(() => {
     if (!activeCharacter) return [];
+    if (rerolledOffers) return rerolledOffers;
     return getShopOffers(activeCharacter, ITEM_ASSETS);
-  }, [activeCharacter]);
+  }, [activeCharacter, rerolledOffers]);
 
   useEffect(() => {
     if (!activeCharacter) return;
     const newSoldOut = SHOP_OFFERS.map((_, i) => isOfferSoldOut(i, activeCharacter));
     setSoldOut(newSoldOut);
+    const charId = activeCharacter.id ?? activeCharacter.seed;
+    setRerollUsed(isRerollUsed(charId));
+    // Reset rerolled offers if character changes
+    setRerolledOffers(null);
   }, [activeCharacter]);
 
   const handleBuyClick = useCallback((index: number) => {
@@ -67,6 +79,41 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
   const handleCancel = useCallback(() => {
     setConfirmIndex(null);
   }, []);
+
+  const handleRerollClick = useCallback(() => {
+    if (rerolling || rerollUsed) return;
+    if ((activeCharacter?.essence ?? 0) < REROLL_COST) {
+      notify('Not enough essence to reroll (25 🜁).', 'error', 3000);
+      return;
+    }
+    setShowRerollConfirm(true);
+  }, [rerolling, rerollUsed, activeCharacter, notify]);
+
+  const handleRerollConfirm = useCallback(async () => {
+    if (rerolling) return;
+    setRerolling(true);
+    try {
+      const newOffers = await rerollShopOffers();
+      if (newOffers) {
+        setRerolledOffers(newOffers);
+        setRerollUsed(true);
+        notify('Shop offers rerolled! (-25 🜁)', 'success', 3000);
+      } else {
+        notify('Reroll failed — not enough essence or already used today.', 'error', 3000);
+      }
+    } catch {
+      notify('Failed to reroll. Try again.', 'error', 3000);
+    } finally {
+      setRerolling(false);
+      setShowRerollConfirm(false);
+    }
+  }, [rerolling, rerollShopOffers, notify]);
+
+  const handleRerollCancel = useCallback(() => {
+    setShowRerollConfirm(false);
+  }, []);
+
+  const canReroll = !rerollUsed && !rerolling && (activeCharacter?.essence ?? 0) >= REROLL_COST;
 
   if (!activeCharacter) return null;
 
@@ -200,7 +247,45 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
         })}
       </div>
 
-      {/* Confirmation overlay */}
+      {/* Reroll button */}
+      <div className="shop-reroll-row">
+        <button
+          className={`shop-reroll-btn ${rerollUsed ? 'shop-reroll-used' : ''}`}
+          onClick={handleRerollClick}
+          disabled={!canReroll}
+          title={rerollUsed ? 'Already rerolled today' : !canReroll ? `Need ${REROLL_COST} 🜁` : `Reroll offers for ${REROLL_COST} 🜁`}
+          aria-label="Reroll shop offers"
+        >
+          {rerollUsed ? 'REROLLED' : rerolling ? 'REROLLING...' : `RELANCE (${REROLL_COST} 🜁)`}
+        </button>
+      </div>
+
+      {/* Reroll confirmation overlay */}
+      {showRerollConfirm && (
+        <div className="forge-confirm-overlay">
+          <div className="forge-confirm-dialog">
+            <div className="forge-confirm-title">Confirm Reroll</div>
+            <div className="forge-confirm-item">
+              <span className="forge-confirm-item-name">Refresh all offers</span>
+              <span className="forge-confirm-yield">{REROLL_COST} 🜁</span>
+            </div>
+            <div className="forge-confirm-warning">This will replace all 3 offers with new ones.</div>
+            <div className="forge-confirm-actions">
+              <button className="forge-confirm-cancel" onClick={handleRerollCancel}>Cancel</button>
+              <button
+                className="forge-confirm-ok"
+                onClick={handleRerollConfirm}
+                disabled={rerolling}
+                aria-label="Confirm reroll"
+              >
+                {rerolling ? 'REROLLING...' : 'CONFIRM'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Purchase confirmation overlay */}
       {confirmIndex !== null && (
         <div className="forge-confirm-overlay">
           <div className="forge-confirm-dialog">

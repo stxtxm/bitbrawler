@@ -10,6 +10,7 @@ let getShopOffers: (character: Character, items: typeof ITEM_ASSETS, dateStr?: s
 let canBuyOffer: (index: number, character: Character) => boolean;
 let isOfferSoldOut: (index: number, character: Character, dateStr?: string) => boolean;
 let resetDailyPurchases: (character: Character, dateStr?: string) => Character;
+let rerollShopOffers: (character: Character, items: typeof ITEM_ASSETS, dateStr?: string) => { character: Character; offers: ShopOffer[] } | null;
 
 interface ShopOffer {
   index: number;
@@ -63,6 +64,7 @@ describe('shop-utils (TDD)', () => {
     canBuyOffer = mod.canBuyOffer;
     isOfferSoldOut = mod.isOfferSoldOut;
     resetDailyPurchases = mod.resetDailyPurchases;
+    rerollShopOffers = mod.rerollShopOffers;
   });
 
   // ─── getShopOffers ───────────────────────────────────────────────────────
@@ -355,6 +357,86 @@ describe('shop-utils (TDD)', () => {
     it('third offer is lootbox type with null pool', () => {
       expect(SHOP_OFFERS[2].type).toBe('lootbox');
       expect(SHOP_OFFERS[2].rarityPool).toBeNull();
+    });
+  });
+
+  // ─── rerollShopOffers ──────────────────────────────────────────────────────
+
+  describe('rerollShopOffers', () => {
+    it('returns new offers when character has enough essence and reroll not used', () => {
+      const char = makeCharacter({ essence: 100 });
+      const result = rerollShopOffers(char, ITEM_ASSETS, getTodayStr());
+      expect(result).not.toBeNull();
+      expect(result!.offers).toHaveLength(3);
+      expect(result!.character.essence).toBe(75); // 100 - 25
+    });
+
+    it('returns offers with valid structure', () => {
+      const char = makeCharacter({ essence: 100 });
+      const result = rerollShopOffers(char, ITEM_ASSETS, getTodayStr());
+      expect(result).not.toBeNull();
+      result!.offers.forEach((offer) => {
+        expect(offer).toHaveProperty('index');
+        expect(offer).toHaveProperty('type');
+        expect(offer).toHaveProperty('price');
+        expect(offer).toHaveProperty('label');
+      });
+    });
+
+    it('returns null when character does not have 25 essence', () => {
+      const char = makeCharacter({ essence: 10 });
+      const result = rerollShopOffers(char, ITEM_ASSETS, getTodayStr());
+      expect(result).toBeNull();
+    });
+
+    it('returns null when reroll already used today', async () => {
+      const storage = await import('../../utils/shopStorage');
+      storage.markRerollUsed('test-char', getTodayStr());
+      const char = makeCharacter({ essence: 100 });
+      const result = rerollShopOffers(char, ITEM_ASSETS, getTodayStr());
+      expect(result).toBeNull();
+    });
+
+    it('allows reroll again on a different day', async () => {
+      const storage = await import('../../utils/shopStorage');
+      storage.markRerollUsed('test-char', '2026-07-06');
+      const char = makeCharacter({ essence: 100 });
+      const result = rerollShopOffers(char, ITEM_ASSETS, getTodayStr());
+      expect(result).not.toBeNull();
+      expect(result!.offers).toHaveLength(3);
+    });
+
+    it('returns different offers than the original getShopOffers', () => {
+      const char = makeCharacter({ essence: 100, level: 10 });
+      const original = getShopOffers(char, ITEM_ASSETS, getTodayStr(), () => 0);
+      const result = rerollShopOffers(char, ITEM_ASSETS, getTodayStr());
+      expect(result).not.toBeNull();
+      // At least one offer should differ due to different seed
+      const originalIds = original.map(o => o.item?.id ?? 'lootbox');
+      const rerollIds = result!.offers.map(o => o.item?.id ?? 'lootbox');
+      const allSame = originalIds.every((id, i) => id === rerollIds[i]);
+      // With different seeds, they should not all be identical
+      expect(allSame).toBe(false);
+    });
+
+    it('deducts exactly 25 essence from character', () => {
+      const char = makeCharacter({ essence: 200 });
+      const result = rerollShopOffers(char, ITEM_ASSETS, getTodayStr());
+      expect(result).not.toBeNull();
+      expect(result!.character.essence).toBe(175);
+    });
+
+    it('does not modify the original character object (immutable)', () => {
+      const char = makeCharacter({ essence: 100 });
+      const originalEssence = char.essence;
+      rerollShopOffers(char, ITEM_ASSETS, getTodayStr());
+      expect(char.essence).toBe(originalEssence);
+    });
+
+    it('returns null when essence is 0', () => {
+      const char = makeCharacter({ essence: 0 });
+      const result = rerollShopOffers(char, ITEM_ASSETS, getTodayStr());
+      expect(result).toBeNull();
     });
   });
 });
