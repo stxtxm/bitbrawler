@@ -454,8 +454,13 @@ jobs:
           fi
 
           # --- Approve & merge ---
-          echo "✅ All checks passed — approving and merging PR #$PR_NUMBER"
-          gh pr review --approve "$PR_NUMBER" --body "✅ Revue automatique: CI verte, dépendances résolues, pas de migration SQL."
+          echo "✅ All checks passed — merging PR #$PR_NUMBER"
+          AUTHOR=$(gh pr view "$PR_NUMBER" --json author --jq '.author.login // ""' 2>/dev/null || echo "")
+          if [ "$AUTHOR" = "github-actions" ] || [ "$AUTHOR" = "github-actions[bot]" ]; then
+            echo "ℹ Auto-authored PR — merging directly (skip approval)"
+          else
+            gh pr review --approve "$PR_NUMBER" --body "✅ Revue automatique: CI verte, dépendances résolues, pas de migration SQL."
+          fi
           gh pr merge "$PR_NUMBER" --squash --delete-branch
           echo "✓ PR #$PR_NUMBER merged"
 
