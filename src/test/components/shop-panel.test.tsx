@@ -79,11 +79,17 @@ describe('ShopPanel', () => {
     expect(screen.getByText(/SHOP/)).toBeTruthy();
   });
 
-  it('renders all 3 shop offers', () => {
+  it('renders all 4 shop offers', () => {
     setupGame();
     render(<ShopPanel onClose={vi.fn()} />);
+    // Epic guarantee may replace Pièce rare with Objet épique
     for (const offer of SHOP_OFFERS) {
-      expect(screen.getByText(offer.label)).toBeTruthy();
+      const el = screen.queryByText(offer.label);
+      if (offer.label === 'Pièce rare' && !el) {
+        expect(screen.getByText('Objet épique')).toBeTruthy();
+      } else {
+        expect(el).toBeTruthy();
+      }
     }
   });
 
@@ -101,13 +107,13 @@ describe('ShopPanel', () => {
     }
   });
 
-  it('shows item name for offer 0 and 1 (item type)', () => {
+  it('shows item name for item type offers', () => {
     setupGame();
     render(<ShopPanel onClose={vi.fn()} />);
     // At least the item offers should show item names
     const shopItems = SHOP_OFFERS.filter(o => o.type === 'item');
     // Each item offer should have a name displayed somewhere
-    expect(shopItems.length).toBe(2);
+    expect(shopItems.length).toBe(3);
   });
 
   it('shows lootbox label for offer 2', () => {
