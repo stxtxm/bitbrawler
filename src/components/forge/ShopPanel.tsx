@@ -1,39 +1,54 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
+import { SHOP_OFFERS } from '../../data/shopConstants';
+import { ESSENCE_HARD_CAP } from '../../data/forgeConstants';
 import { ITEM_ASSETS } from '../../data/itemAssets';
-import { getShopOffers, canBuyOffer, isOfferSoldOut, ShopOffer } from '../../utils/shopUtils';
+import { getShopOffers, canBuyOffer, isOfferSoldOut, type ShopOffer } from '../../utils/shopUtils';
+import { isRerollUsed } from '../../utils/shopStorage';
 import { PixelItemIcon } from '../PixelItemIcon';
+import { EssenceGauge } from '../EssenceGauge';
 import '../../styles/components/_forge.scss';
+
+const REROLL_COST = 25;
 
 interface ShopPanelProps {
   onClose: () => void;
 }
 
 export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
-  const { activeCharacter, essence, buyShopOffer } = useGame();
+  const { activeCharacter, essence, buyShopOffer, rerollShopOffers } = useGame();
   const { notify } = useNotification();
 
   const [buying, setBuying] = useState(false);
   const [confirmIndex, setConfirmIndex] = useState<number | null>(null);
-  const [soldOut, setSoldOut] = useState<boolean[]>([]);
+  const [soldOut, setSoldOut] = useState<boolean[]>([false, false, false]);
   const [purchasedIndex, setPurchasedIndex] = useState<number | null>(null);
   const [showItemGlow, setShowItemGlow] = useState(false);
+  const [showRerollConfirm, setShowRerollConfirm] = useState(false);
+  const [rerolling, setRerolling] = useState(false);
+  const [rerolledOffers, setRerolledOffers] = useState<ShopOffer[] | null>(null);
+  const [rerollUsed, setRerollUsed] = useState(false);
 
   const offers = useMemo<ShopOffer[]>(() => {
     if (!activeCharacter) return [];
+    if (rerolledOffers) return rerolledOffers;
     return getShopOffers(activeCharacter, ITEM_ASSETS);
-  }, [activeCharacter]);
+  }, [activeCharacter, rerolledOffers]);
 
   useEffect(() => {
-    if (!activeCharacter || offers.length === 0) return;
-    const newSoldOut = offers.map((o) => isOfferSoldOut(o.index, activeCharacter));
+    if (!activeCharacter) return;
+    const newSoldOut = SHOP_OFFERS.map((_, i) => isOfferSoldOut(i, activeCharacter));
     setSoldOut(newSoldOut);
-  }, [activeCharacter, offers]);
+    const charId = activeCharacter.id ?? activeCharacter.seed;
+    setRerollUsed(isRerollUsed(charId));
+    // Reset rerolled offers if character changes
+    setRerolledOffers(null);
+  }, [activeCharacter]);
 
-  const handleBuyClick = useCallback((offerIndex: number, arrayIndex: number) => {
-    if (buying || soldOut[arrayIndex]) return;
-    setConfirmIndex(offerIndex);
+  const handleBuyClick = useCallback((index: number) => {
+    if (buying || soldOut[index]) return;
+    setConfirmIndex(index);
   }, [buying, soldOut]);
 
   const handleConfirm = useCallback(async () => {
@@ -42,14 +57,12 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
     try {
       const result = await buyShopOffer(confirmIndex);
       if (result) {
-        const arrIndex = offers.findIndex(o => o.index === confirmIndex);
         const updatedSoldOut = [...soldOut];
-        if (arrIndex >= 0) updatedSoldOut[arrIndex] = true;
+        updatedSoldOut[confirmIndex] = true;
         setSoldOut(updatedSoldOut);
-        setPurchasedIndex(arrIndex);
+        setPurchasedIndex(confirmIndex);
         setShowItemGlow(true);
-        const purchasedOffer = offers.find(o => o.index === confirmIndex);
-        notify(`${purchasedOffer ? purchasedOffer.label : 'Item'} purchased!`, 'success', 3000);
+        notify(`${SHOP_OFFERS[confirmIndex].label} purchased!`, 'success', 3000);
         setTimeout(() => {
           setShowItemGlow(false);
           setPurchasedIndex(null);
@@ -63,16 +76,46 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
       setBuying(false);
       setConfirmIndex(null);
     }
-  }, [confirmIndex, buying, buyShopOffer, notify, soldOut, offers]);
+  }, [confirmIndex, buying, buyShopOffer, notify, soldOut]);
 
   const handleCancel = useCallback(() => {
     setConfirmIndex(null);
   }, []);
 
-  const confirmOffer = useMemo(() => {
-    if (confirmIndex === null) return null;
-    return offers.find(o => o.index === confirmIndex) ?? null;
-  }, [confirmIndex, offers]);
+  const handleRerollClick = useCallback(() => {
+    if (rerolling || rerollUsed) return;
+    if ((activeCharacter?.essence ?? 0) < REROLL_COST) {
+      notify('Not enough essence to reroll (25 🜁).', 'error', 3000);
+      return;
+    }
+    setShowRerollConfirm(true);
+  }, [rerolling, rerollUsed, activeCharacter, notify]);
+
+  const handleRerollConfirm = useCallback(async () => {
+    if (rerolling) return;
+    setRerolling(true);
+    try {
+      const newOffers = await rerollShopOffers();
+      if (newOffers) {
+        setRerolledOffers(newOffers);
+        setRerollUsed(true);
+        notify('Shop offers rerolled! (-25 🜁)', 'success', 3000);
+      } else {
+        notify('Reroll failed — not enough essence or already used today.', 'error', 3000);
+      }
+    } catch {
+      notify('Failed to reroll. Try again.', 'error', 3000);
+    } finally {
+      setRerolling(false);
+      setShowRerollConfirm(false);
+    }
+  }, [rerolling, rerollShopOffers, notify]);
+
+  const handleRerollCancel = useCallback(() => {
+    setShowRerollConfirm(false);
+  }, []);
+
+  const canReroll = !rerollUsed && !rerolling && (activeCharacter?.essence ?? 0) >= REROLL_COST;
 
   if (!activeCharacter) return null;
 
@@ -89,6 +132,12 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
           <span className="forge-essence-label">ESSENCE</span>
           <span className="forge-essence-value">{essence.toFixed(2)}</span>
         </div>
+        {essence > 0 && <EssenceGauge current={essence} />}
+        {essence >= ESSENCE_HARD_CAP && (
+          <div className="forge-essence-warning forge-essence-hard-cap">
+            🔴 Essence au maximum! ({ESSENCE_HARD_CAP}/{ESSENCE_HARD_CAP})
+          </div>
+        )}
         <div className="forge-empty-state">
           <div className="forge-empty-text">No offers available today.</div>
         </div>
@@ -109,6 +158,12 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
         <span className="forge-essence-label">ESSENCE</span>
         <span className="forge-essence-value">{essence.toFixed(2)}</span>
       </div>
+      {essence > 0 && <EssenceGauge current={essence} />}
+      {essence >= ESSENCE_HARD_CAP && (
+        <div className="forge-essence-warning forge-essence-hard-cap">
+          🔴 Essence au maximum! ({ESSENCE_HARD_CAP}/{ESSENCE_HARD_CAP})
+        </div>
+      )}
 
       {/* Canopy / Awning */}
       <div className="shop-canopy">
@@ -133,8 +188,8 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
       <div className="shop-vitrine">
         {offers.map((offer, index) => {
           const isSold = soldOut[index];
-          const canBuy = canBuyOffer(offer.index, activeCharacter) && !isSold && !buying;
-          const isPurchasing = confirmIndex === offer.index;
+          const canBuy = canBuyOffer(index, activeCharacter) && !isSold && !buying;
+          const isPurchasing = confirmIndex === index;
 
           return (
             <div
@@ -194,7 +249,7 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
               {/* Buy / Sold button */}
               <button
                 className={`shop-buy-btn ${isSold ? 'shop-sold-btn' : ''}`}
-                onClick={() => handleBuyClick(offer.index, index)}
+                onClick={() => handleBuyClick(index)}
                 disabled={!canBuy}
                 title={!canBuy && !isSold ? 'Not enough essence' : ''}
                 aria-label={`Buy ${offer.label}`}
@@ -206,17 +261,55 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
         })}
       </div>
 
-      {/* Confirmation overlay */}
-      {confirmOffer && (
-        <div className="forge-confirm-overlay" key="confirm">
+      {/* Reroll button */}
+      <div className="shop-reroll-row">
+        <button
+          className={`shop-reroll-btn ${rerollUsed ? 'shop-reroll-used' : ''}`}
+          onClick={handleRerollClick}
+          disabled={!canReroll}
+          title={rerollUsed ? 'Already rerolled today' : !canReroll ? `Need ${REROLL_COST} 🜁` : `Reroll offers for ${REROLL_COST} 🜁`}
+          aria-label="Reroll shop offers"
+        >
+          {rerollUsed ? 'REROLLED' : rerolling ? 'REROLLING...' : `RELANCE (${REROLL_COST} 🜁)`}
+        </button>
+      </div>
+
+      {/* Reroll confirmation overlay */}
+      {showRerollConfirm && (
+        <div className="forge-confirm-overlay">
+          <div className="forge-confirm-dialog">
+            <div className="forge-confirm-title">Confirm Reroll</div>
+            <div className="forge-confirm-item">
+              <span className="forge-confirm-item-name">Refresh all offers</span>
+              <span className="forge-confirm-yield">{REROLL_COST} 🜁</span>
+            </div>
+            <div className="forge-confirm-warning">This will replace all 3 offers with new ones.</div>
+            <div className="forge-confirm-actions">
+              <button className="forge-confirm-cancel" onClick={handleRerollCancel}>Cancel</button>
+              <button
+                className="forge-confirm-ok"
+                onClick={handleRerollConfirm}
+                disabled={rerolling}
+                aria-label="Confirm reroll"
+              >
+                {rerolling ? 'REROLLING...' : 'CONFIRM'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Purchase confirmation overlay */}
+      {confirmIndex !== null && (
+        <div className="forge-confirm-overlay">
           <div className="forge-confirm-dialog">
             <div className="forge-confirm-title">Confirm Purchase</div>
             <div className="forge-confirm-item">
-              <span className="forge-confirm-item-name">{confirmOffer.label}</span>
-              {confirmOffer.item && (
-                <span className="forge-confirm-item-rarity">{confirmOffer.item.rarity.toUpperCase()}</span>
+              <span className="forge-confirm-item-name">{offers[confirmIndex].label}</span>
+              {offers[confirmIndex].item && (
+                <span className="forge-confirm-item-rarity">{offers[confirmIndex].item!.rarity.toUpperCase()}</span>
               )}
-              <span className="forge-confirm-yield">{confirmOffer.price} 💎</span>
+              <span className="forge-confirm-yield">{SHOP_OFFERS[confirmIndex].price} 💎</span>
             </div>
             <div className="forge-confirm-actions">
               <button className="forge-confirm-cancel" onClick={handleCancel}>Cancel</button>

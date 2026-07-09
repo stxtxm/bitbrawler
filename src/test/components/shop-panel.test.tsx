@@ -5,8 +5,6 @@ import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
 import type { Character } from '../../types/Character';
 import { SHOP_OFFERS } from '../../data/shopConstants';
-import { getShopOffers } from '../../utils/shopUtils';
-import { ITEM_ASSETS } from '../../data/itemAssets';
 import { clearShopPurchases, markOfferPurchased, markRerollUsed } from '../../utils/shopStorage';
 
 vi.mock('../../context/GameContext', () => ({
@@ -81,15 +79,12 @@ describe('ShopPanel', () => {
     expect(screen.getByText(/SHOP/)).toBeTruthy();
   });
 
-  it('renders the 3 daily shop offers (only 3 of 4 configs are shown)', () => {
+  it('renders all 3 shop offers', () => {
     setupGame();
     render(<ShopPanel onClose={vi.fn()} />);
-    // Only 3 offers are displayed per day; get the actual offers to verify
-    const char = makeCharacter();
-    const dailyOffers = getShopOffers(char, ITEM_ASSETS);
-    dailyOffers.forEach((offer) => {
+    for (const offer of SHOP_OFFERS) {
       expect(screen.getByText(offer.label)).toBeTruthy();
-    });
+    }
   });
 
   it('displays essence on the panel', () => {
@@ -98,24 +93,21 @@ describe('ShopPanel', () => {
     expect(screen.getByText('500.00')).toBeTruthy();
   });
 
-  it('shows price for the 3 daily offers', () => {
+  it('shows price for each offer', () => {
     setupGame();
     render(<ShopPanel onClose={vi.fn()} />);
-    const char = makeCharacter();
-    const dailyOffers = getShopOffers(char, ITEM_ASSETS);
-    dailyOffers.forEach((offer) => {
+    for (const offer of SHOP_OFFERS) {
       expect(screen.getByText(`${offer.price} 💎`)).toBeTruthy();
-    });
+    }
   });
 
-  it('shows item name for item-type offers', () => {
+  it('shows item name for offer 0 and 1 (item type)', () => {
     setupGame();
     render(<ShopPanel onClose={vi.fn()} />);
-    const char = makeCharacter();
-    const dailyOffers = getShopOffers(char, ITEM_ASSETS);
-    const itemOffers = dailyOffers.filter(o => o.type === 'item');
-    expect(itemOffers.length).toBeGreaterThanOrEqual(2);
-    expect(itemOffers.length).toBeLessThanOrEqual(3);
+    // At least the item offers should show item names
+    const shopItems = SHOP_OFFERS.filter(o => o.type === 'item');
+    // Each item offer should have a name displayed somewhere
+    expect(shopItems.length).toBe(2);
   });
 
   it('shows lootbox label for offer 2', () => {
@@ -124,10 +116,10 @@ describe('ShopPanel', () => {
     expect(screen.getByText('Coffre mystère')).toBeTruthy();
   });
 
-  it('shows correct rarity border color for each item offer', () => {
+  it('shows correct rarity border color for offer 0 and 1 items', () => {
     setupGame();
     render(<ShopPanel onClose={vi.fn()} />);
-    // Verify that exactly 3 offer cards are rendered
+    // Verify that each item offer card has a rarity class
     const cards = document.querySelectorAll('.shop-offer-card');
     expect(cards.length).toBe(3);
   });

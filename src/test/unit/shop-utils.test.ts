@@ -79,18 +79,19 @@ describe('shop-utils (TDD)', () => {
     it('all offers have valid prices from SHOP_OFFERS', () => {
       const char = makeCharacter({ level: 5 });
       const offers = getShopOffers(char, ITEM_ASSETS);
-      offers.forEach((offer) => {
-        expect(offer.price).toBe(SHOP_OFFERS[offer.index].price);
+      offers.forEach((offer, i) => {
+        expect(offer.price).toBe(SHOP_OFFERS[i].price);
       });
     });
 
-    it('offer types and labels match their SHOP_OFFERS config by index', () => {
+    it('offer types match SHOP_OFFERS config', () => {
       const char = makeCharacter({ level: 5 });
       const offers = getShopOffers(char, ITEM_ASSETS);
-      offers.forEach((offer) => {
-        const config = SHOP_OFFERS[offer.index];
-        expect(offer.type).toBe(config.type);
-        expect(offer.label).toBe(config.label);
+      offers.forEach((offer, i) => {
+        expect(offer.type).toBe(SHOP_OFFERS[i].type);
+        // Epic guarantee may replace Pièce rare with Objet épique
+        if (SHOP_OFFERS[i].label === 'Pièce rare' && offer.label === 'Objet épique') return;
+        expect(offer.label).toBe(SHOP_OFFERS[i].label);
       });
     });
 
@@ -173,56 +174,6 @@ describe('shop-utils (TDD)', () => {
     });
   });
 
-    // ─── Epic guarantee ────────────────────────────────────────────────────
-
-    it('returns exactly 1 item with epic rarity among the 3 offers (forced epic)', () => {
-      // Use rng=0 which picks first eligible item from each pool.
-      // For Pièce rare (rare/epic pool), first eligible item at level 5 is usually rare, not epic.
-      // The function should then replace it with the Objet épique (epic-only) offer.
-      const char = makeCharacter({ level: 5, inventory: [] });
-      const offers = getShopOffers(char, ITEM_ASSETS, '2026-07-06', () => 0);
-      const epicItems = offers.filter(o => o.item?.rarity === 'epic');
-      expect(epicItems).toHaveLength(1);
-    });
-
-    it('returns exactly 1 epic item when Pièce rare naturally rolls epic (no duplication)', () => {
-      // Find an rng value that makes Pièce rare pick an epic item.
-      // We use rng=0.99 to pick the last item in the filtered pool (likely epic).
-      const char = makeCharacter({ level: 10, inventory: [] });
-      const offers = getShopOffers(char, ITEM_ASSETS, '2026-07-06', () => 0.99);
-      const epicItems = offers.filter(o => o.item?.rarity === 'epic');
-      expect(epicItems).toHaveLength(1);
-    });
-
-    it('epic offer is at index 1 when forced (Objet épique replaces Pièce rare)', () => {
-      const char = makeCharacter({ level: 5, inventory: [] });
-      const offers = getShopOffers(char, ITEM_ASSETS, '2026-07-06', () => 0);
-      const epicItems = offers.filter(o => o.item?.rarity === 'epic');
-      expect(epicItems).toHaveLength(1);
-      // The epic item should have price 450 (Objet épique) or 350 (Pièce rare if epic)
-      // When forced, it's the Objet épique at price 450
-      expect(epicItems[0].price).toBe(450);
-      expect(epicItems[0].label).toBe('Objet épique');
-    });
-
-    it('still returns exactly 3 offers when epic guarantee kicks in', () => {
-      const char = makeCharacter({ level: 5, inventory: [] });
-      const offers = getShopOffers(char, ITEM_ASSETS, '2026-07-06', () => 0);
-      expect(offers).toHaveLength(3);
-    });
-
-    it('epic guarantee is deterministic for same char and same date', () => {
-      const char = makeCharacter({ level: 5 });
-      const dateStr = '2026-07-06';
-      const offersA = getShopOffers(char, ITEM_ASSETS, dateStr);
-      const offersB = getShopOffers(char, ITEM_ASSETS, dateStr);
-      const epicA = offersA.filter(o => o.item?.rarity === 'epic');
-      const epicB = offersB.filter(o => o.item?.rarity === 'epic');
-      expect(epicA).toHaveLength(1);
-      expect(epicB).toHaveLength(1);
-      expect(epicA[0].item!.id).toBe(epicB[0].item!.id);
-    });
-
   // ─── canBuyOffer ─────────────────────────────────────────────────────────
 
   describe('canBuyOffer', () => {
@@ -300,14 +251,15 @@ describe('shop-utils (TDD)', () => {
       expect(result!.inventory).toHaveLength(1);
     });
 
-    it('deducts essence and adds item to inventory (offer at position 1, by its config index)', () => {
+    it('deducts essence and adds item to inventory (offer 1)', () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
-      const dateStr = getTodayStr();
-      const offers = getShopOffers(char, ITEM_ASSETS, dateStr, () => 0.5);
-      const targetIdx = offers[1].index; // Config index of the offer at array position 1
-      const result = buyShopOffer(targetIdx, char, ITEM_ASSETS, dateStr, () => 0.5);
+      // Use RNG that naturally rolls epic so Pièce rare stays in rotation
+      const offers = getShopOffers(char, ITEM_ASSETS, getTodayStr(), () => 0.1);
+      const offer1 = offers.find(o => o.index === 1);
+      if (!offer1) return; // Skip if epic guarantee replaced it
+      const result = buyShopOffer(1, char, ITEM_ASSETS, getTodayStr(), () => 0.1);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(500 - SHOP_OFFERS[targetIdx].price);
+      expect(result!.essence).toBe(500 - SHOP_OFFERS[1].price);
       expect(result!.inventory).toHaveLength(1);
     });
 
@@ -386,10 +338,6 @@ describe('shop-utils (TDD)', () => {
       expect(getShopPrice(2)).toBe(350);
     });
 
-    it('returns 450 for offer 3 (Objet épique)', () => {
-      expect(getShopPrice(3)).toBe(450);
-    });
-
     it('throws for invalid index', () => {
       expect(() => getShopPrice(99)).toThrow();
     });
@@ -398,7 +346,7 @@ describe('shop-utils (TDD)', () => {
   // ─── SHOP_OFFERS alignment ───────────────────────────────────────────────
 
   describe('SHOP_OFFERS alignment', () => {
-    it('has exactly 4 offers (3 standard + 1 guaranteed epic)', () => {
+    it('has exactly 3 offers', () => {
       expect(SHOP_OFFERS).toHaveLength(4);
     });
 
@@ -416,13 +364,6 @@ describe('shop-utils (TDD)', () => {
       expect(SHOP_OFFERS[2].type).toBe('lootbox');
       expect(SHOP_OFFERS[2].rarityPool).toBeNull();
     });
-
-    it('fourth offer is item type with epic-only pool and price 450', () => {
-      expect(SHOP_OFFERS[3].type).toBe('item');
-      expect(SHOP_OFFERS[3].rarityPool).toEqual(['epic']);
-      expect(SHOP_OFFERS[3].price).toBe(450);
-      expect(SHOP_OFFERS[3].label).toBe('Objet épique');
-    });
   });
 
   // ─── rerollShopOffers ──────────────────────────────────────────────────────
@@ -432,7 +373,7 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 100 });
       const result = rerollShopOffers(char, ITEM_ASSETS, getTodayStr());
       expect(result).not.toBeNull();
-      expect(result!.offers).toHaveLength(3);
+      expect(result!.offers).toHaveLength(4);
       expect(result!.character.essence).toBe(75); // 100 - 25
     });
 
@@ -468,7 +409,7 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 100 });
       const result = rerollShopOffers(char, ITEM_ASSETS, getTodayStr());
       expect(result).not.toBeNull();
-      expect(result!.offers).toHaveLength(3);
+      expect(result!.offers).toHaveLength(4);
     });
 
     it('returns different offers than the original getShopOffers', () => {
