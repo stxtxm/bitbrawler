@@ -975,6 +975,8 @@ async function parseEquippedItems(page) {
     }
 
     await invBtn.click()
+    console.log('   Clicked inventory button, waiting for panel to open...')
+    await page.waitForTimeout(300)
 
     // Wait for inventory panel to fully open — use longer timeout and retry logic
     let panelReady = false
@@ -1086,8 +1088,9 @@ async function parseEquippedItemsFromBody(page) {
             const itemNameMatch = trimmed.match(new RegExp(`${slotIcon}\\s*(.+?)(?:\\s*×|$)`))
             if (itemNameMatch) {
               const itemName = itemNameMatch[1].trim()
-              // Skip "EMPTY" slots and corrupted/invalid names (empty or icon-only)
-              if (itemName && itemName.length > 0 && itemName.toUpperCase() !== 'EMPTY') {
+              // Skip "EMPTY" slots and corrupted/invalid names (empty, icon-only, single char, no letters)
+              const isValidName = itemName && itemName.length >= 2 && /[a-zA-Z]/.test(itemName) && itemName.toUpperCase() !== 'EMPTY'
+              if (isValidName) {
                 items.push({ slot: slotIcon, name: itemName })
               } else {
                 console.log(`   ⚠️ parseEquippedItemsFromBody: skipped corrupted item at slot ${slotIcon} (name="${itemName}" length=${itemName.length})`)
@@ -1111,8 +1114,10 @@ async function parseEquippedItemsFromBody(page) {
           const start = Math.max(0, bodyText.lastIndexOf('\n', idx) + 1)
           const end = bodyText.indexOf('\n', idx)
           const line = bodyText.substring(start, end !== -1 ? end : bodyText.length).trim()
-          if (line && line.length > 0 && line.length < 40) {
+          if (line && line.trim().length >= 2 && /[a-zA-Z]/.test(line) && line.length < 40) {
             items.push({ slot: '?', name: line })
+          } else if (line) {
+            console.log(`   ⚠️ parseEquippedItemsFromBody: skipped corrupted keyword match (line="${line}" length=${line.length})`)
           }
         }
       }
