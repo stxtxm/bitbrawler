@@ -26,6 +26,8 @@ interface FightRecord {
   max_hp?: number | null
   fight_type?: 'pvp' | 'pve'   // track PvP vs PvE fights
   monster_name?: string | null  // PvE monster name if applicable
+  xp_before_modifier?: number | null  // PvE XP before 0.80 modifier (displayed value)
+  xp_after_modifier?: number | null   // PvE XP after 0.80 modifier (actual saved value)
 }
 
 interface LevelUpEvent {
@@ -101,6 +103,9 @@ interface PveAnalysis {
   avg_xp_per_fight: number
   avg_duration_ms: number
   monsters_faced: Record<string, number>  // monster name → encounter count
+  avg_xp_before_modifier: number | null   // average PvE XP before 0.80 modifier (displayed value)
+  avg_xp_after_modifier: number | null    // average PvE XP after 0.80 modifier (actual saved value)
+  pve_xp_ratio: number | null             // ratio of PvE avg_xp_after_modifier to PvP avg_xp_per_win
 }
 
 interface EquipmentAnalysis {
@@ -469,6 +474,29 @@ function analyze(stats: RunRecord[]): AnalysisReport {
       if (f.monster_name) monsters[f.monster_name] = (monsters[f.monster_name] || 0) + 1
     }
 
+    // PvE XP modifier tracking: before_modifier (displayed) vs after_modifier (saved)
+    const pveXpBeforeMod = pveFights.filter((f): f is FightRecord & { xp_before_modifier: number } =>
+      f.xp_before_modifier !== null && f.xp_before_modifier !== undefined
+    )
+    const pveXpAfterMod = pveFights.filter((f): f is FightRecord & { xp_after_modifier: number } =>
+      f.xp_after_modifier !== null && f.xp_after_modifier !== undefined
+    )
+    const avgXpBefore = pveXpBeforeMod.length > 0
+      ? pveXpBeforeMod.reduce((s, f) => s + f.xp_before_modifier, 0) / pveXpBeforeMod.length
+      : null
+    const avgXpAfter = pveXpAfterMod.length > 0
+      ? pveXpAfterMod.reduce((s, f) => s + f.xp_after_modifier, 0) / pveXpAfterMod.length
+      : null
+
+    // PvE/PvP XP ratio: compare after_modifier PvE XP to PvP win XP
+    const pvpWinsForRatio = wins.filter(f => f.fight_type !== 'pve').filter((f): f is FightRecord => f.xp !== null)
+    const avgPvpXpWin = pvpWinsForRatio.length > 0
+      ? pvpWinsForRatio.reduce((s, f) => s + (f.xp ?? 0), 0) / pvpWinsForRatio.length
+      : 0
+    const pveRatio = avgXpAfter !== null && avgPvpXpWin > 0
+      ? avgXpAfter / avgPvpXpWin
+      : null
+
     pveAnalysis = {
       total_fights: pveFights.length,
       win_rate: pveFights.length > 0 ? pveWins.length / pveFights.length : 0,
@@ -477,6 +505,9 @@ function analyze(stats: RunRecord[]): AnalysisReport {
         ? pveFights.reduce((s, f) => s + f.fight_duration_ms, 0) / pveFights.length
         : 0,
       monsters_faced: monsters,
+      avg_xp_before_modifier: avgXpBefore !== null ? Math.round(avgXpBefore * 100) / 100 : null,
+      avg_xp_after_modifier: avgXpAfter !== null ? Math.round(avgXpAfter * 100) / 100 : null,
+      pve_xp_ratio: pveRatio !== null ? Math.round(pveRatio * 1000) / 1000 : null,
     }
   }
 
@@ -534,7 +565,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   }
 
   // --- PvE-specific suggestions ---
-  if (pveAnalysis && pveAnalysis.total_fights >= 3) {
+  if (pveAnalysis && pveAnalysis.total_fights >= 1) {
     if (pveAnalysis.win_rate < 0.3) {
       suggestions.push(`PvE win rate is ${(pveAnalysis.win_rate * 100).toFixed(0)}% — monsters may be too strong. Consider lowering PVE.STAT_MULTIPLIER or PVE.HP_MULTIPLIER.`)
     }
@@ -543,6 +574,16 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     }
     if (pveAnalysis.avg_duration_ms > 40000) {
       suggestions.push(`PvE fights avg ${(pveAnalysis.avg_duration_ms / 1000).toFixed(1)}s — may be too long for mobile sessions. Consider reducing monster HP.`)
+    }
+    // PvE XP ratio: warn if actual saved XP deviates significantly from expected 80%
+    if (pveAnalysis.pve_xp_ratio !== null && pveAnalysis.total_fights >= 3) {
+      const expectedRatio = 0.80
+      const tolerance = 0.10
+      if (pveAnalysis.pve_xp_ratio < expectedRatio - tolerance) {
+        suggestions.push(`PvE XP ratio is ${(pveAnalysis.pve_xp_ratio * 100).toFixed(0)}% of PvP (expected ${(expectedRatio * 100).toFixed(0)}%). PvE XP may be too low — check if XP_LOSS is used as base instead of XP_WIN.`)
+      } else if (pveAnalysis.pve_xp_ratio > expectedRatio + tolerance) {
+        suggestions.push(`PvE XP ratio is ${(pveAnalysis.pve_xp_ratio * 100).toFixed(0)}% of PvP (expected ${(expectedRatio * 100).toFixed(0)}%). PvE XP may be too high.`)
+      }
     }
   }
 
@@ -745,7 +786,7 @@ function printReport(report: AnalysisReport): void {
     console.log('')
   }
 
-  if (report.pve_analysis && report.pve_analysis.total_fights >= 3) {
+  if (report.pve_analysis && report.pve_analysis.total_fights >= 1) {
     console.log(`  ── ${bold}PvE Monsters${reset} ──`)
     const monsterStr = Object.entries(report.pve_analysis.monsters_faced)
       .map(([name, count]) => `${name}=${count}`)
@@ -753,6 +794,15 @@ function printReport(report: AnalysisReport): void {
     console.log(`  Monsters:       ${monsterStr || 'none'}`)
     console.log(`  XP/fight:       ${report.pve_analysis.avg_xp_per_fight.toFixed(0)}`)
     console.log(`  Avg duration:   ${fmtSec(report.pve_analysis.avg_duration_ms)}`)
+    if (report.pve_analysis.avg_xp_before_modifier !== null) {
+      console.log(`  XP before mod:  ${report.pve_analysis.avg_xp_before_modifier.toFixed(1)}`)
+    }
+    if (report.pve_analysis.avg_xp_after_modifier !== null) {
+      console.log(`  XP after mod:   ${report.pve_analysis.avg_xp_after_modifier.toFixed(1)}`)
+    }
+    if (report.pve_analysis.pve_xp_ratio !== null) {
+      console.log(`  PvE/PvP ratio:  ${fmtPct(report.pve_analysis.pve_xp_ratio)} (expected 80%)`)
+    }
     console.log('')
   }
 
