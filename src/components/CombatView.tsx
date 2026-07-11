@@ -90,6 +90,10 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const [visibilityKey, setVisibilityKey] = useState(0);
     const bgStartRef = useRef<number | null>(null);
     const roundIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    /** Wall-clock timestamp of mount — used in the round interval to check
+     *  if elapsed time exceeds fightHardTimeoutMs. This is a true wall-clock
+     *  guard that works even if setTimeout is throttled (background tab). */
+    const fightStartRef = useRef<number>(Date.now());
 
     // Two-stage health bar state (track percentages for the ghost bar)
     const initialPlayerPct = player.maxHp > 0 ? (player.hp / player.maxHp) * 100 : 100;
@@ -314,6 +318,25 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
             let roundIndex = 0;
             const roundInterval = setInterval(() => {
                 roundIntervalRef.current = roundInterval;
+
+                // Wall-clock watchdog: if elapsed time from mount exceeds hard
+                // timeout, force-finish immediately. This catches cases where
+                // the browser throttles setTimeout (background tab, main thread
+                // blocked) making the mount-level timeout fire too late.
+                if (Date.now() - fightStartRef.current >= COMBAT_BALANCE.fightHardTimeoutMs) {
+                    console.warn(`[CombatView] Wall-clock watchdog — ${Date.now() - fightStartRef.current}ms elapsed, force-finishing`);
+                    clearInterval(roundInterval);
+                    roundIntervalRef.current = null;
+                    setCombatResult(prev => prev ?? {
+                        winner: 'draw',
+                        rounds: 0,
+                        details: ['Fight timed out'],
+                        timeline: [{ attackerHp: player.hp, defenderHp: opponent.hp }],
+                    });
+                    setPhase('result');
+                    return;
+                }
+
                 if (roundIndex < combatResult.details.length) {
                     setCurrentRound(roundIndex);
                     const detail = combatResult.details[roundIndex];

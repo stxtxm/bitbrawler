@@ -44,8 +44,8 @@ export const COMBAT_BALANCE = {
     max: 96,
   },
   damage: {
-    offenseWeight: 2.5,
-    defenseWeight: 0.15,
+    offenseWeight: 1.8,
+    defenseWeight: 0.35,
     min: 20,
     critMultiplier: 1.30,
   },

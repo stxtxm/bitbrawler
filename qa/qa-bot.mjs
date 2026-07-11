@@ -975,20 +975,35 @@ async function parseEquippedItems(page) {
     }
 
     await invBtn.click()
+    console.log('   Clicked inventory button, waiting for panel to open...')
+    await page.waitForTimeout(300)
 
-    // Wait for inventory panel to fully open
-    try {
-      await page.locator('.inv-loadout-slots').waitFor({ state: 'visible', timeout: 3000 })
-    } catch {
-      console.log('   Inventory panel did not open, trying body text fallback')
+    // Wait for inventory panel to fully open — use longer timeout and retry logic
+    let panelReady = false
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        await page.locator('.inv-loadout-slots').waitFor({ state: 'visible', timeout: 3000 })
+        panelReady = true
+        break
+      } catch {
+        if (attempt < 2) {
+          console.log(`   ⚠️ Inventory panel not ready (attempt ${attempt + 1}), retrying...`)
+          await page.waitForTimeout(1000)
+        }
+      }
+    }
+
+    if (!panelReady) {
+      console.log('   Inventory panel did not open after retries, trying body text fallback')
       return await parseEquippedItemsFromBody(page)
     }
 
-    await page.waitForTimeout(400)
+    await page.waitForTimeout(600)
 
     const items = []
     const filledSlots = page.locator('.inv-loadout-slot.filled')
     const count = await filledSlots.count().catch(() => 0)
+    console.log(`   Found ${count} filled equipment slot(s) in DOM`)
     for (let i = 0; i < count; i++) {
       const slot = filledSlots.nth(i)
       const name = await slot.locator('.inv-loadout-item-name').textContent().catch(() => null)
@@ -1005,13 +1020,20 @@ async function parseEquippedItems(page) {
         }
       }
 
-      if (name) items.push({ slot: slotLabel?.trim() || '?', name: name.trim(), ...(rarity ? { rarity } : {}) })
+      if (name && name.trim().length > 0) {
+        items.push({ slot: slotLabel?.trim() || '?', name: name.trim(), ...(rarity ? { rarity } : {}) })
+      } else {
+        console.log(`   ⚠️ parseEquippedItems: skipped empty/corrupted item at slot ${i}`)
+      }
     }
 
     // If DOM-based parsing found nothing, try body text fallback
     if (items.length === 0) {
+      console.log('   DOM parsing yielded no valid items, falling back to body text parse')
       const bodyItems = await parseEquippedItemsFromBody(page)
       if (bodyItems.length > 0) return bodyItems
+    } else {
+      console.log(`   Parsed ${items.length} equipment item(s) from DOM: ${items.map(i => `${i.slot}=${i.name}${i.rarity ? ` (${i.rarity})` : ''}`).join(', ')}`)
     }
 
     // Close inventory
@@ -1066,9 +1088,12 @@ async function parseEquippedItemsFromBody(page) {
             const itemNameMatch = trimmed.match(new RegExp(`${slotIcon}\\s*(.+?)(?:\\s*×|$)`))
             if (itemNameMatch) {
               const itemName = itemNameMatch[1].trim()
-              // Skip "EMPTY" slots
-              if (itemName && itemName.toUpperCase() !== 'EMPTY') {
+              // Skip "EMPTY" slots and corrupted/invalid names (empty, icon-only, single char, no letters)
+              const isValidName = itemName && itemName.length >= 2 && /[a-zA-Z]/.test(itemName) && itemName.toUpperCase() !== 'EMPTY'
+              if (isValidName) {
                 items.push({ slot: slotIcon, name: itemName })
+              } else {
+                console.log(`   ⚠️ parseEquippedItemsFromBody: skipped corrupted item at slot ${slotIcon} (name="${itemName}" length=${itemName.length})`)
               }
             }
             break
@@ -1089,8 +1114,10 @@ async function parseEquippedItemsFromBody(page) {
           const start = Math.max(0, bodyText.lastIndexOf('\n', idx) + 1)
           const end = bodyText.indexOf('\n', idx)
           const line = bodyText.substring(start, end !== -1 ? end : bodyText.length).trim()
-          if (line && line.length < 40) {
+          if (line && line.trim().length >= 2 && /[a-zA-Z]/.test(line) && line.length < 40) {
             items.push({ slot: '?', name: line })
+          } else if (line) {
+            console.log(`   ⚠️ parseEquippedItemsFromBody: skipped corrupted keyword match (line="${line}" length=${line.length})`)
           }
         }
       }
@@ -1098,6 +1125,8 @@ async function parseEquippedItemsFromBody(page) {
 
     if (items.length > 0) {
       console.log(`   Parsed ${items.length} equipment item(s) from body text: ${items.map(i => i.name).join(', ')}`)
+    } else {
+      console.log('   ⚠️ parseEquippedItemsFromBody: no equipment items found in body text (EQUIPPED section or keyword scan yielded nothing)')
     }
     return items
   } catch (err) {

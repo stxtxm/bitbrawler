@@ -26,12 +26,12 @@ describe('Combat Balance Config', () => {
 
   // ── Value Assertions ───────────────────────────────────────────────────
 
-  it('should have offenseWeight set to 2.5', () => {
-    expect(COMBAT_BALANCE.damage.offenseWeight).toBe(2.5);
+  it('should have offenseWeight set to 1.8', () => {
+    expect(COMBAT_BALANCE.damage.offenseWeight).toBe(1.8);
   });
 
-  it('should have defenseWeight set to 0.15', () => {
-    expect(COMBAT_BALANCE.damage.defenseWeight).toBe(0.15);
+  it('should have defenseWeight set to 0.35', () => {
+    expect(COMBAT_BALANCE.damage.defenseWeight).toBe(0.35);
   });
 
   it('should have critMultiplier set to 1.30', () => {
@@ -98,12 +98,12 @@ describe('Combat Balance Config', () => {
     // level 5: levelMultiplier = 1 + min(0.22, 4*0.012) = 1 + 0.048 = 1.048
     // offense = 17.079 * 1.85 * 1.048 = 33.113
     // defense = 13.928 * 2.0 * 1.048 = 29.193
-    // baseDamage = 33.113 * 2.5 - 29.193 * 0.15 = 82.783 - 4.379 = 78.404
+    // baseDamage = 33.113 * 1.8 - 29.193 * 0.35 = 59.603 - 10.218 = 49.385
     // With variance at 0.5: varianceRange = 0.2 - min(0.08, 10*0.002) = 0.2 - 0.02 = 0.18
     // varianceFactor = (1 - 0.09) + 0.5*0.18 = 0.91 + 0.09 = 1.0
     // No comeback (HP > 35%), no focus surge, no affinity
-    // damage = max(20, round(78.404 * 1.0)) = 78
-    expect(damages[0]).toBe(78);
+    // damage = max(20, round(49.385 * 1.0)) = 49
+    expect(damages[0]).toBe(49);
   });
 
   // ── Behavioral Impact: Comeback ────────────────────────────────────────
@@ -164,11 +164,11 @@ describe('Combat Balance Config', () => {
     // offense = 13.928 * 1.85 * 1.048 ≈ 27.004
     // scaleStat(20) = 10 + 10^0.85 = 17.079
     // defense = 17.079 * 2.0 * 1.048 = 35.798
-    // baseDamage = 27.004 * 2.5 - 35.798 * 0.15 = 67.51 - 5.37 = 62.14
+    // baseDamage = 27.004 * 1.8 - 35.798 * 0.35 = 48.607 - 12.529 = 36.078
     // comebackMultiplier = 1.35
     // varianceFactor at 0.5 = 1.0 (same as above)
-    // damage = max(20, round(62.14 * 1.0 * 1.35)) = max(20, round(83.89)) = 84
-    expect(damage).toBe(84);
+    // damage = max(20, round(36.078 * 1.0 * 1.35)) = max(20, round(48.705)) = 49
+    expect(damage).toBe(49);
   });
 
   // ── Behavioral Impact: Hit Chance Cap ──────────────────────────────────
