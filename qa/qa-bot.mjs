@@ -2033,6 +2033,20 @@ async function run() {
     console.log(`[PAGE ERROR] ${err.message}`)
   })
 
+  // Auto-dismiss level-up overlay whenever it appears (prevents click interception)
+  page.addLocatorHandler(
+    page.locator('.level-up-pop-overlay'),
+    async () => {
+      const addBtns = page.locator('.stat-add-btn')
+      const count = await addBtns.count()
+      for (let i = 0; i < count; i++) {
+        await addBtns.nth(0).click({ force: true, timeout: 2000 }).catch(() => {})
+        await page.waitForTimeout(200)
+      }
+      await page.waitForSelector('.level-up-pop-overlay', { state: 'hidden', timeout: 3000 }).catch(() => {})
+    }
+  )
+
   const runRecord = {
     date: now.toISOString(),
     run: runKey,
