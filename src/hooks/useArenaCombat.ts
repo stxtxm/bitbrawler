@@ -125,6 +125,15 @@ export const useArenaCombat = ({
       const result = combatData?.matchType === 'pve'
         ? await usePveFight(won, Math.round(xpGained * GAME_RULES.PVE.XP_MODIFIER), opponentName, { monsterId: pveMonster?.monsterId })
         : await useFight(won, xpGained, opponentName, combatData?.opponent.id ?? '');
+
+      // Log PvE XP metrics for QA analysis — trace pre-modifier vs post-modifier values
+      if (combatData?.matchType === 'pve') {
+        const modifiedXp = Math.round(xpGained * GAME_RULES.PVE.XP_MODIFIER);
+        console.warn(
+          `[PvE XP] won=${won} beforeModifier=${xpGained} afterModifier=${modifiedXp} ` +
+          `modifier=${GAME_RULES.PVE.XP_MODIFIER}`
+        );
+      }
       /* eslint-enable react-hooks/rules-of-hooks */
 
       if (result?.leveledUp) {

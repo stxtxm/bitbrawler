@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-07-10T20:23:39Z",
+  "last_session": "2026-07-10T20:27:45Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -45,6 +45,11 @@
     {
       "lesson": "CombatView already had a mount-level setTimeout for hard timeout (45s), but setTimeout can be throttled by browsers in background tabs. Added a second wall-clock guard using Date.now() inside the round interval callback that checks elapsed time at each 520ms tick. This dual-layer approach (Date.now() poll + setTimeout safety net) ensures the hard timeout cannot be bypassed even when the browser throttles timers. The mount-level setTimeout must be kept as a redundant safety net for edge cases where the round interval is not running (e.g., during intro/vs phases).",
       "issue": "#469",
+      "date": "2026-07-10"
+    },
+    {
+      "lesson": "PvE XP investigation #477: Traced PvE XP flow in useArenaCombat.ts — onCombatComplete applies GAME_RULES.PVE.XP_MODIFIER (0.80) to xpGained from calculateFightXp. CombatView shows pre-modifier XP (from calculateFightXp) while the actual saved XP is post-modifier. Added console.warn logging at point of modification to capture before/after values in browser console. QA bot now captures xp_before_modifier and xp_after_modifier fields for PvE fights. Analysis script computes pve_xp_ratio comparing actual saved PvE XP to PvP win XP. 6 new tests pass. Root cause: XP calculation itself is correct (uses XP_WIN=90 for wins), but the 27% ratio in issue data may stem from QA data mixing pre-modifier display values or old XP formula data. The logging/metrics added will enable data-driven diagnosis.",
+      "issue": "#477",
       "date": "2026-07-10"
     }
   ]
