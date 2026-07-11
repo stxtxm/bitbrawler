@@ -380,6 +380,57 @@ describe('CombatView Interface', () => {
         vi.restoreAllMocks();
     });
 
+    it('should force-finish via wall-clock watchdog when round interval exceeds hard timeout', () => {
+        vi.useFakeTimers();
+
+        // Many rounds so combat does NOT auto-finish before the hard timeout
+        const rounds = 200;
+        const details = Array.from({ length: rounds }, (_, i) => `Round ${i + 1}: Hero hits Villain for ${5 + i} DMG`);
+        const timeline = Array.from({ length: rounds }, (_, i) => ({
+            attackerHp: Math.max(100 - i * 2, 10),
+            defenderHp: Math.max(100 - i * 3, 5),
+        }));
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds,
+            details,
+            timeline,
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit',
+        });
+
+        vi.spyOn(xpUtils, 'calculateFightXp').mockReturnValue(88);
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        // Advance through intro (2000ms) and vs (1400ms) = ~3400ms, now in combat
+        act(() => { vi.advanceTimersByTime(3500); });
+
+        // The round interval has started (520ms per tick). Advance time so total
+        // elapsed from mount exceeds fightHardTimeoutMs (45000ms).
+        // 3500 + 42000 = 45500ms — past the 45000ms hard timeout.
+        act(() => { vi.advanceTimersByTime(42000); });
+
+        // The wall-clock watchdog inside the round interval should have detected
+        // elapsed >= fightHardTimeoutMs and force-finished to result phase.
+        expect(screen.getByText('+88 XP')).toBeInTheDocument();
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
     // ─── Phase 1: Round counter & Progress bar ────────────
 
     it('should display round counter during combat phase', () => {

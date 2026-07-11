@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-07-09T20:51:38Z",
+  "last_session": "2026-07-10T20:21:44Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -36,6 +36,11 @@
       "lesson": "Pity counter unbounded growth fix: When forceLegendaryRoll() returns null (no legendary items in eligible pool at low levels), the pity counter must be reset via recursive rollLootbox() call with pityCount=0 to prevent unbounded growth. Simple fall-through to normal roll would keep incrementing the counter forever.",
       "issue": "#496",
       "date": "2026-07-09"
+    },
+    {
+      "lesson": "CombatView already had a mount-level setTimeout for hard timeout (45s), but setTimeout can be throttled by browsers in background tabs. Added a second wall-clock guard using Date.now() inside the round interval callback that checks elapsed time at each 520ms tick. This dual-layer approach (Date.now() poll + setTimeout safety net) ensures the hard timeout cannot be bypassed even when the browser throttles timers. The mount-level setTimeout must be kept as a redundant safety net for edge cases where the round interval is not running (e.g., during intro/vs phases).",
+      "issue": "#469",
+      "date": "2026-07-10"
     }
   ]
 }

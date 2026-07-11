@@ -11,7 +11,7 @@ export const GAME_RULES = {
         XP_LOSS: 30,
     },
     PVE: {
-        XP_MODIFIER: 0.80, // PvE awards 80% of PvP XP
+        XP_MODIFIER: 0.90, // PvE awards 90% of PvP XP
         STAT_MULTIPLIER: 10.0,
         HP_MULTIPLIER: 11.0,
         LEVEL_BOOST: 2, // Monsters fight at playerLevel + this offset
