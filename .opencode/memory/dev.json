@@ -41,6 +41,11 @@
       "lesson": "QA bot equipment capture fix: body text fallback item names can be corrupted emoji remnants. Validation must check for actual alphanumeric content (/[a-zA-Z]/) and minimum length >= 2, not just truthy/empty. Also added wait after inventory click for DOM reliability.",
       "issue": "#475",
       "date": "2026-07-10"
+    },
+    {
+      "lesson": "CombatView already had a mount-level setTimeout for hard timeout (45s), but setTimeout can be throttled by browsers in background tabs. Added a second wall-clock guard using Date.now() inside the round interval callback that checks elapsed time at each 520ms tick. This dual-layer approach (Date.now() poll + setTimeout safety net) ensures the hard timeout cannot be bypassed even when the browser throttles timers. The mount-level setTimeout must be kept as a redundant safety net for edge cases where the round interval is not running (e.g., during intro/vs phases).",
+      "issue": "#469",
+      "date": "2026-07-10"
     }
   ]
 }
