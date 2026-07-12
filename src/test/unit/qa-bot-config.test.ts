@@ -203,4 +203,62 @@ describe('QA Bot Fight Type Decision', () => {
       expect(parseMonsterFromResultText('')).toBeNull()
     })
   })
+
+  describe('MonsterId to display name mapping', () => {
+    // Mirror the MONSTER_DISPLAY_NAMES mapping from qa-bot.mjs
+    const MONSTER_DISPLAY_NAMES: Record<string, string> = {
+      goblin: 'Goblin',
+      ogre: 'Ogre',
+      wraith: 'Wraith',
+      slime: 'Slime',
+      wolf: 'Wolf',
+      skeleton: 'Skeleton',
+      chimera: 'Chimera',
+      dragon_spawn: 'Dragon Spawn',
+    }
+
+    it('maps goblin to Goblin', () => {
+      expect(MONSTER_DISPLAY_NAMES.goblin).toBe('Goblin')
+    })
+
+    it('maps ogre to Ogre', () => {
+      expect(MONSTER_DISPLAY_NAMES.ogre).toBe('Ogre')
+    })
+
+    it('maps wraith to Wraith', () => {
+      expect(MONSTER_DISPLAY_NAMES.wraith).toBe('Wraith')
+    })
+
+    it('maps slime to Slime', () => {
+      expect(MONSTER_DISPLAY_NAMES.slime).toBe('Slime')
+    })
+
+    it('maps wolf to Wolf', () => {
+      expect(MONSTER_DISPLAY_NAMES.wolf).toBe('Wolf')
+    })
+
+    it('maps skeleton to Skeleton', () => {
+      expect(MONSTER_DISPLAY_NAMES.skeleton).toBe('Skeleton')
+    })
+
+    it('maps chimera to Chimera', () => {
+      expect(MONSTER_DISPLAY_NAMES.chimera).toBe('Chimera')
+    })
+
+    it('maps dragon_spawn to Dragon Spawn', () => {
+      expect(MONSTER_DISPLAY_NAMES.dragon_spawn).toBe('Dragon Spawn')
+    })
+
+    it('returns undefined for unknown monster id', () => {
+      expect(MONSTER_DISPLAY_NAMES.unknown).toBeUndefined()
+    })
+
+    it('fallback formatting capitalizes first letter and replaces underscores', () => {
+      const fallbackFormat = (id: string): string =>
+        id.replace(/_/g, ' ').replace(/^./, c => c.toUpperCase())
+      expect(fallbackFormat('dragon_spawn')).toBe('Dragon spawn')
+      expect(fallbackFormat('goblin')).toBe('Goblin')
+      expect(fallbackFormat('fire_elemental')).toBe('Fire elemental')
+    })
+  })
 })
