@@ -28,7 +28,7 @@ export const COMBAT_BALANCE = {
   comeback: {
     hpThresholdRatio: 0.35,
     hitBonus: 2,
-    damageMultiplier: 1.35,
+    damageMultiplier: 1.10,
   },
   initiative: {
     baseChance: 0.5,
