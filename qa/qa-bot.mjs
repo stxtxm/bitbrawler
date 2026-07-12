@@ -1321,13 +1321,30 @@ function determineNextFightType(pvpSinceLastPve, pveRatio, pveOnly, characterLev
 }
 
 /**
- * Parse monster name from the fight result screen (`.result-sub` element).
- * Patterns: "Victory over Goblin", "Defeated by Ogre", "Stalemate vs Wraith".
+ * Map internal MonsterId to display name.
+ */
+const MONSTER_DISPLAY_NAMES = {
+  goblin: 'Goblin',
+  ogre: 'Ogre',
+  wraith: 'Wraith',
+  slime: 'Slime',
+  wolf: 'Wolf',
+  skeleton: 'Skeleton',
+  chimera: 'Chimera',
+  dragon_spawn: 'Dragon Spawn',
+}
+
+/**
+ * Parse monster name from the fight result screen.
+ * Priority:
+ *   1. `.result-sub` element (CombatView — PvP result text e.g. "Victory over Goblin")
+ *   2. Body text "Victory over / Defeated by / Stalemate vs" pattern
+ *   3. Idle PvE result screen — `.idle-monster-slot[data-monster]` in phase-result
  * Returns the monster name or null.
  */
 async function parseMonsterNameFromResult(page) {
   try {
-    // Check .result-sub element first (most reliable)
+    // Check .result-sub element first (CombatView result — PvP)
     const resultSub = page.locator('.result-sub').first()
     if (await resultSub.isVisible({ timeout: 1000 }).catch(() => false)) {
       const text = ((await resultSub.textContent().catch(() => '')) || '').trim()
@@ -1338,12 +1355,25 @@ async function parseMonsterNameFromResult(page) {
       }
     }
 
-    // Fallback: parse from body text
+    // Fallback: parse from body text (any result type)
     const bodyText = await page.locator('body').innerText().catch(() => '')
     const bodyMatch = bodyText.match(/(?:Victory over|Defeated by|Stalemate vs)\s+(.+?)(?:\n|$)/i)
     if (bodyMatch) {
       const name = bodyMatch[1].trim()
       if (name && name.length < 40) return name
+    }
+
+    // Fallback: idle PvE result screen — monster slot in phase-result with data-monster attribute
+    const monsterSlot = page.locator('.idle-monster-slot.phase-result').first()
+    if (await monsterSlot.isVisible({ timeout: 500 }).catch(() => false)) {
+      const monsterId = await monsterSlot.getAttribute('data-monster').catch(() => null)
+      if (monsterId && MONSTER_DISPLAY_NAMES[monsterId]) {
+        return MONSTER_DISPLAY_NAMES[monsterId]
+      }
+      if (monsterId && monsterId.length < 30) {
+        // Fallback: capitalize first letter, replace underscores
+        return monsterId.replace(/_/g, ' ').replace(/^./, c => c.toUpperCase())
+      }
     }
 
     return null
