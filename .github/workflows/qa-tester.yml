@@ -1,8 +1,9 @@
 name: QA Tester
 
 on:
-  # Cron desactive : utilise cron-job.org (gratuit) pour le declenchement.
-  # Voir scripts/dispatch-qa-tester.sh pour la configuration.
+  schedule:
+    # Daily QA run: 6h, 12h, 18h UTC
+    - cron: '0 6,12,18 * * *'
   workflow_dispatch:
 
 jobs:

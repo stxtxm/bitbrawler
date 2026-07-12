@@ -54,6 +54,43 @@ interface IdleFightRecord {
   essence: number | null
 }
 
+interface EssenceFlow {
+  idle_gained: number | null
+  fights_change: number | null
+  salvage_gained: number | null
+  fusion_cost: number | null
+  upgrade_cost: number | null
+  forge_net: number | null
+  shop_cost: number | null
+  net_change: number | null
+}
+
+interface ForgeResult {
+  essence_before: number | null
+  essence_after_salvage: number | null
+  essence_after_fusion: number | null
+  essence_after_upgrade: number | null
+  salvage_essence_gained: number | null
+  fusion_cost: number | null
+  upgrade_cost: number | null
+  essence_after: number | null
+}
+
+interface EssenceData {
+  before_idle: number | null
+  after_idle: number | null
+  per_fight: (number | null)[]
+  forge_before: number | null
+  forge_after_salvage: number | null
+  forge_after_fusion: number | null
+  forge_after_upgrade: number | null
+  forge_after: number | null
+  shop_before: number | null
+  shop_after: number | null
+  final: number | null
+  flow: EssenceFlow
+}
+
 interface RunRecord {
   date: string
   run: string
@@ -83,6 +120,9 @@ interface RunRecord {
   pve_data?: { fights: number; wins: number; xp_total: number; monsters_faced: string[] }
   level_up_events?: LevelUpEvent[]
   progression_curve?: { level: number; total_xp: number; xp_for_next: number; percent: number }
+  essence?: EssenceData
+  forge?: ForgeResult | null
+  shop?: { essence_before?: number | null; essence_after?: number | null }
   errors: string[]
   load_times_ms?: Record<string, number>
 }
@@ -141,6 +181,13 @@ interface EssenceAnalysis {
   avg_essence_gained_per_run: number
   avg_initial_essence: number
   avg_final_essence: number
+  avg_idle_essence_gained: number | null
+  avg_forge_net: number | null
+  avg_shop_spent: number | null
+  avg_salvage_gained: number | null
+  avg_fusion_cost: number | null
+  avg_upgrade_cost: number | null
+  runs_with_flow_data: number
 }
 
 interface IdleAnalysis {
@@ -603,11 +650,40 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   if (runsWithEssenceData.length > 0) {
     const avgInitial = runsWithEssenceData.reduce((s, r) => s + r.initial_essence, 0) / runsWithEssenceData.length
     const avgFinal = runsWithEssenceData.reduce((s, r) => s + r.final_essence, 0) / runsWithEssenceData.length
+
+    // Detailed flow analysis from essence.flow data
+    const runsWithFlow = runsWithEssenceData.filter(r => r.essence?.flow)
+    const withIdle = runsWithFlow.filter(r => typeof r.essence!.flow.idle_gained === 'number')
+    const withForge = runsWithFlow.filter(r => typeof r.essence!.flow.forge_net === 'number')
+    const withShop = runsWithFlow.filter(r => typeof r.essence!.flow.shop_cost === 'number')
+    const withSalvage = runsWithFlow.filter(r => typeof r.essence!.flow.salvage_gained === 'number')
+    const withFusion = runsWithFlow.filter(r => typeof r.essence!.flow.fusion_cost === 'number')
+    const withUpgrade = runsWithFlow.filter(r => typeof r.essence!.flow.upgrade_cost === 'number')
+
     essenceAnalysis = {
       runs_with_essence_data: runsWithEssenceData.length,
       avg_essence_gained_per_run: Math.round((avgFinal - avgInitial) * 100) / 100,
       avg_initial_essence: Math.round(avgInitial * 10) / 10,
       avg_final_essence: Math.round(avgFinal * 10) / 10,
+      avg_idle_essence_gained: withIdle.length > 0
+        ? Math.round((withIdle.reduce((s, r) => s + (r.essence!.flow.idle_gained as number), 0) / withIdle.length) * 100) / 100
+        : null,
+      avg_forge_net: withForge.length > 0
+        ? Math.round((withForge.reduce((s, r) => s + (r.essence!.flow.forge_net as number), 0) / withForge.length) * 100) / 100
+        : null,
+      avg_shop_spent: withShop.length > 0
+        ? Math.round((withShop.reduce((s, r) => s + (r.essence!.flow.shop_cost as number), 0) / withShop.length) * 100) / 100
+        : null,
+      avg_salvage_gained: withSalvage.length > 0
+        ? Math.round((withSalvage.reduce((s, r) => s + (r.essence!.flow.salvage_gained as number), 0) / withSalvage.length) * 100) / 100
+        : null,
+      avg_fusion_cost: withFusion.length > 0
+        ? Math.round((withFusion.reduce((s, r) => s + (r.essence!.flow.fusion_cost as number), 0) / withFusion.length) * 100) / 100
+        : null,
+      avg_upgrade_cost: withUpgrade.length > 0
+        ? Math.round((withUpgrade.reduce((s, r) => s + (r.essence!.flow.upgrade_cost as number), 0) / withUpgrade.length) * 100) / 100
+        : null,
+      runs_with_flow_data: runsWithFlow.length,
     }
   }
 
@@ -669,6 +745,24 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     }
     if (essenceAnalysis.avg_essence_gained_per_run < 1 && essenceAnalysis.avg_initial_essence > 50) {
       suggestions.push(`Low essence gain (avg +${essenceAnalysis.avg_essence_gained_per_run.toFixed(1)}/run). Players may be hoarding essence.`)
+    }
+    // Detailed flow suggestions
+    if (essenceAnalysis.runs_with_flow_data >= 3) {
+      if (essenceAnalysis.avg_idle_essence_gained !== null && essenceAnalysis.avg_idle_essence_gained > 0.5) {
+        suggestions.push(`High idle essence gain (avg ${essenceAnalysis.avg_idle_essence_gained.toFixed(2)}/run). Consider reducing IDLE_CONFIG.ESSENCE.BASE_RATE (0.12) or LEVEL_SCALE (0.05).`)
+      }
+      if (essenceAnalysis.avg_salvage_gained !== null && essenceAnalysis.avg_salvage_gained > 30) {
+        suggestions.push(`High salvage essence gain (avg +${essenceAnalysis.avg_salvage_gained.toFixed(1)}/run). Salvage yields may need reduction.`)
+      }
+      if (essenceAnalysis.avg_fusion_cost !== null && essenceAnalysis.avg_fusion_cost > 100) {
+        suggestions.push(`High fusion cost (avg ${essenceAnalysis.avg_fusion_cost.toFixed(1)}/run). Fusion may be too expensive.`)
+      }
+      if (essenceAnalysis.avg_upgrade_cost !== null && essenceAnalysis.avg_upgrade_cost > 50) {
+        suggestions.push(`High upgrade cost (avg ${essenceAnalysis.avg_upgrade_cost.toFixed(1)}/run). Upgrade may be too expensive.`)
+      }
+      if (essenceAnalysis.avg_shop_spent !== null && essenceAnalysis.avg_shop_spent > 300) {
+        suggestions.push(`High shop spending (avg ${essenceAnalysis.avg_shop_spent.toFixed(1)}/run). Shop prices may need adjustment.`)
+      }
     }
   }
 
@@ -834,6 +928,21 @@ function printReport(report: AnalysisReport): void {
     console.log(`  Avg initial:    ${report.essence_analysis.avg_initial_essence.toFixed(1)}`)
     console.log(`  Avg final:      ${report.essence_analysis.avg_final_essence.toFixed(1)}`)
     console.log(`  Gained/run:     +${report.essence_analysis.avg_essence_gained_per_run.toFixed(2)}`)
+    if (report.essence_analysis.runs_with_flow_data > 0) {
+      const idle = report.essence_analysis.avg_idle_essence_gained
+      const forge = report.essence_analysis.avg_forge_net
+      const shop = report.essence_analysis.avg_shop_spent
+      const salvage = report.essence_analysis.avg_salvage_gained
+      const fusion = report.essence_analysis.avg_fusion_cost
+      const upgrade = report.essence_analysis.avg_upgrade_cost
+      console.log(`  ── Flow (avg) ─`)
+      if (idle !== null) console.log(`  Idle gain:      +${idle.toFixed(2)}`)
+      if (salvage !== null) console.log(`  Salvage gain:   +${salvage.toFixed(2)}`)
+      if (fusion !== null) console.log(`  Fusion cost:    -${fusion.toFixed(2)}`)
+      if (upgrade !== null) console.log(`  Upgrade cost:   -${upgrade.toFixed(2)}`)
+      if (forge !== null) console.log(`  Forge net:      ${forge >= 0 ? '+' : ''}${forge.toFixed(2)}`)
+      if (shop !== null) console.log(`  Shop spent:     -${shop.toFixed(2)}`)
+    }
     console.log(`  Data from:      ${report.essence_analysis.runs_with_essence_data} run(s)`)
     console.log('')
   }

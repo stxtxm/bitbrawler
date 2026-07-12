@@ -1812,6 +1812,9 @@ async function testForgeSystem(page, runKey, characterLevel = null) {
     const forgeResult = {
       visited: false,
       essence_before: null,
+      essence_after_salvage: null,
+      essence_after_fusion: null,
+      essence_after_upgrade: null,
       items_before: null,
       salvage_attempted: false,
       salvage_succeeded: false,
@@ -1822,6 +1825,8 @@ async function testForgeSystem(page, runKey, characterLevel = null) {
       essence_after: null,
       items_after: null,
       salvage_essence_gained: null,
+      fusion_cost: null,
+      upgrade_cost: null,
       skipped: true,
       skip_reason: `forge requires LVL ${config.forgeUnlockLevel}`,
     }
@@ -1831,6 +1836,9 @@ async function testForgeSystem(page, runKey, characterLevel = null) {
   const forgeResult = {
     visited: false,
     essence_before: null,
+    essence_after_salvage: null,
+    essence_after_fusion: null,
+    essence_after_upgrade: null,
     items_before: null,
     salvage_attempted: false,
     salvage_succeeded: false,
@@ -1841,6 +1849,8 @@ async function testForgeSystem(page, runKey, characterLevel = null) {
     essence_after: null,
     items_after: null,
     salvage_essence_gained: null,
+    fusion_cost: null,
+    upgrade_cost: null,
     skipped: false,
     skip_reason: null,
   }
@@ -1877,13 +1887,18 @@ async function testForgeSystem(page, runKey, characterLevel = null) {
         // Wait for salvage animation to complete
         await page.waitForTimeout(2000)
         forgeResult.salvage_succeeded = true
-        console.log('   ✅ Item salvaged')
+        forgeResult.essence_after_salvage = await parseEssence(page)
+        console.log(`   ✅ Item salvaged (essence: ${forgeResult.essence_after_salvage ?? '?'})`)
       }
     } catch (err) {
       console.log(`   ⚠️ Salvage attempt failed: ${err.message}`)
     }
   } else {
     console.log('   No items to salvage')
+  }
+  // Fallback if salvage was not performed
+  if (forgeResult.essence_after_salvage === null) {
+    forgeResult.essence_after_salvage = forgeResult.essence_before
   }
 
   // ── Attempt Fusion ──────────────────────────────────────────────
@@ -1910,7 +1925,8 @@ async function testForgeSystem(page, runKey, characterLevel = null) {
           await fuseBtn.click()
           await page.waitForTimeout(3000)
           forgeResult.fusion_succeeded = true
-          console.log('   ✅ Fusion completed')
+          forgeResult.essence_after_fusion = await parseEssence(page)
+          console.log(`   ✅ Fusion completed (essence: ${forgeResult.essence_after_fusion ?? '?'})`)
         }
       } catch (err) {
         console.log(`   ⚠️ Fusion attempt failed: ${err.message}`)
@@ -1918,6 +1934,10 @@ async function testForgeSystem(page, runKey, characterLevel = null) {
     } else {
       console.log(`   Not enough items for fusion (need 3, have ${selectableCount})`)
     }
+  }
+  // Fallback if fusion was not performed
+  if (forgeResult.essence_after_fusion === null) {
+    forgeResult.essence_after_fusion = forgeResult.essence_after_salvage
   }
 
   // ── Attempt Upgrade ─────────────────────────────────────────────
@@ -1943,7 +1963,8 @@ async function testForgeSystem(page, runKey, characterLevel = null) {
           await upgradeBtn.click()
           await page.waitForTimeout(2000)
           forgeResult.upgrade_succeeded = true
-          console.log('   ✅ Upgrade completed')
+          forgeResult.essence_after_upgrade = await parseEssence(page)
+          console.log(`   ✅ Upgrade completed (essence: ${forgeResult.essence_after_upgrade ?? '?'})`)
         }
       } catch (err) {
         console.log(`   ⚠️ Upgrade attempt failed: ${err.message}`)
@@ -1952,17 +1973,29 @@ async function testForgeSystem(page, runKey, characterLevel = null) {
       console.log(`   Cannot upgrade: essence=${currentEssence}, items=${upgradeCardCount}`)
     }
   }
+  // Fallback if upgrade was not performed
+  if (forgeResult.essence_after_upgrade === null) {
+    forgeResult.essence_after_upgrade = forgeResult.essence_after_fusion
+  }
+
+  // Compute per-operation essence changes
+  if (forgeResult.essence_before !== null && forgeResult.essence_after_salvage !== null) {
+    const diff = forgeResult.essence_after_salvage - forgeResult.essence_before
+    forgeResult.salvage_essence_gained = diff > 0 ? Math.round(diff * 100) / 100 : null
+  }
+  if (forgeResult.essence_after_salvage !== null && forgeResult.essence_after_fusion !== null) {
+    const diff = forgeResult.essence_after_salvage - forgeResult.essence_after_fusion
+    forgeResult.fusion_cost = diff > 0 ? Math.round(diff * 100) / 100 : null
+  }
+  if (forgeResult.essence_after_fusion !== null && forgeResult.essence_after_upgrade !== null) {
+    const diff = forgeResult.essence_after_fusion - forgeResult.essence_after_upgrade
+    forgeResult.upgrade_cost = diff > 0 ? Math.round(diff * 100) / 100 : null
+  }
 
   // Capture post-forge state
   forgeResult.essence_after = await parseEssence(page)
   forgeResult.items_after = await parseInventoryItemCount(page)
-  // Compute essence gained from salvage (essence diff when salvage was the primary operation)
-  if (forgeResult.salvage_succeeded && forgeResult.essence_before !== null && forgeResult.essence_after !== null) {
-    forgeResult.salvage_essence_gained = forgeResult.essence_after - forgeResult.essence_before
-  } else {
-    forgeResult.salvage_essence_gained = null
-  }
-  console.log(`   Post-forge: essence=${forgeResult.essence_after ?? '?'}, items=${forgeResult.items_after ?? '?'}${forgeResult.salvage_essence_gained !== null ? `, salvage_gained=${forgeResult.salvage_essence_gained}` : ''}`)
+  console.log(`   Post-forge: essence=${forgeResult.essence_after ?? '?'}, items=${forgeResult.items_after ?? '?'}${forgeResult.salvage_essence_gained !== null ? `, salvage_gained=${forgeResult.salvage_essence_gained}` : ''}${forgeResult.fusion_cost !== null ? `, fusion_cost=${forgeResult.fusion_cost}` : ''}${forgeResult.upgrade_cost !== null ? `, upgrade_cost=${forgeResult.upgrade_cost}` : ''}`)
 
   await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-07-forge-after.png`) })
 
@@ -2065,12 +2098,30 @@ async function run() {
     level_up_events: [],
     idle_runner: null,
     efficiency_panel: null,
+    initial_essence: null,
+    final_essence: null,
     essence: {
-      initial: null,
+      before_idle: null,
+      after_idle: null,
       per_fight: [],
-      after_forge: null,
-      after_shop: null,
+      forge_before: null,
+      forge_after_salvage: null,
+      forge_after_fusion: null,
+      forge_after_upgrade: null,
+      forge_after: null,
+      shop_before: null,
+      shop_after: null,
       final: null,
+      flow: {
+        idle_gained: null,
+        fights_change: null,
+        salvage_gained: null,
+        fusion_cost: null,
+        upgrade_cost: null,
+        forge_net: null,
+        shop_cost: null,
+        net_change: null,
+      },
     },
     level_up_fx: null,
     offline_gains: null,
@@ -2122,6 +2173,13 @@ async function run() {
     console.log('  🎮 PvE Idle Combat Observation')
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
+    // Capture essence BEFORE idle observation
+    const preIdleEssenceBadge = await parseEssenceBadge(page)
+    runRecord.essence.before_idle = preIdleEssenceBadge.value
+    if (preIdleEssenceBadge.badge_visible) {
+      console.log(`   Pre-idle essence badge: ${preIdleEssenceBadge.value} (fractional: ${preIdleEssenceBadge.displayed_as_fractional})`)
+    }
+
     runRecord.idle_runner = await observeIdleCombat(page, 30000)
 
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-04-pve-idle.png`) })
@@ -2132,10 +2190,10 @@ async function run() {
       console.log(`   Efficiency: essence/min=${runRecord.efficiency_panel.essence_per_min}, ETA=${runRecord.efficiency_panel.next_level_eta}, power=${runRecord.efficiency_panel.power_ratio}, interval=${runRecord.efficiency_panel.interval}`)
     }
 
-    const initialEssenceBadge = await parseEssenceBadge(page)
-    runRecord.essence.initial = initialEssenceBadge.value
-    if (initialEssenceBadge.badge_visible) {
-      console.log(`   Initial essence badge: ${initialEssenceBadge.value} (fractional: ${initialEssenceBadge.displayed_as_fractional})`)
+    const postIdleEssenceBadge = await parseEssenceBadge(page)
+    runRecord.essence.after_idle = postIdleEssenceBadge.value
+    if (postIdleEssenceBadge.badge_visible) {
+      console.log(`   Post-idle essence badge: ${postIdleEssenceBadge.value} (fractional: ${postIdleEssenceBadge.displayed_as_fractional})`)
     }
 
     // Capture level-up FX state after idle
@@ -2242,9 +2300,19 @@ async function run() {
     // ── Forge ─────────────────────────────────────────────────────
     const forgeLevel = runRecord.final_stats?.level ?? runRecord.initial_level
     runRecord.forge = await testForgeSystem(page, runKey, forgeLevel)
-    runRecord.essence.after_forge = runRecord.forge.essence_after
+    runRecord.essence.forge_before = runRecord.forge.essence_before
+    runRecord.essence.forge_after_salvage = runRecord.forge.essence_after_salvage
+    runRecord.essence.forge_after_fusion = runRecord.forge.essence_after_fusion
+    runRecord.essence.forge_after_upgrade = runRecord.forge.essence_after_upgrade
+    runRecord.essence.forge_after = runRecord.forge.essence_after
     if (runRecord.forge.salvage_essence_gained !== null) {
       console.log(`   🔨 Essence gained from salvage: ${runRecord.forge.salvage_essence_gained}`)
+    }
+    if (runRecord.forge.fusion_cost !== null) {
+      console.log(`   🔨 Fusion cost: ${runRecord.forge.fusion_cost}`)
+    }
+    if (runRecord.forge.upgrade_cost !== null) {
+      console.log(`   🔨 Upgrade cost: ${runRecord.forge.upgrade_cost}`)
     }
 
     // ── Shop ──────────────────────────────────────────────────────
@@ -2255,7 +2323,8 @@ async function run() {
 
     const shopLevel = runRecord.final_stats?.level ?? runRecord.initial_level
     runRecord.shop = await testShopSystem(page, runKey, shopLevel)
-    runRecord.essence.after_shop = runRecord.shop.essence_after
+    runRecord.essence.shop_before = runRecord.shop.essence_before
+    runRecord.essence.shop_after = runRecord.shop.essence_after
     runRecord.shop_data = runRecord.shop.shop_data
     if (runRecord.shop.purchased) {
       console.log(`   ✅ Purchased offer #${(runRecord.shop_data?.purchased_offer ?? 0) + 1} (cost: ${runRecord.shop.cost}, rarity: ${runRecord.shop.item_rarity ?? 'N/A'})`)
@@ -2283,6 +2352,43 @@ async function run() {
     }
 
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-06-final.png`) })
+
+    // ── Compute essence flow ──────────────────────────────────────
+    const e = runRecord.essence
+    if (e.before_idle !== null && e.after_idle !== null) {
+      e.flow.idle_gained = Math.round((e.after_idle - e.before_idle) * 100) / 100
+    }
+    if (e.per_fight.length >= 2) {
+      const first = e.per_fight[0]
+      const last = e.per_fight[e.per_fight.length - 1]
+      if (first !== null && last !== null && e.after_idle !== null) {
+        e.flow.fights_change = Math.round((last - e.after_idle) * 100) / 100
+      }
+    }
+    if (e.forge_before !== null && e.forge_after_salvage !== null) {
+      e.flow.salvage_gained = Math.round((e.forge_after_salvage - e.forge_before) * 100) / 100
+    }
+    if (e.forge_after_salvage !== null && e.forge_after_fusion !== null) {
+      e.flow.fusion_cost = Math.round((e.forge_after_salvage - e.forge_after_fusion) * 100) / 100
+    }
+    if (e.forge_after_fusion !== null && e.forge_after_upgrade !== null) {
+      e.flow.upgrade_cost = Math.round((e.forge_after_fusion - e.forge_after_upgrade) * 100) / 100
+    }
+    if (e.forge_before !== null && e.forge_after !== null) {
+      e.flow.forge_net = Math.round((e.forge_after - e.forge_before) * 100) / 100
+    }
+    if (e.shop_before !== null && e.shop_after !== null) {
+      const change = e.shop_after - e.shop_before
+      e.flow.shop_cost = change <= 0 ? Math.round(Math.abs(change) * 100) / 100 : null
+    }
+    if (e.before_idle !== null && e.final !== null) {
+      e.flow.net_change = Math.round((e.final - e.before_idle) * 100) / 100
+    }
+    console.log(`   📊 Essence flow: idle=${e.flow.idle_gained ?? '?'}, fights=${e.flow.fights_change ?? '?'}, forge=${e.flow.forge_net ?? '?'}, shop=${e.flow.shop_cost ?? '?'}, net=${e.flow.net_change ?? '?'}`)
+
+    // Set initial_essence/final_essence for analyzer compat
+    runRecord.initial_essence = e.before_idle ?? e.after_idle
+    runRecord.final_essence = e.final
 
     // ── Save ──────────────────────────────────────────────────────
     const stats = loadStats()
