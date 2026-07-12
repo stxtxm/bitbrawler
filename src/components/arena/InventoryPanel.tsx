@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { ItemSlot, PixelItemAsset } from '../../types/Item';
 import { getItemById } from '../../utils/equipmentUtils';
 import { getItemStatEntries } from '../../hooks/useInventory';
@@ -7,6 +7,7 @@ import { AffinityBadge } from '../AffinityBadge';
 import { PixelIcon } from '../PixelIcon';
 import { PixelItemIcon } from '../PixelItemIcon';
 import StreakIndicator from '../StreakIndicator';
+import { ShopPanel } from '../forge/ShopPanel';
 import type {
   InventoryStatEntry,
   InventoryStatMetaMap,
@@ -100,6 +101,7 @@ export const InventoryPanel = memo(function InventoryPanel({
   }, [inventory]);
 
   const lootboxStats = useMemo(() => getItemStatEntries(lootboxResult), [lootboxResult]);
+  const [activeTab, setActiveTab] = useState<'inventory' | 'shop'>('inventory');
 
   return (
     <div className="retro-modal-overlay inventory-overlay" onClick={onClose}>
@@ -143,160 +145,184 @@ export const InventoryPanel = memo(function InventoryPanel({
           <StreakIndicator streak={streak} canRoll={canRollDailyLoot} />
         </div>
 
-        <div className="inventory-body">
-          <div className="inv-loadout">
-            <div className="inv-loadout-label">EQUIPPED</div>
-            <div className="inv-loadout-slots">
-              {ITEM_SLOTS.map((slot) => {
-                const item = equippedItems.find((equipped) => equipped.slot === slot);
-                return (
-                  <div key={slot} className={`inv-loadout-slot ${item ? 'filled' : 'empty'}`}>
-                    <span className="inv-loadout-slot-icon">{SLOT_ICONS[slot]}</span>
-                    {item ? (
-                      <div className="inv-loadout-item">
-                        <PixelItemIcon pixels={item.pixels} size={22} />
-                        {item.element && <AffinityBadge element={item.element} size={10} />}
-                        <div className="inv-loadout-item-name">{item.name}</div>
+        <div className="inventory-tabs">
+          <button
+            className={`inventory-tab ${activeTab === 'inventory' ? 'active' : ''}`}
+            onClick={() => setActiveTab('inventory')}
+            role="tab"
+            aria-selected={activeTab === 'inventory'}
+          >
+            🎒 INVENTORY
+          </button>
+          <button
+            className={`inventory-tab ${activeTab === 'shop' ? 'active' : ''}`}
+            onClick={() => setActiveTab('shop')}
+            role="tab"
+            aria-selected={activeTab === 'shop'}
+          >
+            🏪 SHOP
+          </button>
+        </div>
+
+        {activeTab === 'inventory' ? (
+          <div className="inventory-body">
+            <div className="inv-loadout">
+              <div className="inv-loadout-label">EQUIPPED</div>
+              <div className="inv-loadout-slots">
+                {ITEM_SLOTS.map((slot) => {
+                  const item = equippedItems.find((equipped) => equipped.slot === slot);
+                  return (
+                    <div key={slot} className={`inv-loadout-slot ${item ? 'filled' : 'empty'}`}>
+                      <span className="inv-loadout-slot-icon">{SLOT_ICONS[slot]}</span>
+                      {item ? (
+                        <div className="inv-loadout-item">
+                          <PixelItemIcon pixels={item.pixels} size={22} />
+                          {item.element && <AffinityBadge element={item.element} size={10} />}
+                          <div className="inv-loadout-item-name">{item.name}</div>
+                          <button
+                            className="inv-unequip-btn"
+                            onClick={() => onUnequip(slot)}
+                            title="Unequip"
+                            aria-label={`Unequip ${item.name}`}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="inv-loadout-empty">EMPTY</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="inv-body-content">
+              <div className="inv-groups">
+                {ITEM_SLOTS.map((slot) => {
+                  const slotItems = groupedItems[slot];
+                  if (slotItems.length === 0) return null;
+
+                  return (
+                    <div key={slot} className="inv-group">
+                      <div className="inv-group-label">{SLOT_LABELS[slot]}</div>
+                      <div className="inv-group-grid">
+                        {slotItems.map((item) => {
+                          const isSelected = previewItemId === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              className={`inv-group-item rarity-${item.rarity} ${isSelected ? 'selected' : ''} ${(itemUpgradeLevels[item.id] ?? 0) > 0 ? `upgraded upgraded-level-${Math.min(itemUpgradeLevels[item.id] ?? 0, 5)}` : ''}`}
+                              onClick={() => {
+                                onEquip(item.id, slot);
+                                onSelectItem(item.id);
+                              }}
+                              onMouseEnter={() => onHoverItem(item.id)}
+                              onMouseLeave={() => onHoverItem(null)}
+                              onFocus={() => onHoverItem(item.id)}
+                              onBlur={() => onHoverItem(null)}
+                              onTouchStart={() => onSelectItem(item.id)}
+                              title={`Equip ${item.name}${(itemUpgradeLevels[item.id] ?? 0) > 0 ? ` (+${itemUpgradeLevels[item.id]})` : ''}`}
+                              aria-label={`Equip ${item.name}`}
+                            >
+                              <PixelItemIcon pixels={item.pixels} size={22} />
+                              {item.element && <AffinityBadge element={item.element} size={8} />}
+                              {(itemUpgradeLevels[item.id] ?? 0) > 0 && (
+                                <span className="inv-upgrade-badge">+{itemUpgradeLevels[item.id]}</span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+                {inventory.length === 0 && (
+                  <div className="inv-empty">No items in inventory. Open the daily lootbox!</div>
+                )}
+              </div>
+
+              <div className={`inventory-details ${previewItem ? '' : 'empty'}`}>
+                {previewItem ? (
+                  <>
+                    <div className={`inventory-item-head rarity-${previewItem.rarity}`}>
+                      <PixelItemIcon pixels={previewItem.pixels} size={30} />
+                      <div className="inventory-item-meta">
+                        <div className="inventory-item-name">{previewItem.name}</div>
+                        <div className="inventory-item-sub">
+                          <span className="inventory-item-slot">{previewSlotLabel}</span>
+                          <span className="inventory-item-rarity">{previewItem.rarity.toUpperCase()}</span>
+                          {(itemUpgradeLevels[previewItem.id] ?? 0) > 0 && (
+                            <span className="inventory-item-upgrade">+{itemUpgradeLevels[previewItem.id]}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="inventory-item-stats">
+                      {previewStats.map(({ key, value }) => {
+                        const meta = itemStatMeta[key];
+                        return (
+                          <div key={key} className="inventory-stat-row">
+                            <span className="inventory-stat-icon">
+                              <PixelIcon type={meta.icon} size={12} />
+                            </span>
+                            <span className="inventory-stat-label">{meta.label}</span>
+                            <span className="inventory-stat-value">+{value}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {onSalvage && (
+                      <div className="inventory-forge-actions">
+                        <div className="inventory-essence-yield">
+                          <span className="essence-yield-label">SALVAGE YIELD</span>
+                          <span className="essence-yield-value">+{ESSENCE_YIELD[previewItem.rarity]} Essence</span>
+                        </div>
                         <button
-                          className="inv-unequip-btn"
-                          onClick={() => onUnequip(slot)}
-                          title="Unequip"
-                          aria-label={`Unequip ${item.name}`}
+                          className="forge-action-btn danger"
+                          onClick={() => onSalvage(previewItem.id)}
+                          aria-label={`Salvage ${previewItem.name} for ${ESSENCE_YIELD[previewItem.rarity]} essence`}
                         >
-                          ×
+                          SALVAGE
                         </button>
                       </div>
-                    ) : (
-                      <div className="inv-loadout-empty">EMPTY</div>
                     )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+                    {essence > 0 && (
+                      <div className="inventory-essence-total">
+                        <span className="essence-total-label">ESSENCE</span>
+                        <span className="essence-total-value">{essence.toFixed(2)}</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="inventory-empty-details">TAP AN ITEM TO VIEW BONUSES</div>
+                )}
 
-          <div className="inv-body-content">
-            <div className="inv-groups">
-              {ITEM_SLOTS.map((slot) => {
-                const slotItems = groupedItems[slot];
-                if (slotItems.length === 0) return null;
-
-                return (
-                  <div key={slot} className="inv-group">
-                    <div className="inv-group-label">{SLOT_LABELS[slot]}</div>
-                    <div className="inv-group-grid">
-                      {slotItems.map((item) => {
-                        const isSelected = previewItemId === item.id;
+                {totalBonusEntries.length > 0 && (
+                  <div className="inventory-bonus-summary">
+                    <div className="bonus-title">TOTAL BONUS</div>
+                    <div className="bonus-list">
+                      {totalBonusEntries.map(({ key, value }) => {
+                        const meta = itemStatMeta[key];
                         return (
-                          <button
-                            key={item.id}
-                            className={`inv-group-item rarity-${item.rarity} ${isSelected ? 'selected' : ''} ${(itemUpgradeLevels[item.id] ?? 0) > 0 ? `upgraded upgraded-level-${Math.min(itemUpgradeLevels[item.id] ?? 0, 5)}` : ''}`}
-                            onClick={() => {
-                              onEquip(item.id, slot);
-                              onSelectItem(item.id);
-                            }}
-                            onMouseEnter={() => onHoverItem(item.id)}
-                            onMouseLeave={() => onHoverItem(null)}
-                            onFocus={() => onHoverItem(item.id)}
-                            onBlur={() => onHoverItem(null)}
-                            onTouchStart={() => onSelectItem(item.id)}
-                            title={`Equip ${item.name}${(itemUpgradeLevels[item.id] ?? 0) > 0 ? ` (+${itemUpgradeLevels[item.id]})` : ''}`}
-                            aria-label={`Equip ${item.name}`}
-                          >
-                            <PixelItemIcon pixels={item.pixels} size={22} />
-                            {item.element && <AffinityBadge element={item.element} size={8} />}
-                            {(itemUpgradeLevels[item.id] ?? 0) > 0 && (
-                              <span className="inv-upgrade-badge">+{itemUpgradeLevels[item.id]}</span>
-                            )}
-                          </button>
+                          <div key={key} className="bonus-chip">
+                            <PixelIcon type={meta.icon} size={10} />
+                            <span className="bonus-label">{meta.label}</span>
+                            <span className="bonus-value">+{value}</span>
+                          </div>
                         );
                       })}
                     </div>
                   </div>
-                );
-              })}
-              {inventory.length === 0 && (
-                <div className="inv-empty">No items in inventory. Open the daily lootbox!</div>
-              )}
-            </div>
-
-            <div className={`inventory-details ${previewItem ? '' : 'empty'}`}>
-              {previewItem ? (
-                <>
-                  <div className={`inventory-item-head rarity-${previewItem.rarity}`}>
-                    <PixelItemIcon pixels={previewItem.pixels} size={30} />
-                    <div className="inventory-item-meta">
-                      <div className="inventory-item-name">{previewItem.name}</div>
-                      <div className="inventory-item-sub">
-                        <span className="inventory-item-slot">{previewSlotLabel}</span>
-                        <span className="inventory-item-rarity">{previewItem.rarity.toUpperCase()}</span>
-                        {(itemUpgradeLevels[previewItem.id] ?? 0) > 0 && (
-                          <span className="inventory-item-upgrade">+{itemUpgradeLevels[previewItem.id]}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="inventory-item-stats">
-                    {previewStats.map(({ key, value }) => {
-                      const meta = itemStatMeta[key];
-                      return (
-                        <div key={key} className="inventory-stat-row">
-                          <span className="inventory-stat-icon">
-                            <PixelIcon type={meta.icon} size={12} />
-                          </span>
-                          <span className="inventory-stat-label">{meta.label}</span>
-                          <span className="inventory-stat-value">+{value}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {/* Forge integration: essence yield and salvage */}
-                  {onSalvage && (
-                    <div className="inventory-forge-actions">
-                      <div className="inventory-essence-yield">
-                        <span className="essence-yield-label">SALVAGE YIELD</span>
-                        <span className="essence-yield-value">+{ESSENCE_YIELD[previewItem.rarity]} Essence</span>
-                      </div>
-                      <button
-                        className="forge-action-btn danger"
-                        onClick={() => onSalvage(previewItem.id)}
-                        aria-label={`Salvage ${previewItem.name} for ${ESSENCE_YIELD[previewItem.rarity]} essence`}
-                      >
-                        SALVAGE
-                      </button>
-                    </div>
-                  )}
-                  {essence > 0 && (
-                    <div className="inventory-essence-total">
-                      <span className="essence-total-label">ESSENCE</span>
-                      <span className="essence-total-value">{essence.toFixed(2)}</span>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="inventory-empty-details">TAP AN ITEM TO VIEW BONUSES</div>
-              )}
-
-              {totalBonusEntries.length > 0 && (
-                <div className="inventory-bonus-summary">
-                  <div className="bonus-title">TOTAL BONUS</div>
-                  <div className="bonus-list">
-                    {totalBonusEntries.map(({ key, value }) => {
-                      const meta = itemStatMeta[key];
-                      return (
-                        <div key={key} className="bonus-chip">
-                          <PixelIcon type={meta.icon} size={10} />
-                          <span className="bonus-label">{meta.label}</span>
-                          <span className="bonus-value">+{value}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="inventory-shop-tab">
+            <ShopPanel onClose={onClose} />
+          </div>
+        )}
 
         {lootboxResult && (
           <div

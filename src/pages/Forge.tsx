@@ -4,11 +4,10 @@ import { useGame } from '../context/GameContext';
 import { SalvagePanel } from '../components/forge/SalvagePanel';
 import { FusionPanel } from '../components/forge/FusionPanel';
 import { UpgradePanel } from '../components/forge/UpgradePanel';
-import { ShopPanel } from '../components/forge/ShopPanel';
 import { PROGRESSION_GATES, isFeatureUnlocked } from '../config/progressionConfig';
 import '../styles/forge.scss';
 
-type ForgeTab = 'salvage' | 'fusion' | 'upgrade' | 'shop';
+type ForgeTab = 'salvage' | 'fusion' | 'upgrade';
 
 const Forge = () => {
   const navigate = useNavigate();
@@ -17,7 +16,6 @@ const Forge = () => {
 
   const level = activeCharacter?.level ?? 1;
   const fusionUnlocked = isFeatureUnlocked(level, PROGRESSION_GATES.FUSION_UNLOCK_LEVEL);
-  const shopUnlocked = isFeatureUnlocked(level, PROGRESSION_GATES.SHOP_UNLOCK_LEVEL);
 
   const handleBack = useCallback(() => {
     navigate('/arena');
@@ -25,9 +23,8 @@ const Forge = () => {
 
   const handleTabChange = useCallback((tab: ForgeTab) => {
     if (tab === 'fusion' && !fusionUnlocked) return;
-    if (tab === 'shop' && !shopUnlocked) return;
     setActiveTab(tab);
-  }, [fusionUnlocked, shopUnlocked]);
+  }, [fusionUnlocked]);
 
   if (!activeCharacter) {
     return <Navigate to="/" replace />;
@@ -78,17 +75,6 @@ const Forge = () => {
         >
           ✨ Upgrade
         </button>
-        <button
-          className={`forge-tab ${!shopUnlocked ? 'locked' : ''} ${activeTab === 'shop' ? 'active' : ''}`}
-          onClick={() => handleTabChange('shop')}
-          role="tab"
-          aria-selected={activeTab === 'shop'}
-          aria-controls="forge-panel-shop"
-          disabled={!shopUnlocked}
-          title={shopUnlocked ? 'Shop' : `Unlocks at LVL ${PROGRESSION_GATES.SHOP_UNLOCK_LEVEL}`}
-        >
-          {shopUnlocked ? '🏪 Shop' : `🔒 Shop LVL ${PROGRESSION_GATES.SHOP_UNLOCK_LEVEL}`}
-        </button>
       </div>
 
       {/* Tab Content */}
@@ -113,13 +99,6 @@ const Forge = () => {
           hidden={activeTab !== 'upgrade'}
         >
           {activeTab === 'upgrade' && <UpgradePanel onClose={handleBack} />}
-        </div>
-        <div
-          id="forge-panel-shop"
-          role="tabpanel"
-          hidden={activeTab !== 'shop'}
-        >
-          {activeTab === 'shop' && <ShopPanel onClose={handleBack} />}
         </div>
       </div>
     </div>
