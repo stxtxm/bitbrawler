@@ -42,8 +42,8 @@ describe('Combat Balance Config', () => {
     expect(COMBAT_BALANCE.hitChance.base).toBe(78);
   });
 
-  it('should have comeback.damageMultiplier set to 1.35', () => {
-    expect(COMBAT_BALANCE.comeback.damageMultiplier).toBe(1.35);
+  it('should have comeback.damageMultiplier set to 1.10', () => {
+    expect(COMBAT_BALANCE.comeback.damageMultiplier).toBe(1.10);
   });
 
   it('should have hitChance.max set to 96', () => {
@@ -108,7 +108,7 @@ describe('Combat Balance Config', () => {
 
   // ── Behavioral Impact: Comeback ────────────────────────────────────────
 
-  it('should apply lower comeback damage multiplier (1.01)', () => {
+  it('should apply lowered comeback damage multiplier (1.10)', () => {
     // Attacker starts very low HP to trigger comeback
     const attacker = {
       ...baseCharacter,
@@ -165,10 +165,10 @@ describe('Combat Balance Config', () => {
     // scaleStat(20) = 10 + 10^0.85 = 17.079
     // defense = 17.079 * 2.0 * 1.048 = 35.798
     // baseDamage = 27.004 * 1.8 - 35.798 * 0.35 = 48.607 - 12.529 = 36.078
-    // comebackMultiplier = 1.35
+    // comebackMultiplier = 1.10
     // varianceFactor at 0.5 = 1.0 (same as above)
-    // damage = max(20, round(36.078 * 1.0 * 1.35)) = max(20, round(48.705)) = 49
-    expect(damage).toBe(49);
+    // damage = max(20, round(36.078 * 1.0 * 1.10)) = max(20, round(39.686)) = 40
+    expect(damage).toBe(40);
   });
 
   // ── Behavioral Impact: Hit Chance Cap ──────────────────────────────────
