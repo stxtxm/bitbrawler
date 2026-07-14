@@ -79,11 +79,14 @@ describe('ShopPanel', () => {
     expect(screen.getByText(/SHOP/)).toBeTruthy();
   });
 
-  it('renders all 4 shop offers', () => {
+  it('renders all shop offers', () => {
     setupGame();
     render(<ShopPanel onClose={vi.fn()} />);
     // Epic guarantee may replace Pièce rare with Objet épique
+    // Only 3 offers are displayed daily; Objet épique (index 3) replaces Pièce rare (index 1)
     for (const offer of SHOP_OFFERS) {
+      // Objet épique is a replacement for Pièce rare, not a standalone 4th offer
+      if (offer.label === 'Objet épique') continue;
       const el = screen.queryByText(offer.label);
       if (offer.label === 'Pièce rare' && !el) {
         expect(screen.getByText('Objet épique')).toBeTruthy();
