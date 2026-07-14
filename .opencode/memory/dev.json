@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-07-10T20:27:45Z",
+  "last_session": "2026-07-14T20:13:21Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -51,6 +51,11 @@
       "lesson": "PvE XP investigation #477: Traced PvE XP flow in useArenaCombat.ts — onCombatComplete applies GAME_RULES.PVE.XP_MODIFIER (0.80) to xpGained from calculateFightXp. CombatView shows pre-modifier XP (from calculateFightXp) while the actual saved XP is post-modifier. Added console.warn logging at point of modification to capture before/after values in browser console. QA bot now captures xp_before_modifier and xp_after_modifier fields for PvE fights. Analysis script computes pve_xp_ratio comparing actual saved PvE XP to PvP win XP. 6 new tests pass. Root cause: XP calculation itself is correct (uses XP_WIN=90 for wins), but the 27% ratio in issue data may stem from QA data mixing pre-modifier display values or old XP formula data. The logging/metrics added will enable data-driven diagnosis.",
       "issue": "#477",
       "date": "2026-07-10"
+    },
+    {
+      "lesson": "PvE difficulty adjustment: PVE.STAT_MULTIPLIER 10->11 and PVE.HP_MULTIPLIER 11->12 to address 100% PvE win rate. Simple config change with test assertions. TDD flow followed: tests updated first (RED), then source values (GREEN), lint + build verified.",
+      "issue": "#518",
+      "date": "2026-07-14"
     }
   ]
 }
