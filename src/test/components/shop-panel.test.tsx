@@ -79,17 +79,21 @@ describe('ShopPanel', () => {
     expect(screen.getByText(/SHOP/)).toBeTruthy();
   });
 
-  it('renders all 4 shop offers', () => {
+  it('renders all shop offers', () => {
     setupGame();
     render(<ShopPanel onClose={vi.fn()} />);
-    // Epic guarantee may replace Pièce rare with Objet épique
-    for (const offer of SHOP_OFFERS) {
-      const el = screen.queryByText(offer.label);
-      if (offer.label === 'Pièce rare' && !el) {
-        expect(screen.getByText('Objet épique')).toBeTruthy();
-      } else {
-        expect(el).toBeTruthy();
-      }
+    // getShopOffers returns 3 offers: either [Marchandise, Pièce rare, Coffre mystère]
+    // or if no natural epic, [Marchandise, Objet épique, Coffre mystère]
+    const hasEpic = screen.queryByText('Objet épique');
+    const hasRare = screen.queryByText('Pièce rare');
+    expect(screen.getByText('Marchandise')).toBeTruthy();
+    expect(screen.getByText('Coffre mystère')).toBeTruthy();
+    if (hasEpic) {
+      expect(hasEpic).toBeTruthy();
+      expect(hasRare).toBeNull();
+    } else {
+      expect(hasRare).toBeTruthy();
+      expect(hasEpic).toBeNull();
     }
   });
 

@@ -8,6 +8,8 @@ import { PixelIcon } from '../PixelIcon';
 import { PixelItemIcon } from '../PixelItemIcon';
 import StreakIndicator from '../StreakIndicator';
 import { ShopPanel } from '../forge/ShopPanel';
+import { useGame } from '../../context/GameContext';
+import { PROGRESSION_GATES, isFeatureUnlocked } from '../../config/progressionConfig';
 import type {
   InventoryStatEntry,
   InventoryStatMetaMap,
@@ -103,6 +105,15 @@ export const InventoryPanel = memo(function InventoryPanel({
   const lootboxStats = useMemo(() => getItemStatEntries(lootboxResult), [lootboxResult]);
   const [activeTab, setActiveTab] = useState<'inventory' | 'shop'>('inventory');
 
+  const { activeCharacter } = useGame();
+  const level = activeCharacter?.level ?? 1;
+  const shopUnlocked = isFeatureUnlocked(level, PROGRESSION_GATES.SHOP_UNLOCK_LEVEL);
+
+  const handleTabChange = useMemo(() => (tab: 'inventory' | 'shop') => {
+    if (tab === 'shop' && !shopUnlocked) return;
+    setActiveTab(tab);
+  }, [shopUnlocked]);
+
   return (
     <div className="retro-modal-overlay inventory-overlay" onClick={onClose}>
       <div
@@ -155,12 +166,14 @@ export const InventoryPanel = memo(function InventoryPanel({
             🎒 INVENTORY
           </button>
           <button
-            className={`inventory-tab ${activeTab === 'shop' ? 'active' : ''}`}
-            onClick={() => setActiveTab('shop')}
+            className={`inventory-tab ${!shopUnlocked ? 'locked' : ''} ${activeTab === 'shop' ? 'active' : ''}`}
+            onClick={() => handleTabChange('shop')}
             role="tab"
             aria-selected={activeTab === 'shop'}
+            disabled={!shopUnlocked}
+            title={shopUnlocked ? 'Shop' : `Unlocks at LVL ${PROGRESSION_GATES.SHOP_UNLOCK_LEVEL}`}
           >
-            🏪 SHOP
+            {shopUnlocked ? '🏪 SHOP' : `🔒 SHOP LVL ${PROGRESSION_GATES.SHOP_UNLOCK_LEVEL}`}
           </button>
         </div>
 
@@ -318,9 +331,17 @@ export const InventoryPanel = memo(function InventoryPanel({
               </div>
             </div>
           </div>
-        ) : (
+        ) : shopUnlocked ? (
           <div className="inventory-shop-tab">
             <ShopPanel onClose={onClose} />
+          </div>
+        ) : (
+          <div className="inventory-shop-tab inventory-shop-locked">
+            <div className="shop-locked-message">
+              <span className="shop-locked-icon">🔒</span>
+              <p className="shop-locked-text">Shop unlocks at LVL {PROGRESSION_GATES.SHOP_UNLOCK_LEVEL}</p>
+              <p className="shop-locked-hint">Fight battles and level up to access the 8-Bit Emporium!</p>
+            </div>
           </div>
         )}
 
