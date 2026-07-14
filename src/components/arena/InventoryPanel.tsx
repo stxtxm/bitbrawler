@@ -127,35 +127,6 @@ export const InventoryPanel = memo(function InventoryPanel({
           </button>
         </div>
 
-        <div className="inventory-roll">
-          <button
-            className="button lootbox-btn"
-            onClick={onLootboxRoll}
-            disabled={lootboxRolling || !canRollDailyLoot || inventoryFull || isOfflineMode}
-            aria-label="Daily lootbox roll"
-          >
-            <PixelIcon type="chest" size={18} />
-            <span>
-              {lootboxRolling
-                ? 'OPENING...'
-                : inventoryFull
-                  ? 'INVENTORY FULL'
-                  : canRollDailyLoot
-                    ? 'DAILY LOOTBOX'
-                    : 'COME BACK TOMORROW'}
-            </span>
-          </button>
-          <div className="lootbox-status">
-            <span>{inventory.length}/{inventoryCapacity} SLOTS</span>
-            {pityCount > 0 && canRollDailyLoot && (
-              <span className="lootbox-pity-counter" title="Consecutive lootboxes without a legendary">
-                🎯 {pityCount}/{75}
-              </span>
-            )}
-          </div>
-          <StreakIndicator streak={streak} canRoll={canRollDailyLoot} />
-        </div>
-
         <div className="inventory-tabs">
           <button
             className={`inventory-tab ${activeTab === 'inventory' ? 'active' : ''}`}
@@ -179,6 +150,34 @@ export const InventoryPanel = memo(function InventoryPanel({
 
         {activeTab === 'inventory' ? (
           <div className="inventory-body">
+            <div className="inventory-roll">
+              <button
+                className="button lootbox-btn"
+                onClick={onLootboxRoll}
+                disabled={lootboxRolling || !canRollDailyLoot || inventoryFull || isOfflineMode}
+                aria-label="Daily lootbox roll"
+              >
+                <PixelIcon type="chest" size={18} />
+                <span>
+                  {lootboxRolling
+                    ? 'OPENING...'
+                    : inventoryFull
+                      ? 'INVENTORY FULL'
+                      : canRollDailyLoot
+                        ? 'DAILY LOOTBOX'
+                        : 'COME BACK TOMORROW'}
+                </span>
+              </button>
+              <div className="lootbox-status">
+                <span>{inventory.length}/{inventoryCapacity} SLOTS</span>
+                {pityCount > 0 && canRollDailyLoot && (
+                  <span className="lootbox-pity-counter" title="Consecutive lootboxes without a legendary">
+                    🎯 {pityCount}/{75}
+                  </span>
+                )}
+              </div>
+              <StreakIndicator streak={streak} canRoll={canRollDailyLoot} />
+            </div>
             <div className="inv-loadout">
               <div className="inv-loadout-label">EQUIPPED</div>
               <div className="inv-loadout-slots">
