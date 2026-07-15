@@ -216,7 +216,7 @@ describe('XP Utils', () => {
             }
             const avgXp = totalXp / simulations;
 
-            // XP needed for level 3 = 120 + 120 = 240 (with EARLY_SHIFT=2)
+            // XP needed for level 3 = 120 + 120 = 240 (with EARLY_SHIFT=3)
             const xpNeededForLevel3 = getTotalXpForLevel(3);
             expect(xpNeededForLevel3).toBe(240);
 
