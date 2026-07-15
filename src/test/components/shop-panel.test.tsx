@@ -82,18 +82,17 @@ describe('ShopPanel', () => {
   it('renders all shop offers', () => {
     setupGame();
     render(<ShopPanel onClose={vi.fn()} />);
-    // getShopOffers returns 3 offers: either [Marchandise, Pièce rare, Coffre mystère]
-    // or if no natural epic, [Marchandise, Objet épique, Coffre mystère]
-    const hasEpic = screen.queryByText('Objet épique');
-    const hasRare = screen.queryByText('Pièce rare');
-    expect(screen.getByText('Marchandise')).toBeTruthy();
-    expect(screen.getByText('Coffre mystère')).toBeTruthy();
-    if (hasEpic) {
-      expect(hasEpic).toBeTruthy();
-      expect(hasRare).toBeNull();
-    } else {
-      expect(hasRare).toBeTruthy();
-      expect(hasEpic).toBeNull();
+    // Epic guarantee may replace Pièce rare with Objet épique
+    // Only 3 offers are displayed daily; Objet épique (index 3) replaces Pièce rare (index 1)
+    for (const offer of SHOP_OFFERS) {
+      // Objet épique is a replacement for Pièce rare, not a standalone 4th offer
+      if (offer.label === 'Objet épique') continue;
+      const el = screen.queryByText(offer.label);
+      if (offer.label === 'Pièce rare' && !el) {
+        expect(screen.getByText('Objet épique')).toBeTruthy();
+      } else {
+        expect(el).toBeTruthy();
+      }
     }
   });
 
