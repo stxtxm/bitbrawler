@@ -16,6 +16,13 @@ vi.mock('../../components/IdleRunnerScene', () => ({
   IdleRunnerScene: () => <div data-testid="idle-runner-scene">IDLE SCENE</div>,
 }));
 
+vi.mock('../../context/GameContext', () => ({
+  useGame: () => ({
+    activeCharacter: { level: 10 },
+    essence: 100,
+  }),
+}));
+
 const getItem = (id: string): PixelItemAsset => {
   const item = ITEM_ASSETS.find((asset) => asset.id === id);
   if (!item) throw new Error(`Missing test item: ${id}`);

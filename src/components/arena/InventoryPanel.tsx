@@ -8,6 +8,8 @@ import { PixelIcon } from '../PixelIcon';
 import { PixelItemIcon } from '../PixelItemIcon';
 import StreakIndicator from '../StreakIndicator';
 import { ShopPanel } from '../forge/ShopPanel';
+import { useGame } from '../../context/GameContext';
+import { PROGRESSION_GATES, isFeatureUnlocked } from '../../config/progressionConfig';
 import type {
   InventoryStatEntry,
   InventoryStatMetaMap,
@@ -103,6 +105,15 @@ export const InventoryPanel = memo(function InventoryPanel({
   const lootboxStats = useMemo(() => getItemStatEntries(lootboxResult), [lootboxResult]);
   const [activeTab, setActiveTab] = useState<'inventory' | 'shop'>('inventory');
 
+  const { activeCharacter } = useGame();
+  const level = activeCharacter?.level ?? 1;
+  const shopUnlocked = isFeatureUnlocked(level, PROGRESSION_GATES.SHOP_UNLOCK_LEVEL);
+
+  const handleTabChange = useMemo(() => (tab: 'inventory' | 'shop') => {
+    if (tab === 'shop' && !shopUnlocked) return;
+    setActiveTab(tab);
+  }, [shopUnlocked]);
+
   return (
     <div className="retro-modal-overlay inventory-overlay" onClick={onClose}>
       <div
@@ -116,35 +127,6 @@ export const InventoryPanel = memo(function InventoryPanel({
           </button>
         </div>
 
-        <div className="inventory-roll">
-          <button
-            className="button lootbox-btn"
-            onClick={onLootboxRoll}
-            disabled={lootboxRolling || !canRollDailyLoot || inventoryFull || isOfflineMode}
-            aria-label="Daily lootbox roll"
-          >
-            <PixelIcon type="chest" size={18} />
-            <span>
-              {lootboxRolling
-                ? 'OPENING...'
-                : inventoryFull
-                  ? 'INVENTORY FULL'
-                  : canRollDailyLoot
-                    ? 'DAILY LOOTBOX'
-                    : 'COME BACK TOMORROW'}
-            </span>
-          </button>
-          <div className="lootbox-status">
-            <span>{inventory.length}/{inventoryCapacity} SLOTS</span>
-            {pityCount > 0 && canRollDailyLoot && (
-              <span className="lootbox-pity-counter" title="Consecutive lootboxes without a legendary">
-                🎯 {pityCount}/{75}
-              </span>
-            )}
-          </div>
-          <StreakIndicator streak={streak} canRoll={canRollDailyLoot} />
-        </div>
-
         <div className="inventory-tabs">
           <button
             className={`inventory-tab ${activeTab === 'inventory' ? 'active' : ''}`}
@@ -155,17 +137,47 @@ export const InventoryPanel = memo(function InventoryPanel({
             🎒 INVENTORY
           </button>
           <button
-            className={`inventory-tab ${activeTab === 'shop' ? 'active' : ''}`}
-            onClick={() => setActiveTab('shop')}
+            className={`inventory-tab ${!shopUnlocked ? 'locked' : ''} ${activeTab === 'shop' ? 'active' : ''}`}
+            onClick={() => handleTabChange('shop')}
             role="tab"
             aria-selected={activeTab === 'shop'}
+            disabled={!shopUnlocked}
+            title={shopUnlocked ? 'Shop' : `Unlocks at LVL ${PROGRESSION_GATES.SHOP_UNLOCK_LEVEL}`}
           >
-            🏪 SHOP
+            {shopUnlocked ? '🏪 SHOP' : `🔒 SHOP LVL ${PROGRESSION_GATES.SHOP_UNLOCK_LEVEL}`}
           </button>
         </div>
 
         {activeTab === 'inventory' ? (
           <div className="inventory-body">
+            <div className="inventory-roll">
+              <button
+                className="button lootbox-btn"
+                onClick={onLootboxRoll}
+                disabled={lootboxRolling || !canRollDailyLoot || inventoryFull || isOfflineMode}
+                aria-label="Daily lootbox roll"
+              >
+                <PixelIcon type="chest" size={18} />
+                <span>
+                  {lootboxRolling
+                    ? 'OPENING...'
+                    : inventoryFull
+                      ? 'INVENTORY FULL'
+                      : canRollDailyLoot
+                        ? 'DAILY LOOTBOX'
+                        : 'COME BACK TOMORROW'}
+                </span>
+              </button>
+              <div className="lootbox-status">
+                <span>{inventory.length}/{inventoryCapacity} SLOTS</span>
+                {pityCount > 0 && canRollDailyLoot && (
+                  <span className="lootbox-pity-counter" title="Consecutive lootboxes without a legendary">
+                    🎯 {pityCount}/{75}
+                  </span>
+                )}
+              </div>
+              <StreakIndicator streak={streak} canRoll={canRollDailyLoot} />
+            </div>
             <div className="inv-loadout">
               <div className="inv-loadout-label">EQUIPPED</div>
               <div className="inv-loadout-slots">
@@ -318,9 +330,17 @@ export const InventoryPanel = memo(function InventoryPanel({
               </div>
             </div>
           </div>
-        ) : (
+        ) : shopUnlocked ? (
           <div className="inventory-shop-tab">
             <ShopPanel onClose={onClose} />
+          </div>
+        ) : (
+          <div className="inventory-shop-tab inventory-shop-locked">
+            <div className="shop-locked-message">
+              <span className="shop-locked-icon">🔒</span>
+              <p className="shop-locked-text">Shop unlocks at LVL {PROGRESSION_GATES.SHOP_UNLOCK_LEVEL}</p>
+              <p className="shop-locked-hint">Fight battles and level up to access the 8-Bit Emporium!</p>
+            </div>
           </div>
         )}
 

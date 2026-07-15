@@ -5,7 +5,7 @@ import { getHpForVitality } from './statUtils';
 // Configuration constants derived from central rules
 const BASE_XP = 120;
 const EXPONENT = 1.65;
-const EARLY_SHIFT = 2;
+const EARLY_SHIFT = 3;
 const MAX_LEVEL = 99;
 
 /**
