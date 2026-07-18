@@ -211,6 +211,12 @@ describe('lootboxUtils', () => {
 
   // ─── New Weight Tests ──────────────────────────────────────────────────
 
+  it('has decreasing common weight as level increases (level 3 better than level 1-2)', () => {
+    const w1 = getLootboxRarityWeights(1);
+    const w3 = getLootboxRarityWeights(3);
+    expect(w3.common).toBeLessThan(w1.common);
+  });
+
   it('has legendary weight 0.04 at level 3-6 (midgame)', () => {
     const w3 = getLootboxRarityWeights(3);
     const w6 = getLootboxRarityWeights(6);
