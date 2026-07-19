@@ -92,7 +92,7 @@ export const getLootboxRarityWeights = (level: number): Record<ItemRarity, numbe
     return { common: 0.488, uncommon: 0.24, rare: 0.15, epic: 0.10, legendary: 0.04 };
   }
   if (level >= 3) {
-    return { common: 0.498, uncommon: 0.20, rare: 0.15, epic: 0.13, legendary: 0.04 };
+    return { common: 0.42, uncommon: 0.24, rare: 0.17, epic: 0.14, legendary: 0.04 };
   }
   return { ...LOOTBOX_RARITY_WEIGHTS };
 };
