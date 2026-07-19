@@ -281,8 +281,8 @@ describe('Combat Balance Config', () => {
 
   // ── Max Duration ────────────────────────────────────────────────────────
 
-  it('should have maxDurationMs set to 30000', () => {
-    expect(COMBAT_BALANCE.maxDurationMs).toBe(30000);
+  it('should have maxDurationMs set to 25000', () => {
+    expect(COMBAT_BALANCE.maxDurationMs).toBe(25000);
   });
 
   // ── Hard Timeout ────────────────────────────────────────────────────────
