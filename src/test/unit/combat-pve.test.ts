@@ -72,7 +72,7 @@ describe('PvE combat', () => {
     const xpWin = calculateFightXp(true, 5, 5);
     const pveXp = Math.round(xpWin * GAME_RULES.PVE.XP_MODIFIER);
     expect(pveXp).toBe(Math.round(xpWin * GAME_RULES.PVE.XP_MODIFIER));
-    expect(pveXp).toBeLessThan(xpWin);
+    expect(pveXp).toBe(xpWin);
   });
 
   it('can fight monsters at every level from 1 to 20', () => {
