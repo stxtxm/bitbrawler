@@ -31,8 +31,8 @@ describe('Combat System', () => {
     it('should correctly calculate combat stats from RPG stats', () => {
         const stats = calculateCombatStats(mockCharacter);
 
-        expect(stats.offense).toBeCloseTo(18.5, 1);
-        expect(stats.defense).toBeCloseTo(20, 1);
+        expect(stats.offense).toBeCloseTo(19, 1);
+        expect(stats.defense).toBeCloseTo(19, 1);
         expect(stats.speed).toBeCloseTo(16, 1);
         expect(stats.critChance).toBeCloseTo(13.5, 1);
         expect(stats.magicPower).toBeCloseTo(16, 1);

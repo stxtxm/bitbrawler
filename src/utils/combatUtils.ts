@@ -270,8 +270,8 @@ export function simulateCombat(attacker: Character, defender: Character): {
 
   let winner: 'attacker' | 'defender' | 'draw'
   if (attackerHp <= 0 && defenderHp <= 0) {
-    winner = 'draw'
-    record("Match nul !")
+    winner = 'attacker'
+    record(`${attacker.name} gagne (KO simultané) !`)
   } else if (attackerHp <= 0) {
     winner = 'defender'
     record(`${defender.name} gagne !`)

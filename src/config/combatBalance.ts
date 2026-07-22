@@ -2,8 +2,8 @@ export const COMBAT_BALANCE = {
   statBaseline: 10,
   diminishingExponent: 0.85,
   statWeights: {
-    offense: 1.85,
-    defense: 2.0,
+    offense: 1.9,
+    defense: 1.9,
     speed: 1.6,
     magicPower: 1.6,
     focus: 1.35,
@@ -13,9 +13,9 @@ export const COMBAT_BALANCE = {
   },
   levelScaling: {
     perLevel: 0.012,
-    maxBonus: 0.22,
+    maxBonus: 0.40,
   },
-  roundLimit: 15,
+  roundLimit: 25,
   maxDurationMs: 25000,
   /** Hard watchdog timeout for the overall fight cycle (incl. UI animation).
    *  If a fight exceeds this wall-clock limit, the combat loop force-finishes
@@ -44,8 +44,8 @@ export const COMBAT_BALANCE = {
     max: 96,
   },
   damage: {
-    offenseWeight: 1.2,
-    defenseWeight: 0.35,
+    offenseWeight: 1.3,
+    defenseWeight: 0.25,
     min: 20,
     critMultiplier: 1.30,
   },

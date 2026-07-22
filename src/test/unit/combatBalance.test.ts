@@ -26,12 +26,12 @@ describe('Combat Balance Config', () => {
 
   // ── Value Assertions ───────────────────────────────────────────────────
 
-  it('should have offenseWeight set to 1.2', () => {
-    expect(COMBAT_BALANCE.damage.offenseWeight).toBe(1.2);
+  it('should have offenseWeight set to 1.3', () => {
+    expect(COMBAT_BALANCE.damage.offenseWeight).toBe(1.3);
   });
 
-  it('should have defenseWeight set to 0.35', () => {
-    expect(COMBAT_BALANCE.damage.defenseWeight).toBe(0.35);
+  it('should have defenseWeight set to 0.25', () => {
+    expect(COMBAT_BALANCE.damage.defenseWeight).toBe(0.25);
   });
 
   it('should have critMultiplier set to 1.30', () => {
@@ -94,15 +94,14 @@ describe('Combat Balance Config', () => {
     // Calculate expected damage with the updated balance parameters
     // scaleStat(20): 10 + (20-10)^0.85 = 10 + 10^0.85 = 10 + 7.079 = 17.079
     // scaleStat(15): 10 + (15-10)^0.85 = 10 + 5^0.85 = 10 + 3.928 = 13.928
-    // level 5: levelMultiplier = 1 + min(0.22, 4*0.012) = 1 + 0.048 = 1.048
-    // offense = 17.079 * 1.85 * 1.048 = 33.113
-    // defense = 13.928 * 2.0 * 1.048 = 29.193
-    // baseDamage = 33.113 * 1.2 - 29.193 * 0.35 = 39.736 - 10.218 = 29.518
-    // With variance at 0.5: varianceRange = 0.2 - min(0.08, 10*0.002) = 0.2 - 0.02 = 0.18
-    // varianceFactor = (1 - 0.09) + 0.5*0.18 = 0.91 + 0.09 = 1.0
+    // level 5: levelMultiplier = 1 + min(0.40, 4*0.012) = 1 + 0.048 = 1.048
+    // offense = 17.079 * 1.9 * 1.048 = 34.010
+    // defense = 13.928 * 1.9 * 1.048 = 27.728
+    // baseDamage = 34.010 * 1.3 - 27.728 * 0.25 = 44.213 - 6.932 = 37.281
+    // With variance at 0.5: varianceFactor = 1.0
     // No comeback (HP > 35%), no focus surge, no affinity
-    // damage = max(20, round(29.518 * 1.0)) = 30
-    expect(damages[0]).toBe(30);
+    // damage = max(20, round(37.281 * 1.0)) = 37
+    expect(damages[0]).toBe(37);
   });
 
   // ── Behavioral Impact: Comeback ────────────────────────────────────────
@@ -160,14 +159,14 @@ describe('Combat Balance Config', () => {
     // With comeback active (hp < 35%) and diminished returns exponent 0.85:
     // level 5: levelMultiplier = 1.048
     // scaleStat(15) = 10 + 5^0.85 = 13.928
-    // offense = 13.928 * 1.85 * 1.048 ≈ 27.004
+    // offense = 13.928 * 1.9 * 1.048 ≈ 27.728
     // scaleStat(20) = 10 + 10^0.85 = 17.079
-    // defense = 17.079 * 2.0 * 1.048 = 35.798
-    // baseDamage = 27.004 * 1.2 - 35.798 * 0.35 = 32.405 - 12.529 = 19.876
+    // defense = 17.079 * 1.9 * 1.048 = 34.010
+    // baseDamage = 27.728 * 1.3 - 34.010 * 0.25 = 36.046 - 8.503 = 27.544
     // comebackMultiplier = 1.10
-    // varianceFactor at 0.5 = 1.0 (same as above)
-    // damage = max(20, round(19.876 * 1.0 * 1.10)) = max(20, round(21.864)) = 22
-    expect(damage).toBe(22);
+    // varianceFactor at 0.5 = 1.0
+    // damage = max(20, round(27.544 * 1.0 * 1.10)) = max(20, round(30.298)) = 30
+    expect(damage).toBe(30);
   });
 
   // ── Behavioral Impact: Hit Chance Cap ──────────────────────────────────
