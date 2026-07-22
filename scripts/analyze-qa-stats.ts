@@ -741,7 +741,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   // Essence suggestions
   if (essenceAnalysis && essenceAnalysis.runs_with_essence_data >= 3) {
     if (essenceAnalysis.avg_essence_gained_per_run > 20) {
-      suggestions.push(`High essence gain (avg +${essenceAnalysis.avg_essence_gained_per_run.toFixed(1)}/run). Consider adjusting ESSENCE_SOFT_CAP or salvage yields.`)
+      suggestions.push(`High essence gain (avg +${essenceAnalysis.avg_essence_gained_per_run.toFixed(1)}/run). Consider adjusting salvage yields.`)
     }
     if (essenceAnalysis.avg_essence_gained_per_run < 1 && essenceAnalysis.avg_initial_essence > 50) {
       suggestions.push(`Low essence gain (avg +${essenceAnalysis.avg_essence_gained_per_run.toFixed(1)}/run). Players may be hoarding essence.`)

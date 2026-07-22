@@ -12,7 +12,6 @@ import {
   FUSION_COST,
   UPGRADE_COST,
   MAX_UPGRADE_LEVEL,
-  ESSENCE_SOFT_CAP,
 } from '../../data/forgeConstants';
 
 // ─── Mocks ──────────────────────────────────────────────────────────────────
@@ -146,17 +145,6 @@ describe('SalvagePanel', () => {
       'success',
       expect.any(Number),
     );
-  });
-
-  it('shows essence soft cap warning when near cap', () => {
-    const char = makeCharacter({
-      inventory: [FLAME_DAGGER.id],
-      essence: ESSENCE_SOFT_CAP - 10,
-    });
-    setupGame({ activeCharacter: char, essence: char.essence });
-    render(<SalvagePanel onClose={vi.fn()} />);
-
-    expect(screen.getByText(/essence.*cap|cap.*essence|soft.*cap/i)).toBeInTheDocument();
   });
 
   it('shows 0 essence state', () => {
@@ -438,17 +426,6 @@ describe('UpgradePanel', () => {
     await waitFor(() => {
       expect(upgradeItem).toHaveBeenCalledWith(RUSTY_SWORD.id);
     });
-  });
-
-  it('shows essence soft cap warning when near cap', () => {
-    const char = makeCharacter({
-      inventory: [RUSTY_SWORD.id],
-      essence: ESSENCE_SOFT_CAP - 10,
-    });
-    setupGame({ activeCharacter: char, essence: char.essence });
-    render(<UpgradePanel onClose={vi.fn()} />);
-
-    expect(screen.getByText(/essence.*cap|cap.*essence|soft.*cap/i)).toBeInTheDocument();
   });
 
   it('shows disabled upgrade button with 0 essence', () => {

@@ -3,7 +3,6 @@ import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
 import { getInventoryItems } from '../../utils/equipmentUtils';
 import { getEssenceYield } from '../../utils/forgeUtils';
-import { ESSENCE_SOFT_CAP, ESSENCE_HARD_CAP } from '../../data/forgeConstants';
 import type { PixelItemAsset, ItemRarity } from '../../types/Item';
 import '../../styles/components/_forge.scss';
 
@@ -54,9 +53,6 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
   }, [activeCharacter]);
 
   const grouped = useMemo(() => groupByRarity(inventoryItems), [inventoryItems]);
-
-  const isNearSoftCap = essence >= ESSENCE_SOFT_CAP - 50 && essence < ESSENCE_SOFT_CAP;
-  const isAtHardCap = essence >= ESSENCE_HARD_CAP;
 
   // Trigger count-up animation when essence increases
   useEffect(() => {
@@ -218,16 +214,6 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
         <span className="forge-essence-label">CURRENT ESSENCE</span>
         <span className={`forge-essence-value ${essenceBump ? 'forge-essence-count-up' : ''}`}>{essence.toFixed(2)}</span>
       </div>
-      {isAtHardCap && (
-        <div className="forge-essence-warning forge-essence-hard-cap">
-          🔴 Essence au maximum! ({ESSENCE_HARD_CAP}/{ESSENCE_HARD_CAP})
-        </div>
-      )}
-      {isNearSoftCap && !isAtHardCap && (
-        <div className="forge-essence-warning">
-          ⚠ Essence near cap ({ESSENCE_SOFT_CAP}) — excess will be lost
-        </div>
-      )}
 
       <div className="forge-panel-sections">
         {RARITY_ORDER.map((rarity) => {

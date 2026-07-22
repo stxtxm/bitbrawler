@@ -8,7 +8,6 @@ import {
   UPGRADE_COST_SCALING,
   MAX_UPGRADE_LEVEL,
   LUCKY_PROC_CHANCE,
-  ESSENCE_HARD_CAP,
 } from '../data/forgeConstants';
 import { RARITY_RANK } from './lootboxUtils';
 
@@ -26,18 +25,6 @@ export const getEssenceYield = (item: PixelItemAsset): number => {
  */
 export const salvageItems = (items: PixelItemAsset[]): number => {
   return items.reduce((total, item) => total + getEssenceYield(item), 0);
-};
-
-/**
- * Clamp essence to hard cap when gaining, but never reduce existing essence.
- * Soft cap (750) is used for visual warnings only — hard cap (1000) is the
- * absolute maximum.
- */
-export const clampEssence = (value: number, current: number): number => {
-  if (value > current) {
-    return Math.min(value, Math.max(current, ESSENCE_HARD_CAP));
-  }
-  return value;
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -96,7 +83,7 @@ export const salvageItem = (
   const currentEssence = character.essence ?? 0;
   const essenceGain = getEssenceYield(item);
   const newInventory = (character.inventory ?? []).filter((id) => id !== itemId);
-  const newEssence = clampEssence(currentEssence + essenceGain, currentEssence);
+  const newEssence = currentEssence + essenceGain;
 
   return {
     ...character,
@@ -228,9 +215,9 @@ export const performFusion = (
   // Add result item to inventory if found
   const finalInventory = resultItem ? [...newInventory, resultItem.id] : newInventory;
 
-  // Deduct essence cost and clamp
+  // Deduct essence cost
   const currentEssence = character.essence ?? 0;
-  const newEssence = clampEssence(currentEssence - cost, currentEssence);
+  const newEssence = currentEssence - cost;
 
   return {
     result: resultItem,
@@ -319,6 +306,6 @@ export const performUpgrade = (itemId: string, character: Character): Character 
       ...currentUpgrades,
       [itemId]: currentLevel + 1,
     },
-    essence: clampEssence((character.essence ?? 0) - cost, character.essence ?? 0),
+    essence: (character.essence ?? 0) - cost,
   };
 };

@@ -67,7 +67,7 @@ Lis le rapport QA complet. Les sections importantes:
     - Si purchase_rate < 10% → prix trop élevés, créer issue avec `/oc` pour ↓ prix de 10%
     - Si purchase_rate > 60% → prix trop bas, créer issue avec `/oc` pour ↑ prix de 10%
   - **avg_essence_before** : moyenne essence avant achat
-    - Si < 100 → soft cap (750) trop bas ou essence drops insuffisants
+    - Si < 100 → les gains d'essence sont insuffisants
   - **lootbox_purchases** : si la lootbox (offre 3) est achetée plus souvent que les items
     - Sur 7+ jours, créer issue pour ↓ prix lootbox ou ↓ drop rate
   - **item_rarity_avg** : rareté moyenne des items achetés

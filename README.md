@@ -58,7 +58,7 @@ See [AGENTS.md](AGENTS.md) for autonomous agent workflows and responsibilities.
 - **Equipment loadouts** — manual equip/unequip with 6 weapon elements (fire/water/wind/earth/light/dark), affinity system (+15% damage vs bot archetypes)
 - **6 bot archetypes** (bruiser/tank/rogue/mage/lucky/zen) with elemental weakness mapping
 - **Equipment Forge** — salvage unwanted items for essence (fractional counter in header with .toFixed(2) display), fuse 3 same-rarity items for a higher tier, spend essence to upgrade stats up to +5
-- **🏪 8-Bit Emporium (Shop)** — onglet Shop dans la Forge : 4 offres quotidiennes dont 1 item épique garanti, achète contre de l'essence. Possibilité de relancer les 3 offres pour 25 essence. Essence plafonnée à 1000 avec jauge de progression visuelle.
+- **🏪 8-Bit Emporium (Shop)** — onglet Shop dans la Forge : 4 offres quotidiennes dont 1 item épique garanti, achète contre de l'essence. Possibilité de relancer les 3 offres pour 25 essence.
 - **🏅 PvE Medal System** — 25 médailles PvE : 16 médailles de chasseur (8 monstres × 2 paliers : 5/25 kills), 3 médailles de streak PvE (3/5/10 victoires consécutives), 6 médailles de progression haute (niveaux 30/50/75/100/150/200). Les médailles sont vérifiées automatiquement après chaque combat.
 - **Monster kill tracking** — chaque monstre affronté en PvE est enregistré. Les kills cumulés débloquent les médailles de chasseur. Visible dans le panneau des médailles.
 - **Progression déverrouillée dès le level 1** — PvP et Forge accessibles immédiatement après la création du personnage. Plus de paliers de déblocage.

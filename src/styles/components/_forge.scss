@@ -1732,17 +1732,3 @@
     display: none;
   }
 }
-
-.forge-essence-hard-cap {
-  font-weight: bold;
-  animation: essencePulse 1s ease-in-out infinite;
-}
-
-@keyframes essencePulse {
-  0%, 100% {
-    box-shadow: 0 0 4px rgba(255, 68, 68, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 10px rgba(255, 68, 68, 0.7);
-  }
-}

@@ -65,15 +65,3 @@ export const MAX_UPGRADE_LEVEL = 5;
  * Chance (0-1) for a lucky proc that upgrades two rarity tiers instead of one on fusion.
  */
 export const LUCKY_PROC_CHANCE = 0.1;
-
-/**
- * Soft cap for essence — excess beyond this is discarded.
- * Raised to 750 to accommodate shop purchases (up to 500) + upgrade costs.
- */
-export const ESSENCE_SOFT_CAP = 750;
-
-/**
- * Hard cap for essence — absolute maximum a character can hold.
- * Beyond this, no essence gains are allowed.
- */
-export const ESSENCE_HARD_CAP = 1000;

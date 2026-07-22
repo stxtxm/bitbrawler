@@ -3,7 +3,7 @@ import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
 import { getInventoryItems, getEquippedItems } from '../../utils/equipmentUtils';
 import { canUpgrade, getUpgradeCost } from '../../utils/forgeUtils';
-import { UPGRADE_BASE_COST, MAX_UPGRADE_LEVEL, ESSENCE_SOFT_CAP, ESSENCE_HARD_CAP } from '../../data/forgeConstants';
+import { UPGRADE_BASE_COST, MAX_UPGRADE_LEVEL } from '../../data/forgeConstants';
 import { PixelItemAsset } from '../../types/Item';
 import '../../styles/components/_forge.scss';
 
@@ -65,12 +65,6 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
   }, [selectedItem, selectedUpgradeLevel]);
 
   const insufficientEssence = essence < upgradeCost;
-
-  const isNearSoftCap = useMemo(() => {
-    // For upgrade, we don't gain essence, but warn if they're near cap
-    return essence >= ESSENCE_SOFT_CAP - 50 && essence < ESSENCE_SOFT_CAP;
-  }, [essence]);
-  const isAtHardCap = essence >= ESSENCE_HARD_CAP;
 
   const handleSelect = useCallback(
     (itemId: string) => {
@@ -160,16 +154,6 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
           <span className="forge-essence-label">ESSENCE</span>
           <span className="forge-essence-value">{essence.toFixed(2)}</span>
         </div>
-        {isAtHardCap && (
-          <div className="forge-essence-warning forge-essence-hard-cap">
-            🔴 Essence au maximum! ({ESSENCE_HARD_CAP}/{ESSENCE_HARD_CAP})
-          </div>
-        )}
-        {isNearSoftCap && !isAtHardCap && (
-          <div className="forge-essence-warning">
-            ⚠ Essence near cap ({ESSENCE_SOFT_CAP}) — spend some before upgrading
-        </div>
-      )}
 
       <div className="forge-selection-hint">
         Select an item to upgrade

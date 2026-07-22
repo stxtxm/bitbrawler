@@ -170,4 +170,4 @@ Merci de corriger ces points."
 - Vérifier que `buyShopOffer` dans GameContext persiste bien essence + inventory à Supabase
 - Vérifier que le daily reset (`shopPurchases.date`) fonctionne correctement
 - Vérifier que `rollSimpleLootbox()` est utilisé pour la lootbox du shop (pas de streak/pity)
-- Vérifier que les prix (200/350/500) sont bien alignés avec `ESSENCE_SOFT_CAP` (750)
+- Vérifier que les prix (200/350/500) sont cohérents avec les gains d'essence

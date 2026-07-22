@@ -20,7 +20,6 @@ import {
 } from '../utils/persistenceUtils';
 import {
   getEssenceYield,
-  clampEssence,
   performFusion,
   performUpgrade,
 } from '../utils/forgeUtils';
@@ -1074,7 +1073,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     if (!activeCharacter?.id) return null;
     if (amount <= 0) return null;
 
-    const newEssence = clampEssence((activeCharacter.essence ?? 0) + amount, activeCharacter.essence ?? 0);
+    const newEssence = (activeCharacter.essence ?? 0) + amount;
     const updatedChar = normalizeCharacter({
       ...activeCharacter,
       essence: newEssence,
@@ -1151,7 +1150,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const currentEssence = activeCharacter.essence ?? 0;
-    const newEssence = clampEssence(currentEssence + getEssenceYield(item), currentEssence);
+    const newEssence = currentEssence + getEssenceYield(item);
 
     const normalized = normalizeCharacter({
       ...activeCharacter,

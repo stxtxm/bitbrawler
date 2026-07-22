@@ -11,7 +11,6 @@ import {
   getItemUpgradeLevel,
   isFusionLucky,
   getUpgradeCost,
-  clampEssence,
 } from '../../utils/forgeUtils';
 import {
   ESSENCE_YIELD,
@@ -23,8 +22,6 @@ import {
   UPGRADE_BASE_COST,
   MAX_UPGRADE_LEVEL,
   LUCKY_PROC_CHANCE,
-  ESSENCE_SOFT_CAP,
-  ESSENCE_HARD_CAP,
   UPGRADE_COST_SCALING,
 } from '../../data/forgeConstants';
 import { PixelItemAsset } from '../../types/Item';
@@ -125,14 +122,6 @@ describe('forgeConstants', () => {
   it('defines LUCKY_PROC_CHANCE as 0.1', () => {
     expect(LUCKY_PROC_CHANCE).toBe(0.1);
   });
-  it('defines ESSENCE_SOFT_CAP as 750', () => {
-
-    expect(ESSENCE_SOFT_CAP).toBe(750);
-  });
-
-  it('defines ESSENCE_HARD_CAP as 1000', () => {
-    expect(ESSENCE_HARD_CAP).toBe(1000);
-  });
 });
 
 // ─── getEssenceYield ──────────────────────────────────────────────────────
@@ -180,18 +169,6 @@ describe('salvageItem', () => {
 
     expect(result.inventory).toEqual(['other_item']);
     expect(result.essence).toBe(0);
-  });
-
-  it('caps essence at ESSENCE_HARD_CAP', () => {
-    const item = makeItem('legendary_sword', 'legendary');
-    const char = makeCharacter({
-      inventory: ['legendary_sword'],
-      essence: ESSENCE_HARD_CAP - ESSENCE_YIELD.legendary + 1, // just above hard cap
-    });
-
-    const result = salvageItem('legendary_sword', char, [item]);
-
-    expect(result.essence).toBe(ESSENCE_HARD_CAP);
   });
 
   it('handles non-existent item ID gracefully (returns char unchanged)', () => {
@@ -766,19 +743,6 @@ describe('forgeUtils edge cases', () => {
       expect(result.inventory).toContain('rusty_sword');
       expect(result.essence).toBe(0);
     });
-
-    it('salvaging an item when near hard cap caps the essence', () => {
-      const commonItem = makeItem('common_item', 'common');
-      const char = makeCharacter({
-        inventory: ['common_item'],
-        essence: ESSENCE_HARD_CAP - 1, // just below cap
-      });
-
-      const result = salvageItem('common_item', char, [commonItem]);
-      // Essence should be capped at ESSENCE_HARD_CAP
-      expect(result.essence).toBe(ESSENCE_HARD_CAP);
-      expect(result.inventory).toHaveLength(0);
-    });
   });
 
   describe('canFuse edge cases', () => {
@@ -986,48 +950,6 @@ describe('salvageItems', () => {
       makeItem('c', 'epic'),
     ];
     expect(salvageItems(items)).toBe(ESSENCE_YIELD.epic * 3);
-  });
-});
-
-// ─── clampEssence ─────────────────────────────────────────────────────────
-
-describe('clampEssence', () => {
-  it('allows gaining essence up to ESSENCE_HARD_CAP', () => {
-    const result = clampEssence(900, 500);
-    expect(result).toBe(900);
-  });
-
-  it('caps gains at ESSENCE_HARD_CAP', () => {
-    const result = clampEssence(1500, 500);
-    expect(result).toBe(ESSENCE_HARD_CAP);
-  });
-
-  it('allows spending essence below current value', () => {
-    const result = clampEssence(300, 500);
-    expect(result).toBe(300);
-  });
-
-  it('allows spending essence to zero', () => {
-    const result = clampEssence(0, 500);
-    expect(result).toBe(0);
-  });
-
-  it('does not reduce existing essence above ESSENCE_HARD_CAP', () => {
-    // If current essence is already above hard cap (legacy data), spending is allowed
-    const result = clampEssence(900, 1100);
-    expect(result).toBe(900);
-  });
-
-  it('allows gaining essence when current is exactly at ESSENCE_HARD_CAP', () => {
-    // At cap, gaining should still be capped
-    const result = clampEssence(1100, ESSENCE_HARD_CAP);
-    expect(result).toBe(ESSENCE_HARD_CAP);
-  });
-
-  it('allows gaining essence when below hard cap but above soft cap', () => {
-    // Between soft cap (750) and hard cap (1000), gains allowed
-    const result = clampEssence(850, 800);
-    expect(result).toBe(850);
   });
 });
 
