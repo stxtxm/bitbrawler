@@ -4,7 +4,6 @@ import { useNotification } from '../../hooks/useNotification';
 import { getInventoryItems, getEquippedItems } from '../../utils/equipmentUtils';
 import { canUpgrade, getUpgradeCost } from '../../utils/forgeUtils';
 import { UPGRADE_BASE_COST, MAX_UPGRADE_LEVEL, ESSENCE_SOFT_CAP, ESSENCE_HARD_CAP } from '../../data/forgeConstants';
-import { EssenceGauge } from '../EssenceGauge';
 import { PixelItemAsset } from '../../types/Item';
 import '../../styles/components/_forge.scss';
 
@@ -135,7 +134,6 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
           <span className="forge-essence-label">ESSENCE</span>
           <span className="forge-essence-value">{essence.toFixed(2)}</span>
         </div>
-        {essence > 0 && <EssenceGauge current={essence} />}
         <div className="forge-empty-state">
           <div className="forge-empty-text">
             No items to upgrade.
@@ -162,8 +160,6 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
           <span className="forge-essence-label">ESSENCE</span>
           <span className="forge-essence-value">{essence.toFixed(2)}</span>
         </div>
-        {essence > 0 && <EssenceGauge current={essence} />}
-
         {isAtHardCap && (
           <div className="forge-essence-warning forge-essence-hard-cap">
             🔴 Essence au maximum! ({ESSENCE_HARD_CAP}/{ESSENCE_HARD_CAP})

@@ -5,7 +5,6 @@ import { getInventoryItems } from '../../utils/equipmentUtils';
 import { canFuse } from '../../utils/forgeUtils';
 import { FUSION_COST, FUSION_INPUT_COUNT } from '../../data/forgeConstants';
 import { RARITY_RANK } from '../../utils/lootboxUtils';
-import { EssenceGauge } from '../EssenceGauge';
 import type { PixelItemAsset, ItemRarity } from '../../types/Item';
 import '../../styles/components/_forge.scss';
 
@@ -194,8 +193,6 @@ export const FusionPanel = memo(function FusionPanel({ onClose }: FusionPanelPro
         <span className="forge-essence-label">ESSENCE</span>
           <span className="forge-essence-value">{essence.toFixed(2)}</span>
       </div>
-      {essence > 0 && <EssenceGauge current={essence} />}
-
       {!hasAnyFusionable && (
         <div className="forge-empty-state">
           <div className="forge-empty-text">

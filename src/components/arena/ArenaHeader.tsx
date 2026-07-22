@@ -1,6 +1,5 @@
 import { memo } from 'react';
 import { PixelIcon } from '../PixelIcon';
-import { EssenceGauge } from '../EssenceGauge';
 
 interface ArenaHeaderProps {
   characterName: string;
@@ -33,7 +32,6 @@ export const ArenaHeader = memo(function ArenaHeader({
             <span className="essence-badge" title="Essence">💎 {essence.toFixed(2)}</span>
           )}
         </div>
-        {essence > 0 && <EssenceGauge current={essence} />}
       </div>
       <div className="header-actions">
         <button className="button icon-btn" onClick={onOpenSettings} title="Settings" aria-label="Settings">

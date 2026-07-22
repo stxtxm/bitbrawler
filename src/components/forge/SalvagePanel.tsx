@@ -4,7 +4,6 @@ import { useNotification } from '../../hooks/useNotification';
 import { getInventoryItems } from '../../utils/equipmentUtils';
 import { getEssenceYield } from '../../utils/forgeUtils';
 import { ESSENCE_SOFT_CAP, ESSENCE_HARD_CAP } from '../../data/forgeConstants';
-import { EssenceGauge } from '../EssenceGauge';
 import type { PixelItemAsset, ItemRarity } from '../../types/Item';
 import '../../styles/components/_forge.scss';
 
@@ -193,7 +192,6 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
           <span className="forge-essence-label">ESSENCE</span>
           <span className={`forge-essence-value ${essenceBump ? 'forge-essence-count-up' : ''}`}>{essence.toFixed(2)}</span>
         </div>
-        {essence > 0 && <EssenceGauge current={essence} />}
         <div className="forge-empty-state">
           <div className="forge-empty-text">
             No items to salvage.
@@ -220,8 +218,6 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
         <span className="forge-essence-label">CURRENT ESSENCE</span>
         <span className={`forge-essence-value ${essenceBump ? 'forge-essence-count-up' : ''}`}>{essence.toFixed(2)}</span>
       </div>
-      {essence > 0 && <EssenceGauge current={essence} />}
-
       {isAtHardCap && (
         <div className="forge-essence-warning forge-essence-hard-cap">
           🔴 Essence au maximum! ({ESSENCE_HARD_CAP}/{ESSENCE_HARD_CAP})

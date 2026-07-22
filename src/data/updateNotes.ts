@@ -16,7 +16,6 @@ export const UPDATE_NOTES: UpdateNote[] = [
       '🛒 Shop offerings and purchases tracked by QA bot — item rarities, prices, and purchase behavior are now recorded for analysis.',
       '✨ 1 epic item guaranteed per day in the 8-Bit Emporium shop rotation alongside the regular 3 offers.',
       '🔄 Shop reroll feature: spend 25 essence to refresh all 3 daily shop offers for a chance at better loot.',
-      '📊 Essence hard cap at 1000 with a visual EssenceGauge bar showing progress toward soft cap (750) and hard cap (1000) — green/orange/red indicator.',
       '💰 Data-driven shop price reduction: offers now cost 150/250/350 essence (down from 200/350/500) based on QA data analysis.',
       '⚖️ Essence salvage yields rebalanced: rare 75→50, epic 250→80, legendary 1000→400 for a healthier sink-to-source ratio.',
       '1151 tests passing across 88 test files.',
