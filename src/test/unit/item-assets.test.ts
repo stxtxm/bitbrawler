@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { ITEM_ASSETS, ITEM_PALETTE } from '../../data/itemAssets';
 
 describe('Item assets', () => {
-  it('defines 136 items', () => {
-    expect(ITEM_ASSETS.length).toBe(136);
+  it('defines 138 items', () => {
+    expect(ITEM_ASSETS.length).toBe(138);
   });
 
   it('assigns unlock levels up to 99', () => {
@@ -78,11 +78,11 @@ describe('Item assets', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('legendary items exist at various levels starting from level 5', () => {
+  it('legendary items exist at various levels starting from level 3', () => {
     const legendaries = ITEM_ASSETS.filter((i) => i.rarity === 'legendary');
-    expect(legendaries.length).toBeGreaterThanOrEqual(3);
+    expect(legendaries.length).toBeGreaterThanOrEqual(5);
     legendaries.forEach((item) => {
-      expect(item.requiredLevel).toBeGreaterThanOrEqual(5);
+      expect(item.requiredLevel).toBeGreaterThanOrEqual(3);
     });
   });
 
@@ -101,7 +101,9 @@ describe('Item assets', () => {
     expect(waterItems.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('has at least one legendary at each of levels 5, 8, 10, 25, 50, and 99', () => {
+  it('has at least one legendary at each of levels 3, 4, 5, 8, 10, 25, 50, and 99', () => {
+    expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 3)).toBe(true);
+    expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 4)).toBe(true);
     expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 5)).toBe(true);
     expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 8)).toBe(true);
     expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 10)).toBe(true);
