@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-07-14T20:13:21Z",
+  "last_session": "2026-07-22T20:24:04Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -56,6 +56,11 @@
       "lesson": "PvE difficulty adjustment: PVE.STAT_MULTIPLIER 10->11 and PVE.HP_MULTIPLIER 11->12 to address 100% PvE win rate. Simple config change with test assertions. TDD flow followed: tests updated first (RED), then source values (GREEN), lint + build verified.",
       "issue": "#518",
       "date": "2026-07-14"
+    },
+    {
+      "lesson": "Issue #547 - Legendary lootbox drop rate 0% after 133 opens: Root cause was that legendary items only existed at level 5+, but QA characters (and most early-game players) are level 1-4. The 4% legendary weight was effectively 0% because no legendary items existed in the eligible pool. Fix: added 2 low-level legendary items (Mystic Eye at level 3, Serrated Fang at level 4) so the 4% weight becomes meaningful for early-game players. Tests: updated item count from 136→138 and legendary spread assertions.",
+      "issue": "#547",
+      "date": "2026-07-22"
     }
   ]
 }
