@@ -741,15 +741,20 @@
   100% { filter: brightness(1); }
 }
 
-.glow-levelup {
-  animation: levelupGlow 0.8s ease-out;
+.idle-levelup-glow {
+  position: absolute;
+  inset: -10px;
+  pointer-events: none;
+  z-index: 1;
+  border-radius: 50%;
+  animation: idleLevelupGlow 0.8s ease-out;
 }
 
-@keyframes levelupGlow {
-  0% { filter: brightness(1) drop-shadow(0 0 0 transparent); }
-  25% { filter: brightness(2) drop-shadow(0 0 20px rgba($accent-gold, 0.8)); }
-  50% { filter: brightness(1.5) drop-shadow(0 0 15px rgba($accent-gold, 0.6)); }
-  100% { filter: brightness(1) drop-shadow(0 0 0 transparent); }
+@keyframes idleLevelupGlow {
+  0% { box-shadow: 0 0 0 0 transparent; }
+  25% { box-shadow: 0 0 24px 12px rgba($accent-gold, 0.7); }
+  50% { box-shadow: 0 0 16px 8px rgba($accent-gold, 0.4); }
+  100% { box-shadow: 0 0 0 0 transparent; }
 }
 
 // Level-up floating text above character

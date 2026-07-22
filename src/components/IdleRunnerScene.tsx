@@ -244,7 +244,8 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
       {levelUpShockwave && <div className={`level-up-shockwave${isMilestoneCeremony ? ' milestone' : ''}`} />}
       {/* clouds rendered inside ProceduralTerrain canvas */}
 
-      <div key={animKey} className={`idle-character-slot${animRun ? '' : ' anim-paused'} ${isAttacking ? 'attacking' : ''} ${isVictory ? 'victory' : ''} ${showLevelUpFx ? 'glow-levelup' : ''} ${isMilestoneCeremony ? 'ceremony-milestone' : ''}`}>
+      <div key={animKey} className={`idle-character-slot${animRun ? '' : ' anim-paused'} ${isAttacking ? 'attacking' : ''} ${isVictory ? 'victory' : ''} ${isMilestoneCeremony ? 'ceremony-milestone' : ''}`}>
+        {showLevelUpFx && <div className="idle-levelup-glow" />}
         <PixelCharacter
           seed={character.seed}
           gender={character.gender}
