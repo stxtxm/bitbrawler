@@ -1,43 +1,175 @@
-import { describe, it, expect } from 'vitest'
-import { getMonsterVisualScale, MONSTER_VISUAL_SCALE } from '../../utils/monsterVisualScale'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, act } from '@testing-library/react'
+import { IdleRunnerScene } from '../../components/IdleRunnerScene'
 
-describe('getMonsterVisualScale', () => {
-  it('returns 0.7x for slime at any screen width', () => {
-    const base = Math.round((5 + 2) * MONSTER_VISUAL_SCALE.slime)
-    expect(getMonsterVisualScale('slime', 5)).toBe(base)
+// Mock PixelCharacter — renders a simple div with provided props
+vi.mock('../../components/PixelCharacter', () => ({
+  PixelCharacter: ({ seed }: { seed: string }) => (
+    <div data-testid="pixel-character" data-seed={seed}>CHAR</div>
+  ),
+}))
+
+// Mock PixelMonster — renders a simple div
+vi.mock('../../components/PixelMonster', () => ({
+  PixelMonster: ({ monsterId }: { monsterId: string }) => (
+    <div data-testid="pixel-monster" data-monster={monsterId}>MONSTER</div>
+  ),
+}))
+
+// Mock ParticleSystem
+vi.mock('../../utils/particleSystem', () => ({
+  ParticleSystem: class {
+    mount() { /* noop */ }
+    destroy() { /* noop */ }
+    emit() { /* noop */ }
+  },
+}))
+
+// Mock useLowPerformanceMode
+vi.mock('../../hooks/useLowPerformanceMode', () => ({
+  useLowPerformanceMode: () => false,
+}))
+
+// Mock monsterVisualScale
+vi.mock('../../utils/monsterVisualScale', () => ({
+  monsterScaleFor: () => 1,
+}))
+
+describe('IdleRunnerScene', () => {
+  const defaultProps = {
+    character: {
+      seed: 'test-seed',
+      gender: 'male' as const,
+      level: 5,
+      name: 'Hero',
+      experience: 120,
+      strength: 8,
+      vitality: 7,
+      dexterity: 6,
+      luck: 5,
+      intelligence: 4,
+      focus: 5,
+      hp: 50,
+      maxHp: 50,
+      wins: 0,
+      losses: 0,
+      fightsLeft: 3,
+      lastFightReset: Date.now(),
+    },
+    currentMonster: 'goblin' as const,
+    scenePhase: 'running' as const,
+    lastCombatResult: null,
+    lastCombatXp: 0,
+    offlineGains: null,
+    onClearOfflineGains: vi.fn(),
+    recentLevelUp: null,
+    currentStreak: 0,
+    streakMilestone: null,
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers()
   })
 
-  it('returns 1.5x for dragon_spawn at any screen width', () => {
-    const base = Math.round((8 + 2) * MONSTER_VISUAL_SCALE.dragon_spawn)
-    expect(getMonsterVisualScale('dragon_spawn', 8)).toBe(base)
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
-  it('dragon_spawn is strictly larger than slime at all charScales', () => {
-    for (const charScale of [5, 6, 7, 8]) {
-      const slime = getMonsterVisualScale('slime', charScale)
-      const dragon = getMonsterVisualScale('dragon_spawn', charScale)
-      expect(dragon).toBeGreaterThan(slime)
+  it('shows level-up FX when recentLevelUp is provided', () => {
+    render(
+      <IdleRunnerScene
+        {...defaultProps}
+        recentLevelUp={{ newLevel: 6, isMilestone: false }}
+      />,
+    )
+
+    // The level-up glow should be visible
+    const container = screen.getByText('LVL 6')
+    expect(container).toBeInTheDocument()
+    expect(container.className).toContain('levelup-float-lvl')
+  })
+
+  it('does not show level-up FX when recentLevelUp is null', () => {
+    render(<IdleRunnerScene {...defaultProps} />)
+
+    expect(screen.queryByText(/LVL/)).not.toBeInTheDocument()
+  })
+
+  it('shows milestone ceremony for milestone levels', () => {
+    render(
+      <IdleRunnerScene
+        {...defaultProps}
+        recentLevelUp={{ newLevel: 10, isMilestone: true }}
+      />,
+    )
+
+    const lvlText = screen.getByText('LVL 10')
+    expect(lvlText).toBeInTheDocument()
+    // Milestone should render — the float text is present
+    expect(screen.getByText('⬆')).toBeInTheDocument()
+  })
+
+  it('dismisses level-up FX when clicking on the container', () => {
+    render(
+      <IdleRunnerScene
+        {...defaultProps}
+        recentLevelUp={{ newLevel: 6, isMilestone: false }}
+      />,
+    )
+
+    // Level-up FX should be visible initially
+    expect(screen.getByText('LVL 6')).toBeInTheDocument()
+
+    // Click on the idle runner box container
+    const container = screen.getByText('LVL 6').closest('.idle-runner-box')
+    expect(container).not.toBeNull()
+    if (container) {
+      fireEvent.click(container)
     }
+
+    // Level-up FX should be dismissed immediately
+    expect(screen.queryByText('LVL 6')).not.toBeInTheDocument()
   })
 
-  it('all 8 monster IDs return a positive integer scale', () => {
-    const ids: Array<keyof typeof MONSTER_VISUAL_SCALE> = ['slime', 'wolf', 'goblin', 'skeleton', 'wraith', 'ogre', 'chimera', 'dragon_spawn']
-    for (const id of ids) {
-      for (const charScale of [5, 6, 7, 8]) {
-        const scale = getMonsterVisualScale(id, charScale)
-        expect(Number.isInteger(scale)).toBe(true)
-        expect(scale).toBeGreaterThan(0)
-      }
-    }
+  it('dismisses level-up FX after 2000ms auto-dismiss timer', () => {
+    render(
+      <IdleRunnerScene
+        {...defaultProps}
+        recentLevelUp={{ newLevel: 6, isMilestone: false }}
+      />,
+    )
+
+    // Level-up FX should be visible initially
+    expect(screen.getByText('LVL 6')).toBeInTheDocument()
+
+    // Fast-forward 2000ms
+    act(() => {
+      vi.advanceTimersByTime(2000)
+    })
+
+    // Level-up FX should be dismissed by auto-timer
+    expect(screen.queryByText('LVL 6')).not.toBeInTheDocument()
   })
 
-  it('monsters are ordered by size: slime < wolf < goblin < skeleton < wraith < ogre < chimera < dragon_spawn', () => {
-    const ordered: Array<keyof typeof MONSTER_VISUAL_SCALE> = ['slime', 'wolf', 'goblin', 'skeleton', 'wraith', 'ogre', 'chimera', 'dragon_spawn']
-    for (const charScale of [5, 6, 7, 8]) {
-      const scales = ordered.map(id => getMonsterVisualScale(id, charScale))
-      for (let i = 1; i < scales.length; i++) {
-        expect(scales[i]).toBeGreaterThanOrEqual(scales[i - 1])
-      }
-    }
+  it('does not render the legacy level-up-pop-overlay class', () => {
+    const { container } = render(
+      <IdleRunnerScene
+        {...defaultProps}
+        recentLevelUp={{ newLevel: 6, isMilestone: false }}
+      />,
+    )
+
+    expect(container.querySelector('.level-up-pop-overlay')).toBeNull()
+  })
+
+  it('does not render card-shine element', () => {
+    const { container } = render(
+      <IdleRunnerScene
+        {...defaultProps}
+        recentLevelUp={{ newLevel: 6, isMilestone: false }}
+      />,
+    )
+
+    expect(container.querySelector('.card-shine')).toBeNull()
   })
 })
