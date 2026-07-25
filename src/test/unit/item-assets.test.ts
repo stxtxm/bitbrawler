@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { ITEM_ASSETS, ITEM_PALETTE } from '../../data/itemAssets';
 
 describe('Item assets', () => {
-  it('defines 138 items', () => {
-    expect(ITEM_ASSETS.length).toBe(138);
+  it('defines 139 items', () => {
+    expect(ITEM_ASSETS.length).toBe(139);
   });
 
   it('assigns unlock levels up to 99', () => {
@@ -78,12 +78,12 @@ describe('Item assets', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('legendary items exist at various levels starting from level 3', () => {
+  it('legendary items exist at various levels starting from level 1', () => {
     const legendaries = ITEM_ASSETS.filter((i) => i.rarity === 'legendary');
     expect(legendaries.length).toBeGreaterThanOrEqual(5);
-    legendaries.forEach((item) => {
-      expect(item.requiredLevel).toBeGreaterThanOrEqual(3);
-    });
+    expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 1)).toBe(true);
+    expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 2)).toBe(true);
+  });
   });
 
   it('all items have at least one stat bonus', () => {

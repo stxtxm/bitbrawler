@@ -341,13 +341,15 @@ export function rollLootbox(
   if (!eligibleItems.length) return { item: null, pityCount: currentPity + 1, pityTriggered: false };
 
   // ─── Pity check: force legendary if threshold reached ─────────────────
+  let pitySaturated = false;
   if (currentPity >= PITY_THRESHOLD) {
     const forcedItem = forceLegendaryRoll(eligibleItems, rng);
     if (forcedItem) {
       return { item: forcedItem, pityCount: 0, pityTriggered: true };
     }
-    // No legendary items available — reset pity counter to avoid unbounded growth
-    return rollLootbox(items, { ...options, pityCount: 0 });
+    // No legendary items available — keep pity at threshold
+    // so it triggers when player levels up and legendaries become available
+    pitySaturated = true;
   }
 
   // Compute streak bonus
@@ -375,7 +377,7 @@ export function rollLootbox(
     item = rollSingle(eligibleItems, weights, rng, bonus.minRarity);
   }
 
-  const pityCount = computePity(item, currentPity);
+  const pityCount = pitySaturated ? PITY_THRESHOLD : computePity(item, currentPity);
   const pityTriggered = currentPity >= PITY_THRESHOLD;
 
   return { item, pityCount, pityTriggered };
