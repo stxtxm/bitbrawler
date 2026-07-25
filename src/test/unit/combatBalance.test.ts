@@ -30,8 +30,8 @@ describe('Combat Balance Config', () => {
     expect(COMBAT_BALANCE.damage.offenseWeight).toBe(1.3);
   });
 
-  it('should have defenseWeight set to 0.25', () => {
-    expect(COMBAT_BALANCE.damage.defenseWeight).toBe(0.25);
+  it('should have defenseWeight set to 0.35', () => {
+    expect(COMBAT_BALANCE.damage.defenseWeight).toBe(0.35);
   });
 
   it('should have critMultiplier set to 1.30', () => {
@@ -97,11 +97,11 @@ describe('Combat Balance Config', () => {
     // level 5: levelMultiplier = 1 + min(0.40, 4*0.012) = 1 + 0.048 = 1.048
     // offense = 17.079 * 1.9 * 1.048 = 34.010
     // defense = 13.928 * 1.9 * 1.048 = 27.728
-    // baseDamage = 34.010 * 1.3 - 27.728 * 0.25 = 44.213 - 6.932 = 37.281
+    // baseDamage = 34.010 * 1.3 - 27.728 * 0.35 = 44.213 - 9.705 = 34.508
     // With variance at 0.5: varianceFactor = 1.0
     // No comeback (HP > 35%), no focus surge, no affinity
-    // damage = max(20, round(37.281 * 1.0)) = 37
-    expect(damages[0]).toBe(37);
+    // damage = max(20, round(34.508 * 1.0)) = 35
+    expect(damages[0]).toBe(35);
   });
 
   // ── Behavioral Impact: Comeback ────────────────────────────────────────
@@ -162,11 +162,11 @@ describe('Combat Balance Config', () => {
     // offense = 13.928 * 1.9 * 1.048 ≈ 27.728
     // scaleStat(20) = 10 + 10^0.85 = 17.079
     // defense = 17.079 * 1.9 * 1.048 = 34.010
-    // baseDamage = 27.728 * 1.3 - 34.010 * 0.25 = 36.046 - 8.503 = 27.544
+    // baseDamage = 27.728 * 1.3 - 34.010 * 0.35 = 36.046 - 11.904 = 24.143
     // comebackMultiplier = 1.10
     // varianceFactor at 0.5 = 1.0
-    // damage = max(20, round(27.544 * 1.0 * 1.10)) = max(20, round(30.298)) = 30
-    expect(damage).toBe(30);
+    // damage = max(20, round(24.143 * 1.0 * 1.10)) = max(20, round(26.557)) = 27
+    expect(damage).toBe(27);
   });
 
   // ── Behavioral Impact: Hit Chance Cap ──────────────────────────────────
