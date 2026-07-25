@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { ITEM_ASSETS, ITEM_PALETTE } from '../../data/itemAssets';
 
 describe('Item assets', () => {
-  it('defines 139 items', () => {
-    expect(ITEM_ASSETS.length).toBe(139);
+  it('defines 141 items', () => {
+    expect(ITEM_ASSETS.length).toBe(141);
   });
 
   it('assigns unlock levels up to 99', () => {
@@ -81,9 +81,11 @@ describe('Item assets', () => {
   it('legendary items exist at various levels starting from level 1', () => {
     const legendaries = ITEM_ASSETS.filter((i) => i.rarity === 'legendary');
     expect(legendaries.length).toBeGreaterThanOrEqual(5);
+    // Low-level players can now get legendaries (level 1-4)
     expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 1)).toBe(true);
     expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 2)).toBe(true);
-  });
+    expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 3)).toBe(true);
+    expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 4)).toBe(true);
   });
 
   it('all items have at least one stat bonus', () => {
@@ -101,9 +103,7 @@ describe('Item assets', () => {
     expect(waterItems.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('has at least one legendary at each of levels 3, 4, 5, 8, 10, 25, 50, and 99', () => {
-    expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 3)).toBe(true);
-    expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 4)).toBe(true);
+  it('has at least one legendary at each of levels 5, 8, 10, 25, 50, and 99', () => {
     expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 5)).toBe(true);
     expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 8)).toBe(true);
     expect(ITEM_ASSETS.some((i) => i.rarity === 'legendary' && i.requiredLevel === 10)).toBe(true);
