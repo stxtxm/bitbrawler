@@ -176,26 +176,27 @@ describe('lootboxUtils', () => {
     expect(result.pityCount).toBe(1); // Incremented from 0 since result is common
   });
 
-  it('pity counter resets to 0 when no legendary items are available (level < 5)', () => {
-    // Legendary items start at requiredLevel 5, so at level 1 pity can't force one
-    // Pity should reset to 0 instead of growing unbounded
+  it('pity counter stays at threshold when no legendary items are available', () => {
+    // Filter items to exclude all legendaries, to test the code path
+    const noLegendaryItems = ITEM_ASSETS.filter((i) => i.rarity !== 'legendary');
     const rng = () => 0.001; // Would produce common
-    const result = rollLootbox(ITEM_ASSETS, { rng, level: 1, pityCount: PITY_THRESHOLD });
+    const result = rollLootbox(noLegendaryItems, { rng, level: 10, pityCount: PITY_THRESHOLD });
     expect(result.item).not.toBeNull();
-    expect(result.item!.rarity).toBe('common');
-    // Pity resets: recursive call with pityCount=0 → increments to 1 after common roll
-    expect(result.pityCount).toBe(1);
-    expect(result.pityTriggered).toBe(false);
+    expect(result.item!.rarity).not.toBe('legendary');
+    // Pity stays at threshold to trigger when legendaries become available
+    expect(result.pityCount).toBe(PITY_THRESHOLD);
+    expect(result.pityTriggered).toBe(true);
   });
 
   it('pity counter does not exceed PITY_THRESHOLD when no legendaries are available', () => {
-    // Simulate many rolls at level 1 (no legendary items available)
+    // Filter items to exclude all legendaries
+    const noLegendaryItems = ITEM_ASSETS.filter((i) => i.rarity !== 'legendary');
     let pityCount = PITY_THRESHOLD - 2; // Start near threshold
     const rng = () => 0.001;
     for (let i = 0; i < 10; i++) {
-      const result = rollLootbox(ITEM_ASSETS, { rng, level: 1, pityCount });
+      const result = rollLootbox(noLegendaryItems, { rng, level: 10, pityCount });
       pityCount = result.pityCount;
-      // Pity should never exceed PITY_THRESHOLD - 1 at level 1 since it resets
+      // Pity should never exceed PITY_THRESHOLD (stays capped when no legendaries)
       expect(pityCount).toBeLessThanOrEqual(PITY_THRESHOLD);
     }
   });
@@ -236,6 +237,50 @@ describe('lootboxUtils', () => {
     const w20 = getLootboxRarityWeights(20);
     expect(w10.legendary).toBeCloseTo(0.07, 3);
     expect(w20.legendary).toBeCloseTo(0.07, 3);
+  });
+
+  // ─── Low-Level Legendary Items Tests ──────────────────────────────────────
+
+  it('low-level player at level 1 can roll legendary items from new items', () => {
+    // With the new low-level legendaries (glimmer_blade, lucky_coin), level 1
+    // players have a chance (4%) to roll a legendary via the standard weight system
+    const rng = () => 0.999; // Force high rarity
+    const result = rollLootbox(ITEM_ASSETS, { rng, level: 1 });
+    expect(result.item).not.toBeNull();
+    expect(result.item!.rarity).toBe('legendary');
+    expect(result.item!.requiredLevel).toBeLessThanOrEqual(1);
+  });
+
+  it('low-level player at level 2 can roll legendary items', () => {
+    const rng = () => 0.999;
+    const result = rollLootbox(ITEM_ASSETS, { rng, level: 2 });
+    expect(result.item).not.toBeNull();
+    expect(result.item!.rarity).toBe('legendary');
+    expect(result.item!.requiredLevel).toBeLessThanOrEqual(2);
+  });
+
+  it('new legendary items from level 1-3 have legendary rarity and appropriate stats', () => {
+    const lowLevelLegendaries = ITEM_ASSETS.filter(
+      (i) => i.rarity === 'legendary' && i.requiredLevel <= 3
+    );
+    expect(lowLevelLegendaries.length).toBeGreaterThanOrEqual(2);
+    lowLevelLegendaries.forEach((item) => {
+      expect(item.requiredLevel).toBeLessThanOrEqual(3);
+      const totalStats = Object.values(item.stats).reduce((sum, v) => sum + (typeof v === 'number' ? v : 0), 0);
+      // Weaker legendaries: total stats between 2 and 5
+      expect(totalStats).toBeGreaterThanOrEqual(2);
+      expect(totalStats).toBeLessThanOrEqual(5);
+    });
+  });
+
+  it('pity threshold at level 1 now forces a legendary (new items available)', () => {
+    // Since level 1 now has legendary items, pity should award one
+    const rng = () => 0.001; // Would normally produce common
+    const result = rollLootbox(ITEM_ASSETS, { rng, level: 1, pityCount: PITY_THRESHOLD });
+    expect(result.item).not.toBeNull();
+    expect(result.item!.rarity).toBe('legendary');
+    expect(result.pityTriggered).toBe(true);
+    expect(result.pityCount).toBe(0);
   });
 
   it('PITY_THRESHOLD is 75', () => {
