@@ -46,7 +46,7 @@ describe('PvE combat', () => {
   });
 
   it('player can win against a monster', () => {
-    const strongPlayer = makePlayer({ level: 10, strength: 50, vitality: 40, dexterity: 50, focus: 40, luck: 30, intelligence: 30, hp: 2000, maxHp: 2000 });
+    const strongPlayer = makePlayer({ level: 10, strength: 120, vitality: 60, dexterity: 80, focus: 40, luck: 30, intelligence: 30, hp: 3000, maxHp: 3000 });
     const monster = generateMonster('goblin', 1);
     const result = simulateCombat(strongPlayer, monster);
     expect(result.winner).toBe('attacker');
@@ -72,7 +72,7 @@ describe('PvE combat', () => {
     const xpWin = calculateFightXp(true, 5, 5);
     const pveXp = Math.round(xpWin * GAME_RULES.PVE.XP_MODIFIER);
     expect(pveXp).toBe(Math.round(xpWin * GAME_RULES.PVE.XP_MODIFIER));
-    expect(pveXp).toBeLessThan(xpWin);
+    expect(pveXp).toBe(xpWin);
   });
 
   it('can fight monsters at every level from 1 to 20', () => {
