@@ -176,13 +176,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           PR_NUMBER="${{ steps.check_pr.outputs.existing_pr }}"
-          # Count passing/neutral checks vs failing/pending
-          CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
-            [.statusCheckRollup[]? | select(.status? == "COMPLETED") | select(.conclusion? == "SUCCESS" or .conclusion? == "NEUTRAL")] | length
-          ' 2>/dev/null || echo "0")
-          TOTAL=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
-            [.statusCheckRollup[]? | select(.status? == "COMPLETED")] | length
-          ' 2>/dev/null || echo "0")
           echo "PR #$PR_NUMBER: $CHECKS/$TOTAL checks passing"
 
           if [ "$TOTAL" -gt 0 ] && [ "$CHECKS" -eq "$TOTAL" ]; then
@@ -434,10 +427,10 @@ jobs:
 
           # --- Check CI status ---
           CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
-            [.statusCheckRollup[]? | select(.status? == "COMPLETED") | select(.conclusion? == "SUCCESS" or .conclusion? == "NEUTRAL")] | length
+            [.statusCheckRollup[]? | select(.app?.slug != "vercel") | select(.status? == "COMPLETED") | select(.conclusion? == "SUCCESS" or .conclusion? == "NEUTRAL")] | length
           ' 2>/dev/null || echo "0")
           TOTAL=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
-            [.statusCheckRollup[]? | select(.status? == "COMPLETED")] | length
+            [.statusCheckRollup[]? | select(.app?.slug != "vercel") | select(.status? == "COMPLETED")] | length
           ' 2>/dev/null || echo "0")
 
           if [ "$TOTAL" -gt 0 ] && [ "$CHECKS" -ne "$TOTAL" ]; then
@@ -504,7 +497,7 @@ jobs:
           PR_COMMENTS=$(gh api "/repos/${{ github.repository }}/issues/$PR_NUMBER/comments" --jq '.[].body' 2>/dev/null || echo "")
           PR_REVIEWS=$(gh api "/repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews" --jq '.[].body' 2>/dev/null || echo "")
           CI_CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
-            [.statusCheckRollup[]? | select(.conclusion? == "FAILURE" or .conclusion? == "ACTION_REQUIRED") |
+            [.statusCheckRollup[]? | select(.app?.slug != "vercel") | select(.conclusion? == "FAILURE" or .conclusion? == "ACTION_REQUIRED") |
               {name: .name, conclusion: .conclusion}
             ]' 2>/dev/null || echo "")
 

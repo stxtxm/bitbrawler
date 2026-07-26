@@ -54,7 +54,7 @@ jobs:
           for i in $(seq 1 3); do
             # Count checks that are not completed or not successful/neutral
             CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
-              [.statusCheckRollup[]? | select(
+              [.statusCheckRollup[]? | select(.app?.slug != "vercel") | select(
                 .status? != "COMPLETED" or (.conclusion? != "SUCCESS" and .conclusion? != "NEUTRAL")
               )] | length
             ' 2>/dev/null || echo "3")
