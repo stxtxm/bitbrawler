@@ -2153,6 +2153,7 @@ async function run() {
     },
     level_up_events: [],
     idle_runner: null,
+    idle_fights: [],
     efficiency_panel: null,
     initial_essence: null,
     final_essence: null,
@@ -2238,6 +2239,16 @@ async function run() {
 
     runRecord.idle_runner = await observeIdleCombat(page, 30000)
 
+    // Convert idle_runner observation to structured idle_fights records
+    if (runRecord.idle_runner && runRecord.idle_runner.xp_events.length > 0) {
+      runRecord.idle_fights = runRecord.idle_runner.xp_events.map(evt => ({
+        result: evt.result?.toUpperCase().includes('VICTORY') ? 'victory' : 'defeat',
+        xp: evt.xp,
+        monster: evt.monster,
+      }))
+      console.log(`   Converted ${runRecord.idle_fights.length} idle fight(s) to structured idle_fights`)
+    }
+
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-04-pve-idle.png`) })
 
     // Capture efficiency panel and essence after idle observation
@@ -2317,16 +2328,6 @@ async function run() {
     console.log(`   Final max HP: ${runRecord.final_max_hp}`)
     if (runRecord.final_equipment.length > 0) {
       console.log(`   Equipment: ${runRecord.final_equipment.map(e => `${e.slot}=${e.name}`).join(', ')}`)
-    }
-
-    // Populate pve_data from idle_runner for backward compatibility (merge with fight data)
-    if (runRecord.idle_runner && runRecord.idle_runner.monsters_faced.length > 0) {
-      runRecord.pve_data.fights = Math.max(runRecord.pve_data.fights, runRecord.idle_runner.cycles_observed)
-      runRecord.pve_data.wins = Math.max(runRecord.pve_data.wins, runRecord.idle_runner.victories)
-      runRecord.pve_data.xp_total = Math.max(runRecord.pve_data.xp_total, runRecord.idle_runner.xp_total)
-      runRecord.pve_data.monsters_faced = [
-        ...new Set([...runRecord.pve_data.monsters_faced, ...runRecord.idle_runner.monsters_faced])
-      ]
     }
 
     // ── Lootbox ───────────────────────────────────────────────────
