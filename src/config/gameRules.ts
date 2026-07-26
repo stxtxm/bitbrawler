@@ -12,8 +12,8 @@ export const GAME_RULES = {
     },
     PVE: {
         XP_MODIFIER: 1.0,
-        STAT_MULTIPLIER: 13.0,
-        HP_MULTIPLIER: 14.0,
+        STAT_MULTIPLIER: 15.0,
+        HP_MULTIPLIER: 17.0,
         LEVEL_BOOST: 2, // Monsters fight at playerLevel + this offset
     },
     BOTS: {
