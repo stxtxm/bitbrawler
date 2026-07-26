@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-07-22T20:24:04Z",
+  "last_session": "2026-07-26T20:16:02Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -61,6 +61,11 @@
       "lesson": "Issue #547 - Legendary lootbox drop rate 0% after 133 opens: Root cause was that legendary items only existed at level 5+, but QA characters (and most early-game players) are level 1-4. The 4% legendary weight was effectively 0% because no legendary items existed in the eligible pool. Fix: added 2 low-level legendary items (Mystic Eye at level 3, Serrated Fang at level 4) so the 4% weight becomes meaningful for early-game players. Tests: updated item count from 136→138 and legendary spread assertions.",
       "issue": "#547",
       "date": "2026-07-22"
+    },
+    {
+      "lesson": "QA bot idle/PvE classification fix: Added structured idle_fights[] records from idle_runner observation data. Removed idle data merge from pve_data so pve_data only reflects active PvE fights. Updated analyzer to read idle_fights with legacy idle_runner fallback, added idle to fight_type_breakdown with separate win rate. The 3 fight types are now cleanly separated: pvp (active PvP), pve (active PvE via FIGHT button), idle (auto-resolve idle observation).",
+      "issue": "#561",
+      "date": "2026-07-26"
     }
   ]
 }
