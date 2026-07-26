@@ -61,6 +61,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
 }: IdleRunnerSceneProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const particlesRef = useRef<ParticleSystem | null>(null)
+  const levelUpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [showLevelUpFx, setShowLevelUpFx] = useState(false)
   const [levelUpLevel, setLevelUpLevel] = useState(0)
   const [screenShake, setScreenShake] = useState(false)
@@ -229,18 +230,36 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
       setTimeout(() => setLevelUpShockwave(false), 600)
     }
 
-    const timer = setTimeout(() => {
+    levelUpTimerRef.current = setTimeout(() => {
       setShowLevelUpFx(false)
       setIsMilestoneCeremony(false)
+      levelUpTimerRef.current = null
     }, 2000)
-    return () => clearTimeout(timer)
+    return () => {
+      if (levelUpTimerRef.current) {
+        clearTimeout(levelUpTimerRef.current)
+        levelUpTimerRef.current = null
+      }
+    }
   }, [recentLevelUp, lowPerf])
+
+  // Click-to-dismiss: clicking anywhere on the idle runner box dismisses
+  // level-up visual FX immediately so it never blocks FIGHT button clicks.
+  const dismissLevelUpFx = () => {
+    if (!showLevelUpFx) return
+    if (levelUpTimerRef.current) {
+      clearTimeout(levelUpTimerRef.current)
+      levelUpTimerRef.current = null
+    }
+    setShowLevelUpFx(false)
+    setIsMilestoneCeremony(false)
+  }
 
   const showBigXp = scenePhase === 'result' && lastCombatXp > 0
   const showStreakBanner = streakMilestone !== null && scenePhase === 'result' && lastCombatResult === 'win'
 
   return (
-    <div className={`idle-runner-box${screenShake ? ' shake-screen' : ''}${levelUpFlash ? ' level-up-flash' : ''}`} ref={containerRef}>
+    <div className={`idle-runner-box${screenShake ? ' shake-screen' : ''}${levelUpFlash ? ' level-up-flash' : ''}`} ref={containerRef} onClick={dismissLevelUpFx}>
       {levelUpShockwave && <div className={`level-up-shockwave${isMilestoneCeremony ? ' milestone' : ''}`} />}
       {/* clouds rendered inside ProceduralTerrain canvas */}
 
