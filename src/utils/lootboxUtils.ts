@@ -10,7 +10,7 @@ export const LOOTBOX_RARITY_WEIGHTS: Record<ItemRarity, number> = {
 };
 
 /** Number of consecutive lootboxes without a legendary before pity forces one. */
-export const PITY_THRESHOLD = 75;
+export const PITY_THRESHOLD = 30;
 
 export interface StreakBonus {
   weightBonus: number;      // Extra weight added to rare/epic
