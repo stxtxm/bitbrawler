@@ -24,7 +24,7 @@ interface FightRecord {
   xp: number | null
   fight_duration_ms: number
   max_hp?: number | null
-  fight_type?: 'pvp' | 'pve'   // track PvP vs PvE fights
+  fight_type?: 'pvp' | 'pve' | 'idle'   // track PvP vs PvE vs idle fights
   monster_name?: string | null  // PvE monster name if applicable
   xp_before_modifier?: number | null  // PvE XP before 0.80 modifier (displayed value)
   xp_after_modifier?: number | null   // PvE XP after 0.80 modifier (actual saved value)
@@ -52,6 +52,7 @@ interface IdleFightRecord {
   result: 'victory' | 'defeat'
   xp: number | null
   essence: number | null
+  monster?: string | null
 }
 
 interface EssenceFlow {
@@ -99,6 +100,13 @@ interface RunRecord {
   replaced_character?: string | null
   fights: FightRecord[]
   idle_fights?: IdleFightRecord[]
+  idle_runner?: {
+    xp_events?: Array<{ result?: string; xp?: number; monster?: string }>
+    cycles_observed?: number
+    victories?: number
+    xp_total?: number
+    monsters_faced?: string[]
+  }
   lootbox?: LootboxResult | null
   auto_mode_enabled?: boolean
   auto_mode_sync_ok?: boolean
@@ -246,8 +254,10 @@ interface AnalysisReport {
   fight_type_breakdown: {
     pvp_fights: number
     pve_fights: number
+    idle_fights: number
     pvp_win_rate: number
     pve_win_rate: number
+    idle_win_rate: number
   }
   issues: string[]
   suggestions: string[]
@@ -601,14 +611,23 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     }
   }
 
-  // --- Fight Type Breakdown ---
+  // --- Fight Type Breakdown (pvp / pve / idle) ---
   const pvpWins = pvpFights.filter(f => f.result === 'victory')
   const pveWins = pveFights.filter(f => f.result === 'victory')
+
+  // Idle fights come from idle_fights on each run (separate from active fights[])
+  const allIdleFightsFromRuns = validRuns.flatMap(
+    r => (r.idle_fights ?? []).map(f => ({ ...f, fight_duration_ms: 0, result: f.result } as FightRecord))
+  )
+  const idleWinsFromRuns = allIdleFightsFromRuns.filter(f => f.result === 'victory')
+
   const fightTypeBreakdown = {
     pvp_fights: pvpFights.length,
     pve_fights: pveFights.length,
+    idle_fights: allIdleFightsFromRuns.length,
     pvp_win_rate: pvpFights.length > 0 ? pvpWins.length / pvpFights.length : 0,
     pve_win_rate: pveFights.length > 0 ? pveWins.length / pveFights.length : 0,
+    idle_win_rate: allIdleFightsFromRuns.length > 0 ? idleWinsFromRuns.length / allIdleFightsFromRuns.length : 0,
   }
 
   // --- PvE-specific suggestions ---
@@ -688,19 +707,37 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   }
 
   // --- Idle Analysis ---
-  const runsWithIdleData = validRuns.filter(
-    (r): r is RunRecord & { idle_fights: IdleFightRecord[] } =>
-      r.idle_fights !== null && r.idle_fights !== undefined && r.idle_fights.length > 0
-  )
+  // Collect idle fights from both structured idle_fights[] (new) and legacy idle_runner (backward compat)
+  const allIdleFights: IdleFightRecord[] = []
+  let runsWithIdleDataCount = 0
+  for (const r of validRuns) {
+    let hasIdle = false
+    if (r.idle_fights && r.idle_fights.length > 0) {
+      allIdleFights.push(...r.idle_fights)
+      hasIdle = true
+    } else if (r.idle_runner && r.idle_runner.xp_events && r.idle_runner.xp_events.length > 0) {
+      // Legacy fallback: convert idle_runner.xp_events to IdleFightRecord[]
+      for (const evt of r.idle_runner.xp_events) {
+        allIdleFights.push({
+          result: evt.result?.toUpperCase().includes('VICTORY') ? 'victory' : 'defeat',
+          xp: evt.xp ?? null,
+          essence: null,
+          monster: evt.monster ?? null,
+        })
+      }
+      hasIdle = true
+    }
+    if (hasIdle) runsWithIdleDataCount++
+  }
+
   let idleAnalysis: IdleAnalysis | null = null
-  if (runsWithIdleData.length > 0) {
-    const allIdleFights = runsWithIdleData.flatMap(r => r.idle_fights)
+  if (runsWithIdleDataCount > 0 && allIdleFights.length > 0) {
     const idleWins = allIdleFights.filter(f => f.result === 'victory')
     const idleXpFights = allIdleFights.filter((f): f is IdleFightRecord & { xp: number } => f.xp !== null)
     const idleEssenceFights = allIdleFights.filter((f): f is IdleFightRecord & { essence: number } => f.essence !== null)
 
     idleAnalysis = {
-      runs_with_idle_data: runsWithIdleData.length,
+      runs_with_idle_data: runsWithIdleDataCount,
       total_idle_fights: allIdleFights.length,
       idle_win_rate: allIdleFights.length > 0 ? idleWins.length / allIdleFights.length : 0,
       avg_idle_xp_per_fight: idleXpFights.length > 0
@@ -873,10 +910,11 @@ function printReport(report: AnalysisReport): void {
     console.log(`  Final:          ${finalStr}`)
   }
   console.log('')
-  if (report.fight_type_breakdown.pve_fights > 0 || report.fight_type_breakdown.pvp_fights > 0) {
+  if (report.fight_type_breakdown.pve_fights > 0 || report.fight_type_breakdown.pvp_fights > 0 || report.fight_type_breakdown.idle_fights > 0) {
     console.log(`  ── ${bold}Fight Type${reset} ──`)
     console.log(`  PvP:            ${report.fight_type_breakdown.pvp_fights} fights, ${fmtPct(report.fight_type_breakdown.pvp_win_rate)} win rate`)
     console.log(`  PvE:            ${report.fight_type_breakdown.pve_fights} fights, ${fmtPct(report.fight_type_breakdown.pve_win_rate)} win rate`)
+    console.log(`  Idle:           ${report.fight_type_breakdown.idle_fights} fights, ${fmtPct(report.fight_type_breakdown.idle_win_rate)} win rate`)
     console.log('')
   }
 
