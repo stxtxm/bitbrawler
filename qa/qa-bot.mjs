@@ -1347,16 +1347,46 @@ const MONSTER_DISPLAY_NAMES = {
 }
 
 /**
+ * Capture monster name from the combat DOM during the fight
+ * (before the result screen).  Tries multiple selectors in priority order:
+ *   1. `.encounter-name` — PvE intro phase ("A wild Goblin appears!")
+ *   2. `.vs-fighter.vs-right .vs-fighter-name` — VS phase (right side = opponent)
+ *   3. `.fighter-side.right .fighter-name-small` — active combat phase
+ * Returns the monster name or null.
+ */
+async function captureMonsterNameDuringCombat(page) {
+  const selectors = [
+    '.encounter-name',
+    '.vs-fighter.vs-right .vs-fighter-name, .vs-right .vs-fighter-name',
+    '.fighter-side.right .fighter-name-small',
+  ]
+  for (const selector of selectors) {
+    try {
+      const el = page.locator(selector).first()
+      if (await el.isVisible({ timeout: 300 }).catch(() => false)) {
+        const text = ((await el.textContent().catch(() => '')) || '').trim()
+        if (text && text.length >= 2 && text.length < 40) {
+          return text
+        }
+      }
+    } catch {
+      // continue to next selector
+    }
+  }
+  return null
+}
+
+/**
  * Parse monster name from the fight result screen.
  * Priority:
- *   1. `.result-sub` element (CombatView — PvP result text e.g. "Victory over Goblin")
+ *   1. `.result-sub` element (CombatView — result text e.g. "Victory over Goblin")
  *   2. Body text "Victory over / Defeated by / Stalemate vs" pattern
  *   3. Idle PvE result screen — `.idle-monster-slot[data-monster]` in phase-result
  * Returns the monster name or null.
  */
 async function parseMonsterNameFromResult(page) {
   try {
-    // Check .result-sub element first (CombatView result — PvP)
+    // Check .result-sub element first (CombatView result screen — all match types)
     const resultSub = page.locator('.result-sub').first()
     if (await resultSub.isVisible({ timeout: 1000 }).catch(() => false)) {
       const text = ((await resultSub.textContent().catch(() => '')) || '').trim()
@@ -1453,6 +1483,16 @@ async function runFightSequence(page, runKey, runRecord) {
 
     const fightBtn = page.locator('button.primary-btn.giant-btn').first()
     const fightStart = Date.now()
+
+    // Capture monster name from the combat DOM before the result poll
+    let monsterName = null
+    if (isPve) {
+      monsterName = await captureMonsterNameDuringCombat(page)
+      if (monsterName) {
+        console.log(`   PvE monster spotted: ${monsterName}`)
+      }
+    }
+
     for (let attempt = 0; attempt < 3; attempt++) {
       const clicked = await fightBtn.click({ timeout: 3000 }).then(() => true).catch(() => false)
       if (clicked) break
@@ -1464,6 +1504,16 @@ async function runFightSequence(page, runKey, runRecord) {
     console.log('   Fight started, waiting for result...')
 
     await sleep(1000)
+
+    // If we didn't capture the monster name before the fight, try during
+    // the VS/combat phase (the encounter intro is usually gone by now,
+    // but the VS right-fighter name or combat name-small may still be visible)
+    if (isPve && !monsterName) {
+      monsterName = await captureMonsterNameDuringCombat(page)
+      if (monsterName) {
+        console.log(`   PvE monster from VS/combat: ${monsterName}`)
+      }
+    }
 
     const maxRetries = 3
     const baseTimeout = Math.floor(config.fightTimeout * 0.5)
@@ -1539,10 +1589,12 @@ async function runFightSequence(page, runKey, runRecord) {
     const xpMatch = pageText.match(/\+(\d+)\s*XP/)
     const xpGained = xpMatch ? parseInt(xpMatch[1]) : null
 
-    // Capture monster name for PvE fights
-    let monsterName = null
-    if (isPve) {
+    // Fallback: try parsing monster name from the result screen if not already captured
+    if (isPve && !monsterName) {
       monsterName = await parseMonsterNameFromResult(page)
+      if (monsterName) {
+        console.log(`   PvE monster from result: ${monsterName}`)
+      }
     }
 
     console.log(`   Result: ${isVictory ? '✅ VICTORY' : isDefeat ? '❌ DEFEAT' : '🤝 DRAW'} (${fightDuration}ms) [${isPve ? 'PVE' : 'PVP'}]${monsterName ? ` vs ${monsterName}` : ''}`)
