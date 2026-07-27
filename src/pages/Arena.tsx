@@ -71,7 +71,7 @@ const Arena = () => {
 
   const idle = useIdleCombat({
     character: activeCharacter,
-    isPaused: !combat.pveMode,
+    isPaused: !combat.pveMode || combat.combatData !== null,
     onCharacterUpdate: setCharacter,
     onSyncCharacter: syncCharacterToBackend,
     onLevelUp: levelUp.queueLevelUp,

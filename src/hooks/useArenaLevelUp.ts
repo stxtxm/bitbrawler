@@ -36,14 +36,13 @@ export const useArenaLevelUp = ({
 
   const queueLevelUp = useCallback((_levelsGained: number, newLevel: number) => {
     setRecentLevelUp({ newLevel, isMilestone: isMilestoneLevel(newLevel) });
-    play('levelup');
 
     if (levelUpTimerRef.current) clearTimeout(levelUpTimerRef.current);
     levelUpTimerRef.current = setTimeout(() => {
       setRecentLevelUp(null);
       levelUpTimerRef.current = null;
     }, 2000);
-  }, [play]);
+  }, []);
 
   // XP flash timing
   useEffect(() => {
