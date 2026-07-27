@@ -176,6 +176,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           PR_NUMBER="${{ steps.check_pr.outputs.existing_pr }}"
+          CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
+            [.statusCheckRollup[]? | select(.app?.slug != "vercel") | select(.status? == "COMPLETED") | select(.conclusion? == "SUCCESS" or .conclusion? == "NEUTRAL")] | length
+          ' 2>/dev/null || echo "0")
+          TOTAL=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
+            [.statusCheckRollup[]? | select(.app?.slug != "vercel") | select(.status? == "COMPLETED")] | length
+          ' 2>/dev/null || echo "0")
           echo "PR #$PR_NUMBER: $CHECKS/$TOTAL checks passing"
 
           if [ "$TOTAL" -gt 0 ] && [ "$CHECKS" -eq "$TOTAL" ]; then
