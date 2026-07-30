@@ -783,6 +783,47 @@
   }
 }
 
+// Continue button to dismiss level-up FX early
+.levelup-continue-btn {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  background: $accent-gold;
+  color: #1a1a2e;
+  border: 2px solid lighten($accent-gold, 10%);
+  padding: 6px 20px;
+  font-family: $font-pixel;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  border-radius: 4px;
+  box-shadow: 0 0 8px rgba($accent-gold, 0.5);
+  animation: fadeInUp 0.3s ease-out;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translateX(-50%) scale(1.05);
+    box-shadow: 0 0 14px rgba($accent-gold, 0.8);
+  }
+
+  &:active {
+    transform: translateX(-50%) scale(0.95);
+  }
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
 @keyframes levelupFloatUp {
   0% {
     opacity: 1;
