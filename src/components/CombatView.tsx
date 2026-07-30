@@ -90,9 +90,8 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const [visibilityKey, setVisibilityKey] = useState(0);
     const bgStartRef = useRef<number | null>(null);
     const roundIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    /** Wall-clock timestamp of mount — used in the round interval to check
-     *  if elapsed time exceeds fightHardTimeoutMs. This is a true wall-clock
-     *  guard that works even if setTimeout is throttled (background tab). */
+    /** Wall-clock timestamp of mount — used in the round interval and watchdog
+     *  to check if elapsed time exceeds fightHardTimeoutMs. */
     const fightStartRef = useRef<number>(Date.now());
 
     // Two-stage health bar state (track percentages for the ghost bar)
@@ -143,12 +142,46 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     }, [phase]);
 
     // Hard timeout watchdog — force-finish the fight if it exceeds the limit.
+    // Uses a polling interval (1000ms) with wall-clock checks, plus a safety-net
+    // setTimeout at 60s. The polling approach is more robust than a single
+    // setTimeout because even if the browser throttles timers in background tabs,
+    // the first tick after throttle lifts immediately detects elapsed >= threshold.
     // Set once on mount, NOT reset on phase transitions or HP changes.
     const hardTimeoutRef = useRef<number | null>(null);
+    const watchdogIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     useEffect(() => {
+        // Primary watchdog: polling interval checks elapsed time every 1000ms
+        watchdogIntervalRef.current = setInterval(() => {
+            const elapsed = Date.now() - fightStartRef.current;
+            if (elapsed >= COMBAT_BALANCE.fightHardTimeoutMs) {
+                console.warn(`[CombatView] Watchdog interval — ${elapsed}ms elapsed (≥${COMBAT_BALANCE.fightHardTimeoutMs}ms), force-finishing`);
+                if (watchdogIntervalRef.current !== null) {
+                    clearInterval(watchdogIntervalRef.current);
+                    watchdogIntervalRef.current = null;
+                }
+                if (hardTimeoutRef.current !== null) {
+                    clearTimeout(hardTimeoutRef.current);
+                    hardTimeoutRef.current = null;
+                }
+                setCombatResult(prev => prev ?? {
+                    winner: 'draw',
+                    rounds: 0,
+                    details: ['Fight timed out'],
+                    timeline: [{ attackerHp: player.hp, defenderHp: opponent.hp }],
+                });
+                setPhase('result');
+            }
+        }, 1000);
+
+        // Secondary watchdog: safety-net setTimeout at 60s (1.33x base threshold).
+        // Catches edge cases where the interval fails to fire (extreme throttling).
         hardTimeoutRef.current = window.setTimeout(() => {
-            console.warn(`[CombatView] Hard timeout — forcing result phase after ${COMBAT_BALANCE.fightHardTimeoutMs}ms`);
+            console.warn(`[CombatView] Safety-net timeout — forcing result phase after 60000ms`);
             hardTimeoutRef.current = null;
+            if (watchdogIntervalRef.current !== null) {
+                clearInterval(watchdogIntervalRef.current);
+                watchdogIntervalRef.current = null;
+            }
             setCombatResult(prev => prev ?? {
                 winner: 'draw',
                 rounds: 0,
@@ -156,21 +189,31 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                 timeline: [{ attackerHp: player.hp, defenderHp: opponent.hp }],
             });
             setPhase('result');
-        }, COMBAT_BALANCE.fightHardTimeoutMs);
+        }, 60000);
 
         return () => {
             if (hardTimeoutRef.current !== null) {
                 window.clearTimeout(hardTimeoutRef.current);
                 hardTimeoutRef.current = null;
             }
+            if (watchdogIntervalRef.current !== null) {
+                clearInterval(watchdogIntervalRef.current);
+                watchdogIntervalRef.current = null;
+            }
         };
     }, []); // mount only — never resets
 
-    // Clear the timeout when the fight completes naturally (result phase reached)
+    // Clear both watchdogs when the fight completes naturally (result phase reached)
     useEffect(() => {
-        if (phase === 'result' && hardTimeoutRef.current !== null) {
-            window.clearTimeout(hardTimeoutRef.current);
-            hardTimeoutRef.current = null;
+        if (phase === 'result') {
+            if (hardTimeoutRef.current !== null) {
+                window.clearTimeout(hardTimeoutRef.current);
+                hardTimeoutRef.current = null;
+            }
+            if (watchdogIntervalRef.current !== null) {
+                clearInterval(watchdogIntervalRef.current);
+                watchdogIntervalRef.current = null;
+            }
         }
     }, [phase]);
 
@@ -456,6 +499,9 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                     roundIndex++;
                 } else {
                     clearInterval(roundInterval);
+                    // The watchdog interval at 45s will force-finish if this
+                    // setTimeout is throttled (background tab). Normal foreground
+                    // operation uses a simple 1200ms delay for the result transition.
                     setTimeout(() => {
                         setPhase('result');
 
