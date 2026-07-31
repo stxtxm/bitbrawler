@@ -431,6 +431,119 @@ describe('CombatView Interface', () => {
         vi.restoreAllMocks();
     });
 
+    it('should force-finish via watchdog interval when post-round result delay exceeds hard timeout', () => {
+        vi.useFakeTimers();
+
+        // 79 rounds: 79 * 520ms = 41080ms of combat animation.
+        // Rounds finish at ~44580ms from mount (3500ms intro+vs + 41080ms).
+        // The 1200ms result transition setTimeout would fire at ~45780ms.
+        // The watchdog interval fires at 45000ms and force-finishes BEFORE
+        // the 1200ms result transition. This tests the watchdog catching
+        // the case where the result transition is delayed (background tab).
+        const rounds = 79;
+        const details = Array.from({ length: rounds }, (_, i) => `Round ${i + 1}: Hero hits Villain for ${5 + i} DMG`);
+        const timeline = Array.from({ length: rounds + 1 }, (_, i) => ({
+            attackerHp: Math.max(100 - i, 10),
+            defenderHp: Math.max(100 - i * 2, 5),
+        }));
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds,
+            details,
+            timeline,
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit',
+        });
+
+        vi.spyOn(xpUtils, 'calculateFightXp').mockReturnValue(77);
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        // Advance through intro (2500ms to cover intro timer 2000ms + buffer)
+        act(() => { vi.advanceTimersByTime(2500); });
+        // Advance through vs (2000ms to cover vs timer 900ms + nested 500ms)
+        act(() => { vi.advanceTimersByTime(2000); });
+        // Advance 42000ms more. Total elapsed from mount: 2500 + 2000 + 42000 = 46500ms.
+        // At 45000ms, the watchdog interval fires, detects elapsed >= 45000,
+        // and force-finishes to result phase BEFORE the 1200ms result
+        // transition would fire (at ~45780ms).
+        act(() => { vi.advanceTimersByTime(42000); });
+
+        // The watchdog interval should have caught the timeout
+        expect(screen.getByText('+77 XP')).toBeInTheDocument();
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should clean up watchdog timers when fight completes naturally before hard timeout', () => {
+        vi.useFakeTimers();
+
+        // Few rounds so fight completes well before the 45s hard timeout
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 3,
+            details: [
+                'Round 1: Hero hits Villain for 10 DMG',
+                'Round 2: Hero hits Villain for 12 DMG',
+                'Round 3: Hero wins!',
+            ],
+            timeline: [
+                { attackerHp: 100, defenderHp: 100 },
+                { attackerHp: 100, defenderHp: 90 },
+                { attackerHp: 100, defenderHp: 78 },
+                { attackerHp: 100, defenderHp: 0 },
+            ],
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit',
+        });
+
+        vi.spyOn(xpUtils, 'calculateFightXp').mockReturnValue(55);
+
+        render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        // Advance step by step through each phase to let React re-render
+        act(() => { vi.advanceTimersByTime(2500); }); // intro fires → phase='vs'
+        act(() => { vi.advanceTimersByTime(2000); }); // vs fires → phase='combat'
+        act(() => { vi.advanceTimersByTime(5000); }); // 3 rounds (1560ms) + result delay (1200ms)
+
+        // Result should be visible (fight completed normally)
+        expect(screen.getByText('+55 XP')).toBeInTheDocument();
+
+        // Advance far past the hard timeout — no crash or double-result should occur
+        // The watchdog should have been cleaned up when result phase was reached
+        act(() => { vi.advanceTimersByTime(50000); });
+
+        // Still showing result (phase didn't change back, no console errors)
+        expect(screen.getByText('+55 XP')).toBeInTheDocument();
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
     // ─── Phase 1: Round counter & Progress bar ────────────
 
     it('should display round counter during combat phase', () => {
