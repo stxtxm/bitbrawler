@@ -145,15 +145,15 @@ describe('lootboxUtils', () => {
   });
 
   it('pity triggers at exactly PITY_THRESHOLD, not before', () => {
-    // At pityCount = PITY_THRESHOLD - 1 (74), the 75th roll is normal
+    // At pityCount = PITY_THRESHOLD - 1 (29), the 30th roll is normal
     const rng = () => 0.001; // Would produce common
     const normalResult = rollLootbox(ITEM_ASSETS, { rng, level: 10, pityCount: PITY_THRESHOLD - 1 });
     expect(normalResult.item).not.toBeNull();
     expect(normalResult.item!.rarity).toBe('common');
     expect(normalResult.pityTriggered).toBe(false);
-    expect(normalResult.pityCount).toBe(PITY_THRESHOLD); // 75
+    expect(normalResult.pityCount).toBe(PITY_THRESHOLD); // 30
 
-    // At pityCount = PITY_THRESHOLD (75), the 76th roll is guaranteed legendary
+    // At pityCount = PITY_THRESHOLD (30), the 31st roll is guaranteed legendary
     const pityResult = rollLootbox(ITEM_ASSETS, { rng, level: 10, pityCount: PITY_THRESHOLD });
     expect(pityResult.item).not.toBeNull();
     expect(pityResult.item!.rarity).toBe('legendary');
@@ -203,10 +203,10 @@ describe('lootboxUtils', () => {
 
   it('pityCount returns correct value in RollLootboxResult', () => {
     const rng = () => 0.001; // Always common
-    const result = rollLootbox(ITEM_ASSETS, { rng, level: 10, pityCount: 50 });
+    const result = rollLootbox(ITEM_ASSETS, { rng, level: 10, pityCount: 20 });
     expect(result.item?.rarity).toBe('common');
-    // Since pityThreshold is 75 and we're at 50, should increment to 51
-    expect(result.pityCount).toBe(51);
+    // Since pityThreshold is 30 and we're at 20, should increment to 21
+    expect(result.pityCount).toBe(21);
     expect(result.pityTriggered).toBe(false);
   });
 
@@ -283,7 +283,7 @@ describe('lootboxUtils', () => {
     expect(result.pityCount).toBe(0);
   });
 
-  it('PITY_THRESHOLD is 75', () => {
-    expect(PITY_THRESHOLD).toBe(75);
+  it('PITY_THRESHOLD is 30', () => {
+    expect(PITY_THRESHOLD).toBe(30);
   });
 });
