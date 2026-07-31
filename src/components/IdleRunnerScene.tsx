@@ -276,6 +276,11 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
             <span className="levelup-float-lvl">LVL {levelUpLevel}</span>
           </div>
         )}
+        {showLevelUpFx && (
+          <button className="levelup-continue-btn" onClick={dismissLevelUpFx} aria-label="Continue">
+            Continue
+          </button>
+        )}
       </div>
 
       {currentMonster && (

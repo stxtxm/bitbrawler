@@ -172,4 +172,37 @@ describe('IdleRunnerScene', () => {
 
     expect(container.querySelector('.card-shine')).toBeNull()
   })
+
+  it('shows a Continue button when level-up FX is active', () => {
+    render(
+      <IdleRunnerScene
+        {...defaultProps}
+        recentLevelUp={{ newLevel: 5, isMilestone: false }}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: /continue/i })).toBeInTheDocument()
+  })
+
+  it('does not show Continue button when level-up FX is not active', () => {
+    render(<IdleRunnerScene {...defaultProps} />)
+
+    expect(screen.queryByRole('button', { name: /continue/i })).not.toBeInTheDocument()
+  })
+
+  it('dismisses level-up FX when Continue button is clicked', () => {
+    render(
+      <IdleRunnerScene
+        {...defaultProps}
+        recentLevelUp={{ newLevel: 5, isMilestone: false }}
+      />,
+    )
+
+    expect(screen.getByText('LVL 5')).toBeInTheDocument()
+
+    const continueBtn = screen.getByRole('button', { name: /continue/i })
+    fireEvent.click(continueBtn)
+
+    expect(screen.queryByText('LVL 5')).not.toBeInTheDocument()
+  })
 })
