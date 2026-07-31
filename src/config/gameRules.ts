@@ -11,7 +11,7 @@ export const GAME_RULES = {
         XP_LOSS: 30,
     },
     PVE: {
-        XP_MODIFIER: 1.0,
+        XP_MODIFIER: 2.5,
         STAT_MULTIPLIER: 15.0,
         HP_MULTIPLIER: 17.0,
         LEVEL_BOOST: 2, // Monsters fight at playerLevel + this offset
