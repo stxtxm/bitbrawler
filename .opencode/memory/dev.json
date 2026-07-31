@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-07-26T20:16:02Z",
+  "last_session": "2026-07-31T20:29:44Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -66,6 +66,11 @@
       "lesson": "QA bot idle/PvE classification fix: Added structured idle_fights[] records from idle_runner observation data. Removed idle data merge from pve_data so pve_data only reflects active PvE fights. Updated analyzer to read idle_fights with legacy idle_runner fallback, added idle to fight_type_breakdown with separate win rate. The 3 fight types are now cleanly separated: pvp (active PvP), pve (active PvE via FIGHT button), idle (auto-resolve idle observation).",
       "issue": "#561",
       "date": "2026-07-26"
+    },
+    {
+      "lesson": "PvE difficulty adjustment: PVE.STAT_MULTIPLIER 15->20, HP_MULTIPLIER 17->22, LEVEL_BOOST 2->3 to address 100% PvE win rate (QA: 15 fights, 100% WR). Simple config change with test assertions updated first (RED), then source values (GREEN). Full suite 1127 tests + lint + build verified before commit. Stale comment in combat-pve.test.ts also updated to reflect new values.",
+      "issue": "#569",
+      "date": "2026-07-31"
     }
   ]
 }
