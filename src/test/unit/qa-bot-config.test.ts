@@ -3,8 +3,13 @@
  *
  * Tests for the PvE fight type decision logic used by the QA bot
  * to alternate between PvP and PvE fights based on config.
+ *
+ * Also verifies that qa/qa-bot.config.js stays synchronized with the
+ * game's PROGRESSION_GATES (src/config/progressionConfig.ts).
  */
 import { describe, it, expect } from 'vitest'
+import qaBotConfig from '../../../qa/qa-bot.config.js'
+import { PROGRESSION_GATES } from '../../config/progressionConfig'
 
 // ── Fight type decision function (mirrors qa-bot.mjs logic) ──
 
@@ -16,8 +21,13 @@ interface FightTypeResult {
 function determineNextFightType(
   pvpSinceLastPve: number,
   pveRatio: number,
-  pveOnly: boolean
+  pveOnly: boolean,
+  characterLevel: number | null = null,
+  pvpUnlockLevel = qaBotConfig.pvpUnlockLevel
 ): FightTypeResult {
+  if (characterLevel !== null && characterLevel < pvpUnlockLevel) {
+    return { type: 'pve', pvpSinceLastPve: 0 }
+  }
   if (pveOnly) {
     return { type: 'pve', pvpSinceLastPve: 0 }
   }
@@ -259,6 +269,42 @@ describe('QA Bot Fight Type Decision', () => {
       expect(fallbackFormat('dragon_spawn')).toBe('Dragon spawn')
       expect(fallbackFormat('goblin')).toBe('Goblin')
       expect(fallbackFormat('fire_elemental')).toBe('Fire elemental')
+    })
+  })
+
+  describe('qa-bot.config sync with PROGRESSION_GATES', () => {
+    it('pvpUnlockLevel matches game PVP_UNLOCK_LEVEL', () => {
+      expect(qaBotConfig.pvpUnlockLevel).toBe(PROGRESSION_GATES.PVP_UNLOCK_LEVEL)
+    })
+
+    it('forgeUnlockLevel matches game FORGE_UNLOCK_LEVEL', () => {
+      expect(qaBotConfig.forgeUnlockLevel).toBe(PROGRESSION_GATES.FORGE_UNLOCK_LEVEL)
+    })
+
+    it('shopUnlockLevel matches game SHOP_UNLOCK_LEVEL', () => {
+      expect(qaBotConfig.shopUnlockLevel).toBe(PROGRESSION_GATES.SHOP_UNLOCK_LEVEL)
+    })
+
+    it('pvpUnlockLevel and forgeUnlockLevel are 1 (unlocked from level 1)', () => {
+      expect(qaBotConfig.pvpUnlockLevel).toBe(1)
+      expect(qaBotConfig.forgeUnlockLevel).toBe(1)
+    })
+  })
+
+  describe('determineNextFightType with pvpUnlockLevel=1', () => {
+    it('allows PvP at level 1 (unlocked immediately)', () => {
+      const result = determineNextFightType(0, 0.33, false, 1)
+      expect(result.type).toBe('pvp')
+    })
+
+    it('does not force PvE for level 1 characters', () => {
+      const plan = buildFightPlan(5, 0.33, false)
+      expect(plan).toEqual(['pvp', 'pvp', 'pve', 'pvp', 'pvp'])
+    })
+
+    it('forces PvE when level is below the pvp unlock level', () => {
+      const result = determineNextFightType(0, 0.33, false, 0, 1)
+      expect(result.type).toBe('pve')
     })
   })
 })
