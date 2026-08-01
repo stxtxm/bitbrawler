@@ -78,6 +78,11 @@
       "date": "2026-08-01"
     },
     {
+      "lesson": "QA bot forge/shop never tested: qa/qa-bot.config.js unlock levels were desynced from src/config/progressionConfig.ts (forgeUnlockLevel: 10 vs FORGE_UNLOCK_LEVEL: 1). Fixed pvpUnlockLevel 5->1, forgeUnlockLevel 10->1. Shop stays 20 (matches game) with explicit skip_reason. Added qa-bot.config.d.ts so vitest/tsc can type-check the JS config, and sync tests importing PROGRESSION_GATES.",
+      "issue": "#582",
+      "date": "2026-08-01"
+    },
+    {
       "lesson": "Issue #583 (Web Push Notifications, Proposition majeure avec /oc) était trop large (SW + Web Push API + migration DB + UI + scheduler + tests, 6+ fichiers sur 5 sous-systèmes). Appliqué la règle campagne: créé 5 sous-issues avec /oc + label campaign-583 (#588-592) et 1 issue migration SANS /oc (#587) pour validation humaine, puis STOP sans coder. Le texte de l'issue est trompeur: malgré 'Type: Proposition majeure (validation humaine)', le tag /oc impose l'implémentation — mais via sous-issues. Pattern: utiliser --body-file pour les issues gh quand le body contient des apostrophes/backticks (sinon syntax error shell).",
       "issue": "#583",
       "date": "2026-08-03"
