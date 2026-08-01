@@ -1,14 +1,25 @@
 {
   "version": 1,
   "agent": "tech-lead",
-  "last_session": null,
-  "recent_failures": [],
+  "last_session": "2026-08-01",
+  "recent_failures": [
+    "Le pipeline QA tester est MORT: 100/100 runs cancelled (timeout 10min + rebase conflict qa/state.json). Aucune donnée fraîche depuis 2026-07-06.",
+    "Les trends win rate (100% last_10) sont calculées sur des données de JUIN — ne pas prendre de décision d'équilibrage avant la réparation du pipeline.",
+    "qa-bot.config.js désynchronisé du jeu: forgeUnlockLevel 10 vs FORGE_UNLOCK_LEVEL 1 → forge jamais testé (issue #582)."
+  ],
   "known_limitations": [
-    "Les stats QA sont dans qa/stats.json",
+    "Les stats QA sont dans qa/stats.json (stale depuis 06/07/2026)",
     "Les analyses HP, loot, win rate doivent être basées sur les données du fichier",
     "Créer des issues avec /oc pour les bugs critiques et ajustements d'équilibrage",
     "Créer des issues SANS /oc pour les propositions majeures (label proposition)",
-    "Toujours référencer les données QA dans les issues créées"
+    "Toujours référencer les données QA dans les issues créées",
+    "Le dev-agent n'a PAS le droit de modifier .github/workflows/*.yml — les fixes workflows passent en issues sans /oc (validation humaine)",
+    "Shop unlock level 20 inatteignable par le QA bot (max level ~3) → shop jamais testé"
   ],
-  "session_notes": []
+  "session_notes": [
+    "2026-08-01: Pipeline QA mort — priorité #1 = réparer qa-tester.yml (timeout + rebase state.json). Issues créées: #582 (config unlock forge/shop QA), #583 (proposition push notifications), #584 (idle observation timeout). Commentaires: #548 (critical QA pipeline), #440 (win rate validation bloquée), #581 (pipeline action_required).",
+    "2026-08-01: Shop/forge jamais testés car unlock levels inatteignables (forge lvl 1 dans le jeu mais 10 dans qa-bot.config.js).",
+    "2026-08-01: Essence affichée en fractionnel (.toFixed(2)) — PAS un bug, design voulu.",
+    "2026-08-01: Push notifications = levier rétention n°1 des idle games (recherche web) — proposition majeure #583 créée."
+  ]
 }
