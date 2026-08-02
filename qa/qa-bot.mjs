@@ -10,6 +10,60 @@ const STATE_FILE = join(__dirname, config.stateFile)
 const SCREENSHOTS_DIR = join(__dirname, config.screenshotsDir)
 const QA_TIME_ZONE = config.timeZone || 'Europe/Paris'
 
+let runStartTime = Date.now()
+
+function elapsedRunMs() {
+  return Date.now() - runStartTime
+}
+
+function timeBudgetRemainingMs() {
+  return Math.max(0, config.timeBudgetMs - elapsedRunMs())
+}
+
+function timeBudgetExceeded() {
+  return timeBudgetRemainingMs() <= 0
+}
+
+function createSkippedForgeResult(reason) {
+  return {
+    visited: false,
+    essence_before: null,
+    essence_after_salvage: null,
+    essence_after_fusion: null,
+    essence_after_upgrade: null,
+    items_before: null,
+    salvage_attempted: false,
+    salvage_succeeded: false,
+    fusion_attempted: false,
+    fusion_succeeded: false,
+    upgrade_attempted: false,
+    upgrade_succeeded: false,
+    essence_after: null,
+    items_after: null,
+    salvage_essence_gained: null,
+    fusion_cost: null,
+    upgrade_cost: null,
+    skipped: true,
+    skip_reason: reason,
+  }
+}
+
+function createSkippedShopResult(reason) {
+  return {
+    visited: false,
+    offers_count: 0,
+    purchased: false,
+    offer_type: null,
+    item_rarity: null,
+    cost: null,
+    essence_before: null,
+    essence_after: null,
+    skipped: true,
+    skip_reason: reason,
+    shop_data: { offers: [], purchased_offer: null, essence_after_purchase: null },
+  }
+}
+
 function getZonedParts(date = new Date(), timeZone = QA_TIME_ZONE) {
   const formatter = new Intl.DateTimeFormat('en-GB', {
     timeZone,
@@ -610,8 +664,10 @@ async function captureIdleCycleSnapshot(page) {
  * captures phase transitions, XP, streak, level-up FX.
  * Toggles PvE OFF at the end.
  * Returns aggregated idle_runner data.
+ * If deadlineMs is provided, the polling loop stops early when it is reached
+ * (global time budget guard) while still toggling PvE OFF.
  */
-async function observeIdleCombat(page, durationMs = 30000) {
+async function observeIdleCombat(page, durationMs = 30000, deadlineMs = null) {
   console.log(`👁️ Observing idle PvE combat for ${durationMs}ms...`)
 
   const result = {
@@ -662,11 +718,12 @@ async function observeIdleCombat(page, durationMs = 30000) {
   // Polling loop
   const startTime = Date.now()
   const endTime = startTime + durationMs
+  const effectiveDeadline = deadlineMs !== null ? Math.min(endTime, deadlineMs) : endTime
   let previousMonster = null
   let previousPhase = 'unknown'
   const countedXpKeys = new Set()
 
-  while (Date.now() < endTime) {
+  while (Date.now() < effectiveDeadline) {
     await page.waitForTimeout(500)
 
     const snapshot = await captureIdleCycleSnapshot(page)
@@ -1432,6 +1489,12 @@ async function runFightSequence(page, runKey, runRecord) {
   for (let i = 0; i < config.fightsPerRun; i++) {
     await humanDelay(page)
 
+    // Global time budget guard: stop the fight sequence cleanly if exceeded
+    if (timeBudgetExceeded()) {
+      console.log(`   ⏰ Time budget exceeded (${timeBudgetRemainingMs()}ms remaining), stopping fight sequence early`)
+      break
+    }
+
     // Determine if this fight should be PvE
     const fightType = determineNextFightType(pvpSinceLastPve, config.pveRatio, config.pveOnly, currentLevel, config.pvpUnlockLevel)
     const isPve = fightType.type === 'pve'
@@ -1759,20 +1822,7 @@ async function testShopSystem(page, runKey, characterLevel = null) {
   // Check level gate
   if (characterLevel !== null && characterLevel < config.shopUnlockLevel) {
     console.log(`   ⏭️ Shop locked until LVL ${config.shopUnlockLevel} (current: ${characterLevel}), skipping`)
-    const shopResult = {
-      visited: false,
-      offers_count: 0,
-      purchased: false,
-      offer_type: null,
-      item_rarity: null,
-      cost: null,
-      essence_before: null,
-      essence_after: null,
-      skipped: true,
-      skip_reason: `shop requires LVL ${config.shopUnlockLevel}`,
-      shop_data: { offers: [], purchased_offer: null, essence_after_purchase: null },
-    }
-    return shopResult
+    return createSkippedShopResult(`shop requires LVL ${config.shopUnlockLevel}`)
   }
 
   const shopResult = {
@@ -1903,28 +1953,7 @@ async function testForgeSystem(page, runKey, characterLevel = null) {
   // Check level gate
   if (characterLevel !== null && characterLevel < config.forgeUnlockLevel) {
     console.log(`   ⏭️ Forge locked until LVL ${config.forgeUnlockLevel} (current: ${characterLevel}), skipping`)
-    const forgeResult = {
-      visited: false,
-      essence_before: null,
-      essence_after_salvage: null,
-      essence_after_fusion: null,
-      essence_after_upgrade: null,
-      items_before: null,
-      salvage_attempted: false,
-      salvage_succeeded: false,
-      fusion_attempted: false,
-      fusion_succeeded: false,
-      upgrade_attempted: false,
-      upgrade_succeeded: false,
-      essence_after: null,
-      items_after: null,
-      salvage_essence_gained: null,
-      fusion_cost: null,
-      upgrade_cost: null,
-      skipped: true,
-      skip_reason: `forge requires LVL ${config.forgeUnlockLevel}`,
-    }
-    return forgeResult
+    return createSkippedForgeResult(`forge requires LVL ${config.forgeUnlockLevel}`)
   }
 
   const forgeResult = {
@@ -2105,6 +2134,7 @@ async function run() {
   const state = loadState()
   const isCurrentRun = state.run === runKey
   const savedCharacterName = state.character && (!isCurrentRun || state.exhausted !== true) ? state.character : null
+  runStartTime = Date.now()
 
   console.log('═══════════════════════════════════════════')
   console.log('  🤖 QA Bot starting')
@@ -2115,7 +2145,8 @@ async function run() {
   console.log(`    pveRatio:       ${config.pveRatio}`)
   console.log(`    pveOnly:        ${config.pveOnly}`)
   console.log(`    fightTimeout:   ${config.fightTimeout}ms`)
-  console.log(`    idleObserveMs:  30000 (PvE idle observation)`)
+  console.log(`    idleObserveMs:  ${config.idleObservationMs} (PvE idle observation)`)
+  console.log(`    timeBudgetMs:   ${config.timeBudgetMs} (global run time budget)`)
   console.log(`    statsFile:      ${STATS_FILE}`)
   console.log(`    stateFile:      ${STATE_FILE}`)
   console.log(`    screenshotsDir: ${SCREENSHOTS_DIR}`)
@@ -2289,7 +2320,15 @@ async function run() {
       console.log(`   Pre-idle essence badge: ${preIdleEssenceBadge.value} (fractional: ${preIdleEssenceBadge.displayed_as_fractional})`)
     }
 
-    runRecord.idle_runner = await observeIdleCombat(page, 30000)
+    const remainingBudgetMs = timeBudgetRemainingMs()
+    if (timeBudgetExceeded()) {
+      console.log(`   ⏰ Time budget exceeded (${remainingBudgetMs}ms remaining), skipping idle observation`)
+      runRecord.idle_runner = null
+    } else {
+      const idleDuration = Math.min(config.idleObservationMs, remainingBudgetMs)
+      const deadline = Date.now() + remainingBudgetMs
+      runRecord.idle_runner = await observeIdleCombat(page, idleDuration, deadline)
+    }
 
     // Convert idle_runner observation to structured idle_fights records
     if (runRecord.idle_runner && runRecord.idle_runner.xp_events.length > 0) {
@@ -2301,7 +2340,11 @@ async function run() {
       console.log(`   Converted ${runRecord.idle_fights.length} idle fight(s) to structured idle_fights`)
     }
 
-    await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-04-pve-idle.png`) })
+    if (!timeBudgetExceeded()) {
+      await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-04-pve-idle.png`) })
+    } else {
+      console.log('   ⏰ Time budget exceeded, skipping idle screenshot')
+    }
 
     // Capture efficiency panel and essence after idle observation
     runRecord.efficiency_panel = await parseEfficiencyPanel(page)
@@ -2408,7 +2451,12 @@ async function run() {
 
     // ── Forge ─────────────────────────────────────────────────────
     const forgeLevel = runRecord.final_stats?.level ?? runRecord.initial_level
-    runRecord.forge = await testForgeSystem(page, runKey, forgeLevel)
+    if (timeBudgetExceeded()) {
+      console.log('   ⏰ Time budget exceeded, skipping forge test')
+      runRecord.forge = createSkippedForgeResult('time budget exceeded')
+    } else {
+      runRecord.forge = await testForgeSystem(page, runKey, forgeLevel)
+    }
     runRecord.essence.forge_before = runRecord.forge.essence_before
     runRecord.essence.forge_after_salvage = runRecord.forge.essence_after_salvage
     runRecord.essence.forge_after_fusion = runRecord.forge.essence_after_fusion
@@ -2431,7 +2479,12 @@ async function run() {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
     const shopLevel = runRecord.final_stats?.level ?? runRecord.initial_level
-    runRecord.shop = await testShopSystem(page, runKey, shopLevel)
+    if (timeBudgetExceeded()) {
+      console.log('   ⏰ Time budget exceeded, skipping shop test')
+      runRecord.shop = createSkippedShopResult('time budget exceeded')
+    } else {
+      runRecord.shop = await testShopSystem(page, runKey, shopLevel)
+    }
     runRecord.essence.shop_before = runRecord.shop.essence_before
     runRecord.essence.shop_after = runRecord.shop.essence_after
     runRecord.shop_data = runRecord.shop.shop_data
@@ -2450,14 +2503,27 @@ async function run() {
     }
 
     // ── Offline Gains ─────────────────────────────────────────────
-    console.log('')
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-    console.log('  💤 Offline Gains Check')
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    if (timeBudgetExceeded()) {
+      console.log('   ⏰ Time budget exceeded, skipping offline gains check')
+      runRecord.offline_gains = {
+        notification_shown: false,
+        offline_time: null,
+        fights: null,
+        xp_gained: null,
+        essence_gained: null,
+        levels_gained: null,
+        claimed: false,
+      }
+    } else {
+      console.log('')
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+      console.log('  💤 Offline Gains Check')
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
-    runRecord.offline_gains = await checkOfflineGains(page, runKey)
-    if (runRecord.offline_gains.notification_shown) {
-      console.log(`   Offline time: ${runRecord.offline_gains.offline_time}, XP=${runRecord.offline_gains.xp_gained}, essence=${runRecord.offline_gains.essence_gained}, claimed=${runRecord.offline_gains.claimed}`)
+      runRecord.offline_gains = await checkOfflineGains(page, runKey)
+      if (runRecord.offline_gains.notification_shown) {
+        console.log(`   Offline time: ${runRecord.offline_gains.offline_time}, XP=${runRecord.offline_gains.xp_gained}, essence=${runRecord.offline_gains.essence_gained}, claimed=${runRecord.offline_gains.claimed}`)
+      }
     }
 
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-06-final.png`) })

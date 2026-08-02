@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-07-31T20:29:44Z",
+  "last_session": "2026-08-01T20:20:02Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -71,6 +71,11 @@
       "lesson": "PvE difficulty adjustment: PVE.STAT_MULTIPLIER 15->20, HP_MULTIPLIER 17->22, LEVEL_BOOST 2->3 to address 100% PvE win rate (QA: 15 fights, 100% WR). Simple config change with test assertions updated first (RED), then source values (GREEN). Full suite 1127 tests + lint + build verified before commit. Stale comment in combat-pve.test.ts also updated to reflect new values.",
       "issue": "#569",
       "date": "2026-07-31"
+    },
+    {
+      "lesson": "Issue #584 - QA bot time budget: Made idle observation configurable (idleObservationMs default 20s, was 30s hardcoded but observed 57s due to setup waits). Added global timeBudgetMs (8 min default) guard that propagates a deadline into observeIdleCombat polling loop (effectiveDeadline = min(endTime, deadline)), stops fight sequence early, and skips idle/forge/shop/offline-gains phases with clean skipped-result factories (createSkippedForgeResult/createSkippedShopResult) instead of throwing. Also skips idle screenshot when budget exceeded. Pattern: for long-running E2E scripts, use module-level runStartTime + deadline-aware loops + graceful skip factories rather than hard timeouts.",
+      "issue": "#584",
+      "date": "2026-08-01"
     }
   ]
 }
