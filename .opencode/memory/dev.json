@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-03T20:06:05Z",
+  "last_session": "2026-08-03T20:52:33Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -106,6 +106,11 @@
       "lesson": "Issue #592 (Web Push persistence): convertToSupabase must NOT emit push columns (push_endpoint/push_keys/push_subscribed) on the default no-fields sync path — migration #587 not yet applied, PostgREST returns PGRST204 for unknown columns and would break EVERY debounced sync (dbAvailable=false). Solution: push fields are only emitted when explicitly requested via the fields param (convertToSupabase(char, [push_endpoint, push_keys, push_subscribed])), plus a buildPushSubscriptionUpdate() helper returning the exact 3-field payload for the banner. Reminder flow: usePushReminders hook fires trySendPushReminder on login/load (1/jour via localStorage key bitbrawler_last_push_sent).",
       "issue": "#592",
       "date": "2026-08-03T20:04:00Z"
+    },
+    {
+      "lesson": "Issue #582 (QA bot forge/shop unlock sync) was RE-DISPATCHED via /oc but the fix was already merged in PR #585 (commit 13f52f8). Verify state before coding: HEAD==master, diff 0. Checking git log for existing merged PR + gh pr view avoided duplication. The bot's forge gate config config forgeUnlockLevel=1) now allows forge testing at low levels; remaining blocker for data collection is PvE timeout #548 (campaign #605 -> sub-issues #608/#609). When re-dispatched on an already-merged issue, verify and comment rather than push an empty/duplicate branch.",
+      "issue": "#582",
+      "date": "2026-08-03"
     }
   ]
 }
