@@ -30,6 +30,7 @@ import {
   getDefaultMedalProgress,
 } from '../utils/medalUtils';
 import type { MedalDef, SpecialMedalContext } from '../utils/medalUtils';
+import { usePushReminders } from '../hooks/usePushReminders';
 
 interface GameContextType {
   activeCharacter: Character | null;
@@ -88,6 +89,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [lastUnlockedMedal, setLastUnlockedMedal] = useState<MedalDef | null>(null);
   const [lootboxPityCount, setLootboxPityCount] = useState(0);
   const isOnline = useOnlineStatus();
+  usePushReminders(activeCharacter);
   const initiatedMatchmakingRef = useRef(false);
   const charRef = useRef<Character | null>(null);
   const persistCharacter = useCallback((character: Character) => {
