@@ -46,6 +46,9 @@ export function convertFromSupabase(row: CharacterRow): Character {
     medalXpBonus: row.medal_xp_bonus ?? 0,
     medalTitle: row.medal_title ?? undefined,
     medalAura: row.medal_aura ?? false,
+    pushEndpoint: row.push_endpoint ?? null,
+    pushKeys: row.push_keys ?? null,
+    pushSubscribed: row.push_subscribed ?? false,
   };
 }
 
@@ -95,9 +98,19 @@ export function convertToSupabase(character: Character, fields?: string[]): Part
     ...(character.medalAura !== undefined ? { medal_aura: character.medalAura } : {}),
   };
   if (fields) {
-    return Object.fromEntries(
+    const filtered = Object.fromEntries(
       Object.entries(allFields).filter(([key]) => fields.includes(key))
     ) as Partial<CharacterRow>;
+    if (fields.includes('push_endpoint')) {
+      filtered.push_endpoint = character.pushEndpoint ?? null;
+    }
+    if (fields.includes('push_keys')) {
+      filtered.push_keys = character.pushKeys ?? null;
+    }
+    if (fields.includes('push_subscribed')) {
+      filtered.push_subscribed = character.pushSubscribed ?? false;
+    }
+    return filtered;
   }
   return allFields;
 }

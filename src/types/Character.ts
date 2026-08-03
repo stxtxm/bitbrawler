@@ -170,4 +170,9 @@ export interface Character {
   achievementXpBonus?: number; // Permanent XP bonus per win from achievements
   achievementEssenceBonus?: number; // One-time essence bonus tracking (not the essence itself)
   achievementCosmetics?: string[]; // Unlocked cosmetic flags
+
+  // Web Push notifications
+  pushEndpoint?: string | null; // Push subscription endpoint persisted on the character
+  pushKeys?: string | null; // Serialized push keys (p256dh + auth) persisted on the character
+  pushSubscribed?: boolean; // Whether the character opted in to web push
 }
