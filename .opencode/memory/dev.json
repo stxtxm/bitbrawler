@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-03T19:12:34Z",
+  "last_session": "2026-08-03T19:19:50Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -91,6 +91,11 @@
       "lesson": "Issue infra #596 (migrer CI/reviewer vers workflow_run) : la modification de .github/workflows/*.yml est interdite au dev agent. Correctif: créer une issue HUMAIN SANS /oc (#597) avec les diffs YAML exacts, commenter l issue parente, et NE PAS coder. Le workflow_dispatch reste le workaround. Branch protection master confirmee vide.",
       "issue": "#596",
       "date": "2026-08-03T19:11:17Z"
+    },
+    {
+      "lesson": "Issue #599 /oc demandait d'exécuter #597 (migration CI/reviewer vers workflow_run). Blocage: #597 est 100% infra .github/workflows/*.yml (modification interdite au dev agent, renvoyée par la CI) + réglages GitHub Settings (approbation PRs bots) accessibles uniquement en HTTP 403 pour l'integration token. Aucun code src/ exigé. Réponse correcte: commenter #599 avec les preuves (403 + diffs dans #597 + workaround workflow_dispatch), NE PAS créer de branch vide, laisser issue ouverte à l'action humaine. Pattern confirmé: /oc ne peut pas déroger à la contrainte absolue sur les fichiers de workflow.",
+      "issue": "#599",
+      "date": "2026-08-03"
     }
   ]
 }
