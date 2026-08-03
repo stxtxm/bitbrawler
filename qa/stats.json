@@ -17549,5 +17549,181 @@
       "home": 1495,
       "arena": 2821
     }
+  },
+  {
+    "date": "2026-08-03T19:20:20.406Z",
+    "run": "2026-08-03",
+    "character": "STARKSIGIL",
+    "character_action": "reused",
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": {
+      "str": 9,
+      "vit": 19,
+      "dex": 8,
+      "luk": 13,
+      "int": 7,
+      "foc": 14,
+      "fights": 0
+    },
+    "initial_level": 5,
+    "initial_xp": {
+      "current": 261,
+      "max": 376
+    },
+    "initial_max_hp": 305,
+    "initial_equipment": [
+      {
+        "slot": "🛡",
+        "name": "️ ARMOR"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 8,
+      "xp": 1480,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 10,
+      "vit": 20,
+      "dex": 8,
+      "luk": 13,
+      "int": 8,
+      "foc": 14,
+      "last xp": 19,
+      "fights": 1
+    },
+    "final_max_hp": 344,
+    "final_equipment": [
+      {
+        "slot": "🛡",
+        "name": "️ ARMOR"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": null,
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": []
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 32595,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "ogre"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 21,
+      "xp_events": [
+        {
+          "time_ms": 32595,
+          "xp": 21,
+          "monster": "ogre",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": true,
+      "level_up_events": [
+        {
+          "time_ms": 1038,
+          "monster": "ogre"
+        },
+        {
+          "time_ms": 1560,
+          "monster": "ogre"
+        },
+        {
+          "time_ms": 2074,
+          "monster": "ogre"
+        },
+        {
+          "time_ms": 32595,
+          "monster": "ogre"
+        }
+      ],
+      "phase_transition_times_ms": [
+        517,
+        1038,
+        32595
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 21,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.59,
+      "next_level_eta": "⬆ 3m 19s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.02x",
+      "interval": "12.0s",
+      "streak_bonus": null
+    },
+    "initial_essence": null,
+    "final_essence": null,
+    "essence": {
+      "before_idle": 19.85,
+      "after_idle": 20.41,
+      "per_fight": [],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": null,
+      "flow": {
+        "idle_gained": null,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": null
+      }
+    },
+    "level_up_fx": {
+      "detected": true,
+      "glow_class_applied": false,
+      "float_text_shown": true,
+      "level": 8
+    },
+    "offline_gains": null,
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": null,
+    "shop": null,
+    "errors": [
+      "Fight 1: timeout waiting for result (45000ms, 3 retries)",
+      "Fight 2: timeout waiting for result (45000ms, 3 retries)",
+      "Fight 3: timeout waiting for result (45000ms, 3 retries)",
+      "Fight 4: timeout waiting for result (45000ms, 3 retries)",
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('button[aria-label=\"Inventory\"], button[title=\"Inventory\"]').first()\n    - locator resolved to <button title=\"Inventory\" aria-label=\"Inventory\" class=\"button icon-btn inventory-btn\">…</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay inventory-overlay\">…</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay inventory-overlay\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    53 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div class=\"retro-modal-overlay inventory-overlay\">…</div> intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n"
+    ],
+    "load_times_ms": {
+      "home": 1703,
+      "arena": 809
+    }
   }
 ]
