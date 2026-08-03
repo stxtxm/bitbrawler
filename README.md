@@ -71,6 +71,7 @@ See [AGENTS.md](AGENTS.md) for autonomous agent workflows and responsibilities.
 - **Global daily reset** — scripted resets at midnight (Paris) for fights and opponent tracking
 - **Hall of Fame** rankings with real-time updates
 - **PWA** install experience (works offline)
+- **🔔 Push notifications & session reminders** — opt-in web push ("Se rappeler de moi") with auto nudges for streak in danger, daily lootbox ready, and new events (max 1/day, no spam)
 - **Autonomous CI/CD** with agent-driven development
 
 ## Quick Links
