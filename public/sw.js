@@ -1,4 +1,4 @@
-const VERSION = 'v4'
+const VERSION = 'v5'
 const APP_SHELL_CACHE = `bitbrawler-shell-${VERSION}`
 const ASSET_CACHE = `bitbrawler-assets-${VERSION}`
 const RUNTIME_CACHE = `bitbrawler-runtime-${VERSION}`
@@ -98,4 +98,44 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(networkFirst(request, RUNTIME_CACHE))
+})
+
+self.addEventListener('push', (event) => {
+  if (!event.data) return
+  const payload = event.data.json()
+  const title = payload.title || 'Bitbrawler'
+  const options = {
+    body: payload.body || '',
+    icon: payload.icon || '/icon-192.png',
+    tag: payload.tag,
+    data: { url: payload.url },
+  }
+  event.waitUntil(self.registration.showNotification(title, options))
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const url = event.notification.data && event.notification.data.url
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      if (url) {
+        const existing = windowClients.find((client) => {
+          try {
+            return new URL(client.url).origin === self.location.origin
+          } catch {
+            return false
+          }
+        })
+        if (existing) return existing.focus()
+        return self.clients.openWindow(url)
+      }
+      const head = windowClients[0]
+      if (head) return head.focus()
+      return self.clients.openWindow('/')
+    })
+  )
+})
+
+self.addEventListener('notificationclose', (event) => {
+  event.waitUntil(Promise.resolve())
 })

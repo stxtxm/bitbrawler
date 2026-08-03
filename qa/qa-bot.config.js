@@ -18,9 +18,9 @@ export default {
   headless: process.env.QA_HEADLESS !== 'false',
   slowMo: parseInt(process.env.QA_SLOW_MO || '0', 10),
   /** Level at which PvP mode becomes available */
-  pvpUnlockLevel: 5,
+  pvpUnlockLevel: 1,
   /** Level at which Forge (Salvage) becomes available */
-  forgeUnlockLevel: 10,
+  forgeUnlockLevel: 1,
   /** Level at which Shop becomes available */
   shopUnlockLevel: 20,
 }

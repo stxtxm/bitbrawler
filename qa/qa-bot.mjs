@@ -1368,10 +1368,10 @@ async function humanDelay(page) {
  * @param {number} pveRatio - Fraction of fights that should be PvE (e.g. 0.33).
  * @param {boolean} pveOnly - If true, always return PvE.
  * @param {number|null} [characterLevel] - Current character level. If below PvP unlock, forces PvE.
- * @param {number} [pvpUnlockLevel=5] - Level at which PvP becomes available.
+ * @param {number} [pvpUnlockLevel=1] - Level at which PvP becomes available.
  * @returns {{ type: 'pvp'|'pve', pvpSinceLastPve: number }}
  */
-function determineNextFightType(pvpSinceLastPve, pveRatio, pveOnly, characterLevel = null, pvpUnlockLevel = 5) {
+function determineNextFightType(pvpSinceLastPve, pveRatio, pveOnly, characterLevel = null, pvpUnlockLevel = 1) {
   // Force PvE if character level is below PvP unlock threshold
   if (characterLevel !== null && characterLevel < pvpUnlockLevel) {
     return { type: 'pve', pvpSinceLastPve: 0 }

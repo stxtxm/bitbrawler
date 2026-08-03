@@ -1,0 +1,129 @@
+@use '../variables' as *;
+
+.push-opt-in {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  max-width: 460px;
+  background: linear-gradient(180deg, #1a120b 0%, #0d0906 100%);
+  border: 2px solid $accent-gold;
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6), inset 0 0 0 2px rgba(0, 0, 0, 0.5);
+  animation: push-opt-in-enter 0.35s ease-out;
+
+  @include mobile {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  @keyframes push-opt-in-enter {
+    from {
+      opacity: 0;
+      transform: translateY(-12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  &__icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    background: rgba($accent-gold, 0.14);
+    border: 2px solid rgba($accent-gold, 0.45);
+    border-radius: 8px;
+    filter: drop-shadow(0 0 6px rgba($accent-gold, 0.35));
+  }
+
+  &__content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__title {
+    font-family: $font-pixel;
+    font-size: 0.65rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: $accent-gold;
+    text-shadow: 2px 2px 0 #000;
+    margin-bottom: 4px;
+  }
+
+  &__text {
+    font-size: 0.55rem;
+    color: #b5b0a6;
+    letter-spacing: 0.5px;
+    line-height: 1.5;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+
+    @include mobile {
+      justify-content: flex-end;
+    }
+  }
+
+  &__button {
+    font-family: $font-pixel;
+    font-size: 0.5rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 10px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: transform 0.08s ease, box-shadow 0.2s ease, background 0.2s ease,
+      color 0.2s ease;
+    border: 2px solid transparent;
+    box-shadow: 3px 3px 0 #000;
+
+    &:disabled {
+      opacity: 0.55;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    &--primary {
+      color: #1a120b;
+      background: $accent-gold;
+      border-color: #ffd95c;
+
+      &:hover:not(:disabled) {
+        background: #ffe066;
+        box-shadow: 3px 3px 0 #000, 0 0 10px rgba($accent-gold, 0.5);
+      }
+
+      &:active:not(:disabled) {
+        transform: translate(2px, 2px);
+        box-shadow: 1px 1px 0 #000;
+      }
+    }
+
+    &--secondary {
+      color: $accent-gold;
+      background: rgba(0, 0, 0, 0.45);
+      border-color: rgba($accent-gold, 0.4);
+
+      &:hover:not(:disabled) {
+        background: rgba($accent-gold, 0.12);
+      }
+
+      &:active:not(:disabled) {
+        transform: translate(2px, 2px);
+        box-shadow: 1px 1px 0 #000;
+      }
+    }
+  }
+}

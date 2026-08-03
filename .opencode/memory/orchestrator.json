@@ -3,6 +3,15 @@
   "agent": "orchestrator",
   "last_session": "2026-08-03T20:40:00Z",
   "recent_failures": [],
+  "active_campaign": {
+    "parent_issue": 605,
+    "title": "QA bot PvE timeout fix",
+    "sub_issues": [608, 609],
+    "level_0_dispatched": true,
+    "level_0_sub_issue": 608,
+    "level_1_sub_issue": 609,
+    "created": "2026-08-03T00:00:00Z"
+  },
   "known_limitations": [
     "Ne jamais créer de sub-issue qui modifie .github/workflows/",
     "Chaque sub-issue doit être 1-2 fichiers max",
@@ -16,6 +25,20 @@
     "parallel_fork": "Sub-issue A (no deps), Sub-issue B (no deps) → Sub-issue C (depends-on #A, #B)"
   },
   "session_notes": [
+    {
+      "session": "2026-08-03T00:00:00Z",
+      "parent_issue": 605,
+      "title": "QA bot PvE timeout fix (campaign-605)",
+      "sub_issues_created": [608, 609],
+      "sub_issues_dispatched": [608],
+      "lessons_learned": [
+        "Issue #605 est un bugfix mono-fichier (qa-bot.mjs) mais avec deux responsabilités distinctes : helper de détection + câblage dans la boucle fight → découpé en 2 sub-issues linéaires",
+        "La scène IdleRunnerScene n'expose jamais VICTORY/DEFEAT/DRAW dans innerText → les marqueurs DOM (phase-result, big-xp-label, data-monster, compteur BOSS FIGHTS) sont la seule source fiable pour PvE",
+        "PvP fonctionne avec la détection texte (~11.5s) — ne pas toucher ce chemin dans #609",
+        "Le label campaign-605 n'existait pas → créé avec --force (aucun conflit)"
+      ],
+      "issues_encountered": []
+    },
     {
       "session": "2026-08-03T20:40:00Z",
       "parent_issue": 605,

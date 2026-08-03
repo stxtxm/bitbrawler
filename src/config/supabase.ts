@@ -60,6 +60,9 @@ export type CharacterRow = {
   medal_xp_bonus?: number;
   medal_title?: string | null;
   medal_aura?: boolean;
+  push_endpoint?: string | null;
+  push_keys?: string | null;
+  push_subscribed?: boolean | null;
 }
 
 export type ServerTimeRow = {
