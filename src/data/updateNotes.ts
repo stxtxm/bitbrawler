@@ -8,6 +8,21 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.2.0',
+    date: '2026-08-03',
+    title: '🔔 Push Notifications & Session Reminders — the retention lever n°1 of idle games',
+    changes: [
+      '🔔 Push opt-in — the "Se rappeler de moi" banner invites players to enable web notifications when the game loads.',
+      '🔥 Streak in danger — auto reminder: "Ton streak de N jours expire dans 12h!" when a player has been away for over 24h.',
+      '🎁 Daily lootbox ready — a reminder tells players their fresh daily lootbox is waiting.',
+      '⚔️ New event alert — a push is sent when an active event starts.',
+      '⏱️ Anti-spam — at most 1 reminder per day, synchronized with the daily reset clock, so nudges never feel intrusive.',
+      '📲 Native Web Push built on the Push API + VAPID keys and handled by the Service Worker (works even in background on mobile).',
+      '💾 Subscription persisted per character via Supabase (push_endpoint / push_keys) and auto-restored at login.',
+      '1207 tests passing across 90 test files.',
+    ],
+  },
+  {
     version: '5.1.0',
     date: '2026-07-09',
     title: 'Essence Economy & Shop Balance — data-driven pricing, epic daily item, shop reroll, essence hard cap',
