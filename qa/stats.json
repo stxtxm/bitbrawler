@@ -16422,5 +16422,164 @@
       "home": 1823,
       "arena": 707
     }
+  },
+  {
+    "date": "2026-08-03T04:01:13.229Z",
+    "run": "2026-08-03",
+    "character": "SQUIREVALE",
+    "character_action": "reused",
+    "replaced_character": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": {
+      "str": 18,
+      "vit": 17,
+      "dex": 22,
+      "luk": 18,
+      "int": 29,
+      "foc": 74,
+      "fights": 0
+    },
+    "initial_level": 83,
+    "initial_xp": {
+      "current": 68426,
+      "max": 165683
+    },
+    "initial_max_hp": 1220,
+    "initial_equipment": [
+      {
+        "slot": "🛡",
+        "name": "️ ARMOR"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 83,
+      "xp": 76505,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 18,
+      "vit": 17,
+      "dex": 22,
+      "luk": 18,
+      "int": 29,
+      "foc": 74,
+      "last xp": 89,
+      "fights": 1
+    },
+    "final_max_hp": 1220,
+    "final_equipment": [
+      {
+        "slot": "🛡",
+        "name": "️ ARMOR"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": null,
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": []
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 32573,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "ogre"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 89,
+      "xp_events": [
+        {
+          "time_ms": 32573,
+          "xp": 89,
+          "monster": "ogre",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        514,
+        1028,
+        32573
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 89,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 16.91,
+      "next_level_eta": "⬆ 1h 1m",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.83x",
+      "interval": "10.2s",
+      "streak_bonus": null
+    },
+    "initial_essence": null,
+    "final_essence": null,
+    "essence": {
+      "before_idle": 60307.81,
+      "after_idle": 60313.83,
+      "per_fight": [],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": null,
+      "flow": {
+        "idle_gained": null,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": null
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": null,
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": null,
+    "shop": null,
+    "errors": [
+      "Fight 1: timeout waiting for result (45000ms, 3 retries)",
+      "Fight 2: timeout waiting for result (45000ms, 3 retries)",
+      "Fight 3: timeout waiting for result (45000ms, 3 retries)",
+      "Fight 4: timeout waiting for result (45000ms, 3 retries)",
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('button[aria-label=\"Inventory\"], button[title=\"Inventory\"]').first()\n    - locator resolved to <button title=\"Inventory\" aria-label=\"Inventory\" class=\"button icon-btn inventory-btn\">…</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay inventory-overlay\">…</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay inventory-overlay\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    52 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div class=\"retro-modal-overlay inventory-overlay\">…</div> intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n"
+    ],
+    "load_times_ms": {
+      "home": 1684,
+      "arena": 497
+    }
   }
 ]
