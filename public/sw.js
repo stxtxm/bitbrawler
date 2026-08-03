@@ -122,7 +122,7 @@ self.addEventListener('notificationclick', (event) => {
         const existing = windowClients.find((client) => {
           try {
             return new URL(client.url).origin === self.location.origin
-          } catch (error) {
+          } catch {
             return false
           }
         })
