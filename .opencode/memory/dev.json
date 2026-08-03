@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-03T19:19:50Z",
+  "last_session": "2026-08-03T20:06:05Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -96,6 +96,11 @@
       "lesson": "Issue #599 /oc demandait d'exécuter #597 (migration CI/reviewer vers workflow_run). Blocage: #597 est 100% infra .github/workflows/*.yml (modification interdite au dev agent, renvoyée par la CI) + réglages GitHub Settings (approbation PRs bots) accessibles uniquement en HTTP 403 pour l'integration token. Aucun code src/ exigé. Réponse correcte: commenter #599 avec les preuves (403 + diffs dans #597 + workaround workflow_dispatch), NE PAS créer de branch vide, laisser issue ouverte à l'action humaine. Pattern confirmé: /oc ne peut pas déroger à la contrainte absolue sur les fichiers de workflow.",
       "issue": "#599",
       "date": "2026-08-03"
+    },
+    {
+      "lesson": "Issue #592 (Web Push persistence): convertToSupabase must NOT emit push columns (push_endpoint/push_keys/push_subscribed) on the default no-fields sync path — migration #587 not yet applied, PostgREST returns PGRST204 for unknown columns and would break EVERY debounced sync (dbAvailable=false). Solution: push fields are only emitted when explicitly requested via the fields param (convertToSupabase(char, [push_endpoint, push_keys, push_subscribed])), plus a buildPushSubscriptionUpdate() helper returning the exact 3-field payload for the banner. Reminder flow: usePushReminders hook fires trySendPushReminder on login/load (1/jour via localStorage key bitbrawler_last_push_sent).",
+      "issue": "#592",
+      "date": "2026-08-03T20:04:00Z"
     }
   ]
 }
