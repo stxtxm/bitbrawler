@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-01T20:20:02Z",
+  "last_session": "2026-08-03T17:48:03Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -76,6 +76,11 @@
       "lesson": "Issue #584 - QA bot time budget: Made idle observation configurable (idleObservationMs default 20s, was 30s hardcoded but observed 57s due to setup waits). Added global timeBudgetMs (8 min default) guard that propagates a deadline into observeIdleCombat polling loop (effectiveDeadline = min(endTime, deadline)), stops fight sequence early, and skips idle/forge/shop/offline-gains phases with clean skipped-result factories (createSkippedForgeResult/createSkippedShopResult) instead of throwing. Also skips idle screenshot when budget exceeded. Pattern: for long-running E2E scripts, use module-level runStartTime + deadline-aware loops + graceful skip factories rather than hard timeouts.",
       "issue": "#584",
       "date": "2026-08-01"
+    },
+    {
+      "lesson": "Issue #583 (Web Push Notifications, Proposition majeure avec /oc) était trop large (SW + Web Push API + migration DB + UI + scheduler + tests, 6+ fichiers sur 5 sous-systèmes). Appliqué la règle campagne: créé 5 sous-issues avec /oc + label campaign-583 (#588-592) et 1 issue migration SANS /oc (#587) pour validation humaine, puis STOP sans coder. Le texte de l'issue est trompeur: malgré 'Type: Proposition majeure (validation humaine)', le tag /oc impose l'implémentation — mais via sous-issues. Pattern: utiliser --body-file pour les issues gh quand le body contient des apostrophes/backticks (sinon syntax error shell).",
+      "issue": "#583",
+      "date": "2026-08-03"
     }
   ]
 }
