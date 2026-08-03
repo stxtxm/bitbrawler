@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-01T20:20:02Z",
+  "last_session": "2026-08-03T17:54:44Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -76,6 +76,11 @@
       "lesson": "Issue #584 - QA bot time budget: Made idle observation configurable (idleObservationMs default 20s, was 30s hardcoded but observed 57s due to setup waits). Added global timeBudgetMs (8 min default) guard that propagates a deadline into observeIdleCombat polling loop (effectiveDeadline = min(endTime, deadline)), stops fight sequence early, and skips idle/forge/shop/offline-gains phases with clean skipped-result factories (createSkippedForgeResult/createSkippedShopResult) instead of throwing. Also skips idle screenshot when budget exceeded. Pattern: for long-running E2E scripts, use module-level runStartTime + deadline-aware loops + graceful skip factories rather than hard timeouts.",
       "issue": "#584",
       "date": "2026-08-01"
+    },
+    {
+      "lesson": "Issue #590 reminder scheduler: no event config exists yet in the codebase (src/config has no event source). The event rule must be implemented with an injectable events array param (ActiveEvent[]), defaulting to empty so it gracefully skips. This keeps getReminderType pure and future-proof for sub-issue #583 later steps. Priority streak_danger > lootbox > event, max 1 notification/day enforced via shouldSendToday using getDailyResetKey comparison.",
+      "issue": "#590",
+      "date": "2026-08-03"
     }
   ]
 }
