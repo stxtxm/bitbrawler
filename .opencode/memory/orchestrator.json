@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "orchestrator",
-  "last_session": "2026-08-03T00:00:00Z",
+  "last_session": "2026-08-03T20:40:00Z",
   "recent_failures": [],
   "active_campaign": {
     "parent_issue": 605,
@@ -38,6 +38,23 @@
         "Le label campaign-605 n'existait pas → créé avec --force (aucun conflit)"
       ],
       "issues_encountered": []
+    },
+    {
+      "session": "2026-08-03T20:40:00Z",
+      "parent_issue": 605,
+      "title": "QA bot PvE timeout fix — detectPveResult helper",
+      "sub_issues_created": [],
+      "sub_issues_dispatched": [],
+      "lessons_learned": [
+        "AVANT de créer des sub-issues, toujours vérifier si #N est déjà marqué sub-issue + campaign-X (labels) — ne PAS re-décomposer une feuille",
+        "Un parent peut avoir DEUX plans commentés sur la même campagne (#608/#609 EN et #610/#611 FR) → détecter les doublons et traiter le chemin non-encore-fait",
+        "Si un sous-issue Level 0 a déjà sa branche feat/auto-N en vol, ne pas re-dispatching ni re-créer de campagne-nichée",
+        "Garde-fou : ne pas embarquer un leaf 1-shot dans une campagne-nichée campaign-N → violation ≤2 fichiers"
+      ],
+      "issues_encountered": [
+        "Issue #608 déjà label sub-issue + campagne-605 : inutile de créer campaign-608",
+        "#610/#611 (plan FR) clôturés parce que redondants de #608/#609 (plan EN)"
+      ]
     },
     {
       "session": "2026-07-09T18:30:00Z",
