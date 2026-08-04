@@ -33,11 +33,37 @@ export const useArenaLevelUp = ({
   const [xpBarAnimating, setXpBarAnimating] = useState(false);
   const [recentLevelUp, setRecentLevelUp] = useState<RecentLevelUp | null>(null);
   const levelUpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const levelUpQueueRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  const queueLevelUp = useCallback((_levelsGained: number, newLevel: number) => {
-    setRecentLevelUp({ newLevel, isMilestone: isMilestoneLevel(newLevel) });
-
+  const queueLevelUp = useCallback((levelsGained: number, newLevel: number) => {
     if (levelUpTimerRef.current) clearTimeout(levelUpTimerRef.current);
+    levelUpTimerRef.current = null;
+    levelUpQueueRef.current.forEach(t => clearTimeout(t));
+    levelUpQueueRef.current = [];
+
+    const total = Math.max(1, levelsGained);
+    const startLevel = newLevel - total + 1;
+
+    // Multiple levels at once (offline catch-up) → show one FX per level
+    // with a short stagger instead of jumping straight to the final level.
+    if (total > 1) {
+      for (let i = 0; i < total; i++) {
+        const level = startLevel + i;
+        const isLast = i === total - 1;
+        levelUpQueueRef.current.push(setTimeout(() => {
+          setRecentLevelUp({ newLevel: level, isMilestone: isMilestoneLevel(level) });
+          if (isLast) {
+            levelUpTimerRef.current = setTimeout(() => {
+              setRecentLevelUp(null);
+              levelUpTimerRef.current = null;
+            }, 2000);
+          }
+        }, i * 1200));
+      }
+      return;
+    }
+
+    setRecentLevelUp({ newLevel, isMilestone: isMilestoneLevel(newLevel) });
     levelUpTimerRef.current = setTimeout(() => {
       setRecentLevelUp(null);
       levelUpTimerRef.current = null;
@@ -64,6 +90,7 @@ export const useArenaLevelUp = ({
     return () => {
       clearXpNotifications();
       if (levelUpTimerRef.current) clearTimeout(levelUpTimerRef.current);
+      levelUpQueueRef.current.forEach(t => clearTimeout(t));
     };
   }, [clearXpNotifications]);
 

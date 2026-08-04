@@ -54,6 +54,7 @@ const ESSENCE_LEVEL_SCALE = 0.08
 // Aligned with src/config idleConfig.ts and src/utils/xpUtils.ts
 const EARLY_SHIFT = 2
 const IDLE_MODIFIER = 0.35
+const OFFLINE_XP_MODIFIER = 0.5
 const MAX_IDLE_FIGHTS = 50
 const MONSTER_IDS = ['GOBLIN', 'OGRE', 'WRAITH', 'SLIME', 'SKELETON', 'BAT', 'SPIDER']
 
@@ -212,6 +213,10 @@ function calculateIdleXp(won: boolean, level: number): number {
   return Math.floor(baseXp * levelScaling * IDLE_MODIFIER * variance)
 }
 
+function calculateOfflineIdleXp(won: boolean, level: number): number {
+  return Math.floor(calculateIdleXp(won, level) * OFFLINE_XP_MODIFIER)
+}
+
 // ─────────────────────────────────────────────────────────────
 // Idle processor logic
 // ─────────────────────────────────────────────────────────────
@@ -260,7 +265,7 @@ function simulateIdleGains(char: Character, idleMs: number): { updated: Characte
     const combat = simulateCombat(current, monster)
     const won = combat.winner === 'attacker'
 
-    const baseXp = calculateIdleXp(won, current.level)
+    const baseXp = calculateOfflineIdleXp(won, current.level)
     const xpBonus = eff.xpBonusMultiplier - 1
     const streakBonus = Math.min(streak * STREAK_BONUS_PER_STEP, STREAK_BONUS_CAP)
     const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
