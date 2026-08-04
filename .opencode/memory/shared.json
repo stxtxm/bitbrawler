@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "last_updated": "2026-08-03T00:00:00Z",
+  "last_updated": "2026-08-04T18:45:00Z",
   "active_campaigns": [
     {
       "parent_issue": 605,
@@ -52,7 +52,9 @@
     "Les migrations SQL passent par une issue, jamais exécutées directement",
     "Chaque sub-issue doit déclarer depends-on: #N dans son body",
     "Les PR docs/campaign-* sont créées par le supervisor et mergées par le reviewer",
-    "Toute modification de schéma DB nécessite une issue de migration sans /oc"
+    "Toute modification de schéma DB nécessite une issue de migration sans /oc",
+    "BOSS PvE (#626): kill 1-jour IMPOSSIBLE par design (pool 12x maxHp + round limit) — ne jamais 'corriger' en nerf; médiane de kill ~4 jours validée par bossBalance.test.ts. Doc: BOSS_PVE.md",
+    "Migration boss_progress (#625) EXÉCUTÉE — convertToSupabase émet boss_progress (omis si undefined); ne jamais écrire boss_progress: null"
   ],
   "patterns": {
     "error_recovery": "Quand un workflow échoue, vérifier d'abord shared.json pour les problèmes connus",

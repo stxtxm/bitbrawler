@@ -8,6 +8,20 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.3.0',
+    date: '2026-08-04',
+    title: '🐉 Raid Boss PvE — VOID TITAN, the persistent HP-pool raid!',
+    changes: [
+      '🐉 RAID BOSS — débloqué au niveau 30 : un 3e mode dans l\'Arène vous oppose au VOID TITAN, un boss unique au sprite 8-bit.',
+      '⚔️ 5 attaques par jour — jauge indépendante du PvP/PvE, rechargée chaque nuit (minuit, heure de Paris).',
+      '💀 HP pool persistant — le boss garde les dégâts subis entre vos attaques et entre les jours. Pas de régénération : chaque point de dégât compte.',
+      '🏆 Kill = nouveau cycle — quand le pool tombe à zéro, le boss est terrassé : XP massive (4× un combat normal) + 60 essence, puis un nouveau cycle plus coriace commence.',
+      '📈 Boss évolutif — ses stats (1.2×) et son niveau (playerLevel + 2) suivent votre progression : le raid reste un défi à tous les niveaux.',
+      '❌ Les attaques ratées ne comptent pas comme défaites — seuls les kills entrent au compteur de victoires.',
+      '1264 tests passing across 94 test files.',
+    ],
+  },
+  {
     version: '5.2.0',
     date: '2026-08-03',
     title: '🔔 Push Notifications & Session Reminders — the retention lever n°1 of idle games',

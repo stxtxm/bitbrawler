@@ -1,5 +1,13 @@
 # Migration Status: Supabase — ✅ Complete
 
+## ✅ Executed migrations (recent)
+
+- [x] **#625 — `boss_progress` JSONB (Raid Boss PvE)** — executed 2026-08-04
+  ```sql
+  ALTER TABLE characters ADD COLUMN IF NOT EXISTS boss_progress JSONB;
+  ```
+  Sync cross-device active end-to-end (see [BOSS_PVE.md](BOSS_PVE.md) → Persistance). If the column is ever dropped, the game still works (fallback localStorage via the load-merge `bestChar.bossProgress ?? localChar.bossProgress`).
+
 ## ✅ Configuration
 - [x] Created `src/config/supabase.ts` with Supabase configuration
 - [x] Removed `src/config/firebase.ts` (migration complete)

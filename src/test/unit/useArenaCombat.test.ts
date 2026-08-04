@@ -24,22 +24,26 @@ describe('useArenaCombat - PvE XP logging', () => {
   let consoleWarnSpy: any;
   let pveFightMock: any;
   let fightMock: any;
+  let bossFightMock: any;
   let onLevelUpMock: any;
 
   beforeEach(() => {
     consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     pveFightMock = vi.fn().mockResolvedValue(mockFightResult());
     fightMock = vi.fn().mockResolvedValue(mockFightResult());
+    bossFightMock = vi.fn().mockResolvedValue(mockFightResult());
     onLevelUpMock = vi.fn();
   });
 
   function buildOnCombatComplete(options: {
-    matchType?: 'pve' | 'balanced' | 'similar';
+    matchType?: 'pve' | 'balanced' | 'similar' | 'boss';
     xpGained: number;
     won?: boolean;
     modifier?: number;
     opponentName?: string;
     monsterId?: string;
+    bossHpLeft?: number;
+    opponentHp?: number;
   }) {
     const {
       matchType = 'pve',
@@ -47,14 +51,18 @@ describe('useArenaCombat - PvE XP logging', () => {
       won = true,
       opponentName = 'Monster',
       monsterId = 'GOBLIN',
+      bossHpLeft,
+      opponentHp = 7008,
     } = options;
 
-    // This mirrors the production callback in useArenaCombat.ts lines 121-137
+    // This mirrors the production callback in useArenaCombat.ts
     const onCombatComplete = async () => {
       try {
         const result = matchType === 'pve'
           ? await pveFightMock(won, Math.round(xpGained * (GAME_RULES.PVE.XP_MODIFIER)), opponentName, { monsterId })
-          : await fightMock(won, xpGained, opponentName, 'opponent-id');
+          : matchType === 'boss'
+            ? await bossFightMock(won, xpGained, opponentName, { bossHpLeft: bossHpLeft ?? opponentHp })
+            : await fightMock(won, xpGained, opponentName, 'opponent-id');
 
         // PvE logging (mirroring the added console.warn)
         if (matchType === 'pve') {
@@ -175,5 +183,78 @@ describe('useArenaCombat - PvE XP logging', () => {
     expect(consoleWarnSpy).toHaveBeenCalledTimes(1);
     const logMessage = consoleWarnSpy.mock.calls[0][0];
     expect(logMessage).toContain('won=false');
+  });
+
+  it('calls useBossFight with bossHpLeft when provided', async () => {
+    const onCombatComplete = buildOnCombatComplete({
+      matchType: 'boss',
+      xpGained: 0,
+      won: false,
+      opponentName: 'VOID TITAN',
+      bossHpLeft: 4200,
+    });
+
+    await act(async () => {
+      await onCombatComplete();
+    });
+
+    expect(bossFightMock).toHaveBeenCalledWith(
+      false,
+      0,
+      'VOID TITAN',
+      expect.objectContaining({ bossHpLeft: 4200 })
+    );
+  });
+
+  it('falls back to opponent.hp when bossHpLeft is not provided', async () => {
+    const onCombatComplete = buildOnCombatComplete({
+      matchType: 'boss',
+      xpGained: 360,
+      won: true,
+      opponentName: 'VOID TITAN',
+      opponentHp: 7008,
+    });
+
+    await act(async () => {
+      await onCombatComplete();
+    });
+
+    expect(bossFightMock).toHaveBeenCalledWith(
+      true,
+      360,
+      'VOID TITAN',
+      expect.objectContaining({ bossHpLeft: 7008 })
+    );
+  });
+
+  it('does not log PvE XP warning for boss fights', async () => {
+    const onCombatComplete = buildOnCombatComplete({
+      matchType: 'boss',
+      xpGained: 360,
+      won: true,
+      bossHpLeft: 0,
+    });
+
+    await act(async () => {
+      await onCombatComplete();
+    });
+
+    expect(consoleWarnSpy).not.toHaveBeenCalled();
+  });
+
+  it('forwards leveledUp from useBossFight to onLevelUp', async () => {
+    bossFightMock = vi.fn().mockResolvedValue(mockFightResult({ leveledUp: true, levelsGained: 1, newLevel: 31 }));
+    const onCombatComplete = buildOnCombatComplete({
+      matchType: 'boss',
+      xpGained: 360,
+      won: true,
+      bossHpLeft: 0,
+    });
+
+    await act(async () => {
+      await onCombatComplete();
+    });
+
+    expect(onLevelUpMock).toHaveBeenCalledWith(1, 31);
   });
 });

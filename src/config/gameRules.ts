@@ -16,6 +16,15 @@ export const GAME_RULES = {
         HP_MULTIPLIER: 22.0,
         LEVEL_BOOST: 3, // Monsters fight at playerLevel + this offset
     },
+    BOSS: {
+        UNLOCK_LEVEL: 30, // Boss PvE unlocks at this level
+        MAX_DAILY_ATTACKS: 5, // Daily attacks against the raid boss (independent from PvP/PvE gauge)
+        LEVEL_BOOST: 2, // Boss fights at playerLevel + this offset
+        STAT_MULTIPLIER: 1.2, // Boss raw stats scale off the player's raw stats
+        HP_MULTIPLIER: 12.0, // Boss persistent HP pool = player maxHp * this
+        XP_MODIFIER: 4.0, // Boss kill XP payout multiplier (vs a regular fight win)
+        ESSENCE_REWARD: 60, // Essence rewarded on boss kill
+    },
     BOTS: {
         MIN_POPULATION: 2,
         MIN_LVL1_BOTS: 10, // Ensure at least 10 lvl 1 bots

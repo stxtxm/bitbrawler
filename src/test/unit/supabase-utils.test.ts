@@ -97,6 +97,33 @@ describe('convertFromSupabase', () => {
     expect(char.itemUpgrades).toEqual({ sword_01: 2, armor_01: 1 })
   })
 
+  it('maps boss_progress from CharacterRow to Character (round-trip)', () => {
+    const progress = {
+      bossId: 'void_titan',
+      attacksLeft: 3,
+      lastAttackReset: 1700000000000,
+      bossHp: 4200,
+      bossMaxHp: 7008,
+      bossLevel: 32,
+      totalKills: 1,
+      lastKillAt: 1700000000000,
+      firstEncounterAt: 1699000000000,
+    }
+    const rowWithBoss: CharacterRow = { ...row, boss_progress: progress }
+    const char = convertFromSupabase(rowWithBoss)
+
+    expect(char.bossProgress).toEqual(progress)
+
+    // Round-trip: the boss progress survives convertToSupabase unchanged.
+    const roundTripped = convertToSupabase({ ...char, bossProgress: progress })
+    expect(roundTripped.boss_progress).toEqual(progress)
+  })
+
+  it('defaults bossProgress to undefined when row has null', () => {
+    const char = convertFromSupabase({ ...row, boss_progress: null })
+    expect(char.bossProgress).toBeUndefined()
+  })
+
   it('defaults essence to 0 and itemUpgrades to undefined when row has null/0', () => {
     const char = convertFromSupabase(row)
 
@@ -238,6 +265,11 @@ describe('convertToSupabase', () => {
 
     expect(row.essence).toBeUndefined()
     expect(row.item_upgrades).toBeUndefined()
+  })
+
+  it('omits boss_progress when not set on Character (never nulls server data)', () => {
+    const row = convertToSupabase(character)
+    expect(row.boss_progress).toBeUndefined()
   })
 
   it('fills default values for missing optional fields', () => {

@@ -1,14 +1,17 @@
 import { MONSTER_ASSETS, MonsterId } from '../data/monsterAssets';
+import { BOSS_ASSETS, BossId } from '../data/bossAssets';
 
 type PixelMonsterProps = {
-  monsterId: MonsterId;
+  monsterId: MonsterId | BossId;
   scale?: number;
 };
 
 const CELL_SIZE = 1;
 
 export function PixelMonster({ monsterId, scale = 4 }: PixelMonsterProps) {
-  const def = MONSTER_ASSETS.find(m => m.id === monsterId);
+  const def =
+    MONSTER_ASSETS.find(m => m.id === monsterId) ??
+    BOSS_ASSETS.find(b => b.id === monsterId);
   if (!def) return null;
 
   const { pixels, palette } = def;

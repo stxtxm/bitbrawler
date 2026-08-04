@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import type { FightHistory, IncomingFightHistory, PendingFight } from '../types/Character'
+import type { BossProgress } from '../utils/bossUtils'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://bhbpvbfvuayafygdrbgb.supabase.co'
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_TvmRepD1Trhu5bQIGZbkmg_YZ3FI3Gn'
@@ -63,6 +64,7 @@ export type CharacterRow = {
   push_endpoint?: string | null;
   push_keys?: string | null;
   push_subscribed?: boolean | null;
+  boss_progress?: BossProgress | null;
 }
 
 export type ServerTimeRow = {

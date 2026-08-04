@@ -193,6 +193,43 @@
     padding: 2rem 1rem;
 }
 
+.boss-intro {
+    .match-type-badge {
+        background: linear-gradient(135deg, #7b2fff 0%, #ff3b4e 100%);
+        animation: pulse 0.8s ease-in-out infinite;
+    }
+
+    .encounter-text {
+        color: #a78bfa;
+    }
+
+    .encounter-name {
+        color: #ff3b4e;
+        text-shadow:
+            3px 3px 0 #000,
+            0 0 24px rgba(255, 59, 78, 0.8),
+            0 0 48px rgba(123, 47, 255, 0.5);
+        animation: bossNamePulse 0.9s ease-in-out infinite;
+    }
+
+    .encounter-level {
+        color: #c4b5fd;
+        border-color: #c4b5fd;
+        background: rgba(123, 47, 255, 0.25);
+    }
+}
+
+@keyframes bossNamePulse {
+    0%, 100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+    50% {
+        transform: scale(1.08);
+        filter: brightness(1.35);
+    }
+}
+
 .monster-encounter {
     display: flex;
     flex-direction: column;

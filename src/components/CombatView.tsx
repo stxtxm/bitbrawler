@@ -4,11 +4,13 @@ import { PixelCharacter } from './PixelCharacter';
 import { PixelMonster } from './PixelMonster';
 import { PixelIcon } from './PixelIcon';
 import { simulateCombat } from '../utils/combatUtils';
-import { getMatchDifficultyLabel } from '../utils/matchmakingUtils';
+import { getMatchDifficultyLabel, MatchType } from '../utils/matchmakingUtils';
 import { parseCombatDetail, CombatAction, CombatActionType } from '../utils/combatLogUtils';
 import { calculateFightXp } from '../utils/xpUtils';
 import { useSound } from '../hooks/useSound';
 import { MonsterId, MONSTER_ASSETS } from '../data/monsterAssets';
+import { BossId, BOSS_ASSETS } from '../data/bossAssets';
+import { getBossKillXp } from '../utils/bossUtils';
 import { ParticleSystem, type ParticleType } from '../utils/particleSystem';
 import { COMBAT_BALANCE } from '../config/combatBalance';
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode';
@@ -56,9 +58,9 @@ function getComboClass(count: number): string {
 interface CombatViewProps {
     player: Character;
     opponent: Character;
-    matchType: 'balanced' | 'similar' | 'pve';
-    monsterId?: MonsterId;
-    onComplete: (won: boolean, xpGained: number) => void;
+    matchType: MatchType;
+    monsterId?: MonsterId | BossId;
+    onComplete: (won: boolean, xpGained: number, bossHpLeft?: number) => void;
     onClose: () => void;
     candidates?: Character[];
     comboCount?: number;
@@ -281,7 +283,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
 
     useEffect(() => {
         if (phase !== 'intro') return;
-        const delay = matchType === 'pve' ? 1200 : 2000;
+        const delay = (matchType === 'pve' || matchType === 'boss') ? 1200 : 2000;
         const introTimer = setTimeout(() => {
             const result = simulateCombat(player, opponent);
             setCombatResult(result);
@@ -598,7 +600,13 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
         if (!combatResult) return;
 
         try {
-            await onComplete(combatResult.winner === 'attacker', xpGained);
+            // For boss fights, report the boss's remaining HP so the caller can
+            // persist the shared HP pool across attacks.
+            const finalSnapshot = combatResult.timeline[combatResult.timeline.length - 1];
+            const bossHpLeft = matchType === 'boss'
+                ? (finalSnapshot?.defenderHp ?? opponent.hp)
+                : undefined;
+            await onComplete(combatResult.winner === 'attacker', xpGained, bossHpLeft);
         } finally {
             onClose();
         }
@@ -609,8 +617,11 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
 
     const xpGained = useMemo(() => {
         if (!combatResult) return 0;
+        if (matchType === 'boss') {
+            return combatResult.winner === 'attacker' ? getBossKillXp(player) : 0;
+        }
         return calculateFightXp(combatResult.winner === 'attacker', player.level, opponent.level);
-    }, [player.level, combatResult]);
+    }, [player, combatResult, matchType]);
 
     const playerMaxHp = player.maxHp || player.hp;
     const opponentMaxHp = opponent.maxHp || opponent.hp;
@@ -669,8 +680,8 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
             <div className="combat-modal">
                 <div className="particle-layer left" ref={leftLayerRef} />
                 <div className="particle-layer right" ref={rightLayerRef} />
-                {phase === 'intro' && (matchType === 'pve' ? (
-                    <div className="combat-intro pve-intro">
+                {phase === 'intro' && (matchType === 'pve' || matchType === 'boss') ? (
+                    <div className={`combat-intro ${matchType === 'boss' ? 'pve-intro boss-intro' : 'pve-intro'}`}>
                         {comboCount >= 2 && (
                             <div className={`combo-ring ${getComboClass(comboCount)}`}>
                                 <span className="combo-count">{comboCount}</span>
@@ -679,7 +690,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                         )}
                         <div className="match-type-badge">{getMatchDifficultyLabel(matchType)}</div>
                         <div className="monster-encounter">
-                            <div className="encounter-text">A WILD</div>
+                            <div className="encounter-text">{matchType === 'boss' ? 'A RAID BOSS' : 'A WILD'}</div>
                             <div className="encounter-name">{opponent.name}</div>
                             <div className="encounter-text">APPEARS!</div>
                             <div className="encounter-level">LVL {opponent.level}</div>
@@ -713,7 +724,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                             )}
                         </div>
                     </div>
-                ))}
+                )}
                 {phase === 'vs' && (
                     <div key={`combat-vs-${visibilityKey}`} className="combat-vs">
                         <div className="vs-fighter vs-left">
@@ -725,13 +736,14 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                             <div className="vs-text">VS</div>
                         </div>
                         <div className="vs-fighter vs-right">
-                            {matchType === 'pve' && monsterId ? (
+                            {(matchType === 'pve' || matchType === 'boss') && monsterId ? (
                                 <div className="monster-vs-display">
                                     <PixelMonster monsterId={monsterId} scale={8} />
                                     {(() => {
-                                        const def = MONSTER_ASSETS.find(m => m.id === monsterId);
+                                        const def = MONSTER_ASSETS.find(m => m.id === monsterId)
+                                            ?? BOSS_ASSETS.find(b => b.id === monsterId);
                                         return def ? (
-                                            <div className="monster-specialty">{def.specialty}</div>
+                                            <div className={`monster-specialty ${matchType === 'boss' ? 'boss-specialty' : ''}`}>{def.specialty}</div>
                                         ) : null;
                                     })()}
                                 </div>
@@ -766,7 +778,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                             </div>
                             <div key={`opponent-${currentRound}`} className={`fighter-side right${fighterEntrance ? ' enter-right' : ''}${actionPulse?.actor === 'opponent' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'player' ? ` react-${reactionType}` : ''}${showOpponentDefeat ? ' defeated' : ''}`}>
                                 <div className="fighter-character-wrap">
-                                    {matchType === 'pve' && monsterId ? (
+                                    {(matchType === 'pve' || matchType === 'boss') && monsterId ? (
                                         <PixelMonster monsterId={monsterId} scale={5} />
                                     ) : (
                                         <PixelCharacter seed={opponent.seed} gender={opponent.gender} scale={6} />
@@ -811,8 +823,8 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                 )}
                 {phase === 'result' && combatResult && (
                     <div key={`combat-result-${visibilityKey}`} className={`combat-result${won ? ' victory' : draw ? ' draw' : ' defeat'}${!won ? ' combat-result-shake' : ''}`}>
-                        {won && <><div className="result-badge victory">VICTORY!</div><div className="result-icon pixel victory"><PixelIcon type="trophy" size={80}/></div><div className="result-message"><div className="result-xp victory result-xp-popup">+{xpGained} XP</div><div className="result-sub">Victory over {opponent.name}</div></div></>}
-                        {!won && !draw && <><div className="result-badge defeat">DEFEAT</div><div className="result-icon pixel defeat"><PixelIcon type="skull" size={72}/></div><div className="result-message"><div className="result-xp defeat result-xp-popup">+{xpGained} XP</div><div className="result-sub">Defeated by {opponent.name}</div></div></>}
+                        {won && <><div className="result-badge victory">VICTORY!</div><div className="result-icon pixel victory"><PixelIcon type="trophy" size={80}/></div><div className="result-message"><div className="result-xp victory result-xp-popup">+{xpGained} XP</div><div className="result-sub">{matchType === 'boss' ? `You slew ${opponent.name}!` : `Victory over ${opponent.name}`}</div></div></>}
+                        {!won && !draw && <><div className="result-badge defeat">DEFEAT</div><div className="result-icon pixel defeat"><PixelIcon type="skull" size={72}/></div><div className="result-message">{matchType === 'boss' ? <><div className="result-xp defeat result-xp-popup">BOSS REMAINS</div><div className="result-sub">{opponent.name} survives — its HP persists for your next attack.</div></> : <><div className="result-xp defeat result-xp-popup">+{xpGained} XP</div><div className="result-sub">Defeated by {opponent.name}</div></>}</div></>}
                         {draw && <><div className="result-badge draw">DRAW</div><div className="result-icon pixel draw"><PixelIcon type="swords" size={72}/></div><div className="result-message"><div className="result-xp draw result-xp-popup">+{xpGained} XP</div><div className="result-sub">Stalemate vs {opponent.name}</div></div></>}
                         <button className="button primary-btn result-btn" onClick={handleFinish}>CONTINUE</button>
                     </div>

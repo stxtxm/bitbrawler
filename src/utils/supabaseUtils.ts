@@ -49,6 +49,7 @@ export function convertFromSupabase(row: CharacterRow): Character {
     pushEndpoint: row.push_endpoint ?? null,
     pushKeys: row.push_keys ?? null,
     pushSubscribed: row.push_subscribed ?? false,
+    bossProgress: row.boss_progress ?? undefined,
   };
 }
 
@@ -96,6 +97,7 @@ export function convertToSupabase(character: Character, fields?: string[]): Part
     ...(character.medalXpBonus !== undefined ? { medal_xp_bonus: character.medalXpBonus } : {}),
     ...(character.medalTitle !== undefined ? { medal_title: character.medalTitle } : {}),
     ...(character.medalAura !== undefined ? { medal_aura: character.medalAura } : {}),
+    ...(character.bossProgress !== undefined ? { boss_progress: character.bossProgress } : {}),
   };
   if (fields) {
     const filtered = Object.fromEntries(

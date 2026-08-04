@@ -62,6 +62,15 @@ BitBrawler is a React-based pixel-art fighting arena game with sophisticated off
 
 **Best for**: Finding specific files quickly, understanding game constants, executing common tasks, quick lookups during development.
 
+### 3. BOSS_PVE.md ⭐ RAID BOSS
+
+**Reference for the Raid Boss PvE system (VOID TITAN):**
+
+- Gameplay: unlock, daily attacks, persistent HP pool, kill cycle
+- Balance constants (`GAME_RULES.BOSS`) and **design invariants** (day-1 kill impossible by construction, median kill ~4 days — do not "fix")
+- Persistence (`boss_progress` JSONB, migration #625 executed, sync end-to-end)
+- Code map, test inventory, known pitfalls
+
 ## Key Discoveries
 
 ### Architectural Strengths
