@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
+import { useSound } from '../../hooks/useSound';
 import { SHOP_OFFERS } from '../../data/shopConstants';
 import { ITEM_ASSETS } from '../../data/itemAssets';
 import { getShopOffers, canBuyOffer, isOfferSoldOut, type ShopOffer } from '../../utils/shopUtils';
@@ -17,6 +18,7 @@ interface ShopPanelProps {
 export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
   const { activeCharacter, essence, buyShopOffer, rerollShopOffers } = useGame();
   const { notify } = useNotification();
+  const { play } = useSound();
 
   const [buying, setBuying] = useState(false);
   const [confirmIndex, setConfirmIndex] = useState<number | null>(null);
@@ -60,21 +62,24 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
         setSoldOut(updatedSoldOut);
         setPurchasedIndex(confirmIndex);
         setShowItemGlow(true);
+        play('purchase');
         notify(`${SHOP_OFFERS[confirmIndex].label} purchased!`, 'success', 3000);
         setTimeout(() => {
           setShowItemGlow(false);
           setPurchasedIndex(null);
         }, 1200);
       } else {
+        play('error');
         notify('Purchase failed — not enough essence or already sold out.', 'error', 3000);
       }
     } catch {
+      play('error');
       notify('Failed to purchase. Try again.', 'error', 3000);
     } finally {
       setBuying(false);
       setConfirmIndex(null);
     }
-  }, [confirmIndex, buying, buyShopOffer, notify, soldOut]);
+  }, [confirmIndex, buying, buyShopOffer, notify, play, soldOut]);
 
   const handleCancel = useCallback(() => {
     setConfirmIndex(null);
@@ -83,11 +88,12 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
   const handleRerollClick = useCallback(() => {
     if (rerolling || rerollUsed) return;
     if ((activeCharacter?.essence ?? 0) < REROLL_COST) {
+      play('error');
       notify('Not enough essence to reroll (25 🜁).', 'error', 3000);
       return;
     }
     setShowRerollConfirm(true);
-  }, [rerolling, rerollUsed, activeCharacter, notify]);
+  }, [rerolling, rerollUsed, activeCharacter, notify, play]);
 
   const handleRerollConfirm = useCallback(async () => {
     if (rerolling) return;
@@ -97,17 +103,20 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
       if (newOffers) {
         setRerolledOffers(newOffers);
         setRerollUsed(true);
+        play('reroll');
         notify('Shop offers rerolled! (-25 🜁)', 'success', 3000);
       } else {
+        play('error');
         notify('Reroll failed — not enough essence or already used today.', 'error', 3000);
       }
     } catch {
+      play('error');
       notify('Failed to reroll. Try again.', 'error', 3000);
     } finally {
       setRerolling(false);
       setShowRerollConfirm(false);
     }
-  }, [rerolling, rerollShopOffers, notify]);
+  }, [rerolling, rerollShopOffers, notify, play]);
 
   const handleRerollCancel = useCallback(() => {
     setShowRerollConfirm(false);
@@ -277,6 +286,7 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
                 onClick={handleRerollConfirm}
                 disabled={rerolling}
                 aria-label="Confirm reroll"
+                data-click-sound="none"
               >
                 {rerolling ? 'REROLLING...' : 'CONFIRM'}
               </button>
@@ -304,6 +314,7 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
                 onClick={handleConfirm}
                 disabled={buying}
                 aria-label="Confirm purchase"
+                data-click-sound="none"
               >
                 {buying ? 'PURCHASING...' : 'CONFIRM'}
               </button>

@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
+import { useSound } from '../../hooks/useSound';
 import { getInventoryItems } from '../../utils/equipmentUtils';
 import { getEssenceYield } from '../../utils/forgeUtils';
 import type { PixelItemAsset, ItemRarity } from '../../types/Item';
@@ -39,6 +40,7 @@ function groupByRarity(items: PixelItemAsset[]): GroupedItems {
 export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanelProps) {
   const { activeCharacter, salvageItems, essence } = useGame();
   const { notify } = useNotification();
+  const { play } = useSound();
   const [salvaging, setSalvaging] = useState<Set<string>>(new Set());
   const [salvagedIds, setSalvagedIds] = useState<Set<string>>(new Set());
   const [essenceBump, setEssenceBump] = useState(false);
@@ -98,9 +100,11 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
           const yieldAmount = item ? getEssenceYield(item) : 0;
           notify(`Salvaged 1 item → ${yieldAmount} Essence`, 'success', 3000);
           setSalvagedIds((prev) => new Set(prev).add(itemId));
+          play('salvage');
         }
       } catch {
         notify('Failed to salvage item. Try again.', 'error', 3000);
+        play('error');
       } finally {
         setSalvaging((prev) => {
           const next = new Set(prev);
@@ -109,7 +113,7 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
         });
       }
     },
-    [activeCharacter, inventoryItems, notify, salvageItems, salvaging],
+    [activeCharacter, inventoryItems, notify, play, salvageItems, salvaging],
   );
 
   const handleSalvageBulk = useCallback(
@@ -122,6 +126,7 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
 
       // Salvage each item sequentially
       setConfirmBulk(null);
+      let salvagedCount = 0;
       for (const itemId of itemIds) {
         if (salvaging.has(itemId)) continue;
         setSalvaging((prev) => new Set(prev).add(itemId));
@@ -130,9 +135,11 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
           const result = await salvageItems(itemId);
           if (result) {
             setSalvagedIds((prev) => new Set(prev).add(itemId));
+            salvagedCount++;
           }
         } catch {
           notify(`Failed to salvage ${items.find((i) => i.id === itemId)?.name}.`, 'error', 3000);
+          play('error');
         } finally {
           setSalvaging((prev) => {
             const next = new Set(prev);
@@ -142,9 +149,10 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
         }
       }
 
+      if (salvagedCount > 0) play('salvage');
       notify(`Salvaged ${items.length} items → ${totalYield} Essence`, 'success', 3000);
     },
-    [activeCharacter, grouped, notify, salvageItems, salvaging, salvagedIds],
+    [activeCharacter, grouped, notify, play, salvageItems, salvaging, salvagedIds],
   );
 
   const handleRequestSalvage = useCallback((item: PixelItemAsset) => {
@@ -309,6 +317,7 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
                     className="forge-confirm-ok"
                     onClick={() => handleSalvageSingle(confirmItem.id)}
                     aria-label="Confirm salvage"
+                    data-click-sound="none"
                   >
                     SALVAGE
                   </button>
@@ -340,6 +349,7 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
                     className="forge-confirm-ok"
                     onClick={() => handleSalvageBulk(confirmBulk.rarity)}
                     aria-label="Confirm bulk salvage"
+                    data-click-sound="none"
                   >
                     SALVAGE ALL
                   </button>
