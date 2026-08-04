@@ -70,11 +70,23 @@ describe('PvE combat', () => {
     expect(result.winner).toBeDefined();
   });
 
-  it('PvE XP modifier boosts PvE XP above PvP XP (2.5x bonus)', () => {
-    const xpWin = calculateFightXp(true, 5, 5);
-    const pveXp = Math.round(xpWin * GAME_RULES.PVE.XP_MODIFIER);
-    expect(pveXp).toBe(Math.round(xpWin * GAME_RULES.PVE.XP_MODIFIER));
-    expect(pveXp).toBeGreaterThan(xpWin);
+  it('PvE win XP is strictly greater than the equivalent PvP win XP', () => {
+    const level = 5;
+    const pvpWinXp = calculateFightXp(true, level, level);
+    const pveWinXp = Math.round(pvpWinXp * GAME_RULES.PVE.XP_MODIFIER);
+
+    expect(pveWinXp).toBeGreaterThan(pvpWinXp);
+    expect(pveWinXp).toBe(Math.round(pvpWinXp * GAME_RULES.PVE.XP_MODIFIER));
+    expect(GAME_RULES.PVE.XP_MODIFIER).toBe(2.5);
+  });
+
+  it('PvE win XP exceeds the base XP_WIN payout at every level 1-20', () => {
+    for (let level = 1; level <= 20; level++) {
+      const baseWin = Math.floor(GAME_RULES.COMBAT.XP_WIN * (1 + (level - 1) * 0.06));
+      const pveWinXp = Math.round(baseWin * GAME_RULES.PVE.XP_MODIFIER);
+      expect(pveWinXp).toBeGreaterThan(baseWin);
+      expect(pveWinXp).toBeGreaterThan(GAME_RULES.COMBAT.XP_WIN);
+    }
   });
 
   it('can fight monsters at every level from 1 to 20', () => {
