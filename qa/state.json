@@ -1,7 +1,7 @@
 {
-  "run": "2026-08-04",
-  "character": "STARKSIGIL",
+  "run": "2026-08-05",
+  "character": "COBALTMAGE",
   "exhausted": false,
-  "updated_at": "2026-08-04T19:19:08.711Z",
-  "source": "reused"
+  "updated_at": "2026-08-04T22:02:50.516Z",
+  "source": "created-after-exhausted-energy"
 }
