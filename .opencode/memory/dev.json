@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-03T21:44:49Z",
+  "last_session": "2026-08-04T11:52:54Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -111,6 +111,11 @@
       "lesson": "Issue #616 (Vercel deployments failing - all deployments after 20:52 UTC): pure infra issue outside dev-agent scope. Evidence gathered: npm run lint clean, 1207/1207 tests pass, npm run build OK (tsc+vite), latest master commit 1888f7d shows ONLY status = Vercel failure ('Deployment has failed - run npx vercel inspect dpl_... --logs'). No VERCEL_TOKEN in CI env so Vercel CLI inspect is impossible. Pattern of 'ALL deployments fail regardless of content while same code passes locally' = platform-side issue (quota/billing, global incident status.vercel.com, or Vercel build config/env var), NOT repo regression. Correct action: post evidence comment to issue #616, do NOT push empty branch, leave issue OPEN for human with Vercel access. Consistent with infra patterns #597/#599.",
       "issue": "#616",
       "date": "2026-08-03"
+    },
+    {
+      "lesson": "Testing hooks that schedule setTimeout (e.g. useArenaLevelUp stagger queue) with vi.useFakeTimers: ALL mock functions (play, setCharacter, saveStatAllocations, clearXpNotifications) passed to the hook MUST be created ONCE outside the renderHook callback (stable identity). If recreated inside the callback on every render, any effect whose deps include those mocks (e.g. cleanup effect dep [clearXpNotifications]) re-runs on each render and clears the pending timers (levelUpQueueRef/levelUpTimerRef) - so recentLevelUp gets stuck and vi.getTimerCount() drops to 0. Fix: create stable mocks per-hook. Correct pattern: separate sync act() + vi.advanceTimersByTime() steps, assert after each. Also note: reading result.current INSIDE an async act callback is stale; read between acts.",
+      "issue": "#620",
+      "date": "2026-08-04"
     }
   ]
 }
