@@ -2,6 +2,8 @@ node_modules
 dist
 .git
 coverage
-qa
+qa/*
+!qa/qa-bot.config.js
+!qa/qa-bot.config.d.ts
 .vercel
 actions-runner
