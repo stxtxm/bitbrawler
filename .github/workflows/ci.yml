@@ -58,7 +58,7 @@ jobs:
             exit 0
           fi
           echo "✅ CI passed for PR #$PR_NUMBER — triggering reviewer..."
-          gh workflow run reviewer.yml -f pr_number="$PR_NUMBER" --repo "${{ github.repository }}"
+          gh workflow run reviewer.yml -f pr_number="$PR_NUMBER" -f ci_green=true --repo "${{ github.repository }}"
           echo "✓ Reviewer workflow dispatched for PR #$PR_NUMBER"
 
       - name: On CI failure — dispatch dev agent to fix
