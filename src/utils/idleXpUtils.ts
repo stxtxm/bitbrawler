@@ -5,6 +5,12 @@ export function calculateIdleXp(won: boolean, playerLevel: number): number {
   return Math.floor(calculateFightXp(won, playerLevel) * IDLE_CONFIG.XP_MODIFIER)
 }
 
+// Offline fights (player not watching) earn less XP per fight than active
+// idle fights, so watching the scene stays the best rate.
+export function calculateOfflineIdleXp(won: boolean, playerLevel: number): number {
+  return Math.floor(calculateIdleXp(won, playerLevel) * IDLE_CONFIG.OFFLINE_XP_MODIFIER)
+}
+
 export function calculateIdleEssence(
   won: boolean,
   playerLevel: number,

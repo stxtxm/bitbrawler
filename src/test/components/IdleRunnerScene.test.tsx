@@ -69,6 +69,7 @@ describe('IdleRunnerScene', () => {
 
   beforeEach(() => {
     vi.useFakeTimers()
+    defaultProps.onClearOfflineGains.mockClear()
   })
 
   afterEach(() => {
@@ -173,24 +174,7 @@ describe('IdleRunnerScene', () => {
     expect(container.querySelector('.card-shine')).toBeNull()
   })
 
-  it('shows a Continue button when level-up FX is active', () => {
-    render(
-      <IdleRunnerScene
-        {...defaultProps}
-        recentLevelUp={{ newLevel: 5, isMilestone: false }}
-      />,
-    )
-
-    expect(screen.getByRole('button', { name: /continue/i })).toBeInTheDocument()
-  })
-
-  it('does not show Continue button when level-up FX is not active', () => {
-    render(<IdleRunnerScene {...defaultProps} />)
-
-    expect(screen.queryByRole('button', { name: /continue/i })).not.toBeInTheDocument()
-  })
-
-  it('dismisses level-up FX when Continue button is clicked', () => {
+  it('shows no Continue button when level-up FX is active (auto-dismiss + tap instead)', () => {
     render(
       <IdleRunnerScene
         {...defaultProps}
@@ -199,10 +183,68 @@ describe('IdleRunnerScene', () => {
     )
 
     expect(screen.getByText('LVL 5')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /continue/i })).not.toBeInTheDocument()
+  })
 
-    const continueBtn = screen.getByRole('button', { name: /continue/i })
-    fireEvent.click(continueBtn)
+  it('renders the offline gains popup with a CLAIM REWARDS button', () => {
+    render(
+      <IdleRunnerScene
+        {...defaultProps}
+        offlineGains={{ fights: 12, xp: 500, levels: 2, essence: 3.5, timeAway: 3600000 }}
+      />,
+    )
 
-    expect(screen.queryByText('LVL 5')).not.toBeInTheDocument()
+    expect(screen.getByText(/WELCOME BACK/i)).toBeInTheDocument()
+    expect(screen.getByText('+500')).toBeInTheDocument()
+    expect(screen.getByText(/1h 0m/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /claim rewards/i })).toBeInTheDocument()
+  })
+
+  it('dismisses the offline popup when clicking CLAIM REWARDS', () => {
+    render(
+      <IdleRunnerScene
+        {...defaultProps}
+        offlineGains={{ fights: 12, xp: 500, levels: 2, essence: 3.5, timeAway: 3600000 }}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /claim rewards/i }))
+
+    expect(defaultProps.onClearOfflineGains).toHaveBeenCalled()
+  })
+
+  it('dismisses the offline popup when tapping it', () => {
+    render(
+      <IdleRunnerScene
+        {...defaultProps}
+        offlineGains={{ fights: 12, xp: 500, levels: 2, essence: 3.5, timeAway: 3600000 }}
+      />,
+    )
+
+    const popup = screen.getByText(/WELCOME BACK/i).closest('.idle-offline-notification')
+    expect(popup).not.toBeNull()
+    if (popup) {
+      fireEvent.click(popup)
+    }
+
+    expect(defaultProps.onClearOfflineGains).toHaveBeenCalled()
+  })
+
+  it('does not auto-dismiss the offline popup without a click', () => {
+    render(
+      <IdleRunnerScene
+        {...defaultProps}
+        offlineGains={{ fights: 12, xp: 500, levels: 2, essence: 3.5, timeAway: 3600000 }}
+      />,
+    )
+
+    expect(screen.getByText(/WELCOME BACK/i)).toBeInTheDocument()
+
+    act(() => {
+      vi.advanceTimersByTime(30000)
+    })
+
+    expect(screen.getByText(/WELCOME BACK/i)).toBeInTheDocument()
+    expect(defaultProps.onClearOfflineGains).not.toHaveBeenCalled()
   })
 })

@@ -7,7 +7,7 @@ import { generateMonsterForPlayer, getReferenceMonster } from '../utils/monsterU
 import { simulateCombat, calculateCombatStats } from '../utils/combatUtils'
 import { gainXp, getXpProgress } from '../utils/xpUtils'
 import { GAME_RULES } from '../config/gameRules'
-import { calculateIdleXp, calculateIdleEssence } from '../utils/idleXpUtils'
+import { calculateIdleXp, calculateOfflineIdleXp, calculateIdleEssence } from '../utils/idleXpUtils'
 import { applyEquipmentToCharacter } from '../utils/equipmentUtils'
 import { COMBAT_BALANCE } from '../config/combatBalance'
 import {
@@ -138,7 +138,7 @@ export function useIdleCombat({
         const result = simulateCombat(char, monster.character)
         const won = result.winner === 'attacker'
 
-        const baseXp = calculateIdleXp(won, char.level)
+        const baseXp = calculateOfflineIdleXp(won, char.level)
         const xpBonus = xpBonusRef.current - 1
         const streakBonus = Math.min(
           streak * IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_PER_STEP,
@@ -260,9 +260,8 @@ export function useIdleCombat({
     const result = runLocalCatchUp(timeAway, currentChar)
     if (!result) return
     onCharacterUpdate(result.updatedChar)
-    if (result.levels > 0) {
-      onLevelUp?.(result.levels, result.updatedChar.level)
-    }
+    // No onLevelUp here: the WELCOME BACK popup already announces levels
+    // gained, and the level-up FX would be hidden behind it anyway.
     if (result.xp > 0 || result.levels > 0 || result.essence > 0 || result.fights > 0) {
       setOfflineGains({
         fights: result.fights,
@@ -272,7 +271,7 @@ export function useIdleCombat({
         timeAway,
       })
     }
-  }, [onCharacterUpdate, onLevelUp, runLocalCatchUp])
+  }, [onCharacterUpdate, runLocalCatchUp])
 
   // On mount: process idle time > 30s and show popup.
   useEffect(() => {
@@ -557,7 +556,7 @@ export function useIdleCombat({
         const result = simulateCombat(char, monster.character)
         const won = result.winner === 'attacker'
 
-        const baseXp = calculateIdleXp(won, char.level)
+        const baseXp = calculateOfflineIdleXp(won, char.level)
         const xpBonus = xpBonusRef.current - 1
         const streakBonus = Math.min(
           streak * IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_PER_STEP,

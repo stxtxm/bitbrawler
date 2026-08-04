@@ -255,6 +255,11 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     setIsMilestoneCeremony(false)
   }
 
+  // Offline gains popup is static — it stays on screen until the player
+  // clicks (the CLAIM REWARDS button or anywhere on the popup). This is
+  // deterministic for QA/bot automation.
+  const animatedXp = offlineGains?.xp ?? 0
+
   const showBigXp = scenePhase === 'result' && lastCombatXp > 0
   const showStreakBanner = streakMilestone !== null && scenePhase === 'result' && lastCombatResult === 'win'
 
@@ -275,11 +280,6 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
             <span className="levelup-float-arrow">⬆</span>
             <span className="levelup-float-lvl">LVL {levelUpLevel}</span>
           </div>
-        )}
-        {showLevelUpFx && (
-          <button className="levelup-continue-btn" onClick={dismissLevelUpFx} aria-label="Continue">
-            Continue
-          </button>
         )}
       </div>
 
@@ -315,7 +315,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
 
 
       {offlineGains && (
-        <div className="idle-offline-notification">
+        <div className="idle-offline-notification" onClick={onClearOfflineGains}>
           <div className="offline-glow" />
           <div className="offline-title">
             <span className="offline-title-icon">⚔</span>
@@ -330,7 +330,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
           </div>
           <div className="offline-stats">
             <div className="offline-stat-item">
-              <span className="offline-stat-value">+{offlineGains.xp}</span>
+              <span className="offline-stat-value">+{animatedXp}</span>
               <span className="offline-stat-label">XP</span>
             </div>
             {offlineGains.essence > 0 && (
@@ -350,7 +350,11 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
               </div>
             )}
           </div>
-          <button className="offline-claim-btn" onClick={onClearOfflineGains}>
+          <button
+            type="button"
+            className="offline-claim-btn"
+            onClick={onClearOfflineGains}
+          >
             CLAIM REWARDS
           </button>
         </div>
