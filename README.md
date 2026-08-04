@@ -72,6 +72,7 @@ See [AGENTS.md](AGENTS.md) for autonomous agent workflows and responsibilities.
 - **Hall of Fame** rankings with real-time updates
 - **PWA** install experience (works offline)
 - **🔔 Push notifications & session reminders** — opt-in web push ("Se rappeler de moi") with auto nudges for streak in danger, daily lootbox ready, and new events (max 1/day, no spam)
+- **🐉 Raid Boss PvE (VOID TITAN)** — unlocked at level 30, a 3rd Arena mode: 5 daily attacks against a persistent HP-pool boss (no regen between attacks/days), kill grants 4× XP + 60 essence and starts a fresh, tougher cycle. Boss stats scale with the player (see [BOSS_PVE.md](BOSS_PVE.md))
 - **Autonomous CI/CD** with agent-driven development
 
 ## Quick Links
@@ -83,6 +84,7 @@ See [AGENTS.md](AGENTS.md) for autonomous agent workflows and responsibilities.
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Development setup, coding conventions, PR process |
 | [AGENTS.md](AGENTS.md) | OpenCode agent workflows, responsibilities, automation |
 | [TESTING.md](TESTING.md) | Testing guidelines, test structure, writing tests |
+| [BOSS_PVE.md](BOSS_PVE.md) | Raid boss system: mechanics, balance invariants, persistence, tests |
 
 ---
 
@@ -92,7 +94,7 @@ See [AGENTS.md](AGENTS.md) for autonomous agent workflows and responsibilities.
 | -------------- | ----------------------------------------------- |
 | Frontend       | React 18 + TypeScript + Vite                    |
 | Backend / Auth | Supabase (PostgreSQL, real-time, auth)          |
-| Testing        | Vitest + React Testing Library + jsdom — **1066 tests, 85 files**          |
+| Testing        | Vitest + React Testing Library + jsdom — **1264 tests, 94 files**          |
 | Styling        | Sass (SCSS)                                     |
 | Fonts          | Press Start 2P (via Fontsource)                 |
 | Scripting      | tsx (TypeScript executor)                       |
@@ -139,7 +141,7 @@ npm run dev                        # Start Vite dev server (localhost:5173)
 npm run preview                    # Preview production build
 
 # Testing & Quality
-npm test                           # Run test suite (Vitest — 1066 tests, 85 files)
+npm test                           # Run test suite (Vitest — 1264 tests, 94 files)
 npm run lint                       # ESLint check
 npm run build                      # TypeScript check + Vite production build
 

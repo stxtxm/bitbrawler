@@ -88,7 +88,7 @@ jobs:
           for i in $(seq 1 3); do
             # Count checks that are not completed or not successful/neutral
             CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
-              [.statusCheckRollup[]? | select(.app?.slug != "vercel") | select(
+              [.statusCheckRollup[]? | select((.app?.slug != "vercel") and (.name? != "Vercel")) | select(
                 .status? != "COMPLETED" or (.conclusion? != "SUCCESS" and .conclusion? != "NEUTRAL")
               )] | length
             ' 2>/dev/null || echo "3")
@@ -247,7 +247,7 @@ jobs:
           # status from the dispatch moment. The agent LLM must not be the only
           # guard here; this step hard-blocks review if CI is red.
           CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
-            [.statusCheckRollup[]? | select(.app?.slug != "vercel") | select(
+            [.statusCheckRollup[]? | select((.app?.slug != "vercel") and (.name? != "Vercel")) | select(
               .status? != "COMPLETED" or (.conclusion? != "SUCCESS" and .conclusion? != "NEUTRAL")
             )] | length
           ' 2>/dev/null || echo "1")
@@ -336,7 +336,7 @@ jobs:
             8. **Performance** : pas de boucles inutiles, pas de requêtes N+1 Supabase
 
              ## Règles
-            - ⚠️ **AVANT de merger** : re-vérifie la CI à l'instant T avec \`gh pr view "$PR_NUMBER" --json statusCheckRollup\`. Exclue les checks Vercel (app.slug == "vercel"). Si un seul check non-Vercel n'est pas COMPLETED avec conclusion SUCCESS/NEUTRAL → \`gh pr review "$PR_NUMBER" --request-changes\` et ne merge PAS.
+            - ⚠️ **AVANT de merger** : re-vérifie la CI à l'instant T avec \`gh pr view "$PR_NUMBER" --json statusCheckRollup\`. Exclue les checks Vercel (app.slug == "vercel" OU name == "Vercel" — sur compte gratuit le check Vercel reste pending à jamais et est rapporté avec app: null). Si un seul check non-Vercel n'est pas COMPLETED avec conclusion SUCCESS/NEUTRAL → \`gh pr review "$PR_NUMBER" --request-changes\` et ne merge PAS.
             - Si SKIP_APPROVAL=true (PR auto-générée par bot) → passe directement au merge sans approval: \`gh pr merge "$PR_NUMBER" --squash --delete-branch\` (après re-vérification CI verte)
             - Sinon, si CI est verte ✅ et tout est bon → \`gh pr review --approve "$PR_NUMBER"\` puis \`gh pr merge "$PR_NUMBER" --squash --delete-branch\`
             - Si CI est rouge → \`gh pr review "$PR_NUMBER" --request-changes --body "feedback..."\` même si l'erreur est préexistante (cela déclenche le dev agent qui corrigera)
