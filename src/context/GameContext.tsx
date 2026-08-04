@@ -30,7 +30,7 @@ import {
   getDefaultMedalProgress,
 } from '../utils/medalUtils';
 import type { MedalDef, SpecialMedalContext } from '../utils/medalUtils';
-import { usePushReminders } from '../hooks/usePushReminders';
+import { usePushReminders, type PushSubscriptionUpdate } from '../hooks/usePushReminders';
 
 interface GameContextType {
   activeCharacter: Character | null;
@@ -41,6 +41,7 @@ interface GameContextType {
   login: (name: string) => Promise<string | null>;
   logout: () => void;
   setCharacter: (char: Character) => void;
+  updatePushSubscription: (update: PushSubscriptionUpdate) => Promise<void>;
   retryConnection: () => Promise<boolean>;
   useFight: (
     won: boolean,
@@ -293,6 +294,27 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const setCharacter = useCallback((char: Character) => {
     persistCharacter(char);
   }, [persistCharacter]);
+
+  // Update push subscription (opt-in/opt-out) and persist it
+  const updatePushSubscription = useCallback(async (update: PushSubscriptionUpdate) => {
+    if (!activeCharacter?.id) return;
+    const updatedChar = normalizeCharacter({
+      ...activeCharacter,
+      pushEndpoint: update.push_endpoint ?? null,
+      pushKeys: update.push_keys ?? null,
+      pushSubscribed: update.push_subscribed,
+    });
+    persistCharacter(updatedChar);
+    try {
+      const { error } = await supabase
+        .from('characters')
+        .update(convertToSupabase(updatedChar, ['push_endpoint', 'push_keys', 'push_subscribed']))
+        .eq('id', updatedChar.id);
+      if (error) throw error;
+    } catch (error) {
+      handleDbError(error, 'push-subscription');
+    }
+  }, [activeCharacter, handleDbError, persistCharacter]);
 
   // Clear XP notifications
   const clearXpNotifications = useCallback(() => {
@@ -1356,6 +1378,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     login,
     logout,
     setCharacter,
+    updatePushSubscription,
     retryConnection,
     useFight,
     usePveFight,

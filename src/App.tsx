@@ -6,11 +6,19 @@ import { initClickSound } from './hooks/useSound'
 import { HomePage, CharacterCreation, Rankings, Login, Arena, NotFound, Forge, Achievements } from './routes/lazyPages'
 import LoadingScreen from './components/LoadingScreen'
 import { MedalUnlockToast } from './components/MedalUnlockToast'
+import { PushOptInBanner } from './components/PushOptInBanner'
+import { buildPushSubscriptionUpdate } from './hooks/usePushReminders'
+import type { SerializedPushSubscription } from './utils/pushNotifications'
+import { isPushSupported } from './utils/pushNotifications'
 
 function App() {
   useEffect(() => { initClickSound() }, [])
-  const { activeCharacter, loading, dbAvailable, lastUnlockedMedal, clearMedalNotification } = useGame()
+  const { activeCharacter, loading, dbAvailable, lastUnlockedMedal, clearMedalNotification, updatePushSubscription } = useGame()
   const isOnline = useOnlineStatus()
+
+  const handlePushSubscribe = (subscription: SerializedPushSubscription) => {
+    updatePushSubscription(buildPushSubscriptionUpdate(subscription))
+  }
 
   if (loading) {
     return <LoadingScreen />
@@ -64,6 +72,10 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
+
+      {activeCharacter && isPushSupported() && (
+        <PushOptInBanner onSubscribe={handlePushSubscribe} />
+      )}
 
       {lastUnlockedMedal && (
         <MedalUnlockToast
