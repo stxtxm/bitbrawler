@@ -11,6 +11,11 @@ on:
         description: PR number to review
         required: true
         type: string
+      ci_green:
+        description: Set to true when dispatched from a green CI run (skip CI wait)
+        required: false
+        default: 'false'
+        type: string
 
 concurrency:
   group: pr-review-${{ github.event.workflow_run.pull_requests[0].number || github.event.inputs.pr_number }}
@@ -62,7 +67,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Wait briefly for CI checks (max 30 seconds)
+      - name: Wait briefly for CI checks (skip when dispatched from green CI)
         id: wait-ci
         env:
           GH_TOKEN: ${{ github.token }}
@@ -71,7 +76,15 @@ jobs:
           echo "PR number: $PR_NUMBER"
           echo "PR_NUMBER=$PR_NUMBER" >> "$GITHUB_ENV"
 
-          echo "Waiting briefly for CI checks on PR #$PR_NUMBER (max 30 seconds)..."
+          # When ci.yml dispatches us right after a successful run, CI is already
+          # green — re-polling wastes ~30s and can false-positive while GitHub
+          # statusCheckRollup is still settling. Skip the wait entirely.
+          if [ "${{ github.event.inputs.ci_green }}" = "true" ] || [ "${{ github.event_name }}" = "workflow_run" ]; then
+            echo "✅ CI already passed before dispatch — skipping CI wait."
+            exit 0
+          fi
+
+          echo "Manual dispatch — waiting briefly for CI checks on PR #$PR_NUMBER (max 30 seconds)..."
           for i in $(seq 1 3); do
             # Count checks that are not completed or not successful/neutral
             CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
@@ -224,13 +237,42 @@ jobs:
           fi
           echo "✅ No SQL migration detected"
 
+      - name: Gate on current CI status (block merge if not green)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUMBER="${{ env.PR_NUMBER }}"
+
+          # Fresh check of the PR's checks at review time — never rely on a stale
+          # status from the dispatch moment. The agent LLM must not be the only
+          # guard here; this step hard-blocks review if CI is red.
+          CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
+            [.statusCheckRollup[]? | select(.app?.slug != "vercel") | select(
+              .status? != "COMPLETED" or (.conclusion? != "SUCCESS" and .conclusion? != "NEUTRAL")
+            )] | length
+          ' 2>/dev/null || echo "1")
+
+          if [ "$CHECKS" -gt 0 ]; then
+            echo "⛔ CI not green at review time ($CHECKS failing/pending check(s)) — blocking review"
+            gh pr review "$PR_NUMBER" --request-changes --body "⛔ La CI n'est pas verte au moment du merge ($CHECKS check(s) en échec ou en attente). Corrige et repousse — le reviewer repassera automatiquement." 2>/dev/null || true
+            echo "CI_GATE_BLOCKED=true" >> "$GITHUB_ENV"
+          else
+            echo "✅ CI green at review time"
+            echo "CI_GATE_BLOCKED=false" >> "$GITHUB_ENV"
+          fi
+
       - name: Skip reviewer if dependencies blocked
         if: env.DEPS_BLOCKED == 'true'
         run: |
           echo "⏳ Dependencies not resolved — reviewer skipped. Will re-trigger when dependencies merge."
 
+      - name: Skip reviewer if CI gate blocked
+        if: env.CI_GATE_BLOCKED == 'true'
+        run: |
+          echo "⛔ CI gate blocked — reviewer skipped. PR will be reviewed once CI is green."
+
       - name: Run Reviewer agent
-        if: env.DEPS_BLOCKED != 'true'
+        if: env.DEPS_BLOCKED != 'true' && env.CI_GATE_BLOCKED != 'true'
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GH_TOKEN: ${{ github.token }}
@@ -294,7 +336,8 @@ jobs:
             8. **Performance** : pas de boucles inutiles, pas de requêtes N+1 Supabase
 
              ## Règles
-            - Si SKIP_APPROVAL=true (PR auto-générée par bot) → passe directement au merge sans approval: \`gh pr merge "$PR_NUMBER" --squash --delete-branch\`
+            - ⚠️ **AVANT de merger** : re-vérifie la CI à l'instant T avec \`gh pr view "$PR_NUMBER" --json statusCheckRollup\`. Exclue les checks Vercel (app.slug == "vercel"). Si un seul check non-Vercel n'est pas COMPLETED avec conclusion SUCCESS/NEUTRAL → \`gh pr review "$PR_NUMBER" --request-changes\` et ne merge PAS.
+            - Si SKIP_APPROVAL=true (PR auto-générée par bot) → passe directement au merge sans approval: \`gh pr merge "$PR_NUMBER" --squash --delete-branch\` (après re-vérification CI verte)
             - Sinon, si CI est verte ✅ et tout est bon → \`gh pr review --approve "$PR_NUMBER"\` puis \`gh pr merge "$PR_NUMBER" --squash --delete-branch\`
             - Si CI est rouge → \`gh pr review "$PR_NUMBER" --request-changes --body "feedback..."\` même si l'erreur est préexistante (cela déclenche le dev agent qui corrigera)
             - NE JAMAIS approuver si CI est rouge

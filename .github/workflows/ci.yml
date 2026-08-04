@@ -58,8 +58,17 @@ jobs:
             exit 0
           fi
           echo "✅ CI passed for PR #$PR_NUMBER — triggering reviewer..."
-          gh workflow run reviewer.yml -f pr_number="$PR_NUMBER" --repo "${{ github.repository }}"
-          echo "✓ Reviewer workflow dispatched for PR #$PR_NUMBER"
+          # Prefer ci_green=true (skips the reviewer's CI wait). Fall back to a
+          # plain dispatch when the reviewer's public.yml on the default branch
+          # doesn't know the input yet (PR to add it not merged).
+          if gh workflow run reviewer.yml -f pr_number="$PR_NUMBER" -f ci_green=true --repo "${{ github.repository }}" 2>/dev/null; then
+            echo "✓ Reviewer dispatched for PR #$PR_NUMBER (ci_green=true)"
+          elif gh workflow run reviewer.yml -f pr_number="$PR_NUMBER" --repo "${{ github.repository }}" 2>/dev/null; then
+            echo "⚠ ci_green input not yet on default branch — dispatched without it"
+          else
+            echo "❌ Could not dispatch reviewer for PR #$PR_NUMBER"
+            exit 1
+          fi
 
       - name: On CI failure — dispatch dev agent to fix
         if: failure()
