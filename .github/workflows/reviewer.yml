@@ -88,7 +88,7 @@ jobs:
           for i in $(seq 1 3); do
             # Count checks that are not completed or not successful/neutral
             CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
-              [.statusCheckRollup[]? | select((.app?.slug != "vercel") and (.name? != "Vercel")) | select(
+              [.statusCheckRollup[]? | select((.app?.slug != "vercel") and (.name? != "Vercel") and (.context? != "Vercel")) | select(
                 .status? != "COMPLETED" or (.conclusion? != "SUCCESS" and .conclusion? != "NEUTRAL")
               )] | length
             ' 2>/dev/null || echo "3")
@@ -247,7 +247,7 @@ jobs:
           # status from the dispatch moment. The agent LLM must not be the only
           # guard here; this step hard-blocks review if CI is red.
           CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
-            [.statusCheckRollup[]? | select((.app?.slug != "vercel") and (.name? != "Vercel")) | select(
+            [.statusCheckRollup[]? | select((.app?.slug != "vercel") and (.name? != "Vercel") and (.context? != "Vercel")) | select(
               .status? != "COMPLETED" or (.conclusion? != "SUCCESS" and .conclusion? != "NEUTRAL")
             )] | length
           ' 2>/dev/null || echo "1")
