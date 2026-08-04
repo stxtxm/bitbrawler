@@ -5,7 +5,11 @@ export type SoundType =
   | 'hit' | 'crit' | 'magic' | 'miss' | 'counter'
   | 'levelup' | 'lootbox' | 'loot'
   | 'victory' | 'defeat'
-  | 'vs' | 'scan' | 'scanTick' | 'create';
+  | 'vs' | 'scan' | 'scanTick' | 'create'
+  | 'equip' | 'purchase' | 'reroll'
+  | 'salvage' | 'forge' | 'upgrade' | 'fusion'
+  | 'achievement' | 'streak' | 'offline' | 'notification'
+  | 'error' | 'spawn';
 
 interface Voice {
   type: OscillatorType;
@@ -33,17 +37,22 @@ interface SoundConfig {
 
 const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
   // ── UI ──
+  // click: soft retro tick — never piercing, slight pitch variation per tap
   click: {
-    voices: [{ type: 'sine', freq: 1000, gain: 0.45 }],
-    decay: 10, gain: 1, reverb: 0,
+    voices: [
+      { type: 'sine', freq: 780, gain: 0.14 },
+      { type: 'triangle', freq: 1180, gain: 0.05 },
+    ],
+    decay: 24, gain: 1, reverb: 0, pitchVar: 8,
   },
+  // nav: gentle low blip for menu/tab navigation
   nav: {
-    voices: [{ type: 'sine', freq: 660, gain: 0.35 }],
-    decay: 15, gain: 1, reverb: 0,
+    voices: [{ type: 'sine', freq: 560, gain: 0.16 }],
+    decay: 22, gain: 1, reverb: 0, pitchVar: 6,
   },
   scanTick: {
-    voices: [{ type: 'triangle', freq: 1047, gain: 0.3 }],
-    decay: 15, gain: 1, reverb: 0,
+    voices: [{ type: 'triangle', freq: 1047, gain: 0.14 }],
+    decay: 18, gain: 1, reverb: 0, pitchVar: 12,
   },
 
   // ── COMBAT ──
@@ -208,6 +217,184 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
     decay: 300, gain: 0.75,
     reverb: 0.25,
   },
+
+  // ── ACTIONS & FORGE ──
+  // equip: soft metallic slot — gear attaches
+  equip: {
+    voices: [
+      { type: 'square', freq: 660, gain: 0.12 },
+      { type: 'sine', freq: 990, gain: 0.08 },
+    ],
+    decay: 40, gain: 1,
+    noise: { gain: 0.05, dur: 0.02 },
+    reverb: 0.12, pitchVar: 5,
+  },
+  // purchase: coin jingle — shop buy
+  purchase: {
+    voices: [
+      { type: 'sine', freq: 988, gain: 0.14 },
+      { type: 'sine', freq: 1319, gain: 0.12 },
+      { type: 'sine', freq: 1976, gain: 0.08 },
+    ],
+    arp: [
+      { voice: 0, dur: 30, delay: 0 },
+      { voice: 1, dur: 30, delay: 40 },
+      { voice: 2, dur: 130, delay: 80 },
+    ],
+    decay: 170, gain: 1,
+    noise: { gain: 0.05, dur: 0.02 },
+    reverb: 0.2, pitchVar: 4,
+  },
+  // reroll: shuffle — shop offers refresh
+  reroll: {
+    voices: [
+      { type: 'triangle', freq: 587, gain: 0.12 },
+      { type: 'triangle', freq: 494, gain: 0.1 },
+    ],
+    arp: [
+      { voice: 0, dur: 30, delay: 0 },
+      { voice: 1, dur: 30, delay: 45 },
+      { voice: 0, dur: 30, delay: 90 },
+      { voice: 1, dur: 120, delay: 135 },
+    ],
+    decay: 160, gain: 1,
+    noise: { gain: 0.08, dur: 0.04 },
+    reverb: 0.15, pitchVar: 6,
+  },
+  // salvage: crunch — items broken down into essence
+  salvage: {
+    voices: [
+      { type: 'square', freq: 180, gain: 0.16 },
+      { type: 'sine', freq: 90, gain: 0.16 },
+    ],
+    decay: 60, gain: 1,
+    noise: { gain: 0.14, dur: 0.08 },
+    reverb: 0.15, pitchVar: 12,
+  },
+  // forge: hammer — single smith thud
+  forge: {
+    voices: [
+      { type: 'triangle', freq: 130, gain: 0.22 },
+      { type: 'triangle', freq: 392, gain: 0.1 },
+    ],
+    decay: 70, gain: 1,
+    noise: { gain: 0.12, dur: 0.04 },
+    reverb: 0.12, pitchVar: 8,
+  },
+  // upgrade: success ding — item enhanced
+  upgrade: {
+    voices: [
+      { type: 'triangle', freq: 659, gain: 0.16 },
+      { type: 'sine', freq: 880, gain: 0.1 },
+      { type: 'sine', freq: 1319, gain: 0.06 },
+    ],
+    arp: [
+      { voice: 0, dur: 40, delay: 0 },
+      { voice: 1, dur: 60, delay: 40 },
+      { voice: 2, dur: 200, delay: 90 },
+    ],
+    decay: 220, gain: 1,
+    reverb: 0.2, pitchVar: 3,
+  },
+  // fusion: rising mystical arp — items unite
+  fusion: {
+    voices: [
+      { type: 'sine', freq: 440, gain: 0.14 },
+      { type: 'sine', freq: 554, gain: 0.12 },
+      { type: 'sine', freq: 659, gain: 0.1 },
+      { type: 'sine', freq: 880, gain: 0.08 },
+    ],
+    arp: [
+      { voice: 0, dur: 60, delay: 0 },
+      { voice: 1, dur: 60, delay: 70 },
+      { voice: 2, dur: 60, delay: 140 },
+      { voice: 3, dur: 240, delay: 210 },
+    ],
+    decay: 260, gain: 1,
+    noise: { gain: 0.04, dur: 0.05 },
+    reverb: 0.4, pitchVar: 3,
+  },
+
+  // ── SYSTEM FEEDBACK ──
+  // achievement: medal unlock fanfare — bright, distinct from levelup
+  achievement: {
+    voices: [
+      { type: 'triangle', freq: 880, gain: 0.18 },
+      { type: 'triangle', freq: 1109, gain: 0.15 },
+      { type: 'triangle', freq: 1319, gain: 0.12 },
+      { type: 'sine', freq: 1760, gain: 0.06 },
+    ],
+    arp: [
+      { voice: 0, dur: 50, delay: 0 },
+      { voice: 1, dur: 50, delay: 50 },
+      { voice: 2, dur: 80, delay: 100 },
+      { voice: 3, dur: 300, delay: 160 },
+    ],
+    decay: 320, gain: 1,
+    reverb: 0.25, pitchVar: 2,
+  },
+  // streak: combo milestone — punchy power-chord strike
+  streak: {
+    voices: [
+      { type: 'triangle', freq: 392, gain: 0.2 },
+      { type: 'sawtooth', freq: 196, gain: 0.08 },
+      { type: 'triangle', freq: 466, gain: 0.14 },
+      { type: 'sine', freq: 784, gain: 0.06 },
+    ],
+    decay: 120, gain: 1,
+    noise: { gain: 0.08, dur: 0.03 },
+    reverb: 0.2, pitchVar: 4,
+  },
+  // offline: welcome-back chime — gentle major arpeggio
+  offline: {
+    voices: [
+      { type: 'sine', freq: 523, gain: 0.14 },
+      { type: 'sine', freq: 659, gain: 0.12 },
+      { type: 'sine', freq: 784, gain: 0.1 },
+      { type: 'sine', freq: 1047, gain: 0.08 },
+    ],
+    arp: [
+      { voice: 0, dur: 60, delay: 0 },
+      { voice: 1, dur: 60, delay: 90 },
+      { voice: 2, dur: 60, delay: 180 },
+      { voice: 3, dur: 260, delay: 270 },
+    ],
+    decay: 320, gain: 1,
+    reverb: 0.3, pitchVar: 3,
+  },
+  // notification: soft double blip — toast / reminder
+  notification: {
+    voices: [
+      { type: 'sine', freq: 880, gain: 0.1 },
+      { type: 'sine', freq: 1175, gain: 0.08 },
+    ],
+    arp: [
+      { voice: 0, dur: 30, delay: 0 },
+      { voice: 1, dur: 90, delay: 60 },
+    ],
+    decay: 130, gain: 1,
+    reverb: 0.15, pitchVar: 4,
+  },
+  // error: denied buzz — low dual tone for blocked actions
+  error: {
+    voices: [
+      { type: 'square', freq: 220, gain: 0.1 },
+      { type: 'square', freq: 160, gain: 0.08 },
+    ],
+    decay: 120, gain: 1,
+    reverb: 0.1, pitchVar: 0,
+  },
+  // spawn: monster growl — foe appears (idle PvE)
+  spawn: {
+    voices: [
+      { type: 'sawtooth', freq: 70, gain: 0.14 },
+      { type: 'sine', freq: 110, gain: 0.1 },
+      { type: 'sawtooth', freq: 233, gain: 0.04 },
+    ],
+    decay: 150, gain: 1,
+    noise: { gain: 0.06, dur: 0.05 },
+    reverb: 0.3, pitchVar: 12,
+  },
   // victory: triumphant brass fanfare C4-E4-G4-C5-E5-G5-C6
   victory: {
     voices: [
@@ -309,9 +496,9 @@ function init() {
   const _comp = c.createDynamicsCompressor();
   _comp.threshold.setValueAtTime(-18, c.currentTime);
   _comp.knee.setValueAtTime(12, c.currentTime);
-  _comp.ratio.setValueAtTime(6, c.currentTime);
-  _comp.attack.setValueAtTime(0.003, c.currentTime);
-  _comp.release.setValueAtTime(0.15, c.currentTime);
+  _comp.ratio.setValueAtTime(4, c.currentTime);
+  _comp.attack.setValueAtTime(0.005, c.currentTime);
+  _comp.release.setValueAtTime(0.2, c.currentTime);
 
   const _master = c.createGain();
   _master.gain.setValueAtTime(settings.volume, c.currentTime);
@@ -324,7 +511,7 @@ function init() {
   conv = _conv;
 
   const _reverb = c.createGain();
-  _reverb.gain.setValueAtTime(0.35, c.currentTime);
+  _reverb.gain.setValueAtTime(0.4, c.currentTime);
 
   const _dry = c.createGain();
   _dry.gain.setValueAtTime(1, c.currentTime);
@@ -470,7 +657,11 @@ function handleClickGate(e: MouseEvent) {
   const el = e.target as HTMLElement;
   const btn = el.closest('button, a.button, [role="button"], [data-click-sound]') as HTMLElement | null;
   if (!btn) return;
-  playSound((btn.getAttribute('data-click-sound') || 'click') as SoundType);
+  // data-click-sound="none" → the action plays its own dedicated sound,
+  // so the generic tick is suppressed to avoid double feedback.
+  const sound = btn.getAttribute('data-click-sound');
+  if (sound === 'none') return;
+  playSound((sound || 'click') as SoundType);
 }
 
 export function initClickSound() {

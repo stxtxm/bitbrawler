@@ -124,9 +124,10 @@ export const useInventory = ({
       console.error('Equipment DB save failed, rolling back:', error);
       setCharacter(previousCharacter);
     });
+    play('equip');
     setInventoryHoveredId(null);
     setInventorySelectedId(null);
-  }, [character, saveEquipment, setCharacter]);
+  }, [character, play, saveEquipment, setCharacter]);
 
   const handleUnequipItem = useCallback((slot: ItemSlot) => {
     if (!character) return;
@@ -139,7 +140,8 @@ export const useInventory = ({
       console.error('Equipment DB save failed, rolling back:', error);
       setCharacter(previousCharacter);
     });
-  }, [character, saveEquipment, setCharacter]);
+    play('equip');
+  }, [character, play, saveEquipment, setCharacter]);
 
   const handleLootboxRoll = useCallback(async () => {
     if (lootboxRolling) return;

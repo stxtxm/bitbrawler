@@ -1,6 +1,7 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
+import { useSound } from '../../hooks/useSound';
 import { getInventoryItems, getEquippedItems } from '../../utils/equipmentUtils';
 import { canUpgrade, getUpgradeCost } from '../../utils/forgeUtils';
 import { UPGRADE_BASE_COST, MAX_UPGRADE_LEVEL } from '../../data/forgeConstants';
@@ -19,6 +20,7 @@ interface UpgradePanelProps {
 export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanelProps) {
   const { activeCharacter, essence, upgradeItem } = useGame();
   const { notify } = useNotification();
+  const { play } = useSound();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [upgrading, setUpgrading] = useState(false);
@@ -84,6 +86,7 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
 
       if (!result) {
         setShowShake(true);
+        play('error');
         if (insufficientEssence) {
           notify('Not enough essence!', 'error', 3000);
         } else {
@@ -96,6 +99,7 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
 
       // Show glow animation
       setShowGlow(true);
+      play('upgrade');
 
       const newLevel = (result.itemUpgrades?.[selectedId] ?? 0);
       notify(`Upgrade success! ${selectedItem?.name} now +${newLevel}`, 'success', 3000);
@@ -108,7 +112,7 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
       notify('Upgrade failed due to connection error.', 'error', 3000);
       setUpgrading(false);
     }
-  }, [canPerformUpgrade, insufficientEssence, notify, selectedId, selectedItem, upgradeItem, upgrading]);
+  }, [canPerformUpgrade, insufficientEssence, notify, play, selectedId, selectedItem, upgradeItem, upgrading]);
 
   if (!activeCharacter) {
     return null;
@@ -259,6 +263,7 @@ export const UpgradePanel = memo(function UpgradePanel({ onClose }: UpgradePanel
           onClick={handleUpgrade}
           disabled={!canPerformUpgrade || upgrading}
           aria-label="Upgrade item"
+          data-click-sound="none"
         >
           {upgrading ? 'UPGRADING...' : isMaxLevel ? 'MAXED' : 'UPGRADE'}
         </button>

@@ -1,6 +1,7 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
+import { useSound } from '../../hooks/useSound';
 import { getInventoryItems } from '../../utils/equipmentUtils';
 import { canFuse } from '../../utils/forgeUtils';
 import { FUSION_COST, FUSION_INPUT_COUNT } from '../../data/forgeConstants';
@@ -41,6 +42,7 @@ function groupByRarity(items: PixelItemAsset[]): GroupedItems {
 export const FusionPanel = memo(function FusionPanel({ onClose }: FusionPanelProps) {
   const { activeCharacter, essence, fuseItems } = useGame();
   const { notify } = useNotification();
+  const { play } = useSound();
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [fusing, setFusing] = useState(false);
@@ -140,6 +142,7 @@ export const FusionPanel = memo(function FusionPanel({ onClose }: FusionPanelPro
         } else {
           notify('Fusion failed — no matching result item available.', 'error', 4000);
         }
+        play('error');
         setFusing(false);
         return;
       }
@@ -152,7 +155,9 @@ export const FusionPanel = memo(function FusionPanel({ onClose }: FusionPanelPro
       setLuckyProc(isLucky);
       setShowResult(result);
 
+      play('fusion');
       if (isLucky) {
+        play('achievement');
         notify(`✨ Lucky Fusion! ${selectedItems[0].name} → ${result.name}!`, 'success', 4000);
       } else {
         notify(`Fusion successful! ${selectedItems[0].name} → ${result.name}!`, 'success', 3000);
@@ -167,9 +172,10 @@ export const FusionPanel = memo(function FusionPanel({ onClose }: FusionPanelPro
       }, 1500);
     } catch {
       notify('Fusion failed due to connection error.', 'error', 3000);
+      play('error');
       setFusing(false);
     }
-  }, [activeCharacter, canPerformFusion, fuseItems, fusing, notify, selectedItems]);
+  }, [activeCharacter, canPerformFusion, fuseItems, fusing, notify, play, selectedItems]);
 
   if (!activeCharacter) {
     return null;
@@ -283,6 +289,7 @@ export const FusionPanel = memo(function FusionPanel({ onClose }: FusionPanelPro
               onClick={handleFusion}
               disabled={!canPerformFusion || fusing || insufficientEssence}
               aria-label="Fuse items"
+              data-click-sound="none"
             >
               {fusing ? 'FUSING...' : 'FUSE'}
             </button>
