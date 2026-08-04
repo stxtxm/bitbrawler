@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "last_updated": "2026-08-03T00:00:00Z",
+  "last_updated": "2026-08-04T00:00:00Z",
   "active_campaigns": [
     {
       "parent_issue": 605,
@@ -58,7 +58,8 @@
     "error_recovery": "Quand un workflow échoue, vérifier d'abord shared.json pour les problèmes connus",
     "sub_issue_scope": "Max 1-2 fichiers par sub-issue, jamais de changement schema + logique dans la même",
     "orchestrator_dispatch": "Les sub-issues Level 0 sont dispatchées immédiatement, les autres attendent leur dépendance",
-    "supervisor_pr": "Le supervisor ne push plus sur master directement — crée une PR docs/campaign-N"
+    "supervisor_pr": "Le supervisor ne push plus sur master directement — crée une PR docs/campaign-N",
+    "auto_pr_creation": "La création auto de PR n'existe QUE via le workflow dev-agent (opencode.yml): branche feat/auto-N poussée + gh pr create + gh pr merge --auto. Un push manuel ne crée aucune PR — faire gh pr create manuellement, puis CI (ci.yml) dispatche le reviewer qui approbe et merge automatiquement."
   },
   "agents": {
     "dev": "Implémente le code défini dans les issues. Lit dev.json au début, écrit dedans à la fin.",
