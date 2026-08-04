@@ -43,6 +43,7 @@ export const normalizeCharacter = (character: Character): Character => {
     achievementXpBonus: character.achievementXpBonus ?? 0,
     achievementEssenceBonus: character.achievementEssenceBonus ?? 0,
     achievementCosmetics: character.achievementCosmetics ?? [],
+    bossProgress: character.bossProgress ?? undefined,
   };
 
   // One-time migration: idle combat never granted stat points before the fix.

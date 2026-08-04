@@ -46,10 +46,11 @@ export interface PendingFight {
   status: 'searching' | 'matched';
   startedAt: number;
   opponent?: PendingFightOpponent;
-  matchType?: 'balanced' | 'similar' | 'pve';
+  matchType?: 'balanced' | 'similar' | 'pve' | 'boss';
 }
 
 import { ItemRarity, PixelItemAsset } from './Item';
+import type { BossProgress } from '../utils/bossUtils';
 
 // ─── Forge System Types ────────────────────────────────────────────────────
 
@@ -175,4 +176,7 @@ export interface Character {
   pushEndpoint?: string | null; // Push subscription endpoint persisted on the character
   pushKeys?: string | null; // Serialized push keys (p256dh + auth) persisted on the character
   pushSubscribed?: boolean; // Whether the character opted in to web push
+
+  // Raid Boss PvE progress (persistent HP pool + daily attack gauge)
+  bossProgress?: BossProgress;
 }

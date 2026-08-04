@@ -1,13 +1,14 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-04T11:52:54Z",
+  "last_session": "2026-08-04T18:35:00Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
     "Ne pas générer de SQL ALTER TABLE — créer une issue migration",
     "Le build peut échouer si on touche à des fichiers de typages sans mettre à jour les déclarations",
-    "Toujours vérifier que npm test && npm run build passent avant de commit"
+    "Toujours vérifier que npm test && npm run build passent avant de commit",
+    "Boss PvE: un kill 1-shot en une journée est IMPOSSIBLE par construction (pool = 12x maxHp, boss scale 1.2x) — médiane ~4 jours, c'est le design voulu"
   ],
   "preferred_patterns": {
     "naming": "camelCase pour variables, PascalCase pour types/interfaces",
@@ -115,6 +116,11 @@
     {
       "lesson": "Testing hooks that schedule setTimeout (e.g. useArenaLevelUp stagger queue) with vi.useFakeTimers: ALL mock functions (play, setCharacter, saveStatAllocations, clearXpNotifications) passed to the hook MUST be created ONCE outside the renderHook callback (stable identity). If recreated inside the callback on every render, any effect whose deps include those mocks (e.g. cleanup effect dep [clearXpNotifications]) re-runs on each render and clears the pending timers (levelUpQueueRef/levelUpTimerRef) - so recentLevelUp gets stuck and vi.getTimerCount() drops to 0. Fix: create stable mocks per-hook. Correct pattern: separate sync act() + vi.advanceTimersByTime() steps, assert after each. Also note: reading result.current INSIDE an async act callback is stale; read between acts.",
       "issue": "#620",
+      "date": "2026-08-04"
+    },
+    {
+      "lesson": "Boss PvE (VOID TITAN): migration #625 executée par l'humain → sync boss_progress activée de bout en bout. Câblage: CharacterRow.boss_progress (config/supabase.ts), convertFromSupabase/convertToSupabase (omis si undefined pour ne jamais nuller les données serveur), payload de useBossFight inclut boss_progress, merge au load = bestChar.bossProgress ?? localChar.bossProgress, sync debounced (convertToSupabase complet) inclus. Equilibrage Monte-Carlo: kill day-1 impossible par construction (pool 12x maxHp, boss scale 1.2x), médiane ~4 jours, killRate 10j = 100%. Tests: arena-boss.test.tsx (4), round-trip supabase-utils (2), bossUtils (26), bossBalance (3). Piège test integration: characterToSupabaseRow (test/utils/supabaseMock.ts) n'émet PAS essence/boss_progress → le merge au load garde le serveur (XP égale) et essence=0 ; pour garder la version locale il faut lui donner plus de XP (hasMoreXp). Total suite: 1264 tests verts.",
+      "issue": "#625-feat",
       "date": "2026-08-04"
     }
   ]

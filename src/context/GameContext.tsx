@@ -11,6 +11,11 @@ import { canRollLootbox, computeNextStreak, rollLootbox } from '../utils/lootbox
 import { ItemSlot, PixelItemAsset } from '../types/Item';
 import { getItemById } from '../utils/equipmentUtils';
 import { simulateCombat } from '../utils/combatUtils';
+import {
+  createBossProgress,
+  ensureBossDailyReset,
+  getBossRewards,
+} from '../utils/bossUtils';
 import { convertFromSupabase, convertToSupabase } from '../utils/supabaseUtils';
 import {
   INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP,
@@ -55,6 +60,12 @@ interface GameContextType {
     xpGained: number,
     monsterName: string,
     options?: { consumeEnergy?: boolean; characterOverride?: Character; monsterId?: string }
+  ) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
+  useBossFight: (
+    won: boolean,
+    xpGained: number,
+    bossName: string,
+    options?: { consumeEnergy?: boolean; characterOverride?: Character; bossHpLeft?: number }
   ) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
   findOpponent: () => Promise<MatchmakingResult | null>;
   clearXpNotifications: () => void;
@@ -223,7 +234,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         const serverChar = syncResult.character;
         const hasMoreXp = (localChar.experience ?? 0) > (serverChar.experience ?? 0);
         const bestChar = hasMoreXp ? localChar : serverChar;
-        const normalized = normalizeCharacter(bestChar);
+        // bossProgress is now synced via the boss_progress column — keep the
+        // local copy as fallback so the persistent boss HP pool never resets.
+        const mergedChar: Character = {
+          ...bestChar,
+          bossProgress: bestChar.bossProgress ?? localChar.bossProgress ?? undefined,
+        };
+        const normalized = normalizeCharacter(mergedChar);
         persistCharacter(normalized);
         setDbAvailable(true);
         // If local had more XP, sync it back to Supabase
@@ -635,6 +652,123 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
     return {
       xpGained,
+      leveledUp: xpResult.leveledUp,
+      levelsGained: xpResult.levelsGained,
+      newLevel: xpResult.newLevel,
+    };
+  }, [activeCharacter, handleDbError, persistCharacter]);
+
+  const useBossFight = useCallback(async (
+    won: boolean,
+    _xpGained: number,
+    bossName: string,
+    options?: { consumeEnergy?: boolean; characterOverride?: Character; bossHpLeft?: number }
+  ): Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null> => {
+    const baseCharacter = options?.characterOverride ?? activeCharacter;
+    if (!baseCharacter) return null;
+
+    const now = Date.now();
+    const shouldConsume = options?.consumeEnergy ?? true;
+
+    // Progress starts fresh on first encounter; daily gauge refills at reset.
+    const baseProgress = baseCharacter.bossProgress
+      ? ensureBossDailyReset(baseCharacter.bossProgress, now)
+      : createBossProgress(baseCharacter, now);
+
+    const attacksLeft = Math.max(0, baseProgress.attacksLeft - (shouldConsume ? 1 : 0));
+
+    // Rewards only on a kill; the persistent HP pool is the "currency" of a loss.
+    const rewards = getBossRewards(baseCharacter, won);
+    const xpResult = gainXp(baseCharacter, won ? rewards.xpGained : 0);
+
+    const historyEntry = { date: now, won, opponentName: bossName };
+    const newHistory = [historyEntry, ...(baseCharacter.fightHistory || [])].slice(0, 20);
+
+    const pointsGained = xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL;
+
+    let updatedProgress = baseProgress;
+    if (won) {
+      // Boss defeated: a new cycle starts at the player's (possibly new) level,
+      // keeping any remaining daily attacks for the same day.
+      const next = createBossProgress(xpResult.updatedCharacter, now);
+      updatedProgress = {
+        ...next,
+        attacksLeft,
+        lastAttackReset: baseProgress.lastAttackReset,
+        totalKills: baseProgress.totalKills + 1,
+        lastKillAt: now,
+        firstEncounterAt: baseProgress.firstEncounterAt,
+      };
+    } else {
+      // Boss survived: it keeps the HP it had at the end of the fight.
+      updatedProgress = {
+        ...baseProgress,
+        attacksLeft,
+        bossHp: options?.bossHpLeft ?? baseProgress.bossHp,
+      };
+    }
+
+    let updatedChar: Character = normalizeCharacter({
+      ...xpResult.updatedCharacter,
+      bossProgress: updatedProgress,
+      essence: (baseCharacter.essence ?? 0) + rewards.essenceGained,
+      wins: won ? (baseCharacter.wins || 0) + 1 : (baseCharacter.wins || 0),
+      // Non-kill attacks don't inflate the loss record — they're raid attempts.
+      losses: baseCharacter.losses || 0,
+      fightHistory: newHistory,
+      statPoints: (baseCharacter.statPoints || 0) + pointsGained,
+    });
+
+    if (updatedChar.autoMode && (updatedChar.statPoints || 0) > 0) {
+      updatedChar = normalizeCharacter(
+        autoAllocateStatPoints(updatedChar, updatedChar.statPoints || 0)
+      );
+    }
+
+    if (baseCharacter.id) {
+      try {
+        const { error } = await supabase
+          .from('characters')
+          .update({
+            level: updatedChar.level,
+            experience: updatedChar.experience,
+            wins: updatedChar.wins,
+            losses: updatedChar.losses,
+            fight_history: updatedChar.fightHistory,
+            stat_points: updatedChar.statPoints,
+            strength: updatedChar.strength,
+            vitality: updatedChar.vitality,
+            dexterity: updatedChar.dexterity,
+            luck: updatedChar.luck,
+            intelligence: updatedChar.intelligence,
+            focus: updatedChar.focus,
+            hp: updatedChar.hp,
+            max_hp: updatedChar.maxHp,
+            essence: updatedChar.essence,
+            boss_progress: updatedChar.bossProgress ?? null,
+          })
+          .eq('id', baseCharacter.id);
+
+        if (error) throw error;
+      } catch (error: any) {
+        handleDbError(error, 'use-boss-fight');
+        throw new Error("Connection error - boss fight not saved. Please check your internet connection.");
+      }
+    }
+
+    persistCharacter(updatedChar);
+
+    setLastXpGain(won ? rewards.xpGained : 0);
+    if (xpResult.leveledUp && !updatedChar.autoMode) {
+      setLastLevelUp({
+        levelsGained: xpResult.levelsGained,
+        newLevel: xpResult.newLevel,
+        hpGained: xpResult.levelsGained * HP_PER_LEVEL,
+      });
+    }
+
+    return {
+      xpGained: won ? rewards.xpGained : 0,
       leveledUp: xpResult.leveledUp,
       levelsGained: xpResult.levelsGained,
       newLevel: xpResult.newLevel,
@@ -1382,6 +1516,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     retryConnection,
     useFight,
     usePveFight,
+    useBossFight,
     findOpponent: findOpponentForPlayer,
     startMatchmaking: startMatchmakingForPlayer,
     clearXpNotifications,

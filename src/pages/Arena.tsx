@@ -27,6 +27,7 @@ const Arena = () => {
     logout,
     useFight,
     usePveFight,
+    useBossFight,
     startMatchmaking,
     lastXpGain,
     clearXpNotifications,
@@ -66,12 +67,13 @@ const Arena = () => {
     startMatchmaking,
     useFight,
     usePveFight,
+    useBossFight,
     onLevelUp: levelUp.queueLevelUp,
   });
 
   const idle = useIdleCombat({
     character: activeCharacter,
-    isPaused: !combat.pveMode || combat.combatData !== null,
+    isPaused: combat.mode !== 'pve' || combat.combatData !== null,
     onCharacterUpdate: setCharacter,
     onSyncCharacter: syncCharacterToBackend,
     onLevelUp: levelUp.queueLevelUp,
@@ -223,12 +225,14 @@ const Arena = () => {
         />
       )}
 
-      {!combat.pveMode && combat.combatData && combatOpponent && (
+      {combat.combatData && combatOpponent && (
         <CombatView
           player={effectiveCharacter}
           opponent={combatOpponent}
           matchType={combat.combatData.matchType}
-          monsterId={combat.combatData.matchType === 'pve' ? combat.pveMonster?.monsterId : undefined}
+          monsterId={combat.combatData.matchType === 'pve' || combat.combatData.matchType === 'boss'
+            ? combat.pveMonster?.monsterId
+            : undefined}
           candidates={combat.combatData.candidates}
           comboCount={idle.currentStreak}
           onComplete={combat.onCombatComplete}

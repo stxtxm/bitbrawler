@@ -3,9 +3,11 @@ import { Character } from '../types/Character';
 import { calculateCombatStats } from './combatUtils';
 import { convertFromSupabase } from './supabaseUtils';
 
+export type MatchType = 'balanced' | 'similar' | 'pve' | 'boss';
+
 export interface MatchmakingResult {
     opponent: Character;
-    matchType: 'balanced' | 'similar' | 'pve';
+    matchType: MatchType;
     candidates: Character[];
 }
 
@@ -94,7 +96,7 @@ async function findOpponentByPowerRange(player: Character): Promise<MatchmakingR
 /**
  * Get match difficulty label
  */
-export function getMatchDifficultyLabel(matchType: 'balanced' | 'similar' | 'pve'): string {
+export function getMatchDifficultyLabel(matchType: MatchType): string {
     switch (matchType) {
         case 'balanced':
             return 'BALANCED MATCH';
@@ -102,6 +104,8 @@ export function getMatchDifficultyLabel(matchType: 'balanced' | 'similar' | 'pve
             return 'FAIR MATCH';
         case 'pve':
             return 'MONSTER BATTLE';
+        case 'boss':
+            return 'RAID BOSS';
         default:
             return 'MATCH';
     }

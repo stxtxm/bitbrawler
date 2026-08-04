@@ -1678,6 +1678,93 @@
         background: #111;
         box-shadow: none;
     }
+
+    .mini-pip.active {
+        background: $accent-gold;
+        border-color: #fff;
+        box-shadow: 0 0 8px $accent-gold;
+    }
+}
+
+.pve-status-compact {
+    border-left-color: $accent-green !important;
+
+    .boss-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 1.4rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        @include mobile {
+            width: 24px;
+            height: 24px;
+            font-size: 1rem;
+        }
+    }
+
+    .label-sub {
+        color: $accent-green !important;
+    }
+
+    .mini-pip.active {
+        background: $accent-green;
+        border-color: #fff;
+        box-shadow: 0 0 8px $accent-green;
+    }
+}
+
+.boss-hp-strip {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+
+    @include mobile {
+        min-width: 90px;
+    }
+}
+
+.boss-hp-bar {
+    height: 10px;
+    background: #111;
+    @include retro-border(2px, #444);
+    overflow: hidden;
+
+    @include mobile {
+        height: 8px;
+        border-width: 1px;
+    }
+}
+
+.boss-hp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #7b2fff 0%, $accent-gold 100%);
+    box-shadow: 0 0 10px $accent-gold;
+    transition: width 0.6s ease;
+}
+
+.boss-hp-values {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.55rem;
+    letter-spacing: 0.5px;
+
+    @include mobile {
+        font-size: 0.45rem;
+    }
+}
+
+.boss-hp-name {
+    color: $accent-gold;
+    font-family: $font-pixel;
+}
+
+.boss-hp-num {
+    color: #bbb;
 }
 
 
