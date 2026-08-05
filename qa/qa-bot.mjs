@@ -1662,8 +1662,8 @@ async function runFightSequence(page, runKey, runRecord) {
 
     console.log(`   Result: ${isVictory ? '✅ VICTORY' : isDefeat ? '❌ DEFEAT' : '🤝 DRAW'} (${fightDuration}ms) [${isPve ? 'PVE' : 'PVP'}]${monsterName ? ` vs ${monsterName}` : ''}`)
 
-    // PvE XP modifier constant (must match GAME_RULES.PVE.XP_MODIFIER in gameRules.ts)
-    const PVE_XP_MODIFIER = 0.80
+    // PvE XP modifier constant (must match GAME_RULES.PVE.XP_MODIFIER in gameRules.ts, currently 2.5)
+    const PVE_XP_MODIFIER = 2.5
     const pveXpBeforeModifier = isPve ? xpGained : null
     const pveXpAfterModifier = isPve && xpGained !== null ? Math.round(xpGained * PVE_XP_MODIFIER) : null
 

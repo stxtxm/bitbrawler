@@ -26,8 +26,8 @@ interface FightRecord {
   max_hp?: number | null
   fight_type?: 'pvp' | 'pve' | 'idle'   // track PvP vs PvE vs idle fights
   monster_name?: string | null  // PvE monster name if applicable
-  xp_before_modifier?: number | null  // PvE XP before 0.80 modifier (displayed value)
-  xp_after_modifier?: number | null   // PvE XP after 0.80 modifier (actual saved value)
+  xp_before_modifier?: number | null  // PvE XP before 2.5x modifier (displayed value)
+  xp_after_modifier?: number | null   // PvE XP after 2.5x modifier (actual saved value)
 }
 
 interface LevelUpEvent {
@@ -151,8 +151,8 @@ interface PveAnalysis {
   avg_xp_per_fight: number
   avg_duration_ms: number
   monsters_faced: Record<string, number>  // monster name → encounter count
-  avg_xp_before_modifier: number | null   // average PvE XP before 0.80 modifier (displayed value)
-  avg_xp_after_modifier: number | null    // average PvE XP after 0.80 modifier (actual saved value)
+  avg_xp_before_modifier: number | null   // average PvE XP before 2.5x modifier (displayed value)
+  avg_xp_after_modifier: number | null    // average PvE XP after 2.5x modifier (actual saved value)
   pve_xp_ratio: number | null             // ratio of PvE avg_xp_after_modifier to PvP avg_xp_per_win
 }
 
@@ -641,10 +641,10 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     if (pveAnalysis.avg_duration_ms > 40000) {
       suggestions.push(`PvE fights avg ${(pveAnalysis.avg_duration_ms / 1000).toFixed(1)}s — may be too long for mobile sessions. Consider reducing monster HP.`)
     }
-    // PvE XP ratio: warn if actual saved XP deviates significantly from expected 80%
+    // PvE XP ratio: warn if actual saved XP deviates significantly from expected 2.5x (GAME_RULES.PVE.XP_MODIFIER)
     if (pveAnalysis.pve_xp_ratio !== null && pveAnalysis.total_fights >= 3) {
-      const expectedRatio = 0.80
-      const tolerance = 0.10
+      const expectedRatio = 2.5
+      const tolerance = 0.30
       if (pveAnalysis.pve_xp_ratio < expectedRatio - tolerance) {
         suggestions.push(`PvE XP ratio is ${(pveAnalysis.pve_xp_ratio * 100).toFixed(0)}% of PvP (expected ${(expectedRatio * 100).toFixed(0)}%). PvE XP may be too low — check if XP_LOSS is used as base instead of XP_WIN.`)
       } else if (pveAnalysis.pve_xp_ratio > expectedRatio + tolerance) {
@@ -933,7 +933,7 @@ function printReport(report: AnalysisReport): void {
       console.log(`  XP after mod:   ${report.pve_analysis.avg_xp_after_modifier.toFixed(1)}`)
     }
     if (report.pve_analysis.pve_xp_ratio !== null) {
-      console.log(`  PvE/PvP ratio:  ${fmtPct(report.pve_analysis.pve_xp_ratio)} (expected 80%)`)
+      console.log(`  PvE/PvP ratio:  ${fmtPct(report.pve_analysis.pve_xp_ratio)} (expected 250%)`)
     }
     console.log('')
   }

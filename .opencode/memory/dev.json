@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-04T18:35:00Z",
+  "last_session": "2026-08-04T20:25:49Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -121,6 +121,11 @@
     {
       "lesson": "Boss PvE (VOID TITAN): migration #625 executée par l'humain → sync boss_progress activée de bout en bout. Câblage: CharacterRow.boss_progress (config/supabase.ts), convertFromSupabase/convertToSupabase (omis si undefined pour ne jamais nuller les données serveur), payload de useBossFight inclut boss_progress, merge au load = bestChar.bossProgress ?? localChar.bossProgress, sync debounced (convertToSupabase complet) inclus. Equilibrage Monte-Carlo: kill day-1 impossible par construction (pool 12x maxHp, boss scale 1.2x), médiane ~4 jours, killRate 10j = 100%. Tests: arena-boss.test.tsx (4), round-trip supabase-utils (2), bossUtils (26), bossBalance (3). Piège test integration: characterToSupabaseRow (test/utils/supabaseMock.ts) n'émet PAS essence/boss_progress → le merge au load garde le serveur (XP égale) et essence=0 ; pour garder la version locale il faut lui donner plus de XP (hasMoreXp). Total suite: 1264 tests verts.",
       "issue": "#625-feat",
+      "date": "2026-08-04"
+    },
+    {
+      "lesson": "Issue #627 PvE XP ratio 0.509: game code correct (useArenaCombat.ts applies GAME_RULES.PVE.XP_MODIFIER=2.5). Root cause = STALE QA tooling constant: qa/qa-bot.mjs had PVE_XP_MODIFIER=0.80 (so xp_after_modifier=79*0.80=63) and scripts/analyze-qa-stats.ts expectedRatio=0.80. Both updated to 2.5. Improved tautological combat-pve.test.ts test to assert PvE win XP strictly > PvP win XP at all levels. Pattern: when QA stats contradict game constants, audit the parsing/label constants FIRST before touching game balance. 1265 tests green.",
+      "issue": "#627",
       "date": "2026-08-04"
     }
   ]
