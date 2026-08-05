@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-04T20:25:49Z",
+  "last_session": "2026-08-05T20:39:24Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -127,6 +127,11 @@
       "lesson": "Issue #627 PvE XP ratio 0.509: game code correct (useArenaCombat.ts applies GAME_RULES.PVE.XP_MODIFIER=2.5). Root cause = STALE QA tooling constant: qa/qa-bot.mjs had PVE_XP_MODIFIER=0.80 (so xp_after_modifier=79*0.80=63) and scripts/analyze-qa-stats.ts expectedRatio=0.80. Both updated to 2.5. Improved tautological combat-pve.test.ts test to assert PvE win XP strictly > PvP win XP at all levels. Pattern: when QA stats contradict game constants, audit the parsing/label constants FIRST before touching game balance. 1265 tests green.",
       "issue": "#627",
       "date": "2026-08-04"
+    },
+    {
+      "lesson": "Issue #630: qa-bot.mjs line 1714 used shorthand `levels_gained,` in object literal but local was camelCase `levelsGained` -> ReferenceError crashed every QA run on level-up (avg_fights_per_run 4.52->1.2, win rate 0% artifact). Fix: explicit `levels_gained: levelsGained,`. Analyzer (analyze-qa-stats.ts LevelUpEvent) reads snake_case key - correct choice. Added static source-shape regression test in qa-analysis.test.ts reading qa/qa-bot.mjs via process.cwd() (import.meta.url breaks under jsdom, ERR_INVALID_URL_SCHEME) asserting explicit key present and no bare shorthand. Pattern: for E2E scripts that cant be unit-tested, guard against runtime ReferenceError via source-content assertion on the exact object literal key.",
+      "issue": "#630",
+      "date": "2026-08-05"
     }
   ]
 }
