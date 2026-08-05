@@ -1,25 +1,28 @@
 {
-  "version": 1,
+  "version": 2,
   "agent": "tech-lead",
-  "last_session": "2026-08-01",
+  "last_session": "2026-08-05",
   "recent_failures": [
-    "Le pipeline QA tester est MORT: 100/100 runs cancelled (timeout 10min + rebase conflict qa/state.json). Aucune donnée fraîche depuis 2026-07-06.",
-    "Les trends win rate (100% last_10) sont calculées sur des données de JUIN — ne pas prendre de décision d'équilibrage avant la réparation du pipeline.",
-    "qa-bot.config.js désynchronisé du jeu: forgeUnlockLevel 10 vs FORGE_UNLOCK_LEVEL 1 → forge jamais testé (issue #582)."
+    "Le pipeline QA est RÉPARÉ (runs quotidiens depuis 08/04) mais POLLUÉ depuis #622: ReferenceError 'levels_gained is not defined' (qa-bot.mjs:1714, shorthand levels_gained → var levelsGained). 100% des runs récents crash sur level-up → win rate last_10=0% = ARTEFACT, pas une régression de balance. Fix créé: issue #630 (1 ligne, /oc).",
+    "Les trends win rate (0% last_10 du 08/05) sont corrompues par le crash QA bot — NE PAS ajuster la balance (diminishingExponent, comeback) sur ces données. Le vrai signal all-time = 50.7% (sain).",
+    "qa-bot.config.js: forgeUnlockLevel désynchronisé → forge jamais testé (issue #582, toujours ouverte)."
   ],
   "known_limitations": [
-    "Les stats QA sont dans qa/stats.json (stale depuis 06/07/2026)",
-    "Les analyses HP, loot, win rate doivent être basées sur les données du fichier",
-    "Créer des issues avec /oc pour les bugs critiques et ajustements d'équilibrage",
-    "Créer des issues SANS /oc pour les propositions majeures (label proposition)",
-    "Toujours référencer les données QA dans les issues créées",
-    "Le dev-agent n'a PAS le droit de modifier .github/workflows/*.yml — les fixes workflows passent en issues sans /oc (validation humaine)",
-    "Shop unlock level 20 inatteignable par le QA bot (max level ~3) → shop jamais testé"
+    "Vérifier AVANT de créer une issue si elle existe déjà (gh issue list) — 60+ propositions majeures ouvertes, risque de doublon élevé.",
+    "Le crash levels_gained (qa-bot.mjs:1714) est le blocker n°1 de la qualité de données QA — tant qu'il n'est pas merge, les win rates last_3/5/10 sont inexploitables.",
+    "PvE XP: fix #629 merge (constant QA 0.80→2.5) — le jeu appliquait déjà 2.5x, seul le tooling QA était faux.",
+    "Idle win rate 12% (08/05) suspect mais à re-mesurer après fix #630 — les runs idle récents sont corrompus.",
+    "Les stats QA sont dans qa/stats.json (frais depuis 08/04, 258 runs cumulés).",
+    "Créer des issues avec /oc pour les bugs critiques et ajustements d'équilibrage.",
+    "Créer des issues SANS /oc pour les propositions majeures (label proposition).",
+    "Le dev-agent n'a PAS le droit de modifier .github/workflows/*.yml — les fixes workflows passent en issues sans /oc (validation humaine).",
+    "Shop unlock level 20 inatteignable par le QA bot (max level ~3) → shop jamais testé (voir #606: baisser à 8)."
   ],
   "session_notes": [
-    "2026-08-01: Pipeline QA mort — priorité #1 = réparer qa-tester.yml (timeout + rebase state.json). Issues créées: #582 (config unlock forge/shop QA), #583 (proposition push notifications), #584 (idle observation timeout). Commentaires: #548 (critical QA pipeline), #440 (win rate validation bloquée), #581 (pipeline action_required).",
+    "2026-08-05: Issue #630 créée (fix levels_gained ReferenceError, /oc). Proposition majeure #631 créée (Wave-Like Session Difficulty Curve). Commentaires: #440 (win rate 0% = artefact, ne pas rebalancer), #408 (root cause error rate), #606 (paliers 15/15/20 → 5/5/8), #607 (idle win rate 12% → re-mesurer après fix), #548 (noms équipement corrompus + essence/shop null), #609 (campaign-605 bloquée par #630).",
+    "2026-08-05: Lootbox rarity saine (common 62%, rare 10%, epic 9%, legendary 0 — legendary level-gated au niveau 2-3). HP growth +15.9/run sain (5-30). Stats perso ~10-11 équilibrées.",
+    "2026-08-05: Push notifications DÉJÀ implémentées (PushOptInBanner.tsx, pushNotifications.ts, reminderScheduler.ts) — proposition #583 obsolète/à vérifier.",
     "2026-08-01: Shop/forge jamais testés car unlock levels inatteignables (forge lvl 1 dans le jeu mais 10 dans qa-bot.config.js).",
-    "2026-08-01: Essence affichée en fractionnel (.toFixed(2)) — PAS un bug, design voulu.",
-    "2026-08-01: Push notifications = levier rétention n°1 des idle games (recherche web) — proposition majeure #583 créée."
+    "2026-08-01: Essence affichée en fractionnel (.toFixed(2)) — PAS un bug, design voulu."
   ]
 }
