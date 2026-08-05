@@ -1,7 +1,7 @@
 {
   "run": "2026-08-05",
-  "character": "SCOUTFANG",
+  "character": "LANCERSTAR",
   "exhausted": false,
-  "updated_at": "2026-08-05T19:01:27.513Z",
-  "source": "reused"
+  "updated_at": "2026-08-05T19:17:14.799Z",
+  "source": "created-after-exhausted-energy"
 }
