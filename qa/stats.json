@@ -20088,5 +20088,151 @@
       "home": 1400,
       "arena": 258
     }
+  },
+  {
+    "date": "2026-08-05T07:01:17.730Z",
+    "run": "2026-08-05",
+    "character": "COBALTMAGE",
+    "character_action": "reused",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 653,
+        "fight_duration_ms": 6988,
+        "max_hp": 369,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 498.81
+      }
+    ],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": {
+      "str": 7,
+      "vit": 12,
+      "dex": 9,
+      "luk": 32,
+      "int": 7,
+      "foc": 19,
+      "fights": 0
+    },
+    "initial_level": 14,
+    "initial_xp": {
+      "current": 10075,
+      "max": 6273
+    },
+    "initial_max_hp": 360,
+    "initial_equipment": [],
+    "initial_streak": 0,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "final_equipment": null,
+    "final_streak": null,
+    "lootbox_equipment": null,
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": []
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 30519,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "goblin"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 28,
+      "xp_events": [
+        {
+          "time_ms": 30519,
+          "xp": 28,
+          "monster": "goblin",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": true,
+      "level_up_events": [
+        {
+          "time_ms": 30519,
+          "monster": "goblin"
+        }
+      ],
+      "phase_transition_times_ms": [
+        30519
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 28,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.25,
+      "next_level_eta": "⬆ 6m 8s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.06x",
+      "interval": "12.0s",
+      "streak_bonus": null
+    },
+    "initial_essence": null,
+    "final_essence": null,
+    "essence": {
+      "before_idle": 498.14,
+      "after_idle": 498.81,
+      "per_fight": [
+        498.81
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": null,
+      "flow": {
+        "idle_gained": null,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": null
+      }
+    },
+    "level_up_fx": {
+      "detected": true,
+      "glow_class_applied": false,
+      "float_text_shown": true,
+      "level": 15
+    },
+    "offline_gains": null,
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": null,
+    "shop": null,
+    "errors": [
+      "levels_gained is not defined"
+    ],
+    "load_times_ms": {
+      "home": 1696,
+      "arena": 632
+    }
   }
 ]
