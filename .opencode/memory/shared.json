@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "last_updated": "2026-08-04T18:45:00Z",
+  "last_updated": "2026-08-06T09:25:00Z",
   "active_campaigns": [
     {
       "parent_issue": 605,
@@ -54,6 +54,7 @@
     "Les PR docs/campaign-* sont créées par le supervisor et mergées par le reviewer",
     "Toute modification de schéma DB nécessite une issue de migration sans /oc",
     "BOSS PvE (#626): kill 1-jour IMPOSSIBLE par design (pool 12x maxHp + round limit) — ne jamais 'corriger' en nerf; médiane de kill ~4 jours validée par bossBalance.test.ts. Doc: BOSS_PVE.md",
+    "BOSS PvE UX (#633): plus de toggle BOSS ni de mode Arena 'boss' — en mode PvE le bouton FIGHT (ATTACK BOSS) lance directement le raid boss, sans fenêtre de matchmaking; statut boss (attaques X/5 + HP pool) affiché dans le panneau PvE (ActionPanel)",
     "Migration boss_progress (#625) EXÉCUTÉE — convertToSupabase émet boss_progress (omis si undefined); ne jamais écrire boss_progress: null"
   ],
   "patterns": {
