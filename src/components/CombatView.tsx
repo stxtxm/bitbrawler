@@ -9,11 +9,12 @@ import { parseCombatDetail, CombatAction, CombatActionType } from '../utils/comb
 import { calculateFightXp } from '../utils/xpUtils';
 import { useSound } from '../hooks/useSound';
 import { MonsterId, MONSTER_ASSETS } from '../data/monsterAssets';
-import { BossId, BOSS_ASSETS } from '../data/bossAssets';
+import { BossId, BOSS_ASSETS, getBossDef } from '../data/bossAssets';
 import { getBossKillXp } from '../utils/bossUtils';
 import { ParticleSystem, type ParticleType } from '../utils/particleSystem';
 import { COMBAT_BALANCE } from '../config/combatBalance';
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode';
+import { BossBackground } from './BossBackground';
 
 const HIT_STOP_DURATION: Record<string, number> = {
   hit: 100,
@@ -123,6 +124,12 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     }, [candidates, opponent]);
 
     const selectedKey = opponent.id || opponent.name;
+
+    // Boss window theming: when the fight is a raid, resolve the boss def so the
+    // modal gets its own chrome (accent border) and a data-driven background.
+    const bossDef = matchType === 'boss' && monsterId && BOSS_ASSETS.some((b) => b.id === monsterId)
+        ? getBossDef(monsterId as BossId)
+        : undefined;
 
     useEffect(() => {
         if (leftLayerRef.current && !leftParticleSystemRef.current) {
@@ -677,7 +684,15 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
 
     return (
         <div className="combat-overlay" onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()}>
-            <div className="combat-modal">
+            <div
+                className={`combat-modal${bossDef ? ' boss-modal' : ''}`}
+                style={bossDef ? ({
+                    '--boss-accent': bossDef.background.accent,
+                    '--boss-accent-alt': bossDef.background.accentAlt ?? bossDef.background.accent,
+                } as React.CSSProperties) : undefined}
+                onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()}
+            >
+                {bossDef && <BossBackground def={bossDef.background} />}
                 <div className="particle-layer left" ref={leftLayerRef} />
                 <div className="particle-layer right" ref={rightLayerRef} />
                 {phase === 'intro' && (matchType === 'pve' || matchType === 'boss') ? (
