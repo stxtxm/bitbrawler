@@ -1,10 +1,8 @@
 import { useCallback, useMemo, useState } from 'react';
-import { GAME_RULES } from '../config/gameRules';
 import { MonsterId } from '../data/monsterAssets';
 import { BOSS_ID, BossId } from '../data/bossAssets';
 import { Character } from '../types/Character';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
-import { generateMonsterForPlayer, getMonsterDef } from '../utils/monsterUtils';
 import {
   buildBossCharacter,
   createBossProgress,
@@ -27,13 +25,6 @@ type UseFight = (
   opponentId: string,
 ) => Promise<FightResult | null>;
 
-type UsePveFight = (
-  won: boolean,
-  xpGained: number,
-  monsterName: string,
-  options?: { consumeEnergy?: boolean; characterOverride?: Character; monsterId?: string },
-) => Promise<FightResult | null>;
-
 type UseBossFight = (
   won: boolean,
   xpGained: number,
@@ -41,7 +32,7 @@ type UseBossFight = (
   options?: { consumeEnergy?: boolean; characterOverride?: Character; bossHpLeft?: number },
 ) => Promise<FightResult | null>;
 
-export type ArenaMode = 'pvp' | 'pve' | 'boss';
+export type ArenaMode = 'pvp' | 'pve';
 
 interface UseArenaCombatOptions {
   character: Character | null;
@@ -51,7 +42,6 @@ interface UseArenaCombatOptions {
   openModal: (message: string) => void;
   startMatchmaking: () => Promise<MatchmakingResult | null>;
   useFight: UseFight;
-  usePveFight: UsePveFight;
   useBossFight: UseBossFight;
   onLevelUp: (levelsGained: number, newLevel: number) => void;
 }
@@ -68,17 +58,15 @@ export const useArenaCombat = ({
   openModal,
   startMatchmaking,
   useFight,
-  usePveFight,
   useBossFight,
   onLevelUp,
 }: UseArenaCombatOptions) => {
   const [mode, setMode] = useState<ArenaMode>('pve');
   const [matchmaking, setMatchmaking] = useState(false);
   const [combatData, setCombatData] = useState<MatchmakingResult | null>(null);
-  const [pveMonster, setPveMonster] = useState<{ monsterId: MonsterId | BossId; monsterDef: ReturnType<typeof getMonsterDef> } | null>(null);
+  const [pveMonster, setPveMonster] = useState<{ monsterId: MonsterId | BossId; monsterDef: unknown } | null>(null);
 
   const fightsLeft = character?.fightsLeft ?? 0;
-  const pveFightsLeft = character?.pveFightsLeft ?? 5;
   const bossProgress = character?.bossProgress
     ? ensureBossDailyReset(character.bossProgress)
     : null;
@@ -88,21 +76,17 @@ export const useArenaCombat = ({
   const autoMode = !!character?.autoMode;
 
   const pveMode = mode === 'pve';
-  const bossMode = mode === 'boss';
 
   const canFight = !!character
     && !isOfflineMode
     && !hasPendingFight
     && !autoMode
     && (pveMode
-      ? pveFightsLeft > 0
-      : bossMode
-        ? bossUnlocked && bossAttacksLeft > 0
-        : fightsLeft > 0);
+      ? bossUnlocked && bossAttacksLeft > 0
+      : fightsLeft > 0);
 
   const onTogglePve = useCallback(() => setMode('pve'), []);
   const onTogglePvp = useCallback(() => setMode('pvp'), []);
-  const onToggleBoss = useCallback(() => setMode('boss'), []);
 
   const onFight = useCallback(async () => {
     if (!character || matchmaking || hasPendingFight || character.autoMode) return;
@@ -111,8 +95,7 @@ export const useArenaCombat = ({
 
     if (window.navigator.vibrate) window.navigator.vibrate(80);
 
-    if (bossMode) {
-      setMatchmaking(true);
+    if (pveMode) {
       try {
         const progress = character.bossProgress
           ? ensureBossDailyReset(character.bossProgress)
@@ -123,23 +106,6 @@ export const useArenaCombat = ({
       } catch (error: unknown) {
         console.error('Boss generation failed:', error);
         openModal(connectionMessage);
-      } finally {
-        setMatchmaking(false);
-      }
-      return;
-    }
-
-    if (pveMode) {
-      setMatchmaking(true);
-      try {
-        const { character: monsterCharacter, def } = generateMonsterForPlayer(character.level);
-        setPveMonster({ monsterId: def.id, monsterDef: def });
-        setCombatData({ opponent: monsterCharacter, matchType: 'pve', candidates: [] });
-      } catch (error: unknown) {
-        console.error('Monster generation failed:', error);
-        openModal(connectionMessage);
-      } finally {
-        setMatchmaking(false);
       }
       return;
     }
@@ -159,7 +125,6 @@ export const useArenaCombat = ({
       setMatchmaking(false);
     }
   }, [
-    bossMode,
     character,
     connectionMessage,
     ensureConnection,
@@ -182,18 +147,7 @@ export const useArenaCombat = ({
         ? await useBossFight(won, xpGained, opponentName, {
             bossHpLeft: bossHpLeft ?? combatData.opponent.hp,
           })
-        : combatData?.matchType === 'pve'
-          ? await usePveFight(won, Math.round(xpGained * GAME_RULES.PVE.XP_MODIFIER), opponentName, { monsterId: pveMonster?.monsterId as MonsterId | undefined })
-          : await useFight(won, xpGained, opponentName, combatData?.opponent.id ?? '');
-
-      // Log PvE XP metrics for QA analysis — trace pre-modifier vs post-modifier values
-      if (combatData?.matchType === 'pve') {
-        const modifiedXp = Math.round(xpGained * GAME_RULES.PVE.XP_MODIFIER);
-        console.warn(
-          `[PvE XP] won=${won} beforeModifier=${xpGained} afterModifier=${modifiedXp} ` +
-          `modifier=${GAME_RULES.PVE.XP_MODIFIER}`
-        );
-      }
+        : await useFight(won, xpGained, opponentName, combatData?.opponent.id ?? '');
       /* eslint-enable react-hooks/rules-of-hooks */
 
       if (result?.leveledUp) {
@@ -203,7 +157,7 @@ export const useArenaCombat = ({
       console.error('Fight result save failed:', error);
       openModal(getErrorMessage(error, connectionMessage));
     }
-  }, [combatData, connectionMessage, onLevelUp, openModal, useBossFight, useFight, usePveFight, pveMonster]);
+  }, [combatData, connectionMessage, onLevelUp, openModal, useBossFight, useFight]);
 
   const onCloseCombat = useCallback(() => {
     setCombatData(null);
@@ -212,14 +166,12 @@ export const useArenaCombat = ({
 
   const actionPanelProps = useMemo(() => ({
     pveMode,
-    bossMode,
     canFight,
     matchmaking,
     hasPendingFight,
     autoMode,
     isOfflineMode,
     fightsLeft,
-    pveFightsLeft,
     bossAttacksLeft,
     bossUnlocked,
     bossHp: bossProgress?.bossHp ?? 0,
@@ -227,7 +179,6 @@ export const useArenaCombat = ({
     bossLevel: bossProgress?.bossLevel ?? 0,
     onTogglePve,
     onTogglePvp,
-    onToggleBoss,
     onFight,
   }), [
     autoMode,
@@ -238,22 +189,18 @@ export const useArenaCombat = ({
     bossUnlocked,
     canFight,
     fightsLeft,
-    pveFightsLeft,
     hasPendingFight,
     isOfflineMode,
     matchmaking,
     onFight,
-    onToggleBoss,
     onTogglePve,
     onTogglePvp,
     pveMode,
-    bossMode,
   ]);
 
   return {
     mode,
     pveMode,
-    bossMode,
     matchmaking,
     combatData,
     pveMonster,
@@ -265,7 +212,6 @@ export const useArenaCombat = ({
     bossAttacksLeft,
     onTogglePve,
     onTogglePvp,
-    onToggleBoss,
     onFight,
     onCombatComplete,
     onCloseCombat,

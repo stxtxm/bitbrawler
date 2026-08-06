@@ -53,9 +53,9 @@ Si ces chiffres dérivent (par ex. après une modification de `combatBalance.ts`
 | `src/config/gameRules.ts` | Bloc `BOSS` (constantes ci-dessus) |
 | `src/data/bossAssets.ts` | `BossId`, `BOSS_ID` (`void_titan`), sprite 16×16 + palette, `getBossDef` |
 | `src/utils/bossUtils.ts` | `BossProgress`, `isBossUnlocked`, `buildBossCharacter`, `createBossProgress`, `ensureBossDailyReset`, `getBossAttacksLeft`, `resolveBossAttack`, `getBossKillXp`, `getBossRewards`, `simulateBossAttack` |
-| `src/hooks/useArenaCombat.ts` | `ArenaMode = 'pvp' \| 'pve' \| 'boss'`, flux `onFight`/`onCombatComplete` (passe `bossHpLeft`), `actionPanelProps` boss |
+| `src/hooks/useArenaCombat.ts` | `ArenaMode = 'pvp' \| 'pve'`, flux `onFight`/`onCombatComplete` (passe `bossHpLeft`) ; en mode PvE le bouton FIGHT lance directement le boss |
 | `src/context/GameContext.tsx` | `useBossFight` (récompenses, cycle, sync Supabase) |
-| `src/components/arena/ActionPanel.tsx` | Switch PVE/BOSS/PVP, jauge attaques, barre HP pool |
+| `src/components/arena/ActionPanel.tsx` | Panneau PvE = statut boss (attaques restantes + barre HP pool) et bouton ATTACK BOSS (plus de toggle BOSS) |
 | `src/components/CombatView.tsx` | Intro "A RAID BOSS", rendu boss, écrans de résultat kill/défaite |
 | `src/components/PixelMonster.tsx` | Affiche les assets boss (`MonsterId \| BossId`) |
 | `src/utils/matchmakingUtils.ts` | `MatchType` inclut `'boss'`, label "RAID BOSS" |

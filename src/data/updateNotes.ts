@@ -12,7 +12,7 @@ export const UPDATE_NOTES: UpdateNote[] = [
     date: '2026-08-04',
     title: '🐉 Raid Boss PvE — VOID TITAN, the persistent HP-pool raid!',
     changes: [
-      '🐉 RAID BOSS — débloqué au niveau 30 : un 3e mode dans l\'Arène vous oppose au VOID TITAN, un boss unique au sprite 8-bit.',
+      '🐉 RAID BOSS — débloqué au niveau 30 : en mode PvE, le bouton FIGHT attaque directement le VOID TITAN, un boss unique au sprite 8-bit (plus de toggle BOSS, pas de fenêtre de matchmaking).',
       '⚔️ 5 attaques par jour — jauge indépendante du PvP/PvE, rechargée chaque nuit (minuit, heure de Paris).',
       '💀 HP pool persistant — le boss garde les dégâts subis entre vos attaques et entre les jours. Pas de régénération : chaque point de dégât compte.',
       '🏆 Kill = nouveau cycle — quand le pool tombe à zéro, le boss est terrassé : XP massive (4× un combat normal) + 60 essence, puis un nouveau cycle plus coriace commence.',
