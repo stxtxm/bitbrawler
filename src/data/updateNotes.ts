@@ -8,6 +8,16 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.3.1',
+    date: '2026-08-06',
+    title: '👑 Raid Boss window — dedicated void background & no more matchmaking shell',
+    changes: [
+      '🎨 La fenêtre de combat du boss a sa propre identité — plus de style matchmaking : bordure & glow thématiques (violet abyssal), tag RAID BOSS en coin, et le fond « Void Abyss » : champ d\'étoiles scintillantes, rochers du néant en lévitation, runes corrompues et volutes d\'âmes.',
+      '🧩 Moteur de fonds data-driven — chaque futur boss déclare son background dans BOSS_ASSETS (gradient, accent, éléments) : le rendu est automatique, zéro changement dans CombatView ou le CSS de fenêtre.',
+      '1268 tests passing across 95 test files.',
+    ],
+  },
+  {
     version: '5.3.0',
     date: '2026-08-04',
     title: '🐉 Raid Boss PvE — VOID TITAN, the persistent HP-pool raid!',

@@ -69,6 +69,7 @@ BitBrawler is a React-based pixel-art fighting arena game with sophisticated off
 - Gameplay: unlock, daily attacks, persistent HP pool, kill cycle
 - Balance constants (`GAME_RULES.BOSS`) and **design invariants** (day-1 kill impossible by construction, median kill ~4 days — do not "fix")
 - Persistence (`boss_progress` JSONB, migration #625 executed, sync end-to-end)
+- Dedicated boss combat window + **data-driven background engine** (`BossBackgroundDef` → `BossBackground`, adding a new boss requires no CombatView changes)
 - Code map, test inventory, known pitfalls
 
 ## Key Discoveries
