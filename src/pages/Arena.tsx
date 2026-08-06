@@ -26,7 +26,6 @@ const Arena = () => {
     activeCharacter,
     logout,
     useFight,
-    usePveFight,
     useBossFight,
     startMatchmaking,
     lastXpGain,
@@ -66,7 +65,6 @@ const Arena = () => {
     openModal,
     startMatchmaking,
     useFight,
-    usePveFight,
     useBossFight,
     onLevelUp: levelUp.queueLevelUp,
   });
