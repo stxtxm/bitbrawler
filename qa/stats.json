@@ -21562,5 +21562,151 @@
       "home": 1393,
       "arena": 898
     }
+  },
+  {
+    "date": "2026-08-06T04:01:28.245Z",
+    "run": "2026-08-06",
+    "character": "LANCERSTAR",
+    "character_action": "reused",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 1481,
+        "fight_duration_ms": 6478,
+        "max_hp": 417,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 916.01
+      }
+    ],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": {
+      "str": 13,
+      "vit": 12,
+      "dex": 7,
+      "luk": 10,
+      "int": 31,
+      "foc": 9,
+      "fights": 0
+    },
+    "initial_level": 17,
+    "initial_xp": {
+      "current": 19260,
+      "max": 9338
+    },
+    "initial_max_hp": 404,
+    "initial_equipment": [],
+    "initial_streak": 0,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "final_equipment": null,
+    "final_streak": null,
+    "lootbox_equipment": null,
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": []
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 30519,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "wraith"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 37,
+      "xp_events": [
+        {
+          "time_ms": 30519,
+          "xp": 37,
+          "monster": "wraith",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": true,
+      "level_up_events": [
+        {
+          "time_ms": 30519,
+          "monster": "wraith"
+        }
+      ],
+      "phase_transition_times_ms": [
+        30519
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 37,
+        "monster": "wraith"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.93,
+      "next_level_eta": "⬆ 21m 39s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.20x",
+      "interval": "12.0s",
+      "streak_bonus": null
+    },
+    "initial_essence": null,
+    "final_essence": null,
+    "essence": {
+      "before_idle": 915.13,
+      "after_idle": 916.01,
+      "per_fight": [
+        916.01
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": null,
+      "flow": {
+        "idle_gained": null,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": null
+      }
+    },
+    "level_up_fx": {
+      "detected": true,
+      "glow_class_applied": false,
+      "float_text_shown": true,
+      "level": 19
+    },
+    "offline_gains": null,
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": null,
+    "shop": null,
+    "errors": [
+      "levels_gained is not defined"
+    ],
+    "load_times_ms": {
+      "home": 1975,
+      "arena": 714
+    }
   }
 ]
