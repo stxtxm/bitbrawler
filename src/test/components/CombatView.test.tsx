@@ -904,4 +904,94 @@ describe('CombatView Interface', () => {
         vi.useRealTimers();
         vi.restoreAllMocks();
     });
+
+    it('does NOT render the matchmaking stage during vs/combat phases (phase guard regression)', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 2,
+            details: ['Hero hits Villain for 12 DMG', 'Hero lands a critical hit!'],
+            timeline: [
+                { attackerHp: 100, defenderHp: 88 },
+                { attackerHp: 92, defenderHp: 70 },
+                { attackerHp: 84, defenderHp: 0 },
+            ],
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit',
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        // Intro phase: the matchmaking stage is legitimate here.
+        act(() => { vi.advanceTimersByTime(1000); });
+        expect(container.querySelector('.matchmaking-stage')).not.toBeNull();
+
+        // Phase = 'vs': matchmaking stage must be unmounted.
+        act(() => { vi.advanceTimersByTime(1000); });
+        act(() => { vi.advanceTimersByTime(1000); });
+        expect(container.querySelector('.combat-vs')).not.toBeNull();
+
+        // Phase = 'combat': still no leftover matchmaking stage.
+        act(() => { vi.advanceTimersByTime(1000); });
+        expect(container.querySelector('.combat-action')).not.toBeNull();
+
+        expect(container.querySelector('.matchmaking-stage')).toBeNull();
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('does NOT render the matchmaking stage in boss intro (precedence regression)', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 2,
+            details: ['Hero hits VOID TITAN for 12 DMG', 'Hero lands a critical hit!'],
+            timeline: [
+                { attackerHp: 100, defenderHp: 4900 },
+                { attackerHp: 92, defenderHp: 4800 },
+                { attackerHp: 84, defenderHp: 4700 },
+            ],
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'crit',
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="boss"
+                monsterId="void_titan"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(1000); });
+        act(() => { vi.advanceTimersByTime(1000); });
+        act(() => { vi.advanceTimersByTime(500); });
+
+        expect(container.querySelector('.combat-modal')).not.toBeNull();
+        expect(container.querySelector('.matchmaking-stage')).toBeNull();
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
 });
