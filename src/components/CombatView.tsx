@@ -695,7 +695,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                 {bossDef && <BossBackground def={bossDef.background} />}
                 <div className="particle-layer left" ref={leftLayerRef} />
                 <div className="particle-layer right" ref={rightLayerRef} />
-                {phase === 'intro' && (matchType === 'pve' || matchType === 'boss') ? (
+                {phase === 'intro' && ((matchType === 'pve' || matchType === 'boss') ? (
                     <div className={`combat-intro ${matchType === 'boss' ? 'pve-intro boss-intro' : 'pve-intro'}`}>
                         {comboCount >= 2 && (
                             <div className={`combo-ring ${getComboClass(comboCount)}`}>
@@ -739,7 +739,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                             )}
                         </div>
                     </div>
-                )}
+                ))}
                 {phase === 'vs' && (
                     <div key={`combat-vs-${visibilityKey}`} className="combat-vs">
                         <div className="vs-fighter vs-left">
