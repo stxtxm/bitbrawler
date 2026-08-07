@@ -204,6 +204,41 @@ describe('arena extracted components', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('InventoryPanel allows selecting an equipped item from the loadout to view its stats', () => {
+    const rustySword = getItem('rusty_sword');
+    const onSelectItem = vi.fn();
+
+    render(
+<InventoryPanel
+        inventory={[]}
+        inventoryCapacity={20}
+        equippedItems={[rustySword]}
+        previewItem={null}
+        previewSlotLabel=""
+        previewStats={[]}
+        totalBonusEntries={[]}
+        lootboxResult={null}
+        lootboxRolling={false}
+        canRollDailyLoot
+        inventoryFull={false}
+        streak={0}
+        itemStatMeta={ITEM_STAT_META}
+        isOfflineMode={false}
+        onClose={vi.fn()}
+        onEquip={vi.fn()}
+        onUnequip={vi.fn()}
+        onLootboxRoll={vi.fn()}
+        onCloseLootboxResult={vi.fn()}
+        onSelectItem={onSelectItem}
+        onHoverItem={vi.fn()}
+        previewItemId={null}
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText('View equipped Rusty Sword'));
+    expect(onSelectItem).toHaveBeenCalledWith(rustySword.id);
+  });
+
   it('InventoryPanel displays lootbox rewards with stats', () => {
     const reward = getItem('flame_dagger');
     render(

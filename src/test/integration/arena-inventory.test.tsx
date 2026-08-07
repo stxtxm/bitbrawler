@@ -371,4 +371,33 @@ describe('Arena inventory modal', () => {
     expect(equipBtn).toBeDisabled()
     expect(equipBtn).toHaveTextContent('EQUIPPED')
   })
+
+  it('displays an equipped item stats when selecting it from the loadout', () => {
+    const charWithEquipped: Character = {
+      ...mockCharacter,
+      inventory: ['rusty_sword'],
+      equippedItems: { weapon: 'rusty_sword', armor: null, accessory: null },
+    }
+    mockUseGame.mockReturnValue(makeDefaultGameMock({
+      activeCharacter: charWithEquipped,
+    }))
+
+    const { getByLabelText, getByText } = render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Arena />
+      </MemoryRouter>
+    )
+
+    fireEvent.click(getByLabelText('Inventory'))
+
+    // Select the equipped copy in the loadout to view its stats
+    fireEvent.click(getByLabelText('View equipped Rusty Sword'))
+
+    // The detail view shows stats for the equipped item
+    const equipBtn = getByLabelText('Equip Rusty Sword')
+    expect(equipBtn).toBeDisabled()
+    expect(equipBtn).toHaveTextContent('EQUIPPED')
+    expect(getByText('SALVAGE YIELD')).toBeInTheDocument()
+    expect(getByText('SALVAGE')).toBeInTheDocument()
+  })
 })

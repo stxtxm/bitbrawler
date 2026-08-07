@@ -81,9 +81,32 @@
   position: relative;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   width: 100%;
+}
+
+.inv-loadout-item-select {
+  display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+
+  &:hover .inv-loadout-item-name,
+  &:focus-visible .inv-loadout-item-name {
+    color: $accent-gold;
+  }
+
+  &.selected {
+    outline: 1px solid rgba(255, 204, 0, 0.7);
+  }
 }
 
 .inv-loadout-item-name {
