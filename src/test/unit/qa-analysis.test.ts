@@ -9,6 +9,8 @@
  * These test the pure computation logic used in scripts/analyze-qa-stats.ts
  */
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 
 // ── Types matching RunRecord from analyze-qa-stats.ts ──
 
@@ -412,5 +414,17 @@ describe('QA Streak Analysis', () => {
       { date: '2026-01-02', run: 'r2', character: 'C2', fights: [], errors: [], initial_streak: undefined },
     ]
     expect(computeStreakAnalysis(runs)).toBeNull()
+  })
+})
+
+describe('QA Level-Up Event Contract', () => {
+  it('qa-bot.mjs binds levels_gained to the camelCase local (no ReferenceError shorthand)', () => {
+    const source = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
+    // The fight-loop level-up event must emit the snake_case key the analyzer
+    // expects (analyze-qa-stats.ts LevelUpEvent.levels_gained). A bare shorthand
+    // `levels_gained,` would reference a non-existent variable (the local is
+    // `levelsGained`) → ReferenceError that crashes every QA run on level-up (#630).
+    expect(source).toContain('levels_gained: levelsGained,')
+    expect(source).not.toMatch(/levels_gained,\s*\n/)
   })
 })

@@ -1711,7 +1711,7 @@ async function runFightSequence(page, runKey, runRecord) {
       runRecord.level_up_events.push({
         fight_number: i + 1,
         fight_type: isPve ? 'pve' : 'pvp',
-        levels_gained,
+        levels_gained: levelsGained,
         previous_level: currentLevel,
         new_level: newLevel,
       })
