@@ -23,27 +23,30 @@ const getElementStyle = (el: BossBgElement): CSSProperties => {
 };
 
 export const BossBackground = memo(function BossBackground({ def }: BossBackgroundProps) {
+  const vars = {
+    '--boss-accent': def.accent,
+    '--boss-accent-alt': def.accentAlt ?? def.accent,
+  } as CSSProperties;
   return (
-    <div
-      className="boss-bg"
-      style={{
-        '--boss-accent': def.accent,
-        '--boss-accent-alt': def.accentAlt ?? def.accent,
-      } as CSSProperties}
-      aria-hidden="true"
-    >
-      <div className="boss-bg-gradient" style={{ background: def.gradient }} />
-      <div className="boss-bg-elements">
-        {def.elements.map((el, i) => (
-          <div
-            key={i}
-            className={`boss-bg-el bg-el-${el.type}`}
-            style={getElementStyle(el)}
-          />
-        ))}
+    <>
+      <div
+        className="boss-bg"
+        style={vars}
+        aria-hidden="true"
+      >
+        <div className="boss-bg-gradient" style={{ background: def.gradient }} />
+        <div className="boss-bg-elements">
+          {def.elements.map((el, i) => (
+            <div
+              key={i}
+              className={`boss-bg-el bg-el-${el.type}`}
+              style={getElementStyle(el)}
+            />
+          ))}
+        </div>
+        <div className="boss-bg-vignette" />
       </div>
       {def.label && <div className="boss-bg-tag">{def.label}</div>}
-      <div className="boss-bg-vignette" />
-    </div>
+    </>
   );
 });
