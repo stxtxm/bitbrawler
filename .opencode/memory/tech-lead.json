@@ -3,30 +3,25 @@
   "agent": "tech-lead",
   "last_session": "2026-08-07",
   "recent_failures": [
-    "PR #632 (fix levels_gained, issue #630) est restée BLOQUÉE 2 jours: seuls les checks Vercel tournés, CI + reviewer jamais déclenchés (bug pipeline d'auto-review sur PR auto). → Reviewer dispatché manuellement le 08-07, devrait merger.",
-    "NOUVEAU blocker n°2: deadlock inventory-overlay (issue #637) — 50 timeouts locator.click, 5/6 derniers runs échoués (08-06 10:00 → 08-07 00:00). handleDailyLootbox ferme l'inventaire avec .catch(() => {}) silencieux + aucun locator handler pour .inventory-overlay + syncAutoMode sans pre-dismiss. C'est la 1ère source d'erreur devant #630.",
-    "Les trends win rate (0% last_3/5/10 du 08-06/07) sont corrompues par #630 + #637 — NE PAS ajuster la balance. Le vrai signal all-time = 50.3% (sain).",
-    "qa-bot.config.js: forgeUnlockLevel désynchronisé → forge jamais testé (issue #582, toujours ouverte)."
+    "NOUVEAU blocker n°1: fix #639 (deadlock inventory-overlay) INCOMPLET — le deadlock a MUTÉ de Settings vers le bouton Daily lootbox (runs 272-276, tous après merge 10:22, échoués). Root cause: addLocatorHandler(.inventory-overlay) ferme l'inventaire pendant handleDailyLootbox qui en a besoin OUVERT → timeout 30s. Issue #645 /oc créée.",
+    "14 runs consécutifs échoués (263→276, 08-06 10:01 → 08-07 19:01). Error rate 43%. Les trends win rate restent corrompus — NE PAS ajuster balance.",
+    "Idle win rate 9% = ARTEFACT parsing: cycles_observed:0 + defeats:1 dans tous les records idle_runner (53 runs) — observer ne détecte jamais de cycle complet (xp_label unknown → defeats++). Ne PAS ajuster idleConfig.ts.",
+    "Lootbox legendary 0/133: pity 30 reset à chaque perso QA frais → jamais testable par le bot.",
+    "qa-bot.config.js: forgeUnlockLevel désynchronisé → forge jamais testé (issue #582)."
   ],
   "known_limitations": [
-    "Vérifier AVANT de créer une issue si elle existe déjà (gh issue list) — 60+ propositions majeures ouvertes, risque de doublon élevé.",
-    "Le crash levels_gained (qa-bot.mjs:1714) est le blocker n°1 de la qualité de données QA — tant qu'il n'est pas merge, les win rates last_3/5/10 sont inexploitables.",
-    "PvE XP: fix #629 merge (constant QA 0.80→2.5) — le jeu appliquait déjà 2.5x, seul le tooling QA était faux.",
-    "Idle win rate 12% (08/05) suspect mais à re-mesurer après fix #630 — les runs idle récents sont corrompus.",
-    "Les stats QA sont dans qa/stats.json (frais depuis 08/04, 258 runs cumulés).",
-    "Créer des issues avec /oc pour les bugs critiques et ajustements d'équilibrage.",
-    "Créer des issues SANS /oc pour les propositions majeures (label proposition).",
-    "Le dev-agent n'a PAS le droit de modifier .github/workflows/*.yml — les fixes workflows passent en issues sans /oc (validation humaine).",
-    "Shop unlock level 20 inatteignable par le QA bot (max level ~3) → shop jamais testé (voir #606: baisser à 8).",
-    "Parsing noms équipement + monstres TOUJOURS corrompu (08-07): item_names=['️','️ ARMOR'], seulement 4/19 fights PvE avec monstre nommé. Ne pas conclure sur PvE XP ratio (0.464) tant que ça n'est pas fixé.",
-    "Idle win rate 9% (08-07, 2/22) suspect — re-mesurer après merge #632 + #637 avant d'ajuster idleConfig.ts."
+    "Vérifier AVANT de créer une issue si elle existe déjà (gh issue list) — 60+ propositions majeures ouvertes.",
+    "Deadlock inventory-overlay PERSISTE (muté) malgré #639 — issue #645 en cours.",
+    "Parsing noms équipement + monstres TOUJOURS corrompu (08-07): item_names=['️','️ ARMOR'], seulement 4/19 fights PvE nommés (tous defeats). Ne pas conclure sur PvE XP ratio.",
+    "Shop: null sur 277 runs — palier 20 inatteignable (#606).",
+    "Win rate last_3/5/10 = 0% = artefact QA bot (runs échoués), PAS une régression balance.",
+    "Le dev-agent n'a PAS le droit de modifier .github/workflows/*.yml."
   ],
   "session_notes": [
-    "2026-08-07: Reviewer dispatché pour PR #632 (déblocage levels_gained). Issue #637 créée (/oc): deadlock inventory-overlay. /oc ajouté à #634 (test mirror chore). Proposition majeure #638 créée (Shareable Progress Cards). Commentaires: #630 (PR dispatchée), #548 (parsing noms corrompu), #440 (win rate 0% = artefact persisté), #607 (idle win rate 9% suspect), #408 (nouveau top error source = overlay).",
-    "2026-08-07: Lootbox rarity saine (common 61%, rare 10%, epic 9%, legendary 0). HP growth +15.9/run sain. Streak 2.1→2.8 sain. Stats ~10-11 équilibrées. BOSS: UNLOCK_LEVEL 30, XP_MODIFIER 4, ESSENCE_REWARD 60 (gameRules.ts).",
-    "2026-08-06: Commits: PR #636 (matchmaking precedence fix), #635 (boss window background engine), #633 (boss toggle removal) — mergés. Game en bonne santé, c'est le QA bot qui est malade.",
-    "2026-08-05: Issue #630 créée (fix levels_gained ReferenceError, /oc). Proposition majeure #631 créée (Wave-Like Session Difficulty Curve). Commentaires: #440, #408, #606, #607, #548, #609.",
-    "2026-08-05: Push notifications DÉJÀ implémentées — proposition #583 obsolète/à vérifier.",
-    "2026-08-01: Shop/forge jamais testés car unlock levels inatteignables. Essence fractionnel (.toFixed(2)) = design voulu."
+    "2026-08-07 (soir): Issue #645 créée (/oc) — deadlock v2 lootbox (fix #639 incomplet). Proposition majeure #646 (Welcome-Back Bonus). Commentaires: #408 (43% erreurs, 14 runs consécutifs échoués), #440 (0% = artefact), #548 (parsing corrompu), #606 (shop null 277 runs), #607 (idle 9% = artefact), #637 (fix incomplet).",
+    "2026-08-07: Lootbox rarity saine hors legendary (common 62%, epic 9%). HP growth +15.9/run sain. Streak 2.1→2.8 sain. Stats ~10-11 équilibrées. xp_win_loss_ratio 1.7 pollué par PvE.",
+    "2026-08-06: Commits: PR #636, #635, #633 mergés. Game en bonne santé, c'est le QA bot qui est malade.",
+    "2026-08-05: Issue #630 créée (levels_gained, /oc). Proposition #631 (Wave-Like).",
+    "2026-08-01: Shop/forge jamais testés car unlock levels inatteignables."
   ]
 }
