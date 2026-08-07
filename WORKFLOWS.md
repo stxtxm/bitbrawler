@@ -124,6 +124,14 @@ GitHub Actions triggers:
   → ci.yml (lint, test, build)
 ```
 
+> **⚠️ `[skip ci]` head commits (bot PRs)**: the dev agent's last commit is
+> `chore: update dev memory [skip ci]` — GitHub then ignores the `pull_request`
+> trigger and CI would never run. To keep the merge pipeline reliable,
+> opencode.yml **re-dispatches CI explicitly** on the PR branch right after PR
+> creation (`gh workflow run ci.yml --ref <branch> -f pr_number=<N>`). If a PR
+> still has no CI checks (e.g. manual dispatch), the **reviewer runs the full
+> gate itself** (lint + tsc + tests + build) on the PR branch before merging.
+
 ### Step 6: Trigger Reviewer
 ```
 GitHub Actions triggers:

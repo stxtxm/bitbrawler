@@ -45,11 +45,20 @@
       "status": "fixed",
       "fix_workflow": "opencode.yml:553-556 — remplacé par commentaire, GitHub events gèrent auto",
       "fixed_date": "2026-07-09"
+    },
+    {
+      "id": "skip-ci-head-kills-pr-trigger",
+      "title": "Commit de tête '[skip ci]' (mémoire session) supprime le déclencheur pull_request CI",
+      "impact": "0 run CI sur les PR bot → la chaîne CI→reviewer ne s'enclenche jamais → PR bloquée jusqu'au sweep quotidien tech-lead (trou ~24h, ex: #639)",
+      "status": "fixed",
+      "fix_workflow": "opencode.yml (étape 'Push and manage PR', après create/edit) — si le commit de tête est skip-ci: gh workflow run ci.yml --ref \"$BRANCH\" -f pr_number=\"$PR_NUMBER\". reviewer.yml (étape 'Verify branch integrity') — si la PR n'a AUCUN check CI (statusCheckRollup vide hors Vercel): gate complète locale (lint + tsc + tests + build) avant merge",
+      "fixed_date": "2026-08-07"
     }
   ],
   "cross_agent_constraints": [
     "Le dev agent ne doit JAMAIS modifier .github/workflows/*.yml",
     "Les migrations SQL passent par une issue, jamais exécutées directement",
+    "PR bot merge (#639): opencode.yml re-dispatch CI explicitement (workflow run ci.yml --ref branche) quand le commit de tête est skip-ci; le reviewer reste LA seule autorité de merge et exécute la gate complète (lint+tsc+tests+build) si la PR n'a aucun check CI",
     "Chaque sub-issue doit déclarer depends-on: #N dans son body",
     "Les PR docs/campaign-* sont créées par le supervisor et mergées par le reviewer",
     "Toute modification de schéma DB nécessite une issue de migration sans /oc",

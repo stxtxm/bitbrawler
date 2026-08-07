@@ -743,6 +743,28 @@ jobs:
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_OUTPUT
           echo "✓ PR #$PR_NUMBER: $PR_URL"
 
+          # --- Guarantee the reviewer gate runs even with a [skip ci] head ---
+          # The last commit pushed is the session-memory commit
+          # ("chore: update dev memory [skip ci]"). GitHub suppresses the
+          # pull_request CI trigger when the head commit contains a skip marker
+          # (→ 0 CI run → the CI→reviewer dispatch chain never fires → the PR
+          # stalls until the daily tech-lead sweep). Fix: re-dispatch CI on the
+          # PR branch explicitly. On success ci.yml dispatches the reviewer
+          # (ci_green=true), which runs its own integrity gate before merging.
+          if [ -n "$PR_NUMBER" ]; then
+            HEAD_MSG=$(git log -1 --format=%s)
+            if echo "$HEAD_MSG" | grep -qiE '\[skip ci\]|\[ci skip\]|\[skip actions\]'; then
+              echo "⏳ Head commit \"$HEAD_MSG\" is a skip-ci marker — dispatching CI explicitly on $BRANCH for PR #$PR_NUMBER"
+              if gh workflow run ci.yml --ref "$BRANCH" -f pr_number="$PR_NUMBER" --repo "${{ github.repository }}" 2>/dev/null; then
+                echo "✓ CI dispatched for PR #$PR_NUMBER → reviewer will be triggered automatically"
+              else
+                echo "⚠ Could not dispatch CI — fallback: daily tech-lead sweep will activate the reviewer"
+              fi
+            else
+              echo "✅ Head commit is not skip-ci — the pull_request event will trigger CI normally"
+            fi
+          fi
+
       - name: Dispatch newly created /oc issues
         if: success() && github.event.inputs.mode != 'supervisor'
         env:
