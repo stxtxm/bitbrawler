@@ -554,6 +554,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [activeCharacter, appendIncomingFightHistory, handleDbError, persistCharacter]);
 
+  /**
+   * @deprecated No longer called from the Arena since the boss-toggle removal (#633).
+   * PvE fights now route to useBossFight directly. Kept for pveFightsLeft persistence
+   * and legacy integration tests.
+   */
   const usePveFight = useCallback(async (
     won: boolean,
     xpGained: number,
