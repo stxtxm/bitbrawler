@@ -300,10 +300,10 @@ describe('arena extracted components', () => {
       );
 
       // The upgraded item name or card should show upgrade info
-      const equipBtn = screen.getByLabelText('Equip Rusty Sword');
-      expect(equipBtn).toBeInTheDocument();
+      const itemCard = screen.getByLabelText('View Rusty Sword');
+      expect(itemCard).toBeInTheDocument();
       // The card should have the upgraded class (VISUALLY)
-      expect(equipBtn.className).toContain('upgraded');
+      expect(itemCard.className).toContain('upgraded');
     });
 
     it('renders salvage button in detail view when item is selected', () => {
