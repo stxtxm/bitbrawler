@@ -127,15 +127,17 @@ async function runPushNotifier() {
                 .eq('id', candidate.id);
             sent += 1;
             console.log(`✅ Push sent to ${candidate.name ?? candidate.id}`);
-        } catch (err: any) {
-            if (err?.statusCode === 404 || err?.statusCode === 410) {
+        } catch (err: unknown) {
+            const statusCode = (err as { statusCode?: number })?.statusCode;
+            if (statusCode === 404 || statusCode === 410) {
                 // Subscription no longer valid → unsubscribe
                 await unsubscribeCharacter(candidate.id);
                 cleaned += 1;
-                console.log(`🧹 Unsubscribed expired endpoint for ${candidate.name ?? candidate.id} (${err.statusCode})`);
+                console.log(`🧹 Unsubscribed expired endpoint for ${candidate.name ?? candidate.id} (${statusCode})`);
             } else {
                 failed += 1;
-                console.warn(`⚠️ Push failed for ${candidate.name ?? candidate.id}: ${err?.message ?? err}`);
+                const message = err instanceof Error ? err.message : String(err);
+                console.warn(`⚠️ Push failed for ${candidate.name ?? candidate.id}: ${message}`);
             }
         }
     }

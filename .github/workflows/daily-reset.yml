@@ -36,6 +36,7 @@ jobs:
 
       - name: Send Lootbox Push Notifications
         if: always()
+        continue-on-error: true
         run: npm run push-notify:run
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
