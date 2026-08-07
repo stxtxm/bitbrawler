@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-07T10:38:49Z",
+  "last_session": "2026-08-07T19:57:08Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -141,6 +141,11 @@
     {
       "lesson": "Issue #634: useArenaCombat.test.ts tested a MOCK mirror of the OLD pre-#633 logic (pve branch calling usePveFight with XP_MODIFIER + console.warn '[PvE XP]'). After the boss-toggle removal, the mirror was rewritten to match the real production onCombatComplete: only 'boss' branch (useBossFight with bossHpLeft ?? opponent.hp) and fallback useFight. Removed GAME_RULES import. Also simplified pveMonster state in useArenaCombat.ts (dropped the never-read monsterDef: unknown field, keeping only monsterId which Arena.tsx consumes) and marked usePveFight in GameContext as @deprecated (still exported + used by legacy integration tests, just no longer called from Arena). Gotcha: vitest 1.6 Mock generic takes a params TUPLE not a function type — use `Mock<[won: boolean, xpGained: number, ...], Promise<FightResult | null>>` with `vi.fn<Tuple, ReturnType>()`, NOT `Mock<FunctionType>`. Test suite 1273 green, lint + build OK.",
       "issue": "#634",
+      "date": "2026-08-07"
+    },
+    {
+      "lesson": "Issue #645 QA bot deadlock v2: the #637 .inventory-overlay locator handler dismisses the inventory on EVERY intercepted action, so handleDailyLootbox (which needs the overlay OPEN to click the lootbox button inside it) deadlocks -> 30s timeout (14 consecutive failed runs). CRITICAL Playwright semantic: a bare `return` guard in the handler is NOT enough — after the handler runs, Playwright calls waitForSelector(handler.selector, {state: hidden}) unless the handler was registered with { noWaitAfter: true }; with noWaitAfter, a suppressed handler still lets the click proceed (button is inside the overlay = clickable). Fix: module flag suppressInventoryHandler + guard in handler + { noWaitAfter: true } + set flag before inventoryBtn.click() and re-arm on EVERY exit path (5 post-flag returns: 4 early + main). Exception aborts the whole run (outer catch closes browser) so stuck flag on throw is harmless. Regression tests: source-content contract asserting every return after the set re-arms the flag (returnsAfter == unsets count). 1283 tests green.",
+      "issue": "#645",
       "date": "2026-08-07"
     }
   ]

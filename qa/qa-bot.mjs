@@ -11,6 +11,7 @@ const SCREENSHOTS_DIR = join(__dirname, config.screenshotsDir)
 const QA_TIME_ZONE = config.timeZone || 'Europe/Paris'
 
 let runStartTime = Date.now()
+let suppressInventoryHandler = false
 
 function elapsedRunMs() {
   return Date.now() - runStartTime
@@ -891,6 +892,7 @@ async function handleDailyLootbox(page, runKey) {
     return { available: false, opened: false, reason: 'inventory-button-missing' }
   }
 
+  suppressInventoryHandler = true
   await inventoryBtn.click()
   await page.waitForTimeout(800)
 
@@ -907,6 +909,7 @@ async function handleDailyLootbox(page, runKey) {
         console.warn('   ⚠️ Inventory overlay still attached after close')
       })
     }
+    suppressInventoryHandler = false
     return { available: false, opened: false, reason: 'lootbox-button-missing' }
   }
 
@@ -925,6 +928,7 @@ async function handleDailyLootbox(page, runKey) {
         console.warn('   ⚠️ Inventory overlay still attached after close')
       })
     }
+    suppressInventoryHandler = false
     return { available: false, opened: false, reason: 'already-opened' }
   }
 
@@ -940,6 +944,7 @@ async function handleDailyLootbox(page, runKey) {
         console.warn('   ⚠️ Inventory overlay still attached after close')
       })
     }
+    suppressInventoryHandler = false
     return { available: false, opened: false, reason: 'inventory-full' }
   }
 
@@ -955,6 +960,7 @@ async function handleDailyLootbox(page, runKey) {
         console.warn('   ⚠️ Inventory overlay still attached after close')
       })
     }
+    suppressInventoryHandler = false
     return { available: false, opened: false, reason: 'unexpected-label', label }
   }
 
@@ -1000,6 +1006,8 @@ async function handleDailyLootbox(page, runKey) {
     })
     await page.waitForTimeout(300)
   }
+
+  suppressInventoryHandler = false
 
   // Parse item stats from lootbox result if visible
   const statValues = await page.locator('.lootbox-stat-value').allTextContents().catch(() => [])
@@ -2266,6 +2274,7 @@ async function run() {
   page.addLocatorHandler(
     page.locator('.inventory-overlay'),
     async () => {
+      if (suppressInventoryHandler) return
       const closeBtn = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
       if (await closeBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
         await closeBtn.click({ force: true, timeout: 2000 }).catch(() => {})
@@ -2273,7 +2282,8 @@ async function run() {
         await page.locator('.inventory-overlay').first().click({ force: true, timeout: 2000 }).catch(() => {})
       }
       await page.waitForSelector('.inventory-overlay', { state: 'hidden', timeout: 3000 }).catch(() => {})
-    }
+    },
+    { noWaitAfter: true }
   )
 
   const runRecord = {
