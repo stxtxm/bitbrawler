@@ -191,9 +191,14 @@ describe('arena extracted components', () => {
     expect(screen.getByText('Rusty Sword')).toBeInTheDocument();
     expect(screen.getByText('TOTAL BONUS')).toBeInTheDocument();
 
+    // Tapping an item in the grid only selects it (does not equip)
+    fireEvent.click(screen.getByLabelText('View Rusty Sword'));
+    expect(onSelectItem).toHaveBeenCalledWith(rustySword.id);
+    expect(onEquip).not.toHaveBeenCalled();
+
+    // Equipping is an explicit action from the detail view
     fireEvent.click(screen.getByLabelText('Equip Rusty Sword'));
     expect(onEquip).toHaveBeenCalledWith(rustySword.id, 'weapon');
-    expect(onSelectItem).toHaveBeenCalledWith(rustySword.id);
 
     fireEvent.click(screen.getByLabelText('Close inventory'));
     expect(onClose).toHaveBeenCalled();
@@ -295,10 +300,10 @@ describe('arena extracted components', () => {
       );
 
       // The upgraded item name or card should show upgrade info
-      const equipBtn = screen.getByLabelText('Equip Rusty Sword');
-      expect(equipBtn).toBeInTheDocument();
+      const itemCard = screen.getByLabelText('View Rusty Sword');
+      expect(itemCard).toBeInTheDocument();
       // The card should have the upgraded class (VISUALLY)
-      expect(equipBtn.className).toContain('upgraded');
+      expect(itemCard.className).toContain('upgraded');
     });
 
     it('renders salvage button in detail view when item is selected', () => {
@@ -377,6 +382,50 @@ describe('arena extracted components', () => {
       expect(screen.getByText('SALVAGE YIELD')).toBeInTheDocument();
       // The essence total should be shown
       expect(screen.getByText('50.00')).toBeInTheDocument();
+    });
+
+    it('renders equip button in detail view and disables it when the item is already equipped', () => {
+      const rustySword = getItem('rusty_sword');
+      const onEquip = vi.fn();
+
+      render(
+        <InventoryPanel
+          inventory={[rustySword.id]}
+          inventoryCapacity={20}
+          equippedItems={[rustySword]}
+          previewItem={rustySword}
+          previewSlotLabel="WEAPON"
+          previewStats={getItemStatEntries(rustySword)}
+          totalBonusEntries={[]}
+          lootboxResult={null}
+          lootboxRolling={false}
+          canRollDailyLoot
+          inventoryFull={false}
+          streak={0}
+          itemStatMeta={ITEM_STAT_META}
+          isOfflineMode={false}
+          onClose={vi.fn()}
+          onEquip={onEquip}
+          onUnequip={vi.fn()}
+          onLootboxRoll={vi.fn()}
+          onCloseLootboxResult={vi.fn()}
+          onSelectItem={vi.fn()}
+          onHoverItem={vi.fn()}
+          previewItemId={rustySword.id}
+          onSalvage={vi.fn()}
+        />,
+      );
+
+      const equipBtn = screen.getByLabelText('Equip Rusty Sword');
+      expect(equipBtn).toBeInTheDocument();
+      expect(equipBtn).toBeDisabled();
+      expect(equipBtn).toHaveTextContent('EQUIPPED');
+      fireEvent.click(equipBtn);
+      expect(onEquip).not.toHaveBeenCalled();
+
+      // Salvage stays available even when a copy is equipped
+      const salvageBtn = screen.getByRole('button', { name: /salvage/i });
+      expect(salvageBtn).not.toBeDisabled();
     });
   });
 });

@@ -103,6 +103,10 @@ export const InventoryPanel = memo(function InventoryPanel({
   }, [inventory]);
 
   const lootboxStats = useMemo(() => getItemStatEntries(lootboxResult), [lootboxResult]);
+  const isPreviewEquipped = useMemo(
+    () => previewItem ? equippedItems.some((item) => item.id === previewItem.id) : false,
+    [equippedItems, previewItem],
+  );
   const [activeTab, setActiveTab] = useState<'inventory' | 'shop'>('inventory');
 
   const { activeCharacter } = useGame();
@@ -225,17 +229,14 @@ export const InventoryPanel = memo(function InventoryPanel({
                             <button
                               key={item.id}
                               className={`inv-group-item rarity-${item.rarity} ${isSelected ? 'selected' : ''} ${(itemUpgradeLevels[item.id] ?? 0) > 0 ? `upgraded upgraded-level-${Math.min(itemUpgradeLevels[item.id] ?? 0, 5)}` : ''}`}
-                              onClick={() => {
-                                onEquip(item.id, slot);
-                                onSelectItem(item.id);
-                              }}
+                              onClick={() => onSelectItem(item.id)}
                               onMouseEnter={() => onHoverItem(item.id)}
                               onMouseLeave={() => onHoverItem(null)}
                               onFocus={() => onHoverItem(item.id)}
                               onBlur={() => onHoverItem(null)}
                               onTouchStart={() => onSelectItem(item.id)}
-                              title={`Equip ${item.name}${(itemUpgradeLevels[item.id] ?? 0) > 0 ? ` (+${itemUpgradeLevels[item.id]})` : ''}`}
-                              aria-label={`Equip ${item.name}`}
+                              title={`View ${item.name}${(itemUpgradeLevels[item.id] ?? 0) > 0 ? ` (+${itemUpgradeLevels[item.id]})` : ''}`}
+                              aria-label={`View ${item.name}`}
                             >
                               <PixelItemIcon pixels={item.pixels} size={22} />
                               {item.element && <AffinityBadge element={item.element} size={8} />}
@@ -284,21 +285,34 @@ export const InventoryPanel = memo(function InventoryPanel({
                         );
                       })}
                     </div>
-                    {onSalvage && (
-                      <div className="inventory-forge-actions">
+                    <div className={`inventory-forge-actions ${onSalvage ? 'with-salvage' : ''}`}>
+                      {onSalvage && (
                         <div className="inventory-essence-yield">
                           <span className="essence-yield-label">SALVAGE YIELD</span>
                           <span className="essence-yield-value">+{ESSENCE_YIELD[previewItem.rarity]} Essence</span>
                         </div>
+                      )}
+                      <div className="inventory-detail-buttons">
                         <button
-                          className="forge-action-btn danger"
-                          onClick={() => onSalvage(previewItem.id)}
-                          aria-label={`Salvage ${previewItem.name} for ${ESSENCE_YIELD[previewItem.rarity]} essence`}
+                          className="forge-action-btn"
+                          onClick={() => onEquip(previewItem.id, previewItem.slot)}
+                          disabled={isPreviewEquipped}
+                          title={isPreviewEquipped ? 'Already equipped' : `Equip ${previewItem.name}`}
+                          aria-label={`Equip ${previewItem.name}`}
                         >
-                          SALVAGE
+                          {isPreviewEquipped ? 'EQUIPPED' : 'EQUIP'}
                         </button>
+                        {onSalvage && (
+                          <button
+                            className="forge-action-btn danger"
+                            onClick={() => onSalvage(previewItem.id)}
+                            aria-label={`Salvage ${previewItem.name} for ${ESSENCE_YIELD[previewItem.rarity]} essence`}
+                          >
+                            SALVAGE
+                          </button>
+                        )}
                       </div>
-                    )}
+                    </div>
                     {essence > 0 && (
                       <div className="inventory-essence-total">
                         <span className="essence-total-label">ESSENCE</span>
