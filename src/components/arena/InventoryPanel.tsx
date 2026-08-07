@@ -192,9 +192,20 @@ export const InventoryPanel = memo(function InventoryPanel({
                       <span className="inv-loadout-slot-icon">{SLOT_ICONS[slot]}</span>
                       {item ? (
                         <div className="inv-loadout-item">
-                          <PixelItemIcon pixels={item.pixels} size={22} />
-                          {item.element && <AffinityBadge element={item.element} size={10} />}
-                          <div className="inv-loadout-item-name">{item.name}</div>
+                          <button
+                            className={`inv-loadout-item-select ${previewItemId === item.id ? 'selected' : ''}`}
+                            onClick={() => onSelectItem(item.id)}
+                            onMouseEnter={() => onHoverItem(item.id)}
+                            onMouseLeave={() => onHoverItem(null)}
+                            onFocus={() => onHoverItem(item.id)}
+                            onBlur={() => onHoverItem(null)}
+                            title={`View ${item.name}`}
+                            aria-label={`View equipped ${item.name}`}
+                          >
+                            <PixelItemIcon pixels={item.pixels} size={22} />
+                            {item.element && <AffinityBadge element={item.element} size={10} />}
+                            <div className="inv-loadout-item-name">{item.name}</div>
+                          </button>
                           <button
                             className="inv-unequip-btn"
                             onClick={() => onUnequip(slot)}

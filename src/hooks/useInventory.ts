@@ -126,7 +126,7 @@ export const useInventory = ({
     });
     play('equip');
     setInventoryHoveredId(null);
-    setInventorySelectedId(null);
+    setInventorySelectedId(itemId);
   }, [character, play, saveEquipment, setCharacter]);
 
   const handleUnequipItem = useCallback((slot: ItemSlot) => {
