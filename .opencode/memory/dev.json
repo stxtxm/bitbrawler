@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-05T20:39:24Z",
+  "last_session": "2026-08-07T00:48:56Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -132,6 +132,11 @@
       "lesson": "Issue #630: qa-bot.mjs line 1714 used shorthand `levels_gained,` in object literal but local was camelCase `levelsGained` -> ReferenceError crashed every QA run on level-up (avg_fights_per_run 4.52->1.2, win rate 0% artifact). Fix: explicit `levels_gained: levelsGained,`. Analyzer (analyze-qa-stats.ts LevelUpEvent) reads snake_case key - correct choice. Added static source-shape regression test in qa-analysis.test.ts reading qa/qa-bot.mjs via process.cwd() (import.meta.url breaks under jsdom, ERR_INVALID_URL_SCHEME) asserting explicit key present and no bare shorthand. Pattern: for E2E scripts that cant be unit-tested, guard against runtime ReferenceError via source-content assertion on the exact object literal key.",
       "issue": "#630",
       "date": "2026-08-05"
+    },
+    {
+      "lesson": "Issue #637 QA bot overlay deadlock: inventory-overlay intercepted Settings/Inventory clicks (50 timeouts, 6 runs failed). Fix in qa/qa-bot.mjs only: (1) dismissModals(page) helper = Escape -> force-click .retro-modal-overlay -> force-click .lootbox-result-overlay -> waitForSelector('.retro-modal-overlay', {state:'detached', timeout:3000}) returning bool; (2) addLocatorHandler for .inventory-overlay clicking .inventory-close + backdrop force; (3) syncAutoMode calls dismissModals before settingsBtn.click(); (4) handleDailyLootbox: ALL 5 silent closeInventory.click().catch(()=>{}) replaced with console.warn + dismissModals fallback + waitForSelector('.inventory-overlay',{state:'detached'}). Tests: source-content regression suite 'QA Bot Overlay Deadlock Contract' in qa-analysis.test.ts using extractAsyncFunction + requireAsyncFunction (TS guard helper: expect().not.toBeNull() does NOT narrow - use explicit null check + throw). Gotcha: selector strings live inside longer selectors so assert substring '.inventory-close' not quoted exact match. 1275 tests green, lint + build OK.",
+      "issue": "#637",
+      "date": "2026-08-07"
     }
   ]
 }

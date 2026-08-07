@@ -428,3 +428,60 @@ describe('QA Level-Up Event Contract', () => {
     expect(source).not.toMatch(/levels_gained,\s*\n/)
   })
 })
+
+describe('QA Bot Overlay Deadlock Contract', () => {
+  const qaBotSource = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
+
+  function extractAsyncFunction(source: string, name: string): string | null {
+    const start = source.indexOf(`async function ${name}(`)
+    if (start === -1) return null
+    const bodyStart = source.indexOf('{', start)
+    let depth = 0
+    for (let i = bodyStart; i < source.length; i++) {
+      if (source[i] === '{') depth++
+      else if (source[i] === '}') {
+        depth--
+        if (depth === 0) return source.slice(start, i + 1)
+      }
+    }
+    return null
+  }
+
+  function requireAsyncFunction(name: string): string {
+    const fn = extractAsyncFunction(qaBotSource, name)
+    expect(fn).not.toBeNull()
+    if (fn === null) throw new Error(`qa-bot.mjs missing async function ${name}()`)
+    return fn
+  }
+
+  it('registers a locator handler for .inventory-overlay that force-closes it', () => {
+    // Without this handler (unlike the level-up one) the inventory overlay can
+    // stay open and intercept pointer events on Settings/Inventory (#637).
+    expect(qaBotSource).toContain("page.addLocatorHandler(")
+    expect(qaBotSource).toContain("page.locator('.inventory-overlay')")
+    expect(qaBotSource).toContain('.inventory-close')
+  })
+
+  it('defines a dismissModals(page) helper that polls for overlay detach', () => {
+    const fn = requireAsyncFunction('dismissModals')
+    expect(fn).toContain("keyboard.press('Escape')")
+    expect(fn).toContain("page.locator('.retro-modal-overlay').first()")
+    expect(fn).toContain("page.locator('.lootbox-result-overlay').first()")
+    expect(fn).toContain("state: 'detached'")
+  })
+
+  it('syncAutoMode dismisses open modals before clicking Settings', () => {
+    const fn = requireAsyncFunction('syncAutoMode')
+    const dismissIdx = fn.indexOf('dismissModals(page)')
+    const settingsClickIdx = fn.indexOf('settingsBtn.click()')
+    expect(dismissIdx).toBeGreaterThan(-1)
+    expect(settingsClickIdx).toBeGreaterThan(dismissIdx)
+  })
+
+  it('handleDailyLootbox waits for inventory-overlay detach and does not silently swallow close errors', () => {
+    const fn = requireAsyncFunction('handleDailyLootbox')
+    expect(fn).toContain("waitForSelector('.inventory-overlay'")
+    expect(fn).toContain("state: 'detached'")
+    expect(fn).not.toMatch(/closeInventory\.click\(\)\.catch\(\(\) => \{\}\)/)
+  })
+})
