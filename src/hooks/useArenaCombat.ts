@@ -64,7 +64,7 @@ export const useArenaCombat = ({
   const [mode, setMode] = useState<ArenaMode>('pve');
   const [matchmaking, setMatchmaking] = useState(false);
   const [combatData, setCombatData] = useState<MatchmakingResult | null>(null);
-  const [pveMonster, setPveMonster] = useState<{ monsterId: MonsterId | BossId; monsterDef: unknown } | null>(null);
+  const [pveMonster, setPveMonster] = useState<{ monsterId: MonsterId | BossId } | null>(null);
 
   const fightsLeft = character?.fightsLeft ?? 0;
   const bossProgress = character?.bossProgress
@@ -101,7 +101,7 @@ export const useArenaCombat = ({
           ? ensureBossDailyReset(character.bossProgress)
           : createBossProgress(character);
         const boss = buildBossCharacter(character, progress.bossHp);
-        setPveMonster({ monsterId: BOSS_ID, monsterDef: undefined });
+        setPveMonster({ monsterId: BOSS_ID });
         setCombatData({ opponent: boss, matchType: 'boss', candidates: [] });
       } catch (error: unknown) {
         console.error('Boss generation failed:', error);
