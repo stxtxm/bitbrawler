@@ -23574,5 +23574,152 @@
       "home": 1299,
       "arena": 2309
     }
+  },
+  {
+    "date": "2026-08-07T12:41:18.957Z",
+    "run": "2026-08-07",
+    "character": "AZUREVIGIL",
+    "character_action": "created-after-missing-fight-cta",
+    "replaced_character": "STEELGUARD",
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": {
+      "str": 27,
+      "vit": 7,
+      "dex": 11,
+      "luk": 8,
+      "int": 9,
+      "foc": 16,
+      "fights": 0
+    },
+    "initial_level": 13,
+    "initial_xp": {
+      "current": 8303,
+      "max": 5360
+    },
+    "initial_max_hp": 300,
+    "initial_equipment": [],
+    "initial_streak": null,
+    "final_stats": {
+      "level": 1,
+      "xp": 0,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 9,
+      "vit": 18,
+      "dex": 7,
+      "luk": 11,
+      "int": 14,
+      "foc": 7,
+      "fights": 0
+    },
+    "final_max_hp": 244,
+    "final_equipment": [],
+    "final_streak": null,
+    "lootbox_equipment": null,
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": []
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 30517,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "wraith"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 25,
+      "xp_events": [
+        {
+          "time_ms": 30517,
+          "xp": 25,
+          "monster": "wraith",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": true,
+      "level_up_events": [
+        {
+          "time_ms": 30517,
+          "monster": "wraith"
+        }
+      ],
+      "phase_transition_times_ms": [
+        30517
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 25,
+        "monster": "wraith"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.3,
+      "next_level_eta": "⬆ 2m 31s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.07x",
+      "interval": "11.5s",
+      "streak_bonus": null
+    },
+    "initial_essence": null,
+    "final_essence": null,
+    "essence": {
+      "before_idle": 340.55,
+      "after_idle": 341.22,
+      "per_fight": [],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": null,
+      "flow": {
+        "idle_gained": null,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": null
+      }
+    },
+    "level_up_fx": {
+      "detected": true,
+      "glow_class_applied": false,
+      "float_text_shown": true,
+      "level": 14
+    },
+    "offline_gains": null,
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": null,
+    "shop": null,
+    "errors": [
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('button[aria-label=\"Daily lootbox roll\"], .lootbox-btn').first()\n    - found locator('.inventory-overlay'), intercepting action to run the handler\n    - locator handler has finished, waiting for locator('.inventory-overlay') to be hidden\n    - interception handler has finished, continuing\n"
+    ],
+    "load_times_ms": {
+      "home": 1251,
+      "arena": 2351
+    }
   }
 ]
