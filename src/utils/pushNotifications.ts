@@ -1,5 +1,5 @@
 export const DEFAULT_VAPID_PUBLIC_KEY =
-  'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkQZokFHFVnJf52DSy0H2FrzpwK0X8F_8vM9jUoCgA';
+  'BNawhl0LvObdPNaLyQpOi_7NVmYc2V7rQnlu8K9JEjh8vvDJxwlCU7a-ZmI9RIKLTwCR1y0YvPj_8bXw5cgCYug';
 
 export const isPushSupported = (): boolean => {
   if (typeof navigator === 'undefined') return false;

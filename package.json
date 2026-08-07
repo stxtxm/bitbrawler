@@ -11,6 +11,7 @@
     "test": "vitest",
     "bots:run": "tsx scripts/bot-engine.ts",
     "daily-reset:run": "tsx scripts/daily-reset-engine.ts",
+    "push-notify:run": "tsx scripts/push-notifier.ts",
     "qa:analyze": "tsx scripts/analyze-qa-stats.ts",
     "qa:run": "node qa/qa-bot.mjs",
     "db:migrate": "tsx scripts/run-migration.ts",
@@ -22,7 +23,8 @@
     "@supabase/supabase-js": "^2.106.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.8.0"
+    "react-router-dom": "^6.8.0",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.2",
@@ -31,6 +33,7 @@
     "@types/node": "^25.2.2",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
+    "@types/web-push": "^3.6.4",
     "@typescript-eslint/eslint-plugin": "^8.54.0",
     "@typescript-eslint/parser": "^8.54.0",
     "@vitejs/plugin-react": "^4.2.1",
