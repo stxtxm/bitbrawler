@@ -188,6 +188,8 @@ Original issue description...
          ↓
 [GitHub Actions creates PR automatically]
          ↓
+[opencode.yml re-dispatches CI explicitly if the PR head is a [skip ci] commit]
+         ↓
 [CI workflow runs (lint, test, build)]
          ↓
 [Reviewer workflow analyzes PR]
@@ -769,9 +771,13 @@ Or visit: https://github.com/stxtxm/bitbrawler/actions
 ### Dev Agent Failed
 
 **Check**:
-1. Issue description is clear?
-2. Scope is reasonable (1-2 files)?
-3. No typos in `/oc` command?
+1. Is the PR head commit a `[skip ci]` marker (`chore: update dev memory [skip ci]`)?
+   - GitHub ignores `pull_request` triggers when the head commit has a skip marker → no CI → no reviewer dispatch.
+   - Fix: opencode.yml now re-dispatches CI explicitly on the PR branch. If a PR is still stuck, re-dispatch manually: `gh workflow run ci.yml -f pr_number=<N> --repo stxtxm/bitbrawler` (CI pass → reviewer → auto-merge).
+   - Note: when a PR has no CI checks at all, the reviewer itself runs the full gate (lint, tsc, tests, build) before merging — it never merges untested code.
+2. Is the issue description clear?
+3. Is the scope reasonable (1-2 files)?
+4. Any typos in `/oc` command?
 
 **Fix**:
 1. Edit issue with clearer description

@@ -163,6 +163,23 @@ jobs:
           fi
           echo "✅ TypeScript compilation clean — branch ready for review"
 
+          # Bot PR heads end with a session-memory commit "[skip ci]", which
+          # makes GitHub ignore the pull_request CI trigger → the PR carries no
+          # CI checks at all. In that case we run the full validation gate on
+          # the PR branch ourselves so the reviewer never merges untested code.
+          CHECK_COUNT=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '[.statusCheckRollup[]? | select((((.app?.name // .name // .context // .app?.slug // "") | ascii_downcase | contains("vercel")) | not))] | length' 2>/dev/null || echo "0")
+          if [ "$CHECK_COUNT" -eq 0 ]; then
+            echo "🔍 No CI checks attached to PR #$PR_NUMBER (skip-ci head?) — running full validation locally..."
+            if ! (npm run lint && npx tsc --noEmit && npm test && npm run build); then
+              echo "❌ Full validation failed on the PR branch — preventing merge"
+              gh pr review "$PR_NUMBER" --request-changes --body "❌ La validation complète (lint, tsc, tests, build) a échoué sur la branche de cette PR. Le commit de tête \`[skip ci]\` a désactivé CI, donc le reviewer a exécuté la validation lui-même. Merci de corriger et de repousser."
+              exit 1
+            fi
+            echo "✅ Full validation passed on the PR branch (reviewer gate)"
+          else
+            echo "✅ $CHECK_COUNT CI checks attached to PR #$PR_NUMBER — validation is covered by CI"
+          fi
+
       - name: Check dependencies (depends-on resolution)
         env:
           GH_TOKEN: ${{ github.token }}

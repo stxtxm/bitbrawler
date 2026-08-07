@@ -8,6 +8,16 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.3.2',
+    date: '2026-08-07',
+    title: '🤖 Bot merge pipeline hardening — PRs auto reviewées & mergées en continu',
+    changes: [
+      '🛠️ Les PRs générées automatiquement sont désormais toujours reviewées et mergées par le Reviewer : opencode.yml re-déclenche CI sur la branche de la PR même quand le commit de tête est un marqueur [skip ci] (qui faisait stagner les PR jusqu\'au sweep quotidien).',
+      '🛡️ Le Reviewer reste la seule autorité de merge : quand une PR ne porte aucun check CI, il exécute lui-même la validation complète (lint, tsc, tests, build) sur la branche avant de merger.',
+      '1280 tests passing across 96 test files.',
+    ],
+  },
+  {
     version: '5.3.1',
     date: '2026-08-06',
     title: '👑 Raid Boss window — dedicated void background & no more matchmaking shell',

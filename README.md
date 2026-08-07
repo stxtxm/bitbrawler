@@ -73,7 +73,7 @@ See [AGENTS.md](AGENTS.md) for autonomous agent workflows and responsibilities.
 - **PWA** install experience (works offline)
 - **🔔 Push notifications & session reminders** — opt-in web push ("Se rappeler de moi") with auto nudges for streak in danger, daily lootbox ready, and new events (max 1/day, no spam)
 - **🐉 Raid Boss PvE (VOID TITAN)** — unlocked at level 30, a 3rd Arena mode: 5 daily attacks against a persistent HP-pool boss (no regen between attacks/days), kill grants 4× XP + 60 essence and starts a fresh, tougher cycle. Boss stats scale with the player (see [BOSS_PVE.md](BOSS_PVE.md))
-- **Autonomous CI/CD** with agent-driven development
+- **Autonomous CI/CD** with agent-driven development — bot PRs are always review-gated: opencode.yml re-dispatches CI even when the head commit carries a `[skip ci]` marker, and the reviewer runs the full lint/tsc/tests/build gate itself whenever a PR has no CI checks
 
 ## Quick Links
 
