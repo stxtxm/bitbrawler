@@ -349,6 +349,30 @@ async function loginOrCreateDailyCharacter(page, runKey, savedCharacterName) {
   throw new Error(`Daily QA fighter for ${runKey} could not be created or reused`)
 }
 
+async function dismissModals(page) {
+  await page.keyboard.press('Escape').catch(() => {})
+  await page.waitForTimeout(300)
+
+  const overlay = page.locator('.retro-modal-overlay').first()
+  if (await overlay.isVisible({ timeout: 500 }).catch(() => false)) {
+    await overlay.click({ force: true }).catch(() => {})
+    await page.waitForTimeout(300)
+  }
+
+  const lootboxResult = page.locator('.lootbox-result-overlay').first()
+  if (await lootboxResult.isVisible({ timeout: 500 }).catch(() => false)) {
+    await lootboxResult.click({ force: true }).catch(() => {})
+    await page.waitForTimeout(300)
+  }
+
+  const overlayGone = await page
+    .waitForSelector('.retro-modal-overlay', { state: 'detached', timeout: 3000 })
+    .then(() => true)
+    .catch(() => false)
+
+  return overlayGone
+}
+
 async function syncAutoMode(page, desiredEnabled) {
   console.log(`🔁 Setting auto mode to ${desiredEnabled ? 'ON' : 'OFF'}...`)
 
@@ -358,6 +382,7 @@ async function syncAutoMode(page, desiredEnabled) {
     return false
   }
 
+  await dismissModals(page)
   await settingsBtn.click()
   await page.waitForTimeout(1000)
 
@@ -874,7 +899,13 @@ async function handleDailyLootbox(page, runKey) {
     console.log('   Lootbox button not found in inventory')
     const closeInventory = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
     if (await closeInventory.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await closeInventory.click().catch(() => {})
+      await closeInventory.click().catch(() => {
+        console.warn('   ⚠️ Inventory close click failed, forcing backdrop dismiss')
+        return dismissModals(page)
+      })
+      await page.waitForSelector('.inventory-overlay', { state: 'detached', timeout: 3000 }).catch(() => {
+        console.warn('   ⚠️ Inventory overlay still attached after close')
+      })
     }
     return { available: false, opened: false, reason: 'lootbox-button-missing' }
   }
@@ -886,7 +917,13 @@ async function handleDailyLootbox(page, runKey) {
     console.log('   No lootbox available today')
     const closeInventory = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
     if (await closeInventory.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await closeInventory.click().catch(() => {})
+      await closeInventory.click().catch(() => {
+        console.warn('   ⚠️ Inventory close click failed, forcing backdrop dismiss')
+        return dismissModals(page)
+      })
+      await page.waitForSelector('.inventory-overlay', { state: 'detached', timeout: 3000 }).catch(() => {
+        console.warn('   ⚠️ Inventory overlay still attached after close')
+      })
     }
     return { available: false, opened: false, reason: 'already-opened' }
   }
@@ -895,7 +932,13 @@ async function handleDailyLootbox(page, runKey) {
     console.log('   Lootbox blocked because inventory is full')
     const closeInventory = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
     if (await closeInventory.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await closeInventory.click().catch(() => {})
+      await closeInventory.click().catch(() => {
+        console.warn('   ⚠️ Inventory close click failed, forcing backdrop dismiss')
+        return dismissModals(page)
+      })
+      await page.waitForSelector('.inventory-overlay', { state: 'detached', timeout: 3000 }).catch(() => {
+        console.warn('   ⚠️ Inventory overlay still attached after close')
+      })
     }
     return { available: false, opened: false, reason: 'inventory-full' }
   }
@@ -904,7 +947,13 @@ async function handleDailyLootbox(page, runKey) {
     console.log(`   Lootbox in unexpected state: ${label || 'no label'}`)
     const closeInventory = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
     if (await closeInventory.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await closeInventory.click().catch(() => {})
+      await closeInventory.click().catch(() => {
+        console.warn('   ⚠️ Inventory close click failed, forcing backdrop dismiss')
+        return dismissModals(page)
+      })
+      await page.waitForSelector('.inventory-overlay', { state: 'detached', timeout: 3000 }).catch(() => {
+        console.warn('   ⚠️ Inventory overlay still attached after close')
+      })
     }
     return { available: false, opened: false, reason: 'unexpected-label', label }
   }
@@ -934,14 +983,22 @@ async function handleDailyLootbox(page, runKey) {
 
   const resultOverlay = page.locator('.lootbox-result-overlay').first()
   if (await resultOverlay.isVisible({ timeout: 1500 }).catch(() => false)) {
-    await resultOverlay.click({ force: true }).catch(() => {})
+    await resultOverlay.click({ force: true }).catch(() => {
+      console.warn('   ⚠️ Lootbox result overlay click failed')
+    })
     await page.waitForTimeout(500)
   }
 
   const closeInventory = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
   if (await closeInventory.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await closeInventory.click().catch(() => {})
-    await page.waitForTimeout(500)
+    await closeInventory.click().catch(() => {
+      console.warn('   ⚠️ Inventory close click failed, forcing backdrop dismiss')
+      return dismissModals(page)
+    })
+    await page.waitForSelector('.inventory-overlay', { state: 'detached', timeout: 3000 }).catch(() => {
+      console.warn('   ⚠️ Inventory overlay still attached after close')
+    })
+    await page.waitForTimeout(300)
   }
 
   // Parse item stats from lootbox result if visible
@@ -2202,6 +2259,20 @@ async function run() {
         await page.waitForTimeout(200)
       }
       await page.waitForSelector('.level-up-pop-overlay', { state: 'hidden', timeout: 3000 }).catch(() => {})
+    }
+  )
+
+  // Auto-dismiss inventory overlay whenever it appears (prevents click interception)
+  page.addLocatorHandler(
+    page.locator('.inventory-overlay'),
+    async () => {
+      const closeBtn = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
+      if (await closeBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await closeBtn.click({ force: true, timeout: 2000 }).catch(() => {})
+      } else {
+        await page.locator('.inventory-overlay').first().click({ force: true, timeout: 2000 }).catch(() => {})
+      }
+      await page.waitForSelector('.inventory-overlay', { state: 'hidden', timeout: 3000 }).catch(() => {})
     }
   )
 
