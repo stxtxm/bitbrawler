@@ -23868,5 +23868,152 @@
       "home": 2071,
       "arena": 2489
     }
+  },
+  {
+    "date": "2026-08-07T16:01:18.729Z",
+    "run": "2026-08-07",
+    "character": "ROGUESIGIL",
+    "character_action": "created-after-missing-fight-cta",
+    "replaced_character": "REEDBLADE",
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": {
+      "str": 6,
+      "vit": 13,
+      "dex": 7,
+      "luk": 15,
+      "int": 8,
+      "foc": 27,
+      "fights": 0
+    },
+    "initial_level": 11,
+    "initial_xp": {
+      "current": 4866,
+      "max": 3709
+    },
+    "initial_max_hp": 324,
+    "initial_equipment": [],
+    "initial_streak": null,
+    "final_stats": {
+      "level": 1,
+      "xp": 0,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 7,
+      "vit": 7,
+      "dex": 9,
+      "luk": 7,
+      "int": 11,
+      "foc": 25,
+      "fights": 0
+    },
+    "final_max_hp": 156,
+    "final_equipment": [],
+    "final_streak": null,
+    "lootbox_equipment": null,
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": []
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 30512,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "ogre"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 26,
+      "xp_events": [
+        {
+          "time_ms": 30512,
+          "xp": 26,
+          "monster": "ogre",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": true,
+      "level_up_events": [
+        {
+          "time_ms": 30512,
+          "monster": "ogre"
+        }
+      ],
+      "phase_transition_times_ms": [
+        30512
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 26,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.18,
+      "next_level_eta": "⬆ 6m 46s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.16x",
+      "interval": "12.0s",
+      "streak_bonus": null
+    },
+    "initial_essence": null,
+    "final_essence": null,
+    "essence": {
+      "before_idle": 234.26,
+      "after_idle": 234.91,
+      "per_fight": [],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": null,
+      "flow": {
+        "idle_gained": null,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": null
+      }
+    },
+    "level_up_fx": {
+      "detected": true,
+      "glow_class_applied": false,
+      "float_text_shown": true,
+      "level": 12
+    },
+    "offline_gains": null,
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": null,
+    "shop": null,
+    "errors": [
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('button[aria-label=\"Daily lootbox roll\"], .lootbox-btn').first()\n    - found locator('.inventory-overlay'), intercepting action to run the handler\n    - locator handler has finished, waiting for locator('.inventory-overlay') to be hidden\n    - interception handler has finished, continuing\n"
+    ],
+    "load_times_ms": {
+      "home": 1819,
+      "arena": 2811
+    }
   }
 ]
