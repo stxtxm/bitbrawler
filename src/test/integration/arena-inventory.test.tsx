@@ -197,8 +197,8 @@ describe('Arena inventory modal', () => {
     fireEvent.click(getByLabelText('Inventory'))
 
     // Click on the rusty sword to select it (it's the only item)
-    const equipBtn = getByLabelText('Equip Rusty Sword')
-    fireEvent.click(equipBtn)
+    const itemBtn = getByLabelText('View Rusty Sword')
+    fireEvent.click(itemBtn)
 
     // Now the detail view should show salvage info
     expect(getByText('SALVAGE YIELD')).toBeInTheDocument()
@@ -226,8 +226,8 @@ describe('Arena inventory modal', () => {
     fireEvent.click(getByLabelText('Inventory'))
 
     // Click item to select it and view details (essence total shows in detail view)
-    const equipBtn = getByLabelText('Equip Rusty Sword')
-    fireEvent.click(equipBtn)
+    const itemBtn = getByLabelText('View Rusty Sword')
+    fireEvent.click(itemBtn)
 
     // Essence total should be visible
     expect(getByText('42.00')).toBeInTheDocument()
@@ -258,7 +258,8 @@ describe('Arena inventory modal', () => {
 
     fireEvent.click(getByLabelText('Inventory'))
 
-    // Click equip on rusty sword
+    // Select the item, then equip it from the detail view
+    fireEvent.click(getByLabelText('View Rusty Sword'))
     fireEvent.click(getByLabelText('Equip Rusty Sword'))
 
     // Wait for the promise to reject
@@ -309,5 +310,65 @@ describe('Arena inventory modal', () => {
     const lastCallArg = setCharacter.mock.calls[setCharacter.mock.calls.length - 1][0]
     expect(lastCallArg.equippedItems?.weapon).toBe('rusty_sword')
     expect(lastCallArg.inventory).not.toContain('rusty_sword')
+  })
+
+  // ─── Selection-First UX Tests ─────────────────────────────────────────
+
+  it('does not equip an item when tapping it in the grid', () => {
+    const saveEquipment = vi.fn()
+    const setCharacter = vi.fn()
+    const charWithItems: Character = {
+      ...mockCharacter,
+      inventory: ['rusty_sword'],
+      equippedItems: { weapon: null, armor: null, accessory: null },
+    }
+    mockUseGame.mockReturnValue(makeDefaultGameMock({
+      activeCharacter: charWithItems,
+      saveEquipment,
+      setCharacter,
+    }))
+
+    const { getByLabelText, getByText } = render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Arena />
+      </MemoryRouter>
+    )
+
+    fireEvent.click(getByLabelText('Inventory'))
+
+    // Tap on the item in the grid
+    fireEvent.click(getByLabelText('View Rusty Sword'))
+
+    // No equipment mutation should happen: no save, no setCharacter
+    expect(saveEquipment).not.toHaveBeenCalled()
+    expect(setCharacter).not.toHaveBeenCalled()
+
+    // The detail view shows the salvage action without needing to equip
+    expect(getByText('SALVAGE YIELD')).toBeInTheDocument()
+    expect(getByText('SALVAGE')).toBeInTheDocument()
+  })
+
+  it('shows EQUIPPED state and disables equip when a copy is already equipped', () => {
+    const charWithEquippedCopy: Character = {
+      ...mockCharacter,
+      inventory: ['rusty_sword'],
+      equippedItems: { weapon: 'rusty_sword', armor: null, accessory: null },
+    }
+    mockUseGame.mockReturnValue(makeDefaultGameMock({
+      activeCharacter: charWithEquippedCopy,
+    }))
+
+    const { getByLabelText } = render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Arena />
+      </MemoryRouter>
+    )
+
+    fireEvent.click(getByLabelText('Inventory'))
+    fireEvent.click(getByLabelText('View Rusty Sword'))
+
+    const equipBtn = getByLabelText('Equip Rusty Sword')
+    expect(equipBtn).toBeDisabled()
+    expect(equipBtn).toHaveTextContent('EQUIPPED')
   })
 })

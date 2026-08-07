@@ -898,6 +898,35 @@
   }
 }
 
+// Button cluster inside the detail actions row
+.inventory-detail-buttons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.inventory-forge-actions.with-salvage {
+  @include mobile {
+    flex-direction: column;
+    align-items: stretch;
+
+    .inventory-essence-yield {
+      flex-direction: row;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .inventory-detail-buttons {
+      margin-left: 0;
+
+      .forge-action-btn {
+        flex: 1;
+      }
+    }
+  }
+}
+
 // Essence yield display in inventory detail
 .inventory-essence-yield {
   display: flex;
