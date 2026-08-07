@@ -484,4 +484,31 @@ describe('QA Bot Overlay Deadlock Contract', () => {
     expect(fn).toContain("state: 'detached'")
     expect(fn).not.toMatch(/closeInventory\.click\(\)\.catch\(\(\) => \{\}\)/)
   })
+
+  it('guards the .inventory-overlay locator handler with suppressInventoryHandler + noWaitAfter (deadlock v2 #645)', () => {
+    // The #637 handler dismisses the inventory on EVERY intercepted action. During
+    // handleDailyLootbox the overlay must stay OPEN (the lootbox button lives inside
+    // it), so the handler fights the flow → infinite retry → 30s timeout (#645).
+    // A bare `return` guard is NOT enough: Playwright waits for the selector to be
+    // hidden after the handler unless noWaitAfter is set, which would still block.
+    expect(qaBotSource).toContain('let suppressInventoryHandler = false')
+    const overlayLocatorIdx = qaBotSource.indexOf("page.locator('.inventory-overlay')")
+    expect(overlayLocatorIdx).toBeGreaterThan(-1)
+    const handlerBlock = qaBotSource.slice(overlayLocatorIdx, overlayLocatorIdx + 700)
+    expect(handlerBlock).toContain('if (suppressInventoryHandler) return')
+    expect(handlerBlock).toContain('noWaitAfter: true')
+  })
+
+  it('handleDailyLootbox suppresses the inventory handler before opening inventory and re-arms it on every exit path (#645)', () => {
+    const fn = requireAsyncFunction('handleDailyLootbox')
+    const setIdx = fn.indexOf('suppressInventoryHandler = true')
+    const clickIdx = fn.indexOf('inventoryBtn.click()')
+    expect(setIdx).toBeGreaterThan(-1)
+    expect(setIdx).toBeLessThan(clickIdx)
+    const afterSet = fn.slice(setIdx)
+    const returnsAfter = (afterSet.match(/return \{/g) || []).length
+    const unsets = (afterSet.match(/suppressInventoryHandler = false/g) || []).length
+    expect(returnsAfter).toBeGreaterThan(0)
+    expect(unsets).toBe(returnsAfter)
+  })
 })
