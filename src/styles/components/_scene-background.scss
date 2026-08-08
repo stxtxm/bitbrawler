@@ -64,6 +64,21 @@
     animation: sceneTagPulse 2s ease-in-out infinite;
 }
 
+// ─── Host-container integration ───────────────────────────────────────────────
+// When the scene renders inside a combat container (`.combat-action`,
+// `.combat-vs`), override generic child rules (e.g. `.combat-action > *`
+// forces z-index: 2) so the scene stays BEHIND the content while the corner
+// tag stays ABOVE it.
+.combat-action > .scene-bg-root,
+.combat-vs > .scene-bg-root {
+    z-index: 0;
+}
+
+.combat-action > .scene-bg-tag,
+.combat-vs > .scene-bg-tag {
+    z-index: 40;
+}
+
 @keyframes sceneTagPulse {
     0%, 100% { box-shadow: 0 0 8px rgba(0, 0, 0, 0.6), inset 0 0 6px rgba(0, 0, 0, 0.4); }
     50% { box-shadow: 0 0 16px var(--scene-accent, #888), inset 0 0 8px rgba(0, 0, 0, 0.4); }
