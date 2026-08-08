@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { SceneBackground } from '../../components/SceneBackground';
-import { BACKGROUNDS, getBackgroundDef, VOLCANIC_BACKGROUND } from '../../data/backgrounds';
+import { BACKGROUNDS, getBackgroundDef, VOLCANIC_BACKGROUND, VOID_ABYSS_BACKGROUND } from '../../data/backgrounds';
 import { BOSS_ASSETS } from '../../data/bossAssets';
 import { BackgroundDef, BackgroundElementType } from '../../data/backgrounds';
 
@@ -69,17 +69,34 @@ describe('Background engine — registry', () => {
         expect(types).toContain('smoke');
         expect(types).toContain('crack');
     });
+
+    it('volcanic background carries no badge label (it must not mask the fight)', () => {
+        expect(VOLCANIC_BACKGROUND.label).toBeUndefined();
+    });
+
+    it('volcanic lava stays OFF the ground line so fighters stand on rock', () => {
+        const lavas = VOLCANIC_BACKGROUND.elements.filter((el) => el.type === 'lava');
+        expect(lavas.length).toBeGreaterThan(0);
+        for (const lava of lavas) {
+            expect(lava.y).toBeLessThanOrEqual(60);
+        }
+        // A wide basalt slab grounds the fighters.
+        const ground = VOLCANIC_BACKGROUND.elements
+            .find((el) => el.type === 'rock' && (el.width ?? 0) >= 400);
+        expect(ground).toBeDefined();
+        expect((ground?.y ?? 0)).toBeGreaterThanOrEqual(80);
+    });
 });
 
 describe('SceneBackground — renderer', () => {
     it('renders gradient layer, element layer, vignette and corner tag', () => {
-        const { container } = render(<SceneBackground def={VOLCANIC_BACKGROUND} />);
+        const { container } = render(<SceneBackground def={VOID_ABYSS_BACKGROUND} />);
 
         expect(container.querySelector('.scene-bg')).not.toBeNull();
         expect(container.querySelector('.scene-bg-gradient')).not.toBeNull();
         expect(container.querySelector('.scene-bg-vignette')).not.toBeNull();
-        expect(container.querySelectorAll('.scene-bg-el').length).toBe(VOLCANIC_BACKGROUND.elements.length);
-        expect(container.querySelector('.scene-bg-tag')?.textContent).toContain('VOLCANO');
+        expect(container.querySelectorAll('.scene-bg-el').length).toBe(VOID_ABYSS_BACKGROUND.elements.length);
+        expect(container.querySelector('.scene-bg-tag')?.textContent).toContain('RAID BOSS');
     });
 
     it('omits the corner tag when the def has no label', () => {
@@ -115,26 +132,26 @@ describe('SceneBackground — renderer', () => {
     });
 
     it('exposes accent vars on the root so the corner tag inherits them', () => {
-        const { container } = render(<SceneBackground def={VOLCANIC_BACKGROUND} />);
+        const { container } = render(<SceneBackground def={VOID_ABYSS_BACKGROUND} />);
         const root = container.querySelector<HTMLElement>('.scene-bg-root');
         expect(root).not.toBeNull();
         const rootVars = root?.style.cssText ?? '';
         expect(rootVars).toContain('--scene-accent');
-        expect(rootVars).toContain(VOLCANIC_BACKGROUND.accent);
+        expect(rootVars).toContain(VOID_ABYSS_BACKGROUND.accent);
         // The tag is a SIBLING of the root (never z-clipped by its stacking
         // context) and carries its own vars.
         const tag = container.querySelector<HTMLElement>('.scene-bg-tag');
         expect(tag).not.toBeNull();
         const tagVars = tag?.style.cssText ?? '';
         expect(tagVars).toContain('--scene-accent');
-        expect(tagVars).toContain(VOLCANIC_BACKGROUND.accent);
+        expect(tagVars).toContain(VOID_ABYSS_BACKGROUND.accent);
         // Root is aria-hidden (decorative), tag is not.
         expect(root?.getAttribute('aria-hidden')).toBe('true');
         expect(tag?.getAttribute('aria-hidden')).toBeNull();
     });
 
     it('renders the corner tag as a sibling AFTER the scene root', () => {
-        const { container } = render(<SceneBackground def={VOLCANIC_BACKGROUND} />);
+        const { container } = render(<SceneBackground def={VOID_ABYSS_BACKGROUND} />);
         const root = container.querySelector('.scene-bg-root');
         expect(root?.nextElementSibling?.classList.contains('scene-bg-tag')).toBe(true);
     });
