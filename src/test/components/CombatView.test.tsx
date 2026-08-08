@@ -1029,17 +1029,25 @@ describe('CombatView Interface', () => {
         expect(container.querySelector('.scene-bg-root')).toBeNull();
         expect(container.querySelector('.scene-bg-tag')).toBeNull();
 
-        // Advance into the actual combat window (vs/combat phases).
+        // Advance into the actual combat phases (vs/combat).
         act(() => { vi.advanceTimersByTime(2000); });
         act(() => { vi.advanceTimersByTime(1000); });
         act(() => { vi.advanceTimersByTime(1000); });
         act(() => { vi.advanceTimersByTime(500); });
 
-        // Scene + label now live INSIDE the combat modal (the combat window).
+        // The scene is the background of the COMBAT CONTAINER (vs/action),
+        // not a layer of the whole dialog.
         const modal = container.querySelector('.boss-modal');
-        expect(modal?.querySelector('.scene-bg-root')).not.toBeNull();
-        expect(modal?.querySelector('.scene-bg-tag')?.textContent).toContain('VOLCANO');
-        // …and nowhere else in the overlay.
+        expect(modal?.querySelector(':scope > .scene-bg-root')).toBeNull();
+        const combatScene =
+            container.querySelector('.combat-action > .scene-bg-root')
+            ?? container.querySelector('.combat-vs > .scene-bg-root');
+        expect(combatScene).not.toBeNull();
+        const combatTag =
+            container.querySelector('.combat-action > .scene-bg-tag')
+            ?? container.querySelector('.combat-vs > .scene-bg-tag');
+        expect(combatTag?.textContent).toContain('VOLCANO');
+        // …and nowhere else in the dialog.
         expect(container.querySelectorAll('.scene-bg-root').length).toBe(1);
 
         vi.useRealTimers();
