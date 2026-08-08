@@ -24768,5 +24768,180 @@
       "home": 1211,
       "arena": 2324
     }
+  },
+  {
+    "date": "2026-08-08T06:35:36.660Z",
+    "run": "2026-08-08",
+    "character": "FROSTEXILE",
+    "character_action": "created-after-missing-fight-cta",
+    "replaced_character": "LUNARMOON",
+    "fights": [],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Worn Bracers",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": {
+      "str": 9,
+      "vit": 27,
+      "dex": 16,
+      "luk": 9,
+      "int": 10,
+      "foc": 8,
+      "fights": 0
+    },
+    "initial_level": 12,
+    "initial_xp": {
+      "current": 6279,
+      "max": 4504
+    },
+    "initial_max_hp": 448,
+    "initial_equipment": [],
+    "initial_streak": null,
+    "final_stats": {
+      "level": 1,
+      "xp": 0,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 7,
+      "vit": 7,
+      "dex": 25,
+      "luk": 9,
+      "int": 11,
+      "foc": 7,
+      "fights": 0
+    },
+    "final_max_hp": 156,
+    "final_equipment": [],
+    "final_streak": null,
+    "lootbox_equipment": [],
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": []
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 39621,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "wraith"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 24,
+      "xp_events": [
+        {
+          "time_ms": 39621,
+          "xp": 24,
+          "monster": "wraith",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": true,
+      "level_up_events": [
+        {
+          "time_ms": 7051,
+          "monster": "wraith"
+        },
+        {
+          "time_ms": 7564,
+          "monster": "wraith"
+        },
+        {
+          "time_ms": 8077,
+          "monster": "wraith"
+        },
+        {
+          "time_ms": 8592,
+          "monster": "wraith"
+        },
+        {
+          "time_ms": 9105,
+          "monster": "wraith"
+        },
+        {
+          "time_ms": 39621,
+          "monster": "wraith"
+        }
+      ],
+      "phase_transition_times_ms": [
+        7051,
+        8592,
+        39621
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 24,
+        "monster": "wraith"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.18,
+      "next_level_eta": "⬆ 4m 29s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 0.97x",
+      "interval": "10.7s",
+      "streak_bonus": null
+    },
+    "initial_essence": null,
+    "final_essence": null,
+    "essence": {
+      "before_idle": 255.36,
+      "after_idle": 256.06,
+      "per_fight": [],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": null,
+      "flow": {
+        "idle_gained": null,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": null
+      }
+    },
+    "level_up_fx": {
+      "detected": true,
+      "glow_class_applied": false,
+      "float_text_shown": true,
+      "level": 13
+    },
+    "offline_gains": null,
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": null,
+    "shop": null,
+    "errors": [
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('[role=\"switch\"][aria-label=\"Auto mode\"], [role=\"switch\"], .pixel-switch').first()\n    - locator resolved to <button role=\"switch\" aria-checked=\"true\" aria-label=\"PvE mode\" class=\"pixel-switch pve-switch on\">…</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay settings-overlay\">…</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay settings-overlay\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    52 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div class=\"retro-modal-overlay settings-overlay\">…</div> intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n"
+    ],
+    "load_times_ms": {
+      "home": 1621,
+      "arena": 2789
+    }
   }
 ]
