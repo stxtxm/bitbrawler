@@ -741,7 +741,6 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                 ))}
                 {phase === 'vs' && (
                     <div key={`combat-vs-${visibilityKey}`} className="combat-vs">
-                        {bossDef && <SceneBackground def={bossDef.background} />}
                         <div className="vs-fighter vs-left">
                             <PixelCharacter seed={player.seed} gender={player.gender} scale={8} />
                             <div className="vs-fighter-name">{player.name}</div>
@@ -775,9 +774,9 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                         className={`combat-action${actionPulse ? ` action-${actionPulse.type}` : ''}${hitStop ? ' hit-stop' : ''}${isKO ? ' action-ko' : ''}`}
                         style={{ '--shake-dir': actionPulse?.actor === 'player' ? -1 : 1 } as React.CSSProperties}
                     >
-                        {bossDef && <SceneBackground def={bossDef.background} />}
                         {screenFlash !== 'none' && <div className={`screen-flash flash-${screenFlash}`} />}
                         <div className="combat-fighters">
+                            {bossDef && <SceneBackground def={bossDef.background} />}
                             <div key={`player-${currentRound}`} className={`fighter-side left${fighterEntrance ? ' enter-left' : ''}${actionPulse?.actor === 'player' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'opponent' ? ` react-${reactionType}` : ''}${showPlayerDefeat ? ' defeated' : ''}`}>
                                 <div className="fighter-character-wrap">
                                     <PixelCharacter seed={player.seed} gender={player.gender} scale={6} />
