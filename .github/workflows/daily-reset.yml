@@ -6,6 +6,11 @@ on:
     - cron: '0 22 * * *' # 00:00 Paris during CEST (UTC+2)
     - cron: '0 23 * * *' # 00:00 Paris during CET (UTC+1)
   workflow_dispatch:
+    inputs:
+      push-force-test:
+        description: 'Envoyer une notification push de test à tous les abonnés (ignore éligibilité et anti-spam)'
+        type: boolean
+        default: false
 
 jobs:
   daily-reset:
@@ -44,6 +49,7 @@ jobs:
           VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
           VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
           VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+          PUSH_FORCE: ${{ github.event.inputs.push-force-test == 'true' && '1' || '' }}
 
       - name: Sanity Check
         if: always()
