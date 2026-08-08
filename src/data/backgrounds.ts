@@ -66,30 +66,30 @@ export type BackgroundDef = {
 // dark basalt slabs at the base so the fighters stand on solid rock, dim
 // magma veins, rising embers and smoke columns. Warm ember/orange palette
 // over a charred night sky.
-// Positioned for the raid boss arena: the active volcano sits behind the boss
-// (x ~78%), extra peaks flank the scene. No corner badge — the scene must
-// never mask the fighters.
+// Positioned for the raid boss arena: the active volcano sits CENTERED behind
+// the fighters (x ~50%), flanking cones complete the composition. No corner
+// badge — the scene must never mask the fighters.
 
 export const VOLCANIC_BACKGROUND: BackgroundDef = {
     id: 'volcanic',
     accent: '#ff7b2e',
     accentAlt: '#ffd166',
     gradient:
-        'radial-gradient(95% 55% at 78% 30%, rgba(255, 106, 41, 0.30) 0%, rgba(255, 106, 41, 0) 60%),' +
+        'radial-gradient(95% 55% at 50% 30%, rgba(255, 106, 41, 0.30) 0%, rgba(255, 106, 41, 0) 60%),' +
         'radial-gradient(150% 130% at 50% 110%, #2e121a 0%, #1c0c12 38%, #0b050d 72%, #050209 100%)',
     elements: [
         // Calder glow haze — high behind the summit.
-        { type: 'halo', x: 78, y: 44, size: 215, color: 'rgba(255, 123, 46, 0.30)', speed: 3 },
-        { type: 'halo', x: 78, y: 44, size: 118, color: 'rgba(255, 209, 102, 0.26)', speed: 2.2, delay: 0.6 },
-        // Volcano silhouettes — main cone + flanking cones.
-        { type: 'peak', x: 78, y: 88, size: 265, height: 195, color: '#1e0a12', speed: 7 },
-        { type: 'peak', x: 26, y: 90, size: 140, height: 110, color: '#130610', speed: 8.5, delay: 0.4 },
-        { type: 'peak', x: 98, y: 93, size: 120, height: 84, color: '#160710', speed: 9, delay: 0.9 },
+        { type: 'halo', x: 50, y: 44, size: 215, color: 'rgba(255, 123, 46, 0.30)', speed: 3 },
+        { type: 'halo', x: 50, y: 44, size: 118, color: 'rgba(255, 209, 102, 0.26)', speed: 2.2, delay: 0.6 },
+        // Volcano silhouettes — main cone centered + flanking cones.
+        { type: 'peak', x: 50, y: 88, size: 280, height: 205, color: '#1e0a12', speed: 7 },
+        { type: 'peak', x: 20, y: 90, size: 130, height: 100, color: '#130610', speed: 8.5, delay: 0.4 },
+        { type: 'peak', x: 80, y: 93, size: 130, height: 96, color: '#160710', speed: 9, delay: 0.9 },
         // Crater magma — SUMMIT ONLY (y ≤ 44), never reaches the floor.
-        { type: 'lava', x: 78, y: 40, size: 66, height: 11, color: '#ff9f1c', glow: 'rgba(255, 159, 28, 0.55)', speed: 2.6 },
-        { type: 'lava', x: 76, y: 44, size: 34, height: 8, color: '#ffd166', glow: 'rgba(255, 209, 102, 0.5)', speed: 2.9, delay: 0.7 },
+        { type: 'lava', x: 50, y: 40, size: 66, height: 11, color: '#ff9f1c', glow: 'rgba(255, 159, 28, 0.55)', speed: 2.6 },
+        { type: 'lava', x: 48, y: 44, size: 34, height: 8, color: '#ffd166', glow: 'rgba(255, 209, 102, 0.5)', speed: 2.9, delay: 0.7 },
         // Thin lava trickle spilling down the flank (still far above the ground).
-        { type: 'lava', x: 89, y: 56, size: 16, width: 5, height: 30, color: '#ff8a2a', glow: 'rgba(255, 138, 42, 0.45)', speed: 3.2, delay: 0.1, rotate: -12 },
+        { type: 'lava', x: 58, y: 56, size: 16, width: 5, height: 30, color: '#ff8a2a', glow: 'rgba(255, 138, 42, 0.45)', speed: 3.2, delay: 0.1, rotate: -12 },
         // Granite ground — the fighters' solid basalt footing.
         { type: 'rock', x: 56, y: 94, size: 8, width: 480, height: 38, color: '#241016', speed: 6, delay: 1 },
         { type: 'rock', x: 50, y: 90, size: 8, width: 300, height: 14, color: '#170a11', speed: 6.5, delay: 0.5 },
@@ -101,17 +101,17 @@ export const VOLCANIC_BACKGROUND: BackgroundDef = {
         { type: 'crack', x: 34, y: 87, size: 5, width: 28, color: 'rgba(255, 107, 43, 0.45)', glow: 'rgba(255, 107, 43, 0.3)', speed: 2.4, delay: 0.4, rotate: -8 },
         { type: 'crack', x: 60, y: 92, size: 5, width: 24, color: 'rgba(255, 209, 102, 0.38)', glow: 'rgba(255, 209, 102, 0.28)', speed: 2.6, delay: 1.2, rotate: 7 },
         // Embers drifting up from the crater (upper band only).
-        { type: 'ember', x: 78, y: 46, size: 4, color: '#ffd166', glow: 'rgba(255, 209, 102, 0.9)', speed: 8, delay: 0 },
-        { type: 'ember', x: 82, y: 40, size: 3, color: '#ff9f1c', glow: 'rgba(255, 159, 28, 0.9)', speed: 9, delay: 0.8 },
-        { type: 'ember', x: 74, y: 42, size: 3, color: '#ffb84d', glow: 'rgba(255, 184, 77, 0.9)', speed: 7.5, delay: 1.6 },
-        { type: 'ember', x: 86, y: 36, size: 2, color: '#ffd166', glow: 'rgba(255, 209, 102, 0.9)', speed: 10, delay: 2.3 },
-        { type: 'ember', x: 70, y: 50, size: 2, color: '#ff6b2b', glow: 'rgba(255, 107, 43, 0.8)', speed: 8.5, delay: 1.0 },
-        { type: 'ember', x: 92, y: 52, size: 2, color: '#ffd166', glow: 'rgba(255, 209, 102, 0.8)', speed: 9, delay: 0.4 },
+        { type: 'ember', x: 50, y: 46, size: 4, color: '#ffd166', glow: 'rgba(255, 209, 102, 0.9)', speed: 8, delay: 0 },
+        { type: 'ember', x: 54, y: 40, size: 3, color: '#ff9f1c', glow: 'rgba(255, 159, 28, 0.9)', speed: 9, delay: 0.8 },
+        { type: 'ember', x: 46, y: 42, size: 3, color: '#ffb84d', glow: 'rgba(255, 184, 77, 0.9)', speed: 7.5, delay: 1.6 },
+        { type: 'ember', x: 58, y: 36, size: 2, color: '#ffd166', glow: 'rgba(255, 209, 102, 0.9)', speed: 10, delay: 2.3 },
+        { type: 'ember', x: 42, y: 50, size: 2, color: '#ff6b2b', glow: 'rgba(255, 107, 43, 0.8)', speed: 8.5, delay: 1.0 },
+        { type: 'ember', x: 62, y: 52, size: 2, color: '#ffd166', glow: 'rgba(255, 209, 102, 0.8)', speed: 9, delay: 0.4 },
         // Smoke columns drifting from the summit.
-        { type: 'smoke', x: 78, y: 38, size: 26, color: 'rgba(128, 96, 104, 0.5)', speed: 10, delay: 0.2 },
-        { type: 'smoke', x: 84, y: 34, size: 18, color: 'rgba(112, 86, 96, 0.45)', speed: 12, delay: 2.1 },
-        { type: 'smoke', x: 26, y: 52, size: 22, color: 'rgba(118, 94, 102, 0.4)', speed: 11, delay: 1.2 },
-        { type: 'smoke', x: 94, y: 60, size: 16, color: 'rgba(100, 78, 88, 0.4)', speed: 12, delay: 0.9 },
+        { type: 'smoke', x: 50, y: 38, size: 26, color: 'rgba(128, 96, 104, 0.5)', speed: 10, delay: 0.2 },
+        { type: 'smoke', x: 56, y: 34, size: 18, color: 'rgba(112, 86, 96, 0.45)', speed: 12, delay: 2.1 },
+        { type: 'smoke', x: 22, y: 52, size: 22, color: 'rgba(118, 94, 102, 0.4)', speed: 11, delay: 1.2 },
+        { type: 'smoke', x: 78, y: 60, size: 16, color: 'rgba(100, 78, 88, 0.4)', speed: 12, delay: 0.9 },
     ],
 };
 
