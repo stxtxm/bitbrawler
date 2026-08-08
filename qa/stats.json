@@ -24615,5 +24615,158 @@
       "home": 1549,
       "arena": 2707
     }
+  },
+  {
+    "date": "2026-08-08T04:01:17.557Z",
+    "run": "2026-08-08",
+    "character": "LUNARMOON",
+    "character_action": "created-after-missing-fight-cta",
+    "replaced_character": "PROUDGUARD",
+    "fights": [],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Crystal Pendant",
+      "rarity": "EPIC",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "initial_stats": {
+      "str": 6,
+      "vit": 16,
+      "dex": 15,
+      "luk": 7,
+      "int": 25,
+      "foc": 9,
+      "fights": 0
+    },
+    "initial_level": 13,
+    "initial_xp": {
+      "current": 6932,
+      "max": 5360
+    },
+    "initial_max_hp": 372,
+    "initial_equipment": [],
+    "initial_streak": null,
+    "final_stats": {
+      "level": 1,
+      "xp": 0,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 8,
+      "vit": 21,
+      "dex": 15,
+      "luk": 6,
+      "int": 9,
+      "foc": 7,
+      "fights": 0
+    },
+    "final_max_hp": 268,
+    "final_equipment": [],
+    "final_streak": null,
+    "lootbox_equipment": [],
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": []
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 30519,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "ogre"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 26,
+      "xp_events": [
+        {
+          "time_ms": 30519,
+          "xp": 26,
+          "monster": "ogre",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": true,
+      "level_up_events": [
+        {
+          "time_ms": 30519,
+          "monster": "ogre"
+        }
+      ],
+      "phase_transition_times_ms": [
+        30519
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 26,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.58,
+      "next_level_eta": "⬆ 9m 15s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.16x",
+      "interval": "11.2s",
+      "streak_bonus": null
+    },
+    "initial_essence": null,
+    "final_essence": null,
+    "essence": {
+      "before_idle": 335.58,
+      "after_idle": 336.3,
+      "per_fight": [],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": null,
+      "flow": {
+        "idle_gained": null,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": null
+      }
+    },
+    "level_up_fx": {
+      "detected": true,
+      "glow_class_applied": false,
+      "float_text_shown": true,
+      "level": 14
+    },
+    "offline_gains": null,
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": null,
+    "shop": null,
+    "errors": [
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('[role=\"switch\"][aria-label=\"Auto mode\"], [role=\"switch\"], .pixel-switch').first()\n    - locator resolved to <button role=\"switch\" aria-checked=\"true\" aria-label=\"PvE mode\" class=\"pixel-switch pve-switch on\">…</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay settings-overlay\">…</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay settings-overlay\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    52 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div class=\"retro-modal-overlay settings-overlay\">…</div> intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n"
+    ],
+    "load_times_ms": {
+      "home": 1211,
+      "arena": 2324
+    }
   }
 ]
