@@ -14,7 +14,7 @@ import { getBossKillXp } from '../utils/bossUtils';
 import { ParticleSystem, type ParticleType } from '../utils/particleSystem';
 import { COMBAT_BALANCE } from '../config/combatBalance';
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode';
-import { BossBackground } from './BossBackground';
+import { SceneBackground } from './SceneBackground';
 
 const HIT_STOP_DURATION: Record<string, number> = {
   hit: 100,
@@ -692,7 +692,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                 } as React.CSSProperties) : undefined}
                 onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()}
             >
-                {bossDef && <BossBackground def={bossDef.background} />}
+                {bossDef && <SceneBackground def={bossDef.background} />}
                 <div className="particle-layer left" ref={leftLayerRef} />
                 <div className="particle-layer right" ref={rightLayerRef} />
                 {phase === 'intro' && ((matchType === 'pve' || matchType === 'boss') ? (
