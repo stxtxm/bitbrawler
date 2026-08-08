@@ -994,4 +994,55 @@ describe('CombatView Interface', () => {
         vi.useRealTimers();
         vi.restoreAllMocks();
     });
+
+    it('renders the scene background ONLY inside combat phases, not the whole dialog', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 2,
+            details: ['Hero hits VOID TITAN for 12 DMG', 'Hero lands a critical hit!'],
+            timeline: [
+                { attackerHp: 100, defenderHp: 4900 },
+                { attackerHp: 92, defenderHp: 4800 },
+                { attackerHp: 84, defenderHp: 4700 },
+            ],
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'crit',
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="boss"
+                monsterId="void_titan"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        // Intro dialog stays clean — the volcanic scene must NOT fill the whole dialog.
+        expect(container.querySelector('.scene-bg-root')).toBeNull();
+        expect(container.querySelector('.scene-bg-tag')).toBeNull();
+
+        // Advance into the actual combat window (vs/combat phases).
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(1000); });
+        act(() => { vi.advanceTimersByTime(1000); });
+        act(() => { vi.advanceTimersByTime(500); });
+
+        // Scene + label now live INSIDE the combat modal (the combat window).
+        const modal = container.querySelector('.boss-modal');
+        expect(modal?.querySelector('.scene-bg-root')).not.toBeNull();
+        expect(modal?.querySelector('.scene-bg-tag')?.textContent).toContain('VOLCANO');
+        // …and nowhere else in the overlay.
+        expect(container.querySelectorAll('.scene-bg-root').length).toBe(1);
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
 });

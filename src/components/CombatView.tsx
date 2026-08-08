@@ -692,7 +692,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                 } as React.CSSProperties) : undefined}
                 onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()}
             >
-                {bossDef && <SceneBackground def={bossDef.background} />}
+                {bossDef && phase !== 'intro' && phase !== 'result' && <SceneBackground def={bossDef.background} />}
                 <div className="particle-layer left" ref={leftLayerRef} />
                 <div className="particle-layer right" ref={rightLayerRef} />
                 {phase === 'intro' && ((matchType === 'pve' || matchType === 'boss') ? (
