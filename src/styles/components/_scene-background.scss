@@ -7,7 +7,16 @@
 // future biomes, menus…). Driven by a `BackgroundDef` from data/backgrounds.ts:
 // base gradient + decorative pixel elements + vignette + optional corner tag.
 // Accent colors are injected as CSS vars by SceneBackground
-// (`--scene-accent`, `--scene-accent-alt`).
+// (`--scene-accent`, `--scene-accent-alt`) on the ROOT wrapper so both the
+// scene layers AND the corner tag inherit them.
+
+// Fills the (positioned) parent; carries the accent vars for inheritance.
+.scene-bg-root {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
 
 .scene-bg {
     position: absolute;
@@ -15,7 +24,6 @@
     overflow: hidden;
     border-radius: inherit;
     pointer-events: none;
-    z-index: 0;
     isolation: isolate;
 }
 

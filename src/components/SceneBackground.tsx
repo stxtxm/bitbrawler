@@ -5,13 +5,17 @@ type SceneBackgroundProps = {
   def: BackgroundDef;
 };
 
+// Custom property consumed by .bg-el-peak shaping (cone silhouette colors).
+type SceneElStyle = CSSProperties & { '--bg-el-color'?: string };
+
 const getElementStyle = (el: BackgroundElement): CSSProperties => {
-  const base: CSSProperties = {
+  const base: SceneElStyle = {
     left: `${el.x}%`,
     top: `${el.y}%`,
     width: el.width ?? el.size,
     height: el.height ?? el.size,
     color: el.color,
+    '--bg-el-color': el.color,
     boxShadow: el.glow ? `0 0 ${Math.max(6, el.size)}px ${el.glow}` : undefined,
     animationDuration: `${el.speed ?? 1}s`,
     animationDelay: `${el.delay ?? 0}s`,
@@ -23,7 +27,7 @@ const getElementStyle = (el: BackgroundElement): CSSProperties => {
     // Standalone `rotate` property — never conflicts with animation transforms.
     base.rotate = `${el.rotate}deg`;
   }
-  return base;
+  return base as CSSProperties;
 };
 
 /**
@@ -37,8 +41,8 @@ export const SceneBackground = memo(function SceneBackground({ def }: SceneBackg
     '--scene-accent-alt': def.accentAlt ?? def.accent,
   } as CSSProperties;
   return (
-    <>
-      <div className="scene-bg" style={vars} aria-hidden="true">
+    <div className="scene-bg-root" style={vars} aria-hidden="true">
+      <div className="scene-bg">
         <div className="scene-bg-gradient" style={{ background: def.gradient }} />
         <div className="scene-bg-elements">
           {def.elements.map((el, i) => (
@@ -52,6 +56,6 @@ export const SceneBackground = memo(function SceneBackground({ def }: SceneBackg
         <div className="scene-bg-vignette" />
       </div>
       {def.label && <div className="scene-bg-tag">{def.label}</div>}
-    </>
+    </div>
   );
 });

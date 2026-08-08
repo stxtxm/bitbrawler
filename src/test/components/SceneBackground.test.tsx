@@ -113,4 +113,30 @@ describe('SceneBackground — renderer', () => {
         expect(Number.parseInt(lava.style.width, 10)).toBeGreaterThan(0);
         expect(lava.style.width).not.toBe(lava.style.height);
     });
+
+    it('exposes accent vars on the root so the corner tag inherits them', () => {
+        const { container } = render(<SceneBackground def={VOLCANIC_BACKGROUND} />);
+        const root = container.querySelector<HTMLElement>('.scene-bg-root');
+        expect(root).not.toBeNull();
+        const rootVars = root?.style.cssText ?? '';
+        expect(rootVars).toContain('--scene-accent');
+        expect(rootVars).toContain(VOLCANIC_BACKGROUND.accent);
+        // The tag is INSIDE the wrapper → inherits the accent vars.
+        const tag = root?.querySelector('.scene-bg-tag');
+        expect(tag).not.toBeNull();
+        expect(
+            String(
+                (tag?.parentElement instanceof HTMLElement && tag?.parentElement.getAttribute('style')) ?? '',
+            ),
+        ).toContain('--scene-accent');
+    });
+
+    it('sets --bg-el-color from the element color for peak shaping', () => {
+        const { container } = render(<SceneBackground def={VOLCANIC_BACKGROUND} />);
+        const peak = Array.from(container.querySelectorAll<HTMLElement>('.scene-bg-el'))
+            .find((el) => el.classList.contains('bg-el-peak'));
+        expect(peak).toBeDefined();
+        if (!peak) return;
+        expect(peak.style.cssText).toContain('--bg-el-color');
+    });
 });
