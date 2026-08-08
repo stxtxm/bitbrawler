@@ -511,4 +511,33 @@ describe('QA Bot Overlay Deadlock Contract', () => {
     expect(returnsAfter).toBeGreaterThan(0)
     expect(unsets).toBe(returnsAfter)
   })
+
+  it('syncAutoMode targets the Auto mode switch with a strict locator, never the generic [role="switch"] fallback (#653)', () => {
+    // The composite locator '[role="switch"][aria-label="Auto mode"], [role="switch"],
+    // .pixel-switch' .first() resolved to the PvE switch (ActionPanel, higher in DOM)
+    // instead of the Auto mode switch inside the settings modal → click intercepted by
+    // the settings-overlay → 30s timeout on every run (#653).
+    const fn = requireAsyncFunction('syncAutoMode')
+    expect(fn).toContain("getByRole('switch', { name: 'Auto mode' })")
+    expect(fn).not.toContain('[role="switch"][aria-label="Auto mode"], [role="switch"], .pixel-switch')
+    expect(fn).not.toMatch(/,\s*\[role="switch"\]/)
+  })
+
+  it('syncAutoMode verifies the settings overlay is open before clicking the Auto mode switch (#653)', () => {
+    const fn = requireAsyncFunction('syncAutoMode')
+    const overlayCheckIdx = fn.indexOf('settings-overlay')
+    const clickIdx = fn.indexOf('autoSwitch.click()')
+    expect(overlayCheckIdx).toBeGreaterThan(-1)
+    expect(clickIdx).toBeGreaterThan(overlayCheckIdx)
+  })
+
+  it('syncAutoMode retries the toggle with force click when aria-checked does not change after click (#653)', () => {
+    const fn = requireAsyncFunction('syncAutoMode')
+    const firstClick = fn.indexOf('autoSwitch.click()')
+    const forceClick = fn.indexOf('autoSwitch.click({ force: true })')
+    expect(firstClick).toBeGreaterThan(-1)
+    expect(forceClick).toBeGreaterThan(firstClick)
+    const retryChecked = fn.indexOf("getAttribute('aria-checked')", forceClick)
+    expect(retryChecked).toBeGreaterThan(forceClick)
+  })
 })

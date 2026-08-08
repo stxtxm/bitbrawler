@@ -387,7 +387,16 @@ async function syncAutoMode(page, desiredEnabled) {
   await settingsBtn.click()
   await page.waitForTimeout(1000)
 
-  const autoSwitch = page.locator('[role="switch"][aria-label="Auto mode"], [role="switch"], .pixel-switch').first()
+  const settingsOpen = await page
+    .waitForSelector('.retro-modal-overlay.settings-overlay', { state: 'visible', timeout: 3000 })
+    .then(() => true)
+    .catch(() => false)
+  if (!settingsOpen) {
+    console.log('   Settings overlay did not open')
+    return false
+  }
+
+  const autoSwitch = page.getByRole('switch', { name: 'Auto mode' }).first()
   if (!(await autoSwitch.isVisible({ timeout: 5000 }).catch(() => false))) {
     console.log('   Auto mode switch not found')
     return false
@@ -398,7 +407,20 @@ async function syncAutoMode(page, desiredEnabled) {
   if (isEnabled !== desiredEnabled) {
     await autoSwitch.click()
     await page.waitForTimeout(1000)
-    console.log(`   Auto mode changed to ${desiredEnabled ? 'ON' : 'OFF'} ✅`)
+    const verified = await autoSwitch.getAttribute('aria-checked').catch(() => null)
+    if (verified === String(desiredEnabled)) {
+      console.log(`   Auto mode changed to ${desiredEnabled ? 'ON' : 'OFF'} ✅`)
+    } else {
+      console.log('   ⚠️ First toggle attempt may have failed, retrying...')
+      await autoSwitch.click({ force: true }).catch(() => {})
+      await page.waitForTimeout(1000)
+      const retryVerified = await autoSwitch.getAttribute('aria-checked').catch(() => null)
+      if (retryVerified === String(desiredEnabled)) {
+        console.log(`   Auto mode changed to ${desiredEnabled ? 'ON' : 'OFF'} (after retry) ✅`)
+      } else {
+        console.log(`   ❌ Failed to toggle auto mode to ${desiredEnabled ? 'ON' : 'OFF'}`)
+      }
+    }
   } else {
     console.log(`   Auto mode already ${desiredEnabled ? 'ON' : 'OFF'}`)
   }
