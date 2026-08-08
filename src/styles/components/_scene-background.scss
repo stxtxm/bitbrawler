@@ -65,17 +65,14 @@
 }
 
 // ─── Host-container integration ───────────────────────────────────────────────
-// When the scene renders inside a combat container (`.combat-action`,
-// `.combat-vs`), override generic child rules (e.g. `.combat-action > *`
-// forces z-index: 2) so the scene stays BEHIND the content while the corner
-// tag stays ABOVE it.
-.combat-action > .scene-bg-root,
-.combat-vs > .scene-bg-root {
+// When the scene renders inside the combat fighters container (the top combat
+// window where the fight takes place), override generic child rules so the
+// scene stays BEHIND the content while the corner tag stays ABOVE it.
+.combat-fighters > .scene-bg-root {
     z-index: 0;
 }
 
-.combat-action > .scene-bg-tag,
-.combat-vs > .scene-bg-tag {
+.combat-fighters > .scene-bg-tag {
     z-index: 40;
 }
 

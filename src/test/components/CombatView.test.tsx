@@ -1030,23 +1030,19 @@ describe('CombatView Interface', () => {
         expect(container.querySelector('.scene-bg-tag')).toBeNull();
 
         // Advance into the actual combat phases (vs/combat).
+        act(() => { vi.advanceTimersByTime(3000); });
+        act(() => { vi.advanceTimersByTime(3000); });
         act(() => { vi.advanceTimersByTime(2000); });
-        act(() => { vi.advanceTimersByTime(1000); });
-        act(() => { vi.advanceTimersByTime(1000); });
-        act(() => { vi.advanceTimersByTime(500); });
 
-        // The scene is the background of the COMBAT CONTAINER (vs/action),
-        // not a layer of the whole dialog.
-        const modal = container.querySelector('.boss-modal');
-        expect(modal?.querySelector(':scope > .scene-bg-root')).toBeNull();
-        const combatScene =
-            container.querySelector('.combat-action > .scene-bg-root')
-            ?? container.querySelector('.combat-vs > .scene-bg-root');
-        expect(combatScene).not.toBeNull();
-        const combatTag =
-            container.querySelector('.combat-action > .scene-bg-tag')
-            ?? container.querySelector('.combat-vs > .scene-bg-tag');
-        expect(combatTag?.textContent).toContain('VOLCANO');
+        // The scene is the background of the TOP COMBAT CONTAINER
+        // (.combat-fighters — where the fight takes place), not the dialog
+        // nor the whole .combat-action (log area stays clean).
+        expect(container.querySelector('.boss-modal > .scene-bg-root')).toBeNull();
+        expect(container.querySelector('.combat-vs > .scene-bg-root')).toBeNull();
+        expect(container.querySelector('.combat-action > .scene-bg-root')).toBeNull();
+        const fighters = container.querySelector('.combat-action > .combat-fighters');
+        expect(fighters?.querySelector(':scope > .scene-bg-root')).not.toBeNull();
+        expect(fighters?.querySelector(':scope > .scene-bg-tag')?.textContent).toContain('VOLCANO');
         // …and nowhere else in the dialog.
         expect(container.querySelectorAll('.scene-bg-root').length).toBe(1);
 

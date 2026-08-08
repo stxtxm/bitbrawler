@@ -184,6 +184,7 @@
     display: flex; justify-content: space-between; align-items: flex-start;
     padding: 1rem; background: rgba(0,0,0,0.3);
     border: 2px solid #4ecdc4; border-radius: 4px;
+    position: relative; // host container for the scene background engine
 }
 
 .combat-fighters .pixel-character { width: 72px; height: 108px; }
