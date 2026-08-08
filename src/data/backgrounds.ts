@@ -85,11 +85,13 @@ export const VOLCANIC_BACKGROUND: BackgroundDef = {
         { type: 'peak', x: 50, y: 88, size: 280, height: 205, color: '#1e0a12', speed: 7 },
         { type: 'peak', x: 20, y: 90, size: 130, height: 100, color: '#130610', speed: 8.5, delay: 0.4 },
         { type: 'peak', x: 80, y: 93, size: 130, height: 96, color: '#160710', speed: 9, delay: 0.9 },
-        // Crater magma — SUMMIT ONLY (y ≤ 44), never reaches the floor.
-        { type: 'lava', x: 50, y: 40, size: 66, height: 11, color: '#ff9f1c', glow: 'rgba(255, 159, 28, 0.55)', speed: 2.6 },
-        { type: 'lava', x: 48, y: 44, size: 34, height: 8, color: '#ffd166', glow: 'rgba(255, 209, 102, 0.5)', speed: 2.9, delay: 0.7 },
+        // Crater magma — SUMMIT ONLY (y ≤ 60), never reaches the floor.
+        // Multiple overlapping irregular blobs = one rich molten pool, not ovals.
+        { type: 'lava', x: 50, y: 40, size: 70, height: 12, color: '#ff9f1c', speed: 2.6 },
+        { type: 'lava', x: 45, y: 43, size: 46, height: 9, color: '#ffd166', speed: 2.9, delay: 0.7 },
+        { type: 'lava', x: 58, y: 40, size: 22, height: 6, color: '#ffb84d', speed: 3.1, delay: 1.1 },
         // Thin lava trickle spilling down the flank (still far above the ground).
-        { type: 'lava', x: 58, y: 56, size: 16, width: 5, height: 30, color: '#ff8a2a', glow: 'rgba(255, 138, 42, 0.45)', speed: 3.2, delay: 0.1, rotate: -12 },
+        { type: 'lava', x: 57, y: 55, size: 14, width: 5, height: 24, color: '#ff8a2a', speed: 3.2, delay: 0.1 },
         // Granite ground — the fighters' solid basalt footing.
         { type: 'rock', x: 56, y: 94, size: 8, width: 480, height: 38, color: '#241016', speed: 6, delay: 1 },
         { type: 'rock', x: 50, y: 90, size: 8, width: 300, height: 14, color: '#170a11', speed: 6.5, delay: 0.5 },

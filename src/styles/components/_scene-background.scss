@@ -139,17 +139,38 @@
     animation: peakRumble 7s steps(2) infinite;
 }
 
-// Lava pool — hot magma ellipsis pulsing over the ground
+// Lava pool — organic magma melt: a clipped molten blob (never a raw oval)
+// with a hard incandescent core fading to charcoal edges, plus a soft
+// drop-shadow glow so it melts into the rock instead of floating on it.
 .bg-el-lava {
-    border-radius: 50% / 100% 100% 42% 42%;
-    background: radial-gradient(
-        80% 110% at 50% 22%,
-        #ffd166 0%,
-        #ff9f1c 34%,
-        #ff6b2b 68%,
-        #c43d1f 100%
+    border-radius: 0;
+    background:
+        radial-gradient(circle at 50% 70%, #fff3c4 0%, rgba(255, 209, 102, 0.95) 12%, rgba(255, 140, 42, 0.92) 32%, rgba(214, 55, 28, 0.7) 55%, rgba(110, 24, 30, 0) 76%);
+    clip-path: polygon(
+        5% 12%, 15% 40%, 27% 22%, 36% 54%, 48% 18%, 60% 42%,
+        72% 10%, 83% 46%, 92% 26%, 97% 62%, 88% 84%, 74% 96%,
+        62% 72%, 50% 92%, 38% 78%, 26% 98%, 14% 80%, 2% 68%
     );
+    box-shadow: inset 0 0 16px rgba(255, 107, 43, 0.35);
+    filter: drop-shadow(0 0 6px rgba(255, 123, 46, 0.30));
     animation: lavaPulse 2.6s ease-in-out infinite;
+}
+
+// Magma vein cutting through the stone — hot core fading into the rock.
+.bg-el-crack {
+    background:
+        linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(255, 107, 43, 0.25) 30%,
+            currentColor 50%,
+            rgba(255, 209, 102, 0.55) 50%,
+            rgba(255, 107, 43, 0.25) 70%,
+            transparent 100%
+        );
+    border-radius: 2px;
+    box-shadow: 0 0 8px 1px color-mix(in srgb, currentColor 55%, transparent);
+    animation: crackGlow 2.4s ease-in-out infinite;
 }
 
 // Pixel ember drifting up with crunchy stepped hops
@@ -164,14 +185,6 @@
     background: radial-gradient(circle, currentColor 0%, transparent 72%);
     filter: blur(5px);
     animation: smokeRise 10s linear infinite;
-}
-
-// Molten seam glowing through the ground
-.bg-el-crack {
-    background: currentColor;
-    border-radius: 3px;
-    box-shadow: 0 0 10px 1px currentColor;
-    animation: crackGlow 2.2s ease-in-out infinite;
 }
 
 // ============================================
@@ -213,10 +226,19 @@
     75% { transform: translate(-50%, -50%) translate(-1px, 0); }
 }
 
-// Magma pool breathing on the surface
+// Magma pool breathing on the surface — glow lives inside the filter chain
+// so the clipped silhouette keeps its halo through the whole cycle.
 @keyframes lavaPulse {
-    0%, 100% { opacity: 0.85; transform: translate(-50%, -50%) scaleY(1); filter: brightness(0.95); }
-    50% { opacity: 1; transform: translate(-50%, -50%) scaleY(1.07); filter: brightness(1.3); }
+    0%, 100% {
+        opacity: 0.9;
+        transform: translate(-50%, -50%) scaleY(1);
+        filter: drop-shadow(0 0 5px rgba(255, 123, 46, 0.30)) brightness(0.96);
+    }
+    50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scaleY(1.06);
+        filter: drop-shadow(0 0 12px rgba(255, 159, 28, 0.55)) brightness(1.1);
+    }
 }
 
 // Ember rising: drift up + sway, winking out at the top
