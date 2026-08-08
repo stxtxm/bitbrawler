@@ -1042,7 +1042,8 @@ describe('CombatView Interface', () => {
         expect(container.querySelector('.combat-action > .scene-bg-root')).toBeNull();
         const fighters = container.querySelector('.combat-action > .combat-fighters');
         expect(fighters?.querySelector(':scope > .scene-bg-root')).not.toBeNull();
-        expect(fighters?.querySelector(':scope > .scene-bg-tag')?.textContent).toContain('VOLCANO');
+        // No corner badge — it used to mask the fight.
+        expect(fighters?.querySelector(':scope > .scene-bg-tag')).toBeNull();
         // …and nowhere else in the dialog.
         expect(container.querySelectorAll('.scene-bg-root').length).toBe(1);
 
