@@ -27,6 +27,9 @@ import {
 const SUBJECT = process.env.VAPID_SUBJECT || 'mailto:bitbrawler@example.com';
 const VAPID_PUBLIC = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
+// PUSH_FORCE=1 bypasses eligibility (lootbox already rolled) and anti-spam (lastPushDay)
+// so a notification can be sent immediately for testing.
+const FORCE = process.env.PUSH_FORCE === '1';
 
 if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
     console.error('❌ Missing VAPID_PUBLIC_KEY or VAPID_PRIVATE_KEY environment variables');
@@ -80,7 +83,8 @@ async function runPushNotifier() {
         process.exit(1);
     }
 
-    console.log(`📊 Fetched ${candidates.length} subscribed players.`);
+    console.log('📊 Fetched ' + candidates.length + ' subscribed players.');
+    if (FORCE) console.log('🧪 FORCE mode: sending test notifications (bypassing eligibility & anti-spam).');
     if (candidates.length === 0) {
         console.log('✅ No candidates. Done.');
         return;
@@ -105,13 +109,13 @@ async function runPushNotifier() {
         }
 
         // Lootbox not available for this player yet (already rolled today)
-        if (!isEligibleForLootbox(candidate.last_loot_roll, now)) {
+        if (!FORCE && !isEligibleForLootbox(candidate.last_loot_roll, now)) {
             skipped += 1;
             continue;
         }
 
         // Anti-spam: already notified today
-        if (!shouldSendToday(keys.lastPushDay, todayKey)) {
+        if (!FORCE && !shouldSendToday(keys.lastPushDay, todayKey)) {
             skipped += 1;
             continue;
         }
