@@ -41,21 +41,30 @@ export const SceneBackground = memo(function SceneBackground({ def }: SceneBackg
     '--scene-accent-alt': def.accentAlt ?? def.accent,
   } as CSSProperties;
   return (
-    <div className="scene-bg-root" style={vars} aria-hidden="true">
-      <div className="scene-bg">
-        <div className="scene-bg-gradient" style={{ background: def.gradient }} />
-        <div className="scene-bg-elements">
-          {def.elements.map((el, i) => (
-            <div
-              key={i}
-              className={`scene-bg-el bg-el-${el.type}`}
-              style={getElementStyle(el)}
-            />
-          ))}
+    <>
+      <div className="scene-bg-root" style={vars} aria-hidden="true">
+        <div className="scene-bg">
+          <div className="scene-bg-gradient" style={{ background: def.gradient }} />
+          <div className="scene-bg-elements">
+            {def.elements.map((el, i) => (
+              <div
+                key={i}
+                className={`scene-bg-el bg-el-${el.type}`}
+                style={getElementStyle(el)}
+              />
+            ))}
+          </div>
+          <div className="scene-bg-vignette" />
         </div>
-        <div className="scene-bg-vignette" />
       </div>
-      {def.label && <div className="scene-bg-tag">{def.label}</div>}
-    </div>
+      {/* Sibling of the root: never trapped in the root's stacking context
+          (z-index 0), so the tag stays above the combat content. Carries its
+          own vars since siblings don't inherit the root's custom properties. */}
+      {def.label && (
+        <div className="scene-bg-tag" style={vars}>
+          {def.label}
+        </div>
+      )}
+    </>
   );
 });

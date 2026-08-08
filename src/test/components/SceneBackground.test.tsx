@@ -121,14 +121,22 @@ describe('SceneBackground — renderer', () => {
         const rootVars = root?.style.cssText ?? '';
         expect(rootVars).toContain('--scene-accent');
         expect(rootVars).toContain(VOLCANIC_BACKGROUND.accent);
-        // The tag is INSIDE the wrapper → inherits the accent vars.
-        const tag = root?.querySelector('.scene-bg-tag');
+        // The tag is a SIBLING of the root (never z-clipped by its stacking
+        // context) and carries its own vars.
+        const tag = container.querySelector<HTMLElement>('.scene-bg-tag');
         expect(tag).not.toBeNull();
-        expect(
-            String(
-                (tag?.parentElement instanceof HTMLElement && tag?.parentElement.getAttribute('style')) ?? '',
-            ),
-        ).toContain('--scene-accent');
+        const tagVars = tag?.style.cssText ?? '';
+        expect(tagVars).toContain('--scene-accent');
+        expect(tagVars).toContain(VOLCANIC_BACKGROUND.accent);
+        // Root is aria-hidden (decorative), tag is not.
+        expect(root?.getAttribute('aria-hidden')).toBe('true');
+        expect(tag?.getAttribute('aria-hidden')).toBeNull();
+    });
+
+    it('renders the corner tag as a sibling AFTER the scene root', () => {
+        const { container } = render(<SceneBackground def={VOLCANIC_BACKGROUND} />);
+        const root = container.querySelector('.scene-bg-root');
+        expect(root?.nextElementSibling?.classList.contains('scene-bg-tag')).toBe(true);
     });
 
     it('sets --bg-el-color from the element color for peak shaping', () => {
