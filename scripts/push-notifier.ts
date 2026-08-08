@@ -129,11 +129,17 @@ async function runPushNotifier() {
             console.log(`✅ Push sent to ${candidate.name ?? candidate.id}`);
         } catch (err: unknown) {
             const statusCode = (err as { statusCode?: number })?.statusCode;
+            // 404/410: subscription no longer valid. 400/401/403: auth rejected
+            // (e.g. VAPID key rotation made the stored subscription unusable).
+            // In both cases the endpoint can never succeed again → unsubscribe.
             if (statusCode === 404 || statusCode === 410) {
-                // Subscription no longer valid → unsubscribe
                 await unsubscribeCharacter(candidate.id);
                 cleaned += 1;
                 console.log(`🧹 Unsubscribed expired endpoint for ${candidate.name ?? candidate.id} (${statusCode})`);
+            } else if (statusCode === 400 || statusCode === 401 || statusCode === 403) {
+                await unsubscribeCharacter(candidate.id);
+                cleaned += 1;
+                console.log(`🧹 Unsubscribed rejected endpoint for ${candidate.name ?? candidate.id} (${statusCode})`);
             } else {
                 failed += 1;
                 const message = err instanceof Error ? err.message : String(err);
