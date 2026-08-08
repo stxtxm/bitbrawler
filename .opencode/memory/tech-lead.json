@@ -1,27 +1,27 @@
 {
-  "version": 3,
+  "version": 4,
   "agent": "tech-lead",
-  "last_session": "2026-08-07",
+  "last_session": "2026-08-08",
   "recent_failures": [
-    "NOUVEAU blocker n°1: fix #639 (deadlock inventory-overlay) INCOMPLET — le deadlock a MUTÉ de Settings vers le bouton Daily lootbox (runs 272-276, tous après merge 10:22, échoués). Root cause: addLocatorHandler(.inventory-overlay) ferme l'inventaire pendant handleDailyLootbox qui en a besoin OUVERT → timeout 30s. Issue #645 /oc créée.",
-    "14 runs consécutifs échoués (263→276, 08-06 10:01 → 08-07 19:01). Error rate 43%. Les trends win rate restent corrompus — NE PAS ajuster balance.",
-    "Idle win rate 9% = ARTEFACT parsing: cycles_observed:0 + defeats:1 dans tous les records idle_runner (53 runs) — observer ne détecte jamais de cycle complet (xp_label unknown → defeats++). Ne PAS ajuster idleConfig.ts.",
-    "Lootbox legendary 0/133: pity 30 reset à chaque perso QA frais → jamais testable par le bot.",
-    "qa-bot.config.js: forgeUnlockLevel désynchronisé → forge jamais testé (issue #582)."
+    "Deadlock v3 (08-08): syncAutoMode locator composite '[role=\"switch\"][aria-label=\"Auto mode\"], [role=\"switch\"], .pixel-switch' + .first() résout sur le switch PvE (ActionPanel, DOM plus haut) → settings-overlay intercepte le clic → timeout 30s. 94 runs consécutifs échoués (depuis 08-01), dernier succès 08-06. Issue #653 /oc créée. Les fixes #637/#645/#647 n'ont PAS couvert syncAutoMode.",
+    "Toutes les métriques avancées restent null (essence_analysis, progression_curve, shop) tant que le bot échoue — priorité absolue au merge de #653.",
+    "Parsing équipement TOUJOURS corrompu: item_names=['️','️ ARMOR'] — pollue equipment_analysis.",
+    "Idle win rate 9% = ARTEFACT parsing (cycles_observed:0) — NE PAS ajuster idleConfig.",
+    "Lootbox legendary 0/133: pity 30 reset à chaque perso QA frais — jamais testable par le bot."
   ],
   "known_limitations": [
     "Vérifier AVANT de créer une issue si elle existe déjà (gh issue list) — 60+ propositions majeures ouvertes.",
-    "Deadlock inventory-overlay PERSISTE (muté) malgré #639 — issue #645 en cours.",
-    "Parsing noms équipement + monstres TOUJOURS corrompu (08-07): item_names=['️','️ ARMOR'], seulement 4/19 fights PvE nommés (tous defeats). Ne pas conclure sur PvE XP ratio.",
-    "Shop: null sur 277 runs — palier 20 inatteignable (#606).",
+    "Deadlock QA bot = problème récurrent (v1 inventory #637, v2 lootbox #645, v3 syncAutoMode #653) — vérifier les locators composites avec .first() dans qa-bot.mjs.",
     "Win rate last_3/5/10 = 0% = artefact QA bot (runs échoués), PAS une régression balance.",
-    "Le dev-agent n'a PAS le droit de modifier .github/workflows/*.yml."
+    "Le dev-agent n'a PAS le droit de modifier .github/workflows/*.yml.",
+    "PvE XP ratio 0.46 = parsing corrompu (4/19 fights nommés, tous defeats) — ne pas conclure.",
+    "Shop: null sur 277+ runs — palier 20 inatteignable (#606)."
   ],
   "session_notes": [
-    "2026-08-07 (soir): Issue #645 créée (/oc) — deadlock v2 lootbox (fix #639 incomplet). Proposition majeure #646 (Welcome-Back Bonus). Commentaires: #408 (43% erreurs, 14 runs consécutifs échoués), #440 (0% = artefact), #548 (parsing corrompu), #606 (shop null 277 runs), #607 (idle 9% = artefact), #637 (fix incomplet).",
-    "2026-08-07: Lootbox rarity saine hors legendary (common 62%, epic 9%). HP growth +15.9/run sain. Streak 2.1→2.8 sain. Stats ~10-11 équilibrées. xp_win_loss_ratio 1.7 pollué par PvE.",
-    "2026-08-06: Commits: PR #636, #635, #633 mergés. Game en bonne santé, c'est le QA bot qui est malade.",
-    "2026-08-05: Issue #630 créée (levels_gained, /oc). Proposition #631 (Wave-Like).",
-    "2026-08-01: Shop/forge jamais testés car unlock levels inatteignables."
+    "2026-08-08 (soir): Issue #653 créée (/oc) — deadlock v3 syncAutoMode (locator composite → switch PvE, 94 runs échoués). Proposition majeure #654 (Golden Odds — fight prediction minigame sur bot pool, effort 3). Commentaires: #408 (45% erreurs, mutation v3), #440 (0% = artefact, ne pas toucher balance), #548 (parsing équipement corrompu).",
+    "2026-08-08: Win rate all-time 50.3% sain, HP growth +15.9/run sain, lootbox common 62%/epic 9% sain, stats ~10.5-11.4 équilibrées, streak 2.1→2.8 sain. Le jeu est sain, c'est le QA bot qui est malade.",
+    "2026-08-08: Recherches web: idle engagement 60/40 rule, weekly events > monthly drops, prestige timing, juice/hit-stop (déjà couvert #457), spectator betting → #654.",
+    "2026-08-07: Issue #645 créée (/oc) — deadlock v2 lootbox. Proposition majeure #646 (Welcome-Back Bonus).",
+    "2026-08-06: Commits: PR #636, #635, #633 mergés. Game en bonne santé."
   ]
 }
