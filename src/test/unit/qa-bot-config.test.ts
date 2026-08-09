@@ -277,17 +277,19 @@ describe('QA Bot Fight Type Decision', () => {
       expect(qaBotConfig.pvpUnlockLevel).toBe(PROGRESSION_GATES.PVP_UNLOCK_LEVEL)
     })
 
-    it('forgeUnlockLevel matches game FORGE_UNLOCK_LEVEL', () => {
-      expect(qaBotConfig.forgeUnlockLevel).toBe(PROGRESSION_GATES.FORGE_UNLOCK_LEVEL)
+    it('forgeUnlockLevel matches the max forge tab gate (FUSION_UNLOCK_LEVEL)', () => {
+      // The bot's forge test exercises Salvage (LVL 1), Fusion (LVL 15) and Upgrade
+      // (LVL 15) tabs. It must only run once ALL forge tabs are unlocked, so the gate
+      // is the max forge gate: FUSION_UNLOCK_LEVEL (not FORGE_UNLOCK_LEVEL) (#685).
+      expect(qaBotConfig.forgeUnlockLevel).toBe(PROGRESSION_GATES.FUSION_UNLOCK_LEVEL)
     })
 
     it('shopUnlockLevel matches game SHOP_UNLOCK_LEVEL', () => {
       expect(qaBotConfig.shopUnlockLevel).toBe(PROGRESSION_GATES.SHOP_UNLOCK_LEVEL)
     })
 
-    it('pvpUnlockLevel and forgeUnlockLevel are 1 (unlocked from level 1)', () => {
+    it('pvpUnlockLevel is 1 (unlocked from level 1)', () => {
       expect(qaBotConfig.pvpUnlockLevel).toBe(1)
-      expect(qaBotConfig.forgeUnlockLevel).toBe(1)
     })
   })
 

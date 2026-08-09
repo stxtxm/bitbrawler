@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-09T15:39:07Z",
+  "last_session": "2026-08-09T19:37:14Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -177,6 +177,11 @@
       "lesson": "Issue #666 (biome engine [4/4]) re-dispatched in parallel: first run merged a clean implementation via PR #678 (issue auto-closed 15:28), while a parallel run force-pushed its own version to the SAME branch feat/auto-666 (4e9524f) and created duplicate PR #680. My own implementation (27361b6) was a third redundant copy. Correct handling when an issue is already merged: (1) NEVER push redundant code — it creates PR churn and force-push wars on the same branch; (2) close duplicate PRs with a comment referencing the canonical merged PR (#678); (3) reset local branch to origin/master + git push origin --delete <branch> so the workflow's 'push & manage PR' step finds 0 commits vs master and exits cleanly instead of creating a new feature PR from stale branch commits; (4) let the standard memory-only commit/PR flow happen. ALSO: master's merged BiomeTerrain (#672) has NO .biome-terrain class nor data-biome attribute and uses biomeId?: string (optional) — never write test selectors against a parallel agent's copy; inspect the actual merged DOM/props first. The merged #678 SceneBox intentionally dropped the old 'pveMode &&' gate (biome follows the character even in PvP) — accepted design, do not 'fix' it.",
       "issue": "#666",
       "date": "2026-08-09T15:36:00Z"
+    },
+    {
+      "lesson": "Issue #685 QA bot forge lock timeout: qa/qa-bot.config.js forgeUnlockLevel was 1 (from #582, matched FORGE_UNLOCK_LEVEL=1 = Salvage only) but the bot's testForgeSystem CLICKS the Fusion/Upgrade tabs which are gated at FUSION_UNLOCK_LEVEL=15/UPGRADE_UNLOCK_LEVEL=15. Playwright click() waits for 'enabled' on disabled buttons -> 30s timeout on 10 consecutive runs (win_rate 0% artifact). Fix: (1) forgeUnlockLevel -> 15 (max forge gate, assert against FUSION_UNLOCK_LEVEL not FORGE_UNLOCK_LEVEL in sync tests); (2) new isTabLocked(locator) helper = isDisabled() OR title includes 'Unlocks at LVL' (locked tabs in Forge.tsx/InventoryPanel.tsx have BOTH disabled attr AND title='Unlocks at LVL 15/20'); (3) guard fusion/upgrade/shop tab clicks BEFORE isVisible+click, returning createSkippedForgeResult/createSkippedShopResult instead of timing out. Pattern: for Playwright scripts, detect disabled/locked state via isDisabled()/getAttribute('title') BEFORE click() — click() on a disabled button blocks until timeout. Source-content contract tests in qa-analysis.test.ts (QA Bot Locked Tab Skip Contract) mirror the #637/#645/#653 pattern. Full suite 1369 tests green, lint + build OK.",
+      "issue": "#685",
+      "date": "2026-08-09"
     }
   ]
 }

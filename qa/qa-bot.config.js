@@ -19,8 +19,8 @@ export default {
   slowMo: parseInt(process.env.QA_SLOW_MO || '0', 10),
   /** Level at which PvP mode becomes available */
   pvpUnlockLevel: 1,
-  /** Level at which Forge (Salvage) becomes available */
-  forgeUnlockLevel: 1,
+  /** Level at which all Forge tabs (Salvage + Fusion + Upgrade) are unlocked */
+  forgeUnlockLevel: 15,
   /** Level at which Shop becomes available */
   shopUnlockLevel: 20,
 }
