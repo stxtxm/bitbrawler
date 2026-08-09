@@ -102,10 +102,18 @@ describe('getBiomeMonsterPool', () => {
     expect(getBiomeMonsterPool('plains').length).toBeGreaterThan(0);
   });
 
-  it('returns a non-empty pool for the volcanic biome (plains fallback until sub-issue 3)', () => {
+  it('returns a non-empty volcanic pool with the 3 exclusive volcanic monsters', () => {
     const pool = getBiomeMonsterPool('volcanic');
     expect(pool.length).toBeGreaterThan(0);
-    expect(pool).toEqual(getBiomeMonsterPool('plains'));
+    expect(pool).not.toEqual(getBiomeMonsterPool('plains'));
+    expect(pool).toEqual(['magma_golem', 'lava_hound', 'cinder_imp']);
+  });
+
+  it('keeps volcanic monsters out of the plains pool', () => {
+    const plainsPool = getBiomeMonsterPool('plains');
+    expect(plainsPool).not.toContain('magma_golem');
+    expect(plainsPool).not.toContain('lava_hound');
+    expect(plainsPool).not.toContain('cinder_imp');
   });
 
   it('falls back to the plains pool for an unknown biome id', () => {

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { generateMonster, getRandomMonsterId, getMonsterDef, generateMonsterForPlayer } from '../../utils/monsterUtils';
 import { MONSTER_ASSETS } from '../../data/monsterAssets';
+import { getBiomeMonsterPool } from '../../data/biomes';
 
 describe('monsterUtils', () => {
   it('getMonsterDef returns definition for valid ID', () => {
@@ -26,7 +27,7 @@ describe('monsterUtils', () => {
   });
 
   it('getRandomMonsterId excludes given ID', () => {
-    const ids = Array.from({ length: 40 }, () => getRandomMonsterId(10, 'ogre'));
+    const ids = Array.from({ length: 40 }, () => getRandomMonsterId(10, undefined, 'ogre'));
     ids.forEach(id => {
       expect(id).not.toBe('ogre');
     });
@@ -146,5 +147,75 @@ describe('monsterUtils', () => {
 
   it('throws for unknown monster ID', () => {
     expect(() => generateMonster('unknown' as any, 1)).toThrow();
+  });
+
+  describe('biome-filtered monster selection', () => {
+    it('getRandomMonsterId with volcanic biome only returns volcanic pool monsters', () => {
+      const volcanicPool = getBiomeMonsterPool('volcanic');
+      const ids = Array.from({ length: 60 }, () => getRandomMonsterId(30, 'volcanic'));
+      ids.forEach(id => {
+        expect(volcanicPool).toContain(id);
+      });
+    });
+
+    it('getRandomMonsterId with volcanic biome respects level tiers', () => {
+      // At level 8, cinder_imp (min 5) and lava_hound (min 12) are excluded,
+      // so only cinder_imp remains in the volcanic pool
+      const ids = Array.from({ length: 40 }, () => getRandomMonsterId(8, 'volcanic'));
+      ids.forEach(id => {
+        expect(id).toBe('cinder_imp');
+      });
+      // At level 25, all three volcanic monsters are eligible
+      const highIds = Array.from({ length: 60 }, () => getRandomMonsterId(25, 'volcanic'));
+      const seen = new Set(highIds);
+      expect(seen.has('cinder_imp')).toBe(true);
+      expect(seen.has('lava_hound')).toBe(true);
+      expect(seen.has('magma_golem')).toBe(true);
+    });
+
+    it('getRandomMonsterId with biomeId never returns plains-only monsters', () => {
+      const volcanicPool = getBiomeMonsterPool('volcanic');
+      const ids = Array.from({ length: 40 }, () => getRandomMonsterId(30, 'volcanic'));
+      ids.forEach(id => {
+        expect(volcanicPool).toContain(id);
+        expect(['goblin', 'ogre', 'wraith', 'slime', 'wolf', 'skeleton', 'chimera', 'dragon_spawn']).not.toContain(id);
+      });
+    });
+
+    it('getRandomMonsterId without biomeId keeps legacy behavior', () => {
+      const ids = Array.from({ length: 40 }, () => getRandomMonsterId(30));
+      ids.forEach(id => {
+        const def = getMonsterDef(id)!;
+        expect(def.minLevel === undefined || 30 >= def.minLevel).toBe(true);
+        expect(def.maxLevel === undefined || 30 <= def.maxLevel).toBe(true);
+      });
+      // Unrestricted legacy monsters (goblin/ogre/wraith) must still appear without a biome filter
+      expect(ids.some(id => id === 'goblin')).toBe(true);
+      expect(ids.some(id => id === 'ogre')).toBe(true);
+    });
+
+    it('getRandomMonsterId with biomeId respects exclude', () => {
+      const ids = Array.from({ length: 40 }, () => getRandomMonsterId(25, 'volcanic', 'magma_golem'));
+      ids.forEach(id => {
+        expect(id).not.toBe('magma_golem');
+        expect(getBiomeMonsterPool('volcanic')).toContain(id);
+      });
+    });
+
+    it('generateMonsterForPlayer propagates biomeId', () => {
+      const volcanicPool = getBiomeMonsterPool('volcanic');
+      const results = Array.from({ length: 40 }, () => generateMonsterForPlayer(25, 'volcanic'));
+      results.forEach(({ def }) => {
+        expect(volcanicPool).toContain(def.id);
+      });
+    });
+
+    it('getRandomMonsterId never throws even when biome pool is empty at low level', () => {
+      // Level 1: no volcanic monster qualifies (min 5+) — fallback keeps old behavior
+      const ids = Array.from({ length: 20 }, () => getRandomMonsterId(1, 'volcanic'));
+      ids.forEach(id => {
+        expect(MONSTER_ASSETS.some(m => m.id === id)).toBe(true);
+      });
+    });
   });
 });

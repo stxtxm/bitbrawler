@@ -11,19 +11,22 @@ export type BiomeDef = {
   terrainSeed?: string;
 };
 
-const CURRENT_MONSTER_POOL: MonsterId[] = MONSTER_ASSETS.map((monster) => monster.id);
+const VOLCANIC_MONSTER_POOL: MonsterId[] = ['magma_golem', 'lava_hound', 'cinder_imp'];
+const PLAINS_MONSTER_POOL: MonsterId[] = MONSTER_ASSETS
+  .filter((monster) => !VOLCANIC_MONSTER_POOL.includes(monster.id))
+  .map((monster) => monster.id);
 
 export const BIOMES: BiomeDef[] = [
   {
     id: 'plains',
     label: 'Plains',
-    monsterPool: CURRENT_MONSTER_POOL,
+    monsterPool: PLAINS_MONSTER_POOL,
   },
   {
     id: 'volcanic',
     label: 'Volcanic',
     unlockAt: (character) => (character.bossProgress?.totalKills ?? 0) > 0,
-    monsterPool: CURRENT_MONSTER_POOL,
+    monsterPool: VOLCANIC_MONSTER_POOL,
   },
 ];
 
