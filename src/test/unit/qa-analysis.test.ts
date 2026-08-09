@@ -541,3 +541,71 @@ describe('QA Bot Overlay Deadlock Contract', () => {
     expect(retryChecked).toBeGreaterThan(forceClick)
   })
 })
+
+describe('QA Bot Locked Tab Skip Contract', () => {
+  const qaBotSource = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
+
+  function extractAsyncFunction(source: string, name: string): string | null {
+    const start = source.indexOf(`async function ${name}(`)
+    if (start === -1) return null
+    const bodyStart = source.indexOf('{', start)
+    let depth = 0
+    for (let i = bodyStart; i < source.length; i++) {
+      if (source[i] === '{') depth++
+      else if (source[i] === '}') {
+        depth--
+        if (depth === 0) return source.slice(start, i + 1)
+      }
+    }
+    return null
+  }
+
+  function requireAsyncFunction(name: string): string {
+    const fn = extractAsyncFunction(qaBotSource, name)
+    expect(fn).not.toBeNull()
+    if (fn === null) throw new Error(`qa-bot.mjs missing async function ${name}()`)
+    return fn
+  }
+
+  it('defines an isTabLocked helper that detects disabled tabs or "Unlocks at LVL" titles (#685)', () => {
+    const fn = extractAsyncFunction(qaBotSource, 'isTabLocked')
+    expect(fn).not.toBeNull()
+    if (fn === null) throw new Error('qa-bot.mjs missing async function isTabLocked()')
+    expect(fn).toContain('isDisabled()')
+    expect(fn).toContain('Unlocks at LVL')
+    expect(fn).toContain("getAttribute('title')")
+  })
+
+  it('testForgeSystem guards the Fusion tab click with isTabLocked and skips via createSkippedForgeResult (#685)', () => {
+    const fn = requireAsyncFunction('testForgeSystem')
+    const lockIdx = fn.indexOf('isTabLocked(fusionTab)')
+    const clickIdx = fn.indexOf('fusionTab.click()')
+    expect(lockIdx).toBeGreaterThan(-1)
+    expect(clickIdx).toBeGreaterThan(lockIdx)
+    const skipIdx = fn.indexOf('createSkippedForgeResult(', lockIdx)
+    expect(skipIdx).toBeGreaterThan(-1)
+    expect(skipIdx).toBeLessThan(clickIdx)
+  })
+
+  it('testForgeSystem guards the Upgrade tab click with isTabLocked and skips via createSkippedForgeResult (#685)', () => {
+    const fn = requireAsyncFunction('testForgeSystem')
+    const lockIdx = fn.indexOf('isTabLocked(upgradeTab)')
+    const clickIdx = fn.indexOf('upgradeTab.click()')
+    expect(lockIdx).toBeGreaterThan(-1)
+    expect(clickIdx).toBeGreaterThan(lockIdx)
+    const skipIdx = fn.indexOf('createSkippedForgeResult(', lockIdx)
+    expect(skipIdx).toBeGreaterThan(-1)
+    expect(skipIdx).toBeLessThan(clickIdx)
+  })
+
+  it('testShopSystem guards the Shop tab click with isTabLocked and returns createSkippedShopResult (#685)', () => {
+    const fn = requireAsyncFunction('testShopSystem')
+    const lockIdx = fn.indexOf('isTabLocked(shopTab)')
+    const clickIdx = fn.indexOf('shopTab.click()')
+    expect(lockIdx).toBeGreaterThan(-1)
+    expect(clickIdx).toBeGreaterThan(lockIdx)
+    const skipIdx = fn.indexOf('createSkippedShopResult(', lockIdx)
+    expect(skipIdx).toBeGreaterThan(-1)
+    expect(skipIdx).toBeLessThan(clickIdx)
+  })
+})

@@ -65,6 +65,13 @@ function createSkippedShopResult(reason) {
   }
 }
 
+async function isTabLocked(tabLocator) {
+  const tab = tabLocator.first()
+  if (await tab.isDisabled().catch(() => false)) return true
+  const title = await tab.getAttribute('title').catch(() => null)
+  return title !== null && title.includes('Unlocks at LVL')
+}
+
 function getZonedParts(date = new Date(), timeZone = QA_TIME_ZONE) {
   const formatter = new Intl.DateTimeFormat('en-GB', {
     timeZone,
@@ -1934,6 +1941,11 @@ async function testShopSystem(page, runKey, characterLevel = null) {
 
   // Click Shop tab
   const shopTab = page.locator('button[role="tab"]:has-text("Shop"), .forge-tab:has-text("Shop")')
+  if (await isTabLocked(shopTab)) {
+    console.log(`   ⏭️ Shop tab locked (Unlocks at LVL ${config.shopUnlockLevel}), skipping shop test`)
+    await leaveForge(page)
+    return createSkippedShopResult(`shop tab locked (unlocks at LVL ${config.shopUnlockLevel})`)
+  }
   if (!(await shopTab.isVisible({ timeout: 3000 }).catch(() => false))) {
     console.log('   ⚠️ Shop tab not found')
     await leaveForge(page)
@@ -2113,6 +2125,11 @@ async function testForgeSystem(page, runKey, characterLevel = null) {
 
   // ── Attempt Fusion ──────────────────────────────────────────────
   const fusionTab = page.locator('button[role="tab"]:has-text("Fusion"), .forge-tab:has-text("Fusion")')
+  if (await isTabLocked(fusionTab)) {
+    console.log(`   ⏭️ Fusion tab locked (Unlocks at LVL ${config.forgeUnlockLevel}), skipping forge test`)
+    await leaveForge(page)
+    return createSkippedForgeResult(`fusion tab locked (unlocks at LVL ${config.forgeUnlockLevel})`)
+  }
   if (await fusionTab.isVisible({ timeout: 2000 }).catch(() => false)) {
     await fusionTab.click()
     await page.waitForTimeout(800)
@@ -2152,6 +2169,11 @@ async function testForgeSystem(page, runKey, characterLevel = null) {
 
   // ── Attempt Upgrade ─────────────────────────────────────────────
   const upgradeTab = page.locator('button[role="tab"]:has-text("Upgrade"), .forge-tab:has-text("Upgrade")')
+  if (await isTabLocked(upgradeTab)) {
+    console.log(`   ⏭️ Upgrade tab locked (Unlocks at LVL ${config.forgeUnlockLevel}), skipping forge test`)
+    await leaveForge(page)
+    return createSkippedForgeResult(`upgrade tab locked (unlocks at LVL ${config.forgeUnlockLevel})`)
+  }
   if (await upgradeTab.isVisible({ timeout: 2000 }).catch(() => false)) {
     await upgradeTab.click()
     await page.waitForTimeout(800)
