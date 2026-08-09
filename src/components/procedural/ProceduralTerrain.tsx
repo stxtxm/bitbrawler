@@ -1,5 +1,11 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useResponsiveCanvas } from '../../hooks/useTerrainAnimation';
+import { useTerrainScrollLoop } from '../../hooks/useTerrainScrollLoop';
+import {
+  deterministicNoise,
+  layerPhase,
+  tileWorldIndex,
+} from '../../utils/terrainScroll';
 
 interface ProceduralTerrainProps {
   width?: number;
@@ -24,6 +30,26 @@ interface CloudDef {
   width: number;
   speed: number;
 }
+
+const drawCloud = (
+  ctx: CanvasRenderingContext2D,
+  cloud: CloudDef,
+  cx: number,
+  cy: number,
+) => {
+  const shape = cloud.shape;
+  const rows = shape.length;
+  const cols = shape[0].length;
+  const pw = Math.round(cloud.width / cols);
+  const ph = pw;
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      if (!shape[row][col]) continue;
+      ctx.fillStyle = shape[row][col] === 1 ? '#ffffff' : '#e8e8e8';
+      ctx.fillRect(cx + col * pw, cy + row * ph, pw, ph);
+    }
+  }
+};
 
 // ── TREES (1=dark foliage, 2=light foliage, 3=trunk, 4=highlight) ──
 const TREE_PALETTES: Record<number, string>[] = [
@@ -139,13 +165,6 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const scrollOffsetRef = useRef(0);
-  const lastTimeRef = useRef(0);
-  const animatedRef = useRef(animated);
-  const animationStartTime = useRef<number | null>(null);
-  const bgPausedRef = useRef(false);
-  
-  animatedRef.current = animated;
 
   const canvasSize = useResponsiveCanvas(containerRef, canvasRef);
   const width = canvasSize.width || propWidth || 0;
@@ -176,14 +195,8 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
     return cs;
   }, [seedNum]);
 
-  useEffect(() => {
-    if (width === 0 || height === 0) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Pre-render 64px grass blade tile (bigger/detailed)
+  // ── Pre-rendered tiling tiles (blade grass + depth bush) ──
+  const tiles = useMemo(() => {
     const bladeTileW = 64;
     const bladeTileH = 10;
     const bladeTile = document.createElement('canvas');
@@ -199,7 +212,6 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       bCtx.fillRect(x, bladeTileH - bh, 4, bh);
     }
 
-    // Pre-render depth tile (32px, same parallax seam)
     const depthTileW = 64;
     const depthTile = document.createElement('canvas');
     depthTile.width = depthTileW;
@@ -213,23 +225,16 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       }
     }
 
-    const drawCloud = (cloud: CloudDef, cx: number, cy: number) => {
-      const shape = cloud.shape;
-      const rows = shape.length;
-      const cols = shape[0].length;
-      const pw = Math.round(cloud.width / cols);
-      const ph = pw;
-      for (let row = 0; row < rows; row++) {
-        for (let col = 0; col < cols; col++) {
-          if (!shape[row][col]) continue;
-          ctx.fillStyle = shape[row][col] === 1 ? '#ffffff' : '#e8e8e8';
-          ctx.fillRect(cx + col * pw, cy + row * ph, pw, ph);
-        }
-      }
-    };
+    return { bladeTile, depthTile, bladeTileW, bladeTileH, depthTileW };
+  }, [seedNum]);
 
-    const drawFrame = (groundScroll: number) => {
-      if (typeof ctx.setTransform !== 'function') return;
+  const drawFrame = useCallback(
+    (groundScroll: number) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx || typeof ctx.setTransform !== 'function') return;
+      const dpr = window.devicePixelRatio || 1;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       ctx.clearRect(0, 0, width, height);
@@ -251,22 +256,22 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
         if (cx < 0) cx += width;
         cx = Math.round(cx);
         const cy = Math.round(cloud.y * height);
-        drawCloud(cloud, cx, cy);
+        drawCloud(ctx, cloud, cx, cy);
         if (cx + cloud.width > width) {
-          drawCloud(cloud, cx - width, cy);
+          drawCloud(ctx, cloud, cx - width, cy);
         }
       }
 
       const grassY = Math.round(groundTop - 5);
 
-      const dPhase = Math.round((scrollPx * 0.25) % depthTileW);
-      const depthTilesNeeded = Math.ceil(width / depthTileW) + 2;
-      const depthStartX = -dPhase - depthTileW;
-      
+      const dPhase = layerPhase(scrollPx, 0.25, tiles.depthTileW);
+      const depthTilesNeeded = Math.ceil(width / tiles.depthTileW) + 2;
+      const depthStartX = -dPhase - tiles.depthTileW;
+
       for (let i = 0; i < depthTilesNeeded; i++) {
-        const sx = depthStartX + i * depthTileW;
+        const sx = depthStartX + i * tiles.depthTileW;
         if (sx > width) continue;
-        ctx.drawImage(depthTile, Math.round(sx), grassY - 8 - 9);
+        ctx.drawImage(tiles.depthTile, Math.round(sx), grassY - 8 - 9);
       }
 
       ctx.fillStyle = '#6b5340';
@@ -275,11 +280,11 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       ctx.fillStyle = '#4a8a3a';
       ctx.fillRect(0, grassY, width, 6);
 
-      const treePhase = scrollPx % 320;
+      const treePhase = layerPhase(scrollPx, 1, 320);
       for (let sx = -(treePhase + 320); sx < width + 320; sx += 320) {
         if (sx < -44 || sx > width + 44) continue;
-        const worldIdx = Math.floor((sx + scrollPx) / 320);
-        const h = (worldIdx * 31 + seedNum * 7) % 101;
+        const worldIdx = tileWorldIndex(sx + scrollPx, 320);
+        const h = deterministicNoise(seedNum, worldIdx, 31, 7);
         if (h > 35) continue;
         const tree = TREES[h % TREES.length];
         const px = 6;
@@ -294,23 +299,23 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
         }
       }
 
-      const bladePhase = Math.round((scrollPx * 0.8) % bladeTileW);
-      const tilesNeeded = Math.ceil(width / bladeTileW) + 2; // +2 for overflow coverage
-      const startX = -bladePhase - bladeTileW; // Start earlier to ensure full coverage
-      
+      const bladePhase = layerPhase(scrollPx, 0.8, tiles.bladeTileW);
+      const tilesNeeded = Math.ceil(width / tiles.bladeTileW) + 2;
+      const startX = -bladePhase - tiles.bladeTileW;
+
       for (let i = 0; i < tilesNeeded; i++) {
-        const sx = startX + i * bladeTileW;
-        if (sx > width) continue; // No need to render beyond canvas
-        ctx.drawImage(bladeTile, Math.round(sx), grassY - bladeTileH);
+        const sx = startX + i * tiles.bladeTileW;
+        if (sx > width) continue;
+        ctx.drawImage(tiles.bladeTile, Math.round(sx), grassY - tiles.bladeTileH);
       }
 
       // ── Shrooms: tiny (back layer) + medium (foreground) with depth ──
       const shroomTinyCell = 3;
-      const shroomTinyPhase = scrollPx * 0.5 % 128;
+      const shroomTinyPhase = layerPhase(scrollPx, 0.5, 128);
       for (let sx = -(shroomTinyPhase + 128); sx < width + 128; sx += 128) {
         if (sx < -10 || sx > width + 10) continue;
-        const worldIdx = Math.floor((sx + scrollPx * 0.5) / 128);
-        const h = (worldIdx * 23 + seedNum * 11) % 101;
+        const worldIdx = tileWorldIndex(sx + scrollPx * 0.5, 128);
+        const h = deterministicNoise(seedNum, worldIdx, 23, 11);
         if (h > 22) continue;
         const off = ((worldIdx * 7 + seedNum * 5) % 7) - 3;
         const mx = Math.round(sx + off);
@@ -324,11 +329,11 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
         }
       }
       const shroomMedCell = 3;
-      const shroomMedPhase = scrollPx % 192;
+      const shroomMedPhase = layerPhase(scrollPx, 1, 192);
       for (let sx = -(shroomMedPhase + 192); sx < width + 192; sx += 192) {
         if (sx < -10 || sx > width + 10) continue;
-        const worldIdx = Math.floor((sx + scrollPx) / 192);
-        const h = (worldIdx * 29 + seedNum * 13) % 101;
+        const worldIdx = tileWorldIndex(sx + scrollPx, 192);
+        const h = deterministicNoise(seedNum, worldIdx, 29, 13);
         if (h > 20) continue;
         const off = ((worldIdx * 11 + seedNum * 7) % 7) - 3;
         const mx = Math.round(sx + off);
@@ -342,28 +347,28 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
         }
       }
 
-      const flowerPhase = scrollPx % 80;
+      const flowerPhase = layerPhase(scrollPx, 1, 80);
       for (let sx = -(flowerPhase + 80); sx < width + 80; sx += 80) {
         if (sx < -12 || sx > width + 12) continue;
-        const worldIdx = Math.floor((sx + scrollPx) / 80);
-        const h = (worldIdx * 19 + seedNum * 13) % 101;
+        const worldIdx = tileWorldIndex(sx + scrollPx, 80);
+        const h = deterministicNoise(seedNum, worldIdx, 19, 13);
         if (h > 45) continue;
         const off = ((worldIdx * 11 + seedNum * 3) % 11) - 5;
         const fx = Math.round(sx + off);
         const colorIdx = h % FLOWER_COLORS.length;
         ctx.fillStyle = FLOWER_COLORS[colorIdx];
         // Larger flower: center + 4 petals
-        ctx.fillRect(fx + 2, grassY - 4, 4, 4);               // center
-        ctx.fillRect(fx, grassY - 8, 3, 3);                    // top-left petal
-        ctx.fillRect(fx + 5, grassY - 8, 3, 3);                // top-right petal
-        ctx.fillRect(fx, grassY - 1, 3, 3);                    // bottom-left petal
-        ctx.fillRect(fx + 5, grassY - 1, 3, 3);                // bottom-right petal
+        ctx.fillRect(fx + 2, grassY - 4, 4, 4);
+        ctx.fillRect(fx, grassY - 8, 3, 3);
+        ctx.fillRect(fx + 5, grassY - 8, 3, 3);
+        ctx.fillRect(fx, grassY - 1, 3, 3);
+        ctx.fillRect(fx + 5, grassY - 1, 3, 3);
         // Stem
         ctx.fillStyle = '#3a8a3a';
         ctx.fillRect(fx + 3, grassY + 1, 2, 4);
       }
 
-      const texPhase = scrollPx * 0.7 % 48;
+      const texPhase = layerPhase(scrollPx, 0.7, 48);
       for (let sx = -(texPhase + 48); sx < width + 48; sx += 8) {
         if (sx < 0 || sx > width) continue;
         const worldX = sx + scrollPx * 0.7;
@@ -377,21 +382,21 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
       for (let layer = 0; layer < 4; layer++) {
         const spacing = 64 + layer * 16;
         const parallax = 0.4 + layer * 0.08;
-        const phase = scrollPx * parallax % spacing;
+        const phase = layerPhase(scrollPx, parallax, spacing);
         const baseY = groundTop + 2 + layer * 6;
         const maxSize = 6 - layer;
         const opacity = 0.5 + layer * 0.12;
-        
+
         for (let sx = -(phase + spacing); sx < width + spacing; sx += spacing) {
           if (sx < -12 || sx > width + 12) continue;
-          const worldIdx = Math.floor((sx + scrollPx * parallax) / spacing);
-          const r = (worldIdx * 17 + seedNum * (3 + layer * 7)) % 31;
+          const worldIdx = tileWorldIndex(sx + scrollPx * parallax, spacing);
+          const r = deterministicNoise(seedNum, worldIdx, 17, 3 + layer * 7, 31);
           const off = (r % 19) - 9;
           const size = 3 + (r % maxSize);
           const stoneW = size + (r % 3);
           const stoneH = Math.max(2, size - 1);
           const sx2 = Math.round(sx + off);
-          
+
           // Shadow
           ctx.fillStyle = `rgba(0,0,0,${(opacity * 0.15).toFixed(2)})`;
           ctx.fillRect(sx2 + 1, baseY + 1, stoneW, stoneH);
@@ -404,10 +409,10 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
         }
       }
 
-      const bushPhase = scrollPx * 0.5 % 128;
+      const bushPhase = layerPhase(scrollPx, 0.5, 128);
       for (let sx = -(bushPhase + 128); sx < width + 128; sx += 128) {
         if (sx < -16 || sx > width + 16) continue;
-        const worldIdx = Math.floor((sx + scrollPx * 0.5) / 128);
+        const worldIdx = tileWorldIndex(sx + scrollPx * 0.5, 128);
         const off = ((worldIdx * 13 + seedNum * 7) % 21) - 10;
         const bx = Math.round(sx + off);
         ctx.fillStyle = '#4a7a3a';
@@ -419,73 +424,28 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
         ctx.fillStyle = '#3a6a2a';
         ctx.fillRect(bx + 1, grassY - 3, 8, 3);
       }
-    };
+    },
+    [width, height, groundTop, clouds, tiles, seedNum],
+  );
 
-    const dpr = window.devicePixelRatio || 1;
-    if (typeof ctx.setTransform !== 'function') {
-      return;
-    }
-
-    // Handle background tab — pause rAF when hidden, resume when visible
-    const onVisibility = () => {
-      bgPausedRef.current = document.visibilityState === 'hidden';
-      if (document.visibilityState === 'visible') {
-        lastTimeRef.current = performance.now();
-        animationStartTime.current = null;
-      }
-    };
-    document.addEventListener('visibilitychange', onVisibility);
-
-    let rafId: number;
-
-    const render = (now: number) => {
-      if (bgPausedRef.current) {
-        rafId = requestAnimationFrame(render);
-        return;
-      }
-      rafId = requestAnimationFrame(render);
-
-      if (animationStartTime.current === null) {
-        animationStartTime.current = now;
-      }
-
-      const elapsedSinceStable = now - animationStartTime.current;
-
-      const rampUpFactor = Math.min(1, elapsedSinceStable / 800);
-      const effectiveScrollSpeed = 24 * rampUpFactor;
-
-      if (animatedRef.current) {
-        const dt = lastTimeRef.current ? Math.min((now - lastTimeRef.current) / 1000, 0.05) : 0;
-        scrollOffsetRef.current += dt * effectiveScrollSpeed;
-      }
-
-      lastTimeRef.current = now;
-      drawFrame(scrollOffsetRef.current);
-    };
-
-    lastTimeRef.current = performance.now();
-    animationStartTime.current = performance.now();
-    scrollOffsetRef.current = 0;
-    rafId = requestAnimationFrame(render);
-
-    return () => {
-      document.removeEventListener('visibilitychange', onVisibility);
-      cancelAnimationFrame(rafId);
-    };
-  }, [width, height, seedNum, isMobile, groundTop, clouds]);
+  useTerrainScrollLoop({
+    animated,
+    onFrame: drawFrame,
+    enabled: width > 0 && height > 0,
+  });
 
   return (
     <div
       ref={containerRef}
-        style={{
-          width: '100%',
-          height: '100%',
-          position: 'absolute',
-          inset: 0,
-          overflow: 'hidden',
-          zIndex: 1,
-          willChange: 'transform',
-        }}
+      style={{
+        width: '100%',
+        height: '100%',
+        position: 'absolute',
+        inset: 0,
+        overflow: 'hidden',
+        zIndex: 1,
+        willChange: 'transform',
+      }}
     >
       <canvas
         ref={canvasRef}
