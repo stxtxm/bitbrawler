@@ -154,6 +154,11 @@
       "date": "2026-08-08"
     },
     {
+      "lesson": "Issue #661 (Biome engine, effort 4+): campaign rule applied — created sub-issues [1/4]=#662 (pre-existing), [2/4]=#663 (pre-existing, BiomeTerrain), [3/4]=#665 (volcanic monster pool + biome-filtered getRandomMonsterId), [4/4]=#666 (SceneBox + useIdleCombat integration) with /oc + label campaign-661, posted DAG plan on parent, STOP without coding. GOTCHA: parallel dispatches of the SAME parent issue create duplicate sub-issues seconds apart (#664, #667, #668). After creating sub-issues, ALWAYS re-scan gh issue list --label campaign-N and close duplicates (keep earliest + most precise body) to avoid two agents implementing the same deliverable concurrently. Pattern: gh issue close <dup> --comment explaining the duplicate and canonical issue.",
+      "issue": "#661",
+      "date": "2026-08-09"
+    },
+    {
       "lesson": "Issue #662 biome registry: getBiomeForCharacter 'first biome whose unlockAt returns true' is a trap — if a missing unlockAt is treated as true, the default biome (plains, first in registry) always matches and gated biomes (volcanic) become dead code (volcanic-unlock tests fail: plains always wins). Correct semantics: only a DEFINED unlockAt returning true matches (find), and the default biome (BIOMES[0]) is the fallback via ?? BIOMES[0]. Plains stays 'first' by position = default, not by gate. Plains pool derived from MONSTER_ASSETS.map(id) (data-driven, auto-tracks new monsters); volcanic pool falls back to the same pool until sub-issue 3. Suite: 1333 tests green, lint + build OK.",
       "issue": "#662",
       "date": "2026-08-09"
