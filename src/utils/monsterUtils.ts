@@ -1,4 +1,5 @@
 import { MONSTER_ASSETS, MonsterId, MonsterDef } from '../data/monsterAssets';
+import { BiomeId, getBiomeMonsterPool } from '../data/biomes';
 import { Character } from '../types/Character';
 import { Element } from '../types/Item';
 import { GAME_RULES } from '../config/gameRules';
@@ -9,9 +10,11 @@ export function getMonsterDef(id: MonsterId): MonsterDef | undefined {
   return MONSTER_ASSETS.find(m => m.id === id);
 }
 
-export function getRandomMonsterId(playerLevel: number, exclude?: MonsterId): MonsterId {
+export function getRandomMonsterId(playerLevel: number, biomeId?: BiomeId, exclude?: MonsterId): MonsterId {
+  const biomePool = biomeId ? getBiomeMonsterPool(biomeId) : null;
   const pool = MONSTER_IDS.filter(id => {
     if (id === exclude) return false;
+    if (biomePool && !biomePool.includes(id)) return false;
     const def = getMonsterDef(id);
     if (!def) return false;
     if (def.minLevel !== undefined && playerLevel < def.minLevel) return false;
@@ -57,8 +60,8 @@ export function generateMonster(monsterId: MonsterId, playerLevel: number): Char
   };
 }
 
-export function generateMonsterForPlayer(playerLevel: number): { character: Character; def: MonsterDef } {
-  const id = getRandomMonsterId(playerLevel);
+export function generateMonsterForPlayer(playerLevel: number, biomeId?: BiomeId): { character: Character; def: MonsterDef } {
+  const id = getRandomMonsterId(playerLevel, biomeId);
   const def = getMonsterDef(id)!;
   return { character: generateMonster(id, playerLevel), def };
 }

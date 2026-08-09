@@ -3,8 +3,8 @@ import { MONSTER_ASSETS, MONSTER_PALETTES } from '../../data/monsterAssets';
 import { ELEMENTS } from '../../types/Item';
 
 describe('Monster assets', () => {
-  it('defines exactly 8 monsters', () => {
-    expect(MONSTER_ASSETS.length).toBe(8);
+  it('defines exactly 11 monsters', () => {
+    expect(MONSTER_ASSETS.length).toBe(11);
   });
 
   it('has unique IDs', () => {
@@ -78,7 +78,7 @@ describe('Monster assets', () => {
 
   it('new monsters have valid level restrictions', () => {
     const restricted = MONSTER_ASSETS.filter(m =>
-      ['slime', 'wolf', 'skeleton', 'chimera', 'dragon_spawn'].includes(m.id)
+      ['slime', 'wolf', 'skeleton', 'chimera', 'dragon_spawn', 'cinder_imp', 'lava_hound', 'magma_golem'].includes(m.id)
     );
     restricted.forEach(m => {
       expect(m.minLevel).toBeDefined();
@@ -139,5 +139,53 @@ describe('Monster assets', () => {
 
     // Skeleton: balanced INT/DEX
     expect(skeleton.growthRates.intelligence).toBe(skeleton.growthRates.dexterity);
+  });
+
+  it('registers the 3 volcanic monsters with fire/lava palettes', () => {
+    const cinderImp = MONSTER_ASSETS.find(m => m.id === 'cinder_imp');
+    const lavaHound = MONSTER_ASSETS.find(m => m.id === 'lava_hound');
+    const magmaGolem = MONSTER_ASSETS.find(m => m.id === 'magma_golem');
+    expect(cinderImp).toBeDefined();
+    expect(lavaHound).toBeDefined();
+    expect(magmaGolem).toBeDefined();
+    expect(MONSTER_PALETTES.cinder_imp).toBe(cinderImp!.palette);
+    expect(MONSTER_PALETTES.lava_hound).toBe(lavaHound!.palette);
+    expect(MONSTER_PALETTES.magma_golem).toBe(magmaGolem!.palette);
+  });
+
+  it('volcanic monsters follow their archetype stat profiles', () => {
+    const cinderImp = MONSTER_ASSETS.find(m => m.id === 'cinder_imp')!;
+    const lavaHound = MONSTER_ASSETS.find(m => m.id === 'lava_hound')!;
+    const magmaGolem = MONSTER_ASSETS.find(m => m.id === 'magma_golem')!;
+
+    // cinder_imp = fire mage (high INT/FOC growth)
+    expect(cinderImp.element).toBe('fire');
+    expect(cinderImp.growthRates.intelligence).toBeGreaterThan(cinderImp.growthRates.strength);
+    expect(cinderImp.growthRates.focus).toBeGreaterThan(cinderImp.growthRates.dexterity);
+
+    // lava_hound = fast glass cannon (high DEX growth, low VIT/HP)
+    expect(lavaHound.element).toBe('fire');
+    expect(lavaHound.growthRates.dexterity).toBeGreaterThan(lavaHound.growthRates.vitality);
+    expect(lavaHound.baseStats.vitality).toBeLessThan(lavaHound.baseStats.strength);
+
+    // magma_golem = tank (high STR/VIT/HP, low DEX)
+    expect(magmaGolem.element).toBe('earth');
+    expect(magmaGolem.baseStats.hp).toBeGreaterThan(lavaHound.baseStats.hp);
+    expect(magmaGolem.growthRates.vitality).toBeGreaterThan(magmaGolem.growthRates.dexterity);
+    expect(magmaGolem.baseStats.dexterity).toBeLessThan(magmaGolem.baseStats.strength);
+  });
+
+  it('volcanic monster level tiers are coherent and non-overlapping with legacy tiers', () => {
+    const cinderImp = MONSTER_ASSETS.find(m => m.id === 'cinder_imp')!;
+    const lavaHound = MONSTER_ASSETS.find(m => m.id === 'lava_hound')!;
+    const magmaGolem = MONSTER_ASSETS.find(m => m.id === 'magma_golem')!;
+
+    expect(cinderImp.minLevel!).toBeLessThanOrEqual(cinderImp.maxLevel!);
+    expect(lavaHound.minLevel!).toBeLessThanOrEqual(lavaHound.maxLevel!);
+    expect(magmaGolem.minLevel!).toBeLessThanOrEqual(magmaGolem.maxLevel!);
+
+    // Tier order: cinder_imp < lava_hound < magma_golem
+    expect(lavaHound.minLevel!).toBeGreaterThan(cinderImp.minLevel!);
+    expect(magmaGolem.minLevel!).toBeGreaterThan(lavaHound.minLevel!);
   });
 });
