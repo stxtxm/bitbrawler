@@ -18,6 +18,7 @@ import {
   calculateSpeedEfficiency,
 } from '../utils/idleEfficiencyUtils'
 import { MonsterId } from '../data/monsterAssets'
+import { getBiomeForCharacter } from '../data/biomes'
 
 interface UseIdleCombatOptions {
   character: Character | null
@@ -132,9 +133,11 @@ export function useIdleCombat({
     let totalEssenceGain = 0
     let totalXpGained = 0
 
+    const biomeId = getBiomeForCharacter(currentChar).id
+
     for (let i = 0; i < numFights; i++) {
       try {
-        const monster = generateMonsterForPlayer(char.level)
+        const monster = generateMonsterForPlayer(char.level, biomeId)
         const result = simulateCombat(char, monster.character)
         const won = result.winner === 'attacker'
 
@@ -353,10 +356,14 @@ export function useIdleCombat({
     const currentChar = charRef.current
     if (!currentChar) return
 
+    // Generate monster from the character's active biome (volcanic once the
+    // first boss is slain, plains otherwise).
+    const biomeId = getBiomeForCharacter(currentChar).id
+
     // Generate monster
     let monster
     try {
-      monster = generateMonsterForPlayer(currentChar.level)
+      monster = generateMonsterForPlayer(currentChar.level, biomeId)
     } catch {
       return
     }
@@ -545,6 +552,8 @@ export function useIdleCombat({
     let totalEssenceGain = 0
     let totalXpGained = 0
 
+    const biomeId = getBiomeForCharacter(currentChar).id
+
     for (let i = 0; i < numFights; i++) {
       // Check total catch-up wall-clock time — stop if exceeding hard timeout
       if (Date.now() - catchUpStart >= maxCatchUpDuration) {
@@ -552,7 +561,7 @@ export function useIdleCombat({
         break
       }
       try {
-        const monster = generateMonsterForPlayer(char.level)
+        const monster = generateMonsterForPlayer(char.level, biomeId)
         const result = simulateCombat(char, monster.character)
         const won = result.winner === 'attacker'
 

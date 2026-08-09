@@ -16,6 +16,30 @@ vi.mock('../../components/IdleRunnerScene', () => ({
   IdleRunnerScene: () => <div data-testid="idle-runner-scene">IDLE SCENE</div>,
 }));
 
+vi.mock('../../components/procedural/BiomeTerrain', () => ({
+  BiomeTerrain: (props: { seed: string; animated?: boolean }) => (
+    <div
+      data-testid="biome-terrain"
+      data-seed={props.seed}
+      data-animated={String(props.animated)}
+    >
+      VOLCANIC BIOME
+    </div>
+  ),
+}));
+
+vi.mock('../../components/procedural/ProceduralTerrain', () => ({
+  ProceduralTerrain: (props: { seed: string; animated?: boolean }) => (
+    <div
+      data-testid="procedural-terrain"
+      data-seed={props.seed}
+      data-animated={String(props.animated)}
+    >
+      PLAINS TERRAIN
+    </div>
+  ),
+}));
+
 vi.mock('../../context/GameContext', () => ({
   useGame: () => ({
     activeCharacter: { level: 10 },
@@ -133,7 +157,7 @@ describe('arena extracted components', () => {
     expect(container.querySelector('.scene-pvp-center')).toBeTruthy();
   });
 
-  it('SceneBox replaces the scrolling terrain with the volcanic background once the first boss is slain (PvE)', () => {
+  it('SceneBox renders the scrolling volcanic BiomeTerrain once the first boss is slain (PvE)', () => {
     const bossSlayer: Character = {
       ...character,
       bossProgress: {
@@ -151,22 +175,28 @@ describe('arena extracted components', () => {
       <SceneBox character={bossSlayer} effectiveCharacter={bossSlayer} pveMode idle={idle} />,
     );
 
-    // The scrolling canvas terrain is gone…
-    expect(container.querySelector('canvas')).toBeNull();
-    // …replaced by the volcanic scene engine.
-    const root = container.querySelector('.scene-bg-root');
-    expect(root).not.toBeNull();
-    // The volcanic arena carries no corner badge (it must never mask the runner).
+    // Volcanic biome → the scrolling BiomeTerrain canvas replaces the plains terrain.
+    const biomeTerrain = container.querySelector('[data-testid="biome-terrain"]');
+    expect(biomeTerrain).not.toBeNull();
+    // BiomeTerrain receives the character seed and animates while PvE is running.
+    expect(biomeTerrain?.getAttribute('data-seed')).toBe('hero-seed');
+    expect(biomeTerrain?.getAttribute('data-animated')).toBe('true');
+    // The static volcanic SceneBackground engine is gone entirely.
+    expect(container.querySelector('.scene-bg-root')).toBeNull();
     expect(container.querySelector('.scene-bg-tag')).toBeNull();
   });
 
-  it('SceneBox keeps the scrolling terrain before the first boss kill (PvE)', () => {
+  it('SceneBox keeps the scrolling plains terrain before the first boss kill (PvE)', () => {
     const { container } = render(
       <SceneBox character={character} effectiveCharacter={character} pveMode idle={idle} />,
     );
 
+    // Plains biome → the classic scrolling ProceduralTerrain stays in place.
+    const plainsTerrain = container.querySelector('[data-testid="procedural-terrain"]');
+    expect(plainsTerrain).not.toBeNull();
+    expect(plainsTerrain?.getAttribute('data-seed')).toBe('hero-seed');
+    expect(plainsTerrain?.getAttribute('data-animated')).toBe('true');
     expect(container.querySelector('.scene-bg-root')).toBeNull();
-    expect(container.querySelector('canvas')).not.toBeNull();
   });
 
   it('CharacterDisplay composes scene, XP, and stats sections', () => {
