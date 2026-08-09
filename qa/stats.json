@@ -27501,5 +27501,180 @@
       "home": 1805,
       "arena": 2765
     }
+  },
+  {
+    "date": "2026-08-09T18:26:06.573Z",
+    "run": "2026-08-09",
+    "character": "STARFLARE",
+    "character_action": "created-after-missing-fight-cta",
+    "replaced_character": "NOBLESOLAR",
+    "fights": [],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Worn Bracers",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 10,
+      "vit": 7,
+      "dex": 26,
+      "luk": 9,
+      "int": 10,
+      "foc": 15,
+      "fights": 0
+    },
+    "initial_level": 12,
+    "initial_xp": {
+      "current": 8727,
+      "max": 4504
+    },
+    "initial_max_hp": 288,
+    "initial_equipment": [],
+    "initial_streak": null,
+    "final_stats": {
+      "level": 1,
+      "xp": 0,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 9,
+      "vit": 14,
+      "dex": 7,
+      "luk": 22,
+      "int": 7,
+      "foc": 7,
+      "fights": 0
+    },
+    "final_max_hp": 212,
+    "final_equipment": [],
+    "final_streak": null,
+    "lootbox_equipment": [],
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": []
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 33087,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "wraith"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 24,
+      "xp_events": [
+        {
+          "time_ms": 33087,
+          "xp": 24,
+          "monster": "wraith",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": true,
+      "level_up_events": [
+        {
+          "time_ms": 512,
+          "monster": "wraith"
+        },
+        {
+          "time_ms": 1025,
+          "monster": "wraith"
+        },
+        {
+          "time_ms": 1543,
+          "monster": "wraith"
+        },
+        {
+          "time_ms": 2058,
+          "monster": "wraith"
+        },
+        {
+          "time_ms": 2571,
+          "monster": "wraith"
+        },
+        {
+          "time_ms": 33087,
+          "monster": "wraith"
+        }
+      ],
+      "phase_transition_times_ms": [
+        512,
+        1543,
+        33087
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 24,
+        "monster": "wraith"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.71,
+      "next_level_eta": "⬆ 55s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.05x",
+      "interval": "9.6s",
+      "streak_bonus": null
+    },
+    "initial_essence": null,
+    "final_essence": null,
+    "essence": {
+      "before_idle": 271.56,
+      "after_idle": 272.47,
+      "per_fight": [],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": null,
+      "flow": {
+        "idle_gained": null,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": null
+      }
+    },
+    "level_up_fx": {
+      "detected": true,
+      "glow_class_applied": false,
+      "float_text_shown": true,
+      "level": 13
+    },
+    "offline_gains": null,
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": null,
+    "shop": null,
+    "errors": [
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('button[role=\"tab\"]:has-text(\"Fusion\"), .forge-tab:has-text(\"Fusion\")')\n    - locator resolved to <button disabled role=\"tab\" aria-selected=\"false\" class=\"forge-tab locked \" title=\"Unlocks at LVL 15\" aria-controls=\"forge-panel-fusion\">🔒 Fusion LVL 15</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is not enabled\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is not enabled\n    - retrying click action\n      - waiting 100ms\n    58 × waiting for element to be visible, enabled and stable\n       - element is not enabled\n     - retrying click action\n       - waiting 500ms\n"
+    ],
+    "load_times_ms": {
+      "home": 1279,
+      "arena": 2386
+    }
   }
 ]
