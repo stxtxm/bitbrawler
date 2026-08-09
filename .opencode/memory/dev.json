@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-09T15:15:30Z",
+  "last_session": "2026-08-09T15:30:47Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -166,6 +166,11 @@
     {
       "lesson": "Issue #665 (biome engine [3/4] volcanic pool): getRandomMonsterId signature extended to (playerLevel, biomeId?, exclude?) — the 2nd positional arg is now biomeId, NOT exclude. Any legacy call passing exclude as 2nd arg silently breaks (exclude ignored → 'ogre' can reappear). Fix: update callers to getRandomMonsterId(level, undefined, exclude). Also: when adding MonsterId values, exhaustive Record<MonsterId, number> (monsterVisualScale.ts) must be updated or tsc fails. Volcanic pool in biomes.ts must exclude volcanic monsters from plains pool (PLAINS = MONSTER_ASSETS minus VOLCANIC) to keep exclusivity; biome test asserting volcanic==plains fallback must be updated to the real pool.",
       "issue": "#665",
+      "date": "2026-08-09"
+    },
+    {
+      "lesson": "Issue #666 (biome engine [4/4] SceneBox + useIdleCombat) re-dispatch: implementation commit 09ee4f6 already existed AND was pushed to origin/feat/auto-666 (prior agent run killed before PR creation), but no PR existed and issue still OPEN with dispatched label. Correct action on re-dispatch: verify the committed implementation fully satisfies the issue (SceneBox getBiomeForCharacter→BiomeTerrain seed/animated when volcanic else ProceduralTerrain; useIdleCombat biomeId passed to generateMonsterForPlayer in runCombatTick/runLocalCatchUp/catchUpBackgroundFights; arena-components tests updated + new useIdleCombat-biome.test.tsx 4 tests), run the full gate (1365/1365 tests, lint, build OK), and do NOT create a duplicate commit — opencode.yml Push step auto-detects remote branch with no new commits and creates the PR from it. Working tree stays clean; no push needed.",
+      "issue": "#666",
       "date": "2026-08-09"
     }
   ]
