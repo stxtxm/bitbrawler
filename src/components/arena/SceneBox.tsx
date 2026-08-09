@@ -3,8 +3,8 @@ import { Character } from '../../types/Character';
 import { IdleRunnerScene } from '../IdleRunnerScene';
 import { PixelCharacter } from '../PixelCharacter';
 import { ProceduralTerrain } from '../procedural/ProceduralTerrain';
-import { SceneBackground } from '../SceneBackground';
-import { VOLCANIC_BACKGROUND } from '../../data/backgrounds';
+import { BiomeTerrain } from '../procedural/BiomeTerrain';
+import { getBiomeForCharacter } from '../../data/biomes';
 import type { ArenaIdleViewModel } from './arenaTypes';
 
 interface SceneBoxProps {
@@ -22,14 +22,19 @@ export const SceneBox = memo(function SceneBox({
 }: SceneBoxProps) {
   const pvpScale = typeof window !== 'undefined' && window.innerWidth < 480 ? 6 : 8;
 
-  // Once the first raid boss is slain, the PvE training ground trades its
-  // scrolling plains for the volcanic arena — the world visibly warms up.
-  const volcanicArena = pveMode && (character.bossProgress?.totalKills ?? 0) > 0;
+  // The active biome drives the scrolling terrain. Once the first raid boss is
+  // slain the world warms up: the volcanic biome replaces the grassy plains
+  // with a flowing lava-field backdrop.
+  const biome = getBiomeForCharacter(character);
 
   return (
     <div className="scene-box">
-      {volcanicArena ? (
-        <SceneBackground def={VOLCANIC_BACKGROUND} />
+      {biome.id === 'volcanic' ? (
+        <BiomeTerrain
+          biomeId="volcanic"
+          seed={character.seed}
+          animated={pveMode}
+        />
       ) : (
         <ProceduralTerrain
           seed={character.seed}
