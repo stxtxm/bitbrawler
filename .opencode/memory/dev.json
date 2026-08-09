@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-09T15:03:16Z",
+  "last_session": "2026-08-09T15:24:36Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -161,6 +161,11 @@
     {
       "lesson": "Issue #662 biome registry: getBiomeForCharacter 'first biome whose unlockAt returns true' is a trap — if a missing unlockAt is treated as true, the default biome (plains, first in registry) always matches and gated biomes (volcanic) become dead code (volcanic-unlock tests fail: plains always wins). Correct semantics: only a DEFINED unlockAt returning true matches (find), and the default biome (BIOMES[0]) is the fallback via ?? BIOMES[0]. Plains stays 'first' by position = default, not by gate. Plains pool derived from MONSTER_ASSETS.map(id) (data-driven, auto-tracks new monsters); volcanic pool falls back to the same pool until sub-issue 3. Suite: 1333 tests green, lint + build OK.",
       "issue": "#662",
+      "date": "2026-08-09"
+    },
+    {
+      "lesson": "Issue #665 volcanic monster pool: extending the MonsterId union requires updating EVERY Record<MonsterId, *> map — MONSTER_VISUAL_SCALE (src/utils/monsterVisualScale.ts) broke tsc with TS2739 missing properties magma_golem/lava_hound/cinder_imp. Pattern: after adding ids to MonsterId, grep for Record<MonsterId to catch all exhaustive maps (MONSTER_PALETTES, MONSTER_VISUAL_SCALE). Also: new getRandomMonsterId signature is (playerLevel, biomeId?, exclude?) — existing callers passing exclude as 2nd arg (tests) must be updated; scripts/ callers with zero args are NOT type-checked (tsconfig includes only src). Fallback semantics preserved: biome pool minus exclude, never throws.",
+      "issue": "#665",
       "date": "2026-08-09"
     }
   ]
