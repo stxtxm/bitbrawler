@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-09T15:25:59Z",
+  "last_session": "2026-08-09T15:39:07Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -172,6 +172,11 @@
       "lesson": "Biome campaign #661 parallel dispatch: #666 (4/4) is compile-coupled to #663 (BiomeTerrain) + #665 (generateMonsterForPlayer biomeId). Verified locally with TEMPORARY untracked shims (BiomeTerrain.tsx + monsterUtils biomeId param), confirmed all my tests pass, then reverted shims and rebased onto master once deps merged (PRs #672/#673). Only residual failure during shim phase was monster-utils.test.ts getRandomMonsterId(10,\"ogre\") — the #665-owned test update, NOT mine. Also re-confirmed #620 lesson: useIdleCombat offline effect loops forever if onCharacterUpdate/onSyncCharacter are recreated inside the renderHook callback (stable-identity mocks required); microtask flush via await Promise.resolve() loop, not vi.runAllTicks().",
       "issue": "#666",
       "date": "2026-08-09"
+    },
+    {
+      "lesson": "Issue #666 (biome engine [4/4]) re-dispatched in parallel: first run merged a clean implementation via PR #678 (issue auto-closed 15:28), while a parallel run force-pushed its own version to the SAME branch feat/auto-666 (4e9524f) and created duplicate PR #680. My own implementation (27361b6) was a third redundant copy. Correct handling when an issue is already merged: (1) NEVER push redundant code — it creates PR churn and force-push wars on the same branch; (2) close duplicate PRs with a comment referencing the canonical merged PR (#678); (3) reset local branch to origin/master + git push origin --delete <branch> so the workflow's 'push & manage PR' step finds 0 commits vs master and exits cleanly instead of creating a new feature PR from stale branch commits; (4) let the standard memory-only commit/PR flow happen. ALSO: master's merged BiomeTerrain (#672) has NO .biome-terrain class nor data-biome attribute and uses biomeId?: string (optional) — never write test selectors against a parallel agent's copy; inspect the actual merged DOM/props first. The merged #678 SceneBox intentionally dropped the old 'pveMode &&' gate (biome follows the character even in PvP) — accepted design, do not 'fix' it.",
+      "issue": "#666",
+      "date": "2026-08-09T15:36:00Z"
     }
   ]
 }
