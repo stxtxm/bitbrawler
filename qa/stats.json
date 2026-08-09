@@ -27676,5 +27676,158 @@
       "home": 1279,
       "arena": 2386
     }
+  },
+  {
+    "date": "2026-08-09T19:01:14.434Z",
+    "run": "2026-08-09",
+    "character": "COMETSAGE",
+    "character_action": "created-after-missing-fight-cta",
+    "replaced_character": "STARFLARE",
+    "fights": [],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Worn Bracers",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 9,
+      "vit": 14,
+      "dex": 10,
+      "luk": 23,
+      "int": 8,
+      "foc": 8,
+      "fights": 0
+    },
+    "initial_level": 7,
+    "initial_xp": {
+      "current": 2607,
+      "max": 1181
+    },
+    "initial_max_hp": 332,
+    "initial_equipment": [],
+    "initial_streak": null,
+    "final_stats": {
+      "level": 1,
+      "xp": 0,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 7,
+      "vit": 13,
+      "dex": 9,
+      "luk": 8,
+      "int": 8,
+      "foc": 21,
+      "fights": 0
+    },
+    "final_max_hp": 204,
+    "final_equipment": [],
+    "final_streak": null,
+    "lootbox_equipment": [],
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": []
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 30515,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "goblin"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 20,
+      "xp_events": [
+        {
+          "time_ms": 30515,
+          "xp": 20,
+          "monster": "goblin",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": true,
+      "level_up_events": [
+        {
+          "time_ms": 30515,
+          "monster": "goblin"
+        }
+      ],
+      "phase_transition_times_ms": [
+        30515
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 20,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.48,
+      "next_level_eta": "⬆ 40s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 0.95x",
+      "interval": "12.0s",
+      "streak_bonus": null
+    },
+    "initial_essence": null,
+    "final_essence": null,
+    "essence": {
+      "before_idle": 46.7,
+      "after_idle": 47.15,
+      "per_fight": [],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": null,
+      "flow": {
+        "idle_gained": null,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": null
+      }
+    },
+    "level_up_fx": {
+      "detected": true,
+      "glow_class_applied": false,
+      "float_text_shown": true,
+      "level": 8
+    },
+    "offline_gains": null,
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": null,
+    "shop": null,
+    "errors": [
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('button[role=\"tab\"]:has-text(\"Fusion\"), .forge-tab:has-text(\"Fusion\")')\n    - locator resolved to <button disabled role=\"tab\" aria-selected=\"false\" class=\"forge-tab locked \" title=\"Unlocks at LVL 15\" aria-controls=\"forge-panel-fusion\">🔒 Fusion LVL 15</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is not enabled\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is not enabled\n    - retrying click action\n      - waiting 100ms\n    58 × waiting for element to be visible, enabled and stable\n       - element is not enabled\n     - retrying click action\n       - waiting 500ms\n"
+    ],
+    "load_times_ms": {
+      "home": 1269,
+      "arena": 2401
+    }
   }
 ]
