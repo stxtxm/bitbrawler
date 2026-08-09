@@ -85,6 +85,13 @@ export const VOLCANIC_BACKGROUND: BackgroundDef = {
         { type: 'peak', x: 50, y: 88, size: 280, height: 205, color: '#1e0a12', speed: 7 },
         { type: 'peak', x: 20, y: 90, size: 130, height: 100, color: '#130610', speed: 8.5, delay: 0.4 },
         { type: 'peak', x: 80, y: 93, size: 130, height: 96, color: '#160710', speed: 9, delay: 0.9 },
+        // Distant range silhouettes — darker, lower, breathing depth into the scene.
+        { type: 'peak', x: 10, y: 95, size: 84, height: 52, color: '#0a0308', speed: 10, delay: 0.7 },
+        { type: 'peak', x: 91, y: 96, size: 92, height: 58, color: '#0c040a', speed: 10.5, delay: 1.3 },
+        // Crater halo bubbles — molten glow blisters popping above the rim.
+        { type: 'halo', x: 45, y: 36, size: 34, color: 'rgba(255, 159, 28, 0.45)', speed: 2.4, delay: 0.3 },
+        { type: 'halo', x: 53, y: 33, size: 26, color: 'rgba(255, 209, 102, 0.40)', speed: 2.1, delay: 1.1 },
+        { type: 'halo', x: 49, y: 41, size: 42, color: 'rgba(255, 123, 46, 0.38)', speed: 2.7, delay: 1.9 },
         // Crater magma — SUMMIT ONLY (y ≤ 60), never reaches the floor.
         // Multiple overlapping irregular blobs = one rich molten pool, not ovals.
         { type: 'lava', x: 50, y: 40, size: 70, height: 12, color: '#ff9f1c', speed: 2.6 },
@@ -109,6 +116,10 @@ export const VOLCANIC_BACKGROUND: BackgroundDef = {
         { type: 'ember', x: 58, y: 36, size: 2, color: '#ffd166', glow: 'rgba(255, 209, 102, 0.9)', speed: 10, delay: 2.3 },
         { type: 'ember', x: 42, y: 50, size: 2, color: '#ff6b2b', glow: 'rgba(255, 107, 43, 0.8)', speed: 8.5, delay: 1.0 },
         { type: 'ember', x: 62, y: 52, size: 2, color: '#ffd166', glow: 'rgba(255, 209, 102, 0.8)', speed: 9, delay: 0.4 },
+        // Ember bursts kicked sideways from the crater walls.
+        { type: 'ember', x: 44, y: 34, size: 3, color: '#ff9f1c', glow: 'rgba(255, 159, 28, 0.9)', speed: 9.5, delay: 0.6 },
+        { type: 'ember', x: 57, y: 44, size: 3, color: '#ff6b2b', glow: 'rgba(255, 107, 43, 0.85)', speed: 8.5, delay: 1.5 },
+        { type: 'ember', x: 49, y: 30, size: 2, color: '#ffd166', glow: 'rgba(255, 209, 102, 0.9)', speed: 10.5, delay: 2.8 },
         // Smoke columns drifting from the summit.
         { type: 'smoke', x: 50, y: 38, size: 26, color: 'rgba(128, 96, 104, 0.5)', speed: 10, delay: 0.2 },
         { type: 'smoke', x: 56, y: 34, size: 18, color: 'rgba(112, 86, 96, 0.45)', speed: 12, delay: 2.1 },

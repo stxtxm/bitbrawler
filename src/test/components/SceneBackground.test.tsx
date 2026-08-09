@@ -86,6 +86,28 @@ describe('Background engine — registry', () => {
         expect(ground).toBeDefined();
         expect((ground?.y ?? 0)).toBeGreaterThanOrEqual(80);
     });
+
+    it('volcanic background layers 5+ peak silhouettes for depth (main cone + flanks + distant)', () => {
+        const peaks = VOLCANIC_BACKGROUND.elements.filter((el) => el.type === 'peak');
+        expect(peaks.length).toBeGreaterThanOrEqual(5);
+        // All peaks stay entirely inside the window.
+        for (const peak of peaks) {
+            expect(peak.y).toBeLessThanOrEqual(100);
+            expect(peak.y).toBeGreaterThan(60);
+        }
+    });
+
+    it('volcanic background bubbles the crater with small halo glow bubbles', () => {
+        const bubbles = VOLCANIC_BACKGROUND.elements.filter(
+            (el) => el.type === 'halo' && el.size <= 50 && el.x > 40 && el.x < 62 && el.y >= 30 && el.y <= 46,
+        );
+        expect(bubbles.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('volcanic background throws embers beyond the crater for drama', () => {
+        const embers = VOLCANIC_BACKGROUND.elements.filter((el) => el.type === 'ember');
+        expect(embers.length).toBeGreaterThanOrEqual(9);
+    });
 });
 
 describe('SceneBackground — renderer', () => {

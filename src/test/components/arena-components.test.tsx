@@ -133,6 +133,42 @@ describe('arena extracted components', () => {
     expect(container.querySelector('.scene-pvp-center')).toBeTruthy();
   });
 
+  it('SceneBox replaces the scrolling terrain with the volcanic background once the first boss is slain (PvE)', () => {
+    const bossSlayer: Character = {
+      ...character,
+      bossProgress: {
+        bossId: 'void_titan',
+        attacksLeft: 4,
+        lastAttackReset: 0,
+        bossHp: 0,
+        bossMaxHp: 7008,
+        bossLevel: 31,
+        totalKills: 1,
+        firstEncounterAt: 1,
+      },
+    };
+    const { container } = render(
+      <SceneBox character={bossSlayer} effectiveCharacter={bossSlayer} pveMode idle={idle} />,
+    );
+
+    // The scrolling canvas terrain is gone…
+    expect(container.querySelector('canvas')).toBeNull();
+    // …replaced by the volcanic scene engine.
+    const root = container.querySelector('.scene-bg-root');
+    expect(root).not.toBeNull();
+    // The volcanic arena carries no corner badge (it must never mask the runner).
+    expect(container.querySelector('.scene-bg-tag')).toBeNull();
+  });
+
+  it('SceneBox keeps the scrolling terrain before the first boss kill (PvE)', () => {
+    const { container } = render(
+      <SceneBox character={character} effectiveCharacter={character} pveMode idle={idle} />,
+    );
+
+    expect(container.querySelector('.scene-bg-root')).toBeNull();
+    expect(container.querySelector('canvas')).not.toBeNull();
+  });
+
   it('CharacterDisplay composes scene, XP, and stats sections', () => {
     render(
       <CharacterDisplay
