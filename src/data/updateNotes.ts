@@ -8,6 +8,18 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.4.0',
+    date: '2026-08-09',
+    title: '🌋 Biome engine — the volcanic biome makes idle PvE alive',
+    changes: [
+      '🌋 NEW VOLCANIC BIOME — unlocked from your very first boss kill (no more static backdrop): the scenery now scrolls in parallax (volcanoes, lava flows, drifting ash and animated embers) so your hero visibly advances through a living, brighter world.',
+      '🔥 Biome-exclusive monsters — while the volcanic biome is active you only meet fire creatures: Magma Golem (earth tank), Lava Hound (fire glass cannon) and Cinder Imp (fire mage), each with fresh 16×16 pixel art and calibrated stats.',
+      '🗺️ Data-driven biome engine — new src/data/biomes.ts registry: each biome declares its scrolling background, monster pool and unlock condition. Next biomes (forest, desert, abyss…) can be added without touching any component.',
+      '🎨 BiomeTerrain — new animated canvas backdrop (deterministic seed, rAF + ramp-up) replacing the dark static volcanic fill from PR #660 with a brighter, flowing volcano scene.',
+      '1365 tests passing across 99 test files.',
+    ],
+  },
+  {
     version: '5.3.2',
     date: '2026-08-07',
     title: '🤖 Bot merge pipeline hardening — PRs auto reviewées & mergées en continu',
