@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-09T15:15:30Z",
+  "last_session": "2026-08-09T15:25:59Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -166,6 +166,11 @@
     {
       "lesson": "Issue #665 (biome engine [3/4] volcanic pool): getRandomMonsterId signature extended to (playerLevel, biomeId?, exclude?) — the 2nd positional arg is now biomeId, NOT exclude. Any legacy call passing exclude as 2nd arg silently breaks (exclude ignored → 'ogre' can reappear). Fix: update callers to getRandomMonsterId(level, undefined, exclude). Also: when adding MonsterId values, exhaustive Record<MonsterId, number> (monsterVisualScale.ts) must be updated or tsc fails. Volcanic pool in biomes.ts must exclude volcanic monsters from plains pool (PLAINS = MONSTER_ASSETS minus VOLCANIC) to keep exclusivity; biome test asserting volcanic==plains fallback must be updated to the real pool.",
       "issue": "#665",
+      "date": "2026-08-09"
+    },
+    {
+      "lesson": "Biome campaign #661 parallel dispatch: #666 (4/4) is compile-coupled to #663 (BiomeTerrain) + #665 (generateMonsterForPlayer biomeId). Verified locally with TEMPORARY untracked shims (BiomeTerrain.tsx + monsterUtils biomeId param), confirmed all my tests pass, then reverted shims and rebased onto master once deps merged (PRs #672/#673). Only residual failure during shim phase was monster-utils.test.ts getRandomMonsterId(10,\"ogre\") — the #665-owned test update, NOT mine. Also re-confirmed #620 lesson: useIdleCombat offline effect loops forever if onCharacterUpdate/onSyncCharacter are recreated inside the renderHook callback (stable-identity mocks required); microtask flush via await Promise.resolve() loop, not vi.runAllTicks().",
+      "issue": "#666",
       "date": "2026-08-09"
     }
   ]
