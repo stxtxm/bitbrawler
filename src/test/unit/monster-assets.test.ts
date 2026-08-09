@@ -3,8 +3,8 @@ import { MONSTER_ASSETS, MONSTER_PALETTES } from '../../data/monsterAssets';
 import { ELEMENTS } from '../../types/Item';
 
 describe('Monster assets', () => {
-  it('defines exactly 8 monsters', () => {
-    expect(MONSTER_ASSETS.length).toBe(8);
+  it('defines exactly 11 monsters', () => {
+    expect(MONSTER_ASSETS.length).toBe(11);
   });
 
   it('has unique IDs', () => {
@@ -18,7 +18,7 @@ describe('Monster assets', () => {
     });
   });
 
-  it('elements are spread across the 8 monsters', () => {
+  it('elements are spread across the monsters', () => {
     const elements = MONSTER_ASSETS.map(m => m.element);
     expect(elements).toContain('wind');
     expect(elements).toContain('earth');
@@ -78,7 +78,7 @@ describe('Monster assets', () => {
 
   it('new monsters have valid level restrictions', () => {
     const restricted = MONSTER_ASSETS.filter(m =>
-      ['slime', 'wolf', 'skeleton', 'chimera', 'dragon_spawn'].includes(m.id)
+      ['slime', 'wolf', 'skeleton', 'chimera', 'dragon_spawn', 'cinder_imp', 'lava_hound', 'magma_golem'].includes(m.id)
     );
     restricted.forEach(m => {
       expect(m.minLevel).toBeDefined();
@@ -108,6 +108,52 @@ describe('Monster assets', () => {
     expect(skeleton.maxLevel!).toBeLessThanOrEqual(50);
     expect(chimera.maxLevel!).toBeLessThanOrEqual(50);
     expect(dragon.maxLevel!).toBeLessThanOrEqual(50);
+  });
+
+  it('volcanic monsters use fire/earth elements and lava palettes', () => {
+    const volcanic = MONSTER_ASSETS.filter(m =>
+      ['magma_golem', 'lava_hound', 'cinder_imp'].includes(m.id)
+    );
+    expect(volcanic.length).toBe(3);
+    volcanic.forEach(m => {
+      expect(['fire', 'earth']).toContain(m.element);
+      expect(MONSTER_PALETTES[m.id]).toBe(m.palette);
+      expect(m.pixels.length).toBe(16);
+      m.pixels.forEach(row => {
+        expect(row.length).toBe(16);
+      });
+    });
+  });
+
+  it('volcanic monster level tiers progress cinder_imp < lava_hound < magma_golem', () => {
+    const cinder = MONSTER_ASSETS.find(m => m.id === 'cinder_imp')!;
+    const hound = MONSTER_ASSETS.find(m => m.id === 'lava_hound')!;
+    const golem = MONSTER_ASSETS.find(m => m.id === 'magma_golem')!;
+
+    expect(cinder.minLevel!).toBeGreaterThanOrEqual(5);
+    expect(cinder.maxLevel!).toBeLessThanOrEqual(25);
+    expect(hound.minLevel!).toBeGreaterThan(cinder.minLevel!);
+    expect(hound.maxLevel!).toBeLessThanOrEqual(35);
+    expect(golem.minLevel!).toBeGreaterThan(hound.minLevel!);
+    expect(golem.maxLevel!).toBeLessThanOrEqual(45);
+    expect(golem.minLevel!).toBeGreaterThanOrEqual(20);
+  });
+
+  it('volcanic monster stats match their combat role', () => {
+    const cinder = MONSTER_ASSETS.find(m => m.id === 'cinder_imp')!;
+    const hound = MONSTER_ASSETS.find(m => m.id === 'lava_hound')!;
+    const golem = MONSTER_ASSETS.find(m => m.id === 'magma_golem')!;
+
+    // Cinder imp: fire mage with high INT growth
+    expect(cinder.growthRates.intelligence).toBeGreaterThan(cinder.growthRates.strength);
+
+    // Lava hound: fast glass cannon with high DEX, low VIT
+    expect(hound.growthRates.dexterity).toBeGreaterThan(hound.growthRates.vitality);
+    expect(hound.baseStats.vitality).toBeLessThan(hound.baseStats.strength);
+
+    // Magma golem: tank with the highest HP and VIT growth
+    expect(golem.baseStats.hp).toBeGreaterThan(hound.baseStats.hp);
+    expect(golem.growthRates.vitality).toBeGreaterThan(hound.growthRates.vitality);
   });
 
   it('specialty stat distributions make each monster unique', () => {

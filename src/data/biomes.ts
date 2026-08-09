@@ -13,6 +13,8 @@ export type BiomeDef = {
 
 const CURRENT_MONSTER_POOL: MonsterId[] = MONSTER_ASSETS.map((monster) => monster.id);
 
+export const VOLCANIC_MONSTER_POOL: MonsterId[] = ['magma_golem', 'lava_hound', 'cinder_imp'];
+
 export const BIOMES: BiomeDef[] = [
   {
     id: 'plains',
@@ -23,7 +25,7 @@ export const BIOMES: BiomeDef[] = [
     id: 'volcanic',
     label: 'Volcanic',
     unlockAt: (character) => (character.bossProgress?.totalKills ?? 0) > 0,
-    monsterPool: CURRENT_MONSTER_POOL,
+    monsterPool: VOLCANIC_MONSTER_POOL,
   },
 ];
 

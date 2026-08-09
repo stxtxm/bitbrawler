@@ -26,7 +26,7 @@ describe('monsterUtils', () => {
   });
 
   it('getRandomMonsterId excludes given ID', () => {
-    const ids = Array.from({ length: 40 }, () => getRandomMonsterId(10, 'ogre'));
+    const ids = Array.from({ length: 40 }, () => getRandomMonsterId(10, undefined, 'ogre'));
     ids.forEach(id => {
       expect(id).not.toBe('ogre');
     });
@@ -77,6 +77,40 @@ describe('monsterUtils', () => {
     expect(ids.some(id => id === 'wraith')).toBe(true);
   });
 
+  it('getRandomMonsterId with volcanic biome returns only volcanic pool monsters', () => {
+    const ids = Array.from({ length: 60 }, () => getRandomMonsterId(30, 'volcanic'));
+    const volcanicIds = ['magma_golem', 'lava_hound', 'cinder_imp'];
+    ids.forEach(id => {
+      expect(volcanicIds).toContain(id);
+    });
+    // Level 30: cinder_imp (maxLevel 25) is filtered out by level
+    expect(ids.every(id => id !== 'cinder_imp')).toBe(true);
+    expect(ids.some(id => id === 'magma_golem')).toBe(true);
+    expect(ids.some(id => id === 'lava_hound')).toBe(true);
+  });
+
+  it('getRandomMonsterId with volcanic biome respects exclude', () => {
+    const ids = Array.from({ length: 40 }, () => getRandomMonsterId(30, 'volcanic', 'magma_golem'));
+    ids.forEach(id => {
+      expect(id).not.toBe('magma_golem');
+      expect(['lava_hound', 'cinder_imp']).toContain(id);
+    });
+  });
+
+  it('getRandomMonsterId falls back to the biome pool without throwing when level-filtered pool is empty', () => {
+    const ids = Array.from({ length: 20 }, () => getRandomMonsterId(2, 'volcanic'));
+    ids.forEach(id => {
+      expect(['magma_golem', 'lava_hound', 'cinder_imp']).toContain(id);
+    });
+  });
+
+  it('getRandomMonsterId without biomeId keeps the full level-filtered pool', () => {
+    const lowLevelIds = Array.from({ length: 50 }, () => getRandomMonsterId(3));
+    expect(lowLevelIds.every(id => id !== 'cinder_imp')).toBe(true);
+    expect(lowLevelIds.every(id => id !== 'magma_golem')).toBe(true);
+    expect(lowLevelIds.some(id => id === 'goblin')).toBe(true);
+  });
+
   it('generateMonster creates a character at the given level', () => {
     const monster = generateMonster('goblin', 5);
     expect(monster.name).toBe('Goblin');
@@ -98,13 +132,20 @@ describe('monsterUtils', () => {
     expect(monster.level).toBe(1);
   });
 
-  it('all 8 monster types can be generated', () => {
+  it('all registered monster types can be generated', () => {
     const allIds = MONSTER_ASSETS.map(m => m.id);
     allIds.forEach(id => {
       const monster = generateMonster(id, 10);
       expect(monster.name).toBe(getMonsterDef(id)!.name);
       expect(monster.hp).toBeGreaterThan(0);
       expect(monster.maxHp).toBeGreaterThan(0);
+    });
+  });
+
+  it('generateMonsterForPlayer propagates biomeId to monster selection', () => {
+    const results = Array.from({ length: 40 }, () => generateMonsterForPlayer(30, 'volcanic'));
+    results.forEach(({ def }) => {
+      expect(['magma_golem', 'lava_hound', 'cinder_imp']).toContain(def.id);
     });
   });
 

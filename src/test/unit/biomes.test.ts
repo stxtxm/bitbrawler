@@ -4,6 +4,7 @@ import { MONSTER_ASSETS } from '../../data/monsterAssets';
 import {
   BIOMES,
   BiomeId,
+  VOLCANIC_MONSTER_POOL,
   getBiomeForCharacter,
   getBiomeMonsterPool,
 } from '../../data/biomes';
@@ -102,10 +103,11 @@ describe('getBiomeMonsterPool', () => {
     expect(getBiomeMonsterPool('plains').length).toBeGreaterThan(0);
   });
 
-  it('returns a non-empty pool for the volcanic biome (plains fallback until sub-issue 3)', () => {
+  it('returns the exclusive volcanic pool for the volcanic biome', () => {
     const pool = getBiomeMonsterPool('volcanic');
-    expect(pool.length).toBeGreaterThan(0);
-    expect(pool).toEqual(getBiomeMonsterPool('plains'));
+    expect(pool.length).toBe(3);
+    expect(pool).toEqual(VOLCANIC_MONSTER_POOL);
+    expect(pool).not.toEqual(getBiomeMonsterPool('plains'));
   });
 
   it('falls back to the plains pool for an unknown biome id', () => {

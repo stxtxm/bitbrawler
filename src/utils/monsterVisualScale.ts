@@ -9,6 +9,9 @@ export const MONSTER_VISUAL_SCALE: Record<MonsterId, number> = {
   ogre: 1.2,
   chimera: 1.3,
   dragon_spawn: 1.5,
+  cinder_imp: 0.7,
+  lava_hound: 1.0,
+  magma_golem: 1.6,
 }
 
 export function monsterScaleFor(monsterId: MonsterId, charScale: number): number {
