@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-08T19:31:06Z",
+  "last_session": "2026-08-09T15:23:49Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -152,6 +152,11 @@
       "lesson": "Issue #653 QA bot deadlock v3: syncAutoMode's composite locator '[role=\"switch\"][aria-label=\"Auto mode\"], [role=\"switch\"], .pixel-switch'.first() resolved to the PvE switch (ActionPanel, higher in DOM) instead of the Auto mode switch inside the settings modal -> click intercepted by settings-overlay -> 30s timeout on 94 runs. Fix in qa/qa-bot.mjs only: (1) strict locator page.getByRole('switch', { name: 'Auto mode' }).first() with NO generic [role=\"switch\"] fallback; (2) verify settings overlay opened via waitForSelector('.retro-modal-overlay.settings-overlay', {state:'visible'}) before clicking switch, return false if not; (3) retry pattern (force click + re-verify aria-checked) after first toggle. Kept dismissModals() before settingsBtn.click(). Tests: 3 source-content regression assertions in the 'QA Bot Overlay Deadlock Contract' describe (strict locator present + composite absent, overlay check before click, retry force click after first click + re-check after force click). Gotcha: when asserting retry ordering, search the second getAttribute('aria-checked') AFTER the forceClick index, not after the first occurrence. 1314 tests green, lint + build OK.",
       "issue": "#653",
       "date": "2026-08-08"
+    },
+    {
+      "lesson": "Campagne parallèle: plusieurs agents (#663/#665/#668) modifient les MÊMES fichiers de données (biomes.ts, monsterAssets.ts, monsterUtils.ts). Pour éviter les conflits de merge, il faut adopter byte-for-byte l'implémentation du sibling déjà poussée (git checkout origin/feat/auto-XXX -- <fichiers partagés>) et ne garder que ses changements UNIQUES (wiring, UI). Vérifier ensuite que ses propres tests (membership checks, pas d'ordres de pools) restent verts. Le premier poussé = source de vérité pour les fichiers partagés.",
+      "issue": "#668",
+      "date": "2026-08-09"
     }
   ]
 }
