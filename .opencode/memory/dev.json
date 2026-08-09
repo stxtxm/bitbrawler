@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-09T15:25:59Z",
+  "last_session": "2026-08-09T15:37:42Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -170,6 +170,11 @@
     },
     {
       "lesson": "Biome campaign #661 parallel dispatch: #666 (4/4) is compile-coupled to #663 (BiomeTerrain) + #665 (generateMonsterForPlayer biomeId). Verified locally with TEMPORARY untracked shims (BiomeTerrain.tsx + monsterUtils biomeId param), confirmed all my tests pass, then reverted shims and rebased onto master once deps merged (PRs #672/#673). Only residual failure during shim phase was monster-utils.test.ts getRandomMonsterId(10,\"ogre\") — the #665-owned test update, NOT mine. Also re-confirmed #620 lesson: useIdleCombat offline effect loops forever if onCharacterUpdate/onSyncCharacter are recreated inside the renderHook callback (stable-identity mocks required); microtask flush via await Promise.resolve() loop, not vi.runAllTicks().",
+      "issue": "#666",
+      "date": "2026-08-09"
+    },
+    {
+      "lesson": "Issue #666 ([4/4] biome engine, SceneBox + useIdleCombat integration) was dispatched TWICE in parallel → two dev-agent sessions implemented the same deliverable on the same branch feat/auto-666. The duplicate agent's PR #678 merged FIRST (commit 154600b, reviewer CI green), so my implementation became redundant. Detection: git push rejected 'fetch first' + remote branch contained a commit with the SAME issue title from another agent. Reconciliation: (1) verify the merged master state actually contains the full deliverable (SceneBox getBiomeForCharacter→BiomeTerrain, useIdleCombat biomeId in 3 call sites) before doing anything; (2) do NOT push a divergent redundant history (it worsens branch conflicts and spawns more PRs); (3) the workflow force-pushes branch state + memory commits, creating a fresh PR each time (#678 merged, #679/#680 closed, #681 open+conflicting) — leave PR lifecycle to the reviewer; (4) reset local branch to origin/master for a clean local state. Gotcha: master's merged SceneBox gates volcanic ONLY on biome (no pveMode), while my/other versions added pveMode && — a semantic choice already decided by the reviewer; don't re-litigate it. Pattern: for same-issue duplicate dispatches, the canonical state is the FIRST merged PR; close/ignore later duplicates.",
       "issue": "#666",
       "date": "2026-08-09"
     }
