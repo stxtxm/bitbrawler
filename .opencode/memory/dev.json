@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-09T19:37:14Z",
+  "last_session": "2026-08-10T20:15:15Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -182,6 +182,11 @@
       "lesson": "Issue #685 QA bot forge lock timeout: qa/qa-bot.config.js forgeUnlockLevel was 1 (from #582, matched FORGE_UNLOCK_LEVEL=1 = Salvage only) but the bot's testForgeSystem CLICKS the Fusion/Upgrade tabs which are gated at FUSION_UNLOCK_LEVEL=15/UPGRADE_UNLOCK_LEVEL=15. Playwright click() waits for 'enabled' on disabled buttons -> 30s timeout on 10 consecutive runs (win_rate 0% artifact). Fix: (1) forgeUnlockLevel -> 15 (max forge gate, assert against FUSION_UNLOCK_LEVEL not FORGE_UNLOCK_LEVEL in sync tests); (2) new isTabLocked(locator) helper = isDisabled() OR title includes 'Unlocks at LVL' (locked tabs in Forge.tsx/InventoryPanel.tsx have BOTH disabled attr AND title='Unlocks at LVL 15/20'); (3) guard fusion/upgrade/shop tab clicks BEFORE isVisible+click, returning createSkippedForgeResult/createSkippedShopResult instead of timing out. Pattern: for Playwright scripts, detect disabled/locked state via isDisabled()/getAttribute('title') BEFORE click() — click() on a disabled button blocks until timeout. Source-content contract tests in qa-analysis.test.ts (QA Bot Locked Tab Skip Contract) mirror the #637/#645/#653 pattern. Full suite 1369 tests green, lint + build OK.",
       "issue": "#685",
       "date": "2026-08-09"
+    },
+    {
+      "lesson": "Le pity lootbox était un useState session-only dans GameContext — jamais persisté (ni localStorage ni Supabase), donc reset à chaque reload : le pity garanti (30 rolls) ne déclenchait jamais. Fix: persister lootboxPityCount sur le Character (normalizeCharacter + persistCharacter) + sync Supabase best-effort via le champs fields uniquement (migration #692, PGRST204 ignoré silencieusement pour ne pas casser le roll). Bug UI: InventoryPanel affichait /75 au lieu de PITY_THRESHOLD (30).",
+      "issue": "#690",
+      "date": "2026-08-10"
     }
   ]
 }

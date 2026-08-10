@@ -28,6 +28,7 @@ export function convertFromSupabase(row: CharacterRow): Character {
     inventory: row.inventory,
     lastLootRoll: row.last_loot_roll,
     lootboxStreak: row.lootbox_streak ?? 0,
+    lootboxPityCount: row.lootbox_pity ?? 0,
     incomingFightHistory: row.incoming_fight_history,
     isBot: row.is_bot,
     autoMode: row.auto_mode,
@@ -111,6 +112,9 @@ export function convertToSupabase(character: Character, fields?: string[]): Part
     }
     if (fields.includes('push_subscribed')) {
       filtered.push_subscribed = character.pushSubscribed ?? false;
+    }
+    if (fields.includes('lootbox_pity')) {
+      filtered.lootbox_pity = character.lootboxPityCount ?? 0;
     }
     return filtered;
   }

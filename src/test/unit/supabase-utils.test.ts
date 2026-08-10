@@ -131,6 +131,16 @@ describe('convertFromSupabase', () => {
     expect(char.itemUpgrades).toBeUndefined()
   })
 
+  it('maps lootbox_pity from CharacterRow to Character', () => {
+    const char = convertFromSupabase({ ...row, lootbox_pity: 17 })
+    expect(char.lootboxPityCount).toBe(17)
+  })
+
+  it('defaults lootboxPityCount to 0 when row has no lootbox_pity', () => {
+    const char = convertFromSupabase(row)
+    expect(char.lootboxPityCount).toBe(0)
+  })
+
   it('handles a bot character correctly', () => {
     const botRow: CharacterRow = { ...row, is_bot: true, auto_mode: true, id: 'bot-1' }
     const char = convertFromSupabase(botRow)
@@ -270,6 +280,21 @@ describe('convertToSupabase', () => {
   it('omits boss_progress when not set on Character (never nulls server data)', () => {
     const row = convertToSupabase(character)
     expect(row.boss_progress).toBeUndefined()
+  })
+
+  it('omits lootbox_pity in the default sync path (column may not exist yet)', () => {
+    const row = convertToSupabase({ ...character, lootboxPityCount: 23 })
+    expect(row.lootbox_pity).toBeUndefined()
+  })
+
+  it('emits lootbox_pity only when explicitly requested via fields', () => {
+    const row = convertToSupabase({ ...character, lootboxPityCount: 23 }, ['lootbox_pity'])
+    expect(row.lootbox_pity).toBe(23)
+  })
+
+  it('defaults lootbox_pity to 0 when requested but not set', () => {
+    const row = convertToSupabase(character, ['lootbox_pity'])
+    expect(row.lootbox_pity).toBe(0)
   })
 
   it('fills default values for missing optional fields', () => {

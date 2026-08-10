@@ -407,6 +407,59 @@ describe('GameContext Integration', () => {
     expect(mockSupabaseFrom).toHaveBeenCalledWith('characters');
   });
 
+  it('should persist the lootbox pity count on the character after a roll', async () => {
+    const now = new Date('2025-01-01T00:00:00Z');
+    vi.setSystemTime(now);
+
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    setupMockCharacter(mockCharacter);
+
+    const mockItem: PixelItemAsset = {
+      id: 'test-item',
+      name: 'Test Item',
+      rarity: 'common',
+      slot: 'weapon',
+      stats: { strength: 1 },
+      pixels: [[1]],
+      requiredLevel: 1
+    };
+
+    (canRollLootbox as any).mockReturnValue(true);
+    (rollLootbox as any).mockReturnValue({ item: mockItem, pityCount: 12, pityTriggered: false });
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.rollLootbox();
+    });
+
+    // Pity counter must be persisted on the character (survives page reload)
+    expect(result.current.activeCharacter?.lootboxPityCount).toBe(12);
+    expect(result.current.pityCount).toBe(12);
+  });
+
+  it('should restore the lootbox pity count from a loaded character', async () => {
+    const charWithPity = { ...mockCharacter, lootboxPityCount: 29 };
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(charWithPity));
+    setupMockCharacter(charWithPity);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.pityCount).toBe(29);
+  });
+
   it('should prevent double roll when server last_loot_roll changed (cross-tab race)', async () => {
     const yesterday = Date.now() - 86400000 * 2;
     const now = new Date('2025-01-01T00:00:00Z');
