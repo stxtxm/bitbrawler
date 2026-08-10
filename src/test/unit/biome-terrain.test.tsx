@@ -7,6 +7,7 @@ import {
   worldIndexAt,
   tileScanStart,
   scrollPixels,
+  drawVolcano,
 } from '../../components/procedural/terrainShared';
 
 // ============================================================================
@@ -178,17 +179,36 @@ describe('Volcanic terrain parallax layers', () => {
     expect(new Set(speeds).size).toBeGreaterThanOrEqual(4);
   });
 
-  it('parallax phases wrap into non-negative integer tile phases', () => {
+  it('parallax phases wrap into non-negative continuous phases (float remainder — no rounding jumps)', () => {
     const scrollOffsets = [0, 10, 127, 255.4, 256, 512.7, 1000, 2048.5];
     scrollOffsets.forEach((off) => {
       const scrollPx = scrollPixels(off);
       for (const layer of VOLCANIC_TERRAIN.volcanic.layers) {
         const phase = wrapPhase(scrollPx, layer.speed, 320);
-        expect(Number.isInteger(phase)).toBe(true);
         expect(phase).toBeGreaterThanOrEqual(0);
         expect(phase).toBeLessThan(320);
+        // The phase must be the exact continuous float remainder of
+        // (scrollPx * speed) over the tile width — rounding it to an integer
+        // makes layers visibly blink/teleport by a whole tile.
+        expect(phase).toBeCloseTo((scrollPx * layer.speed) % 320, 6);
       }
     });
+  });
+
+  it('wrapPhase never teleports a whole tile between consecutive frames (ember layer, speed 1.2, spacing 44)', () => {
+    let prev = wrapPhase(0, 1.2, 44);
+    for (let px = 1; px <= 300; px++) {
+      const phase = wrapPhase(px, 1.2, 44);
+      const delta = phase - prev;
+      // Forward motion is exactly the layer speed (1.2px per scroll px)…
+      if (delta >= 0) {
+        expect(delta).toBeLessThanOrEqual(1.2 + 1e-9);
+      } else {
+        // …except a single clean wrap backward by one tile width (44px).
+        expect(delta).toBeGreaterThanOrEqual(1.2 - 44 - 1e-9);
+      }
+      prev = phase;
+    }
   });
 
   it('tileScanStart starts one tile before the wrapped phase (full coverage)', () => {
@@ -215,6 +235,60 @@ describe('Deterministic seed layout', () => {
   it('rejects a blank/non-numeric seed to a stable numeric fallback', () => {
     const source = BiomeTerrain.toString();
     expect(source).toContain("parseInt(seed.replace(/\\D/g,");
+  });
+});
+
+// ============================================================================
+// VOLCANO ORIENTATION — cone must narrow at the top and widen at the base
+// (fix: volcanoes were rendered upside down)
+// ============================================================================
+
+describe('Volcano drawing orientation', () => {
+  const makeCtx = () => {
+    const calls: Array<{ x: number; y: number; w: number; h: number }> = [];
+    const ctx = {
+      fillStyle: '',
+      fillRect: (x: number, y: number, w: number, h: number) => {
+        calls.push({ x, y, w, h });
+      },
+    } as unknown as CanvasRenderingContext2D;
+    return { ctx, calls };
+  };
+
+  it('draws the widest row at the base (bottom) and the narrowest at the top (apex)', () => {
+    const { ctx, calls } = makeCtx();
+    drawVolcano(ctx, 100, 200, 80, 120, '#333', '#ff6', null);
+
+    // 8 body rows: first row starts at baseY - h (top), rows get wider downward
+    const bodyRows = calls.slice(0, 8);
+    expect(bodyRows.length).toBe(8);
+
+    const firstRowW = bodyRows[0].w;
+    const lastRowW = bodyRows[bodyRows.length - 1].w;
+
+    // Apex row (top, drawn first) must be the narrowest…
+    expect(firstRowW).toBeLessThan(lastRowW);
+    // …and the base row (bottom, drawn last) must be the widest
+    expect(lastRowW).toBeGreaterThan(firstRowW);
+    // Row width must increase monotonically from top to bottom
+    for (let i = 1; i < bodyRows.length; i++) {
+      expect(bodyRows[i].w).toBeGreaterThan(bodyRows[i - 1].w);
+    }
+    // The first (top) row must sit at the apex height
+    expect(bodyRows[0].y).toBeLessThan(bodyRows[bodyRows.length - 1].y);
+  });
+
+  it('centers every row horizontally on the volcano axis', () => {
+    const { ctx, calls } = makeCtx();
+    drawVolcano(ctx, 500, 300, 100, 140, '#333', '#ff6', null);
+
+    const bodyRows = calls.slice(0, 8);
+    for (const row of bodyRows) {
+      // row.x is the left edge; center = x + w/2 must stay on cx (500).
+      // Odd row widths can land on half pixels (x.5) — that's fine, the
+      // row must never drift more than one pixel off-center.
+      expect(Math.abs(row.x + row.w / 2 - 500)).toBeLessThanOrEqual(0.6);
+    }
   });
 });
 
