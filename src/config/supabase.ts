@@ -40,6 +40,7 @@ export type CharacterRow = {
   inventory: string[]
   last_loot_roll: number
   lootbox_streak: number
+  lootbox_pity?: number
   incoming_fight_history: IncomingFightHistory[]
   is_bot: boolean
   auto_mode: boolean

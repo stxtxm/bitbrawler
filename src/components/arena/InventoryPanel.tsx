@@ -10,6 +10,7 @@ import StreakIndicator from '../StreakIndicator';
 import { ShopPanel } from '../forge/ShopPanel';
 import { useGame } from '../../context/GameContext';
 import { PROGRESSION_GATES, isFeatureUnlocked } from '../../config/progressionConfig';
+import { PITY_THRESHOLD } from '../../utils/lootboxUtils';
 import type {
   InventoryStatEntry,
   InventoryStatMetaMap,
@@ -176,7 +177,7 @@ export const InventoryPanel = memo(function InventoryPanel({
                 <span>{inventory.length}/{inventoryCapacity} SLOTS</span>
                 {pityCount > 0 && canRollDailyLoot && (
                   <span className="lootbox-pity-counter" title="Consecutive lootboxes without a legendary">
-                    🎯 {pityCount}/{75}
+                    🎯 {pityCount}/{PITY_THRESHOLD}
                   </span>
                 )}
               </div>

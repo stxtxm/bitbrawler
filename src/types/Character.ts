@@ -133,6 +133,7 @@ export interface Character {
   inventory?: string[]; // Item ids
   lastLootRoll?: number; // Timestamp (UTC) of daily lootbox roll
   lootboxStreak?: number; // Consecutive daily lootbox claims
+  lootboxPityCount?: number; // Consecutive non-legendary lootbox rolls (pity counter)
   pendingFight?: PendingFight;
   equippedItems?: {
     weapon: string | null;

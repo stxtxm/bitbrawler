@@ -112,6 +112,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     return normalized;
   }, []);
 
+  // Keep the in-memory pity counter in sync with the loaded character so it
+  // survives page reloads (was previously session-only React state — bug #690).
+  useEffect(() => {
+    setLootboxPityCount(activeCharacter?.lootboxPityCount ?? 0);
+  }, [activeCharacter]);
+
   // DB error handler
   const handleDbError = useCallback((error: any, context: string) => {
      console.error(`DB error (${context}):`, error);
@@ -1140,6 +1146,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       inventory: [...inventory, result.item.id],
       lastLootRoll: now,
       lootboxStreak: newStreak,
+      lootboxPityCount: result.pityCount,
     });
 
     try {
@@ -1166,6 +1173,21 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       }
 
       persistCharacter(updatedChar);
+
+      // Best-effort pity persistence (lootbox_pity column, migration #692).
+      // Emitted via the explicit fields param only — silently ignored while the
+      // column doesn't exist yet (PGRST204), so it never breaks the lootbox roll.
+      Promise.resolve(
+        supabase
+          .from('characters')
+          .update(convertToSupabase(updatedChar, ['lootbox_pity']))
+          .eq('id', char.id)
+      ).then(({ error: pityError }) => {
+        if (pityError) {
+          // Column not migrated yet (or offline) — pity stays local until then
+          console.warn('lootbox_pity sync skipped:', pityError.message);
+        }
+      }).catch(() => {});
 
       // Non-blocking medal/achievement check after lootbox
       const isFirstLootbox = (char.lastLootRoll ?? 0) === 0 && newStreak > 0;
