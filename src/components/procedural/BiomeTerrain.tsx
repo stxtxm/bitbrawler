@@ -4,6 +4,7 @@ import {
   wrapPhase,
   tileScanStart,
   worldIndexAt,
+  drawVolcano,
 } from './terrainShared';
 import {
   VOLCANIC_TERRAIN,
@@ -19,39 +20,6 @@ interface BiomeTerrainProps {
 }
 
 const PI2 = Math.PI * 2;
-
-const drawVolcano = (
-  ctx: CanvasRenderingContext2D,
-  cx: number,
-  baseY: number,
-  w: number,
-  h: number,
-  color: string,
-  crater: string,
-  lava: string | null,
-) => {
-  const steps = 8;
-  for (let i = 0; i < steps; i++) {
-    const rowW = Math.max(2, Math.round(w * (1 - i / steps)));
-    const rowX = Math.round(cx - rowW / 2);
-    const rowY = Math.round(baseY - h + (i * h) / steps);
-    const rowH = Math.round(h / steps) + 1;
-    ctx.fillStyle = color;
-    ctx.fillRect(rowX, rowY, rowW, rowH);
-  }
-  ctx.fillStyle = crater;
-  ctx.fillRect(Math.round(cx - 4), Math.round(baseY - h - 3), 8, 4);
-  if (lava) {
-    for (let i = 1; i <= 4; i++) {
-      const lx = Math.round(cx + (i % 2 === 0 ? 6 : -6));
-      const ly = Math.round(baseY - h + ((h / 5) * i));
-      ctx.fillStyle = lava;
-      ctx.fillRect(lx, ly, 4, 4);
-    }
-    ctx.fillStyle = lava;
-    ctx.fillRect(Math.round(cx), Math.round(baseY - h + 2), 4, 6);
-  }
-};
 
 export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
   width: propWidth,
