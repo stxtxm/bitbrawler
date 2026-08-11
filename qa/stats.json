@@ -30939,5 +30939,227 @@
       "purchased_offer": null,
       "essence_after_purchase": null
     }
+  },
+  {
+    "date": "2026-08-11T07:01:17.398Z",
+    "run": "2026-08-11",
+    "character": "ROGUEWYRM",
+    "character_action": "created-after-missing-fight-cta",
+    "replaced_character": "ZEPHYR",
+    "fights": [],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Wooden Talisman",
+      "rarity": "RARE",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "initial_stats": {
+      "str": 8,
+      "vit": 7,
+      "dex": 20,
+      "luk": 5,
+      "int": 12,
+      "foc": 14,
+      "fights": 0
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 44,
+      "max": 120
+    },
+    "initial_max_hp": 156,
+    "initial_equipment": [],
+    "initial_streak": null,
+    "final_stats": {
+      "level": 1,
+      "xp": 0,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 9,
+      "vit": 13,
+      "dex": 22,
+      "luk": 7,
+      "int": 8,
+      "foc": 7,
+      "fights": 0
+    },
+    "final_max_hp": 204,
+    "final_equipment": [],
+    "final_streak": null,
+    "lootbox_equipment": [],
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": []
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 33089,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "ogre"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 19,
+      "xp_events": [
+        {
+          "time_ms": 33089,
+          "xp": 19,
+          "monster": "ogre",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": true,
+      "level_up_events": [
+        {
+          "time_ms": 513,
+          "monster": "ogre"
+        },
+        {
+          "time_ms": 1027,
+          "monster": "ogre"
+        },
+        {
+          "time_ms": 1542,
+          "monster": "ogre"
+        },
+        {
+          "time_ms": 2058,
+          "monster": "ogre"
+        },
+        {
+          "time_ms": 2573,
+          "monster": "ogre"
+        },
+        {
+          "time_ms": 33089,
+          "monster": "ogre"
+        }
+      ],
+      "phase_transition_times_ms": [
+        513,
+        1542,
+        33089
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 19,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.81,
+      "next_level_eta": "⬆ 11s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.06x",
+      "interval": "10.2s",
+      "streak_bonus": null
+    },
+    "initial_essence": 17.31,
+    "final_essence": 0.24,
+    "essence": {
+      "before_idle": 17.31,
+      "after_idle": 17.95,
+      "per_fight": [],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": 0.24,
+      "flow": {
+        "idle_gained": 0.64,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": -17.07
+      }
+    },
+    "level_up_fx": {
+      "detected": true,
+      "glow_class_applied": false,
+      "float_text_shown": true,
+      "level": 6
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": true,
+      "skip_reason": "forge requires LVL 15"
+    },
+    "shop": {
+      "visited": false,
+      "offers_count": 0,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": null,
+      "essence_after": null,
+      "skipped": true,
+      "skip_reason": "shop requires LVL 20",
+      "shop_data": {
+        "offers": [],
+        "purchased_offer": null,
+        "essence_after_purchase": null
+      }
+    },
+    "errors": [],
+    "load_times_ms": {
+      "home": 1386,
+      "arena": 2811
+    },
+    "shop_data": {
+      "offers": [],
+      "purchased_offer": null,
+      "essence_after_purchase": null
+    }
   }
 ]
