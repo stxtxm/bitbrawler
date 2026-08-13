@@ -183,6 +183,7 @@ interface HpAnalysis {
   avg_final_max_hp: number         // average max HP at run end
   avg_hp_growth_per_run: number    // average increase in max HP per run
   runs_with_hp_data: number
+  runs_excluded_by_character_replacement: number
 }
 
 interface LootRarityDistribution {
@@ -206,6 +207,7 @@ interface EssenceAnalysis {
   avg_fusion_cost: number | null
   avg_upgrade_cost: number | null
   runs_with_flow_data: number
+  runs_excluded_by_character_replacement: number
 }
 
 interface IdleAnalysis {
@@ -286,6 +288,22 @@ function median(values: number[]): number {
   const sorted = [...values].sort((a, b) => a - b)
   const mid = Math.floor(sorted.length / 2)
   return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid]
+}
+
+// A run that replaces the character mid-run (QA bot `created-after-*` actions)
+// reads initial_max_hp on the OLD character and final_max_hp on the NEW one, so
+// final drops sharply. Such runs must be excluded from HP/essence growth metrics
+// because they mix two different characters (#696).
+function isCharacterReplacedRun(r: RunRecord): boolean {
+  if (typeof r.initial_max_hp === 'number' && typeof r.final_max_hp === 'number') {
+    if (r.final_max_hp < r.initial_max_hp - 10) return true
+  }
+  if (typeof r.character_action === 'string' && r.character_action.startsWith('created-after-')) {
+    if (r.replaced_character !== null && r.replaced_character !== undefined) {
+      return true
+    }
+  }
+  return false
 }
 
 function computeTrendWindow(runs: RunRecord[], count: number, label: string): TrendWindow | null {
@@ -393,9 +411,11 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   // --- HP Analysis (max HP growth) ---
   // Note: The game restores HP after every fight, so current HP always = max HP.
   // We track max HP progression to measure character growth from level-ups and equipment.
-  const runsWithHpData = validRuns.filter(
+  const allRunsWithHpData = validRuns.filter(
     r => typeof r.initial_max_hp === 'number' && typeof r.final_max_hp === 'number'
   )
+  const runsWithHpData = allRunsWithHpData.filter(r => !isCharacterReplacedRun(r))
+  const hpExcludedRuns = allRunsWithHpData.length - runsWithHpData.length
   let hpAnalysis: HpAnalysis | null = null
 
   if (runsWithHpData.length > 0) {
@@ -408,6 +428,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
       avg_final_max_hp: Math.round(avgFinalHp * 10) / 10,
       avg_hp_growth_per_run: Math.round(avgGrowth * 10) / 10,
       runs_with_hp_data: runsWithHpData.length,
+      runs_excluded_by_character_replacement: hpExcludedRuns,
     }
   }
 
@@ -671,10 +692,12 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   }
 
   // --- Essence Analysis ---
-  const runsWithEssenceData = validRuns.filter(
+  const allRunsWithEssenceData = validRuns.filter(
     (r): r is RunRecord & { initial_essence: number; final_essence: number } =>
       typeof r.initial_essence === 'number' && typeof r.final_essence === 'number'
   )
+  const runsWithEssenceData = allRunsWithEssenceData.filter(r => !isCharacterReplacedRun(r))
+  const essenceExcludedRuns = allRunsWithEssenceData.length - runsWithEssenceData.length
   let essenceAnalysis: EssenceAnalysis | null = null
   if (runsWithEssenceData.length > 0) {
     const avgInitial = runsWithEssenceData.reduce((s, r) => s + r.initial_essence, 0) / runsWithEssenceData.length
@@ -713,6 +736,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
         ? Math.round((withUpgrade.reduce((s, r) => s + (r.essence!.flow.upgrade_cost as number), 0) / withUpgrade.length) * 100) / 100
         : null,
       runs_with_flow_data: runsWithFlow.length,
+      runs_excluded_by_character_replacement: essenceExcludedRuns,
     }
   }
 
@@ -969,6 +993,7 @@ function printReport(report: AnalysisReport): void {
     console.log(`  Final avg:      ${report.hp_analysis.avg_final_max_hp.toFixed(0)} HP`)
     console.log(`  Growth/run:     +${report.hp_analysis.avg_hp_growth_per_run.toFixed(1)} HP`)
     console.log(`  Data from:      ${report.hp_analysis.runs_with_hp_data} run(s)`)
+    console.log(`  Excluded:       ${report.hp_analysis.runs_excluded_by_character_replacement} replaced-character run(s)`)
     console.log('')
   }
   if (report.essence_analysis) {
@@ -992,6 +1017,7 @@ function printReport(report: AnalysisReport): void {
       if (shop !== null) console.log(`  Shop spent:     -${shop.toFixed(2)}`)
     }
     console.log(`  Data from:      ${report.essence_analysis.runs_with_essence_data} run(s)`)
+    console.log(`  Excluded:       ${report.essence_analysis.runs_excluded_by_character_replacement} replaced-character run(s)`)
     console.log('')
   }
 
