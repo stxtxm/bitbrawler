@@ -45,6 +45,10 @@ interface RunRecord {
   initial_streak?: number | null
   final_streak?: number | null
   lootbox_streak?: number | null
+  initial_max_hp?: number | null
+  final_max_hp?: number | null
+  character_action?: string | null
+  replaced_character?: string | null
   pve_data?: { fights: number; wins: number; xp_total: number; monsters_faced: string[] }
   errors: string[]
 }
@@ -59,6 +63,14 @@ interface StreakAnalysis {
   avg_initial_streak: number
   avg_final_streak: number
   runs_with_data: number
+}
+
+interface HpAnalysis {
+  avg_initial_max_hp: number
+  avg_final_max_hp: number
+  avg_hp_growth_per_run: number
+  runs_with_hp_data: number
+  runs_excluded_by_character_replacement: number
 }
 
 // ── Pure analysis functions (mirroring analyze-qa-stats.ts logic) ──
@@ -125,6 +137,45 @@ function computePveWinRate(pveFights: FightRecord[]): number {
   if (pveFights.length === 0) return 0
   const wins = pveFights.filter(f => f.result === 'victory')
   return wins.length / pveFights.length
+}
+
+// ── Character-replacement exclusion (mirror of analyze-qa-stats.ts) ──
+// A run that replaces the character mid-run (QA bot `created-after-*` actions)
+// reads initial_max_hp on the OLD character and final_max_hp on the NEW one,
+// so final drops sharply. Such runs must be excluded from HP/essence growth
+// metrics because they mix two different characters (#696).
+
+function isCharacterReplacedRun(r: RunRecord): boolean {
+  if (typeof r.initial_max_hp === 'number' && typeof r.final_max_hp === 'number') {
+    if (r.final_max_hp < r.initial_max_hp - 10) return true
+  }
+  if (typeof r.character_action === 'string' && r.character_action.startsWith('created-after-')) {
+    if (r.replaced_character !== null && r.replaced_character !== undefined) {
+      return true
+    }
+  }
+  return false
+}
+
+function computeHpAnalysis(runs: RunRecord[]): HpAnalysis | null {
+  const allRunsWithHpData = runs.filter(
+    r => typeof r.initial_max_hp === 'number' && typeof r.final_max_hp === 'number'
+  )
+  const excludedRuns = allRunsWithHpData.filter(isCharacterReplacedRun)
+  const runsWithHpData = allRunsWithHpData.filter(r => !isCharacterReplacedRun(r))
+  if (runsWithHpData.length === 0) return null
+
+  const avgInitialHp = runsWithHpData.reduce((s, r) => s + (r.initial_max_hp ?? 0), 0) / runsWithHpData.length
+  const avgFinalHp = runsWithHpData.reduce((s, r) => s + (r.final_max_hp ?? 0), 0) / runsWithHpData.length
+  const avgGrowth = runsWithHpData.reduce((s, r) => s + ((r.final_max_hp ?? 0) - (r.initial_max_hp ?? 0)), 0) / runsWithHpData.length
+
+  return {
+    avg_initial_max_hp: Math.round(avgInitialHp * 10) / 10,
+    avg_final_max_hp: Math.round(avgFinalHp * 10) / 10,
+    avg_hp_growth_per_run: Math.round(avgGrowth * 10) / 10,
+    runs_with_hp_data: runsWithHpData.length,
+    runs_excluded_by_character_replacement: excludedRuns.length,
+  }
 }
 
 // ── Tests ──
@@ -726,5 +777,99 @@ describe('QA Bot Fight CTA Robustness Contract', () => {
 
   it('runRecord initializes arena_status to null (#689)', () => {
     expect(qaBotSource).toContain('arena_status: null')
+  })
+})
+
+describe('QA Character Replacement Exclusion', () => {
+  describe('isCharacterReplacedRun', () => {
+    it('detects replacement when final_max_hp < initial_max_hp - 10 (#696)', () => {
+      const r: RunRecord = {
+        date: '2026-08-13', run: '339', character: 'SWIFTVALE', fights: [], errors: [],
+        initial_max_hp: 442, final_max_hp: 213,
+      }
+      expect(isCharacterReplacedRun(r)).toBe(true)
+    })
+
+    it('keeps runs with healthy HP growth (no drop > 10)', () => {
+      const r: RunRecord = {
+        date: '2026-08-13', run: '341', character: 'RIDERSAGE', fights: [], errors: [],
+        initial_max_hp: 224, final_max_hp: 277,
+      }
+      expect(isCharacterReplacedRun(r)).toBe(false)
+    })
+
+    it('detects replacement via character_action created-after-* even without HP data', () => {
+      const r: RunRecord = {
+        date: '2026-08-13', run: 'r1', character: 'X', fights: [], errors: [],
+        character_action: 'created-after-exhausted-energy', replaced_character: 'Y',
+      }
+      expect(isCharacterReplacedRun(r)).toBe(true)
+    })
+
+    it('keeps runs with created-after-* action but no replaced_character', () => {
+      const r: RunRecord = {
+        date: '2026-08-13', run: 'r2', character: 'X', fights: [], errors: [],
+        character_action: 'created-after-exhausted-energy',
+      }
+      expect(isCharacterReplacedRun(r)).toBe(false)
+    })
+
+    it('keeps runs with replaced_character but a non-created-after action', () => {
+      const r: RunRecord = {
+        date: '2026-08-13', run: 'r3', character: 'X', fights: [], errors: [],
+        character_action: 'reused', replaced_character: 'Y',
+      }
+      expect(isCharacterReplacedRun(r)).toBe(false)
+    })
+  })
+
+  describe('computeHpAnalysis', () => {
+    it('excludes replaced-character runs from the averages and reports the exclusion count (#696)', () => {
+      const runs: RunRecord[] = [
+        {
+          date: '2026-08-13', run: '339', character: 'SWIFTVALE', fights: [], errors: [],
+          initial_max_hp: 442, final_max_hp: 213,
+          character_action: 'created-after-exhausted-energy', replaced_character: 'BLACKAGENT',
+        },
+        {
+          date: '2026-08-13', run: '340', character: 'RIDERSAGE', fights: [], errors: [],
+          initial_max_hp: 320, final_max_hp: 224,
+          character_action: 'created-after-exhausted-energy', replaced_character: 'SWIFTVALE',
+        },
+        {
+          date: '2026-08-13', run: '341', character: 'RIDERSAGE', fights: [], errors: [],
+          initial_max_hp: 224, final_max_hp: 277, character_action: 'reused',
+        },
+      ]
+      const result = computeHpAnalysis(runs)
+      expect(result).not.toBeNull()
+      expect(result!.runs_with_hp_data).toBe(1)
+      expect(result!.runs_excluded_by_character_replacement).toBe(2)
+      expect(result!.avg_initial_max_hp).toBe(224)
+      expect(result!.avg_final_max_hp).toBe(277)
+      expect(result!.avg_hp_growth_per_run).toBe(53)
+    })
+
+    it('keeps all runs when no replacement is detected', () => {
+      const runs: RunRecord[] = [
+        { date: '2026-08-13', run: 'r1', character: 'A', fights: [], errors: [], initial_max_hp: 200, final_max_hp: 220 },
+        { date: '2026-08-13', run: 'r2', character: 'B', fights: [], errors: [], initial_max_hp: 300, final_max_hp: 310 },
+      ]
+      const result = computeHpAnalysis(runs)
+      expect(result).not.toBeNull()
+      expect(result!.runs_with_hp_data).toBe(2)
+      expect(result!.runs_excluded_by_character_replacement).toBe(0)
+      expect(result!.avg_hp_growth_per_run).toBe(15) // (20 + 10) / 2
+    })
+  })
+
+  describe('analyze-qa-stats.ts source contract', () => {
+    it('applies the character-replacement filter to HP/essence analysis and reports excluded runs (#696)', () => {
+      const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+      expect(source).toContain('runs_excluded_by_character_replacement')
+      expect(source).toContain('r.final_max_hp < r.initial_max_hp - 10')
+      expect(source).toContain("startsWith('created-after-')")
+      expect(source).toContain('allRunsWithEssenceData.filter(r => !isCharacterReplacedRun(r))')
+    })
   })
 })
