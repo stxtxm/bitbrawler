@@ -20,7 +20,7 @@ export default {
   /** Level at which PvP mode becomes available */
   pvpUnlockLevel: 1,
   /** Level at which all Forge tabs (Salvage + Fusion + Upgrade) are unlocked */
-  forgeUnlockLevel: 15,
+  forgeUnlockLevel: 6,
   /** Level at which Shop becomes available */
-  shopUnlockLevel: 20,
+  shopUnlockLevel: 8,
 }
