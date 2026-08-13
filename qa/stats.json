@@ -36754,5 +36754,265 @@
       "purchased_offer": null,
       "essence_after_purchase": null
     }
+  },
+  {
+    "date": "2026-08-13T19:01:43.903Z",
+    "run": "2026-08-13",
+    "character": "RIDERSAGE",
+    "character_action": "reused",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 49,
+        "fight_duration_ms": 22768,
+        "max_hp": 265,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 8.03
+      },
+      {
+        "result": "defeat",
+        "xp": 44,
+        "fight_duration_ms": 24033,
+        "max_hp": 277,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 12.63
+      },
+      {
+        "result": "defeat",
+        "xp": 50,
+        "fight_duration_ms": 22010,
+        "max_hp": 277,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 12.63
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Arcane Robe",
+      "rarity": "UNCOMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 1,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false
+    },
+    "initial_stats": {
+      "str": 5,
+      "vit": 14,
+      "dex": 8,
+      "luk": 9,
+      "int": 23,
+      "foc": 8,
+      "fights": 0
+    },
+    "initial_level": 2,
+    "initial_xp": {
+      "current": 14,
+      "max": 120
+    },
+    "initial_max_hp": 224,
+    "initial_equipment": [],
+    "initial_streak": null,
+    "final_stats": {
+      "level": 6,
+      "xp": 425,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 5,
+      "vit": 14,
+      "dex": 8,
+      "luk": 11,
+      "int": 25,
+      "foc": 8,
+      "fights": 0
+    },
+    "final_max_hp": 277,
+    "final_equipment": [],
+    "final_streak": null,
+    "lootbox_equipment": [],
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": []
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 3,
+        "previous_level": 2,
+        "new_level": 5
+      },
+      {
+        "fight_number": 3,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 5,
+        "new_level": 6
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 30518,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "slime"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 17,
+      "xp_events": [
+        {
+          "time_ms": 30518,
+          "xp": 17,
+          "monster": "slime",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": true,
+      "level_up_events": [
+        {
+          "time_ms": 30518,
+          "monster": "slime"
+        }
+      ],
+      "phase_transition_times_ms": [
+        30518
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 17,
+        "monster": "slime"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.48,
+      "next_level_eta": "⬆ 42s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.12x",
+      "interval": "12.0s",
+      "streak_bonus": null
+    },
+    "initial_essence": 7.85,
+    "final_essence": 16.35,
+    "essence": {
+      "before_idle": 7.85,
+      "after_idle": 8.03,
+      "per_fight": [
+        8.03,
+        12.63,
+        12.63
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": 16.35,
+      "flow": {
+        "idle_gained": 0.18,
+        "fights_change": 4.6,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": 8.5
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": true,
+      "skip_reason": "forge requires LVL 15"
+    },
+    "shop": {
+      "visited": false,
+      "offers_count": 0,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": null,
+      "essence_after": null,
+      "skipped": true,
+      "skip_reason": "shop requires LVL 20",
+      "shop_data": {
+        "offers": [],
+        "purchased_offer": null,
+        "essence_after_purchase": null
+      }
+    },
+    "errors": [
+      "Fight 2: timeout waiting for result (45000ms, 3 retries)",
+      "Fight 5: timeout waiting for result (45000ms, 3 retries)"
+    ],
+    "load_times_ms": {
+      "home": 1097,
+      "arena": 380
+    },
+    "shop_data": {
+      "offers": [],
+      "purchased_offer": null,
+      "essence_after_purchase": null
+    }
   }
 ]
