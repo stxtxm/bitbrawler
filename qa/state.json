@@ -1,7 +1,7 @@
 {
-  "run": "2026-08-13",
-  "character": "RIDERSAGE",
-  "exhausted": false,
-  "updated_at": "2026-08-13T19:08:53.900Z",
-  "source": "reused"
+  "run": "2026-08-14",
+  "character": "MATRIXBIT",
+  "exhausted": true,
+  "updated_at": "2026-08-13T22:06:13.229Z",
+  "source": "created-after-exhausted-energy"
 }
