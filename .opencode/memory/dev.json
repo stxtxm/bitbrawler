@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-10T20:15:15Z",
+  "last_session": "2026-08-13T20:00:15Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -187,6 +187,11 @@
       "lesson": "Le pity lootbox était un useState session-only dans GameContext — jamais persisté (ni localStorage ni Supabase), donc reset à chaque reload : le pity garanti (30 rolls) ne déclenchait jamais. Fix: persister lootboxPityCount sur le Character (normalizeCharacter + persistCharacter) + sync Supabase best-effort via le champs fields uniquement (migration #692, PGRST204 ignoré silencieusement pour ne pas casser le roll). Bug UI: InventoryPanel affichait /75 au lieu de PITY_THRESHOLD (30).",
       "issue": "#690",
       "date": "2026-08-10"
+    },
+    {
+      "lesson": "Issue #606 unlock gate lowering (15/15/20 -> 5/6/8): QA data (236 runs, avg end level ~2.5, only 1 run reached lvl 11) proved FUSION/UPGRADE/SHOP gates at 15/15/20 were unreachable. Changed src/config/progressionConfig.ts (FUSION 5, UPGRADE 6, SHOP 8) + qa/qa-bot.config.js (forgeUnlockLevel 15->6 = max forge tab gate, shopUnlockLevel 20->8). Pattern: forgeUnlockLevel sync test now asserts Math.max(FUSION_UNLOCK_LEVEL, UPGRADE_UNLOCK_LEVEL) instead of FUSION_UNLOCK_LEVEL alone (future-proof: Upgrade gate can exceed Fusion). Added a discovery-staircase regression test (Forge < Fusion < Upgrade < Shop) so future gate tweaks preserve the escalation. No DB migration needed (config-only). Full suite 1391 tests green, lint + build OK. NOTE: UPGRADE_UNLOCK_LEVEL is declared but NOT enforced in Forge.tsx UI (only Fusion tab is gated) — the bot's isTabLocked check on the Upgrade tab is a no-op in the current UI, keep as-is.",
+      "issue": "#606",
+      "date": "2026-08-13"
     }
   ]
 }

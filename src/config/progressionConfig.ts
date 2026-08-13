@@ -1,9 +1,9 @@
 export const PROGRESSION_GATES = {
   PVP_UNLOCK_LEVEL: 1,
   FORGE_UNLOCK_LEVEL: 1,
-  FUSION_UNLOCK_LEVEL: 15,
-  UPGRADE_UNLOCK_LEVEL: 15,
-  SHOP_UNLOCK_LEVEL: 20,
+  FUSION_UNLOCK_LEVEL: 5,
+  UPGRADE_UNLOCK_LEVEL: 6,
+  SHOP_UNLOCK_LEVEL: 8,
 } as const;
 
 export function isFeatureUnlocked(level: number, requiredLevel: number): boolean {
