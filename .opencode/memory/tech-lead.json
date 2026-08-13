@@ -1,27 +1,24 @@
 {
-  "version": 4,
+  "version": 5,
   "agent": "tech-lead",
-  "last_session": "2026-08-08",
+  "last_session": "2026-08-13",
   "recent_failures": [
-    "Deadlock v3 (08-08): syncAutoMode locator composite '[role=\"switch\"][aria-label=\"Auto mode\"], [role=\"switch\"], .pixel-switch' + .first() résout sur le switch PvE (ActionPanel, DOM plus haut) → settings-overlay intercepte le clic → timeout 30s. 94 runs consécutifs échoués (depuis 08-01), dernier succès 08-06. Issue #653 /oc créée. Les fixes #637/#645/#647 n'ont PAS couvert syncAutoMode.",
-    "Toutes les métriques avancées restent null (essence_analysis, progression_curve, shop) tant que le bot échoue — priorité absolue au merge de #653.",
-    "Parsing équipement TOUJOURS corrompu: item_names=['️','️ ARMOR'] — pollue equipment_analysis.",
-    "Idle win rate 9% = ARTEFACT parsing (cycles_observed:0) — NE PAS ajuster idleConfig.",
-    "Lootbox legendary 0/133: pity 30 reset à chaque perso QA frais — jamais testable par le bot."
+    "Deadlock v3 (08-08) résolu par #653 (merge) — ne plus investiguer syncAutoMode.",
+    "Fight-result timeouts (45s x3) sur 4/5 runs post-fix #695 — combats tanky lvl 12-14 (max 94.8s vs médiane 15.6s) dépassent le budget. Proposition majeure #697 (Sudden Death) créée pour traiter à la racine.",
+    "Runs 'created-after-missing-fight-cta' (25/30): le fallback de #695 crée un perso frais → distorsion win rate + métriques HP/essence (initial lu sur ancien perso, final sur nouveau). Issue mineure #696 créée (/oc) pour filtrer dans analyze-qa-stats.ts.",
+    "Idle win rate 7% = TOUJOURS artefact (cycles_observed:0 sur 100% des runs) — NE PAS ajuster idleConfig.",
+    "Lootbox legendary 0/138: #690 clos par #693 (fix persistance). Pity 30 reset par perso frais. Ne pas rouvrir sans données joueurs réels."
   ],
   "known_limitations": [
     "Vérifier AVANT de créer une issue si elle existe déjà (gh issue list) — 60+ propositions majeures ouvertes.",
-    "Deadlock QA bot = problème récurrent (v1 inventory #637, v2 lootbox #645, v3 syncAutoMode #653) — vérifier les locators composites avec .first() dans qa-bot.mjs.",
-    "Win rate last_3/5/10 = 0% = artefact QA bot (runs échoués), PAS une régression balance.",
+    "Win rate last_3/5/10 bas (17.6% sur 17 fights post-fix) = pool de bots nivelé vs persos frais QA, PAS une régression balance. Ne pas toucher COMBAT.XP_WIN/XP_LOSS/diminishingExponent — all-time 49.5% sain. Prioriser #570 (bot pool matchmaking) et #545 (PDS).",
+    "Shop/forge restent inaccessibles (LVL 20/15) → shop metrics null. #606 (paliers 15/15/20) redispatche 08-13.",
     "Le dev-agent n'a PAS le droit de modifier .github/workflows/*.yml.",
-    "PvE XP ratio 0.46 = parsing corrompu (4/19 fights nommés, tous defeats) — ne pas conclure.",
-    "Shop: null sur 277+ runs — palier 20 inatteignable (#606)."
+    "PvE XP ratio 0.46 = parsing corrompu (4/19 fights nommés) — ne pas conclure."
   ],
   "session_notes": [
-    "2026-08-08 (soir): Issue #653 créée (/oc) — deadlock v3 syncAutoMode (locator composite → switch PvE, 94 runs échoués). Proposition majeure #654 (Golden Odds — fight prediction minigame sur bot pool, effort 3). Commentaires: #408 (45% erreurs, mutation v3), #440 (0% = artefact, ne pas toucher balance), #548 (parsing équipement corrompu).",
-    "2026-08-08: Win rate all-time 50.3% sain, HP growth +15.9/run sain, lootbox common 62%/epic 9% sain, stats ~10.5-11.4 équilibrées, streak 2.1→2.8 sain. Le jeu est sain, c'est le QA bot qui est malade.",
-    "2026-08-08: Recherches web: idle engagement 60/40 rule, weekly events > monthly drops, prestige timing, juice/hit-stop (déjà couvert #457), spectator betting → #654.",
-    "2026-08-07: Issue #645 créée (/oc) — deadlock v2 lootbox. Proposition majeure #646 (Welcome-Back Bonus).",
-    "2026-08-06: Commits: PR #636, #635, #633 mergés. Game en bonne santé."
+    "2026-08-13 (soir): Fix #695 merge 08:13 — bot refight enfin (17 fights runs 337-341). Commentaires: #440 (pendule 100%→17% = pool de bots, pas balance), #570 (preuves fresh-player loss streak 0W/7L), #606 (shop/forge toujours bloqués + redispatche), #548 (3 artefacts parsing: timeouts, remplacement perso, essence incohérente), #408 (erreurs = timeouts + fallback, plus de deadlock). Fermé #609 (résolu par #695/#608). Créé #696 (mineure /oc: filtre remplacement perso dans analyze-qa-stats) + #697 (majeure: Combat Sudden Death 30s). Dispatched #606 et #696.",
+    "2026-08-13: Win rate all-time 49.5% sain, stats ~10.5-11.5 équilibrées, streak 2.1→2.8 sain, lootbox common 61%/epic 9.4% cohérent avec #690 clos. Le jeu est sain; le problème est le matchmaking bot pool vs persos frais (#570).",
+    "2026-08-13: Recherches web: idle retention 2026 (GameAnalytics benchmarks, MapleStory Idle walls), sudden death/anti-deadlock (gamedev stackexchange, Marvel Rivals overtime), bot pool new player experience."
   ]
 }
