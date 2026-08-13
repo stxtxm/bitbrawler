@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-10T20:15:15Z",
+  "last_session": "2026-08-13T20:01:48Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -187,6 +187,11 @@
       "lesson": "Le pity lootbox était un useState session-only dans GameContext — jamais persisté (ni localStorage ni Supabase), donc reset à chaque reload : le pity garanti (30 rolls) ne déclenchait jamais. Fix: persister lootboxPityCount sur le Character (normalizeCharacter + persistCharacter) + sync Supabase best-effort via le champs fields uniquement (migration #692, PGRST204 ignoré silencieusement pour ne pas casser le roll). Bug UI: InventoryPanel affichait /75 au lieu de PITY_THRESHOLD (30).",
       "issue": "#690",
       "date": "2026-08-10"
+    },
+    {
+      "lesson": "Issue #696: analyze-qa-stats.ts was polluted by QA bot character-replacement runs. Since #695 (merge 08-13), runs with character_action=created-after-missing-fight-cta/created-after-exhausted-energy replace the character mid-run: initial_max_hp read on OLD char, final_max_hp on NEW char → hp_analysis avg_hp_growth 13.8 mixed characters, essence_analysis avg -128.55 (n=5) triggered erroneous 'Players may be hoarding essence' suggestion. Fix: isCharacterReplacedRun() helper (final_max_hp < initial_max_hp - 10 OR character_action startsWith 'created-after-' with replaced_character set) applied to BOTH HP and essence analysis; new visibility field runs_excluded_by_character_replacement on both. Verified: essence now uses 3 healthy runs (+8.16/run), hoarding suggestion gone. Pattern: when QA stats contradict expectations, check for run-level data-quality artifacts (character replacement) BEFORE reading it as a balance signal. Test pattern: mirror function + source-content contract test reading scripts/analyze-qa-stats.ts (like qa-bot.mjs contract tests).",
+      "issue": "#696",
+      "date": "2026-08-13"
     }
   ]
 }
