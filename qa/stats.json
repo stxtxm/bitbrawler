@@ -36500,5 +36500,259 @@
       "purchased_offer": null,
       "essence_after_purchase": null
     }
+  },
+  {
+    "date": "2026-08-13T18:50:34.025Z",
+    "run": "2026-08-13",
+    "character": "RIDERSAGE",
+    "character_action": "created-after-exhausted-energy",
+    "replaced_character": "SWIFTVALE",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 62,
+        "fight_duration_ms": 19077,
+        "max_hp": 329,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 292.69
+      },
+      {
+        "result": "defeat",
+        "xp": 56,
+        "fight_duration_ms": 29478,
+        "max_hp": 329,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 294.17
+      },
+      {
+        "result": "defeat",
+        "xp": 28,
+        "fight_duration_ms": 15020,
+        "max_hp": 212,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": null
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Chipped Wand",
+      "rarity": "UNCOMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "LOCKED LVL 30",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": null,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": true
+    },
+    "initial_stats": {
+      "str": 7,
+      "vit": 11,
+      "dex": 17,
+      "luk": 11,
+      "int": 9,
+      "foc": 24,
+      "fights": 0
+    },
+    "initial_level": 12,
+    "initial_xp": {
+      "current": 6812,
+      "max": 4504
+    },
+    "initial_max_hp": 320,
+    "initial_equipment": [],
+    "initial_streak": null,
+    "final_stats": {
+      "level": 2,
+      "xp": 14,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 5,
+      "vit": 14,
+      "dex": 8,
+      "luk": 9,
+      "int": 23,
+      "foc": 8,
+      "fights": 0
+    },
+    "final_max_hp": 224,
+    "final_equipment": [],
+    "final_streak": null,
+    "lootbox_equipment": [],
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": []
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 12,
+        "new_level": 13
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 30514,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "ogre"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 25,
+      "xp_events": [
+        {
+          "time_ms": 30514,
+          "xp": 25,
+          "monster": "ogre",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": true,
+      "level_up_events": [
+        {
+          "time_ms": 30514,
+          "monster": "ogre"
+        }
+      ],
+      "phase_transition_times_ms": [
+        30514
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 25,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.57,
+      "next_level_eta": "⬆ 3m 46s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.16x",
+      "interval": "10.9s",
+      "streak_bonus": null
+    },
+    "initial_essence": 292.27,
+    "final_essence": 1.28,
+    "essence": {
+      "before_idle": 292.27,
+      "after_idle": 292.69,
+      "per_fight": [
+        292.69,
+        294.17,
+        null
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": 1.28,
+      "flow": {
+        "idle_gained": 0.42,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": -290.99
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": true,
+      "skip_reason": "time budget exceeded"
+    },
+    "shop": {
+      "visited": false,
+      "offers_count": 0,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": null,
+      "essence_after": null,
+      "skipped": true,
+      "skip_reason": "time budget exceeded",
+      "shop_data": {
+        "offers": [],
+        "purchased_offer": null,
+        "essence_after_purchase": null
+      }
+    },
+    "errors": [
+      "Fight 2: timeout waiting for result (45000ms, 3 retries)",
+      "Fight 3: timeout waiting for result (45000ms, 3 retries)"
+    ],
+    "load_times_ms": {
+      "home": 1573,
+      "arena": 2915,
+      "arena_reload": 24
+    },
+    "shop_data": {
+      "offers": [],
+      "purchased_offer": null,
+      "essence_after_purchase": null
+    }
   }
 ]
