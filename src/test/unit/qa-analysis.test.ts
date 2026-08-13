@@ -609,3 +609,122 @@ describe('QA Bot Locked Tab Skip Contract', () => {
     expect(skipIdx).toBeLessThan(clickIdx)
   })
 })
+
+describe('QA Bot Fight CTA Robustness Contract', () => {
+  const qaBotSource = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
+
+  function extractAsyncFunction(source: string, name: string): string | null {
+    const start = source.indexOf(`async function ${name}(`)
+    if (start === -1) return null
+    const bodyStart = source.indexOf('{', start)
+    let depth = 0
+    for (let i = bodyStart; i < source.length; i++) {
+      if (source[i] === '{') depth++
+      else if (source[i] === '}') {
+        depth--
+        if (depth === 0) return source.slice(start, i + 1)
+      }
+    }
+    return null
+  }
+
+  function requireAsyncFunction(name: string): string {
+    const fn = extractAsyncFunction(qaBotSource, name)
+    expect(fn).not.toBeNull()
+    if (fn === null) throw new Error(`qa-bot.mjs missing async function ${name}()`)
+    return fn
+  }
+
+  it('togglePveMode toggles based on the target switch aria-checked, not the desired boolean (#689)', () => {
+    // The PvP switch's aria-checked already encodes "PvP mode active" (true when
+    // in PvP). The old `isOn !== enablePve` check read "false" for the PvP switch
+    // while in PvE mode, so toggling back to PvP silently did nothing → the bot
+    // stayed in PvE mode where the boss is locked (LOCKED LVL 30) → 0 fights.
+    // The post-click verification must also compare against `true` (target mode
+    // active), never against the desired boolean.
+    const fn = requireAsyncFunction('togglePveMode')
+    expect(fn).toContain('if (!isOn) {')
+    expect(fn).not.toContain('isOn !== enablePve')
+    expect(fn).toContain('if (verified === true) {')
+    expect(fn).toContain('if (retryVerified === true) {')
+    expect(fn).not.toContain('verified === enablePve')
+  })
+
+  it('readArenaStatus exposes fightButtonEnabled, isSearching and isPveLocked (#689)', () => {
+    const fn = requireAsyncFunction('readArenaStatus')
+    expect(fn).toContain('fightButtonEnabled')
+    expect(fn).toContain('isDisabled()')
+    expect(fn).toContain('isSearching')
+    expect(fn).toContain('isPveLocked')
+    expect(fn).toContain("fightButtonLabel.includes('SEARCHING')")
+    expect(fn).toContain("fightButtonLabel.includes('LOCKED LVL')")
+  })
+
+  it('defines a buildArenaStatusRecord helper capturing the fight-gate diagnostics (#689)', () => {
+    const fn = extractAsyncFunction(qaBotSource, 'buildArenaStatusRecord')
+      ?? (() => {
+        const start = qaBotSource.indexOf('function buildArenaStatusRecord(')
+        if (start === -1) return null
+        const bodyStart = qaBotSource.indexOf('{', start)
+        let depth = 0
+        for (let i = bodyStart; i < qaBotSource.length; i++) {
+          if (qaBotSource[i] === '{') depth++
+          else if (qaBotSource[i] === '}') {
+            depth--
+            if (depth === 0) return qaBotSource.slice(start, i + 1)
+          }
+        }
+        return null
+      })()
+    expect(fn).not.toBeNull()
+    if (fn === null) throw new Error('qa-bot.mjs missing function buildArenaStatusRecord()')
+    for (const key of ['fightButtonLabel', 'fightButtonVisible', 'fightButtonEnabled', 'fightsAvailable', 'isResting', 'hasFightCta', 'isSearching', 'isPveLocked']) {
+      expect(fn).toContain(key)
+    }
+  })
+
+  it('runFightSequence gates fights on fightButtonEnabled + energy, not the raw FIGHT label (#689)', () => {
+    const fn = requireAsyncFunction('runFightSequence')
+    expect(fn).toContain('!arenaStatus.fightButtonEnabled')
+    expect(fn).not.toContain('!arenaStatus.hasFightCta')
+    expect(fn).toContain('runRecord.arena_status = buildArenaStatusRecord(')
+  })
+
+  it('runFightSequence treats SEARCHING... with a wait+retry loop (max 2 retries) before failing (#689)', () => {
+    const fn = requireAsyncFunction('runFightSequence')
+    const searchIdx = fn.indexOf('isSearching')
+    expect(searchIdx).toBeGreaterThan(-1)
+    expect(fn.indexOf('await sleep(3000)', searchIdx)).toBeGreaterThan(searchIdx)
+    expect(fn.indexOf('retry < 2', searchIdx)).toBeGreaterThan(searchIdx)
+  })
+
+  it('runFightSequence falls back from PvE-locked (LOCKED LVL) to PvP mode before replacing the character (#689)', () => {
+    const fn = requireAsyncFunction('runFightSequence')
+    const lockIdx = fn.indexOf('isPveLocked')
+    expect(lockIdx).toBeGreaterThan(-1)
+    const toggleIdx = fn.indexOf('togglePveMode(page, false)', lockIdx)
+    expect(toggleIdx).toBeGreaterThan(lockIdx)
+    const missingCtaIdx = fn.indexOf("'missing-fight-cta'")
+    expect(missingCtaIdx).toBeGreaterThan(toggleIdx)
+  })
+
+  it('defines a retryArenaReload helper that reloads the page and re-waits for the arena (#689)', () => {
+    const fn = extractAsyncFunction(qaBotSource, 'retryArenaReload')
+    expect(fn).not.toBeNull()
+    if (fn === null) throw new Error('qa-bot.mjs missing async function retryArenaReload()')
+    expect(fn).toContain('page.reload(')
+    expect(fn).toContain('waitForArena(page')
+  })
+
+  it('runFightSequence reloads the arena before replacing the character on missing-fight-cta (#689)', () => {
+    const fn = requireAsyncFunction('runFightSequence')
+    const reloadIdx = fn.indexOf('retryArenaReload(page)')
+    expect(reloadIdx).toBeGreaterThan(-1)
+    const missingIdx = fn.indexOf("'missing-fight-cta'")
+    expect(missingIdx).toBeGreaterThan(reloadIdx)
+  })
+
+  it('runRecord initializes arena_status to null (#689)', () => {
+    expect(qaBotSource).toContain('arena_status: null')
+  })
+})

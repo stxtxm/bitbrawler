@@ -110,6 +110,16 @@ interface RunRecord {
   lootbox?: LootboxResult | null
   auto_mode_enabled?: boolean
   auto_mode_sync_ok?: boolean
+  arena_status?: {
+    fightButtonLabel: string
+    fightButtonVisible: boolean
+    fightButtonEnabled: boolean
+    fightsAvailable: number | null
+    isResting: boolean
+    hasFightCta: boolean
+    isSearching: boolean
+    isPveLocked: boolean
+  } | null
   initial_stats?: Record<string, number> | null
   initial_level?: number | null
   initial_xp?: { current: number; max: number } | null

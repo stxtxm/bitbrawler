@@ -180,8 +180,13 @@ async function readArenaStatus(page) {
   const fightButtonLabel = fightButtonVisible
     ? ((await giantFightBtn.textContent().catch(() => '')) || '').trim().toUpperCase()
     : ''
+  const fightButtonEnabled = fightButtonVisible
+    ? !(await giantFightBtn.isDisabled().catch(() => true))
+    : false
   const isResting = bodyText.includes('REST NOW') || fightButtonLabel.includes('REST NOW')
   const isResolving = bodyText.includes('RESOLVING') || fightButtonLabel.includes('RESOLVING')
+  const isSearching = fightButtonLabel.includes('SEARCHING')
+  const isPveLocked = fightButtonLabel.includes('LOCKED LVL')
   const hasFightCta = fightButtonLabel.includes('FIGHT')
 
   return {
@@ -190,10 +195,31 @@ async function readArenaStatus(page) {
     isPveEnergy,
     fightButtonVisible,
     fightButtonLabel,
+    fightButtonEnabled,
     isResting,
     isResolving,
+    isSearching,
+    isPveLocked,
     hasFightCta,
   }
+}
+
+function buildArenaStatusRecord(status) {
+  return {
+    fightButtonLabel: status.fightButtonLabel,
+    fightButtonVisible: status.fightButtonVisible,
+    fightButtonEnabled: status.fightButtonEnabled,
+    fightsAvailable: status.fightsAvailable,
+    isResting: status.isResting,
+    hasFightCta: status.hasFightCta,
+    isSearching: status.isSearching,
+    isPveLocked: status.isPveLocked,
+  }
+}
+
+async function retryArenaReload(page) {
+  await page.reload({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => {})
+  return await waitForArena(page, 15000)
 }
 
 async function waitForArena(page, timeout = 15000) {
@@ -1095,20 +1121,20 @@ async function togglePveMode(page, enablePve) {
     return false
   }
   const isOn = await button.getAttribute('aria-checked').then(v => v === 'true')
-  if (isOn !== enablePve) {
+  if (!isOn) {
     await button.click()
     await page.waitForTimeout(600)
 
     // Verify the toggle actually took effect
     const verified = await button.getAttribute('aria-checked').then(v => v === 'true').catch(() => null)
-    if (verified === enablePve) {
+    if (verified === true) {
       console.log(`   Mode toggled to ${enablePve ? 'PVE' : 'PVP'} ✅`)
     } else {
       console.log(`   ⚠️ First toggle attempt may have failed, retrying...`)
       await button.click({ force: true }).catch(() => {})
       await page.waitForTimeout(600)
       const retryVerified = await button.getAttribute('aria-checked').then(v => v === 'true').catch(() => null)
-      if (retryVerified === enablePve) {
+      if (retryVerified === true) {
         console.log(`   Mode toggled to ${enablePve ? 'PVE' : 'PVP'} (after retry) ✅`)
       } else {
         console.log(`   ❌ Failed to toggle to ${enablePve ? 'PVE' : 'PVP'} mode`)
@@ -1579,6 +1605,7 @@ async function runFightSequence(page, runKey, runRecord) {
   let recreatedForExhaustion = false
   let currentLevel = runRecord.initial_level
   let pvpSinceLastPve = 0
+  let pveLockedRecoveries = 0
 
   for (let i = 0; i < config.fightsPerRun; i++) {
     await humanDelay(page)
@@ -1606,9 +1633,10 @@ async function runFightSequence(page, runKey, runRecord) {
       }
     }
 
-    const arenaStatus = await readArenaStatus(page)
+    let arenaStatus = await readArenaStatus(page)
     const fightsAvailable = arenaStatus.fightsAvailable
     const isResting = arenaStatus.isResting
+    runRecord.arena_status = buildArenaStatusRecord(arenaStatus)
 
     if (fightsAvailable !== null && fightsAvailable <= 0) {
       console.log('   No battle energy available for current fighter')
@@ -1623,8 +1651,61 @@ async function runFightSequence(page, runKey, runRecord) {
       break
     }
 
-    if (isResting || !arenaStatus.hasFightCta) {
-      console.log(`   Fight CTA not available (${arenaStatus.fightButtonLabel || 'no label'})`)
+    if (arenaStatus.isSearching) {
+      console.log('   Fight button shows SEARCHING..., waiting for matchmaking to settle')
+      let searchResolved = false
+      for (let retry = 0; retry < 2; retry++) {
+        await sleep(3000)
+        const recheck = await readArenaStatus(page)
+        runRecord.arena_status = buildArenaStatusRecord(recheck)
+        if (!recheck.isSearching) {
+          arenaStatus = recheck
+          searchResolved = true
+          break
+        }
+      }
+      if (!searchResolved) {
+        console.log('   SEARCHING... persisted after 2 retries, treating CTA as unavailable')
+      }
+    }
+
+    if (arenaStatus.isPveLocked && !config.pveOnly && pveLockedRecoveries < config.fightsPerRun) {
+      console.log('   PvE boss locked (LOCKED LVL) — toggling back to PvP mode')
+      pveLockedRecoveries++
+      await togglePveMode(page, false)
+      await page.waitForTimeout(600)
+      i--
+      continue
+    }
+
+    if (isResting || !arenaStatus.fightButtonEnabled) {
+      console.log(`   Fight CTA not available (label=${arenaStatus.fightButtonLabel || 'no label'}, enabled=${arenaStatus.fightButtonEnabled})`)
+      if (!isResting) {
+        let recovered = false
+        for (let retry = 0; retry < 2; retry++) {
+          console.log(`   Reloading arena to retry fight CTA (attempt ${retry + 1}/2)...`)
+          const arenaLoadMs = await retryArenaReload(page)
+          if (arenaLoadMs !== null) {
+            runRecord.load_times_ms.arena_reload = arenaLoadMs
+          }
+          const recheck = await readArenaStatus(page)
+          runRecord.arena_status = buildArenaStatusRecord(recheck)
+          if (
+            !recheck.isResting &&
+            recheck.fightButtonEnabled &&
+            recheck.fightsAvailable !== null &&
+            recheck.fightsAvailable > 0
+          ) {
+            console.log('   Fight CTA available after reload ✅')
+            recovered = true
+            break
+          }
+        }
+        if (recovered) {
+          i--
+          continue
+        }
+      }
       if (!recreatedForExhaustion) {
         if (isPve) await togglePveMode(page, false)
         await maybeReplaceExhaustedCharacter(page, runKey, runRecord, 'missing-fight-cta')
@@ -1713,6 +1794,7 @@ async function runFightSequence(page, runKey, runRecord) {
       runRecord.errors.push(`Fight ${i + 1}: timeout waiting for result (${config.fightTimeout}ms, ${maxRetries} retries)`)
 
       const timeoutArenaStatus = await readArenaStatus(page)
+      runRecord.arena_status = buildArenaStatusRecord(timeoutArenaStatus)
       if (
         i === 0 &&
         runRecord.fights.length === 0 &&
@@ -1720,7 +1802,7 @@ async function runFightSequence(page, runKey, runRecord) {
         (
           timeoutArenaStatus.isResting ||
           (timeoutArenaStatus.fightsAvailable !== null && timeoutArenaStatus.fightsAvailable <= 0) ||
-          !timeoutArenaStatus.hasFightCta
+          !timeoutArenaStatus.fightButtonEnabled
         )
       ) {
         if (isPve) await togglePveMode(page, false)
@@ -2340,6 +2422,7 @@ async function run() {
     lootbox: null,
     auto_mode_enabled: false,
     auto_mode_sync_ok: false,
+    arena_status: null,
     initial_stats: null,
     initial_level: null,
     initial_xp: null,
