@@ -1,7 +1,7 @@
 {
   "run": "2026-08-14",
-  "character": "ORBITBLADE",
-  "exhausted": false,
-  "updated_at": "2026-08-14T01:10:05.805Z",
-  "source": "created"
+  "character": "PIXELFRAME",
+  "exhausted": true,
+  "updated_at": "2026-08-14T04:06:25.924Z",
+  "source": "created-after-exhausted-energy"
 }
