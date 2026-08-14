@@ -8,6 +8,8 @@ import {
   tileScanStart,
   scrollPixels,
   drawVolcano,
+  plumeOpacity,
+  eruptionDx,
 } from '../../components/procedural/terrainShared';
 
 // ============================================================================
@@ -292,6 +294,39 @@ describe('Volcano drawing orientation', () => {
       // row must never drift more than one pixel off-center.
       expect(Math.abs(row.x + row.w / 2 - 500)).toBeLessThanOrEqual(0.6);
     }
+  });
+});
+
+// ============================================================================
+// CRATER PLUME + ERUPTION SPARKS — seamless animation (no visible blink)
+// ============================================================================
+
+describe('Crater smoke plume animation', () => {
+  it('fades IN at the crater mouth (t=0) and OUT at the apex (t=1) — seamless cycle', () => {
+    // Cone envelope: sin(π·t) is 0 at both ends and peaks mid-rise.
+    // The old linear 0.55·(1-t) envelope was at FULL opacity at t=0, so
+    // the plume popped back into existence every cycle (blinking).
+    expect(plumeOpacity(0, 0.55)).toBeCloseTo(0, 6);
+    expect(plumeOpacity(1, 0.55)).toBeCloseTo(0, 6);
+    expect(plumeOpacity(0.5, 0.55)).toBeCloseTo(0.55, 6);
+    expect(plumeOpacity(0.25, 0.55)).toBeGreaterThan(0);
+    expect(plumeOpacity(0.75, 0.55)).toBeGreaterThan(0);
+  });
+
+  it('clamps t outside [0,1] to the envelope bounds', () => {
+    expect(plumeOpacity(-1, 0.5)).toBeCloseTo(0, 6);
+    expect(plumeOpacity(2, 0.5)).toBeCloseTo(0, 6);
+  });
+});
+
+describe('Eruption sparks trajectory', () => {
+  it('displacement is velocity × time (bounded near the crater), not velocity × tick', () => {
+    // velocityX max ≈ 15.4, progressTick ∈ [0,48). The old formula
+    // dx = v * progressTick flung sparks up to ±740px across the screen —
+    // visible as blinking streaks everywhere.
+    expect(eruptionDx(15.4, 0)).toBe(0);
+    expect(Math.abs(eruptionDx(15.4, 1))).toBeLessThanOrEqual(15.4 + 1e-9);
+    expect(Math.abs(eruptionDx(-15.4, 0.5))).toBeLessThanOrEqual(7.7 + 1e-9);
   });
 });
 
