@@ -1,7 +1,7 @@
 {
-  "run": "2026-08-14",
-  "character": "RUNESAGE",
+  "run": "2026-08-15",
+  "character": "FABLEDMAGE",
   "exhausted": true,
-  "updated_at": "2026-08-14T19:05:24.285Z",
-  "source": "created"
+  "updated_at": "2026-08-14T22:05:33.635Z",
+  "source": "created-after-exhausted-energy"
 }
