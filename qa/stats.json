@@ -38102,5 +38102,302 @@
       "purchased_offer": null,
       "essence_after_purchase": null
     }
+  },
+  {
+    "date": "2026-08-14T07:10:40.448Z",
+    "run": "2026-08-14",
+    "character": "ROGUEBYTE",
+    "character_action": "created-after-exhausted-energy",
+    "replaced_character": "SHARDTITAN",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 51,
+        "fight_duration_ms": 18538,
+        "max_hp": 208,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 13.76
+      },
+      {
+        "result": "defeat",
+        "xp": 45,
+        "fight_duration_ms": 18607,
+        "max_hp": 208,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 15.49
+      },
+      {
+        "result": "defeat",
+        "xp": 29,
+        "fight_duration_ms": 18540,
+        "max_hp": 228,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": null
+      },
+      {
+        "result": "victory",
+        "xp": 107,
+        "fight_duration_ms": 18281,
+        "max_hp": 241,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": null
+      },
+      {
+        "result": "victory",
+        "xp": 103,
+        "fight_duration_ms": 17712,
+        "max_hp": 241,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": null
+      },
+      {
+        "result": "defeat",
+        "xp": 40,
+        "fight_duration_ms": 21453,
+        "max_hp": 253,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 0.06
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Crystal Pendant",
+      "rarity": "EPIC",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 2,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false
+    },
+    "initial_stats": {
+      "str": 11,
+      "vit": 6,
+      "dex": 7,
+      "luk": 7,
+      "int": 18,
+      "foc": 20,
+      "fights": 0
+    },
+    "initial_level": 5,
+    "initial_xp": {
+      "current": 296,
+      "max": 376
+    },
+    "initial_max_hp": 202,
+    "initial_equipment": [],
+    "initial_streak": null,
+    "final_stats": {
+      "level": 3,
+      "xp": 55,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 7,
+      "vit": 16,
+      "dex": 23,
+      "luk": 8,
+      "int": 7,
+      "foc": 7,
+      "last xp": 16,
+      "fights": 1
+    },
+    "final_max_hp": 253,
+    "final_equipment": [],
+    "final_streak": null,
+    "lootbox_equipment": [],
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": []
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 5,
+        "new_level": 6
+      },
+      {
+        "fight_number": 2,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 1,
+        "new_level": 2
+      },
+      {
+        "fight_number": 5,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 2,
+        "new_level": 3
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 30514,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "goblin"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 17,
+      "xp_events": [
+        {
+          "time_ms": 30514,
+          "xp": 17,
+          "monster": "goblin",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": true,
+      "level_up_events": [
+        {
+          "time_ms": 30514,
+          "monster": "goblin"
+        }
+      ],
+      "phase_transition_times_ms": [
+        30514
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 17,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.67,
+      "next_level_eta": "⬆ 1m 11s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.19x",
+      "interval": "12.0s",
+      "streak_bonus": null
+    },
+    "initial_essence": 13.56,
+    "final_essence": 0.91,
+    "essence": {
+      "before_idle": 13.56,
+      "after_idle": 13.76,
+      "per_fight": [
+        13.76,
+        15.49,
+        null,
+        null,
+        null,
+        0.06
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": 0.91,
+      "flow": {
+        "idle_gained": 0.2,
+        "fights_change": -13.7,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": -12.65
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": true,
+      "skip_reason": "forge requires LVL 6"
+    },
+    "shop": {
+      "visited": false,
+      "offers_count": 0,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": null,
+      "essence_after": null,
+      "skipped": true,
+      "skip_reason": "shop requires LVL 8",
+      "shop_data": {
+        "offers": [],
+        "purchased_offer": null,
+        "essence_after_purchase": null
+      }
+    },
+    "errors": [
+      "Fight 4: timeout waiting for result (45000ms, 3 retries)"
+    ],
+    "load_times_ms": {
+      "home": 1880,
+      "arena": 2495
+    },
+    "shop_data": {
+      "offers": [],
+      "purchased_offer": null,
+      "essence_after_purchase": null
+    }
   }
 ]
