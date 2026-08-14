@@ -5,6 +5,8 @@ import {
   tileScanStart,
   worldIndexAt,
   drawVolcano,
+  plumeOpacity,
+  eruptionDx,
 } from './terrainShared';
 import {
   VOLCANIC_TERRAIN,
@@ -184,21 +186,23 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
         const craterY = Math.round(groundTop - vh);
         const craterCenter = vx;
 
-        // Erupting sparks: parabolic arcs using deterministic physics driven by scrollPx
-        const sparkCount = 4 + (worldIdx % 3);
-        for (let s = 0; s < sparkCount; s++) {
-          const sparkSeed = worldIdx * 17 + s * 31 + seedNum;
-          const cycleDuration = 48; // tick length for a full jump
-          const progressTick = (scrollPx * 0.45 + sparkSeed * 7) % cycleDuration;
-          const t = progressTick / cycleDuration; // 0.0 to 1.0
+          // Erupting sparks: parabolic arcs using deterministic physics driven by scrollPx
+          const sparkCount = 4 + (worldIdx % 3);
+          for (let s = 0; s < sparkCount; s++) {
+            const sparkSeed = worldIdx * 17 + s * 31 + seedNum;
+            const cycleDuration = 48; // tick length for a full jump
+            const progressTick = (scrollPx * 0.45 + sparkSeed * 7) % cycleDuration;
+            const t = progressTick / cycleDuration; // 0.0 to 1.0
 
-          // Parabolic trajectory
-          const velocityX = ((sparkSeed % 23) - 11) * 1.4; // horizontal direction & speed
-          const launchVelocityY = -35 - (sparkSeed % 13) * 1.5; // initial boost upward
-          const gravity = 80; // gravity force pulls downward
+            // Parabolic trajectory
+            const velocityX = ((sparkSeed % 23) - 11) * 1.4; // horizontal direction & speed
+            const launchVelocityY = -35 - (sparkSeed % 13) * 1.5; // initial boost upward
+            const gravity = 80; // gravity force pulls downward
 
-          const dx = velocityX * progressTick;
-          const dy = launchVelocityY * t + 0.5 * gravity * t * t;
+            // dx is velocity × TIME (t), never velocity × raw tick —
+            // the old formula flung sparks up to ±740px across the screen.
+            const dx = eruptionDx(velocityX, t);
+            const dy = launchVelocityY * t + 0.5 * gravity * t * t;
 
           const sparkX = Math.round(craterCenter + dx);
           const sparkY = Math.round(craterY + dy);
@@ -224,8 +228,10 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
           const plumeX = Math.round(craterCenter + sway);
           const size = Math.round(10 + t * 20); // expands as it rises
 
-          // Draw pixelated cloud circles
-          ctx.fillStyle = 'rgba(64, 46, 44, ' + (0.55 * (1 - t)).toFixed(2) + ')';
+          // Draw pixelated cloud circles — opacity follows a sin(π·t)
+          // envelope: fade in at the crater, fade out at the apex, so the
+          // cycle restart is invisible (no blinking).
+          ctx.fillStyle = 'rgba(64, 46, 44, ' + plumeOpacity(t, 0.55).toFixed(2) + ')';
           ctx.beginPath();
           ctx.arc(plumeX, plumeY, size / 2, 0, Math.PI * 2);
           ctx.arc(plumeX - size / 4, plumeY + size / 6, size / 3, 0, Math.PI * 2);
@@ -234,7 +240,7 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
 
           // Internal warm magma glow inside the plume near the crater mouth
           if (t < 0.4) {
-            ctx.fillStyle = 'rgba(255, 90, 26, ' + (0.45 * (1 - t / 0.4)).toFixed(2) + ')';
+            ctx.fillStyle = 'rgba(255, 90, 26, ' + (0.45 * (1 - t / 0.4) * (t / 0.4)).toFixed(2) + ')';
             ctx.beginPath();
             ctx.arc(plumeX, plumeY + 2, (size / 3) * (1 - t / 0.4), 0, Math.PI * 2);
             ctx.fill();

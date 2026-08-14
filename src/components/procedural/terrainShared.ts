@@ -23,6 +23,27 @@ export function tilesNeeded(viewWidth: number, tileWidth: number): number {
 }
 
 /**
+ * Seamless opacity envelope for the crater smoke plume over its rise
+ * cycle t ∈ [0,1]. sin(π·t) is 0 at both ends, so the plume fades in at
+ * the crater mouth, peaks mid-rise and fades out at the apex — no pop/
+ * blink when the cycle restarts. (A linear (1-t) envelope was at FULL
+ * opacity at t=0, making the plume blink back into existence.)
+ */
+export function plumeOpacity(t: number, maxOpacity: number): number {
+  const clamped = Math.min(1, Math.max(0, t));
+  return maxOpacity * Math.sin(Math.PI * clamped);
+}
+
+/**
+ * Horizontal displacement of an eruption spark: velocity × time (t ∈ [0,1]),
+ * so the spark stays near its volcano crater. A previous formula used
+ * velocity × raw tick, which flung sparks up to ±740px across the screen.
+ */
+export function eruptionDx(velocityX: number, t: number): number {
+  return velocityX * Math.min(1, Math.max(0, t));
+}
+
+/**
  * Draws a pixel-art volcano cone, apex (narrow) at the top, base (wide)
  * on the ground line. The widest row sits at the bottom — a previous
  * (1 - i/steps) formula drew the widest row at the top, upside down.
