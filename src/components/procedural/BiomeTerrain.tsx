@@ -77,14 +77,57 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
       ctx.fillStyle = sky;
       ctx.fillRect(0, 0, width, height);
 
-      // ── Sun glow (brighter than SceneBackground) ──
+      // ── Retro Pixel Sun (Multi-layered glowing celestial body) ──
       const sunPhase = wrapPhase(scrollPx, 0.05, width);
       const sunX = Math.round(width * 0.68 - sunPhase);
-      const sunY = Math.round(groundTop - height * 0.22);
+      const sunY = Math.round(groundTop - height * 0.24);
+
+      // Layer 1: Outer glow ring (36x36 with corners clipped)
+      ctx.fillStyle = 'rgba(255, 138, 42, 0.35)';
+      ctx.fillRect(sunX - 18, sunY - 14, 36, 28);
+      ctx.fillRect(sunX - 14, sunY - 18, 28, 36);
+
+      // Layer 2: Middle glow ring (28x28 with corners clipped)
+      ctx.fillStyle = '#ff8a2a';
+      ctx.fillRect(sunX - 14, sunY - 10, 28, 20);
+      ctx.fillRect(sunX - 10, sunY - 14, 20, 28);
+
+      // Layer 3: Solid Sun Core (20x20 with corners clipped)
       ctx.fillStyle = '#ffd060';
-      ctx.fillRect(sunX - 18, sunY - 18, 36, 36);
-      ctx.fillStyle = '#fff0b0';
-      ctx.fillRect(sunX - 10, sunY - 10, 20, 20);
+      ctx.fillRect(sunX - 10, sunY - 8, 20, 16);
+      ctx.fillRect(sunX - 8, sunY - 10, 16, 20);
+
+      // Layer 4: Brightest center (12x12)
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(sunX - 6, sunY - 6, 12, 12);
+
+      // ── Billowing Volcanic Dark Smoke Clouds (slow parallax) ──
+      const cloudSpeed = 0.12;
+      const cloudSpacing = 320;
+      const cloudPhase = wrapPhase(scrollPx, cloudSpeed, cloudSpacing);
+      for (let sx = tileScanStart(cloudPhase, cloudSpacing); sx < width + cloudSpacing; sx += cloudSpacing) {
+        if (sx < -160 || sx > width + 160) continue;
+        const worldIdx = worldIndexAt(sx, scrollPx, cloudSpeed, cloudSpacing);
+        const h = (worldIdx * 19 + seedNum * 13) % 101;
+        if (h > 45) continue; // 45% chance to render a cloud block
+
+        const cy = Math.round(height * 0.12 + (h % 5) * 8);
+        const cx = Math.round(sx + ((h % 11) - 5) * 4);
+
+        // Render a retro billowing pixel cloud composed of intersecting circles/caps
+        // Dark ash grey base, with orange lava-reflected highlights at the bottom.
+        ctx.fillStyle = 'rgba(42, 22, 24, 0.85)'; // Charred, dark smoke color
+        ctx.fillRect(cx - 30, cy, 60, 18);
+        ctx.fillRect(cx - 20, cy - 8, 40, 26);
+        ctx.fillRect(cx - 8, cy - 14, 22, 32);
+
+        // Volcanic orange highlights on the cloud bellies/rims
+        ctx.fillStyle = '#ff5a1a';
+        ctx.fillRect(cx - 24, cy + 12, 48, 4);
+        ctx.fillRect(cx - 14, cy + 16, 28, 3);
+        ctx.fillStyle = '#ff8a2a';
+        ctx.fillRect(cx - 8, cy + 12, 16, 2);
+      }
 
       // ── Far volcano silhouettes (slow parallax) ──
       const farSpeed = layerSpeed('volcanoFar');
@@ -130,12 +173,73 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
         const vw = 150 + (h % 7) * 18;
         const vh = 150 + (h % 9) * 20;
         const vx = Math.round(sx + off);
-        drawVolcano(ctx, vx, groundTop, vw, vh, cfg.volcanoNear, cfg.crater, cfg.lava);
+        drawVolcano(ctx, vx, groundTop, vw, vh, cfg.volcanoNear, cfg.crater, cfg.lava, scrollPx);
         // Lava pool glow at the base
         ctx.fillStyle = cfg.lavaBright;
         ctx.fillRect(vx - 14, groundTop - 2, 28, 4);
         ctx.fillStyle = cfg.lava;
         ctx.fillRect(vx - 10, groundTop + 2, 20, 3);
+
+        // ── Volcano Active Craters: Erupting Sparks & Falling Lava Geysers ──
+        const craterY = Math.round(groundTop - vh);
+        const craterCenter = vx;
+
+        // Erupting sparks: parabolic arcs using deterministic physics driven by scrollPx
+        const sparkCount = 4 + (worldIdx % 3);
+        for (let s = 0; s < sparkCount; s++) {
+          const sparkSeed = worldIdx * 17 + s * 31 + seedNum;
+          const cycleDuration = 48; // tick length for a full jump
+          const progressTick = (scrollPx * 0.45 + sparkSeed * 7) % cycleDuration;
+          const t = progressTick / cycleDuration; // 0.0 to 1.0
+
+          // Parabolic trajectory
+          const velocityX = ((sparkSeed % 23) - 11) * 1.4; // horizontal direction & speed
+          const launchVelocityY = -35 - (sparkSeed % 13) * 1.5; // initial boost upward
+          const gravity = 80; // gravity force pulls downward
+
+          const dx = velocityX * progressTick;
+          const dy = launchVelocityY * t + 0.5 * gravity * t * t;
+
+          const sparkX = Math.round(craterCenter + dx);
+          const sparkY = Math.round(craterY + dy);
+
+          // Only draw if spark hasn't fallen below ground top
+          if (sparkY < groundTop) {
+            ctx.fillStyle = s % 2 === 0 ? cfg.lavaBright : cfg.lava;
+            ctx.fillRect(sparkX, sparkY, 3, 3);
+            ctx.fillStyle = 'rgba(255, 110, 40, 0.45)';
+            ctx.fillRect(sparkX - 1, sparkY - 1, 5, 5);
+          }
+        }
+
+        // ── Volcanic Smoke/Ash Columns: Expanding swaying plumes from crater ──
+        const plumeCount = 3;
+        for (let p = 0; p < plumeCount; p++) {
+          const plumeSeed = worldIdx * 13 + p * 19 + seedNum;
+          const plumeScroll = (scrollPx * 0.2 + plumeSeed * 11) % 64;
+          const t = plumeScroll / 64; // 0.0 to 1.0 rising factor
+
+          const plumeY = Math.round(craterY - t * (height * 0.35));
+          const sway = Math.sin(scrollPx * 0.03 + plumeSeed) * 12 * t;
+          const plumeX = Math.round(craterCenter + sway);
+          const size = Math.round(10 + t * 20); // expands as it rises
+
+          // Draw pixelated cloud circles
+          ctx.fillStyle = 'rgba(64, 46, 44, ' + (0.55 * (1 - t)).toFixed(2) + ')';
+          ctx.beginPath();
+          ctx.arc(plumeX, plumeY, size / 2, 0, Math.PI * 2);
+          ctx.arc(plumeX - size / 4, plumeY + size / 6, size / 3, 0, Math.PI * 2);
+          ctx.arc(plumeX + size / 4, plumeY + size / 6, size / 3, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Internal warm magma glow inside the plume near the crater mouth
+          if (t < 0.4) {
+            ctx.fillStyle = 'rgba(255, 90, 26, ' + (0.45 * (1 - t / 0.4)).toFixed(2) + ')';
+            ctx.beginPath();
+            ctx.arc(plumeX, plumeY + 2, (size / 3) * (1 - t / 0.4), 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
       }
 
       // ── Basalt ground with lava veins ──
@@ -143,6 +247,34 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
       ctx.fillRect(0, groundTop, width, height - groundTop);
 
       const groundSpeed = layerSpeed('ground');
+
+      // ── Molten Lava Pools on the Basalt Floor (Scrolling with scrolling floor) ──
+      const poolSpacing = 160;
+      const poolPhase = wrapPhase(scrollPx, groundSpeed, poolSpacing);
+      for (let sx = tileScanStart(poolPhase, poolSpacing); sx < width + poolSpacing; sx += poolSpacing) {
+        if (sx < -60 || sx > width + 60) continue;
+        const worldIdx = worldIndexAt(sx, scrollPx, groundSpeed, poolSpacing);
+        const h = (worldIdx * 29 + seedNum * 7) % 101;
+        if (h > 35) continue; // 35% chance to draw a ground lava puddle
+
+        const px = Math.round(sx + ((h % 13) - 6) * 2);
+        const py = Math.round(groundTop + 4 + (h % 5) * 4);
+        const poolW = 28 + (h % 7) * 4;
+        const poolH = 6 + (h % 3) * 2;
+
+        // Lava puddle shadow/edge
+        ctx.fillStyle = '#2e1208';
+        ctx.fillRect(px - 2, py - 1, poolW + 4, poolH + 2);
+        // Lava pool base
+        ctx.fillStyle = cfg.lava;
+        ctx.fillRect(px, py, poolW, poolH);
+        // Molten bright highlight core
+        ctx.fillStyle = cfg.lavaBright;
+        const hiliteOffset = Math.floor((scrollPx * 0.1) % (poolW - 8));
+        ctx.fillRect(px + 4 + (hiliteOffset % (poolW - 8)), py + 2, Math.max(4, poolW / 4), poolH - 4);
+      }
+
+      // ── Glowing lava veins inside the ground basalt slabs ──
       const veinSpacing = 96;
       const veinPhase = wrapPhase(scrollPx, groundSpeed, veinSpacing);
       for (let sx = tileScanStart(veinPhase, veinSpacing); sx < width + veinSpacing; sx += veinSpacing) {
@@ -159,7 +291,36 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
         ctx.fillRect(vx + 1, vy + 1, 3, 2);
       }
 
-      // ── Rising embers (foreground particles) ──
+      // ── Charred Basalt Ground Stones (Multi-layered random details for polish/depth) ──
+      for (let layer = 0; layer < 3; layer++) {
+        const stoneSpacing = 72 + layer * 24;
+        const parallaxSpeed = groundSpeed * (0.85 + layer * 0.08);
+        const phase = wrapPhase(scrollPx, parallaxSpeed, stoneSpacing);
+        const baseY = groundTop + 3 + layer * 6;
+        const maxStoneSize = 6 - layer;
+
+        for (let sx = tileScanStart(phase, stoneSpacing); sx < width + stoneSpacing; sx += stoneSpacing) {
+          if (sx < -16 || sx > width + 16) continue;
+          const worldIdx = worldIndexAt(sx, scrollPx, parallaxSpeed, stoneSpacing);
+          const r = (worldIdx * 31 + seedNum * (5 + layer * 11)) % 101;
+          if (r > 40) continue; // 40% density of dark polished volcanic stones
+
+          const size = Math.round(3 + (r % maxStoneSize));
+          const stoneW = size + (r % 3);
+          const stoneH = Math.max(2, size - 1);
+          const stoneX = Math.round(sx + ((r % 17) - 8));
+
+          // Draw dark charcoal basalt stone with light specular highlight
+          ctx.fillStyle = 'rgba(18, 8, 10, 0.6)'; // Drop shadow
+          ctx.fillRect(stoneX + 1, baseY + 1, stoneW, stoneH);
+          ctx.fillStyle = '#1c0c12'; // Base dark body
+          ctx.fillRect(stoneX, baseY, stoneW, stoneH);
+          ctx.fillStyle = '#4a2014'; // Subtle highlight edge
+          ctx.fillRect(stoneX, baseY, Math.max(1, stoneW - 2), 1);
+        }
+      }
+
+      // ── Rising embers (foreground particles with heat swaying & size variations) ──
       const emberSpeed = layerSpeed('ember');
       const emberSpacing = 44;
       const emberPhase = wrapPhase(scrollPx, emberSpeed, emberSpacing);
@@ -170,13 +331,23 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
         if (h > 50) continue;
         const off = ((worldIdx * 7 + seedNum * 5) % 21) - 10;
         const rise = ((worldIdx * 13 + seedNum * 3) % 40) / 40;
-        const ex = Math.round(sx + off);
-        const ey = Math.round(groundTop - 6 - rise * (groundTop * 0.55));
+
+        // Horizontal swaying from hot wind currents
+        const swayFreq = 0.04 + (h % 3) * 0.02;
+        const swayAmp = 6 + (h % 5) * 3;
+        const sway = Math.sin(scrollPx * swayFreq + worldIdx) * swayAmp;
+
+        const ex = Math.round(sx + off + sway);
+        const ey = Math.round(groundTop - 6 - rise * (groundTop * 0.65));
         const colorIdx = h % cfg.embers.length;
+
+        // Randomize ember size for perspective depth (1px, 2px, or 3px)
+        const emberSize = 1 + (h % 3);
+
         ctx.fillStyle = cfg.embers[colorIdx];
-        ctx.fillRect(ex, ey, 2, 2);
-        ctx.fillStyle = 'rgba(255, 170, 80, 0.35)';
-        ctx.fillRect(ex - 1, ey - 1, 4, 4);
+        ctx.fillRect(ex, ey, emberSize, emberSize);
+        ctx.fillStyle = 'rgba(255, 170, 80, 0.25)';
+        ctx.fillRect(ex - 1, ey - 1, emberSize + 2, emberSize + 2);
       }
 
       // ── Lava shimmer texture on the ground ──
