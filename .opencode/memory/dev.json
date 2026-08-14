@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-"last_session": "2026-08-13T20:01:48Z",
+  "last_session": "2026-08-14T19:48:13Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -197,6 +197,11 @@
       "lesson": "Issue #606 unlock gate lowering (15/15/20 -> 5/6/8): QA data (236 runs, avg end level ~2.5, only 1 run reached lvl 11) proved FUSION/UPGRADE/SHOP gates at 15/15/20 were unreachable. Changed src/config/progressionConfig.ts (FUSION 5, UPGRADE 6, SHOP 8) + qa/qa-bot.config.js (forgeUnlockLevel 15->6 = max forge tab gate, shopUnlockLevel 20->8). Pattern: forgeUnlockLevel sync test now asserts Math.max(FUSION_UNLOCK_LEVEL, UPGRADE_UNLOCK_LEVEL) instead of FUSION_UNLOCK_LEVEL alone (future-proof: Upgrade gate can exceed Fusion). Added a discovery-staircase regression test (Forge < Fusion < Upgrade < Shop) so future gate tweaks preserve the escalation. No DB migration needed (config-only). Full suite 1391 tests green, lint + build OK. NOTE: UPGRADE_UNLOCK_LEVEL is declared but NOT enforced in Forge.tsx UI (only Fusion tab is gated) — the bot's isTabLocked check on the Upgrade tab is a no-op in the current UI, keep as-is.",
       "issue": "#606",
       "date": "2026-08-13"
+    },
+    {
+      "lesson": "Issue #702: QA bot fight timeout 45s -> 90s. Root cause: tanky lvl 12-14 fights (max 94.8s, median 15.7s) exceed the old 45s total budget -> 44% of runs hit 'timeout waiting for result' -> partial runs (avg 4.69/5 fights). Fix is config-only: qa/qa-bot.config.js fightTimeout default '45000' -> '90000' (env QA_FIGHT_TIMEOUT overridable). Retry mechanism preserved (3 retries, budget split 50% + 50% + remainder via baseTimeout = floor(fightTimeout * 0.5)). TDD: added assertion in qa-bot-config.test.ts 'fightTimeout default is 90000ms' (RED: got 45000 -> GREEN after config change). Suite 1403 tests green, lint + build OK. Impact expected: fights of 45-90s now pass, only >90s fail (rare). Game-side root fix tracked in #697 (Sudden Death 30s, awaiting human validation).",
+      "issue": "#702",
+      "date": "2026-08-14"
     }
   ]
 }

@@ -295,6 +295,12 @@ describe('QA Bot Fight Type Decision', () => {
     it('pvpUnlockLevel is 1 (unlocked from level 1)', () => {
       expect(qaBotConfig.pvpUnlockLevel).toBe(1)
     })
+
+    it('fightTimeout default is 90000ms (covers tanky 45-90s fights, #702)', () => {
+      // Tanky lvl 12-14 fights reach ~95s (median 15.7s); the old 45s budget
+      // caused ~44% of runs to hit "timeout waiting for result".
+      expect(qaBotConfig.fightTimeout).toBe(90000)
+    })
   })
 
   describe('determineNextFightType with pvpUnlockLevel=1', () => {
