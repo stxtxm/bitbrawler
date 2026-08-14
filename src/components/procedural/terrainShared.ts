@@ -36,6 +36,7 @@ export function drawVolcano(
   color: string,
   crater: string,
   lava: string | null,
+  scrollPx?: number,
 ): void {
   const steps = 8;
   for (let i = 0; i < steps; i++) {
@@ -49,13 +50,16 @@ export function drawVolcano(
   ctx.fillStyle = crater;
   ctx.fillRect(Math.round(cx - 4), Math.round(baseY - h - 3), 8, 4);
   if (lava) {
+    // Scroll-animated flow trickles
+    const flowOffset = scrollPx ? Math.floor((scrollPx * 0.15) % 8) : 0;
     for (let i = 1; i <= 4; i++) {
       const lx = Math.round(cx + (i % 2 === 0 ? 6 : -6));
-      const ly = Math.round(baseY - h + ((h / 5) * i));
+      const baseLavaY = baseY - h + ((h / 5) * i);
+      const ly = Math.round(baseLavaY + flowOffset);
       ctx.fillStyle = lava;
       ctx.fillRect(lx, ly, 4, 4);
     }
     ctx.fillStyle = lava;
-    ctx.fillRect(Math.round(cx), Math.round(baseY - h + 2), 4, 6);
+    ctx.fillRect(Math.round(cx), Math.round(baseY - h + 2 + (flowOffset % 3)), 4, 6);
   }
 }

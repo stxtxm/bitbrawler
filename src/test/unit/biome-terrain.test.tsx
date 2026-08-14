@@ -35,6 +35,9 @@ describe('BiomeTerrain Canvas', () => {
       fillStyle: '',
       drawImage: vi.fn(),
       fillText: vi.fn(),
+      beginPath: vi.fn(),
+      arc: vi.fn(),
+      fill: vi.fn(),
     })) as unknown as typeof HTMLCanvasElement.prototype.getContext;
 
     vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
