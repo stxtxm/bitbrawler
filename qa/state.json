@@ -1,7 +1,7 @@
 {
-  "run": "2026-08-15",
-  "character": "SHARDGUST",
+  "run": "2026-08-16",
+  "character": "SAGEREAVER",
   "exhausted": true,
-  "updated_at": "2026-08-15T19:05:37.733Z",
-  "source": "created"
+  "updated_at": "2026-08-15T22:05:49.270Z",
+  "source": "created-after-exhausted-energy"
 }
