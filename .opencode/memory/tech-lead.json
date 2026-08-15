@@ -1,24 +1,27 @@
 {
-  "version": 6,
+  "version": 7,
   "agent": "tech-lead",
-  "last_session": "2026-08-14",
+  "last_session": "2026-08-15",
   "recent_failures": [
     "Deadlock v3 (08-08) résolu par #653 (merge) — ne plus investiguer syncAutoMode.",
-    "Fight-result timeouts: TOUJOURS actifs post-fix #695 (44% des runs, 100% des erreurs) — fights tanky >45s (max 94.8s). Stopgap #702 (timeout bot 45→90s) + racine #697 (Sudden Death 30s).",
-    "Résolu: runs 'created-after-missing-fight-cta' → #696 filtré par #699 (runs à remplacement de perso exclus des métriques HP/essence).",
+    "RÉSOLU 08-15: Fight-result timeouts éliminés par #704 (timeout bot 45→90s) — 17 runs consécutifs sans erreur. #697 (Sudden Death 30s) reste ouvert pour l'expérience joueur réel (combats jusqu'à 95s), PAS pour le QA.",
+    "Nouveau 08-15: PvE data pipeline MORT depuis 08-05 — le toggle PvE de l'arène est devenu le BOSS fight (LOCKED LVL 30, ActionPanel.tsx). pveRatio 0.33 ne produit jamais de fight PvE (0/130 fights récents). Fix = #705.",
+    "Shop TOUJOURS inaccessible: 65 runs skippés (LVL 20 puis LVL 8). Persos QA LVL 2-5, jamais LVL 8. Fix proposé = #706 (SHOP_UNLOCK_LEVEL 8→5).",
     "Idle win rate 5-7% = TOUJOURS artefact (cycles_observed:0) — NE PAS ajuster idleConfig.",
-    "Lootbox legendary 0/149: #690 clos par #693 (fix persistance). Pity 30 reset par perso frais. Ne pas rouvrir sans données joueurs réels."
+    "Lootbox legendary 0/149: #690 clos par #693 (fix persistance). Pity 30 reset par perso frais. Ne pas rouvrir sans données joueurs réels.",
+    "Equipment parsing cassé: noms d'items vides (emoji seuls) dans equipment_analysis — à traiter avec #705 (même fichier qa-bot.mjs)."
   ],
   "known_limitations": [
     "Vérifier AVANT de créer une issue si elle existe déjà (gh issue list) — 60+ propositions majeures ouvertes.",
-    "Win rate last_3/5/10 bas (17.6% sur 17 fights post-fix) = pool de bots nivelé vs persos frais QA, PAS une régression balance. Ne pas toucher COMBAT.XP_WIN/XP_LOSS/diminishingExponent — all-time 49.5% sain. Prioriser #570 (bot pool matchmaking) et #545 (PDS).",
-    "Shop/forge restent inaccessibles (LVL 20/15) → shop metrics null. #606 (paliers 15/15/20) redispatche 08-13.",
+    "Win rate last_3/5/10 = pool de bots nivelé vs persos frais QA, PAS une régression balance. Ne pas toucher COMBAT.XP_WIN/XP_LOSS/diminishingExponent — all-time 49.4% sain. Prioriser #570 (bot pool matchmaking) et #545 (PDS).",
+    "PvE mode de l'arène = BOSS fight (LOCKED LVL 30) depuis ~08-05. Ne pas s'attendre à des fights monstres via le toggle PvE — le PvE monster vit dans l'idle/biome. #705 à merger.",
     "Le dev-agent n'a PAS le droit de modifier .github/workflows/*.yml.",
-    "PvE XP ratio 0.46 = parsing corrompu (4/19 fights nommés) — ne pas conclure.",
-    "Post-fix #695 (16 runs): 100% des erreurs restantes = fight-result timeouts (fights >45s). Stopgap #702 (timeout 45→90s) créé; racine = #697 Sudden Death. Ne PAS considérer #408 clos avant #697 merge + surveillance.",
-    "MONSTER_PALETTES existe déjà dans monsterAssets.ts — les variantes rares (shiny #703) sont quasi gratuites en pixel art."
+    "PvE XP ratio 0.48 = parsing corrompu (4/19 fights nommés) + pipeline mort — ne pas conclure sur le PvE tant que #705 n'est pas mergé.",
+    "Shop metrics null tant que SHOP_UNLOCK_LEVEL > 5 (persos QA LVL 2-5) — #706 en cours.",
+    "MONSTER_PALETTES existe déjà dans monsterAssets.ts — les variantes rares (shiny #703) sont quasi gratuites en pixel art. Nouvelle synergie: mode colorblind #707 (8% des hommes CVD) — palettes ciblées + icônes de rareté."
   ],
   "session_notes": [
+    "2026-08-15: 17 runs consécutifs SANS erreur (last error 08-14T07:10, avant #704) → error rate QA récent 0%, #408 commenté comme résolu côté QA (garder #697 pour joueurs réels). Découverte MAJEURE: PvE pipeline mort (0 fight PvE sur 130 récents) car toggle PvE = BOSS fight LOCKED LVL 30 → créé #705 (mineure /oc: QA bot PvE/boss detection). Shop toujours bloqué (65 skips, LVL 8 jamais atteint) → créé #706 (mineure /oc: SHOP_UNLOCK_LEVEL 8→5). Equipment names cassés (emoji seuls) → commenté sur #548. Win rate: last_3 33% / last_5 48% / last_10 58% / all_time 49.4% → commenté #570 et #440 (balance saine, pool mismatch). Commenté #697 (stopgap QA OK, racine toujours valable joueurs), #472 (shop data gap). Recherches web: idle retention 2026 (prestige/timed events/achievements/guilds déjà couverts par issues existantes), shop economy data-driven (renforce #706), shiny variants (Pokémon 1/4096-1/512, Metal Slimes — valide #703), game juice (valide #457), NOUVEAU: accessibility colorblind mode 2026 (8% hommes CVD, palettes ciblées > filtres plein écran, icônes secondaires) → créé #707 (majeure: Colorblind/Accessibility Mode).",
     "2026-08-14: Post-fix #695 = 16 runs: avg fights 2.07→4.69, locator.click/creation errors disparus, mais 44% runs encore avec erreurs = 100% fight-result timeouts (tanky >45s). Win rate post-fix 38% (28W/46L, 74 fights) = preuve #570 matchmaking (persos frais vs bots lvl 12-14), PAS régression balance. Commentaires: #697 (timeouts = cause racine restante), #408 (profil d'erreurs transformé, fermeture conditionnée à #697), #570 (38% post-fix). Fermé: #696 (résolu #699) et #606 (résolu #698) — déjà clos, vérifié. Créé #702 (mineure /oc: QA bot timeout 45→90s stopgap) + #703 (majeure: PvE Rare Monster Variants 'Shiny' — palettes existantes, roll 2-5%, XP ×3-5, synergie #536/#529/#687). Recherches web: idle retention 2026 (GameAnalytics: battle comps/betting valide #654, guilds #628, timed rewards #337), rare monsters (Metal Slimes 20-30x XP, Pokémon Shinies, Monster Sanctuary, variable-ratio reinforcement), enrage timers (WoW berserk, Portal neurotoxin — valide #697).",
     "2026-08-13 (soir): Fix #695 merge 08:13 — bot refight enfin (17 fights runs 337-341). Commentaires: #440 (pendule 100%→17% = pool de bots, pas balance), #570 (preuves fresh-player loss streak 0W/7L), #606 (shop/forge toujours bloqués + redispatche), #548 (3 artefacts parsing: timeouts, remplacement perso, essence incohérente), #408 (erreurs = timeouts + fallback, plus de deadlock). Fermé #609 (résolu par #695/#608). Créé #696 (mineure /oc: filtre remplacement perso dans analyze-qa-stats) + #697 (majeure: Combat Sudden Death 30s). Dispatched #606 et #696.",
     "2026-08-13: Win rate all-time 49.5% sain, stats ~10.5-11.5 équilibrées, streak 2.1→2.8 sain, lootbox common 61%/epic 9.4% cohérent avec #690 clos. Le jeu est sain; le problème est le matchmaking bot pool vs persos frais (#570).",
