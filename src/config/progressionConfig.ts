@@ -3,7 +3,7 @@ export const PROGRESSION_GATES = {
   FORGE_UNLOCK_LEVEL: 1,
   FUSION_UNLOCK_LEVEL: 5,
   UPGRADE_UNLOCK_LEVEL: 6,
-  SHOP_UNLOCK_LEVEL: 8,
+  SHOP_UNLOCK_LEVEL: 5,
 } as const;
 
 export function isFeatureUnlocked(level: number, requiredLevel: number): boolean {

@@ -22,14 +22,15 @@ describe('progressionConfig', () => {
     expect(PROGRESSION_GATES.UPGRADE_UNLOCK_LEVEL).toBe(6);
   });
 
-  it('SHOP_UNLOCK_LEVEL is 8', () => {
-    expect(PROGRESSION_GATES.SHOP_UNLOCK_LEVEL).toBe(8);
+  it('SHOP_UNLOCK_LEVEL is 5', () => {
+    expect(PROGRESSION_GATES.SHOP_UNLOCK_LEVEL).toBe(5);
   });
 
-  it('keeps a discovery staircase Forge(1) < Fusion(5) < Upgrade(6) < Shop(8)', () => {
+  it('keeps a discovery staircase Forge(1) < Fusion(5) < Upgrade(6) with Shop aligned to Fusion', () => {
     expect(PROGRESSION_GATES.FORGE_UNLOCK_LEVEL).toBeLessThan(PROGRESSION_GATES.FUSION_UNLOCK_LEVEL);
     expect(PROGRESSION_GATES.FUSION_UNLOCK_LEVEL).toBeLessThan(PROGRESSION_GATES.UPGRADE_UNLOCK_LEVEL);
-    expect(PROGRESSION_GATES.UPGRADE_UNLOCK_LEVEL).toBeLessThan(PROGRESSION_GATES.SHOP_UNLOCK_LEVEL);
+    expect(PROGRESSION_GATES.SHOP_UNLOCK_LEVEL).toBe(PROGRESSION_GATES.FUSION_UNLOCK_LEVEL);
+    expect(PROGRESSION_GATES.SHOP_UNLOCK_LEVEL).toBeLessThan(PROGRESSION_GATES.UPGRADE_UNLOCK_LEVEL);
   });
 
   it('isFeatureUnlocked returns false when level is below threshold', () => {
