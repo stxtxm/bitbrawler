@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-14T19:48:13Z",
+  "last_session": "2026-08-15T19:28:38Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -202,6 +202,11 @@
       "lesson": "Issue #702: QA bot fight timeout 45s -> 90s. Root cause: tanky lvl 12-14 fights (max 94.8s, median 15.7s) exceed the old 45s total budget -> 44% of runs hit 'timeout waiting for result' -> partial runs (avg 4.69/5 fights). Fix is config-only: qa/qa-bot.config.js fightTimeout default '45000' -> '90000' (env QA_FIGHT_TIMEOUT overridable). Retry mechanism preserved (3 retries, budget split 50% + 50% + remainder via baseTimeout = floor(fightTimeout * 0.5)). TDD: added assertion in qa-bot-config.test.ts 'fightTimeout default is 90000ms' (RED: got 45000 -> GREEN after config change). Suite 1403 tests green, lint + build OK. Impact expected: fights of 45-90s now pass, only >90s fail (rare). Game-side root fix tracked in #697 (Sudden Death 30s, awaiting human validation).",
       "issue": "#702",
       "date": "2026-08-14"
+    },
+    {
+      "lesson": "Issue #706: SHOP_UNLOCK_LEVEL 8->5 aligned with FUSION_UNLOCK_LEVEL (5) to unblock QA shop data (65 runs skipped, avg end level 2-5 never reached 8). Staircase test Forge(1)<Fusion(5)<Upgrade(6)<Shop(8) was updated to Forge(1)<Fusion(5)=Shop(5)<Upgrade(6) — Shop no longer the strict top of the escalation, it aligns with Fusion. qa-bot.config.js shopUnlockLevel 8->5 (sync test auto-covers). Config-only change, no DB migration. 1403 tests green, lint + build OK.",
+      "issue": "#706",
+      "date": "2026-08-15"
     }
   ]
 }
