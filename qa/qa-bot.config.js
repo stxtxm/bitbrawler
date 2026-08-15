@@ -22,5 +22,5 @@ export default {
   /** Level at which all Forge tabs (Salvage + Fusion + Upgrade) are unlocked */
   forgeUnlockLevel: 6,
   /** Level at which Shop becomes available */
-  shopUnlockLevel: 8,
+  shopUnlockLevel: 5,
 }
