@@ -13,6 +13,10 @@ const QA_TIME_ZONE = config.timeZone || 'Europe/Paris'
 let runStartTime = Date.now()
 let suppressInventoryHandler = false
 
+// Raid boss constants (mirror src/config/gameRules.ts BOSS.* and src/data/bossAssets.ts)
+const BOSS_UNLOCK_LEVEL = 30
+const BOSS_NAME = 'VOID TITAN'
+
 function elapsedRunMs() {
   return Date.now() - runStartTime
 }
@@ -188,6 +192,8 @@ async function readArenaStatus(page) {
   const isSearching = fightButtonLabel.includes('SEARCHING')
   const isPveLocked = fightButtonLabel.includes('LOCKED LVL')
   const hasFightCta = fightButtonLabel.includes('FIGHT')
+  const bossLockedMatch = fightButtonLabel.match(/LOCKED LVL\s*(\d+)/)
+  const bossLockedLevel = bossLockedMatch ? parseInt(bossLockedMatch[1], 10) : null
 
   return {
     bodyText,
@@ -201,6 +207,7 @@ async function readArenaStatus(page) {
     isSearching,
     isPveLocked,
     hasFightCta,
+    bossLockedLevel,
   }
 }
 
@@ -214,6 +221,7 @@ function buildArenaStatusRecord(status) {
     hasFightCta: status.hasFightCta,
     isSearching: status.isSearching,
     isPveLocked: status.isPveLocked,
+    bossLockedLevel: status.bossLockedLevel ?? null,
   }
 }
 
@@ -1601,6 +1609,132 @@ async function parseMonsterNameFromResult(page) {
   }
 }
 
+/**
+ * Capture the raid boss status from the arena ActionPanel DOM.
+ * The boss HP strip (`.boss-hp-name` / `.boss-hp-num`) is only rendered once
+ * the boss is unlocked (LVL 30+); for locked bosses we fall back to the
+ * canonical boss name and null HP values.
+ */
+async function captureBossStatus(page) {
+  try {
+    const nameEl = page.locator('.boss-hp-name').first()
+    const hpEl = page.locator('.boss-hp-num').first()
+    const nameVisible = await nameEl.isVisible({ timeout: 500 }).catch(() => false)
+    const hpVisible = await hpEl.isVisible({ timeout: 500 }).catch(() => false)
+    let bossName = nameVisible ? ((await nameEl.textContent().catch(() => '')) || '').trim() : null
+    let bossLevel = null
+    if (bossName) {
+      const lvlMatch = bossName.match(/LVL\s*(\d+)/i)
+      bossLevel = lvlMatch ? parseInt(lvlMatch[1], 10) : null
+    } else {
+      bossName = BOSS_NAME
+    }
+    let bossHp = null
+    let bossMaxHp = null
+    if (hpVisible) {
+      const hpText = ((await hpEl.textContent().catch(() => '')) || '').trim()
+      const hpMatch = hpText.match(/(\d+)\s*\/\s*(\d+)/)
+      if (hpMatch) {
+        bossHp = parseInt(hpMatch[1], 10)
+        bossMaxHp = parseInt(hpMatch[2], 10)
+      }
+    }
+    return { boss_name: bossName, boss_level: bossLevel, boss_hp: bossHp, boss_max_hp: bossMaxHp }
+  } catch {
+    return { boss_name: BOSS_NAME, boss_level: null, boss_hp: null, boss_max_hp: null }
+  }
+}
+
+/**
+ * Launch a real raid boss fight (character reached the boss gate, LVL 30+).
+ * Clicks FIGHT, waits for the result, and returns a fight record tagged
+ * `fight_type: 'boss'` (logged in pve_data for the boss analysis).
+ * Returns null if the fight could not be started or timed out.
+ */
+async function captureBossFight(page, runKey, fightNumber) {
+  console.log(`   ⚔️ BOSS Fight ${fightNumber} (boss unlocked — LVL ${BOSS_UNLOCK_LEVEL}+)...`)
+  const fightBtn = page.locator('button.primary-btn.giant-btn').first()
+  const fightStart = Date.now()
+
+  let clicked = false
+  for (let attempt = 0; attempt < 3; attempt++) {
+    clicked = await fightBtn.click({ timeout: 3000 }).then(() => true).catch(() => false)
+    if (clicked) break
+    console.log(`   BOSS FIGHT click blocked (attempt ${attempt + 1}), retrying with force click...`)
+    clicked = await fightBtn.click({ force: true, timeout: 3000 }).then(() => true).catch(() => false)
+    if (clicked) break
+  }
+  if (!clicked) {
+    console.log('   BOSS FIGHT button could not be clicked')
+    return null
+  }
+
+  await sleep(1000)
+
+  const maxRetries = 3
+  const baseTimeout = Math.floor(config.fightTimeout * 0.5)
+  let resultDetected = false
+  for (let retry = 0; retry < maxRetries; retry++) {
+    if (retry > 0) {
+      await sleep(Math.min(1000 * Math.pow(2, retry - 1), 8000))
+    }
+    const timeout = retry < maxRetries - 1 ? baseTimeout : config.fightTimeout - baseTimeout * (maxRetries - 1)
+    try {
+      await page.waitForFunction(
+        () => {
+          const text = document.body?.innerText || ''
+          return text.includes('VICTORY') || text.includes('DEFEAT') || text.includes('DRAW')
+        },
+        { timeout }
+      )
+      resultDetected = true
+      break
+    } catch {
+      if (retry < maxRetries - 1) {
+        console.log(`   ⚠️ Boss result not yet available after attempt ${retry + 1}`)
+      }
+    }
+  }
+
+  if (!resultDetected) {
+    console.log(`   Boss result not detected after ${config.fightTimeout}ms timeout (${maxRetries} retries)`)
+    await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-boss-${fightNumber}-timeout.png`) })
+    return null
+  }
+
+  const fightDuration = Date.now() - fightStart
+  const pageText = await page.locator('body').innerText()
+  const isVictory = pageText.includes('VICTORY')
+  const isDefeat = pageText.includes('DEFEAT')
+  const xpMatch = pageText.match(/\+(\d+)\s*XP/)
+  const xpGained = xpMatch ? parseInt(xpMatch[1]) : null
+
+  console.log(`   Boss result: ${isVictory ? '✅ VICTORY' : isDefeat ? '❌ DEFEAT' : '🤝 DRAW'} (${fightDuration}ms)`)
+
+  await page.screenshot({
+    path: join(SCREENSHOTS_DIR, `${runKey}-boss-${fightNumber}-${isVictory ? 'win' : 'loss'}.png`),
+  })
+
+  const continueBtn = page.locator('button:has-text("CONTINUE"), button:has-text("CLOSE"), button:has-text("OK")').first()
+  if (await continueBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await continueBtn.click()
+    await page.waitForTimeout(1500)
+  }
+
+  const bossStatus = await captureBossStatus(page)
+
+  return {
+    result: isVictory ? 'victory' : isDefeat ? 'defeat' : 'draw',
+    xp: xpGained,
+    fight_duration_ms: fightDuration,
+    max_hp: null,
+    fight_type: 'boss',
+    monster_name: BOSS_NAME,
+    boss_hp_left: bossStatus.boss_hp,
+    boss_max_hp: bossStatus.boss_max_hp,
+  }
+}
+
 async function runFightSequence(page, runKey, runRecord) {
   let recreatedForExhaustion = false
   let currentLevel = runRecord.initial_level
@@ -1669,13 +1803,45 @@ async function runFightSequence(page, runKey, runRecord) {
       }
     }
 
-    if (arenaStatus.isPveLocked && !config.pveOnly && pveLockedRecoveries < config.fightsPerRun) {
-      console.log('   PvE boss locked (LOCKED LVL) — toggling back to PvP mode')
+    if (arenaStatus.isPveLocked && pveLockedRecoveries < config.fightsPerRun) {
       pveLockedRecoveries++
-      await togglePveMode(page, false)
-      await page.waitForTimeout(600)
-      i--
-      continue
+      const bossLockedLevel = arenaStatus.bossLockedLevel ?? BOSS_UNLOCK_LEVEL
+
+      // Option A (#705): PvE mode now maps to the raid boss fight, locked until LVL 30.
+      // Record the run as a PvE-observation so the analysis knows monster PvE has
+      // shifted to the boss — instead of silently falling back to PvP.
+      if (!runRecord.pve_data.pve_shifted) {
+        const bossStatus = await captureBossStatus(page)
+        runRecord.pve_data.pve_shifted = true
+        runRecord.pve_data.boss_locked_level = bossLockedLevel
+        runRecord.pve_data.boss_name = bossStatus?.boss_name || BOSS_NAME
+        runRecord.pve_data.boss_level = bossStatus?.boss_level ?? null
+        runRecord.pve_data.boss_hp = bossStatus?.boss_hp ?? null
+        runRecord.pve_data.boss_max_hp = bossStatus?.boss_max_hp ?? null
+        console.log(`   PvE boss locked (LOCKED LVL ${bossLockedLevel}) — recorded PvE-observation (pve_shifted=true)`)
+      }
+
+      // Option B (#705): the character reached the boss gate — launch a real boss fight.
+      if (!config.pveOnly && currentLevel !== null && currentLevel >= bossLockedLevel) {
+        const bossFight = await captureBossFight(page, runKey, i + 1)
+        if (bossFight) {
+          runRecord.fights.push(bossFight)
+          const postBossLevel = parseLevelFromText(await page.locator('body').innerText().catch(() => ''))
+          if (postBossLevel !== null) currentLevel = postBossLevel
+          continue
+        }
+      }
+
+      if (!config.pveOnly) {
+        console.log('   PvE boss locked — toggling back to PvP mode')
+        await togglePveMode(page, false)
+        await page.waitForTimeout(600)
+        i--
+        continue
+      }
+
+      console.log('   PvE boss locked and pveOnly mode — stopping fight sequence (no PvE fights available)')
+      break
     }
 
     if (isResting || !arenaStatus.fightButtonEnabled) {
@@ -2441,6 +2607,7 @@ async function run() {
       wins: 0,
       xp_total: 0,
       monsters_faced: [],
+      pve_shifted: false,
     },
     level_up_events: [],
     idle_runner: null,
@@ -2603,6 +2770,12 @@ async function run() {
       runRecord.pve_data.xp_total = pveFights.reduce((sum, f) => sum + (f.xp || 0), 0)
       const monsters = pveFights.map(f => f.monster_name).filter(Boolean)
       runRecord.pve_data.monsters_faced = [...new Set(monsters)]
+    }
+    // Boss fights (fight_type === 'boss') are logged in pve_data too (#705)
+    const bossFights = runRecord.fights.filter(f => f.fight_type === 'boss')
+    if (bossFights.length > 0) {
+      runRecord.pve_data.boss_fights = bossFights.length
+      runRecord.pve_data.boss_wins = bossFights.filter(f => f.result === 'victory').length
     }
 
     // ── Final Stats ───────────────────────────────────────────────

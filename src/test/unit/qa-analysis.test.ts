@@ -19,8 +19,10 @@ interface FightRecord {
   xp: number | null
   fight_duration_ms: number
   max_hp?: number | null
-  fight_type?: 'pvp' | 'pve'
+  fight_type?: 'pvp' | 'pve' | 'boss'
   monster_name?: string | null
+  boss_hp_left?: number | null
+  boss_max_hp?: number | null
 }
 
 interface LootboxResult {
@@ -49,7 +51,17 @@ interface RunRecord {
   final_max_hp?: number | null
   character_action?: string | null
   replaced_character?: string | null
-  pve_data?: { fights: number; wins: number; xp_total: number; monsters_faced: string[] }
+  pve_data?: {
+    fights: number
+    wins: number
+    xp_total: number
+    monsters_faced: string[]
+    pve_shifted?: boolean
+    boss_name?: string | null
+    boss_locked_level?: number | null
+    boss_hp?: number | null
+    boss_max_hp?: number | null
+  }
   errors: string[]
 }
 
@@ -137,6 +149,40 @@ function computePveWinRate(pveFights: FightRecord[]): number {
   if (pveFights.length === 0) return 0
   const wins = pveFights.filter(f => f.result === 'victory')
   return wins.length / pveFights.length
+}
+
+// ── PvE→Boss shift helpers (mirror of analyze-qa-stats.ts #705) ──
+// Since the #633 boss-toggle removal, PvE mode launches the raid boss fight
+// (LOCKED LVL 30). Runs that hit the lock are marked pve_data.pve_shifted so
+// monster PvE analysis is not mistaken for live data; boss fights are tracked
+// separately via fight_type === 'boss' and excluded from the PvP bucket.
+
+function computePveShiftedRuns(runs: RunRecord[]): RunRecord[] {
+  return runs.filter(r => r.pve_data?.pve_shifted === true)
+}
+
+function computeBossFightStats(fights: FightRecord[]): {
+  boss_fights: number
+  boss_win_rate: number | null
+  boss_avg_xp_per_fight: number | null
+} {
+  const bossFights = fights.filter(f => f.fight_type === 'boss')
+  if (bossFights.length === 0) {
+    return { boss_fights: 0, boss_win_rate: null, boss_avg_xp_per_fight: null }
+  }
+  const bossWins = bossFights.filter(f => f.result === 'victory')
+  const bossXpFights = bossFights.filter((f): f is FightRecord & { xp: number } => f.xp !== null)
+  return {
+    boss_fights: bossFights.length,
+    boss_win_rate: bossWins.length / bossFights.length,
+    boss_avg_xp_per_fight: bossXpFights.length > 0
+      ? bossXpFights.reduce((s, f) => s + f.xp, 0) / bossXpFights.length
+      : 0,
+  }
+}
+
+function computePvpFightsExcludingBoss(fights: FightRecord[]): FightRecord[] {
+  return fights.filter(f => f.fight_type !== 'pve' && f.fight_type !== 'boss')
 }
 
 // ── Character-replacement exclusion (mirror of analyze-qa-stats.ts) ──
@@ -265,6 +311,77 @@ describe('QA PvE Analysis', () => {
         { result: 'victory', xp: 100, fight_duration_ms: 5000, fight_type: 'pve', monster_name: 'Ogre' },
       ]
       expect(computePveWinRate(fights)).toBe(0.5)
+    })
+  })
+})
+
+describe('QA PvE→Boss Shift Analysis (#705)', () => {
+  describe('computePveShiftedRuns', () => {
+    it('returns empty when no run reports pve_data.pve_shifted', () => {
+      const runs: RunRecord[] = [
+        { date: '2026-08-16', run: 'r1', character: 'A', fights: [], errors: [] },
+        { date: '2026-08-16', run: 'r2', character: 'B', fights: [], errors: [], pve_data: { fights: 0, wins: 0, xp_total: 0, monsters_faced: [] } },
+      ]
+      expect(computePveShiftedRuns(runs)).toHaveLength(0)
+    })
+
+    it('returns runs where pve_data.pve_shifted is true (PvE mode = locked boss)', () => {
+      const runs: RunRecord[] = [
+        { date: '2026-08-16', run: 'r1', character: 'A', fights: [], errors: [], pve_data: { fights: 0, wins: 0, xp_total: 0, monsters_faced: [], pve_shifted: true, boss_locked_level: 30 } },
+        { date: '2026-08-16', run: 'r2', character: 'B', fights: [], errors: [], pve_data: { fights: 0, wins: 0, xp_total: 0, monsters_faced: [] } },
+      ]
+      expect(computePveShiftedRuns(runs)).toHaveLength(1)
+    })
+  })
+
+  describe('computeBossFightStats', () => {
+    it('returns zeros/null when no boss fights exist', () => {
+      const fights: FightRecord[] = [
+        { result: 'victory', xp: 100, fight_duration_ms: 5000, fight_type: 'pvp' },
+        { result: 'victory', xp: 100, fight_duration_ms: 5000, fight_type: 'pve', monster_name: 'Goblin' },
+      ]
+      expect(computeBossFightStats(fights)).toEqual({ boss_fights: 0, boss_win_rate: null, boss_avg_xp_per_fight: null })
+    })
+
+    it('aggregates boss fights with win rate and avg XP', () => {
+      const fights: FightRecord[] = [
+        { result: 'victory', xp: 360, fight_duration_ms: 20000, fight_type: 'boss', monster_name: 'VOID TITAN' },
+        { result: 'defeat', xp: 0, fight_duration_ms: 30000, fight_type: 'boss', monster_name: 'VOID TITAN' },
+      ]
+      const stats = computeBossFightStats(fights)
+      expect(stats.boss_fights).toBe(2)
+      expect(stats.boss_win_rate).toBeCloseTo(0.5, 5)
+      expect(stats.boss_avg_xp_per_fight).toBe(180)
+    })
+
+    it('ignores non-boss fights entirely', () => {
+      const fights: FightRecord[] = [
+        { result: 'victory', xp: 100, fight_duration_ms: 5000, fight_type: 'pve', monster_name: 'Goblin' },
+        { result: 'victory', xp: 360, fight_duration_ms: 20000, fight_type: 'boss', monster_name: 'VOID TITAN' },
+      ]
+      const stats = computeBossFightStats(fights)
+      expect(stats.boss_fights).toBe(1)
+      expect(stats.boss_avg_xp_per_fight).toBe(360)
+    })
+  })
+
+  describe('computePvpFightsExcludingBoss', () => {
+    it('excludes boss fights from the PvP bucket', () => {
+      const fights: FightRecord[] = [
+        { result: 'victory', xp: 100, fight_duration_ms: 5000, fight_type: 'pvp' },
+        { result: 'victory', xp: 360, fight_duration_ms: 20000, fight_type: 'boss', monster_name: 'VOID TITAN' },
+      ]
+      const pvp = computePvpFightsExcludingBoss(fights)
+      expect(pvp).toHaveLength(1)
+      expect(pvp[0].fight_type).toBe('pvp')
+    })
+
+    it('keeps legacy fights without fight_type in the PvP bucket', () => {
+      const fights: FightRecord[] = [
+        { result: 'victory', xp: 100, fight_duration_ms: 5000 },
+        { result: 'victory', xp: 360, fight_duration_ms: 20000, fight_type: 'boss', monster_name: 'VOID TITAN' },
+      ]
+      expect(computePvpFightsExcludingBoss(fights)).toHaveLength(1)
     })
   })
 })
@@ -778,6 +895,48 @@ describe('QA Bot Fight CTA Robustness Contract', () => {
   it('runRecord initializes arena_status to null (#689)', () => {
     expect(qaBotSource).toContain('arena_status: null')
   })
+
+  it('readArenaStatus parses bossLockedLevel from the LOCKED LVL label (#705)', () => {
+    const fn = requireAsyncFunction('readArenaStatus')
+    expect(fn).toContain('bossLockedLevel')
+    expect(fn).toContain('match(/LOCKED LVL')
+  })
+
+  it('runFightSequence records a PvE-observation (pve_data.pve_shifted) when the boss is locked (Option A, #705)', () => {
+    const fn = requireAsyncFunction('runFightSequence')
+    const lockIdx = fn.indexOf('isPveLocked')
+    expect(lockIdx).toBeGreaterThan(-1)
+    expect(fn.indexOf('pve_data.pve_shifted = true', lockIdx)).toBeGreaterThan(lockIdx)
+    expect(fn.indexOf('captureBossStatus(page)', lockIdx)).toBeGreaterThan(lockIdx)
+    expect(fn.indexOf('togglePveMode(page, false)', lockIdx)).toBeGreaterThan(lockIdx)
+  })
+
+  it('runFightSequence launches a real boss fight via captureBossFight once the character reaches the boss gate (Option B, #705)', () => {
+    const fn = requireAsyncFunction('runFightSequence')
+    const lockIdx = fn.indexOf('isPveLocked')
+    expect(lockIdx).toBeGreaterThan(-1)
+    expect(fn.indexOf('currentLevel >= bossLockedLevel', lockIdx)).toBeGreaterThan(lockIdx)
+    expect(fn.indexOf('captureBossFight(page, runKey', lockIdx)).toBeGreaterThan(lockIdx)
+  })
+
+  it('defines a captureBossStatus helper reading boss name/HP from the arena DOM (#705)', () => {
+    const fn = requireAsyncFunction('captureBossStatus')
+    expect(fn).toContain('.boss-hp-name')
+    expect(fn).toContain('.boss-hp-num')
+    expect(fn).toContain('boss_name')
+    expect(fn).toContain('boss_max_hp')
+  })
+
+  it('defines a captureBossFight helper producing a fight_type: boss record (#705)', () => {
+    const fn = requireAsyncFunction('captureBossFight')
+    expect(fn).toContain("fight_type: 'boss'")
+    expect(fn).toContain('monster_name: BOSS_NAME')
+    expect(fn).toContain('VICTORY')
+  })
+
+  it('runRecord pve_data initializes pve_shifted to false (#705)', () => {
+    expect(qaBotSource).toContain('pve_shifted: false')
+  })
 })
 
 describe('QA Character Replacement Exclusion', () => {
@@ -871,5 +1030,16 @@ describe('QA Character Replacement Exclusion', () => {
       expect(source).toContain("startsWith('created-after-')")
       expect(source).toContain('allRunsWithEssenceData.filter(r => !isCharacterReplacedRun(r))')
     })
+  })
+})
+
+describe('QA PvE→Boss Shift Analyzer Contract (#705)', () => {
+  it('analyze-qa-stats.ts exposes the pve_shifted flag and boss fight metrics', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+    expect(source).toContain("f.fight_type === 'boss'")
+    expect(source).toContain('pve_shifted')
+    expect(source).toContain('boss_fights')
+    expect(source).toContain('boss_win_rate')
+    expect(source).toContain("f.fight_type !== 'pve' && f.fight_type !== 'boss'")
   })
 })
