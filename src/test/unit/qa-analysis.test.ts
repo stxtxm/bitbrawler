@@ -62,6 +62,16 @@ interface RunRecord {
     boss_hp?: number | null
     boss_max_hp?: number | null
   }
+  shop?: { essence_before?: number | null; essence_after?: number | null }
+  shop_data?: {
+    offers?: Array<{ name: string; rarity?: string | null; price: number | null }>
+    purchased_offer?: number | null
+    essence_after_purchase?: number | null
+  }
+  essence?: {
+    shop_before?: number | null
+    shop_after?: number | null
+  }
   errors: string[]
 }
 
@@ -221,6 +231,83 @@ function computeHpAnalysis(runs: RunRecord[]): HpAnalysis | null {
     avg_hp_growth_per_run: Math.round(avgGrowth * 10) / 10,
     runs_with_hp_data: runsWithHpData.length,
     runs_excluded_by_character_replacement: excludedRuns.length,
+  }
+}
+
+// ── Shop simulated affordability (mirror of analyze-qa-stats.ts #711) ──
+// Real shop purchases are near-impossible for fresh/mid-game QA characters
+// (prices 150/250/350 💎 vs avg ~14 💎), so avg_shop_spent stays null and the
+// economic balance is blind. We simulate rational purchases from the observed
+// offer pool + essence_before: a run "would purchase" when it can afford the
+// cheapest offer, and the simulated_purchase_rate proxies the real rate.
+
+interface ShopSimulatedAnalysis {
+  runs_with_shop_data: number
+  avg_essence_before: number | null
+  avg_offer_price: number | null
+  min_offer_price: number | null
+  max_offer_price: number | null
+  offer_rarity_distribution: Record<string, number>
+  affordable_offer_count: number
+  avg_affordable_offer_count: number | null
+  would_purchase_runs: number
+  simulated_purchase_rate: number | null
+}
+
+function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis | null {
+  const runsWithShopData = runs.filter(
+    (r): r is RunRecord & { shop_data: { offers: Array<{ name: string; rarity?: string | null; price: number | null }> } } =>
+      r.shop_data?.offers != null && r.shop_data.offers.length > 0
+  )
+  if (runsWithShopData.length === 0) return null
+
+  const allPrices: number[] = []
+  const rarityDist: Record<string, number> = {}
+  let affordableTotal = 0
+  let wouldPurchaseRuns = 0
+  let essenceSum = 0
+  let essenceCount = 0
+
+  for (const r of runsWithShopData) {
+    const offers = r.shop_data.offers
+    const prices = offers
+      .map(o => o.price)
+      .filter((p): p is number => typeof p === 'number')
+    allPrices.push(...prices)
+
+    for (const o of offers) {
+      if (o.rarity && typeof o.rarity === 'string' && o.rarity.trim() !== '') {
+        const key = o.rarity.toLowerCase()
+        rarityDist[key] = (rarityDist[key] || 0) + 1
+      }
+    }
+
+    const essenceBefore = r.shop?.essence_before ?? r.essence?.shop_before
+    if (typeof essenceBefore === 'number') {
+      essenceSum += essenceBefore
+      essenceCount++
+      affordableTotal += prices.filter(p => p <= essenceBefore).length
+      if (prices.length > 0 && essenceBefore >= Math.min(...prices)) {
+        wouldPurchaseRuns++
+      }
+    }
+  }
+
+  return {
+    runs_with_shop_data: runsWithShopData.length,
+    avg_essence_before: essenceCount > 0 ? Math.round((essenceSum / essenceCount) * 100) / 100 : null,
+    avg_offer_price: allPrices.length > 0
+      ? Math.round((allPrices.reduce((s, p) => s + p, 0) / allPrices.length) * 100) / 100
+      : null,
+    min_offer_price: allPrices.length > 0 ? Math.min(...allPrices) : null,
+    max_offer_price: allPrices.length > 0 ? Math.max(...allPrices) : null,
+    offer_rarity_distribution: rarityDist,
+    affordable_offer_count: affordableTotal,
+    avg_affordable_offer_count: essenceCount > 0
+      ? Math.round((affordableTotal / essenceCount) * 100) / 100
+      : null,
+    would_purchase_runs: wouldPurchaseRuns,
+    simulated_purchase_rate: Math.round((wouldPurchaseRuns / runsWithShopData.length) * 1000) / 1000,
   }
 }
 
@@ -1041,5 +1128,214 @@ describe('QA PvE→Boss Shift Analyzer Contract (#705)', () => {
     expect(source).toContain('boss_fights')
     expect(source).toContain('boss_win_rate')
     expect(source).toContain("f.fight_type !== 'pve' && f.fight_type !== 'boss'")
+  })
+})
+
+describe('QA Shop Simulated Affordability Analysis (#711)', () => {
+  describe('computeShopSimulatedAnalysis', () => {
+    it('returns null when no run has shop_data with offers', () => {
+      const runs: RunRecord[] = [
+        { date: '2026-08-16', run: 'r1', character: 'A', fights: [], errors: [], shop_data: { offers: [] } },
+        { date: '2026-08-16', run: 'r2', character: 'B', fights: [], errors: [] },
+      ]
+      expect(computeShopSimulatedAnalysis(runs)).toBeNull()
+    })
+
+    it('counts affordable offers per run (price <= essence_before)', () => {
+      const runs: RunRecord[] = [
+        {
+          date: '2026-08-16', run: 'r1', character: 'A', fights: [], errors: [],
+          shop: { essence_before: 200 },
+          shop_data: {
+            offers: [
+              { name: 'Marchandise', rarity: 'common', price: 150 },
+              { name: 'Pièce rare', rarity: 'rare', price: 250 },
+              { name: 'Coffre mystère', rarity: 'epic', price: 350 },
+            ],
+          },
+        },
+      ]
+      const result = computeShopSimulatedAnalysis(runs)
+      expect(result).not.toBeNull()
+      expect(result!.runs_with_shop_data).toBe(1)
+      expect(result!.affordable_offer_count).toBe(1)
+      expect(result!.avg_affordable_offer_count).toBe(1)
+      expect(result!.would_purchase_runs).toBe(1)
+      expect(result!.simulated_purchase_rate).toBe(1)
+    })
+
+    it('marks a run as would_purchase when essence_before >= cheapest offer price', () => {
+      const runs: RunRecord[] = [
+        {
+          date: '2026-08-16', run: 'r1', character: 'A', fights: [], errors: [],
+          shop: { essence_before: 150 },
+          shop_data: {
+            offers: [
+              { name: 'Marchandise', rarity: 'common', price: 150 },
+              { name: 'Pièce rare', rarity: 'rare', price: 250 },
+            ],
+          },
+        },
+        {
+          date: '2026-08-16', run: 'r2', character: 'B', fights: [], errors: [],
+          shop: { essence_before: 40 },
+          shop_data: {
+            offers: [
+              { name: 'Marchandise', rarity: 'common', price: 150 },
+              { name: 'Pièce rare', rarity: 'rare', price: 250 },
+            ],
+          },
+        },
+      ]
+      const result = computeShopSimulatedAnalysis(runs)
+      expect(result).not.toBeNull()
+      expect(result!.would_purchase_runs).toBe(1)
+      expect(result!.simulated_purchase_rate).toBe(0.5)
+      expect(result!.affordable_offer_count).toBe(1)
+    })
+
+    it('computes the simulated_purchase_rate across all runs with shop_data', () => {
+      const runs: RunRecord[] = [
+        {
+          date: '2026-08-16', run: 'r1', character: 'A', fights: [], errors: [],
+          shop: { essence_before: 500 },
+          shop_data: { offers: [{ name: 'Item', rarity: 'rare', price: 200 }] },
+        },
+        {
+          date: '2026-08-16', run: 'r2', character: 'B', fights: [], errors: [],
+          shop: { essence_before: 100 },
+          shop_data: { offers: [{ name: 'Item', rarity: 'rare', price: 200 }] },
+        },
+        {
+          date: '2026-08-16', run: 'r3', character: 'C', fights: [], errors: [],
+          shop: { essence_before: 220 },
+          shop_data: { offers: [{ name: 'Item', rarity: 'rare', price: 200 }] },
+        },
+      ]
+      const result = computeShopSimulatedAnalysis(runs)
+      expect(result).not.toBeNull()
+      expect(result!.would_purchase_runs).toBe(2)
+      expect(result!.simulated_purchase_rate).toBe(0.667) // Math.round(2/3 * 1000) / 1000
+      expect(result!.avg_essence_before).toBe(273.33)
+    })
+
+    it('aggregates the offer pool: avg/min/max price and rarity distribution', () => {
+      const runs: RunRecord[] = [
+        {
+          date: '2026-08-16', run: 'r1', character: 'A', fights: [], errors: [],
+          shop: { essence_before: 300 },
+          shop_data: {
+            offers: [
+              { name: 'Marchandise', rarity: 'common', price: 150 },
+              { name: 'Pièce rare', rarity: 'RARE', price: 250 },
+              { name: 'Coffre mystère', rarity: 'epic', price: 350 },
+            ],
+          },
+        },
+        {
+          date: '2026-08-16', run: 'r2', character: 'B', fights: [], errors: [],
+          shop: { essence_before: 400 },
+          shop_data: {
+            offers: [
+              { name: 'Marchandise', rarity: 'common', price: 150 },
+              { name: 'Pièce rare', rarity: 'rare', price: 250 },
+            ],
+          },
+        },
+      ]
+      const result = computeShopSimulatedAnalysis(runs)
+      expect(result).not.toBeNull()
+      expect(result!.avg_offer_price).toBe(230) // (150+250+350+150+250) / 5
+      expect(result!.min_offer_price).toBe(150)
+      expect(result!.max_offer_price).toBe(350)
+      expect(result!.offer_rarity_distribution).toEqual({ common: 2, rare: 2, epic: 1 })
+    })
+
+    it('falls back to essence.shop_before when shop.essence_before is missing', () => {
+      const runs: RunRecord[] = [
+        {
+          date: '2026-08-16', run: 'r1', character: 'A', fights: [], errors: [],
+          essence: { shop_before: 180 },
+          shop_data: { offers: [{ name: 'Item', rarity: 'common', price: 150 }] },
+        },
+      ]
+      const result = computeShopSimulatedAnalysis(runs)
+      expect(result).not.toBeNull()
+      expect(result!.avg_essence_before).toBe(180)
+      expect(result!.would_purchase_runs).toBe(1)
+    })
+
+    it('ignores offers with null price but keeps runs with valid prices', () => {
+      const runs: RunRecord[] = [
+        {
+          date: '2026-08-16', run: 'r1', character: 'A', fights: [], errors: [],
+          shop: { essence_before: 200 },
+          shop_data: {
+            offers: [
+              { name: 'Unparsed', rarity: null, price: null },
+              { name: 'Marchandise', rarity: 'common', price: 150 },
+            ],
+          },
+        },
+      ]
+      const result = computeShopSimulatedAnalysis(runs)
+      expect(result).not.toBeNull()
+      expect(result!.avg_offer_price).toBe(150)
+      expect(result!.affordable_offer_count).toBe(1)
+      expect(result!.would_purchase_runs).toBe(1)
+    })
+
+    it('keeps runs without essence_before in the denominator but not in would_purchase', () => {
+      const runs: RunRecord[] = [
+        {
+          date: '2026-08-16', run: 'r1', character: 'A', fights: [], errors: [],
+          shop: { essence_before: null },
+          shop_data: { offers: [{ name: 'Item', rarity: 'common', price: 150 }] },
+        },
+        {
+          date: '2026-08-16', run: 'r2', character: 'B', fights: [], errors: [],
+          shop: { essence_before: 200 },
+          shop_data: { offers: [{ name: 'Item', rarity: 'common', price: 150 }] },
+        },
+      ]
+      const result = computeShopSimulatedAnalysis(runs)
+      expect(result).not.toBeNull()
+      expect(result!.runs_with_shop_data).toBe(2)
+      expect(result!.would_purchase_runs).toBe(1)
+      expect(result!.simulated_purchase_rate).toBe(0.5)
+      expect(result!.avg_essence_before).toBe(200)
+      expect(result!.avg_affordable_offer_count).toBe(1)
+    })
+
+    it('handles no offer prices at all (all null)', () => {
+      const runs: RunRecord[] = [
+        {
+          date: '2026-08-16', run: 'r1', character: 'A', fights: [], errors: [],
+          shop: { essence_before: 200 },
+          shop_data: { offers: [{ name: 'X', rarity: null, price: null }] },
+        },
+      ]
+      const result = computeShopSimulatedAnalysis(runs)
+      expect(result).not.toBeNull()
+      expect(result!.avg_offer_price).toBeNull()
+      expect(result!.min_offer_price).toBeNull()
+      expect(result!.max_offer_price).toBeNull()
+      expect(result!.affordable_offer_count).toBe(0)
+      expect(result!.would_purchase_runs).toBe(0)
+      expect(result!.simulated_purchase_rate).toBe(0)
+    })
+  })
+
+  describe('analyze-qa-stats.ts source contract (#711)', () => {
+    it('exposes shop.simulated with affordability metrics and a purchase-rate suggestion', () => {
+      const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+      expect(source).toContain('shop_data?.offers')
+      expect(source).toContain('affordable_offer_count')
+      expect(source).toContain('would_purchase_runs')
+      expect(source).toContain('simulated_purchase_rate')
+      expect(source).toContain('offer_rarity_distribution')
+      expect(source).toContain('simulated: shopSimulated')
+      expect(source).toContain('r.shop?.essence_before ?? r.essence?.shop_before')
+    })
   })
 })
