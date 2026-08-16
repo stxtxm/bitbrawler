@@ -1,7 +1,7 @@
 {
-  "run": "2026-08-16",
-  "character": "FLINTGROVE",
+  "run": "2026-08-17",
+  "character": "STORMLOGIC",
   "exhausted": true,
-  "updated_at": "2026-08-16T19:05:20.132Z",
-  "source": "created"
+  "updated_at": "2026-08-16T22:05:10.622Z",
+  "source": "created-after-exhausted-energy"
 }

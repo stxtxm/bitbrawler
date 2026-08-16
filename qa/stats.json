@@ -46312,5 +46312,303 @@
       "purchased_offer": null,
       "essence_after_purchase": null
     }
+  },
+  {
+    "date": "2026-08-16T22:01:09.579Z",
+    "run": "2026-08-17",
+    "character": "STORMLOGIC",
+    "character_action": "created-after-exhausted-energy",
+    "replaced_character": "FLINTGROVE",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 88,
+        "fight_duration_ms": 19196,
+        "max_hp": 277,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": null
+      },
+      {
+        "result": "victory",
+        "xp": 83,
+        "fight_duration_ms": 20106,
+        "max_hp": 288,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": null
+      },
+      {
+        "result": "victory",
+        "xp": 115,
+        "fight_duration_ms": 21164,
+        "max_hp": 308,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": null
+      },
+      {
+        "result": "victory",
+        "xp": 88,
+        "fight_duration_ms": 15705,
+        "max_hp": 320,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": null
+      },
+      {
+        "result": "victory",
+        "xp": 118,
+        "fight_duration_ms": 21181,
+        "max_hp": 337,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": null
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Oak Staff",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 1,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 11,
+      "vit": 8,
+      "dex": 10,
+      "luk": 24,
+      "int": 12,
+      "foc": 13,
+      "fights": 0
+    },
+    "initial_level": 13,
+    "initial_xp": {
+      "current": 8130,
+      "max": 5360
+    },
+    "initial_max_hp": 372,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 5,
+      "xp": 12,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 7,
+      "vit": 23,
+      "dex": 17,
+      "luk": 8,
+      "int": 8,
+      "foc": 8,
+      "fights": 0
+    },
+    "final_max_hp": 337,
+    "final_equipment": [],
+    "final_streak": 0,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_locked_level": 30,
+      "boss_name": "VOID TITAN",
+      "boss_level": null,
+      "boss_hp": null,
+      "boss_max_hp": null
+    },
+    "level_up_events": [
+      {
+        "fight_number": 2,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 1,
+        "new_level": 2
+      },
+      {
+        "fight_number": 3,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 2,
+        "new_level": 3
+      },
+      {
+        "fight_number": 4,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 3,
+        "new_level": 4
+      },
+      {
+        "fight_number": 5,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 4,
+        "new_level": 5
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 30516,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "ogre"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 33,
+      "xp_events": [
+        {
+          "time_ms": 30516,
+          "xp": 33,
+          "monster": "ogre",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": true,
+      "level_up_events": [
+        {
+          "time_ms": 30516,
+          "monster": "ogre"
+        }
+      ],
+      "phase_transition_times_ms": [
+        30516
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 33,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.14,
+      "next_level_eta": "⬆ 6m 50s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.05x",
+      "interval": "12.0s",
+      "streak_bonus": null
+    },
+    "initial_essence": 331.21,
+    "final_essence": null,
+    "essence": {
+      "before_idle": 331.21,
+      "after_idle": 331.47,
+      "per_fight": [
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": null,
+      "flow": {
+        "idle_gained": 0.26,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": null
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": true,
+      "skip_reason": "forge requires LVL 6"
+    },
+    "shop": {
+      "visited": false,
+      "offers_count": 0,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": null,
+      "essence_after": null,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [],
+        "purchased_offer": null,
+        "essence_after_purchase": null
+      }
+    },
+    "errors": [],
+    "load_times_ms": {
+      "home": 1159,
+      "arena": 2377
+    },
+    "shop_data": {
+      "offers": [],
+      "purchased_offer": null,
+      "essence_after_purchase": null
+    }
   }
 ]
