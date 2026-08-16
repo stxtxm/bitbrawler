@@ -24,10 +24,12 @@ interface FightRecord {
   xp: number | null
   fight_duration_ms: number
   max_hp?: number | null
-  fight_type?: 'pvp' | 'pve' | 'idle'   // track PvP vs PvE vs idle fights
+  fight_type?: 'pvp' | 'pve' | 'idle' | 'boss'   // track PvP vs PvE vs idle vs boss fights
   monster_name?: string | null  // PvE monster name if applicable
   xp_before_modifier?: number | null  // PvE XP before 2.5x modifier (displayed value)
   xp_after_modifier?: number | null   // PvE XP after 2.5x modifier (actual saved value)
+  boss_hp_left?: number | null  // boss HP remaining after a boss fight (persistent pool)
+  boss_max_hp?: number | null   // boss max HP pool
 }
 
 interface LevelUpEvent {
@@ -135,7 +137,20 @@ interface RunRecord {
   final_essence?: number | null
   lootbox_equipment?: Array<{ slot: string; name: string; rarity?: string }> | null
   lootbox_streak?: number | null
-  pve_data?: { fights: number; wins: number; xp_total: number; monsters_faced: string[] }
+  pve_data?: {
+    fights: number
+    wins: number
+    xp_total: number
+    monsters_faced: string[]
+    pve_shifted?: boolean
+    boss_fights?: number
+    boss_wins?: number
+    boss_name?: string | null
+    boss_locked_level?: number | null
+    boss_level?: number | null
+    boss_hp?: number | null
+    boss_max_hp?: number | null
+  }
   level_up_events?: LevelUpEvent[]
   progression_curve?: { level: number; total_xp: number; xp_for_next: number; percent: number }
   essence?: EssenceData
@@ -164,6 +179,12 @@ interface PveAnalysis {
   avg_xp_before_modifier: number | null   // average PvE XP before 2.5x modifier (displayed value)
   avg_xp_after_modifier: number | null    // average PvE XP after 2.5x modifier (actual saved value)
   pve_xp_ratio: number | null             // ratio of PvE avg_xp_after_modifier to PvP avg_xp_per_win
+  pve_shifted: boolean                    // PvE mode = raid boss fight (LOCKED LVL 30); monster PvE is stale (#705)
+  boss_observations: number               // runs that detected the locked boss (PvE-observation)
+  boss_fights: number                     // actual boss fights (fight_type === 'boss')
+  boss_win_rate: number | null            // boss fight win rate
+  boss_avg_xp_per_fight: number | null    // average XP per boss fight
+  boss_avg_hp_left: number | null         // average boss HP remaining after boss fights (pool progress)
 }
 
 interface EquipmentAnalysis {
@@ -267,9 +288,11 @@ interface AnalysisReport {
     pvp_fights: number
     pve_fights: number
     idle_fights: number
+    boss_fights: number
     pvp_win_rate: number
     pve_win_rate: number
     idle_win_rate: number
+    boss_win_rate: number | null
   }
   issues: string[]
   suggestions: string[]
@@ -551,10 +574,12 @@ function analyze(stats: RunRecord[]): AnalysisReport {
 
   // --- PvE Analysis ---
   const pveFights = allFights.filter(f => f.fight_type === 'pve')
-  const pvpFights = allFights.filter(f => f.fight_type !== 'pve')
+  const bossFights = allFights.filter(f => f.fight_type === 'boss')
+  const pvpFights = allFights.filter(f => f.fight_type !== 'pve' && f.fight_type !== 'boss')
+  const pveShiftedRuns = validRuns.filter(r => r.pve_data?.pve_shifted === true)
   let pveAnalysis: PveAnalysis | null = null
 
-  if (pveFights.length > 0) {
+  if (pveFights.length > 0 || bossFights.length > 0 || pveShiftedRuns.length > 0) {
     const pveWins = pveFights.filter(f => f.result === 'victory')
     const pveXp = pveFights.filter((f): f is FightRecord => f.xp !== null)
     const monsters: Record<string, number> = {}
@@ -576,14 +601,23 @@ function analyze(stats: RunRecord[]): AnalysisReport {
       ? pveXpAfterMod.reduce((s, f) => s + f.xp_after_modifier, 0) / pveXpAfterMod.length
       : null
 
-    // PvE/PvP XP ratio: compare after_modifier PvE XP to PvP win XP
-    const pvpWinsForRatio = wins.filter(f => f.fight_type !== 'pve').filter((f): f is FightRecord => f.xp !== null)
+    // PvE/PvP XP ratio: compare after_modifier PvE XP to PvP win XP (boss fights excluded)
+    const pvpWinsForRatio = wins
+      .filter(f => f.fight_type !== 'pve' && f.fight_type !== 'boss')
+      .filter((f): f is FightRecord => f.xp !== null)
     const avgPvpXpWin = pvpWinsForRatio.length > 0
       ? pvpWinsForRatio.reduce((s, f) => s + (f.xp ?? 0), 0) / pvpWinsForRatio.length
       : 0
     const pveRatio = avgXpAfter !== null && avgPvpXpWin > 0
       ? avgXpAfter / avgPvpXpWin
       : null
+
+    // Boss fight aggregation (#705): fight_type === 'boss' records from captureBossFight
+    const bossWins = bossFights.filter(f => f.result === 'victory')
+    const bossXpFights = bossFights.filter((f): f is FightRecord => f.xp !== null)
+    const bossHpLeftFights = bossFights.filter((f): f is FightRecord & { boss_hp_left: number } =>
+      f.boss_hp_left !== null && f.boss_hp_left !== undefined
+    )
 
     pveAnalysis = {
       total_fights: pveFights.length,
@@ -596,6 +630,16 @@ function analyze(stats: RunRecord[]): AnalysisReport {
       avg_xp_before_modifier: avgXpBefore !== null ? Math.round(avgXpBefore * 100) / 100 : null,
       avg_xp_after_modifier: avgXpAfter !== null ? Math.round(avgXpAfter * 100) / 100 : null,
       pve_xp_ratio: pveRatio !== null ? Math.round(pveRatio * 1000) / 1000 : null,
+      pve_shifted: pveShiftedRuns.length > 0,
+      boss_observations: pveShiftedRuns.length,
+      boss_fights: bossFights.length,
+      boss_win_rate: bossFights.length > 0 ? bossWins.length / bossFights.length : null,
+      boss_avg_xp_per_fight: bossXpFights.length > 0
+        ? Math.round((bossXpFights.reduce((s, f) => s + (f.xp ?? 0), 0) / bossXpFights.length) * 100) / 100
+        : null,
+      boss_avg_hp_left: bossHpLeftFights.length > 0
+        ? Math.round((bossHpLeftFights.reduce((s, f) => s + f.boss_hp_left, 0) / bossHpLeftFights.length) * 100) / 100
+        : null,
     }
   }
 
@@ -642,9 +686,10 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     }
   }
 
-  // --- Fight Type Breakdown (pvp / pve / idle) ---
+  // --- Fight Type Breakdown (pvp / pve / idle / boss) ---
   const pvpWins = pvpFights.filter(f => f.result === 'victory')
   const pveWins = pveFights.filter(f => f.result === 'victory')
+  const bossWinsForBreakdown = bossFights.filter(f => f.result === 'victory')
 
   // Idle fights come from idle_fights on each run (separate from active fights[])
   const allIdleFightsFromRuns = validRuns.flatMap(
@@ -656,12 +701,24 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     pvp_fights: pvpFights.length,
     pve_fights: pveFights.length,
     idle_fights: allIdleFightsFromRuns.length,
+    boss_fights: bossFights.length,
     pvp_win_rate: pvpFights.length > 0 ? pvpWins.length / pvpFights.length : 0,
     pve_win_rate: pveFights.length > 0 ? pveWins.length / pveFights.length : 0,
     idle_win_rate: allIdleFightsFromRuns.length > 0 ? idleWinsFromRuns.length / allIdleFightsFromRuns.length : 0,
+    boss_win_rate: bossFights.length > 0 ? bossWinsForBreakdown.length / bossFights.length : null,
   }
 
   // --- PvE-specific suggestions ---
+  // PvE mode now launches the raid boss (LOCKED LVL 30, #633/#705): monster PvE
+  // data is stale for low-level characters. Report the shift so the analysis is
+  // not mistaken for live monster balance data.
+  if (pveAnalysis && pveAnalysis.pve_shifted) {
+    const shiftedLockLevels = pveShiftedRuns
+      .map(r => r.pve_data?.boss_locked_level)
+      .filter((l): l is number => typeof l === 'number')
+    const bossLockedLevel = shiftedLockLevels.length > 0 ? Math.max(...shiftedLockLevels) : 30
+    issues.push(`PvE mode now maps to the raid boss fight (LOCKED LVL ${bossLockedLevel}, ${pveAnalysis.boss_observations} observation run(s)) — monster PvE is stale (pve_shifted). pve_analysis reflects pre-shift monster data only; boss fights tracked via boss_fights (${pveAnalysis.boss_fights}). See #705.`)
+  }
   if (pveAnalysis && pveAnalysis.total_fights >= 1) {
     if (pveAnalysis.win_rate < 0.3) {
       suggestions.push(`PvE win rate is ${(pveAnalysis.win_rate * 100).toFixed(0)}% — monsters may be too strong. Consider lowering PVE.STAT_MULTIPLIER or PVE.HP_MULTIPLIER.`)
@@ -944,20 +1001,32 @@ function printReport(report: AnalysisReport): void {
     console.log(`  Final:          ${finalStr}`)
   }
   console.log('')
-  if (report.fight_type_breakdown.pve_fights > 0 || report.fight_type_breakdown.pvp_fights > 0 || report.fight_type_breakdown.idle_fights > 0) {
+  if (report.fight_type_breakdown.pve_fights > 0 || report.fight_type_breakdown.pvp_fights > 0 || report.fight_type_breakdown.idle_fights > 0 || report.fight_type_breakdown.boss_fights > 0) {
     console.log(`  ── ${bold}Fight Type${reset} ──`)
     console.log(`  PvP:            ${report.fight_type_breakdown.pvp_fights} fights, ${fmtPct(report.fight_type_breakdown.pvp_win_rate)} win rate`)
     console.log(`  PvE:            ${report.fight_type_breakdown.pve_fights} fights, ${fmtPct(report.fight_type_breakdown.pve_win_rate)} win rate`)
     console.log(`  Idle:           ${report.fight_type_breakdown.idle_fights} fights, ${fmtPct(report.fight_type_breakdown.idle_win_rate)} win rate`)
+    if (report.fight_type_breakdown.boss_fights > 0) {
+      console.log(`  Boss:           ${report.fight_type_breakdown.boss_fights} fights, ${report.fight_type_breakdown.boss_win_rate !== null ? fmtPct(report.fight_type_breakdown.boss_win_rate) : 'n/a'} win rate`)
+    }
     console.log('')
   }
 
-  if (report.pve_analysis && report.pve_analysis.total_fights >= 1) {
-    console.log(`  ── ${bold}PvE Monsters${reset} ──`)
-    const monsterStr = Object.entries(report.pve_analysis.monsters_faced)
-      .map(([name, count]) => `${name}=${count}`)
-      .join(', ')
-    console.log(`  Monsters:       ${monsterStr || 'none'}`)
+  if (report.pve_analysis && (report.pve_analysis.total_fights >= 1 || report.pve_analysis.pve_shifted)) {
+    console.log(`  ── ${bold}PvE / Boss${reset} ──`)
+    if (report.pve_analysis.pve_shifted) {
+      console.log(`  Shifted:        ${yellow}PvE = raid boss (${report.pve_analysis.boss_observations} observation run(s))${reset}`)
+    }
+    console.log(`  Monsters:       ${Object.entries(report.pve_analysis.monsters_faced).map(([name, count]) => `${name}=${count}`).join(', ') || 'none (PvE is boss-shifted)'}`)
+    if (report.pve_analysis.boss_fights > 0) {
+      console.log(`  Boss fights:    ${report.pve_analysis.boss_fights} (${report.pve_analysis.boss_win_rate !== null ? fmtPct(report.pve_analysis.boss_win_rate) : 'n/a'} win rate)`)
+      if (report.pve_analysis.boss_avg_xp_per_fight !== null) {
+        console.log(`  Boss XP/fight:  ${report.pve_analysis.boss_avg_xp_per_fight.toFixed(0)}`)
+      }
+      if (report.pve_analysis.boss_avg_hp_left !== null) {
+        console.log(`  Boss HP left:   ${report.pve_analysis.boss_avg_hp_left.toFixed(0)} (pool progress)`)
+      }
+    }
     console.log(`  XP/fight:       ${report.pve_analysis.avg_xp_per_fight.toFixed(0)}`)
     console.log(`  Avg duration:   ${fmtSec(report.pve_analysis.avg_duration_ms)}`)
     if (report.pve_analysis.avg_xp_before_modifier !== null) {
