@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-16T08:46:12Z",
+  "last_session": "2026-08-16T19:39:31Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -211,6 +211,13 @@
     {
       "lesson": "Issue #705 QA bot PvE pipeline dead since 08-05: since #633 (boss-toggle removal), the arena's PvE mode launches the raid boss fight (LOCKED LVL 30) instead of monsters. The bot's isPveLocked fallback silently converted every PvE attempt to PvP, so pve_data.fights=0 on all runs. Fix applied A+B: (1) Option A: runFightSequence now records a PvE-observation — pve_data.pve_shifted=true + boss_locked_level + boss_name/HP from new captureBossStatus() helper (reads .boss-hp-name/.boss-hp-num which only render when boss unlocked, falls back to BOSS_NAME='VOID TITAN' constant) — instead of silently falling back; (2) Option B: if currentLevel >= bossLockedLevel (parsed from LOCKED LVL label via bossLockedLevel on readArenaStatus), launch a real fight via new captureBossFight() producing fight_type:'boss' records (monster_name: BOSS_NAME, boss_hp_left/boss_max_hp). Also: pve_data now initialized with pve_shifted:false and populated with boss_fights/boss_wins; pveOnly+locked-boss now breaks instead of the old endless character-replacement loop. Analyzer (analyze-qa-stats.ts): FightRecord.fight_type extended with 'boss', pve_data shape extended, PveAnalysis gained pve_shifted/boss_observations/boss_fights/boss_win_rate/boss_avg_xp_per_fight/boss_avg_hp_left; pvpFights and pvpWinsForRatio now exclude boss fights; fight_type_breakdown gained boss_fights+boss_win_rate; an ISSUE is emitted when pve_shifted is detected (monster PvE stale, see #705). Pattern: when QA stats contradict config expectations (pveRatio 0.33 but 0 PvE fights), audit what the game UI actually does in that mode FIRST (PvE switch = boss fight now) before touching game balance. 14 new tests (mirror + source-content contract, following #637/#645/#653/#685/#696 patterns), full suite 1417 green, lint+build OK.",
       "issue": "#705",
+      "date": "2026-08-16"
+    },
+    {
+      "version": 1,
+      "agent": "dev",
+      "lesson": "Issue #710 QA bot equipment deadlock: root cause was NOT the DOM selectors (they match current InventoryPanel: .inv-loadout-slots, .inv-loadout-slot.filled, .inv-loadout-item-name, .inv-loadout-slot-icon all correct). Root cause = the .inventory-overlay locator handler (added #637, refined #645) fires on EVERY Playwright action while the overlay is visible, closing the inventory mid-parse. handleDailyLootbox sets suppressInventoryHandler=true before opening inventory + re-arms on all exits, but parseEquippedItems and parseStreak did NOT → DOM parse always yielded 0 → body fallback captured garbage (group labels 'WEAPONS'/'ARMOR'/'ACCESSORIES' from SLOT_LABELS '⚔️ WEAPONS' etc., and '️ ARMOR' = U+FE0F variation selector remnant) → 18 runs empty equipment + streak null. Fix: (1) suppressInventoryHandler=true in parseEquippedItems + parseStreak before opening inventory, detect already-open overlay (skip button click), re-arm=false on ALL exit paths; (2) parseEquippedItemsFromBody hardened: sanitizeItemName strips leading emoji/variation-selector (️) via /\\p{Extended_Pictographic}/u + trailing '×', EQUIPMENT_GROUP_LABELS rejection (letters-only match), peek next line when icon and name are on separate rendered lines (innerText puts .inv-loadout-slot-icon on its own line, then item name, then × unequip button), debug log of EQUIPPED section lines when empty; (3) analyze-qa-stats.ts computeEquipmentAnalysis filters corrupted names (isValidEquippedItemName) counting only runs with ≥1 valid name. Pattern: any QA-bot function that opens the inventory and reads inside it MUST suppress the .inventory-overlay handler, not just handleDailyLootbox. Test gotcha: pre-existing #645 test used indexOf first 'page.locator(.inventory-overlay)' which now hits the new alreadyOpen check — must search after 'page.addLocatorHandler(' to target the handler block.",
+      "issue": "#710",
       "date": "2026-08-16"
     }
   ]

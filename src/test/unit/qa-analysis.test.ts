@@ -109,16 +109,51 @@ function computePveMonsters(fights: FightRecord[]): Record<string, number> {
   return monsters
 }
 
+// Corrupted-name guard shared by the analyzer and the QA bot's body-text fallback
+// (#710): names that are emoji-only, variation-selector remnants ("\uFE0F ARMOR"),
+// or inventory group labels ("WEAPONS", "ARMOR", "ACCESSORIES") must never reach
+// equipment_analysis.
+const EQUIPMENT_GROUP_LABELS = new Set([
+  'WEAPONS', 'ARMOR', 'ACCESSORIES', 'TRINKETS', 'SHIELDS', 'RINGS', 'AMULETS',
+  'WANDS', 'STAFFS', 'BOWS', 'DAGGERS', 'HELMETS', 'BOOTS', 'GLOVES', 'CLOAKS', 'ROBES', 'CHARMS',
+])
+
+function sanitizeEquippedItemName(name: string): string {
+  return String(name)
+    .replace(/^[\p{Extended_Pictographic}\uFE0F\u200D\s\-–—.:*"'()\[\]{}]+/u, '')
+    .replace(/[\s×]+$/u, '')
+    .trim()
+}
+
+function isEquipmentGroupLabel(name: string): boolean {
+  const lettersOnly = String(name).replace(/[^a-zA-Z]/g, '').toUpperCase()
+  return EQUIPMENT_GROUP_LABELS.has(lettersOnly)
+}
+
+function isValidEquippedItemName(name: string): boolean {
+  const sanitized = sanitizeEquippedItemName(name)
+  return (
+    sanitized.length >= 2 &&
+    /[a-zA-Z]/.test(sanitized) &&
+    sanitized.toUpperCase() !== 'EMPTY' &&
+    !isEquipmentGroupLabel(sanitized)
+  )
+}
+
 function computeEquipmentAnalysis(runs: RunRecord[]): EquipmentAnalysis | null {
-  const runsWithEquipment = runs.filter(
-    (r) => r.initial_equipment !== null && r.initial_equipment !== undefined && r.initial_equipment.length > 0
-  )
-  const runsWithLootboxEquipment = runs.filter(
-    (r) => r.lootbox_equipment !== null && r.lootbox_equipment !== undefined && r.lootbox_equipment.length > 0
-  )
+  const runsWithEquipment = runs
+    .filter(
+      (r) => r.initial_equipment !== null && r.initial_equipment !== undefined && r.initial_equipment.length > 0
+    )
+    .filter((r) => r.initial_equipment!.some((e) => isValidEquippedItemName(e.name)))
+  const runsWithLootboxEquipment = runs
+    .filter(
+      (r) => r.lootbox_equipment !== null && r.lootbox_equipment !== undefined && r.lootbox_equipment.length > 0
+    )
+    .filter((r) => r.lootbox_equipment!.some((e) => isValidEquippedItemName(e.name)))
   const allEquippedItems = [
-    ...runsWithEquipment.flatMap(r => r.initial_equipment!.map(e => e.name)),
-    ...runsWithLootboxEquipment.flatMap(r => r.lootbox_equipment!.map(e => e.name)),
+    ...runsWithEquipment.flatMap(r => r.initial_equipment!.map(e => e.name).filter(isValidEquippedItemName)),
+    ...runsWithLootboxEquipment.flatMap(r => r.lootbox_equipment!.map(e => e.name).filter(isValidEquippedItemName)),
   ]
   if (allEquippedItems.length === 0) return null
 
@@ -747,7 +782,9 @@ describe('QA Bot Overlay Deadlock Contract', () => {
     // A bare `return` guard is NOT enough: Playwright waits for the selector to be
     // hidden after the handler unless noWaitAfter is set, which would still block.
     expect(qaBotSource).toContain('let suppressInventoryHandler = false')
-    const overlayLocatorIdx = qaBotSource.indexOf("page.locator('.inventory-overlay')")
+    const addHandlerIdx = qaBotSource.indexOf('page.addLocatorHandler(')
+    expect(addHandlerIdx).toBeGreaterThan(-1)
+    const overlayLocatorIdx = qaBotSource.indexOf("page.locator('.inventory-overlay')", addHandlerIdx)
     expect(overlayLocatorIdx).toBeGreaterThan(-1)
     const handlerBlock = qaBotSource.slice(overlayLocatorIdx, overlayLocatorIdx + 700)
     expect(handlerBlock).toContain('if (suppressInventoryHandler) return')
@@ -1337,5 +1374,176 @@ describe('QA Shop Simulated Affordability Analysis (#711)', () => {
       expect(source).toContain('simulated: shopSimulated')
       expect(source).toContain('r.shop?.essence_before ?? r.essence?.shop_before')
     })
+describe('QA Equipment Name Sanitization Contract (#710)', () => {
+  it('rejects emoji-only and variation-selector-only names', () => {
+    expect(isValidEquippedItemName('⚔️')).toBe(false)
+    expect(isValidEquippedItemName('🛡️')).toBe(false)
+    expect(isValidEquippedItemName('🔮')).toBe(false)
+    expect(isValidEquippedItemName('\uFE0F')).toBe(false)
+    expect(isValidEquippedItemName('️')).toBe(false)
+  })
+
+  it('rejects empty and EMPTY slot markers', () => {
+    expect(isValidEquippedItemName('')).toBe(false)
+    expect(isValidEquippedItemName('EMPTY')).toBe(false)
+    expect(isValidEquippedItemName('  ')).toBe(false)
+  })
+
+  it('rejects inventory group labels that the body-text fallback captures as item names', () => {
+    expect(isValidEquippedItemName('WEAPONS')).toBe(false)
+    expect(isValidEquippedItemName('ARMOR')).toBe(false)
+    expect(isValidEquippedItemName('ACCESSORIES')).toBe(false)
+    expect(isValidEquippedItemName('⚔️ WEAPONS')).toBe(false)
+    expect(isValidEquippedItemName('🛡️ ARMOR')).toBe(false)
+    expect(isValidEquippedItemName('💍 ACCESSORIES')).toBe(false)
+  })
+
+  it('sanitizes leading emoji/variation-selector remnants and accepts real item names', () => {
+    expect(sanitizeEquippedItemName('\uFE0F ARMOR')).toBe('ARMOR')
+    expect(isValidEquippedItemName('\uFE0F ARMOR')).toBe(false) // group label after sanitize
+    expect(isValidEquippedItemName('Iron Sword')).toBe(true)
+    expect(isValidEquippedItemName('Leather Vest')).toBe(true)
+    expect(isValidEquippedItemName('Voidreaper')).toBe(true)
+    expect(isValidEquippedItemName('Heaven\'s Edge')).toBe(true)
+  })
+
+  it('strips the unequip button × from names rendered on the same line', () => {
+    expect(sanitizeEquippedItemName('Iron Sword ×')).toBe('Iron Sword')
+    expect(sanitizeEquippedItemName('⚔️ Iron Sword ×')).toBe('Iron Sword')
+    expect(isValidEquippedItemName('Iron Sword ×')).toBe(true)
+  })
+
+  it('filters corrupted names out of computeEquipmentAnalysis (mirror of analyzer #710)', () => {
+    const runs: RunRecord[] = [
+      {
+        date: '2026-08-16', run: 'r1', character: 'C1', fights: [], errors: [],
+        initial_equipment: [
+          { slot: 'shield', name: '\uFE0F ARMOR' },
+          { slot: 'weapon', name: 'Iron Sword' },
+        ],
+        lootbox_equipment: [
+          { slot: 'accessory', name: 'ACCESSORIES' },
+        ],
+      },
+      {
+        date: '2026-08-16', run: 'r2', character: 'C2', fights: [], errors: [],
+        initial_equipment: [
+          { slot: 'armor', name: '⚔️' },
+        ],
+      },
+    ]
+    const result = computeEquipmentAnalysis(runs)
+    expect(result).not.toBeNull()
+    expect(result!.runs_with_data).toBe(1)
+    expect(result!.unique_item_count).toBe(1)
+    expect(result!.item_names).toEqual(['Iron Sword'])
+  })
+
+  it('returns null when every equipment name is corrupted', () => {
+    const runs: RunRecord[] = [
+      {
+        date: '2026-08-16', run: 'r1', character: 'C1', fights: [], errors: [],
+        initial_equipment: [{ slot: 'armor', name: '️ ARMOR' }],
+      },
+    ]
+    expect(computeEquipmentAnalysis(runs)).toBeNull()
+  })
+})
+
+describe('QA Bot Equipment Parse Contract (#710)', () => {
+  const qaBotSource = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
+
+  function extractAsyncFunction(source: string, name: string): string | null {
+    const start = source.indexOf(`async function ${name}(`)
+    if (start === -1) return null
+    const bodyStart = source.indexOf('{', start)
+    let depth = 0
+    for (let i = bodyStart; i < source.length; i++) {
+      if (source[i] === '{') depth++
+      else if (source[i] === '}') {
+        depth--
+        if (depth === 0) return source.slice(start, i + 1)
+      }
+    }
+    return null
+  }
+
+  function requireAsyncFunction(name: string): string {
+    const fn = extractAsyncFunction(qaBotSource, name)
+    expect(fn).not.toBeNull()
+    if (fn === null) throw new Error(`qa-bot.mjs missing async function ${name}()`)
+    return fn
+  }
+
+  it('parseEquippedItems suppresses the inventory overlay handler before opening inventory and re-arms on every exit (#710)', () => {
+    const fn = requireAsyncFunction('parseEquippedItems')
+    const setIdx = fn.indexOf('suppressInventoryHandler = true')
+    expect(setIdx).toBeGreaterThan(-1)
+    // The flag must be armed before any attempt to open/read the inventory.
+    const clickIdx = fn.indexOf('invBtn.click()')
+    expect(setIdx).toBeLessThan(clickIdx)
+    const afterSet = fn.slice(setIdx)
+    const returnsAfter = (afterSet.match(/return /g) || []).length
+    const unsets = (afterSet.match(/suppressInventoryHandler = false/g) || []).length
+    expect(returnsAfter).toBeGreaterThan(0)
+    expect(unsets).toBe(returnsAfter)
+  })
+
+  it('parseEquippedItems skips the button click when the inventory overlay is already open (#710)', () => {
+    const fn = requireAsyncFunction('parseEquippedItems')
+    expect(fn).toContain("page.locator('.inventory-overlay').first().isVisible")
+    expect(fn).toContain('alreadyOpen')
+  })
+
+  it('parseEquippedItems reads equipped names from .inv-loadout-item-name and .inv-loadout-slot.filled (current InventoryPanel DOM)', () => {
+    const fn = requireAsyncFunction('parseEquippedItems')
+    expect(fn).toContain("'.inv-loadout-slot.filled'")
+    expect(fn).toContain("'.inv-loadout-item-name'")
+    expect(fn).toContain("'.inv-loadout-slot-icon'")
+  })
+
+  it('parseStreak suppresses the inventory overlay handler before opening inventory and re-arms on every exit (#710)', () => {
+    const fn = requireAsyncFunction('parseStreak')
+    const setIdx = fn.indexOf('suppressInventoryHandler = true')
+    expect(setIdx).toBeGreaterThan(-1)
+    const clickIdx = fn.indexOf('invBtn.click()')
+    expect(setIdx).toBeLessThan(clickIdx)
+    const afterSet = fn.slice(setIdx)
+    const returnsAfter = (afterSet.match(/return /g) || []).length
+    const unsets = (afterSet.match(/suppressInventoryHandler = false/g) || []).length
+    expect(returnsAfter).toBeGreaterThan(0)
+    expect(unsets).toBe(returnsAfter)
+  })
+
+  it('parseEquippedItemsFromBody sanitizes names and rejects group labels before pushing items (#710)', () => {
+    const fn = requireAsyncFunction('parseEquippedItemsFromBody')
+    expect(fn).toContain('sanitizeItemName')
+    expect(fn).toContain('isEquipmentGroupLabel')
+    // The group-label set lives at module scope (before parseEquippedItems) and
+    // the fallback must reject both the label words and their emoji-prefixed forms.
+    const helpersStart = qaBotSource.indexOf('const EQUIPMENT_GROUP_LABELS')
+    expect(helpersStart).toBeGreaterThan(-1)
+    const helpersBlock = qaBotSource.slice(helpersStart, helpersStart + 400)
+    expect(helpersBlock).toContain('WEAPONS')
+    expect(helpersBlock).toContain('ARMOR')
+    expect(helpersBlock).toContain('ACCESSORIES')
+  })
+
+  it('parseEquippedItemsFromBody logs the EQUIPPED section text when it yields nothing (#710)', () => {
+    const fn = requireAsyncFunction('parseEquippedItemsFromBody')
+    expect(fn).toContain('EQUIPPED section')
+  })
+
+  it('parseEquippedItemsFromBody peeks the next line for the item name when the icon line has no text (#710)', () => {
+    const fn = requireAsyncFunction('parseEquippedItemsFromBody')
+    expect(fn).toContain('next')
+    expect(fn).toContain('lines[li')
+  })
+
+  it('analyze-qa-stats.ts filters corrupted equipment names before aggregating (#710)', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+    expect(source).toContain('isValidEquippedItemName')
+    expect(source).toContain('EQUIPMENT_GROUP_LABELS')
+    expect(source).toContain('filter')
   })
 })

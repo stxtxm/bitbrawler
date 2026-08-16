@@ -1153,6 +1153,45 @@ async function togglePveMode(page, enablePve) {
   return true
 }
 
+const EQUIPPED_SLOT_ICONS = ['⚔️', '🛡', '📿', '💍', '👑', '🧤', '👢', '🦅', '🔮', '🌟', '🗡️', '🪄', '⛓️']
+
+const EQUIPMENT_GROUP_LABELS = new Set([
+  'WEAPONS', 'ARMOR', 'ACCESSORIES', 'TRINKETS', 'SHIELDS', 'RINGS', 'AMULETS',
+  'WANDS', 'STAFFS', 'BOWS', 'DAGGERS', 'HELMETS', 'BOOTS', 'GLOVES', 'CLOAKS', 'ROBES', 'CHARMS',
+])
+
+function sanitizeItemName(name) {
+  return String(name)
+    .replace(/^[\p{Extended_Pictographic}\uFE0F\u200D\s\-–—.:*"'()\[\]{}]+/u, '')
+    .replace(/[\s×]+$/u, '')
+    .trim()
+}
+
+function isEquipmentGroupLabel(name) {
+  const lettersOnly = String(name).replace(/[^a-zA-Z]/g, '').toUpperCase()
+  return EQUIPMENT_GROUP_LABELS.has(lettersOnly)
+}
+
+function isValidItemName(name) {
+  const sanitized = sanitizeItemName(name)
+  return (
+    sanitized.length >= 2 &&
+    /[a-zA-Z]/.test(sanitized) &&
+    sanitized.toUpperCase() !== 'EMPTY' &&
+    !isEquipmentGroupLabel(sanitized)
+  )
+}
+
+function matchSlotIcon(line) {
+  for (const icon of EQUIPPED_SLOT_ICONS) {
+    const idx = line.indexOf(icon)
+    if (idx !== -1) {
+      return { icon, rest: line.slice(idx + icon.length).trim() }
+    }
+  }
+  return null
+}
+
 /**
  * Parse equipped item slots visible in the inventory (equipped section).
  * Returns an array of { slot, name, rarity? } or empty array.
@@ -1165,15 +1204,29 @@ async function togglePveMode(page, enablePve) {
 async function parseEquippedItems(page) {
   try {
     // ── Strategy 1: DOM-based parsing via inventory panel ──
-    const invBtn = page.locator('button[aria-label="Inventory"], button[title="Inventory"], button.icon-btn.inventory-btn').first()
-    if (!(await invBtn.isVisible({ timeout: 2000 }).catch(() => false))) {
-      console.log('   Inventory button not found, trying body text fallback')
-      return await parseEquippedItemsFromBody(page)
-    }
+    // The .inventory-overlay locator handler dismisses the overlay on EVERY
+    // action while it is visible — that would close the inventory mid-parse and
+    // leave the body-text fallback with no EQUIPPED section (#710). Suppress the
+    // handler for the whole read and re-arm it on every exit path.
+    suppressInventoryHandler = true
 
-    await invBtn.click()
-    console.log('   Clicked inventory button, waiting for panel to open...')
-    await page.waitForTimeout(300)
+    // If the inventory overlay is already open (leftover from a previous step),
+    // skip the button click — the panel is already visible.
+    const alreadyOpen = await page.locator('.inventory-overlay').first().isVisible({ timeout: 1000 }).catch(() => false)
+
+    if (!alreadyOpen) {
+      const invBtn = page.locator('button[aria-label="Inventory"], button[title="Inventory"], button.icon-btn.inventory-btn').first()
+      if (!(await invBtn.isVisible({ timeout: 2000 }).catch(() => false))) {
+        console.log('   Inventory button not found, trying body text fallback')
+        suppressInventoryHandler = false
+        return await parseEquippedItemsFromBody(page)
+      }
+      await invBtn.click()
+      console.log('   Clicked inventory button, waiting for panel to open...')
+      await page.waitForTimeout(300)
+    } else {
+      console.log('   Inventory overlay already open, skipping button click')
+    }
 
     // Wait for inventory panel to fully open — use longer timeout and retry logic
     let panelReady = false
@@ -1192,6 +1245,7 @@ async function parseEquippedItems(page) {
 
     if (!panelReady) {
       console.log('   Inventory panel did not open after retries, trying body text fallback')
+      suppressInventoryHandler = false
       return await parseEquippedItemsFromBody(page)
     }
 
@@ -1225,10 +1279,11 @@ async function parseEquippedItems(page) {
     }
 
     // If DOM-based parsing found nothing, try body text fallback
+    let parsed = items
     if (items.length === 0) {
       console.log('   DOM parsing yielded no valid items, falling back to body text parse')
       const bodyItems = await parseEquippedItemsFromBody(page)
-      if (bodyItems.length > 0) return bodyItems
+      if (bodyItems.length > 0) parsed = bodyItems
     } else {
       console.log(`   Parsed ${items.length} equipment item(s) from DOM: ${items.map(i => `${i.slot}=${i.name}${i.rarity ? ` (${i.rarity})` : ''}`).join(', ')}`)
     }
@@ -1240,9 +1295,11 @@ async function parseEquippedItems(page) {
       await page.waitForTimeout(500)
     }
 
-    return items
+    suppressInventoryHandler = false
+    return parsed
   } catch (err) {
     console.log(`   ⚠️ Could not parse equipped items via DOM: ${err.message}`)
+    suppressInventoryHandler = false
     return await parseEquippedItemsFromBody(page)
   }
 }
@@ -1255,16 +1312,13 @@ async function parseEquippedItemsFromBody(page) {
   try {
     const bodyText = await page.locator('body').innerText().catch(() => '')
 
-    // Known slot icons used in the game UI
     const lines = bodyText.split('\n')
     const items = []
-
-    // Track whether we are inside the EQUIPPED section
     let inEquippedSection = false
-    const slotNames = ['⚔️', '🛡', '📿', '💍', '👑', '🧤', '👢', '🦅', '🔮', '🌟', '🗡️', '🪄', '⛓️']
+    let equippedSectionLines = []
 
-    for (const line of lines) {
-      const trimmed = line.trim()
+    for (let li = 0; li < lines.length; li++) {
+      const trimmed = lines[li].trim()
       if (!trimmed) continue
 
       // Detect the EQUIPPED section header
@@ -1274,29 +1328,45 @@ async function parseEquippedItemsFromBody(page) {
       }
 
       // Detect end of equipped section (next section header)
-      if (inEquippedSection && (trimmed.toUpperCase() === 'INVENTORY' || trimmed.includes('SLOTS'))) {
+      if (inEquippedSection && (trimmed.toUpperCase() === 'INVENTORY' || trimmed.toUpperCase() === 'SHOP' || trimmed.includes('SLOTS'))) {
         break
       }
 
-      if (inEquippedSection) {
-        for (const slotIcon of slotNames) {
-          if (trimmed.includes(slotIcon)) {
-            // Extract slot name (the icon character) and item name (text after icon)
-            const itemNameMatch = trimmed.match(new RegExp(`${slotIcon}\\s*(.+?)(?:\\s*×|$)`))
-            if (itemNameMatch) {
-              const itemName = itemNameMatch[1].trim()
-              // Skip "EMPTY" slots and corrupted/invalid names (empty, icon-only, single char, no letters)
-              const isValidName = itemName && itemName.length >= 2 && /[a-zA-Z]/.test(itemName) && itemName.toUpperCase() !== 'EMPTY'
-              if (isValidName) {
-                items.push({ slot: slotIcon, name: itemName })
-              } else {
-                console.log(`   ⚠️ parseEquippedItemsFromBody: skipped corrupted item at slot ${slotIcon} (name="${itemName}" length=${itemName.length})`)
-              }
-            }
-            break
-          }
+      if (!inEquippedSection) continue
+
+      equippedSectionLines.push(trimmed)
+
+      const iconMatch = matchSlotIcon(trimmed)
+      if (!iconMatch) continue
+
+      // Stop at the first inventory group label (e.g. "⚔️ WEAPONS") — the
+      // equipped loadout slots come before the inventory grid in the DOM.
+      if (isEquipmentGroupLabel(iconMatch.rest)) break
+
+      let name = iconMatch.rest
+      if (!isValidItemName(name)) {
+        // Icon and name may be on separate lines: peek the next non-empty line
+        for (let next = li + 1; next < lines.length; next++) {
+          const nextTrimmed = lines[next].trim()
+          if (!nextTrimmed) continue
+          if (nextTrimmed === 'EMPTY' || nextTrimmed === '×' || isEquipmentGroupLabel(nextTrimmed)) break
+          name = nextTrimmed
+          break
         }
       }
+
+      const sanitized = sanitizeItemName(name)
+      if (isValidItemName(sanitized)) {
+        items.push({ slot: iconMatch.icon, name: sanitized })
+      } else {
+        console.log(`   ⚠️ parseEquippedItemsFromBody: skipped corrupted item at slot ${iconMatch.icon} (name="${name}" length=${name.length})`)
+      }
+    }
+
+    // Debug: when the EQUIPPED section yields nothing, log the section text so
+    // layout changes in InventoryPanel are diagnosable from run logs (#710).
+    if (items.length === 0 && equippedSectionLines.length > 0) {
+      console.log(`   🔍 parseEquippedItemsFromBody: EQUIPPED section lines (${equippedSectionLines.length}): ${JSON.stringify(equippedSectionLines.slice(0, 15))}`)
     }
 
     // If equipped section parsing didn't work, try a broader pattern:
@@ -1310,11 +1380,12 @@ async function parseEquippedItemsFromBody(page) {
           // Extract the surrounding text as item name
           const start = Math.max(0, bodyText.lastIndexOf('\n', idx) + 1)
           const end = bodyText.indexOf('\n', idx)
-          const line = bodyText.substring(start, end !== -1 ? end : bodyText.length).trim()
-          if (line && line.trim().length >= 2 && /[a-zA-Z]/.test(line) && line.length < 40) {
+          const rawLine = bodyText.substring(start, end !== -1 ? end : bodyText.length).trim()
+          const line = sanitizeItemName(rawLine)
+          if (line && isValidItemName(line) && line.length < 40) {
             items.push({ slot: '?', name: line })
-          } else if (line) {
-            console.log(`   ⚠️ parseEquippedItemsFromBody: skipped corrupted keyword match (line="${line}" length=${line.length})`)
+          } else if (rawLine) {
+            console.log(`   ⚠️ parseEquippedItemsFromBody: skipped corrupted keyword match (line="${rawLine}" length=${rawLine.length})`)
           }
         }
       }
@@ -1364,18 +1435,30 @@ async function parseStreak(page) {
     }
 
     // 1b. The full streak indicator is inside the inventory panel – open it
-    const invBtn = page.locator('button[aria-label="Inventory"], button[title="Inventory"], button.icon-btn.inventory-btn').first()
-    if (!(await invBtn.isVisible({ timeout: 1000 }).catch(() => false))) {
-      return await parseStreakFromBody(page)
+    // Suppress the .inventory-overlay locator handler so it does not close the
+    // panel mid-read (same deadlock as parseEquippedItems, #710), and re-arm the
+    // flag on every exit path.
+    suppressInventoryHandler = true
+    const alreadyOpen = await page.locator('.inventory-overlay').first().isVisible({ timeout: 1000 }).catch(() => false)
+
+    if (!alreadyOpen) {
+      const invBtn = page.locator('button[aria-label="Inventory"], button[title="Inventory"], button.icon-btn.inventory-btn').first()
+      if (!(await invBtn.isVisible({ timeout: 1000 }).catch(() => false))) {
+        suppressInventoryHandler = false
+        return await parseStreakFromBody(page)
+      }
+      await invBtn.click()
+      await page.waitForTimeout(800)
+    } else {
+      console.log('   Inventory overlay already open, skipping button click')
     }
-    await invBtn.click()
-    await page.waitForTimeout(800)
 
     // Wait for inventory panel to open
     try {
       await page.locator('.inv-loadout-slots').waitFor({ state: 'visible', timeout: 3000 })
     } catch {
       // Inventory didn't open
+      suppressInventoryHandler = false
       return await parseStreakFromBody(page)
     }
 
@@ -1399,13 +1482,16 @@ async function parseStreak(page) {
 
     if (streak !== null) {
       console.log(`   Streak from inventory panel: ${streak}`)
+      suppressInventoryHandler = false
       return streak
     }
 
     // ── Strategy 2: Body text fallback ──
+    suppressInventoryHandler = false
     return await parseStreakFromBody(page)
   } catch (err) {
     console.log(`   ⚠️ Could not parse streak via DOM: ${err.message}`)
+    suppressInventoryHandler = false
     return await parseStreakFromBody(page)
   }
 }
