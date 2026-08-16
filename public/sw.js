@@ -1,4 +1,4 @@
-const VERSION = 'v5'
+const VERSION = 'v6'
 const APP_SHELL_CACHE = `bitbrawler-shell-${VERSION}`
 const ASSET_CACHE = `bitbrawler-assets-${VERSION}`
 const RUNTIME_CACHE = `bitbrawler-runtime-${VERSION}`
@@ -10,6 +10,8 @@ const APP_SHELL = [
   '/icon.svg',
   '/icon-192.png',
   '/icon-512.png',
+  '/badge.svg',
+  '/badge-96.png',
   '/apple-touch-icon-120.png',
   '/apple-touch-icon-152.png',
   '/apple-touch-icon-167.png',
@@ -107,6 +109,7 @@ self.addEventListener('push', (event) => {
   const options = {
     body: payload.body || '',
     icon: payload.icon || '/icon-192.png',
+    badge: payload.badge || '/badge-96.png',
     tag: payload.tag,
     data: { url: payload.url },
   }
