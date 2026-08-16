@@ -1374,6 +1374,9 @@ describe('QA Shop Simulated Affordability Analysis (#711)', () => {
       expect(source).toContain('simulated: shopSimulated')
       expect(source).toContain('r.shop?.essence_before ?? r.essence?.shop_before')
     })
+  })
+})
+
 describe('QA Equipment Name Sanitization Contract (#710)', () => {
   it('rejects emoji-only and variation-selector-only names', () => {
     expect(isValidEquippedItemName('⚔️')).toBe(false)
