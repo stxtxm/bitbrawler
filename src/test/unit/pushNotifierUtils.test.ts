@@ -93,12 +93,13 @@ describe('mergeLastPushDay', () => {
 });
 
 describe('buildPushPayload', () => {
-  it('builds the lootbox payload with a daily tag', () => {
+  it('builds the lootbox payload with a daily tag, app icon and badge', () => {
     const payload = buildPushPayload('2025-01-02');
     expect(payload.title).toContain('Lootbox');
     expect(payload.tag).toBe('lootbox-2025-01-02');
     expect(payload.url).toBe('/arena');
     expect(payload.icon).toBe('/icon-192.png');
+    expect(payload.badge).toBe('/badge-96.png');
     expect(payload.body.length).toBeGreaterThan(0);
   });
 

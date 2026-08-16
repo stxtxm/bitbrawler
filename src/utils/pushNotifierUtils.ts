@@ -10,6 +10,7 @@ export interface PushNotificationPayload {
   title: string;
   body: string;
   icon: string;
+  badge?: string;
   tag: string;
   url: string;
 }
@@ -70,6 +71,7 @@ export const buildPushPayload = (todayKey: string): PushNotificationPayload => (
   title: '🎁 Lootbox quotidienne',
   body: "Ta lootbox quotidienne t'attend !",
   icon: '/icon-192.png',
+  badge: '/badge-96.png',
   tag: `lootbox-${todayKey}`,
   url: '/arena',
 });

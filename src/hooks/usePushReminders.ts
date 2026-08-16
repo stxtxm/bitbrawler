@@ -66,6 +66,8 @@ export const showPushReminder = async (message: ReminderMessage): Promise<boolea
     if (!registration?.showNotification) return false;
     await registration.showNotification(message.title, {
       body: message.body,
+      icon: '/icon-192.png',
+      badge: '/badge-96.png',
       tag: `bitbrawler-${message.type}`,
       data: { url: message.url },
     });
