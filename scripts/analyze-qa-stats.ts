@@ -79,6 +79,12 @@ interface ForgeResult {
   essence_after: number | null
 }
 
+interface ShopOffer {
+  name: string
+  rarity?: string | null
+  price: number | null
+}
+
 interface EssenceData {
   before_idle: number | null
   after_idle: number | null
@@ -156,6 +162,11 @@ interface RunRecord {
   essence?: EssenceData
   forge?: ForgeResult | null
   shop?: { essence_before?: number | null; essence_after?: number | null }
+  shop_data?: {
+    offers?: Array<ShopOffer>
+    purchased_offer?: number | null
+    essence_after_purchase?: number | null
+  }
   errors: string[]
   load_times_ms?: Record<string, number>
 }
@@ -231,6 +242,19 @@ interface EssenceAnalysis {
   runs_excluded_by_character_replacement: number
 }
 
+interface ShopSimulatedAnalysis {
+  runs_with_shop_data: number
+  avg_essence_before: number | null
+  avg_offer_price: number | null
+  min_offer_price: number | null
+  max_offer_price: number | null
+  offer_rarity_distribution: Record<string, number>
+  affordable_offer_count: number
+  avg_affordable_offer_count: number | null
+  would_purchase_runs: number
+  simulated_purchase_rate: number | null
+}
+
 interface IdleAnalysis {
   runs_with_idle_data: number
   total_idle_fights: number
@@ -274,6 +298,9 @@ interface AnalysisReport {
   essence_analysis: EssenceAnalysis | null
   idle_analysis: IdleAnalysis | null
   progression_curve: ProgressionCurveSummary | null
+  shop: {
+    simulated: ShopSimulatedAnalysis | null
+  }
   lootbox: {
     runs_with_lootbox: number
     lootboxes_opened: number
@@ -327,6 +354,70 @@ function isCharacterReplacedRun(r: RunRecord): boolean {
     }
   }
   return false
+}
+
+// Shop simulated affordability (#711): real purchases are near-impossible for
+// fresh/mid-game QA characters (prices 150/250/350 💎 vs avg ~14 💎), so
+// avg_shop_spent stays null and the economic balance is blind. We simulate a
+// rational purchase from the observed offer pool + essence_before: a run
+// "would purchase" when it can afford the cheapest offer. The resulting
+// simulated_purchase_rate proxies the real purchase rate for pricing decisions
+// (thresholds: <10% → lower SHOP_OFFERS prices, >60% → raise them).
+function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis | null {
+  const runsWithShopData = runs.filter(
+    (r): r is RunRecord & { shop_data: { offers: ShopOffer[] } } =>
+      r.shop_data?.offers != null && r.shop_data.offers.length > 0
+  )
+  if (runsWithShopData.length === 0) return null
+
+  const allPrices: number[] = []
+  const rarityDist: Record<string, number> = {}
+  let affordableTotal = 0
+  let wouldPurchaseRuns = 0
+  let essenceSum = 0
+  let essenceCount = 0
+
+  for (const r of runsWithShopData) {
+    const offers = r.shop_data.offers
+    const prices = offers
+      .map(o => o.price)
+      .filter((p): p is number => typeof p === 'number')
+    allPrices.push(...prices)
+
+    for (const o of offers) {
+      if (o.rarity && typeof o.rarity === 'string' && o.rarity.trim() !== '') {
+        const key = o.rarity.toLowerCase()
+        rarityDist[key] = (rarityDist[key] || 0) + 1
+      }
+    }
+
+    const essenceBefore = r.shop?.essence_before ?? r.essence?.shop_before
+    if (typeof essenceBefore === 'number') {
+      essenceSum += essenceBefore
+      essenceCount++
+      affordableTotal += prices.filter(p => p <= essenceBefore).length
+      if (prices.length > 0 && essenceBefore >= Math.min(...prices)) {
+        wouldPurchaseRuns++
+      }
+    }
+  }
+
+  return {
+    runs_with_shop_data: runsWithShopData.length,
+    avg_essence_before: essenceCount > 0 ? Math.round((essenceSum / essenceCount) * 100) / 100 : null,
+    avg_offer_price: allPrices.length > 0
+      ? Math.round((allPrices.reduce((s, p) => s + p, 0) / allPrices.length) * 100) / 100
+      : null,
+    min_offer_price: allPrices.length > 0 ? Math.min(...allPrices) : null,
+    max_offer_price: allPrices.length > 0 ? Math.max(...allPrices) : null,
+    offer_rarity_distribution: rarityDist,
+    affordable_offer_count: affordableTotal,
+    avg_affordable_offer_count: essenceCount > 0
+      ? Math.round((affordableTotal / essenceCount) * 100) / 100
+      : null,
+    would_purchase_runs: wouldPurchaseRuns,
+    simulated_purchase_rate: Math.round((wouldPurchaseRuns / runsWithShopData.length) * 1000) / 1000,
+  }
 }
 
 function computeTrendWindow(runs: RunRecord[], count: number, label: string): TrendWindow | null {
@@ -823,6 +914,12 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     }
   }
 
+  // --- Shop Simulated Affordability (#711) ---
+  // Real shop purchases are impossible for fresh/mid-game characters, so the
+  // purchase_rate would be blind without a simulation. Compute the affordability
+  // proxy from the observed offer pool + essence_before.
+  const shopSimulated = computeShopSimulatedAnalysis(validRuns)
+
   // --- Idle Analysis ---
   // Collect idle fights from both structured idle_fights[] (new) and legacy idle_runner (backward compat)
   const allIdleFights: IdleFightRecord[] = []
@@ -920,6 +1017,16 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     }
   }
 
+  // Shop simulated affordability suggestions (#711): use the simulated purchase
+  // rate as a proxy when real purchases are impossible (essence too low).
+  if (shopSimulated && shopSimulated.runs_with_shop_data >= 3) {
+    if (shopSimulated.simulated_purchase_rate !== null && shopSimulated.simulated_purchase_rate < 0.1) {
+      suggestions.push(`Simulated shop purchase rate is ${(shopSimulated.simulated_purchase_rate * 100).toFixed(0)}% (${shopSimulated.would_purchase_runs}/${shopSimulated.runs_with_shop_data} runs) — shop prices (avg ${shopSimulated.avg_offer_price?.toFixed(0) ?? 'n/a'} 💎) exceed player essence (avg ${shopSimulated.avg_essence_before?.toFixed(1) ?? 'n/a'} 💎). Consider lowering SHOP_OFFERS prices.`)
+    } else if (shopSimulated.simulated_purchase_rate !== null && shopSimulated.simulated_purchase_rate > 0.6) {
+      suggestions.push(`Simulated shop purchase rate is ${(shopSimulated.simulated_purchase_rate * 100).toFixed(0)}% — offers are easily affordable for players. Consider raising SHOP_OFFERS prices to make purchases meaningful.`)
+    }
+  }
+
   // Idle suggestions
   if (idleAnalysis && idleAnalysis.runs_with_idle_data >= 3) {
     if (idleAnalysis.avg_idle_essence_per_fight > 0.5) {
@@ -962,6 +1069,9 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     essence_analysis: essenceAnalysis,
     idle_analysis: idleAnalysis,
     progression_curve: progressionCurve,
+    shop: {
+      simulated: shopSimulated,
+    },
     lootbox: {
       runs_with_lootbox: runsWithLootbox.length,
       lootboxes_opened: lootboxOpened.length,
@@ -1113,6 +1223,22 @@ function printReport(report: AnalysisReport): void {
     }
     console.log(`  Data from:      ${report.essence_analysis.runs_with_essence_data} run(s)`)
     console.log(`  Excluded:       ${report.essence_analysis.runs_excluded_by_character_replacement} replaced-character run(s)`)
+    console.log('')
+  }
+
+  if (report.shop.simulated) {
+    const s = report.shop.simulated
+    console.log(`  ── ${bold}Shop Simulated Affordability${reset} ──`)
+    console.log(`  Runs with data: ${s.runs_with_shop_data}`)
+    console.log(`  Avg essence:    ${s.avg_essence_before?.toFixed(1) ?? 'n/a'} before shop`)
+    console.log(`  Offer prices:   avg ${s.avg_offer_price?.toFixed(0) ?? 'n/a'} min ${s.min_offer_price ?? 'n/a'} max ${s.max_offer_price ?? 'n/a'}`)
+    const rarities = Object.entries(s.offer_rarity_distribution)
+      .filter(([, count]) => count > 0)
+      .map(([k, v]) => `${k}=${v}`)
+      .join(', ')
+    if (rarities) console.log(`  Rarities:       ${rarities}`)
+    console.log(`  Affordable:     ${s.affordable_offer_count} offers (avg ${s.avg_affordable_offer_count?.toFixed(1) ?? 'n/a'}/run)`)
+    console.log(`  Would purchase: ${s.would_purchase_runs}/${s.runs_with_shop_data} runs (${(s.simulated_purchase_rate! * 100).toFixed(0)}%)`)
     console.log('')
   }
 
