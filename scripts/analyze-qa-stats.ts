@@ -644,18 +644,44 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   }
 
   // --- Equipment Analysis ---
-  // Gather from both initial_equipment and lootbox_equipment
+  // Gather from both initial_equipment and lootbox_equipment. Names that are
+  // emoji-only, variation-selector remnants ("\uFE0F ARMOR"), or inventory group
+  // labels ("WEAPONS", "ARMOR", "ACCESSORIES") are QA-bot fallback artifacts and
+  // must never pollute equipment_analysis (#710).
+  const EQUIPMENT_GROUP_LABELS = new Set([
+    'WEAPONS', 'ARMOR', 'ACCESSORIES', 'TRINKETS', 'SHIELDS', 'RINGS', 'AMULETS',
+    'WANDS', 'STAFFS', 'BOWS', 'DAGGERS', 'HELMETS', 'BOOTS', 'GLOVES', 'CLOAKS', 'ROBES', 'CHARMS',
+  ])
+  const sanitizeEquippedItemName = (name: string): string =>
+    String(name)
+      .replace(/^[\p{Extended_Pictographic}\uFE0F\u200D\s\-–—.:*"'()\[\]{}]+/u, '')
+      .replace(/[\s×]+$/u, '')
+      .trim()
+  const isValidEquippedItemName = (name: string): boolean => {
+    const sanitized = sanitizeEquippedItemName(name)
+    const lettersOnly = sanitized.replace(/[^a-zA-Z]/g, '').toUpperCase()
+    return (
+      sanitized.length >= 2 &&
+      /[a-zA-Z]/.test(sanitized) &&
+      sanitized.toUpperCase() !== 'EMPTY' &&
+      !EQUIPMENT_GROUP_LABELS.has(lettersOnly)
+    )
+  }
   const runsWithEquipment = validRuns.filter(
     (r): r is RunRecord & { initial_equipment: Array<{ slot: string; name: string }> } =>
-      r.initial_equipment !== null && r.initial_equipment !== undefined && r.initial_equipment.length > 0
+      r.initial_equipment !== null && r.initial_equipment !== undefined &&
+      r.initial_equipment.length > 0 &&
+      r.initial_equipment.some(e => isValidEquippedItemName(e.name))
   )
   const runsWithLootboxEquipment = validRuns.filter(
     (r): r is RunRecord & { lootbox_equipment: Array<{ slot: string; name: string }> } =>
-      r.lootbox_equipment !== null && r.lootbox_equipment !== undefined && r.lootbox_equipment.length > 0
+      r.lootbox_equipment !== null && r.lootbox_equipment !== undefined &&
+      r.lootbox_equipment.length > 0 &&
+      r.lootbox_equipment.some(e => isValidEquippedItemName(e.name))
   )
   const allEquippedItems = [
-    ...runsWithEquipment.flatMap(r => r.initial_equipment.map(e => e.name)),
-    ...runsWithLootboxEquipment.flatMap(r => r.lootbox_equipment.map(e => e.name)),
+    ...runsWithEquipment.flatMap(r => r.initial_equipment.map(e => e.name).filter(isValidEquippedItemName)),
+    ...runsWithLootboxEquipment.flatMap(r => r.lootbox_equipment.map(e => e.name).filter(isValidEquippedItemName)),
   ]
   let equipmentAnalysis: EquipmentAnalysis | null = null
   if (allEquippedItems.length > 0) {
