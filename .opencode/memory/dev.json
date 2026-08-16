@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-15T19:28:38Z",
+  "last_session": "2026-08-16T08:46:12Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -207,6 +207,11 @@
       "lesson": "Issue #706: SHOP_UNLOCK_LEVEL 8->5 aligned with FUSION_UNLOCK_LEVEL (5) to unblock QA shop data (65 runs skipped, avg end level 2-5 never reached 8). Staircase test Forge(1)<Fusion(5)<Upgrade(6)<Shop(8) was updated to Forge(1)<Fusion(5)=Shop(5)<Upgrade(6) — Shop no longer the strict top of the escalation, it aligns with Fusion. qa-bot.config.js shopUnlockLevel 8->5 (sync test auto-covers). Config-only change, no DB migration. 1403 tests green, lint + build OK.",
       "issue": "#706",
       "date": "2026-08-15"
+    },
+    {
+      "lesson": "Issue #705 QA bot PvE pipeline dead since 08-05: since #633 (boss-toggle removal), the arena's PvE mode launches the raid boss fight (LOCKED LVL 30) instead of monsters. The bot's isPveLocked fallback silently converted every PvE attempt to PvP, so pve_data.fights=0 on all runs. Fix applied A+B: (1) Option A: runFightSequence now records a PvE-observation — pve_data.pve_shifted=true + boss_locked_level + boss_name/HP from new captureBossStatus() helper (reads .boss-hp-name/.boss-hp-num which only render when boss unlocked, falls back to BOSS_NAME='VOID TITAN' constant) — instead of silently falling back; (2) Option B: if currentLevel >= bossLockedLevel (parsed from LOCKED LVL label via bossLockedLevel on readArenaStatus), launch a real fight via new captureBossFight() producing fight_type:'boss' records (monster_name: BOSS_NAME, boss_hp_left/boss_max_hp). Also: pve_data now initialized with pve_shifted:false and populated with boss_fights/boss_wins; pveOnly+locked-boss now breaks instead of the old endless character-replacement loop. Analyzer (analyze-qa-stats.ts): FightRecord.fight_type extended with 'boss', pve_data shape extended, PveAnalysis gained pve_shifted/boss_observations/boss_fights/boss_win_rate/boss_avg_xp_per_fight/boss_avg_hp_left; pvpFights and pvpWinsForRatio now exclude boss fights; fight_type_breakdown gained boss_fights+boss_win_rate; an ISSUE is emitted when pve_shifted is detected (monster PvE stale, see #705). Pattern: when QA stats contradict config expectations (pveRatio 0.33 but 0 PvE fights), audit what the game UI actually does in that mode FIRST (PvE switch = boss fight now) before touching game balance. 14 new tests (mirror + source-content contract, following #637/#645/#653/#685/#696 patterns), full suite 1417 green, lint+build OK.",
+      "issue": "#705",
+      "date": "2026-08-16"
     }
   ]
 }
