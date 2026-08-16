@@ -99,17 +99,36 @@ function computePveMonsters(fights: FightRecord[]): Record<string, number> {
   return monsters
 }
 
+// Validate and clean a captured equipment name. Corrupted names (emoji remnants
+// such as variation selectors after slot icons, or inventory section labels) are
+// cleaned so real items are recovered; only non-item values are excluded (#710).
+function cleanEquipmentName(name: string): string | null {
+  if (!name) return null
+  const clean = name.replace(/[\uFE0F\u200D]/g, '').trim().replace(/^[^\p{L}\p{N}]+/u, '').trim()
+  if (clean.length < 2) return null
+  if (!/[a-zA-Z]/.test(clean)) return null
+  const upper = clean.toUpperCase()
+  if (upper === 'EMPTY' || upper === 'WEAPONS' || upper === 'ARMOR' || upper === 'ACCESSORIES') return null
+  return clean
+}
+
 function computeEquipmentAnalysis(runs: RunRecord[]): EquipmentAnalysis | null {
   const runsWithEquipment = runs.filter(
-    (r) => r.initial_equipment !== null && r.initial_equipment !== undefined && r.initial_equipment.length > 0
+    (r) => r.initial_equipment !== null &&
+      r.initial_equipment !== undefined &&
+      r.initial_equipment.some(e => cleanEquipmentName(e.name) !== null)
   )
   const runsWithLootboxEquipment = runs.filter(
-    (r) => r.lootbox_equipment !== null && r.lootbox_equipment !== undefined && r.lootbox_equipment.length > 0
+    (r) => r.lootbox_equipment !== null &&
+      r.lootbox_equipment !== undefined &&
+      r.lootbox_equipment.some(e => cleanEquipmentName(e.name) !== null)
   )
   const allEquippedItems = [
     ...runsWithEquipment.flatMap(r => r.initial_equipment!.map(e => e.name)),
     ...runsWithLootboxEquipment.flatMap(r => r.lootbox_equipment!.map(e => e.name)),
   ]
+    .map(cleanEquipmentName)
+    .filter((n): n is string => n !== null)
   if (allEquippedItems.length === 0) return null
 
   return {
@@ -496,6 +515,55 @@ describe('QA Equipment Analysis', () => {
     ]
     expect(computeEquipmentAnalysis(runs)).toBeNull()
   })
+
+  it('recovers real item names from emoji remnants and excludes section labels (#710)', () => {
+    const runs: RunRecord[] = [
+      {
+        date: '2026-01-01', run: 'r1', character: 'C1', fights: [], errors: [],
+        initial_equipment: [
+          { slot: 'weapon', name: '\uFE0F Iron Sword' },
+          { slot: 'armor', name: '\uFE0F ARMOR' },
+        ],
+      },
+      {
+        date: '2026-01-02', run: 'r2', character: 'C2', fights: [], errors: [],
+        initial_equipment: [
+          { slot: 'weapon', name: 'Steel Sword' },
+        ],
+      },
+    ]
+    const result = computeEquipmentAnalysis(runs)
+    expect(result).not.toBeNull()
+    // r1's "️ Iron Sword" is recovered as "Iron Sword"; the "️ ARMOR" section
+    // label is dropped. Both runs count as having data.
+    expect(result!.runs_with_data).toBe(2)
+    expect(result!.unique_item_count).toBe(2)
+    expect(result!.item_names).toEqual(['Iron Sword', 'Steel Sword'])
+  })
+
+  it('drops emoji-only and section-label equipment names entirely (#710)', () => {
+    const runs: RunRecord[] = [
+      {
+        date: '2026-01-01', run: 'r1', character: 'C1', fights: [], errors: [],
+        initial_equipment: [
+          { slot: '?', name: 'ARMOR' },
+          { slot: '?', name: 'WEAPONS' },
+          { slot: '?', name: '\uFE0F' },
+        ],
+      },
+    ]
+    expect(computeEquipmentAnalysis(runs)).toBeNull()
+  })
+
+  it('accepts real single-word item names as valid equipment (#710)', () => {
+    expect(cleanEquipmentName('Flamberge')).toBe('Flamberge')
+    expect(cleanEquipmentName('Voidreaper')).toBe('Voidreaper')
+    expect(cleanEquipmentName('Iron Sword')).toBe('Iron Sword')
+    expect(cleanEquipmentName('\uFE0F Iron Sword')).toBe('Iron Sword')
+    expect(cleanEquipmentName('EMPTY')).toBeNull()
+    expect(cleanEquipmentName('\uFE0F')).toBeNull()
+    expect(cleanEquipmentName('')).toBeNull()
+  })
 })
 
 describe('QA Streak Analysis', () => {
@@ -707,6 +775,107 @@ describe('QA Bot Overlay Deadlock Contract', () => {
     expect(forceClick).toBeGreaterThan(firstClick)
     const retryChecked = fn.indexOf("getAttribute('aria-checked')", forceClick)
     expect(retryChecked).toBeGreaterThan(forceClick)
+  })
+})
+
+describe('QA Bot Equipment Capture Contract (#710)', () => {
+  const qaBotSource = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
+
+  function extractAsyncFunction(source: string, name: string): string | null {
+    const start = source.indexOf(`async function ${name}(`)
+    if (start === -1) return null
+    const bodyStart = source.indexOf('{', start)
+    let depth = 0
+    for (let i = bodyStart; i < source.length; i++) {
+      if (source[i] === '{') depth++
+      else if (source[i] === '}') {
+        depth--
+        if (depth === 0) return source.slice(start, i + 1)
+      }
+    }
+    return null
+  }
+
+  function requireAsyncFunction(name: string): string {
+    const fn = extractAsyncFunction(qaBotSource, name)
+    expect(fn).not.toBeNull()
+    if (fn === null) throw new Error(`qa-bot.mjs missing async function ${name}()`)
+    return fn
+  }
+
+  // Every `return` after the flag is set must be preceded by a re-arm. Without
+  // it the .inventory-overlay handler stays suppressed forever and future clicks
+  // on the inventory are no longer auto-dismissed (#710, same invariant as #645).
+  function assertEveryReturnReArms(fn: string): void {
+    const setIdx = fn.indexOf('suppressInventoryHandler = true')
+    expect(setIdx).toBeGreaterThan(-1)
+    const afterSet = fn.slice(setIdx)
+    const returnsAfter = (afterSet.match(/return /g) || []).length
+    const unsets = (afterSet.match(/suppressInventoryHandler = false/g) || []).length
+    expect(returnsAfter).toBeGreaterThan(0)
+    expect(unsets).toBeGreaterThan(0)
+    let cursor = setIdx
+    let idx = -1
+    while ((idx = fn.indexOf('return ', cursor)) !== -1) {
+      const unsetBefore = fn.lastIndexOf('suppressInventoryHandler = false', idx)
+      expect(unsetBefore).toBeGreaterThan(setIdx)
+      cursor = idx + 7
+    }
+  }
+
+  it('parseEquippedItems suppresses the inventory handler before opening the panel and re-arms on every exit path (#710)', () => {
+    const fn = requireAsyncFunction('parseEquippedItems')
+    const setIdx = fn.indexOf('suppressInventoryHandler = true')
+    const clickIdx = fn.indexOf('invBtn.click()')
+    expect(setIdx).toBeGreaterThan(-1)
+    expect(setIdx).toBeLessThan(clickIdx)
+    assertEveryReturnReArms(fn)
+  })
+
+  it('parseStreak suppresses the inventory handler before opening the panel and re-arms on every exit path (#710)', () => {
+    const fn = requireAsyncFunction('parseStreak')
+    const setIdx = fn.indexOf('suppressInventoryHandler = true')
+    const clickIdx = fn.indexOf('invBtn.click()')
+    expect(setIdx).toBeGreaterThan(-1)
+    expect(setIdx).toBeLessThan(clickIdx)
+    assertEveryReturnReArms(fn)
+  })
+
+  it('parseEquippedItemsFromBody cleans names via cleanItemName (strips emoji remnants, rejects section labels) (#710)', () => {
+    const fn = requireAsyncFunction('parseEquippedItemsFromBody')
+    expect(fn).toContain('cleanItemName(')
+    expect(fn).not.toContain("itemName.length >= 2 && /[a-zA-Z]/.test(itemName)")
+  })
+
+  it('defines a cleanItemName helper that strips variation selectors and leading emoji junk (#710)', () => {
+    const fnStart = qaBotSource.indexOf('function cleanItemName(')
+    expect(fnStart).toBeGreaterThan(-1)
+    const fn = qaBotSource.slice(fnStart, fnStart + 600)
+    expect(fn).toContain('\\uFE0F\\u200D')
+    expect(fn).toContain('[^\\p{L}\\p{N}]+')
+    expect(fn).toContain("'WEAPONS'")
+    expect(fn).toContain("'ARMOR'")
+    expect(fn).toContain("'ACCESSORIES'")
+    expect(fn).toContain("'EMPTY'")
+  })
+
+  it('analyze-qa-stats.ts cleans corrupted equipment names in the equipment analysis (#710)', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+    expect(source).toContain('function cleanEquipmentName(')
+    expect(source).toContain('.some(e => cleanEquipmentName(e.name) !== null)')
+    expect(source).toContain('.filter((n): n is string => n !== null)')
+  })
+
+  it('handleDailyLootbox equips the lootbox item so the loadout records real equipment (#710)', () => {
+    const fn = requireAsyncFunction('handleDailyLootbox')
+    const equipIdx = fn.indexOf('button[aria-label^="Equip "]')
+    const resultOverlayIdx = fn.indexOf('.lootbox-result-overlay')
+    const closeIdx = fn.lastIndexOf('closeInventory')
+    expect(equipIdx).toBeGreaterThan(-1)
+    expect(equipIdx).toBeGreaterThan(resultOverlayIdx)
+    expect(closeIdx).toBeGreaterThan(equipIdx)
+    expect(fn).toContain('.inv-loadout-slot.filled')
+    expect(fn).toContain('Equipped lootbox item')
   })
 })
 

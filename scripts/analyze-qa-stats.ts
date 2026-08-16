@@ -313,6 +313,22 @@ function median(values: number[]): number {
   return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid]
 }
 
+// Validate and clean a captured equipment name. The QA bot can record corrupted
+// names when the body-text fallback captures slot emoji remnants (variation
+// selectors such as \uFE0F after 🛡️) or inventory section labels ("WEAPONS"/
+// "ARMOR"/"ACCESSORIES") instead of real item names (#710). Returns the cleaned
+// name (so real items recovered from emoji remnants keep their data point) or
+// null when the value is not a real item name.
+function cleanEquipmentName(name: string): string | null {
+  if (!name) return null
+  const clean = name.replace(/[\uFE0F\u200D]/g, '').trim().replace(/^[^\p{L}\p{N}]+/u, '').trim()
+  if (clean.length < 2) return null
+  if (!/[a-zA-Z]/.test(clean)) return null
+  const upper = clean.toUpperCase()
+  if (upper === 'EMPTY' || upper === 'WEAPONS' || upper === 'ARMOR' || upper === 'ACCESSORIES') return null
+  return clean
+}
+
 // A run that replaces the character mid-run (QA bot `created-after-*` actions)
 // reads initial_max_hp on the OLD character and final_max_hp on the NEW one, so
 // final drops sharply. Such runs must be excluded from HP/essence growth metrics
@@ -644,19 +660,27 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   }
 
   // --- Equipment Analysis ---
-  // Gather from both initial_equipment and lootbox_equipment
+  // Gather from both initial_equipment and lootbox_equipment. Corrupted names
+  // (emoji remnants, section labels) are cleaned/recovered so the analysis
+  // reflects real equipment diversity only (#710).
   const runsWithEquipment = validRuns.filter(
     (r): r is RunRecord & { initial_equipment: Array<{ slot: string; name: string }> } =>
-      r.initial_equipment !== null && r.initial_equipment !== undefined && r.initial_equipment.length > 0
+      r.initial_equipment !== null &&
+      r.initial_equipment !== undefined &&
+      r.initial_equipment.some(e => cleanEquipmentName(e.name) !== null)
   )
   const runsWithLootboxEquipment = validRuns.filter(
     (r): r is RunRecord & { lootbox_equipment: Array<{ slot: string; name: string }> } =>
-      r.lootbox_equipment !== null && r.lootbox_equipment !== undefined && r.lootbox_equipment.length > 0
+      r.lootbox_equipment !== null &&
+      r.lootbox_equipment !== undefined &&
+      r.lootbox_equipment.some(e => cleanEquipmentName(e.name) !== null)
   )
   const allEquippedItems = [
     ...runsWithEquipment.flatMap(r => r.initial_equipment.map(e => e.name)),
     ...runsWithLootboxEquipment.flatMap(r => r.lootbox_equipment.map(e => e.name)),
   ]
+    .map(cleanEquipmentName)
+    .filter((n): n is string => n !== null)
   let equipmentAnalysis: EquipmentAnalysis | null = null
   if (allEquippedItems.length > 0) {
     equipmentAnalysis = {

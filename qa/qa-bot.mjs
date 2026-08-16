@@ -1058,6 +1058,21 @@ async function handleDailyLootbox(page, runKey) {
     await page.waitForTimeout(500)
   }
 
+  // Equip the lootbox item so equipped-item capture records real data (#710).
+  // handleLootboxRoll auto-selects the rolled item, so while the inventory is
+  // still open the details panel shows the EQUIP button. Without this step the
+  // loadout is always empty (items go to inventory, never equipped) and
+  // equipment_analysis has nothing to analyse.
+  const equipBtn = page.locator('button[aria-label^="Equip "]').first()
+  if (await equipBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await equipBtn.click({ force: true }).catch(() => {
+      console.warn('   ⚠️ Equip button click failed')
+    })
+    await page.waitForTimeout(600)
+    const equippedCount = await page.locator('.inv-loadout-slot.filled').count().catch(() => 0)
+    console.log(`   Equipped lootbox item (${equippedCount} filled loadout slot(s))`)
+  }
+
   const closeInventory = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
   if (await closeInventory.isVisible({ timeout: 2000 }).catch(() => false)) {
     await closeInventory.click().catch(() => {
@@ -1171,6 +1186,11 @@ async function parseEquippedItems(page) {
       return await parseEquippedItemsFromBody(page)
     }
 
+    // The .inventory-overlay locator handler (#637/#645) closes the panel on
+    // every intercepted action. Without suppression it fires while the panel is
+    // opening, so .inv-loadout-slots never becomes visible → equipment always []
+    // (#710). Keep the flag set for the whole DOM read and re-arm on every exit.
+    suppressInventoryHandler = true
     await invBtn.click()
     console.log('   Clicked inventory button, waiting for panel to open...')
     await page.waitForTimeout(300)
@@ -1192,6 +1212,7 @@ async function parseEquippedItems(page) {
 
     if (!panelReady) {
       console.log('   Inventory panel did not open after retries, trying body text fallback')
+      suppressInventoryHandler = false
       return await parseEquippedItemsFromBody(page)
     }
 
@@ -1217,18 +1238,20 @@ async function parseEquippedItems(page) {
         }
       }
 
-      if (name && name.trim().length > 0) {
-        items.push({ slot: slotLabel?.trim() || '?', name: name.trim(), ...(rarity ? { rarity } : {}) })
+      const cleanName = cleanItemName(name)
+      if (cleanName) {
+        items.push({ slot: slotLabel?.trim() || '?', name: cleanName, ...(rarity ? { rarity } : {}) })
       } else {
         console.log(`   ⚠️ parseEquippedItems: skipped empty/corrupted item at slot ${i}`)
       }
     }
 
     // If DOM-based parsing found nothing, try body text fallback
+    let result = items
     if (items.length === 0) {
       console.log('   DOM parsing yielded no valid items, falling back to body text parse')
       const bodyItems = await parseEquippedItemsFromBody(page)
-      if (bodyItems.length > 0) return bodyItems
+      if (bodyItems.length > 0) result = bodyItems
     } else {
       console.log(`   Parsed ${items.length} equipment item(s) from DOM: ${items.map(i => `${i.slot}=${i.name}${i.rarity ? ` (${i.rarity})` : ''}`).join(', ')}`)
     }
@@ -1239,12 +1262,33 @@ async function parseEquippedItems(page) {
       await closeBtn.click()
       await page.waitForTimeout(500)
     }
+    suppressInventoryHandler = false
 
-    return items
+    return result
   } catch (err) {
     console.log(`   ⚠️ Could not parse equipped items via DOM: ${err.message}`)
+    suppressInventoryHandler = false
     return await parseEquippedItemsFromBody(page)
   }
+}
+
+/**
+ * Clean a raw item name extracted from DOM/body text.
+ * Strips variation selectors / zero-width joiners (e.g. the \uFE0F left behind by
+ * slot emoji like 🛡️) and any leading emoji/non-alphanumeric junk, then rejects
+ * names that are empty, icon-only, single-char, or have no real letters.
+ * Returns the cleaned name or null when the value is not a valid item name.
+ */
+function cleanItemName(raw) {
+  if (!raw) return null
+  let name = raw.replace(/[\uFE0F\u200D]/g, '').trim()
+  name = name.replace(/^[^\p{L}\p{N}]+/u, '').trim()
+  if (name.length < 2) return null
+  if (!/[a-zA-Z]/.test(name)) return null
+  if (name.toUpperCase() === 'EMPTY') return null
+  const sectionLabel = name.toUpperCase()
+  if (sectionLabel === 'WEAPONS' || sectionLabel === 'ARMOR' || sectionLabel === 'ACCESSORIES') return null
+  return name
 }
 
 /**
@@ -1263,8 +1307,8 @@ async function parseEquippedItemsFromBody(page) {
     let inEquippedSection = false
     const slotNames = ['⚔️', '🛡', '📿', '💍', '👑', '🧤', '👢', '🦅', '🔮', '🌟', '🗡️', '🪄', '⛓️']
 
-    for (const line of lines) {
-      const trimmed = line.trim()
+    for (let li = 0; li < lines.length; li++) {
+      const trimmed = lines[li].trim()
       if (!trimmed) continue
 
       // Detect the EQUIPPED section header
@@ -1283,15 +1327,23 @@ async function parseEquippedItemsFromBody(page) {
           if (trimmed.includes(slotIcon)) {
             // Extract slot name (the icon character) and item name (text after icon)
             const itemNameMatch = trimmed.match(new RegExp(`${slotIcon}\\s*(.+?)(?:\\s*×|$)`))
-            if (itemNameMatch) {
-              const itemName = itemNameMatch[1].trim()
-              // Skip "EMPTY" slots and corrupted/invalid names (empty, icon-only, single char, no letters)
-              const isValidName = itemName && itemName.length >= 2 && /[a-zA-Z]/.test(itemName) && itemName.toUpperCase() !== 'EMPTY'
-              if (isValidName) {
-                items.push({ slot: slotIcon, name: itemName })
-              } else {
-                console.log(`   ⚠️ parseEquippedItemsFromBody: skipped corrupted item at slot ${slotIcon} (name="${itemName}" length=${itemName.length})`)
+            let rawName = itemNameMatch ? itemNameMatch[1] : ''
+            // The DOM renders the slot icon and the item name on separate lines
+            // (icon in .inv-loadout-slot-icon, name in .inv-loadout-item-name),
+            // so an icon-only line must look at the next line for the name.
+            if (!rawName || !rawName.trim()) {
+              const nextLine = (lines[li + 1] || '').trim()
+              const nextHasIcon = slotNames.some(ic => nextLine.includes(ic))
+              const nextIsHeader = nextLine.toUpperCase() === 'INVENTORY' || nextLine.toUpperCase() === 'EQUIPPED'
+              if (nextLine && nextLine !== 'EMPTY' && !nextHasIcon && !nextIsHeader) {
+                rawName = nextLine
               }
+            }
+            const cleanName = cleanItemName(rawName)
+            if (cleanName) {
+              items.push({ slot: slotIcon, name: cleanName })
+            } else {
+              console.log(`   ⚠️ parseEquippedItemsFromBody: skipped corrupted item at slot ${slotIcon} (name="${rawName}" length=${rawName.length})`)
             }
             break
           }
@@ -1311,8 +1363,9 @@ async function parseEquippedItemsFromBody(page) {
           const start = Math.max(0, bodyText.lastIndexOf('\n', idx) + 1)
           const end = bodyText.indexOf('\n', idx)
           const line = bodyText.substring(start, end !== -1 ? end : bodyText.length).trim()
-          if (line && line.trim().length >= 2 && /[a-zA-Z]/.test(line) && line.length < 40) {
-            items.push({ slot: '?', name: line })
+          const cleanName = cleanItemName(line)
+          if (cleanName && cleanName.length < 40) {
+            items.push({ slot: '?', name: cleanName })
           } else if (line) {
             console.log(`   ⚠️ parseEquippedItemsFromBody: skipped corrupted keyword match (line="${line}" length=${line.length})`)
           }
@@ -1368,6 +1421,10 @@ async function parseStreak(page) {
     if (!(await invBtn.isVisible({ timeout: 1000 }).catch(() => false))) {
       return await parseStreakFromBody(page)
     }
+    // Same inventory-overlay handler suppression as parseEquippedItems (#710):
+    // without it the handler closes the panel as it opens → .inv-loadout-slots
+    // never visible → streak always null.
+    suppressInventoryHandler = true
     await invBtn.click()
     await page.waitForTimeout(800)
 
@@ -1376,6 +1433,7 @@ async function parseStreak(page) {
       await page.locator('.inv-loadout-slots').waitFor({ state: 'visible', timeout: 3000 })
     } catch {
       // Inventory didn't open
+      suppressInventoryHandler = false
       return await parseStreakFromBody(page)
     }
 
@@ -1396,6 +1454,7 @@ async function parseStreak(page) {
       await closeBtn.click()
       await page.waitForTimeout(500)
     }
+    suppressInventoryHandler = false
 
     if (streak !== null) {
       console.log(`   Streak from inventory panel: ${streak}`)
@@ -1406,6 +1465,7 @@ async function parseStreak(page) {
     return await parseStreakFromBody(page)
   } catch (err) {
     console.log(`   ⚠️ Could not parse streak via DOM: ${err.message}`)
+    suppressInventoryHandler = false
     return await parseStreakFromBody(page)
   }
 }
