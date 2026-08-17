@@ -230,6 +230,34 @@ describe('Volcanic terrain parallax layers', () => {
     // Scrolling forward increases the world index
     expect(worldIndexAt(50, 200, 0.45, 320)).toBeGreaterThanOrEqual(a);
   });
+
+  it('worldIndexAt never flips the world index at an exact spacing boundary (float remainder blink)', () => {
+    // Regression for #719: when scrollPx*parallax lands exactly on a multiple
+    // of `spacing`, floating-point can leave screenX + scrollPx*parallax a hair
+    // BELOW the boundary (e.g. 639.9999999999999), so Math.floor() toggled ±1
+    // world index on consecutive frames → every hash-based sprite (billowing
+    // magma clouds, volcanoes, ash, pools…) teleported a full tile width and
+    // blinked. The billowing-cloud layer (parallax 0.12, spacing 320) triggers
+    // it: at scrollPx=14 a cloud snapped between two positions each frame.
+    //
+    // Simulate the real tile loop (tileScanStart + k*spacing, as BiomeTerrain
+    // does for clouds/volcanoes/ash/pools) across a wrap boundary and assert
+    // each world tile's index is monotone — it must not oscillate ±1.
+    const parallax = 0.12;
+    const spacing = 320;
+    const k = 3;
+    let prev = -1;
+    let prevDeltaOk = true;
+    for (let s = 0; s <= 2700; s++) {
+      const phase = wrapPhase(s, parallax, spacing);
+      const sx = tileScanStart(phase, spacing) + k * spacing;
+      const idx = worldIndexAt(sx, s, parallax, spacing);
+      if (prev >= 0 && idx < prev) prevDeltaOk = false; // never decrement
+      prev = idx;
+    }
+    expect(prevDeltaOk).toBe(true);
+    expect(prev).toBeGreaterThanOrEqual(0);
+  });
 });
 
 // ============================================================================

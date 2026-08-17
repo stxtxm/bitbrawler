@@ -15,7 +15,14 @@ export function tileScanStart(phase: number, tileWidth: number): number {
 }
 
 export function worldIndexAt(screenX: number, scrollPx: number, parallax: number, spacing: number): number {
-  return Math.floor((screenX + scrollPx * parallax) / spacing);
+  // screenX comes from tileScanStart(), so screenX + scrollPx*parallax is
+  // mathematically an exact multiple of `spacing` (float remainder cancels).
+  // Floating-point rounding can still land a hair BELOW the multiple (e.g.
+  // 639.9999999999999), making Math.floor() oscillate ±1 world index on
+  // consecutive frames → every hash-based sprite (clouds, volcanoes, ash,
+  // pools…) teleports a full tile width and blinks. A tiny epsilon pushes
+  // these exact-boundary cases up to the intended index.
+  return Math.floor((screenX + scrollPx * parallax + 1e-6) / spacing);
 }
 
 export function tilesNeeded(viewWidth: number, tileWidth: number): number {
