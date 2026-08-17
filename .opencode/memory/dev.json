@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-16T19:39:31Z",
+  "last_session": "2026-08-17T19:42:47Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -219,6 +219,13 @@
       "lesson": "Issue #710 QA bot equipment deadlock: root cause was NOT the DOM selectors (they match current InventoryPanel: .inv-loadout-slots, .inv-loadout-slot.filled, .inv-loadout-item-name, .inv-loadout-slot-icon all correct). Root cause = the .inventory-overlay locator handler (added #637, refined #645) fires on EVERY Playwright action while the overlay is visible, closing the inventory mid-parse. handleDailyLootbox sets suppressInventoryHandler=true before opening inventory + re-arms on all exits, but parseEquippedItems and parseStreak did NOT → DOM parse always yielded 0 → body fallback captured garbage (group labels 'WEAPONS'/'ARMOR'/'ACCESSORIES' from SLOT_LABELS '⚔️ WEAPONS' etc., and '️ ARMOR' = U+FE0F variation selector remnant) → 18 runs empty equipment + streak null. Fix: (1) suppressInventoryHandler=true in parseEquippedItems + parseStreak before opening inventory, detect already-open overlay (skip button click), re-arm=false on ALL exit paths; (2) parseEquippedItemsFromBody hardened: sanitizeItemName strips leading emoji/variation-selector (️) via /\\p{Extended_Pictographic}/u + trailing '×', EQUIPMENT_GROUP_LABELS rejection (letters-only match), peek next line when icon and name are on separate rendered lines (innerText puts .inv-loadout-slot-icon on its own line, then item name, then × unequip button), debug log of EQUIPPED section lines when empty; (3) analyze-qa-stats.ts computeEquipmentAnalysis filters corrupted names (isValidEquippedItemName) counting only runs with ≥1 valid name. Pattern: any QA-bot function that opens the inventory and reads inside it MUST suppress the .inventory-overlay handler, not just handleDailyLootbox. Test gotcha: pre-existing #645 test used indexOf first 'page.locator(.inventory-overlay)' which now hits the new alreadyOpen check — must search after 'page.addLocatorHandler(' to target the handler block.",
       "issue": "#710",
       "date": "2026-08-16"
+    },
+    {
+      "version": 1,
+      "agent": "dev",
+      "lesson": "Issue #724: QA bot testShopSystem found the shop in the Forge page, but the shop moved to a tab inside the Inventory modal (InventoryPanel.tsx tabs INVENTORY/SHOP) -> silently 0 purchases on 87 visits (purchase_rate 0%, shop.simulated null). Fix in qa/qa-bot.mjs only: testShopSystem now (1) opens the inventory modal via button[aria-label=Inventory] instead of navigateToForge, (2) clicks button[role=tab]:has-text(SHOP) inside the modal, (3) keeps offer parsing selectors (.shop-offer-card/.shop-buy-btn/.shop-price — unchanged in ShopPanel.tsx), (4) captures essence_before via parseEssence (.forge-essence-value unchanged), (5) keeps characterLevel < config.shopUnlockLevel gate, (6) suppresses .inventory-overlay handler + re-arms on every exit path (#710 pattern: opened modal requires suppression or the locator handler closes it mid-read), (7) closes modal via .inventory-close instead of leaveForge. 3 new source-content contract tests in qa-analysis.test.ts (modal flow, handler suppress/re-arm counts, close-not-leaveForge). NOTE: isTabLocked() still works for the modal SHOP tab (InventoryPanel tab has BOTH disabled attr when locked AND title='Unlocks at LVL 5'). Pattern: when a game UI element moves to a different container (page->modal, tab->tab), audit the QA bot's navigation step first, and remember the modal-specific locator handler suppression requirement.",
+      "issue": "#724",
+      "date": "2026-08-17"
     }
   ]
 }
