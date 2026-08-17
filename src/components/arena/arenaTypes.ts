@@ -31,9 +31,6 @@ export interface ArenaIdleViewModel {
   totalKills: number;
   efficiencyData: IdleEfficiencyData | null;
   remainingSeconds: number | null;
-  registerTap: () => void;
-  tapsUsed: number;
-  tapMax: number;
 }
 
 export type InventoryStatKey = keyof ItemStats;

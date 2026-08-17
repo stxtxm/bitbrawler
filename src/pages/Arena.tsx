@@ -144,9 +144,6 @@ const Arena = () => {
     totalKills: idle.totalKills,
     efficiencyData: idle.efficiencyData,
     remainingSeconds: idle.remainingSeconds,
-    registerTap: idle.registerTap,
-    tapsUsed: idle.tapsUsed,
-    tapMax: idle.tapMax,
   }), [
     idle.clearOfflineGains,
     idle.currentMonster,
@@ -156,11 +153,8 @@ const Arena = () => {
     idle.lastCombatResult,
     idle.lastCombatXp,
     idle.offlineGains,
-    idle.registerTap,
     idle.remainingSeconds,
     idle.scenePhase,
-    idle.tapMax,
-    idle.tapsUsed,
     idle.totalKills,
     levelUp.recentLevelUp,
   ]);
