@@ -20,20 +20,12 @@ describe('Game rules', () => {
     expect(GAME_RULES.PVE.XP_MODIFIER).toBe(2.5);
   });
 
-  it('PVE stat multiplier makes monsters harder', () => {
-    expect(GAME_RULES.PVE.STAT_MULTIPLIER).toBeGreaterThan(1);
+  it('PVE stat multiplier keeps monster raw stats near player level (challenge comes from LEVEL_BOOST + monster growth)', () => {
+    expect(GAME_RULES.PVE.STAT_MULTIPLIER).toBe(1.0);
   });
 
-  it('PVE stat multiplier makes monsters challenging (target win rate ~60-70%)', () => {
-    expect(GAME_RULES.PVE.STAT_MULTIPLIER).toBe(20.0);
-  });
-
-  it('PVE HP multiplier extends fights', () => {
-    expect(GAME_RULES.PVE.HP_MULTIPLIER).toBeGreaterThan(1);
-  });
-
-  it('PVE HP multiplier extends battles for more challenge (target ~60-70% win rate)', () => {
-    expect(GAME_RULES.PVE.HP_MULTIPLIER).toBe(22.0);
+  it('PVE HP multiplier keeps monster HP at base + level growth (no raw HP inflation)', () => {
+    expect(GAME_RULES.PVE.HP_MULTIPLIER).toBe(1.0);
   });
 
   it('PVE level boost provides challenge', () => {
