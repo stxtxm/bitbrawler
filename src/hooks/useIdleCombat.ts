@@ -18,7 +18,10 @@ import {
   calculateSpeedEfficiency,
 } from '../utils/idleEfficiencyUtils'
 import { MonsterId } from '../data/monsterAssets'
+import { MonsterDef } from '../data/monsterAssets'
 import { getBiomeForCharacter } from '../data/biomes'
+import { TAP_CONFIG } from '../config/tapConfig'
+import { computeTapEssence, computeTapDamage, isTapPhase } from '../utils/tapUtils'
 
 interface UseIdleCombatOptions {
   character: Character | null
@@ -44,6 +47,9 @@ interface UseIdleCombatReturn {
   idleTotalXp: number
   efficiencyData: IdleEfficiencyData | null
   remainingSeconds: number | null
+  registerTap: () => void
+  tapsUsed: number
+  tapMax: number
 }
 
 export function useIdleCombat({
@@ -83,6 +89,25 @@ export function useIdleCombat({
   const fightStartTimeRef = useRef<number>(0)
   /** Reference to the hard timeout safety timer for the current fight. */
   const hardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  /** Current fight's monster (for tap-kill resolution + combat log). */
+  const lastMonsterRef = useRef<{ character: Character; def: MonsterDef } | null>(null)
+  /** Max HP of the current fight's monster — 0 means no active fight. */
+  const monsterMaxHpRef = useRef(0)
+  /** Accumulated tap damage against the current monster. */
+  const tapDamageRef = useRef(0)
+  /** Accumulated tap essence for the current fight (applied on resolution). */
+  const tapEssenceRef = useRef(0)
+  /** Number of taps registered this fight (anti-autoclicker budget). */
+  const tapsUsedRef = useRef(0)
+  /** Latest scene phase, readable from the tap handler without re-renders. */
+  const phaseRef = useRef<ScenePhase>('running')
+  /** True once the current fight resolved (blocks late taps in a burst). */
+  const fightResolvedRef = useRef(false)
+  const [tapsUsed, setTapsUsed] = useState(0)
+
+  useEffect(() => {
+    phaseRef.current = scenePhase
+  }, [scenePhase])
 
   isPausedRef.current = isPaused || !character
   charRef.current = character ?? charRef.current
@@ -348,6 +373,130 @@ export function useIdleCombat({
     setOfflineGains(null)
   }, [])
 
+  // Resolve a fight: applies XP, streak, kill counters, essence (kill + taps),
+  // writes the character, logs the entry and leaves the scene on 'result'.
+  // Shared by the natural timed path (t1) and the tap-kill early win.
+  const resolveFight = useCallback((
+    won: boolean,
+    tapEssenceBonus: number,
+    currentChar: Character,
+    monster: { character: Character; def: MonsterDef },
+  ) => {
+    if (fightResolvedRef.current) return
+    fightResolvedRef.current = true
+
+    // Calculate XP with bonuses
+    const baseXp = calculateIdleXp(won, currentChar.level)
+    const xpBonus = xpBonusRef.current - 1
+    const streakBonus = Math.min(
+      streakRef.current * IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_PER_STEP,
+      IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_CAP,
+    )
+    const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
+
+    setLastCombatResult(won ? 'win' : 'lose')
+    setLastCombatXp(finalXp)
+    setIdleXpGained(prev => prev + finalXp)
+
+    // Update streak and kill counters
+    let newStreak = streakRef.current
+    let newKills = killsRef.current
+    let newIdleXp = idleXpRef.current
+    if (won) {
+      newStreak++
+      newKills++
+    } else {
+      newStreak = 0
+    }
+    newIdleXp += finalXp
+
+    // Essence: kill reward (scales with power ratio + stats) + tap trickle
+    const essenceGain =
+      calculateIdleEssence(won, currentChar.level, currentChar.intelligence, currentChar.focus) * xpBonusRef.current +
+      tapEssenceBonus
+
+    // Apply XP with updated idle stats and watermarks
+    const xpResult = gainXp(currentChar, finalXp)
+    const now = Date.now()
+    // Re-read the freshest character: a discrete user action (lootbox roll,
+    // salvage, equip) may have run during this multi-second tick. Preserving
+    // its fields prevents the idle write-back from reverting them — e.g.
+    // reverting lastLootRoll would let the daily lootbox be claimed twice.
+    const latest = charRef.current ?? currentChar
+    const updatedEssence = (latest.essence ?? currentChar.essence ?? 0) + essenceGain
+    const updatedChar: Character = {
+      ...xpResult.updatedCharacter,
+      inventory: latest.inventory,
+      lastLootRoll: latest.lastLootRoll,
+      lootboxStreak: latest.lootboxStreak,
+      equippedItems: latest.equippedItems,
+      itemUpgrades: latest.itemUpgrades,
+      essence: updatedEssence,
+      idleStreak: newStreak,
+      idleMaxStreak: Math.max(newStreak, (currentChar.idleMaxStreak ?? 0)),
+      idleTotalKills: newKills,
+      idleTotalXp: newIdleXp,
+      statPoints: (xpResult.updatedCharacter.statPoints || 0) + xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL,
+      lastIdleCheck: now,
+      lastActive: now,
+    }
+    onCharacterUpdate(updatedChar)
+    onSyncCharacter?.(updatedChar)
+    if (xpResult.levelsGained > 0) {
+      onLevelUp?.(xpResult.levelsGained, updatedChar.level)
+    }
+
+    setCurrentStreak(newStreak)
+    setTotalKills(newKills)
+    setIdleTotalXp(newIdleXp)
+
+    // Log
+    const entry: IdleCombatEntry = {
+      timestamp: Date.now(),
+      monsterId: monster.def.id,
+      monsterName: monster.def.name,
+      won,
+      xpGained: finalXp,
+      damageTaken: 0,
+    }
+    setCombatLog(prev => [...prev, entry])
+  }, [onCharacterUpdate, onSyncCharacter, onLevelUp])
+
+  // Register one tap on the idle monster: deals damage, grants a small
+  // essence trickle, and resolves the fight as an early win once the
+  // accumulated tap damage reaches the monster HP.
+  const registerTap = useCallback(() => {
+    if (isPausedRef.current) return
+    if (fightResolvedRef.current) return
+    if (!isTapPhase(phaseRef.current)) return
+    if (monsterMaxHpRef.current <= 0) return
+    if (tapsUsedRef.current >= TAP_CONFIG.MAX_TAPS_PER_FIGHT) return
+    const currentChar = charRef.current
+    if (!currentChar) return
+
+    tapsUsedRef.current += 1
+    setTapsUsed(tapsUsedRef.current)
+    tapDamageRef.current += computeTapDamage(monsterMaxHpRef.current)
+    tapEssenceRef.current += computeTapEssence(currentChar.level, currentChar.intelligence, currentChar.focus)
+
+    // Tap kill → resolve the fight as an early win right now
+    if (tapDamageRef.current >= monsterMaxHpRef.current) {
+      const monster = lastMonsterRef.current
+      if (!monster) return
+      clearPhaseTimers()
+      resolveFight(true, tapEssenceRef.current, charRef.current ?? currentChar, monster)
+      setScenePhase('result')
+      // Schedule the return to running (same length as the natural result phase)
+      const t = setTimeout(() => {
+        setCurrentMonster(null)
+        setScenePhase('running')
+        monsterMaxHpRef.current = 0
+        syncWatermarks()
+      }, IDLE_CONFIG.RESULT_DURATION)
+      phaseTimers.current = [t]
+    }
+  }, [clearPhaseTimers, resolveFight, syncWatermarks])
+
   const runCombatTick = useCallback(() => {
     if (isPausedRef.current) return
 
@@ -364,6 +513,15 @@ export function useIdleCombat({
     } catch {
       return
     }
+
+    // New fight: reset tap state (budget, damage, essence, resolved flag)
+    lastMonsterRef.current = monster
+    monsterMaxHpRef.current = monster.character.maxHp
+    tapDamageRef.current = 0
+    tapEssenceRef.current = 0
+    tapsUsedRef.current = 0
+    setTapsUsed(0)
+    fightResolvedRef.current = false
 
     // Record fight start time for hard timeout watchdog
     fightStartTimeRef.current = Date.now()
@@ -382,6 +540,8 @@ export function useIdleCombat({
         setCurrentMonster(null)
         setBackgroundMonster(null)
         setScenePhase('running')
+        monsterMaxHpRef.current = 0
+        fightResolvedRef.current = true
         return true
       }
       return false
@@ -394,81 +554,7 @@ export function useIdleCombat({
 
       const result = simulateCombat(currentChar, monster.character)
       const won = result.winner === 'attacker'
-
-      // Calculate XP with bonuses
-      const baseXp = calculateIdleXp(won, currentChar.level)
-      const xpBonus = xpBonusRef.current - 1
-      const streakBonus = Math.min(
-        streakRef.current * IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_PER_STEP,
-        IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_CAP,
-      )
-      const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
-
-      setLastCombatResult(won ? 'win' : 'lose')
-      setLastCombatXp(finalXp)
-      setIdleXpGained(prev => prev + finalXp)
-
-      // Update streak and kill counters
-      let newStreak = streakRef.current
-      let newKills = killsRef.current
-      let newIdleXp = idleXpRef.current
-      if (won) {
-        newStreak++
-        newKills++
-      } else {
-        newStreak = 0
-      }
-      newIdleXp += finalXp
-
-      // Accumulate essence per kill (scales with power ratio + stats, like XP)
-      const essenceGain = calculateIdleEssence(won, currentChar.level, currentChar.intelligence, currentChar.focus) * xpBonusRef.current
-
-      // Apply XP with updated idle stats and watermarks
-      const xpResult = gainXp(currentChar, finalXp)
-      const now = Date.now()
-      // Re-read the freshest character: a discrete user action (lootbox roll,
-      // salvage, equip) may have run during this multi-second tick. Preserving
-      // its fields prevents the idle write-back from reverting them — e.g.
-      // reverting lastLootRoll would let the daily lootbox be claimed twice.
-      const latest = charRef.current ?? currentChar
-      const updatedEssence = (latest.essence ?? currentChar.essence ?? 0) + essenceGain
-      const updatedChar: Character = {
-        ...xpResult.updatedCharacter,
-        inventory: latest.inventory,
-        lastLootRoll: latest.lastLootRoll,
-        lootboxStreak: latest.lootboxStreak,
-        equippedItems: latest.equippedItems,
-        itemUpgrades: latest.itemUpgrades,
-        essence: updatedEssence,
-        idleStreak: newStreak,
-        idleMaxStreak: Math.max(newStreak, (currentChar.idleMaxStreak ?? 0)),
-        idleTotalKills: newKills,
-        idleTotalXp: newIdleXp,
-        statPoints: (xpResult.updatedCharacter.statPoints || 0) + xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL,
-        lastIdleCheck: now,
-        lastActive: now,
-      }
-      onCharacterUpdate(updatedChar)
-      onSyncCharacter?.(updatedChar)
-      if (xpResult.levelsGained > 0) {
-        onLevelUp?.(xpResult.levelsGained, updatedChar.level)
-      }
-
-      setCurrentStreak(newStreak)
-      setTotalKills(newKills)
-      setIdleTotalXp(newIdleXp)
-
-      // Log
-      const entry: IdleCombatEntry = {
-        timestamp: Date.now(),
-        monsterId: monster.def.id,
-        monsterName: monster.def.name,
-        won,
-        xpGained: finalXp,
-        damageTaken: 0,
-      }
-
-      setCombatLog(prev => [...prev, entry])
+      resolveFight(won, 0, currentChar, monster)
     }, IDLE_CONFIG.MONSTER_APPEAR_DURATION)
 
     const t2 = setTimeout(() => {
@@ -482,6 +568,9 @@ export function useIdleCombat({
 
       setCurrentMonster(null)
       setScenePhase('running')
+      // Fight over: clear the tap target so stray taps are ignored
+      monsterMaxHpRef.current = 0
+      fightResolvedRef.current = true
       syncWatermarks()
     }, IDLE_CONFIG.MONSTER_APPEAR_DURATION + IDLE_CONFIG.COMBAT_DURATION + IDLE_CONFIG.RESULT_DURATION)
 
@@ -495,7 +584,7 @@ export function useIdleCombat({
     }, COMBAT_BALANCE.fightHardTimeoutMs)
 
     phaseTimers.current = [t1, t2, t3]
-  }, [onCharacterUpdate, onSyncCharacter, onLevelUp, syncWatermarks, clearPhaseTimers])
+  }, [onCharacterUpdate, onSyncCharacter, onLevelUp, syncWatermarks, clearPhaseTimers, resolveFight])
 
   // Trigger first combat immediately, then repeat on dynamic interval
   useEffect(() => {
@@ -680,5 +769,8 @@ export function useIdleCombat({
     idleTotalXp,
     efficiencyData,
     remainingSeconds,
+    registerTap,
+    tapsUsed,
+    tapMax: TAP_CONFIG.MAX_TAPS_PER_FIGHT,
   }
 }
