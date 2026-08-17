@@ -900,6 +900,42 @@ describe('QA Bot Locked Tab Skip Contract', () => {
     expect(skipIdx).toBeGreaterThan(-1)
     expect(skipIdx).toBeLessThan(clickIdx)
   })
+
+  it('testShopSystem opens the inventory modal instead of navigating to the Forge page (#724)', () => {
+    // The shop moved from a Forge tab to a tab inside the Inventory modal
+    // (InventoryPanel.tsx tabs 🎒 INVENTORY / 🏪 SHOP). The bot must open the
+    // inventory via the arena header button and find the SHOP tab there, not
+    // navigate to /forge and look for a non-existent Shop tab.
+    const fn = requireAsyncFunction('testShopSystem')
+    expect(fn).not.toContain('navigateToForge(page)')
+    expect(fn).toContain("button[aria-label=\"Inventory\"]")
+    expect(fn).toContain('.inventory-overlay')
+    expect(fn).toContain('button[role="tab"]:has-text("SHOP")')
+    expect(fn).not.toContain('.forge-tab:has-text("Shop")')
+  })
+
+  it('testShopSystem suppresses the inventory overlay handler before opening the modal and re-arms it on every exit path (#724)', () => {
+    // The .inventory-overlay locator handler dismisses the overlay on EVERY
+    // Playwright action while it is visible (#637/#645/#710). Opening the
+    // inventory to reach the shop would deadlock unless the handler is
+    // suppressed for the whole read and re-armed on every exit path.
+    const fn = requireAsyncFunction('testShopSystem')
+    const setIdx = fn.indexOf('suppressInventoryHandler = true')
+    const invBtnClickIdx = fn.indexOf('invBtn.click()')
+    expect(setIdx).toBeGreaterThan(-1)
+    expect(setIdx).toBeLessThan(invBtnClickIdx)
+    const afterSet = fn.slice(setIdx)
+    const returnsAfter = (afterSet.match(/\breturn (?:shopResult|createSkippedShopResult)/g) || []).length
+    const unsets = (afterSet.match(/suppressInventoryHandler = false/g) || []).length
+    expect(returnsAfter).toBeGreaterThan(0)
+    expect(unsets).toBe(returnsAfter)
+  })
+
+  it('testShopSystem closes the inventory modal (not leaveForge) after the shop read (#724)', () => {
+    const fn = requireAsyncFunction('testShopSystem')
+    expect(fn).not.toContain('leaveForge(page)')
+    expect(fn).toContain('button[aria-label="Close inventory"], .inventory-close')
+  })
 })
 
 describe('QA Bot Fight CTA Robustness Contract', () => {

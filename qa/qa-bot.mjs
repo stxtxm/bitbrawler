@@ -2238,7 +2238,8 @@ async function leaveForge(page) {
 }
 
 /**
- * Navigate to the Shop tab, read offers, and attempt to purchase the cheapest.
+ * Navigate to the Shop tab inside the Inventory modal, read offers, and attempt
+ * to purchase the cheapest.
  * Returns an object with shop stats or null if inaccessible.
  * @param {import('playwright').Page} page
  * @param {string} runKey
@@ -2267,22 +2268,59 @@ async function testShopSystem(page, runKey, characterLevel = null) {
     shop_data: { offers: [], purchased_offer: null, essence_after_purchase: null },
   }
 
-  const navigated = await navigateToForge(page)
-  if (!navigated) {
-    console.log('   ⚠️ Could not navigate to forge page')
+  // The shop is a tab inside the Inventory modal (InventoryPanel.tsx), not a
+  // Forge tab anymore. The .inventory-overlay locator handler dismisses the
+  // overlay on EVERY Playwright action while it is visible — suppress it for the
+  // whole read and re-arm it on every exit path (#710).
+  suppressInventoryHandler = true
+
+  // If the inventory overlay is already open (leftover from a previous step),
+  // skip the button click — the panel is already visible.
+  const alreadyOpen = await page.locator('.inventory-overlay').first().isVisible({ timeout: 1000 }).catch(() => false)
+
+  if (!alreadyOpen) {
+    const invBtn = page.locator('button[aria-label="Inventory"], button[title="Inventory"], button.icon-btn.inventory-btn').first()
+    if (!(await invBtn.isVisible({ timeout: 3000 }).catch(() => false))) {
+      console.log('   ⚠️ Inventory button not found in arena header')
+      suppressInventoryHandler = false
+      return shopResult
+    }
+    await invBtn.click()
+    console.log('   Opened inventory modal, waiting for panel...')
+    await page.waitForTimeout(800)
+  } else {
+    console.log('   Inventory overlay already open, skipping button click')
+  }
+
+  // Wait for the inventory tabs to be visible (modal fully open)
+  try {
+    await page.locator('.inventory-tabs').waitFor({ state: 'visible', timeout: 3000 })
+  } catch {
+    console.log('   ⚠️ Inventory panel did not open')
+    suppressInventoryHandler = false
     return shopResult
   }
 
   // Click Shop tab
-  const shopTab = page.locator('button[role="tab"]:has-text("Shop"), .forge-tab:has-text("Shop")')
+  const shopTab = page.locator('button[role="tab"]:has-text("SHOP"), .inventory-tab:has-text("SHOP")')
   if (await isTabLocked(shopTab)) {
     console.log(`   ⏭️ Shop tab locked (Unlocks at LVL ${config.shopUnlockLevel}), skipping shop test`)
-    await leaveForge(page)
+    const closeBtn = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
+    if (await closeBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await closeBtn.click()
+      await page.waitForTimeout(300)
+    }
+    suppressInventoryHandler = false
     return createSkippedShopResult(`shop tab locked (unlocks at LVL ${config.shopUnlockLevel})`)
   }
   if (!(await shopTab.isVisible({ timeout: 3000 }).catch(() => false))) {
-    console.log('   ⚠️ Shop tab not found')
-    await leaveForge(page)
+    console.log('   ⚠️ Shop tab not found in inventory modal')
+    const closeBtn = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
+    if (await closeBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+      await closeBtn.click()
+      await page.waitForTimeout(300)
+    }
+    suppressInventoryHandler = false
     return shopResult
   }
 
@@ -2368,7 +2406,14 @@ async function testShopSystem(page, runKey, characterLevel = null) {
 
   await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-08-shop.png`) })
 
-  await leaveForge(page)
+  // Close the inventory modal
+  const closeBtn = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
+  if (await closeBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await closeBtn.click()
+    await page.waitForTimeout(500)
+  }
+
+  suppressInventoryHandler = false
   console.log('🏪 Shop test complete')
   return shopResult
 }
