@@ -51,10 +51,12 @@ const ESSENCE_BASE_RATE = 0.2
 const ESSENCE_LOSS_RATIO = 0.3
 const ESSENCE_LEVEL_SCALE = 0.08
 
-// Aligned with src/config idleConfig.ts and src/utils/xpUtils.ts
-const EARLY_SHIFT = 2
-const IDLE_MODIFIER = 0.35
-const OFFLINE_XP_MODIFIER = 0.5
+// Aligned with src/config idleConfig.ts (XP_MODIFIER) and src/utils/xpUtils.ts (EARLY_SHIFT)
+// NOTE: these MUST stay in sync with the client — when the client curve changes,
+// update xpCurveSync.test.ts to catch drift.
+export const EARLY_SHIFT = 3
+export const IDLE_MODIFIER = 0.5
+export const OFFLINE_XP_MODIFIER = 0.5
 const MAX_IDLE_FIGHTS = 50
 const MONSTER_IDS = ['GOBLIN', 'OGRE', 'WRAITH', 'SLIME', 'SKELETON', 'BAT', 'SPIDER']
 
@@ -137,13 +139,13 @@ function simulateCombat(attacker: Character, defender: Character): CombatResult 
     : { winner: 'defender', hpLoss: Math.max(1, Math.floor(dStats.attack * (0.8 + Math.random() * 0.4) - aStats.defense * 0.3)) }
 }
 
-function xpForNextLevel(level: number): number {
+export function xpForNextLevel(level: number): number {
   if (level >= 99) return Infinity
   const shifted = Math.max(1, level - EARLY_SHIFT)
   return Math.floor(120 * Math.pow(shifted, 1.65))
 }
 
-function totalXpForLevel(level: number): number {
+export function totalXpForLevel(level: number): number {
   if (level <= 1) return 0
   let total = 0
   for (let i = 1; i < level; i++) total += xpForNextLevel(i)
@@ -206,14 +208,14 @@ function calculateOfflineFightsWithEfficiency(start: number, end: number, interv
   return Math.min(fights, MAX_IDLE_FIGHTS)
 }
 
-function calculateIdleXp(won: boolean, level: number): number {
+export function calculateIdleXp(won: boolean, level: number): number {
   const baseXp = won ? 90 : 30
   const levelScaling = 1 + (level - 1) * 0.06
   const variance = 0.9 + Math.random() * 0.2
   return Math.floor(baseXp * levelScaling * IDLE_MODIFIER * variance)
 }
 
-function calculateOfflineIdleXp(won: boolean, level: number): number {
+export function calculateOfflineIdleXp(won: boolean, level: number): number {
   return Math.floor(calculateIdleXp(won, level) * OFFLINE_XP_MODIFIER)
 }
 
