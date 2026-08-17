@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Character } from '../types/Character'
 import { MonsterId } from '../data/monsterAssets'
 import { ScenePhase } from '../types/IdleCombat'
@@ -7,7 +7,6 @@ import { PixelMonster } from './PixelMonster'
 import { ParticleSystem } from '../utils/particleSystem'
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode'
 import { monsterScaleFor } from '../utils/monsterVisualScale'
-import { computeTapEssence, isTapPhase } from '../utils/tapUtils'
 
 interface OfflineGainsData {
   fights: number
@@ -28,16 +27,6 @@ interface IdleRunnerSceneProps {
   recentLevelUp: { newLevel: number; isMilestone?: boolean } | null
   currentStreak?: number
   streakMilestone?: number | null
-  onMonsterTap?: () => void
-  tapsUsed?: number
-  tapMax?: number
-}
-
-interface TapFloat {
-  id: number
-  x: number
-  y: number
-  text: string
 }
 
 function formatTimeAway(ms: number): string {
@@ -69,24 +58,16 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   recentLevelUp,
   currentStreak = 0,
   streakMilestone = null,
-  onMonsterTap,
-  tapsUsed = 0,
-  tapMax = 0,
 }: IdleRunnerSceneProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const monsterSlotRef = useRef<HTMLDivElement>(null)
   const particlesRef = useRef<ParticleSystem | null>(null)
   const levelUpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const hitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const floatIdRef = useRef(0)
   const [showLevelUpFx, setShowLevelUpFx] = useState(false)
   const [levelUpLevel, setLevelUpLevel] = useState(0)
   const [screenShake, setScreenShake] = useState(false)
   const [levelUpFlash, setLevelUpFlash] = useState(false)
   const [levelUpShockwave, setLevelUpShockwave] = useState(false)
   const [isMilestoneCeremony, setIsMilestoneCeremony] = useState(false)
-  const [monsterHit, setMonsterHit] = useState(false)
-  const [tapFloats, setTapFloats] = useState<TapFloat[]>([])
   const lowPerf = useLowPerformanceMode()
   const prevPhaseRef = useRef<ScenePhase>('running')
   const characterLevelRef = useRef(character.level)
@@ -212,64 +193,6 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     setScreenShake(false)
   }, [scenePhase, lastCombatResult])
 
-  // ── Tap-to-damage: active taps on the idle monster ─────────────────────
-  // The hook (useIdleCombat) owns the combat resolution; this component only
-  // forwards taps and renders the feedback (particles, hit shake, essence
-  // float) at the monster's position.
-  const tapActive = Boolean(
-    onMonsterTap && currentMonster && isTapPhase(scenePhase),
-  )
-
-  const handleMonsterTap = useCallback(() => {
-    if (!onMonsterTap) return
-    if (!tapActive) return
-    onMonsterTap()
-
-    const ps = particlesRef.current
-    const container = containerRef.current
-    const slot = monsterSlotRef.current
-    if (ps && container && slot) {
-      const cRect = container.getBoundingClientRect()
-      const sRect = slot.getBoundingClientRect()
-      const cx = sRect.left + sRect.width / 2 - cRect.left
-      const cy = sRect.top + sRect.height / 2 - cRect.top
-      ps.emit('hit_ring', cx, cy, lowPerf ? 2 : 5)
-      ps.emit('spark', cx, cy, lowPerf ? 1 : 3)
-      const isCrit = Math.random() < 0.15
-      const dmg = 5 + character.level * 2
-      ps.emit('damage', cx, cy, 1, isCrit ? dmg * 2 : dmg)
-      if (isCrit) ps.emit('crit', cx, cy, 1)
-      setTapFloats(prev => [
-        ...prev.slice(-3),
-        {
-          id: ++floatIdRef.current,
-          x: cx + (Math.random() * 40 - 20),
-          y: cy - 30,
-          text: `+${computeTapEssence(character.level, character.intelligence, character.focus).toFixed(2)} 💎`,
-        },
-      ])
-    }
-
-    setMonsterHit(true)
-    if (hitTimerRef.current) clearTimeout(hitTimerRef.current)
-    hitTimerRef.current = setTimeout(() => setMonsterHit(false), 120)
-  }, [onMonsterTap, tapActive, character.level, character.intelligence, character.focus, lowPerf])
-
-  // Remove expired tap floats (700ms animation)
-  useEffect(() => {
-    if (tapFloats.length === 0) return
-    const t = setTimeout(() => {
-      setTapFloats([])
-    }, 750)
-    return () => clearTimeout(t)
-  }, [tapFloats])
-
-  useEffect(() => {
-    return () => {
-      if (hitTimerRef.current) clearTimeout(hitTimerRef.current)
-    }
-  }, [])
-
   // Level-up visual effect (glow + particles + floating text + flash + shockwave)
   useEffect(() => {
     if (!recentLevelUp) return
@@ -361,34 +284,11 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
       </div>
 
       {currentMonster && (
-        <div
-          ref={monsterSlotRef}
-          className={`idle-monster-slot phase-${scenePhase}${tapActive ? ' tappable' : ''}${monsterHit ? ' monster-hit' : ''}`}
-          data-monster={currentMonster}
-          onPointerDown={handleMonsterTap}
-        >
+        <div className={`idle-monster-slot phase-${scenePhase}`} data-monster={currentMonster}>
           <PixelMonster monsterId={currentMonster} scale={monsterScaleFor(currentMonster, charScale)} />
           {scenePhase === 'combat' && <div className="combat-flash" />}
-          {tapActive && (
-            <div className={`tap-hint${monsterHit ? ' tapped' : ''}`}>
-              <span className="tap-hint-icon">⚡</span>
-              <span className="tap-hint-text">TAP!
-                {tapMax > 0 && <span className="tap-hint-count"> {tapsUsed}/{tapMax}</span>}
-              </span>
-            </div>
-          )}
         </div>
       )}
-
-      {tapFloats.map(float => (
-        <div
-          key={float.id}
-          className="tap-float"
-          style={{ left: float.x, top: float.y }}
-        >
-          {float.text}
-        </div>
-      ))}
 
       {showBigXp && (
         <div className={`idle-big-xp ${lastCombatResult}`}>
