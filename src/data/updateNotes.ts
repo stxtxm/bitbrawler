@@ -8,6 +8,17 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.4.1',
+    date: '2026-08-17',
+    title: '⚔️ PvE & idle monsters rebalanced — fights are winnable again',
+    changes: [
+      '⚖️ PvE monster stats rebalanced: STAT_MULTIPLIER 20→1 and HP_MULTIPLIER 22→1 (raw monster stats now sit at ~player level, challenge comes from fighting 3 levels above your own).',
+      '🐉 Before this fix the idle/PvE monsters were mathematically unbeatable: a level 1-30 player dealt ~20 min-clamp damage against 2000-8000 HP pools — 71 idle fights, 0 wins in QA data.',
+      '🎯 Target win rates now: active PvE 70-85%, idle 40-70% — early-game players can progress through monsters again.',
+      '1443 tests passing across 99 test files.',
+    ],
+  },
+  {
     version: '5.4.0',
     date: '2026-08-09',
     title: '🌋 Biome engine — the volcanic biome makes idle PvE alive',
