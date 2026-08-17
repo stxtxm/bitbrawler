@@ -54,6 +54,9 @@ export const SceneBox = memo(function SceneBox({
           recentLevelUp={idle.recentLevelUp}
           currentStreak={idle.currentStreak}
           streakMilestone={idle.streakMilestone}
+          onMonsterTap={idle.registerTap}
+          tapsUsed={idle.tapsUsed}
+          tapMax={idle.tapMax}
         />
       ) : (
         <div className="scene-pvp-center">

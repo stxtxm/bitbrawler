@@ -84,6 +84,9 @@ const idle: ArenaIdleViewModel = {
     speedEfficiency: 1,
     statEssenceMultiplier: 1,
   },
+  registerTap: vi.fn(),
+  tapsUsed: 0,
+  tapMax: 15,
 };
 
 describe('arena extracted components', () => {
