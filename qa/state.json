@@ -1,7 +1,7 @@
 {
-  "run": "2026-08-18",
-  "character": "WILDADEPT",
-  "exhausted": false,
-  "updated_at": "2026-08-18T19:08:46.417Z",
-  "source": "created"
+  "run": "2026-08-19",
+  "character": "NANOVALOR",
+  "exhausted": true,
+  "updated_at": "2026-08-18T22:05:09.850Z",
+  "source": "created-after-exhausted-energy"
 }

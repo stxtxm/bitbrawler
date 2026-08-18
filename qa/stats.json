@@ -52848,5 +52848,362 @@
       "purchased_offer": null,
       "essence_after_purchase": 2
     }
+  },
+  {
+    "date": "2026-08-18T22:01:17.171Z",
+    "run": "2026-08-19",
+    "character": "NANOVALOR",
+    "character_action": "created-after-exhausted-energy",
+    "replaced_character": "WILDADEPT",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 105,
+        "fight_duration_ms": 17930,
+        "max_hp": 390,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 20.81
+      },
+      {
+        "result": "victory",
+        "xp": 92,
+        "fight_duration_ms": 13876,
+        "max_hp": 285,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": null
+      },
+      {
+        "result": "victory",
+        "xp": 117,
+        "fight_duration_ms": 14162,
+        "max_hp": 304,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": null
+      },
+      {
+        "result": "victory",
+        "xp": 120,
+        "fight_duration_ms": 15102,
+        "max_hp": 324,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": null
+      },
+      {
+        "result": "victory",
+        "xp": 127,
+        "fight_duration_ms": 16805,
+        "max_hp": 336,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": null
+      },
+      {
+        "result": "victory",
+        "xp": 73,
+        "fight_duration_ms": 14694,
+        "max_hp": 356,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": null
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Frost Band",
+      "rarity": "LEGENDARY",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 1,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 13,
+      "vit": 24,
+      "dex": 7,
+      "luk": 7,
+      "int": 6,
+      "foc": 11,
+      "fights": 0
+    },
+    "initial_level": 4,
+    "initial_xp": {
+      "current": 40,
+      "max": 120
+    },
+    "initial_max_hp": 328,
+    "initial_equipment": [],
+    "initial_streak": 0,
+    "final_stats": {
+      "level": 5,
+      "xp": 49,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 13,
+      "vit": 26,
+      "dex": 7,
+      "luk": 6,
+      "int": 11,
+      "foc": 8,
+      "fights": 0
+    },
+    "final_max_hp": 356,
+    "final_equipment": [],
+    "final_streak": 0,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_locked_level": 30,
+      "boss_name": "VOID TITAN",
+      "boss_level": null,
+      "boss_hp": null,
+      "boss_max_hp": null
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 4,
+        "previous_level": 4,
+        "new_level": 8
+      },
+      {
+        "fight_number": 2,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 1,
+        "new_level": 2
+      },
+      {
+        "fight_number": 3,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 2,
+        "new_level": 3
+      },
+      {
+        "fight_number": 4,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 3,
+        "new_level": 4
+      },
+      {
+        "fight_number": 5,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 4,
+        "new_level": 5
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 20244,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "slime",
+        "wolf"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 136,
+      "xp_events": [
+        {
+          "time_ms": 516,
+          "xp": 63,
+          "monster": "slime",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 12680,
+          "xp": 73,
+          "monster": "wolf",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": true,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        516,
+        9603,
+        11141,
+        12680
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 63,
+        "monster": "slime"
+      },
+      {
+        "result": "victory",
+        "xp": 73,
+        "monster": "wolf"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.51,
+      "next_level_eta": "⬆ 4m 54s",
+      "power_ratio": "⚔ 0.93x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 0.97x",
+      "interval": "12.0s",
+      "streak_bonus": "🔥 7-win streak (+5%)"
+    },
+    "initial_essence": 19.4,
+    "final_essence": null,
+    "essence": {
+      "before_idle": 19.4,
+      "after_idle": 19.7,
+      "per_fight": [
+        20.81,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": 0,
+      "shop_after": 0,
+      "final": null,
+      "flow": {
+        "idle_gained": 0.3,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": 0,
+        "net_change": null
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": true,
+      "skip_reason": "forge requires LVL 6"
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 0,
+      "essence_after": 0,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Novice Wrap",
+            "rarity": "UNCOMMON",
+            "price": 150
+          },
+          {
+            "name": "Crystal Pendant",
+            "rarity": "EPIC",
+            "price": 250
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 350
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 0
+      }
+    },
+    "errors": [],
+    "load_times_ms": {
+      "home": 1381,
+      "arena": 3039
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Novice Wrap",
+          "rarity": "UNCOMMON",
+          "price": 150
+        },
+        {
+          "name": "Crystal Pendant",
+          "rarity": "EPIC",
+          "price": 250
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 350
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 0
+    }
   }
 ]
