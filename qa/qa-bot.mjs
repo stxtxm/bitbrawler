@@ -111,8 +111,55 @@ function dateKey(date = new Date(), timeZone = QA_TIME_ZONE) {
   return `${parts.year}-${String(parts.month).padStart(2, '0')}-${String(parts.day).padStart(2, '0')}`
 }
 
+function getZonedWeekday(date = new Date(), timeZone = QA_TIME_ZONE) {
+  const parts = getZonedParts(date, timeZone)
+  return new Date(Date.UTC(parts.year, parts.month - 1, parts.day)).getUTCDay()
+}
+
 function getAppUrl(path) {
   return new URL(path, config.baseUrl).toString()
+}
+
+// ── Persistent QA character (#731) ─────────────────────────────────────────
+// The bot reuses a dedicated character (config.persistentCharacterName) across
+// runs so equipment, streak, essence, shop purchases and mid-game levels
+// accumulate into usable longitudinal data. On controlled reset (level cap or
+// max age) a new generation of the character is created.
+
+function persistentNameForGeneration(baseName, generation) {
+  if (generation === 0) return baseName
+  // Game name limit is 10 chars (CharacterCreation input maxLength=10). The
+  // base name is truncated to make room for the "-N" generation suffix.
+  const suffix = `-${generation + 1}`
+  const maxBaseLen = 10 - suffix.length
+  const base = baseName.length <= maxBaseLen ? baseName : baseName.slice(0, maxBaseLen)
+  return `${base}${suffix}`
+}
+
+function resolvePersistentCharacter(state, now) {
+  const generation = state.persistent_generation || 0
+  const createdAt = state.persistent_created_at ? new Date(state.persistent_created_at) : null
+  const ageMs = createdAt !== null ? now.getTime() - createdAt.getTime() : null
+  const ageExceeded =
+    config.persistentCharacterMaxAgeDays > 0 &&
+    ageMs !== null &&
+    ageMs > config.persistentCharacterMaxAgeDays * 24 * 60 * 60 * 1000
+  const shouldReset = state.persistent_reset_ready === true || ageExceeded
+  if (!shouldReset) {
+    return {
+      name: persistentNameForGeneration(config.persistentCharacterName, generation),
+      generation,
+      createdAt: state.persistent_created_at || null,
+      reset: false,
+    }
+  }
+  const nextGeneration = generation + 1
+  return {
+    name: persistentNameForGeneration(config.persistentCharacterName, nextGeneration),
+    generation: nextGeneration,
+    createdAt: null,
+    reset: true,
+  }
 }
 
 function loadStats() {
@@ -371,6 +418,41 @@ async function createCharacterFromAppGenerator(page) {
   throw new Error('Could not create a QA fighter from app-generated names after multiple attempts')
 }
 
+async function createCharacterWithName(page, charName) {
+  await openCharacterCreation(page)
+
+  const nameInput = page.locator('input[type="text"], .retro-input').first()
+  await nameInput.waitFor({ state: 'visible', timeout: 10000 })
+  await nameInput.fill(charName)
+
+  const rollBtn = page.locator('button:has-text("ROLL STATS"), button:has-text("ROLL"), button:has-text("REROLL"), button:has-text("RANDOM")').first()
+  if (await rollBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await rollBtn.click()
+    await page.waitForTimeout(500)
+  }
+
+  const startBtn = page.locator('button:has-text("START GAME"), button:has-text("START"), button:has-text("CREATE"), button:has-text("FIGHT")').first()
+  await startBtn.waitFor({ state: 'visible', timeout: 10000 })
+  await startBtn.click()
+
+  const arenaLoadMs = await waitForArena(page, 15000)
+  if (arenaLoadMs !== null) {
+    return { outcome: 'created', character: charName, arenaLoadMs }
+  }
+
+  const bodyText = await readBodyText(page)
+  if (bodyText.toUpperCase().includes('NAME ALREADY TAKEN')) {
+    // Race: another run created the same persistent name. Log in instead.
+    console.log(`   Name ${charName} already taken — logging in to reuse it`)
+    const loginResult = await loginCharacter(page, charName)
+    if (loginResult.outcome === 'reused') {
+      return { ...loginResult, character: charName }
+    }
+  }
+
+  throw new Error(`Persistent fighter ${charName} could not be created or reused`)
+}
+
 async function loginOrCreateDailyCharacter(page, runKey, savedCharacterName) {
   if (savedCharacterName) {
     console.log(`🎭 Reusing daily QA fighter from state: ${savedCharacterName}`)
@@ -389,6 +471,20 @@ async function loginOrCreateDailyCharacter(page, runKey, savedCharacterName) {
   }
 
   throw new Error(`Daily QA fighter for ${runKey} could not be created or reused`)
+}
+
+async function loginOrCreatePersistentCharacter(page, runKey, charName) {
+  console.log(`🎭 Persistent QA fighter: ${charName}`)
+  const loginResult = await loginCharacter(page, charName)
+  if (loginResult.outcome === 'reused') {
+    return { ...loginResult, character: charName }
+  }
+  console.log(`   Persistent fighter ${charName} not found for ${runKey}, creating it...`)
+  const createResult = await createCharacterWithName(page, charName)
+  if (createResult.outcome === 'created') {
+    return createResult
+  }
+  throw new Error(`Persistent QA fighter ${charName} could not be created or reused`)
 }
 
 async function dismissModals(page) {
@@ -1088,17 +1184,22 @@ async function handleDailyLootbox(page, runKey) {
   }
 }
 
-function persistQaState(runKey, character, source, exhausted) {
+function persistQaState(runKey, character, source, exhausted, extra = {}) {
   saveState({
     run: runKey,
     character,
     exhausted,
     updated_at: new Date().toISOString(),
     source,
+    ...extra,
   })
 }
 
 async function maybeReplaceExhaustedCharacter(page, runKey, runRecord, reason) {
+  if (runRecord.character_type === 'persistent') {
+    console.log(`   ⏸️ Persistent QA fighter exhausted (${reason}) — skipping replacement (#731)`)
+    return false
+  }
   console.log(`♻️ Replacing QA fighter because ${reason}...`)
   const previousCharacter = runRecord.character
   const replacement = await createCharacterFromAppGenerator(page)
@@ -2622,6 +2723,9 @@ async function run() {
   const state = loadState()
   const isCurrentRun = state.run === runKey
   const savedCharacterName = state.character && (!isCurrentRun || state.exhausted !== true) ? state.character : null
+  const usePersistent = config.persistentCharacter && getZonedWeekday(now, QA_TIME_ZONE) !== config.freshCharacterDay
+  const isFreshDay = config.persistentCharacter && getZonedWeekday(now, QA_TIME_ZONE) === config.freshCharacterDay
+  const persistentInfo = usePersistent ? resolvePersistentCharacter(state, now) : null
   runStartTime = Date.now()
 
   console.log('═══════════════════════════════════════════')
@@ -2635,6 +2739,7 @@ async function run() {
   console.log(`    fightTimeout:   ${config.fightTimeout}ms`)
   console.log(`    idleObserveMs:  ${config.idleObservationMs} (PvE idle observation)`)
   console.log(`    timeBudgetMs:   ${config.timeBudgetMs} (global run time budget)`)
+  console.log(`    persistent:     ${config.persistentCharacter ? 'yes' : 'no'} (${config.persistentCharacterName}, fresh day=${config.freshCharacterDay}, max lvl=${config.persistentCharacterMaxLevel}, max age=${config.persistentCharacterMaxAgeDays}d)`)
   console.log(`    statsFile:      ${STATS_FILE}`)
   console.log(`    stateFile:      ${STATE_FILE}`)
   console.log(`    screenshotsDir: ${SCREENSHOTS_DIR}`)
@@ -2715,6 +2820,7 @@ async function run() {
     character: null,
     character_action: null,
     replaced_character: null,
+    character_type: null,
     fights: [],
     lootbox: null,
     auto_mode_enabled: false,
@@ -2788,15 +2894,38 @@ async function run() {
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-01-home.png`) })
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-02-pre-auth.png`) })
 
-    const authResult = await loginOrCreateDailyCharacter(page, runKey, savedCharacterName)
+    let authResult
+    if (persistentInfo) {
+      if (persistentInfo.reset) {
+        console.log(`♻️ Persistent QA fighter reset (level cap / max age reached) — creating ${persistentInfo.name}`)
+        authResult = await createCharacterWithName(page, persistentInfo.name)
+      } else {
+        authResult = await loginOrCreatePersistentCharacter(page, runKey, persistentInfo.name)
+      }
+      runRecord.character_type = 'persistent'
+    } else {
+      authResult = await loginOrCreateDailyCharacter(page, runKey, isFreshDay ? null : savedCharacterName)
+      runRecord.character_type = 'fresh'
+    }
     runRecord.character = authResult.character
     runRecord.character_action = authResult.outcome
     if (authResult.arenaLoadMs !== null) {
       runRecord.load_times_ms.arena = authResult.arenaLoadMs
       console.log(`   Arena loaded in ${runRecord.load_times_ms.arena}ms (${authResult.outcome})`)
     }
-    console.log(`🎭 Active QA fighter: ${runRecord.character}`)
-    persistQaState(runKey, runRecord.character, authResult.outcome, false)
+    console.log(`🎭 Active QA fighter: ${runRecord.character} (${runRecord.character_type})`)
+    const persistentCreatedAt = persistentInfo
+      ? (authResult.outcome === 'created' || persistentInfo.reset ? now.toISOString() : (persistentInfo.createdAt || now.toISOString()))
+      : null
+    if (persistentInfo) {
+      persistQaState(runKey, runRecord.character, authResult.outcome, false, {
+        persistent_generation: persistentInfo.generation,
+        persistent_created_at: persistentCreatedAt,
+        persistent_reset_ready: false,
+      })
+    } else {
+      persistQaState(runKey, runRecord.character, authResult.outcome, false)
+    }
 
     await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-03-arena.png`) })
 
@@ -2958,7 +3087,22 @@ async function run() {
 
     runRecord.auto_mode_enabled = fighterExhausted
     runRecord.auto_mode_sync_ok = await syncAutoMode(page, fighterExhausted)
-    persistQaState(runKey, runRecord.character, runRecord.character_action, fighterExhausted)
+    if (persistentInfo) {
+      const persistentResetReady =
+        runRecord.final_stats?.level !== null &&
+        runRecord.final_stats?.level !== undefined &&
+        runRecord.final_stats.level >= config.persistentCharacterMaxLevel
+      persistQaState(runKey, runRecord.character, runRecord.character_action, fighterExhausted, {
+        persistent_generation: persistentInfo.generation,
+        persistent_created_at: persistentCreatedAt,
+        persistent_reset_ready: persistentResetReady,
+      })
+      if (persistentResetReady) {
+        console.log(`   ♻️ Persistent fighter reached LVL ${runRecord.final_stats.level} (cap ${config.persistentCharacterMaxLevel}) — next run will create a new generation`)
+      }
+    } else {
+      persistQaState(runKey, runRecord.character, runRecord.character_action, fighterExhausted)
+    }
     console.log(`   Fighter exhausted for today: ${fighterExhausted ? 'yes' : 'no'}`)
 
     // ── Forge ─────────────────────────────────────────────────────

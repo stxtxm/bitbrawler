@@ -106,6 +106,7 @@ interface RunRecord {
   character: string
   character_action?: string | null
   replaced_character?: string | null
+  character_type?: 'fresh' | 'persistent' | null  // #731: persistent QA character vs fresh first-session runs
   fights: FightRecord[]
   idle_fights?: IdleFightRecord[]
   idle_runner?: {
@@ -204,6 +205,15 @@ interface EquipmentAnalysis {
   unique_item_count: number
 }
 
+// #731: the QA bot reuses a dedicated persistent character between runs to build
+// longitudinal data (equipment, streak, essence, shop, mid-game levels). Fresh
+// runs (weekly calibration + legacy) must be distinguished from persistent runs.
+interface CharacterTypeBreakdown {
+  fresh_runs: number
+  persistent_runs: number
+  unknown_runs: number
+}
+
 interface StreakAnalysis {
   avg_initial_streak: number
   avg_final_streak: number
@@ -278,6 +288,8 @@ interface AnalysisReport {
   successful_runs: number
   halfway_runs: number
   error_runs: number
+  character_type_breakdown: CharacterTypeBreakdown
+  persistent_level_distribution: Record<string, number>
   win_rate: number
   loss_rate: number
   draw_rate: number
@@ -355,6 +367,13 @@ const STAT_KEYS = new Set(['str', 'vit', 'dex', 'luk', 'int', 'foc'])
 // categorization and the recent-window error-rate alerts (#730).
 function isErrorRun(r: RunRecord): boolean {
   return !!r.errors && r.errors.length > 0 && (!r.fights || r.fights.length === 0)
+}
+
+// #731: a persistent run uses the dedicated QA character (character_type ===
+// 'persistent'). Fresh runs calibrate the first-session experience; legacy runs
+// have no character_type at all and are treated as unknown.
+function isPersistentRun(r: RunRecord): boolean {
+  return r.character_type === 'persistent'
 }
 
 function isHalfwayRun(r: RunRecord): boolean {
@@ -537,6 +556,28 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     if (r.final_stats?.level !== null && r.final_stats?.level !== undefined) {
       const key = `lvl-${r.final_stats.level}`
       levelDist[key] = (levelDist[key] || 0) + 1
+    }
+  }
+
+  // Character type breakdown (#731): the persistent QA character is the only
+  // source of longitudinal data; fresh runs calibrate the first-session
+  // experience. Legacy runs have no character_type and count as unknown.
+  const characterTypeBreakdown: CharacterTypeBreakdown = { fresh_runs: 0, persistent_runs: 0, unknown_runs: 0 }
+  for (const r of stats) {
+    if (r.character_type === 'persistent') characterTypeBreakdown.persistent_runs++
+    else if (r.character_type === 'fresh') characterTypeBreakdown.fresh_runs++
+    else characterTypeBreakdown.unknown_runs++
+  }
+
+  // Persistent-only level distribution: fresh characters can never reach
+  // mid-game levels, so restricting the distribution to persistent runs gives
+  // the LVL 6-29 visibility needed to calibrate the mid-game XP curve (#712).
+  const persistentLevelDist: Record<string, number> = {}
+  for (const r of validRuns) {
+    if (!isPersistentRun(r)) continue
+    if (r.final_stats?.level !== null && r.final_stats?.level !== undefined) {
+      const key = `lvl-${r.final_stats.level}`
+      persistentLevelDist[key] = (persistentLevelDist[key] || 0) + 1
     }
   }
 
@@ -1104,6 +1145,8 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     successful_runs: successfulRuns.length,
     halfway_runs: halfwayRuns.length,
     error_runs: errorRuns.length,
+    character_type_breakdown: characterTypeBreakdown,
+    persistent_level_distribution: persistentLevelDist,
     win_rate: Math.round(winRate * 1000) / 1000,
     loss_rate: Math.round((allFights.length > 0 ? losses.length / allFights.length : 0) * 1000) / 1000,
     draw_rate: Math.round((allFights.length > 0 ? draws.length / allFights.length : 0) * 1000) / 1000,
@@ -1166,6 +1209,11 @@ function printReport(report: AnalysisReport): void {
   console.log('')
   console.log(`  ${bold}Runs:${reset} ${report.total_runs} total`)
   console.log(`        ${green}${report.successful_runs} successful${reset}, ${yellow}${report.halfway_runs} partial${reset}, ${red}${report.error_runs} errors${reset}`)
+  const ct = report.character_type_breakdown
+  console.log(`  ${bold}Characters:${reset} ${ct.persistent_runs} persistent (longitudinal), ${ct.fresh_runs} fresh (first-session), ${ct.unknown_runs} unknown`)
+  if (Object.keys(report.persistent_level_distribution).length > 0) {
+    console.log(`  ${bold}Persistent LVL dist:${reset} ${Object.entries(report.persistent_level_distribution).map(([k, v]) => `${k}=${v}`).join(', ')}`)
+  }
   console.log(`  ${bold}Fights:${reset} ${report.total_fights} (avg ${report.avg_fights_per_run}/run)`)
   console.log('')
   console.log(`  ── ${bold}Combat Balance${reset} ──`)

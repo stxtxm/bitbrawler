@@ -23,4 +23,19 @@ export default {
   forgeUnlockLevel: 6,
   /** Level at which Shop becomes available */
   shopUnlockLevel: 5,
+  /** Persistent QA character (#731): reuse a dedicated character across runs so
+   *  equipment, streak, essence, shop purchases and mid-game levels accumulate
+   *  (longitudinal data). Set env QA_PERSISTENT_CHARACTER=false to disable. */
+  persistentCharacter: process.env.QA_PERSISTENT_CHARACTER !== 'false',
+  /** Fixed name of the persistent QA character (created once, reused forever). */
+  persistentCharacterName: process.env.QA_PERSISTENT_CHARACTER_NAME || 'QA-PERSIST',
+  /** Day of week (0=Sunday..6=Saturday) for the weekly fresh-character run used
+   *  to calibrate the first-session experience (#473). Default 1 = Monday. */
+  freshCharacterDay: parseInt(process.env.QA_FRESH_CHARACTER_DAY || '1', 10),
+  /** Recreate the persistent character once it reaches this level (controlled
+   *  reset, #731). Default 30 = the boss unlock cap. */
+  persistentCharacterMaxLevel: parseInt(process.env.QA_PERSISTENT_MAX_LEVEL || '30', 10),
+  /** Recreate the persistent character once it is older than this many days
+   *  (controlled reset by age, #731). 0 disables the age-based reset. */
+  persistentCharacterMaxAgeDays: parseInt(process.env.QA_PERSISTENT_MAX_AGE_DAYS || '30', 10),
 }
