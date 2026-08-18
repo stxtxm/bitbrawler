@@ -24,7 +24,7 @@ interface IdleRunnerSceneProps {
   lastCombatXp: number
   offlineGains: OfflineGainsData | null
   onClearOfflineGains: () => void
-  recentLevelUp: { newLevel: number; isMilestone?: boolean } | null
+  recentLevelUp: { newLevel: number; isMilestone?: boolean; count?: number } | null
   currentStreak?: number
   streakMilestone?: number | null
 }
@@ -64,6 +64,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   const levelUpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [showLevelUpFx, setShowLevelUpFx] = useState(false)
   const [levelUpLevel, setLevelUpLevel] = useState(0)
+  const [levelUpCount, setLevelUpCount] = useState<number | null>(null)
   const [screenShake, setScreenShake] = useState(false)
   const [levelUpFlash, setLevelUpFlash] = useState(false)
   const [levelUpShockwave, setLevelUpShockwave] = useState(false)
@@ -199,6 +200,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     const isMilestone = recentLevelUp.isMilestone ?? false
     setShowLevelUpFx(true)
     setLevelUpLevel(recentLevelUp.newLevel)
+    setLevelUpCount(recentLevelUp.count ?? null)
     setIsMilestoneCeremony(isMilestone)
 
     const ps = particlesRef.current
@@ -233,6 +235,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     levelUpTimerRef.current = setTimeout(() => {
       setShowLevelUpFx(false)
       setIsMilestoneCeremony(false)
+      setLevelUpCount(null)
       levelUpTimerRef.current = null
     }, 2000)
     return () => {
@@ -253,6 +256,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     }
     setShowLevelUpFx(false)
     setIsMilestoneCeremony(false)
+    setLevelUpCount(null)
   }
 
   // Offline gains popup is static — it stays on screen until the player
@@ -278,7 +282,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
         {showLevelUpFx && (
           <div className="levelup-float-text">
             <span className="levelup-float-arrow">⬆</span>
-            <span className="levelup-float-lvl">LVL {levelUpLevel}</span>
+            <span className="levelup-float-lvl">LVL {levelUpLevel}{levelUpCount && levelUpCount > 1 ? <span className="levelup-float-count"> ×{levelUpCount}</span> : null}</span>
           </div>
         )}
       </div>

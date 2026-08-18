@@ -6,6 +6,9 @@ import { STAT_KEYS, StatKey, allocateStatsByArchetype } from '../utils/statUtils
 export interface RecentLevelUp {
   newLevel: number;
   isMilestone?: boolean;
+  /** Number of levels gained in one go (offline catch-up). When > 1 the FX is
+   * aggregated into a single announcement instead of one flash per level. */
+  count?: number;
 }
 
 export const isMilestoneLevel = (level: number): boolean => {
@@ -33,37 +36,19 @@ export const useArenaLevelUp = ({
   const [xpBarAnimating, setXpBarAnimating] = useState(false);
   const [recentLevelUp, setRecentLevelUp] = useState<RecentLevelUp | null>(null);
   const levelUpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const levelUpQueueRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const queueLevelUp = useCallback((levelsGained: number, newLevel: number) => {
     if (levelUpTimerRef.current) clearTimeout(levelUpTimerRef.current);
     levelUpTimerRef.current = null;
-    levelUpQueueRef.current.forEach(t => clearTimeout(t));
-    levelUpQueueRef.current = [];
 
     const total = Math.max(1, levelsGained);
-    const startLevel = newLevel - total + 1;
 
-    // Multiple levels at once (offline catch-up) → show one FX per level
-    // with a short stagger instead of jumping straight to the final level.
-    if (total > 1) {
-      for (let i = 0; i < total; i++) {
-        const level = startLevel + i;
-        const isLast = i === total - 1;
-        levelUpQueueRef.current.push(setTimeout(() => {
-          setRecentLevelUp({ newLevel: level, isMilestone: isMilestoneLevel(level) });
-          if (isLast) {
-            levelUpTimerRef.current = setTimeout(() => {
-              setRecentLevelUp(null);
-              levelUpTimerRef.current = null;
-            }, 2000);
-          }
-        }, i * 1200));
-      }
-      return;
-    }
-
-    setRecentLevelUp({ newLevel, isMilestone: isMilestoneLevel(newLevel) });
+    // Multiple levels at once (offline catch-up) → show ONE aggregated FX
+    // announcing the final level with the total gained. Staggering one flash
+    // per level (1200ms apart) read as "a level-up for every monster killed"
+    // during a big catch-up, and spammed the level-up sound N times.
+    const isMilestone = isMilestoneLevel(newLevel);
+    setRecentLevelUp(total > 1 ? { newLevel, isMilestone, count: total } : { newLevel, isMilestone });
     levelUpTimerRef.current = setTimeout(() => {
       setRecentLevelUp(null);
       levelUpTimerRef.current = null;
@@ -90,7 +75,6 @@ export const useArenaLevelUp = ({
     return () => {
       clearXpNotifications();
       if (levelUpTimerRef.current) clearTimeout(levelUpTimerRef.current);
-      levelUpQueueRef.current.forEach(t => clearTimeout(t));
     };
   }, [clearXpNotifications]);
 
