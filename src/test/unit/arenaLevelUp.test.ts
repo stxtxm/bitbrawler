@@ -94,27 +94,18 @@ describe('useArenaLevelUp - multi-level stagger queue', () => {
     vi.restoreAllMocks();
   });
 
-  it('queueLevelUp(3, 8) staggers through levels 6, 7, 8 then clears', () => {
+  it('queueLevelUp(3, 8) aggregates into a single LEVEL UP ×3 FX at the final level, then clears', () => {
     const { result } = makeHook();
 
     act(() => {
       result.current.queueLevelUp(3, 8);
     });
 
-    act(() => {
-      vi.advanceTimersByTime(0);
-    });
-    expect(result.current.recentLevelUp).toEqual({ newLevel: 6, isMilestone: false });
-
-    act(() => {
-      vi.advanceTimersByTime(1200);
-    });
-    expect(result.current.recentLevelUp).toEqual({ newLevel: 7, isMilestone: false });
-
-    act(() => {
-      vi.advanceTimersByTime(1200);
-    });
-    expect(result.current.recentLevelUp).toEqual({ newLevel: 8, isMilestone: false });
+    // No staggered one-per-level cascade: a single FX announces the whole
+    // catch-up at the final level with the level count (regression: a big
+    // offline catch-up used to fire one flash per level every 1200ms, which
+    // read as "a level-up for every monster killed").
+    expect(result.current.recentLevelUp).toEqual({ newLevel: 8, isMilestone: false, count: 3 });
 
     act(() => {
       vi.advanceTimersByTime(2000);
@@ -142,7 +133,7 @@ describe('useArenaLevelUp - multi-level stagger queue', () => {
     act(() => {
       result.current.queueLevelUp(3, 8);
     });
-    expect(vi.getTimerCount()).toBe(3);
+    expect(vi.getTimerCount()).toBe(1);
 
     unmount();
     expect(vi.getTimerCount()).toBe(0);
@@ -154,10 +145,7 @@ describe('useArenaLevelUp - multi-level stagger queue', () => {
     act(() => {
       result.current.queueLevelUp(3, 8);
     });
-    act(() => {
-      vi.advanceTimersByTime(1200);
-    });
-    expect(result.current.recentLevelUp).toEqual({ newLevel: 7, isMilestone: false });
+    expect(result.current.recentLevelUp).toEqual({ newLevel: 8, isMilestone: false, count: 3 });
 
     act(() => {
       result.current.queueLevelUp(1, 9);
