@@ -340,6 +340,53 @@ function median(values: number[]): number {
   return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid]
 }
 
+// Alert windows: issues/suggestions use a recent window so stale all-time
+// cumulative data (e.g. pre-fix eras) does not keep triggering alerts (#730).
+const RECENT_WINDOW_RUNS = 30
+const RECENT_IDLE_RUNS = 15
+
+// Real character stat keys (short labels parsed from the arena panel). The
+// structured parse can also capture non-stat counters (e.g. 'fights' from the
+// PvE panel) which must not be compared against STATS.MIN_VALUE/MAX_VALUE (#730).
+const STAT_KEYS = new Set(['str', 'vit', 'dex', 'luk', 'int', 'foc'])
+
+// A run "failed completely" when it recorded errors but no fights. Partial runs
+// (halfway) have fights but also recorded errors. Shared by the all-time report
+// categorization and the recent-window error-rate alerts (#730).
+function isErrorRun(r: RunRecord): boolean {
+  return !!r.errors && r.errors.length > 0 && (!r.fights || r.fights.length === 0)
+}
+
+function isHalfwayRun(r: RunRecord): boolean {
+  return !!r.fights && r.fights.length > 0 && !!r.errors && r.errors.length > 0
+}
+
+function isStatKey(key: string): boolean {
+  return STAT_KEYS.has(key)
+}
+
+// Idle fights come from structured idle_fights[] (new) or legacy idle_runner
+// xp_events (backward compat). Shared by the all-time aggregation and the
+// recent-window idle win-rate alert (#730).
+function collectIdleFights(runs: RunRecord[]): IdleFightRecord[] {
+  const fights: IdleFightRecord[] = []
+  for (const r of runs) {
+    if (r.idle_fights && r.idle_fights.length > 0) {
+      fights.push(...r.idle_fights)
+    } else if (r.idle_runner && r.idle_runner.xp_events && r.idle_runner.xp_events.length > 0) {
+      for (const evt of r.idle_runner.xp_events) {
+        fights.push({
+          result: evt.result?.toUpperCase().includes('VICTORY') ? 'victory' : 'defeat',
+          xp: evt.xp ?? null,
+          essence: null,
+          monster: evt.monster ?? null,
+        })
+      }
+    }
+  }
+  return fights
+}
+
 // A run that replaces the character mid-run (QA bot `created-after-*` actions)
 // reads initial_max_hp on the OLD character and final_max_hp on the NEW one, so
 // final drops sharply. Such runs must be excluded from HP/essence growth metrics
@@ -449,8 +496,8 @@ function analyze(stats: RunRecord[]): AnalysisReport {
 
   // Categorize runs
   const validRuns = stats.filter(r => r.fights && r.fights.length > 0)
-  const errorRuns = stats.filter(r => r.errors && r.errors.length > 0 && (!r.fights || r.fights.length === 0))
-  const halfwayRuns = validRuns.filter(r => r.errors && r.errors.length > 0)
+  const errorRuns = stats.filter(isErrorRun)
+  const halfwayRuns = validRuns.filter(isHalfwayRun)
   const successfulRuns = validRuns.filter(r => !r.errors || r.errors.length === 0)
 
   // Aggregate fights
@@ -586,7 +633,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
 
   // XP balance
   if (avgXpWin < 50) issues.push(`Avg XP per win is only ${avgXpWin.toFixed(0)} — may feel unrewarding`)
-  if (xpWinRatio < 2) suggestions.push(`XP win/loss ratio is ${xpWinRatio.toFixed(1)}x (expected ~4x). Adjust COMBAT.XP_WIN or XP_LOSS in gameRules.ts (100/25).`)
+  if (xpWinRatio < 2) suggestions.push(`XP win/loss ratio is ${xpWinRatio.toFixed(1)}x (expected ~4x). Often a matchmaking symptom (#570/#725) — investigate MM before adjusting COMBAT.XP_WIN/XP_LOSS in gameRules.ts (100/25).`)
   if (xpWinRatio > 8) suggestions.push(`XP win/loss ratio is ${xpWinRatio.toFixed(1)}x — very punishing. Consider raising COMBAT.XP_LOSS (currently 25).`)
 
   // Fight duration
@@ -601,16 +648,22 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     suggestions.push(`Characters gain ${avgLevelGained.toFixed(1)} levels/run — very fast progression. Consider increasing XP thresholds.`)
   }
 
-  // Stats balance
+  // Stats balance — only real character stats are compared against
+  // STATS.MIN_VALUE/MAX_VALUE; the QA bot's structured parse can also capture
+  // non-stat counters (e.g. 'fights' from the PvE panel) which must not trigger
+  // stat-balance suggestions (#730).
   if (Object.keys(avgInitialStats).length > 0) {
     for (const [key, val] of Object.entries(avgInitialStats)) {
+      if (!isStatKey(key)) continue
       if (val < 5) suggestions.push(`Average initial ${key.toUpperCase()} is ${val.toFixed(1)} (min=${Math.round(val)}). Consider raising STATS.MIN_VALUE (currently 5).`)
       if (val > 15) suggestions.push(`Average initial ${key.toUpperCase()} is ${val.toFixed(1)} (max=${Math.round(val)}). Consider lowering STATS.MAX_VALUE (currently 15).`)
     }
     // Check stat variance (are all stats roughly equal?)
-    const vals = Object.values(avgInitialStats)
-    const spread = vals.length > 0 ? Math.max(...vals) - Math.min(...vals) : 0
-    if (spread < 1 && vals.length >= 6) {
+    const statVals = Object.entries(avgInitialStats)
+      .filter(([key]) => isStatKey(key))
+      .map(([, v]) => v)
+    const spread = statVals.length > 0 ? Math.max(...statVals) - Math.min(...statVals) : 0
+    if (spread < 1 && statVals.length >= 6) {
       suggestions.push(`All initial stats are nearly identical (spread=${spread.toFixed(1)}). Random stat generation may need more variance.`)
     }
   }
@@ -627,14 +680,21 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     suggestions.push(`No rare or epic items found in ${lootboxOpened.length} lootbox opens. Consider adjusting LOOTBOX_RARITY_WEIGHTS.`)
   }
 
-  // Error rate
-  const errorRate = stats.length > 0 ? errorRuns.length / stats.length : 0
-  const totalErrorRate = stats.length > 0 ? (errorRuns.length + halfwayRuns.length) / stats.length : 0
+  // Error rate — alerts use the recent 30-run window; the all-time cumulative
+  // rate stays in the report, but stale failure eras must not keep triggering
+  // alerts (#730).
+  const recentRuns = stats.slice(-RECENT_WINDOW_RUNS)
+  const recentErrorRuns = recentRuns.filter(isErrorRun)
+  const recentHalfwayRuns = recentRuns.filter(isHalfwayRun)
+  const errorRate = recentRuns.length > 0 ? recentErrorRuns.length / recentRuns.length : 0
+  const totalErrorRate = recentRuns.length > 0
+    ? (recentErrorRuns.length + recentHalfwayRuns.length) / recentRuns.length
+    : 0
   if (errorRate > 0.3) {
-    issues.push(`High error rate: ${(errorRate * 100).toFixed(0)}% of runs failed completely`)
+    issues.push(`High error rate: ${(errorRate * 100).toFixed(0)}% of the last ${recentRuns.length} runs failed completely`)
   }
   if (totalErrorRate > 0.5) {
-    suggestions.push(`High total error rate (${(totalErrorRate * 100).toFixed(0)}% including partial runs). Check for UI stability issues.`)
+    suggestions.push(`High total error rate (${(totalErrorRate * 100).toFixed(0)}% of the last ${recentRuns.length} runs including partial runs). Check for UI stability issues.`)
   }
 
   // Trend direction
@@ -846,8 +906,10 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     if (pveAnalysis.avg_duration_ms > 40000) {
       suggestions.push(`PvE fights avg ${(pveAnalysis.avg_duration_ms / 1000).toFixed(1)}s — may be too long for mobile sessions. Consider reducing monster HP.`)
     }
-    // PvE XP ratio: warn if actual saved XP deviates significantly from expected 2.5x (GAME_RULES.PVE.XP_MODIFIER)
-    if (pveAnalysis.pve_xp_ratio !== null && pveAnalysis.total_fights >= 3) {
+    // PvE XP ratio: warn if actual saved XP deviates significantly from expected 2.5x (GAME_RULES.PVE.XP_MODIFIER).
+    // Gated behind !pve_shifted: pre-shift monster fights are stale (#705) and
+    // must not keep emitting misleading ratio suggestions (#730).
+    if (pveAnalysis.pve_xp_ratio !== null && pveAnalysis.total_fights >= 3 && !pveAnalysis.pve_shifted) {
       const expectedRatio = 2.5
       const tolerance = 0.30
       if (pveAnalysis.pve_xp_ratio < expectedRatio - tolerance) {
@@ -922,27 +984,12 @@ function analyze(stats: RunRecord[]): AnalysisReport {
 
   // --- Idle Analysis ---
   // Collect idle fights from both structured idle_fights[] (new) and legacy idle_runner (backward compat)
-  const allIdleFights: IdleFightRecord[] = []
-  let runsWithIdleDataCount = 0
-  for (const r of validRuns) {
-    let hasIdle = false
-    if (r.idle_fights && r.idle_fights.length > 0) {
-      allIdleFights.push(...r.idle_fights)
-      hasIdle = true
-    } else if (r.idle_runner && r.idle_runner.xp_events && r.idle_runner.xp_events.length > 0) {
-      // Legacy fallback: convert idle_runner.xp_events to IdleFightRecord[]
-      for (const evt of r.idle_runner.xp_events) {
-        allIdleFights.push({
-          result: evt.result?.toUpperCase().includes('VICTORY') ? 'victory' : 'defeat',
-          xp: evt.xp ?? null,
-          essence: null,
-          monster: evt.monster ?? null,
-        })
-      }
-      hasIdle = true
-    }
-    if (hasIdle) runsWithIdleDataCount++
-  }
+  const runsWithIdleData = validRuns.filter(r =>
+    (r.idle_fights && r.idle_fights.length > 0) ||
+    (r.idle_runner && r.idle_runner.xp_events && r.idle_runner.xp_events.length > 0)
+  )
+  const allIdleFights = collectIdleFights(runsWithIdleData)
+  const runsWithIdleDataCount = runsWithIdleData.length
 
   let idleAnalysis: IdleAnalysis | null = null
   if (runsWithIdleDataCount > 0 && allIdleFights.length > 0) {
@@ -1032,11 +1079,21 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     if (idleAnalysis.avg_idle_essence_per_fight > 0.5) {
       suggestions.push(`High idle essence (${idleAnalysis.avg_idle_essence_per_fight.toFixed(2)}/fight). Consider reducing IDLE_CONFIG.ESSENCE.BASE_RATE or LEVEL_SCALE.`)
     }
-    if (idleAnalysis.idle_win_rate < 0.4) {
-      suggestions.push(`Low idle win rate (${(idleAnalysis.idle_win_rate * 100).toFixed(0)}%). Idle monsters may be too strong.`)
-    }
-    if (idleAnalysis.idle_win_rate > 0.9) {
-      suggestions.push(`High idle win rate (${(idleAnalysis.idle_win_rate * 100).toFixed(0)}%). Idle monsters may be too weak.`)
+    // Idle win-rate alerts use the recent idle-data window (#730): the all-time
+    // cumulative rate includes the pre-#727 era (STAT_MULTIPLIER 20.0) and would
+    // keep flagging "too strong" forever even after the fix.
+    const recentIdleRuns = runsWithIdleData.slice(-RECENT_IDLE_RUNS)
+    const recentIdleFights = collectIdleFights(recentIdleRuns)
+    const recentIdleWinRate = recentIdleFights.length > 0
+      ? recentIdleFights.filter(f => f.result === 'victory').length / recentIdleFights.length
+      : null
+    if (recentIdleWinRate !== null) {
+      if (recentIdleWinRate < 0.4) {
+        suggestions.push(`Low idle win rate (${(recentIdleWinRate * 100).toFixed(0)}% over the last ${recentIdleRuns.length} idle runs). Idle monsters may be too strong.`)
+      }
+      if (recentIdleWinRate > 0.9) {
+        suggestions.push(`High idle win rate (${(recentIdleWinRate * 100).toFixed(0)}% over the last ${recentIdleRuns.length} idle runs). Idle monsters may be too weak.`)
+      }
     }
   }
 

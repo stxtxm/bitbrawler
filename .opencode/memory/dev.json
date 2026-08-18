@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-"last_session": "2026-08-17T19:42:47Z",
+  "last_session": "2026-08-18T19:35:31Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -233,6 +233,11 @@
       "lesson": "Issue #723 PvE balance fix: STAT_MULTIPLIER 20->1.0, HP_MULTIPLIER 22->1.0 (LEVEL_BOOST=3 kept). QA showed idle 2.8% win rate (71 fights, 0 wins) because raw monster stats ~200 vs player ~10 after x20/x22 multipliers -> player dealt min-clamp 20 dmg vs 2000-8000 HP pools, mathematically unbeatable. Monte-Carlo verification (200 runs/level, naked player): LVL1 100%, LVL3 73%, LVL5 83%, LVL10 84%, LVL15 75%, LVL20 49%, LVL25 53%, LVL30 41% — early game (where all QA runs sit, avg end level ~2.5) now winnable, matches targets (PvE 70-85%, idle 40-70%). Gotchas: (1) gameRules.test.ts had hardcoded toBe(20.0)/toBe(22.0) AND toBeGreaterThan(1) assertions — both replaced when multiplier drops to 1.0; (2) regression test 'typical early player beats goblin' with flat-10 stats / HP100 was FLAKY (95.6% win rate over 2000 sims -> ~36% chance of >=1 loss over 10 iterations). Fixed by modeling a realistic fresh player (stats 12, HP 150 = 66 allocated points) which wins 100% over 2000 sims. Pattern: when asserting 'player should win' against a monster, model a REAL fresh character (generated with 66 points), not flat baseline stats — flat-10 is weaker than any real character and makes the test RNG-flaky. Patch note added as 5.4.1. 1443 tests green, lint + build OK.",
       "issue": "#723",
       "date": "2026-08-17"
+    },
+    {
+      "lesson": "Issue #730 analyze-qa-stats cumulative false positives: alerts (issues/suggestions) must use recent windows, not all-time cumulative data. 4 fixes: (1) error-rate alerts use last 30 runs (stats.slice(-RECENT_WINDOW_RUNS)) while report keeps all-time error_runs; (2) idle win-rate alerts use last 15 idle-data runs (collectIdleFights helper shared between all-time aggregation and recent window) — all-time 23% included pre-#727 era but last 15 = 79%; (3) PvE XP ratio suggestion gated behind !pve_analysis.pve_shifted (pre-shift monster fights #705 are stale); (4) stats-balance suggestions skip non-stat keys via STAT_KEYS whitelist ['str','vit','dex','luk','int','foc'] — QA bot structured parse captures 'fights' counter (StatsPanel .compact-stat-label FIGHTS) which triggered 'Average initial FIGHTS is 0.0 — consider raising STATS.MIN_VALUE'. Also annotated XP win/loss ratio suggestion as matchmaking symptom (#570/#725). Pattern: when a cumulative metric contradicts recent health, add a recent-window alert path (mirror helper + source-contract test, following #637/#645/#696/#705 patterns). Test gotcha: assertion string 'recentHalfwayRuns.filter(isHalfwayRun)' was wrong — the variable is computed FROM recentRuns (recentRuns.filter(isHalfwayRun)).",
+      "issue": "#730",
+      "date": "2026-08-18"
     }
   ]
 }

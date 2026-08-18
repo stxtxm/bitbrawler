@@ -35,11 +35,22 @@ interface LootboxResult {
   raw_text?: string
 }
 
+interface IdleFightRecord {
+  result: 'victory' | 'defeat'
+  xp: number | null
+  essence: number | null
+  monster?: string | null
+}
+
 interface RunRecord {
   date: string
   run: string
   character: string
   fights: FightRecord[]
+  idle_fights?: IdleFightRecord[]
+  idle_runner?: {
+    xp_events?: Array<{ result?: string; xp?: number; monster?: string }>
+  }
   lootbox?: LootboxResult | null
   initial_equipment?: Array<{ slot: string; name: string; rarity?: string }> | null
   final_equipment?: Array<{ slot: string; name: string; rarity?: string }> | null
@@ -344,6 +355,68 @@ function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis 
     would_purchase_runs: wouldPurchaseRuns,
     simulated_purchase_rate: Math.round((wouldPurchaseRuns / runsWithShopData.length) * 1000) / 1000,
   }
+}
+
+// ── Recent-window alert helpers (mirror of analyze-qa-stats.ts #730) ──
+// Issues/suggestions must be computed on a recent window: the all-time
+// cumulative rate stays in the report, but stale eras (pre-fix runs) must not
+// keep triggering the same false-positive alerts forever.
+
+const RECENT_WINDOW_RUNS = 30
+const RECENT_IDLE_RUNS = 15
+
+// Real character stat keys (short labels parsed from the arena panel). The
+// structured parse can also capture non-stat counters (e.g. 'fights' from the
+// PvE panel) which must not be compared against STATS.MIN_VALUE/MAX_VALUE.
+const STAT_KEYS = new Set(['str', 'vit', 'dex', 'luk', 'int', 'foc'])
+
+function isErrorRun(r: RunRecord): boolean {
+  return !!r.errors && r.errors.length > 0 && (!r.fights || r.fights.length === 0)
+}
+
+function isHalfwayRun(r: RunRecord): boolean {
+  return !!r.fights && r.fights.length > 0 && !!r.errors && r.errors.length > 0
+}
+
+function computeRecentErrorCounts(
+  runs: RunRecord[],
+  windowSize = RECENT_WINDOW_RUNS,
+): { recent_runs: number; error_runs: number; halfway_runs: number } {
+  const recent = runs.slice(-windowSize)
+  return {
+    recent_runs: recent.length,
+    error_runs: recent.filter(isErrorRun).length,
+    halfway_runs: recent.filter(isHalfwayRun).length,
+  }
+}
+
+function collectIdleFights(runs: RunRecord[]): IdleFightRecord[] {
+  const fights: IdleFightRecord[] = []
+  for (const r of runs) {
+    if (r.idle_fights && r.idle_fights.length > 0) {
+      fights.push(...r.idle_fights)
+    } else if (r.idle_runner?.xp_events?.length) {
+      for (const evt of r.idle_runner.xp_events) {
+        fights.push({
+          result: evt.result?.toUpperCase().includes('VICTORY') ? 'victory' : 'defeat',
+          xp: evt.xp ?? null,
+          essence: null,
+          monster: evt.monster ?? null,
+        })
+      }
+    }
+  }
+  return fights
+}
+
+function computeRecentIdleWinRate(runsWithIdleData: RunRecord[], windowSize = RECENT_IDLE_RUNS): number | null {
+  const recentFights = collectIdleFights(runsWithIdleData.slice(-windowSize))
+  if (recentFights.length === 0) return null
+  return recentFights.filter(f => f.result === 'victory').length / recentFights.length
+}
+
+function isStatKey(key: string): boolean {
+  return STAT_KEYS.has(key)
 }
 
 // ── Tests ──
@@ -1584,5 +1657,164 @@ describe('QA Bot Equipment Parse Contract (#710)', () => {
     expect(source).toContain('isValidEquippedItemName')
     expect(source).toContain('EQUIPMENT_GROUP_LABELS')
     expect(source).toContain('filter')
+  })
+})
+
+describe('QA Recent-Window Alert Analysis (#730)', () => {
+  describe('computeRecentErrorCounts', () => {
+    it('uses only the last 30 runs so stale all-time failures do not trigger alerts', () => {
+      const runs: RunRecord[] = []
+      for (let i = 0; i < 20; i++) {
+        runs.push({ date: '2026-08-18', run: `old-${i}`, character: 'C', fights: [], errors: ['boom'] })
+      }
+      for (let i = 0; i < 30; i++) {
+        runs.push({
+          date: '2026-08-18', run: `new-${i}`, character: 'C',
+          fights: [{ result: 'victory', xp: 90, fight_duration_ms: 1000 }],
+          errors: [],
+        })
+      }
+      const counts = computeRecentErrorCounts(runs)
+      expect(counts.recent_runs).toBe(30)
+      expect(counts.error_runs).toBe(0)
+      expect(counts.halfway_runs).toBe(0)
+    })
+
+    it('flags errors when the recent window itself has a high failure rate', () => {
+      const runs: RunRecord[] = []
+      for (let i = 0; i < 12; i++) {
+        runs.push({ date: '2026-08-18', run: `err-${i}`, character: 'C', fights: [], errors: ['timeout'] })
+      }
+      for (let i = 0; i < 18; i++) {
+        runs.push({
+          date: '2026-08-18', run: `ok-${i}`, character: 'C',
+          fights: [{ result: 'victory', xp: 90, fight_duration_ms: 1000 }],
+          errors: [],
+        })
+      }
+      const counts = computeRecentErrorCounts(runs)
+      expect(counts.recent_runs).toBe(30)
+      expect(counts.error_runs).toBe(12)
+      expect(counts.error_runs / counts.recent_runs).toBeGreaterThan(0.3)
+    })
+
+    it('counts halfway (partial) runs separately in the recent window', () => {
+      const runs: RunRecord[] = [
+        {
+          date: '2026-08-18', run: 'partial', character: 'C',
+          fights: [{ result: 'victory', xp: 90, fight_duration_ms: 1000 }],
+          errors: ['mid-run failure'],
+        },
+        {
+          date: '2026-08-18', run: 'ok', character: 'C',
+          fights: [{ result: 'victory', xp: 90, fight_duration_ms: 1000 }],
+          errors: [],
+        },
+      ]
+      const counts = computeRecentErrorCounts(runs)
+      expect(counts.halfway_runs).toBe(1)
+      expect(counts.error_runs).toBe(0)
+    })
+
+    it('returns zero counts when there are no runs at all', () => {
+      const counts = computeRecentErrorCounts([])
+      expect(counts.recent_runs).toBe(0)
+      expect(counts.error_runs).toBe(0)
+      expect(counts.halfway_runs).toBe(0)
+    })
+  })
+
+  describe('computeRecentIdleWinRate', () => {
+    it('computes the win rate over the last 15 runs that have idle data, ignoring older eras', () => {
+      const runs: RunRecord[] = []
+      for (let i = 0; i < 5; i++) {
+        runs.push({
+          date: '2026-08-18', run: `old-${i}`, character: 'C', fights: [], errors: [],
+          idle_fights: [{ result: 'defeat', xp: 10, essence: 0 }],
+        })
+      }
+      for (let i = 0; i < 10; i++) {
+        runs.push({
+          date: '2026-08-18', run: `new-w-${i}`, character: 'C', fights: [], errors: [],
+          idle_fights: [{ result: 'victory', xp: 20, essence: 0 }],
+        })
+      }
+      for (let i = 0; i < 5; i++) {
+        runs.push({
+          date: '2026-08-18', run: `new-l-${i}`, character: 'C', fights: [], errors: [],
+          idle_fights: [{ result: 'defeat', xp: 10, essence: 0 }],
+        })
+      }
+      const rate = computeRecentIdleWinRate(runs)
+      expect(rate).not.toBeNull()
+      expect(rate).toBeCloseTo(10 / 15, 5)
+    })
+
+    it('returns null when no recent idle data exists', () => {
+      const runs: RunRecord[] = [
+        { date: '2026-08-18', run: 'r1', character: 'C', fights: [], errors: [] },
+      ]
+      expect(computeRecentIdleWinRate(runs)).toBeNull()
+    })
+
+    it('falls back to legacy idle_runner xp_events when idle_fights is missing', () => {
+      const runs: RunRecord[] = [
+        {
+          date: '2026-08-18', run: 'legacy1', character: 'C', fights: [], errors: [],
+          idle_runner: { xp_events: [{ result: 'VICTORY', xp: 25 }] },
+        },
+        {
+          date: '2026-08-18', run: 'legacy2', character: 'C', fights: [], errors: [],
+          idle_runner: { xp_events: [{ result: 'defeat', xp: 10 }] },
+        },
+      ]
+      const rate = computeRecentIdleWinRate(runs)
+      expect(rate).not.toBeNull()
+      expect(rate).toBe(0.5)
+    })
+  })
+
+  describe('isStatKey', () => {
+    it('treats the six character stats as stat keys', () => {
+      for (const key of ['str', 'vit', 'dex', 'luk', 'int', 'foc']) {
+        expect(isStatKey(key)).toBe(true)
+      }
+    })
+
+    it('excludes non-stat counters captured by the structured parse (fights)', () => {
+      expect(isStatKey('fights')).toBe(false)
+      expect(isStatKey('monster')).toBe(false)
+    })
+  })
+
+  describe('analyze-qa-stats.ts source contract (#730)', () => {
+    it('alerts on a recent error-rate window instead of the all-time cumulative rate', () => {
+      const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+      expect(source).toContain('stats.slice(-RECENT_WINDOW_RUNS)')
+      expect(source).toContain('recentRuns.filter(isErrorRun)')
+      expect(source).toContain('recentRuns.filter(isHalfwayRun)')
+    })
+
+    it('gates the PvE XP ratio suggestion behind !pve_analysis.pve_shifted', () => {
+      const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+      expect(source).toContain('pveAnalysis.total_fights >= 3 && !pveAnalysis.pve_shifted')
+    })
+
+    it('skips non-stat keys (fights) in the stats balance suggestions', () => {
+      const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+      expect(source).toContain('STAT_KEYS.has(key)')
+      expect(source).toContain("'str', 'vit', 'dex', 'luk', 'int', 'foc'")
+    })
+
+    it('uses a recent idle-data window for the idle win-rate suggestion', () => {
+      const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+      expect(source).toContain('runsWithIdleData.slice(-RECENT_IDLE_RUNS)')
+      expect(source).toContain('collectIdleFights(recentIdleRuns)')
+    })
+
+    it('annotates the XP win/loss ratio suggestion as a matchmaking symptom (#570/#725)', () => {
+      const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+      expect(source).toContain('#570/#725')
+    })
   })
 })
