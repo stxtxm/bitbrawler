@@ -50185,5 +50185,347 @@
       "purchased_offer": null,
       "essence_after_purchase": 2
     }
+  },
+  {
+    "date": "2026-08-18T04:01:27.751Z",
+    "run": "2026-08-18",
+    "character": "WILDARRAY",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 81,
+        "fight_duration_ms": 21239,
+        "max_hp": 209,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 0.68
+      },
+      {
+        "result": "victory",
+        "xp": 81,
+        "fight_duration_ms": 13720,
+        "max_hp": 220,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 0.68
+      },
+      {
+        "result": "defeat",
+        "xp": 28,
+        "fight_duration_ms": 15571,
+        "max_hp": 220,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 1.31
+      },
+      {
+        "result": "victory",
+        "xp": 89,
+        "fight_duration_ms": 13673,
+        "max_hp": 240,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 1.31
+      },
+      {
+        "result": "victory",
+        "xp": 103,
+        "fight_duration_ms": 21800,
+        "max_hp": 257,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 2.4
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Bone Dagger",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 1,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 11,
+      "vit": 12,
+      "dex": 6,
+      "luk": 6,
+      "int": 23,
+      "foc": 8,
+      "fights": 0
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 120
+    },
+    "initial_max_hp": 196,
+    "initial_equipment": [],
+    "initial_streak": 0,
+    "final_stats": {
+      "level": 5,
+      "xp": 109,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 11,
+      "vit": 13,
+      "dex": 6,
+      "luk": 6,
+      "int": 24,
+      "foc": 10,
+      "last xp": 45,
+      "fights": 3
+    },
+    "final_max_hp": 257,
+    "final_equipment": [],
+    "final_streak": 0,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_locked_level": 30,
+      "boss_name": "VOID TITAN",
+      "boss_level": null,
+      "boss_hp": null,
+      "boss_max_hp": null
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 1,
+        "new_level": 2
+      },
+      {
+        "fight_number": 2,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 2,
+        "new_level": 3
+      },
+      {
+        "fight_number": 4,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 3,
+        "new_level": 4
+      },
+      {
+        "fight_number": 5,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 4,
+        "new_level": 5
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 20249,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "slime",
+        "ogre"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 88,
+      "xp_events": [
+        {
+          "time_ms": 518,
+          "xp": 40,
+          "monster": "slime",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 11661,
+          "xp": 48,
+          "monster": "slime",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        518,
+        8590,
+        10123,
+        11661,
+        19737
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 40,
+        "monster": "slime"
+      },
+      {
+        "result": "victory",
+        "xp": 48,
+        "monster": "slime"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.31,
+      "next_level_eta": "⬆ 25s",
+      "power_ratio": "⚔ 1.22x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.12x",
+      "interval": "11.2s",
+      "streak_bonus": "🔥 3-win streak (+3%)"
+    },
+    "initial_essence": 0.23,
+    "final_essence": 2.4,
+    "essence": {
+      "before_idle": 0.23,
+      "after_idle": 0.68,
+      "per_fight": [
+        0.68,
+        0.68,
+        1.31,
+        1.31,
+        2.4
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": 2,
+      "shop_after": 2,
+      "final": 2.4,
+      "flow": {
+        "idle_gained": 0.45,
+        "fights_change": 1.72,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": 0,
+        "net_change": 2.17
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": true,
+      "offline_time": "⏰ 2m 48s",
+      "fights": 8,
+      "xp_gained": 215,
+      "essence_gained": 3.13,
+      "levels_gained": null,
+      "claimed": true
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": true,
+      "skip_reason": "forge requires LVL 6"
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 2,
+      "essence_after": 2,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Rusty Sword",
+            "rarity": "COMMON",
+            "price": 150
+          },
+          {
+            "name": "Crystal Pendant",
+            "rarity": "EPIC",
+            "price": 250
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 350
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 2
+      }
+    },
+    "errors": [],
+    "load_times_ms": {
+      "home": 2278,
+      "arena": 3112
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Rusty Sword",
+          "rarity": "COMMON",
+          "price": 150
+        },
+        {
+          "name": "Crystal Pendant",
+          "rarity": "EPIC",
+          "price": 250
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 350
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 2
+    }
   }
 ]
