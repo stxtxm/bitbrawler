@@ -55311,5 +55311,260 @@
       "purchased_offer": 0,
       "essence_after_purchase": 847
     }
+  },
+  {
+    "date": "2026-08-19T22:01:25.346Z",
+    "run": "2026-08-20",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Bone Dagger",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 0,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 13,
+      "vit": 28,
+      "dex": 13,
+      "luk": 12,
+      "int": 14,
+      "foc": 15,
+      "fights": 0
+    },
+    "initial_level": 24,
+    "initial_xp": {
+      "current": 5824,
+      "max": 18232
+    },
+    "initial_max_hp": 723,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 24,
+      "xp": 6778,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 13,
+      "vit": 28,
+      "dex": 13,
+      "luk": 12,
+      "int": 14,
+      "foc": 15,
+      "last xp": 114,
+      "fights": 2
+    },
+    "final_max_hp": 723,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 2,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20233,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "goblin"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 222,
+      "xp_events": [
+        {
+          "time_ms": 517,
+          "xp": 108,
+          "monster": "goblin",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 12168,
+          "xp": 114,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        517,
+        9099,
+        10632,
+        12168
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 108,
+        "monster": "goblin"
+      },
+      {
+        "result": "victory",
+        "xp": 114,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 3.26,
+      "next_level_eta": "⬆ 18m 36s",
+      "power_ratio": "⚔ 0.75x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.09x",
+      "interval": "11.5s",
+      "streak_bonus": "🔥 4-win streak (+2%)"
+    },
+    "initial_essence": 1273.96,
+    "final_essence": 1212.46,
+    "essence": {
+      "before_idle": 1273.96,
+      "after_idle": 1274.58,
+      "per_fight": [],
+      "forge_before": 1274,
+      "forge_after_salvage": 1279,
+      "forge_after_fusion": 1279,
+      "forge_after_upgrade": 1229,
+      "forge_after": 1229,
+      "shop_before": 1232,
+      "shop_after": 1212,
+      "final": 1212.46,
+      "flow": {
+        "idle_gained": 0.62,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 50,
+        "forge_net": -45,
+        "shop_cost": 20,
+        "net_change": -61.5
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 1274,
+      "essence_after_salvage": 1279,
+      "essence_after_fusion": 1279,
+      "essence_after_upgrade": 1229,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 1229,
+      "items_after": 1,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": 50,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "COMMON",
+      "cost": 20,
+      "essence_before": 1232,
+      "essence_after": 1212,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Broad Axe",
+            "rarity": "UNCOMMON",
+            "price": 20
+          },
+          {
+            "name": "Witchblade",
+            "rarity": "EPIC",
+            "price": 60
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 35
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 1212
+      }
+    },
+    "errors": [],
+    "load_times_ms": {
+      "home": 2139,
+      "arena": 839
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Broad Axe",
+          "rarity": "UNCOMMON",
+          "price": 20
+        },
+        {
+          "name": "Witchblade",
+          "rarity": "EPIC",
+          "price": 60
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 35
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 1212
+    }
   }
 ]
