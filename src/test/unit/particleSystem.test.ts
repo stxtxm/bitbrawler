@@ -125,3 +125,36 @@ describe('ParticleSystem - combo & xp_burst types', () => {
     expect(validTypes).toContain('xp_burst');
   });
 });
+
+describe('ParticleSystem - recycling stale text', () => {
+  let ps: ParticleSystem;
+  let container: HTMLElement;
+
+  beforeEach(() => {
+    ps = new ParticleSystem();
+    container = document.createElement('div');
+    ps.mount(container);
+  });
+
+  afterEach(() => {
+    ps.destroy();
+  });
+
+  it('clears stale text when a text particle is recycled into a non-text type', () => {
+    ps.emit('damage', 100, 100, 1, 42);
+    expect(container.children.length).toBe(1);
+    const textEl = container.children[0] as HTMLElement;
+    expect(textEl.textContent).toBe('42');
+    expect(textEl.style.zIndex).toBe('20');
+
+    (ps as any).particles[0].life = -1;
+    (ps as any).tick(performance.now() + 2000);
+    expect(container.children.length).toBe(0);
+
+    ps.emit('dust', 100, 100, 1);
+    expect(container.children.length).toBe(1);
+    const dustEl = container.children[0] as HTMLElement;
+    expect(dustEl.textContent).toBe('');
+    expect(dustEl.style.zIndex).toBe('15');
+  });
+});

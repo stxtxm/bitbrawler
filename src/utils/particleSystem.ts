@@ -84,6 +84,7 @@ export class ParticleSystem {
       // allocating a new one on every emission.
       const particle = this.acquire();
       Object.assign(particle, seed);
+      particle.text = seed.text;
 
       const el = particle.el ?? document.createElement('span');
       el.className = `particle particle-${type}`;
