@@ -54803,5 +54803,259 @@
       "purchased_offer": 0,
       "essence_after_purchase": 106
     }
+  },
+  {
+    "date": "2026-08-19T13:01:29.133Z",
+    "run": "2026-08-19",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 0,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 9,
+      "vit": 26,
+      "dex": 13,
+      "luk": 12,
+      "int": 12,
+      "foc": 14,
+      "fights": 0
+    },
+    "initial_level": 15,
+    "initial_xp": {
+      "current": 4296,
+      "max": 7241
+    },
+    "initial_max_hp": 543,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 15,
+      "xp": 4684,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 9,
+      "vit": 26,
+      "dex": 13,
+      "luk": 12,
+      "int": 12,
+      "foc": 14,
+      "last xp": 109,
+      "fights": 2
+    },
+    "final_max_hp": 543,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20178,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "wraith",
+        "goblin"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 217,
+      "xp_events": [
+        {
+          "time_ms": 515,
+          "xp": 108,
+          "monster": "wraith",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 12128,
+          "xp": 109,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        515,
+        9080,
+        10603,
+        12128
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 108,
+        "monster": "wraith"
+      },
+      {
+        "result": "victory",
+        "xp": 109,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.37,
+      "next_level_eta": "⬆ 6m 0s",
+      "power_ratio": "⚔ 0.83x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.06x",
+      "interval": "11.5s",
+      "streak_bonus": "🔥 24-win streak (+22%)"
+    },
+    "initial_essence": 178.11,
+    "final_essence": 80.65,
+    "essence": {
+      "before_idle": 178.11,
+      "after_idle": 178.57,
+      "per_fight": [],
+      "forge_before": 178,
+      "forge_after_salvage": 228,
+      "forge_after_fusion": 228,
+      "forge_after_upgrade": 228,
+      "forge_after": 228,
+      "shop_before": 230,
+      "shop_after": 80,
+      "final": 80.65,
+      "flow": {
+        "idle_gained": 0.46,
+        "fights_change": null,
+        "salvage_gained": 50,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 50,
+        "shop_cost": 150,
+        "net_change": -97.46
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 178,
+      "essence_after_salvage": 228,
+      "essence_after_fusion": 228,
+      "essence_after_upgrade": 228,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": 228,
+      "items_after": 1,
+      "salvage_essence_gained": 50,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "COMMON",
+      "cost": 150,
+      "essence_before": 230,
+      "essence_after": 80,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Scale Mail",
+            "rarity": "UNCOMMON",
+            "price": 150
+          },
+          {
+            "name": "Tempest Blade",
+            "rarity": "EPIC",
+            "price": 250
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 350
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 80
+      }
+    },
+    "errors": [],
+    "load_times_ms": {
+      "home": 1510,
+      "arena": 855
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Scale Mail",
+          "rarity": "UNCOMMON",
+          "price": 150
+        },
+        {
+          "name": "Tempest Blade",
+          "rarity": "EPIC",
+          "price": 250
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 350
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 80
+    }
   }
 ]
