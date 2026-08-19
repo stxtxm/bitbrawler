@@ -2,14 +2,12 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
 import { useSound } from '../../hooks/useSound';
-import { SHOP_OFFERS } from '../../data/shopConstants';
+import { SHOP_OFFERS, REROLL_COST } from '../../data/shopConstants';
 import { ITEM_ASSETS } from '../../data/itemAssets';
 import { getShopOffers, canBuyOffer, isOfferSoldOut, type ShopOffer } from '../../utils/shopUtils';
 import { isRerollUsed } from '../../utils/shopStorage';
 import { PixelItemIcon } from '../PixelItemIcon';
 import '../../styles/components/_forge.scss';
-
-const REROLL_COST = 25;
 
 interface ShopPanelProps {
   onClose: () => void;
@@ -89,7 +87,7 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
     if (rerolling || rerollUsed) return;
     if ((activeCharacter?.essence ?? 0) < REROLL_COST) {
       play('error');
-      notify('Not enough essence to reroll (25 🜁).', 'error', 3000);
+      notify(`Not enough essence to reroll (${REROLL_COST} 🜁).`, 'error', 3000);
       return;
     }
     setShowRerollConfirm(true);
@@ -104,7 +102,7 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
         setRerolledOffers(newOffers);
         setRerollUsed(true);
         play('reroll');
-        notify('Shop offers rerolled! (-25 🜁)', 'success', 3000);
+        notify(`Shop offers rerolled! (-${REROLL_COST} 🜁)`, 'success', 3000);
       } else {
         play('error');
         notify('Reroll failed — not enough essence or already used today.', 'error', 3000);

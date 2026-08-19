@@ -106,6 +106,9 @@ describe('ShopPanel', () => {
     setupGame();
     render(<ShopPanel onClose={vi.fn()} />);
     for (const offer of SHOP_OFFERS) {
+      // Objet épique (index 3) only appears as a replacement at LVL >= 10;
+      // the LVL 5 test character never sees it (issue #726 epic unlock gate).
+      if (offer.label === 'Objet épique') continue;
       expect(screen.getByText(`${offer.price} 💎`)).toBeTruthy();
     }
   });
@@ -144,7 +147,7 @@ describe('ShopPanel', () => {
   });
 
   it('buy buttons are disabled when character has insufficient essence', () => {
-    setupGame({ essence: 50, activeCharacter: makeCharacter({ essence: 50 }) });
+    setupGame({ essence: 10, activeCharacter: makeCharacter({ essence: 10 }) });
     render(<ShopPanel onClose={vi.fn()} />);
     const buyBtns = screen.getAllByRole('button', { name: /buy/i });
     buyBtns.forEach(btn => {
@@ -152,8 +155,8 @@ describe('ShopPanel', () => {
     });
   });
 
-  it('offer 2 (lootbox) buy button is disabled when essence < 350', () => {
-    setupGame({ essence: 300, activeCharacter: makeCharacter({ essence: 300 }) });
+  it('offer 2 (lootbox) buy button is disabled when essence < 35', () => {
+    setupGame({ essence: 30, activeCharacter: makeCharacter({ essence: 30 }) });
     render(<ShopPanel onClose={vi.fn()} />);
     const buyBtns = screen.getAllByRole('button', { name: /buy/i });
     // Last offer (lootbox) should be disabled
@@ -161,7 +164,7 @@ describe('ShopPanel', () => {
   });
 
   it('shows insufficient essence warning on disabled buttons', () => {
-    setupGame({ essence: 50, activeCharacter: makeCharacter({ essence: 50 }) });
+    setupGame({ essence: 10, activeCharacter: makeCharacter({ essence: 10 }) });
     render(<ShopPanel onClose={vi.fn()} />);
     // Each disabled button should have a title indicating insufficient essence
     const buyBtns = screen.getAllByRole('button', { name: /buy/i });
@@ -264,11 +267,11 @@ describe('ShopPanel', () => {
     it('shows reroll button text with cost', () => {
       setupGame({ essence: 100, activeCharacter: makeCharacter({ essence: 100 }) });
       render(<ShopPanel onClose={vi.fn()} />);
-      expect(screen.getByText(/RELANCE.*25/)).toBeTruthy();
+      expect(screen.getByText(/RELANCE.*10/)).toBeTruthy();
     });
 
-    it('reroll button is disabled when character has less than 25 essence', () => {
-      setupGame({ essence: 10, activeCharacter: makeCharacter({ essence: 10 }) });
+    it('reroll button is disabled when character has less than 10 essence', () => {
+      setupGame({ essence: 5, activeCharacter: makeCharacter({ essence: 5 }) });
       render(<ShopPanel onClose={vi.fn()} />);
       const rerollBtn = screen.getByRole('button', { name: /reroll shop offers/i });
       expect(rerollBtn).toBeDisabled();
@@ -402,8 +405,8 @@ describe('ShopPanel', () => {
       });
     });
 
-    it('shows insufficient essence notification when clicking reroll with < 25 essence', async () => {
-      setupGame({ essence: 10, activeCharacter: makeCharacter({ essence: 10 }) });
+    it('shows insufficient essence notification when clicking reroll with < 10 essence', async () => {
+      setupGame({ essence: 5, activeCharacter: makeCharacter({ essence: 5 }) });
       render(<ShopPanel onClose={vi.fn()} />);
       const rerollBtn = screen.getByRole('button', { name: /reroll shop offers/i });
       // Button is disabled, clicking won't trigger handleRerollClick

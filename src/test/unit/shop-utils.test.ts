@@ -163,6 +163,32 @@ describe('shop-utils (TDD)', () => {
       }
     });
 
+    it('returns no epic items for LVL < 10 (epic unlock gate, issue #726)', () => {
+      const char = makeCharacter({ level: 5, inventory: [] });
+      for (const rng of [() => 0, () => 0.5, () => 0.99]) {
+        const offers = getShopOffers(char, ITEM_ASSETS, getTodayStr(), rng);
+        for (const offer of offers) {
+          if (offer.type === 'item' && offer.item) {
+            expect(offer.item.rarity).not.toBe('epic');
+          }
+        }
+      }
+    });
+
+    it('still guarantees an epic offer at LVL >= 10 (epic unlock gate, issue #726)', () => {
+      const char = makeCharacter({ level: 12, inventory: [] });
+      const offers = getShopOffers(char, ITEM_ASSETS, getTodayStr(), () => 0);
+      const epics = offers.filter(o => o.item?.rarity === 'epic');
+      expect(epics.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('cheapest offer is reachable within 3-5 days of real essence income (~4.75/run, issue #726)', () => {
+      const dailyIncome = 4.75;
+      const firstPurchaseDays = SHOP_OFFERS[0].price / dailyIncome;
+      expect(SHOP_OFFERS[0].price).toBeLessThanOrEqual(25);
+      expect(firstPurchaseDays).toBeLessThanOrEqual(5.3);
+    });
+
     it('filters by date-based seed so same-day offers are identical regardless of call order', () => {
       const char = makeCharacter({ level: 5 });
       const dateStr = '2026-07-06';
@@ -183,7 +209,7 @@ describe('shop-utils (TDD)', () => {
     });
 
     it('returns false when character does not have enough essence', () => {
-      const char = makeCharacter({ essence: 50 });
+      const char = makeCharacter({ essence: 15 });
       expect(canBuyOffer(0, char)).toBe(false);
     });
 
@@ -247,7 +273,7 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
       const result = buyShopOffer(0, char, ITEM_ASSETS, getTodayStr(), () => 0);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(350); // 500 - 150
+      expect(result!.essence).toBe(480); // 500 - 20 (issue #726 rebalance)
       expect(result!.inventory).toHaveLength(1);
     });
 
@@ -272,7 +298,7 @@ describe('shop-utils (TDD)', () => {
     });
 
     it('returns null when not enough essence', () => {
-      const char = makeCharacter({ essence: 50, inventory: [] });
+      const char = makeCharacter({ essence: 15, inventory: [] });
       const result = buyShopOffer(0, char, ITEM_ASSETS, getTodayStr());
       expect(result).toBeNull();
     });
@@ -309,7 +335,7 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
       const result = buyShopOffer(2, char, ITEM_ASSETS, getTodayStr(), () => 0);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(150); // 500 - 350
+      expect(result!.essence).toBe(465); // 500 - 35 (issue #726 rebalance)
       expect(result!.inventory).toHaveLength(1);
       const itemData = ITEM_ASSETS.find(a => a.id === result!.inventory![0]);
       expect(itemData).toBeDefined();
@@ -319,23 +345,27 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 600, inventory: [] });
       const result = buyShopOffer(2, char, ITEM_ASSETS, getTodayStr(), () => 0.5);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(250); // 600 - 350
+      expect(result!.essence).toBe(565); // 600 - 35 (issue #726 rebalance)
     });
   });
 
   // ─── getShopPrice ────────────────────────────────────────────────────────
 
   describe('getShopPrice', () => {
-    it('returns 150 for offer 0', () => {
-      expect(getShopPrice(0)).toBe(150);
+    it('returns 20 for offer 0', () => {
+      expect(getShopPrice(0)).toBe(20);
     });
 
-    it('returns 250 for offer 1', () => {
-      expect(getShopPrice(1)).toBe(250);
+    it('returns 40 for offer 1', () => {
+      expect(getShopPrice(1)).toBe(40);
     });
 
-    it('returns 350 for offer 2', () => {
-      expect(getShopPrice(2)).toBe(350);
+    it('returns 35 for offer 2', () => {
+      expect(getShopPrice(2)).toBe(35);
+    });
+
+    it('returns 60 for offer 3 (Objet épique)', () => {
+      expect(getShopPrice(3)).toBe(60);
     });
 
     it('throws for invalid index', () => {
@@ -374,7 +404,7 @@ describe('shop-utils (TDD)', () => {
       const result = rerollShopOffers(char, ITEM_ASSETS, getTodayStr());
       expect(result).not.toBeNull();
       expect(result!.offers).toHaveLength(4);
-      expect(result!.character.essence).toBe(75); // 100 - 25
+      expect(result!.character.essence).toBe(90); // 100 - 10 (issue #726 rebalance)
     });
 
     it('returns offers with valid structure', () => {
@@ -389,8 +419,8 @@ describe('shop-utils (TDD)', () => {
       });
     });
 
-    it('returns null when character does not have 25 essence', () => {
-      const char = makeCharacter({ essence: 10 });
+    it('returns null when character does not have 10 essence', () => {
+      const char = makeCharacter({ essence: 5 });
       const result = rerollShopOffers(char, ITEM_ASSETS, getTodayStr());
       expect(result).toBeNull();
     });
@@ -429,7 +459,7 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 200 });
       const result = rerollShopOffers(char, ITEM_ASSETS, getTodayStr());
       expect(result).not.toBeNull();
-      expect(result!.character.essence).toBe(175);
+      expect(result!.character.essence).toBe(190); // 200 - 10 (issue #726 rebalance)
     });
 
     it('does not modify the original character object (immutable)', () => {
@@ -443,6 +473,17 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 0 });
       const result = rerollShopOffers(char, ITEM_ASSETS, getTodayStr());
       expect(result).toBeNull();
+    });
+
+    it('reroll offers respect the epic unlock gate for LVL < 10', () => {
+      const char = makeCharacter({ essence: 100, level: 5, inventory: [] });
+      const result = rerollShopOffers(char, ITEM_ASSETS, getTodayStr());
+      expect(result).not.toBeNull();
+      result!.offers.forEach((offer) => {
+        if (offer.type === 'item' && offer.item) {
+          expect(offer.item.rarity).not.toBe('epic');
+        }
+      });
     });
   });
 });
