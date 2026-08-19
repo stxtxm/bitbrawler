@@ -9,6 +9,7 @@ This document explains **OpenCode autonomous agents**, how they work, their resp
 - [Agents Overview](#agents-overview)
 - [Memory System](#memory-system)
 - [Dev Agent](#dev-agent)
+- [Refactoring Workflow](#refactoring-workflow-arena--beyond)
 - [Reviewer Agent](#reviewer-agent)
 - [Orchestrator Agent](#orchestrator-agent)
 - [Supervisor Agent](#supervisor-agent)
@@ -147,6 +148,21 @@ ALTER TABLE characters ADD COLUMN IF NOT EXISTS essence INTEGER NOT NULL DEFAULT
 7. **Does NOT create PR** (workflow handles this)
 8. **Does NOT merge code** (reviewer handles this)
 
+### Key Files (Phase 3 refactor output)
+
+Arena features live in **thin pages + hooks + props-only components**:
+
+| Area | Files |
+|------|-------|
+| Arena page | `src/pages/Arena.tsx` (244 lines — refactored from 1066) |
+| Arena components | `src/components/arena/` — ActionPanel, ArenaHeader, CharacterDisplay, ExperienceBar, InventoryPanel, SceneBox, SettingsPanel, StatsPanel, arenaTypes.ts |
+| Arena hooks | `src/hooks/useArenaCombat.ts` (PvP/PvE/Boss orchestration), `useInventory.ts` (lootbox/equipment), `useSettings.ts` (settings/auto-mode/delete), `useArenaLevelUp.ts` |
+| Forge components | `src/components/forge/` — SalvagePanel, FusionPanel, UpgradePanel, ShopPanel |
+| Particle FX | `src/utils/particleSystem.ts` — pooled DOM particles used by CombatView + IdleRunnerScene |
+| Shared types | `src/components/arena/arenaTypes.ts` (view models, prop types) |
+
+Always reuse these patterns rather than adding state back into `Arena.tsx`.
+
 ### Trigger
 
 **Create an issue with `/oc`** in the body:
@@ -265,6 +281,58 @@ This would require:
 
 ---
 
+## Refactoring Workflow (Arena & Beyond)
+
+### Reference implementation: `Arena.tsx` (1066 → 244 lines, Phase 3)
+
+The main arena page was refactored from a 1066-line "god component" into a **thin page
+composing hooks + presentational components**. This is the canonical pattern for any new
+arena feature or large-component refactor:
+
+#### Structure
+
+```
+src/pages/Arena.tsx                  ← 244 lines: composes hooks, renders components
+src/components/arena/                ← Presentational sub-components (props-only)
+│   ├── ActionPanel.tsx              ← PvP/PvE/Boss fight actions
+│   ├── ArenaHeader.tsx              ← Character name, level, nav buttons
+│   ├── CharacterDisplay.tsx         ← Scene + XP bar + stats
+│   ├── ExperienceBar.tsx            ← XP bar + gain popup + max level
+│   ├── InventoryPanel.tsx           ← Inventory modal (incl. Shop tab)
+│   ├── SceneBox.tsx                 ← PvE idle runner vs PvP avatar
+│   ├── SettingsPanel.tsx            ← Settings modal (auto-mode, delete, logs, medals)
+│   ├── StatsPanel.tsx               ← Stat grid + HP + efficiency
+│   └── arenaTypes.ts                ← Shared arena types (view models, prop types)
+src/hooks/
+│   ├── useArenaCombat.ts            ← Combat orchestration: mode, matchmaking, boss/PvE
+│   ├── useInventory.ts              ← Inventory/lootbox/equipment state + handlers
+│   ├── useSettings.ts               ← Settings modal, auto-mode, delete, history, medals
+│   └── useArenaLevelUp.ts           ← Level-up FX + stat allocation flow
+src/utils/particleSystem.ts          ← Pooled DOM particle effects (CombatView, IdleRunnerScene)
+```
+
+#### Rules for refactoring
+
+1. **State lives in hooks**: Extract all `useState`/`useCallback`/`useMemo` into a dedicated
+   hook (`useInventory.ts`, `useSettings.ts`, `useArenaCombat.ts`). The page stays declarative.
+2. **Components are props-only**: Presentational components receive props/view models and call
+   back via handlers (`onEquip`, `onClose`, `onToggleAutoMode`, ...). No direct context access
+   inside sub-components — keep them reusable and testable.
+3. **Shared types in `arenaTypes.ts`**: View models (`ArenaIdleViewModel`, `ArenaStatOption`,
+   `InventoryStatEntry`) and prop interfaces live in a single shared types file.
+4. **Follow the Shop/Salvage/Fusion/Upgrade precedent**: `src/components/forge/` (SalvagePanel,
+   FusionPanel, UpgradePanel, ShopPanel) uses the same hook + props pattern via `useGame()`.
+5. **Every extracted component needs a test**: New sub-components/hooks get unit tests
+   (`src/test/components/arena-components.test.tsx`, `src/test/unit/useArenaCombat.test.ts`, ...).
+6. **Keep `Arena.tsx` thin**: target ≤ ~300 lines; if a feature adds more, extract further.
+
+#### Memory note
+
+When working on arena features, read `.opencode/memory/dev.json` + `shared.json` first — the
+dev agent has documented past refactoring failures and preferred patterns there.
+
+---
+
 ## Reviewer Agent
 
 ### File: `.opencode/agents/reviewer.md`
@@ -338,7 +406,7 @@ The reviewer checks:
 
 ```
 ✓ CI Passed (lint, test, build)
-✓ Tests: 431/431 passed
+✓ Tests: 1482/1482 passed
 ✓ No TypeScript errors
 ✓ Code follows conventions
 ✓ No security issues
@@ -716,7 +784,7 @@ Each agent logs progress to GitHub Actions:
 ✓ Creating branch feat/auto-42
 ✓ Exploring codebase...
 ✓ Running npm test
-  ✓ 431 tests passed
+  ✓ 1482 tests passed
 ✓ Running npm run build
   ✓ Build successful
 ✓ Pushing to feat/auto-42

@@ -135,24 +135,25 @@ Wrap tous les composants arena/ avec `React.memo` pour éviter les re-rendus inu
 `src/components/IdleRunnerScene.tsx`: Vérifier les deps des useEffect, éviter les re-rendus quand scenePhase ne change pas.
 **Résultat:** Les 2 effets de transition (`isAttacking`/`isVictory` et émission de particules) mettent maintenant à jour leur ref de phase AVANT de tester la transition, avec guards `prevPhase`. Un changement de `lastCombatResult` pendant que `scenePhase` reste `'combat'`/`'result'` ne re-déclenche plus l'animation one-shot ni la ré-émission des particules (pas de re-rendu / re-timer inutile). Tests ✓ (12).
 
-### Phase 7 - Documentation (PRIORITÉ BASSE)
+### Phase 7 - Documentation ✅ COMPLÈTE
 
-**11. Mettre à jour README.md**
-- Architecture overview
-- Tech stack
+**11. ✅ Mettre à jour README.md**
+- Architecture overview (diagram + data flow)
+- Tech stack (1482 tests, 99 files)
 - Setup instructions
-- Agent workflow (dev-agent, reviewer, tech-lead, qa-tester)
+- Agent workflow (dev-agent, reviewer, tech-lead, qa-tester + orchestrator/supervisor)
+- Project structure mis à jour (arena/, forge/, procedural/, hooks, data)
 
-**12. Mettre à jour AGENTS.md**
-- Référencer les nouveaux fichiers créés
-- Documenter le workflow de refactoring
+**12. ✅ Mettre à jour AGENTS.md**
+- Référence les nouveaux fichiers créés (composants arena/, hooks useInventory/useSettings/useArenaCombat, particleSystem)
+- Documente le workflow de refactoring (Arena.tsx 1066 → 244 lignes, pattern hooks + props-only components)
 
-**13. Créer ARCHITECTURE.md**
-- Structure des dossiers
+**13. ✅ Vérifier et compléter ARCHITECTURE.md** (le fichier existait déjà)
+- Structure des dossiers (components/arena, forge, procedural, hooks, data, test)
 - Data flow (GameContext → hooks → components)
-- Système de combat (PvP + PvE idle)
-- Système d'équipement/loot
-- Déploiement Vercel
+- Système de combat (PvP + PvE idle + Boss VOID TITAN)
+- Système d'équipement/loot (inventory, forge, essence, shop, medals, achievements)
+- Déploiement Vercel (vercel.json, rewrites, env vars, pipeline)
 
 ---
 
