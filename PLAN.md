@@ -38,22 +38,30 @@ eb0bfca phase-0: Complete terrain system overhaul
 - Overlay d'efficacité dans IdleRunnerScene (XP/min, EFF, PWR)
 - Props efficiency/xpPerMinute/powerRatio ajoutées
 
-### Phase 3 - Refactoring (EN COURS)
+### Phase 3 - Refactoring ✅
+- `src/pages/Arena.tsx` réduit de 1066 à **244 lignes** (78% de réduction)
 - `src/components/arena/ActionPanel.tsx` ✓ (extrait)
 - `src/components/arena/SettingsPanel.tsx` ✓ (extrait)
-- **Reste à faire:** InventoryPanel, CharacterDisplay, sous-composants
+- `src/components/arena/InventoryPanel.tsx` ✓ (extrait, inclut le Shop tab)
+- `src/components/arena/CharacterDisplay.tsx` ✓ (extrait: scene + XP bar + stats)
+- `src/components/arena/SceneBox.tsx` ✓ (extrait: PvE idle runner vs PvP avatar)
+- `src/components/arena/StatsPanel.tsx` ✓ (extrait: stat grid + HP + efficiency)
+- `src/components/arena/ExperienceBar.tsx` ✓ (extrait: XP bar + gain popup + max level)
+- `src/components/arena/ArenaHeader.tsx` ✓ (extrait: nom, level, nav buttons)
+- `src/hooks/useInventory.ts` ✓ (créé: état inventory/lootbox/équipement)
+- `src/hooks/useSettings.ts` ✓ (créé: modal settings + auto-mode + delete)
+- `src/components/arena/arenaTypes.ts` ✓ (types partagés)
+- Test: `src/test/components/arena-components.test.tsx` ✓ (15 tests)
 
 ---
 
 ## Ce Qu'il Faut Terminer
 
-### Phase 3 - Refactoring (PRIORITÉ HAUTE)
-
+### Phase 3 - Refactoring ✅ COMPLÈTE
 Arena.tsx fait **1066 lignes**. Objectif: **~200 lignes**.
-
+**Résultat:** `src/pages/Arena.tsx` = **244 lignes** ✓
 #### Fichiers à créer:
-
-**1. `src/components/arena/InventoryPanel.tsx` (~200 lignes)**
+**1. ✅ `src/components/arena/InventoryPanel.tsx`** (créé, 420 lignes — inclut Shop tab + salvage + upgrade badges)
 Extraire les lignes 709-913 de Arena.tsx (modal inventory).
 Props nécessaires:
 ```ts
@@ -83,35 +91,35 @@ interface InventoryPanelProps {
 }
 ```
 
-**2. `src/components/arena/CharacterDisplay.tsx` (~120 lignes)**
+**2. ✅ `src/components/arena/CharacterDisplay.tsx`** (créé, 58 lignes)
 Extraire les lignes 526-637 (scene box + XP section + stats panel).
 Props: effectiveCharacter, pveMode, xpProgress, xpBarAnimating, isMaxLevel, showXpGain, lastXpGain, statOptions, idle data, handlers.
 
-**3. `src/components/arena/SceneBox.tsx` (~30 lignes)**
+**3. ✅ `src/components/arena/SceneBox.tsx`** (créé, 65 lignes)
 Extraire les lignes 528-549 (PvE idle runner vs PvP avatar).
 
-**4. `src/components/arena/StatsPanel.tsx` (~70 lignes)**
+**4. ✅ `src/components/arena/StatsPanel.tsx`** (créé, 130 lignes)
 Extraire les lignes 572-637 (stat grid + HP bar + efficiency + PvE stats).
 
-**5. `src/components/arena/ExperienceBar.tsx` (~20 lignes)**
+**5. ✅ `src/components/arena/ExperienceBar.tsx`** (créé, 40 lignes)
 Extraire les lignes 552-569 (XP bar + gain popup + max level badge).
 
 #### Hooks à créer:
 
-**6. `src/hooks/useInventory.ts`**
+**6. ✅ `src/hooks/useInventory.ts`** (créé, 247 lignes)
 État: inventoryOpen, inventoryHoveredId, inventorySelectedId, lootboxRolling, lootboxResult.
 Fonctions: handleLootboxRoll, handleSelectItem, handleEquipItem, handleUnequipItem.
 Dérivés: inventory, inventoryCapacity, inventoryFull, canRollDailyLoot, equippedItems, previewItem, previewStats, totalBonusEntries.
 
-**7. `src/hooks/useSettings.ts`**
+**7. ✅ `src/hooks/useSettings.ts`** (créé, 164 lignes)
 État: settingsOpen, settingsView, autoModeUpdating, deleteStep, deletePending.
 Fonctions: handleToggleAutoMode, handleDeleteCharacter, handleOpenHistoryFromSettings, handleReturnToSettings.
 Dérivés: autoModeEnabled, combinedHistory.
 
-#### Modifications Arena.tsx:
-- Importer les nouveaux composants et hooks
-- Remplacer le JSX inline par `<InventoryPanel {...inventoryProps} />` etc.
-- Réduire de 1066 lignes à ~200 lignes
+#### Modifications Arena.tsx: ✅ FAIT
+- Importer les nouveaux composants et hooks ✓
+- Remplacer le JSX inline par `<InventoryPanel {...inventoryProps} />` etc. ✓
+- Réduire de 1066 lignes à ~200 lignes ✓ (244 lignes, commit `2dbb4dc`)
 
 ### Phase 4 - Performance (PRIORITÉ MOYENNE)
 
@@ -159,7 +167,10 @@ Wrap tous les composants arena/ avec `React.memo` pour éviter les re-rendus inu
 
 | Fichier | Lignes | Description |
 |---------|--------|-------------|
-| `src/pages/Arena.tsx` | 1066 | Page principale - CIBLE PRINCIPALE du refactoring |
+| `src/pages/Arena.tsx` | 244 | Page principale - refactoring terminé (était 1066, commit `2dbb4dc`) |
+| `src/components/arena/*.tsx` | - | Sous-composants extraits (ActionPanel, SettingsPanel, InventoryPanel, CharacterDisplay, SceneBox, StatsPanel, ExperienceBar, ArenaHeader) |
+| `src/hooks/useInventory.ts` | 247 | État inventory/lootbox/équipement |
+| `src/hooks/useSettings.ts` | 164 | État settings modal + auto-mode + delete |
 | `src/context/GameContext.tsx` | ~900 | "God context" - tous les états du jeu |
 | `src/hooks/useIdleCombat.ts` | 414 | Moteur combat idle PvE |
 | `src/components/IdleRunnerScene.tsx` | 250+ | Scène visuelle idle mode |
@@ -187,4 +198,4 @@ npm test               # Tous les tests (peut timeout)
 - TOUT nouveau composant doit avoir un test unitaire
 - Les imports doivent être vérifiés (pas de circular deps)
 - `src/components/arena/ActionPanel.tsx` et `SettingsPanel.tsx` sont DÉJÀ extraits et fonctionnels
-- Les fichiers `src/hooks/useInventory.ts` et `src/hooks/useSettings.ts` n'existent PAS ENCORE - il faut les créer
+- Tous les sous-composants `arena/*` et les hooks `useInventory.ts` / `useSettings.ts` sont créés et fonctionnels (Phase 3 ✅)
