@@ -1,6 +1,6 @@
 import { Character } from '../types/Character';
 import { PixelItemAsset } from '../types/Item';
-import { SHOP_OFFERS } from '../data/shopConstants';
+import { SHOP_OFFERS, REROLL_COST, EPIC_UNLOCK_LEVEL } from '../data/shopConstants';
 import { rollSimpleLootbox } from './lootboxUtils';
 import { isOfferPurchased, markOfferPurchased, isRerollUsed, markRerollUsed, loadShopPurchases, saveShopPurchases } from './shopStorage';
 
@@ -74,9 +74,15 @@ function buildOffer(
     (item) => item.requiredLevel <= charLevel && item.rarity !== 'legendary',
   );
 
+  // Epic items are a mid-game unlock: below EPIC_UNLOCK_LEVEL the rarity
+  // pool is stripped of epic (issue #726 — low levels were offered 50% epic).
+  const epicLocked = charLevel < EPIC_UNLOCK_LEVEL;
+
   // Filter by rarity pool for this offer
   const pool = eligible.filter((item) =>
-    config.rarityPool ? config.rarityPool.includes(item.rarity) : true,
+    config.rarityPool
+      ? config.rarityPool.includes(item.rarity) && (!epicLocked || item.rarity !== 'epic')
+      : true,
   );
 
   // Ensure we don't offer items already owned
@@ -121,6 +127,12 @@ export function getShopOffers(
   );
 
   if (hasNaturalEpic) {
+    return standardOffers;
+  }
+
+  // Epic guarantee is a mid-game perk (issue #726): below EPIC_UNLOCK_LEVEL
+  // no epic is forced — low-level offers stay common/rare.
+  if ((character.level ?? 1) < EPIC_UNLOCK_LEVEL) {
     return standardOffers;
   }
 
@@ -212,10 +224,8 @@ export function buyShopOffer(
   } as Character;
 }
 
-const REROLL_COST = 25;
-
 /**
- * Reroll today's shop offers for 25 essence.
+ * Reroll today's shop offers for 10 essence.
  * Checks that the player has enough essence and has not already rerolled today.
  * Returns the updated character (with essence deducted) and new offers, or null.
  */
@@ -237,41 +247,9 @@ export function rerollShopOffers(
   const rerollSeed = getDailySeed(charId, `${today}-reroll`);
   const rand = seededRandom(rerollSeed);
 
-  const charLevel = character.level;
-
-  const offers: ShopOffer[] = SHOP_OFFERS.map((config, index) => {
-    if (config.type === 'lootbox') {
-      return {
-        index,
-        type: 'lootbox' as const,
-        price: config.price,
-        label: config.label,
-        item: null,
-      };
-    }
-
-    const eligible = items.filter(
-      (item) => item.requiredLevel <= charLevel && item.rarity !== 'legendary',
-    );
-
-    const pool = eligible.filter((item) =>
-      config.rarityPool ? config.rarityPool.includes(item.rarity) : true,
-    );
-
-    const owned = new Set(character.inventory ?? []);
-    const fresh = pool.filter((item) => !owned.has(item.id));
-
-    const source = fresh.length > 0 ? fresh : pool;
-    const picked = pickItem(source, rand);
-
-    return {
-      index,
-      type: 'item' as const,
-      price: config.price,
-      label: config.label,
-      item: picked ? { id: picked.id, name: picked.name, rarity: picked.rarity } : null,
-    };
-  });
+  const offers: ShopOffer[] = [0, 1, 2, 3].map((index) =>
+    buildOffer(index, character, items, rand),
+  );
 
   // Deduct essence
   const newEssence = (character.essence ?? 0) - REROLL_COST;
