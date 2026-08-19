@@ -53872,5 +53872,341 @@
       "purchased_offer": null,
       "essence_after_purchase": 2
     }
+  },
+  {
+    "date": "2026-08-19T07:02:33.405Z",
+    "run": "2026-08-19",
+    "character": "CIPHERBARD",
+    "character_action": "created",
+    "replaced_character": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 133,
+        "fight_duration_ms": 14120,
+        "max_hp": 189,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 0.62
+      },
+      {
+        "result": "victory",
+        "xp": 121,
+        "fight_duration_ms": 12591,
+        "max_hp": 200,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 0.62
+      },
+      {
+        "result": "victory",
+        "xp": 128,
+        "fight_duration_ms": 13613,
+        "max_hp": 220,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 0.62
+      },
+      {
+        "result": "victory",
+        "xp": 97,
+        "fight_duration_ms": 13264,
+        "max_hp": 220,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 1.68
+      },
+      {
+        "result": "defeat",
+        "xp": 36,
+        "fight_duration_ms": 17129,
+        "max_hp": 220,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 1.68
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Aqua Shield",
+      "rarity": "RARE",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 1,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 22,
+      "vit": 8,
+      "dex": 7,
+      "luk": 8,
+      "int": 14,
+      "foc": 7,
+      "fights": 0
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 120
+    },
+    "initial_max_hp": 164,
+    "initial_equipment": [],
+    "initial_streak": 0,
+    "final_stats": {
+      "level": 5,
+      "xp": 285,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 23,
+      "vit": 9,
+      "dex": 7,
+      "luk": 8,
+      "int": 14,
+      "foc": 9,
+      "last xp": 44,
+      "fights": 3
+    },
+    "final_max_hp": 220,
+    "final_equipment": [],
+    "final_streak": 0,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_locked_level": 30,
+      "boss_name": "VOID TITAN",
+      "boss_level": null,
+      "boss_hp": null,
+      "boss_max_hp": null
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 2,
+        "previous_level": 1,
+        "new_level": 3
+      },
+      {
+        "fight_number": 2,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 3,
+        "new_level": 4
+      },
+      {
+        "fight_number": 3,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 4,
+        "new_level": 5
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 20254,
+      "cycles_observed": 2,
+      "monsters_faced": [
+        "wraith",
+        "ogre",
+        "slime"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 91,
+      "xp_events": [
+        {
+          "time_ms": 517,
+          "xp": 47,
+          "monster": "wraith",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 11668,
+          "xp": 44,
+          "monster": "ogre",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        517,
+        8592,
+        10127,
+        11668,
+        19742
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 47,
+        "monster": "wraith"
+      },
+      {
+        "result": "victory",
+        "xp": 44,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.18,
+      "next_level_eta": "⬆ 23s",
+      "power_ratio": "⚔ 1.23x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.01x",
+      "interval": "11.2s",
+      "streak_bonus": "🔥 3-win streak (+3%)"
+    },
+    "initial_essence": 0.21,
+    "final_essence": 2.74,
+    "essence": {
+      "before_idle": 0.21,
+      "after_idle": 0.62,
+      "per_fight": [
+        0.62,
+        0.62,
+        0.62,
+        1.68,
+        1.68
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": 2,
+      "shop_after": 2,
+      "final": 2.74,
+      "flow": {
+        "idle_gained": 0.41,
+        "fights_change": 1.06,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": 0,
+        "net_change": 2.53
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": true,
+      "offline_time": "⏰ 2m 35s",
+      "fights": 6,
+      "xp_gained": 236,
+      "essence_gained": 2.25,
+      "levels_gained": null,
+      "claimed": true
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": true,
+      "skip_reason": "forge requires LVL 6"
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 2,
+      "essence_after": 2,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Hunter Bow",
+            "rarity": "UNCOMMON",
+            "price": 150
+          },
+          {
+            "name": "Flame Dagger",
+            "rarity": "EPIC",
+            "price": 250
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 350
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 2
+      }
+    },
+    "errors": [],
+    "load_times_ms": {
+      "home": 1786,
+      "arena": 2744
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Hunter Bow",
+          "rarity": "UNCOMMON",
+          "price": 150
+        },
+        {
+          "name": "Flame Dagger",
+          "rarity": "EPIC",
+          "price": 250
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 350
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 2
+    }
   }
 ]
