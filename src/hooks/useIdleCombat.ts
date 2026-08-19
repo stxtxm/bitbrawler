@@ -214,20 +214,37 @@ export function useIdleCombat({
     if (serverSuccess && serverData) {
       // Merge server-processed character with local state, keeping the higher
       // of each field to avoid regression (local may be ahead due to debounce).
+      // IMPORTANT: level and experience must stay a COHERENT pair. The old
+      // merge took Math.max(level) + Math.max(experience) independently; when
+      // the server computed its level from a stale DB row (e.g. right after a
+      // PvP write) it returned a higher level with a lower XP, and the merge
+      // combined it with the higher local XP → level below what the XP
+      // justifies → the latent surplus re-converted into burst level-ups on
+      // every kill (the "endless level-up" report after PvP fights).
       const sd = serverData
+      const server = sd.updated ?? {}
+      const maxExp = Math.max(currentChar.experience ?? 0, server.experience ?? 0)
+      // Start from whichever side owns the max XP (its level is the coherent
+      // one for that XP on that curve), force the max XP, then normalize:
+      // gainXp(_, 0) never decreases the level and only bumps it while the XP
+      // exceeds the next threshold — with medalXpBonus disabled so the
+      // normalization itself never inflates the experience.
+      const xpSource = maxExp === (currentChar.experience ?? 0) ? currentChar : server
+      const leveled = gainXp({ ...xpSource, experience: maxExp, medalXpBonus: 0 }, 0).updatedCharacter
+
       const updatedChar: Character = {
         ...currentChar,
-        ...sd.updated,
-        experience: Math.max(currentChar.experience ?? 0, sd.updated.experience ?? 0),
-        level: Math.max(currentChar.level ?? 1, sd.updated.level ?? 1),
-        maxHp: Math.max(currentChar.maxHp ?? 100, sd.updated.maxHp ?? 100),
-        hp: Math.max(currentChar.hp ?? 100, sd.updated.hp ?? 100),
-        statPoints: Math.max(currentChar.statPoints ?? 0, sd.updated.statPoints ?? 0),
-        essence: Math.max(currentChar.essence ?? 0, sd.updated.essence ?? 0),
-        idleStreak: Math.max(currentChar.idleStreak ?? 0, sd.updated.idleStreak ?? 0),
-        idleMaxStreak: Math.max(currentChar.idleMaxStreak ?? 0, sd.updated.idleMaxStreak ?? 0),
-        idleTotalKills: Math.max(currentChar.idleTotalKills ?? 0, sd.updated.idleTotalKills ?? 0),
-        idleTotalXp: Math.max(currentChar.idleTotalXp ?? 0, sd.updated.idleTotalXp ?? 0),
+        ...server,
+        experience: maxExp,
+        level: leveled.level,
+        maxHp: Math.max(currentChar.maxHp ?? 100, server.maxHp ?? 100, leveled.maxHp ?? 100),
+        hp: Math.max(currentChar.hp ?? 100, server.hp ?? 100, leveled.hp ?? 100),
+        statPoints: Math.max(currentChar.statPoints ?? 0, server.statPoints ?? 0),
+        essence: Math.max(currentChar.essence ?? 0, server.essence ?? 0),
+        idleStreak: Math.max(currentChar.idleStreak ?? 0, server.idleStreak ?? 0),
+        idleMaxStreak: Math.max(currentChar.idleMaxStreak ?? 0, server.idleMaxStreak ?? 0),
+        idleTotalKills: Math.max(currentChar.idleTotalKills ?? 0, server.idleTotalKills ?? 0),
+        idleTotalXp: Math.max(currentChar.idleTotalXp ?? 0, server.idleTotalXp ?? 0),
         lastIdleCheck: Date.now(),
         lastActive: Date.now(),
       }
