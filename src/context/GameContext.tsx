@@ -436,7 +436,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     opponentId: string,
     options?: { consumeEnergy?: boolean; characterOverride?: Character }
   ): Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null> => {
-    const baseCharacter = options?.characterOverride ?? activeCharacter;
+    // Prefer charRef.current (always forced by every persistCharacter) over the
+    // React state: a stale activeCharacter here would let a PvP fight write a
+    // level/experience pair WITHOUT the latest idle ticks to Supabase — the
+    // server idle-processor then computes its gains from that stale row and the
+    // offline merge ends up combining a server level with the fresher local XP
+    // (burst level-ups in the idle view, see useIdleCombat offline merge).
+    const baseCharacter = options?.characterOverride ?? charRef.current ?? activeCharacter;
     if (!baseCharacter?.id) return null;
 
     // Process XP gain and level up
