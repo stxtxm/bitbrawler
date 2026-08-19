@@ -46,7 +46,7 @@ describe('PvE combat', () => {
   });
 
   it('player can win against a monster', () => {
-    // Monster at playerLevel=1 gets boosted stats (LEVEL_BOOST=3, STAT_MULTIPLIER=1)
+    // Monster at playerLevel=1 gets boosted stats (LEVEL_BOOST=3, STAT_MULTIPLIER=1.2)
     // Player needs overwhelming stats to guarantee victory vs RNG
     const strongPlayer = makePlayer({ level: 1, strength: 300, vitality: 200, dexterity: 200, focus: 200, luck: 100, intelligence: 100, hp: 5000, maxHp: 5000 });
     const monster = generateMonster('goblin', 1);
@@ -57,7 +57,7 @@ describe('PvE combat', () => {
   it('a typical early player can defeat a level-appropriate monster (balance fix #723)', () => {
     // Regression for #723: STAT_MULTIPLIER=20 / HP_MULTIPLIER=22 made monsters
     // mathematically unbeatable (player dealt min-clamp 20 dmg vs ~2000 HP pools).
-    // With 1.0 multipliers a fresh player (allocated 66 stat points) must reliably win.
+    // With a 1.2 stat multiplier a fresh player (allocated 66 stat points) must reliably win.
     for (let i = 0; i < 10; i++) {
       const player = makePlayer({ level: 1, strength: 12, vitality: 12, dexterity: 12, focus: 12, luck: 12, intelligence: 12, hp: 150, maxHp: 150 });
       const monster = generateMonster('goblin', 1);
