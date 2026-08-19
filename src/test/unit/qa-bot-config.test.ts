@@ -303,6 +303,33 @@ describe('QA Bot Fight Type Decision', () => {
     })
   })
 
+  describe('qa-bot.config persistent character (#731)', () => {
+    it('persistentCharacter defaults to true (longitudinal QA data)', () => {
+      // The QA bot must reuse a dedicated character between runs so equipment,
+      // streak, essence and mid-game levels accumulate (equipment_analysis,
+      // streak_analysis, shop purchase_rate, level distribution beyond LVL 5).
+      expect(qaBotConfig.persistentCharacter).toBe(true)
+    })
+
+    it('persistentCharacterName defaults to QA-PERSIST', () => {
+      expect(qaBotConfig.persistentCharacterName).toBe('QA-PERSIST')
+    })
+
+    it('freshCharacterDay defaults to Monday (1) for the weekly first-session calibration run', () => {
+      // Mitigation from #731: one fresh-character run per week (Monday) keeps
+      // first-session calibration data (#473) alive alongside the persistent char.
+      expect(qaBotConfig.freshCharacterDay).toBe(1)
+    })
+
+    it('persistentCharacterMaxLevel defaults to 30 (controlled reset at the level cap)', () => {
+      expect(qaBotConfig.persistentCharacterMaxLevel).toBe(30)
+    })
+
+    it('persistentCharacterMaxAgeDays defaults to 30 (controlled reset by age)', () => {
+      expect(qaBotConfig.persistentCharacterMaxAgeDays).toBe(30)
+    })
+  })
+
   describe('determineNextFightType with pvpUnlockLevel=1', () => {
     it('allows PvP at level 1 (unlocked immediately)', () => {
       const result = determineNextFightType(0, 0.33, false, 1)

@@ -5,6 +5,8 @@ export interface QaBotConfig {
   pveRatio: number
   pveOnly: boolean
   fightTimeout: number
+  idleObservationMs: number
+  timeBudgetMs: number
   screenshotsDir: string
   statsFile: string
   stateFile: string
@@ -14,6 +16,11 @@ export interface QaBotConfig {
   pvpUnlockLevel: number
   forgeUnlockLevel: number
   shopUnlockLevel: number
+  persistentCharacter: boolean
+  persistentCharacterName: string
+  freshCharacterDay: number
+  persistentCharacterMaxLevel: number
+  persistentCharacterMaxAgeDays: number
 }
 
 declare const config: QaBotConfig

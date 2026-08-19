@@ -62,6 +62,8 @@ interface RunRecord {
   final_max_hp?: number | null
   character_action?: string | null
   replaced_character?: string | null
+  character_type?: 'fresh' | 'persistent' | null
+  final_stats?: { level: number | null; xp: number | null; wins: number | null; losses: number | null } | null
   pve_data?: {
     fights: number
     wins: number
@@ -1815,6 +1817,163 @@ describe('QA Recent-Window Alert Analysis (#730)', () => {
     it('annotates the XP win/loss ratio suggestion as a matchmaking symptom (#570/#725)', () => {
       const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
       expect(source).toContain('#570/#725')
+    })
+  })
+})
+
+describe('QA Persistent Character Classification (#731)', () => {
+  // Mirrors analyze-qa-stats.ts: a persistent run uses the dedicated QA
+  // character (character_type === 'persistent'); fresh runs calibrate the
+  // first-session experience. Legacy runs have no character_type at all.
+  function isPersistentRun(r: RunRecord): boolean {
+    return r.character_type === 'persistent'
+  }
+
+  interface CharacterTypeBreakdown {
+    fresh_runs: number
+    persistent_runs: number
+    unknown_runs: number
+  }
+
+  function computeCharacterTypeBreakdown(runs: RunRecord[]): CharacterTypeBreakdown {
+    let fresh = 0
+    let persistent = 0
+    let unknown = 0
+    for (const r of runs) {
+      if (r.character_type === 'persistent') persistent++
+      else if (r.character_type === 'fresh') fresh++
+      else unknown++
+    }
+    return { fresh_runs: fresh, persistent_runs: persistent, unknown_runs: unknown }
+  }
+
+  function computePersistentLevelDistribution(runs: RunRecord[]): Record<string, number> {
+    const dist: Record<string, number> = {}
+    for (const r of runs) {
+      if (r.character_type !== 'persistent') continue
+      if (r.final_stats?.level !== null && r.final_stats?.level !== undefined) {
+        const key = `lvl-${r.final_stats.level}`
+        dist[key] = (dist[key] || 0) + 1
+      }
+    }
+    return dist
+  }
+
+  describe('isPersistentRun', () => {
+    it('classifies runs with character_type persistent', () => {
+      const r: RunRecord = {
+        date: '2026-08-18', run: 'r1', character: 'QA-PERSIST', fights: [], errors: [],
+        character_type: 'persistent',
+      }
+      expect(isPersistentRun(r)).toBe(true)
+    })
+
+    it('does not classify fresh or legacy runs as persistent', () => {
+      const fresh: RunRecord = {
+        date: '2026-08-18', run: 'r2', character: 'FRESHWAVE', fights: [], errors: [],
+        character_type: 'fresh',
+      }
+      const legacy: RunRecord = {
+        date: '2026-08-18', run: 'r3', character: 'OLDTIMER', fights: [], errors: [],
+      }
+      expect(isPersistentRun(fresh)).toBe(false)
+      expect(isPersistentRun(legacy)).toBe(false)
+    })
+  })
+
+  describe('computeCharacterTypeBreakdown', () => {
+    it('counts fresh, persistent and unknown runs separately', () => {
+      const runs: RunRecord[] = [
+        { date: '2026-08-18', run: 'p1', character: 'QA-PERSIST', fights: [], errors: [], character_type: 'persistent' },
+        { date: '2026-08-18', run: 'p2', character: 'QA-PERSIST', fights: [], errors: [], character_type: 'persistent' },
+        { date: '2026-08-18', run: 'f1', character: 'FRESHGUY', fights: [], errors: [], character_type: 'fresh' },
+        { date: '2026-08-18', run: 'legacy', character: 'OLDTIMER', fights: [], errors: [] },
+      ]
+      const breakdown = computeCharacterTypeBreakdown(runs)
+      expect(breakdown.persistent_runs).toBe(2)
+      expect(breakdown.fresh_runs).toBe(1)
+      expect(breakdown.unknown_runs).toBe(1)
+    })
+
+    it('returns zeros for empty input', () => {
+      expect(computeCharacterTypeBreakdown([])).toEqual({
+        fresh_runs: 0,
+        persistent_runs: 0,
+        unknown_runs: 0,
+      })
+    })
+  })
+
+  describe('computePersistentLevelDistribution', () => {
+    it('only includes persistent runs so mid-game levels are visible (#712)', () => {
+      const runs: RunRecord[] = [
+        {
+          date: '2026-08-18', run: 'p1', character: 'QA-PERSIST', fights: [], errors: [],
+          character_type: 'persistent', final_stats: { level: 15, xp: 0, wins: null, losses: null },
+        },
+        {
+          date: '2026-08-18', run: 'p2', character: 'QA-PERSIST', fights: [], errors: [],
+          character_type: 'persistent', final_stats: { level: 22, xp: 0, wins: null, losses: null },
+        },
+        {
+          date: '2026-08-18', run: 'f1', character: 'FRESHGUY', fights: [], errors: [],
+          character_type: 'fresh', final_stats: { level: 5, xp: 0, wins: null, losses: null },
+        },
+      ]
+      expect(computePersistentLevelDistribution(runs)).toEqual({ 'lvl-15': 1, 'lvl-22': 1 })
+    })
+
+    it('returns an empty object when no persistent run has a final level', () => {
+      const runs: RunRecord[] = [
+        { date: '2026-08-18', run: 'f1', character: 'FRESHGUY', fights: [], errors: [], character_type: 'fresh', final_stats: { level: 5, xp: 0, wins: null, losses: null } },
+      ]
+      expect(computePersistentLevelDistribution(runs)).toEqual({})
+    })
+  })
+
+  describe('analyze-qa-stats.ts source contract (#731)', () => {
+    it('exposes character_type classification, breakdown and persistent level distribution', () => {
+      const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+      expect(source).toContain('character_type')
+      expect(source).toContain('isPersistentRun')
+      expect(source).toContain('character_type_breakdown')
+      expect(source).toContain('persistent_level_distribution')
+    })
+  })
+
+  describe('qa-bot.mjs source contract (#731)', () => {
+    const qaBotSource = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
+
+    it('implements conditional persistent-character creation with a fixed name', () => {
+      expect(qaBotSource).toContain('loginOrCreatePersistentCharacter')
+      expect(qaBotSource).toContain('createCharacterWithName')
+    })
+
+    it('records character_type on run records (persistent vs fresh)', () => {
+      expect(qaBotSource).toContain('character_type')
+      expect(qaBotSource).toContain("runRecord.character_type = 'persistent'")
+      expect(qaBotSource).toContain("runRecord.character_type = 'fresh'")
+    })
+
+    it('skips character replacement when the persistent fighter is exhausted', () => {
+      // The persistent character must never be swapped for a random fresh one
+      // mid-run, otherwise its accumulated equipment/streak/essence is lost.
+      expect(qaBotSource).toContain("runRecord.character_type === 'persistent'")
+    })
+
+    it('respects the weekly fresh-character day for first-session calibration', () => {
+      expect(qaBotSource).toContain('getZonedWeekday')
+      expect(qaBotSource).toContain('config.freshCharacterDay')
+    })
+
+    it('persists generation, created_at and the reset flag for controlled reset', () => {
+      expect(qaBotSource).toContain('persistent_generation')
+      expect(qaBotSource).toContain('persistent_created_at')
+      expect(qaBotSource).toContain('persistent_reset_ready')
+    })
+
+    it('resets the persistent fighter once it reaches the configured max level', () => {
+      expect(qaBotSource).toContain('config.persistentCharacterMaxLevel')
     })
   })
 })

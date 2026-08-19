@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-18T19:35:31Z",
+  "last_session": "2026-08-18T20:19:12Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -237,6 +237,11 @@
     {
       "lesson": "Issue #730 analyze-qa-stats cumulative false positives: alerts (issues/suggestions) must use recent windows, not all-time cumulative data. 4 fixes: (1) error-rate alerts use last 30 runs (stats.slice(-RECENT_WINDOW_RUNS)) while report keeps all-time error_runs; (2) idle win-rate alerts use last 15 idle-data runs (collectIdleFights helper shared between all-time aggregation and recent window) — all-time 23% included pre-#727 era but last 15 = 79%; (3) PvE XP ratio suggestion gated behind !pve_analysis.pve_shifted (pre-shift monster fights #705 are stale); (4) stats-balance suggestions skip non-stat keys via STAT_KEYS whitelist ['str','vit','dex','luk','int','foc'] — QA bot structured parse captures 'fights' counter (StatsPanel .compact-stat-label FIGHTS) which triggered 'Average initial FIGHTS is 0.0 — consider raising STATS.MIN_VALUE'. Also annotated XP win/loss ratio suggestion as matchmaking symptom (#570/#725). Pattern: when a cumulative metric contradicts recent health, add a recent-window alert path (mirror helper + source-contract test, following #637/#645/#696/#705 patterns). Test gotcha: assertion string 'recentHalfwayRuns.filter(isHalfwayRun)' was wrong — the variable is computed FROM recentRuns (recentRuns.filter(isHalfwayRun)).",
       "issue": "#730",
+      "date": "2026-08-18"
+    },
+    {
+      "lesson": "Le jeu limite les noms de personnage à 10 caractères (input maxLength=10 dans CharacterCreation.tsx, MAX_NAME_LENGTH=10 dans characterUtils.ts). Tout nom de personnage QA fixe/généré doit respecter cette limite — pour les générations successives d'un personnage persistant, tronquer le base name pour laisser la place au suffixe '-N'. Aucune CHECK constraint DB sur le format du nom (seulement les stats), les tirets sont acceptés.",
+      "issue": "#731",
       "date": "2026-08-18"
     }
   ]
