@@ -1,7 +1,10 @@
 {
   "run": "2026-08-19",
-  "character": "CIPHERBARD",
+  "character": "QA-PERSIST",
   "exhausted": true,
-  "updated_at": "2026-08-19T07:05:52.091Z",
-  "source": "created"
+  "updated_at": "2026-08-19T10:05:00.231Z",
+  "source": "created",
+  "persistent_generation": 0,
+  "persistent_created_at": "2026-08-19T10:01:14.633Z",
+  "persistent_reset_ready": false
 }
