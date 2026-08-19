@@ -44,6 +44,10 @@ const pickColor = (type: ParticleType): string => {
 
 export class ParticleSystem {
   private particles: ParticleDef[] = [];
+  /** Reusable pool of dead particle objects (and their detached DOM elements).
+   * Bounded by maxParticles: every acquired particle is either alive in
+   * `particles` or parked here, so the pool never grows past the cap. */
+  private freeList: ParticleDef[] = [];
   private animFrameId: number | null = null;
   private lastTime = 0;
   private running = false;
@@ -73,33 +77,37 @@ export class ParticleSystem {
     const text = (type === 'damage' || type === 'heal') && value !== undefined ? String(value) : undefined;
 
     for (let i = 0; i < actualCount; i++) {
-      const partial = this.createParticle(type, x, y, i, actualCount, text);
-      if (!partial) continue;
+      const seed = this.createParticle(type, x, y, i, actualCount, text);
+      if (!seed) continue;
 
-      const el = document.createElement('span');
+      // Reuse a dead particle object (and its detached element) instead of
+      // allocating a new one on every emission.
+      const particle = this.acquire();
+      Object.assign(particle, seed);
+
+      const el = particle.el ?? document.createElement('span');
       el.className = `particle particle-${type}`;
-      el.style.position = 'absolute';
-      el.style.pointerEvents = 'none';
-      el.style.left = '0';
-      el.style.top = '0';
+      el.style.cssText = 'position:absolute;pointer-events:none;left:0;top:0;';
+      el.textContent = '';
 
-      if (partial.text) {
-        el.textContent = partial.text;
-        el.style.fontSize = `${partial.size * 3}px`;
-        el.style.color = partial.color;
+      if (particle.text) {
+        el.textContent = particle.text;
+        el.style.fontSize = `${particle.size * 3}px`;
+        el.style.color = particle.color;
         el.style.fontFamily = "'Press Start 2P',monospace";
         el.style.whiteSpace = 'nowrap';
         el.style.zIndex = '20';
       } else {
-        el.style.width = `${partial.size}px`;
-        el.style.height = `${partial.size}px`;
-        el.style.background = partial.color;
-        el.style.borderRadius = partial.size > 2 ? '1px' : '0';
+        el.style.width = `${particle.size}px`;
+        el.style.height = `${particle.size}px`;
+        el.style.background = particle.color;
+        el.style.borderRadius = particle.size > 2 ? '1px' : '0';
         el.style.zIndex = '15';
       }
 
       this.container.appendChild(el);
-      this.particles.push({ ...partial, el });
+      particle.el = el;
+      this.particles.push(particle);
     }
 
     if (!this.running) {
@@ -310,8 +318,19 @@ export class ParticleSystem {
   clear() {
     for (const particle of this.particles) {
       if (particle.el?.parentNode) particle.el.parentNode.removeChild(particle.el);
+      this.release(particle);
     }
     this.particles.length = 0;
+  }
+
+  private acquire(): ParticleDef {
+    return this.freeList.pop() ?? {
+      x: 0, y: 0, vx: 0, vy: 0, life: 0, maxLife: 0, size: 0, color: '', el: null,
+    };
+  }
+
+  private release(particle: ParticleDef) {
+    this.freeList.push(particle);
   }
 
   stop() {
@@ -340,6 +359,7 @@ export class ParticleSystem {
       particle.life -= delta;
       if (particle.life <= 0) {
         if (particle.el?.parentNode) particle.el.parentNode.removeChild(particle.el);
+        this.release(particle);
         continue;
       }
 

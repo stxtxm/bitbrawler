@@ -121,16 +121,19 @@ Dérivés: autoModeEnabled, combinedHistory.
 - Remplacer le JSX inline par `<InventoryPanel {...inventoryProps} />` etc. ✓
 - Réduire de 1066 lignes à ~200 lignes ✓ (244 lignes, commit `2dbb4dc`)
 
-### Phase 4 - Performance (PRIORITÉ MOYENNE)
+### Phase 4 - Performance (PRIORITÉ MOYENNE) ✅ COMPLÈTE
 
-**8. React.memo sur les sous-composants**
+**8. ✅ React.memo sur les sous-composants**
 Wrap tous les composants arena/ avec `React.memo` pour éviter les re-rendus inutiles.
+**Résultat:** Vérifié — les 8 composants (`ActionPanel`, `ArenaHeader`, `CharacterDisplay`, `ExperienceBar`, `InventoryPanel`, `SceneBox`, `SettingsPanel`, `StatsPanel`) sont DÉJÀ enveloppés dans `React.memo`. Aucune modification nécessaire.
 
-**9. Optimisation particle system**
+**9. ✅ Optimisation particle system**
 `src/utils/particleSystem.ts`: Vérifier que le pool d'objets fonctionne bien, réduire les allocations.
+**Résultat:** Pool d'objets implémenté — les objets `ParticleDef` morts (et leurs éléments DOM détachés) sont recyclés via une `freeList` bornée par `maxParticles`, au lieu d'être alloués/détruits à chaque émission. Suppression de l'allocation de copie (`{ ...partial, el }`) au profit d'un `Object.assign` sur l'objet poolé. Les éléments `<span>` sont réutilisés (reset `className`/`cssText`/`textContent`) → plus de `createElement` par particule. `clear()`/`tick()` renvoient les particules mortes au pool. Tests ✓ (13).
 
-**10. Optimisation IdleRunnerScene**
+**10. ✅ Optimisation IdleRunnerScene**
 `src/components/IdleRunnerScene.tsx`: Vérifier les deps des useEffect, éviter les re-rendus quand scenePhase ne change pas.
+**Résultat:** Les 2 effets de transition (`isAttacking`/`isVictory` et émission de particules) mettent maintenant à jour leur ref de phase AVANT de tester la transition, avec guards `prevPhase`. Un changement de `lastCombatResult` pendant que `scenePhase` reste `'combat'`/`'result'` ne re-déclenche plus l'animation one-shot ni la ré-émission des particules (pas de re-rendu / re-timer inutile). Tests ✓ (12).
 
 ### Phase 7 - Documentation (PRIORITÉ BASSE)
 

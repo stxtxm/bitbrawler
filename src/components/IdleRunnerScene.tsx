@@ -119,17 +119,22 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   const [isVictory, setIsVictory] = useState(false)
   const prevPhaseRef2 = useRef<ScenePhase>('running')
   useEffect(() => {
-    if (prevPhaseRef2.current !== 'combat' && scenePhase === 'combat') {
+    // Record the phase BEFORE checking the transition so a change of
+    // `lastCombatResult` while scenePhase stays in 'combat'/'result' does not
+    // re-trigger the one-shot attack/victory animation (which would reset the
+    // timeout and restart the CSS animation from scratch).
+    const prevPhase = prevPhaseRef2.current
+    prevPhaseRef2.current = scenePhase
+    if (prevPhase !== 'combat' && scenePhase === 'combat') {
       setIsAttacking(true)
       const t = setTimeout(() => setIsAttacking(false), 350)
       return () => clearTimeout(t)
     }
-    if (prevPhaseRef2.current !== 'result' && scenePhase === 'result' && lastCombatResult === 'win') {
+    if (prevPhase !== 'result' && scenePhase === 'result' && lastCombatResult === 'win') {
       setIsVictory(true)
       const t = setTimeout(() => setIsVictory(false), 500)
       return () => clearTimeout(t)
     }
-    prevPhaseRef2.current = scenePhase
   }, [scenePhase, lastCombatResult])
 
   // Force clean remount of the character slot each cycle transition
@@ -159,11 +164,17 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     const container = containerRef.current
     if (!ps || !container) return
 
+    // Update the phase watermark first so the transition guards below only
+    // fire on real phase changes, not when `lastCombatResult` changes while
+    // scenePhase stays the same (avoids re-emitting burst particles).
+    const prevPhase = prevPhaseRef.current
+    prevPhaseRef.current = scenePhase
+
     const rect = container.getBoundingClientRect()
     const cx = rect.width * 0.3
     const cy = rect.height * 0.55
 
-    if (scenePhase === 'combat' && prevPhaseRef.current === 'monster_appears') {
+    if (scenePhase === 'combat' && prevPhase === 'monster_appears') {
       ps.emit('spark', cx, cy, lowPerf ? 2 : 6)
       ps.emit('hit_ring', cx - 20, cy, lowPerf ? 4 : 12)
       if (!lowPerf) ps.emit('dust', cx, cy + 30, 2)
@@ -173,15 +184,13 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
       if (simulatedDmg.isCrit) ps.emit('crit', cx, cy, 1)
     }
 
-    if (scenePhase === 'result' && lastCombatResult) {
+    if (scenePhase === 'result' && prevPhase !== 'result' && lastCombatResult) {
       ps.emit('xp_star', cx, cy - 20, lowPerf ? 3 : 8)
       if (!lowPerf) {
         ps.emit('spark', cx, cy, 4)
         ps.emit('hit_ring', cx - 20, cy, 6)
       }
     }
-
-    prevPhaseRef.current = scenePhase
   }, [scenePhase, lastCombatResult, lowPerf])
 
   // Screen shake on monster defeat
