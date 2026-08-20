@@ -6,7 +6,7 @@ import { PixelCharacter } from '../components/PixelCharacter'
 import { useGame } from '../context/GameContext'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import { useFocusTrap } from '../hooks/useFocusTrap'
-import { convertFromSupabase } from '../utils/supabaseUtils'
+import { RANKINGS_SELECT_COLUMNS } from '../utils/supabaseUtils'
 
 const Rankings = () => {
     const navigate = useNavigate()
@@ -25,13 +25,40 @@ const Rankings = () => {
         try {
             const { data, error } = await supabase
                 .from('characters')
-                .select('*')
+                .select(RANKINGS_SELECT_COLUMNS)
                 .order('level', { ascending: false })
-                .order('name', { ascending: true });
+                .order('name', { ascending: true })
+                .limit(100);
 
             if (error) throw error;
 
-            const fetchedChars: Character[] = data.map(convertFromSupabase);
+            const fetchedChars: Character[] = (data ?? []).map(row => ({
+                id: row.id,
+                name: row.name,
+                gender: row.gender as 'male' | 'female',
+                seed: row.seed,
+                level: row.level,
+                hp: 0,
+                maxHp: 0,
+                strength: 0,
+                vitality: 0,
+                dexterity: 0,
+                luck: 0,
+                intelligence: 0,
+                focus: 0,
+                experience: 0,
+                wins: 0,
+                losses: 0,
+                fightsLeft: 0,
+                lastFightReset: 0,
+                fightHistory: [],
+                foughtToday: [],
+                statPoints: 0,
+                inventory: [],
+                lastLootRoll: 0,
+                incomingFightHistory: [],
+                isBot: false,
+            }));
 
             setCharacters(fetchedChars)
         } catch (error) {

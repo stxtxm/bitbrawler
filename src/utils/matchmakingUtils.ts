@@ -1,7 +1,7 @@
 import { supabase } from '../config/supabase';
 import { Character } from '../types/Character';
 import { calculateCombatStats } from './combatUtils';
-import { convertFromSupabase } from './supabaseUtils';
+import { convertFromMatchmakingRow, MATCHMAKING_SELECT_COLUMNS } from './supabaseUtils';
 
 export type MatchType = 'balanced' | 'similar' | 'pve' | 'boss';
 
@@ -45,7 +45,7 @@ async function findOpponentByPowerRange(player: Character): Promise<MatchmakingR
         const levelRange = 3;
         const { data, error } = await supabase
             .from('characters')
-            .select('*')
+            .select(MATCHMAKING_SELECT_COLUMNS)
             .gte('level', Math.max(1, player.level - levelRange))
             .lte('level', player.level + levelRange)
             .limit(100);
@@ -55,7 +55,7 @@ async function findOpponentByPowerRange(player: Character): Promise<MatchmakingR
         }
 
         const candidates = data
-            .map(convertFromSupabase)
+            .map(convertFromMatchmakingRow)
             .filter(char => {
                 if (!char.id) return false;
                 if (char.id === player.id) return false;

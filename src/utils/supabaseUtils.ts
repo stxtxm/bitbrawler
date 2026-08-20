@@ -1,6 +1,52 @@
 import { CharacterRow } from '../config/supabase';
 import { Character } from '../types/Character';
 
+/**
+ * Column projections that drastically reduce egress on Supabase free tier
+ * (5 GB/month egress budget — the Rankings page used to fetch select('*')
+ * on the whole table, which is the main quota burner).
+ */
+export const RANKINGS_SELECT_COLUMNS = 'id,name,gender,seed,level';
+export const MATCHMAKING_SELECT_COLUMNS =
+  'id,name,gender,seed,level,hp,max_hp,is_bot,strength,vitality,dexterity,luck,intelligence,focus,equipped_items';
+
+/** Convert a partial row (light projection) into a combat-ready Character.
+ * Heavy state (inventory, histories, medals...) is left as defaults — only
+ * combat-critical fields are populated from the row. */
+export function convertFromMatchmakingRow(row: Partial<CharacterRow>): Character {
+  return {
+    name: row.name ?? 'Unknown',
+    gender: (row.gender as 'male' | 'female') ?? 'male',
+    seed: row.seed ?? 'seed',
+    level: row.level ?? 1,
+    hp: row.hp ?? 100,
+    maxHp: row.max_hp ?? 100,
+    strength: row.strength ?? 10,
+    vitality: row.vitality ?? 10,
+    dexterity: row.dexterity ?? 10,
+    luck: row.luck ?? 10,
+    intelligence: row.intelligence ?? 10,
+    focus: row.focus ?? 10,
+    experience: 0,
+    wins: 0,
+    losses: 0,
+    fightsLeft: 0,
+    pveFightsLeft: 5,
+    lastFightReset: 0,
+    fightHistory: [],
+    foughtToday: [],
+    statPoints: 0,
+    pendingFight: undefined,
+    inventory: [],
+    lastLootRoll: 0,
+    incomingFightHistory: [],
+    isBot: row.is_bot ?? false,
+    autoMode: false,
+    equippedItems: row.equipped_items ?? { weapon: null, armor: null, accessory: null },
+    id: row.id,
+  };
+}
+
 export function convertFromSupabase(row: CharacterRow): Character {
   return {
     name: row.name,
