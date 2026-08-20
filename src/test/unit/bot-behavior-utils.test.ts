@@ -82,7 +82,9 @@ describe('botBehaviorUtils', () => {
         });
         expect(budget).toBeLessThanOrEqual(GAME_RULES.BOTS.MAX_FIGHTS_PER_RUN);
         expect(budget).toBeLessThanOrEqual(2);
-        expect(budget).toBe(2);
+        // Strong reduction: even an aggressive bot in prime time is capped at 1 fight/run
+        expect(budget).toBe(GAME_RULES.BOTS.MAX_FIGHTS_PER_RUN);
+        expect(budget).toBe(1);
     });
 
     it('can schedule rest when activity roll fails', () => {
