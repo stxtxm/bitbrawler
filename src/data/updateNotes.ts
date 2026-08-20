@@ -8,6 +8,18 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.4.2',
+    date: '2026-08-20',
+    title: '🤖 Bot population & activity drastically reduced — Supabase free tier safe',
+    changes: [
+      '🚫 GROWTH_CHANCE 0.5 → 0: no more spontaneous bot creation every other run — the population drift (~6 bots/day) is stopped.',
+      '📉 Starter reserves reduced: MIN_LVL1_BOTS 10→3, MIN_LVL1_PROTECTED 5→3, LVL1_RESERVE_PER_HUMAN 1.5→0.5, LVL1_RESERVE_BUFFER 6→2, MIN_POPULATION 2→1.',
+      '💤 Activity near idle floor: ACTIVITY_RATE 0.20→0.08 and MAX_FIGHTS_PER_RUN 2→1 — most bots rest most runs, at most 1 PvE fight per run per bot.',
+      '⚡ Cuts bot-engine DB writes (fights, incoming histories, spawns) by roughly an order of magnitude while keeping a playable opponent pool for new players.',
+      '1483 tests passing across 99 test files.',
+    ],
+  },
+  {
     version: '5.4.1',
     date: '2026-08-17',
     title: '⚔️ PvE & idle monsters rebalanced — fights are winnable again',
