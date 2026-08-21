@@ -8,7 +8,7 @@ import { Character } from '../types/Character';
  */
 export const RANKINGS_SELECT_COLUMNS = 'id,name,gender,seed,level';
 export const MATCHMAKING_SELECT_COLUMNS =
-  'id,name,gender,seed,level,hp,max_hp,is_bot,strength,vitality,dexterity,luck,intelligence,focus,equipped_items';
+  'id,name,gender,seed,level,hp,max_hp,is_bot,strength,vitality,dexterity,luck,intelligence,focus,equipped_items,item_upgrades';
 
 /** Convert a partial row (light projection) into a combat-ready Character.
  * Heavy state (inventory, histories, medals...) is left as defaults — only
@@ -43,6 +43,7 @@ export function convertFromMatchmakingRow(row: Partial<CharacterRow>): Character
     isBot: row.is_bot ?? false,
     autoMode: false,
     equippedItems: row.equipped_items ?? { weapon: null, armor: null, accessory: null },
+    itemUpgrades: row.item_upgrades ?? undefined,
     id: row.id,
   };
 }

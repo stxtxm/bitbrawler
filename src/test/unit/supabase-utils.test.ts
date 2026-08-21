@@ -404,10 +404,14 @@ describe('Supabase egress projections', () => {
   })
 
   it('matchmaking projection excludes heavy payload columns', () => {
-    const heavy = ['fight_history', 'incoming_fight_history', 'inventory', 'medal_progress', 'item_upgrades', 'boss_progress', 'push_endpoint', 'push_keys', 'experience', 'wins', 'losses']
+    const heavy = ['fight_history', 'incoming_fight_history', 'inventory', 'medal_progress', 'boss_progress', 'push_endpoint', 'push_keys', 'experience', 'wins', 'losses']
     const cols = MATCHMAKING_SELECT_COLUMNS.split(',')
     for (const col of heavy) {
       expect(cols).not.toContain(col)
     }
+  })
+
+  it('matchmaking projection includes item_upgrades (combat-critical upgrades)', () => {
+    expect(MATCHMAKING_SELECT_COLUMNS.split(',')).toContain('item_upgrades')
   })
 })
