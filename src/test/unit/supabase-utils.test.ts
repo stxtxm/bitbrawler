@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { convertFromSupabase, convertToSupabase } from '../../utils/supabaseUtils'
+import { convertFromSupabase, convertToSupabase, RANKINGS_SELECT_COLUMNS, MATCHMAKING_SELECT_COLUMNS } from '../../utils/supabaseUtils'
 import { CharacterRow } from '../../config/supabase'
 import { Character } from '../../types/Character'
 
@@ -378,5 +378,40 @@ describe('convertToSupabase', () => {
     const row = convertToSupabase(manualChar)
     expect(row.is_bot).toBe(false)
     expect(row.auto_mode).toBe(false)
+  })
+})
+
+describe('Supabase egress projections', () => {
+  void RANKINGS_SELECT_COLUMNS
+  void MATCHMAKING_SELECT_COLUMNS
+
+  it('rankings only fetches display columns (name, seed, gender, level, id)', () => {
+    expect(RANKINGS_SELECT_COLUMNS).toBe('id,name,gender,seed,level')
+  })
+
+  it('rankings projection excludes heavy payload columns', () => {
+    const heavy = ['fight_history', 'incoming_fight_history', 'inventory', 'medal_progress', 'item_upgrades', 'boss_progress', 'push_endpoint', 'push_keys']
+    for (const col of heavy) {
+      expect(RANKINGS_SELECT_COLUMNS).not.toContain(col)
+    }
+  })
+
+  it('matchmaking projection includes combat-critical stats', () => {
+    const cols = MATCHMAKING_SELECT_COLUMNS.split(',')
+    for (const col of ['id', 'name', 'gender', 'seed', 'level', 'hp', 'max_hp', 'is_bot', 'strength', 'vitality', 'dexterity', 'luck', 'intelligence', 'focus', 'equipped_items']) {
+      expect(cols).toContain(col)
+    }
+  })
+
+  it('matchmaking projection excludes heavy payload columns', () => {
+    const heavy = ['fight_history', 'incoming_fight_history', 'inventory', 'medal_progress', 'boss_progress', 'push_endpoint', 'push_keys', 'experience', 'wins', 'losses']
+    const cols = MATCHMAKING_SELECT_COLUMNS.split(',')
+    for (const col of heavy) {
+      expect(cols).not.toContain(col)
+    }
+  })
+
+  it('matchmaking projection includes item_upgrades (combat-critical upgrades)', () => {
+    expect(MATCHMAKING_SELECT_COLUMNS.split(',')).toContain('item_upgrades')
   })
 })
