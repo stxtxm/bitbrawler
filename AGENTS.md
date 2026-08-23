@@ -985,6 +985,10 @@ Increase XP multiplier from 1.0 to 1.2 for level 20+.
 
 ---
 
+## 🤖 Pipeline Agents — référence complète
+
+Voir **[docs/AGENT_PIPELINE.md](docs/AGENT_PIPELINE.md)** : flow issue→dev→CI→reviewer→merge, cycle de vie des mémoires (auto-compaction), modèles, incidents & procédures.
+
 ## 🔧 Infra Runbook — Supabase & déploiement (ajouté 2026-08-23)
 
 ### Comptes/projets actifs
