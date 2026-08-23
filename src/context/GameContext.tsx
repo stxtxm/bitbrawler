@@ -523,12 +523,18 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
          })
          .eq('id', baseCharacter.id!);
 
-       if (error) throw error;
+        if (error) throw error;
 
-       persistCharacter(updatedChar);
-       initiatedMatchmakingRef.current = false;
+        persistCharacter(updatedChar);
+        initiatedMatchmakingRef.current = false;
+        // Clear stale debounced sync (old 0xp) that would overwrite fresh XP on next flush/logout
+        pendingSyncCharRef.current = null;
+        if (syncToBackendTimeoutRef.current !== null) {
+          clearTimeout(syncToBackendTimeoutRef.current);
+          syncToBackendTimeoutRef.current = null;
+        }
 
-      // Non-blocking medal/achievement check after PvP fight
+       // Non-blocking medal/achievement check after PvP fight
       checkAndApplyMedals(updatedChar, {}).then(charWithMedals => {
         persistCharacter(charWithMedals);
         if (hasMedalChanges(updatedChar, charWithMedals)) {
@@ -660,6 +666,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
 
     persistCharacter(updatedChar);
+    // Clear stale debounced sync that would overwrite fresh XP
+    pendingSyncCharRef.current = null;
+    if (syncToBackendTimeoutRef.current !== null) {
+      clearTimeout(syncToBackendTimeoutRef.current);
+      syncToBackendTimeoutRef.current = null;
+    }
 
     // Non-blocking medal/achievement check after PvE fight
     checkAndApplyMedals(updatedChar, {
@@ -788,6 +800,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
 
     persistCharacter(updatedChar);
+    // Clear stale debounced sync that would overwrite fresh XP
+    pendingSyncCharRef.current = null;
+    if (syncToBackendTimeoutRef.current !== null) {
+      clearTimeout(syncToBackendTimeoutRef.current);
+      syncToBackendTimeoutRef.current = null;
+    }
 
     setLastXpGain(won ? rewards.xpGained : 0);
     if (xpResult.leveledUp && !updatedChar.autoMode) {
