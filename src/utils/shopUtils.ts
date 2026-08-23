@@ -2,7 +2,7 @@ import { Character } from '../types/Character';
 import { PixelItemAsset } from '../types/Item';
 import { SHOP_OFFERS, REROLL_COST, EPIC_UNLOCK_LEVEL } from '../data/shopConstants';
 import { rollSimpleLootbox } from './lootboxUtils';
-import { isOfferPurchased, markOfferPurchased, isRerollUsed, markRerollUsed, loadShopPurchases, saveShopPurchases } from './shopStorage';
+import { isOfferPurchased, isRerollUsed, loadShopPurchases, saveShopPurchases } from './shopStorage';
 
 export interface ShopOffer {
   index: number;
@@ -213,9 +213,9 @@ export function buyShopOffer(
     newInventory = [...(character.inventory ?? []), shopItem.id];
   }
 
-  // Persist purchase to localStorage after successful computation
-  const charId = character.id ?? character.seed;
-  markOfferPurchased(charId, index, today);
+  // NOTE: the sold-out mark is written by the CALLER after the DB write
+  // succeeds (GameContext) — marking here showed SOLD while essence/inventory
+  // were never persisted on transient failures.
 
   return {
     ...character,
@@ -254,8 +254,7 @@ export function rerollShopOffers(
   // Deduct essence
   const newEssence = (character.essence ?? 0) - REROLL_COST;
 
-  // Mark reroll used
-  markRerollUsed(charId, today);
+  // NOTE: reroll-used mark is written by the CALLER after persistence.
 
   return {
     character: {
