@@ -44,6 +44,15 @@ export const useArenaLevelUp = ({
   // 0 = no real visible-transition seen yet (tests / first mount)
   const lastVisibleAtRef = useRef(0);
 
+  // ── Announcement throttle (5.5.1) ────────────────────────────────────────
+  // At early levels one idle kill can cross a threshold every few fights:
+  // legit crossings, but back-to-back flashes read as a looping FX and starve
+  // the hide-timer (stuck text). Minimum 8s between announcements; levels
+  // gained meanwhile are AGGREGATED into the next announcement (+N niveaux).
+  const MIN_ANNOUNCE_INTERVAL = 8000;
+  const lastShownAtRef = useRef(0);
+  const pendingRef = useRef<{ levels: number; newLevel: number } | null>(null);
+
   // Visibility transitions OWN the FX lifecycle across locks: on hide, any
   // pending announcement is dropped (frozen timers otherwise leave the
   // floating text stuck forever); on visible, a 5s grace window keeps late
@@ -64,10 +73,12 @@ export const useArenaLevelUp = ({
   }, []);
 
   const queueLevelUp = useCallback((levelsGained: number, newLevel: number) => {
-    // Swallow while an FX is already showing: background-throttled ticks can
-    // cross several levels back-to-back and chain flashes into an endless loop.
-    // XP/stats are already applied — only the announcement is rate-limited.
-    if (recentRef.current) return;
+    // Swallow while an FX is already showing: aggregate into pending instead.
+    if (recentRef.current) {
+      const p = pendingRef.current ?? { levels: 0, newLevel };
+      pendingRef.current = { levels: p.levels + Math.max(1, levelsGained), newLevel };
+      return;
+    }
 
     // Never play FX while the page is hidden/backgrounded: the offline popup /
     // welcome-back flow announces those gains on return instead.
@@ -78,14 +89,24 @@ export const useArenaLevelUp = ({
     if (lastVisibleAtRef.current && Date.now() - lastVisibleAtRef.current < 5000) return;
 
     const now = Date.now();
-    const last = lastQueuedRef.current;
-    if (last && last.level === newLevel && now - last.at < 3000) return;
+    // Global rate-limit: aggregate anything arriving inside the window.
+    if (now - lastShownAtRef.current < MIN_ANNOUNCE_INTERVAL) {
+      const p = pendingRef.current ?? { levels: 0, newLevel };
+      pendingRef.current = {
+        levels: p.levels + Math.max(1, levelsGained),
+        newLevel: Math.max(p.newLevel, newLevel),
+      };
+      return;
+    }
+    lastShownAtRef.current = now;
+    // Include any levels aggregated during previous suppressed windows
+    const carried = pendingRef.current;
+    const total = Math.max(1, levelsGained) + (carried?.levels ?? 0);
+    pendingRef.current = null;
 
     if (levelUpTimerRef.current) clearTimeout(levelUpTimerRef.current);
     levelUpTimerRef.current = null;
     lastQueuedRef.current = { level: newLevel, at: now };
-
-    const total = Math.max(1, levelsGained);
 
     // Multiple levels at once (offline catch-up) → show ONE aggregated FX
     // announcing the final level with the total gained. Staggering one flash

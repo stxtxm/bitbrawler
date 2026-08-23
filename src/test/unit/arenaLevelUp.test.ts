@@ -159,10 +159,22 @@ describe('useArenaLevelUp - multi-level stagger queue', () => {
     });
     expect(result.current.recentLevelUp).toBeNull();
 
-    // After the window clears, a genuine new level announces normally.
+    // 5.5.1 throttle: within 8s of the last announcement, new levels are
+    // aggregated silently (pending) instead of chaining flashes.
     act(() => {
       result.current.queueLevelUp(1, 9);
+      result.current.queueLevelUp(1, 10);
     });
-    expect(result.current.recentLevelUp).toEqual({ newLevel: 9, isMilestone: false });
+    expect(result.current.recentLevelUp).toBeNull();
+
+    // After the throttle window clears, the next genuine level announces with
+    // the carried aggregation included.
+    act(() => {
+      vi.advanceTimersByTime(8000);
+    });
+    act(() => {
+      result.current.queueLevelUp(1, 11);
+    });
+    expect(result.current.recentLevelUp).toEqual({ newLevel: 11, isMilestone: false, count: 4 });
   });
 });
