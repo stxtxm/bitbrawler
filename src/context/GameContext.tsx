@@ -395,6 +395,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         handleDbError(e, 'logout-flush');
       }
     }
+    // Reset the progress-guard reference too: a NEW character created after
+    // logout must never be coerced toward the previous one's level (#793 lesson).
+    charRef.current = null;
     setActiveCharacter(null);
     clearLocalData();
   }, [handleDbError, mergeWithServerProgress]);

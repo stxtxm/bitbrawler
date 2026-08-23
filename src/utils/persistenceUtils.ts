@@ -171,10 +171,15 @@ export type SyncResult =
 // independent counters take the true max.
 
 export function coerceMonotonicProgress<T extends {
+  id?: string;
   experience?: number; level?: number; hp?: number; maxHp?: number;
   idleTotalXp?: number; idleTotalKills?: number;
 }>(incoming: T, current?: T | null): T {
-  if (!current || !current.experience || typeof current.experience !== 'number') return incoming;
+  // Identity guard: the monotonic rule only applies WITHIN one character.
+  // A freshly created / newly logged-in character (different id) must never
+  // inherit the previous character's progression.
+  if (!current || !current.id || !incoming.id || incoming.id !== current.id) return incoming;
+  if (typeof current.experience !== 'number') return incoming;
   const incExp = incoming.experience ?? 0;
   const curExp = current.experience;
   if (incExp >= curExp) return incoming;
