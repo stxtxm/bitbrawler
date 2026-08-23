@@ -4,9 +4,10 @@ import HomePage from '../../pages/HomePage';
 import { renderWithRouter } from '../utils/router';
 
 describe('HomePage', () => {
-  it('displays Propulsé par OpenCode footer', () => {
+  it('does not display any OpenCode footer', () => {
     renderWithRouter(<HomePage />);
-    expect(screen.getByText(/Propulsé par OpenCode/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Propulsé par OpenCode/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/OpenCode/i)).not.toBeInTheDocument();
   });
 
   it('opens and closes patch notes modal', () => {
