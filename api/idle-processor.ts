@@ -446,8 +446,14 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       .single()
 
     if (error || !data) {
-      res.writeHead(404, { 'Content-Type': 'application/json' })
-      res.end(JSON.stringify({ error: 'Character not found' }))
+      let dbTarget = 'invalid-url'
+      try { dbTarget = new URL(supabaseUrl).host } catch { /* keep default */ }
+      res.writeHead(error ? 500 : 404, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({
+        error: error ? 'DB query failed' : 'Character not found',
+        db_target: dbTarget,
+        detail: error?.message ?? null,
+      }))
       return
     }
 
