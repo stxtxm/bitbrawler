@@ -58048,5 +58048,78 @@
     "load_times_ms": {
       "home": 1283
     }
+  },
+  {
+    "date": "2026-08-23T04:01:11.763Z",
+    "run": "2026-08-23",
+    "character": null,
+    "character_action": null,
+    "replaced_character": null,
+    "character_type": null,
+    "fights": [],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "arena_status": null,
+    "initial_stats": null,
+    "initial_level": null,
+    "initial_xp": null,
+    "initial_max_hp": null,
+    "initial_equipment": null,
+    "initial_streak": null,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "final_equipment": null,
+    "final_streak": null,
+    "lootbox_equipment": null,
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": null,
+    "idle_fights": [],
+    "efficiency_panel": null,
+    "initial_essence": null,
+    "final_essence": null,
+    "essence": {
+      "before_idle": null,
+      "after_idle": null,
+      "per_fight": [],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": null,
+      "flow": {
+        "idle_gained": null,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": null
+      }
+    },
+    "level_up_fx": null,
+    "offline_gains": null,
+    "no_legacy_overlay": null,
+    "forge": null,
+    "shop": null,
+    "errors": [
+      "Persistent fighter QA-PERSIST could not be created or reused"
+    ],
+    "load_times_ms": {
+      "home": 1337
+    }
   }
 ]
