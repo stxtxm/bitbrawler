@@ -991,7 +991,7 @@
 <rect x="928" y="960" width="32" height="32" fill="#0a0603"/>
 <rect x="960" y="960" width="32" height="32" fill="#7a4a22"/>
 <rect x="992" y="960" width="32" height="32" fill="#0a0603"/>
-<rect x="0" y="992" width="32" height="32" fill="#0a0603"/>
+<rect x="0" y="992" width="32" height="32" fill="#a07400"/>
 <rect x="32" y="992" width="32" height="32" fill="#0a0603"/>
 <rect x="64" y="992" width="32" height="32" fill="#0a0603"/>
 <rect x="96" y="992" width="32" height="32" fill="#0a0603"/>
@@ -1022,5 +1022,5 @@
 <rect x="896" y="992" width="32" height="32" fill="#0a0603"/>
 <rect x="928" y="992" width="32" height="32" fill="#0a0603"/>
 <rect x="960" y="992" width="32" height="32" fill="#0a0603"/>
-<rect x="992" y="992" width="32" height="32" fill="#0a0603"/>
+<rect x="992" y="992" width="32" height="32" fill="#a07400"/>
 </svg>

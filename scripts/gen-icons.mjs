@@ -15,7 +15,7 @@
 import { writeFileSync } from 'fs';
 import { deflateSync } from 'zlib';
 import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PUB = resolve(ROOT, 'public');
@@ -34,6 +34,9 @@ const P = {
   guardD: [160, 116, 0],
   grip: [122, 74, 34], gripHi: [148, 94, 46],
   sparkW: [255, 250, 235],
+
+  flatSteel: [174, 189, 212], flatGold: [255, 204, 0],
+  pommel: [160, 116, 0],
 
   outline: [12, 9, 14],      // near-black cool outline for the figure
   hair: [43, 43, 58],        // #2b2b3a dark blue-black spikes
@@ -121,7 +124,6 @@ function buildArtwork(simple = false) {
   for (let y = 9; y <= 18; y++) {
     for (let x = 10; x <= 21; x++) {
       if ((y === 18 && (x < 12 || x > 19))) continue; // jaw taper
-      if ((y === 17 && (x < 11 || x > 20)) && false) continue;
       F(x, y, 'skin');
     }
   }
@@ -178,9 +180,8 @@ function buildArtwork(simple = false) {
       if (figureCells.has(`${nx},${ny}`)) continue;
       const cur = finalGrid[ny][nx];
       // Only outline where background/shadow — keep sword pixels visible
-      const isSword = (cur.r !== undefined && cur.b > 60 && cur.g > 90) || false;
-      if (!isSword && (cur.r < 70 && cur.b < 70)) put(nx, ny, P.outline);
-      else if (!isSword) put(nx, ny, P.outline);
+      const isSword = cur.r !== undefined && cur.b > 60 && cur.g > 90;
+      if (!isSword) put(nx, ny, P.outline);
     }
   }
 
@@ -244,53 +245,59 @@ function encodePNG(rgba, size) {
   ]);
 }
 
-// ── Emit ──
-const detailed = buildArtwork(false);
-const simple = buildArtwork(true);
+export { P, buildArtwork };
 
-const targets = [
-  ['icon-512.png', 512, detailed],
-  ['icon-192.png', 192, detailed],
-  ['apple-touch-icon-180.png', 180, detailed],
-  ['apple-touch-icon-167.png', 167, detailed],
-  ['apple-touch-icon-152.png', 152, detailed],
-  ['apple-touch-icon-120.png', 120, simple],
-  ['badge-96.png', 96, simple],
-  ['favicon-32.png', 32, simple],
-  ['favicon-16.png', 16, simple],
-];
-for (const [name, size, art] of targets) {
-  writeFileSync(resolve(PUB, name), encodePNG(renderRGBA(art, size), size));
-  console.log('✓', name);
-}
+const isMain = Boolean(process.argv[1]) && import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
 
-// ── icon.svg ──
-const S = 32;
-const hex = n => Number.isFinite(n) ? n.toString(16).padStart(2, '0') : '00';
-const css = c => Array.isArray(c) ? `#${hex(c[0])}${hex(c[1])}${hex(c[2])}` : `#${hex(c.r)}${hex(c.g)}${hex(c.b)}`;
-const parts = [
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${GRID * S} ${GRID * S}" shape-rendering="crispEdges">`,
-];
-for (let y = 0; y < GRID; y++) {
-  for (let x = 0; x < GRID; x++) {
-    parts.push(`<rect x="${x * S}" y="${y * S}" width="${S}" height="${S}" fill="${css(detailed[y][x])}"/>`);
+if (isMain) {
+  // ── Emit ──
+  const detailed = buildArtwork(false);
+  const simple = buildArtwork(true);
+
+  const targets = [
+    ['icon-512.png', 512, detailed],
+    ['icon-192.png', 192, detailed],
+    ['apple-touch-icon-180.png', 180, detailed],
+    ['apple-touch-icon-167.png', 167, detailed],
+    ['apple-touch-icon-152.png', 152, detailed],
+    ['apple-touch-icon-120.png', 120, simple],
+    ['badge-96.png', 96, simple],
+    ['favicon-32.png', 32, simple],
+    ['favicon-16.png', 16, simple],
+  ];
+  for (const [name, size, art] of targets) {
+    writeFileSync(resolve(PUB, name), encodePNG(renderRGBA(art, size), size));
+    console.log('✓', name);
   }
-}
-parts.push('</svg>');
-writeFileSync(resolve(PUB, 'icon.svg'), parts.join('\n'));
-console.log('✓ icon.svg');
 
-// ── badge.svg: gold-only silhouette (band, swords, trim, pommels) ──
-const badgeArt = buildArtwork(true);
-const bp = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${GRID * S} ${GRID * S}" shape-rendering="crispEdges">`];
-for (let y = 0; y < GRID; y++) {
-  for (let x = 0; x < GRID; x++) {
-    const c = badgeArt[y][x];
-    const isGoldish = (Array.isArray(c) ? c[1] : c.g) > 150 && (Array.isArray(c) ? c[2] : c.b) < 140;
-    if (!isGoldish) continue;
-    bp.push(`<rect x="${x * S}" y="${y * S}" width="${S}" height="${S}" fill="#ffcc00"/>`);
+  // ── icon.svg ──
+  const S = 32;
+  const hex = n => Number.isFinite(n) ? n.toString(16).padStart(2, '0') : '00';
+  const css = c => Array.isArray(c) ? `#${hex(c[0])}${hex(c[1])}${hex(c[2])}` : `#${hex(c.r)}${hex(c.g)}${hex(c.b)}`;
+  const parts = [
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${GRID * S} ${GRID * S}" shape-rendering="crispEdges">`,
+  ];
+  for (let y = 0; y < GRID; y++) {
+    for (let x = 0; x < GRID; x++) {
+      parts.push(`<rect x="${x * S}" y="${y * S}" width="${S}" height="${S}" fill="${css(detailed[y][x])}"/>`);
+    }
   }
+  parts.push('</svg>');
+  writeFileSync(resolve(PUB, 'icon.svg'), parts.join('\n'));
+  console.log('✓ icon.svg');
+
+  // ── badge.svg: gold-only silhouette (band, swords, trim, pommels) ──
+  const badgeArt = buildArtwork(true);
+  const bp = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${GRID * S} ${GRID * S}" shape-rendering="crispEdges">`];
+  for (let y = 0; y < GRID; y++) {
+    for (let x = 0; x < GRID; x++) {
+      const c = badgeArt[y][x];
+      const isGoldish = (Array.isArray(c) ? c[1] : c.g) > 150 && (Array.isArray(c) ? c[2] : c.b) < 140;
+      if (!isGoldish) continue;
+      bp.push(`<rect x="${x * S}" y="${y * S}" width="${S}" height="${S}" fill="#ffcc00"/>`);
+    }
+  }
+  bp.push('</svg>');
+  writeFileSync(resolve(PUB, 'badge.svg'), bp.join('\n'));
+  console.log('✓ badge.svg');
 }
-bp.push('</svg>');
-writeFileSync(resolve(PUB, 'badge.svg'), bp.join('\n'));
-console.log('✓ badge.svg');
