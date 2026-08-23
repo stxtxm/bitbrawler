@@ -1,7 +1,10 @@
 /**
- * BitBrawler brand icon generator — pure Node (no deps).
- * Renders the 16x16 pixel "gold fist on dark" artwork to every PNG size used
- * by the PWA / favicons, plus the master icon.svg (rect-per-pixel).
+ * BitBrawler brand icon generator v2 — pure Node (no deps).
+ * Artwork: TWO CROSSED SWORDS (gold x steel) with a clash spark, on a dark
+ * radial background. Expert-style pixel rules: 45-degree Bresenham diagonals,
+ * per-side edge highlighting, coherent shadows, maskable-safe margins.
+ *
+ * Sizes <= 48px use a simplified flat palette so favicons stay readable.
  *
  * Run: node scripts/gen-icons.mjs
  */
@@ -13,76 +16,146 @@ import { fileURLToPath } from 'url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PUB = resolve(ROOT, 'public');
 
-// ── Pixel palette (matches app theme: dark + $accent-gold) ──
-const C = {
-  bgTop: [26, 18, 11],      // #1a120b
-  bgBottom: [10, 6, 3],     // #0a0603
-  outline: [43, 31, 0],     // #2b1f00
-  gold: [255, 204, 0],      // #ffcc00
-  light: [255, 224, 102],   // #ffe066
-  shade: [199, 145, 0],     // #c79100
-  glint: [255, 247, 214],   // #fff7d6
+const GRID = 32;
+
+// ── Palette ──
+const P = {
+  bgEdge: [10, 6, 3],       // #0a0603
+  bgCenter: [36, 24, 17],   // #241811 warm glow behind the cross
+  shadow: [20, 12, 7],      // #140c07 soft drop under blades
+  outline: [30, 21, 2],     // #1e1502
+
+  // Steel blade (right sword)
+  sHi: [233, 240, 250],     // #e9f0fa
+  sCore: [174, 189, 212],   // #aebdd4
+  sLo: [109, 127, 155],     // #6d7f9b
+
+  // Gold blade (left sword)
+  gHi: [255, 224, 102],     // #ffe066
+  gCore: [255, 204, 0],     // #ffcc00
+  gLo: [199, 145, 0],       // #c79100
+
+  guard: [255, 204, 0],
+  guardD: [160, 116, 0],
+
+  grip: [122, 74, 34],      // #7a4a22
+  gripHi: [148, 94, 46],
+  pommel: [255, 224, 102],
+
+  sparkW: [255, 250, 235],
+  sparkG: [255, 224, 102],
+
+  // Simplified (small sizes)
+  flatSteel: [207, 216, 230],
+  flatGold: [255, 204, 0],
 };
 
-const GRID = 16;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
-function hex(n) { return n.toString(16).padStart(2, '0'); }
-
-/** Build the 16x16 artwork as a color-index grid. */
-function buildArtwork() {
+function buildArtwork(simple = false) {
   const g = Array.from({ length: GRID }, () => Array(GRID).fill('bg'));
 
-  const inBody = (x, y) => {
-    // Rounded square: cols 3..12, rows 2..12, corner radius 2
-    if (x < 3 || x > 12 || y < 2 || y > 12) return false;
-    const dx = x < 5 ? 5 - x : x > 10 ? x - 10 : 0;
-    const dy = y < 4 ? 4 - y : y > 10 ? y - 10 : 0;
-    return dx * dx + dy * dy <= 4;
+  // Radial warm glow behind the cross
+  const cx = 15.5, cy = 15.5;
+  for (let y = 0; y < GRID; y++) {
+    for (let x = 0; x < GRID; x++) {
+      const d = Math.hypot(x - cx, y - cy) / 18;
+      const k = clamp(1 - d, 0, 1) * 0.85;
+      g[y][x] = {
+        r: Math.round(P.bgEdge[0] + (P.bgCenter[0] - P.bgEdge[0]) * k),
+        g: Math.round(P.bgEdge[1] + (P.bgCenter[1] - P.bgEdge[1]) * k),
+        b: Math.round(P.bgEdge[2] + (P.bgCenter[2] - P.bgEdge[2]) * k),
+      };
+    }
+  }
+
+  const put = (x, y, c) => {
+    if (x < 0 || y < 0 || x >= GRID || y >= GRID) return;
+    // Normalize ANY input to a plain {r,g,b}: palette arrays, named keys,
+    // or accidental array-spreads that become numeric-key objects.
+    let rgb = c;
+    if (Array.isArray(rgb)) rgb = { r: rgb[0], g: rgb[1], b: rgb[2] };
+    else if (typeof rgb === 'string') rgb = { ...P[rgb] };
+    else if (rgb.r === undefined && rgb[0] !== undefined) rgb = { r: rgb[0], g: rgb[1], b: rgb[2] };
+    else rgb = { ...rgb };
+    g[y][x] = rgb;
   };
 
-  for (let y = 0; y < GRID; y++) {
-    for (let x = 0; x < GRID; x++) {
-      if (!inBody(x, y)) continue;
-      let c = 'gold';
-      if (y === 3) c = 'light';                       // top highlight
-      if (y === 12 || (x === 11 && y >= 5)) c = 'shade'; // right/bottom shading
-      if (y === 4 && x === 5) c = 'glint';            // single knuckle glint
-      g[y][x] = c;
+  /**
+   * Diagonal blade from handle-side (hx,hy) going UP with horizontal sign sx.
+   * length = number of steps. Sides: hi/lo perpendicular neighbours.
+   */
+  function sword(hx, hy, sx, len, pal) {
+    // Drop shadow (offset +1,+1), full length
+    for (let i = 0; i < len + 1; i++) {
+      put(hx + sx * i + 1, hy - i + 1, P.shadow);
     }
+    // Blade: core line + hi/lo side cells
+    for (let i = 0; i < len; i++) {
+      const x = hx + sx * i, y = hy - i;
+      put(x, y, pal.core);
+      put(x + sx, y, pal.hi);   // outer edge (towards nearest corner)
+      put(x - sx, y, pal.lo);   // inner edge
+    }
+    // Tip: bright cap + 1 extension pixel
+    const tx = hx + sx * len, ty = hy - len;
+    put(tx, ty, pal.hi);
+    put(tx + sx, ty - 1, simple ? pal.hi : P.sparkW);
+
+    // Crossguard: short bar perpendicular to the blade at i = 4
+    const gx = hx + sx * 4, gy = hy - 4;
+    for (let k = -2; k <= 2; k++) {
+      if (k === 0) continue;
+      put(gx + k, gy + k, k === 0 ? P.guard : simple ? P.guard : P.guardD);
+      put(gx + k, gy + k, simple ? P.flatGold : (Math.abs(k) === 2 ? P.guardD : P.guard));
+    }
+    put(gx, gy, P.guard);
+
+    // Grip towards the handle corner + pommel
+    for (let i = 1; i <= 4; i++) {
+      put(hx - sx * i, hy + i, i % 2 ? P.grip : P.gripHi);
+    }
+    put(hx - sx * 5, hy + 5, P.pommel);
   }
 
-  // Outline: any bg cell touching the body (4-neighbourhood)
-  const out = g.map(r => [...r]);
-  for (let y = 0; y < GRID; y++) {
-    for (let x = 0; x < GRID; x++) {
-      if (g[y][x] !== 'bg') continue;
-      const touch =
-        (x > 0 && g[y][x - 1] !== 'bg') || (x < GRID - 1 && g[y][x + 1] !== 'bg') ||
-        (y > 0 && g[y - 1][x] !== 'bg') || (y < GRID - 1 && g[y + 1][x] !== 'bg');
-      if (touch) out[y][x] = 'outline';
-    }
+  const steelPal = simple
+    ? { core: P.flatSteel, hi: P.flatSteel, lo: P.flatSteel }
+    : { core: P.sCore, hi: P.sHi, lo: P.sLo };
+  const goldPal = simple
+    ? { core: P.flatGold, hi: P.flatGold, lo: P.flatGold }
+    : { core: P.gCore, hi: P.gHi, lo: P.gLo };
+
+  // Right sword: steel, handle bottom-right -> tip top-left
+  sword(25, 26, -1, 18, steelPal);
+  // Left sword: gold, handle bottom-left -> tip top-right (drawn last = on top)
+  sword(6, 26, 1, 18, goldPal);
+
+  // Clash spark at the crossing point
+  put(16, 16, P.sparkW);
+  put(15, 16, P.sparkG); put(17, 16, P.sparkG);
+  put(16, 15, P.sparkG); put(16, 17, P.sparkG);
+  if (!simple) {
+    put(14, 14, P.sparkG); put(18, 14, P.sparkG);
+    put(14, 18, P.sparkG); put(18, 18, P.sparkG);
   }
-  return out;
+
+  return g;
 }
 
-const ART = buildArtwork();
-
-/** Render artwork at `size` px → RGBA buffer (full-bleed dark gradient). */
-function renderRGBA(size) {
+/** Render artwork at `size` px → RGBA buffer (full-bleed, nearest neighbour). */
+function renderRGBA(art, size) {
   const buf = Buffer.alloc(size * size * 4);
   const cell = size / GRID;
   for (let py = 0; py < size; py++) {
-    const gy = Math.min(GRID - 1, Math.floor(py / cell));
-    const t = py / (size - 1);
-    const bgR = Math.round(C.bgTop[0] + (C.bgBottom[0] - C.bgTop[0]) * t);
-    const bgG = Math.round(C.bgTop[1] + (C.bgBottom[1] - C.bgTop[1]) * t);
-    const bgB = Math.round(C.bgTop[2] + (C.bgBottom[2] - C.bgTop[2]) * t);
+    const gy = clamp(Math.floor(py / cell), 0, GRID - 1);
     for (let px = 0; px < size; px++) {
-      const gx = Math.min(GRID - 1, Math.floor(px / cell));
-      const name = ART[gy][gx];
-      const [r, g, b] = name === 'bg' ? [bgR, bgG, bgB] : C[name];
+      const gx = clamp(Math.floor(px / cell), 0, GRID - 1);
+      const c = art[gy][gx];
       const i = (py * size + px) * 4;
-      buf[i] = r; buf[i + 1] = g; buf[i + 2] = b; buf[i + 3] = 255;
+      buf[i] = c.r ?? c[0];
+      buf[i + 1] = c.g ?? c[1];
+      buf[i + 2] = c.b ?? c[2];
+      buf[i + 3] = 255;
     }
   }
   return buf;
@@ -112,10 +185,10 @@ function chunk(type, data) {
 function encodePNG(rgba, size) {
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(size, 0); ihdr.writeUInt32BE(size, 4);
-  ihdr[8] = 8; ihdr[9] = 6; // 8-bit RGBA
+  ihdr[8] = 8; ihdr[9] = 6;
   const raw = Buffer.alloc((size * 4 + 1) * size);
   for (let y = 0; y < size; y++) {
-    raw[y * (size * 4 + 1)] = 0; // filter none
+    raw[y * (size * 4 + 1)] = 0;
     rgba.copy(raw, y * (size * 4 + 1) + 1, y * size * 4, (y + 1) * size * 4);
   }
   return Buffer.concat([
@@ -126,54 +199,59 @@ function encodePNG(rgba, size) {
   ]);
 }
 
-// ── Emit every PNG asset ──
+// ── Emit assets ──
+const detailed = buildArtwork(false);
+const simple = buildArtwork(true);
+
 const targets = [
-  ['icon-512.png', 512],
-  ['icon-192.png', 192],
-  ['apple-touch-icon-180.png', 180],
-  ['apple-touch-icon-167.png', 167],
-  ['apple-touch-icon-152.png', 152],
-  ['apple-touch-icon-120.png', 120],
-  ['badge-96.png', 96],
-  ['favicon-32.png', 32],
-  ['favicon-16.png', 16],
+  ['icon-512.png', 512, detailed],
+  ['icon-192.png', 192, detailed],
+  ['apple-touch-icon-180.png', 180, detailed],
+  ['apple-touch-icon-167.png', 167, detailed],
+  ['apple-touch-icon-152.png', 152, detailed],
+  ['apple-touch-icon-120.png', 120, simple],
+  ['badge-96.png', 96, simple],
+  ['favicon-32.png', 32, simple],
+  ['favicon-16.png', 16, simple],
 ];
-for (const [name, size] of targets) {
-  writeFileSync(resolve(PUB, name), encodePNG(renderRGBA(size), size));
+for (const [name, size, art] of targets) {
+  writeFileSync(resolve(PUB, name), encodePNG(renderRGBA(art, size), size));
   console.log('✓', name);
 }
 
-// ── Master icon.svg (same artwork, crisp vector rects) ──
-const S = 64; // px per grid cell in the SVG viewBox (viewBox 1024)
-const svgParts = [
+// ── Master icon.svg (rect-per-pixel, crispEdges) ──
+const S = 32;
+const hex = n => n.toString(16).padStart(2, '0');
+const css = c => Array.isArray(c) ? `#${hex(c[0])}${hex(c[1])}${hex(c[2])}` : `#${hex(c.r)}${hex(c.g)}${hex(c.b)}`;
+const parts = [
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${GRID * S} ${GRID * S}" shape-rendering="crispEdges">`,
-  `<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">`,
-  `<stop offset="0" stop-color="#${hex(C.bgTop[0])}${hex(C.bgTop[1])}${hex(C.bgTop[2])}"/>`,
-  `<stop offset="1" stop-color="#${hex(C.bgBottom[0])}${hex(C.bgBottom[1])}${hex(C.bgBottom[2])}"/>`,
-  `</linearGradient></defs>`,
-  `<rect width="${GRID * S}" height="${GRID * S}" fill="url(#bg)"/>`,
+  `<rect width="${GRID * S}" height="${GRID * S}" fill="${css(detailed[0][0])}"/>`,
 ];
 for (let y = 0; y < GRID; y++) {
   for (let x = 0; x < GRID; x++) {
-    const n = ART[y][x];
-    if (n === 'bg') continue;
-    const [r, g, b] = C[n];
-    svgParts.push(`<rect x="${x * S}" y="${y * S}" width="${S}" height="${S}" fill="#${hex(r)}${hex(g)}${hex(b)}"/>`);
+    const c = detailed[y][x];
+    if (y === 0 && x === 0) continue;
+    parts.push(`<rect x="${x * S}" y="${y * S}" width="${S}" height="${S}" fill="${css(c)}"/>`);
   }
 }
-svgParts.push('</svg>');
-writeFileSync(resolve(PUB, 'icon.svg'), svgParts.join('\n'));
+parts.push('</svg>');
+writeFileSync(resolve(PUB, 'icon.svg'), parts.join('\n'));
 console.log('✓ icon.svg');
 
-// ── badge.svg: flat gold fist silhouette on transparent (small status-bar use)
-const badgeParts = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${GRID * S} ${GRID * S}" shape-rendering="crispEdges">`];
+// ── badge.svg: flat gold swords silhouette on transparent ──
+const badgeArt = buildArtwork(true);
+const bp = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${GRID * S} ${GRID * S}" shape-rendering="crispEdges">`];
 for (let y = 0; y < GRID; y++) {
   for (let x = 0; x < GRID; x++) {
-    const n = ART[y][x];
-    if (n === 'bg' || n === 'outline') continue;
-    badgeParts.push(`<rect x="${x * S}" y="${y * S}" width="${S}" height="${S}" fill="#ffcc00"/>`);
+    const c = badgeArt[y][x];
+    const isBg = c.r !== undefined && c.r === P.bgEdge[0] && c.g === P.bgEdge[1];
+    const isShadowLike = !Array.isArray(c) && c.r !== undefined && c.r < 40 && c.b < 20;
+    if (isBg || isShadowLike) continue;
+    const goldish = (c[1] ?? c.g) > 150 && (c[2] ?? c.b) < 120; // gold family only
+    if (!goldish) continue;
+    bp.push(`<rect x="${x * S}" y="${y * S}" width="${S}" height="${S}" fill="#ffcc00"/>`);
   }
 }
-badgeParts.push('</svg>');
-writeFileSync(resolve(PUB, 'badge.svg'), badgeParts.join('\n'));
+bp.push('</svg>');
+writeFileSync(resolve(PUB, 'badge.svg'), bp.join('\n'));
 console.log('✓ badge.svg');
