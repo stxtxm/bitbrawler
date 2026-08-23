@@ -22,18 +22,18 @@
   },
   "session_notes": [
     {
-      "lesson": "Issue #730 analyze-qa-stats cumulative false positives: alerts (issues/suggestions) must use recent windows, not all-time cumulative data. 4 fixes: (1) error-rate alerts use last 30 runs (stats.slice(-RECENT_WINDOW_RUNS)) while report keeps all-time error_runs; (2) idle win-rate alerts use last 15 idle-data runs (collectIdleFights helper shared between all-time aggregation and recent window) — all-time 23% included pre-#727 era but last 15 = 79%; (3) PvE XP ratio suggestion gated behind !pve_ana… [full: AGENTS.md / git history]",
+      "lesson": "Issue #730 analyze-qa-stats cumulative false positives: alerts (issues/suggestions) must use recent windows, not all-time cumulative data. 4 fixes: (1) error-rate alerts use last 30 runs (stats.slice(-RECENT_WINDOW_RUNS)) while report keeps all-time error_runs; (2) idle win-rate alerts use last 15 …",
       "issue": "#730",
       "date": "2026-08-18"
     },
     {
-      "lesson": "Le jeu limite les noms de personnage à 10 caractères (input maxLength=10 dans CharacterCreation.tsx, MAX_NAME_LENGTH=10 dans characterUtils.ts). Tout nom de personnage QA fixe/généré doit respecter cette limite — pour les générations successives d'un personnage persistant, tronquer le base name pour laisser la place au suffixe '-N'. Aucune CHECK constraint DB sur le format du nom (seulement les stats), les tirets sont acceptés.… [full: AGENTS.md / git history]",
+      "lesson": "Le jeu limite les noms de personnage à 10 caractères (input maxLength=10 dans CharacterCreation.tsx, MAX_NAME_LENGTH=10 dans characterUtils.ts). Tout nom de personnage QA fixe/généré doit respecter cette limite — pour les générations successives d'un personnage persistant, tronquer le base name pou…",
       "issue": "#731",
       "date": "2026-08-18"
     },
     {
       "date": "2026-08-23",
-      "lesson": "Journée infra+balance: (1) Switch complet vers compte Supabase gunuqjythwgbdbuyshoh — PIÈGE PRINCIPAL: les 4 vars (2 VITE_* build client + 2 SUPABASE_* fonctions serveur Vercel) doivent TOUTES être basculées + GitHub Secrets; une seule oubliée = bugs silencieux (idle mort, Invalid API key avalée en 404). (2) essence doit être double precision (gains fractionnaires). (3) SW v7 network-first JS/CSS obligatoire — le SWR v6 servait de vieux bundles post-deploy à tous les appareils. (4) Économie 5.5.… [full: AGENTS.md / git history]",
+      "lesson": "Journée infra+balance: (1) Switch complet vers compte Supabase gunuqjythwgbdbuyshoh — PIÈGE PRINCIPAL: les 4 vars (2 VITE_* build client + 2 SUPABASE_* fonctions serveur Vercel) doivent TOUTES être basculées + GitHub Secrets; une seule oubliée = bugs silencieux (idle mort, Invalid API key avalée en…",
       "issues_encountered": [
         "exceed_egress_quota ancien compte",
         "Invalid API key Vercel",

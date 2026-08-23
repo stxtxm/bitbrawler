@@ -45,21 +45,6 @@
   ],
   "known_issues": [
     {
-      "id": "grep-conflict-markers",
-      "title": "Le grep '=======' dans opencode.yml matche les commentaires '// ===='",
-      "status": "fixed"
-    },
-    {
-      "id": "case-sensitive-oc",
-      "title": "/Oc avec O majuscule non détecté par contains(body, '/oc')",
-      "status": "fixed"
-    },
-    {
-      "id": "redundant-ci-reviewer-dispatch",
-      "title": "Dispatch manuel CI + Reviewer dans opencode.yml après push",
-      "status": "fixed"
-    },
-    {
       "id": "skip-ci-head-kills-pr-trigger",
       "title": "Commit de tête '[skip ci]' (mémoire session) supprime le déclencheur pull_request CI",
       "status": "fixed"
