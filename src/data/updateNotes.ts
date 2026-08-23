@@ -8,6 +8,17 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.5.1',
+    date: '2026-08-23',
+    title: '🔔 Level-up FX — plus jamais de boucle',
+    changes: [
+      '⏱️ Annonces de niveau limitées à une toutes les 8 s max : les niveaux gagnés entre deux annonces sont agrégés (« +N niveaux »).',
+      '🌙 Aucun FX page cachée ; au retour la popup welcome-back récapitule tout.',
+      '🧠 Pipeline documenté dans docs/LEVELUP_FX.md (garde-fous anti-régression inclus).',
+      '🐛 Idle tick/catch-up ne peuvent plus régresser un niveau/XP plus frais (guard charRef).',
+    ],
+  },
+  {
     version: '5.5.0',
     date: '2026-08-23',
     title: '🜁 Essence economy rebalanced — the shop is a goal again',
