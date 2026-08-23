@@ -12,7 +12,7 @@ export const GAME_RULES = {
     },
     PVE: {
         XP_MODIFIER: 2.5,
-        STAT_MULTIPLIER: 1.0,
+        STAT_MULTIPLIER: 1.2,
         HP_MULTIPLIER: 1.0,
         LEVEL_BOOST: 3, // Monsters fight at playerLevel + this offset
     },
@@ -26,15 +26,15 @@ export const GAME_RULES = {
         ESSENCE_REWARD: 60, // Essence rewarded on boss kill
     },
     BOTS: {
-        MIN_POPULATION: 2,
-        MIN_LVL1_BOTS: 10, // Ensure at least 10 lvl 1 bots
-        MIN_LVL1_PROTECTED: 5, // Opponent pool: enough for 1 new player (MAX_DAILY_FIGHTS)
+        MIN_POPULATION: 1,
+        MIN_LVL1_BOTS: 3, // Minimal lvl 1 starter reserve (strongly reduced for Supabase free tier)
+        MIN_LVL1_PROTECTED: 3, // Opponent pool: small but playable for a new player
         MIN_LVL1_ACTIVE_BOTS: 1, // Keep 1 lvl1 bot progressing (reduced from 2)
-        LVL1_RESERVE_PER_HUMAN: 1.5, // Dynamic reserve sizing for real players
-        LVL1_RESERVE_BUFFER: 6, // Extra starter buffer even with few humans
-        ACTIVITY_RATE: 0.20, // Percentage of bots active per run (reduced from 0.35)
-        MAX_FIGHTS_PER_RUN: 2, // Avoid all-energy dumps in a single run (reduced from 3)
+        LVL1_RESERVE_PER_HUMAN: 0.5, // Dynamic reserve sizing for real players (strongly reduced)
+        LVL1_RESERVE_BUFFER: 2, // Extra starter buffer even with few humans (reduced from 6)
+        ACTIVITY_RATE: 0.08, // Percentage of bots active per run (strongly reduced to near-idle floor)
+        MAX_FIGHTS_PER_RUN: 1, // At most 1 fight per run per bot (was 2)
         END_OF_DAY_DRAIN_START_HOUR: 22, // Paris hour when bots must finish all remaining fights before reset
-        GROWTH_CHANCE: 0.5, // Create a bot every other run (reduced from 1.0)
+        GROWTH_CHANCE: 0, // No spontaneous bot creation per run — stops population drift
     }
 } as const;
