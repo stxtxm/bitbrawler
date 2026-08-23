@@ -470,6 +470,22 @@ export function useIdleCombat({
         lastIdleCheck: now,
         lastActive: now,
       }
+
+      // Progress guard: during this multi-second tick (phase timers), a
+      // discrete action or an offline merge may have advanced charRef beyond
+      // our captured snapshot. Never regress level/experience/hp — adopt the
+      // higher-progress side as a coherent block, keep fight cosmetics.
+      const freshest = latest
+      const fExp = freshest.experience ?? 0
+      if (fExp > (updatedChar.experience ?? 0)) {
+        updatedChar.experience = fExp
+        updatedChar.level = Math.max(updatedChar.level ?? 1, freshest.level ?? 1)
+        updatedChar.maxHp = Math.max(updatedChar.maxHp ?? 0, freshest.maxHp ?? 0)
+        updatedChar.hp = Math.max(updatedChar.hp ?? 0, freshest.hp ?? 0)
+        updatedChar.statPoints = Math.max(updatedChar.statPoints ?? 0, freshest.statPoints ?? 0)
+        updatedChar.essence = Math.max(updatedChar.essence ?? 0, freshest.essence ?? 0)
+      }
+
       onCharacterUpdate(updatedChar)
       onSyncCharacter?.(updatedChar)
       if (xpResult.levelsGained > 0) {
@@ -644,6 +660,21 @@ export function useIdleCombat({
       idleTotalXp: idleTotalXp,
       lastIdleCheck: now,
       lastActive: now,
+    }
+
+    // Same progress guard as runCombatTick: catch-up ran from a snapshot;
+    // never regress fresher charRef progress (level/exp/hp/essence).
+    const freshest = charRef.current
+    if (freshest && freshest !== currentChar) {
+      const fExp = freshest.experience ?? 0
+      if (fExp > (updatedChar.experience ?? 0)) {
+        updatedChar.experience = fExp
+        updatedChar.level = Math.max(updatedChar.level ?? 1, freshest.level ?? 1)
+        updatedChar.maxHp = Math.max(updatedChar.maxHp ?? 0, freshest.maxHp ?? 0)
+        updatedChar.hp = Math.max(updatedChar.hp ?? 0, freshest.hp ?? 0)
+        updatedChar.statPoints = Math.max(updatedChar.statPoints ?? 0, freshest.statPoints ?? 0)
+        updatedChar.essence = Math.max(updatedChar.essence ?? 0, freshest.essence ?? 0)
+      }
     }
 
     onCharacterUpdate(updatedChar)
