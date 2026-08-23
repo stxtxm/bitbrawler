@@ -307,11 +307,23 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [handleDbError, persistCharacter]);
 
-  // Logout function
+  // Logout function — flush le sync debounced (médailles/idle) avant de clear, sinon l'XP reste à 0 au prochain login
   const logout = useCallback(() => {
+    // fire-and-forget : on vide la queue 30s même si le tab se ferme juste après
+    if (pendingSyncCharRef.current?.id) {
+      const toFlush = pendingSyncCharRef.current;
+      pendingSyncCharRef.current = null;
+      if (syncToBackendTimeoutRef.current !== null) {
+        clearTimeout(syncToBackendTimeoutRef.current);
+        syncToBackendTimeoutRef.current = null;
+      }
+      supabase.from('characters').update(convertToSupabase(toFlush)).eq('id', toFlush.id).then(({ error }) => {
+        if (error) handleDbError(error, 'logout-flush');
+      });
+    }
     setActiveCharacter(null);
     clearLocalData();
-  }, []);
+  }, [handleDbError]);
 
   // Set character function
   const setCharacter = useCallback((char: Character) => {
