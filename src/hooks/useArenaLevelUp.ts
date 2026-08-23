@@ -41,6 +41,27 @@ export const useArenaLevelUp = ({
   const lastQueuedRef = useRef<{ level: number; at: number } | null>(null);
   const recentRef = useRef<RecentLevelUp | null>(null);
   recentRef.current = recentLevelUp;
+  // 0 = no real visible-transition seen yet (tests / first mount)
+  const lastVisibleAtRef = useRef(0);
+
+  // Visibility transitions OWN the FX lifecycle across locks: on hide, any
+  // pending announcement is dropped (frozen timers otherwise leave the
+  // floating text stuck forever); on visible, a 5s grace window keeps late
+  // throttled ticks silent — the welcome-back popup aggregates those gains.
+  useEffect(() => {
+    const h = () => {
+      if (levelUpTimerRef.current) {
+        clearTimeout(levelUpTimerRef.current);
+        levelUpTimerRef.current = null;
+      }
+      setRecentLevelUp(null);
+      if (document.visibilityState === 'visible') {
+        lastVisibleAtRef.current = Date.now();
+      }
+    };
+    document.addEventListener('visibilitychange', h);
+    return () => document.removeEventListener('visibilitychange', h);
+  }, []);
 
   const queueLevelUp = useCallback((levelsGained: number, newLevel: number) => {
     // Swallow while an FX is already showing: background-throttled ticks can
@@ -51,6 +72,10 @@ export const useArenaLevelUp = ({
     // Never play FX while the page is hidden/backgrounded: the offline popup /
     // welcome-back flow announces those gains on return instead.
     if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+
+    // Post-unlock grace: late throttled ticks draining their backlog must not
+    // replay announcements one by one (reported: FX relaunched every monster).
+    if (lastVisibleAtRef.current && Date.now() - lastVisibleAtRef.current < 5000) return;
 
     const now = Date.now();
     const last = lastQueuedRef.current;
