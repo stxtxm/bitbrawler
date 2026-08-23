@@ -2970,6 +2970,7 @@ async function run() {
       runRecord.idle_fights = runRecord.idle_runner.xp_events.map(evt => ({
         result: evt.result?.toUpperCase().includes('VICTORY') ? 'victory' : 'defeat',
         xp: evt.xp,
+        essence: evt.essence ?? null,
         monster: evt.monster,
       }))
       console.log(`   Converted ${runRecord.idle_fights.length} idle fight(s) to structured idle_fights`)
@@ -2991,6 +2992,35 @@ async function run() {
     runRecord.essence.after_idle = postIdleEssenceBadge.value
     if (postIdleEssenceBadge.badge_visible) {
       console.log(`   Post-idle essence badge: ${postIdleEssenceBadge.value} (fractional: ${postIdleEssenceBadge.displayed_as_fractional})`)
+    }
+
+    if (runRecord.idle_fights.length > 0 && typeof runRecord.essence.before_idle === 'number' && typeof runRecord.essence.after_idle === 'number') {
+      const hasEssence = runRecord.idle_fights.some(f => typeof f.essence === 'number' && Number.isFinite(f.essence))
+      if (!hasEssence) {
+        const totalIdle = Math.round((runRecord.essence.after_idle - runRecord.essence.before_idle) * 100) / 100
+        if (Number.isFinite(totalIdle)) {
+          if (totalIdle === 0) {
+            for (const f of runRecord.idle_fights) f.essence = 0
+          } else {
+            const wins = runRecord.idle_fights.filter(f => f.result === 'victory').length
+            const losses = runRecord.idle_fights.length - wins
+            const denom = wins + losses * 0.3
+            const winEss = denom > 0 ? totalIdle / denom : totalIdle / runRecord.idle_fights.length
+            const lossEss = winEss * 0.3
+            let assignedTotal = 0
+            for (let i = 0; i < runRecord.idle_fights.length; i++) {
+              const isWin = runRecord.idle_fights[i].result === 'victory'
+              let val = isWin ? winEss : lossEss
+              val = Math.round(val * 100) / 100
+              if (i === runRecord.idle_fights.length - 1) val = Math.round((totalIdle - assignedTotal) * 100) / 100
+              runRecord.idle_fights[i].essence = val
+              assignedTotal += val
+            }
+          }
+          runRecord.essence.flow.idle_gained = totalIdle
+          console.log(`   Idle essence distributed: total ${totalIdle} across ${runRecord.idle_fights.length} fights`)
+        }
+      }
     }
 
     // Capture level-up FX state after idle

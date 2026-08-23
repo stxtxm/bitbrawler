@@ -110,7 +110,7 @@ interface RunRecord {
   fights: FightRecord[]
   idle_fights?: IdleFightRecord[]
   idle_runner?: {
-    xp_events?: Array<{ result?: string; xp?: number; monster?: string }>
+    xp_events?: Array<{ result?: string; xp?: number; monster?: string; essence?: number | null }>
     cycles_observed?: number
     victories?: number
     xp_total?: number
@@ -397,7 +397,7 @@ function collectIdleFights(runs: RunRecord[]): IdleFightRecord[] {
         fights.push({
           result: evt.result?.toUpperCase().includes('VICTORY') ? 'victory' : 'defeat',
           xp: evt.xp ?? null,
-          essence: null,
+          essence: (evt as { essence?: number | null }).essence ?? null,
           monster: evt.monster ?? null,
         })
       }
@@ -1036,8 +1036,23 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   if (runsWithIdleDataCount > 0 && allIdleFights.length > 0) {
     const idleWins = allIdleFights.filter(f => f.result === 'victory')
     const idleXpFights = allIdleFights.filter((f): f is IdleFightRecord & { xp: number } => f.xp !== null)
-    const idleEssenceFights = allIdleFights.filter((f): f is IdleFightRecord & { essence: number } => f.essence !== null)
-
+    const idleEssenceFights = allIdleFights.filter((f): f is IdleFightRecord & { essence: number } => f.essence !== null && Number.isFinite(f.essence))
+    let totalIdleEssence: number
+    let avgIdleEssencePerFight: number
+    if (idleEssenceFights.length > 0) {
+      const sum = idleEssenceFights.reduce((s, f) => s + f.essence, 0)
+      totalIdleEssence = Number.isFinite(sum) ? Math.round(sum * 100) / 100 : 0
+      const avg = sum / idleEssenceFights.length
+      avgIdleEssencePerFight = Number.isFinite(avg) ? Math.round(avg * 100) / 100 : 0
+    } else {
+      const flowTotals = runsWithIdleData
+        .map(r => r.essence?.flow?.idle_gained)
+        .filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
+      const sumFlow = flowTotals.reduce((s, v) => s + v, 0)
+      totalIdleEssence = Number.isFinite(sumFlow) ? Math.round(sumFlow * 100) / 100 : 0
+      const avgFlow = allIdleFights.length > 0 ? sumFlow / allIdleFights.length : 0
+      avgIdleEssencePerFight = Number.isFinite(avgFlow) ? Math.round(avgFlow * 100) / 100 : 0
+    }
     idleAnalysis = {
       runs_with_idle_data: runsWithIdleDataCount,
       total_idle_fights: allIdleFights.length,
@@ -1045,10 +1060,8 @@ function analyze(stats: RunRecord[]): AnalysisReport {
       avg_idle_xp_per_fight: idleXpFights.length > 0
         ? Math.round((idleXpFights.reduce((s, f) => s + f.xp, 0) / idleXpFights.length) * 100) / 100
         : 0,
-      avg_idle_essence_per_fight: idleEssenceFights.length > 0
-        ? Math.round((idleEssenceFights.reduce((s, f) => s + f.essence, 0) / idleEssenceFights.length) * 100) / 100
-        : 0,
-      total_idle_essence: Math.round(idleEssenceFights.reduce((s, f) => s + f.essence, 0) * 100) / 100,
+      avg_idle_essence_per_fight: avgIdleEssencePerFight,
+      total_idle_essence: totalIdleEssence,
     }
   }
 
