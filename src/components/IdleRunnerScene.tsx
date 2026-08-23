@@ -149,31 +149,51 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   }, [scenePhase])
 
   // ── Animation watchdog (PWA background recovery) ────────────────────────
-  // Android can freeze CSS @keyframes and skip the visibilitychange restart.
-  // Every 2s in foreground, while the runner SHOULD be animating (running
-  // phase, no one-shot override), check via Web Animations API that at least
-  // one animation on the character slot is actually 'running'. If every
-  // animation is frozen/paused/finished, force a clean slot remount — same
-  // mechanism as the visibilitychange handler but self-healing for any
-  // missed event.
+  // Android can freeze CSS @keyframes AND skip the visibilitychange restart
+  // event entirely. Two failure modes after a phone lock:
+  //   A) animRun stuck false (.anim-paused) — the 'visible' handler never ran
+  //   B) animRun true but every slot animation frozen/finished
+  // Every 2s in foreground, during the running phase with no one-shot FX,
+  // detect either case (2 consecutive dead samples, 1.5s grace after a
+  // remount) and force a clean slot remount.
   const scenePhaseRef = useRef<ScenePhase>('running')
   scenePhaseRef.current = scenePhase
-  // Skip the watchdog while a level-up ceremony plays: its glow/float text are
-  // ONE-SHOT animations — once finished they look 'not running' and would make
-  // the watchdog remount the slot in an endless loop (replaying the float).
+  const animRunRef = useRef(animRun)
+  animRunRef.current = animRun
+  // One-shot windows whose animations legitimately end early: never "heal"
+  // during them (the level-up glow/float would replay in an endless loop).
   const oneShotRef = useRef(false)
-  oneShotRef.current = isAttacking || isVictory || !animRun || showLevelUpFx
+  oneShotRef.current = isAttacking || isVictory || showLevelUpFx
+  const lastRemountRef = useRef(Date.now())
+  const deadSamplesRef = useRef(0)
   useEffect(() => {
     const iv = setInterval(() => {
       if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
       if (scenePhaseRef.current !== 'running') return
       if (oneShotRef.current) return
-      const el = characterSlotRef.current
-      if (!el || typeof el.getAnimations !== 'function') return
-      const anims = el.getAnimations({ subtree: true })
-      if (anims.length === 0) return // nothing mounted yet — cannot judge
-      const anyRunning = anims.some(a => a.playState === 'running')
-      if (!anyRunning) {
+      if (Date.now() - lastRemountRef.current < 1500) return
+
+      let looksDead = false
+      if (!animRunRef.current) {
+        // Case A: paused flag while page is clearly visible for >2s = missed resume
+        deadSamplesRef.current += 1
+        looksDead = deadSamplesRef.current >= 2
+      } else {
+        const el = characterSlotRef.current
+        if (!el || typeof el.getAnimations !== 'function') return
+        const anims = el.getAnimations({ subtree: true })
+        // Case B: animations exist but all frozen/paused/finished
+        if (anims.length > 0 && !anims.some(a => a.playState === 'running')) {
+          deadSamplesRef.current += 1
+          looksDead = deadSamplesRef.current >= 2
+        } else {
+          deadSamplesRef.current = 0
+        }
+      }
+
+      if (looksDead) {
+        deadSamplesRef.current = 0
+        lastRemountRef.current = Date.now()
         setAnimRun(false)
         requestAnimationFrame(() => {
           setAnimKey(k => k + 1)
