@@ -26,6 +26,74 @@
     max-width: none;
   }
 
+  // Desktop / large screens (PC, TV) — aère la popup sans toucher au mobile
+  @media (min-width: 1024px) {
+    max-width: 560px;
+    padding: 22px 24px;
+    gap: 18px;
+    top: 24px;
+    right: 24px;
+    border-width: 3px;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7), inset 0 0 0 2px rgba(0, 0, 0, 0.5);
+
+    &__icon {
+      width: 56px;
+      height: 56px;
+      font-size: 28px;
+      border-radius: 10px;
+    }
+
+    &__title {
+      font-size: 0.78rem;
+      letter-spacing: 1.4px;
+      margin-bottom: 6px;
+    }
+
+    &__text {
+      font-size: 0.62rem;
+      line-height: 1.65;
+      letter-spacing: 0.6px;
+    }
+
+    &__actions {
+      gap: 10px;
+    }
+
+    &__button {
+      font-size: 0.58rem;
+      padding: 12px 16px;
+      border-radius: 6px;
+    }
+  }
+
+  @media (min-width: 1920px) {
+    max-width: 640px;
+    padding: 28px 32px;
+    gap: 20px;
+    top: 32px;
+    right: 32px;
+
+    &__icon {
+      width: 64px;
+      height: 64px;
+      font-size: 32px;
+    }
+
+    &__title {
+      font-size: 0.88rem;
+    }
+
+    &__text {
+      font-size: 0.7rem;
+    }
+
+    &__button {
+      font-size: 0.65rem;
+      padding: 14px 18px;
+    }
+  }
+
   @keyframes push-opt-in-enter {
     from {
       opacity: 0;
