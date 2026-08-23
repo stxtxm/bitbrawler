@@ -34,6 +34,14 @@ jobs:
 
           [ -z "$MISSED" ] && { echo "No missed /oc issues."; exit 0; }
 
+          # Dedup fort: si un run opencode est actif ou <15 min, on ne re-dispatch pas
+          RECENT=$(gh run list --workflow opencode.yml --limit 10 --json status,createdAt \
+            --jq '[.[] | select(.status=="in_progress" or .status=="queued")] | length')
+          if [ "${RECENT:-0}" -gt 0 ]; then
+            echo "Un run opencode est actif ($RECENT) — sweep différé."
+            exit 0
+          fi
+
           for N in $MISSED; do
             # Dedup: skip si une PR liée existe déjà (feat/auto-N)
             BRANCH="feat/auto-${N}"
