@@ -158,8 +158,11 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   // missed event.
   const scenePhaseRef = useRef<ScenePhase>('running')
   scenePhaseRef.current = scenePhase
+  // Skip the watchdog while a level-up ceremony plays: its glow/float text are
+  // ONE-SHOT animations — once finished they look 'not running' and would make
+  // the watchdog remount the slot in an endless loop (replaying the float).
   const oneShotRef = useRef(false)
-  oneShotRef.current = isAttacking || isVictory || !animRun
+  oneShotRef.current = isAttacking || isVictory || !animRun || showLevelUpFx
   useEffect(() => {
     const iv = setInterval(() => {
       if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
