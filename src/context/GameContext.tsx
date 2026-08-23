@@ -21,6 +21,7 @@ import {
   INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP,
   normalizeCharacter, buildPendingOpponent, hydratePendingOpponent,
   clearLocalData, saveLocalData, loadLocalData,
+  coerceMonotonicProgress,
   SyncResult,
 } from '../utils/persistenceUtils';
 import {
@@ -110,7 +111,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     return () => document.removeEventListener('visibilitychange', h)
   }, []);
   const persistCharacter = useCallback((character: Character) => {
-    const normalized = normalizeCharacter(character);
+    // Monotonic progress guard: async writers (medal checks resolving late,
+    // stale merges) may carry snapshots with LOWER level/experience than the
+    // current state. Persisting them regressed progression and replayed the
+    // level-up FX on every kill. The higher-experience side wins as a block.
+    const current = charRef.current;
+    const guarded = coerceMonotonicProgress(character, current);
+    const normalized = normalizeCharacter(guarded);
     charRef.current = normalized;
     setActiveCharacter(normalized);
     saveLocalData(normalized);

@@ -162,3 +162,31 @@ export type SyncResult =
   | { status: 'ok'; character: Character }
   | { status: 'missing' }
   | { status: 'error' };
+
+// ─── Monotonic progress guard ───────────────────────────────────────────────
+// Async writers (medal checks resolving after later ticks, offline merges)
+// can carry STALE snapshots. Persisting them would REGRESS level/experience,
+// which replays catch-up bursts (and the level-up FX) on every kill.
+// Rule: the higher-experience side owns the coherent level/hp block;
+// independent counters take the true max.
+
+export function coerceMonotonicProgress<T extends {
+  experience?: number; level?: number; hp?: number; maxHp?: number;
+  idleTotalXp?: number; idleTotalKills?: number;
+}>(incoming: T, current?: T | null): T {
+  if (!current || !current.experience || typeof current.experience !== 'number') return incoming;
+  const incExp = incoming.experience ?? 0;
+  const curExp = current.experience;
+  if (incExp >= curExp) return incoming;
+
+  // Current owns more XP -> adopt its whole progression block
+  return {
+    ...incoming,
+    experience: curExp,
+    level: Math.max(incoming.level ?? 1, current.level ?? 1),
+    hp: Math.max(incoming.hp ?? 0, current.hp ?? 0),
+    maxHp: Math.max(incoming.maxHp ?? 0, current.maxHp ?? 0),
+    idleTotalXp: Math.max(incoming.idleTotalXp ?? 0, current.idleTotalXp ?? 0),
+    idleTotalKills: Math.max(incoming.idleTotalKills ?? 0, current.idleTotalKills ?? 0),
+  } as T;
+}
