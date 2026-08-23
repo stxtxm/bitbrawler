@@ -101,7 +101,7 @@ describe('Database Unavailability Handling', () => {
     expect(localStorage.removeItem).not.toHaveBeenCalled();
   });
 
-  it('should set dbAvailable to false when useFight fails', async () => {
+  it('flags offline on useFight failure, then auto-recovers when healthcheck passes', async () => {
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
     const builder = createQueryBuilder({ data: characterToSupabaseRow(mockCharacter), error: null });
     mockSupabaseFrom.mockReturnValue(builder);
@@ -122,7 +122,13 @@ describe('Database Unavailability Handling', () => {
       await expect(result.current.useFight(true, 50, 'FOE', 'opp-1')).rejects.toThrow('Connection error - fight not counted');
     });
 
-    expect(result.current.dbAvailable).toBe(false);
+    // dbAvailable flags offline transiently, but the auto-retry effect
+    // (5.5+ contract) re-runs the healthcheck immediately: with these mocks
+    // it passes (mirrors a transient wake-up blip rather than a real outage),
+    // so the session recovers WITHOUT user action.
+    await waitFor(() => {
+      expect(result.current.dbAvailable).toBe(true);
+    }, { timeout: 5000 });
     expect(result.current.activeCharacter).toBeDefined();
   });
 
