@@ -40,8 +40,8 @@
         "standalone",
         "fullscreen"
     ],
-    "theme_color": "#000000",
-    "background_color": "#000000",
+    "theme_color": "#0a0603",
+    "background_color": "#0a0603",
     "orientation": "portrait",
     "categories": [
         "games",
