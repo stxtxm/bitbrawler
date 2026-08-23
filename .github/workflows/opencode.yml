@@ -65,6 +65,8 @@ jobs:
 
       - name: Load agent memory context
         run: |
+          echo "📖 Compacting memories (ARG_MAX guard)…"
+          node scripts/compact-memories.mjs || true
           echo "📖 Loading memory context..."
           echo "DEV_MEMORY=$(cat .opencode/memory/dev.json 2>/dev/null | tr -d '\n' || echo '{}')" >> "$GITHUB_ENV"
           echo "SHARED_MEMORY=$(cat .opencode/memory/shared.json 2>/dev/null | tr -d '\n' || echo '{}')" >> "$GITHUB_ENV"

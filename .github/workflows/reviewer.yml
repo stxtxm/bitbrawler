@@ -121,6 +121,8 @@ jobs:
 
       - name: Load agent memory context
         run: |
+          echo "📖 Compacting memories (ARG_MAX guard)…"
+          node scripts/compact-memories.mjs || true
           echo "📖 Loading memory context..."
           echo "REVIEWER_MEMORY=$(cat .opencode/memory/reviewer.json 2>/dev/null | tr -d '\n' || echo '{}')" >> "$GITHUB_ENV"
           echo "SHARED_MEMORY=$(cat .opencode/memory/shared.json 2>/dev/null | tr -d '\n' || echo '{}')" >> "$GITHUB_ENV"
@@ -297,6 +299,12 @@ jobs:
           DEPS_LIST: ${{ env.DEPS_LIST }}
         run: |
           PR_DIFF=$(gh pr diff "$PR_NUMBER" 2>/dev/null || echo "")
+          # ARG_MAX guard: huge diffs (generated assets) blow the CLI argv limit
+          if [ ${#PR_DIFF} -gt 40000 ]; then
+            PR_DIFF="$(echo "$PR_DIFF" | head -c 40000)
+
+          … [diff truncated at 40k chars — see PR files]"
+          fi
           PR_TITLE=$(gh pr view "$PR_NUMBER" --json title --jq '.title // ""' 2>/dev/null || echo "")
           PR_BODY=$(gh pr view "$PR_NUMBER" --json body --jq '.body // ""' 2>/dev/null || echo "")
           HEAD_REF=$(gh pr view "$PR_NUMBER" --json headRefName --jq '.headRefName // ""' 2>/dev/null || echo "")

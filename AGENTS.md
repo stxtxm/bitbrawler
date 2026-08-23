@@ -1011,3 +1011,9 @@ Increase XP multiplier from 1.0 to 1.2 for level 20+.
 - **SW v6 servait de vieux bundles post-deploy** → v7 network-first JS/CSS. Après deploy majeur : hard refresh une fois
 - **Reviews CHANGES_REQUESTED obsolètes** bloquent les merges : dismisser via `gh api -X PUT repos/.../pulls/N/reviews/RID/dismissals -f message=...` puis relancer `reviewer.yml -f pr_number=N`
 - **Modèles agents** : deepseek-v4-flash-free HS → `opencode/x-preview-f-free` partout (opencode.json, workflows, agents/*.md)
+
+### Auto-compaction des mémoires (ARG_MAX guard, 2026-08-23)
+- `node scripts/compact-memories.mjs` (= `npm run mem:compact`) : tronque toute string >300c, garde 3 session_notes (500c), 12 known_issues one-liners, budget global par fichier (shared 6KB / agents 4.5KB)
+- Exécuté AUTOMATIQUEMENT avant l'injection mémoire dans `opencode.yml` et `reviewer.yml` — jamais besoin de le lancer à la main
+- **Règle** : les mémoires = pointeurs courts ; les détails vont dans AGENTS.md / BOSS_PVE.md / git history
+- Les gros diffs de PR sont plafonnés à 40k chars dans le prompt reviewer (sinon `Argument list too long` → tous les modèles échouent instantanément)

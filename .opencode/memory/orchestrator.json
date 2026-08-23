@@ -6,7 +6,10 @@
   "active_campaign": {
     "parent_issue": 605,
     "title": "QA bot PvE timeout fix",
-    "sub_issues": [608, 609],
+    "sub_issues": [
+      608,
+      609
+    ],
     "level_0_dispatched": true,
     "level_0_sub_issue": 608,
     "level_1_sub_issue": 609,
@@ -29,15 +32,21 @@
       "session": "2026-08-03T00:00:00Z",
       "parent_issue": 605,
       "title": "QA bot PvE timeout fix (campaign-605)",
-      "sub_issues_created": [608, 609],
-      "sub_issues_dispatched": [608],
+      "sub_issues_created": [
+        608,
+        609
+      ],
+      "sub_issues_dispatched": [
+        608
+      ],
       "lessons_learned": [
         "Issue #605 est un bugfix mono-fichier (qa-bot.mjs) mais avec deux responsabilités distinctes : helper de détection + câblage dans la boucle fight → découpé en 2 sub-issues linéaires",
         "La scène IdleRunnerScene n'expose jamais VICTORY/DEFEAT/DRAW dans innerText → les marqueurs DOM (phase-result, big-xp-label, data-monster, compteur BOSS FIGHTS) sont la seule source fiable pour PvE",
         "PvP fonctionne avec la détection texte (~11.5s) — ne pas toucher ce chemin dans #609",
         "Le label campaign-605 n'existait pas → créé avec --force (aucun conflit)"
       ],
-      "issues_encountered": []
+      "issues_encountered": [],
+      "lesson": ""
     },
     {
       "session": "2026-08-03T20:40:00Z",
@@ -54,14 +63,28 @@
       "issues_encountered": [
         "Issue #608 déjà label sub-issue + campagne-605 : inutile de créer campaign-608",
         "#610/#611 (plan FR) clôturés parce que redondants de #608/#609 (plan EN)"
-      ]
+      ],
+      "lesson": ""
     },
     {
       "session": "2026-07-09T18:30:00Z",
       "parent_issue": 476,
       "title": "Essence Economy & Shop Balance",
-      "sub_issues_created": [478, 479, 480, 481, 482, 483],
-      "sub_issues_dispatched": [478, 479, 480, 481, 482],
+      "sub_issues_created": [
+        478,
+        479,
+        480,
+        481,
+        482,
+        483
+      ],
+      "sub_issues_dispatched": [
+        478,
+        479,
+        480,
+        481,
+        482
+      ],
       "lessons_learned": [
         "Ne pas utiliser 'agent' comme paramètre — le workflow opencode.yml utilise 'mode'",
         "Vérifier les labels existants avant création car des conflits peuvent arriver",
@@ -72,7 +95,8 @@
       "issues_encountered": [
         "gh label create campaign-476 a dû utiliser --force car label déjà existant dans l'API",
         "gh workflow run a rejeté 'agent' comme input — a dû utiliser uniquement issue_number"
-      ]
+      ],
+      "lesson": ""
     }
   ]
 }
