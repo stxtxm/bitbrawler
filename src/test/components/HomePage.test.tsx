@@ -4,6 +4,11 @@ import HomePage from '../../pages/HomePage';
 import { renderWithRouter } from '../utils/router';
 
 describe('HomePage', () => {
+  it('displays Propulsé par OpenCode footer', () => {
+    renderWithRouter(<HomePage />);
+    expect(screen.getByText(/Propulsé par OpenCode/i)).toBeInTheDocument();
+  });
+
   it('opens and closes patch notes modal', () => {
     renderWithRouter(<HomePage />);
 
