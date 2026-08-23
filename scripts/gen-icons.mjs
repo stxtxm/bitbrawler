@@ -79,7 +79,6 @@ function buildArtwork(simple = false) {
     }
   }
 
-  const flat = c => (simple ? (c === P.sHi || c === P.sCore || c === P.sLo ? P.flatSteel : null) : null);
 
   // ── Crossed swords (BEHIND the bust) ────────────────────────────────
   function sword(hx, hy, sx, len, pal) {
