@@ -3,7 +3,6 @@ import {
   calculateIdleXp,
   calculateOfflineIdleXp,
   calculateIdleEssence,
-  calculateOfflineFights,
 } from '../../utils/idleXpUtils'
 import { IDLE_CONFIG } from '../../config/idleConfig'
 
@@ -55,22 +54,4 @@ describe('idleXpUtils', () => {
     })
   })
 
-  describe('calculateOfflineFights', () => {
-    it('should return 0 for zero timestamp', () => {
-      expect(calculateOfflineFights(0, Date.now())).toBe(0)
-    })
-
-    it('should return 0 when now <= lastTimestamp', () => {
-      expect(calculateOfflineFights(1000, 500)).toBe(0)
-    })
-
-    it('should calculate fights for elapsed time', () => {
-      expect(calculateOfflineFights(1, 1 + IDLE_CONFIG.TIMER_INTERVAL * 3)).toBe(3)
-    })
-
-    it('should cap at MAX_IDLE_FIGHTS', () => {
-      const farPast = Date.now() - 24 * 60 * 60 * 1000 * 10
-      expect(calculateOfflineFights(farPast, Date.now())).toBeLessThanOrEqual(IDLE_CONFIG.MAX_IDLE_FIGHTS)
-    })
-  })
 })

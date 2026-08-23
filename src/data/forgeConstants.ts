@@ -12,11 +12,6 @@ export const ESSENCE_YIELD: Record<ItemRarity, number> = {
 };
 
 /**
- * Alias for ESSENCE_YIELD — used in the forge UI.
- */
-export const SALVAGE_YIELD = ESSENCE_YIELD;
-
-/**
  * Essence cost to fuse 3 items of a given rarity into 1 of the next tier.
  * legendary has cost 0 because legendary items cannot be fused.
  */

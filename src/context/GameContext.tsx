@@ -55,12 +55,6 @@ interface GameContextType {
     opponentId: string,
     options?: { consumeEnergy?: boolean; characterOverride?: Character }
   ) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
-  usePveFight: (
-    won: boolean,
-    xpGained: number,
-    monsterName: string,
-    options?: { consumeEnergy?: boolean; characterOverride?: Character; monsterId?: string }
-  ) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
   useBossFight: (
     won: boolean,
     xpGained: number,
@@ -627,120 +621,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [activeCharacter, appendIncomingFightHistory, handleDbError, persistCharacter]);
 
-  /**
-   * @deprecated No longer called from the Arena since the boss-toggle removal (#633).
-   * PvE fights now route to useBossFight directly. Kept for pveFightsLeft persistence
-   * and legacy integration tests.
-   */
-  const usePveFight = useCallback(async (
-    won: boolean,
-    xpGained: number,
-    monsterName: string,
-    options?: { consumeEnergy?: boolean; characterOverride?: Character; monsterId?: string }
-  ): Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null> => {
-    const baseCharacter = options?.characterOverride ?? activeCharacter;
-    if (!baseCharacter) return null;
 
-    const xpResult = gainXp(baseCharacter, xpGained);
-
-    const historyEntry = { date: Date.now(), won, opponentName: monsterName };
-    const existingHistory = baseCharacter.fightHistory || [];
-    const newHistory = [historyEntry, ...existingHistory].slice(0, 20);
-
-    const pointsGained = xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL;
-    const existingPoints = baseCharacter.statPoints || 0;
-    const shouldConsumeEnergy = options?.consumeEnergy ?? true;
-    const monsterId = options?.monsterId;
-
-    // Track monster kills for PvE hunter medals
-    let updatedMonsterKills = baseCharacter.monsterKills ?? {};
-    if (won && monsterId) {
-      const currentKills = updatedMonsterKills[monsterId] ?? 0;
-      updatedMonsterKills = { ...updatedMonsterKills, [monsterId]: currentKills + 1 };
-    }
-
-    let updatedChar: Character = normalizeCharacter({
-      ...xpResult.updatedCharacter,
-      pveFightsLeft: Math.max(0, (baseCharacter.pveFightsLeft ?? 5) - (shouldConsumeEnergy ? 1 : 0)),
-      fightsLeft: baseCharacter.fightsLeft,
-      wins: won ? (baseCharacter.wins || 0) + 1 : (baseCharacter.wins || 0),
-      losses: won ? (baseCharacter.losses || 0) : (baseCharacter.losses || 0) + 1,
-      fightHistory: newHistory,
-      statPoints: existingPoints + pointsGained,
-      monsterKills: updatedMonsterKills,
-    });
-
-    if (updatedChar.autoMode && (updatedChar.statPoints || 0) > 0) {
-      updatedChar = normalizeCharacter(
-        autoAllocateStatPoints(updatedChar, updatedChar.statPoints || 0)
-      );
-    }
-
-    if (baseCharacter.id) {
-      try {
-        const { error } = await supabase
-          .from('characters')
-          .update({
-            pve_fights_left: updatedChar.pveFightsLeft,
-            level: updatedChar.level,
-            experience: updatedChar.experience,
-            wins: updatedChar.wins,
-            losses: updatedChar.losses,
-            fight_history: updatedChar.fightHistory,
-            stat_points: updatedChar.statPoints,
-            strength: updatedChar.strength,
-            vitality: updatedChar.vitality,
-            dexterity: updatedChar.dexterity,
-            luck: updatedChar.luck,
-            intelligence: updatedChar.intelligence,
-            focus: updatedChar.focus,
-            hp: updatedChar.hp,
-            max_hp: updatedChar.maxHp,
-          })
-          .eq('id', baseCharacter.id);
-
-        if (error) throw error;
-      } catch (error: any) {
-        handleDbError(error, 'use-pve-fight');
-        throw new Error("Connection error - PvE fight not saved. Please check your internet connection.");
-      }
-    }
-
-    persistCharacter(updatedChar);
-    // Clear stale debounced sync that would overwrite fresh XP
-    pendingSyncCharRef.current = null;
-    if (syncToBackendTimeoutRef.current !== null) {
-      clearTimeout(syncToBackendTimeoutRef.current);
-      syncToBackendTimeoutRef.current = null;
-    }
-
-    // Non-blocking medal/achievement check after PvE fight
-    checkAndApplyMedals(updatedChar, {
-      monsterKills: updatedMonsterKills,
-      pveStreak: won ? (baseCharacter.idleStreak ?? 0) : 0,
-    }).then(charWithMedals => {
-      persistCharacter(charWithMedals);
-      if (hasMedalChanges(updatedChar, charWithMedals)) {
-        syncCharacterToBackend(charWithMedals).catch(() => {});
-      }
-    }).catch(() => {});
-
-    setLastXpGain(xpGained);
-    if (xpResult.leveledUp && !updatedChar.autoMode) {
-      setLastLevelUp({
-        levelsGained: xpResult.levelsGained,
-        newLevel: xpResult.newLevel,
-        hpGained: xpResult.levelsGained * HP_PER_LEVEL,
-      });
-    }
-
-    return {
-      xpGained,
-      leveledUp: xpResult.leveledUp,
-      levelsGained: xpResult.levelsGained,
-      newLevel: xpResult.newLevel,
-    };
-  }, [activeCharacter, handleDbError, persistCharacter]);
 
   const useBossFight = useCallback(async (
     won: boolean,
@@ -1636,7 +1517,6 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     updatePushSubscription,
     retryConnection,
     useFight,
-    usePveFight,
     useBossFight,
     findOpponent: findOpponentForPlayer,
     startMatchmaking: startMatchmakingForPlayer,

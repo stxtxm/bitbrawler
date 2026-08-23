@@ -166,7 +166,7 @@ describe('Achievement/Medal Integration', () => {
     }, 15000);
   });
 
-  describe('PvE fight triggers medal check', () => {
+  describe('Fight win triggers medal check', () => {
     it('updates medal progress after a PvE fight win', async () => {
       const char = makeCharacter({ id: 'test-id', wins: 0 });
       (localStorage.getItem as any).mockReturnValue(JSON.stringify(char));
@@ -181,7 +181,7 @@ describe('Achievement/Medal Integration', () => {
       });
 
       await act(async () => {
-        await result.current.usePveFight(true, 30, 'GOBLIN');
+        await result.current.useFight(true, 30, 'GOBLIN', 'opponent-1');
       });
 
       await waitFor(() => {

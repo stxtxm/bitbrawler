@@ -5,6 +5,8 @@ import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
 import type { Character } from '../../types/Character';
 import { SHOP_OFFERS } from '../../data/shopConstants';
+import { getShopOffers } from '../../utils/shopUtils';
+import { ITEM_ASSETS } from '../../data/itemAssets';
 import { clearShopPurchases, markOfferPurchased, markRerollUsed } from '../../utils/shopStorage';
 
 vi.mock('../../context/GameContext', () => ({
@@ -439,6 +441,36 @@ describe('ShopPanel', () => {
       fireEvent.click(confirmBtn);
       await waitFor(() => {
         expect(screen.getByText('REROLLED')).toBeTruthy();
+      });
+    });
+  });
+
+  describe('config-index regression (epic-replacement, #759)', () => {
+    it('passes the card offer.index — not the array position — to buyShopOffer', async () => {
+      const char = makeCharacter({ level: 14, essence: 500 });
+      const buyShopOffer = vi.fn().mockResolvedValue(makeCharacter({ essence: 400 }));
+      setupGame({ buyShopOffer, activeCharacter: char, essence: 500 });
+      render(<ShopPanel onClose={vi.fn()} />);
+
+      // Expected offers computed with the same deterministic seed as the panel
+      const expected = getShopOffers(char, ITEM_ASSETS);
+
+      const buyBtns = screen.getAllByRole('button', { name: /buy/i });
+      fireEvent.click(buyBtns[1]); // 2nd visible card
+      fireEvent.click(screen.getByRole('button', { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(buyShopOffer).toHaveBeenCalledWith(expected[1].index);
+      });
+    });
+
+    it('shows the config price of each card (60 on epic-replacement card)', () => {
+      const char = makeCharacter({ level: 14, essence: 500 });
+      setupGame({ activeCharacter: char, essence: 500 });
+      const expected = getShopOffers(char, ITEM_ASSETS);
+      render(<ShopPanel onClose={vi.fn()} />);
+      expected.forEach((offer) => {
+        expect(screen.getByText(`${offer.price} 💎`)).toBeTruthy();
       });
     });
   });
