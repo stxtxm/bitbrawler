@@ -97,7 +97,17 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const isOnline = useOnlineStatus();
   usePushReminders(activeCharacter);
   const initiatedMatchmakingRef = useRef(false);
-  const charRef = useRef<Character | null>(null);
+  const charRef = useRef<Character | null>(null)
+  // Timestamp of the last foreground transition — wake-up grace window for
+  // network calls (Android reconnects the radio a beat after unlock).
+  const lastVisibleAtRef = useRef(Date.now())
+  useEffect(() => {
+    const h = () => {
+      if (document.visibilityState === 'visible') lastVisibleAtRef.current = Date.now()
+    }
+    document.addEventListener('visibilitychange', h)
+    return () => document.removeEventListener('visibilitychange', h)
+  }, []);
   const persistCharacter = useCallback((character: Character) => {
     const normalized = normalizeCharacter(character);
     charRef.current = normalized;
@@ -168,36 +178,48 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     pendingSyncCharRef.current = null
     syncToBackendTimeoutRef.current = null
     if (!toSync?.id) return
-    try {
-      // Cross-source guard: the idle cron may have granted XP/essence server-side
-      // while this stale local snapshot sat in the queue. Never let a debounced
-      // flush DOWNGRADE progress fields — take the max per field before writing.
-      const { data: fresh } = await supabase
-        .from('characters')
-        .select('experience,level,idle_streak,idle_max_streak,idle_total_kills,idle_total_xp,essence,stat_points')
-        .eq('id', toSync.id)
-        .single()
-      const merged = fresh
-        ? {
-            ...toSync,
-            experience: Math.max(toSync.experience ?? 0, fresh.experience ?? 0),
-            level: Math.max(toSync.level ?? 1, fresh.level ?? 1),
-            idleStreak: Math.max(toSync.idleStreak ?? 0, fresh.idle_streak ?? 0),
-            idleMaxStreak: Math.max(toSync.idleMaxStreak ?? 0, fresh.idle_max_streak ?? 0),
-            idleTotalKills: Math.max(toSync.idleTotalKills ?? 0, fresh.idle_total_kills ?? 0),
-            idleTotalXp: Math.max(toSync.idleTotalXp ?? 0, fresh.idle_total_xp ?? 0),
-            essence: Math.max(toSync.essence ?? 0, fresh.essence ?? 0),
-            statPoints: Math.max(toSync.statPoints ?? 0, fresh.stat_points ?? 0),
-          }
-        : toSync
-      const { error } = await supabase
-        .from('characters')
-        .update(convertToSupabase(merged))
-        .eq('id', toSync.id)
-      if (error) throw error
-    } catch (error: any) {
-      handleDbError(error, 'sync-character')
+
+    const attempt = async (retriesLeft: number): Promise<void> => {
+      try {
+        // Cross-source guard: the idle cron may have granted XP/essence server-side
+        // while this stale local snapshot sat in the queue. Never let a debounced
+        // flush DOWNGRADE progress fields — take the max per field before writing.
+        const { data: fresh } = await supabase
+          .from('characters')
+          .select('experience,level,idle_streak,idle_max_streak,idle_total_kills,idle_total_xp,essence,stat_points')
+          .eq('id', toSync.id)
+          .single()
+        const merged = fresh
+          ? {
+              ...toSync,
+              experience: Math.max(toSync.experience ?? 0, fresh.experience ?? 0),
+              level: Math.max(toSync.level ?? 1, fresh.level ?? 1),
+              idleStreak: Math.max(toSync.idleStreak ?? 0, fresh.idle_streak ?? 0),
+              idleMaxStreak: Math.max(toSync.idleMaxStreak ?? 0, fresh.idle_max_streak ?? 0),
+              idleTotalKills: Math.max(toSync.idleTotalKills ?? 0, fresh.idle_total_kills ?? 0),
+              idleTotalXp: Math.max(toSync.idleTotalXp ?? 0, fresh.idle_total_xp ?? 0),
+              essence: Math.max(toSync.essence ?? 0, fresh.essence ?? 0),
+              statPoints: Math.max(toSync.statPoints ?? 0, fresh.stat_points ?? 0),
+            }
+          : toSync
+        const { error } = await supabase
+          .from('characters')
+          .update(convertToSupabase(merged))
+          .eq('id', toSync.id)
+        if (error) throw error
+      } catch (error: any) {
+        // Wake-up grace: timers resumed right after unlock can fire while the
+        // radio is still reconnecting — replay once before flagging offline.
+        const justWoke = Date.now() - lastVisibleAtRef.current < 5000
+        if (retriesLeft > 0 && justWoke && document.visibilityState === 'visible') {
+          setTimeout(() => { void attempt(retriesLeft - 1) }, 2500)
+          return
+        }
+        handleDbError(error, 'sync-character')
+      }
     }
+
+    await attempt(1)
   }, [handleDbError])
 
   const syncCharacterToBackend = useCallback(async (char: Character) => {
@@ -1489,14 +1511,32 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   // Auto-retry DB connection when user returns to the page after being in background.
   // Prevents the app getting stuck in offline mode after transient network blips.
+  // Android restores network a beat AFTER unlock: the first retry (and any
+  // flush fired by resumed timers) can fail while radio is still connecting —
+  // so we retry with backoff (2s, 6s) instead of a single immediate attempt,
+  // and only clear the schedule once the healthcheck passes.
   useEffect(() => {
+    if (dbAvailable) return
+    const timers: ReturnType<typeof setTimeout>[] = []
+    const attempt = () => {
+      void retryConnection().then(ok => {
+        if (!ok) return
+        timers.forEach(clearTimeout)
+      })
+    }
     const handleVisibility = () => {
       if (document.visibilityState === 'visible' && !dbAvailable) {
-        retryConnection()
+        attempt()
+        timers.push(setTimeout(attempt, 2000))
+        timers.push(setTimeout(attempt, 6000))
       }
     }
     document.addEventListener('visibilitychange', handleVisibility)
-    return () => document.removeEventListener('visibilitychange', handleVisibility)
+    handleVisibility()
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
+      timers.forEach(clearTimeout)
+    }
   }, [dbAvailable, retryConnection])
 
   // Find opponent for matchmaking
