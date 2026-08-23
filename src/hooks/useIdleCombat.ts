@@ -60,6 +60,8 @@ export function useIdleCombat({
   const [lastCombatResult, setLastCombatResult] = useState<'win' | 'lose' | null>(null)
   const [lastCombatXp, setLastCombatXp] = useState(0)
   const [scenePhase, setScenePhase] = useState<ScenePhase>('running')
+  // Bumped on visibility-return to restart the perpetual tick loop cleanly
+  const [loopEpoch, setLoopEpoch] = useState(0)
   const [offlineGains, setOfflineGains] = useState<{ fights: number; xp: number; levels: number; essence: number; timeAway: number } | null>(null)
   const [currentStreak, setCurrentStreak] = useState(character?.idleStreak ?? 0)
   const [totalKills, setTotalKills] = useState(character?.idleTotalKills ?? 0)
@@ -365,9 +367,12 @@ export function useIdleCombat({
     setOfflineGains(null)
   }, [])
 
+  const lastTickAtRef = useRef(Date.now())
+
   const runCombatTick = useCallback(() => {
     if (isPausedRef.current) return
 
+    lastTickAtRef.current = Date.now()
     clearPhaseTimers()
 
     const currentChar = charRef.current
@@ -514,7 +519,9 @@ export function useIdleCombat({
     phaseTimers.current = [t1, t2, t3]
   }, [onCharacterUpdate, onSyncCharacter, onLevelUp, syncWatermarks, clearPhaseTimers])
 
-  // Trigger first combat immediately, then repeat on dynamic interval
+  // Trigger first combat immediately, then repeat on dynamic interval.
+  // loopEpoch is bumped on visibility-return so the whole perpetual chain
+  // restarts cleanly after the background suspension (see visibilitychange).
   useEffect(() => {
     if (isPaused) {
       if (timerRef.current) {
@@ -542,7 +549,23 @@ export function useIdleCombat({
         timerRef.current = null
       }
     }
-  }, [isPaused, runCombatTick])
+  }, [isPaused, runCombatTick, loopEpoch])
+
+  // Self-healing watchdog: Android can freeze the page, drop visibilitychange
+  // ordering or lose timers in ways no single handler covers. Every 4s in
+  // foreground, if the runner SHOULD be ticking but hasn't for > interval+5s,
+  // bump the epoch — the canonical effect restarts the whole loop.
+  useEffect(() => {
+    const watchdog = setInterval(() => {
+      if (isPausedRef.current) return
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+      const idleFor = Date.now() - lastTickAtRef.current
+      if (idleFor > effIntervalRef.current + 5000) {
+        setLoopEpoch(e => e + 1)
+      }
+    }, 4000)
+    return () => clearInterval(watchdog)
+  }, [])
 
   // Catch up missed idle combat when the page returns from background.
   // Browser throttles setTimeout in background tabs, so essence/XP don't
@@ -675,10 +698,10 @@ export function useIdleCombat({
         } else if (bgMs >= 30000) {
           processOfflineOnServer(bgMs)
         }
-        // Restart a fresh tick cycle (the loop was suspended on hide)
-        if (!isPausedRef.current && timerRef.current === null) {
-          timerRef.current = setTimeout(() => runCombatTick(), IDLE_CONFIG.MONSTER_APPEAR_DURATION)
-        }
+        // Restart the PERPETUAL tick loop through its canonical effect
+        // (bumping epoch re-runs the mount effect below). Manually scheduling
+        // runCombatTick here would run a single orphan fight and then freeze.
+        setLoopEpoch(e => e + 1)
       }
     }
     document.addEventListener('visibilitychange', handleVisibility)
