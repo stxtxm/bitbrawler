@@ -1,0 +1,51 @@
+name: OC Sweeper
+
+# Issues created BY the agent (GITHUB_TOKEN) never fire `issues: opened/edited`
+# triggers (GitHub anti-recursion rule) — so agent-created `/oc` sub-issues were
+# silently skipped. This sweeper catches them within ~10 minutes.
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch: {}
+
+permissions:
+  issues: write
+  actions: write
+  contents: read
+  pull-requests: read
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dispatch missed /oc issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create oc-dispatched --color 1d76db --description "/oc déjà dispatché par le sweeper" --force >/dev/null 2>&1 || true
+
+          MISSED=$(gh issue list --state open --limit 100 --json number,body,labels \
+            --jq '.[]
+              | select((.body | test("/oc"; "i")))
+              | select([.labels[].name] | index("oc-dispatched") | not)
+              | .number')
+
+          [ -z "$MISSED" ] && { echo "No missed /oc issues."; exit 0; }
+
+          for N in $MISSED; do
+            # Dedup: skip si une PR liée existe déjà (feat/auto-N)
+            BRANCH="feat/auto-${N}"
+            EXISTING=$(gh pr list --state all --head "$BRANCH" --limit 1 --json number --jq 'length')
+            if [ "${EXISTING:-0}" -gt 0 ]; then
+              echo "#$N: PR $BRANCH existe déjà — label seulement."
+              gh issue edit $N --add-label oc-dispatched
+              continue
+            fi
+
+            echo "▶ Dispatch opencode.yml pour l'issue #$N"
+            gh workflow run opencode.yml -f issue_number="$N"
+            gh issue edit $N --add-label oc-dispatched
+            sleep 4 # secondary rate limit sur les dispatches
+          done
