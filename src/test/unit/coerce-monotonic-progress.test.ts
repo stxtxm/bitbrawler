@@ -49,6 +49,14 @@ describe('coerceMonotonicProgress (level-up FX loop root fix)', () => {
     expect(out.essence).toBe(10);
   });
 
+  it('never coerces a DIFFERENT character id (new char after logout)', () => {
+    const previous = makeChar({ id: 'old-char', level: 14, experience: 5000 });
+    const fresh = makeChar({ id: 'new-char', level: 1, experience: 0 });
+    const out = coerceMonotonicProgress(fresh, previous);
+    expect(out.level).toBe(1);
+    expect(out.experience).toBe(0);
+  });
+
   it('is a no-op without a current character', () => {
     const inc = makeChar({ level: 3, experience: 100 });
     expect(coerceMonotonicProgress(inc, null)).toBe(inc);
