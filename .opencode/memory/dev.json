@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-23",
+  "last_session": "2026-08-23T21:35:19Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -41,6 +41,11 @@
         "SW stale bundles",
         "deepseek model HS"
       ]
+    },
+    {
+      "lesson": "Issue #784 gen-icons.mjs: les clés palette manquantes (P.flatSteel/P.flatGold/P.pommel) étaient des no-ops silencieux via put() early-return. Pattern de test: importer le script .mjs depuis vitest via pathToFileURL(resolve(process.cwd(),'scripts/...')) — PAS new URL() qui donne du http: sous jsdom. Guard isMain (import.meta.url === pathToFileURL(argv[1]).href) permet d'exporter P/buildArtwork sans side effects d'écriture. Vérification post-regen: comparer PNG old/new pixel par pixel (decode IHDR+IDAT inflateSync, filter 0) — detailed ne doit changer QUE sur les pixels visés.",
+      "issue": "#784",
+      "date": "2026-08-23"
     }
   ]
 }
