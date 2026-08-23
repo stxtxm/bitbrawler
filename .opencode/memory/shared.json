@@ -149,7 +149,7 @@
       "fixed_date": "2026-08-23"
     },
     {
-      "id": "agent-model-migration-muse-spark",
+      "id": "agent-model-migration-x-preview-f",
       "title": "Modèle opencode/deepseek-v4-flash-free devenu indisponible",
       "impact": "Reviewer/dev agents échouaient instantanément → PRs bloquées",
       "status": "fixed",
