@@ -39,11 +39,17 @@ export const useArenaLevelUp = ({
   // Dedup guard: Android throttles timers while locked/screen-off — several
   // queued calls for the SAME level would replay the FX in a loop.
   const lastQueuedRef = useRef<{ level: number; at: number } | null>(null);
+  const recentRef = useRef<RecentLevelUp | null>(null);
+  recentRef.current = recentLevelUp;
 
   const queueLevelUp = useCallback((levelsGained: number, newLevel: number) => {
-    // Never play FX while the page is hidden/backgrounded: throttled timers
-    // batch multiple ticks and would chain level-up flashes. The offline
-    // popup / welcome-back flow announces those gains on return instead.
+    // Swallow while an FX is already showing: background-throttled ticks can
+    // cross several levels back-to-back and chain flashes into an endless loop.
+    // XP/stats are already applied — only the announcement is rate-limited.
+    if (recentRef.current) return;
+
+    // Never play FX while the page is hidden/backgrounded: the offline popup /
+    // welcome-back flow announces those gains on return instead.
     if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
 
     const now = Date.now();
