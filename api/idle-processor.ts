@@ -353,6 +353,7 @@ interface ProcessResult {
   xp: number
   levels: number
   essence: number
+  writeError?: string
 }
 
 async function processCharacter(
@@ -395,7 +396,11 @@ async function processCharacter(
   const xpDiff = (updatedChar.experience ?? 0) - (candidate.char.experience ?? 0)
   const essenceDiff = (updatedChar.essence ?? 0) - (candidate.char.essence ?? 0)
   const updates = toSupabaseUpdates(updatedChar, now)
-  await supabase.from('characters').update(updates).eq('id', candidate.id)
+  const { error: updErr } = await supabase.from('characters').update(updates).eq('id', candidate.id)
+  if (updErr) {
+    console.error('[IdleProcessor] Write failed for', candidate.id, updErr.message)
+    return { updated: null, conflict: false, fights: 0, xp: 0, levels: 0, essence: 0, writeError: updErr.message }
+  }
 
   return { updated: updatedChar, fights: simulatedFights, xp: xpDiff, levels: levelDiff, essence: essenceDiff }
 }
@@ -505,6 +510,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       xp: result.xp,
       levels: result.levels,
       essence: result.essence,
+      ...(result.writeError ? { write_error: result.writeError } : {}),
     }))
     return
   }
