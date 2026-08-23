@@ -74,6 +74,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   const characterLevelRef = useRef(character.level)
   const [animKey, setAnimKey] = useState(0)
   const [animRun, setAnimRun] = useState(true)
+  const characterSlotRef = useRef<HTMLDivElement | null>(null)
   characterLevelRef.current = character.level
 
   // Browsers freeze CSS @keyframes when tab is hidden and don't always
@@ -146,6 +147,39 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     }
     prevPhaseForRemount.current = scenePhase
   }, [scenePhase])
+
+  // ── Animation watchdog (PWA background recovery) ────────────────────────
+  // Android can freeze CSS @keyframes and skip the visibilitychange restart.
+  // Every 2s in foreground, while the runner SHOULD be animating (running
+  // phase, no one-shot override), check via Web Animations API that at least
+  // one animation on the character slot is actually 'running'. If every
+  // animation is frozen/paused/finished, force a clean slot remount — same
+  // mechanism as the visibilitychange handler but self-healing for any
+  // missed event.
+  const scenePhaseRef = useRef<ScenePhase>('running')
+  scenePhaseRef.current = scenePhase
+  const oneShotRef = useRef(false)
+  oneShotRef.current = isAttacking || isVictory || !animRun
+  useEffect(() => {
+    const iv = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+      if (scenePhaseRef.current !== 'running') return
+      if (oneShotRef.current) return
+      const el = characterSlotRef.current
+      if (!el || typeof el.getAnimations !== 'function') return
+      const anims = el.getAnimations({ subtree: true })
+      if (anims.length === 0) return // nothing mounted yet — cannot judge
+      const anyRunning = anims.some(a => a.playState === 'running')
+      if (!anyRunning) {
+        setAnimRun(false)
+        requestAnimationFrame(() => {
+          setAnimKey(k => k + 1)
+          requestAnimationFrame(() => setAnimRun(true))
+        })
+      }
+    }, 2000)
+    return () => clearInterval(iv)
+  }, [])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -281,7 +315,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
       {levelUpShockwave && <div className={`level-up-shockwave${isMilestoneCeremony ? ' milestone' : ''}`} />}
       {/* clouds rendered inside ProceduralTerrain canvas */}
 
-      <div key={animKey} className={`idle-character-slot${animRun ? '' : ' anim-paused'} ${isAttacking ? 'attacking' : ''} ${isVictory ? 'victory' : ''} ${isMilestoneCeremony ? 'ceremony-milestone' : ''}`}>
+      <div key={animKey} ref={characterSlotRef} className={`idle-character-slot${animRun ? '' : ' anim-paused'} ${isAttacking ? 'attacking' : ''} ${isVictory ? 'victory' : ''} ${isMilestoneCeremony ? 'ceremony-milestone' : ''}`}>
         {showLevelUpFx && <div className="idle-levelup-glow" />}
         <PixelCharacter
           seed={character.seed}
