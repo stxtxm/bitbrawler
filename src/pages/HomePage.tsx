@@ -97,6 +97,8 @@ const HomePage = () => {
         </div>
       </main>
 
+      <footer className="home-footer">Propulsé par OpenCode</footer>
+
       {showUpdateNotes && (
         <div className="retro-modal-overlay home-notes-overlay" onClick={() => setShowUpdateNotes(false)} role="dialog" aria-modal="true" aria-label="Patch notes">
           <div className="retro-modal home-notes-modal" onClick={(e) => e.stopPropagation()}>
