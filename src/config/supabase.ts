@@ -2,8 +2,10 @@ import { createClient } from '@supabase/supabase-js'
 import type { FightHistory, IncomingFightHistory, PendingFight } from '../types/Character'
 import type { BossProgress } from '../utils/bossUtils'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://bhbpvbfvuayafygdrbgb.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_TvmRepD1Trhu5bQIGZbkmg_YZ3FI3Gn'
+// Active project (new account) — fallback = new project for CI/tests, override via .env.example
+// Legacy project kept as comment in .env.example for easy revert.
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://gunuqjythwgbdbuyshoh.supabase.co'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_Oeu79XQ1_UyaUjOn90-9DQ_FxGrdfeB'
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('supabaseUrl or supabaseAnonKey is required')
