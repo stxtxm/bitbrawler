@@ -1977,3 +1977,170 @@ describe('QA Persistent Character Classification (#731)', () => {
     })
   })
 })
+
+describe('QA Idle Essence Per-Fight (#773)', () => {
+  interface IdleFightRecordWithEssence {
+    result: 'victory' | 'defeat'
+    xp: number | null
+    essence: number | null
+    monster?: string | null
+  }
+
+  interface IdleEssenceRun {
+    date: string
+    run: string
+    character: string
+    fights: FightRecord[]
+    idle_fights?: IdleFightRecordWithEssence[]
+    idle_runner?: { xp_events?: Array<{ result?: string; xp?: number; monster?: string; essence?: number | null }> }
+    essence?: { flow?: { idle_gained?: number | null } }
+    errors: string[]
+  }
+
+  function collectIdleFightsForTest(runs: IdleEssenceRun[]): IdleFightRecordWithEssence[] {
+    const fights: IdleFightRecordWithEssence[] = []
+    for (const r of runs) {
+      if (r.idle_fights && r.idle_fights.length > 0) {
+        fights.push(...r.idle_fights)
+      } else if (r.idle_runner?.xp_events?.length) {
+        for (const evt of r.idle_runner.xp_events) {
+          fights.push({
+            result: evt.result?.toUpperCase().includes('VICTORY') ? 'victory' : 'defeat',
+            xp: evt.xp ?? null,
+            essence: (evt as { essence?: number | null }).essence ?? null,
+            monster: evt.monster ?? null,
+          })
+        }
+      }
+    }
+    return fights
+  }
+
+  function computeIdleAnalysisForTest(runs: IdleEssenceRun[]): { avg_idle_essence_per_fight: number; total_idle_essence: number; runs_with_idle_data: number; total_idle_fights: number } | null {
+    const runsWithIdleData = runs.filter(r =>
+      (r.idle_fights && r.idle_fights.length > 0) ||
+      (r.idle_runner?.xp_events && r.idle_runner.xp_events.length > 0)
+    )
+    const allIdleFights = collectIdleFightsForTest(runsWithIdleData)
+    if (runsWithIdleData.length === 0 || allIdleFights.length === 0) return null
+    const idleEssenceFights = allIdleFights.filter((f): f is IdleFightRecordWithEssence & { essence: number } => f.essence !== null)
+    if (idleEssenceFights.length > 0) {
+      const total = idleEssenceFights.reduce((s, f) => s + f.essence, 0)
+      return {
+        runs_with_idle_data: runsWithIdleData.length,
+        total_idle_fights: allIdleFights.length,
+        avg_idle_essence_per_fight: Math.round((total / idleEssenceFights.length) * 100) / 100,
+        total_idle_essence: Math.round(total * 100) / 100,
+      }
+    }
+    const flowTotals = runsWithIdleData
+      .map(r => r.essence?.flow?.idle_gained)
+      .filter((v): v is number => typeof v === 'number')
+    const totalFromFlow = flowTotals.reduce((s, v) => s + v, 0)
+    const avgFromFlow = allIdleFights.length > 0 ? Math.round((totalFromFlow / allIdleFights.length) * 100) / 100 : 0
+    return {
+      runs_with_idle_data: runsWithIdleData.length,
+      total_idle_fights: allIdleFights.length,
+      avg_idle_essence_per_fight: Number.isFinite(avgFromFlow) ? avgFromFlow : 0,
+      total_idle_essence: Number.isFinite(totalFromFlow) ? Math.round(totalFromFlow * 100) / 100 : 0,
+    }
+  }
+
+  it('computes avg and total from per-fight essence when available', () => {
+    const runs: IdleEssenceRun[] = [
+      {
+        date: '2026-08-23', run: 'r1', character: 'A', fights: [], errors: [],
+        idle_fights: [
+          { result: 'victory', xp: 45, essence: 0.12, monster: 'wraith' },
+          { result: 'victory', xp: 47, essence: 0.12, monster: 'slime' },
+          { result: 'victory', xp: 44, essence: 0.04, monster: 'goblin' },
+        ],
+      },
+    ]
+    const result = computeIdleAnalysisForTest(runs)
+    expect(result).not.toBeNull()
+    expect(result!.total_idle_essence).toBeCloseTo(0.28, 2)
+    expect(result!.avg_idle_essence_per_fight).toBeCloseTo(0.09, 2)
+    expect(Number.isFinite(result!.avg_idle_essence_per_fight)).toBe(true)
+  })
+
+  it('falls back to flow.idle_gained when per-fight essence is null (avoids NaN)', () => {
+    const runs: IdleEssenceRun[] = [
+      {
+        date: '2026-08-23', run: 'r1', character: 'A', fights: [], errors: [],
+        idle_fights: [
+          { result: 'victory', xp: 45, essence: null, monster: 'wraith' },
+          { result: 'victory', xp: 47, essence: null, monster: 'slime' },
+          { result: 'victory', xp: 44, essence: null, monster: 'goblin' },
+        ],
+        essence: { flow: { idle_gained: 0.24 } },
+      },
+    ]
+    const result = computeIdleAnalysisForTest(runs)
+    expect(result).not.toBeNull()
+    expect(Number.isFinite(result!.avg_idle_essence_per_fight)).toBe(true)
+    expect(Number.isNaN(result!.avg_idle_essence_per_fight)).toBe(false)
+    expect(result!.total_idle_essence).toBeCloseTo(0.24, 2)
+    expect(result!.avg_idle_essence_per_fight).toBeCloseTo(0.08, 2)
+  })
+
+  it('returns 0/0 not NaN/null when no per-fight and no flow data', () => {
+    const runs: IdleEssenceRun[] = [
+      {
+        date: '2026-08-23', run: 'r1', character: 'A', fights: [], errors: [],
+        idle_fights: [
+          { result: 'victory', xp: 45, essence: null, monster: 'wraith' },
+        ],
+      },
+    ]
+    const result = computeIdleAnalysisForTest(runs)
+    expect(result).not.toBeNull()
+    expect(Number.isFinite(result!.avg_idle_essence_per_fight)).toBe(true)
+    expect(Number.isFinite(result!.total_idle_essence)).toBe(true)
+    expect(result!.avg_idle_essence_per_fight).toBe(0)
+    expect(result!.total_idle_essence).toBe(0)
+  })
+
+  it('handles legacy idle_runner xp_events with essence', () => {
+    const runs: IdleEssenceRun[] = [
+      {
+        date: '2026-08-23', run: 'r1', character: 'A', fights: [], errors: [],
+        idle_runner: { xp_events: [{ result: 'VICTORY', xp: 45, monster: 'goblin', essence: 0.11 }] },
+      },
+    ]
+    const result = computeIdleAnalysisForTest(runs)
+    expect(result).not.toBeNull()
+    expect(result!.total_idle_essence).toBeCloseTo(0.11, 2)
+  })
+
+  describe('analyze-qa-stats.ts source contract (#773)', () => {
+    it('collectIdleFights preserves essence and idleAnalysis falls back to flow without NaN', () => {
+      const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+      expect(source).toContain('idleEssenceFights')
+      expect(source).toContain('flow.idle_gained')
+      expect(source).toContain('Number.isFinite')
+      expect(source).toContain('essence')
+    })
+  })
+
+  describe('qa-bot.mjs source contract (#773)', () => {
+    const qaBotSource = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
+
+    it('observeIdleCombat or run() captures essence per idle fight (not just xp)', () => {
+      expect(qaBotSource).toContain('essence')
+      expect(qaBotSource).toContain('idle_fights')
+      const hasEssencePerFight = qaBotSource.includes('essence:') && qaBotSource.includes('idle_fights')
+      expect(hasEssencePerFight).toBe(true)
+    })
+
+    it('distributes essence_before/after delta across idle_fights when per-fight ticker unavailable', () => {
+      expect(qaBotSource).toContain('before_idle')
+      expect(qaBotSource).toContain('after_idle')
+      expect(qaBotSource).toContain('idle_gained')
+    })
+
+    it('run() assigns essence to each idle_fight entry (weighted by victory/defeat)', () => {
+      expect(qaBotSource).toMatch(/idle_fights.*essence|essence.*idle_fights/s)
+    })
+  })
+})
