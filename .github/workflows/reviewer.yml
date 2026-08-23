@@ -313,7 +313,7 @@ jobs:
 
           MODEL_ATTEMPTS=0
           MODELS=(
-            "opencode/muse-spark-1.2-contributor-free"
+            "opencode/x-preview-f-free"
             "opencode/nemotron"
             "opencode/big-pickle"
           )

@@ -1010,4 +1010,4 @@ Increase XP multiplier from 1.0 to 1.2 for level 20+.
 - **"Invalid API key"** = `SERVICE_ROLE_KEY` périmée/fausse dans Vercel (coller sans espace ni quote ; copier depuis le Dashboard Supabase)
 - **SW v6 servait de vieux bundles post-deploy** → v7 network-first JS/CSS. Après deploy majeur : hard refresh une fois
 - **Reviews CHANGES_REQUESTED obsolètes** bloquent les merges : dismisser via `gh api -X PUT repos/.../pulls/N/reviews/RID/dismissals -f message=...` puis relancer `reviewer.yml -f pr_number=N`
-- **Modèles agents** : deepseek-v4-flash-free HS → `opencode/muse-spark-1.2-contributor-free` partout (opencode.json, workflows, agents/*.md)
+- **Modèles agents** : deepseek-v4-flash-free HS → `opencode/x-preview-f-free` partout (opencode.json, workflows, agents/*.md)

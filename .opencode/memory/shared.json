@@ -153,7 +153,7 @@
       "title": "Modèle opencode/deepseek-v4-flash-free devenu indisponible",
       "impact": "Reviewer/dev agents échouaient instantanément → PRs bloquées",
       "status": "fixed",
-      "fix_workflow": "Tous workflows + .opencode/agents/*.md + opencode.json sur opencode/muse-spark-1.2-contributor-free. Si un modèle disparaît: sed global + relancer reviewer.yml -f pr_number=N",
+      "fix_workflow": "Tous workflows + .opencode/agents/*.md + opencode.json sur opencode/x-preview-f-free. Si un modèle disparaît: sed global + relancer reviewer.yml -f pr_number=N",
       "fixed_date": "2026-08-23"
     },
     {
