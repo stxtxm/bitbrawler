@@ -58518,5 +58518,277 @@
       "purchased_offer": null,
       "essence_after_purchase": null
     }
+  },
+  {
+    "date": "2026-08-23T12:20:30.995Z",
+    "run": "2026-08-23",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 27,
+        "fight_duration_ms": 16698,
+        "max_hp": 336,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 1.28
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "inventory-button-missing"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "arena_status": {
+      "fightButtonLabel": "",
+      "fightButtonVisible": false,
+      "fightButtonEnabled": false,
+      "fightsAvailable": null,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 8,
+      "vit": 25,
+      "dex": 14,
+      "luk": 8,
+      "int": 7,
+      "foc": 5,
+      "fights": 0
+    },
+    "initial_level": 2,
+    "initial_xp": {
+      "current": 35,
+      "max": 120
+    },
+    "initial_max_hp": 312,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": null,
+      "xp": null,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "final_equipment": [],
+    "final_streak": null,
+    "lootbox_equipment": [],
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_locked_level": 30,
+      "boss_name": "VOID TITAN",
+      "boss_level": null,
+      "boss_hp": null,
+      "boss_max_hp": null
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 2,
+        "previous_level": 2,
+        "new_level": 4
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 20217,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "wraith",
+        "goblin"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 88,
+      "xp_events": [
+        {
+          "time_ms": 515,
+          "xp": 43,
+          "monster": "wraith",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 11649,
+          "xp": 45,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": true,
+      "level_up_events": [
+        {
+          "time_ms": 10114,
+          "monster": "goblin"
+        },
+        {
+          "time_ms": 10626,
+          "monster": "goblin"
+        },
+        {
+          "time_ms": 11136,
+          "monster": "goblin"
+        },
+        {
+          "time_ms": 11649,
+          "monster": "goblin"
+        },
+        {
+          "time_ms": 12162,
+          "monster": "goblin"
+        },
+        {
+          "time_ms": 12672,
+          "monster": "goblin"
+        },
+        {
+          "time_ms": 20217,
+          "monster": "goblin"
+        }
+      ],
+      "phase_transition_times_ms": [
+        515,
+        8583,
+        10114,
+        11649,
+        20217
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 43,
+        "monster": "wraith"
+      },
+      {
+        "result": "victory",
+        "xp": 45,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.16,
+      "next_level_eta": "⬆ 14s",
+      "power_ratio": "⚔ 0.99x",
+      "speed_ratio": "⚡ 0.68x",
+      "magic_mult": "🧠 0.93x",
+      "interval": "11.3s",
+      "streak_bonus": "🔥 3-win streak (+2%)"
+    },
+    "initial_essence": 0.2,
+    "final_essence": null,
+    "essence": {
+      "before_idle": 0.2,
+      "after_idle": 0.62,
+      "per_fight": [
+        1.28
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": null,
+      "flow": {
+        "idle_gained": 0.42,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": null
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": true,
+      "skip_reason": "forge requires LVL 6"
+    },
+    "shop": {
+      "visited": false,
+      "offers_count": 0,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": null,
+      "essence_after": null,
+      "skipped": true,
+      "skip_reason": "shop requires LVL 5",
+      "shop_data": {
+        "offers": [],
+        "purchased_offer": null,
+        "essence_after_purchase": null
+      }
+    },
+    "errors": [
+      "Fight 2: timeout waiting for result (90000ms, 3 retries)",
+      "Fight 3: timeout waiting for result (90000ms, 3 retries)"
+    ],
+    "load_times_ms": {
+      "home": 1482,
+      "arena": 779,
+      "arena_reload": 13
+    },
+    "shop_data": {
+      "offers": [],
+      "purchased_offer": null,
+      "essence_after_purchase": null
+    }
   }
 ]
