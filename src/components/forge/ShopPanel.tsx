@@ -20,7 +20,7 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
 
   const [buying, setBuying] = useState(false);
   const [confirmIndex, setConfirmIndex] = useState<number | null>(null);
-  const [soldOut, setSoldOut] = useState<boolean[]>([false, false, false]);
+  const [soldOut, setSoldOut] = useState<boolean[]>(() => SHOP_OFFERS.map(() => false));
   const [purchasedIndex, setPurchasedIndex] = useState<number | null>(null);
   const [showItemGlow, setShowItemGlow] = useState(false);
   const [showRerollConfirm, setShowRerollConfirm] = useState(false);
@@ -179,7 +179,9 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
 
       {/* Offers grid */}
       <div className="shop-vitrine">
-        {offers.map((offer, index) => {
+        {offers.map((offer) => {
+          // Config index (not array position): epic-replacement puts index 3 at position 1
+          const index = offer.index;
           const isSold = soldOut[index];
           const canBuy = canBuyOffer(index, activeCharacter) && !isSold && !buying;
           const isPurchasing = confirmIndex === index;
@@ -294,32 +296,35 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
       )}
 
       {/* Purchase confirmation overlay */}
-      {confirmIndex !== null && (
-        <div className="forge-confirm-overlay">
-          <div className="forge-confirm-dialog">
-            <div className="forge-confirm-title">Confirm Purchase</div>
-            <div className="forge-confirm-item">
-              <span className="forge-confirm-item-name">{offers[confirmIndex].label}</span>
-              {offers[confirmIndex].item && (
-                <span className="forge-confirm-item-rarity">{offers[confirmIndex].item!.rarity.toUpperCase()}</span>
-              )}
-              <span className="forge-confirm-yield">{SHOP_OFFERS[confirmIndex].price} 💎</span>
-            </div>
-            <div className="forge-confirm-actions">
-              <button className="forge-confirm-cancel" onClick={handleCancel}>Cancel</button>
-              <button
-                className="forge-confirm-ok"
-                onClick={handleConfirm}
-                disabled={buying}
-                aria-label="Confirm purchase"
-                data-click-sound="none"
-              >
-                {buying ? 'PURCHASING...' : 'CONFIRM'}
-              </button>
+      {confirmIndex !== null && (() => {
+        const confirmOffer = offers.find(o => o.index === confirmIndex);
+        return (
+          <div className="forge-confirm-overlay">
+            <div className="forge-confirm-dialog">
+              <div className="forge-confirm-title">Confirm Purchase</div>
+              <div className="forge-confirm-item">
+                <span className="forge-confirm-item-name">{confirmOffer?.label ?? SHOP_OFFERS[confirmIndex].label}</span>
+                {confirmOffer?.item && (
+                  <span className="forge-confirm-item-rarity">{confirmOffer.item.rarity.toUpperCase()}</span>
+                )}
+                <span className="forge-confirm-yield">{SHOP_OFFERS[confirmIndex].price} 💎</span>
+              </div>
+              <div className="forge-confirm-actions">
+                <button className="forge-confirm-cancel" onClick={handleCancel}>Cancel</button>
+                <button
+                  className="forge-confirm-ok"
+                  onClick={handleConfirm}
+                  disabled={buying}
+                  aria-label="Confirm purchase"
+                  data-click-sound="none"
+                >
+                  {buying ? 'PURCHASING...' : 'CONFIRM'}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 });
