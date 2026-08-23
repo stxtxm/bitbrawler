@@ -11,6 +11,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('supabaseUrl or supabaseAnonKey is required')
 }
 
+if (import.meta.env.DEV || typeof console !== 'undefined') {
+  console.info('[BitBrawler] Supabase target:', supabaseUrl)
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Character table row type

@@ -1,4 +1,4 @@
-const VERSION = 'v6'
+const VERSION = 'v7'
 const APP_SHELL_CACHE = `bitbrawler-shell-${VERSION}`
 const ASSET_CACHE = `bitbrawler-assets-${VERSION}`
 const RUNTIME_CACHE = `bitbrawler-runtime-${VERSION}`
@@ -24,6 +24,21 @@ const isAssetRequest = (requestUrl, request) => {
   if (request.destination === 'image') return true
   if (request.destination === 'font') return true
   return requestUrl.pathname.startsWith('/assets/')
+}
+
+// Scripts/styles must be FRESH after each deploy — stale JS pointed at the old
+// Supabase project and caused offline mode + XP loss (bug #752 reports).
+const networkFirstAsset = async (request, cacheName) => {
+  const cache = await caches.open(cacheName)
+  try {
+    const response = await fetch(request)
+    cache.put(request, response.clone())
+    return response
+  } catch (error) {
+    const cached = await cache.match(request)
+    if (cached) return cached
+    throw error
+  }
 }
 
 const staleWhileRevalidate = async (request, cacheName) => {
@@ -95,7 +110,11 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (isAssetRequest(url, request)) {
-    event.respondWith(staleWhileRevalidate(request, ASSET_CACHE))
+    if (request.destination === 'script' || request.destination === 'style') {
+      event.respondWith(networkFirstAsset(request, ASSET_CACHE))
+    } else {
+      event.respondWith(staleWhileRevalidate(request, ASSET_CACHE))
+    }
     return
   }
 
