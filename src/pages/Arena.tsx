@@ -159,8 +159,8 @@ const Arena = () => {
     levelUp.recentLevelUp,
   ]);
 
-  const handleLogout = useCallback(() => {
-    logout();
+  const handleLogout = useCallback(async () => {
+    await logout();
     setTimeout(() => navigate('/'), 0);
   }, [logout, navigate]);
 

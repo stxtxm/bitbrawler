@@ -44,7 +44,7 @@ interface GameContextType {
   lastXpGain: number | null;
   lastLevelUp: { levelsGained: number; newLevel: number; hpGained: number } | null;
   login: (name: string) => Promise<string | null>;
-  logout: () => void;
+  logout: () => Promise<void>;
   setCharacter: (char: Character) => void;
   updatePushSubscription: (update: PushSubscriptionUpdate) => Promise<void>;
   retryConnection: () => Promise<boolean>;
@@ -307,11 +307,25 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [handleDbError, persistCharacter]);
 
-  // Logout function
-  const logout = useCallback(() => {
+  // Logout function — flush le sync debounced (médailles/idle) avant de clear, sinon l'XP reste à 0 au prochain login
+  const logout = useCallback(async () => {
+    const toFlush = pendingSyncCharRef.current;
+    if (toFlush?.id) {
+      pendingSyncCharRef.current = null;
+      if (syncToBackendTimeoutRef.current !== null) {
+        clearTimeout(syncToBackendTimeoutRef.current);
+        syncToBackendTimeoutRef.current = null;
+      }
+      try {
+        const { error } = await supabase.from('characters').update(convertToSupabase(toFlush)).eq('id', toFlush.id);
+        if (error) handleDbError(error, 'logout-flush');
+      } catch (e) {
+        handleDbError(e, 'logout-flush');
+      }
+    }
     setActiveCharacter(null);
     clearLocalData();
-  }, []);
+  }, [handleDbError]);
 
   // Set character function
   const setCharacter = useCallback((char: Character) => {
@@ -1250,7 +1264,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
        .from('characters')
        .delete()
        .eq('id', activeCharacter.id);
-      logout();
+      await logout();
       return true;
     } catch (error: any) {
       handleDbError(error, 'delete-character');
