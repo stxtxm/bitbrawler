@@ -71,7 +71,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           MODELS=(
-            "opencode/deepseek-v4-flash-free"
+            "opencode/muse-spark-1.2-contributor-free"
             "opencode/nemotron"
             "opencode/big-pickle"
           )

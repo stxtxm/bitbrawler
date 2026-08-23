@@ -2,7 +2,7 @@
 name: reviewer
 description: Agent de revue de code strict pour valider les PRs créées par l'agent dev. Approuve et merge si tout est bon.
 mode: subagent
-model: opencode/deepseek-v4-flash-free
+model: opencode/muse-spark-1.2-contributor-free
 permission:
   edit: deny
   bash: allow

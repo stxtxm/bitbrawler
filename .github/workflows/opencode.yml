@@ -243,7 +243,7 @@ jobs:
           
           Tu es superviseur + documentaliste. Tu DOIS modifier les fichiers de documentation et les committer."
           
-          opencode run --dangerously-skip-permissions --agent supervisor --model "opencode/deepseek-v4-flash-free" "$PROMPT"
+          opencode run --dangerously-skip-permissions --agent supervisor --model "opencode/muse-spark-1.2-contributor-free" "$PROMPT"
           echo "✅ Supervisor agent completed"
 
       - name: Run Orchestrator agent (for proposals / complex issues)
@@ -318,7 +318,7 @@ jobs:
               --repo \"\${{ github.repository }}\"
             "
 
-            opencode run --dangerously-skip-permissions --agent orchestrator --model "opencode/deepseek-v4-flash-free" "$PROMPT"
+            opencode run --dangerously-skip-permissions --agent orchestrator --model "opencode/muse-spark-1.2-contributor-free" "$PROMPT"
             echo "✅ Orchestrator completed — sub-issues created"
 
             # Dispatch each new sub-issue with /oc
@@ -385,7 +385,7 @@ jobs:
           "
 
           MODELS=(
-            "opencode/deepseek-v4-flash-free"
+            "opencode/muse-spark-1.2-contributor-free"
           )
           SUCCESS=0
           for MODEL in "${MODELS[@]}"; do
@@ -546,7 +546,7 @@ jobs:
           "
 
           MODELS=(
-            "opencode/deepseek-v4-flash-free"
+            "opencode/muse-spark-1.2-contributor-free"
           )
           SUCCESS=0
           for MODEL in "${MODELS[@]}"; do
@@ -655,7 +655,7 @@ jobs:
             echo "$FIX_PROMPT" | head -50
             echo "---"
 
-            opencode run --dangerously-skip-permissions --model "opencode/deepseek-v4-flash-free" "$FIX_PROMPT"
+            opencode run --dangerously-skip-permissions --model "opencode/muse-spark-1.2-contributor-free" "$FIX_PROMPT"
           done
 
       - name: Save agent session memory

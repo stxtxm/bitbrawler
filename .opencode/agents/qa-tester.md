@@ -2,7 +2,7 @@
 name: qa-tester
 description: QA Tester automation. Exécute des tests E2E Playwright sur le site live pour vérifier la stabilité et collecter des stats gameplay.
 mode: subagent
-model: opencode/deepseek-v4-flash-free
+model: opencode/muse-spark-1.2-contributor-free
 permission:
   edit: allow
   bash: allow
