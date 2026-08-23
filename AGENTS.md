@@ -1017,4 +1017,4 @@ Increase XP multiplier from 1.0 to 1.2 for level 20+.
 - Exécuté AUTOMATIQUEMENT avant l'injection mémoire dans `opencode.yml` et `reviewer.yml` — jamais besoin de le lancer à la main
 - **Règle** : les mémoires = pointeurs courts ; les détails vont dans AGENTS.md / BOSS_PVE.md / git history
 - Les gros diffs de PR sont plafonnés à 40k chars dans le prompt reviewer (sinon `Argument list too long` → tous les modèles échouent instantanément)
-- **Issues créées par un agent ne trigger jamais `issues:opened/edited`** (events GITHUB_TOKEN bloqués par GitHub) → sweeper `oc-sweeper.yml` (*/10 min) dispatch les `/oc` sans label `oc-dispatched` ; dédup par PR `feat/auto-N`
+- **Issues créées par un agent ne trigger jamais `issues:opened/edited`** (events GITHUB_TOKEN bloqués par GitHub) → fix manuel : éditer l'issue (ajouter un espace) ou `gh workflow run opencode.yml -f issue_number=N`. Sweeper dédié retiré (non souhaité).
