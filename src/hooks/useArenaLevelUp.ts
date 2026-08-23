@@ -36,10 +36,23 @@ export const useArenaLevelUp = ({
   const [xpBarAnimating, setXpBarAnimating] = useState(false);
   const [recentLevelUp, setRecentLevelUp] = useState<RecentLevelUp | null>(null);
   const levelUpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Dedup guard: Android throttles timers while locked/screen-off — several
+  // queued calls for the SAME level would replay the FX in a loop.
+  const lastQueuedRef = useRef<{ level: number; at: number } | null>(null);
 
   const queueLevelUp = useCallback((levelsGained: number, newLevel: number) => {
+    // Never play FX while the page is hidden/backgrounded: throttled timers
+    // batch multiple ticks and would chain level-up flashes. The offline
+    // popup / welcome-back flow announces those gains on return instead.
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+
+    const now = Date.now();
+    const last = lastQueuedRef.current;
+    if (last && last.level === newLevel && now - last.at < 3000) return;
+
     if (levelUpTimerRef.current) clearTimeout(levelUpTimerRef.current);
     levelUpTimerRef.current = null;
+    lastQueuedRef.current = { level: newLevel, at: now };
 
     const total = Math.max(1, levelsGained);
 
@@ -52,6 +65,7 @@ export const useArenaLevelUp = ({
     levelUpTimerRef.current = setTimeout(() => {
       setRecentLevelUp(null);
       levelUpTimerRef.current = null;
+      lastQueuedRef.current = null;
     }, 2000);
   }, []);
 
