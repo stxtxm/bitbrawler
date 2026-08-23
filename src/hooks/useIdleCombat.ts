@@ -642,6 +642,19 @@ export function useIdleCombat({
       if (document.visibilityState === 'hidden') {
         backgroundStartRef.current = Date.now()
         const currentChar = charRef.current
+        // Android/iOS PWAs throttle setTimeout while backgrounded: the queued
+        // phase timers (fighting/result) and the tick loop would fire all at
+        // once on resume, freezing or rewinding the scene. Suspend everything;
+        // the visible branch restarts a clean cycle.
+        clearPhaseTimers()
+        if (timerRef.current) {
+          clearTimeout(timerRef.current)
+          timerRef.current = null
+        }
+        if (hardTimeoutRef.current !== null) {
+          clearTimeout(hardTimeoutRef.current)
+          hardTimeoutRef.current = null
+        }
         if (!currentChar) return
         saveIdleSnapshot(currentChar.essence ?? 0, currentChar.experience ?? 0, currentChar.level ?? 1)
         const now = Date.now()
@@ -652,16 +665,25 @@ export function useIdleCombat({
         } as Character)
       } else if (document.visibilityState === 'visible') {
         const bgMs = Date.now() - backgroundStartRef.current
+        // Reset the scene to a clean running phase — stale phases from before
+        // backgrounding must never replay after catch-up.
+        clearPhaseTimers()
+        setCurrentMonster(null)
+        setScenePhase('running')
         if (bgMs > 5000 && bgMs < 30000) {
           catchUpBackgroundFights(bgMs)
         } else if (bgMs >= 30000) {
           processOfflineOnServer(bgMs)
         }
+        // Restart a fresh tick cycle (the loop was suspended on hide)
+        if (!isPausedRef.current && timerRef.current === null) {
+          timerRef.current = setTimeout(() => runCombatTick(), IDLE_CONFIG.MONSTER_APPEAR_DURATION)
+        }
       }
     }
     document.addEventListener('visibilitychange', handleVisibility)
     return () => document.removeEventListener('visibilitychange', handleVisibility)
-  }, [onSyncCharacter, catchUpBackgroundFights, processOfflineOnServer])
+  }, [onSyncCharacter, catchUpBackgroundFights, processOfflineOnServer, runCombatTick, clearPhaseTimers])
 
   // Sync watermarks to Supabase on unmount (no local state update, no lastActive
   // advance — keeps idle time intact for character switching).
