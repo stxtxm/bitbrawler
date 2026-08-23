@@ -2,12 +2,13 @@ import { createClient } from '@supabase/supabase-js'
 import type { FightHistory, IncomingFightHistory, PendingFight } from '../types/Character'
 import type { BossProgress } from '../utils/bossUtils'
 
-// Active project (new account). Legacy project kept as comment in .env.example for easy revert.
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
+// Active project (new account) — fallback = new project for CI/tests, override via .env.example
+// Legacy project kept as comment in .env.example for easy revert.
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://gunuqjythwgbdbuyshoh.supabase.co'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_Oeu79XQ1_UyaUjOn90-9DQ_FxGrdfeB'
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY — see .env.example (switch section)')
+  throw new Error('supabaseUrl or supabaseAnonKey is required')
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
