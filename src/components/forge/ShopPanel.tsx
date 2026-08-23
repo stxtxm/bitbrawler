@@ -179,7 +179,12 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
 
       {/* Offers grid */}
       <div className="shop-vitrine">
-        {offers.map((offer, index) => {
+        {offers.map((offer) => {
+          // Use the CONFIG index carried by the offer, NOT the array position:
+          // in epic-replacement mode the 2nd card holds config index 3 (60 💎)
+          // while sitting at position 1 — buying by position fails the
+          // getShopOffers().find(o => o.index === i) lookup (bug report: 2nd item).
+          const index = offer.index;
           const isSold = soldOut[index];
           const canBuy = canBuyOffer(index, activeCharacter) && !isSold && !buying;
           const isPurchasing = confirmIndex === index;
