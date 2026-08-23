@@ -1349,12 +1349,15 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     // Process idle gains before salvage
     await syncIdleBeforeAction();
 
+    // Re-read freshest character: idle sync may have changed state since render
+    const current = charRef.current ?? activeCharacter;
+
     const item = getItemById(itemId, ITEM_ASSETS);
     if (!item) return null;
 
-    const inventory = [...(activeCharacter.inventory ?? [])];
+    const inventory = [...(current.inventory ?? [])];
     const equipped = {
-      ...(activeCharacter.equippedItems ?? { weapon: null, armor: null, accessory: null }),
+      ...(current.equippedItems ?? { weapon: null, armor: null, accessory: null }),
     };
     const invIdx = inventory.indexOf(itemId);
     const equippedSlot = (['weapon', 'armor', 'accessory'] as ItemSlot[])
@@ -1372,11 +1375,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       return null; // nothing to salvage
     }
 
-    const currentEssence = activeCharacter.essence ?? 0;
+    const currentEssence = current.essence ?? 0;
     const newEssence = currentEssence + getEssenceYield(item);
 
     const normalized = normalizeCharacter({
-      ...activeCharacter,
+      ...current,
       inventory,
       equippedItems: equipped,
       essence: newEssence,
@@ -1416,8 +1419,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     // Process idle gains before fusion
     await syncIdleBeforeAction();
 
-    const { result, updatedChar } = performFusion(items, activeCharacter, ITEM_ASSETS);
-    if (updatedChar === activeCharacter) return { result: null, updatedChar: null };
+    // Re-read freshest character: idle sync may have changed state since render
+    const baseChar = charRef.current ?? activeCharacter;
+
+    const { result, updatedChar } = performFusion(items, baseChar, ITEM_ASSETS);
+    if (updatedChar === baseChar) return { result: null, updatedChar: null };
 
     const normalized = normalizeCharacter(updatedChar);
     try {
@@ -1428,7 +1434,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           essence: normalized.essence,
           item_upgrades: normalized.itemUpgrades,
         })
-        .eq('id', activeCharacter.id!);
+        .eq('id', baseChar.id!);
       persistCharacter(normalized);
 
       // Non-blocking medal/achievement check after fusion
@@ -1452,8 +1458,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     // Process idle gains before upgrade
     await syncIdleBeforeAction();
 
-    const updatedChar = performUpgrade(itemId, activeCharacter);
-    if (updatedChar === activeCharacter) return null; // nothing changed
+    // Re-read freshest character: idle sync may have changed state since render
+    const baseChar = charRef.current ?? activeCharacter;
+
+    const updatedChar = performUpgrade(itemId, baseChar);
+    if (updatedChar === baseChar) return null; // nothing changed
 
     const normalized = normalizeCharacter(updatedChar);
     try {
@@ -1463,7 +1472,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           essence: normalized.essence,
           item_upgrades: normalized.itemUpgrades,
         })
-        .eq('id', activeCharacter.id!);
+        .eq('id', baseChar.id!);
       persistCharacter(normalized);
 
       // Non-blocking medal/achievement check after upgrade
@@ -1487,7 +1496,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     // Process idle gains before purchase
     await syncIdleBeforeAction();
 
-    const updatedChar = buyShopOfferUtil(index, activeCharacter, ITEM_ASSETS);
+    // Re-read freshest character: idle sync may have granted essence since render
+    const baseChar = charRef.current ?? activeCharacter;
+
+    const updatedChar = buyShopOfferUtil(index, baseChar, ITEM_ASSETS);
     if (!updatedChar) return null;
 
     const normalized = normalizeCharacter(updatedChar);
@@ -1499,7 +1511,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           essence: normalized.essence,
           inventory: normalized.inventory,
         })
-        .eq('id', activeCharacter.id!);
+        .eq('id', baseChar.id!);
       persistCharacter(normalized);
 
       // Non-blocking medal/achievement check
@@ -1522,7 +1534,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
     await syncIdleBeforeAction();
 
-    const result = rerollShopOffersUtil(activeCharacter, ITEM_ASSETS);
+    // Re-read freshest character: idle sync may have granted essence since render
+    const baseChar = charRef.current ?? activeCharacter;
+
+    const result = rerollShopOffersUtil(baseChar, ITEM_ASSETS);
     if (!result) return null;
 
     const normalized = normalizeCharacter(result.character);
@@ -1533,7 +1548,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         .update({
           essence: normalized.essence,
         })
-        .eq('id', activeCharacter.id!);
+        .eq('id', baseChar.id!);
       persistCharacter(normalized);
 
       checkAndApplyMedals(normalized, {}).then(charWithMedals => {
