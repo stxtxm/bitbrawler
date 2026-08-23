@@ -8,6 +8,18 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.5.0',
+    date: '2026-08-23',
+    title: '🜁 Essence economy rebalanced — the shop is a goal again',
+    changes: [
+      '📉 Idle essence curve flattened: BASE_RATE 0.2 → 0.12 and level scaling ×0.08/level → ×0.03/level — late-game income grows sub-linearly instead of exploding.',
+      '🌙 Offline (cron-processed) kills now earn only 15% of the watching rate (mirrors the XP offline philosophy): leaving the tab closed all night no longer buys the whole shop.',
+      '⏱️ Idle cron window 10 min → 65s: offline progression ticks every minute via cron-job.org instead of 10-min batches.',
+      '🛍️ Shop prices unchanged (20/40/35/60, reroll 10) — full shop now takes days of mixed play instead of ~30 min of AFK.',
+      '🐛 Fixed: shop 2nd card unbuyable at LVL≥10 (epic-replacement position/config index mismatch), stale essence balance after idle sync on shop & forge actions, XP lost on logout/device switch, stale service worker serving outdated bundles.',
+    ],
+  },
+  {
     version: '5.4.2',
     date: '2026-08-20',
     title: '🤖 Bot population & activity drastically reduced — Supabase free tier safe',
