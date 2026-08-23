@@ -367,9 +367,12 @@ export function useIdleCombat({
     setOfflineGains(null)
   }, [])
 
+  const lastTickAtRef = useRef(Date.now())
+
   const runCombatTick = useCallback(() => {
     if (isPausedRef.current) return
 
+    lastTickAtRef.current = Date.now()
     clearPhaseTimers()
 
     const currentChar = charRef.current
@@ -548,6 +551,22 @@ export function useIdleCombat({
     }
   }, [isPaused, runCombatTick, loopEpoch])
 
+  // Self-healing watchdog: Android can freeze the page, drop visibilitychange
+  // ordering or lose timers in ways no single handler covers. Every 4s in
+  // foreground, if the runner SHOULD be ticking but hasn't for > interval+5s,
+  // bump the epoch — the canonical effect restarts the whole loop.
+  useEffect(() => {
+    const watchdog = setInterval(() => {
+      if (isPausedRef.current) return
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+      const idleFor = Date.now() - lastTickAtRef.current
+      if (idleFor > effIntervalRef.current + 5000) {
+        setLoopEpoch(e => e + 1)
+      }
+    }, 4000)
+    return () => clearInterval(watchdog)
+  }, [])
+
   // Catch up missed idle combat when the page returns from background.
   // Browser throttles setTimeout in background tabs, so essence/XP don't
   // accumulate properly. This simulates the fights that should have occurred.
@@ -673,6 +692,7 @@ export function useIdleCombat({
         // backgrounding must never replay after catch-up.
         clearPhaseTimers()
         setCurrentMonster(null)
+        setScenePhase('running')
         if (bgMs > 5000 && bgMs < 30000) {
           catchUpBackgroundFights(bgMs)
         } else if (bgMs >= 30000) {
