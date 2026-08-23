@@ -63,8 +63,12 @@ function compactFile(file) {
     if (Array.isArray(data[key]) && data[key].length > keep) data[key] = data[key].slice(-keep);
   }
   if (Array.isArray(data.session_notes)) {
+    // Notes can be plain strings (tech-lead legacy) or {lesson} objects
     data.session_notes = data.session_notes.slice(-LIMITS.session_notes.keep)
-      .map(n => ({ ...n, lesson: String(n.lesson ?? '').slice(0, LIMITS.session_notes.lessonCap) }));
+      .map(n => typeof n === 'string'
+        ? n.slice(0, LIMITS.session_notes.lessonCap)
+        : { ...n, lesson: String(n.lesson ?? '').slice(0, LIMITS.session_notes.lessonCap) }
+      );
   }
   if (Array.isArray(data.known_issues)) {
     data.known_issues = data.known_issues.slice(-LIMITS.known_issues.keep)
