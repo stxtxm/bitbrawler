@@ -29,6 +29,7 @@ import {
   performUpgrade,
 } from '../utils/forgeUtils';
 import { buyShopOffer as buyShopOfferUtil, rerollShopOffers as rerollShopOffersUtil, type ShopOffer } from '../utils/shopUtils';
+import { markOfferPurchased, markRerollUsed } from '../utils/shopStorage';
 import {
   checkMedals,
   applyMedalReward,
@@ -1457,6 +1458,15 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         })
         .eq('id', baseChar.id!);
       persistCharacter(normalized);
+      // Mark sold-out ONLY after persistence succeeded — marking earlier showed
+      // SOLD while a transient failure left essence/inventory untouched.
+      markOfferPurchased(baseChar.id!, index, new Date().toISOString().slice(0, 10));
+      // Drop any stale queued snapshot (pre-purchase essence/inventory)
+      pendingSyncCharRef.current = null;
+      if (syncToBackendTimeoutRef.current !== null) {
+        clearTimeout(syncToBackendTimeoutRef.current);
+        syncToBackendTimeoutRef.current = null;
+      }
 
       // Non-blocking medal/achievement check
       checkAndApplyMedals(normalized, {}).then(charWithMedals => {
@@ -1494,6 +1504,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         })
         .eq('id', baseChar.id!);
       persistCharacter(normalized);
+      markRerollUsed(baseChar.id!, new Date().toISOString().slice(0, 10));
+      pendingSyncCharRef.current = null;
+      if (syncToBackendTimeoutRef.current !== null) {
+        clearTimeout(syncToBackendTimeoutRef.current);
+        syncToBackendTimeoutRef.current = null;
+      }
 
       checkAndApplyMedals(normalized, {}).then(charWithMedals => {
         persistCharacter(charWithMedals);

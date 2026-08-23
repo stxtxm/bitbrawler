@@ -289,12 +289,16 @@ describe('shop-utils (TDD)', () => {
       expect(result!.inventory).toHaveLength(1);
     });
 
-    it('marks the offer as purchased for today in shopStorage', async () => {
+    it('returns the purchase payload without marking — caller marks after persist', async () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
       const result = buyShopOffer(0, char, ITEM_ASSETS, getTodayStr(), () => 0);
       expect(result).not.toBeNull();
+      expect(result!.essence).toBe(480);
+      expect(result!.inventory!.length).toBe(1);
+      // Marking moved to GameContext AFTER the DB write succeeds (#768 follow-up):
+      // an early mark showed SOLD while a transient failure left the purchase unpersisted.
       const storage = await import('../../utils/shopStorage');
-      expect(storage.isOfferPurchased('test-char', 0, getTodayStr())).toBe(true);
+      expect(storage.isOfferPurchased('test-char', 0, getTodayStr())).toBe(false);
     });
 
     it('returns null when not enough essence', () => {
@@ -303,11 +307,11 @@ describe('shop-utils (TDD)', () => {
       expect(result).toBeNull();
     });
 
-    it('returns null when offer already purchased today', () => {
+    it('returns null when offer already purchased today', async () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
-      const first = buyShopOffer(0, char, ITEM_ASSETS, getTodayStr(), () => 0);
-      expect(first).not.toBeNull();
-      const second = buyShopOffer(0, first!, ITEM_ASSETS, getTodayStr(), () => 0);
+      const storage = await import('../../utils/shopStorage');
+      storage.markOfferPurchased('test-char', 0, getTodayStr());
+      const second = buyShopOffer(0, char, ITEM_ASSETS, getTodayStr(), () => 0);
       expect(second).toBeNull();
     });
 
