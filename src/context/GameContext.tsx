@@ -174,6 +174,37 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const pendingSyncCharRef = useRef<Character | null>(null)
   const syncToBackendTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Cross-source guard shared by flushSyncToBackend and logout-flush:
+  // level+experience must come from the SAME side (max() independently
+  // creates incoherent pairs that replay burst level-ups every kill).
+  const mergeWithServerProgress = useCallback((local: Character, freshRow: any): Character => {
+    const localExp = local.experience ?? 0
+    const serverExp = freshRow?.experience ?? 0
+    const xpSource = serverExp > localExp
+      ? {
+          experience: serverExp,
+          level: freshRow.level ?? local.level,
+          hp: Math.max(local.hp ?? 0, freshRow.hp ?? 0),
+          maxHp: Math.max(local.maxHp ?? 0, freshRow.max_hp ?? 0),
+        }
+      : {
+          experience: localExp,
+          level: local.level ?? 1,
+          hp: local.hp ?? 0,
+          maxHp: local.maxHp ?? 0,
+        }
+    return normalizeCharacter({
+      ...local,
+      ...xpSource,
+      idleStreak: Math.max(local.idleStreak ?? 0, freshRow?.idle_streak ?? 0),
+      idleMaxStreak: Math.max(local.idleMaxStreak ?? 0, freshRow?.idle_max_streak ?? 0),
+      idleTotalKills: Math.max(local.idleTotalKills ?? 0, freshRow?.idle_total_kills ?? 0),
+      idleTotalXp: Math.max(local.idleTotalXp ?? 0, freshRow?.idle_total_xp ?? 0),
+      essence: Math.max(local.essence ?? 0, freshRow?.essence ?? 0),
+      statPoints: Math.max(local.statPoints ?? 0, freshRow?.stat_points ?? 0),
+    })
+  }, [])
+
   const flushSyncToBackend = useCallback(async () => {
     const toSync = pendingSyncCharRef.current
     pendingSyncCharRef.current = null
@@ -187,22 +218,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         // flush DOWNGRADE progress fields — take the max per field before writing.
         const { data: fresh } = await supabase
           .from('characters')
-          .select('experience,level,idle_streak,idle_max_streak,idle_total_kills,idle_total_xp,essence,stat_points')
+          .select('experience,level,hp,max_hp,idle_streak,idle_max_streak,idle_total_kills,idle_total_xp,essence,stat_points')
           .eq('id', toSync.id)
           .single()
-        const merged = fresh
-          ? {
-              ...toSync,
-              experience: Math.max(toSync.experience ?? 0, fresh.experience ?? 0),
-              level: Math.max(toSync.level ?? 1, fresh.level ?? 1),
-              idleStreak: Math.max(toSync.idleStreak ?? 0, fresh.idle_streak ?? 0),
-              idleMaxStreak: Math.max(toSync.idleMaxStreak ?? 0, fresh.idle_max_streak ?? 0),
-              idleTotalKills: Math.max(toSync.idleTotalKills ?? 0, fresh.idle_total_kills ?? 0),
-              idleTotalXp: Math.max(toSync.idleTotalXp ?? 0, fresh.idle_total_xp ?? 0),
-              essence: Math.max(toSync.essence ?? 0, fresh.essence ?? 0),
-              statPoints: Math.max(toSync.statPoints ?? 0, fresh.stat_points ?? 0),
-            }
-          : toSync
+        const merged = fresh ? mergeWithServerProgress(toSync, fresh) : toSync
         const { error } = await supabase
           .from('characters')
           .update(convertToSupabase(merged))
@@ -221,7 +240,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
 
     await attempt(1)
-  }, [handleDbError])
+  }, [handleDbError, mergeWithServerProgress])
 
   const syncCharacterToBackend = useCallback(async (char: Character) => {
     if (!char.id) return
@@ -359,22 +378,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         // server-side idle/cron gains with a stale snapshot at logout.
         const { data: fresh } = await supabase
           .from('characters')
-          .select('experience,level,idle_streak,idle_max_streak,idle_total_kills,idle_total_xp,essence,stat_points')
+          .select('experience,level,hp,max_hp,idle_streak,idle_max_streak,idle_total_kills,idle_total_xp,essence,stat_points')
           .eq('id', toFlush.id)
           .single();
-        const merged = fresh
-          ? {
-              ...toFlush,
-              experience: Math.max(toFlush.experience ?? 0, fresh.experience ?? 0),
-              level: Math.max(toFlush.level ?? 1, fresh.level ?? 1),
-              idleStreak: Math.max(toFlush.idleStreak ?? 0, fresh.idle_streak ?? 0),
-              idleMaxStreak: Math.max(toFlush.idleMaxStreak ?? 0, fresh.idle_max_streak ?? 0),
-              idleTotalKills: Math.max(toFlush.idleTotalKills ?? 0, fresh.idle_total_kills ?? 0),
-              idleTotalXp: Math.max(toFlush.idleTotalXp ?? 0, fresh.idle_total_xp ?? 0),
-              essence: Math.max(toFlush.essence ?? 0, fresh.essence ?? 0),
-              statPoints: Math.max(toFlush.statPoints ?? 0, fresh.stat_points ?? 0),
-            }
-          : toFlush;
+        const merged = fresh ? mergeWithServerProgress(toFlush, fresh) : toFlush;
         const { error } = await supabase.from('characters').update(convertToSupabase(merged)).eq('id', toFlush.id);
         if (error) handleDbError(error, 'logout-flush');
       } catch (e) {
@@ -383,7 +390,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
     setActiveCharacter(null);
     clearLocalData();
-  }, [handleDbError]);
+  }, [handleDbError, mergeWithServerProgress]);
 
   // Set character function
   const setCharacter = useCallback((char: Character) => {
