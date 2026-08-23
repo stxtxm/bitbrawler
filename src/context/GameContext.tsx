@@ -175,9 +175,30 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     syncToBackendTimeoutRef.current = null
     if (!toSync?.id) return
     try {
+      // Cross-source guard: the idle cron may have granted XP/essence server-side
+      // while this stale local snapshot sat in the queue. Never let a debounced
+      // flush DOWNGRADE progress fields — take the max per field before writing.
+      const { data: fresh } = await supabase
+        .from('characters')
+        .select('experience,level,idle_streak,idle_max_streak,idle_total_kills,idle_total_xp,essence,stat_points')
+        .eq('id', toSync.id)
+        .single()
+      const merged = fresh
+        ? {
+            ...toSync,
+            experience: Math.max(toSync.experience ?? 0, fresh.experience ?? 0),
+            level: Math.max(toSync.level ?? 1, fresh.level ?? 1),
+            idleStreak: Math.max(toSync.idleStreak ?? 0, fresh.idle_streak ?? 0),
+            idleMaxStreak: Math.max(toSync.idleMaxStreak ?? 0, fresh.idle_max_streak ?? 0),
+            idleTotalKills: Math.max(toSync.idleTotalKills ?? 0, fresh.idle_total_kills ?? 0),
+            idleTotalXp: Math.max(toSync.idleTotalXp ?? 0, fresh.idle_total_xp ?? 0),
+            essence: Math.max(toSync.essence ?? 0, fresh.essence ?? 0),
+            statPoints: Math.max(toSync.statPoints ?? 0, fresh.stat_points ?? 0),
+          }
+        : toSync
       const { error } = await supabase
         .from('characters')
-        .update(convertToSupabase(toSync))
+        .update(convertToSupabase(merged))
         .eq('id', toSync.id)
       if (error) throw error
     } catch (error: any) {
@@ -317,7 +338,27 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         syncToBackendTimeoutRef.current = null;
       }
       try {
-        const { error } = await supabase.from('characters').update(convertToSupabase(toFlush)).eq('id', toFlush.id);
+        // Same cross-source guard as flushSyncToBackend: never downgrade
+        // server-side idle/cron gains with a stale snapshot at logout.
+        const { data: fresh } = await supabase
+          .from('characters')
+          .select('experience,level,idle_streak,idle_max_streak,idle_total_kills,idle_total_xp,essence,stat_points')
+          .eq('id', toFlush.id)
+          .single();
+        const merged = fresh
+          ? {
+              ...toFlush,
+              experience: Math.max(toFlush.experience ?? 0, fresh.experience ?? 0),
+              level: Math.max(toFlush.level ?? 1, fresh.level ?? 1),
+              idleStreak: Math.max(toFlush.idleStreak ?? 0, fresh.idle_streak ?? 0),
+              idleMaxStreak: Math.max(toFlush.idleMaxStreak ?? 0, fresh.idle_max_streak ?? 0),
+              idleTotalKills: Math.max(toFlush.idleTotalKills ?? 0, fresh.idle_total_kills ?? 0),
+              idleTotalXp: Math.max(toFlush.idleTotalXp ?? 0, fresh.idle_total_xp ?? 0),
+              essence: Math.max(toFlush.essence ?? 0, fresh.essence ?? 0),
+              statPoints: Math.max(toFlush.statPoints ?? 0, fresh.stat_points ?? 0),
+            }
+          : toFlush;
+        const { error } = await supabase.from('characters').update(convertToSupabase(merged)).eq('id', toFlush.id);
         if (error) handleDbError(error, 'logout-flush');
       } catch (e) {
         handleDbError(e, 'logout-flush');

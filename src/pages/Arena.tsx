@@ -232,7 +232,9 @@ const Arena = () => {
             ? combat.pveMonster?.monsterId
             : undefined}
           candidates={combat.combatData.candidates}
-          comboCount={idle.currentStreak}
+          comboCount={combat.combatData.matchType === 'balanced' || combat.combatData.matchType === 'similar'
+            ? 0
+            : idle.currentStreak}
           onComplete={combat.onCombatComplete}
           onClose={combat.onCloseCombat}
         />
