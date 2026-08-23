@@ -45,11 +45,6 @@
   ],
   "known_issues": [
     {
-      "id": "skip-ci-head-kills-pr-trigger",
-      "title": "Commit de tête '[skip ci]' (mémoire session) supprime le déclencheur pull_request CI",
-      "status": "fixed"
-    },
-    {
       "id": "supabase-account-switch-2026-08",
       "title": "Switch de compte Supabase (quota egress dépassé sur bhbpvbfvuayafygdrbgb)",
       "status": "fixed"
@@ -103,6 +98,11 @@
       "id": "reviewer-dismiss-stale-blocks",
       "title": "Reviews CHANGES_REQUESTED obsolètes bloquaient des PRs déjà corrigées",
       "status": "known_pattern"
+    },
+    {
+      "id": "bot-created-issues-dont-trigger",
+      "title": "Issues créées par l'agent (GITHUB_TOKEN) ne déclenchent jamais issues:opened/edited",
+      "status": "fixed"
     }
   ],
   "cross_agent_constraints": [
