@@ -29,7 +29,7 @@ describe('coerceMonotonicProgress (level-up FX loop root fix)', () => {
     const incoming = makeChar({ level: 2, experience: 300, wins: 9, fightHistory: [{ date: 1 } as any] });
     const out = coerceMonotonicProgress(incoming, current) as Character;
     expect(out.wins).toBe(9);
-    expect(out.fightHistory.length).toBe(1);
+    expect(out.fightHistory?.length).toBe(1);
     expect(out.level).toBe(6);
   });
 
