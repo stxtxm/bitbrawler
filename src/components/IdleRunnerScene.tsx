@@ -182,8 +182,9 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
         const el = characterSlotRef.current
         if (!el || typeof el.getAnimations !== 'function') return
         const anims = el.getAnimations({ subtree: true })
-        // Case B: animations exist but all frozen/paused/finished
-        if (anims.length > 0 && !anims.some(a => a.playState === 'running')) {
+        // Case B: no animations at all (Android discards keyframes after long
+        // suspensions) OR they exist but all frozen/paused/finished.
+        if (anims.length === 0 || !anims.some(a => a.playState === 'running')) {
           deadSamplesRef.current += 1
           looksDead = deadSamplesRef.current >= 2
         } else {
@@ -191,7 +192,9 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
         }
       }
 
-      if (looksDead) {
+      // Cap consecutive auto-restarts: if the sprite still cannot animate
+      // (e.g. reduced-motion), stop churning until the phase changes.
+      if (looksDead && deadSamplesRef.current <= 3) {
         deadSamplesRef.current = 0
         lastRemountRef.current = Date.now()
         setAnimRun(false)
