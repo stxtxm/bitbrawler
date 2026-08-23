@@ -147,7 +147,13 @@ jobs:
 
           echo "🔍 Checking out PR branch: $HEAD_REF"
           git fetch origin "$HEAD_REF"
-          git checkout "$HEAD_REF" 2>/dev/null || git checkout -b "$HEAD_REF" "origin/$HEAD_REF"
+          # Force checkout: the memory-compaction step may have modified
+          # .opencode/memory/*.json in the working tree (master version);
+          # a plain checkout aborts when the PR branch also touches them.
+          git checkout -f "$HEAD_REF" 2>/dev/null || git checkout -f -B "$HEAD_REF" "origin/$HEAD_REF"
+          # Re-compact AFTER switching: injected memories must reflect the
+          # PR branch content AND stay under the ARG_MAX budget.
+          node scripts/compact-memories.mjs || true
 
           echo "🔍 Checking for merge conflict markers..."
           if grep -rnP '^<<<<<<< |^=======$|^>>>>>>> ' --include='*.ts' --include='*.tsx' --include='*.json' src/; then
