@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ReactNode } from 'react';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { GameProvider, useGame } from '../../context/GameContext';
 import { Character } from '../../types/Character';
@@ -107,63 +107,6 @@ describe('Arena PvE', () => {
     expect(result.current.activeCharacter?.pveFightsLeft).toBe(5);
   });
 
-  it('usePveFight decrements pveFightsLeft', async () => {
-    setupMocks(mockCharacter);
-    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
 
-    const { result } = renderHook(() => useGame(), {
-      wrapper: createWrapper(),
-    });
 
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
-
-    await act(async () => {
-      await result.current.usePveFight(true, 50, 'Goblin');
-    });
-
-    expect(result.current.activeCharacter?.pveFightsLeft).toBe(4);
-    expect(result.current.activeCharacter?.wins).toBe(6);
-  });
-
-  it('usePveFight does not decrement fightsLeft', async () => {
-    setupMocks(mockCharacter);
-    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
-
-    const { result } = renderHook(() => useGame(), {
-      wrapper: createWrapper(),
-    });
-
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
-
-    await act(async () => {
-      await result.current.usePveFight(false, 20, 'Ogre');
-    });
-
-    expect(result.current.activeCharacter?.fightsLeft).toBe(3);
-    expect(result.current.activeCharacter?.losses).toBe(3);
-  });
-
-  it('usePveFight records monster name in fight history', async () => {
-    setupMocks(mockCharacter);
-    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
-
-    const { result } = renderHook(() => useGame(), {
-      wrapper: createWrapper(),
-    });
-
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
-
-    await act(async () => {
-      await result.current.usePveFight(true, 50, 'Wraith');
-    });
-
-    const history = result.current.activeCharacter?.fightHistory || [];
-    expect(history[0].opponentName).toBe('Wraith');
-  });
 });

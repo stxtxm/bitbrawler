@@ -1,6 +1,16 @@
 # Migration Status: Supabase — ✅ Complete
 
-## ✅ Executed migrations (recent)
+## 🔄 Compte actif: `gunuqjythwgbdbuyshoh` (switch 2026-08-23)
+
+L'ancien compte `bhbpvbfvuayafygdrbgb` est restreint (`exceed_egress_quota`, reset ~4 sept).
+Bootstrap complet exécuté sur le nouveau projet (voir `.env.example` bloc ACTIF/LEGACY).
+
+### Migrations exécutées sur `gunuqjythwgbdbuyshoh`
+- [x] Bootstrap complet (`characters` + `maintenance` + `server_time` + indexes + RLS anon)
+- [x] **`essence ALTER TYPE double precision`** — les gains fractionnaires rejetaient l'UPDATE entier en 22P02
+- ⚠️ Toute future migration SQL = issue dédiée SANS `/oc`, exécutée manuellement (guard reviewer bloque les PR contenant du DDL)
+
+## ✅ Executed migrations (recent, ancien compte — historique)
 
 - [x] **#625 — `boss_progress` JSONB (Raid Boss PvE)** — executed 2026-08-04
   ```sql

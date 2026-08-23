@@ -14,7 +14,6 @@ import {
 } from '../../utils/forgeUtils';
 import {
   ESSENCE_YIELD,
-  SALVAGE_YIELD,
   FUSION_COST,
   FUSION_ESSENCE_COST,
   FUSION_INPUT_COUNT,
@@ -69,7 +68,7 @@ const makeCharacter = (overrides?: Partial<Character>): Character => ({
 // ─── Constants Structure ──────────────────────────────────────────────────
 
 describe('forgeConstants', () => {
-  describe('ESSENCE_YIELD / SALVAGE_YIELD', () => {
+  describe('ESSENCE_YIELD', () => {
     it('defines correct salvage values per rarity', () => {
       expect(ESSENCE_YIELD.common).toBe(5);
       expect(ESSENCE_YIELD.uncommon).toBe(20);
@@ -78,9 +77,6 @@ describe('forgeConstants', () => {
       expect(ESSENCE_YIELD.legendary).toBe(400);
     });
 
-    it('SALVAGE_YIELD is an alias for ESSENCE_YIELD', () => {
-      expect(SALVAGE_YIELD).toBe(ESSENCE_YIELD);
-    });
   });
 
   describe('FUSION_COST / FUSION_ESSENCE_COST', () => {

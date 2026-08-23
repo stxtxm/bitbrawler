@@ -982,3 +982,32 @@ Increase XP multiplier from 1.0 to 1.2 for level 20+.
      │  - Detects bugs       │
      └───────────────────────┘
 ```
+
+---
+
+## 🔧 Infra Runbook — Supabase & déploiement (ajouté 2026-08-23)
+
+### Comptes/projets actifs
+| Projet | Rôle | Statut |
+|---|---|---|
+| `gunuqjythwgbdbuyshoh` | **ACTIF** (prod + scripts) | quota frais |
+| `bhbpvbfvuayafygdrbgb` | LEGACY (revert 1-copier-coller dans `.env.example`) | restreint `exceed_egress_quota` jusqu'à ~4 sept |
+
+⚠️ Le quota egress free tier est **par compte/organisation** — un 2e projet sur le même compte ne reset rien.
+
+### Checklist de switch complète (les 8 points, sinon bugs silencieux)
+1. SQL bootstrap sur le nouveau projet (`characters`, `maintenance`, `server_time` + indexes + policies RLS anon). **`essence` = `double precision`** (gains fractionnaires — INTEGER rejetait l'UPDATE entier en 22P02)
+2. Vercel env vars **Production** : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (client) **ET** `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (fonctions serveur `/api/idle-processor`)
+3. GitHub Secrets : `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+4. `.env` local : bloc ACTIF mis à jour (LEGACY commenté pour revert)
+5. **Redeploy Vercel obligatoire après tout save d'env** (CLI `vercel env add` ne déploie pas non plus — `vercel --prod` requis depuis le dossier lié au BON projet)
+6. Test end-to-end : créer un perso → vérifier ligne en DB
+7. Test idle API : `POST /api/idle-processor {"character_id":"<id existant>"}` → doit renvoyer `{fights:...}`, jamais `Character not found`/`Invalid API key`
+8. Cron-job.org : rien à changer (URL fixe `bitbrawler.vercel.app/api/idle-processor`), mais vérifier qu'il tourne
+
+### Pièges rencontrés (voir aussi memory/shared.json known_issues)
+- **404 "Character not found" sur un perso EXISTANT** = vars serveur périmées (erreur DB avalée). Depuis #754 la réponse inclut `db_target` + `detail` — toujours tester avec un ID réel
+- **"Invalid API key"** = `SERVICE_ROLE_KEY` périmée/fausse dans Vercel (coller sans espace ni quote ; copier depuis le Dashboard Supabase)
+- **SW v6 servait de vieux bundles post-deploy** → v7 network-first JS/CSS. Après deploy majeur : hard refresh une fois
+- **Reviews CHANGES_REQUESTED obsolètes** bloquent les merges : dismisser via `gh api -X PUT repos/.../pulls/N/reviews/RID/dismissals -f message=...` puis relancer `reviewer.yml -f pr_number=N`
+- **Modèles agents** : deepseek-v4-flash-free HS → `opencode/muse-spark-1.2-contributor-free` partout (opencode.json, workflows, agents/*.md)

@@ -1,23 +1,45 @@
 {
   "version": 1,
-  "last_updated": "2026-08-06T12:30:00Z",
+  "last_updated": "2026-08-23T17:30:00Z",
   "active_campaigns": [
     {
       "parent_issue": 605,
       "title": "QA bot PvE timeout fix",
-      "sub_issues": [608, 609],
+      "sub_issues": [
+        608,
+        609
+      ],
       "level_0_dispatched": true,
-      "level_0_sub_issues": [608],
-      "level_1_sub_issues": [609],
+      "level_0_sub_issues": [
+        608
+      ],
+      "level_1_sub_issues": [
+        609
+      ],
       "created": "2026-08-03T00:00:00Z"
     },
     {
       "parent_issue": 476,
       "title": "Essence Economy & Shop Balance",
-      "sub_issues": [478, 479, 480, 481, 482, 483],
+      "sub_issues": [
+        478,
+        479,
+        480,
+        481,
+        482,
+        483
+      ],
       "level_0_dispatched": true,
-      "level_0_sub_issues": [478, 479, 480, 481, 482],
-      "level_1_sub_issues": [483],
+      "level_0_sub_issues": [
+        478,
+        479,
+        480,
+        481,
+        482
+      ],
+      "level_1_sub_issues": [
+        483
+      ],
       "created": "2026-07-09T18:30:00Z"
     }
   ],
@@ -53,6 +75,93 @@
       "status": "fixed",
       "fix_workflow": "opencode.yml (étape 'Push and manage PR', après create/edit) — si le commit de tête est skip-ci: gh workflow run ci.yml --ref \"$BRANCH\" -f pr_number=\"$PR_NUMBER\". reviewer.yml (étape 'Verify branch integrity') — si la PR n'a AUCUN check CI (statusCheckRollup vide hors Vercel): gate complète locale (lint + tsc + tests + build) avant merge",
       "fixed_date": "2026-08-07"
+    },
+    {
+      "id": "supabase-account-switch-2026-08",
+      "title": "Switch de compte Supabase (quota egress dépassé sur bhbpvbfvuayafygdrbgb)",
+      "impact": "Jeu injouable pendant toute la période restreinte ; bascule incomplete = bugs silencieux",
+      "status": "fixed",
+      "fix_workflow": "Projet actif = gunuqjythwgbdbuyshoh. BASCULE COMPLÈTE = 4 vars: Vercel VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY (build client) ET SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (fonctions serveur api/idle-processor) + GitHub Secrets SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY (Actions) + REDEPLOY après chaque modif env. Voir INFRA_RUNBOOK.md",
+      "fixed_date": "2026-08-23"
+    },
+    {
+      "id": "idle-api-silent-404",
+      "title": "idle-processor avale les erreurs DB en '404 Character not found'",
+      "impact": "Mauvaise clé API/projet restreint indistinguable d'un perso absent → diagnostic impossible, idle mort sans log",
+      "status": "fixed",
+      "fix_workflow": "api/idle-processor.ts renvoie db_target (host) + detail (message réel), 500 si erreur DB vs 404 si absent. Toujours tester avec l'ID d'un perso EXISTANT",
+      "fixed_date": "2026-08-23"
+    },
+    {
+      "id": "essence-column-integer",
+      "title": "Colonne essence INTEGER rejetait les gains fractionnaires (22P02)",
+      "impact": "UPDATE entier rejeté silencieusement → progression 'sauvegardée' jamais persistée",
+      "status": "fixed",
+      "fix_workflow": "ALTER TABLE characters ALTER COLUMN essence TYPE double precision (exécuté sur gunuqjyth). Tout nouveau bootstrap doit typer essence en double precision. api/idle-processor retourne désormais write_error au lieu d'avaler",
+      "fixed_date": "2026-08-23"
+    },
+    {
+      "id": "sw-stale-bundles-v6",
+      "title": "Service worker v6 stale-while-revalidate servait de vieux bundles post-deploy",
+      "impact": "Sessions entières sur code obsolète autour du switch Supabase → mode offline + XP perdue sur TOUS les appareils",
+      "status": "fixed",
+      "fix_workflow": "public/sw.js v7: scripts/styles network-first avec fallback cache (images gardent SWR). Après chaque deploy majeur, demander un hard refresh aux testeurs",
+      "fixed_date": "2026-08-23"
+    },
+    {
+      "id": "shop-epic-replacement-index",
+      "title": "Shop: position tableau vs index config en epic-replacement (lvl≥10)",
+      "impact": "2e carte (Objet épique 60💎, config index 3) inachetable — find(o=>o.index===1) introuvable, toast trompeur 'not enough essence'",
+      "status": "fixed",
+      "fix_workflow": "ShopPanel mappe avec offer.index (jamais la position). getShopOffers peut retourner {0,3,2} — tout lookup/stockage (soldOut, markOfferPurchased) utilise l'index config",
+      "fixed_date": "2026-08-23"
+    },
+    {
+      "id": "stale-closure-after-idle-sync",
+      "title": "Closure périmée après syncIdleBeforeAction() dans les actions GameContext",
+      "impact": "'not enough essence' alors que le solde affiché (post-sync) suffit",
+      "status": "fixed",
+      "fix_workflow": "Après tout 'await syncIdleBeforeAction()', relire charRef.current ?? activeCharacter avant de calculer (pattern rollLootboxForPlayer). Appliqué à buy/reroll/salvage/fusion/upgrade (#758)",
+      "fixed_date": "2026-08-23"
+    },
+    {
+      "id": "flush-downgrade-cron-gains",
+      "title": "Flush debounced/logout réécrivait le snapshot local et écrasait les gains cron serveur",
+      "impact": "Gains PvP/idle désynchronisés : le cron crédite serveur, le flush local 30s plus tard régresse XP/essence",
+      "status": "fixed",
+      "fix_workflow": "flushSyncToBackend + logout flush relisent experience/level/idle_*/essence/stat_points et écrivent le MAX par champ (#761)",
+      "fixed_date": "2026-08-23"
+    },
+    {
+      "id": "pvp-combo-idle-streak-leak",
+      "title": "comboCount PvP héritait de la streak idle PvE",
+      "impact": "Gros texte 'COMBO x34' flottant dès l'ouverture d'un combat PvP",
+      "status": "fixed",
+      "fix_workflow": "Arena.tsx: matchType balanced/similar → comboCount 0; pve/boss gardent idle.currentStreak",
+      "fixed_date": "2026-08-23"
+    },
+    {
+      "id": "idle-cron-window-10min",
+      "title": "IDLE_WINDOW_MS 600_000: cron minute sautait les persos <10 min d'absence",
+      "impact": "Progression offline par batchs de 10 min au lieu de per-minute (README promettait 60s)",
+      "status": "fixed",
+      "fix_workflow": "api/idle-processor.ts IDLE_WINDOW_MS=65_000 (marge anti-race vs on-demand)",
+      "fixed_date": "2026-08-23"
+    },
+    {
+      "id": "agent-model-migration-muse-spark",
+      "title": "Modèle opencode/deepseek-v4-flash-free devenu indisponible",
+      "impact": "Reviewer/dev agents échouaient instantanément → PRs bloquées",
+      "status": "fixed",
+      "fix_workflow": "Tous workflows + .opencode/agents/*.md + opencode.json sur opencode/muse-spark-1.2-contributor-free. Si un modèle disparaît: sed global + relancer reviewer.yml -f pr_number=N",
+      "fixed_date": "2026-08-23"
+    },
+    {
+      "id": "reviewer-dismiss-stale-blocks",
+      "title": "Reviews CHANGES_REQUESTED obsolètes bloquaient des PRs déjà corrigées",
+      "impact": "PRs vertes CI mais jamais mergées jusqu'à dismissal manuel",
+      "status": "known_pattern",
+      "fix_workflow": "gh api -X PUT repos/stxtxm/bitbrawler/pulls/N/reviews/RID/dismissals -f message='...' puis gh workflow run reviewer.yml -f pr_number=N"
     }
   ],
   "cross_agent_constraints": [
