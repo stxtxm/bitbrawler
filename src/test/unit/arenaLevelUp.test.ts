@@ -139,7 +139,7 @@ describe('useArenaLevelUp - multi-level stagger queue', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('re-queue during an active queue cancels previous timers', () => {
+  it('swallows a new queue while an FX is already showing (no chaining loop)', () => {
     const { result } = makeHook();
 
     act(() => {
@@ -147,14 +147,22 @@ describe('useArenaLevelUp - multi-level stagger queue', () => {
     });
     expect(result.current.recentLevelUp).toEqual({ newLevel: 8, isMilestone: false, count: 3 });
 
+    // Background-throttled ticks crossing more levels must NOT extend/replay
+    // the FX (regression: chained flashes looped endlessly on PWA resume).
+    act(() => {
+      result.current.queueLevelUp(1, 9);
+    });
+    expect(result.current.recentLevelUp).toEqual({ newLevel: 8, isMilestone: false, count: 3 });
+
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(result.current.recentLevelUp).toBeNull();
+
+    // After the window clears, a genuine new level announces normally.
     act(() => {
       result.current.queueLevelUp(1, 9);
     });
     expect(result.current.recentLevelUp).toEqual({ newLevel: 9, isMilestone: false });
-
-    act(() => {
-      vi.advanceTimersByTime(3000);
-    });
-    expect(result.current.recentLevelUp).toBeNull();
   });
 });
