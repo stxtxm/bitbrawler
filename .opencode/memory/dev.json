@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-23T21:52:38Z",
+  "last_session": "2026-08-24T01:02:00Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -22,16 +22,6 @@
   },
   "session_notes": [
     {
-      "lesson": "Issue #730 analyze-qa-stats cumulative false positives: alerts (issues/suggestions) must use recent windows, not all-time cumulative data. 4 fixes: (1) error-rate alerts use last 30 runs (stats.slice(-RECENT_WINDOW_RUNS)) while report keeps all-time error_runs; (2) idle win-rate alerts use last 15 …",
-      "issue": "#730",
-      "date": "2026-08-18"
-    },
-    {
-      "lesson": "Le jeu limite les noms de personnage à 10 caractères (input maxLength=10 dans CharacterCreation.tsx, MAX_NAME_LENGTH=10 dans characterUtils.ts). Tout nom de personnage QA fixe/généré doit respecter cette limite — pour les générations successives d'un personnage persistant, tronquer le base name pou…",
-      "issue": "#731",
-      "date": "2026-08-18"
-    },
-    {
       "date": "2026-08-23",
       "lesson": "Journée infra+balance: (1) Switch complet vers compte Supabase gunuqjythwgbdbuyshoh — PIÈGE PRINCIPAL: les 4 vars (2 VITE_* build client + 2 SUPABASE_* fonctions serveur Vercel) doivent TOUTES être basculées + GitHub Secrets; une seule oubliée = bugs silencieux (idle mort, Invalid API key avalée en…",
       "issues_encountered": [
@@ -43,14 +33,19 @@
       ]
     },
     {
-      "lesson": "Issue #784 gen-icons.mjs: les clés palette manquantes (P.flatSteel/P.flatGold/P.pommel) étaient des no-ops silencieux via put() early-return. Pattern de test: importer le script .mjs depuis vitest via pathToFileURL(resolve(process.cwd(),'scripts/...')) — PAS new URL() qui donne du http: sous jsdom. Guard isMain (import.meta.url === pathToFileURL(argv[1]).href) permet d'exporter P/buildArtwork sans side effects d'écriture. Vérification post-regen: comparer PNG old/new pixel par pixel (decode IHDR+IDAT inflateSync, filter 0) — detailed ne doit changer QUE sur les pixels visés.",
+      "lesson": "Issue #784 gen-icons.mjs: les clés palette manquantes (P.flatSteel/P.flatGold/P.pommel) étaient des no-ops silencieux via put() early-return. Pattern de test: importer le script .mjs depuis vitest via pathToFileURL(resolve(process.cwd(),'scripts/...')) — PAS new URL() qui donne du http: sous jsdom.…",
       "issue": "#784",
       "date": "2026-08-23"
     },
     {
-      "lesson": "Issue #789: suppression footer HomePage — pattern TDD pour une SUPPRESSION: transformer le test d existence en test d absence (queryByText + not.toBeInTheDocument) → RED, puis retirer le code → GREEN. Garde anti-régression conserve au lieu de perdre toute couverture. Verifier les classes CSS orphelines via grep global avant de toucher aux styles.",
+      "lesson": "Issue #789: suppression footer HomePage — pattern TDD pour une SUPPRESSION: transformer le test d existence en test d absence (queryByText + not.toBeInTheDocument) → RED, puis retirer le code → GREEN. Garde anti-régression conserve au lieu de perdre toute couverture. Verifier les classes CSS orphel…",
       "issue": "#789",
       "date": "2026-08-23"
+    },
+    {
+      "date": "2026-08-24",
+      "lesson": "Issue #796 doc cleanup: avant de réécrire un commentaire/chiffre de courbe XP, recalculer les seuils réels avec node (getTotalXpForLevel) — l'ancien commentaire citait des seuils de l'ère EARLY_SHIFT=3 (4478/6786) alors que la courbe actuelle donne 4119/6426. Pattern anti-périmement: dans les listes de features README, décrire la FORME de la courbe (~5-15 kills/niveau) plutôt que des constantes/valuers exactes qui ont déjà drifté 2 fois (EARLY_SHIFT 2→3→0). Les entrées historiques d'updateNotes.ts ne se corrigent jamais (changelog versionné).",
+      "issue": "#796"
     }
   ]
 }
