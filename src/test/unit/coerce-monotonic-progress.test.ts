@@ -65,6 +65,7 @@ describe('coerceMonotonicProgress (level-up FX loop root fix)', () => {
 
 import { normalizeCharacter } from '../../utils/persistenceUtils';
 import { getTotalXpForLevel } from '../../utils/xpUtils';
+import { getHpForVitality } from '../../utils/statUtils';
 
 describe('normalizeCharacter — upward level healing (5.5.2)', () => {
   it('snaps level UP to the curve when experience justifies more', () => {
@@ -78,5 +79,43 @@ describe('normalizeCharacter — upward level healing (5.5.2)', () => {
     const exp = getTotalXpForLevel(22);
     const out = normalizeCharacter(makeChar({ id: 'legacy', level: 25, experience: exp }));
     expect(out.level).toBe(25);
+  });
+});
+
+describe('normalizeCharacter — heal maxHp sync (#798)', () => {
+  it('recalculates maxHp from vitality/curve and grants the hp delta when a heal occurs', () => {
+    const exp = getTotalXpForLevel(9) + 10;
+    const out = normalizeCharacter(
+      makeChar({ id: 'heal-hp', level: 5, experience: exp, vitality: 10, hp: 120, maxHp: 150 })
+    );
+    expect(out.level).toBe(9);
+    expect(out.maxHp).toBe(getHpForVitality(10, 9));
+    expect(out.hp).toBe(Math.min(120 + (getHpForVitality(10, 9) - 150), getHpForVitality(10, 9)));
+  });
+
+  it('never nerfs a legacy maxHp above the canonical value', () => {
+    const exp = getTotalXpForLevel(9) + 10;
+    const out = normalizeCharacter(
+      makeChar({ id: 'legacy-hp', level: 5, experience: exp, vitality: 10, hp: 280, maxHp: 300 })
+    );
+    expect(out.level).toBe(9);
+    expect(out.maxHp).toBe(300);
+    expect(out.hp).toBe(280);
+  });
+
+  it('clamps hp to maxHp when a stale snapshot has hp above the healed cap', () => {
+    const exp = getTotalXpForLevel(9) + 10;
+    const out = normalizeCharacter(
+      makeChar({ id: 'clamp-hp', level: 5, experience: exp, vitality: 10, hp: 400, maxHp: 150 })
+    );
+    expect(out.maxHp).toBe(getHpForVitality(10, 9));
+    expect(out.hp).toBeLessThanOrEqual(out.maxHp!);
+  });
+
+  it('leaves hp/maxHp untouched without a level heal', () => {
+    const out = normalizeCharacter(makeChar({ id: 'no-heal', level: 5, hp: 42, maxHp: 99 }));
+    expect(out.level).toBe(5);
+    expect(out.maxHp).toBe(99);
+    expect(out.hp).toBe(42);
   });
 });
