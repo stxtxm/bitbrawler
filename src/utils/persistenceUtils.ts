@@ -1,6 +1,7 @@
 import { Character, PendingFightOpponent } from '../types/Character';
 import { GAME_RULES } from '../config/gameRules';
 import { getTotalXpForLevel } from './xpUtils';
+import { getHpForVitality } from './statUtils';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -57,7 +58,16 @@ export const normalizeCharacter = (character: Character): Character => {
     while (l < 99 && getTotalXpForLevel(l + 1) <= (normalized.experience ?? 0)) l++;
     return l;
   })();
-  if (curveLevel > normalized.level) normalized.level = curveLevel;
+  if (curveLevel > normalized.level) {
+    normalized.level = curveLevel;
+    const canonicalMaxHp = getHpForVitality(normalized.vitality || 0, curveLevel);
+    const previousMaxHp = normalized.maxHp || 0;
+    normalized.maxHp = Math.max(previousMaxHp, canonicalMaxHp);
+    normalized.hp = Math.min(
+      (normalized.hp || 0) + Math.max(0, canonicalMaxHp - previousMaxHp),
+      normalized.maxHp
+    );
+  }
 
   // One-time migration: idle combat never granted stat points before the fix.
   // If all core stats are at base value (never allocated) and statPoints is 0,
