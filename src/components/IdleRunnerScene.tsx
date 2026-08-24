@@ -63,8 +63,11 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   const particlesRef = useRef<ParticleSystem | null>(null)
   const levelUpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [showLevelUpFx, setShowLevelUpFx] = useState(false)
-  // Signature of the LAST announced level-up (dedup replay guard)
-  const lastFxSigRef = useRef('')
+  // Signature + timestamp of the LAST announced level-up. The timestamp
+  // extends the dedup across the null-gap between announcements: a second
+  // trigger with the same signature within 4s (double caller, purge race)
+  // is suppressed instead of replaying the float twice.
+  const lastFxRef = useRef<{ sig: string; at: number }>({ sig: '', at: 0 })
   const [levelUpLevel, setLevelUpLevel] = useState(0)
   const [levelUpCount, setLevelUpCount] = useState<number | null>(null)
   const [screenShake, setScreenShake] = useState(false)
@@ -281,8 +284,9 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     // SAME announcement (identity churn from batching). The float/shockwave
     // are one-shots — replaying them per kill is the reported loop.
     const sig = `${recentLevelUp.newLevel}:${recentLevelUp.count ?? 1}`
-    if (sig === lastFxSigRef.current) return
-    lastFxSigRef.current = sig
+    const now = Date.now()
+    if (sig === lastFxRef.current.sig && now - lastFxRef.current.at < 4000) return
+    lastFxRef.current = { sig, at: now }
     const isMilestone = recentLevelUp.isMilestone ?? false
     setShowLevelUpFx(true)
     setLevelUpLevel(recentLevelUp.newLevel)
