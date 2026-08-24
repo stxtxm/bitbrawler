@@ -66,6 +66,11 @@ export const useArenaLevelUp = ({
       }
       fxActiveRef.current = false;
       setRecentLevelUp(null);
+      // Release the imperative FX lock AND drop aggregated pending levels:
+      // the lock must never outlive the purge, otherwise every future
+      // queueLevelUp is swallowed forever (reviewer-caught leak).
+      fxActiveRef.current = false;
+      pendingRef.current = null;
       if (document.visibilityState === 'visible') {
         lastVisibleAtRef.current = Date.now();
       }
