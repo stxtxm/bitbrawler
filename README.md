@@ -63,7 +63,7 @@ See [AGENTS.md](AGENTS.md) for autonomous agent workflows and responsibilities.
 - **🏅 PvE Medal System** — 25 médailles PvE : 16 médailles de chasseur (8 monstres × 2 paliers : 5/25 kills), 3 médailles de streak PvE (3/5/10 victoires consécutives), 6 médailles de progression haute (niveaux 30/50/75/100/150/200). Les médailles sont vérifiées automatiquement après chaque combat.
 - **Monster kill tracking** — chaque monstre affronté en PvE est enregistré. Les kills cumulés débloquent les médailles de chasseur. Visible dans le panneau des médailles.
 - **Progression déverrouillée dès le level 1** — PvP et Forge accessibles immédiatement après la création du personnage. Plus de paliers de déblocage.
-- **Courbe XP early-game boostée** (EARLY_SHIFT=2) — les niveaux 1-4 ne coûtent que 120 XP chacun, rendant la progression initiale 2 à 3× plus rapide.
+- **Courbe XP monotone** (EARLY_SHIFT=0) — coût exponentiel croissant dès le niveau 1 (~5-15 kills par niveau en early game), sans spam de montées de niveau.
 - **Essence doublée en début de jeu** — les nouveaux joueurs accumulent 2× plus d'essence pour forger et acheter au Shop dès leurs premiers combats.
 - **11 pixel monsters** — Goblin, Ogre, Wraith (all levels), Slime (1-8), Wolf (5-18), Skeleton (10-28), Chimera (20-40), Dragon Spawn (30-50) with tiered difficulty and specialty growth rates, plus volcanic biome exclusives Magma Golem, Lava Hound, Cinder Imp
 - **Efficiency panel** — always visible XP/min with next-level ETA, power/speed/magic ratios, and streak bonus
