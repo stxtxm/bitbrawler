@@ -59,3 +59,11 @@ timer de hide meurt avec la page, reste monté indéfiniment. Le watchdog
 d'animation (toutes les 2 s) remontait alors le slot → **replay du float à
 chaque kill**. Fix : purge du FX (glow + float + cérémonie) sur
 `visibilitychange:hidden` dans IdleRunnerScene.
+
+## Signature dedup côté scène (dernier recours)
+
+`IdleRunnerScene` calcule `sig = newLevel:count` et **ignore tout re-run
+d'effet avec une signature identique** (`lastFxSigRef`). Même si l'upstream
+produit de nouveaux objets par kill (batching React, churn d'identité), le
+float/shockwave ne peuvent plus être rejoués pour une annonce déjà montrée.
+Un VRAI nouveau niveau change forcément `newLevel` → annonce autorisée.
