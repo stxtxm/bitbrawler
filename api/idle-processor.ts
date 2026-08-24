@@ -57,7 +57,7 @@ const OFFLINE_ESSENCE_MODIFIER = 0.15
 // Aligned with src/config idleConfig.ts (XP_MODIFIER) and src/utils/xpUtils.ts (EARLY_SHIFT)
 // NOTE: these MUST stay in sync with the client — when the client curve changes,
 // update xpCurveSync.test.ts to catch drift.
-export const EARLY_SHIFT = 3
+export const EARLY_SHIFT = 0
 export const IDLE_MODIFIER = 0.5
 export const OFFLINE_XP_MODIFIER = 0.5
 const MAX_IDLE_FIGHTS = 50
