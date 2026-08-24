@@ -39,8 +39,9 @@ export const useArenaLevelUp = ({
   // Dedup guard: Android throttles timers while locked/screen-off — several
   // queued calls for the SAME level would replay the FX in a loop.
   const lastQueuedRef = useRef<{ level: number; at: number } | null>(null);
-  const recentRef = useRef<RecentLevelUp | null>(null);
-  recentRef.current = recentLevelUp;
+  // Imperative lock: set synchronously inside queueLevelUp so back-to-back
+  // synchronous calls (before React re-renders) cannot double-fire the FX.
+  const fxActiveRef = useRef(false);
   // 0 = no real visible-transition seen yet (tests / first mount)
   const lastVisibleAtRef = useRef(0);
 
@@ -63,6 +64,7 @@ export const useArenaLevelUp = ({
         clearTimeout(levelUpTimerRef.current);
         levelUpTimerRef.current = null;
       }
+      fxActiveRef.current = false;
       setRecentLevelUp(null);
       if (document.visibilityState === 'visible') {
         lastVisibleAtRef.current = Date.now();
@@ -74,7 +76,7 @@ export const useArenaLevelUp = ({
 
   const queueLevelUp = useCallback((levelsGained: number, newLevel: number) => {
     // Swallow while an FX is already showing: aggregate into pending instead.
-    if (recentRef.current) {
+    if (fxActiveRef.current) {
       const p = pendingRef.current ?? { levels: 0, newLevel };
       pendingRef.current = { levels: p.levels + Math.max(1, levelsGained), newLevel };
       return;
@@ -103,6 +105,7 @@ export const useArenaLevelUp = ({
     const carried = pendingRef.current;
     const total = Math.max(1, levelsGained) + (carried?.levels ?? 0);
     pendingRef.current = null;
+    fxActiveRef.current = true;
 
     if (levelUpTimerRef.current) clearTimeout(levelUpTimerRef.current);
     levelUpTimerRef.current = null;
@@ -118,6 +121,7 @@ export const useArenaLevelUp = ({
       setRecentLevelUp(null);
       levelUpTimerRef.current = null;
       lastQueuedRef.current = null;
+      fxActiveRef.current = false;
     }, 2000);
   }, []);
 
