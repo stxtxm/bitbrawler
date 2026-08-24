@@ -117,11 +117,13 @@ describe('useIdleCombat — offline server merge keeps a coherent level/XP pair'
     expect(mergeCall).toBeTruthy();
     const merged = mergeCall![0] as Character;
 
-    // 4800 XP justifies level 9 on the client curve
-    // (getTotalXpForLevel(9) = 4478 <= 4800 < 6786 = total for level 10).
-    // The old merge took max(level)=7 + max(xp)=4800 → 7/4800 → the 322 XP
-    // of latent surplus re-converted into burst level-ups on the next kills.
-    expect(merged.level).toBe(9);
+    // The merged level must equal what 4800 XP justifies on the CURRENT curve
+    // (5.5.2 removed the early shift, so thresholds moved). Derive it from the
+    // curve instead of hardcoding — coherence is the contract, not the number.
+    const { getTotalXpForLevel } = await import('../../utils/xpUtils');
+    let expectedLevel = 1;
+    while (expectedLevel < 99 && getTotalXpForLevel(expectedLevel + 1) <= 4800) expectedLevel++;
+    expect(merged.level).toBe(expectedLevel);
     expect(merged.experience).toBe(4800);
     // The resources still take the best of both sides.
     expect(merged.essence).toBe(15);

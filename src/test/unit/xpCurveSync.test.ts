@@ -19,7 +19,7 @@ describe('XP curve sync between client and server API', () => {
   it('should have identical XP curve constants', () => {
     // EARLY_SHIFT must match src/utils/xpUtils.ts (client source of truth).
     // If the client curve changes, this test fails until the server is updated.
-    expect(EARLY_SHIFT).toBe(3);
+    expect(EARLY_SHIFT).toBe(0);
     expect(IDLE_MODIFIER).toBe(IDLE_CONFIG.XP_MODIFIER);
     expect(OFFLINE_XP_MODIFIER).toBe(IDLE_CONFIG.OFFLINE_XP_MODIFIER);
   });

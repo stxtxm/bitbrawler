@@ -193,7 +193,7 @@ describe('XP Utils', () => {
             expect(avg).toBeLessThan(104);
         });
 
-        it('should require ~4 daily runs to reach level 3 with 46.7% win rate', () => {
+        it('should require ~4 daily runs to reach level 2 with 46.7% win rate', () => {
             // Simulate a full daily run (5 fights) with realistic win rate
             const winsPerRun = Math.round(5 * 0.467); // ~2 wins
             const lossesPerRun = 5 - winsPerRun;       // ~3 losses
@@ -216,11 +216,14 @@ describe('XP Utils', () => {
             }
             const avgXp = totalXp / simulations;
 
-            // XP needed for level 3 = 120 + 120 = 240 (with EARLY_SHIFT=3)
-            const xpNeededForLevel3 = getTotalXpForLevel(3);
-            expect(xpNeededForLevel3).toBe(240);
+            // XP needed for level 2 = 120 (5.5.2: no early shift, steeper start)
+            const xpNeededForLevel2 = getTotalXpForLevel(2);
+            expect(xpNeededForLevel2).toBe(120);
 
-            expect(avgXp).toBeGreaterThanOrEqual(240);
+            // A day of runs reaches level 3 comfortably...
+            expect(avgXp).toBeGreaterThanOrEqual(getTotalXpForLevel(3));
+            // ...but NOT level 5 (~2436 XP) — pacing fix for per-kill FX spam
+            expect(avgXp).toBeLessThan(getTotalXpForLevel(5));
         });
     });
 
