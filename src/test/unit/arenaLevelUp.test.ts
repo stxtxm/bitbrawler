@@ -139,6 +139,32 @@ describe('useArenaLevelUp - multi-level stagger queue', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
+  it('releases the FX lock when visibilitychange purges the hide-timer mid-FX', () => {
+    const { result } = makeHook();
+    const setVis = (s: 'visible' | 'hidden') =>
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => s });
+
+    act(() => { result.current.queueLevelUp(1, 5); });
+    expect(result.current.recentLevelUp).toEqual({ newLevel: 5, isMilestone: true });
+
+    // Tab hidden DURING the FX -> handler purges the hide-timer
+    act(() => {
+      setVis('hidden');
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(result.current.recentLevelUp).toBeNull();
+    expect(vi.getTimerCount()).toBe(0);
+
+    // Back visible + grace/throttle elapsed -> a NEW level announces normally
+    act(() => {
+      setVis('visible');
+      document.dispatchEvent(new Event('visibilitychange'));
+      vi.advanceTimersByTime(9000);
+    });
+    act(() => { result.current.queueLevelUp(1, 6); });
+    expect(result.current.recentLevelUp).toEqual({ newLevel: 6, isMilestone: false });
+  });
+
   it('swallows a new queue while an FX is already showing (no chaining loop)', () => {
     const { result } = makeHook();
 
