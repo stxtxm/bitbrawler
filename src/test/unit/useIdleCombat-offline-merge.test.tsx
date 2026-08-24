@@ -161,8 +161,8 @@ describe('useIdleCombat — offline server merge keeps a coherent level/XP pair'
     );
     expect(mergeCall).toBeTruthy();
     const merged = mergeCall![0] as Character;
-    // 5200 XP justifies level 9 too (4478 <= 5200 < 6786) — and it is the
-    // server's own pair, so nothing regresses.
+    // 5200 XP alone only justifies level 6 on the current curve, but this is
+    // the server's own pair and its XP is ahead — it is kept verbatim.
     expect(merged.level).toBe(9);
     expect(merged.essence).toBe(20);
   });
