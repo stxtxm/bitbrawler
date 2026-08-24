@@ -374,7 +374,7 @@ jobs:
             - NE JAMAIS approuver si CI est rouge
             - NE JAMAIS merge si le code a des problèmes de sécurité
             - Si le changement semble bon mais mérite un suivi, approuve + crée une issue de suivi avec \`gh issue create\`
-            - ⚠️ Le body DOIT se terminer par /oc sur sa propre ligne (sinon aucun dev auto) ET capturer le numéro: NEW_ISSUE=$(gh issue create ... --json number -q .number)
+            - ⚠️ Le body DOIT se terminer par /oc sur sa propre ligne (sinon aucun dev auto) ET capturer le numéro depuis l'URL renvoyée: NEW_ISSUE_URL=$(gh issue create --title "..." --body "...") ; NEW_ISSUE=${NEW_ISSUE_URL##*/}
             - Puis tenter un dispatch immédiat (best-effort): gh workflow run opencode.yml -f issue_number=$NEW_ISSUE || true
             - Nettoie la branche après merge
 
