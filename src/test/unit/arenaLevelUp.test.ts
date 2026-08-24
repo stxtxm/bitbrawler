@@ -177,4 +177,42 @@ describe('useArenaLevelUp - multi-level stagger queue', () => {
     });
     expect(result.current.recentLevelUp).toEqual({ newLevel: 11, isMilestone: false, count: 4 });
   });
+
+  it('synchronous duplicate call while the FX shows neither restarts nor extends it', () => {
+    const { result } = makeHook();
+
+    act(() => {
+      result.current.queueLevelUp(1, 5);
+      result.current.queueLevelUp(1, 5);
+    });
+    expect(result.current.recentLevelUp).toEqual({ newLevel: 5, isMilestone: true });
+
+    act(() => {
+      vi.advanceTimersByTime(2000);
+    });
+    expect(result.current.recentLevelUp).toBeNull();
+  });
+
+  it('releases the FX lock when the visibility purge cancels the hide timer', () => {
+    const { result } = makeHook();
+
+    act(() => {
+      result.current.queueLevelUp(1, 5);
+    });
+    expect(result.current.recentLevelUp).toEqual({ newLevel: 5, isMilestone: true });
+
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(result.current.recentLevelUp).toBeNull();
+
+    act(() => {
+      vi.advanceTimersByTime(9000);
+    });
+
+    act(() => {
+      result.current.queueLevelUp(1, 6);
+    });
+    expect(result.current.recentLevelUp).toEqual({ newLevel: 6, isMilestone: false });
+  });
 });
