@@ -62,3 +62,21 @@ describe('coerceMonotonicProgress (level-up FX loop root fix)', () => {
     expect(coerceMonotonicProgress(inc, null)).toBe(inc);
   });
 });
+
+import { normalizeCharacter } from '../../utils/persistenceUtils';
+import { getTotalXpForLevel } from '../../utils/xpUtils';
+
+describe('normalizeCharacter — upward level healing (5.5.2)', () => {
+  it('snaps level UP to the curve when experience justifies more', () => {
+    const exp = getTotalXpForLevel(9) + 10; // justifie lvl 9
+    const out = normalizeCharacter(makeChar({ id: 'heal', level: 5, experience: exp }));
+    expect(out.level).toBe(9);
+  });
+
+  it('never nerfs a level earned under an older/generous curve', () => {
+    // lvl 25 avec XP de courbe lvl 22 : legacy légitime, on ne touche pas
+    const exp = getTotalXpForLevel(22);
+    const out = normalizeCharacter(makeChar({ id: 'legacy', level: 25, experience: exp }));
+    expect(out.level).toBe(25);
+  });
+});

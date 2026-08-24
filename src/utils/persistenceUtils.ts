@@ -1,5 +1,6 @@
 import { Character, PendingFightOpponent } from '../types/Character';
 import { GAME_RULES } from '../config/gameRules';
+import { getTotalXpForLevel } from './xpUtils';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -46,6 +47,17 @@ export const normalizeCharacter = (character: Character): Character => {
     achievementCosmetics: character.achievementCosmetics ?? [],
     bossProgress: character.bossProgress ?? undefined,
   };
+
+  // Upward-only level healing: if experience justifies a HIGHER level than
+  // stored (legacy incoherent snapshots), snap up to the curve. This kills
+  // repeated catch-up bursts (level-up FX replayed every kill). Never nerfs:
+  // levels earned under older/generous curves are preserved as-is.
+  const curveLevel = (() => {
+    let l = 1;
+    while (l < 99 && getTotalXpForLevel(l + 1) <= (normalized.experience ?? 0)) l++;
+    return l;
+  })();
+  if (curveLevel > normalized.level) normalized.level = curveLevel;
 
   // One-time migration: idle combat never granted stat points before the fix.
   // If all core stats are at base value (never allocated) and statPoints is 0,
