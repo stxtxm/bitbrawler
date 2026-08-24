@@ -44,6 +44,11 @@
     },
     {
       "date": "2026-08-24",
+      "issue": "#796",
+      "lesson": "Issue #796 doc cleanup: avant de réécrire un commentaire/chiffre de courbe XP, recalculer les seuils réels avec node (getTotalXpForLevel) — l'ancien commentaire citait des seuils de l'ère EARLY_SHIFT=3 (4478/6786) alors que la courbe actuelle donne 4119/6426. Pattern anti-périmement: dans les listes de features README, décrire la FORME de la courbe (~5-15 kills/niveau) plutôt que des constantes/valuers exactes qui ont déjà drifté 2 fois (EARLY_SHIFT 2→3→0). Les entrées historiques d'updateNotes.ts ne se corrigent jamais (changelog versionné)."
+    },
+    {
+      "date": "2026-08-24",
       "issue": "#798",
       "lesson": "Issue #798 heal maxHp: normalizeCharacter doit rester IDEMPOTENT - tout grant deterministe (statPoints estimes) serait re-attribue a chaque load tant que non depense. Pattern retenu: mirrorer gainXp (maxHp canonique, delta positif vers hp, cap) + upward-only via Math.max pour ne jamais nerfer un legacy maxHp. Ecart statPoints documente dans le commit (migration one-time all-at-base couvre deja le cas simple)."
     }

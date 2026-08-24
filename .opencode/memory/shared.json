@@ -107,6 +107,7 @@
   ],
   "cross_agent_constraints": [
     "Dev agent: ne jamais modifier .github/workflows/*.yml",
+    "Issue de suivi créée par agent: body terminé par /oc + capture numéro + dispatch opencode.yml best-effort",
     "Migrations SQL = issue dédiée sans /oc, jamais dans une PR ni exécutée par un agent",
     "BOSS PvE: kill 1-jour impossible par design (pool 12x maxHp) — voir BOSS_PVE.md",
     "Shop epic-replacement lvl>=10: toujours utiliser offer.index, pas la position tableau",
