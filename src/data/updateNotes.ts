@@ -16,6 +16,7 @@ export const UPDATE_NOTES: UpdateNote[] = [
       '🌙 Aucun FX page cachée ; au retour la popup welcome-back récapitule tout.',
       '🧠 Pipeline documenté dans docs/LEVELUP_FX.md (garde-fous anti-régression inclus).',
       '🐛 Idle tick/catch-up ne peuvent plus régresser un niveau/XP plus frais (guard charRef).',
+      '⚖️ Early-game XP: suppression de l\'aplanissement (paliers 120/376/746/1194 dès le niveau 1) — un niveau tous les ~5-15 kills au lieu de chaque monstre, fini le spam d\'annonces.',
     ],
   },
   {
