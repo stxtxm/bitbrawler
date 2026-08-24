@@ -1,10 +1,7 @@
 {
-  "run": "2026-08-23",
-  "character": "QA-PERSIST",
+  "run": "2026-08-24",
+  "character": "GLORYPRIME",
   "exhausted": false,
-  "updated_at": "2026-08-23T18:25:05.244Z",
-  "source": "created",
-  "persistent_generation": 0,
-  "persistent_created_at": "2026-08-23T18:16:30.070Z",
-  "persistent_reset_ready": false
+  "updated_at": "2026-08-24T06:46:14.718Z",
+  "source": "created"
 }
