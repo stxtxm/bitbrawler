@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-24T01:02:10Z",
+  "last_session": "2026-08-24T01:43:20Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -35,6 +35,11 @@
       "date": "2026-08-24",
       "issue": "#798",
       "lesson": "Issue #798 heal maxHp: normalizeCharacter doit rester IDEMPOTENT - tout grant deterministe (statPoints estimes) serait re-attribue a chaque load tant que non depense. Pattern retenu: mirrorer gainXp (maxHp canonique, delta positif vers hp, cap) + upward-only via Math.max pour ne jamais nerfer un le…"
+    },
+    {
+      "issue": "#799",
+      "date": "2026-08-24",
+      "lesson": "Issue #799 fxActiveRef: un verrou pose imperativement au show DOIT etre libere sur TOUT chemin qui annule son timer - la purge visibilitychange annule levelUpTimerRef sans passer par le hide-timer. Le commit canonique 9172214 (branche fix/levelup-fx-purge-and-heal, restee non-mergee) oubliait cette liberation = FX mort apres un background mid-FX. Pattern TDD efficace pour un durcissement deja-vert sur master: ecrire les tests de contrat d abord, appliquer le patch canonique verbatim pour demontrer le RED, puis corriger vers GREEN. Tests de repro idle: upper bounds (<=2 appels) + monotonicite strictement croissante des newLevel plutot que des valeurs exactes = robustes aux variations de RNG/efficiency."
     }
   ]
 }
