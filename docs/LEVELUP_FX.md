@@ -67,3 +67,10 @@ d'effet avec une signature identique** (`lastFxSigRef`). Même si l'upstream
 produit de nouveaux objets par kill (batching React, churn d'identité), le
 float/shockwave ne peuvent plus être rejoués pour une annonce déjà montrée.
 Un VRAI nouveau niveau change forcément `newLevel` → annonce autorisée.
+
+
+## Anti double-affichage immédiat (5.5.2)
+
+Même signature (`newLevel:count`) ré-apparue **<4 s** après l'annonce (second
+caller post-purge, race null-gap) → supprimée. Un vrai nouveau niveau change
+`newLevel` → passe toujours.
