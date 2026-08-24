@@ -89,6 +89,15 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     const handler = () => {
       if (document.visibilityState === 'hidden') {
         setAnimRun(false)
+        // Drop any in-flight level-up FX: if its 2s hide-timer freezes with
+        // the page, the element stays mounted and the animation watchdog
+        // would REPLAY it on every slot remount (per-kill float loop).
+        if (levelUpTimerRef.current) {
+          clearTimeout(levelUpTimerRef.current)
+          levelUpTimerRef.current = null
+        }
+        setShowLevelUpFx(false)
+        setIsMilestoneCeremony(false)
       } else if (document.visibilityState === 'visible' && !rafPending) {
         rafPending = true
         requestAnimationFrame(() => {

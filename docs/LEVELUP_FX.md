@@ -45,3 +45,17 @@ n'est qu'une annonce. Aucune perte de progression possible par throttling.
 - Appel pendant l'affichage → avalé (agrégé dans pending)
 - Appels <8 s → agrégés silencieusement ; le prochain appel post-fenêtre affiche `{newLevel:max, count:total}`
 - `document.hidden` → no-op
+
+## Niveaux legacy au-dessus de la courbe (5.5.2)
+
+Les niveaux gagnés sous l'ancienne courbe plate sont **conservés** (jamais de
+nerf). Conséquence : `gainXp` ne peut pas « re-croiser » un seuil déjà
+dépassé — plus de rattrapages en rafale.
+
+## Watchdog d'animation × float text
+
+Le one-shot du texte flottant, s'il est monté pendant un freeze PWA et que son
+timer de hide meurt avec la page, reste monté indéfiniment. Le watchdog
+d'animation (toutes les 2 s) remontait alors le slot → **replay du float à
+chaque kill**. Fix : purge du FX (glow + float + cérémonie) sur
+`visibilitychange:hidden` dans IdleRunnerScene.
