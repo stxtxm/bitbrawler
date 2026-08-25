@@ -9,6 +9,12 @@
  */
 import { describe, it, expect } from 'vitest'
 import qaBotConfig from '../../../qa/qa-bot.config.js'
+import {
+  PERSISTENT_RESET_LEVEL_HEADROOM,
+  parseLevelFromText,
+  persistentNameForGeneration,
+  shouldForcePersistentReset,
+} from '../../../qa/qa-bot-helpers.js'
 import { PROGRESSION_GATES } from '../../config/progressionConfig'
 
 // ── Fight type decision function (mirrors qa-bot.mjs logic) ──
@@ -330,18 +336,7 @@ describe('QA Bot Fight Type Decision', () => {
     })
   })
 
-  describe('persistent character reuse level guard (#820)', () => {
-    const PERSISTENT_RESET_LEVEL_HEADROOM = 2
-
-    function shouldForcePersistentReset(
-      currentLevel: number | null | undefined,
-      maxLevel: number = qaBotConfig.persistentCharacterMaxLevel,
-      headroom: number = PERSISTENT_RESET_LEVEL_HEADROOM,
-    ): boolean {
-      if (typeof currentLevel !== 'number' || !Number.isFinite(currentLevel)) return false
-      return currentLevel >= maxLevel - headroom
-    }
-
+  describe('persistent character reuse level guard (#820, #830)', () => {
     it('never reuses a persistent character whose current level reached the cap', () => {
       expect(shouldForcePersistentReset(qaBotConfig.persistentCharacterMaxLevel)).toBe(true)
       expect(shouldForcePersistentReset(33)).toBe(true)
@@ -369,6 +364,53 @@ describe('QA Bot Fight Type Decision', () => {
       expect(PERSISTENT_RESET_LEVEL_HEADROOM).toBeGreaterThan(0)
       expect(PERSISTENT_RESET_LEVEL_HEADROOM).toBeLessThan(qaBotConfig.persistentCharacterMaxLevel)
       expect(shouldForcePersistentReset(qaBotConfig.persistentCharacterMaxLevel - 1)).toBe(true)
+    })
+  })
+
+  describe('persistentNameForGeneration (#830)', () => {
+    it('returns the base name unchanged for generation 0', () => {
+      expect(persistentNameForGeneration('QA-PERSIST', 0)).toBe('QA-PERSIST')
+    })
+
+    it('appends a "-N" suffix where N is generation + 1', () => {
+      expect(persistentNameForGeneration('QA-PERSIST', 1)).toBe('QA-PERSI-2')
+      expect(persistentNameForGeneration('QA-PERSIST', 2)).toBe('QA-PERSI-3')
+    })
+
+    it('keeps names within the game 10-character limit', () => {
+      for (let generation = 1; generation <= 8; generation++) {
+        const name = persistentNameForGeneration('QA-PERSIST', generation)
+        expect(name.length).toBeLessThanOrEqual(10)
+        expect(name.endsWith(`-${generation + 1}`)).toBe(true)
+      }
+    })
+
+    it('does not truncate short base names', () => {
+      const name = persistentNameForGeneration('BOT', 1)
+      expect(name).toBe('BOT-2')
+    })
+  })
+
+  describe('parseLevelFromText (#830)', () => {
+    it('parses LVL followed by digits', () => {
+      expect(parseLevelFromText('FIGHTER QA-PERSIST LVL 12 READY')).toBe(12)
+    })
+
+    it('is case-insensitive and tolerates missing space', () => {
+      expect(parseLevelFromText('lvl 7')).toBe(7)
+      expect(parseLevelFromText('LVL7')).toBe(7)
+    })
+
+    it('parses multiple-space separators', () => {
+      expect(parseLevelFromText('LVL   8')).toBe(8)
+    })
+
+    it('returns null when no level marker is present', () => {
+      expect(parseLevelFromText('BATTLE ENERGY 5/5 AVAILABLE')).toBeNull()
+    })
+
+    it('returns null for empty text', () => {
+      expect(parseLevelFromText('')).toBeNull()
     })
   })
 
