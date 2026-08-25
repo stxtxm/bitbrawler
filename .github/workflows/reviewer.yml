@@ -375,8 +375,7 @@ jobs:
             - NE JAMAIS merge si le code a des problèmes de sécurité
             - Si le changement semble bon mais mérite un suivi, approuve + crée une issue de suivi avec \`gh issue create\`
             - ⚠️ Issue de suivi = UNE SEULE COMMANDE, body UNE ligne courte sans guillemets/backticks, terminée par /oc:
-            gh issue create --title "<titre court>" --body "<resume en une phrase. /oc>"
-            NEW_ISSUE_URL=$(gh issue create --title "<titre court>" --body-file /tmp/followup.md)
+            NEW_ISSUE_URL=$(gh issue create --title "<titre court>" --body "<resume en une phrase. /oc>")
             Puis dispatch best-effort: gh workflow run opencode.yml -f issue_number=${NEW_ISSUE_URL##*/} || true
             Ne JAMAIS réessayer plus de 2 fois; ne JAMAIS créer une issue sans titre/body substantiels
             - Nettoie la branche après merge
