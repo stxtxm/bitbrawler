@@ -1,7 +1,10 @@
 {
-  "run": "2026-08-24",
-  "character": "SOLARBARD",
+  "run": "2026-08-25",
+  "character": "QA-PERSIST",
   "exhausted": false,
-  "updated_at": "2026-08-24T18:34:31.952Z",
-  "source": "created"
+  "updated_at": "2026-08-25T06:33:48.425Z",
+  "source": "reused",
+  "persistent_generation": 0,
+  "persistent_created_at": "2026-08-25T06:30:07.354Z",
+  "persistent_reset_ready": true
 }
