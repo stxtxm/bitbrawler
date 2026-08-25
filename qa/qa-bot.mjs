@@ -1,8 +1,13 @@
 import { chromium } from 'playwright'
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs'
-import { join, dirname } from 'path'
-import { fileURLToPath } from 'url'
+import { join, dirname, resolve } from 'path'
+import { fileURLToPath, pathToFileURL } from 'url'
 import config from './qa-bot.config.js'
+import {
+  parseLevelFromText,
+  persistentNameForGeneration,
+  shouldForcePersistentReset,
+} from './qa-bot-helpers.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const STATS_FILE = join(__dirname, config.statsFile)
@@ -125,16 +130,8 @@ function getAppUrl(path) {
 // runs so equipment, streak, essence, shop purchases and mid-game levels
 // accumulate into usable longitudinal data. On controlled reset (level cap or
 // max age) a new generation of the character is created.
-
-function persistentNameForGeneration(baseName, generation) {
-  if (generation === 0) return baseName
-  // Game name limit is 10 chars (CharacterCreation input maxLength=10). The
-  // base name is truncated to make room for the "-N" generation suffix.
-  const suffix = `-${generation + 1}`
-  const maxBaseLen = 10 - suffix.length
-  const base = baseName.length <= maxBaseLen ? baseName : baseName.slice(0, maxBaseLen)
-  return `${base}${suffix}`
-}
+// Pure helpers (persistentNameForGeneration, shouldForcePersistentReset,
+// parseLevelFromText) live in qa-bot-helpers.js and are unit-tested (#830).
 
 function resolvePersistentCharacter(state, now) {
   const generation = state.persistent_generation || 0
@@ -160,13 +157,6 @@ function resolvePersistentCharacter(state, now) {
     createdAt: null,
     reset: true,
   }
-}
-
-const PERSISTENT_RESET_LEVEL_HEADROOM = 2
-
-function shouldForcePersistentReset(currentLevel) {
-  if (typeof currentLevel !== 'number' || !Number.isFinite(currentLevel)) return false
-  return currentLevel >= config.persistentCharacterMaxLevel - PERSISTENT_RESET_LEVEL_HEADROOM
 }
 
 function loadStats() {
@@ -209,15 +199,6 @@ function saveState(state) {
     console.error(`   ❌ Failed to write state to ${STATE_FILE}: ${err.message}`)
     throw err
   }
-}
-
-/**
- * Parse character level from body text.
- * Falls back to null if not found.
- */
-function parseLevelFromText(text) {
-  const match = text.match(/LVL\s*(\d+)/i)
-  return match ? parseInt(match[1]) : null
 }
 
 async function sleep(ms) {
@@ -3314,4 +3295,10 @@ async function run() {
   }
 }
 
-run()
+const isDirectExecution =
+  process.argv[1] !== undefined &&
+  import.meta.url === pathToFileURL(resolve(process.argv[1])).href
+
+if (isDirectExecution) {
+  run()
+}
