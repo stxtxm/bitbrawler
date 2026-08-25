@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-24T19:41:55Z",
+  "last_session": "2026-08-25T19:49:33Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -35,6 +35,11 @@
       "date": "2026-08-24",
       "issue": "#783",
       "lesson": "Issue #783 dead-code removal dans un script sans infra de test: pattern verification par EQUIVALENCE COMPORTEMENTALE - sandbox /tmp avec layout miroir (scripts/ + .opencode/memory/), executer version BEFORE sur copies fraiches -> md5 baseline, appliquer le fix, re-executer version AFTER sur les mem…"
+    },
+    {
+      "date": "2026-08-25",
+      "issue": "#820",
+      "lesson": "Issue #820 garde de niveau au reuse persistant: qa-bot.mjs appelle run() au top-level donc non importable dans vitest - pattern verifie: tests miroir (convention repo) + harness /tmp qui extrait les VRAIES fonctions du .mjs via extraction par profondeur d'accolades et rejoue le scénario de bug. Attention: persistentNameForGeneration tronque a 10 chars (limite jeu) donc QA-PERSIST gen2 = QA-PERSI-3, pas QA-PERSIST-3. Le reset forcé au reuse doit rester AVANT la capture initial_stats pour ne pas melanger deux persos dans un run (sinon l'analyzer exclurait le run des métriques HP)."
     }
   ]
 }
