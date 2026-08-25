@@ -9,6 +9,7 @@ export const GAME_RULES = {
         MAX_DAILY_PVE_FIGHTS: 5,
         XP_WIN: 90,
         XP_LOSS: 30,
+        SPEED_OPTIONS: [1, 2],
     },
     PVE: {
         XP_MODIFIER: 2.5,
@@ -38,3 +39,5 @@ export const GAME_RULES = {
         GROWTH_CHANCE: 0, // No spontaneous bot creation per run — stops population drift
     }
 } as const;
+
+export type CombatSpeed = (typeof GAME_RULES)['COMBAT']['SPEED_OPTIONS'][number];
