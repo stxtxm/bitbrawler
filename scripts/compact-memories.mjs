@@ -31,12 +31,6 @@ const LIMITS = {
   cross_agent_constraints: { keep: 10 },
 };
 
-const walkStrings = (node, fn) => {
-  if (typeof node === 'string') fn(node);
-  else if (Array.isArray(node)) node.forEach(n => walkStrings(n, fn));
-  else if (node && typeof node === 'object') Object.values(node).forEach(n => walkStrings(n, fn));
-};
-
 const truncate = s => (s.length > MAX_STR ? s.slice(0, MAX_STR - 1) + '…' : s);
 
 function compactFile(file) {
@@ -46,7 +40,6 @@ function compactFile(file) {
   catch { return console.log('· skip', file); }
 
   // 1) Cap every string in the document
-  walkStrings(data, () => {});
   const capNode = node => {
     if (typeof node === 'string') return truncate(node);
     if (Array.isArray(node)) return node.map(capNode);
