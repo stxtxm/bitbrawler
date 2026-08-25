@@ -162,6 +162,13 @@ function resolvePersistentCharacter(state, now) {
   }
 }
 
+const PERSISTENT_RESET_LEVEL_HEADROOM = 2
+
+function shouldForcePersistentReset(currentLevel) {
+  if (typeof currentLevel !== 'number' || !Number.isFinite(currentLevel)) return false
+  return currentLevel >= config.persistentCharacterMaxLevel - PERSISTENT_RESET_LEVEL_HEADROOM
+}
+
 function loadStats() {
   try {
     const data = readFileSync(STATS_FILE, 'utf-8')
@@ -2914,13 +2921,37 @@ async function run() {
       console.log(`   Arena loaded in ${runRecord.load_times_ms.arena}ms (${authResult.outcome})`)
     }
     console.log(`🎭 Active QA fighter: ${runRecord.character} (${runRecord.character_type})`)
-    const persistentCreatedAt = persistentInfo
+    let activeGeneration = persistentInfo ? persistentInfo.generation : null
+    let activeCreatedAt = persistentInfo
       ? (authResult.outcome === 'created' || persistentInfo.reset ? now.toISOString() : (persistentInfo.createdAt || now.toISOString()))
       : null
+    if (persistentInfo && !persistentInfo.reset) {
+      const reuseLevel = parseLevelFromText(await readBodyText(page))
+      if (shouldForcePersistentReset(reuseLevel)) {
+        console.log(`♻️ Persistent fighter already at LVL ${reuseLevel} (cap ${config.persistentCharacterMaxLevel}, idle cron overshoot) — forcing a new generation now`)
+        persistQaState(runKey, runRecord.character, 'overlevel-detected', false, {
+          persistent_generation: activeGeneration,
+          persistent_created_at: activeCreatedAt,
+          persistent_reset_ready: true,
+        })
+        const nextGeneration = activeGeneration + 1
+        const forcedReset = await createCharacterWithName(
+          page,
+          persistentNameForGeneration(config.persistentCharacterName, nextGeneration),
+        )
+        runRecord.replaced_character = runRecord.character
+        authResult = forcedReset
+        runRecord.character = forcedReset.character
+        runRecord.character_action = 'reset-overlevel'
+        activeGeneration = nextGeneration
+        activeCreatedAt = now.toISOString()
+        console.log(`🎭 Active QA fighter: ${runRecord.character} (${runRecord.character_type})`)
+      }
+    }
     if (persistentInfo) {
-      persistQaState(runKey, runRecord.character, authResult.outcome, false, {
-        persistent_generation: persistentInfo.generation,
-        persistent_created_at: persistentCreatedAt,
+      persistQaState(runKey, runRecord.character, runRecord.character_action, false, {
+        persistent_generation: activeGeneration,
+        persistent_created_at: activeCreatedAt,
         persistent_reset_ready: false,
       })
     } else {
@@ -3123,8 +3154,8 @@ async function run() {
         runRecord.final_stats?.level !== undefined &&
         runRecord.final_stats.level >= config.persistentCharacterMaxLevel
       persistQaState(runKey, runRecord.character, runRecord.character_action, fighterExhausted, {
-        persistent_generation: persistentInfo.generation,
-        persistent_created_at: persistentCreatedAt,
+        persistent_generation: activeGeneration,
+        persistent_created_at: activeCreatedAt,
         persistent_reset_ready: persistentResetReady,
       })
       if (persistentResetReady) {
