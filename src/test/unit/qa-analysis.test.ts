@@ -85,6 +85,7 @@ interface RunRecord {
     shop_before?: number | null
     shop_after?: number | null
   }
+  skipped_fights?: Array<{ index: number; reason: string }>
   errors: string[]
 }
 
@@ -2142,5 +2143,89 @@ describe('QA Idle Essence Per-Fight (#773)', () => {
     it('run() assigns essence to each idle_fight entry (weighted by victory/defeat)', () => {
       expect(qaBotSource).toMatch(/idle_fights.*essence|essence.*idle_fights/s)
     })
+  })
+})
+
+describe('QA Bot Skip Classification Contract (#812)', () => {
+  const qaBotSource = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
+
+  function extractFunction(source: string, name: string): string | null {
+    const asyncStart = source.indexOf(`async function ${name}(`)
+    const syncStart = source.indexOf(`function ${name}(`)
+    const start =
+      syncStart === -1 || (asyncStart !== -1 && asyncStart < syncStart) ? asyncStart : syncStart
+    if (start === -1) return null
+    const bodyStart = source.indexOf('{', start)
+    let depth = 0
+    for (let i = bodyStart; i < source.length; i++) {
+      if (source[i] === '{') depth++
+      else if (source[i] === '}') {
+        depth--
+        if (depth === 0) return source.slice(start, i + 1)
+      }
+    }
+    return null
+  }
+
+  it('initializes a skipped_fights array on the run record (#812)', () => {
+    expect(qaBotSource).toContain('skipped_fights: []')
+  })
+
+  it('defines a recordSkippedFight helper pushing {index, reason} without touching errors (#812)', () => {
+    const fn = extractFunction(qaBotSource, 'recordSkippedFight')
+    expect(fn).not.toBeNull()
+    expect(fn).toContain('skipped_fights.push({ index, reason })')
+    expect(fn).not.toContain('errors.push')
+  })
+
+  it('polls for the No opponents found matchmaking modal during result waiting (#812)', () => {
+    const fn = extractFunction(qaBotSource, 'runFightSequence')
+    expect(fn).not.toBeNull()
+    expect(fn).toContain("text.includes('No opponents found')")
+  })
+
+  it('classifies the matchmaking modal as skipped/no_opponents BEFORE falling through to the timeout error (#812)', () => {
+    const fn = extractFunction(qaBotSource, 'runFightSequence')
+    const noOpponentsIdx = fn!.indexOf("'no_opponents'")
+    expect(noOpponentsIdx).toBeGreaterThan(-1)
+    const timeoutErrIdx = fn!.indexOf('errors.push(`Fight ${i + 1}: timeout waiting for result')
+    expect(timeoutErrIdx).toBeGreaterThan(noOpponentsIdx)
+  })
+
+  it('closes the leftover matchmaking modal via dismissModals before continuing (#812)', () => {
+    const fn = extractFunction(qaBotSource, 'runFightSequence')!
+    const skipIdx = fn.indexOf("'no_opponents'")
+    expect(skipIdx).toBeGreaterThan(-1)
+    const dismissIdx = fn.indexOf('dismissModals(page)', skipIdx)
+    expect(dismissIdx).toBeGreaterThan(-1)
+  })
+
+  it('classifies resting/exhausted fighters as skipped/exhausted before the FIGHT click (#812)', () => {
+    const fn = extractFunction(qaBotSource, 'runFightSequence')!
+    const exhaustedCount = (fn.match(/recordSkippedFight\(runRecord, i \+ 1, 'exhausted'\)/g) || []).length
+    expect(exhaustedCount).toBeGreaterThanOrEqual(2)
+  })
+
+  it('keeps a diagnostic screenshot suffixed -skip for skipped fights (#812)', () => {
+    const fn = extractFunction(qaBotSource, 'runFightSequence')!
+    expect(fn).toMatch(/-fight-\$\{i \+ 1\}-skip\.png/)
+  })
+
+  it('still reports real timeouts as errors (retry/backoff untouched) (#812)', () => {
+    const fn = extractFunction(qaBotSource, 'runFightSequence')!
+    expect(fn).toContain(
+      'errors.push(`Fight ${i + 1}: timeout waiting for result (${config.fightTimeout}ms, ${maxRetries} retries)`)'
+    )
+  })
+
+  it('does not classify a run with only skipped fights as an error run (#812)', () => {
+    const runs: RunRecord[] = [
+      {
+        date: '2026-08-25', run: 'skip-only', character: 'A', fights: [], errors: [],
+        skipped_fights: [{ index: 1, reason: 'no_opponents' }, { index: 2, reason: 'no_opponents' }],
+      },
+    ]
+    expect(isErrorRun(runs[0])).toBe(false)
+    expect(runs[0].errors).toHaveLength(0)
   })
 })

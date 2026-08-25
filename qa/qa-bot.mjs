@@ -272,6 +272,11 @@ function buildArenaStatusRecord(status) {
   }
 }
 
+function recordSkippedFight(runRecord, index, reason) {
+  runRecord.skipped_fights.push({ index, reason })
+  console.log(`   ⏭️ Fight ${index}: skipped (${reason})`)
+}
+
 async function retryArenaReload(page) {
   await page.reload({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => {})
   return await waitForArena(page, 15000)
@@ -1969,6 +1974,7 @@ async function runFightSequence(page, runKey, runRecord) {
         continue
       }
       if (isPve) await togglePveMode(page, false)
+      recordSkippedFight(runRecord, i + 1, 'exhausted')
       break
     }
 
@@ -2067,6 +2073,9 @@ async function runFightSequence(page, runKey, runRecord) {
         continue
       }
       if (isPve) await togglePveMode(page, false)
+      if (isResting || (fightsAvailable !== null && fightsAvailable <= 0)) {
+        recordSkippedFight(runRecord, i + 1, 'exhausted')
+      }
       break
     }
 
@@ -2109,6 +2118,7 @@ async function runFightSequence(page, runKey, runRecord) {
     const maxRetries = 3
     const baseTimeout = Math.floor(config.fightTimeout * 0.5)
     let resultDetected = false
+    let noOpponentsFound = false
 
     for (let retry = 0; retry < maxRetries; retry++) {
       if (retry > 0) {
@@ -2121,6 +2131,10 @@ async function runFightSequence(page, runKey, runRecord) {
           resultDetected = true
           break
         }
+        if (preText.includes('No opponents found')) {
+          noOpponentsFound = true
+          break
+        }
       }
 
       const timeout = retry < maxRetries - 1 ? baseTimeout : config.fightTimeout - baseTimeout * (maxRetries - 1)
@@ -2128,17 +2142,36 @@ async function runFightSequence(page, runKey, runRecord) {
         await page.waitForFunction(
           () => {
             const text = document.body?.innerText || ''
-            return text.includes('VICTORY') || text.includes('DEFEAT') || text.includes('DRAW')
+            return (
+              text.includes('VICTORY') ||
+              text.includes('DEFEAT') ||
+              text.includes('DRAW') ||
+              text.includes('No opponents found')
+            )
           },
           { timeout }
         )
-        resultDetected = true
+        const resolvedText = await page.locator('body').innerText().catch(() => '')
+        if (resolvedText.includes('No opponents found')) {
+          noOpponentsFound = true
+        } else {
+          resultDetected = true
+        }
         break
       } catch {
         if (retry < maxRetries - 1) {
           console.log(`   ⚠️ Fight result not yet available after attempt ${retry + 1}`)
         }
       }
+    }
+
+    if (noOpponentsFound) {
+      console.log(`   🤖 Matchmaking empty ("No opponents found") — not an error, skipping fight ${i + 1}`)
+      await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-skip.png`) })
+      recordSkippedFight(runRecord, i + 1, 'no_opponents')
+      await dismissModals(page)
+      if (isPve) await togglePveMode(page, false)
+      continue
     }
 
     if (!resultDetected) {
@@ -2822,6 +2855,7 @@ async function run() {
     replaced_character: null,
     character_type: null,
     fights: [],
+    skipped_fights: [],
     lootbox: null,
     auto_mode_enabled: false,
     auto_mode_sync_ok: false,
