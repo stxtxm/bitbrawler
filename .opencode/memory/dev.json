@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-24T01:43:20Z",
+  "last_session": "2026-08-25T17:37:34Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -22,11 +22,6 @@
   },
   "session_notes": [
     {
-      "lesson": "Issue #789: suppression footer HomePage — pattern TDD pour une SUPPRESSION: transformer le test d existence en test d absence (queryByText + not.toBeInTheDocument) → RED, puis retirer le code → GREEN. Garde anti-régression conserve au lieu de perdre toute couverture. Verifier les classes CSS orphel…",
-      "issue": "#789",
-      "date": "2026-08-23"
-    },
-    {
       "date": "2026-08-24",
       "issue": "#796",
       "lesson": "Issue #796 doc cleanup: avant de réécrire un commentaire/chiffre de courbe XP, recalculer les seuils réels avec node (getTotalXpForLevel) — l'ancien commentaire citait des seuils de l'ère EARLY_SHIFT=3 (4478/6786) alors que la courbe actuelle donne 4119/6426. Pattern anti-périmement: dans les liste…"
@@ -39,7 +34,12 @@
     {
       "issue": "#799",
       "date": "2026-08-24",
-      "lesson": "Issue #799 fxActiveRef: un verrou pose imperativement au show DOIT etre libere sur TOUT chemin qui annule son timer - la purge visibilitychange annule levelUpTimerRef sans passer par le hide-timer. Le commit canonique 9172214 (branche fix/levelup-fx-purge-and-heal, restee non-mergee) oubliait cette liberation = FX mort apres un background mid-FX. Pattern TDD efficace pour un durcissement deja-vert sur master: ecrire les tests de contrat d abord, appliquer le patch canonique verbatim pour demontrer le RED, puis corriger vers GREEN. Tests de repro idle: upper bounds (<=2 appels) + monotonicite strictement croissante des newLevel plutot que des valeurs exactes = robustes aux variations de RNG/efficiency."
+      "lesson": "Issue #799 fxActiveRef: un verrou pose imperativement au show DOIT etre libere sur TOUT chemin qui annule son timer - la purge visibilitychange annule levelUpTimerRef sans passer par le hide-timer. Le commit canonique 9172214 (branche fix/levelup-fx-purge-and-heal, restee non-mergee) oubliait cette…"
+    },
+    {
+      "date": "2026-08-25",
+      "issue": "#812",
+      "lesson": "Issue #812 qa-bot skip classification: le predicate waitForFunction de Playwright s'execute en CONTEXTE NAVIGATEUR - on ne peut PAS y referencer une const Node (string literal inline obligatoire, cf. 'No opponents found'). Detection anticipee dans le predicate = sortie immediate de CHAQUE tentative de poll au lieu d'attendre le plein timeout. Branches skip placees AVANT la branche timeout-error pour priorite; les vrais timeouts (errors.push) restent intacts. Le modal ConnectionModal n'a AUCUN bouton - fermeture par dismissModals() (Escape + click overlay 'Click anywhere to dismiss') suffit."
     }
   ]
 }
