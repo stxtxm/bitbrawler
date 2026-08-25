@@ -330,6 +330,48 @@ describe('QA Bot Fight Type Decision', () => {
     })
   })
 
+  describe('persistent character reuse level guard (#820)', () => {
+    const PERSISTENT_RESET_LEVEL_HEADROOM = 2
+
+    function shouldForcePersistentReset(
+      currentLevel: number | null | undefined,
+      maxLevel: number = qaBotConfig.persistentCharacterMaxLevel,
+      headroom: number = PERSISTENT_RESET_LEVEL_HEADROOM,
+    ): boolean {
+      if (typeof currentLevel !== 'number' || !Number.isFinite(currentLevel)) return false
+      return currentLevel >= maxLevel - headroom
+    }
+
+    it('never reuses a persistent character whose current level reached the cap', () => {
+      expect(shouldForcePersistentReset(qaBotConfig.persistentCharacterMaxLevel)).toBe(true)
+      expect(shouldForcePersistentReset(33)).toBe(true)
+      expect(shouldForcePersistentReset(100)).toBe(true)
+    })
+
+    it('triggers early inside the anticipation window (cap - headroom)', () => {
+      expect(shouldForcePersistentReset(29)).toBe(true)
+      expect(shouldForcePersistentReset(28)).toBe(true)
+    })
+
+    it('keeps reusing below the anticipation window', () => {
+      expect(shouldForcePersistentReset(27)).toBe(false)
+      expect(shouldForcePersistentReset(16)).toBe(false)
+      expect(shouldForcePersistentReset(1)).toBe(false)
+    })
+
+    it('fails open when the arena level cannot be parsed', () => {
+      expect(shouldForcePersistentReset(null)).toBe(false)
+      expect(shouldForcePersistentReset(undefined)).toBe(false)
+      expect(shouldForcePersistentReset(Number.NaN)).toBe(false)
+    })
+
+    it('headroom stays strictly below the cap so cap-1 is still caught', () => {
+      expect(PERSISTENT_RESET_LEVEL_HEADROOM).toBeGreaterThan(0)
+      expect(PERSISTENT_RESET_LEVEL_HEADROOM).toBeLessThan(qaBotConfig.persistentCharacterMaxLevel)
+      expect(shouldForcePersistentReset(qaBotConfig.persistentCharacterMaxLevel - 1)).toBe(true)
+    })
+  })
+
   describe('determineNextFightType with pvpUnlockLevel=1', () => {
     it('allows PvP at level 1 (unlocked immediately)', () => {
       const result = determineNextFightType(0, 0.33, false, 1)

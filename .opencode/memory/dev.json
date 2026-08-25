@@ -38,6 +38,11 @@
     },
     {
       "date": "2026-08-25",
+      "issue": "#820",
+      "lesson": "Issue #820 garde de niveau au reuse persistant: qa-bot.mjs appelle run() au top-level donc non importable dans vitest - pattern verifie: tests miroir (convention repo) + harness /tmp qui extrait les VRAIES fonctions du .mjs via extraction par profondeur d'accolades et rejoue le scénario de bug. Attention: persistentNameForGeneration tronque a 10 chars (limite jeu) donc QA-PERSIST gen2 = QA-PERSI-3, pas QA-PERSIST-3. Le reset forcé au reuse doit rester AVANT la capture initial_stats pour ne pas melanger deux persos dans un run (sinon l'analyzer exclurait le run des métriques HP)."
+    },
+    {
+      "date": "2026-08-25",
       "issue": "#821",
       "lesson": "Issue #821 combat speed x1/x2: (1) reglage local persiste = pattern useSound (localStorage module-level) - evite toute migration Supabase. (2) CombatView fake timers: le tick #1 du round interval fait setCurrentRound(0) donc .round-value reste '1/3' apres le premier round joue - discriminer x1/x2 via les particules .particle-damage emises par round, pas le counter. (3) Les effets passifs React montent avec un retard au premier act() suivant sous vi.useFakeTimers: toujours ajouter un advance de stabilisation (~60-80ms) apres l'entree en phase avant d'affirmer sur les ticks. (4) roundIndex dans un ref (reset quand phase quitte 'combat') permet de mettre speed dans les deps de l'effet rounds sans rejouer les rounds au toggle mid-fight."
     }
