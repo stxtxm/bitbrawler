@@ -13,6 +13,7 @@ import { BossId, BOSS_ASSETS, getBossDef } from '../data/bossAssets';
 import { getBossKillXp } from '../utils/bossUtils';
 import { ParticleSystem, type ParticleType } from '../utils/particleSystem';
 import { COMBAT_BALANCE } from '../config/combatBalance';
+import type { CombatSpeed } from '../config/gameRules';
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode';
 import { SceneBackground } from './SceneBackground';
 
@@ -65,12 +66,15 @@ interface CombatViewProps {
     onClose: () => void;
     candidates?: Character[];
     comboCount?: number;
+    combatSpeed?: CombatSpeed;
+    onToggleCombatSpeed?: () => void;
 }
 
-export const CombatView = ({ player, opponent, matchType, monsterId, onComplete, onClose, candidates = [], comboCount = 0 }: CombatViewProps) => {
+export const CombatView = ({ player, opponent, matchType, monsterId, onComplete, onClose, candidates = [], comboCount = 0, combatSpeed = 1, onToggleCombatSpeed }: CombatViewProps) => {
     const { play } = useSound();
     const lowPerf = useLowPerformanceMode();
     const [phase, setPhase] = useState<'intro' | 'vs' | 'combat' | 'result'>('intro');
+    const scaleDuration = (ms: number) => Math.max(16, Math.round(ms / combatSpeed));
     const [combatResult, setCombatResult] = useState<{
         winner: 'attacker' | 'defender' | 'draw';
         rounds: number;
@@ -93,6 +97,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const [visibilityKey, setVisibilityKey] = useState(0);
     const bgStartRef = useRef<number | null>(null);
     const roundIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const roundIndexRef = useRef(0);
     /** Wall-clock timestamp of mount — used in the round interval and watchdog
      *  to check if elapsed time exceeds fightHardTimeoutMs. */
     const fightStartRef = useRef<number>(Date.now());
@@ -259,20 +264,20 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                     winningSide.emit('spark', w * 0.5, 40, lowPerf ? 1 : 3);
                                 }
                             }
-                        }, 300);
+                        }, scaleDuration(300));
                     } else if ((phase === 'intro' || phase === 'vs') && combatResult) {
                         // Skip to combat if we've been away long enough
                         setFighterEntrance(true);
                         setTimeout(() => {
                             setPhase('combat');
-                        }, 200);
+                        }, scaleDuration(200));
                     }
                 }
             }
         };
         document.addEventListener('visibilitychange', handleVisibility);
         return () => document.removeEventListener('visibilitychange', handleVisibility);
-    }, [phase, combatResult, lowPerf]);
+    }, [phase, combatResult, lowPerf, combatSpeed]);
 
     // Auto-resolve warning timer — shows "Le combat s'éternise..." after 30s in combat phase
     useEffect(() => {
@@ -283,21 +288,21 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
 
         const warningTimer = window.setTimeout(() => {
             setShowAutoResolve(true);
-        }, COMBAT_BALANCE.autoResolveWarningMs);
+        }, scaleDuration(COMBAT_BALANCE.autoResolveWarningMs));
 
         return () => window.clearTimeout(warningTimer);
-    }, [phase]);
+    }, [phase, combatSpeed]);
 
     useEffect(() => {
         if (phase !== 'intro') return;
-        const delay = (matchType === 'pve' || matchType === 'boss') ? 1200 : 2000;
+        const delay = scaleDuration((matchType === 'pve' || matchType === 'boss') ? 1200 : 2000);
         const introTimer = setTimeout(() => {
             const result = simulateCombat(player, opponent);
             setCombatResult(result);
             setPhase('vs');
         }, delay);
         return () => clearTimeout(introTimer);
-    }, [phase, player, opponent, matchType]);
+    }, [phase, player, opponent, matchType, combatSpeed]);
 
     useEffect(() => {
         if (phase !== 'vs') return;
@@ -325,10 +330,10 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
 
             setTimeout(() => {
                 setPhase('combat');
-            }, 500);
-        }, 900);
+            }, scaleDuration(500));
+        }, scaleDuration(900));
         return () => clearTimeout(vsTimer);
-    }, [phase, play, lowPerf, comboCount]);
+    }, [phase, play, lowPerf, comboCount, combatSpeed]);
 
     useEffect(() => {
         if (phase !== 'intro') return;
@@ -342,8 +347,8 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
         setScanIndex(0);
         setScanLocked(false);
 
-        const scanInterval = 140;
-        const scanDuration = 1900;
+        const scanInterval = scaleDuration(140);
+        const scanDuration = scaleDuration(1900);
 
         const intervalId = window.setInterval(() => {
             index = (index + 1) % scanList.length;
@@ -363,11 +368,11 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
             window.clearInterval(intervalId);
             window.clearTimeout(lockTimer);
         };
-    }, [phase, scanList, selectedKey]);
+    }, [phase, scanList, selectedKey, combatSpeed]);
 
     useEffect(() => {
         if (phase === 'combat' && combatResult) {
-            let roundIndex = 0;
+            let roundIndex = roundIndexRef.current;
             const roundInterval = setInterval(() => {
                 roundIntervalRef.current = roundInterval;
 
@@ -399,7 +404,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                         if (pulseTimeoutRef.current !== null) {
                             window.clearTimeout(pulseTimeoutRef.current);
                         }
-                        const duration = ACTION_DURATIONS[action.type] ?? 320;
+                        const duration = scaleDuration(ACTION_DURATIONS[action.type] ?? 320);
                         pulseTimeoutRef.current = window.setTimeout(() => {
                             setActionPulse(null);
                             pulseTimeoutRef.current = null;
@@ -421,12 +426,12 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                 hitStopTimerRef.current = window.setTimeout(() => {
                                     setHitStop(false);
                                     hitStopTimerRef.current = null;
-                                }, HIT_STOP_DURATION.ko);
+                                }, scaleDuration(HIT_STOP_DURATION.ko));
                                 if (flashTimerRef.current !== null) window.clearTimeout(flashTimerRef.current);
                                 flashTimerRef.current = window.setTimeout(() => {
                                     setScreenFlash('none');
                                     flashTimerRef.current = null;
-                                }, SCREEN_FLASH_DURATION.ko);
+                                }, scaleDuration(SCREEN_FLASH_DURATION.ko));
                             } else if (action.type === 'crit') {
                                 setHitStop(true);
                                 setScreenFlash('crit');
@@ -434,19 +439,19 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                 hitStopTimerRef.current = window.setTimeout(() => {
                                     setHitStop(false);
                                     hitStopTimerRef.current = null;
-                                }, HIT_STOP_DURATION.crit);
+                                }, scaleDuration(HIT_STOP_DURATION.crit));
                                 if (flashTimerRef.current !== null) window.clearTimeout(flashTimerRef.current);
                                 flashTimerRef.current = window.setTimeout(() => {
                                     setScreenFlash('none');
                                     flashTimerRef.current = null;
-                                }, SCREEN_FLASH_DURATION.crit);
+                                }, scaleDuration(SCREEN_FLASH_DURATION.crit));
                             } else if (action.type === 'hit') {
                                 setHitStop(true);
                                 if (hitStopTimerRef.current !== null) window.clearTimeout(hitStopTimerRef.current);
                                 hitStopTimerRef.current = window.setTimeout(() => {
                                     setHitStop(false);
                                     hitStopTimerRef.current = null;
-                                }, HIT_STOP_DURATION.hit);
+                                }, scaleDuration(HIT_STOP_DURATION.hit));
                             }
                         }
 
@@ -506,6 +511,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                         }
                     }
                     roundIndex++;
+                    roundIndexRef.current = roundIndex;
                 } else {
                     clearInterval(roundInterval);
                     // The watchdog interval at 45s will force-finish if this
@@ -535,16 +541,16 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                 }
                             }
                         }
-                    }, 1200);
+                    }, scaleDuration(1200));
                 }
-            }, 520);
+            }, scaleDuration(520));
 
             return () => {
                 roundIntervalRef.current = null;
                 clearInterval(roundInterval);
             };
         }
-    }, [phase, combatResult, player.name, opponent.name, lowPerf, comboCount]);
+    }, [phase, combatResult, player.name, opponent.name, lowPerf, comboCount, combatSpeed]);
 
     useEffect(() => {
         if (actionPulse) {
@@ -568,6 +574,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
 
     useEffect(() => {
         if (phase !== 'combat') {
+            roundIndexRef.current = 0;
             setActionPulse(null);
             setHitStop(false);
             setScreenFlash('none');
@@ -818,6 +825,16 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                             <div className="combat-progress-bar">
                                 <div className="combat-progress-fill" style={{ width: `${Math.min(100, ((currentRound + 1) / combatResult.details.length) * 100)}%` }} />
                             </div>
+                            {onToggleCombatSpeed && (
+                                <button
+                                    type="button"
+                                    className="combat-speed-toggle"
+                                    onClick={onToggleCombatSpeed}
+                                    aria-label="Combat speed"
+                                >
+                                    ⏩ x{combatSpeed}
+                                </button>
+                            )}
                         </div>
                         <div className="combat-log" ref={logRef}>
                             {combatResult.details.slice(0, currentRound + 1).map((detail, idx) => (

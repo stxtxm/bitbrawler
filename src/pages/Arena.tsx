@@ -237,6 +237,8 @@ const Arena = () => {
             : idle.currentStreak}
           onComplete={combat.onCombatComplete}
           onClose={combat.onCloseCombat}
+          combatSpeed={settings.combatSpeed}
+          onToggleCombatSpeed={settings.onToggleCombatSpeed}
         />
       )}
     </div>

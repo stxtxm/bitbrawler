@@ -67,6 +67,7 @@ const mockCharacter: Character = {
 describe('Arena settings modal', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.clear()
     mockUseOnlineStatus.mockReturnValue(true)
     mockUseConnectionGate.mockReturnValue({
       ensureConnection: vi.fn().mockResolvedValue(true),
@@ -217,5 +218,29 @@ describe('Arena settings modal', () => {
 
     const fightButton = getByRole('button', { name: 'FIGHT!' })
     expect(fightButton).not.toBeDisabled()
+  })
+
+  it('toggles combat speed from settings and persists the choice', () => {
+    const { getByLabelText } = renderWithRouter(<Arena />)
+
+    fireEvent.click(getByLabelText('Settings'))
+
+    const speedSwitch = screen.getByRole('switch', { name: 'Combat speed' })
+    expect(speedSwitch).toHaveAttribute('aria-checked', 'false')
+    expect(speedSwitch.textContent).toContain('x1')
+
+    fireEvent.click(speedSwitch)
+
+    expect(screen.getByRole('switch', { name: 'Combat speed' })).toHaveAttribute('aria-checked', 'true')
+    expect(JSON.parse(localStorage.getItem('bitbrawler_combat_speed') ?? '')).toBe(2)
+  })
+
+  it('starts combat speed from persisted value', () => {
+    localStorage.setItem('bitbrawler_combat_speed', JSON.stringify(2))
+    const { getByLabelText } = renderWithRouter(<Arena />)
+
+    fireEvent.click(getByLabelText('Settings'))
+
+    expect(screen.getByRole('switch', { name: 'Combat speed' })).toHaveAttribute('aria-checked', 'true')
   })
 })

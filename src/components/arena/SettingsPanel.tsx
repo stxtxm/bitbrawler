@@ -4,6 +4,7 @@ import { MedalCard } from '../MedalCard';
 import { SettingsLogEntry, formatSettingsLogDate } from '../../utils/arenaUtils';
 import { getMedalsByCategory, getUnlockedCount, getTotalMedalCount } from '../../utils/medalUtils';
 import type { MedalCategory, MedalProgressMap } from '../../utils/medalUtils';
+import type { CombatSpeed } from '../../config/gameRules';
 
 const CATEGORY_LABELS: Record<MedalCategory, string> = {
   combat: 'Combat',
@@ -25,9 +26,11 @@ interface SettingsPanelProps {
   combinedHistory: SettingsLogEntry[];
   isOfflineMode: boolean;
   medalProgress?: MedalProgressMap;
+  combatSpeed: CombatSpeed;
   onClose: () => void;
   onToggleAutoMode: () => void;
   onToggleSound: () => void;
+  onToggleCombatSpeed: () => void;
   onDeleteCharacter: () => void;
   onOpenLogs: () => void;
   onOpenMedals: () => void;
@@ -38,7 +41,8 @@ interface SettingsPanelProps {
 export const SettingsPanel = memo(function SettingsPanel({
   settingsView, autoModeEnabled, autoModeUpdating, soundEnabled,
   deleteStep, deletePending, combinedHistory, isOfflineMode, medalProgress,
-  onClose, onToggleAutoMode, onToggleSound, onDeleteCharacter,
+  combatSpeed,
+  onClose, onToggleAutoMode, onToggleSound, onToggleCombatSpeed, onDeleteCharacter,
   onOpenLogs, onOpenMedals, onReturnToMain, onSetDeleteStep,
 }: SettingsPanelProps) {
   const groupedMedals = useMemo(() => getMedalsByCategory(), []);
@@ -167,6 +171,27 @@ export const SettingsPanel = memo(function SettingsPanel({
                   >
                     <span className="switch-knob" />
                     <span className="switch-text">{soundEnabled ? 'ON' : 'OFF'}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="settings-divider" />
+
+              <div className="settings-section">
+                <div className="settings-row">
+                  <div className="settings-label">
+                    <span>COMBAT SPEED</span>
+                    <span className="settings-sub">Compress fight animations.</span>
+                  </div>
+                  <button
+                    className={`pixel-switch ${combatSpeed === 2 ? 'on' : 'off'}`}
+                    onClick={onToggleCombatSpeed}
+                    role="switch"
+                    aria-checked={combatSpeed === 2}
+                    aria-label="Combat speed"
+                  >
+                    <span className="switch-knob" />
+                    <span className="switch-text">x{combatSpeed}</span>
                   </button>
                 </div>
               </div>
