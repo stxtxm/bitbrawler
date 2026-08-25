@@ -55,7 +55,6 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   lastCombatXp,
   offlineGains,
   onClearOfflineGains,
-  recentLevelUp,
   currentStreak = 0,
   streakMilestone = null,
 }: IdleRunnerSceneProps) {
@@ -63,8 +62,6 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   const particlesRef = useRef<ParticleSystem | null>(null)
   const levelUpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [showLevelUpFx, setShowLevelUpFx] = useState(false)
-  // Signature of the LAST announced level-up (dedup replay guard)
-  const lastFxSigRef = useRef('')
   const [levelUpLevel, setLevelUpLevel] = useState(0)
   const [levelUpCount, setLevelUpCount] = useState<number | null>(null)
   const [screenShake, setScreenShake] = useState(false)
@@ -274,46 +271,37 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     setScreenShake(false)
   }, [scenePhase, lastCombatResult])
 
-  // Level-up visual effect (glow + particles + floating text + flash + shockwave)
-  useEffect(() => {
-    if (!recentLevelUp) return
-    // Signature dedup (5.5.2): upstream may hand us a NEW object with the
-    // SAME announcement (identity churn from batching). The float/shockwave
-    // are one-shots — replaying them per kill is the reported loop.
-    const sig = `${recentLevelUp.newLevel}:${recentLevelUp.count ?? 1}`
-    if (sig === lastFxSigRef.current) return
-    lastFxSigRef.current = sig
-    const isMilestone = recentLevelUp.isMilestone ?? false
+  // ── Level-up FX — derived from authoritative character.level ───────────
+  // Announcements fire ONLY when character.level increases, throttled to one
+  // per 8s with silent aggregation ('+N niveaux' trailing). Suppressed while
+  // the welcome-back popup is up (it already aggregates background gains).
+  const prevLevelRef = useRef(character.level ?? 1)
+  const announceAccRef = useRef({ count: 0, target: 0 })
+  const lastAnnouncedAtRef = useRef(0)
+  const trailingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const flushAnnounce = () => {
+    const acc = announceAccRef.current
+    if (!acc.count) return
+    announceAccRef.current = { count: 0, target: 0 }
+    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+
+    const isMilestone = acc.target % 5 === 0
     setShowLevelUpFx(true)
-    setLevelUpLevel(recentLevelUp.newLevel)
-    setLevelUpCount(recentLevelUp.count ?? null)
+    setLevelUpLevel(acc.target)
+    setLevelUpCount(acc.count > 1 ? acc.count : null)
     setIsMilestoneCeremony(isMilestone)
 
     const ps = particlesRef.current
     const container = containerRef.current
     if (ps && container) {
-      const rect = container.getBoundingClientRect()
-      const cx = rect.width * 0.3
-      const cy = rect.height * 0.4
-      ps.emit('xp_star', cx, cy, lowPerf ? 1 : (isMilestone ? 6 : 3))
-      if (!lowPerf) {
-        ps.emit('confetti', cx, cy, isMilestone ? 20 : 10)
-      }
+      ps.emit('xp_star', container.getBoundingClientRect().width * 0.3, 160, lowPerf ? 1 : (isMilestone ? 6 : 3))
+      if (!lowPerf) ps.emit('confetti', container.getBoundingClientRect().width * 0.3, 160, isMilestone ? 20 : 10)
     }
 
-    // Screen flash
     if (!lowPerf) {
       setLevelUpFlash(true)
-      if (isMilestone) {
-        // Double flash for milestone
-        setTimeout(() => setLevelUpFlash(false), 150)
-        setTimeout(() => setLevelUpFlash(true), 200)
-        setTimeout(() => setLevelUpFlash(false), 500)
-      } else {
-        setTimeout(() => setLevelUpFlash(false), 300)
-      }
-
-      // Shockwave ring
+      setTimeout(() => setLevelUpFlash(false), isMilestone ? 500 : 300)
       setLevelUpShockwave(true)
       setTimeout(() => setLevelUpShockwave(false), 600)
     }
@@ -324,13 +312,49 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
       setLevelUpCount(null)
       levelUpTimerRef.current = null
     }, 2000)
-    return () => {
-      if (levelUpTimerRef.current) {
-        clearTimeout(levelUpTimerRef.current)
-        levelUpTimerRef.current = null
-      }
+  }
+
+  useEffect(() => {
+    const lv = character.level ?? 1
+    const prev = prevLevelRef.current
+    if (lv <= prev) return
+    prevLevelRef.current = lv
+
+    // Welcome-back popup covers background gains — no float on top of it
+    if (offlineGains) return
+
+    const acc = announceAccRef.current
+    acc.count += lv - prev
+    acc.target = Math.max(acc.target || prev, lv)
+
+    const now = Date.now()
+    if (!lastAnnouncedAtRef.current || now - lastAnnouncedAtRef.current >= 8000) {
+      lastAnnouncedAtRef.current = now
+      flushAnnounce()
+      return
     }
-  }, [recentLevelUp, lowPerf])
+    if (!trailingTimerRef.current) {
+      trailingTimerRef.current = setTimeout(() => {
+        trailingTimerRef.current = null
+        lastAnnouncedAtRef.current = Date.now()
+        flushAnnounce()
+      }, 8000 - (now - lastAnnouncedAtRef.current))
+    }
+  }, [character.level, offlineGains])
+
+  useEffect(() => {
+    if (offlineGains) {
+      if (trailingTimerRef.current) {
+        clearTimeout(trailingTimerRef.current)
+        trailingTimerRef.current = null
+      }
+      announceAccRef.current = { count: 0, target: 0 }
+    }
+  }, [offlineGains])
+
+  useEffect(() => () => {
+    if (trailingTimerRef.current) clearTimeout(trailingTimerRef.current)
+  }, [])
 
   // Click-to-dismiss: clicking anywhere on the idle runner box dismisses
   // level-up visual FX immediately so it never blocks FIGHT button clicks.

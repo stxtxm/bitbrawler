@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-25T17:37:34Z",
+  "last_session": "2026-08-24T19:41:55Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -37,9 +37,9 @@
       "lesson": "Issue #799 fxActiveRef: un verrou pose imperativement au show DOIT etre libere sur TOUT chemin qui annule son timer - la purge visibilitychange annule levelUpTimerRef sans passer par le hide-timer. Le commit canonique 9172214 (branche fix/levelup-fx-purge-and-heal, restee non-mergee) oubliait cette…"
     },
     {
-      "date": "2026-08-25",
-      "issue": "#812",
-      "lesson": "Issue #812 qa-bot skip classification: le predicate waitForFunction de Playwright s'execute en CONTEXTE NAVIGATEUR - on ne peut PAS y referencer une const Node (string literal inline obligatoire, cf. 'No opponents found'). Detection anticipee dans le predicate = sortie immediate de CHAQUE tentative de poll au lieu d'attendre le plein timeout. Branches skip placees AVANT la branche timeout-error pour priorite; les vrais timeouts (errors.push) restent intacts. Le modal ConnectionModal n'a AUCUN bouton - fermeture par dismissModals() (Escape + click overlay 'Click anywhere to dismiss') suffit."
+      "date": "2026-08-24",
+      "issue": "#783",
+      "lesson": "Issue #783 dead-code removal dans un script sans infra de test: pattern verification par EQUIVALENCE COMPORTEMENTALE - sandbox /tmp avec layout miroir (scripts/ + .opencode/memory/), executer version BEFORE sur copies fraiches -> md5 baseline, appliquer le fix, re-executer version AFTER sur les memes donnees -> diff byte-a-byte des hashes + logs. Ajouter un fixture stress (strings 900c, nesting profond, depassement budget) pour couvrir les branches capNode. Idempotence = 2e pass md5-identique. Preuve plus forte qu un test unitaire ad-hoc pour du refactoring zero-behavioral."
     }
   ]
 }
