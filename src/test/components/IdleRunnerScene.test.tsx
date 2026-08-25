@@ -67,6 +67,12 @@ describe('IdleRunnerScene', () => {
     streakMilestone: null,
   }
 
+  const renderLevelUpTo = (ui: { rerender: (x: JSX.Element) => void }, to: number) => {
+    ui.rerender(
+      <IdleRunnerScene {...defaultProps} character={{ ...defaultProps.character, level: to }} />,
+    )
+  }
+
   beforeEach(() => {
     vi.useFakeTimers()
     defaultProps.onClearOfflineGains.mockClear()
@@ -76,13 +82,9 @@ describe('IdleRunnerScene', () => {
     vi.useRealTimers()
   })
 
-  it('shows level-up FX when recentLevelUp is provided', () => {
-    render(
-      <IdleRunnerScene
-        {...defaultProps}
-        recentLevelUp={{ newLevel: 6, isMilestone: false }}
-      />,
-    )
+  it('shows level-up FX when character.level increases', () => {
+    const ui = render(<IdleRunnerScene {...defaultProps} />)
+    renderLevelUpTo(ui, 6)
 
     // The level-up glow should be visible
     const container = screen.getByText('LVL 6')
@@ -97,12 +99,8 @@ describe('IdleRunnerScene', () => {
   })
 
   it('shows milestone ceremony for milestone levels', () => {
-    render(
-      <IdleRunnerScene
-        {...defaultProps}
-        recentLevelUp={{ newLevel: 10, isMilestone: true }}
-      />,
-    )
+    const ui = render(<IdleRunnerScene {...defaultProps} />)
+    renderLevelUpTo(ui, 10)
 
     const lvlText = screen.getByText('LVL 10')
     expect(lvlText).toBeInTheDocument()
@@ -111,12 +109,8 @@ describe('IdleRunnerScene', () => {
   })
 
   it('dismisses level-up FX when clicking on the container', () => {
-    render(
-      <IdleRunnerScene
-        {...defaultProps}
-        recentLevelUp={{ newLevel: 6, isMilestone: false }}
-      />,
-    )
+    const ui = render(<IdleRunnerScene {...defaultProps} />)
+    renderLevelUpTo(ui, 6)
 
     // Level-up FX should be visible initially
     expect(screen.getByText('LVL 6')).toBeInTheDocument()
@@ -133,12 +127,8 @@ describe('IdleRunnerScene', () => {
   })
 
   it('dismisses level-up FX after 2000ms auto-dismiss timer', () => {
-    render(
-      <IdleRunnerScene
-        {...defaultProps}
-        recentLevelUp={{ newLevel: 6, isMilestone: false }}
-      />,
-    )
+    const ui = render(<IdleRunnerScene {...defaultProps} />)
+    renderLevelUpTo(ui, 6)
 
     // Level-up FX should be visible initially
     expect(screen.getByText('LVL 6')).toBeInTheDocument()
@@ -153,36 +143,26 @@ describe('IdleRunnerScene', () => {
   })
 
   it('does not render the legacy level-up-pop-overlay class', () => {
-    const { container } = render(
-      <IdleRunnerScene
-        {...defaultProps}
-        recentLevelUp={{ newLevel: 6, isMilestone: false }}
-      />,
-    )
+    const ui = render(<IdleRunnerScene {...defaultProps} />)
+    renderLevelUpTo(ui, 6)
+    const { container } = ui as any
 
     expect(container.querySelector('.level-up-pop-overlay')).toBeNull()
   })
 
   it('does not render card-shine element', () => {
-    const { container } = render(
-      <IdleRunnerScene
-        {...defaultProps}
-        recentLevelUp={{ newLevel: 6, isMilestone: false }}
-      />,
-    )
+    const ui = render(<IdleRunnerScene {...defaultProps} />)
+    renderLevelUpTo(ui, 6)
+    const { container } = ui as any
 
     expect(container.querySelector('.card-shine')).toBeNull()
   })
 
   it('shows no Continue button when level-up FX is active (auto-dismiss + tap instead)', () => {
-    render(
-      <IdleRunnerScene
-        {...defaultProps}
-        recentLevelUp={{ newLevel: 5, isMilestone: false }}
-      />,
-    )
+    const ui3 = render(<IdleRunnerScene {...defaultProps} />)
+    renderLevelUpTo(ui3, 6)
 
-    expect(screen.getByText('LVL 5')).toBeInTheDocument()
+    expect(screen.getByText('LVL 6')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /continue/i })).not.toBeInTheDocument()
   })
 
