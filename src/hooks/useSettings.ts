@@ -1,9 +1,28 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Character } from '../types/Character';
 import { SettingsLogEntry } from '../utils/arenaUtils';
+import { GAME_RULES, type CombatSpeed } from '../config/gameRules';
 
 type SettingsView = 'main' | 'logs' | 'medals';
 type DeleteStep = 'idle' | 'confirm';
+
+const COMBAT_SPEED_STORAGE_KEY = 'bitbrawler_combat_speed';
+
+const isCombatSpeed = (value: unknown): value is CombatSpeed =>
+  typeof value === 'number' &&
+  (GAME_RULES.COMBAT.SPEED_OPTIONS as readonly number[]).includes(value);
+
+const readStoredCombatSpeed = (): CombatSpeed => {
+  try {
+    const raw = localStorage.getItem(COMBAT_SPEED_STORAGE_KEY);
+    if (!raw) return GAME_RULES.COMBAT.SPEED_OPTIONS[0];
+    const parsed: unknown = JSON.parse(raw);
+    if (isCombatSpeed(parsed)) return parsed;
+  } catch {
+    return GAME_RULES.COMBAT.SPEED_OPTIONS[0];
+  }
+  return GAME_RULES.COMBAT.SPEED_OPTIONS[0];
+};
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
   return error instanceof Error && error.message ? error.message : fallback;
@@ -35,6 +54,7 @@ export const useSettings = ({
   const [autoModeUpdating, setAutoModeUpdating] = useState(false);
   const [deleteStep, setDeleteStep] = useState<DeleteStep>('idle');
   const [deletePending, setDeletePending] = useState(false);
+  const [combatSpeed, setCombatSpeed] = useState<CombatSpeed>(readStoredCombatSpeed);
 
   const autoModeEnabled = !!character?.autoMode;
 
@@ -91,6 +111,19 @@ export const useSettings = ({
     openModal,
     setAutoMode,
   ]);
+
+  const handleToggleCombatSpeed = useCallback(() => {
+    setCombatSpeed((prev) => {
+      const options = GAME_RULES.COMBAT.SPEED_OPTIONS;
+      const next = options[(options.indexOf(prev) + 1) % options.length];
+      try {
+        localStorage.setItem(COMBAT_SPEED_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        return prev;
+      }
+      return next;
+    });
+  }, []);
 
   const handleDeleteCharacter = useCallback(async () => {
     if (deletePending) return;
@@ -160,5 +193,8 @@ export const useSettings = ({
     onOpenMedals: handleOpenMedals,
     onReturnToMain: handleReturnToSettings,
     onSetDeleteStep: setDeleteStep,
+    combatSpeed,
+    handleToggleCombatSpeed,
+    onToggleCombatSpeed: handleToggleCombatSpeed,
   };
 };
