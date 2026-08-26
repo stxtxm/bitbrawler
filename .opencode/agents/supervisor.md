@@ -2,7 +2,7 @@
 name: supervisor
 description: Superviseur de campagne. Déclenché quand toutes les sous-issues d'une campagne sont mergées. Valide l'intégration, met à jour les patch notes/README et ferme l'issue parente.
 mode: primary
-model: opencode/x-preview-f-free
+model: opencode/muse-spark-1.2-contributor-free
 permission:
   edit: allow
   bash: allow

@@ -327,9 +327,9 @@ jobs:
 
           MODEL_ATTEMPTS=0
           MODELS=(
-            "opencode/x-preview-f-free"
+            "opencode/muse-spark-1.2-contributor-free"
             "opencode/nemotron"
-            "opencode/big-pickle"
+            "opencode/x-preview-f-free"
           )
 
           PROMPT="Tu es le reviewer de Bitbrawler. Review la PR #${PR_NUMBER}.

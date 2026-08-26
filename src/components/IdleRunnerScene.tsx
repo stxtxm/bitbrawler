@@ -82,9 +82,11 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   // Mobile lock screen / background needs extra care: the visibilitychange
   // fires before the browser has fully restored rendering. Using rAF ensures
   // the DOM update happens when the browser is ready to paint, giving the
-  // CSS animation a clean restart.
+  // CSS animation a clean restart. If rAF doesn't fire in time (mobile PWA
+  // restore race), a short timeout ensures the animation restarts anyway.
   useEffect(() => {
     let rafPending = false
+    let rafTimeout: ReturnType<typeof setTimeout> | null = null
     const handler = () => {
       if (document.visibilityState === 'hidden') {
         setAnimRun(false)
@@ -99,7 +101,19 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
         setIsMilestoneCeremony(false)
       } else if (document.visibilityState === 'visible' && !rafPending) {
         rafPending = true
+        // Fallback: if rAF doesn't fire within 500ms, force the update anyway
+        rafTimeout = setTimeout(() => {
+          if (rafPending) {
+            rafPending = false
+            setAnimRun(true)
+            setAnimKey(prev => prev + 1)
+          }
+        }, 500)
         requestAnimationFrame(() => {
+          if (rafTimeout) {
+            clearTimeout(rafTimeout)
+            rafTimeout = null
+          }
           rafPending = false
           setAnimRun(true)
           setAnimKey(prev => prev + 1)
@@ -107,7 +121,10 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
       }
     }
     document.addEventListener('visibilitychange', handler)
-    return () => document.removeEventListener('visibilitychange', handler)
+    return () => {
+      document.removeEventListener('visibilitychange', handler)
+      if (rafTimeout) clearTimeout(rafTimeout)
+    }
   }, [])
 
   const charScale = useMemo(() => {

@@ -71,9 +71,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           MODELS=(
-            "opencode/x-preview-f-free"
+            "opencode/muse-spark-1.2-contributor-free"
             "opencode/nemotron"
-            "opencode/big-pickle"
+            "opencode/x-preview-f-free"
           )
 
           # Read latest QA analysis if available

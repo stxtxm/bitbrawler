@@ -2,7 +2,7 @@
 name: tech-lead
 description: Tech Lead autonome. Exécuté quotidiennement pour analyser la santé du projet, faire des recherches web, créer des issues et proposer des améliorations.
 mode: primary
-model: opencode/x-preview-f-free
+model: opencode/muse-spark-1.2-contributor-free
 permission:
   edit: allow
   bash: allow

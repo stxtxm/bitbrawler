@@ -430,6 +430,9 @@ export const ProceduralTerrain: React.FC<ProceduralTerrainProps> = ({
     const onVisibility = () => {
       bgPausedRef.current = document.visibilityState === 'hidden';
       if (document.visibilityState === 'visible') {
+        // Reset timers and ramp-up so the scrolling animation resumes cleanly
+        // after returning from background (otherwise first dt is huge or
+        // animationStartTime is stale and terrain appears frozen).
         lastTimeRef.current = performance.now();
         animationStartTime.current = null;
       }

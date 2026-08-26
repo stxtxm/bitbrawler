@@ -243,10 +243,28 @@ jobs:
            9. Poste un rapport récapitulatif sur l'issue #$ISSUE_NUMBER
            10. Ferme l'issue #$ISSUE_NUMBER si tout est OK
           
-          Tu es superviseur + documentaliste. Tu DOIS modifier les fichiers de documentation et les committer."
-          
-          opencode run --dangerously-skip-permissions --agent supervisor --model "opencode/x-preview-f-free" "$PROMPT"
-          echo "✅ Supervisor agent completed"
+           Tu es superviseur + documentaliste. Tu DOIS modifier les fichiers de documentation et les committer."
+           
+           MODELS=(
+             "opencode/muse-spark-1.2-contributor-free"
+             "opencode/nemotron"
+             "opencode/x-preview-f-free"
+           )
+           SUCCESS=0
+           for MODEL in "${MODELS[@]}"; do
+             echo "Trying model: $MODEL"
+             if opencode run --dangerously-skip-permissions --agent supervisor --model "$MODEL" "$PROMPT"; then
+               echo "Model selected: $MODEL"
+               SUCCESS=1
+               break
+             fi
+             echo "Model failed: $MODEL"
+           done
+           if [ "$SUCCESS" -ne 1 ]; then
+             echo "All model attempts failed."
+             exit 1
+           fi
+           echo "✅ Supervisor agent completed"
 
       - name: Run Orchestrator agent (for proposals / complex issues)
         if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr == ''
@@ -320,7 +338,25 @@ jobs:
               --repo \"\${{ github.repository }}\"
             "
 
-            opencode run --dangerously-skip-permissions --agent orchestrator --model "opencode/x-preview-f-free" "$PROMPT"
+            MODELS=(
+              "opencode/muse-spark-1.2-contributor-free"
+              "opencode/nemotron"
+              "opencode/x-preview-f-free"
+            )
+            SUCCESS=0
+            for MODEL in "${MODELS[@]}"; do
+              echo "Trying model: $MODEL"
+              if opencode run --dangerously-skip-permissions --agent orchestrator --model "$MODEL" "$PROMPT"; then
+                echo "Model selected: $MODEL"
+                SUCCESS=1
+                break
+              fi
+              echo "Model failed: $MODEL"
+            done
+            if [ "$SUCCESS" -ne 1 ]; then
+              echo "All model attempts failed."
+              exit 1
+            fi
             echo "✅ Orchestrator completed — sub-issues created"
 
             # Dispatch each new sub-issue with /oc
@@ -387,6 +423,8 @@ jobs:
           "
 
           MODELS=(
+            "opencode/muse-spark-1.2-contributor-free"
+            "opencode/nemotron"
             "opencode/x-preview-f-free"
           )
           SUCCESS=0
@@ -548,6 +586,8 @@ jobs:
           "
 
           MODELS=(
+            "opencode/muse-spark-1.2-contributor-free"
+            "opencode/nemotron"
             "opencode/x-preview-f-free"
           )
           SUCCESS=0
@@ -657,7 +697,25 @@ jobs:
             echo "$FIX_PROMPT" | head -50
             echo "---"
 
-            opencode run --dangerously-skip-permissions --model "opencode/x-preview-f-free" "$FIX_PROMPT"
+            MODELS=(
+              "opencode/muse-spark-1.2-contributor-free"
+              "opencode/nemotron"
+              "opencode/x-preview-f-free"
+            )
+            SUCCESS=0
+            for MODEL in "${MODELS[@]}"; do
+              echo "Trying model: $MODEL"
+              if opencode run --dangerously-skip-permissions --model "$MODEL" "$FIX_PROMPT"; then
+                echo "Model selected: $MODEL"
+                SUCCESS=1
+                break
+              fi
+              echo "Model failed: $MODEL"
+            done
+            if [ "$SUCCESS" -ne 1 ]; then
+              echo "All model attempts failed."
+              exit 1
+            fi
           done
 
       - name: Save agent session memory
