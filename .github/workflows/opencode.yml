@@ -248,7 +248,6 @@ jobs:
            MODELS=(
              "opencode/muse-spark-1.2-contributor-free"
              "opencode/nemotron"
-             "opencode/x-preview-f-free"
            )
            SUCCESS=0
            for MODEL in "${MODELS[@]}"; do
@@ -341,7 +340,6 @@ jobs:
             MODELS=(
               "opencode/muse-spark-1.2-contributor-free"
               "opencode/nemotron"
-              "opencode/x-preview-f-free"
             )
             SUCCESS=0
             for MODEL in "${MODELS[@]}"; do
@@ -425,7 +423,6 @@ jobs:
           MODELS=(
             "opencode/muse-spark-1.2-contributor-free"
             "opencode/nemotron"
-            "opencode/x-preview-f-free"
           )
           SUCCESS=0
           for MODEL in "${MODELS[@]}"; do
@@ -588,7 +585,6 @@ jobs:
           MODELS=(
             "opencode/muse-spark-1.2-contributor-free"
             "opencode/nemotron"
-            "opencode/x-preview-f-free"
           )
           SUCCESS=0
           for MODEL in "${MODELS[@]}"; do
@@ -700,7 +696,6 @@ jobs:
             MODELS=(
               "opencode/muse-spark-1.2-contributor-free"
               "opencode/nemotron"
-              "opencode/x-preview-f-free"
             )
             SUCCESS=0
             for MODEL in "${MODELS[@]}"; do
