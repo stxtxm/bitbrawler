@@ -14,7 +14,7 @@ import {
   parseLevelFromText,
   persistentNameForGeneration,
   shouldForcePersistentReset,
-} from '../../../qa/qa-bot-helpers'
+} from '../../utils/qa-bot-helpers'
 import { PROGRESSION_GATES } from '../../config/progressionConfig'
 
 // ── Fight type decision function (mirrors qa-bot.mjs logic) ──
