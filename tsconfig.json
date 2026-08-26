@@ -20,6 +20,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],
+  "include": ["src", "qa/qa-bot-helpers.d.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
