@@ -7,7 +7,10 @@ import {
   parseLevelFromText,
   persistentNameForGeneration,
   shouldForcePersistentReset,
-} from './qa-bot-helpers.js'
+  COMBAT_SPEED_STORAGE_KEY,
+  COMBAT_SPEED_SETTINGS_SELECTOR,
+  getCombatSpeedFromStorageRaw,
+} from '../src/utils/qa-bot-helpers.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const STATS_FILE = join(__dirname, config.statsFile)
@@ -557,6 +560,83 @@ async function syncAutoMode(page, desiredEnabled) {
   }
 
   return true
+}
+
+async function getCombatSpeed(page) {
+  try {
+    const raw = await page.evaluate(
+      (key) => {
+        try {
+          return localStorage.getItem(key)
+        } catch {
+          return null
+        }
+      },
+      COMBAT_SPEED_STORAGE_KEY,
+    )
+    return getCombatSpeedFromStorageRaw(raw)
+  } catch {
+    return 1
+  }
+}
+
+async function ensureCombatSpeed2x(page) {
+  let before = await getCombatSpeed(page)
+  if (before === 2) {
+    console.log('   ⚡ Combat speed already 2x')
+    return { before, after: 2, toggled: false }
+  }
+  try {
+    const settingsBtn = page.locator('button[aria-label="Settings"], button:has-text("SETTINGS"), [class*="settings"]').first()
+    if (await settingsBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await dismissModals(page)
+      await settingsBtn.click()
+      await page.waitForTimeout(800)
+      const toggle = page.locator(COMBAT_SPEED_SETTINGS_SELECTOR).first()
+      if (await toggle.isVisible({ timeout: 2000 }).catch(() => false)) {
+        const checked = await toggle.getAttribute('aria-checked').catch(() => null)
+        if (checked !== 'true') {
+          await toggle.click()
+          await page.waitForTimeout(600)
+          const verified = await toggle.getAttribute('aria-checked').catch(() => null)
+          if (verified === 'true') {
+            console.log('   ⚡ Combat speed toggled to 2x via settings ✅ (speed_toggled_to_2x)')
+          } else {
+            await toggle.click({ force: true }).catch(() => {})
+            await page.waitForTimeout(600)
+          }
+        }
+      }
+      const closeSettings2 = page.locator('button[aria-label="Close settings"], button:has-text("CLOSE"), button:has-text("OK"), .modal-close, .inventory-close').first()
+      if (await closeSettings2.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await closeSettings2.click()
+        await page.waitForTimeout(300)
+      } else {
+        await dismissModals(page)
+      }
+      const after = await getCombatSpeed(page)
+      if (after === 2) return { before, after, toggled: true }
+    }
+  } catch {}
+  try {
+    await page.evaluate(
+      (key, val) => {
+        try {
+          localStorage.setItem(key, JSON.stringify(val))
+        } catch {}
+      },
+      COMBAT_SPEED_STORAGE_KEY,
+      2,
+    )
+    const after = await getCombatSpeed(page)
+    if (after === 2) {
+      console.log('   ⚡ Combat speed set to 2x via storage fallback (speed_toggled_to_2x)')
+      return { before, after, toggled: true }
+    }
+  } catch {}
+  const afterFallback = await getCombatSpeed(page)
+  console.log(`   Combat speed remains ${afterFallback}x (fallback 1x)`)
+  return { before, after: afterFallback, toggled: false }
 }
 
 /**
@@ -2868,6 +2948,7 @@ async function run() {
     no_legacy_overlay: null,
     forge: null,
     shop: null,
+    combat_speed: 1,
     errors: [],
     load_times_ms: {},
   }
@@ -2952,6 +3033,19 @@ async function run() {
     console.log(`   Initial stats: level=${runRecord.initial_level}, xp=${JSON.stringify(runRecord.initial_xp)}, stats=${JSON.stringify(runRecord.initial_stats)}, maxHp=${runRecord.initial_max_hp}`)
     if (runRecord.initial_equipment.length > 0) {
       console.log(`   Equipment: ${runRecord.initial_equipment.map(e => `${e.slot}=${e.name}`).join(', ')}`)
+    }
+
+    try {
+      const speedResult = await ensureCombatSpeed2x(page)
+      runRecord.combat_speed = speedResult.after
+      console.log(`   Combat speed: ${speedResult.before}x → ${speedResult.after}x (toggled=${speedResult.toggled})`)
+    } catch (e) {
+      try {
+        runRecord.combat_speed = await getCombatSpeed(page)
+      } catch {
+        runRecord.combat_speed = 1
+      }
+      console.log(`   ⚠️ Combat speed check failed, fallback ${runRecord.combat_speed}x: ${e.message}`)
     }
 
     // ── PvE Idle Observation ──────────────────────────────────────
