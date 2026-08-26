@@ -60604,5 +60604,277 @@
       "purchased_offer": null,
       "essence_after_purchase": null
     }
+  },
+  {
+    "date": "2026-08-26T06:31:46.331Z",
+    "run": "2026-08-26",
+    "character": "QA-PERSI-2",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "draw",
+        "xp": 80,
+        "fight_duration_ms": 33451,
+        "max_hp": 437,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 155.64
+      },
+      {
+        "result": "defeat",
+        "xp": 72,
+        "fight_duration_ms": 20230,
+        "max_hp": 437,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 155.64
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Flint Knife",
+      "rarity": "RARE",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 3,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 8,
+      "vit": 6,
+      "dex": 8,
+      "luk": 16,
+      "int": 31,
+      "foc": 21,
+      "fights": 0
+    },
+    "initial_level": 24,
+    "initial_xp": {
+      "current": 21584,
+      "max": 22726
+    },
+    "initial_max_hp": 488,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 25,
+      "xp": 458,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 8,
+      "vit": 8,
+      "dex": 11,
+      "luk": 17,
+      "int": 32,
+      "foc": 22,
+      "fights": 0
+    },
+    "final_max_hp": 457,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_locked_level": 30,
+      "boss_name": "VOID TITAN",
+      "boss_level": null,
+      "boss_hp": null,
+      "boss_max_hp": null
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 24406,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "goblin"
+      ],
+      "victories": 1,
+      "defeats": 0,
+      "xp_total": 33,
+      "xp_events": [
+        {
+          "time_ms": 24406,
+          "xp": 33,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        24406
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 33,
+        "essence": 0.35,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.33,
+      "next_level_eta": "⬆ 1m 13s",
+      "power_ratio": "⚔ 0.56x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.31x",
+      "interval": "12.0s",
+      "streak_bonus": "🔥 1-win streak (+4%)"
+    },
+    "initial_essence": 155.24,
+    "final_essence": 107.9,
+    "essence": {
+      "before_idle": 155.24,
+      "after_idle": 155.59,
+      "per_fight": [
+        155.64,
+        155.64
+      ],
+      "forge_before": 156,
+      "forge_after_salvage": 176,
+      "forge_after_fusion": 176,
+      "forge_after_upgrade": 126,
+      "forge_after": 126,
+      "shop_before": 127,
+      "shop_after": 107,
+      "final": 107.9,
+      "flow": {
+        "idle_gained": 0.35,
+        "fights_change": 0.05,
+        "salvage_gained": 20,
+        "fusion_cost": 0,
+        "upgrade_cost": 50,
+        "forge_net": -30,
+        "shop_cost": 20,
+        "net_change": -47.34
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 156,
+      "essence_after_salvage": 176,
+      "essence_after_fusion": 176,
+      "essence_after_upgrade": 126,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 126,
+      "items_after": 1,
+      "salvage_essence_gained": 20,
+      "fusion_cost": null,
+      "upgrade_cost": 50,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "RARE",
+      "cost": 20,
+      "essence_before": 127,
+      "essence_after": 107,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Celestial Robe",
+            "rarity": "RARE",
+            "price": 20
+          },
+          {
+            "name": "Phoenix Talisman",
+            "rarity": "EPIC",
+            "price": 60
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 35
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 107
+      }
+    },
+    "errors": [
+      "Fight 3: timeout waiting for result (90000ms, 3 retries)",
+      "Fight 4: timeout waiting for result (90000ms, 3 retries)",
+      "Fight 5: timeout waiting for result (90000ms, 3 retries)"
+    ],
+    "load_times_ms": {
+      "home": 1568,
+      "arena": 1195
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Celestial Robe",
+          "rarity": "RARE",
+          "price": 20
+        },
+        {
+          "name": "Phoenix Talisman",
+          "rarity": "EPIC",
+          "price": 60
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 35
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 107
+    }
   }
 ]
