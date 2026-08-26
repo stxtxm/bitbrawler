@@ -1,4 +1,4 @@
-import config from './qa-bot.config.js'
+import config from '../../qa/qa-bot.config.js'
 
 export const PERSISTENT_RESET_LEVEL_HEADROOM = 2
 
@@ -24,4 +24,43 @@ export function shouldForcePersistentReset(
 export function parseLevelFromText(text) {
   const match = text.match(/LVL\s*(\d+)/i)
   return match ? parseInt(match[1]) : null
+}
+
+export const COMBAT_SPEED_STORAGE_KEY = 'bitbrawler_combat_speed'
+export const COMBAT_SPEED_OPTIONS = [1, 2]
+export const COMBAT_SPEED_TOGGLE_SELECTOR = '.combat-speed-toggle'
+export const COMBAT_SPEED_SETTINGS_SELECTOR = 'button[aria-label="Combat speed"]'
+
+export function isCombatSpeed(value) {
+  return typeof value === 'number' && COMBAT_SPEED_OPTIONS.includes(value)
+}
+
+export function parseCombatSpeed(value) {
+  return isCombatSpeed(value) ? value : null
+}
+
+export function parseCombatSpeedText(text) {
+  if (typeof text !== 'string' || !text) return null
+  const match = text.match(/x\s*([12])/i)
+  if (!match) return null
+  const num = parseInt(match[1], 10)
+  return isCombatSpeed(num) ? num : null
+}
+
+export function getCombatSpeedFromStorageRaw(raw) {
+  if (raw === null || raw === undefined || raw === '') return 1
+  try {
+    const parsed = JSON.parse(raw)
+    if (isCombatSpeed(parsed)) return parsed
+  } catch {
+  }
+  const asNum = parseInt(String(raw), 10)
+  if (isCombatSpeed(asNum)) return asNum
+  return 1
+}
+
+export function nextCombatSpeed(current) {
+  if (current === 1) return 2
+  if (current === 2) return 1
+  return 1
 }

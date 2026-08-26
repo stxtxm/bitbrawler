@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-25T21:22:25Z",
+  "last_session": "2026-08-26T21:35:41Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -40,6 +40,11 @@
       "date": "2026-08-25",
       "issue": "#830",
       "lesson": "Issue #830 extraction helpers purs QA bot: (1) module qa/qa-bot-helpers.js + .d.ts suit la convention config.js/config.d.ts du dossier qa/ - PAS .mjs: Node ESM ne resout pas un import './x.js' vers x.mjs, harnais /tmp a attrape le bug avant commit. (2) Entry guard run(): process.argv[1] + import.meta.url === pathToFileURL(resolve(argv1)).href - valide en conditions reelles: node qa/qa-bot.mjs chemin relatif -> execute, import ESM -> inert. (3) Verification par EQUIVALENCE comportementale git HEAD vs nouveau module: extraire fonctions anciennes par profondeur d'accolades, 79 assertions identiques. (4) Les tests miroir peuvent porter des attentes FAUSSES (QA-PERS-3 vs QA-PERSI-3 reel) - le test corrige l'attente, jamais le code extrait verbatim."
+    },
+    {
+      "lesson": "Issue #834 combat speed 2x for qa-bot: helpers moved to src/utils caused import './qa-bot.config.js' broken in that location -> fix to '../../qa/qa-bot.config.js' and qa-bot.mjs import broken './qa-bot-helpers.js' -> '../src/utils/qa-bot-helpers.js'. Toggle detection must use SettingsPanel switch (CombatView toggle only visible during combat), so ensureCombatSpeed2x opens settings, checks aria-checked, clicks if needed, falls back to direct localStorage set. Capture combat_speed in runRecord for analyzer correlation. TDD helpers: COMBAT_SPEED_STORAGE_KEY, OPTIONS, selectors, isCombatSpeed, parseCombatSpeed, parseCombatSpeedText, getCombatSpeedFromStorageRaw, nextCombatSpeed.",
+      "issue": "#834",
+      "date": "2026-08-26"
     }
   ]
 }
