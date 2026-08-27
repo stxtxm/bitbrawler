@@ -6,7 +6,7 @@ import type { CharacterAppearance } from '../types/Character';
 
 export const MALE_HEAD_TYPES = ['male', 'male_bald', 'male_cap', 'male_beard', 'male_mohawk', 'male_sidepart', 'male_spiky', 'male_afro', 'male_helmet', 'male_glasses', 'male_hood', 'male_long'] as const;
 export const FEMALE_HEAD_TYPES = ['female', 'female_pigtails', 'female_braid', 'female_ponytail', 'female_short', 'female_bob', 'female_waves', 'female_afro', 'female_helmet', 'female_pixie', 'female_bang', 'female_bun'] as const;
-export const BODY_TYPES = ['basic', 'sleeveless', 'armor', 'jacket', 'vest', 'robe', 'hoodie', 'tunic', 'cape'] as const;
+export const BODY_TYPES = ['basic', 'sleeveless', 'armor', 'jacket', 'vest', 'robe', 'hoodie', 'tunic'] as const;
 
 export type HeadType = keyof typeof PIXEL_HEADS;
 export type BodyType = keyof typeof PIXEL_BODIES;
