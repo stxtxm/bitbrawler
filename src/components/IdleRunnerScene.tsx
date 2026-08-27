@@ -18,6 +18,7 @@ interface OfflineGainsData {
 
 interface IdleRunnerSceneProps {
   character: Character
+  appearance?: Character['appearance']
   currentMonster: MonsterId | null
   scenePhase: ScenePhase
   lastCombatResult: 'win' | 'lose' | null
@@ -49,6 +50,7 @@ function randomDamage(playerLevel: number): { value: number; isCrit: boolean } {
 
 export const IdleRunnerScene = memo(function IdleRunnerScene({
   character,
+  appearance,
   currentMonster,
   scenePhase,
   lastCombatResult,
@@ -404,6 +406,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
         <PixelCharacter
           seed={character.seed}
           gender={character.gender}
+          appearance={appearance ?? character.appearance}
           scale={charScale}
         />
         {showLevelUpFx && (

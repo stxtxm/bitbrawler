@@ -574,6 +574,172 @@ input[type="text"] {
     }
 }
 
+// ─── Appearance customization (HEAD / OUTFIT / colors) ───────────────────────
+.appearance-group {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    @include retro-border(1px, #2a2a2a);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    @include tablet {
+        padding: 8px;
+        gap: 6px;
+    }
+}
+
+.appearance-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #000;
+    @include retro-border(1px, #222);
+    padding: 6px 8px;
+
+    @include mobile {
+        padding: 4px 6px;
+        gap: 4px;
+    }
+}
+
+.appearance-label {
+    font-size: 0.5rem;
+    color: $accent-gold;
+    min-width: 42px;
+
+    @include mobile {
+        font-size: 0.45rem;
+        min-width: 36px;
+    }
+}
+
+.appearance-value {
+    flex: 1;
+    text-align: center;
+    font-size: 0.55rem;
+    color: #fff;
+    letter-spacing: 0.04em;
+
+    @include mobile {
+        font-size: 0.5rem;
+    }
+}
+
+.appearance-arrow {
+    background: #111;
+    @include retro-border(1px, #444);
+    color: #fff;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.6rem;
+    transition: all 0.15s;
+
+    &:hover {
+        background: #fff;
+        color: #000;
+        border-color: #fff;
+    }
+    &:active {
+        transform: scale(0.95);
+    }
+
+    @include mobile {
+        width: 26px;
+        height: 26px;
+        font-size: 0.55rem;
+    }
+}
+
+.appearance-colors {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.color-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    @include mobile {
+        gap: 4px;
+    }
+}
+
+.color-row-label {
+    font-size: 0.4rem;
+    color: #888;
+    min-width: 32px;
+
+    @include mobile {
+        font-size: 0.35rem;
+        min-width: 28px;
+    }
+}
+
+.swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    flex: 1;
+
+    @include mobile {
+        gap: 3px;
+    }
+}
+
+.swatch {
+    width: 18px;
+    height: 18px;
+    @include retro-border(1px, #333);
+    cursor: pointer;
+    padding: 0;
+    transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+
+    &.selected {
+        border-color: #fff;
+        box-shadow: 0 0 0 2px $accent-gold;
+        transform: scale(1.12);
+    }
+    &:hover {
+        transform: scale(1.08);
+        border-color: #888;
+    }
+
+    @include mobile {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+.appearance-actions {
+    display: flex;
+    gap: 6px;
+
+    .small-btn {
+        flex: 1;
+        padding: 8px !important;
+        font-size: 0.45rem !important;
+
+        &.secondary {
+            background: #111;
+            color: #aaa;
+            border-color: #333;
+        }
+
+        @include mobile {
+            padding: 6px !important;
+            font-size: 0.4rem !important;
+        }
+    }
+}
+
 // Modals (Success/Error Popups)
 .retro-modal-overlay {
     position: fixed;

@@ -1,6 +1,8 @@
 import { GAME_RULES } from '../config/gameRules';
-import { Character } from '../types/Character';
+import { Character, CharacterAppearance } from '../types/Character';
 import { getHpForVitality, STAT_KEYS, StatKey } from './statUtils';
+import { PIXEL_HEADS, PIXEL_BODIES, PIXEL_PALETTES } from '../components/PixelAssets';
+import { mulberry32, getSeedFromText } from './randomUtils';
 
 const MAX_NAME_LENGTH = 10;
 const MIN_SUFFIX_LENGTH = 2;
@@ -233,6 +235,42 @@ export const generateCharacterName = (options: NameGeneratorOptions = {}): strin
     return fallback;
 };
 
+// ─── Appearance helpers (8-bit variants) ─────────────────────────────────────
+
+export const getHeadTypesForGender = (gender: 'male' | 'female'): string[] =>
+    Object.keys(PIXEL_HEADS).filter(k => gender === 'male' ? k.startsWith('male') : k.startsWith('female'));
+
+export const getBodyTypes = (): string[] => Object.keys(PIXEL_BODIES);
+
+export const generateAppearance = (
+    gender: 'male' | 'female',
+    seed?: string,
+    rngOverride?: () => number
+): CharacterAppearance => {
+    const rng = rngOverride ?? (seed ? mulberry32(getSeedFromText(seed)) : Math.random);
+    const pick = <T,>(arr: readonly T[]) => arr[Math.floor(rng() * arr.length)];
+    const headPool = getHeadTypesForGender(gender);
+    const bodyPool = getBodyTypes();
+    return {
+        headType: pick(headPool),
+        bodyType: pick(bodyPool),
+        skinColor: pick(PIXEL_PALETTES.skins as unknown as string[]),
+        hairColor: pick(PIXEL_PALETTES.hair as unknown as string[]),
+        shirtColor: pick(PIXEL_PALETTES.clothes as unknown as string[]),
+        pantsColor: pick(PIXEL_PALETTES.pants as unknown as string[]),
+        eyeColor: pick(PIXEL_PALETTES.eyes as unknown as string[]),
+    };
+};
+
+export const randomizeAppearanceColors = (appearance: CharacterAppearance): CharacterAppearance => ({
+    ...appearance,
+    skinColor: PIXEL_PALETTES.skins[Math.floor(Math.random() * PIXEL_PALETTES.skins.length)] as string,
+    hairColor: PIXEL_PALETTES.hair[Math.floor(Math.random() * PIXEL_PALETTES.hair.length)] as string,
+    shirtColor: PIXEL_PALETTES.clothes[Math.floor(Math.random() * PIXEL_PALETTES.clothes.length)] as string,
+    pantsColor: PIXEL_PALETTES.pants[Math.floor(Math.random() * PIXEL_PALETTES.pants.length)] as string,
+    eyeColor: PIXEL_PALETTES.eyes[Math.floor(Math.random() * PIXEL_PALETTES.eyes.length)] as string,
+});
+
 /**
  * Generates initial stats for a new character using GAME_RULES
  * - Creates natural archetypes via weighted random allocation
@@ -309,11 +347,13 @@ export const generateInitialStats = (name: string, gender: 'male' | 'female'): C
     const hp = getHpForVitality(stats.vitality);
     // Create consistent seed for visuals
     const characterSeed = Math.random().toString(36).substring(2, 10);
+    const appearance = generateAppearance(gender, characterSeed + name);
 
     return {
         name: name || 'HERO',
         gender,
         seed: characterSeed,
+        appearance,
         level: 1,
         hp: hp,
         maxHp: hp,

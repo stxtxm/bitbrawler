@@ -6,9 +6,9 @@ import { Character } from '../types/Character';
  * (5 GB/month egress budget — the Rankings page used to fetch select('*')
  * on the whole table, which is the main quota burner).
  */
-export const RANKINGS_SELECT_COLUMNS = 'id,name,gender,seed,level';
+export const RANKINGS_SELECT_COLUMNS = 'id,name,gender,seed,level,appearance';
 export const MATCHMAKING_SELECT_COLUMNS =
-  'id,name,gender,seed,level,hp,max_hp,is_bot,strength,vitality,dexterity,luck,intelligence,focus,equipped_items,item_upgrades';
+  'id,name,gender,seed,appearance,level,hp,max_hp,is_bot,strength,vitality,dexterity,luck,intelligence,focus,equipped_items,item_upgrades';
 
 /** Convert a partial row (light projection) into a combat-ready Character.
  * Heavy state (inventory, histories, medals...) is left as defaults — only
@@ -18,6 +18,7 @@ export function convertFromMatchmakingRow(row: Partial<CharacterRow>): Character
     name: row.name ?? 'Unknown',
     gender: (row.gender as 'male' | 'female') ?? 'male',
     seed: row.seed ?? 'seed',
+    appearance: (row.appearance as any) ?? undefined,
     level: row.level ?? 1,
     hp: row.hp ?? 100,
     maxHp: row.max_hp ?? 100,
@@ -53,6 +54,7 @@ export function convertFromSupabase(row: CharacterRow): Character {
     name: row.name,
     gender: row.gender as 'male' | 'female',
     seed: row.seed,
+    appearance: (row.appearance as any) ?? undefined,
     level: row.level,
     hp: row.hp,
     maxHp: row.max_hp,
@@ -146,6 +148,7 @@ export function convertToSupabase(character: Character, fields?: string[]): Part
     ...(character.medalTitle !== undefined ? { medal_title: character.medalTitle } : {}),
     ...(character.medalAura !== undefined ? { medal_aura: character.medalAura } : {}),
     ...(character.bossProgress !== undefined ? { boss_progress: character.bossProgress } : {}),
+    ...(character.appearance !== undefined ? { appearance: character.appearance as any } : {}),
   };
   if (fields) {
     const filtered = Object.fromEntries(

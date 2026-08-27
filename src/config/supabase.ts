@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import type { FightHistory, IncomingFightHistory, PendingFight } from '../types/Character'
+import type { CharacterAppearance, FightHistory, IncomingFightHistory, PendingFight } from '../types/Character'
 import type { BossProgress } from '../utils/bossUtils'
 
 // Active project (new account) — fallback = new project for CI/tests, override via .env.example
@@ -72,6 +72,7 @@ export type CharacterRow = {
   push_keys?: string | null;
   push_subscribed?: boolean | null;
   boss_progress?: BossProgress | null;
+  appearance?: CharacterAppearance | null;
 }
 
 export type ServerTimeRow = {

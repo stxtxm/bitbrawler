@@ -101,6 +101,7 @@ export const buildPendingOpponent = (opponent: Character): PendingFightOpponent 
     name: opponent.name,
     gender: opponent.gender,
     seed: opponent.seed,
+    appearance: opponent.appearance,
     level: opponent.level,
     experience: opponent.experience,
     strength: opponent.strength,
@@ -133,6 +134,7 @@ export const buildPendingOpponent = (opponent: Character): PendingFightOpponent 
 export const hydratePendingOpponent = (snapshot: PendingFightOpponent): Character => {
   return normalizeCharacter({
     seed: snapshot.seed,
+    appearance: snapshot.appearance,
     name: snapshot.name,
     gender: snapshot.gender,
     level: snapshot.level,

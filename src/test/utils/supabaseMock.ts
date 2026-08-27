@@ -80,6 +80,7 @@ export function characterToSupabaseRow(char: any): any {
     is_bot: typeof char.isBot === 'boolean' ? char.isBot : false,
     auto_mode: char.autoMode ?? false,
     battle_count: char.battleCount ?? 0,
+    appearance: char.appearance ?? null,
     created_at: new Date().toISOString(),
   };
 }

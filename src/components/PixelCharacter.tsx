@@ -1,40 +1,53 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { useMemo } from 'react';
 import { PIXEL_HEADS, PIXEL_BODIES, PIXEL_PALETTES } from './PixelAssets';
 import { mulberry32, getSeedFromText } from '../utils/randomUtils';
+import type { CharacterAppearance } from '../types/Character';
+
+export const MALE_HEAD_TYPES = ['male', 'male_bald', 'male_cap', 'male_beard', 'male_mohawk', 'male_sidepart', 'male_spiky', 'male_afro', 'male_helmet', 'male_glasses', 'male_hood', 'male_long'] as const;
+export const FEMALE_HEAD_TYPES = ['female', 'female_pigtails', 'female_braid', 'female_ponytail', 'female_short', 'female_bob', 'female_waves', 'female_afro', 'female_helmet', 'female_pixie', 'female_bang', 'female_bun'] as const;
+export const BODY_TYPES = ['basic', 'sleeveless', 'armor', 'jacket', 'vest', 'robe', 'hoodie', 'tunic', 'cape'] as const;
+
+export type HeadType = keyof typeof PIXEL_HEADS;
+export type BodyType = keyof typeof PIXEL_BODIES;
 
 interface PixelCharacterProps {
     seed: string;
     gender: 'male' | 'female';
     scale?: number;
     className?: string;
+    appearance?: CharacterAppearance | null;
 }
 
-export const PixelCharacter: React.FC<PixelCharacterProps> = ({ seed, gender, scale = 4, className }) => {
-    // Generate features based on seed
+export const PixelCharacter: React.FC<PixelCharacterProps> = ({ seed, gender, scale = 4, className, appearance }) => {
+    // Generate features based on seed or explicit appearance override
     const features = useMemo(() => {
         const seedNum = getSeedFromText(seed);
         const rng = mulberry32(seedNum);
 
         const pick = <T,>(arr: readonly T[] | T[]) => arr[Math.floor(rng() * arr.length)];
 
-        const headType: keyof typeof PIXEL_HEADS = gender === 'male'
-            ? pick(['male', 'male_bald', 'male_cap', 'male_beard', 'male_mohawk', 'male_sidepart', 'male_spiky'] as const)
-            : pick(['female', 'female_pigtails', 'female_braid', 'female_ponytail', 'female_short', 'female_bob', 'female_waves'] as const);
+        // Resolve head/body — appearance overrides seed, fallback to RNG with full variant pool
+        const fallbackHead: HeadType = gender === 'male'
+            ? pick(MALE_HEAD_TYPES)
+            : pick(FEMALE_HEAD_TYPES);
+        const fallbackBody: BodyType = pick(BODY_TYPES);
 
-        const bodyType: keyof typeof PIXEL_BODIES = pick(['basic', 'sleeveless', 'armor', 'jacket', 'vest', 'robe'] as const);
+        const headType: HeadType = (appearance?.headType && (appearance.headType in PIXEL_HEADS) ? appearance.headType : fallbackHead) as HeadType;
+        const bodyType: BodyType = (appearance?.bodyType && (appearance.bodyType in PIXEL_BODIES) ? appearance.bodyType : fallbackBody) as BodyType;
 
         return {
-            skinColor: pick(PIXEL_PALETTES.skins) as string,
-            hairColor: pick(PIXEL_PALETTES.hair) as string,
-            shirtColor: pick(PIXEL_PALETTES.clothes) as string,
-            pantsColor: pick(PIXEL_PALETTES.pants) as string,
+            skinColor: appearance?.skinColor ?? (pick(PIXEL_PALETTES.skins) as string),
+            hairColor: appearance?.hairColor ?? (pick(PIXEL_PALETTES.hair) as string),
+            shirtColor: appearance?.shirtColor ?? (pick(PIXEL_PALETTES.clothes) as string),
+            pantsColor: appearance?.pantsColor ?? (pick(PIXEL_PALETTES.pants) as string),
             shoesColor: '#333',
-            eyeColor: pick(PIXEL_PALETTES.eyes) as string,
+            eyeColor: appearance?.eyeColor ?? (pick(PIXEL_PALETTES.eyes) as string),
             logoColor: pick(PIXEL_PALETTES.clothes) as string,
             headType,
             bodyType,
         };
-    }, [seed, gender]);
+    }, [seed, gender, appearance]);
 
     // Render a grid
     const renderGrid = (grid: number[][], offsetX: number, offsetY: number) => {
@@ -76,8 +89,8 @@ export const PixelCharacter: React.FC<PixelCharacterProps> = ({ seed, gender, sc
         return result;
     }
 
-    const headGrid = PIXEL_HEADS[features.headType];
-    const bodyGrid = PIXEL_BODIES[features.bodyType];
+    const headGrid = (PIXEL_HEADS as Record<string, number[][]>)[features.headType] ?? PIXEL_HEADS[gender === 'male' ? 'male' : 'female'];
+    const bodyGrid = (PIXEL_BODIES as Record<string, number[][]>)[features.bodyType] ?? PIXEL_BODIES.basic;
 
     // Grid size is roughly 12 wide x 20 high combined
     // Head is 12x8, Body is 12x9. 

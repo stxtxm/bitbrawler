@@ -45,6 +45,7 @@ export const SceneBox = memo(function SceneBox({
       {pveMode ? (
         <IdleRunnerScene
           character={effectiveCharacter}
+          appearance={effectiveCharacter.appearance}
           currentMonster={idle.currentMonster}
           scenePhase={idle.scenePhase}
           lastCombatResult={idle.lastCombatResult}
@@ -57,7 +58,7 @@ export const SceneBox = memo(function SceneBox({
         />
       ) : (
         <div className="scene-pvp-center">
-          <PixelCharacter seed={character.seed} gender={character.gender} scale={pvpScale} />
+          <PixelCharacter seed={character.seed} gender={character.gender} appearance={character.appearance} scale={pvpScale} />
         </div>
       )}
     </div>

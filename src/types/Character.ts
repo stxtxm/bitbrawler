@@ -19,6 +19,7 @@ export interface PendingFightOpponent {
   name: string;
   gender: 'male' | 'female';
   seed: string;
+  appearance?: CharacterAppearance;
   level: number;
   experience: number;
   strength: number;
@@ -178,6 +179,19 @@ export interface Character {
   pushKeys?: string | null; // Serialized push keys (p256dh + auth) persisted on the character
   pushSubscribed?: boolean; // Whether the character opted in to web push
 
-  // Raid Boss PvE progress (persistent HP pool + daily attack gauge)
+    // Raid Boss PvE progress (persistent HP pool + daily attack gauge)
   bossProgress?: BossProgress;
+
+  // Appearance customization (8-bit variants)
+  appearance?: CharacterAppearance;
+}
+
+export interface CharacterAppearance {
+  headType?: string; // key of PIXEL_HEADS
+  bodyType?: string; // key of PIXEL_BODIES
+  skinColor?: string;
+  hairColor?: string;
+  shirtColor?: string;
+  pantsColor?: string;
+  eyeColor?: string;
 }

@@ -37,6 +37,7 @@ const Rankings = () => {
                 name: row.name,
                 gender: row.gender as 'male' | 'female',
                 seed: row.seed,
+                appearance: (row as any).appearance ?? undefined,
                 level: row.level,
                 hp: 0,
                 maxHp: 0,
@@ -193,7 +194,7 @@ const Rankings = () => {
                                     <div className={`col-rank rank-${index + 1}`}>{index + 1}</div>
                                     <div className="col-avatar">
                                         <div className="mini-avatar">
-                                            <PixelCharacter seed={char.seed} gender={char.gender} scale={3} />
+                                            <PixelCharacter seed={char.seed} gender={char.gender} appearance={char.appearance} scale={3} />
                                         </div>
                                     </div>
                                     <div className="col-name">
