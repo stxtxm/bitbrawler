@@ -386,7 +386,7 @@ describe('Supabase egress projections', () => {
   void MATCHMAKING_SELECT_COLUMNS
 
   it('rankings only fetches display columns (name, seed, gender, level, id)', () => {
-    expect(RANKINGS_SELECT_COLUMNS).toBe('id,name,gender,seed,level')
+    expect(RANKINGS_SELECT_COLUMNS).toBe('id,name,gender,seed,level,appearance')
   })
 
   it('rankings projection excludes heavy payload columns', () => {
@@ -398,7 +398,7 @@ describe('Supabase egress projections', () => {
 
   it('matchmaking projection includes combat-critical stats', () => {
     const cols = MATCHMAKING_SELECT_COLUMNS.split(',')
-    for (const col of ['id', 'name', 'gender', 'seed', 'level', 'hp', 'max_hp', 'is_bot', 'strength', 'vitality', 'dexterity', 'luck', 'intelligence', 'focus', 'equipped_items']) {
+    for (const col of ['id', 'name', 'gender', 'seed', 'appearance', 'level', 'hp', 'max_hp', 'is_bot', 'strength', 'vitality', 'dexterity', 'luck', 'intelligence', 'focus', 'equipped_items']) {
       expect(cols).toContain(col)
     }
   })
