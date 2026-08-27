@@ -8,13 +8,11 @@ import { useConnectionGate } from '../hooks/useConnectionGate'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 import { useSound } from '../hooks/useSound'
 import ConnectionModal from '../components/ConnectionModal'
-import { generateInitialStats, generateCharacterName, getHeadTypesForGender, getBodyTypes, generateAppearance, randomizeAppearanceColors } from '../utils/characterUtils'
+import { generateInitialStats, generateCharacterName } from '../utils/characterUtils'
 import { PixelIcon } from '../components/PixelIcon'
 import { prefetchArena } from '../routes/lazyPages'
 import { STAT_TOOLTIPS } from '../utils/statUtils'
 import { convertToSupabase } from '../utils/supabaseUtils'
-import { PIXEL_PALETTES } from '../components/PixelAssets'
-import type { CharacterAppearance } from '../types/Character'
 
 const CharacterCreation = () => {
   const navigate = useNavigate()
@@ -38,80 +36,28 @@ const CharacterCreation = () => {
   const generateRandomCharacter = (currentGender: 'male' | 'female' = gender) => {
     setIsGenerating(true)
     const newCharacter = generateInitialStats(name, currentGender)
-    // Preserve current appearance if user already customized — only re-roll stats
-    if (generatedCharacter?.appearance) {
-      newCharacter.appearance = { ...generatedCharacter.appearance }
-      // Ensure headType is valid for currentGender if we kept previous appearance
-      const validHeads = getHeadTypesForGender(currentGender)
-      if (newCharacter.appearance.headType && !validHeads.includes(newCharacter.appearance.headType)) {
-        newCharacter.appearance.headType = validHeads[Math.floor(Math.random() * validHeads.length)]
-      }
-    }
     setGeneratedCharacter(newCharacter)
     setIsGenerating(false)
   }
 
+  // Handle gender change without full re-roll (only updates visual + guarantees headType fits new gender)
   const handleGenderChange = (newGender: 'male' | 'female') => {
     setGender(newGender);
     if (generatedCharacter) {
-      const validHeads = getHeadTypesForGender(newGender)
-      let nextAppearance = generatedCharacter.appearance
-      if (nextAppearance) {
-        // Map head if incompatible with new gender — try to keep style (afro->afro, helmet->helmet, etc.)
-        if (nextAppearance.headType && !validHeads.includes(nextAppearance.headType)) {
-          const suffix = nextAppearance.headType.replace('male_', '').replace('female_', '')
-          const mapped = validHeads.find(h => h.endsWith(suffix))
-          nextAppearance = { ...nextAppearance, headType: mapped ?? validHeads[Math.floor(Math.random() * validHeads.length)] }
-        }
+      // If current head doesn't belong to new gender, re-roll just the appearance so the preview stays coherent
+      // Keep stats, only randomize look for the new gender.
+      const curHead = generatedCharacter.appearance?.headType ?? ''
+      const isMaleHead = curHead.startsWith('male_')
+      const isFemaleHead = curHead.startsWith('female_')
+      const mismatch = (newGender === 'male' && isFemaleHead) || (newGender === 'female' && isMaleHead)
+      if (mismatch) {
+        const newChar = generateInitialStats(name, newGender)
+        // Preserve stats, only take appearance from new roll
+        setGeneratedCharacter({ ...generatedCharacter, gender: newGender, appearance: newChar.appearance, seed: newChar.seed })
+      } else {
+        setGeneratedCharacter({ ...generatedCharacter, gender: newGender });
       }
-      setGeneratedCharacter({ ...generatedCharacter, gender: newGender, appearance: nextAppearance });
     }
-  }
-
-  const updateAppearance = (patch: Partial<CharacterAppearance>) => {
-    if (!generatedCharacter) return
-    setGeneratedCharacter({ ...generatedCharacter, appearance: { ...generatedCharacter.appearance, ...patch } as CharacterAppearance })
-  }
-
-  const cycleHead = (dir: 1 | -1) => {
-    if (!generatedCharacter?.appearance) return
-    const pool = getHeadTypesForGender(gender)
-    const idx = pool.indexOf(generatedCharacter.appearance.headType ?? pool[0])
-    const next = pool[(idx + dir + pool.length) % pool.length]
-    updateAppearance({ headType: next })
-    if (window.navigator.vibrate) window.navigator.vibrate(20)
-  }
-
-  const cycleBody = (dir: 1 | -1) => {
-    if (!generatedCharacter?.appearance) return
-    const pool = getBodyTypes()
-    const idx = pool.indexOf(generatedCharacter.appearance.bodyType ?? pool[0])
-    const next = pool[(idx + dir + pool.length) % pool.length]
-    updateAppearance({ bodyType: next })
-    if (window.navigator.vibrate) window.navigator.vibrate(20)
-  }
-
-  const shuffleLook = () => {
-    if (!generatedCharacter) return
-    const next = generateAppearance(gender)
-    setGeneratedCharacter({ ...generatedCharacter, appearance: next })
-    if (window.navigator.vibrate) window.navigator.vibrate(30)
-  }
-
-  const shuffleColors = () => {
-    if (!generatedCharacter?.appearance) return
-    const next = randomizeAppearanceColors(generatedCharacter.appearance)
-    setGeneratedCharacter({ ...generatedCharacter, appearance: next })
-    if (window.navigator.vibrate) window.navigator.vibrate(20)
-  }
-
-  const formatHeadLabel = (headType?: string) => {
-    if (!headType) return '—'
-    return headType.replace('male_', '').replace('female_', '').replace('_', ' ').toUpperCase()
-  }
-  const formatBodyLabel = (bodyType?: string) => {
-    if (!bodyType) return '—'
-    return bodyType.toUpperCase()
   }
 
   // Initialize on mount
@@ -368,63 +314,6 @@ const CharacterCreation = () => {
                 </button>
               </div>
             </div>
-
-            {generatedCharacter?.appearance && (
-              <div className="appearance-group">
-                <div className="appearance-row">
-                  <span className="appearance-label">HEAD</span>
-                  <button className="appearance-arrow" onClick={() => cycleHead(-1)} aria-label="Previous head">◀</button>
-                  <span className="appearance-value">{formatHeadLabel(generatedCharacter.appearance.headType)}</span>
-                  <button className="appearance-arrow" onClick={() => cycleHead(1)} aria-label="Next head">▶</button>
-                </div>
-                <div className="appearance-row">
-                  <span className="appearance-label">OUTFIT</span>
-                  <button className="appearance-arrow" onClick={() => cycleBody(-1)} aria-label="Previous outfit">◀</button>
-                  <span className="appearance-value">{formatBodyLabel(generatedCharacter.appearance.bodyType)}</span>
-                  <button className="appearance-arrow" onClick={() => cycleBody(1)} aria-label="Next outfit">▶</button>
-                </div>
-
-                <div className="appearance-colors">
-                  <div className="color-row">
-                    <span className="color-row-label">SKIN</span>
-                    <div className="swatches">
-                      {PIXEL_PALETTES.skins.map(c => (
-                        <button key={c} className={`swatch ${generatedCharacter.appearance?.skinColor === c ? 'selected' : ''}`} style={{ background: c }} onClick={() => updateAppearance({ skinColor: c })} aria-label={`Skin ${c}`} />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="color-row">
-                    <span className="color-row-label">HAIR</span>
-                    <div className="swatches">
-                      {PIXEL_PALETTES.hair.map(c => (
-                        <button key={c} className={`swatch ${generatedCharacter.appearance?.hairColor === c ? 'selected' : ''}`} style={{ background: c }} onClick={() => updateAppearance({ hairColor: c })} aria-label={`Hair ${c}`} />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="color-row">
-                    <span className="color-row-label">SHIRT</span>
-                    <div className="swatches">
-                      {PIXEL_PALETTES.clothes.map(c => (
-                        <button key={c} className={`swatch ${generatedCharacter.appearance?.shirtColor === c ? 'selected' : ''}`} style={{ background: c }} onClick={() => updateAppearance({ shirtColor: c })} aria-label={`Shirt ${c}`} />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="color-row">
-                    <span className="color-row-label">EYES</span>
-                    <div className="swatches">
-                      {PIXEL_PALETTES.eyes.map(c => (
-                        <button key={c} className={`swatch ${generatedCharacter.appearance?.eyeColor === c ? 'selected' : ''}`} style={{ background: c }} onClick={() => updateAppearance({ eyeColor: c })} aria-label={`Eyes ${c}`} />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="appearance-actions">
-                  <button className="button retro-btn small-btn" onClick={shuffleLook} type="button">SHUFFLE LOOK</button>
-                  <button className="button retro-btn small-btn secondary" onClick={shuffleColors} type="button">COLORS</button>
-                </div>
-              </div>
-            )}
 
             <div className="button-group">
               <button
