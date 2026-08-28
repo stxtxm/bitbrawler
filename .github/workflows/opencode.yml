@@ -19,6 +19,11 @@ on:
         options:
           - dev
           - supervisor
+      ci_failure:
+        description: 'true si re-dispatch suite à CI rouge (passe contexte CI au dev agent)'
+        required: false
+        default: 'false'
+        type: string
 
 jobs:
   implement:
@@ -67,10 +72,20 @@ jobs:
         run: |
           echo "📖 Compacting memories (ARG_MAX guard)…"
           node scripts/compact-memories.mjs || true
-          echo "📖 Loading memory context..."
-          echo "DEV_MEMORY=$(cat .opencode/memory/dev.json 2>/dev/null | tr -d '\n' || echo '{}')" >> "$GITHUB_ENV"
-          echo "SHARED_MEMORY=$(cat .opencode/memory/shared.json 2>/dev/null | tr -d '\n' || echo '{}')" >> "$GITHUB_ENV"
-          echo "✅ Memory loaded"
+          echo "📖 Loading memory context (branche memory si existe)..."
+          git fetch origin memory:refs/remotes/origin/memory 2>/dev/null || git fetch origin memory/dev:refs/remotes/origin/memory/dev 2>/dev/null || true
+          if git show-ref --verify --quiet refs/remotes/origin/memory 2>/dev/null; then
+            git show refs/remotes/origin/memory:.opencode/memory/dev.json > .opencode/memory/dev.json 2>/dev/null || true
+            echo "✓ Mémoire dev restaurée depuis origin/memory"
+          elif git show-ref --verify --quiet refs/remotes/origin/memory/dev 2>/dev/null; then
+            git show refs/remotes/origin/memory/dev:.opencode/memory/dev.json > .opencode/memory/dev.json 2>/dev/null || true
+            echo "✓ Mémoire dev restaurée depuis origin/memory/dev"
+          fi
+          DEV_TRUNC=$(jq -c '{version, last_session, known_limitations, recent_notes: (.session_notes // [])[-5:]}' .opencode/memory/dev.json 2>/dev/null | tr -d '\n' || echo '{}')
+          SHARED_TRUNC=$(jq -c '{version, known_issues: (.known_issues // [])[-3:], cross_agent_constraints}' .opencode/memory/shared.json 2>/dev/null | tr -d '\n' || echo '{}')
+          echo "DEV_MEMORY=$DEV_TRUNC" >> "$GITHUB_ENV"
+          echo "SHARED_MEMORY=$SHARED_TRUNC" >> "$GITHUB_ENV"
+          echo "✅ Memory loaded (tronquée pour contexte prompt)"
 
       - name: Configure git
         run: |
@@ -384,21 +399,15 @@ jobs:
           ISSUE_TITLE=$(cat /tmp/issue-title.txt)
 
           PROMPT="
-          Tu es le dev agent de Bitbrawler.
+          Tu es le dev agent de Bitbrawler. Tu parles et codes EN FRANÇAIS (commentaires interdits dans le code, mais messages/commit en français si besoin).
 
           ## Issue #${ISSUE_NUMBER}
           Titre: ${ISSUE_TITLE}
           Description: ${ISSUE_BODY}
 
-          ## Règles
-          - Écris du code clean, testé, sans commentaires
-          - Exécute les tests (npm test) et le build (npm run build)
-          - Ne modifie PAS .github/workflows/*.yml
-
-           ## Mémoire des sessions précédentes
-           Consulte ta mémoire individuelle et la mémoire commune avant de coder :
-           Mémoire DEV : $(cat .opencode/memory/dev.json 2>/dev/null || echo "{}")
-           Mémoire commune : $(cat .opencode/memory/shared.json 2>/dev/null || echo "{}")
+          ## RÈGLE ABSOLUE : lis ta mémoire AVANT de coder (contexte tronqué à 5 dernières leçons)
+          Mémoire DEV : $(jq -c '{version, last_session, known_limitations, recent_notes: (.session_notes // [])[-5:]}' .opencode/memory/dev.json 2>/dev/null || echo "{}")
+          Mémoire commune : $(jq -c '{version, known_issues: (.known_issues // [])[-3:], cross_agent_constraints}' .opencode/memory/shared.json 2>/dev/null || echo "{}")
 
            ## Feature complexe ? Crée une campagne
           Si le changement demandé nécessite PLUSIEURS étapes ou fichiers (ex: nouvelle fonctionnalité complète) :
@@ -548,8 +557,21 @@ jobs:
           ISSUE_TITLE=$(cat /tmp/issue-title.txt)
           ISSUE_BODY=$(cat /tmp/prompt.txt)
 
+          CI_FAILURE_FLAG="${{ github.event.inputs.ci_failure }}"
+          if [ "$CI_FAILURE_FLAG" = "true" ]; then
+            CI_CONTEXT="⚠️ Cette exécution est un RETRY automatique suite à une CI ROUGE sur la PR #$PR_NUMBER. Tu DOIS corriger la CI en priorité."
+          else
+            CI_CONTEXT="Correction demandée par le reviewer ou CI en échec détectée."
+          fi
+
           PROMPT="
-          Tu dois CORRIGER la PR #$PR_NUMBER. La CI a échoué ou le reviewer a demandé des changements.
+          Tu dois CORRIGER la PR #$PR_NUMBER. $CI_CONTEXT
+          Tu parles et corriges EN FRANÇAIS. Tu DOIS relire ta mémoire AVANT de coder.
+
+          ## Mémoire OBLIGATOIRE à consulter en premier (tronquée)
+          Mémoire DEV : $(jq -c '{version, last_session, known_limitations, recent_notes: (.session_notes // [])[-5:]}' .opencode/memory/dev.json 2>/dev/null || echo "{}")
+          Mémoire commune : $(jq -c '{version, known_issues: (.known_issues // [])[-3:], cross_agent_constraints}' .opencode/memory/shared.json 2>/dev/null || echo "{}")
+          → Respecte les contraintes connues (ex: jamais toucher .github/workflows, champs Supabase optionnels, etc.)
 
           ## Issue originale #$ISSUE_NUMBER
           Titre: $ISSUE_TITLE
@@ -566,20 +588,18 @@ jobs:
           ## Reviews demandant des changements
           $PR_REVIEWS
 
-          ## Checks CI en échec
+          ## Checks CI en échec (à corriger en priorité)
           $CI_CHECKS
+          Si un check est en FAILURE/ACTION_REQUIRED, c'est LA cause à corriger. Ne l'ignore pas.
 
-          ## Contexte du système de mémoire
-          Consulte ta mémoire individuelle et la mémoire commune avant de coder :
-          $(cat .opencode/memory/dev.json 2>/dev/null || echo "Pas de mémoire individuelle")
-          $(cat .opencode/memory/shared.json 2>/dev/null || echo "Pas de mémoire commune")
-
-          ## Instructions
-          1. Analyse les retours CI et les commentaires de review
-          2. Corrige les problèmes identifiés
-          3. Les tests doivent passer (npm test)
+          ## Instructions STRICTES (en français)
+          1. Analyse D'ABORD la mémoire (shared.json + dev.json) puis les retours CI et commentaires
+          2. Corrige les problèmes identifiés — fait le minimum nécessaire pour rendre la CI verte
+          3. Les tests doivent passer (npm test) — exécute-les localement
           4. Le build doit passer (npm run build)
-          5. N'ajoute pas de commentaires dans le code
+          5. N'ajoute PAS de commentaires dans le code, pas de 'any', imports propres
+          6. Ne touche JAMAIS à .github/workflows/*.yml
+          7. À la fin, si tu as appris une leçon, écris-la dans /tmp/agent-session-notes.json
           "
 
           MODELS=(
@@ -690,8 +710,17 @@ jobs:
             FIX_PROMPT=$(cat /tmp/fix_prompt.txt)
 
             echo "--- Agent fix prompt ---"
-            echo "$FIX_PROMPT" | head -50
+            echo "$FIX_PROMPT" | head -80
             echo "---"
+
+            # Enrichir avec mémoire FR (tronquée)
+            echo "" >> /tmp/fix_prompt.txt
+            echo "## Mémoire à consulter (FR, 5 dernières leçons)" >> /tmp/fix_prompt.txt
+            jq -c '{version, recent_notes: (.session_notes // [])[-5:], known_limitations}' .opencode/memory/dev.json 2>/dev/null >> /tmp/fix_prompt.txt || echo "{}" >> /tmp/fix_prompt.txt
+            jq -c '{version, known_issues: (.known_issues // [])[-3:], cross_agent_constraints}' .opencode/memory/shared.json 2>/dev/null >> /tmp/fix_prompt.txt || echo "{}" >> /tmp/fix_prompt.txt
+            echo "Tu DOIS répondre en français et corriger en tenant compte de la mémoire." >> /tmp/fix_prompt.txt
+            FIX_PROMPT=$(cat /tmp/fix_prompt.txt)
+            echo "--- Mémoire ajoutée ---"
 
             MODELS=(
               "opencode/muse-spark-1.2-contributor-free"
@@ -720,11 +749,32 @@ jobs:
             NOTES=$(cat /tmp/agent-session-notes.json)
             CURRENT=$(cat .opencode/memory/dev.json 2>/dev/null || echo '{}')
             UPDATED=$(echo "$CURRENT" | jq --argjson notes "$NOTES" --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
-              .last_session = $date | .session_notes += [$notes]
+              .last_session = $date | .session_notes += [$notes] | .session_notes |= .[-30:]
             ')
-            echo "$UPDATED" > .opencode/memory/dev.json
-            git add .opencode/memory/dev.json && git commit -m "chore: update dev memory [skip ci]" || true
-            echo "✅ Dev memory updated"
+            echo "$UPDATED" > /tmp/memory_dev_updated.json
+            echo "📝 Mémoire dev préparée (30 dernières notes gardées, push sur memory)"
+            CURR_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "feat/auto-$ISSUE_NUMBER")
+            git stash push -m "dev memory stash" --keep-index 2>/dev/null || true
+            git fetch origin memory 2>/dev/null || git fetch origin memory/dev 2>/dev/null || true
+            if git ls-remote --exit-code origin refs/heads/memory >/dev/null 2>&1; then
+              git checkout memory 2>/dev/null || git checkout -B memory origin/memory
+              git pull origin memory --ff-only 2>/dev/null || true
+            elif git ls-remote --exit-code origin refs/heads/memory/dev >/dev/null 2>&1; then
+              git checkout memory/dev 2>/dev/null || git checkout -B memory origin/memory/dev
+              git pull origin memory/dev --ff-only 2>/dev/null || true
+            else
+              git checkout --orphan memory 2>/dev/null || git checkout -B memory
+              git rm -rf . 2>/dev/null || true
+              mkdir -p .opencode/memory
+            fi
+            mkdir -p .opencode/memory
+            cp /tmp/memory_dev_updated.json .opencode/memory/dev.json
+            git add .opencode/memory/dev.json
+            git commit -m "chore: update dev memory #$ISSUE_NUMBER" 2>/dev/null || true
+            git push origin HEAD:memory 2>&1 | head -20 || git push origin memory 2>&1 | head -20 || git push origin HEAD:memory/dev 2>&1 | head -20 || echo "⚠ push memory échoué (retry plus tard)"
+            git checkout "$CURR_BRANCH" 2>/dev/null || git checkout -B "$CURR_BRANCH" || true
+            git stash pop 2>/dev/null || true
+            echo "✅ Dev memory poussée sur origin/memory (pas de [skip ci] sur la PR)"
           else
             echo "ℹ No session notes found"
           fi
@@ -807,16 +857,25 @@ jobs:
           # PR branch explicitly. On success ci.yml dispatches the reviewer
           # (ci_green=true), which runs its own integrity gate before merging.
           if [ -n "$PR_NUMBER" ]; then
+            # Plus de [skip ci] sur la PR grâce à A2a (mémoire sur branche memory), ce bloc ne sert qu'en fallback
+            # Mais on garde le dispatch explicite si un vieux commit skip-ci persiste
             HEAD_MSG=$(git log -1 --format=%s)
             if echo "$HEAD_MSG" | grep -qiE '\[skip ci\]|\[ci skip\]|\[skip actions\]'; then
-              echo "⏳ Head commit \"$HEAD_MSG\" is a skip-ci marker — dispatching CI explicitly on $BRANCH for PR #$PR_NUMBER"
-              if gh workflow run ci.yml --ref "$BRANCH" -f pr_number="$PR_NUMBER" --repo "${{ github.repository }}" 2>/dev/null; then
-                echo "✓ CI dispatched for PR #$PR_NUMBER → reviewer will be triggered automatically"
+              echo "⏳ Head commit \"$HEAD_MSG\" is a skip-ci marker — dispatching CI explicitement sur $BRANCH pour PR #$PR_NUMBER"
+              set +e
+              OUT=$(gh workflow run ci.yml --ref "$BRANCH" -f pr_number="$PR_NUMBER" --repo "${{ github.repository }}" 2>&1)
+              RC=$?
+              set -e
+              if [ $RC -eq 0 ]; then
+                echo "✓ CI dispatchée pour PR #$PR_NUMBER → le reviewer sera déclenché automatiquement (ci_green=true)"
+                echo "$OUT"
               else
-                echo "⚠ Could not dispatch CI — fallback: daily tech-lead sweep will activate the reviewer"
+                echo "❌ Échec dispatch CI explicite : $OUT"
+                echo "⚠ Fallback : le reviewer tentera une validation locale si aucun check CI n'est présent"
+                gh pr comment "$PR_NUMBER" --body "⚠️ Le commit de tête \`[skip ci]\` a supprimé le trigger pull_request. Le dispatch CI explicite a échoué: $OUT" 2>/dev/null || true
               fi
             else
-              echo "✅ Head commit is not skip-ci — the pull_request event will trigger CI normally"
+              echo "✅ Head commit n'est pas skip-ci — l'événement pull_request va déclencher la CI normalement (A2a: mémoire sur branche memory)"
             fi
           fi
 

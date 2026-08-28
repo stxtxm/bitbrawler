@@ -4,7 +4,8 @@ on:
   workflow_run:
     workflows: ["CI"]
     types: [completed]
-    branches: [master]
+  pull_request:
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
       pr_number:
@@ -18,7 +19,7 @@ on:
         type: string
 
 concurrency:
-  group: pr-review-${{ github.event.workflow_run.pull_requests[0].number || github.event.inputs.pr_number }}
+  group: pr-review-${{ github.event.inputs.pr_number || github.event.pull_request.number || github.event.workflow_run.pull_requests[0].number }}
   cancel-in-progress: true
 
 jobs:
@@ -45,6 +46,8 @@ jobs:
               exit 1
             fi
             PR_NUMBER="${PR_NUMBER:-$(echo '${{ toJson(github.event.workflow_run.pull_requests) }}' | jq -r '.[0].number // empty')}"
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            PR_NUMBER="${PR_NUMBER:-${{ github.event.pull_request.number }}}"
           fi
           if [ -z "$PR_NUMBER" ]; then
             echo "⚠ No PR number available — nothing to review"
@@ -76,16 +79,22 @@ jobs:
           echo "PR number: $PR_NUMBER"
           echo "PR_NUMBER=$PR_NUMBER" >> "$GITHUB_ENV"
 
-          # When ci.yml dispatches us right after a successful run, CI is already
-          # green — re-polling wastes ~30s and can false-positive while GitHub
-          # statusCheckRollup is still settling. Skip the wait entirely.
+          # Quand ci.yml nous dispatche juste après un succès, la CI est déjà verte
+          # — re-poller gaspille ~30s et peut donner un faux positif pendant que statusCheckRollup se stabilise.
           if [ "${{ github.event.inputs.ci_green }}" = "true" ] || [ "${{ github.event_name }}" = "workflow_run" ]; then
-            echo "✅ CI already passed before dispatch — skipping CI wait."
+            echo "✅ CI déjà passée avant dispatch — skip attente CI."
             exit 0
           fi
 
-          echo "Manual dispatch — waiting briefly for CI checks on PR #$PR_NUMBER (max 30 seconds)..."
-          for i in $(seq 1 3); do
+          # Pour pull_request (fallback direct), la CI vient juste de démarrer en parallèle → attendre plus longtemps
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            MAX_WAIT=6
+            echo "Trigger pull_request — attente CI sur PR #$PR_NUMBER (max 60s)..."
+          else
+            MAX_WAIT=3
+            echo "Dispatch manuel — attente brève CI sur PR #$PR_NUMBER (max 30s)..."
+          fi
+          for i in $(seq 1 $MAX_WAIT); do
             # Count checks that are not completed or not successful/neutral
             CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
               [.statusCheckRollup[]? | select((.app?.slug != "vercel") and (.name? != "Vercel") and (.context? != "Vercel")) | select(
@@ -96,11 +105,11 @@ jobs:
               echo "✓ All CI checks passed!"
               exit 0
             fi
-            echo "⏳ Waiting... ($i/3, $CHECKS checks remaining)"
+            echo "⏳ Attente... ($i/$MAX_WAIT, $CHECKS checks restants)"
             sleep 10
           done
 
-          echo "⚠ Timeout waiting for CI — proceeding with review anyway (assuming Vercel or other slow checks)."
+          echo "⚠ Timeout attente CI — on continue le review (Vercel ou checks lents supposés)."
           # Proceed with review even if some checks are still pending
 
       - name: Check PR author for self-review bypass
@@ -123,10 +132,20 @@ jobs:
         run: |
           echo "📖 Compacting memories (ARG_MAX guard)…"
           node scripts/compact-memories.mjs || true
-          echo "📖 Loading memory context..."
-          echo "REVIEWER_MEMORY=$(cat .opencode/memory/reviewer.json 2>/dev/null | tr -d '\n' || echo '{}')" >> "$GITHUB_ENV"
-          echo "SHARED_MEMORY=$(cat .opencode/memory/shared.json 2>/dev/null | tr -d '\n' || echo '{}')" >> "$GITHUB_ENV"
-          echo "✅ Memory loaded"
+          echo "📖 Loading memory context (branche memory si existe)..."
+          git fetch origin memory:refs/remotes/origin/memory 2>/dev/null || git fetch origin memory/dev:refs/remotes/origin/memory/dev 2>/dev/null || true
+          if git show-ref --verify --quiet refs/remotes/origin/memory 2>/dev/null; then
+            git show refs/remotes/origin/memory:.opencode/memory/reviewer.json > .opencode/memory/reviewer.json 2>/dev/null || true
+            echo "✓ Mémoire reviewer restaurée depuis origin/memory"
+          elif git show-ref --verify --quiet refs/remotes/origin/memory/dev 2>/dev/null; then
+            git show refs/remotes/origin/memory/dev:.opencode/memory/reviewer.json > .opencode/memory/reviewer.json 2>/dev/null || true
+            echo "✓ Mémoire reviewer restaurée depuis origin/memory/dev"
+          fi
+          REV_TRUNC=$(jq -c '{version, recent_notes: (.session_notes // [])[-5:], known_limitations}' .opencode/memory/reviewer.json 2>/dev/null | tr -d '\n' || echo '{}')
+          SHARED_TRUNC=$(jq -c '{version, known_issues: (.known_issues // [])[-3:], cross_agent_constraints}' .opencode/memory/shared.json 2>/dev/null | tr -d '\n' || echo '{}')
+          echo "REVIEWER_MEMORY=$REV_TRUNC" >> "$GITHUB_ENV"
+          echo "SHARED_MEMORY=$SHARED_TRUNC" >> "$GITHUB_ENV"
+          echo "✅ Memory loaded (tronquée)"
 
       - name: Configure git
         run: |
@@ -331,7 +350,7 @@ jobs:
             "opencode/nemotron"
           )
 
-          PROMPT="Tu es le reviewer de Bitbrawler. Review la PR #${PR_NUMBER}.
+          PROMPT="Tu es le reviewer de Bitbrawler. Tu réponds et agis UNIQUEMENT EN FRANÇAIS. Review la PR #${PR_NUMBER}.
 
             ## PR : ${PR_TITLE}
             \`\`\`
@@ -342,43 +361,45 @@ jobs:
             Titre: ${ISSUE_TITLE:-"N/A"}
             Body: ${ISSUE_BODY:-"N/A"}
 
-            ## Mémoire des sessions précédentes
-            Mémoire REVIEWER : $(cat .opencode/memory/reviewer.json 2>/dev/null || echo "{}")
-            Mémoire commune : $(cat .opencode/memory/shared.json 2>/dev/null || echo "{}")
+            ## Mémoire OBLIGATOIRE à consulter (tronquée à 5 dernières leçons)
+            Mémoire REVIEWER : $(jq -c '{version, recent_notes: (.session_notes // [])[-5:], known_limitations}' .opencode/memory/reviewer.json 2>/dev/null || echo "{}")
+            Mémoire commune : $(jq -c '{version, known_issues: (.known_issues // [])[-3:], cross_agent_constraints}' .opencode/memory/shared.json 2>/dev/null || echo "{}")
 
             ## Dépendances de cette PR
             Dépendances déclarées : $DEPS_LIST
             Toutes les dépendances sont résolues ✅ — cette PR peut être mergée dans l'ordre du DAG.
 
-            ## Instructions de review
+            ## Instructions de review (en français)
 
             1. **Pertinence** : le code résout-il le problème décrit dans l'issue liée ? Si pas d'issue liée, le changement a-t-il du sens ?
-            2. **Périmètre** : y a-t-il des modifications non liées à l'issue (scope creep) ?
+            2. **Périmètre** : y a-t-il des modifications non liées à l'issue (scope creep) ? Un petit hotfix/bug/stats est OK à merger vite, un gros changement nécessite plus de rigueur.
             3. **Conventions du projet** :
                - Pas de commentaires dans le code
-               - Pas de \`any\` TypeScript evade
+               - Pas de \`any\` TypeScript
                - Imports propres (pas d'imports inutilisés)
                - Pas de duplication de code
-            4. **Commits** : le message de commit suit conventional commits (feat:/fix:/refactor:/chore:/test:)
+            4. **Commits** : le message suit conventional commits (feat:/fix:/refactor:/chore:/test:)
             5. **Tests** : les nouveaux cas sont-ils testés ? Les tests existants passent-ils toujours ?
             6. **Régression** : le changement peut-il casser une autre partie du projet ?
             7. **Sécurité** : pas d'injection SQL Supabase, pas de secrets exposés
             8. **Performance** : pas de boucles inutiles, pas de requêtes N+1 Supabase
 
-             ## Règles
-            - ⚠️ **AVANT de merger** : re-vérifie la CI à l'instant T avec \`gh pr view "$PR_NUMBER" --json statusCheckRollup\`. Exclue les checks Vercel (app.slug == "vercel" OU name == "Vercel" — sur compte gratuit le check Vercel reste pending à jamais et est rapporté avec app: null). Si un seul check non-Vercel n'est pas COMPLETED avec conclusion SUCCESS/NEUTRAL → \`gh pr review "$PR_NUMBER" --request-changes\` et ne merge PAS.
+             ## Règles STRICTES (en français)
+            - ⚠️ **AVANT de merger** : re-vérifie la CI à l'instant T avec \`gh pr view "$PR_NUMBER" --json statusCheckRollup\`. Exclue les checks Vercel (app.slug == "vercel" OU name == "Vercel"). Si un seul check non-Vercel n'est pas COMPLETED avec conclusion SUCCESS/NEUTRAL → \`gh pr review "$PR_NUMBER" --request-changes --body \"...en français...\"\` et ne merge PAS. Cela va automatiquement re-déclencher le dev agent avec mémoire pour corriger.
             - Si SKIP_APPROVAL=true (PR auto-générée par bot) → passe directement au merge sans approval: \`gh pr merge "$PR_NUMBER" --squash --delete-branch\` (après re-vérification CI verte)
-            - Sinon, si CI est verte ✅ et tout est bon → \`gh pr review --approve "$PR_NUMBER"\` puis \`gh pr merge "$PR_NUMBER" --squash --delete-branch\`
-            - Si CI est rouge → \`gh pr review "$PR_NUMBER" --request-changes --body "feedback..."\` même si l'erreur est préexistante (cela déclenche le dev agent qui corrigera)
+            - Sinon, si CI est verte ✅ et tout est bon → \`gh pr review --approve "$PR_NUMBER" --body \"✅ Review en français...\"\` puis \`gh pr merge "$PR_NUMBER" --squash --delete-branch\`
+            - Si CI est rouge → \`gh pr review "$PR_NUMBER" --request-changes --body \"feedback en français...\"\` même si l'erreur est préexistante (cela déclenche le dev agent qui corrigera avec mémoire)
             - NE JAMAIS approuver si CI est rouge
             - NE JAMAIS merge si le code a des problèmes de sécurité
-            - Si le changement semble bon mais mérite un suivi, approuve + crée une issue de suivi avec \`gh issue create\`
+            - Si le changement semble bon mais mérite un suivi, approuve + crée une issue de suivi avec \`gh issue create\` (titre et body en français, terminée par /oc)
             - ⚠️ Issue de suivi = UNE SEULE COMMANDE, body UNE ligne courte sans guillemets/backticks, terminée par /oc. REMPLACE OBLIGATOIREMENT les placeholders par du contenu réel :
             NEW_ISSUE_URL=$(gh issue create --title "fix: description courte et concrete" --body "Phrase unique decrivant le suivi. /oc")
             Puis dispatch best-effort: gh workflow run opencode.yml -f issue_number=${NEW_ISSUE_URL##*/} || true
             Ne JAMAIS réessayer plus de 2 fois; ne JAMAIS créer une issue sans titre/body substantiels
             ⛔ INTERDIT de laisser litteralement "<titre court>" ou "<resume en une phrase" — toute issue avec ces placeholders sera auto-fermee et comptera comme echec
             - Nettoie la branche après merge
+            - TOUS tes commentaires / reviews / bodies DOIVENT être en français
+            - Évalue la taille : petit bug/hotfix/stats → merge rapide si CI verte ; gros changement → vérifie tests + régression plus strictement
 
             Variable d'environnement disponible: SKIP_APPROVAL=$SKIP_APPROVAL"
 
@@ -504,11 +525,32 @@ jobs:
             NOTES=$(cat /tmp/agent-session-notes.json)
             CURRENT=$(cat .opencode/memory/reviewer.json 2>/dev/null || echo '{}')
             UPDATED=$(echo "$CURRENT" | jq --argjson notes "$NOTES" --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
-              .last_session = $date | .session_notes += [$notes]
+              .last_session = $date | .session_notes += [$notes] | .session_notes |= .[-30:]
             ')
-            echo "$UPDATED" > .opencode/memory/reviewer.json
-            git add .opencode/memory/reviewer.json && git commit -m "chore: update reviewer memory [skip ci]" || true
-            echo "✅ Reviewer memory updated"
+            echo "$UPDATED" > /tmp/memory_reviewer_updated.json
+            echo "📝 Mémoire reviewer préparée (30 dernières notes)"
+            CURR_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
+            git stash push -m "reviewer stash" --keep-index 2>/dev/null || true
+            git fetch origin memory 2>/dev/null || git fetch origin memory/dev 2>/dev/null || true
+            if git ls-remote --exit-code origin refs/heads/memory >/dev/null 2>&1; then
+              git checkout memory 2>/dev/null || git checkout -B memory origin/memory
+              git pull origin memory --ff-only 2>/dev/null || true
+            elif git ls-remote --exit-code origin refs/heads/memory/dev >/dev/null 2>&1; then
+              git checkout memory/dev 2>/dev/null || git checkout -B memory origin/memory/dev
+              git pull origin memory/dev --ff-only 2>/dev/null || true
+            else
+              git checkout --orphan memory 2>/dev/null || git checkout -B memory
+              git rm -rf . 2>/dev/null || true
+              mkdir -p .opencode/memory
+            fi
+            mkdir -p .opencode/memory
+            cp /tmp/memory_reviewer_updated.json .opencode/memory/reviewer.json
+            git add .opencode/memory/reviewer.json
+            git commit -m "chore: update reviewer memory" 2>/dev/null || true
+            git push origin HEAD:memory 2>&1 | head -20 || git push origin memory 2>&1 | head -20 || git push origin memory/dev 2>&1 | head -20 || echo "⚠ push memory échoué"
+            git checkout "$CURR_BRANCH" 2>/dev/null || git checkout master 2>/dev/null || true
+            git stash pop 2>/dev/null || true
+            echo "✅ Reviewer memory poussée sur origin/memory (pas de [skip ci] sur PR)"
           else
             echo "ℹ No session notes found"
           fi
