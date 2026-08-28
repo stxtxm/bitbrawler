@@ -95,9 +95,9 @@ jobs:
             echo "Dispatch manuel — attente brève CI sur PR #$PR_NUMBER (max 30s)..."
           fi
           for i in $(seq 1 $MAX_WAIT); do
-            # Count checks that are not completed or not successful/neutral
+            # Count checks that are not completed or not successful/neutral (hors Vercel et hors review lui-même)
             CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
-              [.statusCheckRollup[]? | select((.app?.slug != "vercel") and (.name? != "Vercel") and (.context? != "Vercel")) | select(
+              [.statusCheckRollup[]? | select((.app?.slug != "vercel") and (.name? != "Vercel") and (.context? != "Vercel")) | select(.name != "review" and .name != "PR Reviewer" and (.name | test("review";"i") | not)) | select(
                 .status? != "COMPLETED" or (.conclusion? != "SUCCESS" and .conclusion? != "NEUTRAL")
               )] | length
             ' 2>/dev/null || echo "3")
@@ -194,7 +194,7 @@ jobs:
           # makes GitHub ignore the pull_request CI trigger → the PR carries no
           # CI checks at all. In that case we run the full validation gate on
           # the PR branch ourselves so the reviewer never merges untested code.
-          CHECK_COUNT=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '[.statusCheckRollup[]? | select((((.app?.name // .name // .context // .app?.slug // "") | ascii_downcase | contains("vercel")) | not))] | length' 2>/dev/null || echo "0")
+          CHECK_COUNT=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '[.statusCheckRollup[]? | select((((.app?.name // .name // .context // .app?.slug // "") | ascii_downcase | contains("vercel")) | not) and ((.name // "") | test("review";"i") | not))] | length' 2>/dev/null || echo "0")
           if [ "$CHECK_COUNT" -eq 0 ]; then
             echo "🔍 No CI checks attached to PR #$PR_NUMBER (skip-ci head?) — running full validation locally..."
             if ! (npm run lint && npx tsc --noEmit && npm test && npm run build); then
@@ -291,7 +291,7 @@ jobs:
           # status from the dispatch moment. The agent LLM must not be the only
           # guard here; this step hard-blocks review if CI is red.
           CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
-            [.statusCheckRollup[]? | select((.app?.slug != "vercel") and (.name? != "Vercel") and (.context? != "Vercel")) | select(
+            [.statusCheckRollup[]? | select((.app?.slug != "vercel") and (.name? != "Vercel") and (.context? != "Vercel")) | select(.name != "review" and .name != "PR Reviewer" and (.name | test("review";"i") | not)) | select(
               .status? != "COMPLETED" or (.conclusion? != "SUCCESS" and .conclusion? != "NEUTRAL")
             )] | length
           ' 2>/dev/null || echo "1")
