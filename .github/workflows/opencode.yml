@@ -74,14 +74,17 @@ jobs:
           node scripts/compact-memories.mjs || true
           echo "📖 Loading memory context (branche memory si existe)..."
           git fetch origin memory:refs/remotes/origin/memory 2>/dev/null || git fetch origin memory/dev:refs/remotes/origin/memory/dev 2>/dev/null || true
+          DEV_SRC=".opencode/memory/dev.json"
           if git show-ref --verify --quiet refs/remotes/origin/memory 2>/dev/null; then
-            git show refs/remotes/origin/memory:.opencode/memory/dev.json > .opencode/memory/dev.json 2>/dev/null || true
-            echo "✓ Mémoire dev restaurée depuis origin/memory"
+            git show refs/remotes/origin/memory:.opencode/memory/dev.json > /tmp/memory_dev.json 2>/dev/null || cp "$DEV_SRC" /tmp/memory_dev.json 2>/dev/null || echo '{}' > /tmp/memory_dev.json
+            echo "✓ Mémoire dev restaurée depuis origin/memory (temp file, pas de dirty working tree)"
+            DEV_SRC="/tmp/memory_dev.json"
           elif git show-ref --verify --quiet refs/remotes/origin/memory/dev 2>/dev/null; then
-            git show refs/remotes/origin/memory/dev:.opencode/memory/dev.json > .opencode/memory/dev.json 2>/dev/null || true
-            echo "✓ Mémoire dev restaurée depuis origin/memory/dev"
+            git show refs/remotes/origin/memory/dev:.opencode/memory/dev.json > /tmp/memory_dev.json 2>/dev/null || cp "$DEV_SRC" /tmp/memory_dev.json 2>/dev/null || echo '{}' > /tmp/memory_dev.json
+            echo "✓ Mémoire dev restaurée depuis origin/memory/dev (temp file)"
+            DEV_SRC="/tmp/memory_dev.json"
           fi
-          DEV_TRUNC=$(jq -c '{version, last_session, known_limitations, recent_notes: (.session_notes // [])[-5:]}' .opencode/memory/dev.json 2>/dev/null | tr -d '\n' || echo '{}')
+          DEV_TRUNC=$(jq -c '{version, last_session, known_limitations, recent_notes: (.session_notes // [])[-5:]}' "$DEV_SRC" 2>/dev/null | tr -d '\n' || echo '{}')
           SHARED_TRUNC=$(jq -c '{version, known_issues: (.known_issues // [])[-3:], cross_agent_constraints}' .opencode/memory/shared.json 2>/dev/null | tr -d '\n' || echo '{}')
           echo "DEV_MEMORY=$DEV_TRUNC" >> "$GITHUB_ENV"
           echo "SHARED_MEMORY=$SHARED_TRUNC" >> "$GITHUB_ENV"
@@ -145,17 +148,24 @@ jobs:
 
       - name: Create branch
         run: |
+          # Dirty guard: l'étape Load a pu compacter les mémoires (M) — on stash pour ne pas bloquer le rebase
+          git stash push -m "opencode pre-branch stash" --include-untracked --keep-index 2>/dev/null || true
           # Ensure we have the latest master
           git fetch origin master
-          git checkout master
-          git pull origin master
+          git checkout -f master 2>/dev/null || git checkout master
+          git pull origin master --ff-only 2>/dev/null || git pull origin master 2>/dev/null || true
+          # Restaure le stash si on était sur master (évite de laisser des modifs orphelines)
+          git stash pop 2>/dev/null || true
           
           BRANCH="feat/auto-$ISSUE_NUMBER"
           if git ls-remote --exit-code origin "refs/heads/$BRANCH" 2>/dev/null; then
             echo "Branch $BRANCH already exists on remote — checking out"
             git fetch origin "$BRANCH"
-            git checkout -b "$BRANCH" "origin/$BRANCH"
+            # Le rebase échoue si le working tree est dirty — on a stashe au dessus, mais garde un filet
+            git stash push -m "opencode rebase stash" --include-untracked 2>/dev/null || true
+            git checkout -f -B "$BRANCH" "origin/$BRANCH" 2>/dev/null || git checkout -b "$BRANCH" "origin/$BRANCH"
             git rebase origin/master || { git rebase --abort; echo "Rebase aborted — using existing branch as-is"; }
+            git stash pop 2>/dev/null || true
           else
             git checkout -b "$BRANCH" master
           fi

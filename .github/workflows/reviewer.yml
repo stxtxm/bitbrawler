@@ -134,14 +134,17 @@ jobs:
           node scripts/compact-memories.mjs || true
           echo "📖 Loading memory context (branche memory si existe)..."
           git fetch origin memory:refs/remotes/origin/memory 2>/dev/null || git fetch origin memory/dev:refs/remotes/origin/memory/dev 2>/dev/null || true
+          REV_SRC=".opencode/memory/reviewer.json"
           if git show-ref --verify --quiet refs/remotes/origin/memory 2>/dev/null; then
-            git show refs/remotes/origin/memory:.opencode/memory/reviewer.json > .opencode/memory/reviewer.json 2>/dev/null || true
-            echo "✓ Mémoire reviewer restaurée depuis origin/memory"
+            git show refs/remotes/origin/memory:.opencode/memory/reviewer.json > /tmp/memory_reviewer.json 2>/dev/null || cp "$REV_SRC" /tmp/memory_reviewer.json 2>/dev/null || echo '{}' > /tmp/memory_reviewer.json
+            echo "✓ Mémoire reviewer restaurée depuis origin/memory (temp file)"
+            REV_SRC="/tmp/memory_reviewer.json"
           elif git show-ref --verify --quiet refs/remotes/origin/memory/dev 2>/dev/null; then
-            git show refs/remotes/origin/memory/dev:.opencode/memory/reviewer.json > .opencode/memory/reviewer.json 2>/dev/null || true
-            echo "✓ Mémoire reviewer restaurée depuis origin/memory/dev"
+            git show refs/remotes/origin/memory/dev:.opencode/memory/reviewer.json > /tmp/memory_reviewer.json 2>/dev/null || cp "$REV_SRC" /tmp/memory_reviewer.json 2>/dev/null || echo '{}' > /tmp/memory_reviewer.json
+            echo "✓ Mémoire reviewer restaurée depuis origin/memory/dev (temp file)"
+            REV_SRC="/tmp/memory_reviewer.json"
           fi
-          REV_TRUNC=$(jq -c '{version, recent_notes: (.session_notes // [])[-5:], known_limitations}' .opencode/memory/reviewer.json 2>/dev/null | tr -d '\n' || echo '{}')
+          REV_TRUNC=$(jq -c '{version, recent_notes: (.session_notes // [])[-5:], known_limitations}' "$REV_SRC" 2>/dev/null | tr -d '\n' || echo '{}')
           SHARED_TRUNC=$(jq -c '{version, known_issues: (.known_issues // [])[-3:], cross_agent_constraints}' .opencode/memory/shared.json 2>/dev/null | tr -d '\n' || echo '{}')
           echo "REVIEWER_MEMORY=$REV_TRUNC" >> "$GITHUB_ENV"
           echo "SHARED_MEMORY=$SHARED_TRUNC" >> "$GITHUB_ENV"
@@ -392,11 +395,11 @@ jobs:
             - NE JAMAIS approuver si CI est rouge
             - NE JAMAIS merge si le code a des problèmes de sécurité
             - Si le changement semble bon mais mérite un suivi, approuve + crée une issue de suivi avec \`gh issue create\` (titre et body en français, terminée par /oc)
-            - ⚠️ Issue de suivi = UNE SEULE COMMANDE, body UNE ligne courte sans guillemets/backticks, terminée par /oc. REMPLACE OBLIGATOIREMENT les placeholders par du contenu réel :
-            NEW_ISSUE_URL=$(gh issue create --title "fix: description courte et concrete" --body "Phrase unique decrivant le suivi. /oc")
-            Puis dispatch best-effort: gh workflow run opencode.yml -f issue_number=${NEW_ISSUE_URL##*/} || true
+            - ⚠️ Issue de suivi = UNE SEULE COMMANDE, body UNE ligne courte sans guillemets/backticks, terminée par /oc. REMPLACE OBLIGATOIREMENT les placeholders par du contenu réel — NE COPIE JAMAIS l'exemple verbatim :
+            NEW_ISSUE_URL=\$(gh issue create --title "fix: exemple — invente un vrai titre descriptif" --body "Phrase unique decrivant le suivi concret. /oc")
+            Puis dispatch best-effort: gh workflow run opencode.yml -f issue_number=\${NEW_ISSUE_URL##*/} || true
             Ne JAMAIS réessayer plus de 2 fois; ne JAMAIS créer une issue sans titre/body substantiels
-            ⛔ INTERDIT de laisser litteralement "<titre court>" ou "<resume en une phrase" — toute issue avec ces placeholders sera auto-fermee et comptera comme echec
+            ⛔ INTERDIT de laisser litteralement "<titre court>", "<resume en une phrase", "description courte et concrete" ou "Phrase unique" — toute issue avec ces placeholders sera auto-fermee et comptera comme echec (exemple = piège)
             - Nettoie la branche après merge
             - TOUS tes commentaires / reviews / bodies DOIVENT être en français
             - Évalue la taille : petit bug/hotfix/stats → merge rapide si CI verte ; gros changement → vérifie tests + régression plus strictement
@@ -512,10 +515,10 @@ jobs:
           SINCE=$(date -u -d '40 minutes ago' +%Y-%m-%dT%H:%M:%SZ)
           # gh's --jq ne supporte pas --arg ; on utilise jq binaire + filtre placeholder explicite
           gh issue list --state open --author app/github-actions --limit 30 --json number,title,body,createdAt \
-            | jq -r --arg since "$SINCE" '.[] | select(.createdAt > $since and ((.title == "<titre court>") or (.body | contains("<titre court>")) or (.body | contains("<resume en une phrase")) or (.body | length < 30))) | .number' | while read N; do
+            | jq -r --arg since "$SINCE" '.[] | select(.createdAt > $since and ((.title == "<titre court>") or (.title == "fix: description courte et concrete") or (.title | contains("description courte et concrete")) or (.body | contains("<titre court>")) or (.body | contains("<resume en une phrase")) or (.body | contains("description courte et concrete")) or (.body | contains("Phrase unique")) or (.body | length < 30))) | .number' | while read N; do
             [ -z "$N" ] && continue
             echo "Closing placeholder/empty issue #$N"
-            gh issue close "$N" --comment "Auto-cleanup: issue creee avec placeholder \`<titre court>\` par le reviewer (quoting fumble) — fermee proprement."
+            gh issue close "$N" --comment "Auto-cleanup: issue creee avec placeholder par le reviewer (quoting fumble / exemple copie) — fermee proprement."
           done
 
       - name: Save reviewer session memory
