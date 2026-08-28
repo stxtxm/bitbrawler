@@ -1,6 +1,9 @@
 import { memo } from 'react';
 import { PixelIcon } from '../PixelIcon';
 import { GAME_RULES } from '../../config/gameRules';
+import { TacticalLens } from './TacticalLens';
+import type { Character } from '../../types/Character';
+import type { TacticalHint } from '../../utils/tacticalLens';
 
 interface ActionPanelProps {
   pveMode: boolean;
@@ -18,12 +21,16 @@ interface ActionPanelProps {
   onTogglePve: () => void;
   onTogglePvp: () => void;
   onFight: () => void;
+  tacticalOpponent?: Character | null;
+  tacticalHint?: TacticalHint | null;
+  onOpenInventory?: (element?: string) => void;
 }
 
 export const ActionPanel = memo(function ActionPanel({
   pveMode, canFight, matchmaking, hasPendingFight, autoMode,
   isOfflineMode, fightsLeft, bossAttacksLeft, bossUnlocked,
   bossHp, bossMaxHp, bossLevel, onTogglePve, onTogglePvp, onFight,
+  tacticalOpponent, tacticalHint, onOpenInventory,
 }: ActionPanelProps) {
 
   const bossHpPct = bossMaxHp > 0 ? Math.max(0, Math.min(100, (bossHp / bossMaxHp) * 100)) : 100;
@@ -102,6 +109,10 @@ export const ActionPanel = memo(function ActionPanel({
           </div>
         )}
       </div>
+
+      {tacticalOpponent && tacticalHint && onOpenInventory && !pveMode && !hasPendingFight && !autoMode && (
+        <TacticalLens opponent={tacticalOpponent} hint={tacticalHint} onOpenInventory={onOpenInventory} />
+      )}
 
       <div className="fight-row">
         <button

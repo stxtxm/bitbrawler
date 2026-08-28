@@ -199,7 +199,7 @@ const Arena = () => {
           statOptions={statOptions}
           idle={idleView}
         />
-        <ActionPanel {...combat.actionPanelProps} />
+        <ActionPanel {...combat.actionPanelProps} onOpenInventory={inventory.openInventoryFiltered} />
       </div>
 
       <ConnectionModal open={connectionModal.open} message={connectionModal.message} onClose={closeModal} />
@@ -211,6 +211,7 @@ const Arena = () => {
           itemUpgradeLevels={activeCharacter?.itemUpgrades ?? {}}
           essence={essence}
           onSalvage={salvageItems}
+          inventoryFilterElement={inventory.inventoryFilterElement}
         />
       )}
 

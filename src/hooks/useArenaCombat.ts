@@ -1,8 +1,9 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MonsterId } from '../data/monsterAssets';
 import { BOSS_ID, BossId } from '../data/bossAssets';
 import { Character } from '../types/Character';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
+import { getTacticalHint } from '../utils/tacticalLens';
 import {
   buildBossCharacter,
   createBossProgress,
@@ -65,6 +66,8 @@ export const useArenaCombat = ({
   const [matchmaking, setMatchmaking] = useState(false);
   const [combatData, setCombatData] = useState<MatchmakingResult | null>(null);
   const [pveMonster, setPveMonster] = useState<{ monsterId: MonsterId | BossId } | null>(null);
+  const [previewOpponent, setPreviewOpponent] = useState<Character | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   const fightsLeft = character?.fightsLeft ?? 0;
   const bossProgress = character?.bossProgress
@@ -85,8 +88,16 @@ export const useArenaCombat = ({
       ? bossUnlocked && bossAttacksLeft > 0
       : fightsLeft > 0);
 
-  const onTogglePve = useCallback(() => setMode('pve'), []);
-  const onTogglePvp = useCallback(() => setMode('pvp'), []);
+  const onTogglePve = useCallback(() => {
+    setMode('pve');
+    setPreviewOpponent(null);
+    setPreviewLoading(false);
+  }, []);
+  const onTogglePvp = useCallback(() => {
+    setMode('pvp');
+    setPreviewOpponent(null);
+    setPreviewLoading(false);
+  }, []);
 
   const onFight = useCallback(async () => {
     if (!character || matchmaking || hasPendingFight || character.autoMode) return;
@@ -111,6 +122,7 @@ export const useArenaCombat = ({
     }
 
     setMatchmaking(true);
+    setPreviewOpponent(null);
     try {
       const match = await startMatchmaking();
       if (!match) {
@@ -162,7 +174,42 @@ export const useArenaCombat = ({
   const onCloseCombat = useCallback(() => {
     setCombatData(null);
     setPveMonster(null);
+    setPreviewOpponent(null);
+    setPreviewLoading(false);
   }, []);
+
+  const tacticalHint = useMemo(() => {
+    if (!character || !previewOpponent) return null;
+    return getTacticalHint(character, previewOpponent);
+  }, [character, previewOpponent]);
+
+  useEffect(() => {
+    if (pveMode || isOfflineMode || !character || hasPendingFight || autoMode || combatData || previewOpponent || previewLoading) return;
+    if (fightsLeft <= 0) return;
+    if (typeof startMatchmaking !== 'function') return;
+    let cancelled = false;
+    setPreviewLoading(true);
+    try {
+      const maybePromise = startMatchmaking();
+      if (!maybePromise || typeof (maybePromise as Promise<unknown>).then !== 'function') {
+        setPreviewLoading(false);
+        return;
+      }
+      (maybePromise as Promise<MatchmakingResult | null>)
+        .then((match) => {
+          if (!cancelled && match?.opponent) setPreviewOpponent(match.opponent);
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (!cancelled) setPreviewLoading(false);
+        });
+    } catch {
+      setPreviewLoading(false);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [pveMode, isOfflineMode, character, hasPendingFight, autoMode, combatData, previewOpponent, previewLoading, fightsLeft, startMatchmaking]);
 
   const actionPanelProps = useMemo(() => ({
     pveMode,
@@ -180,6 +227,9 @@ export const useArenaCombat = ({
     onTogglePve,
     onTogglePvp,
     onFight,
+    tacticalOpponent: previewOpponent,
+    tacticalHint,
+    previewLoading,
   }), [
     autoMode,
     bossAttacksLeft,
@@ -195,7 +245,10 @@ export const useArenaCombat = ({
     onFight,
     onTogglePve,
     onTogglePvp,
+    previewOpponent,
+    previewLoading,
     pveMode,
+    tacticalHint,
   ]);
 
   return {
@@ -210,6 +263,9 @@ export const useArenaCombat = ({
     canFight,
     bossUnlocked,
     bossAttacksLeft,
+    previewOpponent,
+    tacticalHint,
+    previewLoading,
     onTogglePve,
     onTogglePvp,
     onFight,

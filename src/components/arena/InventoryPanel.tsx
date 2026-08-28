@@ -40,6 +40,7 @@ interface InventoryPanelProps {
   onHoverItem: (id: string | null) => void;
   previewItemId: string | null;
   pityCount?: number;
+  inventoryFilterElement?: string | null;
   // Forge integration
   itemUpgradeLevels?: Record<string, number>;
   onSalvage?: (itemId: string) => void;
@@ -87,6 +88,7 @@ export const InventoryPanel = memo(function InventoryPanel({
   itemUpgradeLevels = {},
   onSalvage,
   essence = 0,
+  inventoryFilterElement = null,
 }: InventoryPanelProps) {
   const groupedItems = useMemo(() => {
     const bySlot: Record<ItemSlot, PixelItemAsset[]> = {
@@ -224,6 +226,11 @@ export const InventoryPanel = memo(function InventoryPanel({
                 })}
               </div>
             </div>
+            {inventoryFilterElement && (
+              <div className="inv-filter-banner" data-testid="inventory-filter-banner">
+                Filtre: {inventoryFilterElement.toUpperCase()}
+              </div>
+            )}
 
             <div className="inv-body-content">
               <div className="inv-groups">
@@ -237,10 +244,11 @@ export const InventoryPanel = memo(function InventoryPanel({
                       <div className="inv-group-grid">
                         {slotItems.map((item) => {
                           const isSelected = previewItemId === item.id;
+                          const isFilterMatch = inventoryFilterElement && item.element === inventoryFilterElement;
                           return (
                             <button
                               key={item.id}
-                              className={`inv-group-item rarity-${item.rarity} ${isSelected ? 'selected' : ''} ${(itemUpgradeLevels[item.id] ?? 0) > 0 ? `upgraded upgraded-level-${Math.min(itemUpgradeLevels[item.id] ?? 0, 5)}` : ''}`}
+                              className={`inv-group-item rarity-${item.rarity} ${isSelected ? 'selected' : ''} ${isFilterMatch ? 'filter-match' : ''} ${(itemUpgradeLevels[item.id] ?? 0) > 0 ? `upgraded upgraded-level-${Math.min(itemUpgradeLevels[item.id] ?? 0, 5)}` : ''}`}
                               onClick={() => onSelectItem(item.id)}
                               onMouseEnter={() => onHoverItem(item.id)}
                               onMouseLeave={() => onHoverItem(null)}
