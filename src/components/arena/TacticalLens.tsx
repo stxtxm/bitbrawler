@@ -4,7 +4,7 @@ import { AffinityBadge } from '../AffinityBadge';
 import { ARCHETYPE_LABELS } from '../../utils/affinityUtils';
 import { ELEMENT_LABELS } from '../../types/Item';
 import type { TacticalHint } from '../../utils/tacticalLens';
-import { Character } from '../../types/Character';
+import type { Character } from '../../types/Character';
 
 interface TacticalLensProps {
   opponent: Character;

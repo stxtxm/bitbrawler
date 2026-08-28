@@ -42,6 +42,7 @@ interface UseArenaCombatOptions {
   ensureConnection: (message: string) => Promise<boolean>;
   openModal: (message: string) => void;
   startMatchmaking: () => Promise<MatchmakingResult | null>;
+  findPreviewOpponent?: () => Promise<MatchmakingResult | null>;
   useFight: UseFight;
   useBossFight: UseBossFight;
   onLevelUp: (levelsGained: number, newLevel: number) => void;
@@ -58,6 +59,7 @@ export const useArenaCombat = ({
   ensureConnection,
   openModal,
   startMatchmaking,
+  findPreviewOpponent,
   useFight,
   useBossFight,
   onLevelUp,
@@ -66,8 +68,10 @@ export const useArenaCombat = ({
   const [matchmaking, setMatchmaking] = useState(false);
   const [combatData, setCombatData] = useState<MatchmakingResult | null>(null);
   const [pveMonster, setPveMonster] = useState<{ monsterId: MonsterId | BossId } | null>(null);
-  const [previewOpponent, setPreviewOpponent] = useState<Character | null>(null);
+  const [previewMatch, setPreviewMatch] = useState<MatchmakingResult | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+
+  const previewOpponent = previewMatch?.opponent ?? null;
 
   const fightsLeft = character?.fightsLeft ?? 0;
   const bossProgress = character?.bossProgress
@@ -90,12 +94,12 @@ export const useArenaCombat = ({
 
   const onTogglePve = useCallback(() => {
     setMode('pve');
-    setPreviewOpponent(null);
+    setPreviewMatch(null);
     setPreviewLoading(false);
   }, []);
   const onTogglePvp = useCallback(() => {
     setMode('pvp');
-    setPreviewOpponent(null);
+    setPreviewMatch(null);
     setPreviewLoading(false);
   }, []);
 
@@ -121,8 +125,15 @@ export const useArenaCombat = ({
       return;
     }
 
+    if (previewMatch) {
+      setCombatData(previewMatch);
+      setPreviewMatch(null);
+      setPreviewLoading(false);
+      return;
+    }
+
     setMatchmaking(true);
-    setPreviewOpponent(null);
+    setPreviewMatch(null);
     try {
       const match = await startMatchmaking();
       if (!match) {
@@ -143,6 +154,7 @@ export const useArenaCombat = ({
     hasPendingFight,
     matchmaking,
     openModal,
+    previewMatch,
     pveMode,
     startMatchmaking,
   ]);
@@ -174,7 +186,7 @@ export const useArenaCombat = ({
   const onCloseCombat = useCallback(() => {
     setCombatData(null);
     setPveMonster(null);
-    setPreviewOpponent(null);
+    setPreviewMatch(null);
     setPreviewLoading(false);
   }, []);
 
@@ -184,20 +196,20 @@ export const useArenaCombat = ({
   }, [character, previewOpponent]);
 
   useEffect(() => {
-    if (pveMode || isOfflineMode || !character || hasPendingFight || autoMode || combatData || previewOpponent || previewLoading) return;
+    if (pveMode || isOfflineMode || !character || hasPendingFight || autoMode || combatData || previewMatch || previewLoading) return;
     if (fightsLeft <= 0) return;
-    if (typeof startMatchmaking !== 'function') return;
+    if (typeof findPreviewOpponent !== 'function') return;
     let cancelled = false;
     setPreviewLoading(true);
     try {
-      const maybePromise = startMatchmaking();
+      const maybePromise = findPreviewOpponent();
       if (!maybePromise || typeof (maybePromise as Promise<unknown>).then !== 'function') {
         setPreviewLoading(false);
         return;
       }
       (maybePromise as Promise<MatchmakingResult | null>)
         .then((match) => {
-          if (!cancelled && match?.opponent) setPreviewOpponent(match.opponent);
+          if (!cancelled && match?.opponent) setPreviewMatch(match);
         })
         .catch(() => {})
         .finally(() => {
@@ -209,7 +221,7 @@ export const useArenaCombat = ({
     return () => {
       cancelled = true;
     };
-  }, [pveMode, isOfflineMode, character, hasPendingFight, autoMode, combatData, previewOpponent, previewLoading, fightsLeft, startMatchmaking]);
+  }, [pveMode, isOfflineMode, character, hasPendingFight, autoMode, combatData, previewMatch, previewLoading, fightsLeft, findPreviewOpponent]);
 
   const actionPanelProps = useMemo(() => ({
     pveMode,
