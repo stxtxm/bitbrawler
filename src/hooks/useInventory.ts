@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Character } from '../types/Character';
+import { Element } from '../types/Item';
 import { ItemSlot, ItemStats, PixelItemAsset } from '../types/Item';
 import {
   equipItem,
@@ -76,6 +77,7 @@ export const useInventory = ({
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [inventoryHoveredId, setInventoryHoveredId] = useState<string | null>(null);
   const [inventorySelectedId, setInventorySelectedId] = useState<string | null>(null);
+  const [inventoryFilterElement, setInventoryFilterElement] = useState<Element | null>(null);
   const [lootboxRolling, setLootboxRolling] = useState(false);
   const [lootboxResult, setLootboxResult] = useState<PixelItemAsset | null>(null);
   const rollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -92,8 +94,22 @@ export const useInventory = ({
     }
   }, []);
 
-  const openInventory = useCallback(() => setInventoryOpen(true), []);
-  const closeInventory = useCallback(() => setInventoryOpen(false), []);
+  const openInventory = useCallback(() => {
+    setInventoryFilterElement(null);
+    setInventoryOpen(true);
+  }, []);
+  const openInventoryFiltered = useCallback((element?: Element | string | null) => {
+    if (element && typeof element === 'string' && ['fire', 'water', 'wind', 'earth', 'light', 'dark'].includes(element)) {
+      setInventoryFilterElement(element as Element);
+    } else {
+      setInventoryFilterElement(null);
+    }
+    setInventoryOpen(true);
+  }, []);
+  const closeInventory = useCallback(() => {
+    setInventoryOpen(false);
+    setInventoryFilterElement(null);
+  }, []);
 
   const inventory = character?.inventory ?? [];
   const inventoryCapacity = INVENTORY_CAPACITY;
@@ -206,6 +222,7 @@ export const useInventory = ({
       setLootboxRolling(false);
       setInventoryHoveredId(null);
       setInventorySelectedId(null);
+      setInventoryFilterElement(null);
     }
   }, [clearRollTimers, inventoryOpen]);
 
@@ -214,7 +231,9 @@ export const useInventory = ({
   return {
     inventoryOpen,
     openInventory,
+    openInventoryFiltered,
     closeInventory,
+    inventoryFilterElement,
     inventory,
     inventoryCapacity,
     inventoryFull,
