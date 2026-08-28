@@ -1,0 +1,86 @@
+name: Watchdog — PR orphelines & CI rouge
+
+on:
+  schedule:
+    - cron: '17 * * * *' # 1x/h à 17min, évite la pile 00
+  workflow_dispatch:
+
+concurrency:
+  group: watchdog
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Sweep PRs orphelines et CI rouge
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "🔍 Watchdog 1/h — scan des PRs auto-generated"
+          gh label get "ci-needs-human" 2>/dev/null || gh label create "ci-needs-human" --color "d73a4a" --description "CI bloquée après 3 retries, intervention humaine requise" 2>/dev/null || true
+          gh pr list --state open --label auto-generated --json number,updatedAt,statusCheckRollup,headRefName,body --limit 20 > /tmp/prs.json 2>/dev/null || echo "[]" > /tmp/prs.json
+          COUNT=$(jq 'length' /tmp/prs.json 2>/dev/null || echo 0)
+          echo "📋 $COUNT PRs auto-generated ouvertes"
+          DISPATCHED=0
+          MAX_DISPATCH=3
+          NOW=$(date -u +%s)
+          for i in $(seq 0 $((COUNT-1))); do
+            [ "$DISPATCHED" -ge "$MAX_DISPATCH" ] && { echo "⏭ Max $MAX_DISPATCH dispatches atteint, arrêt"; break; }
+            PR=$(jq -c ".[$i]" /tmp/prs.json)
+            PR_NUMBER=$(echo "$PR" | jq -r '.number')
+            HEAD_REF=$(echo "$PR" | jq -r '.headRefName // ""')
+            UPDATED_AT=$(echo "$PR" | jq -r '.updatedAt // ""')
+            BODY=$(echo "$PR" | jq -r '.body // ""')
+            ISSUE_NUMBER=$(echo "$BODY" | grep -oE '#[0-9]+' | head -1 | tr -d '#' || echo "")
+            UPDATED_TS=$(date -d "$UPDATED_AT" +%s 2>/dev/null || echo "$NOW")
+            AGE_MIN=$(( (NOW - UPDATED_TS) / 60 ))
+            if [ "$AGE_MIN" -lt 60 ]; then
+              echo "⏭ PR #$PR_NUMBER trop récente (${AGE_MIN}min), skip"
+              continue
+            fi
+            CHECK_COUNT=$(echo "$PR" | jq '[.statusCheckRollup[]? | select(((.name // .context // "") | test("vercel";"i") | not))] | length' 2>/dev/null || echo 0)
+            FAILED_COUNT=$(echo "$PR" | jq '[.statusCheckRollup[]? | select(((.name // .context // "") | test("vercel";"i") | not) and .conclusion == "FAILURE")] | length' 2>/dev/null || echo 0)
+            echo "--- PR #$PR_NUMBER ($HEAD_REF, ${AGE_MIN}min, $CHECK_COUNT checks, $FAILED_COUNT failed, issue #$ISSUE_NUMBER) ---"
+            if [ "$CHECK_COUNT" -eq 0 ] && [ -n "$HEAD_REF" ]; then
+              echo "⚠ PR #$PR_NUMBER orpheline (0 check, >60min) → redispatch CI"
+              if gh workflow run ci.yml --ref "$HEAD_REF" -f pr_number="$PR_NUMBER" --repo "${{ github.repository }}" 2>&1 | head -5; then
+                echo "✓ CI redispatchée pour #$PR_NUMBER"
+                DISPATCHED=$((DISPATCHED+1))
+              else
+                echo "❌ redispatch CI échoué pour #$PR_NUMBER"
+              fi
+              sleep 2
+              continue
+            fi
+            if [ "$FAILED_COUNT" -gt 0 ] && [ -n "$ISSUE_NUMBER" ]; then
+              RETRY_COUNT=$(gh issue view "$ISSUE_NUMBER" --json labels --jq '[.labels[].name | select(startswith("ci-retry-"))] | length' 2>/dev/null || echo 0)
+              HAS_HUMAN_LABEL=$(gh issue view "$ISSUE_NUMBER" --json labels --jq '[.labels[].name | select(. == "ci-needs-human")] | length' 2>/dev/null || echo 0)
+              if [ "$RETRY_COUNT" -ge 3 ] || [ "$HAS_HUMAN_LABEL" -gt 0 ]; then
+                echo "⛔ PR #$PR_NUMBER déjà à 3 retries ou label ci-needs-human, skip"
+                continue
+              fi
+              echo "❌ PR #$PR_NUMBER CI rouge ($FAILED_COUNT failed), retry $RETRY_COUNT → redispatch dev-agent"
+              gh issue edit "$ISSUE_NUMBER" --add-label "ci-retry-$((RETRY_COUNT+1))" 2>/dev/null || true
+              if gh workflow run opencode.yml -f issue_number="$ISSUE_NUMBER" -f ci_failure=true --repo "${{ github.repository }}" 2>&1 | head -5; then
+                echo "✓ Dev-agent redispatché pour #$ISSUE_NUMBER"
+                DISPATCHED=$((DISPATCHED+1))
+              else
+                echo "❌ redispatch dev-agent échoué"
+              fi
+              sleep 2
+              continue
+            fi
+            echo "✅ PR #$PR_NUMBER OK ou pas d'action"
+          done
+          echo "🏁 Watchdog terminé: $DISPATCHED dispatch(s) sur $COUNT PRs"

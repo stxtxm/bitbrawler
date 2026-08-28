@@ -3,6 +3,7 @@ name: CI
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    branches-ignore: ['memory', 'memory/**']
   workflow_dispatch:
     inputs:
       pr_number:
@@ -11,8 +12,8 @@ on:
         type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.ref }}
+  cancel-in-progress: false
 
 jobs:
   check:
@@ -57,17 +58,29 @@ jobs:
             echo "No PR number available — skipping reviewer trigger"
             exit 0
           fi
-          echo "✅ CI passed for PR #$PR_NUMBER — triggering reviewer..."
-          # Prefer ci_green=true (skips the reviewer's CI wait). Fall back to a
-          # plain dispatch when the reviewer's public.yml on the default branch
-          # doesn't know the input yet (PR to add it not merged).
-          if gh workflow run reviewer.yml -f pr_number="$PR_NUMBER" -f ci_green=true --repo "${{ github.repository }}" 2>/dev/null; then
-            echo "✓ Reviewer dispatched for PR #$PR_NUMBER (ci_green=true)"
-          elif gh workflow run reviewer.yml -f pr_number="$PR_NUMBER" --repo "${{ github.repository }}" 2>/dev/null; then
-            echo "⚠ ci_green input not yet on default branch — dispatched without it"
+          echo "✅ CI passée pour PR #$PR_NUMBER — déclenchement du reviewer..."
+          set +e
+          OUT=$(gh workflow run reviewer.yml -f pr_number="$PR_NUMBER" -f ci_green=true --repo "${{ github.repository }}" 2>&1)
+          RC=$?
+          set -e
+          if [ $RC -eq 0 ]; then
+            echo "✓ Reviewer déclenché pour PR #$PR_NUMBER (ci_green=true)"
+            echo "$OUT"
           else
-            echo "❌ Could not dispatch reviewer for PR #$PR_NUMBER"
-            exit 1
+            echo "❌ Dispatch principal échoué (ci_green=true) : $OUT"
+            echo "⚠ Tentative secours sans ci_green..."
+            set +e
+            OUT2=$(gh workflow run reviewer.yml -f pr_number="$PR_NUMBER" --repo "${{ github.repository }}" 2>&1)
+            RC2=$?
+            set -e
+            if [ $RC2 -eq 0 ]; then
+              echo "✓ Reviewer déclenché sans ci_green (fallback)"
+              echo "$OUT2"
+            else
+              echo "❌ Fallback aussi échoué : $OUT2"
+              gh pr comment "$PR_NUMBER" --body "❌ Le workflow reviewer n'a pas pu être déclenché automatiquement. Erreur: $OUT2" 2>/dev/null || true
+              exit 1
+            fi
           fi
 
       - name: On CI failure — dispatch dev agent to fix
@@ -80,19 +93,35 @@ jobs:
             echo "No PR number available — cannot re-dispatch agent"
             exit 0
           fi
-          echo "❌ CI failed for PR #$PR_NUMBER — re-dispatching dev agent to fix..."
+          echo "❌ CI échouée pour PR #$PR_NUMBER — re-dispatch du dev agent pour corriger..."
           PR_BODY=$(gh pr view "$PR_NUMBER" --json body --jq '.body // ""' 2>/dev/null || echo "")
           ISSUE_NUMBER=$(echo "$PR_BODY" | grep -oE '#[0-9]+' | head -1 | tr -d '#' || echo "")
           if [ -z "$ISSUE_NUMBER" ]; then
-            echo "No linked issue found in PR body — cannot re-dispatch"
+            echo "⛔ Aucune issue liée trouvée dans le body de la PR — impossible de re-dispatcher"
+            gh pr comment "$PR_NUMBER" --body "❌ CI en échec mais aucune issue liée trouvée (Closes #N manquant). Impossible de relancer le dev agent automatiquement." 2>/dev/null || true
             exit 0
           fi
           RETRY_COUNT=$(gh issue view "$ISSUE_NUMBER" --json labels --jq '[.labels[].name | select(startswith("ci-retry-"))] | length' 2>/dev/null || echo 0)
           if [ "$RETRY_COUNT" -ge 3 ]; then
-            echo "⛔ Max retries (3) reached for issue #$ISSUE_NUMBER — manual intervention required"
-            gh pr comment "$PR_NUMBER" --body "❌ CI failed after 3 retries. Manual intervention required."
+            echo "⛔ Max retries (3) atteint pour issue #$ISSUE_NUMBER — création issue humaine"
+            RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            gh issue create --title "ci: PR #$PR_NUMBER bloquée après 3 retries (issue #$ISSUE_NUMBER)" --body "CI rouge persistant sur PR #$PR_NUMBER (branche feat/auto-$ISSUE_NUMBER).\n\n- Issue parente: #$ISSUE_NUMBER\n- Run CI: $RUN_URL\n- Le dev-agent a échoué 3 fois avec mémoire+contexte CI.\n- Action: analyser le patch, le flow ou un gros changement nécessitant validation humaine.\n\ncc @stxtxm" --label "ci-needs-human" 2>/dev/null || gh issue create --title "ci: PR #$PR_NUMBER bloquée après 3 retries (issue #$ISSUE_NUMBER)" --body "CI rouge persistant sur PR #$PR_NUMBER. Run: $RUN_URL" 2>/dev/null || true
+            gh pr comment "$PR_NUMBER" --body "⛔ 3 retries échoués — issue de suivi créée (label ci-needs-human). Le flow ou le patch a un problème de fond, intervention humaine requise. Run: $RUN_URL" 2>/dev/null || true
             exit 0
           fi
           gh issue edit "$ISSUE_NUMBER" --add-label "ci-retry-$((RETRY_COUNT+1))" 2>/dev/null || true
-          echo "Re-dispatching dev agent for issue #$ISSUE_NUMBER (retry #$((RETRY_COUNT+1)))..."
-          gh workflow run opencode.yml -f issue_number="$ISSUE_NUMBER" --repo "${{ github.repository }}"
+          # Poster un commentaire visible sur l'issue pour tracer la boucle
+          gh issue comment "$ISSUE_NUMBER" --body "🔄 CI échouée sur PR #$PR_NUMBER — tentative de correction automatique #$((RETRY_COUNT+1))/3. Le dev agent va relire la mémoire et corriger." 2>/dev/null || true
+          echo "🔄 Re-dispatch dev agent pour issue #$ISSUE_NUMBER (retry #$((RETRY_COUNT+1))/3) avec contexte CI..."
+          set +e
+          OUT=$(gh workflow run opencode.yml -f issue_number="$ISSUE_NUMBER" -f ci_failure=true --repo "${{ github.repository }}" 2>&1)
+          RC=$?
+          set -e
+          if [ $RC -eq 0 ]; then
+            echo "✓ Dev agent re-déclenché pour #$ISSUE_NUMBER"
+            echo "$OUT"
+          else
+            echo "❌ Échec re-dispatch opencode.yml : $OUT"
+            gh pr comment "$PR_NUMBER" --body "❌ CI échouée et re-dispatch du dev agent a échoué: $OUT" 2>/dev/null || true
+            exit 1
+          fi
