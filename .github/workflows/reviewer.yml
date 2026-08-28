@@ -396,10 +396,10 @@ jobs:
             - NE JAMAIS merge si le code a des problèmes de sécurité
             - Si le changement semble bon mais mérite un suivi, approuve + crée une issue de suivi avec \`gh issue create\` (titre et body en français, terminée par /oc)
             - ⚠️ Issue de suivi = UNE SEULE COMMANDE, body UNE ligne courte sans guillemets/backticks, terminée par /oc. REMPLACE OBLIGATOIREMENT les placeholders par du contenu réel — NE COPIE JAMAIS l'exemple verbatim :
-            NEW_ISSUE_URL=\$(gh issue create --title "fix: exemple — invente un vrai titre descriptif" --body "Phrase unique decrivant le suivi concret. /oc")
+            NEW_ISSUE_URL=\$(gh issue create --title \"fix: exemple — invente un vrai titre descriptif\" --body \"Phrase unique decrivant le suivi concret. /oc\")
             Puis dispatch best-effort: gh workflow run opencode.yml -f issue_number=\${NEW_ISSUE_URL##*/} || true
             Ne JAMAIS réessayer plus de 2 fois; ne JAMAIS créer une issue sans titre/body substantiels
-            ⛔ INTERDIT de laisser litteralement "<titre court>", "<resume en une phrase", "description courte et concrete" ou "Phrase unique" — toute issue avec ces placeholders sera auto-fermee et comptera comme echec (exemple = piège)
+            ⛔ INTERDIT de laisser litteralement \"<titre court>\", \"<resume en une phrase\", \"description courte et concrete\" ou \"Phrase unique\" — toute issue avec ces placeholders sera auto-fermee et comptera comme echec (exemple = piège)
             - Nettoie la branche après merge
             - TOUS tes commentaires / reviews / bodies DOIVENT être en français
             - Évalue la taille : petit bug/hotfix/stats → merge rapide si CI verte ; gros changement → vérifie tests + régression plus strictement
