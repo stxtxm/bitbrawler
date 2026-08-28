@@ -36,9 +36,6 @@ export const useArenaLevelUp = ({
   const [xpBarAnimating, setXpBarAnimating] = useState(false);
   const [recentLevelUp, setRecentLevelUp] = useState<RecentLevelUp | null>(null);
   const levelUpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Dedup guard: Android throttles timers while locked/screen-off — several
-  // queued calls for the SAME level would replay the FX in a loop.
-  const lastQueuedRef = useRef<{ level: number; at: number } | null>(null);
   // Imperative lock: set synchronously inside queueLevelUp so back-to-back
   // synchronous calls (before React re-renders) cannot double-fire the FX.
   const fxActiveRef = useRef(false);
@@ -114,7 +111,6 @@ export const useArenaLevelUp = ({
 
     if (levelUpTimerRef.current) clearTimeout(levelUpTimerRef.current);
     levelUpTimerRef.current = null;
-    lastQueuedRef.current = { level: newLevel, at: now };
 
     // Multiple levels at once (offline catch-up) → show ONE aggregated FX
     // announcing the final level with the total gained. Staggering one flash
@@ -125,7 +121,6 @@ export const useArenaLevelUp = ({
     levelUpTimerRef.current = setTimeout(() => {
       setRecentLevelUp(null);
       levelUpTimerRef.current = null;
-      lastQueuedRef.current = null;
       fxActiveRef.current = false;
     }, 2000);
   }, []);
