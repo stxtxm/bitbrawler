@@ -90,8 +90,8 @@
       "status": "fixed"
     },
     {
-      "id": "agent-model-migration-x-preview-f",
-      "title": "Modèle opencode/deepseek-v4-flash-free devenu indisponible",
+      "id": "agent-model-migration-muse",
+      "title": "Modèle unique des agents : opencode/muse-spark-1.2-contributor-free (repli opencode/nemotron)",
       "status": "fixed"
     },
     {

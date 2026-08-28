@@ -17,7 +17,7 @@
 └──────────────────────────────┬───────────────────────────────────┘
                                ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│ 2. DEV AGENT (opencode.yml, modèle x-preview-f-free)             │
+│ 2. DEV AGENT (opencode.yml, modèle muse-spark-1.2)              │
 │    • Charge mémoires: dev.json + shared.json                     │
 │      ↳ AUTO-COMPACTÉES avant injection (scripts/                 │
 │        compact-memories.mjs, budgets shared 6KB / agent 4.5KB)   │
@@ -63,8 +63,9 @@
 
 ## Modèles
 
-- Modèle par défaut : `opencode/x-preview-f-free` (opencode.json + frontmatter
-  `.opencode/agents/*.md` + tableaux de fallback dans les workflows).
+- Modèle par défaut : `opencode/muse-spark-1.2-contributor-free` (= `muse`)
+  (opencode.json + frontmatter `.opencode/agents/*.md` + tableaux de fallback dans
+  les workflows, repli `opencode/nemotron`).
 - Si un modèle disparaît : `sed` global du slug, push, relancer
   `gh workflow run reviewer.yml -f pr_number=N`.
 
