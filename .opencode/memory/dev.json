@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "agent": "dev",
+  "last_session": "2026-08-28T22:21:45Z",
+  "recent_failures": [],
+  "known_limitations": [
+    "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
+    "Ne pas générer de SQL ALTER TABLE — créer une issue migration",
+    "Le build peut échouer si on touche à des fichiers de typages sans mettre à jour les déclarations",
+    "Toujours vérifier que npm test && npm run build passent avant de commit",
+    "Boss PvE: un kill 1-shot en une journée est IMPOSSIBLE par construction (pool = 12x maxHp, boss scale 1.2x) — médiane ~4 jours, c'est le design voulu",
+    "Quota egress Supabase free est PAR COMPTE/ORG (pas par projet) — créer un 2e projet sur le même compte ne reset rien",
+    "Vercel: modifier une env var NE redéploie PAS — toujours Redeploy manuel après save; vercel env add via CLI ne déploie pas non plus (vercel --prod requis depuis le dossier lié au bon projet)",
+    "api/idle-processor: SELECT_COLUMNS et calculateIdleEssence sont un MIROIR du client — toute modif de courbe côté client (idleConfig) DOIT être reflétée côté API"
+  ],
+  "preferred_patterns": {
+    "naming": "camelCase pour variables, PascalCase pour types/interfaces",
+    "imports": "Imports absolus depuis src/",
+    "tests": "TDD : écrire le test avant l'implémentation",
+    "error_handling": "Utiliser try/catch avec fallback, pas de throw non géré",
+    "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
+  },
+  "session_notes": [
+    {
+      "date": "2026-08-24",
+      "issue": "#783",
+      "lesson": "Issue #783 dead-code removal dans un script sans infra de test: pattern verification par EQUIVALENCE COMPORTEMENTALE - sandbox /tmp avec layout miroir (scripts/ + .opencode/memory/), executer version BEFORE sur copies fraiches -> md5 baseline, appliquer le fix, re-executer version AFTER sur les mem…"
+    },
+    {
+      "date": "2026-08-25",
+      "issue": "#820",
+      "lesson": "Issue #820 garde de niveau au reuse persistant: qa-bot.mjs appelle run() au top-level donc non importable dans vitest - pattern verifie: tests miroir (convention repo) + harness /tmp qui extrait les VRAIES fonctions du .mjs via extraction par profondeur d'accolades et rejoue le scénario de bug. Att…"
+    },
+    {
+      "date": "2026-08-25",
+      "issue": "#821",
+      "lesson": "Issue #821 combat speed x1/x2: (1) reglage local persiste = pattern useSound (localStorage module-level) - evite toute migration Supabase. (2) CombatView fake timers: le tick #1 du round interval fait setCurrentRound(0) donc .round-value reste '1/3' apres le premier round joue - discriminer x1/x2 v…"
+    },
+    {
+      "date": "2026-08-25",
+      "issue": "#830",
+      "lesson": "Issue #830 extraction helpers purs QA bot: (1) module qa/qa-bot-helpers.js + .d.ts suit la convention config.js/config.d.ts du dossier qa/ - PAS .mjs: Node ESM ne resout pas un import './x.js' vers x.mjs, harnais /tmp a attrape le bug avant commit. (2) Entry guard run(): process.argv[1] + import.meta.url === pathToFileURL(resolve(argv1)).href - valide en conditions reelles: node qa/qa-bot.mjs chemin relatif -> execute, import ESM -> inert. (3) Verification par EQUIVALENCE comportementale git HEAD vs nouveau module: extraire fonctions anciennes par profondeur d'accolades, 79 assertions identiques. (4) Les tests miroir peuvent porter des attentes FAUSSES (QA-PERS-3 vs QA-PERSI-3 reel) - le test corrige l'attente, jamais le code extrait verbatim."
+    },
+    {
+      "lesson": "Issue #834 combat speed 2x for qa-bot: helpers moved to src/utils caused import './qa-bot.config.js' broken in that location -> fix to '../../qa/qa-bot.config.js' and qa-bot.mjs import broken './qa-bot-helpers.js' -> '../src/utils/qa-bot-helpers.js'. Toggle detection must use SettingsPanel switch (CombatView toggle only visible during combat), so ensureCombatSpeed2x opens settings, checks aria-checked, clicks if needed, falls back to direct localStorage set. Capture combat_speed in runRecord for analyzer correlation. TDD helpers: COMBAT_SPEED_STORAGE_KEY, OPTIONS, selectors, isCombatSpeed, parseCombatSpeed, parseCombatSpeedText, getCombatSpeedFromStorageRaw, nextCombatSpeed.",
+      "issue": "#834",
+      "date": "2026-08-26"
+    },
+    {
+      "lesson": "Tactical Lens preview must never call startMatchmaking (which does fightsLeft-1 + pendingFight write). Use dedicated findPreviewOpponent = GameContext.findOpponent (pure findOpponent) and store full MatchmakingResult for reuse. onFight reuses previewMatch instead of second matchmaking to avoid double consumption / pendingFight leak. Import type fix for Character in TacticalLens.",
+      "issue": "#844",
+      "date": "2026-08-28"
+    }
+  ]
+}
