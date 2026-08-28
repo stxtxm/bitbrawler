@@ -38,17 +38,14 @@ describe('Game rules', () => {
     expect(GAME_RULES.BOTS.MAX_FIGHTS_PER_RUN).toBeGreaterThan(0);
   });
 
-  it('BOTS population is strongly reduced for Supabase free tier', () => {
-    // Drift driver must be off: no spontaneous bot creation per run
-    expect(GAME_RULES.BOTS.GROWTH_CHANCE).toBe(0);
-    // Minimal starter reserves to keep a playable opponent pool
+  it('BOTS population is slightly replenished for high-level matchmaking while staying lean for free tier', () => {
+    expect(GAME_RULES.BOTS.GROWTH_CHANCE).toBe(0.05);
     expect(GAME_RULES.BOTS.MIN_LVL1_BOTS).toBeLessThanOrEqual(3);
     expect(GAME_RULES.BOTS.MIN_LVL1_PROTECTED).toBeLessThanOrEqual(3);
     expect(GAME_RULES.BOTS.LVL1_RESERVE_PER_HUMAN).toBeLessThanOrEqual(0.5);
     expect(GAME_RULES.BOTS.LVL1_RESERVE_BUFFER).toBeLessThanOrEqual(2);
-    // Low activity: most bots idle most runs
-    expect(GAME_RULES.BOTS.ACTIVITY_RATE).toBeLessThanOrEqual(0.1);
-    // At most 1 PvE fight per run per bot
+    expect(GAME_RULES.BOTS.ACTIVITY_RATE).toBe(0.15);
+    expect(GAME_RULES.BOTS.MIN_POPULATION).toBe(3);
     expect(GAME_RULES.BOTS.MAX_FIGHTS_PER_RUN).toBe(1);
   });
 });

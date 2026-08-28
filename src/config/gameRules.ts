@@ -27,16 +27,16 @@ export const GAME_RULES = {
         ESSENCE_REWARD: 60, // Essence rewarded on boss kill
     },
     BOTS: {
-        MIN_POPULATION: 1,
+        MIN_POPULATION: 3,
         MIN_LVL1_BOTS: 3, // Minimal lvl 1 starter reserve (strongly reduced for Supabase free tier)
         MIN_LVL1_PROTECTED: 3, // Opponent pool: small but playable for a new player
         MIN_LVL1_ACTIVE_BOTS: 1, // Keep 1 lvl1 bot progressing (reduced from 2)
         LVL1_RESERVE_PER_HUMAN: 0.5, // Dynamic reserve sizing for real players (strongly reduced)
         LVL1_RESERVE_BUFFER: 2, // Extra starter buffer even with few humans (reduced from 6)
-        ACTIVITY_RATE: 0.08, // Percentage of bots active per run (strongly reduced to near-idle floor)
+        ACTIVITY_RATE: 0.15, // Slightly replenished for high-level matchmaking while staying lean for free tier
         MAX_FIGHTS_PER_RUN: 1, // At most 1 fight per run per bot (was 2)
         END_OF_DAY_DRAIN_START_HOUR: 22, // Paris hour when bots must finish all remaining fights before reset
-        GROWTH_CHANCE: 0, // No spontaneous bot creation per run — stops population drift
+        GROWTH_CHANCE: 0.05, // Micro-creation to repopulate mid-levels without recreating lvl1 tide
     }
 } as const;
 
