@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MonsterId } from '../data/monsterAssets';
-import { BOSS_ID, BossId } from '../data/bossAssets';
+import { ABYSSAL_BOSS_ID, BOSS_ID, BossId } from '../data/bossAssets';
 import { Character } from '../types/Character';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
 import { getTacticalHint } from '../utils/tacticalLens';
@@ -10,7 +10,9 @@ import {
   ensureBossDailyReset,
   getBossAttacksLeft,
   getBossPityReductionPct,
+  getBossProgressForId,
   isBossUnlocked,
+  isBossUnlockedForCharacter,
 } from '../utils/bossUtils';
 
 interface FightResult {
@@ -31,7 +33,7 @@ type UseBossFight = (
   won: boolean,
   xpGained: number,
   bossName: string,
-  options?: { consumeEnergy?: boolean; characterOverride?: Character; bossHpLeft?: number },
+  options?: { consumeEnergy?: boolean; characterOverride?: Character; bossHpLeft?: number; bossId?: BossId },
 ) => Promise<FightResult | null>;
 
 export type ArenaMode = 'pvp' | 'pve';
@@ -80,17 +82,32 @@ export const useArenaCombat = ({
     : null;
   const bossAttacksLeft = getBossAttacksLeft(character?.bossProgress);
   const bossUnlocked = !!character && isBossUnlocked(character.level);
+  const abyssalRaw = character ? (getBossProgressForId(character, ABYSSAL_BOSS_ID) ?? (character as any).abyssalBossProgress) : undefined;
+  const abyssalProgress = abyssalRaw ? ensureBossDailyReset(abyssalRaw) : null;
+  const abyssalAttacksLeft = getBossAttacksLeft(abyssalRaw as any);
+  const abyssalUnlocked = !!character && isBossUnlockedForCharacter(character, ABYSSAL_BOSS_ID);
   const hasPendingFight = !!character?.pendingFight;
   const autoMode = !!character?.autoMode;
 
+  const [selectedBossId, setSelectedBossId] = useState<BossId>(BOSS_ID);
+  useEffect(() => {
+    if (abyssalUnlocked && selectedBossId === BOSS_ID) {
+    }
+  }, [abyssalUnlocked, selectedBossId]);
+
   const pveMode = mode === 'pve';
+  const effectiveBossProgress = selectedBossId === ABYSSAL_BOSS_ID ? abyssalProgress : bossProgress;
+  const effectiveAttacksLeft = selectedBossId === ABYSSAL_BOSS_ID ? abyssalAttacksLeft : bossAttacksLeft;
+  const effectiveUnlocked = selectedBossId === ABYSSAL_BOSS_ID ? abyssalUnlocked : bossUnlocked;
+  const effectivePityReduction = getBossPityReductionPct(effectiveBossProgress ?? undefined, selectedBossId);
+  const effectivePityStacks = effectiveBossProgress?.pityStacks ?? 0;
 
   const canFight = !!character
     && !isOfflineMode
     && !hasPendingFight
     && !autoMode
     && (pveMode
-      ? bossUnlocked && bossAttacksLeft > 0
+      ? effectiveUnlocked && effectiveAttacksLeft > 0
       : fightsLeft > 0);
 
   const onTogglePve = useCallback(() => {
@@ -104,6 +121,12 @@ export const useArenaCombat = ({
     setPreviewLoading(false);
   }, []);
 
+  const onSelectBoss = useCallback((id: BossId) => {
+    setSelectedBossId(id);
+    setPreviewMatch(null);
+    setPreviewLoading(false);
+  }, []);
+
   const onFight = useCallback(async () => {
     if (!character || matchmaking || hasPendingFight || character.autoMode) return;
     const canProceed = await ensureConnection(connectionMessage);
@@ -113,11 +136,15 @@ export const useArenaCombat = ({
 
     if (pveMode) {
       try {
-        const progress = character.bossProgress
-          ? ensureBossDailyReset(character.bossProgress)
-          : createBossProgress(character);
-        const boss = buildBossCharacter(character, progress.bossHp, progress.pityStacks ?? 0);
-        setPveMonster({ monsterId: BOSS_ID });
+        const bossId = selectedBossId;
+        const existing = bossId === ABYSSAL_BOSS_ID
+          ? (getBossProgressForId(character, ABYSSAL_BOSS_ID) ?? (character as any).abyssalBossProgress)
+          : character.bossProgress;
+        const progress = existing
+          ? ensureBossDailyReset(existing)
+          : createBossProgress(character, Date.now(), bossId);
+        const boss = buildBossCharacter(character, progress.bossHp, bossId, progress.pityStacks ?? 0);
+        setPveMonster({ monsterId: bossId as any });
         setCombatData({ opponent: boss, matchType: 'boss', candidates: [] });
       } catch (error: unknown) {
         console.error('Boss generation failed:', error);
@@ -157,6 +184,7 @@ export const useArenaCombat = ({
     openModal,
     previewMatch,
     pveMode,
+    selectedBossId,
     startMatchmaking,
   ]);
 
@@ -167,10 +195,12 @@ export const useArenaCombat = ({
   ) => {
     try {
       const opponentName = combatData?.opponent.name ?? 'UNKNOWN';
+      const bossIdForFight = (pveMonster?.monsterId as BossId) ?? selectedBossId;
       /* eslint-disable react-hooks/rules-of-hooks -- callbacks, not hooks */
       const result = combatData?.matchType === 'boss'
         ? await useBossFight(won, xpGained, opponentName, {
             bossHpLeft: bossHpLeft ?? combatData.opponent.hp,
+            bossId: bossIdForFight,
           })
         : await useFight(won, xpGained, opponentName, combatData?.opponent.id ?? '');
       /* eslint-enable react-hooks/rules-of-hooks */
@@ -182,7 +212,7 @@ export const useArenaCombat = ({
       console.error('Fight result save failed:', error);
       openModal(getErrorMessage(error, connectionMessage));
     }
-  }, [combatData, connectionMessage, onLevelUp, openModal, useBossFight, useFight]);
+  }, [combatData, connectionMessage, onLevelUp, openModal, useBossFight, useFight, pveMonster, selectedBossId]);
 
   const onCloseCombat = useCallback(() => {
     setCombatData(null);
@@ -232,27 +262,34 @@ export const useArenaCombat = ({
     autoMode,
     isOfflineMode,
     fightsLeft,
-    bossAttacksLeft,
-    bossUnlocked,
-    bossHp: bossProgress?.bossHp ?? 0,
-    bossMaxHp: bossProgress?.bossMaxHp ?? 0,
-    bossLevel: bossProgress?.bossLevel ?? 0,
-    bossPityStacks: bossProgress?.pityStacks ?? 0,
-    bossPityReduction: getBossPityReductionPct(bossProgress ?? undefined),
+    bossAttacksLeft: effectiveAttacksLeft,
+    bossUnlocked: effectiveUnlocked,
+    bossHp: effectiveBossProgress?.bossHp ?? 0,
+    bossMaxHp: effectiveBossProgress?.bossMaxHp ?? 0,
+    bossLevel: effectiveBossProgress?.bossLevel ?? 0,
+    bossPityStacks: effectivePityStacks,
+    bossPityReduction: effectivePityReduction,
     onTogglePve,
     onTogglePvp,
     onFight,
     tacticalOpponent: previewOpponent,
     tacticalHint,
     previewLoading,
+    bossId: selectedBossId,
+    abyssalUnlocked,
+    abyssalAttacksLeft,
+    abyssalProgress,
+    bossProgress,
+    onSelectBoss,
   }), [
     autoMode,
-    bossAttacksLeft,
-    bossProgress?.bossHp,
-    bossProgress?.bossMaxHp,
-    bossProgress?.bossLevel,
-    bossProgress?.pityStacks,
-    bossUnlocked,
+    effectiveAttacksLeft,
+    effectiveBossProgress?.bossHp,
+    effectiveBossProgress?.bossMaxHp,
+    effectiveBossProgress?.bossLevel,
+    effectivePityStacks,
+    effectivePityReduction,
+    effectiveUnlocked,
     canFight,
     fightsLeft,
     hasPendingFight,
@@ -265,7 +302,12 @@ export const useArenaCombat = ({
     previewLoading,
     pveMode,
     tacticalHint,
-  ]);
+    selectedBossId,
+    abyssalUnlocked,
+    abyssalAttacksLeft,
+    abyssalProgress,
+    bossProgress,
+  ] as any);
 
   return {
     mode,
@@ -279,6 +321,14 @@ export const useArenaCombat = ({
     canFight,
     bossUnlocked,
     bossAttacksLeft,
+    abyssalUnlocked,
+    abyssalAttacksLeft,
+    abyssalProgress,
+    bossProgress,
+    selectedBossId,
+    onSelectBoss,
+    bossPityStacks: effectivePityStacks,
+    bossPityReduction: effectivePityReduction,
     previewOpponent,
     tacticalHint,
     previewLoading,

@@ -51,7 +51,27 @@ export const normalizeCharacter = (character: Character): Character => {
       pityStacks: character.bossProgress.pityStacks ?? 0,
       consolationCount: character.bossProgress.consolationCount ?? 0,
     } : undefined,
-  };
+    bossProgresses: (() => {
+      const anyChar = character as any;
+      if (anyChar.bossProgresses) {
+        const mapped: any = {};
+        for (const [k, v] of Object.entries(anyChar.bossProgresses as Record<string, any>)) {
+          mapped[k] = v ? { ...v, pityStacks: v.pityStacks ?? 0, consolationCount: v.consolationCount ?? 0 } : v;
+        }
+        return mapped;
+      }
+      if (character.bossProgress) {
+        return { void_titan: { ...character.bossProgress, pityStacks: character.bossProgress.pityStacks ?? 0, consolationCount: character.bossProgress.consolationCount ?? 0 } };
+      }
+      return undefined;
+    })(),
+    abyssalBossProgress: (() => {
+      const anyChar = character as any;
+      const raw = anyChar.abyssalBossProgress ?? anyChar.bossProgresses?.abyssal_monarch;
+      if (!raw) return undefined;
+      return { ...raw, pityStacks: raw.pityStacks ?? 0, consolationCount: raw.consolationCount ?? 0 };
+    })(),
+  } as any;
 
   // Upward-only level healing: if experience justifies a HIGHER level than
   // stored (legacy incoherent snapshots), snap up to the curve. This kills

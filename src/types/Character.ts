@@ -52,6 +52,7 @@ export interface PendingFight {
 
 import { ItemRarity, PixelItemAsset } from './Item';
 import type { BossProgress } from '../utils/bossUtils';
+import type { BossId } from '../data/bossAssets';
 
 // ─── Forge System Types ────────────────────────────────────────────────────
 
@@ -179,8 +180,12 @@ export interface Character {
   pushKeys?: string | null; // Serialized push keys (p256dh + auth) persisted on the character
   pushSubscribed?: boolean; // Whether the character opted in to web push
 
-    // Raid Boss PvE progress (persistent HP pool + daily attack gauge)
+    // Raid Boss PvE progress (persistent HP pool + daily attack gauge) — legacy void_titan
   bossProgress?: BossProgress;
+  // Multi-boss map (post-abyssal): stores per-boss progress (reuse boss_progress column)
+  bossProgresses?: Partial<Record<BossId, BossProgress>>;
+  // Abyssal Monarch explicit alias (local-first, optional DB column)
+  abyssalBossProgress?: BossProgress;
 
   // Appearance customization (8-bit variants)
   appearance?: CharacterAppearance;
