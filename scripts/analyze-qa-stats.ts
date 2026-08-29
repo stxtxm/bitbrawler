@@ -281,6 +281,11 @@ interface ProgressionCurveSummary {
   avg_xp_for_next: number
 }
 
+interface DataFreshness {
+  trailing_error_runs: number
+  is_stale: boolean
+}
+
 interface AnalysisReport {
   generated_at: string
   total_runs: number
@@ -333,6 +338,7 @@ interface AnalysisReport {
     idle_win_rate: number
     boss_win_rate: number | null
   }
+  data_freshness: DataFreshness
   issues: string[]
   suggestions: string[]
 }
@@ -356,6 +362,7 @@ function median(values: number[]): number {
 // cumulative data (e.g. pre-fix eras) does not keep triggering alerts (#730).
 const RECENT_WINDOW_RUNS = 30
 const RECENT_IDLE_RUNS = 15
+const FRESHNESS_STALE_THRESHOLD = 10
 
 // Real character stat keys (short labels parsed from the arena panel). The
 // structured parse can also capture non-stat counters (e.g. 'fights' from the
@@ -518,6 +525,14 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   const errorRuns = stats.filter(isErrorRun)
   const halfwayRuns = validRuns.filter(isHalfwayRun)
   const successfulRuns = validRuns.filter(r => !r.errors || r.errors.length === 0)
+
+  const recentRunsForFreshness = stats.slice(-RECENT_WINDOW_RUNS)
+  const trailing_error_runs = recentRunsForFreshness.filter(isErrorRun).length
+  const isStale = trailing_error_runs >= FRESHNESS_STALE_THRESHOLD
+  const data_freshness: DataFreshness = {
+    trailing_error_runs,
+    is_stale: isStale,
+  }
 
   // Aggregate fights
   const allFights = validRuns.flatMap(r => r.fights)
@@ -1053,10 +1068,15 @@ function analyze(stats: RunRecord[]): AnalysisReport {
       const avgFlow = allIdleFights.length > 0 ? sumFlow / allIdleFights.length : 0
       avgIdleEssencePerFight = Number.isFinite(avgFlow) ? Math.round(avgFlow * 100) / 100 : 0
     }
+    const recentIdleRunsForAnalysis = runsWithIdleData.slice(-RECENT_IDLE_RUNS)
+    const recentIdleFightsForAnalysis = collectIdleFights(recentIdleRunsForAnalysis)
+    const freshnessGatedWinRate = recentIdleFightsForAnalysis.length > 0
+      ? recentIdleFightsForAnalysis.filter(f => f.result === 'victory').length / recentIdleFightsForAnalysis.length
+      : (allIdleFights.length > 0 ? idleWins.length / allIdleFights.length : 0)
     idleAnalysis = {
       runs_with_idle_data: runsWithIdleDataCount,
       total_idle_fights: allIdleFights.length,
-      idle_win_rate: allIdleFights.length > 0 ? idleWins.length / allIdleFights.length : 0,
+      idle_win_rate: freshnessGatedWinRate,
       avg_idle_xp_per_fight: idleXpFights.length > 0
         ? Math.round((idleXpFights.reduce((s, f) => s + f.xp, 0) / idleXpFights.length) * 100) / 100
         : 0,
@@ -1128,25 +1148,37 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     }
   }
 
-  // Idle suggestions
+  // Idle suggestions — freshness-gated (#858): gate when trailing_error_runs >= threshold
   if (idleAnalysis && idleAnalysis.runs_with_idle_data >= 3) {
     if (idleAnalysis.avg_idle_essence_per_fight > 0.5) {
       suggestions.push(`High idle essence (${idleAnalysis.avg_idle_essence_per_fight.toFixed(2)}/fight). Consider reducing IDLE_CONFIG.ESSENCE.BASE_RATE or LEVEL_SCALE.`)
     }
-    // Idle win-rate alerts use the recent idle-data window (#730): the all-time
-    // cumulative rate includes the pre-#727 era (STAT_MULTIPLIER 20.0) and would
-    // keep flagging "too strong" forever even after the fix.
     const recentIdleRuns = runsWithIdleData.slice(-RECENT_IDLE_RUNS)
     const recentIdleFights = collectIdleFights(recentIdleRuns)
     const recentIdleWinRate = recentIdleFights.length > 0
       ? recentIdleFights.filter(f => f.result === 'victory').length / recentIdleFights.length
       : null
     if (recentIdleWinRate !== null) {
-      if (recentIdleWinRate < 0.4) {
-        suggestions.push(`Low idle win rate (${(recentIdleWinRate * 100).toFixed(0)}% over the last ${recentIdleRuns.length} idle runs). Idle monsters may be too strong.`)
-      }
-      if (recentIdleWinRate > 0.9) {
-        suggestions.push(`High idle win rate (${(recentIdleWinRate * 100).toFixed(0)}% over the last ${recentIdleRuns.length} idle runs). Idle monsters may be too weak.`)
+      if (isStale) {
+        if (recentIdleWinRate > 0.9) {
+          const freshIdleWinRate = allIdleFights.length > 0
+            ? allIdleFights.filter(f => f.result === 'victory').length / allIdleFights.length
+            : 0
+          if (freshIdleWinRate < 0.5) {
+            suggestions.push(`[STALE] High idle win rate (${(recentIdleWinRate * 100).toFixed(0)}% over the last ${recentIdleRuns.length} idle runs) is stale (trailing_error_runs=${trailing_error_runs} >= ${FRESHNESS_STALE_THRESHOLD}) — fresh idle WR ${(freshIdleWinRate * 100).toFixed(1)}% < 50%, skipping suggestion.`)
+          } else {
+            suggestions.push(`[STALE] High idle win rate (${(recentIdleWinRate * 100).toFixed(0)}% over the last ${recentIdleRuns.length} idle runs) — data is stale (trailing_error_runs=${trailing_error_runs} >= ${FRESHNESS_STALE_THRESHOLD}).`)
+          }
+        } else if (recentIdleWinRate < 0.4) {
+          suggestions.push(`[STALE] Low idle win rate (${(recentIdleWinRate * 100).toFixed(0)}% over the last ${recentIdleRuns.length} idle runs) — data is stale (trailing_error_runs=${trailing_error_runs} >= ${FRESHNESS_STALE_THRESHOLD}).`)
+        }
+      } else {
+        if (recentIdleWinRate < 0.4) {
+          suggestions.push(`Low idle win rate (${(recentIdleWinRate * 100).toFixed(0)}% over the last ${recentIdleRuns.length} idle runs). Idle monsters may be too strong.`)
+        }
+        if (recentIdleWinRate > 0.9) {
+          suggestions.push(`High idle win rate (${(recentIdleWinRate * 100).toFixed(0)}% over the last ${recentIdleRuns.length} idle runs). Idle monsters may be too weak.`)
+        }
       }
     }
   }
@@ -1196,6 +1228,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     equipment_analysis: equipmentAnalysis,
     streak_analysis: streakAnalysis,
     fight_type_breakdown: fightTypeBreakdown,
+    data_freshness,
     issues,
     suggestions,
   }
