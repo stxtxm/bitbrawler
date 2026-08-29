@@ -2144,3 +2144,213 @@ describe('QA Idle Essence Per-Fight (#773)', () => {
     })
   })
 })
+
+describe('QA Freshness-Gated Idle Suggestion (#858)', () => {
+  function isErrorRunLocal(r: RunRecord): boolean {
+    return !!r.errors && r.errors.length > 0 && (!r.fights || r.fights.length === 0)
+  }
+
+  function computeTrailingErrorRuns(runs: RunRecord[]): number {
+    let trailing = 0
+    for (let i = runs.length - 1; i >= 0; i--) {
+      if (isErrorRunLocal(runs[i])) trailing++
+      else break
+    }
+    return trailing
+  }
+
+  interface DataFreshnessLocal {
+    last_valid_run_at: string | null
+    trailing_error_runs: number
+    stale: boolean
+  }
+
+  function computeDataFreshnessLocal(runs: RunRecord[]): DataFreshnessLocal {
+    const trailing = computeTrailingErrorRuns(runs)
+    const lastValid = [...runs].reverse().find(r => !isErrorRunLocal(r))
+    return {
+      last_valid_run_at: lastValid?.date ?? null,
+      trailing_error_runs: trailing,
+      stale: trailing >= 10,
+    }
+  }
+
+  function collectIdleFightsLocal(runs: RunRecord[]): IdleFightRecord[] {
+    const fights: IdleFightRecord[] = []
+    for (const r of runs) {
+      if (r.idle_fights && r.idle_fights.length > 0) {
+        fights.push(...r.idle_fights)
+      } else if (r.idle_runner?.xp_events?.length) {
+        for (const evt of r.idle_runner.xp_events) {
+          fights.push({
+            result: evt.result?.toUpperCase().includes('VICTORY') ? 'victory' : 'defeat',
+            xp: evt.xp ?? null,
+            essence: null,
+            monster: evt.monster ?? null,
+          })
+        }
+      }
+    }
+    return fights
+  }
+
+  function computeIdleSuggestionsGated(
+    runsWithIdleData: RunRecord[],
+    allIdleWinRate: number,
+    trailingErrorRuns: number,
+  ): string[] {
+    const suggestions: string[] = []
+    const recentIdleRuns = runsWithIdleData.slice(-15)
+    const recentIdleFights = collectIdleFightsLocal(recentIdleRuns)
+    const recentIdleWinRate = recentIdleFights.length > 0
+      ? recentIdleFights.filter(f => f.result === 'victory').length / recentIdleFights.length
+      : null
+    const isStale = trailingErrorRuns >= 10
+    if (recentIdleWinRate !== null) {
+      if (recentIdleWinRate > 0.9) {
+        if (isStale) {
+          if (allIdleWinRate < 0.5) {
+            return suggestions
+          }
+          suggestions.push(`[STALE] High idle win rate (${(recentIdleWinRate * 100).toFixed(0)}% over the last ${recentIdleRuns.length} idle runs). Idle monsters may be too weak.`)
+        } else {
+          suggestions.push(`High idle win rate (${(recentIdleWinRate * 100).toFixed(0)}% over the last ${recentIdleRuns.length} idle runs). Idle monsters may be too weak.`)
+        }
+      }
+      if (recentIdleWinRate < 0.4 && !isStale) {
+        suggestions.push(`Low idle win rate (${(recentIdleWinRate * 100).toFixed(0)}% over the last ${recentIdleRuns.length} idle runs). Idle monsters may be too strong.`)
+      }
+    }
+    return suggestions
+  }
+
+  function makeIdleRun(id: string, result: 'victory' | 'defeat'): RunRecord {
+    return {
+      date: `2026-08-18T00:00:00Z-${id}`,
+      run: id,
+      character: 'C',
+      fights: [{ result: 'victory', xp: 90, fight_duration_ms: 1000 }],
+      idle_fights: [{ result, xp: 20, essence: 0.1 }],
+      errors: [],
+    }
+  }
+
+  function makeErrorRun(id: string): RunRecord {
+    return {
+      date: `2026-08-29T00:00:00Z-${id}`,
+      run: id,
+      character: 'C',
+      fights: [],
+      errors: ['timeout'],
+    }
+  }
+
+  describe('computeTrailingErrorRuns', () => {
+    it('counts consecutive error runs at the end of the series', () => {
+      const runs: RunRecord[] = [
+        makeIdleRun('r1', 'victory'),
+        makeIdleRun('r2', 'victory'),
+        makeErrorRun('e1'),
+        makeErrorRun('e2'),
+        makeErrorRun('e3'),
+      ]
+      expect(computeTrailingErrorRuns(runs)).toBe(3)
+    })
+
+    it('returns 0 when the last run is valid', () => {
+      const runs: RunRecord[] = [
+        makeErrorRun('e1'),
+        makeIdleRun('r1', 'victory'),
+      ]
+      expect(computeTrailingErrorRuns(runs)).toBe(0)
+    })
+
+    it('returns full length when all runs are errors', () => {
+      const runs: RunRecord[] = [makeErrorRun('e1'), makeErrorRun('e2')]
+      expect(computeTrailingErrorRuns(runs)).toBe(2)
+    })
+  })
+
+  describe('computeDataFreshness', () => {
+    it('marks stale when trailing_error_runs >=10', () => {
+      const runs: RunRecord[] = []
+      for (let i = 0; i < 5; i++) runs.push(makeIdleRun(`fresh-${i}`, 'defeat'))
+      for (let i = 0; i < 30; i++) runs.push(makeErrorRun(`err-${i}`))
+      const freshness = computeDataFreshnessLocal(runs)
+      expect(freshness.trailing_error_runs).toBe(30)
+      expect(freshness.stale).toBe(true)
+      expect(freshness.last_valid_run_at).not.toBeNull()
+    })
+
+    it('is not stale when trailing errors are below threshold', () => {
+      const runs: RunRecord[] = []
+      for (let i = 0; i < 5; i++) runs.push(makeIdleRun(`fresh-${i}`, 'defeat'))
+      for (let i = 0; i < 9; i++) runs.push(makeErrorRun(`err-${i}`))
+      const freshness = computeDataFreshnessLocal(runs)
+      expect(freshness.trailing_error_runs).toBe(9)
+      expect(freshness.stale).toBe(false)
+    })
+  })
+
+  describe('idle suggestion gating', () => {
+    it('gates High idle win rate when trailing_error_runs >=10 and fresh WR <50% (suppression)', () => {
+      const idleRuns: RunRecord[] = []
+      for (let i = 0; i < 15; i++) idleRuns.push(makeIdleRun(`old-win-${i}`, 'victory'))
+      const allIdleWinRate = 0.389
+      const trailing = 30
+      const suggestions = computeIdleSuggestionsGated(idleRuns, allIdleWinRate, trailing)
+      expect(suggestions.some(s => s.includes('High idle win rate') && !s.includes('[STALE]'))).toBe(false)
+      expect(suggestions.length).toBe(0)
+    })
+
+    it('prefixes [STALE] when trailing stale but fresh WR is high (>=50%)', () => {
+      const idleRuns: RunRecord[] = []
+      for (let i = 0; i < 15; i++) idleRuns.push(makeIdleRun(`old-win-${i}`, 'victory'))
+      const allIdleWinRate = 0.65
+      const trailing = 15
+      const suggestions = computeIdleSuggestionsGated(idleRuns, allIdleWinRate, trailing)
+      expect(suggestions.some(s => s.includes('[STALE]') && s.includes('High idle win rate'))).toBe(true)
+    })
+
+    it('emits normal High idle win rate when not stale', () => {
+      const idleRuns: RunRecord[] = []
+      for (let i = 0; i < 15; i++) idleRuns.push(makeIdleRun(`win-${i}`, 'victory'))
+      const allIdleWinRate = 0.65
+      const trailing = 2
+      const suggestions = computeIdleSuggestionsGated(idleRuns, allIdleWinRate, trailing)
+      expect(suggestions).toEqual(
+        expect.arrayContaining([expect.stringContaining('High idle win rate')]),
+      )
+      expect(suggestions.some(s => s.includes('[STALE]'))).toBe(false)
+    })
+
+    it('does not emit Low idle win rate when stale (gated)', () => {
+      const idleRuns: RunRecord[] = []
+      for (let i = 0; i < 15; i++) idleRuns.push(makeIdleRun(`loss-${i}`, 'defeat'))
+      const allIdleWinRate = 0.3
+      const trailing = 12
+      const suggestions = computeIdleSuggestionsGated(idleRuns, allIdleWinRate, trailing)
+      expect(suggestions.some(s => s.includes('Low idle win rate'))).toBe(false)
+    })
+  })
+
+  describe('analyze-qa-stats.ts source contract (#858)', () => {
+    it('exposes data_freshness with trailing_error_runs and stale flag and gates idle High win rate', () => {
+      const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+      expect(source).toContain('trailing_error_runs')
+      expect(source).toContain('data_freshness')
+      expect(source).toContain('stale')
+      expect(source).toContain('[STALE]')
+      expect(source).toContain("trailing_error_runs >= 10")
+      expect(source).toContain('High idle win rate')
+    })
+
+    it('bases idle suggestion on freshness-gated window, not all-time cumul', () => {
+      const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+      expect(source).toContain('runsWithIdleData.slice(-RECENT_IDLE_RUNS)')
+      expect(source).toContain('collectIdleFights(recentIdleRuns)')
+      expect(source).toContain('idle_win_rate')
+      expect(source).toContain('trailing_error_runs')
+    })
+  })
+})
