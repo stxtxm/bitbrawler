@@ -274,6 +274,12 @@ interface IdleAnalysis {
   total_idle_essence: number
 }
 
+interface DataFreshness {
+  last_valid_run_at: string | null
+  trailing_error_runs: number
+  stale: boolean
+}
+
 interface ProgressionCurveSummary {
   runs_with_data: number
   avg_level: number
@@ -288,6 +294,7 @@ interface AnalysisReport {
   successful_runs: number
   halfway_runs: number
   error_runs: number
+  data_freshness: DataFreshness
   character_type_breakdown: CharacterTypeBreakdown
   persistent_level_distribution: Record<string, number>
   win_rate: number
@@ -367,6 +374,20 @@ const STAT_KEYS = new Set(['str', 'vit', 'dex', 'luk', 'int', 'foc'])
 // categorization and the recent-window error-rate alerts (#730).
 function isErrorRun(r: RunRecord): boolean {
   return !!r.errors && r.errors.length > 0 && (!r.fights || r.fights.length === 0)
+}
+
+function computeDataFreshness(stats: RunRecord[]): DataFreshness {
+  let trailing_error_runs = 0
+  for (let i = stats.length - 1; i >= 0; i--) {
+    if (isErrorRun(stats[i])) trailing_error_runs++
+    else break
+  }
+  const lastValid = [...stats].reverse().find(r => !isErrorRun(r))
+  return {
+    last_valid_run_at: lastValid?.date ?? null,
+    trailing_error_runs,
+    stale: trailing_error_runs >= 10,
+  }
 }
 
 // #731: a persistent run uses the dedicated QA character (character_type ===
@@ -512,6 +533,7 @@ function computeTrendWindow(runs: RunRecord[], count: number, label: string): Tr
 
 function analyze(stats: RunRecord[]): AnalysisReport {
   const now = new Date().toISOString()
+  const data_freshness = computeDataFreshness(stats)
 
   // Categorize runs
   const validRuns = stats.filter(r => r.fights && r.fights.length > 0)
@@ -1136,17 +1158,30 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     // Idle win-rate alerts use the recent idle-data window (#730): the all-time
     // cumulative rate includes the pre-#727 era (STAT_MULTIPLIER 20.0) and would
     // keep flagging "too strong" forever even after the fix.
+    // Freshness gate (#858): when trailing_error_runs >= 10 the last 15 idle
+    // runs are stale (pre-#738 era). Gate the High win-rate suggestion to avoid
+    // retuning in the wrong direction when fresh WR is <50%.
     const recentIdleRuns = runsWithIdleData.slice(-RECENT_IDLE_RUNS)
     const recentIdleFights = collectIdleFights(recentIdleRuns)
     const recentIdleWinRate = recentIdleFights.length > 0
       ? recentIdleFights.filter(f => f.result === 'victory').length / recentIdleFights.length
       : null
     if (recentIdleWinRate !== null) {
+      const isIdleStale = data_freshness.trailing_error_runs >= 10
       if (recentIdleWinRate < 0.4) {
-        suggestions.push(`Low idle win rate (${(recentIdleWinRate * 100).toFixed(0)}% over the last ${recentIdleRuns.length} idle runs). Idle monsters may be too strong.`)
+        if (!isIdleStale) {
+          suggestions.push(`Low idle win rate (${(recentIdleWinRate * 100).toFixed(0)}% over the last ${recentIdleRuns.length} idle runs). Idle monsters may be too strong.`)
+        }
       }
       if (recentIdleWinRate > 0.9) {
-        suggestions.push(`High idle win rate (${(recentIdleWinRate * 100).toFixed(0)}% over the last ${recentIdleRuns.length} idle runs). Idle monsters may be too weak.`)
+        if (isIdleStale) {
+          if (idleAnalysis && idleAnalysis.idle_win_rate < 0.5) {
+          } else {
+            suggestions.push(`[STALE] High idle win rate (${(recentIdleWinRate * 100).toFixed(0)}% over the last ${recentIdleRuns.length} idle runs). Idle monsters may be too weak.`)
+          }
+        } else {
+          suggestions.push(`High idle win rate (${(recentIdleWinRate * 100).toFixed(0)}% over the last ${recentIdleRuns.length} idle runs). Idle monsters may be too weak.`)
+        }
       }
     }
   }
@@ -1158,6 +1193,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     successful_runs: successfulRuns.length,
     halfway_runs: halfwayRuns.length,
     error_runs: errorRuns.length,
+    data_freshness,
     character_type_breakdown: characterTypeBreakdown,
     persistent_level_distribution: persistentLevelDist,
     win_rate: Math.round(winRate * 1000) / 1000,
@@ -1228,6 +1264,11 @@ function printReport(report: AnalysisReport): void {
     console.log(`  ${bold}Persistent LVL dist:${reset} ${Object.entries(report.persistent_level_distribution).map(([k, v]) => `${k}=${v}`).join(', ')}`)
   }
   console.log(`  ${bold}Fights:${reset} ${report.total_fights} (avg ${report.avg_fights_per_run}/run)`)
+  if (report.data_freshness.stale) {
+    console.log(`  ${yellow}DATA STALE — ${report.data_freshness.trailing_error_runs} consecutive errors since ${report.data_freshness.last_valid_run_at ?? 'unknown'} — aggregates reflect pre-outage data${reset}`)
+  } else if (report.data_freshness.trailing_error_runs > 0) {
+    console.log(`  Freshness:      ${report.data_freshness.trailing_error_runs} trailing error run(s), last valid ${report.data_freshness.last_valid_run_at ?? 'n/a'}`)
+  }
   console.log('')
   console.log(`  ── ${bold}Combat Balance${reset} ──`)
   console.log(`  Win rate:       ${report.win_rate > 0.5 ? green : red}${fmtPct(report.win_rate)}${reset}`)
