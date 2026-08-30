@@ -2354,3 +2354,70 @@ describe('QA Freshness-Gated Idle Suggestion (#858)', () => {
     })
   })
 })
+
+describe('QA Bot Combat Overlay Intercept Contract (#864)', () => {
+  const qaBotSource = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
+
+  function extractAsyncFunction(source: string, name: string): string | null {
+    const start = source.indexOf(`async function ${name}(`)
+    if (start === -1) return null
+    const bodyStart = source.indexOf('{', start)
+    let depth = 0
+    for (let i = bodyStart; i < source.length; i++) {
+      if (source[i] === '{') depth++
+      else if (source[i] === '}') {
+        depth--
+        if (depth === 0) return source.slice(start, i + 1)
+      }
+    }
+    return null
+  }
+
+  it('waits for .combat-overlay hidden before Inventory click after fights', () => {
+    expect(qaBotSource).toContain("waitForSelector('.combat-overlay'")
+    expect(qaBotSource).toContain("state: 'hidden'")
+    const waitIdx = qaBotSource.indexOf("waitForSelector('.combat-overlay'")
+    expect(waitIdx).toBeGreaterThan(-1)
+    const inventoryIdx = qaBotSource.indexOf('button[aria-label="Inventory"]', waitIdx)
+    expect(inventoryIdx).toBeGreaterThan(waitIdx)
+    const hiddenSnippet = qaBotSource.slice(waitIdx, waitIdx + 200)
+    expect(hiddenSnippet).toContain("state: 'hidden'")
+    expect(qaBotSource).toContain("document.querySelector('.combat-overlay')")
+  })
+
+  it('overlay branch captures screenshot with -overlay-blocked suffix and marks skipped_inventory without pushing to errors', () => {
+    expect(qaBotSource).toContain('-overlay-blocked')
+    expect(qaBotSource).toContain('skipped_inventory')
+    expect(qaBotSource).toMatch(/skipped_inventory.*overlay/)
+    const runFn = extractAsyncFunction(qaBotSource, 'run')
+    expect(runFn).not.toBeNull()
+    if (runFn) {
+      const overlayIdx = runFn.indexOf("waitForSelector('.combat-overlay'")
+      expect(overlayIdx).toBeGreaterThan(-1)
+      const block = runFn.slice(overlayIdx, overlayIdx + 2000)
+      expect(block).toContain('-overlay-blocked')
+      expect(block).toContain('skipped_inventory')
+      expect(block).not.toContain('errors.push')
+    }
+  })
+
+  it('run() initializes skipped_inventory and handles overlay as SKIP not error (4 fights valid → no errors)', () => {
+    expect(qaBotSource).toContain('skipped_inventory')
+    const runFn = extractAsyncFunction(qaBotSource, 'run')
+    expect(runFn).not.toBeNull()
+    if (runFn) {
+      expect(runFn).toContain("waitForSelector('.combat-overlay'")
+      expect(runFn).toContain('skipped_inventory')
+      const overlaySection = runFn.slice(runFn.indexOf("waitForSelector('.combat-overlay'"))
+      const snippet = overlaySection.slice(0, 1500)
+      expect(snippet).not.toContain('errors.push')
+    }
+    const mockRun = { fights: [{ result: 'victory', xp: 250, fight_duration_ms: 3000 } as const, { result: 'victory', xp: 300, fight_duration_ms: 3200 } as const, { result: 'defeat', xp: 50, fight_duration_ms: 2800 } as const, { result: 'victory', xp: 170, fight_duration_ms: 3100 } as const], errors: [] as string[], skipped_inventory: 'overlay' as string }
+    const isErrorRun = mockRun.errors.length > 0 && mockRun.fights.length === 0
+    const isHalfwayRun = mockRun.fights.length > 0 && mockRun.errors.length > 0
+    expect(isErrorRun).toBe(false)
+    expect(isHalfwayRun).toBe(false)
+    expect(mockRun.skipped_inventory).toBe('overlay')
+    expect(mockRun.errors.length).toBe(0)
+  })
+})

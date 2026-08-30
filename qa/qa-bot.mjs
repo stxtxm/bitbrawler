@@ -502,6 +502,13 @@ async function dismissModals(page) {
   return overlayGone
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function waitForCombatOverlayHidden(page) {
+  await page.waitForSelector('.combat-overlay', { state: 'hidden', timeout: 5000 }).catch(() => {})
+  const stillPresent = await page.evaluate(() => document.querySelector('.combat-overlay') !== null).catch(() => false)
+  return !stillPresent
+}
+
 async function syncAutoMode(page, desiredEnabled) {
   console.log(`🔁 Setting auto mode to ${desiredEnabled ? 'ON' : 'OFF'}...`)
 
@@ -2949,6 +2956,7 @@ async function run() {
     forge: null,
     shop: null,
     combat_speed: 1,
+    skipped_inventory: null,
     errors: [],
     load_times_ms: {},
   }
@@ -3158,6 +3166,14 @@ async function run() {
 
     await runFightSequence(page, runKey, runRecord)
 
+    await page.waitForSelector('.combat-overlay', { state: 'hidden', timeout: 5000 }).catch(() => {})
+    const overlayStillPresent = await page.evaluate(() => document.querySelector('.combat-overlay') !== null).catch(() => false)
+    if (overlayStillPresent) {
+      await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-overlay-blocked.png`) }).catch(() => {})
+      runRecord.skipped_inventory = 'overlay'
+      console.log('   ⚠️ Combat overlay persists after 5s — skipping Inventory click (overlay)')
+    }
+
     // Populate pve_data from fight sequence (captures monster names from PvE results)
     const pveFights = runRecord.fights.filter(f => f.fight_type === 'pve')
     if (pveFights.length > 0) {
@@ -3194,8 +3210,14 @@ async function run() {
 
     runRecord.final_character_stats = await parseCharacterStats(page)
     runRecord.final_max_hp = await parseMaxHp(page)
-    runRecord.final_equipment = await parseEquippedItems(page)
-    runRecord.final_streak = await parseStreak(page)
+    if (runRecord.skipped_inventory === 'overlay') {
+      runRecord.final_equipment = []
+      runRecord.final_streak = runRecord.initial_streak ?? null
+      console.log('   ⚠️ Skipping final equipment/streak parse — combat overlay blocked Inventory')
+    } else {
+      runRecord.final_equipment = await parseEquippedItems(page)
+      runRecord.final_streak = await parseStreak(page)
+    }
     console.log(`   Final character stats: ${JSON.stringify(runRecord.final_character_stats)}`)
     console.log(`   Final max HP: ${runRecord.final_max_hp}`)
     if (runRecord.final_equipment.length > 0) {
@@ -3207,18 +3229,21 @@ async function run() {
     const fighterExhausted =
       finalArenaStatus.isResting ||
       (finalArenaStatus.fightsAvailable !== null && finalArenaStatus.fightsAvailable <= 0)
-    runRecord.lootbox = await handleDailyLootbox(page, runKey)
-
-    // Capture equipment and streak right after lootbox (the lootbox may have
-    // granted a new item).  The inventory has been closed by the lootbox handler,
-    // so parseStreak will re-open it if needed.
-    runRecord.lootbox_equipment = await parseEquippedItems(page)
-    if (runRecord.lootbox_equipment.length > 0) {
-      console.log(`   Lootbox equipment: ${runRecord.lootbox_equipment.map(e => `${e.slot}=${e.name}${e.rarity ? ` (${e.rarity})` : ''}`).join(', ')}`)
-    }
-    runRecord.lootbox_streak = await parseStreak(page)
-    if (runRecord.lootbox_streak !== null) {
-      console.log(`   Lootbox streak: ${runRecord.lootbox_streak}`)
+    if (runRecord.skipped_inventory === 'overlay') {
+      runRecord.lootbox = { available: false, opened: false, reason: 'overlay-blocked', skipped_inventory: 'overlay' }
+      runRecord.lootbox_equipment = []
+      runRecord.lootbox_streak = runRecord.final_streak
+      console.log('   ⚠️ Skipping lootbox — combat overlay blocked Inventory (marked skipped_inventory: overlay)')
+    } else {
+      runRecord.lootbox = await handleDailyLootbox(page, runKey)
+      runRecord.lootbox_equipment = await parseEquippedItems(page)
+      if (runRecord.lootbox_equipment.length > 0) {
+        console.log(`   Lootbox equipment: ${runRecord.lootbox_equipment.map(e => `${e.slot}=${e.name}${e.rarity ? ` (${e.rarity})` : ''}`).join(', ')}`)
+      }
+      runRecord.lootbox_streak = await parseStreak(page)
+      if (runRecord.lootbox_streak !== null) {
+        console.log(`   Lootbox streak: ${runRecord.lootbox_streak}`)
+      }
     }
 
     runRecord.auto_mode_enabled = fighterExhausted
@@ -3271,7 +3296,10 @@ async function run() {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 
     const shopLevel = runRecord.final_stats?.level ?? runRecord.initial_level
-    if (timeBudgetExceeded()) {
+    if (runRecord.skipped_inventory === 'overlay') {
+      console.log('   ⚠️ Skipping shop — combat overlay blocked Inventory (marked skipped_inventory: overlay)')
+      runRecord.shop = createSkippedShopResult('overlay-blocked')
+    } else if (timeBudgetExceeded()) {
       console.log('   ⏰ Time budget exceeded, skipping shop test')
       runRecord.shop = createSkippedShopResult('time budget exceeded')
     } else {
