@@ -111,7 +111,7 @@ interface HpAnalysis {
 // ── Pure analysis functions (mirroring analyze-qa-stats.ts logic) ──
 
 function computePveMonsters(fights: FightRecord[]): Record<string, number> {
-  const pveFights = fights.filter(f => f.fight_type === 'pve')
+  const pveFights = fights.filter(f => f.fight_type === 'pve' && !isBossFight(f))
   const monsters: Record<string, number> = {}
   for (const f of pveFights) {
     if (f.monster_name) {
@@ -219,12 +219,16 @@ function computePveShiftedRuns(runs: RunRecord[]): RunRecord[] {
   return runs.filter(r => r.pve_data?.pve_shifted === true)
 }
 
+function isBossFight(f: FightRecord): boolean {
+  return f.fight_type === 'boss' || (typeof f.monster_name === 'string' && f.monster_name.trim() === 'VOID TITAN')
+}
+
 function computeBossFightStats(fights: FightRecord[]): {
   boss_fights: number
   boss_win_rate: number | null
   boss_avg_xp_per_fight: number | null
 } {
-  const bossFights = fights.filter(f => f.fight_type === 'boss')
+  const bossFights = fights.filter(isBossFight)
   if (bossFights.length === 0) {
     return { boss_fights: 0, boss_win_rate: null, boss_avg_xp_per_fight: null }
   }
@@ -240,7 +244,11 @@ function computeBossFightStats(fights: FightRecord[]): {
 }
 
 function computePvpFightsExcludingBoss(fights: FightRecord[]): FightRecord[] {
-  return fights.filter(f => f.fight_type !== 'pve' && f.fight_type !== 'boss')
+  return fights.filter(f => !isBossFight(f) && f.fight_type !== 'pve')
+}
+
+function computePveFightsExcludingBoss(fights: FightRecord[]): FightRecord[] {
+  return fights.filter(f => f.fight_type === 'pve' && !isBossFight(f))
 }
 
 // ── Character-replacement exclusion (mirror of analyze-qa-stats.ts) ──
@@ -579,6 +587,62 @@ describe('QA PvE→Boss Shift Analysis (#705)', () => {
         { result: 'victory', xp: 360, fight_duration_ms: 20000, fight_type: 'boss', monster_name: 'VOID TITAN' },
       ]
       expect(computePvpFightsExcludingBoss(fights)).toHaveLength(1)
+    })
+  })
+
+  describe('VOID TITAN classified as boss even with fight_type pve (#863)', () => {
+    it('counts VOID TITAN pve fights as boss (OR) and excludes them from pve', () => {
+      const fights: FightRecord[] = [
+        { result: 'victory', xp: 100, fight_duration_ms: 5000, fight_type: 'pve', monster_name: 'Goblin' },
+        { result: 'victory', xp: 100, fight_duration_ms: 5000, fight_type: 'pve', monster_name: 'Goblin' },
+        { result: 'victory', xp: 100, fight_duration_ms: 5000, fight_type: 'pve', monster_name: 'Goblin' },
+        { result: 'defeat', xp: 895, fight_duration_ms: 30000, fight_type: 'pve', monster_name: 'VOID TITAN' },
+        { result: 'defeat', xp: null, fight_duration_ms: 30000, fight_type: 'pve', monster_name: 'VOID TITAN' },
+      ]
+      expect(computeBossFightStats(fights).boss_fights).toBe(2)
+      expect(computePveFightsExcludingBoss(fights)).toHaveLength(3)
+      expect(computePveMonsters(fights)).toEqual({ Goblin: 3 })
+      expect(computePvpFightsExcludingBoss(fights)).toHaveLength(0)
+    })
+
+    it('5 consecutive VOID TITAN defeats → boss 5 with 0% WR, pve filté', () => {
+      const fights: FightRecord[] = Array.from({ length: 5 }, () => ({
+        result: 'defeat' as const,
+        xp: 894,
+        fight_duration_ms: 30000,
+        fight_type: 'pve' as const,
+        monster_name: 'VOID TITAN' as const,
+      }))
+      const allFights: FightRecord[] = [
+        ...Array.from({ length: 19 }, () => ({
+          result: 'victory' as const,
+          xp: 100,
+          fight_duration_ms: 5000,
+          fight_type: 'pve' as const,
+          monster_name: 'Goblin' as const,
+        })),
+        ...fights,
+      ]
+      expect(computeBossFightStats(allFights).boss_fights).toBe(5)
+      expect(computeBossFightStats(allFights).boss_win_rate).toBe(0)
+      expect(computePveFightsExcludingBoss(allFights)).toHaveLength(19)
+    })
+
+    it('serie sans VOID TITAN inchangée', () => {
+      const fights: FightRecord[] = [
+        { result: 'victory', xp: 100, fight_duration_ms: 5000, fight_type: 'pve', monster_name: 'Goblin' },
+        { result: 'victory', xp: 100, fight_duration_ms: 5000, fight_type: 'pve', monster_name: 'Ogre' },
+      ]
+      expect(computeBossFightStats(fights).boss_fights).toBe(0)
+      expect(computePveFightsExcludingBoss(fights)).toHaveLength(2)
+    })
+
+    it('fight_type boss sans VOID TITAN still counted as boss', () => {
+      const fights: FightRecord[] = [
+        { result: 'victory', xp: 360, fight_duration_ms: 20000, fight_type: 'boss', monster_name: 'VOID TITAN' },
+        { result: 'defeat', xp: 0, fight_duration_ms: 30000, fight_type: 'boss', monster_name: 'VOID TITAN' },
+      ]
+      expect(computeBossFightStats(fights).boss_fights).toBe(2)
     })
   })
 })
@@ -1275,7 +1339,8 @@ describe('QA PvE→Boss Shift Analyzer Contract (#705)', () => {
     expect(source).toContain('pve_shifted')
     expect(source).toContain('boss_fights')
     expect(source).toContain('boss_win_rate')
-    expect(source).toContain("f.fight_type !== 'pve' && f.fight_type !== 'boss'")
+    expect(source).toContain('VOID TITAN')
+    expect(source).toContain('isBossFight')
   })
 })
 
