@@ -63153,5 +63153,276 @@
       "home": 1780,
       "arena": 729
     }
+  },
+  {
+    "date": "2026-08-30T20:18:39.242Z",
+    "run": "2026-08-30",
+    "character": "QA-PERSI-4",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 316,
+        "fight_duration_ms": 9778,
+        "max_hp": 792,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 397.47
+      },
+      {
+        "result": "defeat",
+        "xp": 894,
+        "fight_duration_ms": 6644,
+        "max_hp": 792,
+        "fight_type": "pve",
+        "monster_name": "VOID TITAN",
+        "xp_before_modifier": 894,
+        "xp_after_modifier": 2235,
+        "essence_after": 397.47
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Bone Dagger",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "REST NOW",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 0,
+      "isResting": true,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 48,
+      "vit": 23,
+      "dex": 15,
+      "luk": 16,
+      "int": 15,
+      "foc": 17,
+      "fights": 0
+    },
+    "initial_level": 41,
+    "initial_xp": {
+      "current": 6544,
+      "max": 54988
+    },
+    "initial_max_hp": 786,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 41,
+      "xp": 8104,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 51,
+      "vit": 24,
+      "dex": 16,
+      "luk": 18,
+      "int": 16,
+      "foc": 19,
+      "last xp": 52,
+      "fights": 4
+    },
+    "final_max_hp": 792,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 1,
+      "wins": 0,
+      "xp_total": 894,
+      "monsters_faced": [
+        "VOID TITAN"
+      ],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 33081,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "ogre"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 62,
+      "xp_events": [
+        {
+          "time_ms": 33081,
+          "xp": 62,
+          "monster": "ogre",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        516,
+        1541,
+        33081
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 62,
+        "essence": 0.28,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.61,
+      "next_level_eta": "⬆ 59m 14s",
+      "power_ratio": "⚔ 0.67x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.12x",
+      "interval": "11.2s",
+      "streak_bonus": null
+    },
+    "initial_essence": 397.19,
+    "final_essence": 333.95,
+    "essence": {
+      "before_idle": 397.19,
+      "after_idle": 397.47,
+      "per_fight": [
+        397.47,
+        397.47
+      ],
+      "forge_before": 397,
+      "forge_after_salvage": 402,
+      "forge_after_fusion": 402,
+      "forge_after_upgrade": 352,
+      "forge_after": 352,
+      "shop_before": 353,
+      "shop_after": 333,
+      "final": 333.95,
+      "flow": {
+        "idle_gained": 0.28,
+        "fights_change": 0,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 50,
+        "forge_net": -45,
+        "shop_cost": 20,
+        "net_change": -63.24
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 397,
+      "essence_after_salvage": 402,
+      "essence_after_fusion": 402,
+      "essence_after_upgrade": 352,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 352,
+      "items_after": 1,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": 50,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "COMMON",
+      "cost": 20,
+      "essence_before": 353,
+      "essence_after": 333,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Chainmail Coif",
+            "rarity": "UNCOMMON",
+            "price": 20
+          },
+          {
+            "name": "Phoenix Talisman",
+            "rarity": "EPIC",
+            "price": 40
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 35
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 333
+      }
+    },
+    "combat_speed": 2,
+    "errors": [],
+    "load_times_ms": {
+      "home": 1258,
+      "arena": 449
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Chainmail Coif",
+          "rarity": "UNCOMMON",
+          "price": 20
+        },
+        {
+          "name": "Phoenix Talisman",
+          "rarity": "EPIC",
+          "price": 40
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 35
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 333
+    }
   }
 ]
