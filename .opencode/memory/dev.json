@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-29T02:09:56Z",
+  "last_session": "2026-08-30T21:52:26Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -47,9 +47,9 @@
       "date": "2026-08-26"
     },
     {
-      "lesson": "Issue #858 freshness-gated idle: data_freshness trailing_error_runs >=10 gate supprime High idle win rate quand WR frais <50% (evite retune inverse 39%→92% stale). Pattern: computeDataFreshness(stats) compte consecutive error runs from end, expose last_valid_run_at + stale flag, idle suggestion utilise isIdleStale + idleAnalysis.idle_win_rate <0.5 pour suppression vs [STALE] prefix. TDD helpers locaux + source contract check [STALE] + trailing_error_runs >= 10",
-      "issue": "#858",
-      "date": "2026-08-29"
+      "lesson": "Issue #864 combat-overlay intercept: attendre 5s hidden avant Inventory, capturer -overlay-blocked et marquer skipped_inventory overlay sans errors (fights valides). Helper early waitForCombatOverlayHidden pour garantir ordering file avant premier Inventory literal. Ne pas toucher retry combat timeout.",
+      "issue": "#864",
+      "date": "2026-08-30"
     }
   ]
 }
