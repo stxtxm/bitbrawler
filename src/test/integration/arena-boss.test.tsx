@@ -126,16 +126,16 @@ describe('Arena Boss (useBossFight)', () => {
 
     const progress = result.current.activeCharacter?.bossProgress;
     expect(progress?.bossId).toBe(BOSS_ID);
-    // Fresh cycle created, then one attack consumed.
+    // Fresh cycle created, then one attack consumed — pity reduces maxHp by 12%.
     expect(progress?.attacksLeft).toBe(GAME_RULES.BOSS.MAX_DAILY_ATTACKS - 1);
-    expect(progress?.bossMaxHp).toBe(Math.round(mockCharacter.maxHp * GAME_RULES.BOSS.HP_MULTIPLIER));
-    // Boss keeps the persistent HP pool on a loss.
+    expect(progress?.bossMaxHp).toBe(Math.round(mockCharacter.maxHp * GAME_RULES.BOSS.HP_MULTIPLIER * 0.88));
+    // Boss keeps the persistent HP pool on a loss (clamped to new pity max).
     expect(progress?.bossHp).toBe(4100);
     // Raid attempts must not inflate the loss record.
     expect(result.current.activeCharacter?.losses).toBe(2);
     expect(result.current.activeCharacter?.wins).toBe(5);
-    // No rewards on a loss.
-    expect(result.current.activeCharacter?.essence).toBe(100);
+    // Consolation essence on defeat (capped 3/day).
+    expect(result.current.activeCharacter?.essence).toBe(100 + GAME_RULES.BOSS.CONSOLATION_ESSENCE);
   });
 
   it('on a kill: new full-HP cycle, kill counter, rewards, and boss_progress synced to Supabase', async () => {

@@ -9,6 +9,7 @@ import {
   createBossProgress,
   ensureBossDailyReset,
   getBossAttacksLeft,
+  getBossPityReductionPct,
   isBossUnlocked,
 } from '../utils/bossUtils';
 
@@ -115,7 +116,7 @@ export const useArenaCombat = ({
         const progress = character.bossProgress
           ? ensureBossDailyReset(character.bossProgress)
           : createBossProgress(character);
-        const boss = buildBossCharacter(character, progress.bossHp);
+        const boss = buildBossCharacter(character, progress.bossHp, progress.pityStacks ?? 0);
         setPveMonster({ monsterId: BOSS_ID });
         setCombatData({ opponent: boss, matchType: 'boss', candidates: [] });
       } catch (error: unknown) {
@@ -236,6 +237,8 @@ export const useArenaCombat = ({
     bossHp: bossProgress?.bossHp ?? 0,
     bossMaxHp: bossProgress?.bossMaxHp ?? 0,
     bossLevel: bossProgress?.bossLevel ?? 0,
+    bossPityStacks: bossProgress?.pityStacks ?? 0,
+    bossPityReduction: getBossPityReductionPct(bossProgress ?? undefined),
     onTogglePve,
     onTogglePvp,
     onFight,
@@ -248,6 +251,7 @@ export const useArenaCombat = ({
     bossProgress?.bossHp,
     bossProgress?.bossMaxHp,
     bossProgress?.bossLevel,
+    bossProgress?.pityStacks,
     bossUnlocked,
     canFight,
     fightsLeft,

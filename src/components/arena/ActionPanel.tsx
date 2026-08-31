@@ -18,6 +18,8 @@ interface ActionPanelProps {
   bossHp: number;
   bossMaxHp: number;
   bossLevel: number;
+  bossPityStacks?: number;
+  bossPityReduction?: number;
   onTogglePve: () => void;
   onTogglePvp: () => void;
   onFight: () => void;
@@ -29,7 +31,7 @@ interface ActionPanelProps {
 export const ActionPanel = memo(function ActionPanel({
   pveMode, canFight, matchmaking, hasPendingFight, autoMode,
   isOfflineMode, fightsLeft, bossAttacksLeft, bossUnlocked,
-  bossHp, bossMaxHp, bossLevel, onTogglePve, onTogglePvp, onFight,
+  bossHp, bossMaxHp, bossLevel, bossPityStacks = 0, bossPityReduction = 0, onTogglePve, onTogglePvp, onFight,
   tacticalOpponent, tacticalHint, onOpenInventory,
 }: ActionPanelProps) {
 
@@ -106,6 +108,9 @@ export const ActionPanel = memo(function ActionPanel({
               <span className="boss-hp-name">VOID TITAN LVL {bossLevel}</span>
               <span className="boss-hp-num">{Math.max(0, Math.round(bossHp))} / {bossMaxHp}</span>
             </div>
+            {bossPityStacks > 0 && (
+              <div className="boss-pity-badge">Titan affaibli -{bossPityReduction}% ({bossPityStacks} {bossPityStacks === 1 ? 'defeat' : 'defeats'})</div>
+            )}
           </div>
         )}
       </div>
