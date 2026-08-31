@@ -786,10 +786,15 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     }
   }
 
-  // --- PvE Analysis ---
-  const pveFights = allFights.filter(f => f.fight_type === 'pve')
-  const bossFights = allFights.filter(f => f.fight_type === 'boss')
-  const pvpFights = allFights.filter(f => f.fight_type !== 'pve' && f.fight_type !== 'boss')
+  // --- PvE / Boss classification (#863, #705) ---
+  // VOID TITAN emitted by the QA bot as fight_type 'pve' must be counted as a
+  // boss fight, not a legacy monster PvE fight. Detect boss by OR.
+  const isBossFight = (f: FightRecord): boolean =>
+    f.fight_type === 'boss' ||
+    (typeof f.monster_name === 'string' && f.monster_name.trim() === 'VOID TITAN')
+  const bossFights = allFights.filter(isBossFight)
+  const pveFights = allFights.filter(f => f.fight_type === 'pve' && !isBossFight(f))
+  const pvpFights = allFights.filter(f => !isBossFight(f) && f.fight_type !== 'pve')
   const pveShiftedRuns = validRuns.filter(r => r.pve_data?.pve_shifted === true)
   let pveAnalysis: PveAnalysis | null = null
 
@@ -817,7 +822,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
 
     // PvE/PvP XP ratio: compare after_modifier PvE XP to PvP win XP (boss fights excluded)
     const pvpWinsForRatio = wins
-      .filter(f => f.fight_type !== 'pve' && f.fight_type !== 'boss')
+      .filter(f => !isBossFight(f) && f.fight_type !== 'pve')
       .filter((f): f is FightRecord => f.xp !== null)
     const avgPvpXpWin = pvpWinsForRatio.length > 0
       ? pvpWinsForRatio.reduce((s, f) => s + (f.xp ?? 0), 0) / pvpWinsForRatio.length
