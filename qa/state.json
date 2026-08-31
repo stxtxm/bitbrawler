@@ -1,7 +1,10 @@
 {
-  "run": "2026-08-31",
-  "character": "COBALTNOVA",
+  "run": "2026-09-01",
+  "character": "QA-PERSIST",
   "exhausted": false,
-  "updated_at": "2026-08-31T12:18:59.487Z",
-  "source": "created"
+  "updated_at": "2026-08-31T22:15:46.720Z",
+  "source": "reused",
+  "persistent_generation": 0,
+  "persistent_created_at": "2026-08-31T22:12:13.378Z",
+  "persistent_reset_ready": true
 }
