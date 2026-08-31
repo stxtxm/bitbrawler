@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-30T21:52:26Z",
+  "last_session": "2026-08-31T23:10:37Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -47,9 +47,9 @@
       "date": "2026-08-26"
     },
     {
-      "lesson": "Issue #864 combat-overlay intercept: attendre 5s hidden avant Inventory, capturer -overlay-blocked et marquer skipped_inventory overlay sans errors (fights valides). Helper early waitForCombatOverlayHidden pour garantir ordering file avant premier Inventory literal. Ne pas toucher retry combat timeout.",
-      "issue": "#864",
-      "date": "2026-08-30"
+      "lesson": "UPGRADE_COST 50→35: early sink trop raide. Ne pas hardcoder 150 en test (300-150) mais calculer via UPGRADE_BASE_COST+level²×SCALING sinon test casse au prochain rebalance. Paliers mis à jour dans commentaire forgeConstants.",
+      "issue": "#870",
+      "date": "2026-08-31"
     }
   ]
 }
