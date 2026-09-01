@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-09-01T21:47:50Z",
+  "last_session": "2026-09-01T21:48:04Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -37,8 +37,8 @@
       "date": "2026-08-26"
     },
     {
-      "lesson": "Issue #886 simulateCombat timeout garde-fou 30s: importer GAME_RULES.COMBAT.MAX_DURATION_MS en plus de COMBAT_BALANCE.maxDurationMs et checker OR pour alignement #874 (30000). Simple garde-fou par round suffit pour PvP + boss 12x HP pool car meme simulateCombat. Retirer commentaire et garder winner timeout (gagne timeout / Timeout - Match nul). Tests mock Date.now 31000->1 round+winner defini, normal rapide pas de timeout.",
-      "issue": "#886",
+      "lesson": "PR #888 fermée en doublon car branche feat/auto-879 était ancêtre de master (merge-base = tip) → diff vide. Correction: rebase fast-forward sur master puis commit minimal touchant uniquement src/utils/combatUtils.ts en alignant le garde-fou sur GAME_RULES.COMBAT.MAX_DURATION_MS (source unique #874) au lieu de COMBAT_BALANCE. Seul ce fichier doit être modifié pour respecter acceptance #879. Création PR #893 suite fermeture #888.",
+      "issue": "#879",
       "date": "2026-09-01"
     }
   ]
