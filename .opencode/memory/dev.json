@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-09-01T21:48:04Z",
+  "last_session": "2026-09-01T21:48:22Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -37,7 +37,7 @@
       "date": "2026-08-26"
     },
     {
-      "lesson": "PR #888 fermée en doublon car branche feat/auto-879 était ancêtre de master (merge-base = tip) → diff vide. Correction: rebase fast-forward sur master puis commit minimal touchant uniquement src/utils/combatUtils.ts en alignant le garde-fou sur GAME_RULES.COMBAT.MAX_DURATION_MS (source unique #874) au lieu de COMBAT_BALANCE. Seul ce fichier doit être modifié pour respecter acceptance #879. Création PR #893 suite fermeture #888.",
+      "lesson": "PR #888 duplicate de #879: branche feat/auto-879 réutilisée (origin/feat/auto-879 et origin/feat/auto-875 pointaient même commit 83f0946) -> PR head ancêtre de master (diff vide). Fix 6601cda poussé (GAME_RULES.COMBAT.MAX_DURATION_MS) a rendu le diff correct (1 fichier) mais issue déjà mergée via #882/#884 -> fermeture en doublon. Le garde-fou 30s existe depuis 5db7e5e et master 89ea5dd, tests 1602 verts, build ok. Pas de migration DB, ne pas créer de sous-issues campaign-879 (1 fichier).",
       "issue": "#879",
       "date": "2026-09-01"
     }
