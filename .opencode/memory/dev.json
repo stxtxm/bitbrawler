@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-09-01T22:06:02Z",
+  "last_session": "2026-09-01T22:07:43Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -37,8 +37,8 @@
       "date": "2026-08-26"
     },
     {
-      "lesson": "Issue #899 deja implementee en master (MAX_DURATION_MS 30000 sync GAME_RULES/COMBAT_BALANCE, tests verts)",
-      "issue": "#899",
+      "lesson": "PR #911 duplicate de #906 (campaign-873) — issue #900 fermée en duplicate. Code 30s timeout déjà dans master (simulateCombat startTime + GAME_RULES.COMBAT.MAX_DURATION_MS 30000 + reason: timeout_cap + tests Date.now mock). Branche feat/auto-900 resyncée sur master (7eab57e) pour CI verte, pas de code supplémentaire nécessaire. Tests/lint/build verts.",
+      "issue": "#911",
       "date": "2026-09-01"
     }
   ]
