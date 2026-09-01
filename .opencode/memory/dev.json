@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-09-01T21:51:04Z",
+  "last_session": "2026-09-01T21:57:53Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -37,8 +37,8 @@
       "date": "2026-08-26"
     },
     {
-      "lesson": "PR #888 fermee en doublon (#879 deja merge via #882 + #874). Timeout garde-fou 30s deja present dans master via COMBAT_BALANCE.maxDurationMs=30000 (equiv. GAME_RULES). Tentative de fix vers GAME_RULES cree branche orpheline (#888 non-reouvrable apres force-push/recreation). Nettoyage: suppression branche, master reste correct. Lecon: ne pas forcer de branche d'une PR closee 'duplicate' -> elle n'est pas reouvrable (422). Verifier state avant de pousser.",
-      "issue": "#879",
+      "lesson": "Issue #899 déjà implémentée via #884 (62ef239): GAME_RULES.COMBAT.MAX_DURATION_MS=30000 et COMBAT_BALANCE.maxDurationMs=30000 déjà en place, tests gameRules et combatBalance verts — sous-issue dupliquée de la campagne 873 → vérification seule suffit, pas de commit nécessaire",
+      "issue": "#899",
       "date": "2026-09-01"
     }
   ]
