@@ -245,6 +245,7 @@ describe('Combat System', () => {
     expect(result.winner).toBeDefined();
     expect(result.winner).toBe('draw');
     expect(result.details.some(d => d.includes('timeout') || d.includes('Timeout'))).toBeTruthy();
+    expect(result.details.some(d => d.includes('reason: timeout_cap'))).toBeTruthy();
   });
 
   it('should timeout combat when maxDurationMs is exceeded and defender has more HP', () => {
@@ -299,6 +300,7 @@ describe('Combat System', () => {
     const timeoutMsg = result.details.find(d => d.includes('timeout') || d.includes('Timeout'));
     expect(timeoutMsg).toBeTruthy();
     expect(timeoutMsg).toContain('Tanky');
+    expect(timeoutMsg).toContain('reason: timeout_cap');
   });
 
   it('should timeout combat with attacker winning when attacker has more HP after stall', () => {
@@ -349,6 +351,7 @@ describe('Combat System', () => {
     const timeoutMsg = result.details.find(d => d.includes('timeout') || d.includes('Timeout'));
     expect(timeoutMsg).toBeTruthy();
     expect(timeoutMsg).toContain('Titan');
+    expect(timeoutMsg).toContain('reason: timeout_cap');
   });
 
   it('should not be affected by timeout under normal fast combat conditions', () => {
