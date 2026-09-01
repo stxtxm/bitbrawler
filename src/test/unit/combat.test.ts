@@ -235,21 +235,17 @@ describe('Combat System', () => {
     ];
     vi.spyOn(Math, 'random').mockImplementation(() => seq.shift() ?? 0.99);
 
-    // Mock Date.now to simulate timeout after first round
     let dateCalls = 0;
     vi.spyOn(Date, 'now').mockImplementation(() => {
       dateCalls++;
-      if (dateCalls === 1) return 0;       // startTime
-      return 26000;                          // 26s → exceeds 25s timeout
+      if (dateCalls === 1) return 0;
+      return 31000;
     });
 
     const result = simulateCombat(attacker as Character, defender as Character);
 
-    // Should finish after just 1 round (timeout triggered)
     expect(result.rounds).toBe(1);
     expect(result.winner).toBeDefined();
-    // With identical stats and same deterministic rolls, attacker and defender
-    // deal symmetric damage. After 1 round both take equal damage → HP equal → draw
     expect(result.details.some(d => d.includes('timeout') || d.includes('Timeout'))).toBeTruthy();
   });
 
@@ -289,22 +285,70 @@ describe('Combat System', () => {
     ];
     vi.spyOn(Math, 'random').mockImplementation(() => seq.shift() ?? 0.99);
 
-    // Mock Date.now to simulate timeout after first round
     let dateCalls = 0;
     vi.spyOn(Date, 'now').mockImplementation(() => {
       dateCalls++;
       if (dateCalls === 1) return 0;
-      return 26000;
+      return 31000;
     });
 
     const result = simulateCombat(attacker as Character, defender as Character);
 
     expect(result.rounds).toBe(1);
-    // Defender (Tanky) should have more remaining HP → should win
     expect(result.winner).toBe('defender');
     const timeoutMsg = result.details.find(d => d.includes('timeout') || d.includes('Timeout'));
     expect(timeoutMsg).toBeTruthy();
     expect(timeoutMsg).toContain('Tanky');
+  });
+
+  it('should timeout combat with attacker winning when attacker has more HP after stall', () => {
+    const attacker = {
+      ...mockCharacter,
+      name: 'Titan',
+      strength: 5,
+      vitality: 20,
+      hp: 500,
+      maxHp: 500,
+    };
+    const defender = {
+      ...mockCharacter,
+      name: 'Weakling',
+      strength: 5,
+      vitality: 5,
+      hp: 50,
+      maxHp: 50,
+    };
+
+    const seq = [
+      0.4,
+      0,
+      0.99,
+      0.99,
+      0.5,
+      0.99,
+      0,
+      0.99,
+      0.99,
+      0.5,
+      0.99,
+    ];
+    vi.spyOn(Math, 'random').mockImplementation(() => seq.shift() ?? 0.99);
+
+    let dateCalls = 0;
+    vi.spyOn(Date, 'now').mockImplementation(() => {
+      dateCalls++;
+      if (dateCalls === 1) return 0;
+      return 30000;
+    });
+
+    const result = simulateCombat(attacker as Character, defender as Character);
+
+    expect(result.rounds).toBe(1);
+    expect(result.winner).toBe('attacker');
+    expect(result.details.some(d => d.includes('timeout') || d.includes('Timeout'))).toBeTruthy();
+    const timeoutMsg = result.details.find(d => d.includes('timeout') || d.includes('Timeout'));
+    expect(timeoutMsg).toBeTruthy();
+    expect(timeoutMsg).toContain('Titan');
   });
 
   it('should not be affected by timeout under normal fast combat conditions', () => {
