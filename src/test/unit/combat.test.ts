@@ -379,6 +379,57 @@ describe('Combat System', () => {
     expect(timeoutMsg).toBeFalsy();
   });
 
+  it('should timeout boss/PvE combat with same guard and hpLeft resolution', () => {
+    const attacker = {
+      ...mockCharacter,
+      name: 'Hero',
+      level: 10,
+      strength: 15,
+      vitality: 15,
+      hp: 200,
+      maxHp: 200,
+    };
+    const boss = {
+      ...mockCharacter,
+      name: 'RaidBoss',
+      level: 12,
+      strength: 18,
+      vitality: 18,
+      hp: 2400,
+      maxHp: 2400,
+    };
+
+    const seq = [
+      0.4,
+      0,
+      0.99,
+      0.99,
+      0.5,
+      0.99,
+      0,
+      0.99,
+      0.99,
+      0.5,
+      0.99,
+    ];
+    vi.spyOn(Math, 'random').mockImplementation(() => seq.shift() ?? 0.99);
+
+    let dateCalls = 0;
+    vi.spyOn(Date, 'now').mockImplementation(() => {
+      dateCalls++;
+      if (dateCalls === 1) return 0;
+      return 31000;
+    });
+
+    const result = simulateCombat(attacker as Character, boss as Character);
+
+    expect(result.rounds).toBe(1);
+    expect(result.winner).toBe('defender');
+    const timeoutMsg = result.details.find(d => d.includes('timeout') || d.includes('Timeout'));
+    expect(timeoutMsg).toBeTruthy();
+    expect(timeoutMsg).toContain('reason: timeout_cap');
+  });
+
   it('does not include super effective when no element matches', () => {
     const attacker = {
       ...mockCharacter,
