@@ -64648,5 +64648,266 @@
       "purchased_offer": 0,
       "essence_after_purchase": 811
     }
+  },
+  {
+    "date": "2026-09-01T20:19:43.869Z",
+    "run": "2026-09-01",
+    "character": "QA-PERSI-4",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Iron Greaves",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 5,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 52,
+      "vit": 28,
+      "dex": 19,
+      "luk": 20,
+      "int": 20,
+      "foc": 27,
+      "fights": 0
+    },
+    "initial_level": 63,
+    "initial_xp": {
+      "current": 91210,
+      "max": 111710
+    },
+    "initial_max_hp": 1232,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 63,
+      "xp": 93107,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 52,
+      "vit": 28,
+      "dex": 19,
+      "luk": 20,
+      "int": 20,
+      "foc": 27,
+      "fights": 0
+    },
+    "final_max_hp": 1232,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20268,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "wraith"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 499,
+      "xp_events": [
+        {
+          "time_ms": 3067,
+          "xp": 237,
+          "monster": "wraith",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 13710,
+          "xp": 262,
+          "monster": "wraith",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        510,
+        1531,
+        3067,
+        10640,
+        12175,
+        13710
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 237,
+        "essence": 0.45,
+        "monster": "wraith"
+      },
+      {
+        "result": "victory",
+        "xp": 262,
+        "essence": 0.45,
+        "monster": "wraith"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.54,
+      "next_level_eta": "⬆ 16m 18s",
+      "power_ratio": "⚔ 0.59x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.27x",
+      "interval": "10.6s",
+      "streak_bonus": "🔥 12-win streak (+9%)"
+    },
+    "initial_essence": 1266.58,
+    "final_essence": 1180.84,
+    "essence": {
+      "before_idle": 1266.58,
+      "after_idle": 1267.48,
+      "per_fight": [],
+      "forge_before": 1268,
+      "forge_after_salvage": 1273,
+      "forge_after_fusion": 1273,
+      "forge_after_upgrade": 1198,
+      "forge_after": 1198,
+      "shop_before": 1200,
+      "shop_after": 1180,
+      "final": 1180.84,
+      "flow": {
+        "idle_gained": 0.9,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 75,
+        "forge_net": -70,
+        "shop_cost": 20,
+        "net_change": -85.74
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 1268,
+      "essence_after_salvage": 1273,
+      "essence_after_fusion": 1273,
+      "essence_after_upgrade": 1198,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 1198,
+      "items_after": 0,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": 75,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "COMMON",
+      "cost": 20,
+      "essence_before": 1200,
+      "essence_after": 1180,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Opal Pendant",
+            "rarity": "UNCOMMON",
+            "price": 20
+          },
+          {
+            "name": "Starlight Crystal",
+            "rarity": "EPIC",
+            "price": 60
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 35
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 1180
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "errors": [],
+    "load_times_ms": {
+      "home": 2483,
+      "arena": 527,
+      "arena_reload": 12
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Opal Pendant",
+          "rarity": "UNCOMMON",
+          "price": 20
+        },
+        {
+          "name": "Starlight Crystal",
+          "rarity": "EPIC",
+          "price": 60
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 35
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 1180
+    }
   }
 ]
