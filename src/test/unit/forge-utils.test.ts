@@ -98,8 +98,8 @@ describe('forgeConstants', () => {
   });
 
   describe('UPGRADE_COST / UPGRADE_BASE_COST', () => {
-    it('defines UPGRADE_COST as 50', () => {
-      expect(UPGRADE_COST).toBe(50);
+    it('defines UPGRADE_COST as 35', () => {
+      expect(UPGRADE_COST).toBe(35);
     });
 
     it('UPGRADE_BASE_COST is an alias for UPGRADE_COST', () => {
@@ -616,11 +616,9 @@ describe('performUpgrade', () => {
     });
 
     const result = performUpgrade('rusty_sword', char);
-    // cost = UPGRADE_BASE_COST + level² × UPGRADE_COST_SCALING = 50 + 4*25 = 150
-    // essence after = 300 - 150 = 150
 
     expect(result.itemUpgrades?.rusty_sword).toBe(3);
-    expect(result.essence).toBe(150);
+    expect(result.essence).toBe(300 - (UPGRADE_BASE_COST + 4 * UPGRADE_COST_SCALING));
   });
 
   it('does not exceed MAX_UPGRADE_LEVEL', () => {
