@@ -307,6 +307,56 @@ describe('Combat System', () => {
     expect(timeoutMsg).toContain('Tanky');
   });
 
+  it('should timeout combat with attacker winning when attacker has more HP after stall', () => {
+    const attacker = {
+      ...mockCharacter,
+      name: 'Titan',
+      strength: 5,
+      vitality: 20,
+      hp: 500,
+      maxHp: 500,
+    };
+    const defender = {
+      ...mockCharacter,
+      name: 'Weakling',
+      strength: 5,
+      vitality: 5,
+      hp: 50,
+      maxHp: 50,
+    };
+
+    const seq = [
+      0.4,
+      0,
+      0.99,
+      0.99,
+      0.5,
+      0.99,
+      0,
+      0.99,
+      0.99,
+      0.5,
+      0.99,
+    ];
+    vi.spyOn(Math, 'random').mockImplementation(() => seq.shift() ?? 0.99);
+
+    let dateCalls = 0;
+    vi.spyOn(Date, 'now').mockImplementation(() => {
+      dateCalls++;
+      if (dateCalls === 1) return 0;
+      return 30000;
+    });
+
+    const result = simulateCombat(attacker as Character, defender as Character);
+
+    expect(result.rounds).toBe(1);
+    expect(result.winner).toBe('attacker');
+    expect(result.details.some(d => d.includes('timeout') || d.includes('Timeout'))).toBeTruthy();
+    const timeoutMsg = result.details.find(d => d.includes('timeout') || d.includes('Timeout'));
+    expect(timeoutMsg).toBeTruthy();
+    expect(timeoutMsg).toContain('Titan');
+  });
+
   it('should not be affected by timeout under normal fast combat conditions', () => {
     // Normal combat (attacker much stronger)
     const attacker = {
