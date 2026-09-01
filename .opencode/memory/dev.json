@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-09-01T22:08:40Z",
+  "last_session": "2026-09-01T22:13:03Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -37,7 +37,7 @@
       "date": "2026-08-26"
     },
     {
-      "lesson": "PR #911 combat 30s timeout guard déjà conforme: startTime + GAME_RULES.COMBAT.MAX_DURATION_MS break + hpLeft draw/timeout_cap, tests mock Date.now 0->31000, build vert. PR head == base après merge #910 (commit vide), aucun correctif code nécessaire, CI verte via local npm test/build.",
+      "lesson": "PR #911 vide vs master (guard deja merge via #910) => action_required CI. Fix: re-ajout test boss timeout 30s guard (31000ms stall, hpLeft resolution, reason timeout_cap) + cherry-pick stabilisation monster-utils deterministe pour eviter flaky 0.15% -> PR diff 2 fichiers, CI verte 1605 tests. Attention branches fantomes refs/heads/origin/feat/* créées par fetch mal formé -> à supprimer avant push.",
       "issue": "#900",
       "date": "2026-09-01"
     }
