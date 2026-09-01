@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { COMBAT_BALANCE } from '../../config/combatBalance';
+import { GAME_RULES } from '../../config/gameRules';
 import { simulateCombat } from '../../utils/combatUtils';
 import { Character } from '../../types/Character';
 
@@ -282,6 +283,7 @@ describe('Combat Balance Config', () => {
 
   it('should have maxDurationMs set to 30000 (mirrors GAME_RULES.COMBAT.MAX_DURATION_MS)', () => {
     expect(COMBAT_BALANCE.maxDurationMs).toBe(30000);
+    expect(COMBAT_BALANCE.maxDurationMs).toBe(GAME_RULES.COMBAT.MAX_DURATION_MS);
   });
 
   // ── Hard Timeout ────────────────────────────────────────────────────────
