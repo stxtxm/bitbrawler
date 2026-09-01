@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-09-01T21:47:04Z",
+  "last_session": "2026-09-01T21:47:38Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -37,7 +37,7 @@
       "date": "2026-08-26"
     },
     {
-      "lesson": "PR #888 empty diff car HEAD ancestor of master — garde-fou 30s deja present via #384/#874 mais PR vide. Correction: utiliser GAME_RULES.COMBAT.MAX_DURATION_MS comme source explicite (mirroir de COMBAT_BALANCE=30000) pour creer un diff mono-fichier valide vs master tout en gardant winner timeout logic. Toujours verifier git diff origin/master..HEAD avant de considerer PR verte.",
+      "lesson": "PR #888 doublon de #882 (même branche feat/auto-879, même issue #879) — master contenait déjà l'implémentation timeout 30s. Head == base => PR vide 'no commit found', CI in_progress infini. Correction: sync branch puis fermeture PR doublon + issue. Toujours vérifier head vs base ancestry avant de pousser.",
       "issue": "#879",
       "date": "2026-09-01"
     }
