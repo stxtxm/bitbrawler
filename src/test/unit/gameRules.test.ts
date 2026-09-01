@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { GAME_RULES } from '../../config/gameRules';
+import { COMBAT_BALANCE } from '../../config/combatBalance';
 
 describe('Game rules', () => {
   it('POINTS_PER_LEVEL is positive', () => {
@@ -17,6 +18,10 @@ describe('Game rules', () => {
 
   it('COMBAT MAX_DURATION_MS is 30000 (30s cap)', () => {
     expect(GAME_RULES.COMBAT.MAX_DURATION_MS).toBe(30000);
+  });
+
+  it('COMBAT MAX_DURATION_MS mirrors COMBAT_BALANCE.maxDurationMs', () => {
+    expect(GAME_RULES.COMBAT.MAX_DURATION_MS).toBe(COMBAT_BALANCE.maxDurationMs);
   });
 
   it('PVE XP modifier gives 250% of PvP XP (bonus rewards to match PvP efficiency)', () => {
