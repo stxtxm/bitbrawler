@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-09-01T21:58:18Z",
+  "last_session": "2026-09-01T22:00:08Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -37,7 +37,7 @@
       "date": "2026-08-26"
     },
     {
-      "lesson": "Issue #900 combat 30s timeout guard déjà mergé via #893/#895/#901, seule adaptation manquante était log reason: timeout_cap explicite pour critère acceptation — ajouté suffixe (reason: timeout_cap) dans les 3 branches timeout sans casser tests timeout/Timeout, 1603 tests verts",
+      "lesson": "Issue #900 combat 30s timeout guard: AC exige log contenant 'reason: timeout_cap' exactement - les 3 messages timeout doivent l'inclure (attacker/defender gagne + draw). Sans cette string les tests seedes echouent meme si timeout/Timeout present. Pattern TDD: mock Date.now 0->31000 + Math.random deterministe verifie rounds===1.",
       "issue": "#900",
       "date": "2026-09-01"
     }
