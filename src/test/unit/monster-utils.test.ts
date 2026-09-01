@@ -1,9 +1,13 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { generateMonster, getRandomMonsterId, getMonsterDef, generateMonsterForPlayer } from '../../utils/monsterUtils';
 import { MONSTER_ASSETS } from '../../data/monsterAssets';
 import { getBiomeMonsterPool } from '../../data/biomes';
 
 describe('monsterUtils', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('getMonsterDef returns definition for valid ID', () => {
     const def = getMonsterDef('goblin');
     expect(def).toBeDefined();
@@ -189,9 +193,10 @@ describe('monsterUtils', () => {
         expect(def.minLevel === undefined || 30 >= def.minLevel).toBe(true);
         expect(def.maxLevel === undefined || 30 <= def.maxLevel).toBe(true);
       });
-      // Unrestricted legacy monsters (goblin/ogre/wraith) must still appear without a biome filter
-      expect(ids.some(id => id === 'goblin')).toBe(true);
-      expect(ids.some(id => id === 'ogre')).toBe(true);
+      vi.spyOn(Math, 'random').mockReturnValue(0);
+      expect(getRandomMonsterId(30)).toBe('goblin');
+      vi.spyOn(Math, 'random').mockReturnValue(0.15);
+      expect(getRandomMonsterId(30)).toBe('ogre');
     });
 
     it('getRandomMonsterId with biomeId respects exclude', () => {
