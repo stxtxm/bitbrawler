@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-08-31T23:10:37Z",
+  "last_session": "2026-09-01T21:47:04Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -22,16 +22,6 @@
   },
   "session_notes": [
     {
-      "date": "2026-08-24",
-      "issue": "#783",
-      "lesson": "Issue #783 dead-code removal dans un script sans infra de test: pattern verification par EQUIVALENCE COMPORTEMENTALE - sandbox /tmp avec layout miroir (scripts/ + .opencode/memory/), executer version BEFORE sur copies fraiches -> md5 baseline, appliquer le fix, re-executer version AFTER sur les mem…"
-    },
-    {
-      "date": "2026-08-25",
-      "issue": "#820",
-      "lesson": "Issue #820 garde de niveau au reuse persistant: qa-bot.mjs appelle run() au top-level donc non importable dans vitest - pattern verifie: tests miroir (convention repo) + harness /tmp qui extrait les VRAIES fonctions du .mjs via extraction par profondeur d'accolades et rejoue le scénario de bug. Att…"
-    },
-    {
       "date": "2026-08-25",
       "issue": "#821",
       "lesson": "Issue #821 combat speed x1/x2: (1) reglage local persiste = pattern useSound (localStorage module-level) - evite toute migration Supabase. (2) CombatView fake timers: le tick #1 du round interval fait setCurrentRound(0) donc .round-value reste '1/3' apres le premier round joue - discriminer x1/x2 v…"
@@ -39,17 +29,17 @@
     {
       "date": "2026-08-25",
       "issue": "#830",
-      "lesson": "Issue #830 extraction helpers purs QA bot: (1) module qa/qa-bot-helpers.js + .d.ts suit la convention config.js/config.d.ts du dossier qa/ - PAS .mjs: Node ESM ne resout pas un import './x.js' vers x.mjs, harnais /tmp a attrape le bug avant commit. (2) Entry guard run(): process.argv[1] + import.meta.url === pathToFileURL(resolve(argv1)).href - valide en conditions reelles: node qa/qa-bot.mjs chemin relatif -> execute, import ESM -> inert. (3) Verification par EQUIVALENCE comportementale git HEAD vs nouveau module: extraire fonctions anciennes par profondeur d'accolades, 79 assertions identiques. (4) Les tests miroir peuvent porter des attentes FAUSSES (QA-PERS-3 vs QA-PERSI-3 reel) - le test corrige l'attente, jamais le code extrait verbatim."
+      "lesson": "Issue #830 extraction helpers purs QA bot: (1) module qa/qa-bot-helpers.js + .d.ts suit la convention config.js/config.d.ts du dossier qa/ - PAS .mjs: Node ESM ne resout pas un import './x.js' vers x.mjs, harnais /tmp a attrape le bug avant commit. (2) Entry guard run(): process.argv[1] + import.me…"
     },
     {
-      "lesson": "Issue #834 combat speed 2x for qa-bot: helpers moved to src/utils caused import './qa-bot.config.js' broken in that location -> fix to '../../qa/qa-bot.config.js' and qa-bot.mjs import broken './qa-bot-helpers.js' -> '../src/utils/qa-bot-helpers.js'. Toggle detection must use SettingsPanel switch (CombatView toggle only visible during combat), so ensureCombatSpeed2x opens settings, checks aria-checked, clicks if needed, falls back to direct localStorage set. Capture combat_speed in runRecord for analyzer correlation. TDD helpers: COMBAT_SPEED_STORAGE_KEY, OPTIONS, selectors, isCombatSpeed, parseCombatSpeed, parseCombatSpeedText, getCombatSpeedFromStorageRaw, nextCombatSpeed.",
+      "lesson": "Issue #834 combat speed 2x for qa-bot: helpers moved to src/utils caused import './qa-bot.config.js' broken in that location -> fix to '../../qa/qa-bot.config.js' and qa-bot.mjs import broken './qa-bot-helpers.js' -> '../src/utils/qa-bot-helpers.js'. Toggle detection must use SettingsPanel switch (…",
       "issue": "#834",
       "date": "2026-08-26"
     },
     {
-      "lesson": "UPGRADE_COST 50→35: early sink trop raide. Ne pas hardcoder 150 en test (300-150) mais calculer via UPGRADE_BASE_COST+level²×SCALING sinon test casse au prochain rebalance. Paliers mis à jour dans commentaire forgeConstants.",
-      "issue": "#870",
-      "date": "2026-08-31"
+      "lesson": "PR #888 empty diff car HEAD ancestor of master — garde-fou 30s deja present via #384/#874 mais PR vide. Correction: utiliser GAME_RULES.COMBAT.MAX_DURATION_MS comme source explicite (mirroir de COMBAT_BALANCE=30000) pour creer un diff mono-fichier valide vs master tout en gardant winner timeout logic. Toujours verifier git diff origin/master..HEAD avant de considerer PR verte.",
+      "issue": "#879",
+      "date": "2026-09-01"
     }
   ]
 }
