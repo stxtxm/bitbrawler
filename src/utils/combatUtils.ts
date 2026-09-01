@@ -1,6 +1,7 @@
 import { Character } from '../types/Character'
 import { applyEquipmentToCharacter, getEquippedItems } from './equipmentUtils'
 import { COMBAT_BALANCE } from '../config/combatBalance'
+import { GAME_RULES } from '../config/gameRules'
 import { getBotArchetype, getAffinityMultiplier } from './affinityUtils'
 
 export interface CombatStats {
@@ -262,8 +263,7 @@ export function simulateCombat(attacker: Character, defender: Character): {
       record(attackerStrike.detail)
     }
 
-    // Timeout check — break if combat exceeds maxDurationMs
-    if (Date.now() - startTime >= COMBAT_BALANCE.maxDurationMs) {
+    if (Date.now() - startTime >= GAME_RULES.COMBAT.MAX_DURATION_MS || Date.now() - startTime >= COMBAT_BALANCE.maxDurationMs) {
       break
     }
   }
@@ -282,7 +282,6 @@ export function simulateCombat(attacker: Character, defender: Character): {
     winner = 'draw'
     record("Limite de rounds atteinte !")
   } else {
-    // Timeout — whichever has more HP wins
     if (attackerHp > defenderHp) {
       winner = 'attacker'
       record(`${attacker.name} gagne (timeout) !`)
