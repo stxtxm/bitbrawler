@@ -25,6 +25,10 @@ export const GAME_RULES = {
         HP_MULTIPLIER: 12.0, // Boss persistent HP pool = player maxHp * this
         XP_MODIFIER: 4.0, // Boss kill XP payout multiplier (vs a regular fight win)
         ESSENCE_REWARD: 60, // Essence rewarded on boss kill
+        PITY_HP_REDUCTION: 0.12, // Per-stack multiplicative HP reduction (0.88×) on consecutive defeats
+        PITY_FLOOR: 6.0, // Minimum HP multiplier even at max pity (half the baseline)
+        CONSOLATION_ESSENCE: 15, // Essence on defeat (ESSENCE_REWARD × 0.25)
+        CONSOLATION_CAP: 3, // Max consolation payouts per Paris day
     },
     BOTS: {
         MIN_POPULATION: 3,

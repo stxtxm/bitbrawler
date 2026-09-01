@@ -46,7 +46,11 @@ export const normalizeCharacter = (character: Character): Character => {
     achievementXpBonus: character.achievementXpBonus ?? 0,
     achievementEssenceBonus: character.achievementEssenceBonus ?? 0,
     achievementCosmetics: character.achievementCosmetics ?? [],
-    bossProgress: character.bossProgress ?? undefined,
+    bossProgress: character.bossProgress ? {
+      ...character.bossProgress,
+      pityStacks: character.bossProgress.pityStacks ?? 0,
+      consolationCount: character.bossProgress.consolationCount ?? 0,
+    } : undefined,
   };
 
   // Upward-only level healing: if experience justifies a HIGHER level than

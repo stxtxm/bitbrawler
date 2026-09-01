@@ -15,6 +15,7 @@ import {
   createBossProgress,
   ensureBossDailyReset,
   getBossRewards,
+  resolveBossAttack,
 } from '../utils/bossUtils';
 import { convertFromSupabase, convertToSupabase } from '../utils/supabaseUtils';
 import {
@@ -680,10 +681,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       ? ensureBossDailyReset(baseCharacter.bossProgress, now)
       : createBossProgress(baseCharacter, now);
 
-    const attacksLeft = Math.max(0, baseProgress.attacksLeft - (shouldConsume ? 1 : 0));
-
-    // Rewards only on a kill; the persistent HP pool is the "currency" of a loss.
-    const rewards = getBossRewards(baseCharacter, won);
+    const rewards = getBossRewards(baseCharacter, won, baseProgress, now);
     const xpResult = gainXp(baseCharacter, won ? rewards.xpGained : 0);
 
     const historyEntry = { date: now, won, opponentName: bossName };
@@ -691,26 +689,19 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
     const pointsGained = xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL;
 
-    let updatedProgress = baseProgress;
-    if (won) {
-      // Boss defeated: a new cycle starts at the player's (possibly new) level,
-      // keeping any remaining daily attacks for the same day.
-      const next = createBossProgress(xpResult.updatedCharacter, now);
-      updatedProgress = {
-        ...next,
-        attacksLeft,
-        lastAttackReset: baseProgress.lastAttackReset,
-        totalKills: baseProgress.totalKills + 1,
-        lastKillAt: now,
-        firstEncounterAt: baseProgress.firstEncounterAt,
-      };
+    const finalBossHp = options?.bossHpLeft ?? baseProgress.bossHp;
+    let updatedProgress: typeof baseProgress;
+    if (shouldConsume) {
+      const resolution = resolveBossAttack(
+        xpResult.updatedCharacter,
+        baseProgress,
+        finalBossHp,
+        won,
+        now,
+      );
+      updatedProgress = resolution.progress;
     } else {
-      // Boss survived: it keeps the HP it had at the end of the fight.
-      updatedProgress = {
-        ...baseProgress,
-        attacksLeft,
-        bossHp: options?.bossHpLeft ?? baseProgress.bossHp,
-      };
+      updatedProgress = baseProgress;
     }
 
     let updatedChar: Character = normalizeCharacter({

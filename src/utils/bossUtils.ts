@@ -4,12 +4,6 @@ import { BOSS_ID, getBossDef } from '../data/bossAssets';
 import { shouldResetDaily } from './dailyReset';
 import { simulateCombat } from './combatUtils';
 
-// ─── Raid Boss Progress ──────────────────────────────────────────────────────
-// The boss is a single persistent HP pool per character. Each "attack" runs a
-// full combat; on a loss the boss KEEPS its remaining HP (persisted across
-// attacks and across days), and the daily gauge (BOSS.MAX_DAILY_ATTACKS) is
-// refilled at each Paris-day reset.
-
 export interface BossProgress {
   bossId: string;
   attacksLeft: number;
@@ -20,18 +14,50 @@ export interface BossProgress {
   totalKills: number;
   lastKillAt?: number;
   firstEncounterAt: number;
+  pityStacks?: number;
+  consolationCount?: number;
 }
 
 export function isBossUnlocked(level: number): boolean {
   return level >= GAME_RULES.BOSS.UNLOCK_LEVEL;
 }
 
-/** Build the boss combatant scaled off the attacking player. */
-export function buildBossCharacter(player: Character, bossHp?: number): Character {
+export function getBossPityStacks(progress?: BossProgress): number {
+  return progress?.pityStacks ?? 0;
+}
+
+export function getBossEffectiveMultiplier(stacks: number): number {
+  const base = GAME_RULES.BOSS.HP_MULTIPLIER;
+  const reduction = GAME_RULES.BOSS.PITY_HP_REDUCTION;
+  const floor = GAME_RULES.BOSS.PITY_FLOOR;
+  const raw = base * Math.pow(1 - reduction, Math.max(0, stacks));
+  return Math.max(floor, raw);
+}
+
+export function getBossEffectiveMaxHp(player: Character, pityStacks: number): number {
+  const mult = getBossEffectiveMultiplier(pityStacks);
+  return Math.max(1, Math.round(player.maxHp * mult));
+}
+
+export function getBossPityReductionPct(progress?: BossProgress): number {
+  const stacks = getBossPityStacks(progress);
+  if (stacks <= 0) return 0;
+  const base = GAME_RULES.BOSS.HP_MULTIPLIER;
+  const effective = getBossEffectiveMultiplier(stacks);
+  return Math.round((1 - effective / base) * 100);
+}
+
+export function canGrantConsolation(progress: BossProgress | undefined, now = Date.now()): boolean {
+  if (!progress) return true;
+  const reset = ensureBossDailyReset(progress, now);
+  return (reset.consolationCount ?? 0) < GAME_RULES.BOSS.CONSOLATION_CAP;
+}
+
+export function buildBossCharacter(player: Character, bossHp?: number, pityStacks = 0): Character {
   const def = getBossDef()!;
   const level = player.level + GAME_RULES.BOSS.LEVEL_BOOST;
   const mult = GAME_RULES.BOSS.STAT_MULTIPLIER;
-  const maxHp = Math.max(1, Math.round(player.maxHp * GAME_RULES.BOSS.HP_MULTIPLIER));
+  const maxHp = getBossEffectiveMaxHp(player, pityStacks);
 
   return {
     seed: `boss_${def.id}`,
@@ -56,9 +82,9 @@ export function buildBossCharacter(player: Character, bossHp?: number): Characte
   };
 }
 
-/** Fresh boss cycle — full HP pool at the player's current level. */
-export function createBossProgress(player: Character, now = Date.now()): BossProgress {
-  const boss = buildBossCharacter(player);
+export function createBossProgress(player: Character, now = Date.now(), pityStacks = 0): BossProgress {
+  const effectiveStacks = Math.max(0, pityStacks);
+  const boss = buildBossCharacter(player, undefined, effectiveStacks);
   return {
     bossId: BOSS_ID,
     attacksLeft: GAME_RULES.BOSS.MAX_DAILY_ATTACKS,
@@ -68,10 +94,11 @@ export function createBossProgress(player: Character, now = Date.now()): BossPro
     bossLevel: boss.level,
     totalKills: 0,
     firstEncounterAt: now,
+    pityStacks: effectiveStacks,
+    consolationCount: 0,
   };
 }
 
-/** Refill the daily attack gauge if the Paris day rolled over. */
 export function ensureBossDailyReset(
   progress: BossProgress,
   now = Date.now(),
@@ -81,6 +108,7 @@ export function ensureBossDailyReset(
       ...progress,
       attacksLeft: GAME_RULES.BOSS.MAX_DAILY_ATTACKS,
       lastAttackReset: now,
+      consolationCount: 0,
     };
   }
   return progress;
@@ -100,11 +128,6 @@ export interface BossAttackResolution {
   damageDealt: number;
 }
 
-/**
- * Resolve one boss attack.
- * - win (boss HP reached 0): new cycle starts, remaining daily attacks carry over.
- * - loss: the boss keeps the HP it had at the end of the combat.
- */
 export function resolveBossAttack(
   player: Character,
   progress: BossProgress,
@@ -115,9 +138,10 @@ export function resolveBossAttack(
   const reset = ensureBossDailyReset(progress, now);
   const attacksLeft = Math.max(0, reset.attacksLeft - 1);
   const damageDealt = Math.max(0, reset.bossHp - finalBossHp);
+  const currentStacks = getBossPityStacks(reset);
 
   if (won) {
-    const next = createBossProgress(player, now);
+    const next = createBossProgress(player, now, 0);
     return {
       progress: {
         ...next,
@@ -126,24 +150,35 @@ export function resolveBossAttack(
         totalKills: reset.totalKills + 1,
         lastKillAt: now,
         firstEncounterAt: reset.firstEncounterAt,
+        pityStacks: 0,
+        consolationCount: 0,
       },
       killed: true,
       damageDealt,
     };
   }
 
+  const newStacks = currentStacks + 1;
+  const newMaxHp = getBossEffectiveMaxHp(player, newStacks);
+  const clampedHp = Math.min(Math.max(0, finalBossHp), newMaxHp);
+  const alreadyRewarded = reset.consolationCount ?? 0;
+  const canGrant = alreadyRewarded < GAME_RULES.BOSS.CONSOLATION_CAP;
+  const newConsolationCount = canGrant ? alreadyRewarded + 1 : alreadyRewarded;
+
   return {
     progress: {
       ...reset,
       attacksLeft,
-      bossHp: Math.max(0, finalBossHp),
+      bossHp: clampedHp,
+      bossMaxHp: newMaxHp,
+      pityStacks: newStacks,
+      consolationCount: newConsolationCount,
     },
     killed: false,
     damageDealt,
   };
 }
 
-/** Deterministic XP reward for a boss kill (no RNG variance in the payout). */
 export function getBossKillXp(player: Character): number {
   const levelScaling = 1 + (player.level - 1) * 0.06;
   return Math.round(
@@ -151,24 +186,28 @@ export function getBossKillXp(player: Character): number {
   );
 }
 
-/** Full rewards for a boss attack. Only a kill grants rewards. */
 export function getBossRewards(
   player: Character,
   killed: boolean,
+  progress?: BossProgress,
+  now = Date.now(),
 ): { xpGained: number; essenceGained: number } {
-  if (!killed) return { xpGained: 0, essenceGained: 0 };
-  return {
-    xpGained: getBossKillXp(player),
-    essenceGained: GAME_RULES.BOSS.ESSENCE_REWARD,
-  };
+  if (killed) return { xpGained: getBossKillXp(player), essenceGained: GAME_RULES.BOSS.ESSENCE_REWARD };
+  const canGrant = progress ? canGrantConsolation(progress, now) : true;
+  return { xpGained: 0, essenceGained: canGrant ? GAME_RULES.BOSS.CONSOLATION_ESSENCE : 0 };
 }
 
-/** Simulate one boss attack; returns the outcome and the boss's remaining HP. */
+export function getBossConsolationEssence(progress: BossProgress | undefined, now = Date.now()): number {
+  if (!progress) return GAME_RULES.BOSS.CONSOLATION_ESSENCE;
+  return canGrantConsolation(progress, now) ? GAME_RULES.BOSS.CONSOLATION_ESSENCE : 0;
+}
+
 export function simulateBossAttack(
   player: Character,
   progress: BossProgress,
 ): { won: boolean; bossHpLeft: number; damageDealt: number } {
-  const boss = buildBossCharacter(player, progress.bossHp);
+  const pityStacks = getBossPityStacks(progress);
+  const boss = buildBossCharacter(player, progress.bossHp, pityStacks);
   const result = simulateCombat(player, boss);
   const lastSnapshot = result.timeline[result.timeline.length - 1];
   const bossHpLeft = result.winner === 'attacker'

@@ -167,7 +167,7 @@ describe('resolveBossAttack', () => {
     firstEncounterAt: now,
   };
 
-  it('on a loss: consumes an attack and keeps the remaining HP', () => {
+  it('on a loss: consumes an attack and keeps the remaining HP (with pity)', () => {
     const result = resolveBossAttack(player, base, 5120, false, now);
 
     expect(result.killed).toBe(false);
@@ -175,7 +175,8 @@ describe('resolveBossAttack', () => {
     expect(result.progress.attacksLeft).toBe(4);
     expect(result.progress.bossHp).toBe(5120);
     expect(result.progress.totalKills).toBe(0);
-    expect(result.progress.bossMaxHp).toBe(7008);
+    expect(result.progress.pityStacks).toBe(1);
+    expect(result.progress.bossMaxHp).toBe(Math.round(7008 * 0.88));
   });
 
   it('on a win: starts a new cycle, counts the kill, and keeps remaining attacks', () => {
@@ -235,12 +236,84 @@ describe('getBossKillXp / getBossRewards', () => {
     expect(getBossKillXp(makePlayer({ level: 30 }))).toBeGreaterThan(GAME_RULES.COMBAT.XP_WIN);
   });
 
-  it('grants essence only on a kill', () => {
+  it('grants essence on kill and consolation on defeat (capped)', () => {
     expect(getBossRewards(makePlayer(), true)).toEqual({
       xpGained: getBossKillXp(makePlayer()),
       essenceGained: GAME_RULES.BOSS.ESSENCE_REWARD,
     });
-    expect(getBossRewards(makePlayer(), false)).toEqual({ xpGained: 0, essenceGained: 0 });
+    expect(getBossRewards(makePlayer(), false)).toEqual({ xpGained: 0, essenceGained: GAME_RULES.BOSS.CONSOLATION_ESSENCE });
+    const cappedProgress: BossProgress = {
+      bossId: BOSS_ID,
+      attacksLeft: 5,
+      lastAttackReset: Date.now(),
+      bossHp: 4000,
+      bossMaxHp: 7008,
+      bossLevel: 32,
+      totalKills: 0,
+      firstEncounterAt: Date.now(),
+      pityStacks: 6,
+      consolationCount: GAME_RULES.BOSS.CONSOLATION_CAP,
+    };
+    expect(getBossRewards(makePlayer(), false, cappedProgress)).toEqual({ xpGained: 0, essenceGained: 0 });
+  });
+});
+
+describe('boss pity & consolation', () => {
+  it('reduces bossMaxHp cumulatively by PITY_HP_REDUCTION per defeat until floor', () => {
+    const player = makePlayer({ maxHp: 792, hp: 792 });
+    let progress = createBossProgress(player);
+    const baseMax = progress.bossMaxHp;
+    expect(baseMax).toBe(Math.round(792 * GAME_RULES.BOSS.HP_MULTIPLIER));
+    for (let i = 1; i <= 5; i++) {
+      const res = resolveBossAttack(player, progress, progress.bossHp - 100, false);
+      progress = res.progress;
+    }
+    const expected5 = Math.round(792 * GAME_RULES.BOSS.HP_MULTIPLIER * Math.pow(0.88, 5));
+    expect(progress.bossMaxHp).toBe(expected5);
+    expect(progress.pityStacks).toBe(5);
+    const reduction5 = 1 - progress.bossMaxHp / baseMax;
+    expect(reduction5).toBeGreaterThan(0.46);
+    expect(reduction5).toBeLessThan(0.49);
+    for (let i = 0; i < 10; i++) {
+      const res = resolveBossAttack(player, progress, progress.bossHp - 10, false);
+      progress = res.progress;
+    }
+    expect(progress.bossMaxHp).toBe(Math.round(792 * GAME_RULES.BOSS.PITY_FLOOR));
+  });
+
+  it('resets pity on kill', () => {
+    const player = makePlayer();
+    let progress = createBossProgress(player);
+    for (let i = 0; i < 3; i++) {
+      progress = resolveBossAttack(player, progress, progress.bossHp - 50, false).progress;
+    }
+    expect(progress.pityStacks).toBe(3);
+    const killed = resolveBossAttack(player, progress, 0, true);
+    expect(killed.progress.pityStacks).toBe(0);
+    expect(killed.progress.bossMaxHp).toBe(Math.round(player.maxHp * GAME_RULES.BOSS.HP_MULTIPLIER));
+    expect(killed.progress.consolationCount).toBe(0);
+  });
+
+  it('caps consolation at CONSOLATION_CAP per day and resets on daily reset', () => {
+    const player = makePlayer();
+    const now = Date.UTC(2026, 0, 15, 12, 0, 0);
+    let progress = createBossProgress(player, now);
+    for (let i = 0; i < GAME_RULES.BOSS.CONSOLATION_CAP; i++) {
+      const rewards = getBossRewards(player, false, progress, now);
+      expect(rewards.essenceGained).toBe(GAME_RULES.BOSS.CONSOLATION_ESSENCE);
+      progress = resolveBossAttack(player, progress, progress.bossHp - 10, false, now).progress;
+    }
+    expect(getBossRewards(player, false, progress, now).essenceGained).toBe(0);
+    const nextDay = now + 24 * 60 * 60 * 1000;
+    expect(getBossRewards(player, false, progress, nextDay).essenceGained).toBe(GAME_RULES.BOSS.CONSOLATION_ESSENCE);
+  });
+
+  it('buildBossCharacter respects pityStacks for maxHp', () => {
+    const player = makePlayer({ maxHp: 792 });
+    const boss0 = buildBossCharacter(player, undefined, 0);
+    const boss5 = buildBossCharacter(player, undefined, 5);
+    expect(boss5.maxHp).toBeLessThan(boss0.maxHp);
+    expect(boss5.maxHp).toBe(Math.round(792 * Math.max(GAME_RULES.BOSS.PITY_FLOOR, GAME_RULES.BOSS.HP_MULTIPLIER * Math.pow(0.88, 5))));
   });
 });
 
