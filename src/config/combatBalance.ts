@@ -16,7 +16,7 @@ export const COMBAT_BALANCE = {
     maxBonus: 0.40,
   },
   roundLimit: 25,
-  maxDurationMs: 25000,
+  maxDurationMs: 30000,
   /** Hard watchdog timeout for the overall fight cycle (incl. UI animation).
    *  If a fight exceeds this wall-clock limit, the combat loop force-finishes
    *  and resets the scene to prevent indefinite hangs.

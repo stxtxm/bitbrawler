@@ -15,6 +15,10 @@ describe('Game rules', () => {
     expect(GAME_RULES.COMBAT.MAX_DAILY_PVE_FIGHTS).toBeGreaterThan(0);
   });
 
+  it('COMBAT MAX_DURATION_MS is 30000 (30s cap)', () => {
+    expect(GAME_RULES.COMBAT.MAX_DURATION_MS).toBe(30000);
+  });
+
   it('PVE XP modifier gives 250% of PvP XP (bonus rewards to match PvP efficiency)', () => {
     expect(GAME_RULES.PVE.XP_MODIFIER).toBeGreaterThan(0);
     expect(GAME_RULES.PVE.XP_MODIFIER).toBe(2.5);

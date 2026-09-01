@@ -240,7 +240,7 @@ describe('Combat System', () => {
     vi.spyOn(Date, 'now').mockImplementation(() => {
       dateCalls++;
       if (dateCalls === 1) return 0;       // startTime
-      return 26000;                          // 26s → exceeds 25s timeout
+      return 31000;                          // 31s → exceeds 30s timeout
     });
 
     const result = simulateCombat(attacker as Character, defender as Character);
@@ -294,7 +294,7 @@ describe('Combat System', () => {
     vi.spyOn(Date, 'now').mockImplementation(() => {
       dateCalls++;
       if (dateCalls === 1) return 0;
-      return 26000;
+      return 31000;
     });
 
     const result = simulateCombat(attacker as Character, defender as Character);

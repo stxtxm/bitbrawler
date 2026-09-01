@@ -10,6 +10,7 @@ export const GAME_RULES = {
         XP_WIN: 90,
         XP_LOSS: 30,
         SPEED_OPTIONS: [1, 2],
+        MAX_DURATION_MS: 30000,
     },
     PVE: {
         XP_MODIFIER: 2.5,
