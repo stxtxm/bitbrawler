@@ -200,7 +200,6 @@ describe('Combat System', () => {
   // ─── Combat Timeout Tests ─────────────────────────────────────────────
 
   it('should timeout combat when maxDurationMs is exceeded and attacker has more HP', () => {
-    // Balanced fighters with high HP so fight could go long
     const attacker = {
       ...mockCharacter,
       name: 'Speedy',
@@ -218,43 +217,37 @@ describe('Combat System', () => {
       maxHp: 300,
     };
 
-    // Deterministic random: always hit, no crit, no magic, no focus surge
     const seq = [
-      0.4,  // initiative (attacker first)
-      0,    // hit
-      0.99, // no crit
-      0.99, // no magic
-      0.5,  // variance
-      0.99, // no focus surge
-      // defender counter
-      0,    // hit
-      0.99, // no crit
-      0.99, // no magic
-      0.5,  // variance
-      0.99, // no focus surge
+      0.4,
+      0,
+      0.99,
+      0.99,
+      0.5,
+      0.99,
+      0,
+      0.99,
+      0.99,
+      0.5,
+      0.99,
     ];
     vi.spyOn(Math, 'random').mockImplementation(() => seq.shift() ?? 0.99);
 
-    // Mock Date.now to simulate timeout after first round
     let dateCalls = 0;
     vi.spyOn(Date, 'now').mockImplementation(() => {
       dateCalls++;
-      if (dateCalls === 1) return 0;       // startTime
-      return 31000;                          // 31s → exceeds 30s timeout
+      if (dateCalls === 1) return 0;
+      return 31000;
     });
 
     const result = simulateCombat(attacker as Character, defender as Character);
 
-    // Should finish after just 1 round (timeout triggered)
     expect(result.rounds).toBe(1);
     expect(result.winner).toBeDefined();
-    // With identical stats and same deterministic rolls, attacker and defender
-    // deal symmetric damage. After 1 round both take equal damage → HP equal → draw
+    expect(result.winner).toBe('draw');
     expect(result.details.some(d => d.includes('timeout') || d.includes('Timeout'))).toBeTruthy();
   });
 
   it('should timeout combat when maxDurationMs is exceeded and defender has more HP', () => {
-    // Attacker deals less damage (lower strength), defender has more HP
     const attacker = {
       ...mockCharacter,
       name: 'Weakling',
@@ -272,24 +265,21 @@ describe('Combat System', () => {
       maxHp: 500,
     };
 
-    // Deterministic: attacker first, always hits, no specials
     const seq = [
-      0.4,  // initiative (attacker first)
-      0,    // hit
-      0.99, // no crit
-      0.99, // no magic
-      0.5,  // variance
-      0.99, // no focus surge
-      // defender counter
-      0,    // hit
-      0.99, // no crit
-      0.99, // no magic
-      0.5,  // variance
-      0.99, // no focus surge
+      0.4,
+      0,
+      0.99,
+      0.99,
+      0.5,
+      0.99,
+      0,
+      0.99,
+      0.99,
+      0.5,
+      0.99,
     ];
     vi.spyOn(Math, 'random').mockImplementation(() => seq.shift() ?? 0.99);
 
-    // Mock Date.now to simulate timeout after first round
     let dateCalls = 0;
     vi.spyOn(Date, 'now').mockImplementation(() => {
       dateCalls++;
@@ -300,7 +290,6 @@ describe('Combat System', () => {
     const result = simulateCombat(attacker as Character, defender as Character);
 
     expect(result.rounds).toBe(1);
-    // Defender (Tanky) should have more remaining HP → should win
     expect(result.winner).toBe('defender');
     const timeoutMsg = result.details.find(d => d.includes('timeout') || d.includes('Timeout'));
     expect(timeoutMsg).toBeTruthy();
@@ -308,7 +297,6 @@ describe('Combat System', () => {
   });
 
   it('should not be affected by timeout under normal fast combat conditions', () => {
-    // Normal combat (attacker much stronger)
     const attacker = {
       ...mockCharacter,
       name: 'Strong',
@@ -326,12 +314,18 @@ describe('Combat System', () => {
       maxHp: 50,
     };
 
-    // Use real Date.now (no mock) — timeout should not trigger
-    vi.restoreAllMocks();
+    const seq = [
+      0.4,
+      0,
+      0,
+      0.99,
+      0.5,
+      0.99,
+    ];
+    vi.spyOn(Math, 'random').mockImplementation(() => seq.shift() ?? 0.01);
 
     const result = simulateCombat(attacker as Character, defender as Character);
 
-    // Combat should end by knockout, not timeout
     expect(result.winner).toBe('attacker');
     expect(result.rounds).toBeLessThan(COMBAT_BALANCE.roundLimit);
     const timeoutMsg = result.details.find(d => d.includes('timeout') || d.includes('Timeout'));
