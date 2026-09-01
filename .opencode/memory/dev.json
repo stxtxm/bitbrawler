@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-09-01T21:50:45Z",
+  "last_session": "2026-09-01T21:51:04Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -37,7 +37,7 @@
       "date": "2026-08-26"
     },
     {
-      "lesson": "Issue #879 timeout cap 30s: COMBAT_BALANCE.maxDurationMs=30000 et GAME_RULES.COMBAT.MAX_DURATION_MS=30000 sont sync (#874). Garde-fou doit utiliser GAME_RULES comme source primaire per spec (import GAME_RULES) pour que PR diff montre bien 1 fichier (combatUtils.ts) et que PR head ne soit pas vide (sinon PR behind master = diff vide = closed sans merge). Origine avait deja pousse le fix en parallele -> reset hard sur origin pour eviter divergence.",
+      "lesson": "PR #888 fermee en doublon (#879 deja merge via #882 + #874). Timeout garde-fou 30s deja present dans master via COMBAT_BALANCE.maxDurationMs=30000 (equiv. GAME_RULES). Tentative de fix vers GAME_RULES cree branche orpheline (#888 non-reouvrable apres force-push/recreation). Nettoyage: suppression branche, master reste correct. Lecon: ne pas forcer de branche d'une PR closee 'duplicate' -> elle n'est pas reouvrable (422). Verifier state avant de pousser.",
       "issue": "#879",
       "date": "2026-09-01"
     }
