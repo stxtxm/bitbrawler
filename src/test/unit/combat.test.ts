@@ -433,6 +433,56 @@ describe('Combat System', () => {
     expect(timeoutMsg).toContain('reason: timeout_cap');
   });
 
+  it('should timeout boss/PvE fight with 12x HP pool after 30s cap (same wall-clock guard)', () => {
+    const player = {
+      ...mockCharacter,
+      name: 'Hero',
+      strength: 15,
+      vitality: 15,
+      hp: 120,
+      maxHp: 120,
+    };
+    const boss = {
+      ...mockCharacter,
+      name: 'VOID TITAN',
+      strength: 18,
+      vitality: 18,
+      hp: 1440,
+      maxHp: 1440,
+    };
+
+    const seq = [
+      0.4,
+      0,
+      0.99,
+      0.99,
+      0.5,
+      0.99,
+      0,
+      0.99,
+      0.99,
+      0.5,
+      0.99,
+    ];
+    vi.spyOn(Math, 'random').mockImplementation(() => seq.shift() ?? 0.99);
+
+    let dateCalls = 0;
+    vi.spyOn(Date, 'now').mockImplementation(() => {
+      dateCalls++;
+      if (dateCalls === 1) return 0;
+      return 31000;
+    });
+
+    const result = simulateCombat(player as Character, boss as Character);
+
+    expect(result.rounds).toBe(1);
+    expect(result.winner).toBe('defender');
+    const timeoutMsg = result.details.find(d => d.includes('timeout') || d.includes('Timeout'));
+    expect(timeoutMsg).toBeTruthy();
+    expect(timeoutMsg).toContain('VOID TITAN');
+    expect(timeoutMsg).toContain('reason: timeout_cap');
+  });
+
   it('does not include super effective when no element matches', () => {
     const attacker = {
       ...mockCharacter,
