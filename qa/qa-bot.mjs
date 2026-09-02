@@ -2044,6 +2044,9 @@ async function runFightSequence(page, runKey, runRecord) {
         continue
       }
       if (isPve) await togglePveMode(page, false)
+      if (!runRecord.skipped_fights) runRecord.skipped_fights = []
+      runRecord.skipped_fights.push({ index: i + 1, reason: 'exhausted' })
+      await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-skip.png`) }).catch(() => {})
       break
     }
 
@@ -2142,6 +2145,9 @@ async function runFightSequence(page, runKey, runRecord) {
         continue
       }
       if (isPve) await togglePveMode(page, false)
+      if (!runRecord.skipped_fights) runRecord.skipped_fights = []
+      runRecord.skipped_fights.push({ index: i + 1, reason: 'exhausted' })
+      await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-skip.png`) }).catch(() => {})
       break
     }
 
@@ -2184,6 +2190,7 @@ async function runFightSequence(page, runKey, runRecord) {
     const maxRetries = 3
     const baseTimeout = Math.floor(config.fightTimeout * 0.5)
     let resultDetected = false
+    let isNoOpponents = false
 
     for (let retry = 0; retry < maxRetries; retry++) {
       if (retry > 0) {
@@ -2192,8 +2199,18 @@ async function runFightSequence(page, runKey, runRecord) {
         await sleep(backoff)
 
         const preText = await page.locator('body').innerText().catch(() => '')
+        if (preText.includes('No opponents found')) {
+          isNoOpponents = true
+          break
+        }
         if (preText.includes('VICTORY') || preText.includes('DEFEAT') || preText.includes('DRAW')) {
           resultDetected = true
+          break
+        }
+      } else {
+        const immediateText = await page.locator('body').innerText().catch(() => '')
+        if (immediateText.includes('No opponents found')) {
+          isNoOpponents = true
           break
         }
       }
@@ -2203,17 +2220,43 @@ async function runFightSequence(page, runKey, runRecord) {
         await page.waitForFunction(
           () => {
             const text = document.body?.innerText || ''
-            return text.includes('VICTORY') || text.includes('DEFEAT') || text.includes('DRAW')
+            return text.includes('VICTORY') || text.includes('DEFEAT') || text.includes('DRAW') || text.includes('No opponents found')
           },
           { timeout }
         )
+        const afterText = await page.locator('body').innerText().catch(() => '')
+        if (afterText.includes('No opponents found')) {
+          isNoOpponents = true
+          break
+        }
         resultDetected = true
         break
       } catch {
+        const catchText = await page.locator('body').innerText().catch(() => '')
+        if (catchText.includes('No opponents found')) {
+          isNoOpponents = true
+          break
+        }
         if (retry < maxRetries - 1) {
           console.log(`   ⚠️ Fight result not yet available after attempt ${retry + 1}`)
         }
       }
+    }
+
+    if (isNoOpponents) {
+      console.log('   ⏭️ No opponents found — skipping fight (no_opponents)')
+      if (!runRecord.skipped_fights) runRecord.skipped_fights = []
+      runRecord.skipped_fights.push({ index: i + 1, reason: 'no_opponents' })
+      await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-skip.png`) }).catch(() => {})
+      const closeBtn = page.locator('button:has-text("OK"), button:has-text("CLOSE"), button:has-text("CONTINUE")').first()
+      if (await closeBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await closeBtn.click().catch(() => {})
+        await page.waitForTimeout(500)
+      } else {
+        await dismissModals(page).catch(() => {})
+      }
+      if (isPve) await togglePveMode(page, false).catch(() => {})
+      continue
     }
 
     if (!resultDetected) {
@@ -2957,6 +3000,7 @@ async function run() {
     shop: null,
     combat_speed: 1,
     skipped_inventory: null,
+    skipped_fights: [],
     errors: [],
     load_times_ms: {},
   }
