@@ -19,7 +19,7 @@ export const GAME_RULES = {
         LEVEL_BOOST: 3, // Monsters fight at playerLevel + this offset
     },
     BOSS: {
-        UNLOCK_LEVEL: 30, // Boss PvE unlocks at this level
+        UNLOCK_LEVEL: 30, // Boss PvE unlocks at this level (void_titan)
         MAX_DAILY_ATTACKS: 5, // Daily attacks against the raid boss (independent from PvP/PvE gauge)
         LEVEL_BOOST: 2, // Boss fights at playerLevel + this offset
         STAT_MULTIPLIER: 1.2, // Boss raw stats scale off the player's raw stats
@@ -31,6 +31,36 @@ export const GAME_RULES = {
         CONSOLATION_ESSENCE: 15, // Essence on defeat (ESSENCE_REWARD × 0.25)
         CONSOLATION_CAP: 3, // Max consolation payouts per Paris day
     },
+    BOSS_TIERS: {
+        void_titan: {
+            UNLOCK_LEVEL: 30,
+            MAX_DAILY_ATTACKS: 5,
+            LEVEL_BOOST: 2,
+            STAT_MULTIPLIER: 1.2,
+            HP_MULTIPLIER: 12.0,
+            XP_MODIFIER: 4.0,
+            ESSENCE_REWARD: 60,
+            REQUIRES_KILLS: 0,
+            PITY_HP_REDUCTION: 0.12,
+            PITY_FLOOR: 6.0,
+            CONSOLATION_ESSENCE: 15,
+            CONSOLATION_CAP: 3,
+        },
+        abyssal_monarch: {
+            UNLOCK_LEVEL: 58,
+            MAX_DAILY_ATTACKS: 5,
+            LEVEL_BOOST: 4,
+            STAT_MULTIPLIER: 1.55,
+            HP_MULTIPLIER: 24.0,
+            XP_MODIFIER: 9.0,
+            ESSENCE_REWARD: 180,
+            REQUIRES_KILLS: 1,
+            PITY_HP_REDUCTION: 0.12,
+            PITY_FLOOR: 12.0,
+            CONSOLATION_ESSENCE: 45,
+            CONSOLATION_CAP: 3,
+        },
+    } as const,
     BOTS: {
         MIN_POPULATION: 3,
         MIN_LVL1_BOTS: 3, // Minimal lvl 1 starter reserve (strongly reduced for Supabase free tier)

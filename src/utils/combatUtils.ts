@@ -263,7 +263,8 @@ export function simulateCombat(attacker: Character, defender: Character): {
       record(attackerStrike.detail)
     }
 
-    if (Date.now() - startTime >= GAME_RULES.COMBAT.MAX_DURATION_MS) {
+    const elapsed = Date.now() - startTime
+    if (elapsed >= GAME_RULES.COMBAT.MAX_DURATION_MS) {
       break
     }
   }
@@ -282,16 +283,15 @@ export function simulateCombat(attacker: Character, defender: Character): {
     winner = 'draw'
     record("Limite de rounds atteinte !")
   } else {
-    // Timeout — whichever has more HP wins
     if (attackerHp > defenderHp) {
       winner = 'attacker'
-      record(`${attacker.name} gagne (timeout) !`)
+      record(`${attacker.name} gagne (timeout, reason: timeout_cap) !`)
     } else if (defenderHp > attackerHp) {
       winner = 'defender'
-      record(`${defender.name} gagne (timeout) !`)
+      record(`${defender.name} gagne (timeout, reason: timeout_cap) !`)
     } else {
       winner = 'draw'
-      record("Timeout - Match nul !")
+      record("Timeout - Match nul ! (reason: timeout_cap)")
     }
   }
 

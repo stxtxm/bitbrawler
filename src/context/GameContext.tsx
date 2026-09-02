@@ -16,7 +16,10 @@ import {
   ensureBossDailyReset,
   getBossRewards,
   resolveBossAttack,
+  getBossProgressForId,
+  setBossProgressForId,
 } from '../utils/bossUtils';
+import { ABYSSAL_BOSS_ID, BOSS_ID, BossId } from '../data/bossAssets';
 import { convertFromSupabase, convertToSupabase } from '../utils/supabaseUtils';
 import {
   INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP,
@@ -62,7 +65,7 @@ interface GameContextType {
     won: boolean,
     xpGained: number,
     bossName: string,
-    options?: { consumeEnergy?: boolean; characterOverride?: Character; bossHpLeft?: number }
+    options?: { consumeEnergy?: boolean; characterOverride?: Character; bossHpLeft?: number; bossId?: BossId }
   ) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
   findOpponent: () => Promise<MatchmakingResult | null>;
   clearXpNotifications: () => void;
@@ -307,10 +310,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         const bestChar = hasMoreXp ? localChar : serverChar;
         // bossProgress is now synced via the boss_progress column — keep the
         // local copy as fallback so the persistent boss HP pool never resets.
+        const anyBest: any = bestChar as any;
+        const anyLocal: any = localChar as any;
         const mergedChar: Character = {
           ...bestChar,
-          bossProgress: bestChar.bossProgress ?? localChar.bossProgress ?? undefined,
-        };
+          bossProgress: anyBest.bossProgress ?? anyLocal.bossProgress ?? undefined,
+          bossProgresses: anyBest.bossProgresses ?? anyLocal.bossProgresses ?? (anyBest.bossProgress ? { void_titan: anyBest.bossProgress } : undefined),
+          abyssalBossProgress: anyBest.abyssalBossProgress ?? anyLocal.abyssalBossProgress ?? anyBest.bossProgresses?.abyssal_monarch ?? anyLocal.bossProgresses?.abyssal_monarch ?? undefined,
+        } as any;
         const normalized = normalizeCharacter(mergedChar);
         persistCharacter(normalized);
         setDbAvailable(true);
@@ -668,18 +675,20 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     won: boolean,
     _xpGained: number,
     bossName: string,
-    options?: { consumeEnergy?: boolean; characterOverride?: Character; bossHpLeft?: number }
+    options?: { consumeEnergy?: boolean; characterOverride?: Character; bossHpLeft?: number; bossId?: BossId }
   ): Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null> => {
     const baseCharacter = options?.characterOverride ?? activeCharacter;
     if (!baseCharacter) return null;
 
     const now = Date.now();
     const shouldConsume = options?.consumeEnergy ?? true;
+    const bossId: BossId = options?.bossId ?? (bossName === 'ABYSSAL MONARCH' ? ABYSSAL_BOSS_ID : BOSS_ID);
 
     // Progress starts fresh on first encounter; daily gauge refills at reset.
-    const baseProgress = baseCharacter.bossProgress
-      ? ensureBossDailyReset(baseCharacter.bossProgress, now)
-      : createBossProgress(baseCharacter, now);
+    const existingProgress = getBossProgressForId(baseCharacter, bossId) ?? (bossId === BOSS_ID ? baseCharacter.bossProgress : (baseCharacter as any).abyssalBossProgress);
+    const baseProgress = existingProgress
+      ? ensureBossDailyReset(existingProgress, now)
+      : createBossProgress(baseCharacter, now, bossId);
 
     const rewards = getBossRewards(baseCharacter, won, baseProgress, now);
     const xpResult = gainXp(baseCharacter, won ? rewards.xpGained : 0);
@@ -706,14 +715,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
     let updatedChar: Character = normalizeCharacter({
       ...xpResult.updatedCharacter,
-      bossProgress: updatedProgress,
       essence: (baseCharacter.essence ?? 0) + rewards.essenceGained,
       wins: won ? (baseCharacter.wins || 0) + 1 : (baseCharacter.wins || 0),
-      // Non-kill attacks don't inflate the loss record — they're raid attempts.
       losses: baseCharacter.losses || 0,
       fightHistory: newHistory,
       statPoints: (baseCharacter.statPoints || 0) + pointsGained,
-    });
+    } as any);
+    updatedChar = setBossProgressForId(updatedChar, updatedProgress);
 
     if (updatedChar.autoMode && (updatedChar.statPoints || 0) > 0) {
       updatedChar = normalizeCharacter(
@@ -723,6 +731,20 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
     if (baseCharacter.id) {
       try {
+        const anyUpdated: any = updatedChar;
+        let bossProgressPayload: any = null;
+        if (anyUpdated.bossProgresses && Object.keys(anyUpdated.bossProgresses).length > 0) {
+          const keys = Object.keys(anyUpdated.bossProgresses);
+          const hasAbyssal = !!anyUpdated.bossProgresses.abyssal_monarch || !!anyUpdated.abyssalBossProgress;
+          if (!hasAbyssal && keys.length === 1 && keys[0] === 'void_titan') {
+            bossProgressPayload = anyUpdated.bossProgress ?? anyUpdated.bossProgresses.void_titan;
+          } else {
+            bossProgressPayload = { ...anyUpdated.bossProgresses };
+            if (anyUpdated.abyssalBossProgress && !bossProgressPayload.abyssal_monarch) bossProgressPayload.abyssal_monarch = anyUpdated.abyssalBossProgress;
+          }
+        } else {
+          bossProgressPayload = anyUpdated.bossProgress ?? null;
+        }
         const { error } = await supabase
           .from('characters')
           .update({
@@ -741,7 +763,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
             hp: updatedChar.hp,
             max_hp: updatedChar.maxHp,
             essence: updatedChar.essence,
-            boss_progress: updatedChar.bossProgress ?? null,
+            boss_progress: bossProgressPayload,
           })
           .eq('id', baseCharacter.id);
 

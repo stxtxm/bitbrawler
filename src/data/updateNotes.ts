@@ -8,6 +8,19 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.6.0',
+    date: '2026-08-31',
+    title: '👑 ABYSSAL MONARCH — le Titan de la Faille Abyssale (lvl 58+, biome)',
+    changes: [
+      '👑 NOUVEAU BOSS : ABYSSAL MONARCH — débloqué au lvl 58 après avoir vaincu le VOID TITAN (1 kill requis). Thème Faille Abyssale : trench obsidienne, lueurs bioluminescentes, runes ambre.',
+      '⚔️ BOSS BEAUCOUP PLUS ROBUSTE : lvl player+4 (vs +2), stats ×1.55 (vs 1.20), HP pool ×24 (vs 12) — ~26k HP à 1k maxHp, médiane 8-10 jours vs 3 jours pour le Titan. Impossible à one-shot, la Faille se creuse chaque jour.',
+      '💰 RÉCOMPENSE JUICY : XP ×9.0 (≈3.7k à lvl 60 vs 1.6k Titan, 2.25×) + 180 essence (3×) + cache abyssal garanti. Le kill abyssal vaut ~3.5% d’un niveau 60.',
+      '🌊 NOUVEAU BIOME : ABYSSAL RIFT — remplace Volcanic une fois débloqué. Monstres exclusifs Chimera / Dragon Spawn / Wraith (pool sombre), terrain abyssal animé, fond data-driven (ABYSSAL_RIFT_BACKGROUND).',
+      '🧩 Moteur raid multi-boss : bossUtils générique (bossId), biomes priorisés (abyssal > volcanic > plains), progression persistante multi-boss dans boss_progress (map), rétro-compat legacy.',
+      '🎮 UI : ActionPanel affiche sélecteur VOID TITAN / ABYSSAL MONARCH quand débloqué, HP strip + pips + hint récompense or-bleu, SceneBackground + CombatView supportent le nouveau boss.',
+    ],
+  },
+  {
     version: '5.5.1',
     date: '2026-08-23',
     title: '🔔 Level-up FX — plus jamais de boucle',

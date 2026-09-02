@@ -166,12 +166,58 @@ export const VOID_ABYSS_BACKGROUND: BackgroundDef = {
     ],
 };
 
+// ─── ABYSSAL RIFT — Monarch arena (deep abyss theme) ───────────────────────
+// Crushing obsidian trench, bioluminescent abyssal trench walls, distant
+// leviathan silhouettes. Cold teal / amber palette over crushing black.
+
+export const ABYSSAL_RIFT_BACKGROUND: BackgroundDef = {
+    id: 'abyssal_rift',
+    label: 'ABYSSAL MONARCH',
+    accent: '#f0c040',
+    accentAlt: '#2af0ff',
+    gradient:
+        'radial-gradient(130% 90% at 50% 12%, #1a2a48 0%, #0e1430 32%, #060a1e 62%, #020410 100%)',
+    elements: [
+        // Abyssal trench halo — deep teal rift behind the monarch.
+        { type: 'halo', x: 50, y: 28, size: 180, color: 'rgba(42, 240, 255, 0.22)', speed: 5 },
+        { type: 'halo', x: 50, y: 28, size: 96, color: 'rgba(240, 192, 64, 0.18)', speed: 3.5, delay: 0.9 },
+        // Trench walls — obsidian cliffs flanking the arena.
+        { type: 'peak', x: 12, y: 92, size: 140, height: 210, color: '#080a18', speed: 8, delay: 0.3 },
+        { type: 'peak', x: 88, y: 92, size: 140, height: 210, color: '#080a18', speed: 8.2, delay: 0.7 },
+        { type: 'peak', x: 50, y: 96, size: 260, height: 120, color: '#0a0e24', speed: 9, delay: 0.5 },
+        // Bioluminescent fissures — teal veins in the trench walls.
+        { type: 'crack', x: 18, y: 62, size: 6, width: 4, height: 80, color: 'rgba(42, 240, 255, 0.55)', glow: 'rgba(42,240,255,0.4)', speed: 2.8, rotate: -4 },
+        { type: 'crack', x: 82, y: 58, size: 6, width: 4, height: 90, color: 'rgba(42, 240, 255, 0.50)', glow: 'rgba(42,240,255,0.35)', speed: 3.1, rotate: 5 },
+        { type: 'crack', x: 50, y: 72, size: 5, width: 60, color: 'rgba(240, 192, 64, 0.35)', glow: 'rgba(240,192,64,0.25)', speed: 3.4, rotate: 2 },
+        // Starfield — sparse, cold, distant.
+        { type: 'star', x: 14, y: 10, size: 2, color: '#aaf0ff', delay: 0.4 },
+        { type: 'star', x: 32, y: 16, size: 2, color: '#f0d080', delay: 1.1 },
+        { type: 'star', x: 48, y: 8, size: 3, color: '#7af0ff', delay: 0.7 },
+        { type: 'star', x: 66, y: 14, size: 2, color: '#aaf0ff', delay: 1.6 },
+        { type: 'star', x: 84, y: 10, size: 2, color: '#f0d080', delay: 0.9 },
+        { type: 'star', x: 78, y: 30, size: 2, color: '#7af0ff', delay: 2.0 },
+        // Abyssal rocks — obsidian debris.
+        { type: 'rock', x: 8, y: 84, size: 18, color: '#0c1028', speed: 6.5, delay: 0.6 },
+        { type: 'rock', x: 92, y: 86, size: 16, color: '#0c1028', speed: 7, delay: 1.1 },
+        { type: 'rock', x: 50, y: 92, size: 10, width: 220, height: 18, color: '#0e142e', speed: 6, delay: 0.4 },
+        // Ancient runes — amber glyphs on the trench floor.
+        { type: 'rune', x: 26, y: 88, size: 9, color: '#f0c040', glow: 'rgba(240,192,64,0.6)', speed: 2.6, delay: 0.3 },
+        { type: 'rune', x: 74, y: 90, size: 9, color: '#f0c040', glow: 'rgba(240,192,64,0.6)', speed: 2.6, delay: 1.4 },
+        { type: 'rune', x: 50, y: 92, size: 7, color: '#2af0ff', glow: 'rgba(42,240,255,0.5)', speed: 2.9, delay: 0.8 },
+        // Wisps — souls trapped in the abyss.
+        { type: 'wisp', x: 34, y: 68, size: 4, color: '#2af0ff', glow: 'rgba(42,240,255,0.7)', speed: 10, delay: 0.7 },
+        { type: 'wisp', x: 66, y: 72, size: 5, color: '#f0c040', glow: 'rgba(240,192,64,0.6)', speed: 11, delay: 1.9 },
+        { type: 'wisp', x: 50, y: 50, size: 3, color: '#aaf0ff', glow: 'rgba(170,240,255,0.6)', speed: 9, delay: 1.2 },
+    ],
+};
+
 // ─── Registry ────────────────────────────────────────────────────────────────
 // Add new backgrounds here — the engine picks them up automatically.
 
 export const BACKGROUNDS: Record<string, BackgroundDef> = {
     volcanic: VOLCANIC_BACKGROUND,
     void_abyss: VOID_ABYSS_BACKGROUND,
+    abyssal_rift: ABYSSAL_RIFT_BACKGROUND,
 };
 
 export function getBackgroundDef(id: string): BackgroundDef | undefined {
