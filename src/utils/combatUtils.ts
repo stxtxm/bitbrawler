@@ -263,7 +263,8 @@ export function simulateCombat(attacker: Character, defender: Character): {
       record(attackerStrike.detail)
     }
 
-    if (Date.now() - startTime >= GAME_RULES.COMBAT.MAX_DURATION_MS) {
+    const elapsed = Date.now() - startTime
+    if (elapsed >= GAME_RULES.COMBAT.MAX_DURATION_MS) {
       break
     }
   }
