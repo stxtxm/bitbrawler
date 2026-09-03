@@ -30,10 +30,6 @@ interface ActionPanelProps {
   onOpenInventory?: (element?: string) => void;
   bossId?: BossId;
   abyssalUnlocked?: boolean;
-  abyssalAttacksLeft?: number;
-  abyssalProgress?: any;
-  bossProgress?: any;
-  onSelectBoss?: (id: BossId) => void;
 }
 
 export const ActionPanel = memo(function ActionPanel({
@@ -41,11 +37,11 @@ export const ActionPanel = memo(function ActionPanel({
   isOfflineMode, fightsLeft, bossAttacksLeft, bossUnlocked,
   bossHp, bossMaxHp, bossLevel, bossPityStacks = 0, bossPityReduction = 0, onTogglePve, onTogglePvp, onFight,
   tacticalOpponent, tacticalHint, onOpenInventory,
-  bossId, abyssalUnlocked, abyssalProgress, onSelectBoss,
+  bossId, abyssalUnlocked,
 }: ActionPanelProps) {
 
   const bossHpPct = bossMaxHp > 0 ? Math.max(0, Math.min(100, (bossHp / bossMaxHp) * 100)) : 100;
-  const abyssalHpPct = abyssalProgress ? Math.max(0, Math.min(100, (abyssalProgress.bossHp / abyssalProgress.bossMaxHp) * 100)) : 100;
+  const isAbyssal = abyssalUnlocked && bossId === 'abyssal_monarch';
 
   return (
     <div className="action-panel">
@@ -76,15 +72,13 @@ export const ActionPanel = memo(function ActionPanel({
       <div className={`daily-status-compact ${pveMode ? 'boss-status-compact' : ''}`}>
         {pveMode ? (
           <div className="status-label">
-            <span className="boss-icon">👑</span>
+            <span className="boss-icon">{isAbyssal ? '🌊' : '👑'}</span>
             <div className="label-text">
-              <span className="label-main">BOSS ATTACKS</span>
+              <span className="label-main">{isAbyssal ? 'ABYSSAL MONARCH' : 'BOSS ATTACKS'}</span>
               <span className="label-sub">
-                {!bossUnlocked && !abyssalUnlocked
+                {!bossUnlocked
                   ? `UNLOCK AT LVL ${GAME_RULES.BOSS.UNLOCK_LEVEL}`
-                  : abyssalUnlocked && bossId === 'abyssal_monarch'
-                    ? `${bossAttacksLeft} / ${GAME_RULES.BOSS_TIERS.abyssal_monarch.MAX_DAILY_ATTACKS} AVAILABLE — ABYSS`
-                    : `${bossAttacksLeft} / ${GAME_RULES.BOSS.MAX_DAILY_ATTACKS} AVAILABLE`}
+                  : `${bossAttacksLeft} / ${GAME_RULES.BOSS.MAX_DAILY_ATTACKS} AVAILABLE`}
               </span>
             </div>
           </div>
@@ -103,7 +97,7 @@ export const ActionPanel = memo(function ActionPanel({
         )}
         <div className="mini-pips">
           {pveMode
-            ? Array.from({ length: (bossId === 'abyssal_monarch' ? GAME_RULES.BOSS_TIERS.abyssal_monarch.MAX_DAILY_ATTACKS : GAME_RULES.BOSS.MAX_DAILY_ATTACKS) }).map((_, i) => (
+            ? Array.from({ length: GAME_RULES.BOSS.MAX_DAILY_ATTACKS }).map((_, i) => (
               <div key={i} className={`mini-pip ${i < bossAttacksLeft ? 'active' : 'used'}`}></div>
             ))
             : Array.from({ length: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS }).map((_, i) => (
@@ -112,28 +106,17 @@ export const ActionPanel = memo(function ActionPanel({
           }
         </div>
         {pveMode && bossUnlocked && bossMaxHp > 0 && (
-          <div className={`boss-hp-strip ${bossId === 'abyssal_monarch' ? 'abyssal' : ''}`}>
+          <div className={`boss-hp-strip ${isAbyssal ? 'abyssal' : ''}`}>
             <div className="boss-hp-bar">
-              <div className="boss-hp-fill" style={{ width: `${bossId === 'void_titan' ? bossHpPct : abyssalProgress ? abyssalHpPct : bossHpPct}%` }} />
+              <div className="boss-hp-fill" style={{ width: `${bossHpPct}%` }} />
             </div>
-            <div className="boss-hp-values">
-              <span className="boss-hp-name">{bossId === 'abyssal_monarch' ? `ABYSSAL MONARCH LVL ${abyssalProgress?.bossLevel ?? bossLevel}` : `VOID TITAN LVL ${bossLevel}`}</span>
-              <span className="boss-hp-num">{bossId === 'abyssal_monarch' && abyssalProgress ? `${Math.max(0, Math.round(abyssalProgress.bossHp))} / ${abyssalProgress.bossMaxHp}` : `${Math.max(0, Math.round(bossHp))} / ${bossMaxHp}`}</span>
+            <div className="boss-hp-values" style={{ flexWrap: 'wrap', gap: 4 }}>
+              <span className="boss-hp-name" style={{ fontSize: isAbyssal ? 11 : 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, flex: 1 }}>{isAbyssal ? `ABYSSAL LVL ${bossLevel}` : `VOID TITAN LVL ${bossLevel}`}</span>
+              <span className="boss-hp-num" style={{ fontSize: 11, whiteSpace: 'nowrap' }}>{Math.max(0, Math.round(bossHp))} / {bossMaxHp}</span>
             </div>
             {bossPityStacks > 0 && (
-              <div className="boss-pity-badge">Titan affaibli -{bossPityReduction}% ({bossPityStacks} {bossPityStacks === 1 ? 'defeat' : 'defeats'})</div>
+              <div className="boss-pity-badge" style={{ fontSize: 10, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{isAbyssal ? 'Abyss affaibli' : 'Titan affaibli'} -{bossPityReduction}% ({bossPityStacks})</div>
             )}
-          </div>
-        )}
-        {pveMode && abyssalUnlocked && onSelectBoss && (
-          <div className="boss-selector-row" style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-            <button className={`pixel-btn small ${bossId === 'void_titan' ? 'active' : ''}`} onClick={() => onSelectBoss('void_titan')}>VOID TITAN</button>
-            <button className={`pixel-btn small abyssal ${bossId === 'abyssal_monarch' ? 'active' : ''}`} onClick={() => onSelectBoss('abyssal_monarch')}>ABYSSAL MONARCH</button>
-          </div>
-        )}
-        {pveMode && abyssalUnlocked && bossId === 'abyssal_monarch' && (
-          <div className="abyssal-reward-hint" style={{ fontSize: 11, opacity: 0.85, marginTop: 4, color: '#f0c040' }}>
-            ♛ Récompense : {GAME_RULES.BOSS_TIERS.abyssal_monarch.ESSENCE_REWARD} essence + {(GAME_RULES.COMBAT.XP_WIN * (1 + (59*0.06)) * GAME_RULES.BOSS_TIERS.abyssal_monarch.XP_MODIFIER).toFixed(0)} XP + cache abyssal
           </div>
         )}
       </div>
