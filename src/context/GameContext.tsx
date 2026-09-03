@@ -204,6 +204,22 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           hp: local.hp ?? 0,
           maxHp: local.maxHp ?? 0,
         }
+    const pickBoss = (a: any, b: any): any => {
+      if (!a) return b;
+      if (!b) return a;
+      if ((a.totalKills ?? 0) !== (b.totalKills ?? 0)) return (a.totalKills ?? 0) > (b.totalKills ?? 0) ? a : b;
+      return (a.bossHp ?? 0) < (b.bossHp ?? 0) ? a : b;
+    };
+    const serverBossRaw: any = freshRow?.boss_progress;
+    const serverBossVoid = serverBossRaw?.bossId ? serverBossRaw : serverBossRaw?.void_titan;
+    const serverAbyss = serverBossRaw?.abyssal_monarch;
+    const localAny: any = local as any;
+    const mergedVoid = pickBoss(localAny.bossProgress, serverBossVoid) ?? pickBoss(localAny.bossProgresses?.void_titan, serverBossVoid);
+    const mergedAbyss = pickBoss(localAny.abyssalBossProgress ?? localAny.bossProgresses?.abyssal_monarch, serverAbyss);
+    const mergedProgresses: any = { ...(localAny.bossProgresses ?? {}) };
+    if (serverBossRaw?.void_titan || serverBossRaw?.abyssal_monarch) Object.assign(mergedProgresses, serverBossRaw);
+    if (mergedVoid) mergedProgresses.void_titan = mergedVoid;
+    if (mergedAbyss) mergedProgresses.abyssal_monarch = mergedAbyss;
     return normalizeCharacter({
       ...local,
       ...xpSource,
@@ -213,7 +229,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       idleTotalXp: Math.max(local.idleTotalXp ?? 0, freshRow?.idle_total_xp ?? 0),
       essence: Math.max(local.essence ?? 0, freshRow?.essence ?? 0),
       statPoints: Math.max(local.statPoints ?? 0, freshRow?.stat_points ?? 0),
-    })
+      bossProgress: mergedVoid ?? (local as any).bossProgress ?? undefined,
+      bossProgresses: Object.keys(mergedProgresses).length > 0 ? mergedProgresses : undefined,
+      abyssalBossProgress: mergedAbyss ?? (local as any).abyssalBossProgress ?? undefined,
+    } as any)
   }, [])
 
   const flushSyncToBackend = useCallback(async () => {
@@ -303,20 +322,29 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
       const syncResult = await syncCharacterWithSupabase(localChar);
       if (syncResult.status === 'ok') {
-        // Keep the character with the most XP — handles the case where
-        // the last idle sync didn't complete before page unload
         const serverChar = syncResult.character;
         const hasMoreXp = (localChar.experience ?? 0) > (serverChar.experience ?? 0);
         const bestChar = hasMoreXp ? localChar : serverChar;
-        // bossProgress is now synced via the boss_progress column — keep the
-        // local copy as fallback so the persistent boss HP pool never resets.
+        const pickBossProgress = (a: any, b: any): any => {
+          if (!a) return b;
+          if (!b) return a;
+          if ((a.totalKills ?? 0) !== (b.totalKills ?? 0)) return (a.totalKills ?? 0) > (b.totalKills ?? 0) ? a : b;
+          if ((a.bossHp ?? 0) !== (b.bossHp ?? 0)) return (a.bossHp ?? 0) < (b.bossHp ?? 0) ? a : b;
+          return (a.lastAttackReset ?? 0) > (b.lastAttackReset ?? 0) ? a : b;
+        };
         const anyBest: any = bestChar as any;
         const anyLocal: any = localChar as any;
+        const anyServer: any = serverChar as any;
+        const mergedVoid = pickBossProgress(anyLocal.bossProgress, anyServer.bossProgress) ?? pickBossProgress(anyLocal.bossProgresses?.void_titan, anyServer.bossProgresses?.void_titan);
+        const mergedAbyss = pickBossProgress(anyLocal.abyssalBossProgress ?? anyLocal.bossProgresses?.abyssal_monarch, anyServer.abyssalBossProgress ?? anyServer.bossProgresses?.abyssal_monarch);
+        const mergedProgresses: any = { ...(anyBest.bossProgresses ?? anyLocal.bossProgresses ?? anyServer.bossProgresses ?? {}) };
+        if (mergedVoid) mergedProgresses.void_titan = mergedVoid;
+        if (mergedAbyss) mergedProgresses.abyssal_monarch = mergedAbyss;
         const mergedChar: Character = {
           ...bestChar,
-          bossProgress: anyBest.bossProgress ?? anyLocal.bossProgress ?? undefined,
-          bossProgresses: anyBest.bossProgresses ?? anyLocal.bossProgresses ?? (anyBest.bossProgress ? { void_titan: anyBest.bossProgress } : undefined),
-          abyssalBossProgress: anyBest.abyssalBossProgress ?? anyLocal.abyssalBossProgress ?? anyBest.bossProgresses?.abyssal_monarch ?? anyLocal.bossProgresses?.abyssal_monarch ?? undefined,
+          bossProgress: mergedVoid ?? anyBest.bossProgress ?? anyLocal.bossProgress ?? undefined,
+          bossProgresses: Object.keys(mergedProgresses).length > 0 ? mergedProgresses : undefined,
+          abyssalBossProgress: mergedAbyss ?? anyBest.abyssalBossProgress ?? anyLocal.abyssalBossProgress ?? undefined,
         } as any;
         const normalized = normalizeCharacter(mergedChar);
         persistCharacter(normalized);
