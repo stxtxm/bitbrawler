@@ -858,6 +858,12 @@ jobs:
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_OUTPUT
           echo "✓ PR #$PR_NUMBER: $PR_URL"
 
+          # --- Garantie label auto-generated (le watchdog balaie par label ET par
+          # auteur, mais le label reste le signal principal — incident sept 2026 :
+          # des PRs bot sans label sont restées invisibles et bloquées) ---
+          gh pr edit "$PR_NUMBER" --add-label "auto-generated" 2>/dev/null || \
+            gh issue edit "$PR_NUMBER" --add-label "auto-generated" 2>/dev/null || true
+
           # --- Guarantee the reviewer gate runs even with a [skip ci] head ---
           # The last commit pushed is the session-memory commit
           # ("chore: update dev memory [skip ci]"). GitHub suppresses the

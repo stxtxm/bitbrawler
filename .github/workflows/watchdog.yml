@@ -27,11 +27,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          echo "🔍 Watchdog 1/h — scan des PRs auto-generated"
+          echo "🔍 Watchdog 1/h — scan des PRs bot (label auto-generated OU auteur github-actions)"
           gh label get "ci-needs-human" 2>/dev/null || gh label create "ci-needs-human" --color "d73a4a" --description "CI bloquée après 3 retries, intervention humaine requise" 2>/dev/null || true
-          gh pr list --state open --label auto-generated --json number,updatedAt,statusCheckRollup,headRefName,body --limit 20 > /tmp/prs.json 2>/dev/null || echo "[]" > /tmp/prs.json
+          # NOTE: ne pas filtrer côté serveur par --label auto-generated : les PRs bot
+          # créées quand le label manquait n'ont aucun label et devenaient invisibles
+          # (orphelines à 0 check, jamais redispatchées — incident sept 2026 : 7 PRs bloquées).
+          gh pr list --state open --json number,updatedAt,statusCheckRollup,headRefName,body,author,labels --limit 50 > /tmp/prs-all.json 2>/dev/null || echo "[]" > /tmp/prs-all.json
+          jq '[.[] | select(([.labels // [] | .[].name] | index("auto-generated")) or (.author.login == "app/github-actions"))]' /tmp/prs-all.json > /tmp/prs.json 2>/dev/null || echo "[]" > /tmp/prs.json
           COUNT=$(jq 'length' /tmp/prs.json 2>/dev/null || echo 0)
-          echo "📋 $COUNT PRs auto-generated ouvertes"
+          echo "📋 $COUNT PRs bot ouvertes (labellisées ou auteur github-actions)"
           DISPATCHED=0
           MAX_DISPATCH=3
           NOW=$(date -u +%s)
