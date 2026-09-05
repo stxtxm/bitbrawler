@@ -2486,3 +2486,104 @@ describe('QA Bot Combat Overlay Intercept Contract (#864)', () => {
     expect(mockRun.errors.length).toBe(0)
   })
 })
+
+describe('QA Bot No Opponents Skip Contract (#812)', () => {
+  const qaBotSource = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
+
+  function extractAsyncFunction(source: string, name: string): string | null {
+    const start = source.indexOf(`async function ${name}(`)
+    if (start === -1) return null
+    const bodyStart = source.indexOf('{', start)
+    let depth = 0
+    for (let i = bodyStart; i < source.length; i++) {
+      if (source[i] === '{') depth++
+      else if (source[i] === '}') {
+        depth--
+        if (depth === 0) return source.slice(start, i + 1)
+      }
+    }
+    return null
+  }
+
+  function requireAsyncFunction(name: string): string {
+    const fn = extractAsyncFunction(qaBotSource, name)
+    expect(fn).not.toBeNull()
+    if (fn === null) throw new Error(`qa-bot.mjs missing async function ${name}()`)
+    return fn
+  }
+
+  it('detects "No opponents found" in runFightSequence and classifies it as SKIP not timeout', () => {
+    expect(qaBotSource).toContain('No opponents found')
+    const fn = requireAsyncFunction('runFightSequence')
+    expect(fn).toContain('No opponents found')
+    expect(fn).toContain("includes('No opponents found')")
+  })
+
+  it('runRecord initializes skipped_fights as an array', () => {
+    expect(qaBotSource).toContain('skipped_fights: []')
+    expect(qaBotSource).toMatch(/skipped_fights:\s*\[\]/)
+  })
+
+  it('runFightSequence pushes exhausted and no_opponents into skipped_fights', () => {
+    const fn = requireAsyncFunction('runFightSequence')
+    expect(fn).toContain("reason: 'exhausted'")
+    expect(fn).toContain("reason: 'no_opponents'")
+    expect(fn).toContain('skipped_fights.push')
+    expect(fn).toContain("skipped_fights.push({ index: i + 1, reason: 'exhausted' }")
+    expect(fn).toContain("skipped_fights.push({ index: i + 1, reason: 'no_opponents' }")
+  })
+
+  it('no_opponents skip branch captures screenshot with -skip suffix and does NOT push to errors', () => {
+    const fn = requireAsyncFunction('runFightSequence')
+    const noOppIdx = fn.indexOf("reason: 'no_opponents'")
+    expect(noOppIdx).toBeGreaterThan(-1)
+    const branchStart = fn.indexOf('if (isNoOpponents)')
+    expect(branchStart).toBeGreaterThan(-1)
+    const branchEnd = fn.indexOf('if (!resultDetected)', branchStart)
+    expect(branchEnd).toBeGreaterThan(branchStart)
+    const block = fn.slice(branchStart, branchEnd)
+    expect(block).toContain('-skip.png')
+    expect(block).toContain('No opponents found')
+    expect(block).not.toContain('errors.push')
+  })
+
+  it('exhausted skip branch captures screenshot with -skip suffix and does NOT push to errors', () => {
+    const fn = requireAsyncFunction('runFightSequence')
+    const exIdx = fn.indexOf("reason: 'exhausted'")
+    expect(exIdx).toBeGreaterThan(-1)
+    const block = fn.slice(exIdx, exIdx + 800)
+    expect(block).toContain('-skip.png')
+    expect(block).not.toContain('errors.push')
+  })
+
+  it('no_opponents skip closes the modal (OK/CLOSE or dismissModals) and continues without counting error', () => {
+    const fn = requireAsyncFunction('runFightSequence')
+    const branchStart = fn.indexOf('if (isNoOpponents)')
+    expect(branchStart).toBeGreaterThan(-1)
+    const branchEnd = fn.indexOf('if (!resultDetected)', branchStart)
+    expect(branchEnd).toBeGreaterThan(branchStart)
+    const block = fn.slice(branchStart, branchEnd)
+    expect(block).toContain('dismissModals')
+    expect(block).toContain('continue')
+    expect(block).not.toContain('errors.push')
+  })
+
+  it('skipped_fights with exhaust/no_opponents do not inflate error rate (fights + skipped = total attempts)', () => {
+    const mockRun = {
+      fights: [
+        { result: 'victory', xp: 100, fight_duration_ms: 3000 } as const,
+        { result: 'victory', xp: 120, fight_duration_ms: 3100 } as const,
+      ],
+      skipped_fights: [
+        { index: 3, reason: 'no_opponents' as const },
+        { index: 4, reason: 'exhausted' as const },
+      ],
+      errors: [] as string[],
+    }
+    expect(mockRun.skipped_fights).toHaveLength(2)
+    expect(mockRun.errors).toHaveLength(0)
+    expect(mockRun.fights.length + mockRun.skipped_fights.length).toBe(4)
+    const isErrorRun = mockRun.errors.length > 0 && mockRun.fights.length === 0
+    expect(isErrorRun).toBe(false)
+  })
+})
