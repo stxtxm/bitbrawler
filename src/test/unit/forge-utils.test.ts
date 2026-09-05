@@ -98,8 +98,8 @@ describe('forgeConstants', () => {
   });
 
   describe('UPGRADE_COST / UPGRADE_BASE_COST', () => {
-    it('defines UPGRADE_COST as 35', () => {
-      expect(UPGRADE_COST).toBe(35);
+    it('defines UPGRADE_COST as 38', () => {
+      expect(UPGRADE_COST).toBe(38);
     });
 
     it('UPGRADE_BASE_COST is an alias for UPGRADE_COST', () => {

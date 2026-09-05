@@ -36,7 +36,7 @@ export const FUSION_INPUT_COUNT = 3;
 /**
  * Base essence cost to upgrade an item by one level (level 0→1).
  */
-export const UPGRADE_COST = 35;
+export const UPGRADE_COST = 38;
 
 /**
  * Alias for UPGRADE_COST.
@@ -46,8 +46,8 @@ export const UPGRADE_BASE_COST = UPGRADE_COST;
 /**
  * Essence cost scaling per upgrade level (quadratic).
  * Final cost = UPGRADE_BASE_COST + level² × UPGRADE_COST_SCALING
- *    0→1:  35      1→2:  60      2→3: 135
- *    3→4: 260      4→5: 435
+ *    0→1:  38      1→2:  63      2→3: 138
+ *    3→4: 263      4→5: 438
  */
 export const UPGRADE_COST_SCALING = 25;
 
