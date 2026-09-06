@@ -178,6 +178,10 @@ function computeEquipmentAnalysis(runs: RunRecord[]): EquipmentAnalysis | null {
 }
 
 function computeStreakAnalysis(runs: RunRecord[]): StreakAnalysis | null {
+  const STREAK_MIN = 0
+  const STREAK_MAX = 100
+  const isValidStreak = (v: number) => v >= STREAK_MIN && v <= STREAK_MAX
+
   const runsWithInitStreak = runs.filter(
     (r): r is RunRecord & { initial_streak: number } => typeof r.initial_streak === 'number'
   )
@@ -188,18 +192,57 @@ function computeStreakAnalysis(runs: RunRecord[]): StreakAnalysis | null {
     (r): r is RunRecord & { lootbox_streak: number } => typeof r.lootbox_streak === 'number'
   )
 
+  if (runsWithInitStreak.length === 0 && runsWithLootboxStreak.length === 0 && runsWithFinalStreak.length === 0) return null
   if (runsWithInitStreak.length === 0 && runsWithLootboxStreak.length === 0) return null
 
+  const filteredInit = runsWithInitStreak.filter(r => isValidStreak(r.initial_streak))
+  const filteredFinalHard = runsWithFinalStreak.filter(r => isValidStreak(r.final_streak))
+  const filteredLootbox = runsWithLootboxStreak.filter(r => isValidStreak(r.lootbox_streak))
+
+  let finalForAvg = filteredFinalHard
+  if (filteredFinalHard.length >= 30) {
+    const vals = filteredFinalHard.map(r => r.final_streak)
+    const m = vals.reduce((s, v) => s + v, 0) / vals.length
+    const variance = vals.reduce((s, v) => s + (v - m) * (v - m), 0) / vals.length
+    const std = Math.sqrt(variance)
+    if (std > 0) {
+      finalForAvg = filteredFinalHard.filter(r => Math.abs(r.final_streak - m) / std <= 3)
+    }
+  }
+
+  let initForAvg = filteredInit
+  if (filteredInit.length >= 30) {
+    const vals = filteredInit.map(r => r.initial_streak)
+    const m = vals.reduce((s, v) => s + v, 0) / vals.length
+    const variance = vals.reduce((s, v) => s + (v - m) * (v - m), 0) / vals.length
+    const std = Math.sqrt(variance)
+    if (std > 0) {
+      initForAvg = filteredInit.filter(r => Math.abs(r.initial_streak - m) / std <= 3)
+    }
+  }
+
+  const avgInitial = initForAvg.length > 0
+    ? initForAvg.reduce((s, r) => s + r.initial_streak, 0) / initForAvg.length
+    : 0
+  const avgFinal = finalForAvg.length > 0
+    ? finalForAvg.reduce((s, r) => s + r.final_streak, 0) / finalForAvg.length
+    : (filteredLootbox.length > 0
+      ? filteredLootbox.reduce((s, r) => s + r.lootbox_streak, 0) / filteredLootbox.length
+      : 0)
+
+  let runsWithData: number
+  if (finalForAvg.length > 0) runsWithData = finalForAvg.length
+  else if (filteredLootbox.length > 0) runsWithData = filteredLootbox.length
+  else runsWithData = initForAvg.length
+
+  if (runsWithInitStreak.length > 0 && runsWithLootboxStreak.length === 0 && finalForAvg.length === 0) {
+    runsWithData = initForAvg.length
+  }
+
   return {
-    avg_initial_streak: runsWithInitStreak.length > 0
-      ? runsWithInitStreak.reduce((s, r) => s + r.initial_streak, 0) / runsWithInitStreak.length
-      : 0,
-    avg_final_streak: runsWithFinalStreak.length > 0
-      ? runsWithFinalStreak.reduce((s, r) => s + r.final_streak, 0) / runsWithFinalStreak.length
-      : (runsWithLootboxStreak.length > 0
-        ? runsWithLootboxStreak.reduce((s, r) => s + r.lootbox_streak, 0) / runsWithLootboxStreak.length
-        : 0),
-    runs_with_data: Math.max(runsWithInitStreak.length, runsWithLootboxStreak.length),
+    avg_initial_streak: avgInitial,
+    avg_final_streak: avgFinal,
+    runs_with_data: runsWithData,
   }
 }
 
@@ -843,6 +886,74 @@ describe('QA Streak Analysis', () => {
       { date: '2026-01-02', run: 'r2', character: 'C2', fights: [], errors: [], initial_streak: undefined },
     ]
     expect(computeStreakAnalysis(runs)).toBeNull()
+  })
+})
+
+describe('QA Streak Outlier Filtering (#924)', () => {
+  it('excludes final_streak >100 hard cap (1509) from avg_final', () => {
+    const runs: RunRecord[] = [
+      { date: '2026-01-01', run: 'r1', character: 'C1', fights: [], errors: [], initial_streak: 0, final_streak: 0 },
+      { date: '2026-01-02', run: 'r2', character: 'C2', fights: [], errors: [], initial_streak: 1, final_streak: 1 },
+      { date: '2026-01-03', run: 'r3', character: 'C3', fights: [], errors: [], initial_streak: 1, final_streak: 1509 },
+    ]
+    const result = computeStreakAnalysis(runs)
+    expect(result).not.toBeNull()
+    expect(result!.avg_final_streak).toBeCloseTo(0.5, 5)
+    expect(result!.runs_with_data).toBe(2)
+  })
+
+  it('excludes final_streak <0 from avg_final', () => {
+    const runs: RunRecord[] = [
+      { date: '2026-01-01', run: 'r1', character: 'C1', fights: [], errors: [], initial_streak: 0, final_streak: 0 },
+      { date: '2026-01-02', run: 'r2', character: 'C2', fights: [], errors: [], initial_streak: 1, final_streak: 1 },
+      { date: '2026-01-03', run: 'r3', character: 'C3', fights: [], errors: [], initial_streak: 1, final_streak: -5 },
+    ]
+    const result = computeStreakAnalysis(runs)
+    expect(result).not.toBeNull()
+    expect(result!.avg_final_streak).toBeCloseTo(0.5, 5)
+    expect(result!.runs_with_data).toBe(2)
+  })
+
+  it('replicates 06/09 audit: 104 runs with 73 and 1509 outliers → avg ~0.64 after filter', () => {
+    const runs: RunRecord[] = [
+      ...Array.from({ length: 49 }, (_, i) => ({ date: '2026-08-30', run: `r${i}`, character: 'QA-PERSI-4', fights: [], errors: [] as string[], initial_streak: 0, final_streak: 0 })),
+      ...Array.from({ length: 49 }, (_, i) => ({ date: '2026-08-30', run: `r${49 + i}`, character: 'QA-PERSI-4', fights: [], errors: [] as string[], initial_streak: 1, final_streak: 1 })),
+      { date: '2026-08-30', run: 'r98', character: 'QA-PERSI-4', fights: [], errors: [], initial_streak: 1, final_streak: 2 },
+      { date: '2026-08-30', run: 'r99', character: 'QA-PERSI-4', fights: [], errors: [], initial_streak: 1, final_streak: 3 },
+      { date: '2026-08-30', run: 'r100', character: 'QA-PERSI-4', fights: [], errors: [], initial_streak: 1, final_streak: 4 },
+      { date: '2026-08-30', run: 'r101', character: 'QA-PERSI-4', fights: [], errors: [], initial_streak: 1, final_streak: 8 },
+      { date: '2026-08-30', run: 'r102', character: 'QA-PERSI-4', fights: [], errors: [], initial_streak: 1, final_streak: 73 },
+      { date: '2026-08-30', run: 'r103', character: 'QA-PERSI-4', fights: [], errors: [], initial_streak: 1, final_streak: 1509 },
+    ]
+    const result = computeStreakAnalysis(runs)
+    expect(result).not.toBeNull()
+    expect(result!.avg_final_streak).toBeCloseTo(0.64, 1)
+    expect(result!.runs_with_data).toBe(102)
+  })
+
+  it('sigma filter excludes |z|>3 when N>=30 (73 outlier)', () => {
+    const runs: RunRecord[] = [
+      ...Array.from({ length: 30 }, (_, i) => ({ date: '2026-09-01', run: `r${i}`, character: 'QA-PERSI-6', fights: [], errors: [] as string[], initial_streak: 0, final_streak: i % 2 })),
+      { date: '2026-08-30', run: 'r30', character: 'QA-PERSI-4', fights: [], errors: [], initial_streak: 1, final_streak: 73 },
+    ]
+    const result = computeStreakAnalysis(runs)
+    expect(result).not.toBeNull()
+    expect(result!.avg_final_streak).toBeLessThan(2)
+    expect(result!.runs_with_data).toBe(30)
+  })
+
+  it('does not sigma-filter when N<30 (73 kept)', () => {
+    const runs: RunRecord[] = [
+      { date: '2026-09-01', run: 'r1', character: 'C1', fights: [], errors: [], initial_streak: 0, final_streak: 0 },
+      { date: '2026-09-01', run: 'r2', character: 'C2', fights: [], errors: [], initial_streak: 0, final_streak: 0 },
+      { date: '2026-09-01', run: 'r3', character: 'C3', fights: [], errors: [], initial_streak: 0, final_streak: 0 },
+      { date: '2026-09-01', run: 'r4', character: 'C4', fights: [], errors: [], initial_streak: 0, final_streak: 0 },
+      { date: '2026-08-30', run: 'r5', character: 'QA-PERSI-4', fights: [], errors: [], initial_streak: 1, final_streak: 73 },
+    ]
+    const result = computeStreakAnalysis(runs)
+    expect(result).not.toBeNull()
+    expect(result!.avg_final_streak).toBeCloseTo(14.6, 1)
+    expect(result!.runs_with_data).toBe(5)
   })
 })
 

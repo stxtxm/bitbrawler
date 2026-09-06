@@ -913,22 +913,71 @@ function analyze(stats: RunRecord[]): AnalysisReport {
 
   // --- Streak Analysis ---
   // Use initial_streak, final_streak, and lootbox_streak
+  // #924: filter corrupted streak outliers (e.g. 73/1509 on QA-PERSI-4 2026-08-30) that dominate the mean.
+  // Hard cap: 0..100 (max 60 théorique + marge), puis sigma |z|>3 si N>=30 (optionnel safe, commenté mais actif pour 73).
+  const STREAK_MIN = 0
+  const STREAK_MAX = 100
+  const isValidStreak = (v: number) => v >= STREAK_MIN && v <= STREAK_MAX
   const runsWithInitStreak = validRuns.filter((r): r is RunRecord & { initial_streak: number } => typeof r.initial_streak === 'number')
   const runsWithFinalStreak = validRuns.filter((r): r is RunRecord & { final_streak: number } => typeof r.final_streak === 'number')
   const runsWithLootboxStreak = validRuns.filter((r): r is RunRecord & { lootbox_streak: number } => typeof r.lootbox_streak === 'number')
+  const streakOutliersHard = runsWithFinalStreak.filter(r => !isValidStreak(r.final_streak))
+  const filteredInitHard = runsWithInitStreak.filter(r => isValidStreak(r.initial_streak))
+  const filteredFinalHard = runsWithFinalStreak.filter(r => isValidStreak(r.final_streak))
+  const filteredLootboxHard = runsWithLootboxStreak.filter(r => isValidStreak(r.lootbox_streak))
+  let finalForAvg = filteredFinalHard
+  let initForAvg = filteredInitHard
+  const streakSigmaOutliers: RunRecord[] = []
+  if (filteredFinalHard.length >= 30) {
+    const vals = filteredFinalHard.map(r => r.final_streak)
+    const m = vals.reduce((s, v) => s + v, 0) / vals.length
+    const variance = vals.reduce((s, v) => s + (v - m) * (v - m), 0) / vals.length
+    const std = Math.sqrt(variance)
+    if (std > 0) {
+      const kept: RunRecord[] = []
+      for (const r of filteredFinalHard) {
+        if (Math.abs(r.final_streak - m) / std > 3) streakSigmaOutliers.push(r)
+        else kept.push(r)
+      }
+      finalForAvg = kept
+    }
+  }
+  if (filteredInitHard.length >= 30) {
+    const vals = filteredInitHard.map(r => r.initial_streak)
+    const m = vals.reduce((s, v) => s + v, 0) / vals.length
+    const variance = vals.reduce((s, v) => s + (v - m) * (v - m), 0) / vals.length
+    const std = Math.sqrt(variance)
+    if (std > 0) {
+      initForAvg = filteredInitHard.filter(r => Math.abs(r.initial_streak - m) / std <= 3)
+    }
+  }
+  const streakOutliers = [...streakOutliersHard, ...streakSigmaOutliers]
   let streakAnalysis: StreakAnalysis | null = null
   if (runsWithInitStreak.length > 0 || runsWithLootboxStreak.length > 0) {
+    const avgInitial = initForAvg.length > 0
+      ? initForAvg.reduce((s, r) => s + r.initial_streak, 0) / initForAvg.length
+      : 0
+    const avgFinal = finalForAvg.length > 0
+      ? finalForAvg.reduce((s, r) => s + r.final_streak, 0) / finalForAvg.length
+      : (filteredLootboxHard.length > 0
+        ? filteredLootboxHard.reduce((s, r) => s + r.lootbox_streak, 0) / filteredLootboxHard.length
+        : 0)
+    let runsWithData: number
+    if (finalForAvg.length > 0) runsWithData = finalForAvg.length
+    else if (filteredLootboxHard.length > 0) runsWithData = filteredLootboxHard.length
+    else runsWithData = initForAvg.length
     streakAnalysis = {
-      avg_initial_streak: runsWithInitStreak.length > 0
-        ? runsWithInitStreak.reduce((s, r) => s + r.initial_streak, 0) / runsWithInitStreak.length
-        : 0,
-      avg_final_streak: runsWithFinalStreak.length > 0
-        ? runsWithFinalStreak.reduce((s, r) => s + r.final_streak, 0) / runsWithFinalStreak.length
-        : (runsWithLootboxStreak.length > 0
-          ? runsWithLootboxStreak.reduce((s, r) => s + r.lootbox_streak, 0) / runsWithLootboxStreak.length
-          : 0),
-      runs_with_data: Math.max(runsWithInitStreak.length, runsWithLootboxStreak.length),
+      avg_initial_streak: avgInitial,
+      avg_final_streak: avgFinal,
+      runs_with_data: runsWithData,
     }
+  }
+
+  if (streakOutliers.length > 0) {
+    const vals = streakOutliers.map(r => String(r.final_streak)).join(',')
+    const first = streakOutliers[0]
+    const charInfo = first?.character ? ` — see ${first.character} ${String(first.date).slice(0, 10)}` : ''
+    issues.push(`streak outliers excluded: ${streakOutliers.length} (${vals})${charInfo}`)
   }
 
   // --- Fight Type Breakdown (pvp / pve / idle / boss) ---
