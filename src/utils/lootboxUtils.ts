@@ -2,11 +2,11 @@ import { ItemRarity, PixelItemAsset } from '../types/Item';
 import { getDailyResetKey } from './dailyReset';
 
 export const LOOTBOX_RARITY_WEIGHTS: Record<ItemRarity, number> = {
-  common: 0.458,
+  common: 0.43,
   uncommon: 0.20,
   rare: 0.17,
   epic: 0.15,
-  legendary: 0.04,
+  legendary: 0.05,
 };
 
 /** Number of consecutive lootboxes without a legendary before pity forces one. */
@@ -83,16 +83,16 @@ export function computeNextStreak(
 
 export const getLootboxRarityWeights = (level: number): Record<ItemRarity, number> => {
   if (level >= 10) {
-    return { common: 0.38, uncommon: 0.25, rare: 0.18, epic: 0.14, legendary: 0.07 };
+    return { common: 0.38, uncommon: 0.25, rare: 0.18, epic: 0.14, legendary: 0.08 };
   }
   if (level >= 7) {
-    return { common: 0.435, uncommon: 0.25, rare: 0.17, epic: 0.12, legendary: 0.04 };
+    return { common: 0.435, uncommon: 0.25, rare: 0.17, epic: 0.12, legendary: 0.05 };
   }
   if (level >= 4) {
-    return { common: 0.488, uncommon: 0.24, rare: 0.15, epic: 0.10, legendary: 0.04 };
+    return { common: 0.488, uncommon: 0.24, rare: 0.15, epic: 0.10, legendary: 0.05 };
   }
   if (level >= 3) {
-    return { common: 0.42, uncommon: 0.24, rare: 0.17, epic: 0.14, legendary: 0.04 };
+    return { common: 0.42, uncommon: 0.24, rare: 0.17, epic: 0.14, legendary: 0.05 };
   }
   return { ...LOOTBOX_RARITY_WEIGHTS };
 };
