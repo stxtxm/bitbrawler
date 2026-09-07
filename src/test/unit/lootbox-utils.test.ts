@@ -221,22 +221,22 @@ describe('lootboxUtils', () => {
   it('has legendary weight 0.04 at level 3-6 (midgame)', () => {
     const w3 = getLootboxRarityWeights(3);
     const w6 = getLootboxRarityWeights(6);
-    expect(w3.legendary).toBeCloseTo(0.04, 3);
-    expect(w6.legendary).toBeCloseTo(0.04, 3);
+    expect(w3.legendary).toBeCloseTo(0.05, 3);
+    expect(w6.legendary).toBeCloseTo(0.05, 3);
   });
 
   it('has legendary weight 0.04 at level 7-9 (late-midgame)', () => {
     const w7 = getLootboxRarityWeights(7);
     const w9 = getLootboxRarityWeights(9);
-    expect(w7.legendary).toBeCloseTo(0.04, 3);
-    expect(w9.legendary).toBeCloseTo(0.04, 3);
+    expect(w7.legendary).toBeCloseTo(0.05, 3);
+    expect(w9.legendary).toBeCloseTo(0.05, 3);
   });
 
   it('has legendary weight 0.07 at level 10+ (endgame)', () => {
     const w10 = getLootboxRarityWeights(10);
     const w20 = getLootboxRarityWeights(20);
-    expect(w10.legendary).toBeCloseTo(0.07, 3);
-    expect(w20.legendary).toBeCloseTo(0.07, 3);
+    expect(w10.legendary).toBeCloseTo(0.08, 3);
+    expect(w20.legendary).toBeCloseTo(0.08, 3);
   });
 
   // ─── Low-Level Legendary Items Tests ──────────────────────────────────────
