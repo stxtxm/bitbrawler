@@ -1,10 +1,7 @@
 {
-  "run": "2026-09-06",
-  "character": "QA-PERSI-7",
+  "run": "2026-09-07",
+  "character": "ASTRALMAGE",
   "exhausted": false,
-  "updated_at": "2026-09-06T19:55:05.168Z",
-  "source": "reused",
-  "persistent_generation": 6,
-  "persistent_created_at": "2026-09-06T14:39:17.211Z",
-  "persistent_reset_ready": false
+  "updated_at": "2026-09-07T11:11:26.336Z",
+  "source": "created"
 }
