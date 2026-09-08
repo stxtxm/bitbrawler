@@ -69246,5 +69246,308 @@
       "purchased_offer": null,
       "essence_after_purchase": null
     }
+  },
+  {
+    "date": "2026-09-08T10:18:18.350Z",
+    "run": "2026-09-08",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 180,
+        "fight_duration_ms": 15503,
+        "max_hp": 1284,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 3441.39
+      },
+      {
+        "result": "defeat",
+        "xp": 206,
+        "fight_duration_ms": 16165,
+        "max_hp": 1284,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 3441.39
+      },
+      {
+        "result": "defeat",
+        "xp": 457,
+        "fight_duration_ms": 10284,
+        "max_hp": 1284,
+        "fight_type": "pve",
+        "monster_name": "VOID TITAN",
+        "xp_before_modifier": 457,
+        "xp_after_modifier": 1143,
+        "essence_after": 3456.39
+      },
+      {
+        "result": "draw",
+        "xp": 186,
+        "fight_duration_ms": 17368,
+        "max_hp": 1284,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 3456.48
+      },
+      {
+        "result": "defeat",
+        "xp": 194,
+        "fight_duration_ms": 16719,
+        "max_hp": 1284,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 3456.48
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Copper Band",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 2,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 24,
+      "vit": 13,
+      "dex": 69,
+      "luk": 24,
+      "int": 12,
+      "foc": 21,
+      "fights": 0
+    },
+    "initial_level": 91,
+    "initial_xp": {
+      "current": 152969,
+      "max": 204927
+    },
+    "initial_max_hp": 1284,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 91,
+      "xp": 155537,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 27,
+      "vit": 13,
+      "dex": 65,
+      "luk": 27,
+      "int": 12,
+      "foc": 19,
+      "last xp": 304,
+      "fights": 5
+    },
+    "final_max_hp": 1284,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 1,
+      "wins": 0,
+      "xp_total": 457,
+      "monsters_faced": [
+        "VOID TITAN"
+      ],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 22899,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "goblin"
+      ],
+      "victories": 1,
+      "defeats": 0,
+      "xp_total": 122,
+      "xp_events": [
+        {
+          "time_ms": 22899,
+          "xp": 122,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        510,
+        1527,
+        22899
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 122,
+        "essence": 1.09,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 5.24,
+      "next_level_eta": "⬆ 15m 48s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.11x",
+      "interval": "6.6s",
+      "streak_bonus": "🔥 1-win streak (+0%)"
+    },
+    "initial_essence": 3440.21,
+    "final_essence": 3406.7,
+    "essence": {
+      "before_idle": 3440.21,
+      "after_idle": 3441.3,
+      "per_fight": [
+        3441.39,
+        3441.39,
+        3456.39,
+        3456.48,
+        3456.48
+      ],
+      "forge_before": 3456,
+      "forge_after_salvage": 3461,
+      "forge_after_fusion": 3461,
+      "forge_after_upgrade": 3423,
+      "forge_after": 3423,
+      "shop_before": 3426,
+      "shop_after": 3406,
+      "final": 3406.7,
+      "flow": {
+        "idle_gained": 1.09,
+        "fights_change": 15.18,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 38,
+        "forge_net": -33,
+        "shop_cost": 20,
+        "net_change": -33.51
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 3456,
+      "essence_after_salvage": 3461,
+      "essence_after_fusion": 3461,
+      "essence_after_upgrade": 3423,
+      "items_before": 2,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 3423,
+      "items_after": 0,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": 38,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "COMMON",
+      "cost": 20,
+      "essence_before": 3426,
+      "essence_after": 3406,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Scale Mail",
+            "rarity": "UNCOMMON",
+            "price": 20
+          },
+          {
+            "name": "Frost Reaver",
+            "rarity": "EPIC",
+            "price": 40
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 35
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 3406
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1451,
+      "arena": 798
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Scale Mail",
+          "rarity": "UNCOMMON",
+          "price": 20
+        },
+        {
+          "name": "Frost Reaver",
+          "rarity": "EPIC",
+          "price": 40
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 35
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 3406
+    }
   }
 ]
