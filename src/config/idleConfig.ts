@@ -9,7 +9,7 @@ export const IDLE_CONFIG = {
   COMBAT_DURATION: 1500,
   RESULT_DURATION: 1500,
   ESSENCE: {
-    BASE_RATE: 0.12,
+    BASE_RATE: 0.15,
     LOSS_RATIO: 0.3,
     LEVEL_SCALE: 0.03,
   },
