@@ -98,8 +98,8 @@ describe('forgeConstants', () => {
   });
 
   describe('UPGRADE_COST / UPGRADE_BASE_COST', () => {
-    it('defines UPGRADE_COST as 38', () => {
-      expect(UPGRADE_COST).toBe(38);
+    it('defines UPGRADE_COST as 30', () => {
+      expect(UPGRADE_COST).toBe(30);
     });
 
     it('UPGRADE_BASE_COST is an alias for UPGRADE_COST', () => {
@@ -107,8 +107,8 @@ describe('forgeConstants', () => {
     });
   });
 
-  it('defines UPGRADE_COST_SCALING as 25', () => {
-    expect(UPGRADE_COST_SCALING).toBe(25);
+  it('defines UPGRADE_COST_SCALING as 20', () => {
+    expect(UPGRADE_COST_SCALING).toBe(20);
   });
 
   it('defines MAX_UPGRADE_LEVEL as 5', () => {
@@ -573,7 +573,7 @@ describe('canUpgrade', () => {
   it('returns true for item at level 4 (one below max)', () => {
     const char = makeCharacter({
       inventory: ['rusty_sword'],
-      essence: UPGRADE_BASE_COST + (MAX_UPGRADE_LEVEL - 1) * (MAX_UPGRADE_LEVEL - 1) * UPGRADE_COST_SCALING, // cost at level 4
+      essence: UPGRADE_BASE_COST + (MAX_UPGRADE_LEVEL - 1) * UPGRADE_COST_SCALING, // cost at level 4
       itemUpgrades: { rusty_sword: MAX_UPGRADE_LEVEL - 1 },
     });
 
@@ -583,11 +583,11 @@ describe('canUpgrade', () => {
   it('returns false when enough essence for base cost but not for scaled cost at higher level', () => {
     const char = makeCharacter({
       inventory: ['rusty_sword'],
-      essence: UPGRADE_BASE_COST, // 50, enough for level 0 (50) but not level 1 (75)
+      essence: UPGRADE_BASE_COST, // 30, enough for level 0 (30) but not level 1 (50)
       itemUpgrades: { rusty_sword: 1 },
     });
 
-    // cost at level 1 = 50 + 1*1*25 = 75, essence is 50, not enough
+    // cost at level 1 = 30 + 1*20 = 50, essence is 30, not enough
     expect(canUpgrade('rusty_sword', char)).toBe(false);
   });
 });
@@ -618,7 +618,7 @@ describe('performUpgrade', () => {
     const result = performUpgrade('rusty_sword', char);
 
     expect(result.itemUpgrades?.rusty_sword).toBe(3);
-    expect(result.essence).toBe(300 - (UPGRADE_BASE_COST + 4 * UPGRADE_COST_SCALING));
+    expect(result.essence).toBe(300 - (UPGRADE_BASE_COST + 2 * UPGRADE_COST_SCALING));
   });
 
   it('does not exceed MAX_UPGRADE_LEVEL', () => {
@@ -993,23 +993,23 @@ describe('getUpgradeCost', () => {
   });
 
   it('scales with upgrade level parameter', () => {
-    // cost = UPGRADE_BASE_COST + level² × UPGRADE_COST_SCALING
+    // cost = UPGRADE_BASE_COST + level × UPGRADE_COST_SCALING
     const item = makeItem('test', 'epic');
     const cost0 = getUpgradeCost(item, 0);
     expect(cost0).toBe(UPGRADE_BASE_COST);
   });
 
-  it('cost increases with level (quadratic)', () => {
+  it('cost increases with level (linear)', () => {
     const item = makeItem('test', 'legendary');
     const cost0 = getUpgradeCost(item, 0);
     const cost3 = getUpgradeCost(item, 3);
     expect(cost3).toBeGreaterThan(cost0);
-    expect(cost3).toBe(UPGRADE_BASE_COST + 3 * 3 * UPGRADE_COST_SCALING);
+    expect(cost3).toBe(UPGRADE_BASE_COST + 3 * UPGRADE_COST_SCALING);
   });
 
-  it('returns quadratic cost for max level item', () => {
+  it('returns linear cost for max level item', () => {
     const item = makeItem('test', 'common');
     const cost = getUpgradeCost(item, MAX_UPGRADE_LEVEL - 1);
-    expect(cost).toBe(UPGRADE_BASE_COST + (MAX_UPGRADE_LEVEL - 1) * (MAX_UPGRADE_LEVEL - 1) * UPGRADE_COST_SCALING);
+    expect(cost).toBe(UPGRADE_BASE_COST + (MAX_UPGRADE_LEVEL - 1) * UPGRADE_COST_SCALING);
   });
 });
