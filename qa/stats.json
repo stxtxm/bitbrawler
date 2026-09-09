@@ -70484,5 +70484,195 @@
       "purchased_offer": 0,
       "essence_after_purchase": 4872
     }
+  },
+  {
+    "date": "2026-09-09T15:35:31.494Z",
+    "run": "2026-09-09",
+    "character": "QA-PERSI-5",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "draw",
+        "xp": 142,
+        "fight_duration_ms": 16738,
+        "max_hp": 1268,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 1099.46
+      },
+      {
+        "result": "victory",
+        "xp": 200,
+        "fight_duration_ms": 1073,
+        "max_hp": 1268,
+        "fight_type": "pve",
+        "monster_name": "VOID TITAN",
+        "xp_before_modifier": 200,
+        "xp_after_modifier": 500,
+        "essence_after": 1100.17
+      }
+    ],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "arena_status": {
+      "fightButtonLabel": "ATTACK BOSS",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 5,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 19,
+      "vit": 52,
+      "dex": 26,
+      "luk": 21,
+      "int": 14,
+      "foc": 10,
+      "fights": 0
+    },
+    "initial_level": 57,
+    "initial_xp": {
+      "current": 79836,
+      "max": 94705
+    },
+    "initial_max_hp": 1188,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": null,
+    "final_character_stats": null,
+    "final_max_hp": null,
+    "final_equipment": null,
+    "final_streak": null,
+    "lootbox_equipment": null,
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20274,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "goblin",
+        "wraith"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 415,
+      "xp_events": [
+        {
+          "time_ms": 3070,
+          "xp": 216,
+          "monster": "goblin",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 12696,
+          "xp": 199,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        512,
+        1536,
+        3070,
+        10139,
+        11672,
+        12696,
+        19764
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 216,
+        "essence": 0.66,
+        "monster": "goblin"
+      },
+      {
+        "result": "victory",
+        "xp": 199,
+        "essence": 0.66,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.72,
+      "next_level_eta": "⬆ 11m 35s",
+      "power_ratio": "⚔ 0.56x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.04x",
+      "interval": "9.7s",
+      "streak_bonus": "🔥 4-win streak (+1%)"
+    },
+    "initial_essence": null,
+    "final_essence": null,
+    "essence": {
+      "before_idle": 1098.14,
+      "after_idle": 1099.46,
+      "per_fight": [
+        1099.46,
+        1100.17
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": null,
+      "flow": {
+        "idle_gained": 1.32,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": null
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": null,
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": null,
+    "shop": null,
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [
+      "Fight 2: timeout waiting for result (90000ms, 3 retries)",
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('button[aria-label=\"PvP mode\"]')\n    - locator resolved to <button role=\"switch\" title=\"PvP mode\" aria-checked=\"false\" aria-label=\"PvP mode\" class=\"pixel-switch pve-switch off\">…</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"combat-overlay\">…</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"combat-overlay\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    56 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div class=\"combat-overlay\">…</div> intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n"
+    ],
+    "load_times_ms": {
+      "home": 1988,
+      "arena": 404
+    }
   }
 ]
