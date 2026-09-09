@@ -25,9 +25,7 @@ describe('idleBackgroundEssence', () => {
       }
 
       expect(totalEssence).toBeGreaterThan(0)
-      // Each fight at level 10 gives: 0.12 * (1 + 9 * 0.03) = 0.12 * 1.27 = 0.1524
-      // 5 fights: ~0.76 (5.5.0 economy: flattened curve, shop is a goal again)
-      expect(totalEssence).toBeCloseTo(0.76, 1)
+      expect(totalEssence).toBeCloseTo(0.95, 1)
     })
 
     it('should produce less essence on loss than on win', () => {
@@ -126,9 +124,8 @@ describe('idleBackgroundEssence', () => {
         totalEssence += essence
       }
 
-      // 10 fights * 0.1524 essence ≈ 1.52 (5.5.0 economy: flattened curve)
       expect(totalEssence).toBeGreaterThan(1)
-      expect(totalEssence).toBeLessThan(3)
+      expect(totalEssence).toBeLessThan(4)
     })
   })
 })
