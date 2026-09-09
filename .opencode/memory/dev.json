@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-09-01T22:13:03Z",
+  "last_session": "2026-09-09T21:28:25Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -37,9 +37,9 @@
       "date": "2026-08-26"
     },
     {
-      "lesson": "PR #911 vide vs master (guard deja merge via #910) => action_required CI. Fix: re-ajout test boss timeout 30s guard (31000ms stall, hpLeft resolution, reason timeout_cap) + cherry-pick stabilisation monster-utils deterministe pour eviter flaky 0.15% -> PR diff 2 fichiers, CI verte 1605 tests. Attention branches fantomes refs/heads/origin/feat/* créées par fetch mal formé -> à supprimer avant push.",
-      "issue": "#900",
-      "date": "2026-09-01"
+      "lesson": "Issue #933 upgrade cost lissage: passage quadratic (BASE + lvl²*SCALING) → linear (BASE + lvl*SCALING) en 3 fichiers (forgeConstants 38→30/25→20 + formule, forgeUtils 3 sites, forge-utils.test 7 attentes). Total 350 vs 887 ess. Tests 1624 verts.",
+      "issue": "#933",
+      "date": "2026-09-09"
     }
   ]
 }
