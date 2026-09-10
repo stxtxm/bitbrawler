@@ -531,6 +531,11 @@ jobs:
           gh pr merge "$PR_NUMBER" --squash --delete-branch || { echo "Merge still failing — check manually"; exit 1; }
           echo "✓ PR #$PR_NUMBER merged"
 
+          # --- Traçabilité + fermeture explicite (l'auto-close "Closes #" est fragile en squash : ex. #933 restée OPEN malgré #935 mergée) ---
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          gh issue comment "$ISSUE_NUMBER" --body "✅ Auto-dev terminé : PR #$PR_NUMBER mergée ([run]($RUN_URL))." 2>/dev/null || true
+          gh issue close "$ISSUE_NUMBER" --reason completed 2>/dev/null || echo "⚠ Fermeture issue #$ISSUE_NUMBER à vérifier manuellement"
+
           # --- Post-merge: re-trigger dependant PRs ---
           echo "🔍 Looking for PRs that depend on #$ISSUE_NUMBER..."
           DEPENDANT_ISSUES=$(gh issue list --state open --json number,body --jq '
@@ -863,6 +868,19 @@ jobs:
           # des PRs bot sans label sont restées invisibles et bloquées) ---
           gh pr edit "$PR_NUMBER" --add-label "auto-generated" 2>/dev/null || \
             gh issue edit "$PR_NUMBER" --add-label "auto-generated" 2>/dev/null || true
+
+          # --- Traçabilité immédiate + fermeture si déjà mergée ---
+          # (l'auto-close "Closes #" ne se déclenche pas toujours en squash :
+          # ex. #933 restée OPEN malgré #935 mergée en 4s via --auto)
+          if [ -n "$PR_NUMBER" ]; then
+            RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            gh issue comment "$ISSUE_NUMBER" --body "🤖 Pipeline auto-dev : PR #$PR_NUMBER créée/mise à jour ([run]($RUN_URL)). Le reviewer prend le relais après la CI." 2>/dev/null || true
+            MERGED_STATE=$(gh pr view "$PR_NUMBER" --json state --jq '.state' 2>/dev/null || echo "")
+            if [ "$MERGED_STATE" = "MERGED" ]; then
+              gh issue close "$ISSUE_NUMBER" --reason completed 2>/dev/null || echo "⚠ Fermeture issue #$ISSUE_NUMBER à vérifier manuellement"
+              echo "✓ Issue #$ISSUE_NUMBER fermée (PR déjà mergée)"
+            fi
+          fi
 
           # --- Guarantee the reviewer gate runs even with a [skip ci] head ---
           # The last commit pushed is the session-memory commit
