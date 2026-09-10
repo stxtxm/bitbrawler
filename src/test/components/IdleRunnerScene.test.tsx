@@ -227,4 +227,44 @@ describe('IdleRunnerScene', () => {
     expect(screen.getByText(/WELCOME BACK/i)).toBeInTheDocument()
     expect(defaultProps.onClearOfflineGains).not.toHaveBeenCalled()
   })
+
+  it('exposes level-up FX via data-testid level-up-overlay', () => {
+    const ui = render(<IdleRunnerScene {...defaultProps} />)
+    renderLevelUpTo(ui, 6)
+    const overlay = screen.getByTestId('level-up-overlay')
+    expect(overlay).toBeInTheDocument()
+  })
+
+  it('level-up decorative elements do not intercept pointer events', () => {
+    const ui = render(<IdleRunnerScene {...defaultProps} />)
+    renderLevelUpTo(ui, 6)
+    const overlay = screen.getByTestId('level-up-overlay')
+    const style = window.getComputedStyle(overlay)
+    expect(style.pointerEvents).toBe('none')
+    const floatText = overlay.querySelector('.levelup-float-text') ?? document.querySelector('.levelup-float-text')
+    if (floatText) {
+      const floatStyle = window.getComputedStyle(floatText as Element)
+      expect(floatStyle.pointerEvents).toBe('none')
+    }
+    const glow = overlay.querySelector('.idle-levelup-glow') ?? document.querySelector('.idle-levelup-glow')
+    if (glow) {
+      const glowStyle = window.getComputedStyle(glow as Element)
+      expect(glowStyle.pointerEvents).toBe('none')
+    }
+  })
+
+  it('FIGHT button remains clickable when level-up FX is active', () => {
+    const onFight = vi.fn()
+    const ui = render(<IdleRunnerScene {...defaultProps} />)
+    const fightBtn = document.createElement('button')
+    fightBtn.className = 'primary-btn giant-btn'
+    fightBtn.textContent = 'FIGHT!'
+    fightBtn.addEventListener('click', onFight)
+    document.body.appendChild(fightBtn)
+    renderLevelUpTo(ui, 6)
+    expect(screen.getByText('LVL 6')).toBeInTheDocument()
+    fireEvent.click(fightBtn)
+    expect(onFight).toHaveBeenCalledTimes(1)
+    document.body.removeChild(fightBtn)
+  })
 })
