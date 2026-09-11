@@ -1,0 +1,229 @@
+@use '../variables' as *;
+
+.pass-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  max-height: 76vh;
+  overflow-y: auto;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 15%, rgba(60, 35, 15, 0.3) 0%, transparent 100%),
+    radial-gradient(ellipse at top, #1f120a 0%, #0d0805 100%);
+  border: 3px solid #5c3a1e;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.9), 0 0 20px rgba(92, 58, 30, 0.4);
+  position: relative;
+
+  @include mobile {
+    padding: 10px;
+  }
+}
+
+.pass-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(90deg, transparent 0, transparent 3px, rgba(92, 58, 30, 0.06) 3px, rgba(92, 58, 30, 0.06) 4px),
+    radial-gradient(ellipse 60% 30% at 30% 10%, rgba(255, 180, 80, 0.06) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.pass-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.pass-title {
+  font-family: $font-pixel;
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  color: $accent-gold;
+  text-transform: uppercase;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.pass-season-label {
+  font-size: 0.4rem;
+  letter-spacing: 1px;
+  color: #8b7355;
+  text-transform: uppercase;
+}
+
+.pass-progress-bar {
+  position: relative;
+  z-index: 1;
+  height: 14px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid #3a2818;
+  overflow: hidden;
+}
+
+.pass-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #d4a55a 0%, $accent-gold 100%);
+  transition: width 0.4s ease;
+  box-shadow: 0 0 8px rgba(255, 204, 0, 0.4);
+}
+
+.pass-progress-text {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.4rem;
+  letter-spacing: 1px;
+  color: #9aa0a6;
+}
+
+.pass-track {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.pass-tier-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 6px 8px;
+  background: linear-gradient(180deg, rgba(24, 14, 8, 0.95) 0%, rgba(14, 8, 4, 0.98) 100%);
+  border: 2px solid #3a2818;
+  border-left-width: 4px;
+  position: relative;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 3px 0 #1a0e08, inset 0 1px 0 rgba(212, 165, 90, 0.08);
+
+  &:hover {
+    border-color: #8a5e3a;
+    transform: translateY(-1px);
+  }
+}
+
+.pass-tier-card.pass-claimed {
+  opacity: 0.55;
+  filter: grayscale(0.5);
+  border-color: #2a4a2a;
+
+  &::after {
+    content: '✓ CLAIMED';
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 0.3rem;
+    letter-spacing: 1px;
+    color: $accent-green;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 1px 3px;
+    border: 1px solid $accent-green;
+  }
+}
+
+.pass-tier-card.pass-unlocked {
+  border-color: $accent-gold;
+  box-shadow: 0 0 12px rgba(255, 204, 0, 0.25), 0 3px 0 #1a0e08;
+}
+
+.pass-tier-level {
+  font-family: $font-pixel;
+  font-size: 0.5rem;
+  color: #d4a55a;
+  letter-spacing: 1px;
+}
+
+.pass-tier-xp {
+  font-size: 0.35rem;
+  color: #666;
+  letter-spacing: 1px;
+}
+
+.pass-reward {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid #222;
+  min-width: 70px;
+}
+
+.pass-reward-type {
+  font-size: 0.38rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #c7c7c7;
+}
+
+.pass-reward-type.pass-reward-essence { color: $accent-gold; }
+.pass-reward-type.pass-reward-reroll { color: #7ab87a; }
+.pass-reward-type.pass-reward-pity { color: #9b59b6; }
+.pass-reward-type.pass-reward-biome_token { color: #63b3ff; }
+
+.pass-reward-amount {
+  font-family: $font-pixel;
+  font-size: 0.45rem;
+  color: #fff;
+}
+
+.pass-claim-btn {
+  padding: 4px 10px;
+  font-family: $font-pixel;
+  font-size: 0.38rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  border: 2px solid $accent-gold;
+  background: rgba(255, 204, 0, 0.1);
+  color: $accent-gold;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  width: 100%;
+
+  &:hover:not(:disabled) {
+    background: $accent-gold;
+    color: #000;
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    border-color: #444;
+    color: #555;
+  }
+}
+
+.pass-claim-btn.pass-claimed-btn {
+  border-color: #2a4a2a;
+  color: #555;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.pass-close-btn {
+  width: 28px;
+  height: 28px;
+  background: #000;
+  color: $accent-red;
+  border: 2px solid $accent-red;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, background 0.2s ease;
+  margin-left: auto;
+
+  &:hover {
+    background: $accent-red;
+    color: #000;
+    transform: translateY(-2px);
+  }
+}
