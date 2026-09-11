@@ -375,8 +375,6 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     if (trailingTimerRef.current) clearTimeout(trailingTimerRef.current)
   }, [])
 
-  // Click-to-dismiss: clicking anywhere on the idle runner box dismisses
-  // level-up visual FX immediately so it never blocks FIGHT button clicks.
   const dismissLevelUpFx = () => {
     if (!showLevelUpFx) return
     if (levelUpTimerRef.current) {
@@ -388,6 +386,13 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     setLevelUpCount(null)
   }
 
+  useEffect(() => {
+    if (!showLevelUpFx) return
+    const onPointerDown = () => dismissLevelUpFx()
+    document.addEventListener('pointerdown', onPointerDown, true)
+    return () => document.removeEventListener('pointerdown', onPointerDown, true)
+  }, [showLevelUpFx])
+
   // Offline gains popup is static — it stays on screen until the player
   // clicks (the CLAIM REWARDS button or anywhere on the popup). This is
   // deterministic for QA/bot automation.
@@ -398,23 +403,24 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
 
   return (
     <div className={`idle-runner-box${screenShake ? ' shake-screen' : ''}${levelUpFlash ? ' level-up-flash' : ''}`} ref={containerRef} onClick={dismissLevelUpFx}>
-      {levelUpShockwave && <div className={`level-up-shockwave${isMilestoneCeremony ? ' milestone' : ''}`} />}
-      {/* clouds rendered inside ProceduralTerrain canvas */}
+      {levelUpShockwave && <div className={`level-up-shockwave${isMilestoneCeremony ? ' milestone' : ''}`} style={{ pointerEvents: 'none' }} />}
 
       <div key={animKey} ref={characterSlotRef} className={`idle-character-slot${animRun ? '' : ' anim-paused'} ${isAttacking ? 'attacking' : ''} ${isVictory ? 'victory' : ''} ${isMilestoneCeremony ? 'ceremony-milestone' : ''}`}>
-        {showLevelUpFx && <div className="idle-levelup-glow" />}
+        {showLevelUpFx && (
+          <div data-testid="level-up-overlay" className="levelup-overlay-wrapper" style={{ pointerEvents: 'none' }}>
+            <div className="idle-levelup-glow" style={{ pointerEvents: 'none' }} />
+            <div className="levelup-float-text" style={{ pointerEvents: 'none' }}>
+              <span className="levelup-float-arrow">⬆</span>
+              <span className="levelup-float-lvl">LVL {levelUpLevel}{levelUpCount && levelUpCount > 1 ? <span className="levelup-float-count"> ×{levelUpCount}</span> : null}</span>
+            </div>
+          </div>
+        )}
         <PixelCharacter
           seed={character.seed}
           gender={character.gender}
           appearance={appearance ?? character.appearance}
           scale={charScale}
         />
-        {showLevelUpFx && (
-          <div className="levelup-float-text">
-            <span className="levelup-float-arrow">⬆</span>
-            <span className="levelup-float-lvl">LVL {levelUpLevel}{levelUpCount && levelUpCount > 1 ? <span className="levelup-float-count"> ×{levelUpCount}</span> : null}</span>
-          </div>
-        )}
       </div>
 
       {currentMonster && (

@@ -752,7 +752,22 @@
   100% { box-shadow: 0 0 0 0 transparent; }
 }
 
-// Level-up floating text above character
+.levelup-overlay-wrapper {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none !important;
+  isolation: isolate;
+
+  .idle-levelup-glow {
+    pointer-events: none !important;
+  }
+
+  .levelup-float-text {
+    pointer-events: none !important;
+  }
+}
+
 .levelup-float-text {
   position: absolute;
   top: -20px;
@@ -763,8 +778,9 @@
   align-items: center;
   white-space: nowrap;
   animation: levelupFloatUp 1.5s ease-out forwards;
-  pointer-events: none;
+  pointer-events: none !important;
   z-index: 20;
+  isolation: isolate;
 
   .levelup-float-arrow {
     font-size: 1.4rem;

@@ -91,3 +91,30 @@
         transform: translateY(-8px) scale(1.1);
     }
 }
+
+.level-up-pop-overlay,
+.level-up-pop-overlay .card-shine,
+.level-up-pop-overlay .level-up-card,
+.level-up-pop-overlay .level-up-stat-row,
+.card-shine,
+.level-up-card {
+    pointer-events: none !important;
+    isolation: isolate;
+}
+
+.level-up-pop-overlay .stat-add-btn {
+    pointer-events: auto;
+}
+
+.level-up-pop-overlay.auto-allocating,
+.level-up-pop-overlay.auto-allocating .level-up-card {
+    pointer-events: none !important;
+}
+
+.levelup-overlay-wrapper,
+.levelup-float-text,
+.idle-levelup-glow,
+.level-up-shockwave,
+.card-shine {
+    pointer-events: none !important;
+}
