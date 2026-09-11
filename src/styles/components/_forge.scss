@@ -1761,3 +1761,108 @@
     display: none;
   }
 }
+
+.pass-panel {
+  position: relative;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 15%, rgba(60, 35, 15, 0.3) 0%, transparent 100%),
+    radial-gradient(ellipse at top, #1f120a 0%, #0d0805 100%);
+  border: 3px solid #5c3a1e;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.9), 0 0 20px rgba(92, 58, 30, 0.4);
+}
+
+.pass-progress-bar {
+  height: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid #3a2818;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.pass-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #e8c86a 0%, #d4a55a 100%);
+  transition: width 0.3s ease;
+  box-shadow: 0 0 8px rgba(232, 200, 106, 0.4);
+}
+
+.pass-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 8px 4px 16px;
+}
+
+.pass-tier-card {
+  min-height: 110px;
+}
+
+.pass-tier-card.pass-claimed {
+  opacity: 0.55;
+  filter: grayscale(0.5);
+}
+
+.pass-tier-card.pass-claimable {
+  border-color: #e8c86a;
+  box-shadow: 0 0 10px rgba(232, 200, 106, 0.25);
+}
+
+.pass-tier-card.pass-locked {
+  opacity: 0.6;
+}
+
+.pass-tier-number {
+  font-family: $font-pixel;
+  font-size: 0.4rem;
+  color: #8b7355;
+  letter-spacing: 1px;
+}
+
+.pass-tier-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.pass-tier-reward-label {
+  font-size: 0.38rem;
+  color: #ddd;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.pass-tier-type {
+  font-size: 0.32rem;
+  color: #8b7355;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.pass-tier-xp {
+  font-size: 0.35rem;
+  color: #7ec8e3;
+  letter-spacing: 1px;
+}
+
+.pass-tier-status {
+  font-family: $font-pixel;
+  font-size: 0.38rem;
+  letter-spacing: 1px;
+  color: #7ab87a;
+}
+
+.pass-tier-status.pass-locked {
+  color: #8b7355;
+}
+
+.pass-claim-btn {
+  width: 100%;
+  margin-top: 4px;
+}
+
+@include mobile {
+  .pass-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

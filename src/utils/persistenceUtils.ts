@@ -46,6 +46,7 @@ export const normalizeCharacter = (character: Character): Character => {
     achievementXpBonus: character.achievementXpBonus ?? 0,
     achievementEssenceBonus: character.achievementEssenceBonus ?? 0,
     achievementCosmetics: character.achievementCosmetics ?? [],
+    passProgress: character.passProgress ?? undefined,
     bossProgress: character.bossProgress ? {
       ...character.bossProgress,
       pityStacks: character.bossProgress.pityStacks ?? 0,
