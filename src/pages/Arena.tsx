@@ -73,7 +73,7 @@ const Arena = () => {
 
   const idle = useIdleCombat({
     character: activeCharacter,
-    isPaused: combat.mode !== 'pve' || combat.combatData !== null,
+    isPaused: combat.mode !== 'pve' || combat.combatData !== null || !!combat.idlePaused,
     onCharacterUpdate: setCharacter,
     onSyncCharacter: syncCharacterToBackend,
     onLevelUp: levelUp.queueLevelUp,
@@ -184,6 +184,7 @@ const Arena = () => {
         characterName={activeCharacter.name}
         level={activeCharacter.level}
         essence={essence}
+        burstActive={!!combat.burstActive}
         onOpenSettings={settings.openSettings}
         onOpenInventory={inventory.openInventory}
         onOpenForge={handleOpenForge}

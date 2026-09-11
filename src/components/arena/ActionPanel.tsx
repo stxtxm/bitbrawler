@@ -6,6 +6,7 @@ import type { Character } from '../../types/Character';
 import type { TacticalHint } from '../../utils/tacticalLens';
 
 import { BossId } from '../../data/bossAssets';
+import type { BurstMutatorOption, BurstMutatorId } from '../../data/liveOps';
 
 interface ActionPanelProps {
   pveMode: boolean;
@@ -15,6 +16,11 @@ interface ActionPanelProps {
   autoMode: boolean;
   isOfflineMode: boolean;
   fightsLeft: number;
+  effectiveMaxFights?: number;
+  burstActive?: boolean;
+  draftOptions?: BurstMutatorOption[];
+  selectedMutator?: BurstMutatorId | null;
+  onSelectMutator?: (id: BurstMutatorId) => void;
   bossAttacksLeft: number;
   bossUnlocked: boolean;
   bossHp: number;
@@ -34,7 +40,7 @@ interface ActionPanelProps {
 
 export const ActionPanel = memo(function ActionPanel({
   pveMode, canFight, matchmaking, hasPendingFight, autoMode,
-  isOfflineMode, fightsLeft, bossAttacksLeft, bossUnlocked,
+  isOfflineMode, fightsLeft, effectiveMaxFights, burstActive, draftOptions, selectedMutator, onSelectMutator, bossAttacksLeft, bossUnlocked,
   bossHp, bossMaxHp, bossLevel, bossPityStacks = 0, bossPityReduction = 0, onTogglePve, onTogglePvp, onFight,
   tacticalOpponent, tacticalHint, onOpenInventory,
   bossId, abyssalUnlocked,
@@ -42,6 +48,7 @@ export const ActionPanel = memo(function ActionPanel({
 
   const bossHpPct = bossMaxHp > 0 ? Math.max(0, Math.min(100, (bossHp / bossMaxHp) * 100)) : 100;
   const isAbyssal = abyssalUnlocked && bossId === 'abyssal_monarch';
+  const maxFights = effectiveMaxFights ?? GAME_RULES.COMBAT.MAX_DAILY_FIGHTS
 
   return (
     <div className="action-panel">
@@ -90,17 +97,20 @@ export const ActionPanel = memo(function ActionPanel({
               <span className="label-sub">
                 {isOfflineMode
                   ? 'OFFLINE SNAPSHOT'
-                  : `${fightsLeft} / ${GAME_RULES.COMBAT.MAX_DAILY_FIGHTS} AVAILABLE`}
+                  : `${fightsLeft} / ${maxFights} AVAILABLE`}
               </span>
             </div>
           </div>
+        )}
+        {burstActive && !pveMode && (
+          <div className="burst-indicator" data-testid="burst-indicator">⚡ Active Burst: +1 fight + draft</div>
         )}
         <div className="mini-pips">
           {pveMode
             ? Array.from({ length: GAME_RULES.BOSS.MAX_DAILY_ATTACKS }).map((_, i) => (
               <div key={i} className={`mini-pip ${i < bossAttacksLeft ? 'active' : 'used'}`}></div>
             ))
-            : Array.from({ length: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS }).map((_, i) => (
+            : Array.from({ length: maxFights }).map((_, i) => (
               <div key={i} className={`mini-pip ${i < fightsLeft ? 'active' : 'used'}`}></div>
             ))
           }
@@ -123,6 +133,21 @@ export const ActionPanel = memo(function ActionPanel({
 
       {tacticalOpponent && tacticalHint && onOpenInventory && !pveMode && !hasPendingFight && !autoMode && (
         <TacticalLens opponent={tacticalOpponent} hint={tacticalHint} onOpenInventory={onOpenInventory} />
+      )}
+
+      {burstActive && !pveMode && draftOptions && draftOptions.length > 0 && onSelectMutator && (
+        <div className="burst-draft" data-testid="burst-draft">
+          {draftOptions.map(opt => (
+            <button
+              key={opt.id}
+              className={`burst-mutator ${selectedMutator === opt.id ? 'selected' : ''}`}
+              onClick={() => onSelectMutator(opt.id)}
+              data-testid={`mutator-${opt.id}`}
+            >
+              {opt.label} {opt.description}
+            </button>
+          ))}
+        </div>
       )}
 
       <div className="fight-row">

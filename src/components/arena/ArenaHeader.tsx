@@ -5,6 +5,7 @@ interface ArenaHeaderProps {
   characterName: string;
   level: number;
   essence: number;
+  burstActive?: boolean;
   onOpenSettings: () => void;
   onOpenInventory: () => void;
   onOpenForge?: () => void;
@@ -15,6 +16,7 @@ export const ArenaHeader = memo(function ArenaHeader({
   characterName,
   level,
   essence,
+  burstActive,
   onOpenSettings,
   onOpenInventory,
   onOpenForge,
@@ -30,6 +32,9 @@ export const ArenaHeader = memo(function ArenaHeader({
           <span className="lvl-chip">{level}</span>
           {essence > 0 && (
             <span className="essence-badge" title="Essence">💎 {essence.toFixed(2)}</span>
+          )}
+          {burstActive && (
+            <span className="burst-badge" data-testid="burst-header">⚡ Active Burst: +1 fight + draft</span>
           )}
         </div>
       </div>

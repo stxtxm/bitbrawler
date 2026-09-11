@@ -4,6 +4,7 @@ import { ABYSSAL_BOSS_ID, BOSS_ID, BossId } from '../data/bossAssets';
 import { Character } from '../types/Character';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
 import { getTacticalHint } from '../utils/tacticalLens';
+import { isBurstActive, getEffectiveMaxFights, BURST_MUTATORS, applyBurstMutator, logDepthToIdleRatio, type BurstMutatorId } from '../data/liveOps';
 import {
   buildBossCharacter,
   createBossProgress,
@@ -73,10 +74,16 @@ export const useArenaCombat = ({
   const [pveMonster, setPveMonster] = useState<{ monsterId: MonsterId | BossId } | null>(null);
   const [previewMatch, setPreviewMatch] = useState<MatchmakingResult | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const [burstMutator, setBurstMutator] = useState<BurstMutatorId | null>(null);
 
   const previewOpponent = previewMatch?.opponent ?? null;
 
-  const fightsLeft = character?.fightsLeft ?? 0;
+  const burstActive = useMemo(() => isBurstActive(new Date()), []);
+  const idlePaused = burstActive
+  const effectiveMaxFights = getEffectiveMaxFights(burstActive)
+  const rawFightsLeft = character?.fightsLeft ?? 0
+  const fightsLeft = burstActive ? Math.min(rawFightsLeft + 1, effectiveMaxFights) : rawFightsLeft
+  const draftOptions = burstActive ? BURST_MUTATORS : []
   const bossProgress = character?.bossProgress
     ? ensureBossDailyReset(character.bossProgress)
     : null;
@@ -103,7 +110,17 @@ export const useArenaCombat = ({
     && !autoMode
     && (pveMode
       ? effectiveUnlocked && effectiveAttacksLeft > 0
-      : fightsLeft > 0);
+      : fightsLeft > 0)
+
+  const selectMutator = useCallback((id: BurstMutatorId) => {
+    if (!burstActive) return
+    setBurstMutator(id)
+  }, [burstActive])
+
+  useEffect(() => {
+    if (!burstActive) return
+    logDepthToIdleRatio(pveMode ? 0 : 1, 0, new Date())
+  }, [burstActive, pveMode])
 
   const onTogglePve = useCallback(() => {
     setMode('pve');
@@ -185,13 +202,20 @@ export const useArenaCombat = ({
     try {
       const opponentName = combatData?.opponent.name ?? 'UNKNOWN';
       const bossIdForFight = (pveMonster?.monsterId as BossId) ?? effectiveBossId;
+      let effectiveXp = xpGained
+      const currentMutator = burstMutator
+      if (burstActive && currentMutator) {
+        const mutated = applyBurstMutator({ offense: 100, defense: 100, xp: xpGained }, currentMutator)
+        effectiveXp = mutated.xp
+        setBurstMutator(null)
+      }
       /* eslint-disable react-hooks/rules-of-hooks -- callbacks, not hooks */
       const result = combatData?.matchType === 'boss'
-        ? await useBossFight(won, xpGained, opponentName, {
+        ? await useBossFight(won, effectiveXp, opponentName, {
             bossHpLeft: bossHpLeft ?? combatData.opponent.hp,
             bossId: bossIdForFight,
           })
-        : await useFight(won, xpGained, opponentName, combatData?.opponent.id ?? '');
+        : await useFight(won, effectiveXp, opponentName, combatData?.opponent.id ?? '');
       /* eslint-enable react-hooks/rules-of-hooks */
 
       if (result?.leveledUp) {
@@ -201,7 +225,7 @@ export const useArenaCombat = ({
       console.error('Fight result save failed:', error);
       openModal(getErrorMessage(error, connectionMessage));
     }
-  }, [combatData, connectionMessage, onLevelUp, openModal, useBossFight, useFight, pveMonster, effectiveBossId]);
+  }, [burstActive, burstMutator, combatData, connectionMessage, onLevelUp, openModal, useBossFight, useFight, pveMonster, effectiveBossId]);
 
   const onCloseCombat = useCallback(() => {
     setCombatData(null);
@@ -251,6 +275,11 @@ export const useArenaCombat = ({
     autoMode,
     isOfflineMode,
     fightsLeft,
+    effectiveMaxFights,
+    burstActive,
+    draftOptions,
+    selectedMutator: burstMutator,
+    onSelectMutator: selectMutator,
     bossAttacksLeft: effectiveAttacksLeft,
     bossUnlocked: effectiveUnlocked,
     bossHp: effectiveBossProgress?.bossHp ?? 0,
@@ -268,10 +297,14 @@ export const useArenaCombat = ({
     previewLoading,
   }), [
     autoMode,
+    burstActive,
+    burstMutator,
+    draftOptions,
     effectiveAttacksLeft,
     effectiveBossProgress?.bossHp,
     effectiveBossProgress?.bossMaxHp,
     effectiveBossProgress?.bossLevel,
+    effectiveMaxFights,
     effectivePityStacks,
     effectivePityReduction,
     effectiveUnlocked,
@@ -286,6 +319,7 @@ export const useArenaCombat = ({
     previewOpponent,
     previewLoading,
     pveMode,
+    selectMutator,
     tacticalHint,
     effectiveBossId,
     abyssalUnlocked,
@@ -298,6 +332,12 @@ export const useArenaCombat = ({
     combatData,
     pveMonster,
     fightsLeft,
+    effectiveMaxFights,
+    burstActive,
+    idlePaused,
+    draftOptions,
+    selectedMutator: burstMutator,
+    selectMutator,
     hasPendingFight,
     autoMode,
     canFight,
