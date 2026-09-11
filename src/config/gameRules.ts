@@ -14,6 +14,9 @@ export const GAME_RULES = {
     },
     PVE: {
         XP_MODIFIER: 2.5,
+        SURGE_XP_MODIFIER: 3.1,
+        SURGE_ESSENCE_MULTIPLIER: 1.25,
+        BOUNTY_TARGET: 3,
         STAT_MULTIPLIER: 1.2,
         HP_MULTIPLIER: 1.0,
         LEVEL_BOOST: 3, // Monsters fight at playerLevel + this offset
