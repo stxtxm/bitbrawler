@@ -189,6 +189,8 @@ export interface Character {
 
   // Appearance customization (8-bit variants)
   appearance?: CharacterAppearance;
+
+  passProgress?: { xp: number; claimed: number[]; seasonId?: string };
 }
 
 export interface CharacterAppearance {
