@@ -187,6 +187,9 @@ export interface Character {
   // Abyssal Monarch explicit alias (local-first, optional DB column)
   abyssalBossProgress?: BossProgress;
 
+  // Seasonal Mastery Pass Lite (30j free track, no migration)
+  passProgress?: { xp: number; claimed: number[] };
+
   // Appearance customization (8-bit variants)
   appearance?: CharacterAppearance;
 }
