@@ -19,6 +19,7 @@ import {
 } from '../utils/idleEfficiencyUtils'
 import { MonsterId } from '../data/monsterAssets'
 import { getBiomeForCharacter } from '../data/biomes'
+import { getEssenceSurgeMultiplier } from '../data/liveOps'
 
 interface UseIdleCombatOptions {
   character: Character | null
@@ -151,7 +152,8 @@ export function useIdleCombat({
         )
         const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
 
-        const essenceGain = calculateIdleEssence(won, char.level, char.intelligence, char.focus) * xpBonusRef.current
+        const essenceBase = calculateIdleEssence(won, char.level, char.intelligence, char.focus) * xpBonusRef.current
+        const essenceGain = essenceBase * getEssenceSurgeMultiplier(monster.def.id as MonsterId)
         totalEssenceGain += essenceGain
 
         if (won) { streak++; kills++ } else { streak = 0 }
@@ -442,8 +444,8 @@ export function useIdleCombat({
       }
       newIdleXp += finalXp
 
-      // Accumulate essence per kill (scales with power ratio + stats, like XP)
-      const essenceGain = calculateIdleEssence(won, currentChar.level, currentChar.intelligence, currentChar.focus) * xpBonusRef.current
+      const essenceBase = calculateIdleEssence(won, currentChar.level, currentChar.intelligence, currentChar.focus) * xpBonusRef.current
+      const essenceGain = essenceBase * getEssenceSurgeMultiplier(monster.def.id as MonsterId)
 
       // Apply XP with updated idle stats and watermarks
       const xpResult = gainXp(currentChar, finalXp)
@@ -626,7 +628,8 @@ export function useIdleCombat({
         )
         const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
 
-        const essenceGain = calculateIdleEssence(won, char.level, char.intelligence, char.focus) * xpBonusRef.current
+        const essenceBase = calculateIdleEssence(won, char.level, char.intelligence, char.focus) * xpBonusRef.current
+        const essenceGain = essenceBase * getEssenceSurgeMultiplier(monster.def.id as MonsterId)
         totalEssenceGain += essenceGain
 
         if (won) {

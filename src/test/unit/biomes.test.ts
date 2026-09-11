@@ -42,11 +42,13 @@ const makeBossProgress = (totalKills: number) => ({
 });
 
 describe('biome registry', () => {
-  it('registers exactly the plains, volcanic and abyssal biomes', () => {
-    expect(BIOMES.length).toBe(3);
+  it('registers the plains, volcanic, forest, desert and abyssal biomes', () => {
+    expect(BIOMES.length).toBe(5);
     const ids = BIOMES.map((b) => b.id);
     expect(ids).toContain('plains');
     expect(ids).toContain('volcanic');
+    expect(ids).toContain('forest');
+    expect(ids).toContain('desert');
     expect(ids).toContain('abyssal');
     expect(new Set(ids).size).toBe(ids.length);
   });

@@ -1,7 +1,7 @@
 import { Character } from '../types/Character';
 import { MONSTER_ASSETS, MonsterId } from './monsterAssets';
 
-export type BiomeId = 'plains' | 'volcanic' | 'abyssal';
+export type BiomeId = 'plains' | 'volcanic' | 'forest' | 'desert' | 'abyssal';
 
 export type BiomeDef = {
   id: BiomeId;
@@ -12,6 +12,8 @@ export type BiomeDef = {
 };
 
 const VOLCANIC_MONSTER_POOL: MonsterId[] = ['magma_golem', 'lava_hound', 'cinder_imp'];
+const FOREST_MONSTER_POOL: MonsterId[] = ['goblin', 'wolf', 'slime'];
+const DESERT_MONSTER_POOL: MonsterId[] = ['ogre', 'skeleton', 'goblin'];
 const ABYSSAL_MONSTER_POOL: MonsterId[] = ['chimera', 'dragon_spawn', 'wraith'];
 const PLAINS_MONSTER_POOL: MonsterId[] = MONSTER_ASSETS
   .filter((monster) => !VOLCANIC_MONSTER_POOL.includes(monster.id))
@@ -28,6 +30,16 @@ export const BIOMES: BiomeDef[] = [
     label: 'Volcanic',
     unlockAt: (character) => (character.bossProgress?.totalKills ?? 0) > 0,
     monsterPool: VOLCANIC_MONSTER_POOL,
+  },
+  {
+    id: 'forest',
+    label: 'Forest',
+    monsterPool: FOREST_MONSTER_POOL,
+  },
+  {
+    id: 'desert',
+    label: 'Desert',
+    monsterPool: DESERT_MONSTER_POOL,
   },
   {
     id: 'abyssal',

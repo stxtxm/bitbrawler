@@ -1,5 +1,7 @@
 import { IDLE_CONFIG } from '../config/idleConfig'
 import { calculateFightXp } from './xpUtils'
+import { getEssenceSurgeMultiplier } from '../data/liveOps'
+import { MonsterId } from '../data/monsterAssets'
 
 export function calculateIdleXp(won: boolean, playerLevel: number): number {
   return Math.floor(calculateFightXp(won, playerLevel) * IDLE_CONFIG.XP_MODIFIER)
@@ -21,6 +23,18 @@ export function calculateIdleEssence(
   const levelScaling = 1 + (playerLevel - 1) * IDLE_CONFIG.ESSENCE.LEVEL_SCALE
   const statMultiplier = Math.max(0.5, 1 + ((intelligence ?? 10) + (focus ?? 10) - 20) * 0.01)
   return baseRate * levelScaling * statMultiplier
+}
+
+export function calculateIdleEssenceForMonster(
+  won: boolean,
+  playerLevel: number,
+  monsterId: MonsterId,
+  intelligence?: number,
+  focus?: number,
+  date: Date | number = Date.now(),
+): number {
+  const base = calculateIdleEssence(won, playerLevel, intelligence, focus)
+  return base * getEssenceSurgeMultiplier(monsterId, date)
 }
 
 

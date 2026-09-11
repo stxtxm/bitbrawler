@@ -18,6 +18,10 @@ export const GAME_RULES = {
         HP_MULTIPLIER: 1.0,
         LEVEL_BOOST: 3, // Monsters fight at playerLevel + this offset
     },
+    LIVEOPS: {
+        XP_SURGE_MODIFIER: 3.1,
+        ESSENCE_SURGE_BONUS: 0.25,
+    },
     BOSS: {
         UNLOCK_LEVEL: 30, // Boss PvE unlocks at this level (void_titan)
         MAX_DAILY_ATTACKS: 5, // Daily attacks against the raid boss (independent from PvP/PvE gauge)

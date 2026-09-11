@@ -11,6 +11,7 @@ import { useSound } from '../hooks/useSound';
 import { MonsterId, MONSTER_ASSETS } from '../data/monsterAssets';
 import { BossId, BOSS_ASSETS, getBossDef } from '../data/bossAssets';
 import { getBossKillXp } from '../utils/bossUtils';
+import { getEffectivePveXpModifier } from '../data/liveOps';
 import { ParticleSystem, type ParticleType } from '../utils/particleSystem';
 import { COMBAT_BALANCE } from '../config/combatBalance';
 import type { CombatSpeed } from '../config/gameRules';
@@ -634,7 +635,11 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
         if (matchType === 'boss') {
             return combatResult.winner === 'attacker' ? getBossKillXp(player) : 0;
         }
-        return calculateFightXp(combatResult.winner === 'attacker', player.level, opponent.level);
+        const base = calculateFightXp(combatResult.winner === 'attacker', player.level, opponent.level);
+        if (matchType === 'pve') {
+            return Math.round(base * getEffectivePveXpModifier());
+        }
+        return base;
     }, [player, combatResult, matchType]);
 
     const playerMaxHp = player.maxHp || player.hp;
