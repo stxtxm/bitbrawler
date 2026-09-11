@@ -1761,3 +1761,113 @@
     display: none;
   }
 }
+
+.pass-panel {
+  background: linear-gradient(180deg, rgba(26, 14, 8, 0.95) 0%, rgba(14, 8, 4, 0.98) 100%);
+  border: 2px solid #3a2818;
+}
+
+.pass-progress-bar {
+  height: 10px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid #2a1a0e;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.pass-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #d4a55a 0%, $accent-gold 100%);
+  transition: width 0.4s ease;
+  box-shadow: 0 0 6px rgba(255, 204, 0, 0.4);
+}
+
+.pass-level-badge {
+  text-align: center;
+  font-family: $font-pixel;
+  font-size: 0.45rem;
+  letter-spacing: 2px;
+  color: $accent-gold;
+  margin-bottom: 6px;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.pass-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.pass-tier-card {
+  min-height: 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 6px;
+  text-align: center;
+}
+
+.pass-tier-number {
+  font-family: $font-pixel;
+  font-size: 0.4rem;
+  color: #d4a55a;
+  letter-spacing: 1px;
+}
+
+.pass-tier-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.pass-tier-reward-label {
+  font-size: 0.38rem;
+  color: #ddd;
+  letter-spacing: 1px;
+  word-break: break-word;
+}
+
+.pass-tier-type {
+  font-size: 0.32rem;
+  color: #8b7355;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.pass-tier-status {
+  font-family: $font-pixel;
+  font-size: 0.35rem;
+  letter-spacing: 1px;
+  margin-top: 4px;
+}
+
+.pass-claimed .pass-tier-status {
+  color: #5b8c5a;
+}
+
+.pass-locked .pass-tier-status {
+  color: #555;
+}
+
+.pass-claim-btn {
+  margin-top: 4px;
+  padding: 4px 10px;
+  font-size: 0.38rem;
+}
+
+.pass-claimable {
+  border-color: $accent-gold;
+  box-shadow: 0 0 8px rgba(255, 204, 0, 0.25);
+}
+
+.pass-locked {
+  opacity: 0.5;
+}
+
+@include mobile {
+  .pass-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
