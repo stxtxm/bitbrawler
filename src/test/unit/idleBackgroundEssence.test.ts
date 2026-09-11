@@ -5,6 +5,7 @@ import { IDLE_CONFIG } from '../../config/idleConfig'
 describe('idleBackgroundEssence', () => {
   beforeEach(() => {
     vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-14T10:00:00Z'))
   })
 
   afterEach(() => {

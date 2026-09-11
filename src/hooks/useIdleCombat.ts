@@ -20,6 +20,7 @@ import {
 import { MonsterId } from '../data/monsterAssets'
 import { getBiomeForCharacter } from '../data/biomes'
 import { getSurgeEssenceMultiplier, incrementBountyProgress } from '../utils/biomeSurge'
+import { isBurstActive } from '../data/liveOps'
 
 interface UseIdleCombatOptions {
   character: Character | null
@@ -372,7 +373,7 @@ export function useIdleCombat({
   const lastTickAtRef = useRef(Date.now())
 
   const runCombatTick = useCallback(() => {
-    if (isPausedRef.current) return
+    if (isPausedRef.current || isBurstActive()) return
 
     lastTickAtRef.current = Date.now()
     clearPhaseTimers()

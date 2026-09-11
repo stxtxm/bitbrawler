@@ -81,6 +81,7 @@ describe('useIdleCombat — biome propagation', () => {
     generateMonsterForPlayerMock.mockClear();
     mockMonster();
     vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-14T10:00:00Z'))
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
     vi.stubGlobal('ResizeObserver', vi.fn(() => ({ observe: vi.fn(), disconnect: vi.fn() })));
     localStorage.clear();

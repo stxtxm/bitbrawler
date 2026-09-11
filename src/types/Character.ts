@@ -190,6 +190,8 @@ export interface Character {
   // Seasonal Mastery Pass Lite (30j free track, no migration)
   passProgress?: { xp: number; claimed: number[] };
 
+  burstMutator?: string | null;
+
   // Appearance customization (8-bit variants)
   appearance?: CharacterAppearance;
 }

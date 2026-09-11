@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { getXpRequiredForNextLevel, getTotalXpForLevel } from '../../utils/xpUtils';
 import { calculateOfflineIdleXp as clientOfflineXp } from '../../utils/idleXpUtils';
 import {
@@ -12,7 +12,12 @@ import {
 import { IDLE_CONFIG } from '../../config/idleConfig';
 
 describe('XP curve sync between client and server API', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-14T10:00:00Z'))
+  })
   afterEach(() => {
+    vi.useRealTimers()
     vi.restoreAllMocks();
   });
 

@@ -36,6 +36,7 @@ export const normalizeCharacter = (character: Character): Character => {
     essence: character.essence ?? 0,
     itemUpgrades: character.itemUpgrades ?? {},
     passProgress: character.passProgress ?? undefined,
+    burstMutator: (character as any).burstMutator ?? null,
     medalProgress: character.medalProgress ?? {},
     medalInventoryBonus: character.medalInventoryBonus ?? 0,
     medalXpBonus: character.medalXpBonus ?? 0,
