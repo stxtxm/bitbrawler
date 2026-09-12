@@ -10,12 +10,15 @@ describe('LiveOpsHud', () => {
     expect(screen.queryByTestId('liveops-hud')).toBeNull()
   })
 
-  it('shows surge badge when activeSurge set', () => {
+  it('shows compact surge badge when activeSurge set', () => {
     render(<LiveOpsHud activeSurge="volcanic" burstActive={false} burstEndsAt={null} surgeModifier={1.25} />)
     expect(screen.getByTestId('liveops-hud')).toBeInTheDocument()
-    expect(screen.getByTestId('liveops-surge-badge')).toBeInTheDocument()
-    expect(screen.getByText(/Biome Surge: Volcanic/)).toBeInTheDocument()
-    expect(screen.getByText(/\+25% essence idle/)).toBeInTheDocument()
+    const badge = screen.getByTestId('liveops-surge-badge')
+    expect(badge).toBeInTheDocument()
+    expect(badge).toHaveAttribute('title', 'Biome Surge: Volcanic — +25% essence & XP')
+    expect(screen.getByText('Volcanic')).toBeInTheDocument()
+    expect(screen.getByText('+25%')).toBeInTheDocument()
+    expect(screen.queryByText(/Biome Surge:/)).toBeNull()
   })
 
   it('shows surge badge for plains with +25% label', () => {

@@ -155,12 +155,19 @@ export const LiveOpsHud = memo(function LiveOpsHud({
   return (
     <div className="liveops-hud shop-panel" data-testid="liveops-hud" role="status" aria-live="polite">
       {hasSurge && surgeLabel && (
-        <span className="liveops-surge-badge surge-badge" data-testid="liveops-surge-badge" title={`Biome Surge: ${surgeLabel}`}>
-          <span aria-hidden="true">{surgeEmoji}</span> Biome Surge: {surgeLabel} +{surgePct}% essence idle
+        <span
+          className="liveops-surge-badge surge-badge"
+          data-testid="liveops-surge-badge"
+          title={`Biome Surge: ${surgeLabel} — +${surgePct}% essence & XP`}
+          aria-label={`Biome Surge ${surgeLabel}, bonus +${surgePct}%`}
+        >
+          <span aria-hidden="true">{surgeEmoji}</span>
+          <span className="surge-badge-label">{surgeLabel}</span>
+          <span className="surge-badge-pct">+{surgePct}%</span>
         </span>
       )}
       {hasBurst && burstCountdown && (
-        <span className="liveops-burst-badge" data-testid="liveops-burst-countdown" title="Burst ends">
+        <span className="liveops-burst-badge" data-testid="liveops-burst-countdown" title="Fin du burst">
           <span aria-hidden="true">⚡</span> BURST {burstCountdown}
         </span>
       )}

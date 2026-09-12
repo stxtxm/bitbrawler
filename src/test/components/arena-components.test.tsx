@@ -8,6 +8,7 @@ import { SceneBox } from '../../components/arena/SceneBox';
 import { StatsPanel } from '../../components/arena/StatsPanel';
 import { ArenaIdleViewModel, ArenaStatOption } from '../../components/arena/arenaTypes';
 import { ITEM_ASSETS } from '../../data/itemAssets';
+import { getSurgeBiome } from '../../data/liveOps';
 import { Character } from '../../types/Character';
 import { PixelItemAsset } from '../../types/Item';
 import { ITEM_STAT_META, getItemStatEntries } from '../../hooks/useInventory';
@@ -364,6 +365,30 @@ describe('arena extracted components', () => {
     expect(onOpenSettings).toHaveBeenCalled();
     expect(onOpenInventory).toHaveBeenCalled();
     expect(onLogout).toHaveBeenCalled();
+  });
+
+  it('ArenaHeader shows a compact surge chip (no layout-breaking long text)', () => {
+    const surge = getSurgeBiome(new Date());
+
+    render(
+      <ArenaHeader
+        characterName="Surge Hero"
+        level={7}
+        essence={99}
+        surgeBiome={surge}
+        onOpenSettings={vi.fn()}
+        onOpenInventory={vi.fn()}
+        onLogout={vi.fn()}
+      />,
+    );
+
+    const badge = screen.getByTitle(`Biome Surge: ${surge.label} — +25% essence & XP`);
+    expect(badge).toBeInTheDocument();
+    expect(badge).toHaveClass('surge-badge');
+    expect(badge).toHaveAttribute('aria-label', `Biome Surge ${surge.label}, bonus +25%`);
+    expect(screen.getByText(surge.label)).toBeInTheDocument();
+    expect(screen.getByText('+25%')).toBeInTheDocument();
+    expect(screen.queryByText(/Biome Surge:/)).toBeNull();
   });
 
   // ─── InventoryPanel Forge Integration ──────────────────────────────────────

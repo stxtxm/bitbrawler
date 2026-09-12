@@ -2,8 +2,11 @@
 # ==============================================================
 # Script de dispatch du workflow Bot Activity pour cron externe
 # ==============================================================
-# Utilisation prevue : appele par cron-job.org ou similaire.
-# Cron GitHub Actions desactive car ~20% de fiable seulement.
+# Utilisation prevue : appele par cron-job.org ou similaire (OPTIONNEL depuis 2026-09-12 :
+# le workflow a aussi un schedule GitHub natif toutes les 2h en garde-fou).
+# Si cron-job.org ne déclenche plus rien (constaté 23/08→12/09/2026 : vérifier que le job
+# existe toujours et que le PAT n'a pas expiré), le schedule natif prend le relais.
+# Cron GitHub Actions historiquement ~20% fiable seul, d'où le double déclenchement.
 #
 # Configuration sur cron-job.org (gratuit) :
 #   1. Creer un compte sur https://cron-job.org

@@ -17,6 +17,9 @@ const SURGE_EMOJI: Record<string, string> = {
   plains: '🌿',
   volcanic: '🌋',
   abyssal: '🌊',
+  abyss: '🌊',
+  forest: '🌲',
+  desert: '🏜️',
 };
 
 export const ArenaHeader = memo(function ArenaHeader({
@@ -41,8 +44,14 @@ export const ArenaHeader = memo(function ArenaHeader({
             <span className="essence-badge" title="Essence">💎 {essence.toFixed(2)}</span>
           )}
           {surgeBiome && (
-            <span className="surge-badge" title={`Biome Surge: ${surgeBiome.label}`}>
-              {SURGE_EMOJI[surgeBiome.id] ?? '✨'} Biome Surge: {surgeBiome.label} +25%
+            <span
+              className="surge-badge"
+              title={`Biome Surge: ${surgeBiome.label} — +25% essence & XP`}
+              aria-label={`Biome Surge ${surgeBiome.label}, bonus +25%`}
+            >
+              <span aria-hidden="true">{SURGE_EMOJI[surgeBiome.id] ?? '✨'}</span>
+              <span className="surge-badge-label">{surgeBiome.label}</span>
+              <span className="surge-badge-pct">+25%</span>
             </span>
           )}
         </div>
