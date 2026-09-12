@@ -108,6 +108,11 @@
       "id": "bot-cron-dead-2026-09-12",
       "title": "cron-job.org mort 23/08→12/09/2026 (0 run bot-activity, 401 = PAT expiré) → PAT classic no-expiration scope workflow, seul déclencheur",
       "status": "fixed"
+    },
+    {
+      "id": "dev-prompt-shell-quote-2026-09-12",
+      "title": "PROMPT=\"...\" avec backticks/guils bruts → exit 127 : prompts via printf '%s' uniquement, variables en args",
+      "status": "fixed"
     }
   ],
   "cross_agent_constraints": [

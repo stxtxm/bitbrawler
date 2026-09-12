@@ -465,31 +465,40 @@ jobs:
           ISSUE_BODY=$(cat /tmp/prompt.txt)
           ISSUE_TITLE=$(cat /tmp/issue-title.txt)
 
-          PROMPT="
-          Tu es le dev agent de Bitbrawler. Tu parles et codes EN FRANÇAIS (commentaires interdits dans le code, mais messages/commit en français si besoin).
-
-          ## Issue #${ISSUE_NUMBER}
-          Titre: ${ISSUE_TITLE}
-          Description: ${ISSUE_BODY}
-
-          ## RÈGLE ABSOLUE : lis ta mémoire AVANT de coder (contexte tronqué à 5 dernières leçons)
-          Mémoire DEV : $(jq -c '{version, last_session, known_limitations, recent_notes: (.session_notes // [])[-5:]}' .opencode/memory/dev.json 2>/dev/null || echo "{}")
-          Mémoire commune : $(jq -c '{version, known_issues: (.known_issues // [])[-3:], cross_agent_constraints}' .opencode/memory/shared.json 2>/dev/null || echo "{}")
-
-           ## INTERDICTION DE PLANIFIER (incident 2026-09-11 : le dev créait des
-           ## sous-campagnes imbriquées campaign-950/954 → doublons ×4, ~200 runs, rate limit)
-           - INTERDIT de créer des issues ou sous-issues (jamais de `gh issue create`)
-           - INTERDIT de découper en campagne, même si le changement semble gros :
-             implémente UNIQUEMENT le périmètre de cette issue, en un seul bloc logique
-           - Seul l'orchestrator planifie (labels campaign-N). Toi, tu codes.
-           - Si le périmètre déborde vraiment, décris le reste dans le body de ta PR
-             (section "Suivi suggéré") au lieu de créer des issues
-
-          ## Instructions techniques
-          - N'ajoute PAS de commentaires dans le code
-          - N'utilise PAS le type 'any'
-          - Suis les conventions du projet (fichiers voisins, structure existante)
-          "
+          # Construction du prompt via printf uniquement — JAMAIS PROMPT="...$VAR..." :
+          # des backticks ou guillemets bruts dans le texte source cassaient le
+          # shell (incident 2026-09-12 : `gh issue create` exécuté + "Suivi
+          # suggéré" refermant la chaîne → exit 127 systématique sur cette étape).
+          # Règles : texte statique en "..." avec \` et \" échappés (style reviewer.yml),
+          # contenu d'issue/mémoire TOUJOURS en argument '%s' (jamais réinterprété).
+          DEV_MEM=$(jq -c '{version, last_session, known_limitations, recent_notes: (.session_notes // [])[-5:]}' .opencode/memory/dev.json 2>/dev/null || echo '{}')
+          SHARED_MEM=$(jq -c '{version, known_issues: (.known_issues // [])[-3:], cross_agent_constraints}' .opencode/memory/shared.json 2>/dev/null || echo '{}')
+          {
+            printf '%s\n' "Tu es le dev agent de Bitbrawler. Tu parles et codes EN FRANÇAIS (commentaires interdits dans le code, mais messages/commit en français si besoin)."
+            printf '%s\n' ""
+            printf '## Issue #%s\n' "$ISSUE_NUMBER"
+            printf 'Titre: %s\n' "$ISSUE_TITLE"
+            printf 'Description: %s\n' "$ISSUE_BODY"
+            printf '%s\n' ""
+            printf '%s\n' "## RÈGLE ABSOLUE : lis ta mémoire AVANT de coder (contexte tronqué à 5 dernières leçons)"
+            printf 'Mémoire DEV : %s\n' "$DEV_MEM"
+            printf 'Mémoire commune : %s\n' "$SHARED_MEM"
+            printf '%s\n' ""
+            printf '%s\n' "## INTERDICTION DE PLANIFIER (incident 2026-09-11 : le dev créait des"
+            printf '%s\n' "## sous-campagnes imbriquées campaign-950/954 → doublons ×4, ~200 runs, rate limit)"
+            printf '%s\n' "- INTERDIT de créer des issues ou sous-issues (jamais de \`gh issue create\`)"
+            printf '%s\n' "- INTERDIT de découper en campagne, même si le changement semble gros :"
+            printf '%s\n' "  implémente UNIQUEMENT le périmètre de cette issue, en un seul bloc logique"
+            printf '%s\n' "- Seul l'orchestrator planifie (labels campaign-N). Toi, tu codes."
+            printf '%s\n' "- Si le périmètre déborde vraiment, décris le reste dans le body de ta PR"
+            printf '%s\n' "  (section \"Suivi suggéré\") au lieu de créer des issues"
+            printf '%s\n' ""
+            printf '%s\n' "## Instructions techniques"
+            printf '%s\n' "- N'ajoute PAS de commentaires dans le code"
+            printf '%s\n' "- N'utilise PAS le type 'any'"
+            printf '%s\n' "- Suis les conventions du projet (fichiers voisins, structure existante)"
+          } > /tmp/agent_prompt.txt
+          PROMPT=$(cat /tmp/agent_prompt.txt)
 
           MODELS=(
             "opencode/muse-spark-1.2-contributor-free"
