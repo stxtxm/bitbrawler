@@ -1,11 +1,8 @@
 name: Bot Activity
 
 on:
-  schedule:
-    # Garde-fou interne : le cron externe (cron-job.org) est mort du 23/08 au 12/09/2026
-    # (aucun run → aucun bot créé, pool vide). Ce schedule reprend le relais en natif ;
-    # le dispatch externe reste supporté en parallèle (moteur idempotent : budgets par run).
-    - cron: '17 */2 * * *' # toutes les 2h à 17min, évite la pile :00
+  # Déclenchement uniquement via cron-job.org (PAT no-expiration configuré le 2026-09-12).
+  # Voir scripts/dispatch-bot-activity.sh pour la configuration.
   workflow_dispatch:
 
 jobs:
