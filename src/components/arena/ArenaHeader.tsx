@@ -1,20 +1,29 @@
 import { memo } from 'react';
 import { PixelIcon } from '../PixelIcon';
+import type { BiomeDef } from '../../data/biomes';
 
 interface ArenaHeaderProps {
   characterName: string;
   level: number;
   essence: number;
+  surgeBiome?: BiomeDef | null;
   onOpenSettings: () => void;
   onOpenInventory: () => void;
   onOpenForge?: () => void;
   onLogout: () => void;
 }
 
+const SURGE_EMOJI: Record<string, string> = {
+  plains: '🌿',
+  volcanic: '🌋',
+  abyssal: '🌊',
+};
+
 export const ArenaHeader = memo(function ArenaHeader({
   characterName,
   level,
   essence,
+  surgeBiome,
   onOpenSettings,
   onOpenInventory,
   onOpenForge,
@@ -30,6 +39,11 @@ export const ArenaHeader = memo(function ArenaHeader({
           <span className="lvl-chip">{level}</span>
           {essence > 0 && (
             <span className="essence-badge" title="Essence">💎 {essence.toFixed(2)}</span>
+          )}
+          {surgeBiome && (
+            <span className="surge-badge" title={`Biome Surge: ${surgeBiome.label}`}>
+              {SURGE_EMOJI[surgeBiome.id] ?? '✨'} Biome Surge: {surgeBiome.label} +25%
+            </span>
           )}
         </div>
       </div>

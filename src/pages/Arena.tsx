@@ -17,6 +17,7 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { useSettings } from '../hooks/useSettings';
 import { useSound } from '../hooks/useSound';
 import { applyEquipmentToCharacter } from '../utils/equipmentUtils';
+import { getSurgeBiome } from '../data/liveOps';
 import type { ArenaIdleViewModel, ArenaStatOption } from '../components/arena/arenaTypes';
 
 const connectionMessage = 'Connect to battle and sync your progress.';
@@ -174,6 +175,8 @@ const Arena = () => {
     setEnabled(!enabled);
   }, [enabled, setEnabled]);
 
+  const surgeBiome = useMemo(() => getSurgeBiome(new Date()), []);
+
   if (!activeCharacter || !effectiveCharacter) {
     return <Navigate to="/" replace />;
   }
@@ -184,6 +187,7 @@ const Arena = () => {
         characterName={activeCharacter.name}
         level={activeCharacter.level}
         essence={essence}
+        surgeBiome={surgeBiome}
         onOpenSettings={settings.openSettings}
         onOpenInventory={inventory.openInventory}
         onOpenForge={handleOpenForge}

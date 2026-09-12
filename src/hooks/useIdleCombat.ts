@@ -19,6 +19,8 @@ import {
 } from '../utils/idleEfficiencyUtils'
 import { MonsterId } from '../data/monsterAssets'
 import { getBiomeForCharacter } from '../data/biomes'
+import { getSurgeEssenceMultiplier, incrementBountyProgress } from '../utils/biomeSurge'
+import { isBurstActive } from '../data/liveOps'
 
 interface UseIdleCombatOptions {
   character: Character | null
@@ -151,8 +153,9 @@ export function useIdleCombat({
         )
         const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
 
-        const essenceGain = calculateIdleEssence(won, char.level, char.intelligence, char.focus) * xpBonusRef.current
+        const essenceGain = calculateIdleEssence(won, char.level, char.intelligence, char.focus) * xpBonusRef.current * getSurgeEssenceMultiplier(monster.def.id)
         totalEssenceGain += essenceGain
+        if (won && monster.def.id) incrementBountyProgress(monster.def.id)
 
         if (won) { streak++; kills++ } else { streak = 0 }
         totalXpGained += finalXp
@@ -370,7 +373,7 @@ export function useIdleCombat({
   const lastTickAtRef = useRef(Date.now())
 
   const runCombatTick = useCallback(() => {
-    if (isPausedRef.current) return
+    if (isPausedRef.current || isBurstActive()) return
 
     lastTickAtRef.current = Date.now()
     clearPhaseTimers()
@@ -443,7 +446,8 @@ export function useIdleCombat({
       newIdleXp += finalXp
 
       // Accumulate essence per kill (scales with power ratio + stats, like XP)
-      const essenceGain = calculateIdleEssence(won, currentChar.level, currentChar.intelligence, currentChar.focus) * xpBonusRef.current
+      const essenceGain = calculateIdleEssence(won, currentChar.level, currentChar.intelligence, currentChar.focus) * xpBonusRef.current * getSurgeEssenceMultiplier(monster.def.id)
+      if (won) incrementBountyProgress(monster.def.id)
 
       // Apply XP with updated idle stats and watermarks
       const xpResult = gainXp(currentChar, finalXp)
@@ -626,8 +630,9 @@ export function useIdleCombat({
         )
         const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
 
-        const essenceGain = calculateIdleEssence(won, char.level, char.intelligence, char.focus) * xpBonusRef.current
+        const essenceGain = calculateIdleEssence(won, char.level, char.intelligence, char.focus) * xpBonusRef.current * getSurgeEssenceMultiplier(monster.def.id)
         totalEssenceGain += essenceGain
+        if (won) incrementBountyProgress(monster.def.id)
 
         if (won) {
           streak++

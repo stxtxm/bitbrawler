@@ -1,8 +1,15 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { IDLE_CONFIG } from '../../config/idleConfig'
 import { calculateIdleEssence } from '../../utils/idleXpUtils'
 
 describe('idleConfig — essence economy tuning #930', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-14T10:00:00Z'))
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
   it('ESSENCE.BASE_RATE is 0.15 (+25% vs 0.12)', () => {
     expect(IDLE_CONFIG.ESSENCE.BASE_RATE).toBe(0.15)
   })
