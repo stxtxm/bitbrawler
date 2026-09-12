@@ -45,11 +45,6 @@
   ],
   "known_issues": [
     {
-      "id": "supabase-account-switch-2026-08",
-      "title": "Switch de compte Supabase (quota egress dépassé sur bhbpvbfvuayafygdrbgb)",
-      "status": "fixed"
-    },
-    {
       "id": "idle-api-silent-404",
       "title": "idle-processor avale les erreurs DB en '404 Character not found'",
       "status": "fixed"
@@ -103,10 +98,18 @@
       "id": "bot-created-issues-dont-trigger",
       "title": "Issues créées par l'agent (GITHUB_TOKEN) ne déclenchent jamais issues:opened/edited",
       "status": "fixed"
+    },
+    {
+      "id": "orchestrator-fanout-2026-09-11",
+      "title": "Orchestrator re-planifiait les campagnes + dev créait des sous-campagnes → ~200 runs, rate limit, doublons (#940×4, #950×5)",
+      "status": "fixed"
     }
   ],
   "cross_agent_constraints": [
     "Dev agent: ne jamais modifier .github/workflows/*.yml",
+    "Dev agent: ne JAMAIS créer d'issues/campagnes — seul l'orchestrator planifie",
+    "Orchestrator: ne JAMAIS re-planifier si campaign-N a déjà des sous-issues (sauf label force-replan)",
+    "Dispatch: toujours claimer le label `dispatched` AVANT gh workflow run (anti fan-out N²)",
     "Issue de suivi créée par agent: body terminé par /oc + capture numéro + dispatch opencode.yml best-effort",
     "Migrations SQL = issue dédiée sans /oc, jamais dans une PR ni exécutée par un agent",
     "BOSS PvE: kill 1-jour impossible par design (pool 12x maxHp) — voir BOSS_PVE.md",

@@ -224,8 +224,8 @@ jobs:
             exit 0
           fi
 
-          # Extract all depends-on from issue body (supports "depends-on: #a, #b, #c")
-          DEPS=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body' 2>/dev/null | grep -oiE 'depends-on:\s*#[0-9]+([,\s]*#[0-9]+)*' | grep -oE '#[0-9]+' | tr -d '#' || echo "")
+          # Extract all depends-on from issue body (supports "depends-on: #a, #b, #c" — sort -u: anti-doublons #947×2 vus sur #989)
+          DEPS=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body' 2>/dev/null | grep -oiE 'depends-on:\s*#[0-9]+([,\s]*#[0-9]+)*' | grep -oE '#[0-9]+' | tr -d '#' | sort -u -n || echo "")
           echo "DEPS_LIST=$(echo "$DEPS" | tr '\n' ',')" >> "$GITHUB_ENV"
 
           if [ -z "$DEPS" ]; then
@@ -252,7 +252,13 @@ jobs:
           done
 
           if [ "$ALL_RESOLVED" = false ]; then
-            echo "⏳ Dependencies not yet resolved — posting comment and skipping review"
+            echo "⏳ Dependencies not yet resolved — skipping review (anti-spam: skip si déjà posté)"
+            LAST_COMMENT=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments?per_page=1" --jq '.[-1].body // ""' 2>/dev/null || echo "")
+            if echo "$LAST_COMMENT" | grep -q '^⏳ \*\*En attente de dépendances\*\*'; then
+              echo "ℹ Dernier commentaire déjà 'En attente de dépendances' — skip re-post"
+              echo "DEPS_BLOCKED=true" >> "$GITHUB_ENV"
+              exit 0
+            fi
             BODY="⏳ **En attente de dépendances** — Cette PR sera mergée automatiquement quand les dépendances suivantes seront fermées :"
             while read -r D; do
               BODY="$BODY"$'\n'"- #$D"

@@ -147,6 +147,7 @@ ALTER TABLE characters ADD COLUMN IF NOT EXISTS essence INTEGER NOT NULL DEFAULT
 6. Pushes to a feature branch
 7. **Does NOT create PR** (workflow handles this)
 8. **Does NOT merge code** (reviewer handles this)
+9. **Does NOT create sub-issues/campaigns** (only the orchestrator plans — incident 2026-09-11)
 
 ### Key Files (Phase 3 refactor output)
 
@@ -492,6 +493,12 @@ depends-on: #PARENT
 
 /oc
 ```
+
+> **Anti-duplication (incident 2026-09-11 : #940 planifiée 4×, #950 5×, ~200 runs, rate limit, PRs/issues doublons).**
+> L'orchestrator ne recrée JAMAIS de sous-issues si `campaign-N` en a déjà (ouvertes ou fermées) —
+> sauf label `force-replan` sur le parent. Le dev-agent ne crée JAMAIS d'issues.
+> Le dispatch est dédupliqué via le label `dispatched` (claim avant envoi).
+> Le trigger `/oc` exige des délimiteurs (pas de match dans "pas de /oc").
 
 ---
 

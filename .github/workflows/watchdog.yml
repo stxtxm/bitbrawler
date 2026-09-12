@@ -29,10 +29,11 @@ jobs:
         run: |
           echo "🔍 Watchdog 1/h — scan des PRs bot (label auto-generated OU auteur github-actions)"
           gh label get "ci-needs-human" 2>/dev/null || gh label create "ci-needs-human" --color "d73a4a" --description "CI bloquée après 3 retries, intervention humaine requise" 2>/dev/null || true
+          gh label get "needs-rebase" 2>/dev/null || gh label create "needs-rebase" --color "fbca04" --description "PR en conflit avec master, rebase manuel requis" 2>/dev/null || true
           # NOTE: ne pas filtrer côté serveur par --label auto-generated : les PRs bot
           # créées quand le label manquait n'ont aucun label et devenaient invisibles
           # (orphelines à 0 check, jamais redispatchées — incident sept 2026 : 7 PRs bloquées).
-          gh pr list --state open --json number,updatedAt,statusCheckRollup,headRefName,body,author,labels --limit 50 > /tmp/prs-all.json 2>/dev/null || echo "[]" > /tmp/prs-all.json
+          gh pr list --state open --json number,updatedAt,statusCheckRollup,headRefName,body,author,labels,mergeable --limit 50 > /tmp/prs-all.json 2>/dev/null || echo "[]" > /tmp/prs-all.json
           jq '[.[] | select(([.labels // [] | .[].name] | index("auto-generated")) or (.author.login == "app/github-actions"))]' /tmp/prs-all.json > /tmp/prs.json 2>/dev/null || echo "[]" > /tmp/prs.json
           COUNT=$(jq 'length' /tmp/prs.json 2>/dev/null || echo 0)
           echo "📋 $COUNT PRs bot ouvertes (labellisées ou auteur github-actions)"
@@ -46,7 +47,15 @@ jobs:
             HEAD_REF=$(echo "$PR" | jq -r '.headRefName // ""')
             UPDATED_AT=$(echo "$PR" | jq -r '.updatedAt // ""')
             BODY=$(echo "$PR" | jq -r '.body // ""')
+            MERGEABLE=$(echo "$PR" | jq -r '.mergeable // ""')
             ISSUE_NUMBER=$(echo "$BODY" | grep -oE '#[0-9]+' | head -1 | tr -d '#' || echo "")
+            # Les PRs en conflit ne seront jamais vertes via un redispatch CI : on les
+            # signale une fois (label needs-rebase) au lieu de brûler des minutes CI chaque heure
+            if [ "$MERGEABLE" = "CONFLICTING" ]; then
+              echo "⛔ PR #$PR_NUMBER en CONFLIT avec master — skip redispatch CI (rebase requis)"
+              gh pr edit "$PR_NUMBER" --add-label "needs-rebase" 2>/dev/null || true
+              continue
+            fi
             UPDATED_TS=$(date -d "$UPDATED_AT" +%s 2>/dev/null || echo "$NOW")
             AGE_MIN=$(( (NOW - UPDATED_TS) / 60 ))
             if [ "$AGE_MIN" -lt 60 ]; then

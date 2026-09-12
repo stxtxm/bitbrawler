@@ -128,6 +128,7 @@ jobs:
               echo "Fix PR #$PR_NUMBER" > /tmp/issue-title.txt
             fi
             echo "ISSUE_NUMBER=$ISSUE_NUMBER" >> "$GITHUB_ENV"
+            echo "REAL_TRIGGER=true" >> "$GITHUB_ENV"
             echo "Triggered by review on PR #$PR_NUMBER (linked issue: #$LINKED_ISSUE)"
             exit 0
           fi
@@ -142,9 +143,42 @@ jobs:
             exit 1
           fi
 
-          gh issue view "$ISSUE_NUMBER" --json body --jq '.body' > /tmp/prompt.txt
-          gh issue view "$ISSUE_NUMBER" --json title --jq '.title' > /tmp/issue-title.txt
+          # Retry API reads (thundering-herd fan-out can hit GitHub rate limits)
+          for i in 1 2 3; do
+            gh issue view "$ISSUE_NUMBER" --json body --jq '.body' > /tmp/prompt.txt 2>/dev/null && break
+            echo "⚠ gh issue view body failed (attempt $i/3) — retrying..."
+            sleep $((i * 10))
+          done
+          for i in 1 2 3; do
+            gh issue view "$ISSUE_NUMBER" --json title --jq '.title' > /tmp/issue-title.txt 2>/dev/null && break
+            echo "⚠ gh issue view title failed (attempt $i/3) — retrying..."
+            sleep $((i * 10))
+          done
+          if [ ! -s /tmp/prompt.txt ] && [ ! -s /tmp/issue-title.txt ]; then
+            echo "❌ Impossible de lire l'issue #$ISSUE_NUMBER après 3 tentatives (rate limit ?) — abandon sans effet de bord"
+            echo "REAL_TRIGGER=false" >> "$GITHUB_ENV"
+            echo "ISSUE_NUMBER=$ISSUE_NUMBER" >> "$GITHUB_ENV"
+            exit 0
+          fi
           echo "ISSUE_NUMBER=$ISSUE_NUMBER" >> "$GITHUB_ENV"
+
+          # Boundary-aware trigger check (anti faux-positif type "pas de /oc").
+          # Le job-level `contains(body,'/oc')` est un substring match : on re-valide ici
+          # avec les mêmes règles que les étapes de dispatch (délimiteurs obligatoires).
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "REAL_TRIGGER=true" >> "$GITHUB_ENV"
+          else
+            ISSUE_LABELS_EV=$(gh issue view "$ISSUE_NUMBER" --json labels --jq '[.labels[].name] | join(",")' 2>/dev/null || echo "")
+            ISSUE_TITLE_EV=$(cat /tmp/issue-title.txt 2>/dev/null || echo "")
+            if grep -qiE '(^|[[:space:]])/(oc|opencode|proposal)([[:space:]]|$)' /tmp/prompt.txt \
+              || echo "$ISSUE_LABELS_EV" | grep -qiE '(^|,)proposition(,|$)' \
+              || echo "$ISSUE_TITLE_EV $(cat /tmp/prompt.txt)" | grep -qiE '(Phase|Effort:\s*[4-9]|Effort:\s*[1-9][0-9])'; then
+              echo "REAL_TRIGGER=true" >> "$GITHUB_ENV"
+            else
+              echo "REAL_TRIGGER=false" >> "$GITHUB_ENV"
+              echo "ℹ Issue #$ISSUE_NUMBER sans trigger réel (pas de /oc|/opencode|/proposal délimité, ni label proposition, ni Phase/Effort) — aucun travail d'agent"
+            fi
+          fi
 
       - name: Create branch
         run: |
@@ -226,6 +260,11 @@ jobs:
           gh label get "campaign-$ISSUE_NUMBER" 2>/dev/null || \
             gh label create "campaign-$ISSUE_NUMBER" --color "fbca04" --description "Campaign parent: #$ISSUE_NUMBER" 2>/dev/null || true
           echo "✓ campaign-$ISSUE_NUMBER label ready"
+          # Claim `dispatched` immediately so concurrent runs' generic scans skip
+          # this issue (anti fan-out N² — incident 2026-09-11)
+          if [ "${REAL_TRIGGER:-true}" = "true" ]; then
+            gh issue edit "$ISSUE_NUMBER" --add-label dispatched 2>/dev/null || true
+          fi
 
       - name: Mark issue scan start
         run: echo "SCAN_START=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
@@ -291,7 +330,7 @@ jobs:
            echo "✅ Supervisor agent completed"
 
       - name: Run Orchestrator agent (for proposals / complex issues)
-        if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr == ''
+        if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr == '' && env.REAL_TRIGGER == 'true'
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GH_TOKEN: ${{ github.token }}
@@ -326,12 +365,22 @@ jobs:
             exit 0
           fi
 
-          # Already a campaign with open sub-issues → orchestrator just tracks progress
+          # Idempotence anti-duplication (incident 2026-09-11 : campagne #940 planifiée 4×,
+          # #950 5× → ~200 runs parallèles, rate limit GitHub, PRs/issues en doublons).
+          # Si la campagne a DÉJÀ été planifiée (sub-issues ouvertes OU fermées), on ne
+          # recrée JAMAIS de sous-issues — même pour les propositions. Échappatoire humaine :
+          # ajouter le label `force-replan` sur l'issue parente pour autoriser une re-planification.
+          TOTAL_SUBS=$(gh issue list --label "campaign-$ISSUE_NUMBER" --state all --json number --jq 'length' 2>/dev/null || echo 0)
           EXISTING_SUBS=$(gh issue list --label "campaign-$ISSUE_NUMBER" --state open --json number --jq 'length' 2>/dev/null || echo 0)
-          if [ "$EXISTING_SUBS" -gt 0 ] && [ "$IS_PROPOSAL" = false ] && [ "$IS_COMPLEX" = false ]; then
-            echo "✓ Campaign #$ISSUE_NUMBER already has $EXISTING_SUBS sub-issues — skipping orchestrator"
+          HAS_FORCE_REPLAN=$(gh issue view "$ISSUE_NUMBER" --json labels --jq '[.labels[].name | select(. == "force-replan")] | length' 2>/dev/null || echo 0)
+          if [ "$TOTAL_SUBS" -gt 0 ] && [ "$HAS_FORCE_REPLAN" -eq 0 ]; then
+            echo "✓ Campaign #$ISSUE_NUMBER already planned ($EXISTING_SUBS open / $TOTAL_SUBS total sub-issues) — skipping orchestrator (anti-duplication). Add label force-replan to re-plan."
             echo "ORCHESTRATOR_SKIP=true" >> "$GITHUB_ENV"
             exit 0
+          fi
+          if [ "$HAS_FORCE_REPLAN" -gt 0 ]; then
+            echo "⚠ force-replan label detected — re-planning campaign #$ISSUE_NUMBER despite $TOTAL_SUBS existing sub-issues"
+            gh issue edit "$ISSUE_NUMBER" --remove-label "force-replan" 2>/dev/null || true
           fi
 
           if [ "$IS_PROPOSAL" = true ] || [ "$IS_COMPLEX" = true ]; then
@@ -353,6 +402,7 @@ jobs:
             - Chaque body mentionne 'depends-on: #N' quand dépendant
             - Utilise gh issue create avec --label campaign-${ISSUE_NUMBER},sub-issue
             - Ne code RIEN, planifie seulement
+            - ANTI-DUPLICATION : avant de créer, vérifie gh issue list --label campaign-${ISSUE_NUMBER} --state all — si des sous-issues existent déjà, ne crée RIEN et commente uniquement la progression
 
             ## Création des sous-issues avec gh
             gh issue create --title \"feat: ...\" \\
@@ -382,12 +432,19 @@ jobs:
             fi
             echo "✅ Orchestrator completed — sub-issues created"
 
-            # Dispatch each new sub-issue with /oc
+            # Dispatch each new sub-issue with /oc (claim `dispatched` BEFORE dispatch
+            # so concurrent runs' generic scan skips it — anti fan-out N²)
             gh api "repos/\${{ github.repository }}/issues?state=open&labels=campaign-${ISSUE_NUMBER},sub-issue&sort=created&direction=desc" \
               --jq '.[] | select(.pull_request | not) | .number' 2>/dev/null | while read -r SUB; do
+                ALREADY=$(gh issue view "$SUB" --json labels --jq '[.labels[].name | select(. == "dispatched")] | length' 2>/dev/null || echo 0)
+                if [ "$ALREADY" -gt 0 ]; then
+                  echo "⏭ Sub-issue #$SUB already dispatched — skip"
+                  continue
+                fi
+                gh issue edit "$SUB" --add-label dispatched 2>/dev/null || true
                 gh workflow run opencode.yml -f issue_number="$SUB" --repo "\${{ github.repository }}"
                 echo "✓ Dispatched sub-issue #$SUB"
-                sleep 2
+                sleep 5
               done
 
             # Prevent normal Implement step from running
@@ -399,7 +456,7 @@ jobs:
           echo "ORCHESTRATOR_SKIP=true" >> "$GITHUB_ENV"
 
       - name: Implement (new PR)
-        if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr == '' && env.ORCHESTRATOR_DID_RUN != 'true'
+        if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr == '' && env.ORCHESTRATOR_DID_RUN != 'true' && env.REAL_TRIGGER == 'true'
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GH_TOKEN: ${{ github.token }}
@@ -419,19 +476,14 @@ jobs:
           Mémoire DEV : $(jq -c '{version, last_session, known_limitations, recent_notes: (.session_notes // [])[-5:]}' .opencode/memory/dev.json 2>/dev/null || echo "{}")
           Mémoire commune : $(jq -c '{version, known_issues: (.known_issues // [])[-3:], cross_agent_constraints}' .opencode/memory/shared.json 2>/dev/null || echo "{}")
 
-           ## Feature complexe ? Crée une campagne
-          Si le changement demandé nécessite PLUSIEURS étapes ou fichiers (ex: nouvelle fonctionnalité complète) :
-          1. Découpe en sous-tâches (issues GitHub) via gh issue create
-          2. Chaque sous-tâche DOIT contenir /oc dans son body pour être auto-dispatchée
-          3. Ajoute le label campaign-${ISSUE_NUMBER} à chaque sous-tâche
-          4. Ne code QUE ce qui peut être fait en un seul bloc logique
-          5. Le reste sera traité automatiquement via les sous-issues
-
-          Exemple de sous-issue :
-          gh issue create \\
-            --title \"feat: ajouter le système de quêtes quotidiennes - base de données\" \\
-            --label \"campaign-${ISSUE_NUMBER}\" \\
-            --body 'Créer les tables Supabase pour les quêtes quotidiennes... /oc'
+           ## INTERDICTION DE PLANIFIER (incident 2026-09-11 : le dev créait des
+           ## sous-campagnes imbriquées campaign-950/954 → doublons ×4, ~200 runs, rate limit)
+           - INTERDIT de créer des issues ou sous-issues (jamais de `gh issue create`)
+           - INTERDIT de découper en campagne, même si le changement semble gros :
+             implémente UNIQUEMENT le périmètre de cette issue, en un seul bloc logique
+           - Seul l'orchestrator planifie (labels campaign-N). Toi, tu codes.
+           - Si le périmètre déborde vraiment, décris le reste dans le body de ta PR
+             (section "Suivi suggéré") au lieu de créer des issues
 
           ## Instructions techniques
           - N'ajoute PAS de commentaires dans le code
@@ -459,7 +511,7 @@ jobs:
           fi
 
       - name: Skip dev — existing PR already clean, auto-merge inline
-        if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr != '' && env.SKIP_DEV_AGENT == 'true'
+        if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr != '' && env.SKIP_DEV_AGENT == 'true' && env.REAL_TRIGGER == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -467,8 +519,8 @@ jobs:
           ISSUE_NUMBER="${{ env.ISSUE_NUMBER }}"
           echo "✅ PR #$PR_NUMBER already has all CI green — auto-merging via inline reviewer"
 
-          # --- DAG dependency check ---
-          DEPS=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body' 2>/dev/null | grep -oiE 'depends-on:\s*#[0-9]+([,\s]*#[0-9]+)*' | grep -oE '#[0-9]+' | tr -d '#' || echo "")
+          # --- DAG dependency check (dédup sort -u : le body peut lister 2× la même dep) ---
+          DEPS=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body' 2>/dev/null | grep -oiE 'depends-on:\s*#[0-9]+([,\s]*#[0-9]+)*' | grep -oE '#[0-9]+' | tr -d '#' | sort -u -n || echo "")
           if [ -n "$DEPS" ]; then
             ALL_RESOLVED=true
             for DEP in $DEPS; do
@@ -481,7 +533,14 @@ jobs:
             done
             if [ "$ALL_RESOLVED" = false ]; then
               echo "⏳ Dependencies not resolved — skipping merge"
-              gh pr comment "$PR_NUMBER" --body "⏳ **En attente de dépendances** — merge automatique quand toutes les dépendances seront fermées."
+              # Anti-spam (incident 2026-09-11 : 6× le même commentaire sur #989) :
+              # ne re-poste que si le dernier commentaire n'est pas déjà celui-ci
+              LAST_COMMENT=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments?per_page=1" --jq '.[-1].body // ""' 2>/dev/null || echo "")
+              if echo "$LAST_COMMENT" | grep -q '^⏳ \*\*En attente de dépendances\*\*'; then
+                echo "ℹ Dernier commentaire déjà 'En attente de dépendances' — skip re-post"
+              else
+                gh pr comment "$PR_NUMBER" --body "⏳ **En attente de dépendances** — merge automatique quand toutes les dépendances seront fermées."
+              fi
               exit 0
             fi
             echo "✅ All dependencies resolved"
@@ -551,7 +610,7 @@ jobs:
           done
 
       - name: Implement (fix existing PR)
-        if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr != '' && env.SKIP_DEV_AGENT != 'true'
+        if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr != '' && env.SKIP_DEV_AGENT != 'true' && env.REAL_TRIGGER == 'true'
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GH_TOKEN: ${{ github.token }}
@@ -638,7 +697,7 @@ jobs:
           fi
 
       - name: Validate and retry (lint → test → build — recall agent on failure)
-        if: success() && github.event.inputs.mode != 'supervisor'
+        if: success() && github.event.inputs.mode != 'supervisor' && env.REAL_TRIGGER == 'true'
         env:
           OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
           GH_TOKEN: ${{ github.token }}
@@ -796,7 +855,7 @@ jobs:
 
       - name: Push and manage PR
         id: pr_create
-        if: success() && github.event.inputs.mode != 'supervisor'
+        if: success() && github.event.inputs.mode != 'supervisor' && env.REAL_TRIGGER == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -914,7 +973,7 @@ jobs:
           fi
 
       - name: Dispatch newly created /oc issues
-        if: success() && github.event.inputs.mode != 'supervisor'
+        if: success() && github.event.inputs.mode != 'supervisor' && env.ORCHESTRATOR_DID_RUN != 'true' && env.REAL_TRIGGER == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -931,22 +990,28 @@ jobs:
             json=$(printf '%s' "$row" | base64 --decode)
             number=$(echo "$json" | jq -r '.number')
             body=$(echo "$json" | jq -r '.body // ""')
+            labels=$(echo "$json" | jq -r '[.labels[].name] | join(",")')
 
             # Skip the current issue (prevent re-dispatch loop)
             [ "$number" = "$ISSUE_NUMBER" ] && continue
+
+            # Skip already-dispatched issues (claimed by orchestrator loop or a sibling run — anti fan-out N²)
+            if echo "$labels" | grep -qiE '(^|,)dispatched(,|$)'; then
+              continue
+            fi
 
             # Only dispatch if body contains /oc, /opencode, or /proposal
             if ! printf '%s' "$body" | grep -qiE '(^|[[:space:]])/(oc|opencode|proposal)($|[[:space:]])'; then
               continue
             fi
 
-            # Mark as dispatched and trigger workflow
+            # Claim BEFORE dispatch so concurrent runs skip it
             echo "Dispatching issue #$number..."
             gh issue edit "$number" --add-label dispatched 2>/dev/null || true
             gh workflow run opencode.yml -f issue_number="$number" --repo "${{ github.repository }}"
             echo "✓ Dispatched #$number"
             FOUND=1
-            sleep 2
+            sleep 5
           done < "$ISSUES_FILE"
 
           if [ "$FOUND" -eq 0 ]; then

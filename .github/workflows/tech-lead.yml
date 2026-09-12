@@ -47,7 +47,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh issue list --state open --limit 100 --json number,title,labels,updatedAt,body \
-            --jq '.[] | {number, title, labels: [.labels[].name], updatedAt}' > /tmp/existing-issues.json 2>/dev/null || echo "[]" > /tmp/existing-issues.json
+            --jq '.[] | {number, title, labels: [.labels[].name], updatedAt, body: (.body // "" | .[0:300])}' > /tmp/existing-issues.json 2>/dev/null || echo "[]" > /tmp/existing-issues.json
           echo "EXISTING_ISSUES=$(cat /tmp/existing-issues.json | wc -l) open issues found"
           echo "issue_count=$(cat /tmp/existing-issues.json | wc -l)" >> "$GITHUB_OUTPUT"
 
@@ -192,6 +192,7 @@ jobs:
             author=$(echo "$json" | jq -r '.user.login // ""')
             created_at=$(echo "$json" | jq -r '.created_at')
             body=$(echo "$json" | jq -r '.body // ""')
+            labels=$(echo "$json" | jq -r '[.labels[].name] | join(",")')
 
             if [[ "$created_at" < "$TECH_LEAD_SCAN_START" ]]; then
               continue
@@ -201,11 +202,17 @@ jobs:
               continue
             fi
 
+            # Skip déjà dispatchées (anti fan-out avec les scans opencode concurrents)
+            if echo "$labels" | grep -qiE '(^|,)dispatched(,|$)'; then
+              continue
+            fi
+
             if ! printf '%s' "$body" | grep -qiE '(^|[[:space:]])/(oc|opencode)($|[[:space:]])'; then
               continue
             fi
 
             echo "Dispatching OpenCode workflow for issue #$number..."
+            gh issue edit "$number" --add-label dispatched 2>/dev/null || true
             gh workflow run opencode.yml -f issue_number="$number"
             FOUND=1
           done < "$ISSUES_FILE"
