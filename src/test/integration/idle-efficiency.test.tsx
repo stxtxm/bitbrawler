@@ -47,6 +47,8 @@ function makeStats(totalPower: number): CombatStats {
 }
 
 beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-14T10:00:00Z'))
     vi.clearAllMocks();
     Object.defineProperty(window, 'localStorage', {
         value: {
@@ -60,6 +62,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+    vi.useRealTimers()
     vi.clearAllMocks();
 });
 

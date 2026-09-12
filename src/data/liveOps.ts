@@ -1,4 +1,7 @@
 import { BIOMES, BiomeDef, BiomeId } from './biomes';
+import { GAME_RULES } from '../config/gameRules';
+import { DAILY_RESET_TIMEZONE, getDailyResetKey } from '../utils/dailyReset';
+import { getZonedParts } from '../utils/timezoneUtils';
 
 export const SURGE_BIOME_ROTATION: BiomeId[] = BIOMES.map((b) => b.id);
 
@@ -35,13 +38,51 @@ export function getSeasonWindow(date: Date = new Date()): { seasonId: string; st
 }
 
 export function isBurstActive(date: Date = new Date()): boolean {
-  const day = date.getUTCDay();
-  const hour = date.getUTCHours();
-  const isFridayAfter18UTC = day === 5 && hour >= 17;
-  const isSaturday = day === 6;
-  const isSundayBefore18UTC = day === 0 && hour < 17;
-  if (isFridayAfter18UTC) return true;
-  if (isSaturday) return true;
-  if (isSundayBefore18UTC) return true;
+  const parts = getZonedParts(date, DAILY_RESET_TIMEZONE);
+  const weekday = new Date(Date.UTC(parts.year, parts.month - 1, parts.day)).getUTCDay();
+  if (weekday === 5 && parts.hour >= 18) return true;
+  if (weekday === 6) return true;
+  if (weekday === 0 && parts.hour < 18) return true;
   return false;
+}
+
+export function isBurstWindow(date: Date = new Date()): boolean {
+  return isBurstActive(date);
+}
+
+export function getMaxDailyFights(date: Date = new Date()): number {
+  return isBurstActive(date) ? GAME_RULES.COMBAT.MAX_DAILY_FIGHTS + 1 : GAME_RULES.COMBAT.MAX_DAILY_FIGHTS;
+}
+
+export function getBurstGrowthChance(date: Date = new Date()): number {
+  return isBurstActive(date) ? GAME_RULES.BOTS.BURST_GROWTH_CHANCE : GAME_RULES.BOTS.GROWTH_CHANCE;
+}
+
+export function getDepthToIdleRatio(depth: number, idleKills: number): number {
+  if (idleKills <= 0) return depth;
+  return depth / idleKills;
+}
+
+export function getBurstBonusKey(date: Date = new Date()): string {
+  return `bitbrawler_burst_bonus_${getDailyResetKey(date.getTime())}`;
+}
+
+export function isBurstBonusUsed(date: Date = new Date()): boolean {
+  try {
+    return localStorage.getItem(getBurstBonusKey(date)) === '1';
+  } catch {
+    return false;
+  }
+}
+
+export function markBurstBonusUsed(date: Date = new Date()): void {
+  try {
+    localStorage.setItem(getBurstBonusKey(date), '1');
+  } catch { /* ignore */ }
+}
+
+export function clearBurstBonusUsed(date: Date = new Date()): void {
+  try {
+    localStorage.removeItem(getBurstBonusKey(date));
+  } catch { /* ignore */ }
 }

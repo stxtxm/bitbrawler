@@ -1,5 +1,6 @@
 import { IDLE_CONFIG } from '../config/idleConfig';
 import { CombatStats } from './combatUtils';
+import { isBurstActive } from '../data/liveOps';
 
 const EFF = IDLE_CONFIG.EFFICIENCY;
 
@@ -49,12 +50,17 @@ function calculateOfflineFightsWithEfficiency(
   now: number,
   effectiveInterval: number,
 ): number {
+  if (isBurstActive(new Date(now))) return 0;
   if (lastTimestamp <= 0 || now <= lastTimestamp) return 0;
   const elapsed = now - lastTimestamp;
   const maxOffline = IDLE_CONFIG.MAX_OFFLINE_HOURS * 60 * 60 * 1000;
   const cappedElapsed = Math.min(elapsed, maxOffline);
   const fights = Math.floor(cappedElapsed / effectiveInterval);
   return Math.min(fights, IDLE_CONFIG.MAX_IDLE_FIGHTS);
+}
+
+export function isIdlePaused(date: Date = new Date()): boolean {
+  return isBurstActive(date);
 }
 
 export interface EfficiencyResult {

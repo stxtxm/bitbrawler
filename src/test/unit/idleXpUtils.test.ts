@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   calculateIdleXp,
   calculateOfflineIdleXp,
@@ -7,6 +7,13 @@ import {
 import { IDLE_CONFIG } from '../../config/idleConfig'
 
 describe('idleXpUtils', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-14T10:00:00Z'))
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
   describe('calculateOfflineIdleXp', () => {
     it('should be exactly half of active idle XP per fight (fixed variance)', () => {
       const spy = vi.spyOn(Math, 'random').mockReturnValue(0.5)
