@@ -1,10 +1,7 @@
 {
-  "run": "2026-09-13",
-  "character": "QA-PERSI-6",
+  "run": "2026-09-14",
+  "character": "RANGERNOVA",
   "exhausted": true,
-  "updated_at": "2026-09-13T20:02:55.670Z",
-  "source": "reused",
-  "persistent_generation": 5,
-  "persistent_created_at": "2026-09-12T09:49:20.230Z",
-  "persistent_reset_ready": false
+  "updated_at": "2026-09-13T22:04:05.967Z",
+  "source": "created"
 }
