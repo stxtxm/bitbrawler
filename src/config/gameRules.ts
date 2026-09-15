@@ -19,7 +19,7 @@ export const GAME_RULES = {
         BOUNTY_TARGET: 3,
         STAT_MULTIPLIER: 1.35,
         HP_MULTIPLIER: 1.0,
-        LEVEL_BOOST: 3, // Monsters fight at playerLevel + this offset
+        LEVEL_BOOST: 4, // Monsters fight at playerLevel + this offset
     },
     BOSS: {
         UNLOCK_LEVEL: 30, // Boss PvE unlocks at this level (void_titan)
