@@ -81417,5 +81417,255 @@
       "purchased_offer": 0,
       "essence_after_purchase": 11
     }
+  },
+  {
+    "date": "2026-09-15T16:01:35.487Z",
+    "run": "2026-09-15",
+    "character": "QA-PERSI-2",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 0,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 9,
+      "vit": 11,
+      "dex": 17,
+      "luk": 30,
+      "int": 9,
+      "foc": 9,
+      "fights": 0
+    },
+    "initial_level": 12,
+    "initial_xp": {
+      "current": 4803,
+      "max": 7241
+    },
+    "initial_max_hp": 402,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 12,
+      "xp": 4957,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 9,
+      "vit": 11,
+      "dex": 17,
+      "luk": 30,
+      "int": 9,
+      "foc": 9,
+      "last xp": 74,
+      "fights": 4
+    },
+    "final_max_hp": 402,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 24938,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "skeleton"
+      ],
+      "victories": 1,
+      "defeats": 0,
+      "xp_total": 25,
+      "xp_events": [
+        {
+          "time_ms": 24938,
+          "xp": 25,
+          "monster": "skeleton",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        513,
+        1536,
+        24938
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 25,
+        "essence": 0.4,
+        "monster": "skeleton"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.1,
+      "next_level_eta": "⬆ 5m 38s",
+      "power_ratio": "⚔ 0.73x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 0.98x",
+      "interval": "10.9s",
+      "streak_bonus": "🔥 1-win streak (+20%)"
+    },
+    "initial_essence": 11.8,
+    "final_essence": 18.52,
+    "essence": {
+      "before_idle": 11.8,
+      "after_idle": 12.2,
+      "per_fight": [],
+      "forge_before": 12,
+      "forge_after_salvage": 17,
+      "forge_after_fusion": 17,
+      "forge_after_upgrade": 17,
+      "forge_after": 17,
+      "shop_before": 18,
+      "shop_after": 18,
+      "final": 18.52,
+      "flow": {
+        "idle_gained": 0.4,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 5,
+        "shop_cost": 0,
+        "net_change": 6.72
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 12,
+      "essence_after_salvage": 17,
+      "essence_after_fusion": 17,
+      "essence_after_upgrade": 17,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": 17,
+      "items_after": null,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 18,
+      "essence_after": 18,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Lucky Charm",
+            "rarity": "COMMON",
+            "price": 20
+          },
+          {
+            "name": "Aegis Plate",
+            "rarity": "EPIC",
+            "price": 60
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 35
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 18
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "exhausted"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1810,
+      "arena": 747
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Lucky Charm",
+          "rarity": "COMMON",
+          "price": 20
+        },
+        {
+          "name": "Aegis Plate",
+          "rarity": "EPIC",
+          "price": 60
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 35
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 18
+    }
   }
 ]
