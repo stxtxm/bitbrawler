@@ -45,16 +45,6 @@
   ],
   "known_issues": [
     {
-      "id": "idle-api-silent-404",
-      "title": "idle-processor avale les erreurs DB en '404 Character not found'",
-      "status": "fixed"
-    },
-    {
-      "id": "essence-column-integer",
-      "title": "Colonne essence INTEGER rejetait les gains fractionnaires (22P02)",
-      "status": "fixed"
-    },
-    {
       "id": "sw-stale-bundles-v6",
       "title": "Service worker v6 stale-while-revalidate servait de vieux bundles post-deploy",
       "status": "fixed"
@@ -116,7 +106,6 @@
     }
   ],
   "cross_agent_constraints": [
-    "Dev agent: ne jamais modifier .github/workflows/*.yml",
     "Dev agent: ne JAMAIS créer d'issues/campagnes — seul l'orchestrator planifie",
     "Orchestrator: ne JAMAIS re-planifier si campaign-N a déjà des sous-issues (sauf label force-replan)",
     "Dispatch: toujours claimer le label `dispatched` AVANT gh workflow run (anti fan-out N²)",
