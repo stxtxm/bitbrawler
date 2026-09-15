@@ -80577,5 +80577,271 @@
       "purchased_offer": 0,
       "essence_after_purchase": 12
     }
+  },
+  {
+    "date": "2026-09-15T10:42:32.107Z",
+    "run": "2026-09-15",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 0,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 32,
+      "vit": 15,
+      "dex": 13,
+      "luk": 16,
+      "int": 17,
+      "foc": 12,
+      "fights": 0
+    },
+    "initial_level": 27,
+    "initial_xp": {
+      "current": 13831,
+      "max": 27601
+    },
+    "initial_max_hp": 580,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 27,
+      "xp": 14249,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 32,
+      "vit": 15,
+      "dex": 13,
+      "luk": 16,
+      "int": 17,
+      "foc": 12,
+      "last xp": 152,
+      "fights": 3
+    },
+    "final_max_hp": 580,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20223,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "wraith",
+        "goblin"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 284,
+      "xp_events": [
+        {
+          "time_ms": 3056,
+          "xp": 132,
+          "monster": "wraith",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 14679,
+          "xp": 152,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        509,
+        1528,
+        3056,
+        11627,
+        13155,
+        14679
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 132,
+        "essence": 0.37,
+        "monster": "wraith"
+      },
+      {
+        "result": "victory",
+        "xp": 152,
+        "essence": 0.37,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.53,
+      "next_level_eta": "⬆ 21m 52s",
+      "power_ratio": "⚔ 0.68x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.09x",
+      "interval": "11.5s",
+      "streak_bonus": "🔥 3831-win streak (+25%)"
+    },
+    "initial_essence": 22.95,
+    "final_essence": 9.6,
+    "essence": {
+      "before_idle": 22.95,
+      "after_idle": 23.69,
+      "per_fight": [],
+      "forge_before": 23,
+      "forge_after_salvage": 28,
+      "forge_after_fusion": 28,
+      "forge_after_upgrade": 28,
+      "forge_after": 28,
+      "shop_before": 29,
+      "shop_after": 9,
+      "final": 9.6,
+      "flow": {
+        "idle_gained": 0.74,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 5,
+        "shop_cost": 20,
+        "net_change": -13.35
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 23,
+      "essence_after_salvage": 28,
+      "essence_after_fusion": 28,
+      "essence_after_upgrade": 28,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": false,
+      "essence_after": 28,
+      "items_after": 4,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "RARE",
+      "cost": 20,
+      "essence_before": 29,
+      "essence_after": 9,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Tin Charm",
+            "rarity": "COMMON",
+            "price": 20
+          },
+          {
+            "name": "Pyrite Orb",
+            "rarity": "EPIC",
+            "price": 60
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 35
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 9
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "exhausted"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1596,
+      "arena": 731
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Tin Charm",
+          "rarity": "COMMON",
+          "price": 20
+        },
+        {
+          "name": "Pyrite Orb",
+          "rarity": "EPIC",
+          "price": 60
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 35
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 9
+    }
   }
 ]
