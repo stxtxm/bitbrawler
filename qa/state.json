@@ -1,9 +1,9 @@
 {
   "run": "2026-09-15",
   "character": "QA-PERSI-2",
-  "exhausted": false,
-  "updated_at": "2026-09-15T13:10:01.215Z",
-  "source": "reset-overlevel",
+  "exhausted": true,
+  "updated_at": "2026-09-15T15:58:53.173Z",
+  "source": "reused",
   "persistent_generation": 1,
   "persistent_created_at": "2026-09-15T13:01:34.403Z",
   "persistent_reset_ready": false
