@@ -1761,3 +1761,63 @@
     display: none;
   }
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// Codex Badge — HUD animé (Surge LiveOps)
+// ════════════════════════════════════════════════════════════════════════════
+
+@keyframes codexPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 6px rgba(255, 204, 0, 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 16px rgba(255, 204, 0, 0.6), 0 0 28px rgba(255, 204, 0, 0.25);
+  }
+}
+
+.codex-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: linear-gradient(180deg, #1a1408 0%, #0d0a04 100%);
+  border: 2px solid #c49a2a;
+  color: #e8c86a;
+  font-family: $font-pixel;
+  font-size: 0.45rem;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.codex-badge--pulse {
+  animation: codexPulse 1.4s ease-in-out infinite;
+}
+
+.codex-badge-icon {
+  font-size: 0.6rem;
+  filter: drop-shadow(0 0 4px rgba(255, 204, 0, 0.4));
+}
+
+.codex-badge-text {
+  letter-spacing: 2px;
+}
+
+.codex-badge-claim {
+  margin-left: 6px;
+  padding: 3px 8px;
+  font-family: $font-pixel;
+  font-size: 0.38rem;
+  letter-spacing: 1px;
+  border: 1px solid #e8c86a;
+  background: rgba(232, 200, 106, 0.12);
+  color: #e8c86a;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+
+  &:hover {
+    background: #e8c86a;
+    color: #000;
+  }
+}

@@ -8,8 +8,51 @@ import {
   UPGRADE_COST_SCALING,
   MAX_UPGRADE_LEVEL,
   LUCKY_PROC_CHANCE,
+  SALVAGE_JACKPOT_RATE,
+  SALVAGE_JACKPOT_MEGA_RATE,
+  SALVAGE_SURGE_JACKPOT_RATE,
+  SALVAGE_SURGE_MEGA_RATE,
 } from '../data/forgeConstants';
 import { RARITY_RANK } from './lootboxUtils';
+import type { ParticleSystem } from './particleSystem';
+
+export type SalvageJackpotResult = {
+  multiplier: 1 | 2 | 10;
+  isJackpot: boolean;
+};
+
+export const rollSalvageJackpot = (
+  rng: () => number = Math.random,
+  isSurgeActive = false,
+): SalvageJackpotResult => {
+  const megaRate = isSurgeActive ? SALVAGE_SURGE_MEGA_RATE : SALVAGE_JACKPOT_MEGA_RATE;
+  const jackpotRate = isSurgeActive ? SALVAGE_SURGE_JACKPOT_RATE : SALVAGE_JACKPOT_RATE;
+  const roll = rng();
+  if (roll < megaRate) return { multiplier: 10, isJackpot: true };
+  if (roll < megaRate + jackpotRate) return { multiplier: 2, isJackpot: true };
+  return { multiplier: 1, isJackpot: false };
+};
+
+export const getSalvageYieldWithSurge = (
+  item: PixelItemAsset,
+  rng: () => number = Math.random,
+  isSurgeActive = false,
+): { essenceYield: number; multiplier: 1 | 2 | 10; isJackpot: boolean } => {
+  const base = ESSENCE_YIELD[item.rarity];
+  const { multiplier, isJackpot } = rollSalvageJackpot(rng, isSurgeActive);
+  return { essenceYield: base * multiplier, multiplier, isJackpot };
+};
+
+export const triggerSalvageJackpotCelebration = (
+  system: ParticleSystem,
+  x: number,
+  y: number,
+  isJackpot: boolean,
+): void => {
+  if (!isJackpot) return;
+  system.emit('spark_burst', x, y, 12);
+  system.emit('confetti', x, y, 8);
+};
 
 // ─── Essence Helpers ───────────────────────────────────────────────────────
 

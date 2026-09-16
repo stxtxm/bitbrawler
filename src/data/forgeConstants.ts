@@ -60,3 +60,11 @@ export const MAX_UPGRADE_LEVEL = 5;
  * Chance (0-1) for a lucky proc that upgrades two rarity tiers instead of one on fusion.
  */
 export const LUCKY_PROC_CHANCE = 0.1;
+
+export const SALVAGE_JACKPOT_RATE = 0.05;
+
+export const SALVAGE_JACKPOT_MEGA_RATE = 0.01;
+
+export const SALVAGE_SURGE_JACKPOT_RATE = 0.10;
+
+export const SALVAGE_SURGE_MEGA_RATE = 0.02;
