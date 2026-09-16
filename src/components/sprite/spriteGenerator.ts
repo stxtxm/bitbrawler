@@ -16,11 +16,12 @@ import {
   CLOTH_TONES_16,
   EYE_TONES_16,
   HAIR_TONES_16,
+  OUTLINE_HEX,
   PANTS_TONES_16,
   SKIN_TONES_16,
   deepShadeHex,
   highlightHex,
-  shadeHex,
+  mixHex,
 } from './spritePalettes';
 
 export interface SpriteFeatures {
@@ -36,8 +37,8 @@ export interface SpriteFeatures {
   build: SpriteBuild;
 }
 
-const SHADED_BASES = new Set([1, 3, 4, 5, 6, 7, 9, 11, 12]);
-const HIGHLIGHT_BASES = new Set([1, 4, 5, 9, 11]);
+const EDGE_BASES = new Set([1, 3, 4, 5, 6, 7, 9, 11, 12]);
+const DITHER_BASES = new Set([5, 6]);
 
 export function resolveSpriteFeatures(
   seed: string,
@@ -140,21 +141,27 @@ function upscale(grid: SpriteGrid): SpriteGrid {
   return out;
 }
 
-function applyShading(grid: SpriteGrid): void {
+function applySnes(grid: SpriteGrid): void {
   const h = grid.length;
   const w = grid[0].length;
+  const emptyAt = (x: number, y: number): boolean =>
+    x < 0 || y < 0 || x >= w || y >= h || grid[y][x] === 0;
   const edits: Array<[number, number, number]> = [];
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const base = grid[y][x];
-      if (base === 0 || !SHADED_BASES.has(base)) continue;
-      const rightEmpty = x + 1 >= w || grid[y][x + 1] === 0;
-      const bottomEmpty = y + 1 >= h || grid[y + 1][x] === 0;
-      const topEmpty = y - 1 < 0 || grid[y - 1][x] === 0;
-      if (rightEmpty || bottomEmpty) {
-        edits.push([y, x, shadeIndexOf(base)]);
-      } else if (topEmpty && HIGHLIGHT_BASES.has(base)) {
+      if (base === 0 || !EDGE_BASES.has(base)) continue;
+      const edge = emptyAt(x - 1, y) || emptyAt(x + 1, y) || emptyAt(x, y - 1) || emptyAt(x, y + 1);
+      if (base === 4 && emptyAt(x, y - 1)) {
         edits.push([y, x, highlightIndexOf(base)]);
+        continue;
+      }
+      if (edge) {
+        edits.push([y, x, shadeIndexOf(base)]);
+        continue;
+      }
+      if (DITHER_BASES.has(base) && (x + y) % 2 === 0) {
+        edits.push([y, x, shadeIndexOf(base)]);
       }
     }
   }
@@ -181,14 +188,14 @@ export function generateSprite16(
   const base = composeBaseGrid(features.headType, features.bodyType);
   applyBuild(base, features.build);
   const grid = upscale(base);
-  applyShading(grid);
+  applySnes(grid);
   applyDetails(grid);
   const colors = basePaletteOf(features);
   const palette: SpritePalette = { ...colors };
   for (const key of Object.keys(colors).map(Number)) {
-    if (SHADED_BASES.has(key)) palette[shadeIndexOf(key)] = shadeHex(colors[key]);
-    if (HIGHLIGHT_BASES.has(key)) palette[highlightIndexOf(key)] = highlightHex(colors[key]);
+    if (EDGE_BASES.has(key)) palette[shadeIndexOf(key)] = mixHex(colors[key], OUTLINE_HEX, 0.45);
   }
+  palette[highlightIndexOf(4)] = highlightHex(colors[4]);
   palette[shadeIndexOf(5)] = deepShadeHex(colors[5]);
   return { grid, palette, width: SPRITE_WIDTH, height: SPRITE_HEIGHT };
 }

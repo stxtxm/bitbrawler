@@ -46,10 +46,16 @@ describe('sprite generator v2', () => {
     expect(JSON.stringify(slim.grid)).not.toBe(JSON.stringify(broad.grid));
   });
 
-  it('applies shade and highlight cells on edges', () => {
+  it('tints silhouette edges, dithers flat zones and shines hair', () => {
     const sprite = generateSprite16('shade-check', 'male');
     const flat = sprite.grid.flat();
     expect(flat.some((c) => c === shadeIndexOf(5) || c === shadeIndexOf(4))).toBe(true);
-    expect(flat.some((c) => c === highlightIndexOf(5) || c === highlightIndexOf(4))).toBe(true);
+    expect(flat).toContain(highlightIndexOf(4));
+    expect(flat).not.toContain(highlightIndexOf(5));
+  });
+
+  it('maps edge tones toward the outline color, not a 3d bevel', () => {
+    const sprite = generateSprite16('outline-check', 'female');
+    expect(sprite.palette[shadeIndexOf(5)]).not.toBe(sprite.palette[5]);
   });
 });

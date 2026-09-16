@@ -12,10 +12,11 @@ describe('SpriteCanvas', () => {
     expect(canvas?.getAttribute('height')).toBe(String(36 * 4));
   });
 
-  it('applies an element glow when aura is set', () => {
+  it('flags baked glow when aura is set, without css filters', () => {
     const { container } = render(<SpriteCanvas seed="aura-hero" gender="female" aura="fire" />);
     const canvas = container.querySelector('canvas');
-    expect(canvas?.style.filter).toContain('drop-shadow');
+    expect(canvas?.getAttribute('data-glow')).toBe('on');
+    expect(canvas?.style.filter ?? '').not.toContain('drop-shadow');
   });
 
   it('renders without crashing when equipped items are unknown ids', () => {

@@ -1,5 +1,6 @@
 import { memo, useMemo, useState } from 'react';
 import { PixelIcon } from '../PixelIcon';
+import { SpriteThemeSwitch } from '../sprite/SpriteThemeSwitch';
 import { MedalCard } from '../MedalCard';
 import { SettingsLogEntry, formatSettingsLogDate } from '../../utils/arenaUtils';
 import { getMedalsByCategory, getUnlockedCount, getTotalMedalCount } from '../../utils/medalUtils';
@@ -195,6 +196,10 @@ export const SettingsPanel = memo(function SettingsPanel({
                   </button>
                 </div>
               </div>
+
+              <div className="settings-divider" />
+
+              <SpriteThemeSwitch />
 
               <div className="settings-divider" />
 

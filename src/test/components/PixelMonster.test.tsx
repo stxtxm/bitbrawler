@@ -37,9 +37,10 @@ describe('PixelMonster', () => {
     expect(screen.getByLabelText('Ogre').tagName).toBe('CANVAS');
   });
 
-  it('applies an element glow when aura is set', () => {
+  it('flags baked glow when aura is set, without css filters', () => {
     render(<PixelMonster monsterId="void_titan" aura="dark" />);
     const canvas = screen.getByLabelText('VOID TITAN') as HTMLCanvasElement;
-    expect(canvas.style.filter).toContain('drop-shadow');
+    expect(canvas.getAttribute('data-glow')).toBe('on');
+    expect(canvas.style.filter ?? '').not.toContain('drop-shadow');
   });
 });
