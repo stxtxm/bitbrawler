@@ -58,4 +58,12 @@ describe('sprite generator v2', () => {
     const sprite = generateSprite16('outline-check', 'female');
     expect(sprite.palette[shadeIndexOf(5)]).not.toBe(sprite.palette[5]);
   });
+
+  it('adds metal pauldrons and a belt buckle on a basic body', () => {
+    const sprite = generateSprite16('gear-detail', 'male', { bodyType: 'basic', headType: 'male' });
+    const flat = sprite.grid.flat();
+    expect(flat).toContain(9);
+    expect(sprite.grid[28][11]).toBe(9);
+    expect(sprite.grid[28][12]).toBe(9);
+  });
 });

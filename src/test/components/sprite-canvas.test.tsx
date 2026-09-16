@@ -2,14 +2,15 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { SpriteCanvas } from '../../components/sprite/SpriteCanvas';
 import { PixelGridCanvas } from '../../components/sprite/PixelGridCanvas';
+import { SPRITE_DISPLAY_SCALE } from '../../components/sprite/spriteTypes';
 
 describe('SpriteCanvas', () => {
-  it('renders a 24x36 canvas scaled by the scale prop', () => {
+  it('applies the global display shrink for a given scale', () => {
     const { container } = render(<SpriteCanvas seed="canvas-hero" gender="male" scale={4} />);
     const canvas = container.querySelector('canvas');
     expect(canvas).not.toBeNull();
-    expect(canvas?.getAttribute('width')).toBe(String(24 * 4));
-    expect(canvas?.getAttribute('height')).toBe(String(36 * 4));
+    expect(canvas?.getAttribute('width')).toBe(String(12 * 4 * SPRITE_DISPLAY_SCALE));
+    expect(canvas?.getAttribute('height')).toBe(String(18 * 4 * SPRITE_DISPLAY_SCALE));
   });
 
   it('flags baked glow when aura is set, without css filters', () => {

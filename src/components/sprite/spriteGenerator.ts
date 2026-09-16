@@ -38,7 +38,7 @@ export interface SpriteFeatures {
 }
 
 const EDGE_BASES = new Set([1, 3, 4, 5, 6, 7, 9, 11, 12]);
-const DITHER_BASES = new Set([5, 6]);
+const DITHER_BASES = new Set([4, 5, 6]);
 
 export function resolveSpriteFeatures(
   seed: string,
@@ -176,6 +176,22 @@ function applyDetails(grid: SpriteGrid): void {
     for (const y of [34, 35]) {
       if (grid[y][x] === 7) grid[y][x] = shadeIndexOf(7);
     }
+    for (const y of [28, 29]) {
+      if ((x === 11 || x === 12) && (grid[y][x] === 6 || grid[y][x] === shadeIndexOf(6))) {
+        grid[y][x] = 9;
+      }
+    }
+  }
+  for (const y of [20, 21]) {
+    const row = grid[y];
+    const left = row.findIndex((c) => c !== 0);
+    if (left >= 0 && (row[left] === 5 || row[left] === shadeIndexOf(5))) row[left] = 9;
+    for (let x = row.length - 1; x >= 0; x--) {
+      if (row[x] !== 0) {
+        if (row[x] === 5 || row[x] === shadeIndexOf(5)) row[x] = 9;
+        break;
+      }
+    }
   }
 }
 
@@ -193,7 +209,7 @@ export function generateSprite16(
   const colors = basePaletteOf(features);
   const palette: SpritePalette = { ...colors };
   for (const key of Object.keys(colors).map(Number)) {
-    if (EDGE_BASES.has(key)) palette[shadeIndexOf(key)] = mixHex(colors[key], OUTLINE_HEX, 0.45);
+    if (EDGE_BASES.has(key)) palette[shadeIndexOf(key)] = mixHex(colors[key], OUTLINE_HEX, 0.55);
   }
   palette[highlightIndexOf(4)] = highlightHex(colors[4]);
   palette[shadeIndexOf(5)] = deepShadeHex(colors[5]);

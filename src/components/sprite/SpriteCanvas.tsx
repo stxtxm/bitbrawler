@@ -4,6 +4,7 @@ import type { CharacterAppearance } from '../../types/Character';
 import { PixelGridCanvas } from './PixelGridCanvas';
 import { applyEquipmentOverlays, resolveLoadout } from './equipOverlays';
 import { generateSprite16 } from './spriteGenerator';
+import { SPRITE_DISPLAY_SCALE } from './spriteTypes';
 
 interface SpriteCanvasProps {
   seed: string;
@@ -39,7 +40,7 @@ export const SpriteCanvas = memo(function SpriteCanvas({
     <PixelGridCanvas
       grid={grid}
       palette={palette}
-      scale={scale}
+      scale={(scale / 2) * SPRITE_DISPLAY_SCALE}
       label={`fighter-${seed}`}
       className={className}
       glowColor={aura ? ELEMENT_COLORS[aura] : null}
