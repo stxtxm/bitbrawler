@@ -5,6 +5,8 @@ export const SPRITE_BUILDS: SpriteBuild[] = ['slim', 'standard', 'broad'];
 export const SPRITE_WIDTH = 24;
 export const SPRITE_HEIGHT = 36;
 
+export const SPRITE_DISPLAY_SCALE = 0.75;
+
 export type SpriteGrid = number[][];
 
 export type SpritePalette = Record<number, string>;
