@@ -1,50 +1,29 @@
 import { MONSTER_ASSETS, MonsterId } from '../data/monsterAssets';
 import { BOSS_ASSETS, BossId } from '../data/bossAssets';
+import { ELEMENT_COLORS, Element } from '../types/Item';
+import { PixelGridCanvas } from './sprite/PixelGridCanvas';
 
 type PixelMonsterProps = {
   monsterId: MonsterId | BossId;
   scale?: number;
+  aura?: Element | null;
 };
 
-const CELL_SIZE = 1;
-
-export function PixelMonster({ monsterId, scale = 4 }: PixelMonsterProps) {
+export function PixelMonster({ monsterId, scale = 4, aura }: PixelMonsterProps) {
   const def =
     MONSTER_ASSETS.find(m => m.id === monsterId) ??
     BOSS_ASSETS.find(b => b.id === monsterId);
   if (!def) return null;
 
-  const { pixels, palette } = def;
-  const width = pixels[0]?.length ?? 16;
-  const height = pixels.length;
-
-  const viewWidth = width * CELL_SIZE;
-  const viewHeight = height * CELL_SIZE;
+  const glow = aura ? ELEMENT_COLORS[aura] : null;
 
   return (
-    <svg
-      width={width * scale}
-      height={height * scale}
-      viewBox={`0 0 ${viewWidth} ${viewHeight}`}
-      shapeRendering="crispEdges"
-      aria-label={def.name}
-    >
-      {pixels.map((row, y) =>
-        row.map((cell, x) => {
-          if (cell === 0) return null;
-          const fill = palette[cell] ?? 'transparent';
-          return (
-            <rect
-              key={`${x}-${y}`}
-              x={x * CELL_SIZE}
-              y={y * CELL_SIZE}
-              width={CELL_SIZE}
-              height={CELL_SIZE}
-              fill={fill}
-            />
-          );
-        })
-      )}
-    </svg>
+    <PixelGridCanvas
+      grid={def.pixels}
+      palette={def.palette as Record<number, string>}
+      scale={scale}
+      label={def.name}
+      glowColor={glow}
+    />
   );
 }

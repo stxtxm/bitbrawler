@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Character } from '../../types/Character';
 import { IdleRunnerScene } from '../IdleRunnerScene';
-import { PixelCharacter } from '../PixelCharacter';
+import { SpriteCanvas } from '../sprite/SpriteCanvas';
 import { ProceduralTerrain } from '../procedural/ProceduralTerrain';
 import { BiomeTerrain } from '../procedural/BiomeTerrain';
 import { getBiomeForCharacter } from '../../data/biomes';
@@ -58,7 +58,7 @@ export const SceneBox = memo(function SceneBox({
         />
       ) : (
         <div className="scene-pvp-center">
-          <PixelCharacter seed={character.seed} gender={character.gender} appearance={character.appearance} scale={pvpScale} />
+          <SpriteCanvas seed={character.seed} gender={character.gender} appearance={character.appearance} equippedItems={character.equippedItems} scale={pvpScale} />
         </div>
       )}
     </div>

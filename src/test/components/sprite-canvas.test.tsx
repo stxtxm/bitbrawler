@@ -1,0 +1,42 @@
+import { describe, it, expect } from 'vitest';
+import { render } from '@testing-library/react';
+import { SpriteCanvas } from '../../components/sprite/SpriteCanvas';
+import { PixelGridCanvas } from '../../components/sprite/PixelGridCanvas';
+
+describe('SpriteCanvas', () => {
+  it('renders a 24x36 canvas scaled by the scale prop', () => {
+    const { container } = render(<SpriteCanvas seed="canvas-hero" gender="male" scale={4} />);
+    const canvas = container.querySelector('canvas');
+    expect(canvas).not.toBeNull();
+    expect(canvas?.getAttribute('width')).toBe(String(24 * 4));
+    expect(canvas?.getAttribute('height')).toBe(String(36 * 4));
+  });
+
+  it('applies an element glow when aura is set', () => {
+    const { container } = render(<SpriteCanvas seed="aura-hero" gender="female" aura="fire" />);
+    const canvas = container.querySelector('canvas');
+    expect(canvas?.style.filter).toContain('drop-shadow');
+  });
+
+  it('renders without crashing when equipped items are unknown ids', () => {
+    const { container } = render(
+      <SpriteCanvas
+        seed="gear-hero"
+        gender="male"
+        equippedItems={{ weapon: 'nope', armor: null, accessory: null }}
+      />,
+    );
+    expect(container.querySelector('canvas')).not.toBeNull();
+  });
+});
+
+describe('PixelGridCanvas', () => {
+  it('renders any grid at the requested scale', () => {
+    const { container } = render(
+      <PixelGridCanvas grid={[[1, 0], [0, 1]]} palette={{ 1: '#ff0000' }} scale={8} />,
+    );
+    const canvas = container.querySelector('canvas');
+    expect(canvas?.getAttribute('width')).toBe('16');
+    expect(canvas?.getAttribute('height')).toBe('16');
+  });
+});

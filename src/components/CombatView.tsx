@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Character } from '../types/Character';
-import { PixelCharacter } from './PixelCharacter';
+import { SpriteCanvas } from './sprite/SpriteCanvas';
 import { PixelMonster } from './PixelMonster';
 import { PixelIcon } from './PixelIcon';
 import { simulateCombat } from '../utils/combatUtils';
@@ -731,7 +731,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                             <div className={`scan-card ${scanLocked ? 'locked' : 'scanning'}`}>
                                 <div className="scan-subtitle">{scanLocked ? 'OPPONENT FOUND' : 'SCANNING...'}</div>
                                 <div className="scan-avatar">
-                                    <PixelCharacter seed={scanList[scanIndex]?.seed || opponent.seed} gender={scanList[scanIndex]?.gender || opponent.gender} appearance={scanList[scanIndex]?.appearance ?? opponent.appearance} scale={8} />
+                                    <SpriteCanvas seed={scanList[scanIndex]?.seed || opponent.seed} gender={scanList[scanIndex]?.gender || opponent.gender} appearance={scanList[scanIndex]?.appearance ?? opponent.appearance} scale={8} />
                                 </div>
                                 <div className="scan-name">{scanList[scanIndex]?.name || opponent.name}</div>
                                 <div className="scan-level">LVL {scanList[scanIndex]?.level ?? opponent.level}</div>
@@ -749,7 +749,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                 {phase === 'vs' && (
                     <div key={`combat-vs-${visibilityKey}`} className="combat-vs">
                         <div className="vs-fighter vs-left">
-                            <PixelCharacter seed={player.seed} gender={player.gender} appearance={player.appearance} scale={8} />
+                            <SpriteCanvas seed={player.seed} gender={player.gender} appearance={player.appearance} equippedItems={player.equippedItems} scale={8} />
                             <div className="vs-fighter-name">{player.name}</div>
                             <div className="vs-fighter-lvl">LVL {player.level}</div>
                         </div>
@@ -759,7 +759,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                         <div className="vs-fighter vs-right">
                             {(matchType === 'pve' || matchType === 'boss') && monsterId ? (
                                 <div className="monster-vs-display">
-                                    <PixelMonster monsterId={monsterId} scale={8} />
+                                    <PixelMonster monsterId={monsterId} scale={8} aura={matchType === 'boss' ? bossDef?.element ?? null : null} />
                                     {(() => {
                                         const def = MONSTER_ASSETS.find(m => m.id === monsterId)
                                             ?? BOSS_ASSETS.find(b => b.id === monsterId);
@@ -769,7 +769,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                     })()}
                                 </div>
                             ) : (
-                                <PixelCharacter seed={opponent.seed} gender={opponent.gender} appearance={opponent.appearance} scale={8} />
+                                <SpriteCanvas seed={opponent.seed} gender={opponent.gender} appearance={opponent.appearance} equippedItems={opponent.equippedItems} scale={8} />
                             )}
                             <div className="vs-fighter-name">{opponent.name}</div>
                             <div className="vs-fighter-lvl">LVL {opponent.level}</div>
@@ -786,7 +786,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                             {bossDef && <SceneBackground def={bossDef.background} />}
                             <div key={`player-${currentRound}`} className={`fighter-side left${fighterEntrance ? ' enter-left' : ''}${actionPulse?.actor === 'player' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'opponent' ? ` react-${reactionType}` : ''}${showPlayerDefeat ? ' defeated' : ''}`}>
                                 <div className="fighter-character-wrap">
-                                    <PixelCharacter seed={player.seed} gender={player.gender} appearance={player.appearance} scale={6} />
+                                    <SpriteCanvas seed={player.seed} gender={player.gender} appearance={player.appearance} equippedItems={player.equippedItems} scale={6} />
                                     <div className="fighter-shadow" />
                                 </div>
                                 <div className="fighter-name-small">{player.name}</div>
@@ -801,9 +801,9 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                             <div key={`opponent-${currentRound}`} className={`fighter-side right${fighterEntrance ? ' enter-right' : ''}${actionPulse?.actor === 'opponent' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'player' ? ` react-${reactionType}` : ''}${showOpponentDefeat ? ' defeated' : ''}`}>
                                 <div className="fighter-character-wrap">
                                     {(matchType === 'pve' || matchType === 'boss') && monsterId ? (
-                                        <PixelMonster monsterId={monsterId} scale={5} />
+                                        <PixelMonster monsterId={monsterId} scale={5} aura={matchType === 'boss' ? bossDef?.element ?? null : null} />
                                     ) : (
-                                        <PixelCharacter seed={opponent.seed} gender={opponent.gender} appearance={opponent.appearance} scale={6} />
+                                        <SpriteCanvas seed={opponent.seed} gender={opponent.gender} appearance={opponent.appearance} equippedItems={opponent.equippedItems} scale={6} />
                                     )}
                                     <div className="fighter-shadow" />
                                 </div>

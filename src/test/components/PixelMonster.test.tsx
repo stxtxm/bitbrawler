@@ -5,9 +5,9 @@ import { PixelMonster } from '../../components/PixelMonster';
 describe('PixelMonster', () => {
   it('renders goblin with correct name', () => {
     render(<PixelMonster monsterId="goblin" />);
-    const svg = screen.getByLabelText('Goblin');
-    expect(svg).toBeDefined();
-    expect(svg.tagName).toBe('svg');
+    const canvas = screen.getByLabelText('Goblin');
+    expect(canvas).toBeDefined();
+    expect(canvas.tagName).toBe('CANVAS');
   });
 
   it('renders ogre', () => {
@@ -22,9 +22,9 @@ describe('PixelMonster', () => {
 
   it('renders with custom scale', () => {
     render(<PixelMonster monsterId="goblin" scale={8} />);
-    const svg = screen.getByLabelText('Goblin');
-    expect(svg.getAttribute('width')).toBe('128');
-    expect(svg.getAttribute('height')).toBe('128');
+    const canvas = screen.getByLabelText('Goblin');
+    expect(canvas.getAttribute('width')).toBe('128');
+    expect(canvas.getAttribute('height')).toBe('128');
   });
 
   it('returns null for unknown monster ID', () => {
@@ -32,8 +32,14 @@ describe('PixelMonster', () => {
     expect(container.innerHTML).toBe('');
   });
 
-  it('renders SVG element', () => {
+  it('renders canvas element', () => {
     render(<PixelMonster monsterId="ogre" />);
-    expect(screen.getByLabelText('Ogre').tagName).toBe('svg');
+    expect(screen.getByLabelText('Ogre').tagName).toBe('CANVAS');
+  });
+
+  it('applies an element glow when aura is set', () => {
+    render(<PixelMonster monsterId="void_titan" aura="dark" />);
+    const canvas = screen.getByLabelText('VOID TITAN') as HTMLCanvasElement;
+    expect(canvas.style.filter).toContain('drop-shadow');
   });
 });

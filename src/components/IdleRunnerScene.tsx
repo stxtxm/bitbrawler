@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Character } from '../types/Character'
 import { MonsterId } from '../data/monsterAssets'
 import { ScenePhase } from '../types/IdleCombat'
-import { PixelCharacter } from './PixelCharacter'
+import { SpriteCanvas } from './sprite/SpriteCanvas'
 import { PixelMonster } from './PixelMonster'
 import { ParticleSystem } from '../utils/particleSystem'
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode'
@@ -415,10 +415,11 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
             </div>
           </div>
         )}
-        <PixelCharacter
+        <SpriteCanvas
           seed={character.seed}
           gender={character.gender}
           appearance={appearance ?? character.appearance}
+          equippedItems={character.equippedItems}
           scale={charScale}
         />
       </div>

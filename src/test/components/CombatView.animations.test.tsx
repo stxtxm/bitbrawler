@@ -113,7 +113,7 @@ describe('CombatView Animation Overhaul', () => {
 
     // ─── Stage 2: PixelCharacter rendering ────────────
 
-    it('should render PixelCharacter for fighters in combat', () => {
+    it('should render SpriteCanvas for fighters in combat', () => {
         vi.useFakeTimers();
 
         vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
@@ -136,8 +136,8 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(2500); });
         act(() => { vi.advanceTimersByTime(1500); });
 
-        const charSvgs = container.querySelectorAll('.pixel-character');
-        expect(charSvgs.length).toBeGreaterThan(0);
+        const charCanvases = container.querySelectorAll('canvas[aria-label^="fighter-"]');
+        expect(charCanvases.length).toBeGreaterThan(0);
     });
 
     it('should apply defeated class to losing fighter during combat phase', () => {
