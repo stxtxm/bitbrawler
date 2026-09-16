@@ -14,7 +14,6 @@ export const UPDATE_NOTES: UpdateNote[] = [
     changes: [
       '👾 DIRECTION 2D ASSUMÉE — fini le biseau 3D : contour encre bleu nuit, dithering damier SNES sur les aplats, reflet anime sur les cheveux.',
       '⚡ FLUIDE — sprites mis en cache (1 dessin par sprite), glow fondu dans le canvas (plus de filtre CSS coûteux), composants mémoïsés.',
-      '📺 GAMEBOY MODE — interrupteur dans les réglages : tout le jeu rendu en 4 teintes DMG-01.',
       '🌊 Auras fondues dans le sprite : les boss rayonnent sans ramer, même sur mobile.',
     ],
   },

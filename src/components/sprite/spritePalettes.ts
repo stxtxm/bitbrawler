@@ -78,26 +78,3 @@ export function mixHex(a: string, b: string, amountB: number): string {
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b2.toString(16).padStart(2, '0')}`;
 }
 
-export const GB_SHADES = ['#0f380f', '#306230', '#8bac0f', '#9bbc0f'];
-
-export function gbOf(hex: string): string {
-  const clean = hex.replace('#', '');
-  const full = clean.length === 3
-    ? clean.split('').map((c) => c + c).join('')
-    : clean;
-  const r = parseInt(full.slice(0, 2), 16);
-  const g = parseInt(full.slice(2, 4), 16);
-  const b = parseInt(full.slice(4, 6), 16);
-  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  const idx = Math.max(0, Math.min(3, Math.floor(lum * 4)));
-  return GB_SHADES[idx];
-}
-
-export function remapPaletteGb(palette: Record<number, string>): Record<number, string> {
-  const out: Record<number, string> = {};
-  for (const key of Object.keys(palette).map(Number)) {
-    const hex = palette[key];
-    out[key] = !hex || hex === 'transparent' ? hex : gbOf(hex);
-  }
-  return out;
-}
