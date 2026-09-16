@@ -48,13 +48,13 @@ describe('Game rules', () => {
   });
 
   it('BOTS population is slightly replenished for high-level matchmaking while staying lean for free tier', () => {
-    expect(GAME_RULES.BOTS.GROWTH_CHANCE).toBe(0.05);
+    expect(GAME_RULES.BOTS.GROWTH_CHANCE).toBe(0.07);
     expect(GAME_RULES.BOTS.MIN_LVL1_BOTS).toBeLessThanOrEqual(3);
     expect(GAME_RULES.BOTS.MIN_LVL1_PROTECTED).toBeLessThanOrEqual(3);
     expect(GAME_RULES.BOTS.LVL1_RESERVE_PER_HUMAN).toBeLessThanOrEqual(0.5);
     expect(GAME_RULES.BOTS.LVL1_RESERVE_BUFFER).toBeLessThanOrEqual(2);
-    expect(GAME_RULES.BOTS.ACTIVITY_RATE).toBe(0.15);
-    expect(GAME_RULES.BOTS.MIN_POPULATION).toBe(3);
+    expect(GAME_RULES.BOTS.ACTIVITY_RATE).toBe(0.25);
+    expect(GAME_RULES.BOTS.MIN_POPULATION).toBe(5);
     expect(GAME_RULES.BOTS.MAX_FIGHTS_PER_RUN).toBe(1);
   });
 });
