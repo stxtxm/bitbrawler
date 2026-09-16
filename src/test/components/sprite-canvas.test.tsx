@@ -4,12 +4,12 @@ import { SpriteCanvas } from '../../components/sprite/SpriteCanvas';
 import { PixelGridCanvas } from '../../components/sprite/PixelGridCanvas';
 
 describe('SpriteCanvas', () => {
-  it('renders a 24x36 canvas scaled by the scale prop', () => {
+  it('matches legacy display sizes for a given scale', () => {
     const { container } = render(<SpriteCanvas seed="canvas-hero" gender="male" scale={4} />);
     const canvas = container.querySelector('canvas');
     expect(canvas).not.toBeNull();
-    expect(canvas?.getAttribute('width')).toBe(String(24 * 4));
-    expect(canvas?.getAttribute('height')).toBe(String(36 * 4));
+    expect(canvas?.getAttribute('width')).toBe(String(12 * 4));
+    expect(canvas?.getAttribute('height')).toBe(String(18 * 4));
   });
 
   it('flags baked glow when aura is set, without css filters', () => {

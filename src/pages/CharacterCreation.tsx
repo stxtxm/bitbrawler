@@ -222,7 +222,7 @@ const CharacterCreation = () => {
                   seed={generatedCharacter.seed}
                   gender={gender}
                   appearance={generatedCharacter.appearance}
-                  scale={window.innerWidth > 768 ? 12 : 6}
+                  scale={window.innerWidth > 768 ? 25 : 12}
                 />
               )}
             </div>

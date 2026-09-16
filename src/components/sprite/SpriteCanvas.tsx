@@ -39,7 +39,7 @@ export const SpriteCanvas = memo(function SpriteCanvas({
     <PixelGridCanvas
       grid={grid}
       palette={palette}
-      scale={scale}
+      scale={scale / 2}
       label={`fighter-${seed}`}
       className={className}
       glowColor={aura ? ELEMENT_COLORS[aura] : null}
