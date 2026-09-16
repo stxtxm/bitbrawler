@@ -1,5 +1,5 @@
 import React from 'react';
-import { PixelCharacter } from './PixelCharacter';
+import { SpriteCanvas } from './sprite/SpriteCanvas';
 
 interface GameLogoProps {
     showTagline?: boolean;
@@ -12,7 +12,7 @@ export const GameLogo: React.FC<GameLogoProps> = ({ showTagline = true, scale = 
             <div className="logo-main-row">
                 <div className="logo-character-wrapper">
                     <div className="character-aura"></div>
-                    <PixelCharacter seed="LogoHero" gender="male" scale={6} />
+                    <SpriteCanvas seed="LogoHero" gender="male" scale={6} />
                 </div>
 
                 <div className="logo-text-wrapper">
@@ -25,7 +25,7 @@ export const GameLogo: React.FC<GameLogoProps> = ({ showTagline = true, scale = 
 
                 <div className="logo-character-wrapper flip-x">
                     <div className="character-aura energy-blue"></div>
-                    <PixelCharacter seed="LogoRival" gender="female" scale={6} />
+                    <SpriteCanvas seed="LogoRival" gender="female" scale={6} />
                 </div>
             </div>
 

@@ -251,9 +251,11 @@ export const generateAppearance = (
     const pick = <T,>(arr: readonly T[]) => arr[Math.floor(rng() * arr.length)];
     const headPool = getHeadTypesForGender(gender);
     const bodyPool = getBodyTypes();
+    const builds: Array<'slim' | 'standard' | 'broad'> = ['slim', 'standard', 'broad'];
     return {
         headType: pick(headPool),
         bodyType: pick(bodyPool),
+        build: pick(builds),
         skinColor: pick(PIXEL_PALETTES.skins as unknown as string[]),
         hairColor: pick(PIXEL_PALETTES.hair as unknown as string[]),
         shirtColor: pick(PIXEL_PALETTES.clothes as unknown as string[]),

@@ -8,6 +8,19 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.7.0',
+    date: '2026-09-16',
+    title: '🧬 Moteur sprite 16-bit — canvas, ombrages, équipement visible',
+    changes: [
+      '🧬 NOUVEAU MOTEUR 16-BIT — les combattants passent en 24×36 avec ombrages automatiques, reflets, ceinture et bottes détaillées, 3 morphologies (slim / standard / large).',
+      '🎨 RENDU CANVAS — un canvas par sprite au lieu de centaines de rect SVG : interface plus fluide, même sur mobile.',
+      '🗡️ ÉQUIPEMENT VISIBLE — arme, armure et accessoire équipés apparaissent sur ton personnage, bordure couleur rareté.',
+      '🌊 AURA ÉLÉMENTAIRE — les boss rayonnent de leur élément (le MONARQUE ABYSSAL brille en bleu eau).',
+      '🧍 NOUVEAU CHOIX BUILD à la création : slim, standard ou large, aperçu instantané en 16-bit.',
+      '👹 Monstres et boss aussi rendus en canvas, avec aura pour les raids.',
+    ],
+  },
+  {
     version: '5.6.0',
     date: '2026-08-31',
     title: '👑 ABYSSAL MONARCH — le Titan de la Faille Abyssale (lvl 58+, biome)',

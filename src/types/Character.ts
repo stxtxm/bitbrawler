@@ -196,9 +196,12 @@ export interface Character {
   appearance?: CharacterAppearance;
 }
 
+export type CharacterBuild = 'slim' | 'standard' | 'broad';
+
 export interface CharacterAppearance {
   headType?: string; // key of PIXEL_HEADS
   bodyType?: string; // key of PIXEL_BODIES
+  build?: CharacterBuild;
   skinColor?: string;
   hairColor?: string;
   shirtColor?: string;

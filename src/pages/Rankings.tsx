@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../config/supabase'
 import { Character } from '../types/Character'
-import { PixelCharacter } from '../components/PixelCharacter'
+import { SpriteCanvas } from '../components/sprite/SpriteCanvas'
 import { useGame } from '../context/GameContext'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import { useFocusTrap } from '../hooks/useFocusTrap'
@@ -194,7 +194,7 @@ const Rankings = () => {
                                     <div className={`col-rank rank-${index + 1}`}>{index + 1}</div>
                                     <div className="col-avatar">
                                         <div className="mini-avatar">
-                                            <PixelCharacter seed={char.seed} gender={char.gender} appearance={char.appearance} scale={3} />
+                                            <SpriteCanvas seed={char.seed} gender={char.gender} appearance={char.appearance} scale={3} />
                                         </div>
                                     </div>
                                     <div className="col-name">

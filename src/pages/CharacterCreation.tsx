@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { PixelCharacter } from '../components/PixelCharacter'
+import { SpriteCanvas } from '../components/sprite/SpriteCanvas'
+import { SPRITE_BUILDS } from '../components/sprite/spriteTypes'
+import type { CharacterBuild } from '../types/Character'
 import { Character } from '../types/Character'
 import { supabase } from '../config/supabase'
 import { useGame } from '../context/GameContext'
@@ -27,6 +29,8 @@ const CharacterCreation = () => {
   const [nameError, setNameError] = useState('')
   const [showErrorModal, setShowErrorModal] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [build, setBuild] = useState<CharacterBuild>('standard')
+  const buildRef = useRef<CharacterBuild>('standard')
   const connectionMessage = 'Connect to create and sync your fighter.'
   const prefetchStarted = useRef(false)
 
@@ -36,8 +40,18 @@ const CharacterCreation = () => {
   const generateRandomCharacter = (currentGender: 'male' | 'female' = gender) => {
     setIsGenerating(true)
     const newCharacter = generateInitialStats(name, currentGender)
+    newCharacter.appearance = { ...newCharacter.appearance, build: buildRef.current }
     setGeneratedCharacter(newCharacter)
     setIsGenerating(false)
+  }
+
+  const handleBuildChange = (next: CharacterBuild) => {
+    buildRef.current = next
+    setBuild(next)
+    if (window.navigator.vibrate) window.navigator.vibrate(30)
+    setGeneratedCharacter((prev) =>
+      prev ? { ...prev, appearance: { ...prev.appearance, build: next } } : prev,
+    )
   }
 
   // Handle gender change without full re-roll (only updates visual + guarantees headType fits new gender)
@@ -53,7 +67,7 @@ const CharacterCreation = () => {
       if (mismatch) {
         const newChar = generateInitialStats(name, newGender)
         // Preserve stats, only take appearance from new roll
-        setGeneratedCharacter({ ...generatedCharacter, gender: newGender, appearance: newChar.appearance, seed: newChar.seed })
+        setGeneratedCharacter({ ...generatedCharacter, gender: newGender, appearance: { ...newChar.appearance, build: buildRef.current }, seed: newChar.seed })
       } else {
         setGeneratedCharacter({ ...generatedCharacter, gender: newGender });
       }
@@ -204,11 +218,11 @@ const CharacterCreation = () => {
           <div className="preview-section-compact">
             <div className="preview-box">
               {generatedCharacter && (
-                <PixelCharacter
+                <SpriteCanvas
                   seed={generatedCharacter.seed}
                   gender={gender}
                   appearance={generatedCharacter.appearance}
-                  scale={window.innerWidth > 768 ? 25 : 12}
+                  scale={window.innerWidth > 768 ? 12 : 6}
                 />
               )}
             </div>
@@ -312,6 +326,23 @@ const CharacterCreation = () => {
                 >
                   FEMALE
                 </button>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>BUILD:</label>
+              <div className="gender-selection" role="radiogroup" aria-label="Body build">
+                {SPRITE_BUILDS.map((b) => (
+                  <button
+                    key={b}
+                    className={`gender-btn ${build === b ? 'selected' : ''}`}
+                    onClick={() => handleBuildChange(b)}
+                    role="radio"
+                    aria-checked={build === b}
+                  >
+                    {b.toUpperCase()}
+                  </button>
+                ))}
               </div>
             </div>
 
