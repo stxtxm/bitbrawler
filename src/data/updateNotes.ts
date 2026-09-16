@@ -8,6 +8,16 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.7.1',
+    date: '2026-09-16',
+    title: '👾 SNES newave — outline, dither, Game Boy mode, 60fps',
+    changes: [
+      '👾 DIRECTION 2D ASSUMÉE — fini le biseau 3D : contour encre bleu nuit, dithering damier SNES sur les aplats, reflet anime sur les cheveux.',
+      '⚡ FLUIDE — sprites mis en cache (1 dessin par sprite), glow fondu dans le canvas (plus de filtre CSS coûteux), composants mémoïsés.',
+      '🌊 Auras fondues dans le sprite : les boss rayonnent sans ramer, même sur mobile.',
+    ],
+  },
+  {
     version: '5.7.0',
     date: '2026-09-16',
     title: '🧬 Moteur sprite 16-bit — canvas, ombrages, équipement visible',

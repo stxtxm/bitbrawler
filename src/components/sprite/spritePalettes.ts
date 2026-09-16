@@ -54,3 +54,27 @@ export const RARITY_TRIM: Record<ItemRarity, string> = {
   epic: '#bf5af2',
   legendary: '#ffd60a',
 };
+
+export const OUTLINE_HEX = '#15172e';
+
+export function mixHex(a: string, b: string, amountB: number): string {
+  const parse = (hex: string): [number, number, number] => {
+    const clean = hex.replace('#', '');
+    const full = clean.length === 3
+      ? clean.split('').map((c) => c + c).join('')
+      : clean;
+    return [
+      parseInt(full.slice(0, 2), 16),
+      parseInt(full.slice(2, 4), 16),
+      parseInt(full.slice(4, 6), 16),
+    ];
+  };
+  const [ar, ag, ab] = parse(a);
+  const [br, bg, bb] = parse(b);
+  const t = Math.max(0, Math.min(1, amountB));
+  const r = clampByte(ar + (br - ar) * t);
+  const g = clampByte(ag + (bg - ag) * t);
+  const b2 = clampByte(ab + (bb - ab) * t);
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b2.toString(16).padStart(2, '0')}`;
+}
+
