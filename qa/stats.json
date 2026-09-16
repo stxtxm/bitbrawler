@@ -85361,5 +85361,273 @@
       "purchased_offer": 0,
       "essence_after_purchase": 77
     }
+  },
+  {
+    "date": "2026-09-16T22:01:31.759Z",
+    "run": "2026-09-17",
+    "character": "QA-PERSI-3",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Tempest Blade",
+      "rarity": "EPIC",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 0,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 10,
+      "vit": 16,
+      "dex": 10,
+      "luk": 11,
+      "int": 28,
+      "foc": 14,
+      "fights": 0
+    },
+    "initial_level": 18,
+    "initial_xp": {
+      "current": 6812,
+      "max": 14137
+    },
+    "initial_max_hp": 543,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 18,
+      "xp": 7095,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 10,
+      "vit": 16,
+      "dex": 10,
+      "luk": 11,
+      "int": 28,
+      "foc": 14,
+      "last xp": 30,
+      "fights": 5
+    },
+    "final_max_hp": 543,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 2,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 45170,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "skeleton",
+        "ogre"
+      ],
+      "victories": 1,
+      "defeats": 1,
+      "xp_total": 132,
+      "xp_events": [
+        {
+          "time_ms": 3048,
+          "xp": 103,
+          "monster": "skeleton",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 45170,
+          "xp": 29,
+          "monster": "ogre",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        508,
+        1523,
+        3048,
+        12110,
+        13641,
+        45170
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 103,
+        "essence": 0.51,
+        "monster": "skeleton"
+      },
+      {
+        "result": "defeat",
+        "xp": 29,
+        "essence": 0.15,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.38,
+      "next_level_eta": "⬆ 16m 1s",
+      "power_ratio": "⚔ 0.63x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.22x",
+      "interval": "12.0s",
+      "streak_bonus": null
+    },
+    "initial_essence": 96.17,
+    "final_essence": 53.52,
+    "essence": {
+      "before_idle": 96.17,
+      "after_idle": 96.83,
+      "per_fight": [],
+      "forge_before": 96,
+      "forge_after_salvage": 101,
+      "forge_after_fusion": 101,
+      "forge_after_upgrade": 71,
+      "forge_after": 71,
+      "shop_before": 73,
+      "shop_after": 53,
+      "final": 53.52,
+      "flow": {
+        "idle_gained": 0.66,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 30,
+        "forge_net": -25,
+        "shop_cost": 20,
+        "net_change": -42.65
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 96,
+      "essence_after_salvage": 101,
+      "essence_after_fusion": 101,
+      "essence_after_upgrade": 71,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 71,
+      "items_after": 1,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": 30,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 20,
+      "essence_before": 73,
+      "essence_after": 53,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Swift Boots",
+            "rarity": "UNCOMMON",
+            "price": 20
+          },
+          {
+            "name": "Sage Robe",
+            "rarity": "EPIC",
+            "price": 40
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 35
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 53
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "exhausted"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1659,
+      "arena": 789
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Swift Boots",
+          "rarity": "UNCOMMON",
+          "price": 20
+        },
+        {
+          "name": "Sage Robe",
+          "rarity": "EPIC",
+          "price": 40
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 35
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 53
+    }
   }
 ]
