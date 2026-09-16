@@ -8,6 +8,10 @@ import {
   UPGRADE_COST_SCALING,
   MAX_UPGRADE_LEVEL,
   LUCKY_PROC_CHANCE,
+  SALVAGE_JACKPOT_RATE,
+  SALVAGE_JACKPOT_MEGA_RATE,
+  SALVAGE_SURGE_JACKPOT_RATE,
+  SALVAGE_SURGE_MEGA_RATE,
 } from '../data/forgeConstants';
 import { RARITY_RANK } from './lootboxUtils';
 
@@ -20,11 +24,41 @@ export const getEssenceYield = (item: PixelItemAsset): number => {
   return ESSENCE_YIELD[item.rarity];
 };
 
+export type SalvageJackpotResult = {
+  multiplier: 1 | 2 | 10;
+  isJackpot: boolean;
+};
+
+export const rollSalvageJackpot = (
+  rng: () => number = Math.random,
+  isSurgeActive: boolean = false
+): SalvageJackpotResult => {
+  const megaRate = isSurgeActive ? SALVAGE_SURGE_MEGA_RATE : SALVAGE_JACKPOT_MEGA_RATE;
+  const jackpotRate = isSurgeActive ? SALVAGE_SURGE_JACKPOT_RATE : SALVAGE_JACKPOT_RATE;
+  const roll = rng();
+  if (roll < megaRate) {
+    return { multiplier: 10, isJackpot: true };
+  }
+  if (roll < megaRate + jackpotRate) {
+    return { multiplier: 2, isJackpot: true };
+  }
+  return { multiplier: 1, isJackpot: false };
+};
+
 /**
  * Returns the total essence yield from multiple items.
  */
-export const salvageItems = (items: PixelItemAsset[]): number => {
-  return items.reduce((total, item) => total + getEssenceYield(item), 0);
+export const salvageItems = (
+  items: PixelItemAsset[],
+  rng?: () => number,
+  isSurgeActive: boolean = false
+): number => {
+  return items.reduce((total, item) => {
+    const base = getEssenceYield(item);
+    if (!rng) return total + base;
+    const { multiplier } = rollSalvageJackpot(rng, isSurgeActive);
+    return total + base * multiplier;
+  }, 0);
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -69,7 +103,9 @@ export const canSalvageItem = (itemId: string, character: Character): boolean =>
 export const salvageItem = (
   itemId: string,
   character: Character,
-  allItems: PixelItemAsset[]
+  allItems: PixelItemAsset[],
+  rng?: () => number,
+  isSurgeActive: boolean = false
 ): Character => {
   if (!canSalvageItem(itemId, character)) {
     return character;
@@ -81,15 +117,29 @@ export const salvageItem = (
   }
 
   const currentEssence = character.essence ?? 0;
-  const essenceGain = getEssenceYield(item);
+  const jackpot = rng ? rollSalvageJackpot(rng, isSurgeActive) : { multiplier: 1 as const, isJackpot: false };
+  const essenceGain = getEssenceYield(item) * jackpot.multiplier;
   const newInventory = (character.inventory ?? []).filter((id) => id !== itemId);
   const newEssence = currentEssence + essenceGain;
 
-  return {
+  const next: Character & { forgeStats?: { jackpotCount?: number } } = {
     ...character,
     inventory: newInventory,
     essence: newEssence,
   };
+
+  if (jackpot.isJackpot) {
+    const anyChar = character as unknown as { forgeStats?: { jackpotCount?: number } };
+    if (anyChar.forgeStats) {
+      const prev = anyChar.forgeStats;
+      (next as unknown as { forgeStats: { jackpotCount: number } }).forgeStats = {
+        ...prev,
+        jackpotCount: (prev.jackpotCount ?? 0) + 1,
+      } as unknown as { jackpotCount: number };
+    }
+  }
+
+  return next as Character;
 };
 
 // ─── Fusion ────────────────────────────────────────────────────────────────
