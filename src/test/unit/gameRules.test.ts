@@ -38,7 +38,7 @@ describe('Game rules', () => {
   });
 
   it('PVE level boost provides challenge', () => {
-    expect(GAME_RULES.PVE.LEVEL_BOOST).toBe(3);
+    expect(GAME_RULES.PVE.LEVEL_BOOST).toBe(4);
   });
 
   it('BOTS config has positive values', () => {
