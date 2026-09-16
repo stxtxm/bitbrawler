@@ -194,6 +194,11 @@ export interface Character {
 
   // Appearance customization (8-bit variants)
   appearance?: CharacterAppearance;
+
+  // Codex collection (optional, tolérant DB)
+  codex?: string[];
+  codexPity?: number;
+  shinyCodex?: string[];
 }
 
 export type CharacterBuild = 'slim' | 'standard' | 'broad';
