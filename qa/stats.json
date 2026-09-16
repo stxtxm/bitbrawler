@@ -82419,5 +82419,288 @@
       "purchased_offer": 0,
       "essence_after_purchase": 0
     }
+  },
+  {
+    "date": "2026-09-16T01:01:25.052Z",
+    "run": "2026-09-16",
+    "character": "QA-PERSI-2",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": null,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 11,
+      "vit": 14,
+      "dex": 20,
+      "luk": 34,
+      "int": 11,
+      "foc": 9,
+      "fights": 0
+    },
+    "initial_level": 22,
+    "initial_xp": {
+      "current": 1134,
+      "max": 19686
+    },
+    "initial_max_hp": 602,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flame Dagger",
+        "rarity": "EPIC"
+      },
+      {
+        "slot": "💍",
+        "name": "Lucky Charm",
+        "rarity": "COMMON"
+      }
+    ],
+    "initial_streak": 2,
+    "final_stats": {
+      "level": 22,
+      "xp": 1640,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 11,
+      "vit": 14,
+      "dex": 20,
+      "luk": 34,
+      "int": 11,
+      "foc": 9,
+      "fights": 0
+    },
+    "final_max_hp": 602,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flame Dagger",
+        "rarity": "EPIC"
+      },
+      {
+        "slot": "💍",
+        "name": "Lucky Charm",
+        "rarity": "COMMON"
+      }
+    ],
+    "final_streak": 2,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flame Dagger",
+        "rarity": "EPIC"
+      },
+      {
+        "slot": "💍",
+        "name": "Lucky Charm",
+        "rarity": "COMMON"
+      }
+    ],
+    "lootbox_streak": 5,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 33061,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "skeleton"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 36,
+      "xp_events": [
+        {
+          "time_ms": 33061,
+          "xp": 36,
+          "monster": "skeleton",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        508,
+        1528,
+        33061
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 36,
+        "essence": 0.38,
+        "monster": "skeleton"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.45,
+      "next_level_eta": "⬆ 29m 57s",
+      "power_ratio": "⚔ 0.60x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.00x",
+      "interval": "10.4s",
+      "streak_bonus": null
+    },
+    "initial_essence": 28.61,
+    "final_essence": 5.71,
+    "essence": {
+      "before_idle": 28.61,
+      "after_idle": 28.99,
+      "per_fight": [],
+      "forge_before": 29,
+      "forge_after_salvage": 34,
+      "forge_after_fusion": 34,
+      "forge_after_upgrade": 4,
+      "forge_after": 4,
+      "shop_before": 5,
+      "shop_after": 5,
+      "final": 5.71,
+      "flow": {
+        "idle_gained": 0.38,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 30,
+        "forge_net": -25,
+        "shop_cost": 0,
+        "net_change": -22.9
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 29,
+      "essence_after_salvage": 34,
+      "essence_after_fusion": 34,
+      "essence_after_upgrade": 4,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 4,
+      "items_after": 1,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": 30,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 5,
+      "essence_after": 5,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Silver Ring",
+            "rarity": "COMMON",
+            "price": 20
+          },
+          {
+            "name": "Pyrite Orb",
+            "rarity": "EPIC",
+            "price": 60
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 35
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 5
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "exhausted"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 2179,
+      "arena": 866,
+      "arena_reload": 10
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Silver Ring",
+          "rarity": "COMMON",
+          "price": 20
+        },
+        {
+          "name": "Pyrite Orb",
+          "rarity": "EPIC",
+          "price": 60
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 35
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 5
+    }
   }
 ]
