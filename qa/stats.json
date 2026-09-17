@@ -87649,5 +87649,255 @@
       "purchased_offer": 0,
       "essence_after_purchase": 128
     }
+  },
+  {
+    "date": "2026-09-17T16:01:36.494Z",
+    "run": "2026-09-17",
+    "character": "QA-PERSI-3",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 0,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 36,
+      "vit": 16,
+      "dex": 11,
+      "luk": 11,
+      "int": 12,
+      "foc": 18,
+      "fights": 0
+    },
+    "initial_level": 23,
+    "initial_xp": {
+      "current": 12195,
+      "max": 21185
+    },
+    "initial_max_hp": 546,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 23,
+      "xp": 12724,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 36,
+      "vit": 16,
+      "dex": 11,
+      "luk": 11,
+      "int": 12,
+      "foc": 18,
+      "last xp": 110,
+      "fights": 4
+    },
+    "final_max_hp": 546,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 26940,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "chimera"
+      ],
+      "victories": 1,
+      "defeats": 0,
+      "xp_total": 40,
+      "xp_events": [
+        {
+          "time_ms": 26940,
+          "xp": 40,
+          "monster": "chimera",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        511,
+        1530,
+        26940
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 40,
+        "essence": 0.44,
+        "monster": "chimera"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.39,
+      "next_level_eta": "⬆ 17m 21s",
+      "power_ratio": "⚔ 0.66x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.10x",
+      "interval": "11.8s",
+      "streak_bonus": "🔥 1-win streak (+25%)"
+    },
+    "initial_essence": 129.81,
+    "final_essence": 161.13,
+    "essence": {
+      "before_idle": 129.81,
+      "after_idle": 130.25,
+      "per_fight": [],
+      "forge_before": 130,
+      "forge_after_salvage": 180,
+      "forge_after_fusion": 180,
+      "forge_after_upgrade": 180,
+      "forge_after": 180,
+      "shop_before": 181,
+      "shop_after": 161,
+      "final": 161.13,
+      "flow": {
+        "idle_gained": 0.44,
+        "fights_change": null,
+        "salvage_gained": 50,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 50,
+        "shop_cost": 20,
+        "net_change": 31.32
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 130,
+      "essence_after_salvage": 180,
+      "essence_after_fusion": 180,
+      "essence_after_upgrade": 180,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": 180,
+      "items_after": null,
+      "salvage_essence_gained": 50,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "COMMON",
+      "cost": 20,
+      "essence_before": 181,
+      "essence_after": 161,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Moonstone Ring",
+            "rarity": "RARE",
+            "price": 20
+          },
+          {
+            "name": "Tsunami Orb",
+            "rarity": "EPIC",
+            "price": 40
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 35
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 161
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "exhausted"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1927,
+      "arena": 790
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Moonstone Ring",
+          "rarity": "RARE",
+          "price": 20
+        },
+        {
+          "name": "Tsunami Orb",
+          "rarity": "EPIC",
+          "price": 40
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 35
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 161
+    }
   }
 ]
