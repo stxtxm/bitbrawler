@@ -8,6 +8,17 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.7.3',
+    date: '2026-09-17',
+    title: '🎯 Overlays anatomiques — chaque item à sa place',
+    changes: [
+      '🎯 ANCRAGE ANATOMIQUE — le moteur détecte tête, torse, mains et pieds sur ton sprite : chaque overlay suit ta morpho, plus rien ne flotte.',
+      '🗡️ LAMES EN DIAGONALE — épées et dagues brandies vers le haut-droit, garde pile dans la main ; arcs et bâtons tenus verticalement.',
+      '🛡️ PLASTRON AJUSTÉ — l’armure épouse ton torse, avec gemme centrée et rivets de contour.',
+      '💎 COLLIER SANS FLOTTEMENT — chaîne et pendentif posés sur le haut du torse, joyau de casque centré.',
+    ],
+  },
+  {
     version: '5.7.2',
     date: '2026-09-17',
     title: '🛡️ Équipement v2 — armes en main, armures lisibles, persos x1.15',
