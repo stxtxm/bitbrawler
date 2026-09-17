@@ -63,27 +63,6 @@ export const getEssenceYield = (item: PixelItemAsset): number => {
   return ESSENCE_YIELD[item.rarity];
 };
 
-export type SalvageJackpotResult = {
-  multiplier: 1 | 2 | 10;
-  isJackpot: boolean;
-};
-
-export const rollSalvageJackpot = (
-  rng: () => number = Math.random,
-  isSurgeActive: boolean = false
-): SalvageJackpotResult => {
-  const megaRate = isSurgeActive ? SALVAGE_SURGE_MEGA_RATE : SALVAGE_JACKPOT_MEGA_RATE;
-  const jackpotRate = isSurgeActive ? SALVAGE_SURGE_JACKPOT_RATE : SALVAGE_JACKPOT_RATE;
-  const roll = rng();
-  if (roll < megaRate) {
-    return { multiplier: 10, isJackpot: true };
-  }
-  if (roll < megaRate + jackpotRate) {
-    return { multiplier: 2, isJackpot: true };
-  }
-  return { multiplier: 1, isJackpot: false };
-};
-
 /**
  * Returns the total essence yield from multiple items.
  */
