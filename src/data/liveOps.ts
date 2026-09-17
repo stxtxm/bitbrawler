@@ -238,6 +238,47 @@ export function getSurgeBiomeId(surgeOrDate: SurgeId | Date = new Date()): Biome
   return getSurgeBiome(surgeOrDate).id;
 }
 
+export const SALVAGE_SURGE_BONUS = { essencePerFight: 0.04 } as const;
+
+export function getSalvageSurgeWindowForDate(date: Date): { startsAt: Date; endsAt: Date } {
+  const { startsAt } = getBurstWindowForDate(date);
+  const mondayUtc = Date.UTC(startsAt.getUTCFullYear(), startsAt.getUTCMonth(), startsAt.getUTCDate() + 3);
+  const mondayDate = new Date(mondayUtc);
+  const endsAt = parisLocalToUtc(
+    mondayDate.getUTCFullYear(),
+    mondayDate.getUTCMonth() + 1,
+    mondayDate.getUTCDate(),
+    18,
+    0,
+  );
+  return { startsAt, endsAt };
+}
+
+export function isSalvageSurgeActive(date: Date = new Date()): boolean {
+  const parts = getZonedParts(date, LIVEOPS_TIMEZONE);
+  const weekday = getParisWeekday(date);
+  if (weekday === 5) return parts.hour >= 18;
+  if (weekday === 6) return true;
+  if (weekday === 0) return true;
+  if (weekday === 1) return parts.hour < 18;
+  return false;
+}
+
+export function isSalvageSurgeWindow(date: Date = new Date()): boolean {
+  return isSalvageSurgeActive(date);
+}
+
+export function getSalvageSurgeState(date: Date = new Date()): BurstState {
+  const { startsAt, endsAt } = getSalvageSurgeWindowForDate(date);
+  return {
+    active: isSalvageSurgeActive(date),
+    startsAt,
+    endsAt,
+  };
+}
+
+export const SALVAGE_SURGE_ACTIVE: boolean = isSalvageSurgeActive(new Date());
+
 export const ACTIVE_SURGE: SurgeId = getActiveSurge(new Date());
 export const BURST_ACTIVE: boolean = isBurstActive(new Date());
 export const SEASON_ID: string = getSeasonWindow(new Date()).id;
