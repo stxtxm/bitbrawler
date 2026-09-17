@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ITEM_ASSETS } from '../../data/itemAssets';
-import { applyEquipmentOverlays, PLATE_DARK, PLATE_INDEX, PLATE_LIGHT, PLATE_STEEL } from '../../components/sprite/equipOverlays';
+import { applyEquipmentOverlays, PLATE_DARK, PLATE_INDEX, PLATE_LIGHT, PLATE_STEEL, TRIM_DARK } from '../../components/sprite/equipOverlays';
 import { generateSprite16 } from '../../components/sprite/spriteGenerator';
 import { ACCENT_INDEX, ITEM_BLIT_OFFSET, TRIM_INDEX } from '../../components/sprite/spriteTypes';
 import { RARITY_TRIM } from '../../components/sprite/spritePalettes';
@@ -29,23 +29,36 @@ describe('equipment overlays v2', () => {
     expect(out.grid).toEqual(base.grid);
   });
 
-  it('blits the weapon art at double size next to the hand', () => {
+  it('swings blades up-right from the hand and holds poles vertically', () => {
     const base = generateSprite16('hand-anchor', 'male');
     const sword = byId('rusty_sword');
+    const bow = byId('hunter_bow');
     expect(sword).not.toBeNull();
-    const filled = sword?.pixels.flat().filter(Boolean).length ?? 0;
-    const out = applyEquipmentOverlays(base.grid, base.palette, {
+    expect(bow).not.toBeNull();
+    const hand = (() => {
+      for (let y = 24; y <= 31; y++) {
+        const row = base.grid[y];
+        for (let x = row.length - 1; x >= 0; x--) {
+          if (row[x] !== 0) return { x, y };
+        }
+      }
+      return { x: 17, y: 27 };
+    })();
+    const swung = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: sword,
       armor: null,
       accessory: null,
     });
-    const cells = blitCells(out.grid);
-    expect(cells.length).toBeGreaterThan(filled);
-    for (const [x, y] of cells) {
-      expect(x).toBeGreaterThanOrEqual(2);
-      expect(y).toBeGreaterThanOrEqual(6);
-      expect(y).toBeLessThanOrEqual(33);
-    }
+    expect(swung.grid[hand.y][hand.x]).toBeGreaterThanOrEqual(ITEM_BLIT_OFFSET);
+    const upRight = blitCells(swung.grid).filter(([x, y]) => x > hand.x && y < hand.y);
+    expect(upRight.length).toBeGreaterThan(0);
+    const held = applyEquipmentOverlays(base.grid, base.palette, {
+      weapon: bow,
+      armor: null,
+      accessory: null,
+    });
+    const vertical = blitCells(held.grid).filter(([x]) => x === hand.x || x === hand.x + 1);
+    expect(vertical.length).toBeGreaterThan(0);
   });
 
   it('renders different weapons with different art', () => {
@@ -109,8 +122,9 @@ describe('equipment overlays v2', () => {
       armor: null,
       accessory: byId('might_pendant'),
     });
-    expect(pendant.grid[18][11]).toBe(ACCENT_INDEX);
-    expect(pendant.grid[19][12]).toBe(ACCENT_INDEX);
+    const neckZone = pendant.grid.slice(20, 26).flat();
+    expect(neckZone).toContain(ACCENT_INDEX);
+    expect(neckZone).toContain(TRIM_INDEX);
     const orb = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: null,
       armor: null,
@@ -130,7 +144,7 @@ describe('equipment overlays v2', () => {
     const torso = out.grid.slice(20, 30).flat();
     expect(torso).toContain(PLATE_DARK);
     expect(torso).toContain(PLATE_LIGHT);
-    expect(torso).toContain(TRIM_INDEX);
+    expect(torso.some((c) => c === TRIM_INDEX || c === TRIM_DARK)).toBe(true);
     expect(out.palette[PLATE_DARK]).toBeDefined();
     expect(out.palette[PLATE_LIGHT]).toBeDefined();
   });
@@ -142,8 +156,8 @@ describe('equipment overlays v2', () => {
       armor: byId('iron_helm'),
       accessory: byId('might_pendant'),
     });
-    expect(crowned.grid[3][11]).toBe(ACCENT_INDEX);
-    expect(crowned.grid[16][11]).toBe(TRIM_INDEX);
+    expect(crowned.grid.slice(2, 6).flat()).toContain(ACCENT_INDEX);
+    expect(crowned.grid.slice(18, 24).flat()).toContain(TRIM_INDEX);
     const armed = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: byId('rusty_sword'),
       armor: null,

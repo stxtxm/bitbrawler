@@ -37,12 +37,41 @@ const RARITY_RANK: Record<ItemRarity, number> = {
   legendary: 4,
 };
 
-function paint(grid: SpriteGrid, x: number, y: number, v: number): void {
-  if (y < 0 || y >= grid.length || x < 0 || x >= grid[0].length) return;
-  grid[y][x] = v;
+interface Box {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
 }
 
-function findSideHand(grid: SpriteGrid, side: 'left' | 'right'): { x: number; y: number } | null {
+export interface BodyLandmarks {
+  head: Box;
+  torso: Box;
+  handR: { x: number; y: number };
+  handL: { x: number; y: number };
+}
+
+function boxOf(grid: SpriteGrid, y0: number, y1: number): Box {
+  let x0 = 99;
+  let x1 = -1;
+  let top = -1;
+  let bottom = -1;
+  for (let y = y0; y <= y1 && y < grid.length; y++) {
+    const row = grid[y];
+    if (!row) continue;
+    row.forEach((c, x) => {
+      if (c === 0) return;
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (top < 0) top = y;
+      bottom = y;
+    });
+  }
+  if (x1 < 0) return { x0: 0, y0, x1: 0, y1: y0 };
+  return { x0, y0: top, x1, y1: bottom };
+}
+
+function extremeHand(grid: SpriteGrid, side: 'left' | 'right'): { x: number; y: number } {
   let best: { x: number; y: number } | null = null;
   for (let y = 24; y <= 31; y++) {
     const row = grid[y];
@@ -63,64 +92,106 @@ function findSideHand(grid: SpriteGrid, side: 'left' | 'right'): { x: number; y:
       }
     }
   }
-  return best;
+  return best ?? (side === 'right' ? { x: 17, y: 27 } : { x: 6, y: 27 });
 }
 
-function blitArt(grid: SpriteGrid, art: number[][], ox: number, oy: number, scale: number): void {
+export function computeLandmarks(grid: SpriteGrid): BodyLandmarks {
+  return {
+    head: boxOf(grid, 0, 17),
+    torso: boxOf(grid, 18, 33),
+    handR: extremeHand(grid, 'right'),
+    handL: extremeHand(grid, 'left'),
+  };
+}
+
+interface ArtCell {
+  x: number;
+  y: number;
+  v: number;
+}
+
+function artCells(art: number[][]): ArtCell[] {
+  const cells: ArtCell[] = [];
   for (let y = 0; y < art.length; y++) {
     for (let x = 0; x < art[y].length; x++) {
-      const cell = art[y][x];
-      if (!cell) continue;
-      for (let dy = 0; dy < scale; dy++) {
-        for (let dx = 0; dx < scale; dx++) {
-          paint(grid, ox + x * scale + dx, oy + y * scale + dy, ITEM_BLIT_OFFSET + cell);
-        }
-      }
+      if (art[y][x] !== 0) cells.push({ x, y, v: art[y][x] });
     }
+  }
+  return cells;
+}
+
+function artGrip(art: number[][]): { x: number; y: number } {
+  let y = art.length - 1;
+  while (y > 0 && !art[y].some((c) => c !== 0)) y--;
+  let min = 99;
+  let max = -1;
+  art[y].forEach((c, x) => {
+    if (c !== 0) {
+      if (x < min) min = x;
+      if (x > max) max = x;
+    }
+  });
+  return { x: Math.floor((min + max) / 2), y };
+}
+
+function weaponStyle(name: string): 'blade' | 'pole' {
+  const n = name.toLowerCase();
+  if (n.includes('bow') || n.includes('staff') || n.includes('wand') || n.includes('spear') || n.includes('lance') || n.includes('hammer') || n.includes('mace') || n.includes('orb') || n.includes('scepter')) return 'pole';
+  return 'blade';
+}
+
+function paint(grid: SpriteGrid, x: number, y: number, v: number): void {
+  if (y < 0 || y >= grid.length || x < 0 || x >= grid[0].length) return;
+  grid[y][x] = v;
+}
+
+function paintBlade(grid: SpriteGrid, item: PixelItemAsset, hand: { x: number; y: number }): void {
+  const grip = artGrip(item.pixels);
+  for (const { x, y, v } of artCells(item.pixels)) {
+    const dx = x - grip.x;
+    const dy = y - grip.y;
+    const rx = Math.round((dx - dy) / Math.SQRT2);
+    const ry = Math.round((dx + dy) / Math.SQRT2);
+    paint(grid, hand.x + rx, hand.y + ry, ITEM_BLIT_OFFSET + v);
   }
 }
 
-function paintWeapon(grid: SpriteGrid, item: PixelItemAsset): void {
-  const hand = findSideHand(grid, 'right') ?? { x: 17, y: 27 };
-  const art = item.pixels;
-  const w = art[0]?.length ?? 8;
-  const h = art.length;
-  blitArt(grid, art, hand.x - w + 1, hand.y - h * 2 + 4, 2);
+function paintPole(grid: SpriteGrid, item: PixelItemAsset, hand: { x: number; y: number }): void {
+  const grip = artGrip(item.pixels);
+  for (const { x, y, v } of artCells(item.pixels)) {
+    paint(grid, hand.x + (x - grip.x), hand.y + (y - grip.y), ITEM_BLIT_OFFSET + v);
+  }
 }
 
-function paintShield(grid: SpriteGrid, item: PixelItemAsset): void {
-  const hand = findSideHand(grid, 'left') ?? { x: 6, y: 27 };
-  const art = item.pixels;
-  const w = art[0]?.length ?? 8;
-  blitArt(grid, art, hand.x - w + 1, hand.y - art.length * 2 + 4, 2);
-  let cx = 0;
-  let cy = 0;
-  let count = 0;
-  for (let y = 12; y <= 33; y++) {
-    for (let x = 0; x <= 12; x++) {
+function paintShield(grid: SpriteGrid, item: PixelItemAsset, hand: { x: number; y: number }): void {
+  const cells = artCells(item.pixels);
+  if (cells.length === 0) return;
+  const xs = cells.map((c) => c.x);
+  const ys = cells.map((c) => c.y);
+  const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+  const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+  for (const { x, y, v } of cells) {
+    const sx = Math.round((x - cx) * 2 + hand.x);
+    const sy = Math.round((y - cy) * 2 + hand.y);
+    paint(grid, sx, sy, ITEM_BLIT_OFFSET + v);
+  }
+  paint(grid, hand.x, hand.y, ACCENT_INDEX);
+}
+
+function paintChestplate(grid: SpriteGrid, torso: Box): void {
+  const y0 = Math.max(20, torso.y0);
+  const y1 = Math.min(29, torso.y1);
+  const cx = Math.round((torso.x0 + torso.x1) / 2);
+  for (let y = y0; y <= y1; y++) {
+    for (let x = torso.x0; x <= torso.x1; x++) {
       const cell = grid[y]?.[x] ?? 0;
-      if (cell >= ITEM_BLIT_OFFSET && cell < ITEM_BLIT_OFFSET + 10) {
-        cx += x;
-        cy += y;
-        count++;
-      }
-    }
-  }
-  if (count > 0) paint(grid, Math.round(cx / count), Math.round(cy / count), ACCENT_INDEX);
-}
-
-function paintChestplate(grid: SpriteGrid): void {
-  for (let y = 20; y <= 29; y++) {
-    for (let x = 6; x <= 17; x++) {
-      const cell = grid[y][x];
       if (cell !== 5 && cell !== shadeIndexOf(5)) continue;
       const edge =
-        x === 6 || x === 17 ||
         grid[y - 1]?.[x] === 0 || grid[y + 1]?.[x] === 0 ||
         grid[y][x - 1] === 0 || grid[y][x + 1] === 0;
       if (edge) {
         grid[y][x] = TRIM_INDEX;
-      } else if (x === 11 || x === 12) {
+      } else if (x === cx - 1 || x === cx) {
         grid[y][x] = PLATE_LIGHT;
       } else if ((x + y) % 2 === 0) {
         grid[y][x] = PLATE_DARK;
@@ -129,22 +200,25 @@ function paintChestplate(grid: SpriteGrid): void {
       }
     }
   }
-  paint(grid, 11, 23, ACCENT_INDEX);
-  paint(grid, 12, 23, ACCENT_INDEX);
-  paint(grid, 11, 24, ACCENT_INDEX);
-  paint(grid, 12, 24, ACCENT_INDEX);
+  const gy = Math.min(24, y1);
+  paint(grid, cx - 1, gy - 1, ACCENT_INDEX);
+  paint(grid, cx, gy - 1, ACCENT_INDEX);
+  paint(grid, cx - 1, gy, ACCENT_INDEX);
+  paint(grid, cx, gy, ACCENT_INDEX);
 }
 
-function paintHeadgear(grid: SpriteGrid): void {
-  for (let y = 2; y <= 9; y++) {
-    for (let x = 0; x < 24; x++) {
-      const cell = grid[y][x];
+function paintHeadgear(grid: SpriteGrid, head: Box): void {
+  const bandY = head.y0 + 4;
+  const cx = Math.round((head.x0 + head.x1) / 2);
+  for (let y = head.y0; y <= Math.min(9, head.y1); y++) {
+    for (let x = head.x0; x <= head.x1; x++) {
+      const cell = grid[y]?.[x] ?? 0;
       if (cell !== 4 && cell !== shadeIndexOf(4) && cell !== highlightIndexOf(4)) continue;
-      grid[y][x] = y <= 4 ? TRIM_INDEX : PLATE_INDEX;
+      grid[y][x] = y <= bandY ? TRIM_INDEX : PLATE_INDEX;
     }
   }
-  paint(grid, 11, 3, ACCENT_INDEX);
-  paint(grid, 12, 3, ACCENT_INDEX);
+  paint(grid, cx - 1, head.y0 + 1, ACCENT_INDEX);
+  paint(grid, cx, head.y0 + 1, ACCENT_INDEX);
 }
 
 function paintBoots(grid: SpriteGrid): void {
@@ -170,49 +244,39 @@ function paintArmbands(grid: SpriteGrid): void {
   }
 }
 
-function paintNeckGem(grid: SpriteGrid, gem: number): void {
-  paint(grid, 11, 16, TRIM_INDEX);
-  paint(grid, 12, 16, TRIM_INDEX);
-  paint(grid, 11, 17, TRIM_INDEX);
-  paint(grid, 12, 17, TRIM_INDEX);
-  paint(grid, 11, 18, gem);
-  paint(grid, 12, 18, gem);
-  paint(grid, 11, 19, gem);
-  paint(grid, 12, 19, gem);
+function paintNeckGem(grid: SpriteGrid, gem: number, torso: Box): void {
+  const cx = Math.round((torso.x0 + torso.x1) / 2);
+  const ny = Math.max(20, torso.y0);
+  paint(grid, cx - 1, ny, TRIM_INDEX);
+  paint(grid, cx, ny, TRIM_INDEX);
+  paint(grid, cx - 1, ny + 1, TRIM_INDEX);
+  paint(grid, cx, ny + 1, TRIM_INDEX);
+  paint(grid, cx - 1, ny + 2, gem);
+  paint(grid, cx, ny + 2, gem);
+  paint(grid, cx - 1, ny + 3, gem);
+  paint(grid, cx, ny + 3, gem);
 }
 
-function paintBrooch(grid: SpriteGrid): void {
-  if (grid[22][12] !== ACCENT_INDEX) paint(grid, 12, 22, TRIM_INDEX);
-  if (grid[22][11] !== ACCENT_INDEX) paint(grid, 11, 22, TRIM_INDEX);
+function paintBrooch(grid: SpriteGrid, torso: Box): void {
+  const cx = Math.round((torso.x0 + torso.x1) / 2);
+  const y = Math.min(22, torso.y1);
+  if (grid[y]?.[cx] !== ACCENT_INDEX) paint(grid, cx, y, TRIM_INDEX);
+  if (grid[y]?.[cx - 1] !== ACCENT_INDEX) paint(grid, cx - 1, y, TRIM_INDEX);
 }
 
-function tintOverlayEdges(grid: SpriteGrid): void {
-  const darkOf: Record<number, number> = {
-    [TRIM_INDEX]: TRIM_DARK,
-    [PLATE_INDEX]: PLATE_DARK,
-  };
-  for (let y = 0; y < grid.length; y++) {
-    for (let x = 0; x < grid[y].length; x++) {
-      const dark = darkOf[grid[y][x]];
-      if (dark === undefined) continue;
-      const edge =
-        grid[y - 1]?.[x] === 0 || grid[y + 1]?.[x] === 0 ||
-        grid[y][x - 1] === 0 || grid[y][x + 1] === 0;
-      if (edge) grid[y][x] = dark;
-    }
-  }
-}
-
-function paintFloatingOrb(grid: SpriteGrid, item: PixelItemAsset): void {
-  blitArt(grid, item.pixels, 17, 6, 1);
+function paintFloatingOrb(grid: SpriteGrid, item: PixelItemAsset, head: Box): void {
+  const cells = artCells(item.pixels);
+  if (cells.length === 0) return;
+  const xs = cells.map((c) => c.x);
+  const ys = cells.map((c) => c.y);
+  const ox = head.x1 + 1 - Math.min(...xs);
+  const oy = head.y0 + 1 - Math.min(...ys);
   let top: { x: number; y: number } | null = null;
-  for (let y = 0; y < 14; y++) {
-    for (let x = 17; x < 24; x++) {
-      const cell = grid[y]?.[x] ?? 0;
-      if (cell >= ITEM_BLIT_OFFSET && cell < ITEM_BLIT_OFFSET + 10) {
-        if (!top || y < top.y) top = { x, y };
-      }
-    }
+  for (const { x, y, v } of cells) {
+    const px = ox + x;
+    const py = oy + y;
+    paint(grid, px, py, ITEM_BLIT_OFFSET + v);
+    if (!top || py < top.y) top = { x: px, y: py };
   }
   if (top) paint(grid, top.x, top.y - 1, ACCENT_INDEX);
 }
@@ -262,25 +326,46 @@ export function applyEquipmentOverlays(
     if (key === 0) continue;
     next[ITEM_BLIT_OFFSET + key] = ITEM_PALETTE[key];
   }
+  const marks = computeLandmarks(out);
   let boots = false;
-  if (loadout.weapon) paintWeapon(out, loadout.weapon);
+  if (loadout.weapon) {
+    if (weaponStyle(loadout.weapon.name) === 'blade') paintBlade(out, loadout.weapon, marks.handR);
+    else paintPole(out, loadout.weapon, marks.handR);
+  }
   if (loadout.armor) {
     const kind = armorKind(loadout.armor.name);
-    if (kind === 'helm') paintHeadgear(out);
+    if (kind === 'helm') paintHeadgear(out, marks.head);
     else if (kind === 'boots') boots = true;
-    else if (kind === 'shield') paintShield(out, loadout.armor);
+    else if (kind === 'shield') paintShield(out, loadout.armor, marks.handL);
     else if (kind === 'arms') paintArmbands(out);
-    else paintChestplate(out);
+    else paintChestplate(out, marks.torso);
   }
   if (loadout.accessory) {
     const kind = accessoryKind(loadout.accessory.name);
-    if (kind === 'head') paintHeadgear(out);
+    if (kind === 'head') paintHeadgear(out, marks.head);
     else if (kind === 'boots') boots = true;
-    else if (kind === 'neck') paintNeckGem(out, ACCENT_INDEX);
-    else if (kind === 'orb') paintFloatingOrb(out, loadout.accessory);
-    else paintBrooch(out);
+    else if (kind === 'neck') paintNeckGem(out, ACCENT_INDEX, marks.torso);
+    else if (kind === 'orb') paintFloatingOrb(out, loadout.accessory, marks.head);
+    else paintBrooch(out, marks.torso);
   }
   tintOverlayEdges(out);
   if (boots) paintBoots(out);
   return { grid: out, palette: next };
+}
+
+function tintOverlayEdges(grid: SpriteGrid): void {
+  const darkOf: Record<number, number> = {
+    [TRIM_INDEX]: TRIM_DARK,
+    [PLATE_INDEX]: PLATE_DARK,
+  };
+  for (let y = 0; y < grid.length; y++) {
+    for (let x = 0; x < grid[y].length; x++) {
+      const dark = darkOf[grid[y][x]];
+      if (dark === undefined) continue;
+      const edge =
+        grid[y - 1]?.[x] === 0 || grid[y + 1]?.[x] === 0 ||
+        grid[y][x - 1] === 0 || grid[y][x + 1] === 0;
+      if (edge) grid[y][x] = dark;
+    }
+  }
 }
