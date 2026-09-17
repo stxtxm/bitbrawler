@@ -5,7 +5,9 @@ export const SPRITE_BUILDS: SpriteBuild[] = ['slim', 'standard', 'broad'];
 export const SPRITE_WIDTH = 24;
 export const SPRITE_HEIGHT = 36;
 
-export const SPRITE_DISPLAY_SCALE = 0.75;
+export const SPRITE_DISPLAY_SCALE = 0.9;
+
+export const ITEM_BLIT_OFFSET = 70;
 
 export type SpriteGrid = number[][];
 
