@@ -5,7 +5,7 @@ export const SPRITE_BUILDS: SpriteBuild[] = ['slim', 'standard', 'broad'];
 export const SPRITE_WIDTH = 24;
 export const SPRITE_HEIGHT = 36;
 
-export const SPRITE_DISPLAY_SCALE = 1;
+export const SPRITE_DISPLAY_SCALE = 1.15;
 
 export const ITEM_BLIT_OFFSET = 70;
 

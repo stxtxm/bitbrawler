@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ITEM_ASSETS } from '../../data/itemAssets';
-import { applyEquipmentOverlays, PLATE_INDEX, PLATE_STEEL } from '../../components/sprite/equipOverlays';
+import { applyEquipmentOverlays, PLATE_DARK, PLATE_INDEX, PLATE_LIGHT, PLATE_STEEL } from '../../components/sprite/equipOverlays';
 import { generateSprite16 } from '../../components/sprite/spriteGenerator';
 import { ACCENT_INDEX, ITEM_BLIT_OFFSET, TRIM_INDEX } from '../../components/sprite/spriteTypes';
 import { RARITY_TRIM } from '../../components/sprite/spritePalettes';
@@ -118,6 +118,49 @@ describe('equipment overlays v2', () => {
     });
     const orbCells = blitCells(orb.grid).filter(([x, y]) => x >= 17 && y <= 14);
     expect(orbCells.length).toBeGreaterThan(0);
+  });
+
+  it('dithers the plate, ridges the center and tints overlay edges', () => {
+    const base = generateSprite16('polish-check', 'male', { bodyType: 'basic' });
+    const out = applyEquipmentOverlays(base.grid, base.palette, {
+      weapon: null,
+      armor: byId('golem_plate'),
+      accessory: null,
+    });
+    const torso = out.grid.slice(20, 30).flat();
+    expect(torso).toContain(PLATE_DARK);
+    expect(torso).toContain(PLATE_LIGHT);
+    expect(torso).toContain(TRIM_INDEX);
+    expect(out.palette[PLATE_DARK]).toBeDefined();
+    expect(out.palette[PLATE_LIGHT]).toBeDefined();
+  });
+
+  it('jewels the headgear, chains the pendant and covers the hand with the weapon', () => {
+    const base = generateSprite16('detail-check', 'female');
+    const crowned = applyEquipmentOverlays(base.grid, base.palette, {
+      weapon: null,
+      armor: byId('iron_helm'),
+      accessory: byId('might_pendant'),
+    });
+    expect(crowned.grid[3][11]).toBe(ACCENT_INDEX);
+    expect(crowned.grid[16][11]).toBe(TRIM_INDEX);
+    const armed = applyEquipmentOverlays(base.grid, base.palette, {
+      weapon: byId('rusty_sword'),
+      armor: null,
+      accessory: null,
+    });
+    let handCovered = false;
+    for (let y = 24; y <= 31; y++) {
+      const row = base.grid[y];
+      for (let x = row.length - 1; x >= 0; x--) {
+        if (row[x] !== 0) {
+          const cell = armed.grid[y][x];
+          if (cell >= ITEM_BLIT_OFFSET && cell < ITEM_BLIT_OFFSET + 10) handCovered = true;
+          break;
+        }
+      }
+    }
+    expect(handCovered).toBe(true);
   });
 
   it('uses the highest rarity for the trim and survives unknown ids', () => {
