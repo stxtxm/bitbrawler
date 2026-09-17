@@ -8,6 +8,18 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.7.2',
+    date: '2026-09-17',
+    title: '🛡️ Équipement v2 — armes en main, armures lisibles, persos x1.15',
+    changes: [
+      '🗡️ ARMES EN MAIN — le vrai pixel art de ton arme (×2) dans la main du perso, ancré dynamiquement quelle que soit la morpho.',
+      '🛡️ ARMURES LISIBLES — plastron acier damassé avec gemme élémentaire, heaumes, bottes, brassards, bouclier en main gauche.',
+      '💎 ACCESSOIRES VISIBLES — pendentifs au cou avec chaînette, orbes flottants, broches, couronnes serties.',
+      '✒️ FINITION ENCRE — contours assombris sur tous les overlays, joyaux brillants préservés.',
+      '🔍 PERSOS AGRANDIS x1.15 pour mieux admirer ton stuff.',
+    ],
+  },
+  {
     version: '5.7.1',
     date: '2026-09-16',
     title: '👾 SNES newave — outline, dither, Game Boy mode, 60fps',

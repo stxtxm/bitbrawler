@@ -2,10 +2,14 @@ import { ITEM_ASSETS, ITEM_PALETTE } from '../../data/itemAssets';
 import { ELEMENT_COLORS, ItemRarity, PixelItemAsset } from '../../types/Item';
 import { getItemById } from '../../utils/equipmentUtils';
 import { ACCENT_INDEX, ITEM_BLIT_OFFSET, SpriteGrid, SpritePalette, TRIM_INDEX, highlightIndexOf, shadeIndexOf } from './spriteTypes';
-import { RARITY_TRIM } from './spritePalettes';
+import { OUTLINE_HEX, RARITY_TRIM, highlightHex, mixHex } from './spritePalettes';
 
 export const PLATE_INDEX = 62;
 export const PLATE_STEEL = '#a8b4c0';
+export const TRIM_DARK = 90;
+export const ACCENT_DARK = 91;
+export const PLATE_DARK = 92;
+export const PLATE_LIGHT = 102;
 
 export interface ResolvedLoadout {
   weapon: PixelItemAsset | null;
@@ -89,6 +93,20 @@ function paintShield(grid: SpriteGrid, item: PixelItemAsset): void {
   const art = item.pixels;
   const w = art[0]?.length ?? 8;
   blitArt(grid, art, hand.x - w + 1, hand.y - art.length * 2 + 4, 2);
+  let cx = 0;
+  let cy = 0;
+  let count = 0;
+  for (let y = 12; y <= 33; y++) {
+    for (let x = 0; x <= 12; x++) {
+      const cell = grid[y]?.[x] ?? 0;
+      if (cell >= ITEM_BLIT_OFFSET && cell < ITEM_BLIT_OFFSET + 10) {
+        cx += x;
+        cy += y;
+        count++;
+      }
+    }
+  }
+  if (count > 0) paint(grid, Math.round(cx / count), Math.round(cy / count), ACCENT_INDEX);
 }
 
 function paintChestplate(grid: SpriteGrid): void {
@@ -100,7 +118,15 @@ function paintChestplate(grid: SpriteGrid): void {
         x === 6 || x === 17 ||
         grid[y - 1]?.[x] === 0 || grid[y + 1]?.[x] === 0 ||
         grid[y][x - 1] === 0 || grid[y][x + 1] === 0;
-      grid[y][x] = edge ? TRIM_INDEX : PLATE_INDEX;
+      if (edge) {
+        grid[y][x] = TRIM_INDEX;
+      } else if (x === 11 || x === 12) {
+        grid[y][x] = PLATE_LIGHT;
+      } else if ((x + y) % 2 === 0) {
+        grid[y][x] = PLATE_DARK;
+      } else {
+        grid[y][x] = PLATE_INDEX;
+      }
     }
   }
   paint(grid, 11, 23, ACCENT_INDEX);
@@ -117,6 +143,8 @@ function paintHeadgear(grid: SpriteGrid): void {
       grid[y][x] = y <= 4 ? TRIM_INDEX : PLATE_INDEX;
     }
   }
+  paint(grid, 11, 3, ACCENT_INDEX);
+  paint(grid, 12, 3, ACCENT_INDEX);
 }
 
 function paintBoots(grid: SpriteGrid): void {
@@ -143,6 +171,10 @@ function paintArmbands(grid: SpriteGrid): void {
 }
 
 function paintNeckGem(grid: SpriteGrid, gem: number): void {
+  paint(grid, 11, 16, TRIM_INDEX);
+  paint(grid, 12, 16, TRIM_INDEX);
+  paint(grid, 11, 17, TRIM_INDEX);
+  paint(grid, 12, 17, TRIM_INDEX);
   paint(grid, 11, 18, gem);
   paint(grid, 12, 18, gem);
   paint(grid, 11, 19, gem);
@@ -154,8 +186,35 @@ function paintBrooch(grid: SpriteGrid): void {
   if (grid[22][11] !== ACCENT_INDEX) paint(grid, 11, 22, TRIM_INDEX);
 }
 
+function tintOverlayEdges(grid: SpriteGrid): void {
+  const darkOf: Record<number, number> = {
+    [TRIM_INDEX]: TRIM_DARK,
+    [PLATE_INDEX]: PLATE_DARK,
+  };
+  for (let y = 0; y < grid.length; y++) {
+    for (let x = 0; x < grid[y].length; x++) {
+      const dark = darkOf[grid[y][x]];
+      if (dark === undefined) continue;
+      const edge =
+        grid[y - 1]?.[x] === 0 || grid[y + 1]?.[x] === 0 ||
+        grid[y][x - 1] === 0 || grid[y][x + 1] === 0;
+      if (edge) grid[y][x] = dark;
+    }
+  }
+}
+
 function paintFloatingOrb(grid: SpriteGrid, item: PixelItemAsset): void {
   blitArt(grid, item.pixels, 17, 6, 1);
+  let top: { x: number; y: number } | null = null;
+  for (let y = 0; y < 14; y++) {
+    for (let x = 17; x < 24; x++) {
+      const cell = grid[y]?.[x] ?? 0;
+      if (cell >= ITEM_BLIT_OFFSET && cell < ITEM_BLIT_OFFSET + 10) {
+        if (!top || y < top.y) top = { x, y };
+      }
+    }
+  }
+  if (top) paint(grid, top.x, top.y - 1, ACCENT_INDEX);
 }
 
 function armorKind(name: string): 'helm' | 'boots' | 'shield' | 'arms' | 'chest' {
@@ -187,21 +246,28 @@ export function applyEquipmentOverlays(
   );
   if (equipped.length === 0) return { grid: out, palette };
   const top = equipped.reduce((a, b) => (RARITY_RANK[b.rarity] > RARITY_RANK[a.rarity] ? b : a));
+  const trim = RARITY_TRIM[top.rarity];
+  const accent = top.element ? ELEMENT_COLORS[top.element] : trim;
   const next: SpritePalette = {
     ...palette,
-    [TRIM_INDEX]: RARITY_TRIM[top.rarity],
-    [ACCENT_INDEX]: top.element ? ELEMENT_COLORS[top.element] : RARITY_TRIM[top.rarity],
+    [TRIM_INDEX]: trim,
+    [ACCENT_INDEX]: accent,
     [PLATE_INDEX]: PLATE_STEEL,
+    [TRIM_DARK]: mixHex(trim, OUTLINE_HEX, 0.5),
+    [ACCENT_DARK]: mixHex(accent, OUTLINE_HEX, 0.5),
+    [PLATE_DARK]: mixHex(PLATE_STEEL, OUTLINE_HEX, 0.5),
+    [PLATE_LIGHT]: highlightHex(PLATE_STEEL),
   };
   for (const key of Object.keys(ITEM_PALETTE).map(Number)) {
     if (key === 0) continue;
     next[ITEM_BLIT_OFFSET + key] = ITEM_PALETTE[key];
   }
+  let boots = false;
   if (loadout.weapon) paintWeapon(out, loadout.weapon);
   if (loadout.armor) {
     const kind = armorKind(loadout.armor.name);
     if (kind === 'helm') paintHeadgear(out);
-    else if (kind === 'boots') paintBoots(out);
+    else if (kind === 'boots') boots = true;
     else if (kind === 'shield') paintShield(out, loadout.armor);
     else if (kind === 'arms') paintArmbands(out);
     else paintChestplate(out);
@@ -209,10 +275,12 @@ export function applyEquipmentOverlays(
   if (loadout.accessory) {
     const kind = accessoryKind(loadout.accessory.name);
     if (kind === 'head') paintHeadgear(out);
-    else if (kind === 'boots') paintBoots(out);
+    else if (kind === 'boots') boots = true;
     else if (kind === 'neck') paintNeckGem(out, ACCENT_INDEX);
     else if (kind === 'orb') paintFloatingOrb(out, loadout.accessory);
     else paintBrooch(out);
   }
+  tintOverlayEdges(out);
+  if (boots) paintBoots(out);
   return { grid: out, palette: next };
 }
