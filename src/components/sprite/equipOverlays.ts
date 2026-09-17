@@ -1,7 +1,7 @@
-import { ITEM_ASSETS } from '../../data/itemAssets';
+import { ITEM_ASSETS, ITEM_PALETTE } from '../../data/itemAssets';
 import { ELEMENT_COLORS, ItemRarity, PixelItemAsset } from '../../types/Item';
 import { getItemById } from '../../utils/equipmentUtils';
-import { ACCENT_INDEX, SpriteGrid, SpritePalette, TRIM_INDEX } from './spriteTypes';
+import { ACCENT_INDEX, ITEM_BLIT_OFFSET, SpriteGrid, SpritePalette, TRIM_INDEX } from './spriteTypes';
 import { RARITY_TRIM } from './spritePalettes';
 
 export interface ResolvedLoadout {
@@ -35,19 +35,33 @@ function paint(grid: SpriteGrid, x: number, y: number, v: number): void {
   grid[y][x] = v;
 }
 
-function paintWeapon(grid: SpriteGrid): void {
-  for (let y = 18; y <= 32; y++) {
-    paint(grid, 20, y, 9);
-    paint(grid, 21, y, 9);
+function findHand(grid: SpriteGrid): { x: number; y: number } | null {
+  let best: { x: number; y: number } | null = null;
+  for (let y = 24; y <= 31; y++) {
+    const row = grid[y];
+    if (!row) continue;
+    for (let x = row.length - 1; x >= 0; x--) {
+      if (row[x] !== 0) {
+        if (!best || x > best.x) best = { x, y };
+        break;
+      }
+    }
   }
-  for (let y = 18; y <= 20; y++) {
-    paint(grid, 19, y, TRIM_INDEX);
-    paint(grid, 22, y, TRIM_INDEX);
+  return best;
+}
+
+function blitWeapon(grid: SpriteGrid, item: PixelItemAsset): void {
+  const hand = findHand(grid) ?? { x: 17, y: 27 };
+  const art = item.pixels;
+  const oy = hand.y - art.length + 2;
+  const ox = hand.x - Math.floor((art[0]?.length ?? 8) / 2);
+  for (let y = 0; y < art.length; y++) {
+    for (let x = 0; x < art[y].length; x++) {
+      const cell = art[y][x];
+      if (!cell) continue;
+      paint(grid, ox + x, oy + y, ITEM_BLIT_OFFSET + cell);
+    }
   }
-  paint(grid, 20, 17, TRIM_INDEX);
-  paint(grid, 21, 17, TRIM_INDEX);
-  paint(grid, 20, 33, ACCENT_INDEX);
-  paint(grid, 21, 33, ACCENT_INDEX);
 }
 
 function paintArmor(grid: SpriteGrid): void {
@@ -88,7 +102,11 @@ export function applyEquipmentOverlays(
     [TRIM_INDEX]: RARITY_TRIM[top.rarity],
     [ACCENT_INDEX]: top.element ? ELEMENT_COLORS[top.element] : RARITY_TRIM[top.rarity],
   };
-  if (loadout.weapon) paintWeapon(out);
+  for (const key of Object.keys(ITEM_PALETTE).map(Number)) {
+    if (key === 0) continue;
+    next[ITEM_BLIT_OFFSET + key] = ITEM_PALETTE[key];
+  }
+  if (loadout.weapon) blitWeapon(out, loadout.weapon);
   if (loadout.armor) paintArmor(out);
   if (loadout.accessory) paintAccessory(out);
   return { grid: out, palette: next };

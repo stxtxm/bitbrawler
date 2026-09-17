@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { ITEM_ASSETS } from '../../data/itemAssets';
 import { applyEquipmentOverlays } from '../../components/sprite/equipOverlays';
 import { generateSprite16 } from '../../components/sprite/spriteGenerator';
-import { ACCENT_INDEX, TRIM_INDEX } from '../../components/sprite/spriteTypes';
+import { ACCENT_INDEX, ITEM_BLIT_OFFSET, TRIM_INDEX } from '../../components/sprite/spriteTypes';
 import { RARITY_TRIM } from '../../components/sprite/spritePalettes';
 import { ELEMENT_COLORS } from '../../types/Item';
 
@@ -30,6 +30,43 @@ describe('equipment overlays', () => {
     expect(flat).toContain(TRIM_INDEX);
     expect(flat).toContain(9);
     expect(out.palette[TRIM_INDEX]).toBeDefined();
+  });
+
+  it('blits the real weapon art anchored at the hand', () => {
+    const base = generateSprite16('hand-anchor', 'male');
+    const sword = ITEM_ASSETS.find((i) => i.id === 'rusty_sword') ?? null;
+    expect(sword).not.toBeNull();
+    const out = applyEquipmentOverlays(base.grid, base.palette, {
+      weapon: sword,
+      armor: null,
+      accessory: null,
+    });
+    const blitCells: Array<[number, number]> = [];
+    out.grid.forEach((row, y) =>
+      row.forEach((cell, x) => {
+        if (cell >= ITEM_BLIT_OFFSET && cell < ITEM_BLIT_OFFSET + 10) blitCells.push([x, y]);
+      }),
+    );
+    expect(blitCells.length).toBeGreaterThan(0);
+    for (const [x, y] of blitCells) {
+      expect(x).toBeGreaterThanOrEqual(8);
+      expect(y).toBeGreaterThanOrEqual(14);
+      expect(y).toBeLessThanOrEqual(33);
+    }
+  });
+
+  it('renders different weapons with different art', () => {
+    const base = generateSprite16('weapon-diff', 'female');
+    const sword = ITEM_ASSETS.find((i) => i.id === 'rusty_sword') ?? null;
+    const bow = ITEM_ASSETS.find((i) => i.id === 'hunter_bow') ?? null;
+    if (!sword || !bow) return;
+    const a = JSON.stringify(
+      applyEquipmentOverlays(base.grid, base.palette, { weapon: sword, armor: null, accessory: null }).grid,
+    );
+    const b = JSON.stringify(
+      applyEquipmentOverlays(base.grid, base.palette, { weapon: bow, armor: null, accessory: null }).grid,
+    );
+    expect(a).not.toBe(b);
   });
 
   it('uses the highest rarity for the trim and the top element for the accent', () => {
