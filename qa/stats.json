@@ -85629,5 +85629,303 @@
       "purchased_offer": 0,
       "essence_after_purchase": 53
     }
+  },
+  {
+    "date": "2026-09-17T01:01:23.587Z",
+    "run": "2026-09-17",
+    "character": "QA-PERSI-3",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": null,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 10,
+      "vit": 18,
+      "dex": 18,
+      "luk": 11,
+      "int": 32,
+      "foc": 16,
+      "fights": 0
+    },
+    "initial_level": 21,
+    "initial_xp": {
+      "current": 10263,
+      "max": 18232
+    },
+    "initial_max_hp": 611,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Tempest Blade",
+        "rarity": "EPIC"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Iron Greaves",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Swift Boots",
+        "rarity": "UNCOMMON"
+      }
+    ],
+    "initial_streak": 2,
+    "final_stats": {
+      "level": 21,
+      "xp": 11050,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 10,
+      "vit": 18,
+      "dex": 18,
+      "luk": 11,
+      "int": 32,
+      "foc": 16,
+      "fights": 0
+    },
+    "final_max_hp": 611,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Tempest Blade",
+        "rarity": "EPIC"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Iron Greaves",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Swift Boots",
+        "rarity": "UNCOMMON"
+      }
+    ],
+    "final_streak": 2,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Tempest Blade",
+        "rarity": "EPIC"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Iron Greaves",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Swift Boots",
+        "rarity": "UNCOMMON"
+      }
+    ],
+    "lootbox_streak": 32,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 33073,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "chimera"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 43,
+      "xp_events": [
+        {
+          "time_ms": 33073,
+          "xp": 43,
+          "monster": "chimera",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        514,
+        1539,
+        33073
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 43,
+        "essence": 0.36,
+        "monster": "chimera"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.76,
+      "next_level_eta": "⬆ 12m 50s",
+      "power_ratio": "⚔ 0.73x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.28x",
+      "interval": "10.7s",
+      "streak_bonus": null
+    },
+    "initial_essence": 94.36,
+    "final_essence": 31.55,
+    "essence": {
+      "before_idle": 94.36,
+      "after_idle": 94.72,
+      "per_fight": [],
+      "forge_before": 95,
+      "forge_after_salvage": 100,
+      "forge_after_fusion": 100,
+      "forge_after_upgrade": 50,
+      "forge_after": 50,
+      "shop_before": 51,
+      "shop_after": 31,
+      "final": 31.55,
+      "flow": {
+        "idle_gained": 0.36,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 50,
+        "forge_net": -45,
+        "shop_cost": 20,
+        "net_change": -62.81
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 95,
+      "essence_after_salvage": 100,
+      "essence_after_fusion": 100,
+      "essence_after_upgrade": 50,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 50,
+      "items_after": 0,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": 50,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "RARE",
+      "cost": 20,
+      "essence_before": 51,
+      "essence_after": 31,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Iron Greaves",
+            "rarity": "COMMON",
+            "price": 20
+          },
+          {
+            "name": "Aegis Plate",
+            "rarity": "EPIC",
+            "price": 40
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 35
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 31
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "exhausted"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1253,
+      "arena": 343,
+      "arena_reload": 12
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Iron Greaves",
+          "rarity": "COMMON",
+          "price": 20
+        },
+        {
+          "name": "Aegis Plate",
+          "rarity": "EPIC",
+          "price": 40
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 35
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 31
+    }
   }
 ]
