@@ -8,6 +8,16 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.7.4',
+    date: '2026-09-17',
+    title: '🎯 Overlays anatomiques v2 — fini la rotation, chaque item à sa place',
+    changes: [
+      '🗡️ ARMES DROITES — fini la rotation 45° qui éparpillait les haches : l’arme se tient verticale à droite du bras, base à hauteur de main.',
+      '💎 BIJOUX CENTRÉS — joyaux et pendentifs ancrés au centre fixe du visage, plus jamais décalés par les cheveux.',
+      '🔮 ORBE DÉGAGÉ — flotte à droite de la tête, centré verticalement, sans chevaucher ni les cheveux ni l’arme.',
+    ],
+  },
+  {
     version: '5.7.3',
     date: '2026-09-17',
     title: '🎯 Overlays anatomiques — chaque item à sa place',

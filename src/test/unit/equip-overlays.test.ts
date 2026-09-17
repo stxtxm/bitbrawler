@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ITEM_ASSETS } from '../../data/itemAssets';
-import { applyEquipmentOverlays, PLATE_DARK, PLATE_INDEX, PLATE_LIGHT, PLATE_STEEL, TRIM_DARK } from '../../components/sprite/equipOverlays';
+import { applyEquipmentOverlays, computeLandmarks, PLATE_DARK, PLATE_INDEX, PLATE_LIGHT, PLATE_STEEL, TRIM_DARK } from '../../components/sprite/equipOverlays';
 import { generateSprite16 } from '../../components/sprite/spriteGenerator';
 import { ACCENT_INDEX, ITEM_BLIT_OFFSET, TRIM_INDEX } from '../../components/sprite/spriteTypes';
 import { RARITY_TRIM } from '../../components/sprite/spritePalettes';
@@ -29,36 +29,28 @@ describe('equipment overlays v2', () => {
     expect(out.grid).toEqual(base.grid);
   });
 
-  it('swings blades up-right from the hand and holds poles vertically', () => {
+  it('stands weapons beside the hand with their base at hand height', () => {
     const base = generateSprite16('hand-anchor', 'male');
     const sword = byId('rusty_sword');
     const bow = byId('hunter_bow');
     expect(sword).not.toBeNull();
     expect(bow).not.toBeNull();
-    const hand = (() => {
-      for (let y = 24; y <= 31; y++) {
-        const row = base.grid[y];
-        for (let x = row.length - 1; x >= 0; x--) {
-          if (row[x] !== 0) return { x, y };
-        }
-      }
-      return { x: 17, y: 27 };
-    })();
-    const swung = applyEquipmentOverlays(base.grid, base.palette, {
-      weapon: sword,
-      armor: null,
-      accessory: null,
-    });
-    expect(swung.grid[hand.y][hand.x]).toBeGreaterThanOrEqual(ITEM_BLIT_OFFSET);
-    const upRight = blitCells(swung.grid).filter(([x, y]) => x > hand.x && y < hand.y);
-    expect(upRight.length).toBeGreaterThan(0);
-    const held = applyEquipmentOverlays(base.grid, base.palette, {
-      weapon: bow,
-      armor: null,
-      accessory: null,
-    });
-    const vertical = blitCells(held.grid).filter(([x]) => x === hand.x || x === hand.x + 1);
-    expect(vertical.length).toBeGreaterThan(0);
+    const hand = computeLandmarks(base.grid).handR;
+    for (const weapon of [sword, bow]) {
+      const out = applyEquipmentOverlays(base.grid, base.palette, {
+        weapon,
+        armor: null,
+        accessory: null,
+      });
+      const cells = blitCells(out.grid);
+      expect(cells.length).toBeGreaterThan(0);
+      const ys = cells.map(([, y]) => y);
+      const xs = cells.map(([x]) => x);
+      expect(Math.max(...ys)).toBe(hand.y + 1);
+      expect(Math.min(...ys)).toBeLessThan(hand.y - 3);
+      expect(Math.min(...xs)).toBeGreaterThanOrEqual(hand.x - 6);
+      expect(Math.max(...xs)).toBeLessThanOrEqual(23);
+    }
   });
 
   it('renders different weapons with different art', () => {
@@ -122,8 +114,9 @@ describe('equipment overlays v2', () => {
       armor: null,
       accessory: byId('might_pendant'),
     });
+    expect(pendant.grid[22][11]).toBe(ACCENT_INDEX);
+    expect(pendant.grid[22][12]).toBe(ACCENT_INDEX);
     const neckZone = pendant.grid.slice(20, 26).flat();
-    expect(neckZone).toContain(ACCENT_INDEX);
     expect(neckZone).toContain(TRIM_INDEX);
     const orb = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: null,
@@ -149,32 +142,28 @@ describe('equipment overlays v2', () => {
     expect(out.palette[PLATE_LIGHT]).toBeDefined();
   });
 
-  it('jewels the headgear, chains the pendant and covers the hand with the weapon', () => {
+  it('jewels the headgear at face center and chains the pendant', () => {
     const base = generateSprite16('detail-check', 'female');
     const crowned = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: null,
       armor: byId('iron_helm'),
       accessory: byId('might_pendant'),
     });
-    expect(crowned.grid.slice(2, 6).flat()).toContain(ACCENT_INDEX);
-    expect(crowned.grid.slice(18, 24).flat()).toContain(TRIM_INDEX);
+    expect(crowned.grid[3][11]).toBe(ACCENT_INDEX);
+    expect(crowned.grid[3][12]).toBe(ACCENT_INDEX);
+    expect(crowned.grid.slice(20, 24).flat()).toContain(TRIM_INDEX);
     const armed = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: byId('rusty_sword'),
       armor: null,
       accessory: null,
     });
-    let handCovered = false;
-    for (let y = 24; y <= 31; y++) {
-      const row = base.grid[y];
-      for (let x = row.length - 1; x >= 0; x--) {
-        if (row[x] !== 0) {
-          const cell = armed.grid[y][x];
-          if (cell >= ITEM_BLIT_OFFSET && cell < ITEM_BLIT_OFFSET + 10) handCovered = true;
-          break;
-        }
-      }
-    }
-    expect(handCovered).toBe(true);
+    const best = computeLandmarks(base.grid).handR;
+    const atHand = armed.grid[best.y][best.x];
+    const below = armed.grid[best.y + 1]?.[best.x] ?? 0;
+    const covered =
+      (atHand >= ITEM_BLIT_OFFSET && atHand < ITEM_BLIT_OFFSET + 10) ||
+      (below >= ITEM_BLIT_OFFSET && below < ITEM_BLIT_OFFSET + 10);
+    expect(covered).toBe(true);
   });
 
   it('uses the highest rarity for the trim and survives unknown ids', () => {
