@@ -636,33 +636,28 @@ function paintBrooch(grid: SpriteGrid, item: PixelItemAsset, chest: { x: number;
   blitRaw(grid, mini, ox, oy);
 }
 
-function paintFloatingOrb(grid: SpriteGrid, item: PixelItemAsset, head: Box): void {
-  let art = item.pixels;
-  const box0 = artBox(art);
-  if (box0.x1 - box0.x0 + 1 > 5) art = mini44(art);
-  const artW = art[0]?.length ?? 8;
-  const artH = art.length;
+function paintFloatingOrb(grid: SpriteGrid, _item: PixelItemAsset, _head: Box): void {
+  // Orbs hover in the top-left corner like a familiar: weapon on the right,
+  // orb on the left balances the silhouette. Always mini-sized, pinned to
+  // the corner by content box, painted only over empty cells so big
+  // hairstyles never get bitten. A sparkle trails underneath.
+  const art = mini44(_item.pixels);
   const box = artBox(art);
-  const h = box.y1 - box.y0 + 1;
-  const headCy = Math.round((head.y0 + head.y1) / 2);
-  const rightRoom = GRID_W - (head.x1 + 1);
-  const leftRoom = head.x0;
-  let ox: number;
-  if (leftRoom > rightRoom + 2) {
-    ox = clamp(head.x0 - 2 - box.x1, 0, GRID_W - artW);
-  } else {
-    ox = clamp(head.x1 + 2 - box.x0, 0, GRID_W - artW);
-  }
-  const oy = clamp(headCy - Math.floor(h / 2) - box.y0, 0, GRID_H - artH);
-  let top: { x: number; y: number } | null = null;
+  const ox = -box.x0;
+  const oy = -box.y0;
+  let trail: { x: number; y: number } | null = null;
   for (const { x, y, v } of artCells(art)) {
     const px = ox + x;
     const py = oy + y;
     if (py < 0 || py >= grid.length || px < 0 || px >= grid[0].length) continue;
+    if (grid[py][px] !== 0) continue;
     grid[py][px] = ITEM_BLIT_OFFSET + v;
-    if (!top || py < top.y) top = { x: px, y: py };
+    if (!trail || py > trail.y) trail = { x: px, y: py };
   }
-  if (top) paint(grid, top.x, top.y - 1, ACCENT_INDEX);
+  if (trail) {
+    const ty = trail.y + 1;
+    if (ty < grid.length && (grid[ty]?.[trail.x] ?? 1) === 0) paint(grid, trail.x, ty, ACCENT_INDEX);
+  }
 }
 
 export function applyEquipmentOverlays(
