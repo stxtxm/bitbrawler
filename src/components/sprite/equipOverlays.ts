@@ -237,7 +237,7 @@ function headTopHexOf(art: number[][], fallback: string): string {
 
 export type ArmorVisualKind = 'shield' | 'helm' | 'boots' | 'bracers' | 'robe' | 'chest';
 export type AccessoryVisualKind = 'crown' | 'boots' | 'necklace' | 'orb' | 'ring' | 'brooch';
-export type WeaponVisualKind = 'bow' | 'fist' | 'staff' | 'scythe' | 'haft' | 'dagger' | 'blade';
+export type WeaponVisualKind = 'bow' | 'fist' | 'staff' | 'scepter' | 'scythe' | 'haft' | 'dagger' | 'blade';
 
 export function armorVisualKind(name: string): ArmorVisualKind {
   const n = name.toLowerCase();
@@ -267,7 +267,8 @@ export function weaponVisualKind(item: PixelItemAsset): WeaponVisualKind {
   const n = item.name.toLowerCase();
   if (n.includes('bow')) return 'bow';
   if (n.includes('knuckle')) return 'fist';
-  if (n.includes('staff') || n.includes('wand')) return 'staff';
+  if (n.includes('wand')) return 'scepter';
+  if (n.includes('staff')) return 'staff';
   if (n.includes('spear') || n.includes('glaive') || n.includes('halberd') || n.includes('pike')) return 'staff';
   if (n.includes('scythe') || n.includes('reaper')) return 'scythe';
   if (
@@ -365,6 +366,20 @@ function paintStaff(grid: SpriteGrid, palm: { x: number; y: number }): void {
   paint(grid, x0, palm.y - 12, ACCENT_INDEX);
 }
 
+function paintScepter(grid: SpriteGrid, palm: { x: number; y: number }): void {
+  const x0 = palm.x;
+  for (let y = palm.y - 1; y <= palm.y + 1; y++) {
+    paint(grid, x0, y, WOOD_INDEX);
+    paint(grid, x0 + 1, y, WOOD_INDEX);
+  }
+  paint(grid, x0, palm.y + 2, TRIM_INDEX);
+  paint(grid, x0 + 1, palm.y + 2, TRIM_INDEX);
+  for (let y = palm.y - 4; y <= palm.y - 2; y++) {
+    for (let x = x0 - 1; x <= x0 + 1; x++) paint(grid, x, y, WHEAD_INDEX);
+  }
+  paint(grid, x0, palm.y - 3, ACCENT_INDEX);
+}
+
 function paintScythe(grid: SpriteGrid, palm: { x: number; y: number }, glint: boolean): void {
   const x0 = palm.x;
   for (let y = palm.y - 10; y <= palm.y + 1; y++) {
@@ -423,6 +438,10 @@ function paintHeldWeapon(grid: SpriteGrid, item: PixelItemAsset, palm: { x: numb
   }
   if (kind === 'staff') {
     paintStaff(grid, palm);
+    return;
+  }
+  if (kind === 'scepter') {
+    paintScepter(grid, palm);
     return;
   }
   if (kind === 'scythe') {
@@ -512,8 +531,6 @@ function paintChest(grid: SpriteGrid, torso: Box, cx: number, kind: 'chest' | 'r
   const cy = clamp(torso.y0 + 5, torso.y0, torso.y1);
   paint(grid, ccx - 1, cy, ACCENT_INDEX);
   paint(grid, ccx, cy, ACCENT_INDEX);
-  paint(grid, ccx - 1, cy + 1, ACCENT_INDEX);
-  paint(grid, ccx, cy + 1, ACCENT_INDEX);
   if (kind === 'robe') {
     for (let y = 30; y <= 33; y++) {
       const row = grid[y];
@@ -619,31 +636,28 @@ function paintBrooch(grid: SpriteGrid, item: PixelItemAsset, chest: { x: number;
   blitRaw(grid, mini, ox, oy);
 }
 
-function paintFloatingOrb(grid: SpriteGrid, item: PixelItemAsset, head: Box): void {
-  const art = item.pixels;
-  const artW = art[0]?.length ?? 8;
-  const artH = art.length;
+function paintFloatingOrb(grid: SpriteGrid, _item: PixelItemAsset, _head: Box): void {
+  // Orbs hover in the top-left corner like a familiar: weapon on the right,
+  // orb on the left balances the silhouette. Always mini-sized, pinned to
+  // the corner by content box, painted only over empty cells so big
+  // hairstyles never get bitten. A sparkle trails underneath.
+  const art = mini44(_item.pixels);
   const box = artBox(art);
-  const h = box.y1 - box.y0 + 1;
-  const headCy = Math.round((head.y0 + head.y1) / 2);
-  const rightRoom = GRID_W - (head.x1 + 1);
-  const leftRoom = head.x0;
-  let ox: number;
-  if (leftRoom > rightRoom + 2) {
-    ox = clamp(head.x0 - 2 - box.x1, 0, GRID_W - artW);
-  } else {
-    ox = clamp(head.x1 + 2 - box.x0, 0, GRID_W - artW);
-  }
-  const oy = clamp(headCy - Math.floor(h / 2) - box.y0, 0, GRID_H - artH);
-  let top: { x: number; y: number } | null = null;
+  const ox = -box.x0;
+  const oy = -box.y0;
+  let trail: { x: number; y: number } | null = null;
   for (const { x, y, v } of artCells(art)) {
     const px = ox + x;
     const py = oy + y;
     if (py < 0 || py >= grid.length || px < 0 || px >= grid[0].length) continue;
+    if (grid[py][px] !== 0) continue;
     grid[py][px] = ITEM_BLIT_OFFSET + v;
-    if (!top || py < top.y) top = { x: px, y: py };
+    if (!trail || py > trail.y) trail = { x: px, y: py };
   }
-  if (top) paint(grid, top.x, top.y - 1, ACCENT_INDEX);
+  if (trail) {
+    const ty = trail.y + 1;
+    if (ty < grid.length && (grid[ty]?.[trail.x] ?? 1) === 0) paint(grid, trail.x, ty, ACCENT_INDEX);
+  }
 }
 
 export function applyEquipmentOverlays(

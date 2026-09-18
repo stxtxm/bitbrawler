@@ -69,7 +69,8 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     expect(weaponVisualKind(byId('hunter_bow')!)).toBe('bow');
     expect(weaponVisualKind(byId('iron_knuckles')!)).toBe('fist');
     expect(weaponVisualKind(byId('oak_staff')!)).toBe('staff');
-    expect(weaponVisualKind(byId('chipped_wand')!)).toBe('staff');
+    expect(weaponVisualKind(byId('chipped_wand')!)).toBe('scepter');
+    expect(weaponVisualKind(byId('wand_of_storms')!)).toBe('scepter');
     expect(weaponVisualKind(byId('doom_scythe')!)).toBe('scythe');
     expect(weaponVisualKind(byId('bronze_axe')!)).toBe('haft');
     expect(weaponVisualKind(byId('apocalypse_hammer')!)).toBe('haft');
@@ -172,8 +173,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     expect(headRows.some((c) => c === BLADE_INDEX || c === BLADE_DARK)).toBe(true);
   });
 
-  it('plants staves with a gem tip and scythes with a crossbar', () => {
-    const base = generateSprite16('staff-check', 'male', { ...STD_MALE });
+  it('plants staves with a gem tip and scythes with a crossbar', () => {    const base = generateSprite16('staff-check', 'male', { ...STD_MALE });
     const marks = computeLandmarks(base.grid);
     const staff = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: byId('oak_staff'),
@@ -190,6 +190,24 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     });
     const bar = scythe.grid[marks.palmR.y - 11].slice(marks.palmR.x - 3, marks.palmR.x + 3);
     expect(bar).toContain(BLADE_INDEX);
+  });
+
+  it('keeps wands short like scepters, never full staves', () => {
+    const base = generateSprite16('scepter-check', 'male', { ...STD_MALE });
+    const marks = computeLandmarks(base.grid);
+    const out = applyEquipmentOverlays(base.grid, base.palette, {
+      weapon: byId('wand_of_storms'),
+      armor: null,
+      accessory: null,
+    });
+    // handle in the fist, gem head at shoulder height — nothing above y20
+    expect(out.grid[marks.palmR.y][marks.palmR.x]).toBe(WOOD_INDEX);
+    const tipRows = out.grid.slice(marks.palmR.y - 4, marks.palmR.y - 1).flat();
+    expect(tipRows).toContain(WHEAD_INDEX);
+    expect(out.grid[marks.palmR.y - 3][marks.palmR.x]).toBe(ACCENT_INDEX);
+    const above = out.grid.slice(0, marks.palmR.y - 4).flat();
+    expect(above).not.toContain(WOOD_INDEX);
+    expect(above).not.toContain(WHEAD_INDEX);
   });
 
   it('straps knuckles over the fist', () => {
@@ -398,6 +416,36 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       const beside = cells.filter(([x]) => x > marks.head.x1 - 1 || x < marks.head.x0 + 1);
       expect(beside.length).toBeGreaterThan(0);
       expect(out.grid.flat()).toContain(ACCENT_INDEX);
+    }
+  });
+
+  it('shrinks oversized orbs so they never swallow the head', () => {
+    const base = generateSprite16('bigorb-check', 'male', { ...STD_MALE });
+    const out = applyEquipmentOverlays(base.grid, base.palette, {
+      weapon: null,
+      armor: null,
+      accessory: byId('pyrite_orb'),
+    });
+    const cells = blitCells(out.grid);
+    expect(cells.length).toBeGreaterThan(0);
+    expect(cells.length).toBeLessThanOrEqual(16);
+    expect(cells.every(([x, y]) => x <= 4 && y <= 5)).toBe(true);
+  });
+
+  it('hovers orbs top-left like a familiar, never over hair', () => {
+    const base = generateSprite16('famorb-check', 'male', { ...STD_MALE });
+    const marks = computeLandmarks(base.grid);
+    for (const id of ['spirit_orb', 'pyrite_orb']) {
+      const out = applyEquipmentOverlays(base.grid, base.palette, {
+        weapon: null,
+        armor: null,
+        accessory: byId(id),
+      });
+      const cells = blitCells(out.grid);
+      expect(cells.length).toBeGreaterThan(0);
+      const meanX = cells.reduce((a, [x]) => a + x, 0) / cells.length;
+      expect(meanX).toBeLessThan(marks.faceCx);
+      expect(cells.every(([, y]) => y <= 5)).toBe(true);
     }
   });
 
