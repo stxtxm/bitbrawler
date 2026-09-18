@@ -421,7 +421,6 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
 
   it('shrinks oversized orbs so they never swallow the head', () => {
     const base = generateSprite16('bigorb-check', 'male', { ...STD_MALE });
-    const marks = computeLandmarks(base.grid);
     const out = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: null,
       armor: null,
@@ -430,7 +429,24 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     const cells = blitCells(out.grid);
     expect(cells.length).toBeGreaterThan(0);
     expect(cells.length).toBeLessThanOrEqual(16);
-    expect(cells.every(([x]) => x >= marks.head.x0)).toBe(true);
+    expect(cells.every(([x, y]) => x <= 4 && y <= 5)).toBe(true);
+  });
+
+  it('hovers orbs top-left like a familiar, never over hair', () => {
+    const base = generateSprite16('famorb-check', 'male', { ...STD_MALE });
+    const marks = computeLandmarks(base.grid);
+    for (const id of ['spirit_orb', 'pyrite_orb']) {
+      const out = applyEquipmentOverlays(base.grid, base.palette, {
+        weapon: null,
+        armor: null,
+        accessory: byId(id),
+      });
+      const cells = blitCells(out.grid);
+      expect(cells.length).toBeGreaterThan(0);
+      const meanX = cells.reduce((a, [x]) => a + x, 0) / cells.length;
+      expect(meanX).toBeLessThan(marks.faceCx);
+      expect(cells.every(([, y]) => y <= 5)).toBe(true);
+    }
   });
 
   it('tints boots and bracers with each item own colors', () => {
