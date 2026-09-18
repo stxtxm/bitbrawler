@@ -237,7 +237,7 @@ function headTopHexOf(art: number[][], fallback: string): string {
 
 export type ArmorVisualKind = 'shield' | 'helm' | 'boots' | 'bracers' | 'robe' | 'chest';
 export type AccessoryVisualKind = 'crown' | 'boots' | 'necklace' | 'orb' | 'ring' | 'brooch';
-export type WeaponVisualKind = 'bow' | 'fist' | 'staff' | 'scythe' | 'haft' | 'dagger' | 'blade';
+export type WeaponVisualKind = 'bow' | 'fist' | 'staff' | 'scepter' | 'scythe' | 'haft' | 'dagger' | 'blade';
 
 export function armorVisualKind(name: string): ArmorVisualKind {
   const n = name.toLowerCase();
@@ -267,7 +267,8 @@ export function weaponVisualKind(item: PixelItemAsset): WeaponVisualKind {
   const n = item.name.toLowerCase();
   if (n.includes('bow')) return 'bow';
   if (n.includes('knuckle')) return 'fist';
-  if (n.includes('staff') || n.includes('wand')) return 'staff';
+  if (n.includes('wand')) return 'scepter';
+  if (n.includes('staff')) return 'staff';
   if (n.includes('spear') || n.includes('glaive') || n.includes('halberd') || n.includes('pike')) return 'staff';
   if (n.includes('scythe') || n.includes('reaper')) return 'scythe';
   if (
@@ -365,6 +366,20 @@ function paintStaff(grid: SpriteGrid, palm: { x: number; y: number }): void {
   paint(grid, x0, palm.y - 12, ACCENT_INDEX);
 }
 
+function paintScepter(grid: SpriteGrid, palm: { x: number; y: number }): void {
+  const x0 = palm.x;
+  for (let y = palm.y - 1; y <= palm.y + 1; y++) {
+    paint(grid, x0, y, WOOD_INDEX);
+    paint(grid, x0 + 1, y, WOOD_INDEX);
+  }
+  paint(grid, x0, palm.y + 2, TRIM_INDEX);
+  paint(grid, x0 + 1, palm.y + 2, TRIM_INDEX);
+  for (let y = palm.y - 4; y <= palm.y - 2; y++) {
+    for (let x = x0 - 1; x <= x0 + 1; x++) paint(grid, x, y, WHEAD_INDEX);
+  }
+  paint(grid, x0, palm.y - 3, ACCENT_INDEX);
+}
+
 function paintScythe(grid: SpriteGrid, palm: { x: number; y: number }, glint: boolean): void {
   const x0 = palm.x;
   for (let y = palm.y - 10; y <= palm.y + 1; y++) {
@@ -423,6 +438,10 @@ function paintHeldWeapon(grid: SpriteGrid, item: PixelItemAsset, palm: { x: numb
   }
   if (kind === 'staff') {
     paintStaff(grid, palm);
+    return;
+  }
+  if (kind === 'scepter') {
+    paintScepter(grid, palm);
     return;
   }
   if (kind === 'scythe') {
@@ -512,8 +531,6 @@ function paintChest(grid: SpriteGrid, torso: Box, cx: number, kind: 'chest' | 'r
   const cy = clamp(torso.y0 + 5, torso.y0, torso.y1);
   paint(grid, ccx - 1, cy, ACCENT_INDEX);
   paint(grid, ccx, cy, ACCENT_INDEX);
-  paint(grid, ccx - 1, cy + 1, ACCENT_INDEX);
-  paint(grid, ccx, cy + 1, ACCENT_INDEX);
   if (kind === 'robe') {
     for (let y = 30; y <= 33; y++) {
       const row = grid[y];
@@ -620,7 +637,9 @@ function paintBrooch(grid: SpriteGrid, item: PixelItemAsset, chest: { x: number;
 }
 
 function paintFloatingOrb(grid: SpriteGrid, item: PixelItemAsset, head: Box): void {
-  const art = item.pixels;
+  let art = item.pixels;
+  const box0 = artBox(art);
+  if (box0.x1 - box0.x0 + 1 > 5) art = mini44(art);
   const artW = art[0]?.length ?? 8;
   const artH = art.length;
   const box = artBox(art);
