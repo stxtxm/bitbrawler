@@ -88734,5 +88734,304 @@
       "purchased_offer": null,
       "essence_after_purchase": null
     }
+  },
+  {
+    "date": "2026-09-18T01:01:26.893Z",
+    "run": "2026-09-18",
+    "character": "QA-PERSI-4",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": null,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 22,
+      "vit": 10,
+      "dex": 14,
+      "luk": 9,
+      "int": 10,
+      "foc": 15,
+      "fights": 0
+    },
+    "initial_level": 14,
+    "initial_xp": {
+      "current": 5572,
+      "max": 9338
+    },
+    "initial_max_hp": 414,
+    "initial_equipment": [
+      {
+        "slot": "🛡️",
+        "name": "Studded Vest",
+        "rarity": "UNCOMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Lucky Charm",
+        "rarity": "COMMON"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 14,
+      "xp": 6251,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 22,
+      "vit": 10,
+      "dex": 14,
+      "luk": 9,
+      "int": 10,
+      "foc": 15,
+      "fights": 0
+    },
+    "final_max_hp": 414,
+    "final_equipment": [
+      {
+        "slot": "🛡️",
+        "name": "Studded Vest",
+        "rarity": "UNCOMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Lucky Charm",
+        "rarity": "COMMON"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "🛡️",
+        "name": "Studded Vest",
+        "rarity": "UNCOMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Lucky Charm",
+        "rarity": "COMMON"
+      }
+    ],
+    "lootbox_streak": 916,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20212,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "goblin",
+        "skeleton"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 210,
+      "xp_events": [
+        {
+          "time_ms": 3058,
+          "xp": 102,
+          "monster": "goblin",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 14673,
+          "xp": 108,
+          "monster": "skeleton",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        511,
+        1529,
+        3058,
+        11619,
+        13145,
+        14673
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 102,
+        "essence": 0.23,
+        "monster": "goblin"
+      },
+      {
+        "result": "victory",
+        "xp": 108,
+        "essence": 0.22,
+        "monster": "skeleton"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.17,
+      "next_level_eta": "⬆ 7m 27s",
+      "power_ratio": "⚔ 0.63x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.05x",
+      "interval": "11.3s",
+      "streak_bonus": "🔥 912-win streak (+25%)"
+    },
+    "initial_essence": 35.6,
+    "final_essence": 12.44,
+    "essence": {
+      "before_idle": 35.6,
+      "after_idle": 36.05,
+      "per_fight": [],
+      "forge_before": 36,
+      "forge_after_salvage": 41,
+      "forge_after_fusion": 41,
+      "forge_after_upgrade": 11,
+      "forge_after": 11,
+      "shop_before": 12,
+      "shop_after": 12,
+      "final": 12.44,
+      "flow": {
+        "idle_gained": 0.45,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 30,
+        "forge_net": -25,
+        "shop_cost": 0,
+        "net_change": -23.16
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 36,
+      "essence_after_salvage": 41,
+      "essence_after_fusion": 41,
+      "essence_after_upgrade": 11,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 11,
+      "items_after": 0,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": 30,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 12,
+      "essence_after": 12,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "War Scythe",
+            "rarity": "RARE",
+            "price": 18
+          },
+          {
+            "name": "Sapphire Orb",
+            "rarity": "EPIC",
+            "price": 54
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 31
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 12
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "exhausted"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1738,
+      "arena": 827,
+      "arena_reload": 10
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "War Scythe",
+          "rarity": "RARE",
+          "price": 18
+        },
+        {
+          "name": "Sapphire Orb",
+          "rarity": "EPIC",
+          "price": 54
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 31
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 12
+    }
   }
 ]
