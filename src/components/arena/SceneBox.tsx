@@ -55,6 +55,7 @@ export const SceneBox = memo(function SceneBox({
           recentLevelUp={idle.recentLevelUp}
           currentStreak={idle.currentStreak}
           streakMilestone={idle.streakMilestone}
+          packInfo={idle.packInfo ?? null}
         />
       ) : (
         <div className="scene-pvp-center">

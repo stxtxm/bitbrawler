@@ -294,6 +294,31 @@ describe('IdleRunnerScene', () => {
     burstMock.active = false
   })
 
+  it('shows the pack banner with progress during multi-enemy packs', () => {
+    render(
+      <IdleRunnerScene
+        {...defaultProps}
+        currentMonster={'ogre'}
+        packInfo={{ size: 3, index: 1 }}
+      />,
+    )
+    const banner = screen.getByTestId('pack-banner')
+    expect(banner).toBeInTheDocument()
+    expect(banner.textContent).toMatch(/MEUTE 2\/3/)
+  })
+
+  it('hides the pack banner for singles or without monster', () => {
+    const { unmount } = render(
+      <IdleRunnerScene {...defaultProps} currentMonster={'goblin'} packInfo={null} />,
+    )
+    expect(screen.queryByTestId('pack-banner')).toBeNull()
+    unmount()
+    render(
+      <IdleRunnerScene {...defaultProps} currentMonster={'goblin'} packInfo={{ size: 1, index: 0 }} />,
+    )
+    expect(screen.queryByTestId('pack-banner')).toBeNull()
+  })
+
   it('fires a burst opening fanfare when the event starts', () => {
     burstMock.active = false
     render(<IdleRunnerScene {...defaultProps} currentMonster={null} />)
