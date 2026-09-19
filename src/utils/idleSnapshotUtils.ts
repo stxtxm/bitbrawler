@@ -1,4 +1,3 @@
-import { isBurstActive } from '../data/liveOps'
 
 const SNAPSHOT_KEY = 'bitbrawler_idle_snapshot'
 
@@ -9,14 +8,15 @@ export interface IdleSnapshot {
 }
 
 export function saveIdleSnapshot(essence: number, experience: number, level: number): void {
-  if (isBurstActive()) return
   try {
     localStorage.setItem(SNAPSHOT_KEY, JSON.stringify({ essence, experience, level }))
   } catch { }
 }
 
-export function isIdleSnapshotPaused(date: Date = new Date()): boolean {
-  return isBurstActive(date)
+export function isIdleSnapshotPaused(_date: Date = new Date()): boolean {
+  // Weekend Burst no longer pauses idle — snapshots always record.
+  void _date
+  return false
 }
 
 export function loadIdleSnapshot(): IdleSnapshot | null {

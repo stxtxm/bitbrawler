@@ -24,4 +24,24 @@ export const IDLE_CONFIG = {
     STREAK_BONUS_CAP: 0.25,
     STREAK_MILESTONES: [5, 10, 25, 50, 100],
   },
+  BURST: {
+    // Weekend Burst makes idle excellent instead of pausing it:
+    // live-only essence bonus (XP formulas stay server-synced).
+    ESSENCE_MULT: 1.5,
+  },
+  PACK: {
+    // Multi-enemy packs (sequential fights, HP carries over → real danger).
+    MIN_LEVEL: 8,
+    CHANCE: 0.12,
+    CHANCE_BURST: 0.24,
+    MAX_SIZE: 3,
+  },
+  ELITE: {
+    // Enraged elites: level+8, bonus essence, from this level up.
+    MIN_LEVEL: 15,
+    CHANCE: 0.05,
+    CHANCE_BURST: 0.10,
+    LEVEL_BOOST: 8,
+    ESSENCE_MULT: 2,
+  },
 } as const

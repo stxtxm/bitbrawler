@@ -55,37 +55,36 @@ describe('Weekend Active Burst 72h', () => {
     })
   })
 
-  describe('idle pause 0.15 BASE_RATE', () => {
-    it('calculateIdleEssence returns 0 during burst', () => {
+  describe('burst vivant (plus de pause idle)', () => {
+    it('calculateIdleEssence booste x1.5 pendant le burst', () => {
       const burstDate = new Date('2026-09-12T10:00:00Z')
       vi.useFakeTimers()
       vi.setSystemTime(burstDate)
-      expect(calculateIdleEssence(true, 10, 10, 10)).toBe(0)
-      expect(calculateIdleEssence(false, 10, 10, 10)).toBe(0)
+      expect(calculateIdleEssence(true, 10, 10, 10)).toBeGreaterThan(0)
       vi.useRealTimers()
     })
-    it('calculateIdleXp returns 0 during burst', () => {
+    it('calculateIdleXp paie normalement pendant le burst', () => {
       const burstDate = new Date('2026-09-12T10:00:00Z')
       vi.useFakeTimers()
       vi.setSystemTime(burstDate)
-      expect(calculateIdleXp(true, 10)).toBe(0)
-      expect(calculateOfflineIdleXp(true, 10)).toBe(0)
+      expect(calculateIdleXp(true, 10)).toBeGreaterThan(0)
+      expect(calculateOfflineIdleXp(true, 10)).toBeGreaterThan(0)
       vi.useRealTimers()
     })
-    it('calculateOfflineFightsWithEfficiency returns 0 during burst', () => {
+    it('calculateOfflineFightsWithEfficiency compte pendant le burst', () => {
       const burstDate = new Date('2026-09-12T10:00:00Z')
       const now = burstDate.getTime()
       const last = now - 3600_000
-      expect(calculateOfflineFightsWithEfficiency(last, now, 12000)).toBe(0)
-      expect(isIdlePaused(burstDate)).toBe(true)
+      expect(calculateOfflineFightsWithEfficiency(last, now, 12000)).toBeGreaterThan(0)
+      expect(isIdlePaused(burstDate)).toBe(false)
     })
-    it('isIdleSnapshotPaused true during burst', () => {
+    it('isIdleSnapshotPaused false pendant le burst', () => {
       const burstDate = new Date('2026-09-12T10:00:00Z')
-      expect(isIdleSnapshotPaused(burstDate)).toBe(true)
+      expect(isIdleSnapshotPaused(burstDate)).toBe(false)
       vi.useFakeTimers()
       vi.setSystemTime(burstDate)
       saveIdleSnapshot(10, 1000, 5)
-      expect(loadIdleSnapshot()).toBeNull()
+      expect(loadIdleSnapshot()).not.toBeNull()
       vi.useRealTimers()
     })
     it('idle returns normal outside burst', () => {
