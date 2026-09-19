@@ -353,9 +353,11 @@ jobs:
           MODEL_ATTEMPTS=0
           # muse-spark-1.2 pendait >14min sans sortie (runs tués par timeout,
           # ex #1062/#1063) — 1.3 est le modèle courant, nemotron le repli.
-          # Chaque tentative est plafonnée (timeout 10m) pour que le repli
-          # ait une chance dans le budget timeout-minutes: 30 du job.
+          # Le provider stalle parfois en silence même sur mini-PR : on
+          # réessaie le même modèle une fois (stall transitoire) avant le
+          # repli. Budget : 3×8m + ~4m de gates < timeout-minutes: 30.
           MODELS=(
+            "opencode/muse-spark-1.3-contributor-free"
             "opencode/muse-spark-1.3-contributor-free"
             "opencode/nemotron"
           )
@@ -416,9 +418,9 @@ jobs:
           SUCCESS=0
           for MODEL in "${MODELS[@]}"; do
             MODEL_ATTEMPTS=$((MODEL_ATTEMPTS + 1))
-            echo "Trying model: $MODEL (attempt $MODEL_ATTEMPTS, max 10m)"
+            echo "Trying model: $MODEL (attempt $MODEL_ATTEMPTS, max 8m)"
             START=$(date +%s)
-            if timeout 10m opencode run --dangerously-skip-permissions --agent reviewer --model "$MODEL" "$PROMPT"; then
+            if timeout 8m opencode run --dangerously-skip-permissions --agent reviewer --model "$MODEL" "$PROMPT"; then
               echo "Model selected: $MODEL ($(( $(date +%s) - START ))s)"
               SUCCESS=1
               break
