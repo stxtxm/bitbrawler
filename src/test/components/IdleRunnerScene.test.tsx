@@ -35,6 +35,12 @@ vi.mock('../../utils/monsterVisualScale', () => ({
   monsterScaleFor: () => 1,
 }))
 
+// Mock liveOps burst flag — controllable per test
+const burstMock = vi.hoisted(() => ({ active: false }))
+vi.mock('../../data/liveOps', () => ({
+  isBurstActive: () => burstMock.active,
+}))
+
 describe('IdleRunnerScene', () => {
   const defaultProps = {
     character: {
@@ -253,8 +259,7 @@ describe('IdleRunnerScene', () => {
     }
   })
 
-  it('FIGHT button remains clickable when level-up FX is active', () => {
-    const onFight = vi.fn()
+  it('FIGHT button remains clickable when level-up FX is active', () => {    const onFight = vi.fn()
     const ui = render(<IdleRunnerScene {...defaultProps} />)
     const fightBtn = document.createElement('button')
     fightBtn.className = 'primary-btn giant-btn'
@@ -266,5 +271,25 @@ describe('IdleRunnerScene', () => {
     fireEvent.click(fightBtn)
     expect(onFight).toHaveBeenCalledTimes(1)
     document.body.removeChild(fightBtn)
+  })
+
+  it('shows the burst pause banner instead of an empty runner during Weekend Burst', () => {
+    burstMock.active = true
+    render(<IdleRunnerScene {...defaultProps} currentMonster={null} />)
+    const banner = screen.getByTestId('burst-pause-banner')
+    expect(banner).toBeInTheDocument()
+    expect(banner.textContent).toMatch(/WEEKEND BURST/i)
+    burstMock.active = false
+  })
+
+  it('hides the burst banner outside burst windows or when a monster is present', () => {
+    burstMock.active = false
+    const { unmount } = render(<IdleRunnerScene {...defaultProps} currentMonster={null} />)
+    expect(screen.queryByTestId('burst-pause-banner')).toBeNull()
+    unmount()
+    burstMock.active = true
+    render(<IdleRunnerScene {...defaultProps} currentMonster={'goblin'} />)
+    expect(screen.queryByTestId('burst-pause-banner')).toBeNull()
+    burstMock.active = false
   })
 })
