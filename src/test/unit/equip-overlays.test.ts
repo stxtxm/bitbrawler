@@ -401,41 +401,11 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     }
   });
 
-  it('floats orbs beside the head with a sparkle', () => {
+  it('halos orbs centered above the head, never over hair', () => {
     const base = generateSprite16('orb-check', 'female', { ...STD_FEMALE });
     const marks = computeLandmarks(base.grid);
-    for (const id of ['spirit_orb', 'tsunami_orb']) {
+    for (const id of ['spirit_orb', 'tsunami_orb', 'pyrite_orb']) {
       expect(accessoryVisualKind(byId(id)!.name)).toBe('orb');
-      const out = applyEquipmentOverlays(base.grid, base.palette, {
-        weapon: null,
-        armor: null,
-        accessory: byId(id),
-      });
-      const cells = blitCells(out.grid).filter(([, y]) => y <= 14);
-      expect(cells.length).toBeGreaterThan(0);
-      const beside = cells.filter(([x]) => x > marks.head.x1 - 1 || x < marks.head.x0 + 1);
-      expect(beside.length).toBeGreaterThan(0);
-      expect(out.grid.flat()).toContain(ACCENT_INDEX);
-    }
-  });
-
-  it('shrinks oversized orbs so they never swallow the head', () => {
-    const base = generateSprite16('bigorb-check', 'male', { ...STD_MALE });
-    const out = applyEquipmentOverlays(base.grid, base.palette, {
-      weapon: null,
-      armor: null,
-      accessory: byId('pyrite_orb'),
-    });
-    const cells = blitCells(out.grid);
-    expect(cells.length).toBeGreaterThan(0);
-    expect(cells.length).toBeLessThanOrEqual(16);
-    expect(cells.every(([x, y]) => x <= 4 && y <= 5)).toBe(true);
-  });
-
-  it('hovers orbs top-left like a familiar, never over hair', () => {
-    const base = generateSprite16('famorb-check', 'male', { ...STD_MALE });
-    const marks = computeLandmarks(base.grid);
-    for (const id of ['spirit_orb', 'pyrite_orb']) {
       const out = applyEquipmentOverlays(base.grid, base.palette, {
         weapon: null,
         armor: null,
@@ -443,9 +413,10 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       });
       const cells = blitCells(out.grid);
       expect(cells.length).toBeGreaterThan(0);
+      expect(cells.length).toBeLessThanOrEqual(16);
       const meanX = cells.reduce((a, [x]) => a + x, 0) / cells.length;
-      expect(meanX).toBeLessThan(marks.faceCx);
-      expect(cells.every(([, y]) => y <= 5)).toBe(true);
+      expect(Math.abs(meanX - marks.faceCx)).toBeLessThanOrEqual(2);
+      expect(cells.every(([, y]) => y <= marks.head.y0 + 1)).toBe(true);
     }
   });
 
