@@ -25,11 +25,6 @@ export const FIELD_LIGHT = 100;
 export const STRING_INDEX = 101;
 export const RIM_INDEX = 96;
 export const RIM_DARK = 97;
-export const ORB_INDEX = 69;
-export const ORB_DARK = 103;
-export const ORB_LIGHT = 104;
-export const ORB_CORE = 105;
-export const ORB_GLOW = 106;
 
 const GRID_W = 24;
 const GRID_H = SPRITE_HEIGHT;
@@ -634,43 +629,12 @@ function paintBrooch(grid: SpriteGrid, item: PixelItemAsset, chest: { x: number;
   blitRaw(grid, mini, ox, oy);
 }
 
-function paintFloatingOrb(grid: SpriteGrid, cx: number, oy: number): void {
-  // Hovering halo-orb, fully procedural: 5x5 shaded sphere (dark rim, lit
-  // upper-left, white-hot core), a dim glow bleeding into the hover gap and
-  // two accent twinkles. Colors come from the palette slots sampled from
-  // the item art + element accent (see applyEquipmentOverlays).
-  const ox = cx - 2;
-  for (let dy = 0; dy < 5; dy++) {
-    for (let dx = 0; dx < 5; dx++) {
-      const corner = (dx === 0 || dx === 4) && (dy === 0 || dy === 4);
-      if (corner) continue;
-      const cheb = Math.max(Math.abs(dx - 2), Math.abs(dy - 2));
-      let v: number;
-      if (cheb === 2) v = ORB_DARK;
-      else if (dx === 2 && dy === 2) v = ORB_CORE;
-      else if (dx + dy <= 4) v = ORB_LIGHT;
-      else v = ORB_INDEX;
-      paint(grid, ox + dx, oy + dy, v);
-    }
-  }
-  const glow: Array<[number, number]> = [
-    [0, -1], [4, -1], [-1, 1], [-1, 2], [-1, 3], [5, 1], [5, 2], [5, 3], [1, 5], [2, 5], [3, 5],
-  ];
-  for (const [dx, dy] of glow) {
-    const px = ox + dx;
-    const py = oy + dy;
-    if (py < 0 || py >= grid.length || px < 0 || px >= grid[0].length) continue;
-    if ((grid[py]?.[px] ?? 1) !== 0) continue;
-    paint(grid, px, py, ORB_GLOW);
-  }
-  const twinkles: Array<[number, number]> = [[4, -1], [-1, 4]];
-  for (const [dx, dy] of twinkles) {
-    const px = ox + dx;
-    const py = oy + dy;
-    if (py < 0 || py >= grid.length || px < 0 || px >= grid[0].length) continue;
-    if ((grid[py]?.[px] ?? 1) !== 0) continue;
-    paint(grid, px, py, ACCENT_INDEX);
-  }
+function paintOrbPendant(grid: SpriteGrid, item: PixelItemAsset, neck: { x: number; y: number }, chest: { x: number; y: number }): void {
+  for (let y = neck.y; y <= chest.y - 2; y++) paint(grid, chest.x, y, TRIM_INDEX);
+  const mini = mini44(item.pixels);
+  const ox = clamp(chest.x - 2, 0, GRID_W - 4);
+  const oy = clamp(chest.y - 2, 0, GRID_H - 4);
+  blitRaw(grid, mini, ox, oy);
 }
 
 export function applyEquipmentOverlays(
@@ -712,8 +676,6 @@ export function applyEquipmentOverlays(
   const fieldHex = fieldSource
     ? hexOfArtValue(dominantArtValue(fieldSource.pixels), PLATE_STEEL)
     : PLATE_STEEL;
-  const orbItem = loadout.accessory && accessoryKind === 'orb' ? loadout.accessory : null;
-  const orbDom = orbItem ? hexOfArtValue(dominantArtValue(orbItem.pixels), trim) : trim;
   let rimHex: string | null = null;
   if (fieldSource && armorKind === 'helm') {
     const freq = freqOf(fieldSource.pixels, 0, fieldSource.pixels.length - 1);
@@ -738,11 +700,6 @@ export function applyEquipmentOverlays(
     [STRING_INDEX]: '#e8edf2',
     [RIM_INDEX]: rimHex ?? trim,
     [RIM_DARK]: mixHex(rimHex ?? trim, OUTLINE_HEX, 0.5),
-    [ORB_INDEX]: orbDom,
-    [ORB_DARK]: mixHex(orbDom, OUTLINE_HEX, 0.45),
-    [ORB_LIGHT]: highlightHex(orbDom),
-    [ORB_CORE]: mixHex('#ffffff', accent, 0.35),
-    [ORB_GLOW]: mixHex(accent, OUTLINE_HEX, 0.55),
     [TRIM_DARK]: mixHex(trim, OUTLINE_HEX, 0.5),
     [ACCENT_DARK]: mixHex(accent, OUTLINE_HEX, 0.5),
     [PLATE_DARK]: mixHex(PLATE_STEEL, OUTLINE_HEX, 0.5),
@@ -778,7 +735,7 @@ export function applyEquipmentOverlays(
   if (loadout.weapon) paintHeldWeapon(out, loadout.weapon, marks.palmR);
   if (loadout.accessory && accessoryKind === 'ring') paintRing(out, marks.palmR);
   if (loadout.accessory && accessoryKind === 'orb') {
-    paintFloatingOrb(out, marks.faceCx, marks.head.y0 - 6);
+    paintOrbPendant(out, loadout.accessory, marks.neck, marks.chest);
   }
   tintOverlayEdges(out);
   return { grid: out, palette: next };
@@ -794,7 +751,6 @@ function tintOverlayEdges(grid: SpriteGrid): void {
     [WHEAD_INDEX]: WHEAD_DARK,
     [FIELD_INDEX]: FIELD_DARK,
     [RIM_INDEX]: RIM_DARK,
-    [ORB_INDEX]: ORB_DARK,
   };
   for (let y = 0; y < grid.length; y++) {
     for (let x = 0; x < grid[y].length; x++) {

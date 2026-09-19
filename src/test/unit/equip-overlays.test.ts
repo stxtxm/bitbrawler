@@ -21,11 +21,6 @@ import {
   FIELD_LIGHT,
   STRING_INDEX,
   RIM_INDEX,
-  ORB_INDEX,
-  ORB_DARK,
-  ORB_LIGHT,
-  ORB_CORE,
-  ORB_GLOW,
 } from '../../components/sprite/equipOverlays';
 import { generateSprite16 } from '../../components/sprite/spriteGenerator';
 import { ACCENT_INDEX, TRIM_INDEX } from '../../components/sprite/spriteTypes';
@@ -406,7 +401,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     }
   });
 
-  it('hovers glowing orbs above the head with a clear gap', () => {
+  it('hangs orbs as pendants: chain plus medallion on the chest', () => {
     const base = generateSprite16('orb-check', 'female', { ...STD_FEMALE });
     const marks = computeLandmarks(base.grid);
     for (const id of ['spirit_orb', 'tsunami_orb', 'pyrite_orb']) {
@@ -416,21 +411,17 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
         armor: null,
         accessory: byId(id),
       });
-      const body = out.grid.flatMap((row, y) =>
-        row.map((c, x) => ({ c, x, y })),
-      ).filter(({ c }) => c === ORB_INDEX || c === ORB_DARK || c === ORB_LIGHT || c === ORB_CORE);
-      // 5x5 sphere minus corners = 21 cells, all strictly above the hairline
-      expect(body.length).toBe(21);
-      expect(body.every(({ y }) => y < marks.head.y0 - 1)).toBe(true);
-      const meanX = body.reduce((a, { x }) => a + x, 0) / body.length;
-      expect(Math.abs(meanX - marks.faceCx)).toBeLessThanOrEqual(1);
-      // shaded sphere: dark rim, lit top-left, white-hot core, glow bleeding down
-      expect(body.some(({ c }) => c === ORB_DARK)).toBe(true);
-      expect(body.some(({ c }) => c === ORB_LIGHT)).toBe(true);
-      expect(body.some(({ c }) => c === ORB_CORE)).toBe(true);
-      expect(out.grid.flat()).toContain(ORB_GLOW);
-      // per-item colors: gold pyrite vs blue spirit read differently
-      void id;
+      // miniature medallion of the orb art, centered on the chest
+      const cells = blitCells(out.grid).filter(
+        ([x, y]) => Math.abs(x - marks.chest.x) <= 3 && Math.abs(y - marks.chest.y) <= 3,
+      );
+      expect(cells.length).toBeGreaterThan(0);
+      expect(cells.length).toBeLessThanOrEqual(16);
+      // rarity chain running from the neck down to the medallion
+      const chain = out.grid
+        .slice(marks.neck.y, marks.chest.y - 1)
+        .map((row) => row[marks.chest.x]);
+      expect(chain).toContain(TRIM_INDEX);
     }
     const pyrite = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: null,
@@ -442,8 +433,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       armor: null,
       accessory: byId('spirit_orb'),
     });
-    expect(pyrite.palette[ORB_CORE]).not.toBe(spirit.palette[ORB_CORE]);
-    expect(pyrite.palette[ORB_GLOW]).not.toBe(spirit.palette[ORB_GLOW]);
+    expect(JSON.stringify(pyrite.grid)).not.toBe(JSON.stringify(spirit.grid));
   });
 
   it('tints boots and bracers with each item own colors', () => {
