@@ -446,6 +446,39 @@
   }
 }
 
+// Weekend Burst idle pause notice — persistent (no fade-out): without it the
+// runner with zero monsters looks broken during the whole burst window.
+.idle-burst-banner {
+  position: absolute;
+  top: 12%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  animation: burstPulse 1.6s ease-in-out infinite;
+
+  .burst-bolt {
+    font-size: clamp(0.7rem, 1.8cqi, 1rem);
+  }
+
+  .burst-text {
+    font-family: $font-pixel;
+    font-size: clamp(0.45rem, 1.1cqi, 0.65rem);
+    color: $accent-gold;
+    text-shadow: 0 0 10px rgba($accent-gold, 0.7);
+    letter-spacing: 2px;
+    white-space: nowrap;
+  }
+}
+
+@keyframes burstPulse {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 1; }
+}
+
 @keyframes streakBanner {
   0% { transform: translateX(-50%) translateY(-10px) scale(0.7); opacity: 0; }
   15% { transform: translateX(-50%) translateY(0) scale(1.1); opacity: 1; }

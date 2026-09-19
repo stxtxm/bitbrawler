@@ -7,6 +7,7 @@ import { PixelMonster } from './PixelMonster'
 import { ParticleSystem } from '../utils/particleSystem'
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode'
 import { monsterScaleFor } from '../utils/monsterVisualScale'
+import { isBurstActive } from '../data/liveOps'
 
 interface OfflineGainsData {
   fights: number
@@ -77,6 +78,15 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   const [animRun, setAnimRun] = useState(true)
   const characterSlotRef = useRef<HTMLDivElement | null>(null)
   characterLevelRef.current = character.level
+  // Weekend Burst pauses idle ticks server-wide with zero on-screen signal —
+  // without this banner the runner looks broken (no monster ever pops).
+  // Refreshed on an interval: no combat tick re-renders the scene mid-burst.
+  const [burstPaused, setBurstPaused] = useState(() => isBurstActive())
+  useEffect(() => {
+    const refresh = () => setBurstPaused(isBurstActive());
+    const timer = setInterval(refresh, 30_000)
+    return () => clearInterval(timer)
+  }, [])
 
   // Browsers freeze CSS @keyframes when tab is hidden and don't always
   // resume them on return. Force a remount of the character slot to
@@ -428,6 +438,14 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
         <div className={`idle-monster-slot phase-${scenePhase}`} data-monster={currentMonster}>
           <PixelMonster monsterId={currentMonster} scale={monsterScaleFor(currentMonster, charScale)} />
           {scenePhase === 'combat' && <div className="combat-flash" />}
+        </div>
+      )}
+
+      {burstPaused && !currentMonster && (
+        <div data-testid="burst-pause-banner" className="idle-burst-banner">
+          <span className="burst-bolt">⚡</span>
+          <span className="burst-text">WEEKEND BURST — IDLE EN PAUSE, BONUS PVP !</span>
+          <span className="burst-bolt">⚡</span>
         </div>
       )}
 
