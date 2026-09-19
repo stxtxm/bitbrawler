@@ -45,11 +45,6 @@
   ],
   "known_issues": [
     {
-      "id": "sw-stale-bundles-v6",
-      "title": "Service worker v6 stale-while-revalidate servait de vieux bundles post-deploy",
-      "status": "fixed"
-    },
-    {
       "id": "shop-epic-replacement-index",
       "title": "Shop: position tableau vs index config en epic-replacement (lvl≥10)",
       "status": "fixed"
@@ -102,6 +97,11 @@
     {
       "id": "dev-prompt-shell-quote-2026-09-12",
       "title": "PROMPT=\"...\" avec backticks/guils bruts → exit 127 : prompts via printf '%s' uniquement, variables en args",
+      "status": "fixed"
+    },
+    {
+      "id": "reviewer-fanout-timeout-2026-09-19",
+      "title": "Reviewer tué en boucle : 3 déclencheurs/PR (pull_request, workflow_run, dispatch ci.yml) + cancel-in-progress + timeout 15min + modèle 1.2 qui pend → source unique ci.yml, timeout 30, modèle 1.3, timeout 10m/tentative",
       "status": "fixed"
     }
   ],
