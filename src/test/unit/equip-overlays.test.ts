@@ -9,11 +9,13 @@ import {
   PLATE_INDEX,
   PLATE_STEEL,
   TRIM_DARK,
+  TRIM_LIGHT,
   TINT_INDEX,
   TINT2_INDEX,
   TINT2_DARK,
   BLADE_INDEX,
   BLADE_DARK,
+  BLADE_LIGHT,
   WEAPON_SLANT,
   WOOD_INDEX,
   WHEAD_INDEX,
@@ -24,7 +26,7 @@ import {
   RIM_INDEX,
 } from '../../components/sprite/equipOverlays';
 import { generateSprite16 } from '../../components/sprite/spriteGenerator';
-import { ACCENT_INDEX, TRIM_INDEX } from '../../components/sprite/spriteTypes';
+import { ACCENT_INDEX, TRIM_INDEX, shadeIndexOf } from '../../components/sprite/spriteTypes';
 import { RARITY_TRIM } from '../../components/sprite/spritePalettes';
 import { ELEMENT_COLORS } from '../../types/Item';
 
@@ -89,20 +91,26 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       accessory: null,
     });
     const tipY = marks.palmR.y - 1 - 9;
-    // slanted edge runs unbroken from tip to guard, leaning out from the fist
-    // (outer bevel cells auto-darken where they meet the background)
+    // slanted 3-wide edge leans out from the fist: dark bevels, bright core
     const sh = (x: number, y: number): number =>
       x + Math.round((marks.palmR.y - y) * WEAPON_SLANT);
-    for (let y = tipY; y < marks.palmR.y - 1; y++) {
-      expect([BLADE_INDEX, BLADE_DARK]).toContain(out.grid[y][sh(marks.palmR.x, y)]);
-      expect([BLADE_INDEX, BLADE_DARK]).toContain(out.grid[y][sh(marks.palmR.x + 1, y)]);
+    for (let y = tipY + 1; y < marks.palmR.y - 1; y++) {
+      expect([BLADE_INDEX, BLADE_DARK, BLADE_LIGHT]).toContain(out.grid[y][sh(marks.palmR.x, y)]);
+      expect(out.grid[y][sh(marks.palmR.x + 1, y)]).toBe(BLADE_LIGHT);
+      expect([BLADE_INDEX, BLADE_DARK, BLADE_LIGHT]).toContain(out.grid[y][sh(marks.palmR.x + 2, y)]);
+    }
+    // tip row faces the sky: fully lit
+    for (let x = marks.palmR.x; x <= marks.palmR.x + 2; x++) {
+      expect(out.grid[tipY][sh(x, tipY)]).toBe(BLADE_LIGHT);
     }
     // tip leans visibly outward from the guard column
     expect(sh(marks.palmR.x, tipY)).toBeGreaterThan(marks.palmR.x);
-    // guard bar, wooden grip, pommel cap (outer bar cells bevel-darken)
-    for (let x = marks.palmR.x - 1; x <= marks.palmR.x + 2; x++) {
-      expect([TRIM_INDEX, TRIM_DARK]).toContain(out.grid[marks.palmR.y - 1][x]);
+    // guard bar with plain steel gem (no element), wooden grip, pommel cap
+    for (let x = marks.palmR.x - 1; x <= marks.palmR.x + 3; x++) {
+      expect([TRIM_INDEX, TRIM_DARK, TRIM_LIGHT]).toContain(out.grid[marks.palmR.y - 1][x]);
     }
+    expect(out.grid[marks.palmR.y - 1][marks.palmR.x]).toBe(TRIM_INDEX);
+    expect(out.grid[marks.palmR.y - 1][marks.palmR.x + 1]).toBe(TRIM_INDEX);
     expect(out.grid[marks.palmR.y + 1][marks.palmR.x]).toBe(WOOD_INDEX);
     expect(out.grid[marks.palmR.y + 2][marks.palmR.x - 1]).toBe(TRIM_INDEX);
     // blade colors come from the item art, not a fixed gray
@@ -113,6 +121,9 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       accessory: null,
     });
     expect(ember.palette[BLADE_INDEX]).not.toBe(out.palette[BLADE_INDEX]);
+    // elemental gem set into the guard
+    expect(ember.grid[marks.palmR.y - 1][marks.palmR.x]).toBe(ACCENT_INDEX);
+    expect(ember.grid[marks.palmR.y - 1][marks.palmR.x + 1]).toBe(ACCENT_INDEX);
   });
 
   it('draws daggers shorter than swords', () => {
@@ -131,7 +142,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       Math.min(
         ...grid.flatMap((row, y) =>
           row.map((c) =>
-            c === BLADE_INDEX || c === BLADE_DARK || c === ACCENT_INDEX ? y : 99,
+            c === BLADE_INDEX || c === BLADE_DARK || c === BLADE_LIGHT || c === ACCENT_INDEX ? y : 99,
           ),
         ),
       );
@@ -177,6 +188,15 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     const headRows = out.grid.slice(marks.palmR.y - 11, marks.palmR.y - 8).flat();
     expect(headRows).toContain(WHEAD_INDEX);
     expect(headRows.some((c) => c === BLADE_INDEX || c === BLADE_DARK)).toBe(true);
+    // plain steel rivet without element
+    expect(out.grid[marks.palmR.y - 10][marks.palmR.x + 4]).toBe(WHEAD_INDEX);
+    const quake = applyEquipmentOverlays(base.grid, base.palette, {
+      weapon: byId('sundering_axe'),
+      armor: null,
+      accessory: null,
+    });
+    // elemental rivet glows in the head
+    expect(quake.grid[marks.palmR.y - 10][marks.palmR.x + 4]).toBe(ACCENT_INDEX);
   });
 
   it('plants staves with a gem tip and scythes with a crossbar', () => {    const base = generateSprite16('staff-check', 'male', { ...STD_MALE });
@@ -239,7 +259,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       });
       const zone = out.grid.slice(marks.palmL.y - 4, marks.palmL.y + 4).flat();
       expect(zone).toContain(FIELD_INDEX);
-      expect(zone).toContain(TRIM_INDEX);
+      expect(zone.some((c) => c === TRIM_INDEX || c === TRIM_DARK || c === TRIM_LIGHT)).toBe(true);
       expect(zone).toContain(ACCENT_INDEX);
     }
     const guardian = applyEquipmentOverlays(base.grid, base.palette, {
@@ -274,8 +294,8 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       accessory: null,
     });
     expect(leather.palette[FIELD_INDEX]).not.toBe(golem.palette[FIELD_INDEX]);
-    // neck skin preserved — armor follows clothing, never eats anatomy
-    expect(golem.grid[24][10]).toBe(1);
+    // collar shadows the neck — armor follows clothing, never eats anatomy
+    expect(golem.grid[24][10]).toBe(shadeIndexOf(5));
   });
 
   it('classifies wrap/coif/greaves by anatomy, not by word fragment', () => {
@@ -505,7 +525,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       armor: null,
       accessory: null,
     });
-    expect([BLADE_INDEX, BLADE_DARK]).toContain(plain.grid[tipY][tipX]);
+    expect(plain.grid[tipY][tipX]).toBe(BLADE_LIGHT);
     expect(glint.grid[tipY][tipX]).toBe(ACCENT_INDEX);
   });
 
