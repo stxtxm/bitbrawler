@@ -30,6 +30,11 @@ const GRID_W = 24;
 const GRID_H = SPRITE_HEIGHT;
 const PAD = SPRITE_PAD_TOP;
 
+export const WEAPON_SLANT = 0.4;
+
+const slantX = (x: number, y: number, pivotY: number): number =>
+  x + Math.round((pivotY - y) * WEAPON_SLANT);
+
 const DEFAULT_BLADE = '#c0c0c0';
 const DEFAULT_WOOD = '#8b5a2b';
 
@@ -316,76 +321,81 @@ function paintBlade(
   const x0 = palm.x;
   const guardY = palm.y - 1;
   const tipY = Math.max(0, guardY - length);
+  const sx = (x: number, y: number): number => slantX(x, y, palm.y);
   for (let y = tipY + 1; y < guardY; y++) {
-    paint(grid, x0, y, BLADE_INDEX);
-    paint(grid, x0 + 1, y, BLADE_INDEX);
+    paint(grid, sx(x0, y), y, BLADE_INDEX);
+    paint(grid, sx(x0 + 1, y), y, BLADE_INDEX);
   }
-  paint(grid, x0, tipY, BLADE_INDEX);
-  paint(grid, x0 + 1, tipY, BLADE_INDEX);
-  if (glint) paint(grid, x0 + 1, tipY, ACCENT_INDEX);
+  paint(grid, sx(x0, tipY), tipY, BLADE_INDEX);
+  paint(grid, sx(x0 + 1, tipY), tipY, BLADE_INDEX);
+  if (glint) paint(grid, sx(x0 + 1, tipY), tipY, ACCENT_INDEX);
   for (let x = x0 - 1; x <= x0 + 2; x++) paint(grid, x, guardY, TRIM_INDEX);
-  paint(grid, x0, guardY + 1, WOOD_INDEX);
-  paint(grid, x0 + 1, guardY + 1, WOOD_INDEX);
-  paint(grid, x0, guardY + 2, WOOD_INDEX);
-  paint(grid, x0 + 1, guardY + 2, WOOD_INDEX);
-  paint(grid, x0, guardY + 3, TRIM_INDEX);
-  paint(grid, x0 + 1, guardY + 3, TRIM_INDEX);
+  paint(grid, sx(x0, guardY + 1), guardY + 1, WOOD_INDEX);
+  paint(grid, sx(x0 + 1, guardY + 1), guardY + 1, WOOD_INDEX);
+  paint(grid, sx(x0, guardY + 2), guardY + 2, WOOD_INDEX);
+  paint(grid, sx(x0 + 1, guardY + 2), guardY + 2, WOOD_INDEX);
+  paint(grid, sx(x0, guardY + 3), guardY + 3, TRIM_INDEX);
+  paint(grid, sx(x0 + 1, guardY + 3), guardY + 3, TRIM_INDEX);
 }
 
 function paintHaft(grid: SpriteGrid, palm: { x: number; y: number }): void {
   const x0 = palm.x;
+  const sx = (x: number, y: number): number => slantX(x, y, palm.y);
   for (let y = palm.y - 8; y <= palm.y + 1; y++) {
-    paint(grid, x0, y, WOOD_INDEX);
-    paint(grid, x0 + 1, y, WOOD_INDEX);
+    paint(grid, sx(x0, y), y, WOOD_INDEX);
+    paint(grid, sx(x0 + 1, y), y, WOOD_INDEX);
   }
   for (let y = palm.y - 11; y <= palm.y - 9; y++) {
-    for (let x = x0 - 1; x <= x0 + 2; x++) paint(grid, x, y, WHEAD_INDEX);
+    for (let x = x0 - 1; x <= x0 + 2; x++) paint(grid, sx(x, y), y, WHEAD_INDEX);
   }
-  for (let y = palm.y - 11; y <= palm.y - 9; y++) paint(grid, x0 + 2, y, BLADE_INDEX);
-  paint(grid, x0, palm.y + 2, TRIM_INDEX);
-  paint(grid, x0 + 1, palm.y + 2, TRIM_INDEX);
+  for (let y = palm.y - 11; y <= palm.y - 9; y++) paint(grid, sx(x0 + 2, y), y, BLADE_INDEX);
+  paint(grid, sx(x0, palm.y + 2), palm.y + 2, TRIM_INDEX);
+  paint(grid, sx(x0 + 1, palm.y + 2), palm.y + 2, TRIM_INDEX);
 }
 
 function paintStaff(grid: SpriteGrid, palm: { x: number; y: number }): void {
   const x0 = palm.x;
+  const sx = (x: number, y: number): number => slantX(x, y, palm.y);
   for (let y = palm.y - 11; y <= palm.y + 3; y++) {
-    paint(grid, x0, y, WOOD_INDEX);
-    paint(grid, x0 + 1, y, WOOD_INDEX);
+    paint(grid, sx(x0, y), y, WOOD_INDEX);
+    paint(grid, sx(x0 + 1, y), y, WOOD_INDEX);
   }
   for (let y = palm.y - 13; y <= palm.y - 12; y++) {
-    paint(grid, x0, y, WHEAD_INDEX);
-    paint(grid, x0 + 1, y, WHEAD_INDEX);
+    paint(grid, sx(x0, y), y, WHEAD_INDEX);
+    paint(grid, sx(x0 + 1, y), y, WHEAD_INDEX);
   }
-  paint(grid, x0, palm.y - 12, ACCENT_INDEX);
+  paint(grid, sx(x0, palm.y - 12), palm.y - 12, ACCENT_INDEX);
 }
 
 function paintScepter(grid: SpriteGrid, palm: { x: number; y: number }): void {
   const x0 = palm.x;
+  const sx = (x: number, y: number): number => slantX(x, y, palm.y);
   for (let y = palm.y - 1; y <= palm.y + 1; y++) {
-    paint(grid, x0, y, WOOD_INDEX);
-    paint(grid, x0 + 1, y, WOOD_INDEX);
+    paint(grid, sx(x0, y), y, WOOD_INDEX);
+    paint(grid, sx(x0 + 1, y), y, WOOD_INDEX);
   }
-  paint(grid, x0, palm.y + 2, TRIM_INDEX);
-  paint(grid, x0 + 1, palm.y + 2, TRIM_INDEX);
+  paint(grid, sx(x0, palm.y + 2), palm.y + 2, TRIM_INDEX);
+  paint(grid, sx(x0 + 1, palm.y + 2), palm.y + 2, TRIM_INDEX);
   for (let y = palm.y - 4; y <= palm.y - 2; y++) {
-    for (let x = x0 - 1; x <= x0 + 1; x++) paint(grid, x, y, WHEAD_INDEX);
+    for (let x = x0 - 1; x <= x0 + 1; x++) paint(grid, sx(x, y), y, WHEAD_INDEX);
   }
-  paint(grid, x0, palm.y - 3, ACCENT_INDEX);
+  paint(grid, sx(x0, palm.y - 3), palm.y - 3, ACCENT_INDEX);
 }
 
 function paintScythe(grid: SpriteGrid, palm: { x: number; y: number }, glint: boolean): void {
   const x0 = palm.x;
+  const sx = (x: number, y: number): number => slantX(x, y, palm.y);
   for (let y = palm.y - 10; y <= palm.y + 1; y++) {
-    paint(grid, x0, y, WOOD_INDEX);
-    paint(grid, x0 + 1, y, WOOD_INDEX);
+    paint(grid, sx(x0, y), y, WOOD_INDEX);
+    paint(grid, sx(x0 + 1, y), y, WOOD_INDEX);
   }
   for (let y = palm.y - 12; y <= palm.y - 11; y++) {
-    for (let x = x0 - 3; x <= x0 + 2; x++) paint(grid, x, y, BLADE_INDEX);
+    for (let x = x0 - 3; x <= x0 + 2; x++) paint(grid, sx(x, y), y, BLADE_INDEX);
   }
-  paint(grid, x0 - 3, palm.y - 12, BLADE_INDEX);
-  if (glint) paint(grid, x0 - 3, palm.y - 12, ACCENT_INDEX);
-  paint(grid, x0, palm.y + 2, TRIM_INDEX);
-  paint(grid, x0 + 1, palm.y + 2, TRIM_INDEX);
+  paint(grid, sx(x0 - 3, palm.y - 12), palm.y - 12, BLADE_INDEX);
+  if (glint) paint(grid, sx(x0 - 3, palm.y - 12), palm.y - 12, ACCENT_INDEX);
+  paint(grid, sx(x0, palm.y + 2), palm.y + 2, TRIM_INDEX);
+  paint(grid, sx(x0 + 1, palm.y + 2), palm.y + 2, TRIM_INDEX);
 }
 
 function paintBow(grid: SpriteGrid, palm: { x: number; y: number }): void {
