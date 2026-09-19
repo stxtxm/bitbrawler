@@ -636,27 +636,22 @@ function paintBrooch(grid: SpriteGrid, item: PixelItemAsset, chest: { x: number;
   blitRaw(grid, mini, ox, oy);
 }
 
-function paintFloatingOrb(grid: SpriteGrid, _item: PixelItemAsset, _head: Box): void {
-  // Orbs hover in the top-left corner like a familiar: weapon on the right,
-  // orb on the left balances the silhouette. Always mini-sized, pinned to
-  // the corner by content box, painted only over empty cells so big
-  // hairstyles never get bitten. A sparkle trails underneath.
-  const art = mini44(_item.pixels);
+function paintFloatingOrb(grid: SpriteGrid, item: PixelItemAsset, head: Box): void {
+  // Orbs hover centered above the head like a halo. Always mini-sized,
+  // bottom row resting on the hairline, painted only over empty cells so
+  // tall hairstyles are never bitten (the crown may clip at the canvas top
+  // edge instead).
+  const art = mini44(item.pixels);
   const box = artBox(art);
-  const ox = -box.x0;
-  const oy = -box.y0;
-  let trail: { x: number; y: number } | null = null;
+  const cx = Math.round((head.x0 + head.x1) / 2);
+  const ox = Math.round(cx - (box.x0 + box.x1) / 2);
+  const oy = head.y0 - box.y1;
   for (const { x, y, v } of artCells(art)) {
     const px = ox + x;
     const py = oy + y;
     if (py < 0 || py >= grid.length || px < 0 || px >= grid[0].length) continue;
     if (grid[py][px] !== 0) continue;
     grid[py][px] = ITEM_BLIT_OFFSET + v;
-    if (!trail || py > trail.y) trail = { x: px, y: py };
-  }
-  if (trail) {
-    const ty = trail.y + 1;
-    if (ty < grid.length && (grid[ty]?.[trail.x] ?? 1) === 0) paint(grid, trail.x, ty, ACCENT_INDEX);
   }
 }
 
