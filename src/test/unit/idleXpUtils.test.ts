@@ -61,4 +61,23 @@ describe('idleXpUtils', () => {
     })
   })
 
+  describe('Weekend Burst (live)', () => {
+    beforeEach(() => {
+      vi.setSystemTime(new Date('2026-09-19T10:00:00Z'))
+    })
+
+    it('still awards XP and essence during burst (no more idle pause)', () => {
+      expect(calculateIdleXp(true, 10)).toBeGreaterThan(0)
+      expect(calculateOfflineIdleXp(true, 10)).toBeGreaterThan(0)
+      expect(calculateIdleEssence(true, 10)).toBeGreaterThan(0)
+    })
+
+    it('boosts essence x1.5 during burst', () => {
+      const burst = calculateIdleEssence(true, 10, 12, 12)
+      vi.setSystemTime(new Date('2026-09-14T10:00:00Z'))
+      const calm = calculateIdleEssence(true, 10, 12, 12)
+      expect(burst).toBeCloseTo(calm * IDLE_CONFIG.BURST.ESSENCE_MULT, 10)
+    })
+  })
+
 })

@@ -81,6 +81,7 @@ describe('IdleRunnerScene', () => {
 
   beforeEach(() => {
     vi.useFakeTimers()
+    burstMock.active = false
     defaultProps.onClearOfflineGains.mockClear()
   })
 
@@ -290,6 +291,24 @@ describe('IdleRunnerScene', () => {
     burstMock.active = true
     render(<IdleRunnerScene {...defaultProps} currentMonster={'goblin'} />)
     expect(screen.queryByTestId('burst-pause-banner')).toBeNull()
+    burstMock.active = false
+  })
+
+  it('fires a burst opening fanfare when the event starts', () => {
+    burstMock.active = false
+    render(<IdleRunnerScene {...defaultProps} currentMonster={null} />)
+    expect(screen.queryByTestId('burst-fanfare-banner')).toBeNull()
+    burstMock.active = true
+    act(() => {
+      vi.advanceTimersByTime(30000)
+    })
+    const fanfare = screen.getByTestId('burst-fanfare-banner')
+    expect(fanfare).toBeInTheDocument()
+    expect(fanfare.textContent).toMatch(/BURST COMMENCE/i)
+    act(() => {
+      vi.advanceTimersByTime(6000)
+    })
+    expect(screen.queryByTestId('burst-fanfare-banner')).toBeNull()
     burstMock.active = false
   })
 })

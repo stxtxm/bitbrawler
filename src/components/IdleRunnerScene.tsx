@@ -81,12 +81,25 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   // Weekend Burst pauses idle ticks server-wide with zero on-screen signal —
   // without this banner the runner looks broken (no monster ever pops).
   // Refreshed on an interval: no combat tick re-renders the scene mid-burst.
-  const [burstPaused, setBurstPaused] = useState(() => isBurstActive())
+  const [burstActive, setBurstActive] = useState(() => isBurstActive())
   useEffect(() => {
-    const refresh = () => setBurstPaused(isBurstActive());
+    const refresh = () => setBurstActive(isBurstActive());
     const timer = setInterval(refresh, 30_000)
     return () => clearInterval(timer)
   }, [])
+  // Burst opening fanfare — fires on mount during burst and on closed→open
+  // transitions so the event is announced, not silently started.
+  const [burstFanfare, setBurstFanfare] = useState(false)
+  const prevBurstRef = useRef(burstActive)
+  useEffect(() => {
+    if (burstActive && !prevBurstRef.current) {
+      setBurstFanfare(true)
+      const t = setTimeout(() => setBurstFanfare(false), 6000)
+      prevBurstRef.current = true
+      return () => clearTimeout(t)
+    }
+    prevBurstRef.current = burstActive
+  }, [burstActive])
 
   // Browsers freeze CSS @keyframes when tab is hidden and don't always
   // resume them on return. Force a remount of the character slot to
@@ -441,10 +454,18 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
         </div>
       )}
 
-      {burstPaused && !currentMonster && (
+      {burstActive && !currentMonster && (
         <div data-testid="burst-pause-banner" className="idle-burst-banner">
           <span className="burst-bolt">⚡</span>
-          <span className="burst-text">WEEKEND BURST — IDLE EN PAUSE, BONUS PVP !</span>
+          <span className="burst-text">WEEKEND BURST — ESSENCE ×1.5 !</span>
+          <span className="burst-bolt">⚡</span>
+        </div>
+      )}
+
+      {burstFanfare && (
+        <div data-testid="burst-fanfare-banner" className="idle-burst-fanfare">
+          <span className="burst-bolt">⚡</span>
+          <span className="burst-text">LE BURST COMMENCE — MONSTRES SURVOLTÉS !</span>
           <span className="burst-bolt">⚡</span>
         </div>
       )}
