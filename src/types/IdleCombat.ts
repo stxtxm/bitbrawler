@@ -9,6 +9,11 @@ export interface IdleCombatEntry {
 
 export type ScenePhase = 'running' | 'monster_appears' | 'combat' | 'result'
 
+export interface IdlePackInfo {
+  size: number
+  index: number
+}
+
 export interface IdleEfficiencyData {
   powerRatio: number
   efficiency: number

@@ -1,5 +1,5 @@
 import type { MonsterId } from '../../data/monsterAssets';
-import type { IdleEfficiencyData, ScenePhase } from '../../types/IdleCombat';
+import type { IdleEfficiencyData, ScenePhase, IdlePackInfo } from '../../types/IdleCombat';
 import type { ItemStats } from '../../types/Item';
 import type { StatKey } from '../../utils/statUtils';
 
@@ -31,6 +31,7 @@ export interface ArenaIdleViewModel {
   totalKills: number;
   efficiencyData: IdleEfficiencyData | null;
   remainingSeconds: number | null;
+  packInfo?: IdlePackInfo | null;
 }
 
 export type InventoryStatKey = keyof ItemStats;

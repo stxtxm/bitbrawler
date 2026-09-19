@@ -29,6 +29,7 @@ interface IdleRunnerSceneProps {
   recentLevelUp: { newLevel: number; isMilestone?: boolean; count?: number } | null
   currentStreak?: number
   streakMilestone?: number | null
+  packInfo?: { size: number; index: number } | null
 }
 
 function formatTimeAway(ms: number): string {
@@ -60,6 +61,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   onClearOfflineGains,
   currentStreak = 0,
   streakMilestone = null,
+  packInfo = null,
 }: IdleRunnerSceneProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const particlesRef = useRef<ParticleSystem | null>(null)
@@ -482,6 +484,14 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
           <span className="streak-fire">🔥</span>
           <span className="streak-text">{streakMilestone} WIN STREAK!</span>
           <span className="streak-fire">🔥</span>
+        </div>
+      )}
+
+      {packInfo && packInfo.size > 1 && currentMonster && (
+        <div data-testid="pack-banner" className="idle-pack-banner">
+          <span className="pack-claw">🐺</span>
+          <span className="pack-text">MEUTE {packInfo.index + 1}/{packInfo.size}</span>
+          <span className="pack-claw">🐺</span>
         </div>
       )}
 

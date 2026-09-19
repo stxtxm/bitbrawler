@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { saveIdleSnapshot, loadIdleSnapshot, clearIdleSnapshot } from '../utils/idleSnapshotUtils'
 import { Character } from '../types/Character'
-import { IdleCombatEntry, ScenePhase, IdleEfficiencyData } from '../types/IdleCombat'
+import { IdleCombatEntry, ScenePhase, IdleEfficiencyData, IdlePackInfo } from '../types/IdleCombat'
 import { IDLE_CONFIG } from '../config/idleConfig'
+import { isBurstActive } from '../data/liveOps'
 import { generateMonsterForPlayer, getReferenceMonster } from '../utils/monsterUtils'
 import { simulateCombat, calculateCombatStats } from '../utils/combatUtils'
 import { gainXp, getXpProgress } from '../utils/xpUtils'
@@ -45,6 +46,17 @@ interface UseIdleCombatReturn {
   idleTotalXp: number
   efficiencyData: IdleEfficiencyData | null
   remainingSeconds: number | null
+  packInfo: IdlePackInfo | null
+}
+
+// Deterministic pack schedule (every 8th visit, every 4th in burst):
+// punctual, testable, and shifts no RNG stream for the combat sim.
+function rollPackSize(level: number, visits: number): number {
+  if ((level ?? 1) < IDLE_CONFIG.PACK.MIN_LEVEL) return 1
+  const period = isBurstActive() ? 4 : 8
+  if (visits % period !== 0) return 1
+  const size = level >= 20 && visits % 2 === 0 ? 3 : 2
+  return Math.min(size, IDLE_CONFIG.PACK.MAX_SIZE)
 }
 
 export function useIdleCombat({
@@ -69,6 +81,7 @@ export function useIdleCombat({
   const [idleTotalXp, setIdleTotalXp] = useState(character?.idleTotalXp ?? 0)
   const [efficiencyData, setEfficiencyData] = useState<IdleEfficiencyData | null>(null)
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null)
+  const [packInfo, setPackInfo] = useState<IdlePackInfo | null>(null)
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isPausedRef = useRef(isPaused)
@@ -86,6 +99,10 @@ export function useIdleCombat({
   const fightStartTimeRef = useRef<number>(0)
   /** Reference to the hard timeout safety timer for the current fight. */
   const hardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  /** Consecutive visit counter — drives the deterministic pack schedule. */
+  const visitsRef = useRef(0)
+  /** Timestamp until which the current pack visit runs — spaces out ticks. */
+  const packUntilRef = useRef(0)
 
   isPausedRef.current = isPaused || !character
   charRef.current = character ?? charRef.current
@@ -380,20 +397,32 @@ export function useIdleCombat({
     const currentChar = charRef.current
     if (!currentChar) return
 
-    // Generate monster
-    let monster
+    // Generate monster (or pack — deterministic schedule, no RNG stream shift)
+    const level = currentChar.level ?? 1
+    let biomeId
     try {
-      const biomeId = getBiomeForCharacter(currentChar).id
-      monster = generateMonsterForPlayer(currentChar.level, biomeId)
+      biomeId = getBiomeForCharacter(currentChar).id
+    } catch {
+      return
+    }
+    visitsRef.current += 1
+    const packSize = rollPackSize(level, visitsRef.current)
+    const members: Array<{ character: Character; def: { id: MonsterId; name: string } }> = []
+    try {
+      for (let i = 0; i < packSize; i++) {
+        members.push(generateMonsterForPlayer(level, biomeId))
+      }
     } catch {
       return
     }
 
     // Record fight start time for hard timeout watchdog
     fightStartTimeRef.current = Date.now()
+    const entryHp = currentChar.hp ?? currentChar.maxHp ?? 100
 
-    setCurrentMonster(monster.def.id)
-    setBackgroundMonster(monster.def.id)
+    setCurrentMonster(members[0].def.id)
+    setBackgroundMonster(members[0].def.id)
+    setPackInfo(packSize > 1 ? { size: packSize, index: 0 } : null)
     setScenePhase('monster_appears')
 
     // Helper: check if fight has exceeded the hard timeout
@@ -405,126 +434,175 @@ export function useIdleCombat({
         syncWatermarks()
         setCurrentMonster(null)
         setBackgroundMonster(null)
+        setPackInfo(null)
+        packUntilRef.current = 0
         setScenePhase('running')
         return true
       }
       return false
     }
 
-    const t1 = setTimeout(() => {
-      if (isHardTimedOut()) return
+    // Pack visit: members fight one after another in a single scene visit.
+    // HP carries over between members (attrition → real defeats); at visit
+    // end HP is restored to arrival shape so singles behave exactly as before.
+    let running: Character = { ...currentChar }
+    let streak = streakRef.current
+    let kills = killsRef.current
+    let idleXp = idleXpRef.current
+    let totalLevels = 0
 
-      setScenePhase('combat')
+    const after = (ms: number, fn: () => void): void => {
+      phaseTimers.current.push(setTimeout(() => {
+        if (isHardTimedOut()) return
+        fn()
+      }, ms))
+    }
 
-      const result = simulateCombat(currentChar, monster.character)
-      const won = result.winner === 'attacker'
-
-      // Calculate XP with bonuses
-      const baseXp = calculateIdleXp(won, currentChar.level)
-      const xpBonus = xpBonusRef.current - 1
-      const streakBonus = Math.min(
-        streakRef.current * IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_PER_STEP,
-        IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_CAP,
-      )
-      const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
-
-      setLastCombatResult(won ? 'win' : 'lose')
-      setLastCombatXp(finalXp)
-      setIdleXpGained(prev => prev + finalXp)
-
-      // Update streak and kill counters
-      let newStreak = streakRef.current
-      let newKills = killsRef.current
-      let newIdleXp = idleXpRef.current
-      if (won) {
-        newStreak++
-        newKills++
-      } else {
-        newStreak = 0
+    const runMember = (i: number): void => {
+      const member = members[i]
+      if (i > 0) {
+        setCurrentMonster(member.def.id)
+        setPackInfo({ size: packSize, index: i })
+        setScenePhase('monster_appears')
       }
-      newIdleXp += finalXp
+      after(IDLE_CONFIG.MONSTER_APPEAR_DURATION, () => {
+        setScenePhase('combat')
 
-      // Accumulate essence per kill (scales with power ratio + stats, like XP)
-      const essenceGain = calculateIdleEssence(won, currentChar.level, currentChar.intelligence, currentChar.focus) * xpBonusRef.current * getSurgeEssenceMultiplier(monster.def.id)
-      if (won) incrementBountyProgress(monster.def.id)
+        const preHp = running.hp ?? entryHp
+        const result = simulateCombat({ ...running, hp: preHp }, member.character)
+        const won = result.winner === 'attacker'
 
-      // Apply XP with updated idle stats and watermarks
-      const xpResult = gainXp(currentChar, finalXp)
-      const now = Date.now()
-      // Re-read the freshest character: a discrete user action (lootbox roll,
-      // salvage, equip) may have run during this multi-second tick. Preserving
-      // its fields prevents the idle write-back from reverting them — e.g.
-      // reverting lastLootRoll would let the daily lootbox be claimed twice.
-      const latest = charRef.current ?? currentChar
-      const updatedEssence = (latest.essence ?? currentChar.essence ?? 0) + essenceGain
-      const updatedChar: Character = {
-        ...xpResult.updatedCharacter,
-        inventory: latest.inventory,
-        lastLootRoll: latest.lastLootRoll,
-        lootboxStreak: latest.lootboxStreak,
-        equippedItems: latest.equippedItems,
-        itemUpgrades: latest.itemUpgrades,
-        essence: updatedEssence,
-        idleStreak: newStreak,
-        idleMaxStreak: Math.max(newStreak, (currentChar.idleMaxStreak ?? 0)),
-        idleTotalKills: newKills,
-        idleTotalXp: newIdleXp,
-        statPoints: (xpResult.updatedCharacter.statPoints || 0) + xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL,
-        lastIdleCheck: now,
-        lastActive: now,
-      }
+        // Calculate XP with bonuses
+        const baseXp = calculateIdleXp(won, running.level)
+        const xpBonus = xpBonusRef.current - 1
+        const streakBonus = Math.min(
+          streak * IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_PER_STEP,
+          IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_CAP,
+        )
+        const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
 
-      // Progress guard: during this multi-second tick (phase timers), a
-      // discrete action or an offline merge may have advanced charRef beyond
-      // our captured snapshot. Never regress level/experience/hp — adopt the
-      // higher-progress side as a coherent block, keep fight cosmetics.
-      const freshest = latest
-      const fExp = freshest.experience ?? 0
-      if (fExp > (updatedChar.experience ?? 0)) {
-        updatedChar.experience = fExp
-        updatedChar.level = Math.max(updatedChar.level ?? 1, freshest.level ?? 1)
-        updatedChar.maxHp = Math.max(updatedChar.maxHp ?? 0, freshest.maxHp ?? 0)
-        updatedChar.hp = Math.max(updatedChar.hp ?? 0, freshest.hp ?? 0)
-        updatedChar.statPoints = Math.max(updatedChar.statPoints ?? 0, freshest.statPoints ?? 0)
-        updatedChar.essence = Math.max(updatedChar.essence ?? 0, freshest.essence ?? 0)
-      }
+        setLastCombatResult(won ? 'win' : 'lose')
+        setLastCombatXp(finalXp)
+        setIdleXpGained(prev => prev + finalXp)
 
-      onCharacterUpdate(updatedChar)
-      onSyncCharacter?.(updatedChar)
-      if (xpResult.levelsGained > 0) {
-        onLevelUp?.(xpResult.levelsGained, updatedChar.level)
-      }
+        // Update streak and kill counters
+        if (won) {
+          streak++
+          kills++
+        } else {
+          streak = 0
+        }
+        idleXp += finalXp
 
-      setCurrentStreak(newStreak)
-      setTotalKills(newKills)
-      setIdleTotalXp(newIdleXp)
+        // Accumulate essence per kill (scales with power ratio + stats, like XP)
+        const essenceGain = calculateIdleEssence(won, running.level, running.intelligence, running.focus) * xpBonusRef.current * getSurgeEssenceMultiplier(member.def.id)
+        if (won) incrementBountyProgress(member.def.id)
 
-      // Log
-      const entry: IdleCombatEntry = {
-        timestamp: Date.now(),
-        monsterId: monster.def.id,
-        monsterName: monster.def.name,
-        won,
-        xpGained: finalXp,
-        damageTaken: 0,
-      }
+        // Apply XP with updated idle stats and watermarks
+        const xpResult = gainXp(running, finalXp)
+        const now = Date.now()
+        // Re-read the freshest character: a discrete user action (lootbox roll,
+        // salvage, equip) may have run during this multi-second tick. Preserving
+        // its fields prevents the idle write-back from reverting them — e.g.
+        // reverting lastLootRoll would let the daily lootbox be claimed twice.
+        const latest = charRef.current ?? currentChar
+        const updatedEssence = (latest.essence ?? running.essence ?? 0) + essenceGain
+        // Attrition: wounds carry into the next pack member (never below 0,
+        // capped by the post-level maxHp).
+        const endHp = result.timeline?.length
+          ? result.timeline[result.timeline.length - 1].attackerHp
+          : preHp
+        const woundedHp = Math.max(
+          0,
+          Math.min(
+            xpResult.updatedCharacter.maxHp ?? preHp,
+            (xpResult.updatedCharacter.hp ?? preHp) - Math.max(0, preHp - endHp),
+          ),
+        )
+        const updatedChar: Character = {
+          ...xpResult.updatedCharacter,
+          inventory: latest.inventory,
+          lastLootRoll: latest.lastLootRoll,
+          lootboxStreak: latest.lootboxStreak,
+          equippedItems: latest.equippedItems,
+          itemUpgrades: latest.itemUpgrades,
+          essence: updatedEssence,
+          idleStreak: streak,
+          idleMaxStreak: Math.max(streak, (currentChar.idleMaxStreak ?? 0)),
+          idleTotalKills: kills,
+          idleTotalXp: idleXp,
+          statPoints: (xpResult.updatedCharacter.statPoints || 0) + xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL,
+          hp: woundedHp,
+          lastIdleCheck: now,
+          lastActive: now,
+        }
 
-      setCombatLog(prev => [...prev, entry])
-    }, IDLE_CONFIG.MONSTER_APPEAR_DURATION)
+        // Progress guard: during this multi-second tick (phase timers), a
+        // discrete action or an offline merge may have advanced charRef beyond
+        // our captured snapshot. Never regress level/experience/hp — adopt the
+        // higher-progress side as a coherent block, keep fight cosmetics.
+        const freshest = latest
+        const fExp = freshest.experience ?? 0
+        if (fExp > (updatedChar.experience ?? 0)) {
+          updatedChar.experience = fExp
+          updatedChar.level = Math.max(updatedChar.level ?? 1, freshest.level ?? 1)
+          updatedChar.maxHp = Math.max(updatedChar.maxHp ?? 0, freshest.maxHp ?? 0)
+          updatedChar.hp = Math.max(updatedChar.hp ?? 0, freshest.hp ?? 0)
+          updatedChar.statPoints = Math.max(updatedChar.statPoints ?? 0, freshest.statPoints ?? 0)
+          updatedChar.essence = Math.max(updatedChar.essence ?? 0, freshest.essence ?? 0)
+        }
+        running = updatedChar
+        totalLevels += xpResult.levelsGained
 
-    const t2 = setTimeout(() => {
-      if (isHardTimedOut()) return
+        onCharacterUpdate(running)
+        onSyncCharacter?.(running)
 
-      setScenePhase('result')
-    }, IDLE_CONFIG.MONSTER_APPEAR_DURATION + IDLE_CONFIG.COMBAT_DURATION)
+        setCurrentStreak(streak)
+        setTotalKills(kills)
+        setIdleTotalXp(idleXp)
 
-    const t3 = setTimeout(() => {
-      if (isHardTimedOut()) return
+        // Log
+        const entry: IdleCombatEntry = {
+          timestamp: Date.now(),
+          monsterId: member.def.id,
+          monsterName: member.def.name,
+          won,
+          xpGained: finalXp,
+          damageTaken: Math.max(0, preHp - endHp),
+        }
 
-      setCurrentMonster(null)
-      setScenePhase('running')
-      syncWatermarks()
-    }, IDLE_CONFIG.MONSTER_APPEAR_DURATION + IDLE_CONFIG.COMBAT_DURATION + IDLE_CONFIG.RESULT_DURATION)
+        setCombatLog(prev => [...prev, entry])
+
+        after(IDLE_CONFIG.COMBAT_DURATION, () => {
+          setScenePhase('result')
+        })
+        after(IDLE_CONFIG.COMBAT_DURATION + IDLE_CONFIG.RESULT_DURATION, () => {
+          if (!won || i + 1 >= members.length) {
+            // Visit over — rest back to arrival shape (singles: byte-identical
+            // to before packs existed; pack wounds never leak across visits).
+            running = {
+              ...running,
+              hp: Math.max(0, Math.min(running.maxHp ?? entryHp, Math.max(endHp, entryHp))),
+            }
+            onCharacterUpdate(running)
+            onSyncCharacter?.(running)
+            setCurrentMonster(null)
+            setPackInfo(null)
+            setScenePhase('running')
+            syncWatermarks()
+            if (totalLevels > 0) {
+              onLevelUp?.(totalLevels, running.level)
+            }
+            packUntilRef.current = 0
+          } else {
+            runMember(i + 1)
+          }
+        })
+      })
+    }
+    runMember(0)
+    packUntilRef.current =
+      Date.now() + packSize * (IDLE_CONFIG.MONSTER_APPEAR_DURATION + IDLE_CONFIG.COMBAT_DURATION + IDLE_CONFIG.RESULT_DURATION)
 
     // Safety net: hard timeout watchdog that fires regardless of phase timer delays
     if (hardTimeoutRef.current !== null) {
@@ -534,8 +612,6 @@ export function useIdleCombat({
       isHardTimedOut()
       hardTimeoutRef.current = null
     }, COMBAT_BALANCE.fightHardTimeoutMs)
-
-    phaseTimers.current = [t1, t2, t3]
   }, [onCharacterUpdate, onSyncCharacter, onLevelUp, syncWatermarks, clearPhaseTimers])
 
   // Trigger first combat immediately, then repeat on dynamic interval.
@@ -552,9 +628,10 @@ export function useIdleCombat({
 
     const tickLoop = () => {
       runCombatTick()
-      // Schedule next tick with latest effective interval
+      // Schedule next tick with latest effective interval — but never cut a
+      // running pack visit short: wait until its last result phase ends.
       if (!isPausedRef.current) {
-        const delay = effIntervalRef.current
+        const delay = Math.max(effIntervalRef.current, packUntilRef.current - Date.now() + 250)
         timerRef.current = setTimeout(tickLoop, delay)
       }
     }
@@ -727,6 +804,8 @@ export function useIdleCombat({
         // backgrounding must never replay after catch-up.
         clearPhaseTimers()
         setCurrentMonster(null)
+        setPackInfo(null)
+        packUntilRef.current = 0
         setScenePhase('running')
         if (bgMs > 5000 && bgMs < 30000) {
           catchUpBackgroundFights(bgMs)
@@ -777,5 +856,6 @@ export function useIdleCombat({
     idleTotalXp,
     efficiencyData,
     remainingSeconds,
+    packInfo,
   }
 }
