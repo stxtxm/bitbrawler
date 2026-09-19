@@ -1,7 +1,7 @@
 import { ITEM_ASSETS, ITEM_PALETTE } from '../../data/itemAssets';
 import { ELEMENT_COLORS, ItemRarity, PixelItemAsset } from '../../types/Item';
 import { getItemById } from '../../utils/equipmentUtils';
-import { ACCENT_INDEX, ITEM_BLIT_OFFSET, SpriteGrid, SpritePalette, TRIM_INDEX, highlightIndexOf, shadeIndexOf } from './spriteTypes';
+import { ACCENT_INDEX, ITEM_BLIT_OFFSET, SPRITE_HEIGHT, SPRITE_PAD_TOP, SpriteGrid, SpritePalette, TRIM_INDEX, highlightIndexOf, shadeIndexOf } from './spriteTypes';
 import { OUTLINE_HEX, RARITY_TRIM, highlightHex, mixHex } from './spritePalettes';
 
 export const PLATE_INDEX = 62;
@@ -25,9 +25,15 @@ export const FIELD_LIGHT = 100;
 export const STRING_INDEX = 101;
 export const RIM_INDEX = 96;
 export const RIM_DARK = 97;
+export const ORB_INDEX = 69;
+export const ORB_DARK = 103;
+export const ORB_LIGHT = 104;
+export const ORB_CORE = 105;
+export const ORB_GLOW = 106;
 
 const GRID_W = 24;
-const GRID_H = 36;
+const GRID_H = SPRITE_HEIGHT;
+const PAD = SPRITE_PAD_TOP;
 
 const DEFAULT_BLADE = '#c0c0c0';
 const DEFAULT_WOOD = '#8b5a2b';
@@ -100,7 +106,7 @@ function boxOf(grid: SpriteGrid, y0: number, y1: number): Box {
 
 function extremeHand(grid: SpriteGrid, side: 'left' | 'right'): { x: number; y: number } {
   let best: { x: number; y: number } | null = null;
-  for (let y = 24; y <= 31; y++) {
+  for (let y = 24 + PAD; y <= 31 + PAD; y++) {
     const row = grid[y];
     if (!row) continue;
     if (side === 'right') {
@@ -119,14 +125,14 @@ function extremeHand(grid: SpriteGrid, side: 'left' | 'right'): { x: number; y: 
       }
     }
   }
-  return best ?? (side === 'right' ? { x: 17, y: 27 } : { x: 6, y: 27 });
+  return best ?? (side === 'right' ? { x: 17, y: 27 + PAD } : { x: 6, y: 27 + PAD });
 }
 
 const clamp = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, Math.round(v)));
 
 export function computeLandmarks(grid: SpriteGrid): BodyLandmarks {
-  const head = boxOf(grid, 0, 17);
-  const torso = boxOf(grid, 18, 33);
+  const head = boxOf(grid, 0, 17 + PAD);
+  const torso = boxOf(grid, 18 + PAD, 33 + PAD);
   const handR = extremeHand(grid, 'right');
   const handL = extremeHand(grid, 'left');
   let eyeSumX = 0;
@@ -173,14 +179,6 @@ function artCells(art: number[][]): ArtCell[] {
 function paint(grid: SpriteGrid, x: number, y: number, v: number): void {
   if (y < 0 || y >= grid.length || x < 0 || x >= grid[0].length) return;
   grid[y][x] = v;
-}
-
-function artBox(art: number[][]): Box {
-  const cells = artCells(art);
-  if (cells.length === 0) return { x0: 0, y0: 0, x1: 0, y1: 0 };
-  const xs = cells.map((c) => c.x);
-  const ys = cells.map((c) => c.y);
-  return { x0: Math.min(...xs), y0: Math.min(...ys), x1: Math.max(...xs), y1: Math.max(...ys) };
 }
 
 function freqOf(art: number[][], y0: number, y1: number, allowed?: Set<number>): Map<number, number> {
@@ -457,7 +455,7 @@ function paintHeldWeapon(grid: SpriteGrid, item: PixelItemAsset, palm: { x: numb
 
 function paintShield(grid: SpriteGrid, palmL: { x: number; y: number }): void {
   const fc = clamp(palmL.x + 1, 2, GRID_W - 4);
-  const top = clamp(palmL.y - 4, 18, GRID_H - 9);
+  const top = clamp(palmL.y - 4, 18 + PAD, GRID_H - 9);
   const bottom = top + 7;
   for (let y = top; y <= bottom; y++) {
     const narrow = y >= bottom - 1 ? 1 : 0;
@@ -502,8 +500,8 @@ function paintHelm(grid: SpriteGrid, head: Box, faceCx: number, eyeY: number, ri
 
 function paintChest(grid: SpriteGrid, torso: Box, cx: number, kind: 'chest' | 'robe'): void {
   const ccx = clamp(cx, torso.x0 + 4, torso.x1 - 4);
-  const y0 = 19;
-  const y1 = 29;
+  const y0 = 19 + PAD;
+  const y1 = 29 + PAD;
   for (let y = y0; y <= y1; y++) {
     const row = grid[y];
     if (!row) continue;
@@ -532,7 +530,7 @@ function paintChest(grid: SpriteGrid, torso: Box, cx: number, kind: 'chest' | 'r
   paint(grid, ccx - 1, cy, ACCENT_INDEX);
   paint(grid, ccx, cy, ACCENT_INDEX);
   if (kind === 'robe') {
-    for (let y = 30; y <= 33; y++) {
+    for (let y = 30 + PAD; y <= 33 + PAD; y++) {
       const row = grid[y];
       if (!row) continue;
       for (let x = torso.x0; x <= torso.x1; x++) {
@@ -561,7 +559,7 @@ function stampHeadgear(grid: SpriteGrid, item: PixelItemAsset, head: Box, faceCx
 }
 
 function paintBoots(grid: SpriteGrid): void {
-  for (const y of [34, 35]) {
+  for (const y of [34 + PAD, 35 + PAD]) {
     for (let x = 0; x < GRID_W; x++) {
       const cell = grid[y]?.[x] ?? 0;
       if (cell === 7 || cell === shadeIndexOf(7)) grid[y][x] = TINT_INDEX;
@@ -570,7 +568,7 @@ function paintBoots(grid: SpriteGrid): void {
 }
 
 function paintBracers(grid: SpriteGrid): void {
-  for (let y = 24; y <= 29; y++) {
+  for (let y = 24 + PAD; y <= 29 + PAD; y++) {
     const row = grid[y];
     if (!row) continue;
     const left = row.findIndex((c) => c !== 0);
@@ -636,22 +634,42 @@ function paintBrooch(grid: SpriteGrid, item: PixelItemAsset, chest: { x: number;
   blitRaw(grid, mini, ox, oy);
 }
 
-function paintFloatingOrb(grid: SpriteGrid, item: PixelItemAsset, head: Box): void {
-  // Orbs hover centered above the head like a halo. Always mini-sized,
-  // bottom row resting on the hairline, painted only over empty cells so
-  // tall hairstyles are never bitten (the crown may clip at the canvas top
-  // edge instead).
-  const art = mini44(item.pixels);
-  const box = artBox(art);
-  const cx = Math.round((head.x0 + head.x1) / 2);
-  const ox = Math.round(cx - (box.x0 + box.x1) / 2);
-  const oy = head.y0 - box.y1;
-  for (const { x, y, v } of artCells(art)) {
-    const px = ox + x;
-    const py = oy + y;
+function paintFloatingOrb(grid: SpriteGrid, cx: number, oy: number): void {
+  // Hovering halo-orb, fully procedural: 5x5 shaded sphere (dark rim, lit
+  // upper-left, white-hot core), a dim glow bleeding into the hover gap and
+  // two accent twinkles. Colors come from the palette slots sampled from
+  // the item art + element accent (see applyEquipmentOverlays).
+  const ox = cx - 2;
+  for (let dy = 0; dy < 5; dy++) {
+    for (let dx = 0; dx < 5; dx++) {
+      const corner = (dx === 0 || dx === 4) && (dy === 0 || dy === 4);
+      if (corner) continue;
+      const cheb = Math.max(Math.abs(dx - 2), Math.abs(dy - 2));
+      let v: number;
+      if (cheb === 2) v = ORB_DARK;
+      else if (dx === 2 && dy === 2) v = ORB_CORE;
+      else if (dx + dy <= 4) v = ORB_LIGHT;
+      else v = ORB_INDEX;
+      paint(grid, ox + dx, oy + dy, v);
+    }
+  }
+  const glow: Array<[number, number]> = [
+    [0, -1], [4, -1], [-1, 1], [-1, 2], [-1, 3], [5, 1], [5, 2], [5, 3], [1, 5], [2, 5], [3, 5],
+  ];
+  for (const [dx, dy] of glow) {
+    const px = ox + dx;
+    const py = oy + dy;
     if (py < 0 || py >= grid.length || px < 0 || px >= grid[0].length) continue;
-    if (grid[py][px] !== 0) continue;
-    grid[py][px] = ITEM_BLIT_OFFSET + v;
+    if ((grid[py]?.[px] ?? 1) !== 0) continue;
+    paint(grid, px, py, ORB_GLOW);
+  }
+  const twinkles: Array<[number, number]> = [[4, -1], [-1, 4]];
+  for (const [dx, dy] of twinkles) {
+    const px = ox + dx;
+    const py = oy + dy;
+    if (py < 0 || py >= grid.length || px < 0 || px >= grid[0].length) continue;
+    if ((grid[py]?.[px] ?? 1) !== 0) continue;
+    paint(grid, px, py, ACCENT_INDEX);
   }
 }
 
@@ -694,6 +712,8 @@ export function applyEquipmentOverlays(
   const fieldHex = fieldSource
     ? hexOfArtValue(dominantArtValue(fieldSource.pixels), PLATE_STEEL)
     : PLATE_STEEL;
+  const orbItem = loadout.accessory && accessoryKind === 'orb' ? loadout.accessory : null;
+  const orbDom = orbItem ? hexOfArtValue(dominantArtValue(orbItem.pixels), trim) : trim;
   let rimHex: string | null = null;
   if (fieldSource && armorKind === 'helm') {
     const freq = freqOf(fieldSource.pixels, 0, fieldSource.pixels.length - 1);
@@ -718,6 +738,11 @@ export function applyEquipmentOverlays(
     [STRING_INDEX]: '#e8edf2',
     [RIM_INDEX]: rimHex ?? trim,
     [RIM_DARK]: mixHex(rimHex ?? trim, OUTLINE_HEX, 0.5),
+    [ORB_INDEX]: orbDom,
+    [ORB_DARK]: mixHex(orbDom, OUTLINE_HEX, 0.45),
+    [ORB_LIGHT]: highlightHex(orbDom),
+    [ORB_CORE]: mixHex('#ffffff', accent, 0.35),
+    [ORB_GLOW]: mixHex(accent, OUTLINE_HEX, 0.55),
     [TRIM_DARK]: mixHex(trim, OUTLINE_HEX, 0.5),
     [ACCENT_DARK]: mixHex(accent, OUTLINE_HEX, 0.5),
     [PLATE_DARK]: mixHex(PLATE_STEEL, OUTLINE_HEX, 0.5),
@@ -752,7 +777,9 @@ export function applyEquipmentOverlays(
   if (loadout.armor && armorKind === 'shield') paintShield(out, marks.palmL);
   if (loadout.weapon) paintHeldWeapon(out, loadout.weapon, marks.palmR);
   if (loadout.accessory && accessoryKind === 'ring') paintRing(out, marks.palmR);
-  if (loadout.accessory && accessoryKind === 'orb') paintFloatingOrb(out, loadout.accessory, marks.head);
+  if (loadout.accessory && accessoryKind === 'orb') {
+    paintFloatingOrb(out, marks.faceCx, marks.head.y0 - 6);
+  }
   tintOverlayEdges(out);
   return { grid: out, palette: next };
 }
@@ -767,6 +794,7 @@ function tintOverlayEdges(grid: SpriteGrid): void {
     [WHEAD_INDEX]: WHEAD_DARK,
     [FIELD_INDEX]: FIELD_DARK,
     [RIM_INDEX]: RIM_DARK,
+    [ORB_INDEX]: ORB_DARK,
   };
   for (let y = 0; y < grid.length; y++) {
     for (let x = 0; x < grid[y].length; x++) {
