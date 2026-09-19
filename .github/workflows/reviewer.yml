@@ -1,11 +1,11 @@
 name: PR Reviewer
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
-  pull_request:
-    types: [opened, synchronize, reopened]
+  # SOURCE UNIQUE de déclenchement auto : ci.yml dispatche explicitement le
+  # reviewer (ci_green=true) quand la CI est verte. Les triggers pull_request
+  # et workflow_run sont VOLONTAIREMENT absents : ils créaient 2-3 runs
+  # concurrents par PR qui s'entretuaient via cancel-in-progress (runs tués
+  # en boucle, ex #1062/#1063) + des runs mort-nés bloqués sur CI non finie.
   workflow_dispatch:
     inputs:
       pr_number:
@@ -81,19 +81,16 @@ jobs:
 
           # Quand ci.yml nous dispatche juste après un succès, la CI est déjà verte
           # — re-poller gaspille ~30s et peut donner un faux positif pendant que statusCheckRollup se stabilise.
-          if [ "${{ github.event.inputs.ci_green }}" = "true" ] || [ "${{ github.event_name }}" = "workflow_run" ]; then
+          if [ "${{ github.event.inputs.ci_green }}" = "true" ]; then
             echo "✅ CI déjà passée avant dispatch — skip attente CI."
             exit 0
           fi
 
-          # Pour pull_request (fallback direct), la CI vient juste de démarrer en parallèle → attendre plus longtemps
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            MAX_WAIT=6
-            echo "Trigger pull_request — attente CI sur PR #$PR_NUMBER (max 60s)..."
-          else
-            MAX_WAIT=3
-            echo "Dispatch manuel — attente brève CI sur PR #$PR_NUMBER (max 30s)..."
-          fi
+          # Dispatch manuel (ou re-dispatch dépendances) : la CI tourne
+          # peut-être encore (dure ~100s) → attendre jusqu'à 120s qu'elle
+          # verdisse au lieu d'échouer en boucle sur CI_GATE_BLOCKED.
+          MAX_WAIT=12
+          echo "Dispatch manuel — attente CI sur PR #$PR_NUMBER (max 120s)..."
           for i in $(seq 1 $MAX_WAIT); do
             # Count checks that are not completed or not successful/neutral (hors Vercel et hors review lui-même)
             CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
