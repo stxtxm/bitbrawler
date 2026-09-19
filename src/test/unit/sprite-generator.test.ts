@@ -3,12 +3,13 @@ import { generateSprite16, resolveSpriteFeatures } from '../../components/sprite
 import { SPRITE_HEIGHT, SPRITE_WIDTH, highlightIndexOf, shadeIndexOf } from '../../components/sprite/spriteTypes';
 
 describe('sprite generator v2', () => {
-  it('produces a 24x36 grid', () => {
+  it('produces a 24x42 grid with transparent hover room on top', () => {
     const sprite = generateSprite16('hero-seed', 'male');
     expect(sprite.width).toBe(SPRITE_WIDTH);
     expect(sprite.height).toBe(SPRITE_HEIGHT);
-    expect(sprite.grid.length).toBe(36);
+    expect(sprite.grid.length).toBe(42);
     expect(sprite.grid.every((row) => row.length === 24)).toBe(true);
+    expect(sprite.grid.slice(0, 6).flat().every((c) => c === 0)).toBe(true);
   });
 
   it('is deterministic for the same seed', () => {
@@ -63,7 +64,7 @@ describe('sprite generator v2', () => {
     const sprite = generateSprite16('gear-detail', 'male', { bodyType: 'basic', headType: 'male' });
     const flat = sprite.grid.flat();
     expect(flat).toContain(9);
-    expect(sprite.grid[28][11]).toBe(9);
-    expect(sprite.grid[28][12]).toBe(9);
+    expect(sprite.grid[34][11]).toBe(9);
+    expect(sprite.grid[34][12]).toBe(9);
   });
 });

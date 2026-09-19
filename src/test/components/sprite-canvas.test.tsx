@@ -10,7 +10,7 @@ describe('SpriteCanvas', () => {
     const canvas = container.querySelector('canvas');
     expect(canvas).not.toBeNull();
     expect(canvas?.getAttribute('width')).toBe(String(12 * 4 * SPRITE_DISPLAY_SCALE));
-    expect(canvas?.getAttribute('height')).toBe(String(18 * 4 * SPRITE_DISPLAY_SCALE));
+    expect(canvas?.getAttribute('height')).toBe(String(21 * 4 * SPRITE_DISPLAY_SCALE));
   });
 
   it('flags baked glow when aura is set, without css filters', () => {

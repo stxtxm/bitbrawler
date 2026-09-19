@@ -21,6 +21,11 @@ import {
   FIELD_LIGHT,
   STRING_INDEX,
   RIM_INDEX,
+  ORB_INDEX,
+  ORB_DARK,
+  ORB_LIGHT,
+  ORB_CORE,
+  ORB_GLOW,
 } from '../../components/sprite/equipOverlays';
 import { generateSprite16 } from '../../components/sprite/spriteGenerator';
 import { ACCENT_INDEX, TRIM_INDEX } from '../../components/sprite/spriteTypes';
@@ -258,9 +263,9 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       accessory: null,
     });
     expect(golem.palette[PLATE_INDEX]).toBe(PLATE_STEEL);
-    const torsoField = golem.grid.slice(19, 30).flat().filter((c) => c === FIELD_INDEX).length;
+    const torsoField = golem.grid.slice(25, 36).flat().filter((c) => c === FIELD_INDEX).length;
     expect(torsoField).toBeGreaterThan(20);
-    expect(golem.grid.slice(19, 30).flat()).toContain(FIELD_LIGHT);
+    expect(golem.grid.slice(25, 36).flat()).toContain(FIELD_LIGHT);
     expect(golem.grid[marks.chest.y][marks.chest.x]).toBe(ACCENT_INDEX);
     const leather = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: null,
@@ -269,7 +274,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     });
     expect(leather.palette[FIELD_INDEX]).not.toBe(golem.palette[FIELD_INDEX]);
     // neck skin preserved — armor follows clothing, never eats anatomy
-    expect(golem.grid[18][10]).toBe(1);
+    expect(golem.grid[24][10]).toBe(1);
   });
 
   it('classifies wrap/coif/greaves by anatomy, not by word fragment', () => {
@@ -282,19 +287,19 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       armor: byId('novice_wrap'),
       accessory: null,
     });
-    expect(wrap.grid.slice(19, 30).flat().filter((c) => c === FIELD_INDEX).length).toBeGreaterThan(10);
+    expect(wrap.grid.slice(25, 36).flat().filter((c) => c === FIELD_INDEX).length).toBeGreaterThan(10);
     const coif = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: null,
       armor: byId('chainmail_coif'),
       accessory: null,
     });
-    expect(coif.grid.slice(2, 10).flat()).toContain(FIELD_INDEX);
+    expect(coif.grid.slice(8, 16).flat()).toContain(FIELD_INDEX);
     const greaves = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: null,
       armor: byId('iron_greaves'),
       accessory: null,
     });
-    expect(greaves.grid.slice(34, 36).flat()).toContain(TINT_INDEX);
+    expect(greaves.grid.slice(40, 42).flat()).toContain(TINT_INDEX);
   });
 
   it('helms the whole hair while preserving eyes and mouth', () => {
@@ -307,11 +312,11 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
         accessory: null,
       });
       const headField = out.grid
-        .slice(2, 10)
+        .slice(8, 16)
         .flat()
         .filter((c) => c === FIELD_INDEX || c === FIELD_DARK).length;
       expect(headField).toBeGreaterThan(10);
-      const headZone = out.grid.slice(2, 17).flat();
+      const headZone = out.grid.slice(8, 23).flat();
       expect(headZone).toContain(8);
       expect(headZone).toContain(3);
       expect(out.grid[marks.eyeY - 3][marks.faceCx]).toBe(ACCENT_INDEX);
@@ -362,7 +367,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
         accessory: byId(id),
       });
       const cells = blitCells(out.grid).filter(
-        ([x, y]) => y >= 17 && y <= 25 && Math.abs(x - marks.neck.x) <= 4,
+        ([x, y]) => y >= 23 && y <= 31 && Math.abs(x - marks.neck.x) <= 4,
       );
       expect(cells.length).toBeGreaterThan(5);
     }
@@ -401,7 +406,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     }
   });
 
-  it('halos orbs centered above the head, never over hair', () => {
+  it('hovers glowing orbs above the head with a clear gap', () => {
     const base = generateSprite16('orb-check', 'female', { ...STD_FEMALE });
     const marks = computeLandmarks(base.grid);
     for (const id of ['spirit_orb', 'tsunami_orb', 'pyrite_orb']) {
@@ -411,13 +416,34 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
         armor: null,
         accessory: byId(id),
       });
-      const cells = blitCells(out.grid);
-      expect(cells.length).toBeGreaterThan(0);
-      expect(cells.length).toBeLessThanOrEqual(16);
-      const meanX = cells.reduce((a, [x]) => a + x, 0) / cells.length;
-      expect(Math.abs(meanX - marks.faceCx)).toBeLessThanOrEqual(2);
-      expect(cells.every(([, y]) => y <= marks.head.y0 + 1)).toBe(true);
+      const body = out.grid.flatMap((row, y) =>
+        row.map((c, x) => ({ c, x, y })),
+      ).filter(({ c }) => c === ORB_INDEX || c === ORB_DARK || c === ORB_LIGHT || c === ORB_CORE);
+      // 5x5 sphere minus corners = 21 cells, all strictly above the hairline
+      expect(body.length).toBe(21);
+      expect(body.every(({ y }) => y < marks.head.y0 - 1)).toBe(true);
+      const meanX = body.reduce((a, { x }) => a + x, 0) / body.length;
+      expect(Math.abs(meanX - marks.faceCx)).toBeLessThanOrEqual(1);
+      // shaded sphere: dark rim, lit top-left, white-hot core, glow bleeding down
+      expect(body.some(({ c }) => c === ORB_DARK)).toBe(true);
+      expect(body.some(({ c }) => c === ORB_LIGHT)).toBe(true);
+      expect(body.some(({ c }) => c === ORB_CORE)).toBe(true);
+      expect(out.grid.flat()).toContain(ORB_GLOW);
+      // per-item colors: gold pyrite vs blue spirit read differently
+      void id;
     }
+    const pyrite = applyEquipmentOverlays(base.grid, base.palette, {
+      weapon: null,
+      armor: null,
+      accessory: byId('pyrite_orb'),
+    });
+    const spirit = applyEquipmentOverlays(base.grid, base.palette, {
+      weapon: null,
+      armor: null,
+      accessory: byId('spirit_orb'),
+    });
+    expect(pyrite.palette[ORB_CORE]).not.toBe(spirit.palette[ORB_CORE]);
+    expect(pyrite.palette[ORB_GLOW]).not.toBe(spirit.palette[ORB_GLOW]);
   });
 
   it('tints boots and bracers with each item own colors', () => {
@@ -432,22 +458,22 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       armor: null,
       accessory: byId('swift_boots'),
     });
-    expect(shadow.grid.slice(34, 36).flat()).toContain(TINT_INDEX);
-    expect(swift.grid.slice(34, 36).flat()).toContain(TINT_INDEX);
+    expect(shadow.grid.slice(40, 42).flat()).toContain(TINT_INDEX);
+    expect(swift.grid.slice(40, 42).flat()).toContain(TINT_INDEX);
     expect(swift.palette[TINT_INDEX]).not.toBe(shadow.palette[TINT_INDEX]);
     const bracers = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: null,
       armor: byId('worn_bracers'),
       accessory: null,
     });
-    const bracerZone = bracers.grid.slice(24, 30).flat();
+    const bracerZone = bracers.grid.slice(30, 36).flat();
     expect(bracerZone.some((c) => c === TINT2_INDEX || c === TINT2_DARK)).toBe(true);
     const gauntlets = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: null,
       armor: byId('spiked_gauntlets'),
       accessory: null,
     });
-    expect(gauntlets.grid.slice(24, 30).flat().some((c) => c === TINT2_INDEX || c === TINT2_DARK)).toBe(true);
+    expect(gauntlets.grid.slice(30, 36).flat().some((c) => c === TINT2_INDEX || c === TINT2_DARK)).toBe(true);
     expect(gauntlets.palette[TINT2_INDEX]).not.toBe(bracers.palette[TINT2_INDEX]);
   });
 
@@ -461,9 +487,9 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
         armor: null,
         accessory: byId(id),
       });
-      expect(blitCells(out.grid).filter(([, y]) => y <= 9).length).toBeGreaterThan(0);
+      expect(blitCells(out.grid).filter(([, y]) => y <= 15).length).toBeGreaterThan(0);
       expect(out.grid[marks.head.y0 + 1][marks.faceCx]).toBe(ACCENT_INDEX);
-      const headZone = out.grid.slice(2, 17).flat();
+      const headZone = out.grid.slice(8, 23).flat();
       expect(headZone).toContain(8);
     }
   });

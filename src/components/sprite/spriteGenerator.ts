@@ -4,6 +4,7 @@ import type { CharacterAppearance } from '../../types/Character';
 import {
   GeneratedSprite,
   SPRITE_HEIGHT,
+  SPRITE_PAD_TOP,
   SPRITE_WIDTH,
   SpriteBuild,
   SPRITE_BUILDS,
@@ -206,6 +207,7 @@ export function generateSprite16(
   const grid = upscale(base);
   applySnes(grid);
   applyDetails(grid);
+  for (let i = 0; i < SPRITE_PAD_TOP; i++) grid.unshift(Array(SPRITE_WIDTH).fill(0));
   const colors = basePaletteOf(features);
   const palette: SpritePalette = { ...colors };
   for (const key of Object.keys(colors).map(Number)) {

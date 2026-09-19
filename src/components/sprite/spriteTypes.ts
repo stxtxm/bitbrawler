@@ -3,7 +3,9 @@ export type SpriteBuild = 'slim' | 'standard' | 'broad';
 export const SPRITE_BUILDS: SpriteBuild[] = ['slim', 'standard', 'broad'];
 
 export const SPRITE_WIDTH = 24;
-export const SPRITE_HEIGHT = 36;
+export const SPRITE_HEIGHT = 42;
+
+export const SPRITE_PAD_TOP = 6;
 
 export const SPRITE_DISPLAY_SCALE = 1.15;
 
