@@ -40,6 +40,7 @@ export interface SpriteFeatures {
 
 const EDGE_BASES = new Set([1, 3, 4, 5, 6, 7, 9, 11, 12]);
 const DITHER_BASES = new Set([4, 5, 6]);
+const LIGHT_BASES = new Set([1, 4, 5, 6]);
 
 export function resolveSpriteFeatures(
   seed: string,
@@ -153,7 +154,7 @@ function applySnes(grid: SpriteGrid): void {
       const base = grid[y][x];
       if (base === 0 || !EDGE_BASES.has(base)) continue;
       const edge = emptyAt(x - 1, y) || emptyAt(x + 1, y) || emptyAt(x, y - 1) || emptyAt(x, y + 1);
-      if (base === 4 && emptyAt(x, y - 1)) {
+      if (LIGHT_BASES.has(base) && emptyAt(x, y - 1)) {
         edits.push([y, x, highlightIndexOf(base)]);
         continue;
       }
@@ -196,6 +197,66 @@ function applyDetails(grid: SpriteGrid): void {
   }
 }
 
+function applyFeatures(grid: SpriteGrid): void {
+  const set = (x: number, y: number, v: number, onlyIf: number): void => {
+    if (y < 0 || y >= grid.length || x < 0 || x >= grid[0].length) return;
+    if (grid[y][x] === onlyIf) grid[y][x] = v;
+  };
+  let eyeSumX = 0;
+  let eyeCount = 0;
+  let eyeY = 10;
+  let eyeFirstY = 99;
+  const eyeXs: number[] = [];
+  for (let y = 2; y <= 17; y++) {
+    for (let x = 0; x < 24; x++) {
+      if (grid[y][x] === 8) {
+        eyeSumX += x;
+        eyeCount++;
+        eyeY = y;
+        if (y < eyeFirstY) eyeFirstY = y;
+        eyeXs.push(x);
+      }
+    }
+  }
+  const faceCx = eyeCount > 0 ? Math.round(eyeSumX / eyeCount) : 11;
+  const row = grid[eyeY] ?? [];
+  const lx = row.findIndex((c) => c !== 0);
+  let rx = -1;
+  for (let x = row.length - 1; x >= 0; x--) {
+    if (row[x] !== 0) {
+      rx = x;
+      break;
+    }
+  }
+  if (lx >= 0) {
+    if (grid[eyeY]?.[lx - 1] === 0) grid[eyeY][lx - 1] = 1;
+    if (grid[eyeY]?.[rx + 1] === 0) grid[eyeY][rx + 1] = 1;
+  }
+  set(faceCx, eyeY + 2, shadeIndexOf(1), 1);
+  for (const ex of eyeXs) set(ex, eyeFirstY - 2, shadeIndexOf(4), 1);
+  let torsoX0 = 99;
+  let torsoX1 = -1;
+  for (let y = 18; y <= 29; y++) {
+    const r = grid[y] ?? [];
+    r.forEach((c, x) => {
+      if (c !== 0) {
+        if (x < torsoX0) torsoX0 = x;
+        if (x > torsoX1) torsoX1 = x;
+      }
+    });
+  }
+  const torsoCx = Math.round((torsoX0 + torsoX1) / 2);
+  for (let x = torsoCx - 1; x <= torsoCx + 1; x++) {
+    set(x, 18, shadeIndexOf(5), 1);
+    set(x, 19, shadeIndexOf(5), 1);
+  }
+  for (let y = 22; y <= 26; y++) {
+    set(torsoCx - 3, y, shadeIndexOf(5), 5);
+    set(torsoCx + 3, y, shadeIndexOf(5), 5);
+  }
+  for (let y = 30; y <= 33; y++) set(torsoCx, y, shadeIndexOf(6), 6);
+}
+
 export function generateSprite16(
   seed: string,
   gender: 'male' | 'female',
@@ -207,6 +268,7 @@ export function generateSprite16(
   const grid = upscale(base);
   applySnes(grid);
   applyDetails(grid);
+  applyFeatures(grid);
   for (let i = 0; i < SPRITE_PAD_TOP; i++) grid.unshift(Array(SPRITE_WIDTH).fill(0));
   const colors = basePaletteOf(features);
   const palette: SpritePalette = { ...colors };
@@ -214,6 +276,9 @@ export function generateSprite16(
     if (EDGE_BASES.has(key)) palette[shadeIndexOf(key)] = mixHex(colors[key], OUTLINE_HEX, 0.55);
   }
   palette[highlightIndexOf(4)] = highlightHex(colors[4]);
+  palette[highlightIndexOf(1)] = highlightHex(colors[1]);
+  palette[highlightIndexOf(5)] = highlightHex(colors[5]);
+  palette[highlightIndexOf(6)] = highlightHex(colors[6]);
   palette[shadeIndexOf(5)] = deepShadeHex(colors[5]);
   return { grid, palette, width: SPRITE_WIDTH, height: SPRITE_HEIGHT };
 }

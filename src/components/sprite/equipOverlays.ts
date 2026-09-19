@@ -25,6 +25,12 @@ export const FIELD_LIGHT = 100;
 export const STRING_INDEX = 101;
 export const RIM_INDEX = 96;
 export const RIM_DARK = 97;
+export const BLADE_LIGHT = 103;
+export const WOOD_LIGHT = 104;
+export const WHEAD_LIGHT = 105;
+export const TRIM_LIGHT = 106;
+export const TINT_LIGHT = 107;
+export const TINT2_LIGHT = 108;
 
 const GRID_W = 24;
 const GRID_H = SPRITE_HEIGHT;
@@ -317,6 +323,7 @@ function paintBlade(
   palm: { x: number; y: number },
   length: number,
   glint: boolean,
+  gem: number,
 ): void {
   const x0 = palm.x;
   const guardY = palm.y - 1;
@@ -324,12 +331,16 @@ function paintBlade(
   const sx = (x: number, y: number): number => slantX(x, y, palm.y);
   for (let y = tipY + 1; y < guardY; y++) {
     paint(grid, sx(x0, y), y, BLADE_INDEX);
-    paint(grid, sx(x0 + 1, y), y, BLADE_INDEX);
+    paint(grid, sx(x0 + 1, y), y, BLADE_LIGHT);
+    paint(grid, sx(x0 + 2, y), y, BLADE_INDEX);
   }
   paint(grid, sx(x0, tipY), tipY, BLADE_INDEX);
-  paint(grid, sx(x0 + 1, tipY), tipY, BLADE_INDEX);
+  paint(grid, sx(x0 + 1, tipY), tipY, BLADE_LIGHT);
+  paint(grid, sx(x0 + 2, tipY), tipY, BLADE_INDEX);
   if (glint) paint(grid, sx(x0 + 1, tipY), tipY, ACCENT_INDEX);
-  for (let x = x0 - 1; x <= x0 + 2; x++) paint(grid, x, guardY, TRIM_INDEX);
+  for (let x = x0 - 1; x <= x0 + 3; x++) paint(grid, x, guardY, TRIM_INDEX);
+  paint(grid, x0, guardY, gem);
+  paint(grid, x0 + 1, guardY, gem);
   paint(grid, sx(x0, guardY + 1), guardY + 1, WOOD_INDEX);
   paint(grid, sx(x0 + 1, guardY + 1), guardY + 1, WOOD_INDEX);
   paint(grid, sx(x0, guardY + 2), guardY + 2, WOOD_INDEX);
@@ -338,7 +349,7 @@ function paintBlade(
   paint(grid, sx(x0 + 1, guardY + 3), guardY + 3, TRIM_INDEX);
 }
 
-function paintHaft(grid: SpriteGrid, palm: { x: number; y: number }): void {
+function paintHaft(grid: SpriteGrid, palm: { x: number; y: number }, rivet: number): void {
   const x0 = palm.x;
   const sx = (x: number, y: number): number => slantX(x, y, palm.y);
   for (let y = palm.y - 8; y <= palm.y + 1; y++) {
@@ -349,6 +360,8 @@ function paintHaft(grid: SpriteGrid, palm: { x: number; y: number }): void {
     for (let x = x0 - 1; x <= x0 + 2; x++) paint(grid, sx(x, y), y, WHEAD_INDEX);
   }
   for (let y = palm.y - 11; y <= palm.y - 9; y++) paint(grid, sx(x0 + 2, y), y, BLADE_INDEX);
+  paint(grid, sx(x0, palm.y - 10), palm.y - 10, rivet);
+  paint(grid, sx(x0 + 1, palm.y - 10), palm.y - 10, rivet);
   paint(grid, sx(x0, palm.y + 2), palm.y + 2, TRIM_INDEX);
   paint(grid, sx(x0 + 1, palm.y + 2), palm.y + 2, TRIM_INDEX);
 }
@@ -431,6 +444,7 @@ function paintFist(grid: SpriteGrid, palm: { x: number; y: number }): void {
 function paintHeldWeapon(grid: SpriteGrid, item: PixelItemAsset, palm: { x: number; y: number }): void {
   const kind = weaponVisualKind(item);
   const glint = item.rarity === 'epic' || item.rarity === 'legendary';
+  const gem = item.element ? ACCENT_INDEX : TRIM_INDEX;
   if (kind === 'bow') {
     paintBow(grid, palm);
     return;
@@ -452,10 +466,10 @@ function paintHeldWeapon(grid: SpriteGrid, item: PixelItemAsset, palm: { x: numb
     return;
   }
   if (kind === 'haft') {
-    paintHaft(grid, palm);
+    paintHaft(grid, palm, item.element ? ACCENT_INDEX : WHEAD_INDEX);
     return;
   }
-  paintBlade(grid, palm, kind === 'dagger' ? 5 : 9, glint);
+  paintBlade(grid, palm, kind === 'dagger' ? 5 : 9, glint, gem);
 }
 
 function paintShield(grid: SpriteGrid, palmL: { x: number; y: number }): void {
@@ -717,8 +731,14 @@ export function applyEquipmentOverlays(
     [TINT_DARK]: mixHex(tintHex, OUTLINE_HEX, 0.5),
     [TINT2_DARK]: mixHex(tint2Hex, OUTLINE_HEX, 0.5),
     [BLADE_DARK]: mixHex(bladeHex, OUTLINE_HEX, 0.5),
+    [BLADE_LIGHT]: highlightHex(bladeHex),
+    [WOOD_LIGHT]: highlightHex(woodHex),
     [WHEAD_DARK]: mixHex(wheadHex, OUTLINE_HEX, 0.5),
+    [WHEAD_LIGHT]: highlightHex(wheadHex),
     [FIELD_DARK]: mixHex(fieldHex, OUTLINE_HEX, 0.5),
+    [TRIM_LIGHT]: highlightHex(trim),
+    [TINT_LIGHT]: highlightHex(tintHex),
+    [TINT2_LIGHT]: highlightHex(tint2Hex),
   };
   for (const key of Object.keys(ITEM_PALETTE).map(Number)) {
     if (key === 0) continue;
@@ -762,9 +782,24 @@ function tintOverlayEdges(grid: SpriteGrid): void {
     [FIELD_INDEX]: FIELD_DARK,
     [RIM_INDEX]: RIM_DARK,
   };
+  const lightOf: Record<number, number> = {
+    [BLADE_INDEX]: BLADE_LIGHT,
+    [WOOD_INDEX]: WOOD_LIGHT,
+    [WHEAD_INDEX]: WHEAD_LIGHT,
+    [TRIM_INDEX]: TRIM_LIGHT,
+    [FIELD_INDEX]: FIELD_LIGHT,
+    [TINT_INDEX]: TINT_LIGHT,
+    [TINT2_INDEX]: TINT2_LIGHT,
+  };
   for (let y = 0; y < grid.length; y++) {
     for (let x = 0; x < grid[y].length; x++) {
-      const dark = darkOf[grid[y][x]];
+      const v = grid[y][x];
+      const light = lightOf[v];
+      if (light !== undefined && grid[y - 1]?.[x] === 0) {
+        grid[y][x] = light;
+        continue;
+      }
+      const dark = darkOf[v];
       if (dark === undefined) continue;
       const edge =
         grid[y - 1]?.[x] === 0 || grid[y + 1]?.[x] === 0 ||

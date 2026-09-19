@@ -52,7 +52,36 @@ describe('sprite generator v2', () => {
     const flat = sprite.grid.flat();
     expect(flat.some((c) => c === shadeIndexOf(5) || c === shadeIndexOf(4))).toBe(true);
     expect(flat).toContain(highlightIndexOf(4));
-    expect(flat).not.toContain(highlightIndexOf(5));
+    expect(flat).toContain(highlightIndexOf(5));
+    expect(flat).not.toContain(highlightIndexOf(7));
+  });
+
+  it('details the face and clothes: ears, nose, brows, collar, folds', () => {
+    const sprite = generateSprite16('feature-check', 'male', {
+      build: 'standard',
+      bodyType: 'basic',
+      headType: 'male',
+    });
+    const grid = sprite.grid;
+    const eyes: Array<[number, number]> = [];
+    grid.forEach((row, y) => row.forEach((c, x) => {
+      if (c === 8) eyes.push([x, y]);
+    }));
+    expect(eyes.length).toBeGreaterThan(0);
+    const eyeY = Math.max(...eyes.map(([, y]) => y));
+    const faceCx = Math.round(eyes.reduce((a, [x]) => a + x, 0) / eyes.length);
+    const row = grid[eyeY];
+    const contentXs = row.map((c, x) => (c !== 0 && c !== 1 ? x : -1)).filter((x) => x >= 0);
+    const lx = Math.min(...contentXs);
+    const rx = Math.max(...contentXs);
+    expect(grid[eyeY][lx - 1]).toBe(1);
+    expect(grid[eyeY][rx + 1]).toBe(1);
+    expect(grid[eyeY + 2][faceCx]).toBe(shadeIndexOf(1));
+    const upperY = Math.min(...eyes.map(([, y]) => y));
+    const upperXs = [...new Set(eyes.filter(([, y]) => y === upperY).map(([x]) => x))];
+    expect(upperXs.length).toBeGreaterThan(0);
+    expect(upperXs.every((x) => grid[upperY - 2][x] === shadeIndexOf(4))).toBe(true);
+    expect(grid[24][faceCx]).toBe(shadeIndexOf(5));
   });
 
   it('maps edge tones toward the outline color, not a 3d bevel', () => {
