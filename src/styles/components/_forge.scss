@@ -1821,3 +1821,89 @@
     color: #000;
   }
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// Prestige Beacon — HUD 8-bit bois sombre (cohérent ShopPanel)
+// ════════════════════════════════════════════════════════════════════════════
+
+.prestige-beacon {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 15%, rgba(60, 35, 15, 0.3) 0%, transparent 100%),
+    linear-gradient(180deg, #1f120a 0%, #0d0805 100%);
+  border: 2px solid #5c3a1e;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+}
+
+.prestige-beacon-faith {
+  font-family: $font-pixel;
+  font-size: 0.5rem;
+  color: #e8c86a;
+  letter-spacing: 1px;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.prestige-beacon-rate {
+  font-size: 0.42rem;
+  color: #9aa0a6;
+  letter-spacing: 1px;
+}
+
+.prestige-beacon-signal {
+  font-family: $font-pixel;
+  font-size: 0.42rem;
+  letter-spacing: 1px;
+  padding: 4px 8px;
+  border: 1px solid #333;
+  text-align: center;
+}
+
+.prestige-beacon-signal--green {
+  color: #4cd964;
+  border-color: #4cd964;
+  background: rgba(76, 217, 100, 0.08);
+  animation: prestigePulse 1.2s ease-in-out infinite;
+}
+
+.prestige-beacon-signal--yellow {
+  color: #e8c86a;
+  border-color: #c49a2a;
+  background: rgba(232, 200, 106, 0.08);
+}
+
+.prestige-beacon-signal--gray {
+  color: #8b8b8b;
+  border-color: #555;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.prestige-beacon-btn {
+  padding: 8px 16px;
+  font-family: $font-pixel;
+  font-size: 0.5rem;
+  letter-spacing: 2px;
+  cursor: pointer;
+  border: 2px solid #c49a2a;
+  background: rgba(232, 200, 106, 0.12);
+  color: #e8c86a;
+  text-shadow: 1px 1px 0 #000;
+  transition: background 0.2s ease, color 0.2s ease;
+  align-self: center;
+
+  &:hover {
+    background: #e8c86a;
+    color: #000;
+  }
+}
+
+.prestige-beacon-btn--pulse {
+  animation: prestigePulse 1.2s ease-in-out infinite;
+}
+
+@keyframes prestigePulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(232, 200, 106, 0.3); transform: scale(1); }
+  50% { box-shadow: 0 0 16px rgba(232, 200, 106, 0.6), 0 0 28px rgba(232, 200, 106, 0.25); transform: scale(1.03); }
+}

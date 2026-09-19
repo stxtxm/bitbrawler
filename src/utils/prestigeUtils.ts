@@ -31,3 +31,8 @@ export function getFaithBonus(faith: number): number {
   if (!Number.isFinite(faith) || faith <= 0) return 1;
   return 1 + faith * FAITH_BONUS_RATE;
 }
+
+export function capOfflineHours(hours: number): number {
+  if (!Number.isFinite(hours) || hours <= 8) return Number.isFinite(hours) ? hours : 0;
+  return 8 + (hours - 8) * 0.5;
+}
