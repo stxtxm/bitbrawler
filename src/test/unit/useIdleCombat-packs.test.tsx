@@ -162,7 +162,7 @@ describe('useIdleCombat packs', () => {
     expect(result.current.currentMonster).toBeNull();
   });
 
-  it('carries wounds across pack members and rests to arrival shape', () => {
+  it('never wounds in idle: every pack member faces arrival-shape HP', () => {
     const { result, onCharacterUpdate } = setup(
       Array(30).fill('win'),
       ['goblin', 'ogre', 'wraith'],
@@ -172,8 +172,7 @@ describe('useIdleCombat packs', () => {
     advanceUntilQuiescent(result, 10);
     const packPres = simMock.mock.calls.slice(preCalls.length).map(([attacker]) => (attacker as Character).hp);
     expect(packPres.length).toBe(3);
-    expect(packPres[1]).toBeLessThan(packPres[0]);
-    expect(packPres[2]).toBeLessThan(packPres[1]);
+    expect(packPres.every((hp) => hp === 200)).toBe(true);
     const lastUpdate = onCharacterUpdate.mock.calls[onCharacterUpdate.mock.calls.length - 1][0] as Character;
     expect(lastUpdate.hp).toBe(200);
   });
