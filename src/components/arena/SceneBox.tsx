@@ -55,7 +55,6 @@ export const SceneBox = memo(function SceneBox({
           recentLevelUp={idle.recentLevelUp}
           currentStreak={idle.currentStreak}
           streakMilestone={idle.streakMilestone}
-          packInfo={idle.packInfo ?? null}
           eliteName={idle.eliteName ?? null}
           eliteElement={idle.eliteElement ?? null}
         />

@@ -7,7 +7,6 @@ import { PixelMonster } from './PixelMonster'
 import { ParticleSystem } from '../utils/particleSystem'
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode'
 import { monsterScaleFor } from '../utils/monsterVisualScale'
-import { isBurstActive } from '../data/liveOps'
 import type { Element } from '../types/Item'
 
 interface OfflineGainsData {
@@ -30,7 +29,6 @@ interface IdleRunnerSceneProps {
   recentLevelUp: { newLevel: number; isMilestone?: boolean; count?: number } | null
   currentStreak?: number
   streakMilestone?: number | null
-  packInfo?: { size: number; index: number } | null
   eliteName?: string | null
   eliteElement?: Element | null
 }
@@ -64,7 +62,6 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   onClearOfflineGains,
   currentStreak = 0,
   streakMilestone = null,
-  packInfo = null,
   eliteName = null,
   eliteElement = null,
 }: IdleRunnerSceneProps) {
@@ -85,28 +82,6 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   const [animRun, setAnimRun] = useState(true)
   const characterSlotRef = useRef<HTMLDivElement | null>(null)
   characterLevelRef.current = character.level
-  // Weekend Burst pauses idle ticks server-wide with zero on-screen signal —
-  // without this banner the runner looks broken (no monster ever pops).
-  // Refreshed on an interval: no combat tick re-renders the scene mid-burst.
-  const [burstActive, setBurstActive] = useState(() => isBurstActive())
-  useEffect(() => {
-    const refresh = () => setBurstActive(isBurstActive());
-    const timer = setInterval(refresh, 30_000)
-    return () => clearInterval(timer)
-  }, [])
-  // Burst opening fanfare — fires on mount during burst and on closed→open
-  // transitions so the event is announced, not silently started.
-  const [burstFanfare, setBurstFanfare] = useState(false)
-  const prevBurstRef = useRef(burstActive)
-  useEffect(() => {
-    if (burstActive && !prevBurstRef.current) {
-      setBurstFanfare(true)
-      const t = setTimeout(() => setBurstFanfare(false), 6000)
-      prevBurstRef.current = true
-      return () => clearTimeout(t)
-    }
-    prevBurstRef.current = burstActive
-  }, [burstActive])
 
   // Browsers freeze CSS @keyframes when tab is hidden and don't always
   // resume them on return. Force a remount of the character slot to
@@ -461,30 +436,6 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
         </div>
       )}
 
-      {eliteName && currentMonster && (
-        <div data-testid="elite-banner" className="idle-elite-banner">
-          <span className="elite-skull">💀</span>
-          <span className="elite-text">{eliteName} ENRAGÉ</span>
-          <span className="elite-skull">💀</span>
-        </div>
-      )}
-
-      {burstActive && !currentMonster && (
-        <div data-testid="burst-pause-banner" className="idle-burst-banner">
-          <span className="burst-bolt">⚡</span>
-          <span className="burst-text">WEEKEND BURST — ESSENCE ×1.5 !</span>
-          <span className="burst-bolt">⚡</span>
-        </div>
-      )}
-
-      {burstFanfare && (
-        <div data-testid="burst-fanfare-banner" className="idle-burst-fanfare">
-          <span className="burst-bolt">⚡</span>
-          <span className="burst-text">LE BURST COMMENCE — MONSTRES SURVOLTÉS !</span>
-          <span className="burst-bolt">⚡</span>
-        </div>
-      )}
-
       {showBigXp && (
         <div className={`idle-big-xp ${lastCombatResult}`}>
           <span className="big-xp-value">+{lastCombatXp} XP</span>
@@ -497,14 +448,6 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
           <span className="streak-fire">🔥</span>
           <span className="streak-text">{streakMilestone} WIN STREAK!</span>
           <span className="streak-fire">🔥</span>
-        </div>
-      )}
-
-      {packInfo && packInfo.size > 1 && currentMonster && (
-        <div data-testid="pack-banner" className="idle-pack-banner">
-          <span className="pack-claw">🐺</span>
-          <span className="pack-text">MEUTE {packInfo.index + 1}/{packInfo.size}</span>
-          <span className="pack-claw">🐺</span>
         </div>
       )}
 
