@@ -600,6 +600,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       fightHistory: newHistory,
       foughtToday: newFoughtToday,
       statPoints: existingPoints + pointsGained,
+      // Full heal after every PvP fight (documented design): nothing else
+      // heals, so without this wounds accumulate forever and fights end in
+      // 1-round KOs against already-weakened characters.
+      hp: xpResult.updatedCharacter.maxHp ?? baseCharacter.maxHp ?? baseCharacter.hp,
       pendingFight: undefined
     });
 
