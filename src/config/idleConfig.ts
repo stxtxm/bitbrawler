@@ -30,10 +30,10 @@ export const IDLE_CONFIG = {
     ESSENCE_MULT: 1.5,
   },
   PACK: {
-    // Multi-enemy packs (sequential fights, HP carries over → real danger).
+    // Multi-enemy packs (sequential fights in one visit). Idle never wounds:
+    // every member faces arrival-shape HP. Deterministic schedule: every 8th
+    // visit (every 4th in burst), no RNG consumed.
     MIN_LEVEL: 8,
-    CHANCE: 0.12,
-    CHANCE_BURST: 0.24,
     MAX_SIZE: 3,
   },
   ELITE: {

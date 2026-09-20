@@ -440,7 +440,6 @@ export function useIdleCombat({
 
     // Record fight start time for hard timeout watchdog
     fightStartTimeRef.current = Date.now()
-    const entryHp = currentChar.hp ?? currentChar.maxHp ?? 100
 
     setCurrentMonster(members[0].def.id)
     setBackgroundMonster(members[0].def.id)
@@ -469,8 +468,8 @@ export function useIdleCombat({
     }
 
     // Pack visit: members fight one after another in a single scene visit.
-    // HP carries over between members (attrition → real defeats); at visit
-    // end HP is restored to arrival shape so singles behave exactly as before.
+    // Idle never wounds: every member faces arrival-shape HP (level-up heals
+    // still apply). Defeats still happen on sim odds + elites.
     let running: Character = { ...currentChar }
     let streak = streakRef.current
     let kills = killsRef.current
@@ -496,8 +495,7 @@ export function useIdleCombat({
       after(IDLE_CONFIG.MONSTER_APPEAR_DURATION, () => {
         setScenePhase('combat')
 
-        const preHp = running.hp ?? entryHp
-        const result = simulateCombat({ ...running, hp: preHp }, member.character)
+        const result = simulateCombat({ ...running }, member.character)
         const won = result.winner === 'attacker'
 
         // Calculate XP with bonuses
@@ -536,18 +534,6 @@ export function useIdleCombat({
         // reverting lastLootRoll would let the daily lootbox be claimed twice.
         const latest = charRef.current ?? currentChar
         const updatedEssence = (latest.essence ?? running.essence ?? 0) + essenceGain
-        // Attrition: wounds carry into the next pack member (never below 0,
-        // capped by the post-level maxHp).
-        const endHp = result.timeline?.length
-          ? result.timeline[result.timeline.length - 1].attackerHp
-          : preHp
-        const woundedHp = Math.max(
-          0,
-          Math.min(
-            xpResult.updatedCharacter.maxHp ?? preHp,
-            (xpResult.updatedCharacter.hp ?? preHp) - Math.max(0, preHp - endHp),
-          ),
-        )
         const updatedChar: Character = {
           ...xpResult.updatedCharacter,
           inventory: latest.inventory,
@@ -561,7 +547,6 @@ export function useIdleCombat({
           idleTotalKills: kills,
           idleTotalXp: idleXp,
           statPoints: (xpResult.updatedCharacter.statPoints || 0) + xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL,
-          hp: woundedHp,
           lastIdleCheck: now,
           lastActive: now,
         }
@@ -597,7 +582,7 @@ export function useIdleCombat({
           monsterName: member.def.name,
           won,
           xpGained: finalXp,
-          damageTaken: Math.max(0, preHp - endHp),
+          damageTaken: 0,
         }
 
         setCombatLog(prev => [...prev, entry])
@@ -607,14 +592,6 @@ export function useIdleCombat({
         })
         after(IDLE_CONFIG.COMBAT_DURATION + IDLE_CONFIG.RESULT_DURATION, () => {
           if (!won || i + 1 >= members.length) {
-            // Visit over — rest back to arrival shape (singles: byte-identical
-            // to before packs existed; pack wounds never leak across visits).
-            running = {
-              ...running,
-              hp: Math.max(0, Math.min(running.maxHp ?? entryHp, Math.max(endHp, entryHp))),
-            }
-            onCharacterUpdate(running)
-            onSyncCharacter?.(running)
             setCurrentMonster(null)
             setPackInfo(null)
             setEliteName(null)
