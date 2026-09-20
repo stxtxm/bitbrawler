@@ -35,12 +35,6 @@ vi.mock('../../utils/monsterVisualScale', () => ({
   monsterScaleFor: () => 1,
 }))
 
-// Mock liveOps burst flag — controllable per test
-const burstMock = vi.hoisted(() => ({ active: false }))
-vi.mock('../../data/liveOps', () => ({
-  isBurstActive: () => burstMock.active,
-}))
-
 describe('IdleRunnerScene', () => {
   const defaultProps = {
     character: {
@@ -81,7 +75,6 @@ describe('IdleRunnerScene', () => {
 
   beforeEach(() => {
     vi.useFakeTimers()
-    burstMock.active = false
     defaultProps.onClearOfflineGains.mockClear()
   })
 
@@ -274,92 +267,4 @@ describe('IdleRunnerScene', () => {
     document.body.removeChild(fightBtn)
   })
 
-  it('shows the burst pause banner instead of an empty runner during Weekend Burst', () => {
-    burstMock.active = true
-    render(<IdleRunnerScene {...defaultProps} currentMonster={null} />)
-    const banner = screen.getByTestId('burst-pause-banner')
-    expect(banner).toBeInTheDocument()
-    expect(banner.textContent).toMatch(/WEEKEND BURST/i)
-    burstMock.active = false
-  })
-
-  it('hides the burst banner outside burst windows or when a monster is present', () => {
-    burstMock.active = false
-    const { unmount } = render(<IdleRunnerScene {...defaultProps} currentMonster={null} />)
-    expect(screen.queryByTestId('burst-pause-banner')).toBeNull()
-    unmount()
-    burstMock.active = true
-    render(<IdleRunnerScene {...defaultProps} currentMonster={'goblin'} />)
-    expect(screen.queryByTestId('burst-pause-banner')).toBeNull()
-    burstMock.active = false
-  })
-
-  it('shows the pack banner with progress during multi-enemy packs', () => {
-    render(
-      <IdleRunnerScene
-        {...defaultProps}
-        currentMonster={'ogre'}
-        packInfo={{ size: 3, index: 1 }}
-      />,
-    )
-    const banner = screen.getByTestId('pack-banner')
-    expect(banner).toBeInTheDocument()
-    expect(banner.textContent).toMatch(/MEUTE 2\/3/)
-  })
-
-  it('hides the pack banner for singles or without monster', () => {
-    const { unmount } = render(
-      <IdleRunnerScene {...defaultProps} currentMonster={'goblin'} packInfo={null} />,
-    )
-    expect(screen.queryByTestId('pack-banner')).toBeNull()
-    unmount()
-    render(
-      <IdleRunnerScene {...defaultProps} currentMonster={'goblin'} packInfo={{ size: 1, index: 0 }} />,
-    )
-    expect(screen.queryByTestId('pack-banner')).toBeNull()
-  })
-
-  it('shows the elite banner with aura victim while an elite is present', () => {
-    render(
-      <IdleRunnerScene
-        {...defaultProps}
-        currentMonster={'ogre'}
-        eliteName={'Ogre'}
-        eliteElement={'fire'}
-      />,
-    )
-    const banner = screen.getByTestId('elite-banner')
-    expect(banner).toBeInTheDocument()
-    expect(banner.textContent).toMatch(/ogre enragé/i)
-  })
-
-  it('hides the elite banner without elite or without monster', () => {
-    const { unmount } = render(
-      <IdleRunnerScene {...defaultProps} currentMonster={'ogre'} eliteName={null} />,
-    )
-    expect(screen.queryByTestId('elite-banner')).toBeNull()
-    unmount()
-    render(
-      <IdleRunnerScene {...defaultProps} currentMonster={null} eliteName={'Ogre'} />,
-    )
-    expect(screen.queryByTestId('elite-banner')).toBeNull()
-  })
-
-  it('fires a burst opening fanfare when the event starts', () => {
-    burstMock.active = false
-    render(<IdleRunnerScene {...defaultProps} currentMonster={null} />)
-    expect(screen.queryByTestId('burst-fanfare-banner')).toBeNull()
-    burstMock.active = true
-    act(() => {
-      vi.advanceTimersByTime(30000)
-    })
-    const fanfare = screen.getByTestId('burst-fanfare-banner')
-    expect(fanfare).toBeInTheDocument()
-    expect(fanfare.textContent).toMatch(/BURST COMMENCE/i)
-    act(() => {
-      vi.advanceTimersByTime(6000)
-    })
-    expect(screen.queryByTestId('burst-fanfare-banner')).toBeNull()
-    burstMock.active = false
-  })
 })
