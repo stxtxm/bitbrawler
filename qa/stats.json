@@ -95548,5 +95548,255 @@
       "purchased_offer": 0,
       "essence_after_purchase": 6
     }
+  },
+  {
+    "date": "2026-09-20T19:01:26.196Z",
+    "run": "2026-09-20",
+    "character": "QA-PERSI-6",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 0,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 12,
+      "vit": 24,
+      "dex": 9,
+      "luk": 8,
+      "int": 13,
+      "foc": 18,
+      "fights": 0
+    },
+    "initial_level": 17,
+    "initial_xp": {
+      "current": 3112,
+      "max": 12865
+    },
+    "initial_max_hp": 530,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 17,
+      "xp": 3389,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 12,
+      "vit": 24,
+      "dex": 9,
+      "luk": 8,
+      "int": 13,
+      "foc": 18,
+      "last xp": 27,
+      "fights": 4
+    },
+    "final_max_hp": 530,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 33078,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "goblin"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 28,
+      "xp_events": [
+        {
+          "time_ms": 33078,
+          "xp": 28,
+          "monster": "goblin",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        514,
+        1539,
+        33078
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 28,
+        "essence": 0.22,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.23,
+      "next_level_eta": "⬆ 20m 50s",
+      "power_ratio": "⚔ 0.56x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.11x",
+      "interval": "12.0s",
+      "streak_bonus": null
+    },
+    "initial_essence": 39.49,
+    "final_essence": 27.28,
+    "essence": {
+      "before_idle": 39.49,
+      "after_idle": 39.71,
+      "per_fight": [],
+      "forge_before": 39,
+      "forge_after_salvage": 44,
+      "forge_after_fusion": 44,
+      "forge_after_upgrade": 44,
+      "forge_after": 44,
+      "shop_before": 45,
+      "shop_after": 27,
+      "final": 27.28,
+      "flow": {
+        "idle_gained": 0.22,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 5,
+        "shop_cost": 18,
+        "net_change": -12.21
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 39,
+      "essence_after_salvage": 44,
+      "essence_after_fusion": 44,
+      "essence_after_upgrade": 44,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": 44,
+      "items_after": 1,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "COMMON",
+      "cost": 18,
+      "essence_before": 45,
+      "essence_after": 27,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Iron Helm",
+            "rarity": "COMMON",
+            "price": 18
+          },
+          {
+            "name": "Sapphire Orb",
+            "rarity": "EPIC",
+            "price": 54
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 31
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 27
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "exhausted"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1418,
+      "arena": 323
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Iron Helm",
+          "rarity": "COMMON",
+          "price": 18
+        },
+        {
+          "name": "Sapphire Orb",
+          "rarity": "EPIC",
+          "price": 54
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 31
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 27
+    }
   }
 ]
