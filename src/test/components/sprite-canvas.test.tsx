@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, act } from '@testing-library/react';
 import { SpriteCanvas } from '../../components/sprite/SpriteCanvas';
 import { PixelGridCanvas } from '../../components/sprite/PixelGridCanvas';
 import { SPRITE_DISPLAY_SCALE } from '../../components/sprite/spriteTypes';
@@ -29,6 +29,20 @@ describe('SpriteCanvas', () => {
       />,
     );
     expect(container.querySelector('canvas')).not.toBeNull();
+  });
+
+  it('cycles animation frames on a timer and cleans up on unmount', () => {
+    vi.useFakeTimers();
+    const { container, unmount } = render(
+      <SpriteCanvas seed="anim-hero" gender="female" animate="run" />,
+    );
+    expect(container.querySelector('canvas')).not.toBeNull();
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(container.querySelector('canvas')).not.toBeNull();
+    unmount();
+    vi.useRealTimers();
   });
 });
 

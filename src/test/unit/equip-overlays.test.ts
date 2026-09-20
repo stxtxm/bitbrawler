@@ -25,8 +25,8 @@ import {
   STRING_INDEX,
   RIM_INDEX,
 } from '../../components/sprite/equipOverlays';
-import { generateSprite16 } from '../../components/sprite/spriteGenerator';
-import { ACCENT_INDEX, TRIM_INDEX, shadeIndexOf } from '../../components/sprite/spriteTypes';
+import { generateSprite16, generateSpriteFrames } from '../../components/sprite/spriteGenerator';
+import { ACCENT_INDEX, TRIM_INDEX } from '../../components/sprite/spriteTypes';
 import { RARITY_TRIM } from '../../components/sprite/spritePalettes';
 import { ELEMENT_COLORS } from '../../types/Item';
 
@@ -294,8 +294,8 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       accessory: null,
     });
     expect(leather.palette[FIELD_INDEX]).not.toBe(golem.palette[FIELD_INDEX]);
-    // collar shadows the neck — armor follows clothing, never eats anatomy
-    expect(golem.grid[24][10]).toBe(shadeIndexOf(5));
+    // logo-color collar over the neck — armor follows clothing, never eats anatomy
+    expect(golem.grid[24][10]).toBe(11);
   });
 
   it('classifies wrap/coif/greaves by anatomy, not by word fragment', () => {
@@ -527,6 +527,25 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     });
     expect(plain.grid[tipY][tipX]).toBe(BLADE_LIGHT);
     expect(glint.grid[tipY][tipX]).toBe(ACCENT_INDEX);
+  });
+
+  it('tracks limbs across run frames: hands move, weapon follows', () => {
+    const frames = generateSpriteFrames('track-check', 'male', {
+      build: 'standard',
+      bodyType: 'basic',
+      headType: 'male',
+    }, 'run')!;
+    const hands = frames.map((f) => computeLandmarks(f.grid).handR.x);
+    expect(new Set(hands).size).toBeGreaterThan(1);
+    const sword = byId('rusty_sword')!;
+    const grids = frames.map(
+      (f) => JSON.stringify(applyEquipmentOverlays(f.grid, f.palette, {
+        weapon: sword,
+        armor: null,
+        accessory: null,
+      }).grid),
+    );
+    expect(new Set(grids).size).toBe(3);
   });
 
   it('uses the highest rarity for the trim and survives unknown ids', () => {

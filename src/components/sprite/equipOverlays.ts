@@ -690,7 +690,9 @@ export function applyEquipmentOverlays(
   const tint2Hex = tint2Source
     ? hexOfArtValue(dominantArtValue(tint2Source.pixels), trim)
     : trim;
-  const bladeHex = loadout.weapon ? bladeHexOf(loadout.weapon.pixels) : trim;
+  const bladeBase = loadout.weapon ? bladeHexOf(loadout.weapon.pixels) : trim;
+  const bladeElement = loadout.weapon?.element ? ELEMENT_COLORS[loadout.weapon.element] : null;
+  const bladeHex = bladeElement ? mixHex(bladeBase, bladeElement, 0.3) : bladeBase;
   const woodHex = loadout.weapon ? woodHexOf(loadout.weapon.pixels) : DEFAULT_WOOD;
   const wheadHex = loadout.weapon ? headTopHexOf(loadout.weapon.pixels, bladeHex) : bladeHex;
   const fieldSource =

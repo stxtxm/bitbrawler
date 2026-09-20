@@ -1,4 +1,4 @@
-import { PIXEL_HEADS, PIXEL_BODIES } from '../PixelAssets';
+import { PIXEL_HEADS, PIXEL_BODIES, PIXEL_BODIES_RUN } from '../PixelAssets';
 import { mulberry32, getSeedFromText } from '../../utils/randomUtils';
 import type { CharacterAppearance } from '../../types/Character';
 import {
@@ -91,9 +91,11 @@ function basePaletteOf(features: SpriteFeatures): SpritePalette {
   };
 }
 
-function composeBaseGrid(headType: string, bodyType: string): SpriteGrid {
+function composeBaseGrid(headType: string, bodyType: string, bodyGrid?: number[][]): SpriteGrid {
   const grid: SpriteGrid = Array.from({ length: 18 }, () => Array(12).fill(0));
-  const body = (PIXEL_BODIES as Record<string, number[][]>)[bodyType] ?? PIXEL_BODIES.basic;
+  const body = bodyGrid
+    ?? (PIXEL_BODIES as Record<string, number[][]>)[bodyType]
+    ?? PIXEL_BODIES.basic;
   const head = (PIXEL_HEADS as Record<string, number[][]>)[headType] ?? PIXEL_HEADS.male;
   for (let y = 0; y < body.length && y + 9 < 18; y++) {
     for (let x = 0; x < body[y].length && x < 12; x++) {
@@ -247,29 +249,40 @@ function applyFeatures(grid: SpriteGrid): void {
   }
   const torsoCx = Math.round((torsoX0 + torsoX1) / 2);
   for (let x = torsoCx - 1; x <= torsoCx + 1; x++) {
-    set(x, 18, shadeIndexOf(5), 1);
-    set(x, 19, shadeIndexOf(5), 1);
+    set(x, 18, 11, 1);
+    set(x, 19, 11, 1);
   }
   for (let y = 22; y <= 26; y++) {
     set(torsoCx - 3, y, shadeIndexOf(5), 5);
     set(torsoCx + 3, y, shadeIndexOf(5), 5);
   }
-  for (let y = 30; y <= 33; y++) set(torsoCx, y, shadeIndexOf(6), 6);
+  for (let y = 30; y <= 33; y++) {
+    set(torsoCx, y, shadeIndexOf(6), 6);
+    const row = grid[y] ?? [];
+    const left = row.findIndex((c) => c === 6 || c === shadeIndexOf(6));
+    if (left >= 0) set(left, y, highlightIndexOf(6), row[left]);
+    for (let x = row.length - 1; x >= 0; x--) {
+      if (row[x] === 6 || row[x] === shadeIndexOf(6)) {
+        set(x, y, highlightIndexOf(6), row[x]);
+        break;
+      }
+    }
+  }
+  const shoeRow = grid[34] ?? [];
+  let runStart = -1;
+  for (let x = 0; x <= shoeRow.length; x++) {
+    const shoe = x < shoeRow.length && (shoeRow[x] === 7 || shoeRow[x] === shadeIndexOf(7));
+    if (shoe && runStart < 0) runStart = x;
+    if (!shoe && runStart >= 0) {
+      const mid = Math.floor((runStart + x - 1) / 2);
+      set(mid, 34, 2, shoeRow[mid]);
+      if (x - runStart > 3) set(mid + 1, 34, 2, shoeRow[mid + 1]);
+      runStart = -1;
+    }
+  }
 }
 
-export function generateSprite16(
-  seed: string,
-  gender: 'male' | 'female',
-  appearance?: CharacterAppearance | null,
-): GeneratedSprite {
-  const features = resolveSpriteFeatures(seed, gender, appearance);
-  const base = composeBaseGrid(features.headType, features.bodyType);
-  applyBuild(base, features.build);
-  const grid = upscale(base);
-  applySnes(grid);
-  applyDetails(grid);
-  applyFeatures(grid);
-  for (let i = 0; i < SPRITE_PAD_TOP; i++) grid.unshift(Array(SPRITE_WIDTH).fill(0));
+function buildPalette(features: SpriteFeatures): SpritePalette {
   const colors = basePaletteOf(features);
   const palette: SpritePalette = { ...colors };
   for (const key of Object.keys(colors).map(Number)) {
@@ -280,5 +293,54 @@ export function generateSprite16(
   palette[highlightIndexOf(5)] = highlightHex(colors[5]);
   palette[highlightIndexOf(6)] = highlightHex(colors[6]);
   palette[shadeIndexOf(5)] = deepShadeHex(colors[5]);
+  return palette;
+}
+
+function finishGrid(base: SpriteGrid, features: SpriteFeatures): SpriteGrid {
+  applyBuild(base, features.build);
+  const grid = upscale(base);
+  applySnes(grid);
+  applyDetails(grid);
+  applyFeatures(grid);
+  for (let i = 0; i < SPRITE_PAD_TOP; i++) grid.unshift(Array(SPRITE_WIDTH).fill(0));
+  return grid;
+}
+
+export function generateSprite16(
+  seed: string,
+  gender: 'male' | 'female',
+  appearance?: CharacterAppearance | null,
+): GeneratedSprite {
+  const features = resolveSpriteFeatures(seed, gender, appearance);
+  const grid = finishGrid(composeBaseGrid(features.headType, features.bodyType), features);
+  const palette = buildPalette(features);
   return { grid, palette, width: SPRITE_WIDTH, height: SPRITE_HEIGHT };
+}
+
+export type SpriteAnimKind = 'run' | 'attack';
+
+const ANIM_KEYS: Record<SpriteAnimKind, ['run1' | 'attack1', 'run2' | 'attack2', 'run3' | 'attack3']> = {
+  run: ['run1', 'run2', 'run3'],
+  attack: ['attack1', 'attack2', 'attack3'],
+};
+
+// Animation frames for the run cycle / attack swing. Same head, same colors,
+// same size — only the limbs move. Bodies unknown to PIXEL_BODIES_RUN fall
+// back to null (caller keeps the static sprite).
+export function generateSpriteFrames(
+  seed: string,
+  gender: 'male' | 'female',
+  appearance?: CharacterAppearance | null,
+  kind: SpriteAnimKind = 'run',
+): GeneratedSprite[] | null {
+  const features = resolveSpriteFeatures(seed, gender, appearance);
+  const runBody = (PIXEL_BODIES_RUN as Record<string, Record<string, number[][]>>)[features.bodyType];
+  if (!runBody) return null;
+  const palette = buildPalette(features);
+  return ANIM_KEYS[kind].map((key) => {
+    const bodyGrid = runBody[key];
+    if (!bodyGrid) return null;
+    const grid = finishGrid(composeBaseGrid(features.headType, features.bodyType, bodyGrid), features);
+    return { grid, palette, width: SPRITE_WIDTH, height: SPRITE_HEIGHT };
+  }).filter((s): s is GeneratedSprite => s !== null);
 }
