@@ -148,6 +148,8 @@ const Arena = () => {
     efficiencyData: idle.efficiencyData,
     remainingSeconds: idle.remainingSeconds,
     packInfo: idle.packInfo ?? null,
+    eliteName: idle.eliteName ?? null,
+    eliteElement: idle.eliteElement ?? null,
   }), [
     idle.clearOfflineGains,
     idle.currentMonster,
@@ -158,6 +160,8 @@ const Arena = () => {
     idle.lastCombatXp,
     idle.offlineGains,
     idle.packInfo,
+    idle.eliteName,
+    idle.eliteElement,
     idle.remainingSeconds,
     idle.scenePhase,
     idle.totalKills,

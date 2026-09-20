@@ -8,6 +8,7 @@ import { ParticleSystem } from '../utils/particleSystem'
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode'
 import { monsterScaleFor } from '../utils/monsterVisualScale'
 import { isBurstActive } from '../data/liveOps'
+import type { Element } from '../types/Item'
 
 interface OfflineGainsData {
   fights: number
@@ -30,6 +31,8 @@ interface IdleRunnerSceneProps {
   currentStreak?: number
   streakMilestone?: number | null
   packInfo?: { size: number; index: number } | null
+  eliteName?: string | null
+  eliteElement?: Element | null
 }
 
 function formatTimeAway(ms: number): string {
@@ -62,6 +65,8 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   currentStreak = 0,
   streakMilestone = null,
   packInfo = null,
+  eliteName = null,
+  eliteElement = null,
 }: IdleRunnerSceneProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const particlesRef = useRef<ParticleSystem | null>(null)
@@ -451,8 +456,16 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
 
       {currentMonster && (
         <div className={`idle-monster-slot phase-${scenePhase}`} data-monster={currentMonster}>
-          <PixelMonster monsterId={currentMonster} scale={monsterScaleFor(currentMonster, charScale)} />
+          <PixelMonster monsterId={currentMonster} scale={monsterScaleFor(currentMonster, charScale)} aura={eliteName ? eliteElement : undefined} />
           {scenePhase === 'combat' && <div className="combat-flash" />}
+        </div>
+      )}
+
+      {eliteName && currentMonster && (
+        <div data-testid="elite-banner" className="idle-elite-banner">
+          <span className="elite-skull">💀</span>
+          <span className="elite-text">{eliteName} ENRAGÉ</span>
+          <span className="elite-skull">💀</span>
         </div>
       )}
 
