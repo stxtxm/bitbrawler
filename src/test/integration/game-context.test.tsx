@@ -165,6 +165,30 @@ describe('GameContext Integration', () => {
     expect(result.current.activeCharacter?.experience).toBeGreaterThan(500);
   });
 
+  it('should restore full HP after a PvP fight, win or lose', async () => {
+    const wounded = { ...mockCharacter, hp: 20, maxHp: 150 };
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(wounded));
+    setupMockCharacter(wounded);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.useFight(true, 50, 'MOCK_FOE', 'opp-heal');
+    });
+    expect(result.current.activeCharacter?.hp).toBe(result.current.activeCharacter?.maxHp);
+
+    await act(async () => {
+      await result.current.useFight(false, 30, 'MOCK_FOE_2', 'opp-heal-2');
+    });
+    expect(result.current.activeCharacter?.hp).toBe(result.current.activeCharacter?.maxHp);
+  });
+
   it('should reserve energy and store pending fight on matchmaking start', async () => {
     (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
     const builder = setupMockCharacter(mockCharacter);
