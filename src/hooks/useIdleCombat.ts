@@ -2,9 +2,10 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { saveIdleSnapshot, loadIdleSnapshot, clearIdleSnapshot } from '../utils/idleSnapshotUtils'
 import { Character } from '../types/Character'
 import { IdleCombatEntry, ScenePhase, IdleEfficiencyData, IdlePackInfo } from '../types/IdleCombat'
+import { Element } from '../types/Item'
 import { IDLE_CONFIG } from '../config/idleConfig'
 import { isBurstActive } from '../data/liveOps'
-import { generateMonsterForPlayer, getReferenceMonster } from '../utils/monsterUtils'
+import { generateMonsterForPlayer, getReferenceMonster, generateMonster, getMonsterElement } from '../utils/monsterUtils'
 import { simulateCombat, calculateCombatStats } from '../utils/combatUtils'
 import { gainXp, getXpProgress } from '../utils/xpUtils'
 import { GAME_RULES } from '../config/gameRules'
@@ -47,6 +48,8 @@ interface UseIdleCombatReturn {
   efficiencyData: IdleEfficiencyData | null
   remainingSeconds: number | null
   packInfo: IdlePackInfo | null
+  eliteName: string | null
+  eliteElement: Element | null
 }
 
 // Deterministic pack schedule (every 8th visit, every 4th in burst):
@@ -82,6 +85,8 @@ export function useIdleCombat({
   const [efficiencyData, setEfficiencyData] = useState<IdleEfficiencyData | null>(null)
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null)
   const [packInfo, setPackInfo] = useState<IdlePackInfo | null>(null)
+  const [eliteName, setEliteName] = useState<string | null>(null)
+  const [eliteElement, setEliteElement] = useState<Element | null>(null)
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isPausedRef = useRef(isPaused)
@@ -407,10 +412,27 @@ export function useIdleCombat({
     }
     visitsRef.current += 1
     const packSize = rollPackSize(level, visitsRef.current)
-    const members: Array<{ character: Character; def: { id: MonsterId; name: string } }> = []
+    // Enraged elite leading the visit: same species, boosted levels, bonus
+    // essence. Rare but punctual: every 20th visit (every 10th in burst).
+    const eliteVisit =
+      level >= IDLE_CONFIG.ELITE.MIN_LEVEL &&
+      visitsRef.current % (isBurstActive() ? 10 : 20) === 0
+    const members: Array<{ character: Character; def: { id: MonsterId; name: string }; elite: boolean }> = []
     try {
       for (let i = 0; i < packSize; i++) {
-        members.push(generateMonsterForPlayer(level, biomeId))
+        const rolled = generateMonsterForPlayer(level, biomeId)
+        members.push({ ...rolled, elite: false })
+      }
+      if (eliteVisit && members.length > 0) {
+        const lead = members[0]
+        members[0] = {
+          ...lead,
+          character: generateMonster(
+            lead.def.id,
+            level + IDLE_CONFIG.ELITE.LEVEL_BOOST - GAME_RULES.PVE.LEVEL_BOOST,
+          ),
+          elite: true,
+        }
       }
     } catch {
       return
@@ -423,6 +445,8 @@ export function useIdleCombat({
     setCurrentMonster(members[0].def.id)
     setBackgroundMonster(members[0].def.id)
     setPackInfo(packSize > 1 ? { size: packSize, index: 0 } : null)
+    setEliteName(members[0].elite ? members[0].def.name : null)
+    setEliteElement(members[0].elite ? getMonsterElement(members[0].def.id) : null)
     setScenePhase('monster_appears')
 
     // Helper: check if fight has exceeded the hard timeout
@@ -435,6 +459,8 @@ export function useIdleCombat({
         setCurrentMonster(null)
         setBackgroundMonster(null)
         setPackInfo(null)
+        setEliteName(null)
+        setEliteElement(null)
         packUntilRef.current = 0
         setScenePhase('running')
         return true
@@ -463,6 +489,8 @@ export function useIdleCombat({
       if (i > 0) {
         setCurrentMonster(member.def.id)
         setPackInfo({ size: packSize, index: i })
+        setEliteName(member.elite ? member.def.name : null)
+        setEliteElement(member.elite ? getMonsterElement(member.def.id) : null)
         setScenePhase('monster_appears')
       }
       after(IDLE_CONFIG.MONSTER_APPEAR_DURATION, () => {
@@ -494,8 +522,9 @@ export function useIdleCombat({
         }
         idleXp += finalXp
 
-        // Accumulate essence per kill (scales with power ratio + stats, like XP)
-        const essenceGain = calculateIdleEssence(won, running.level, running.intelligence, running.focus) * xpBonusRef.current * getSurgeEssenceMultiplier(member.def.id)
+        // Accumulate essence per kill (scales with power ratio + stats, like XP).
+        // Enraged elites pay double essence (live-only spectacle bonus).
+        const essenceGain = calculateIdleEssence(won, running.level, running.intelligence, running.focus) * xpBonusRef.current * getSurgeEssenceMultiplier(member.def.id) * (member.elite ? IDLE_CONFIG.ELITE.ESSENCE_MULT : 1)
         if (won) incrementBountyProgress(member.def.id)
 
         // Apply XP with updated idle stats and watermarks
@@ -588,6 +617,8 @@ export function useIdleCombat({
             onSyncCharacter?.(running)
             setCurrentMonster(null)
             setPackInfo(null)
+            setEliteName(null)
+            setEliteElement(null)
             setScenePhase('running')
             syncWatermarks()
             if (totalLevels > 0) {
@@ -805,6 +836,8 @@ export function useIdleCombat({
         clearPhaseTimers()
         setCurrentMonster(null)
         setPackInfo(null)
+        setEliteName(null)
+        setEliteElement(null)
         packUntilRef.current = 0
         setScenePhase('running')
         if (bgMs > 5000 && bgMs < 30000) {
@@ -857,5 +890,7 @@ export function useIdleCombat({
     efficiencyData,
     remainingSeconds,
     packInfo,
+    eliteName,
+    eliteElement,
   }
 }

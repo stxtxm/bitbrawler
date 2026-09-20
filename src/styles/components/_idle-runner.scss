@@ -541,6 +541,33 @@
   }
 }
 
+// Enraged elite banner — persistent while the elite is on screen.
+.idle-elite-banner {
+  position: absolute;
+  top: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  animation: burstPulse 1s ease-in-out infinite;
+
+  .elite-skull {
+    font-size: clamp(0.7rem, 1.8cqi, 1rem);
+  }
+
+  .elite-text {
+    font-family: $font-pixel;
+    font-size: clamp(0.5rem, 1.2cqi, 0.7rem);
+    color: #c77dff;
+    text-shadow: 0 0 12px rgba(#c77dff, 0.9);
+    letter-spacing: 2px;
+    white-space: nowrap;
+  }
+}
+
 @keyframes streakBanner {
   0% { transform: translateX(-50%) translateY(-10px) scale(0.7); opacity: 0; }
   15% { transform: translateX(-50%) translateY(0) scale(1.1); opacity: 1; }

@@ -319,6 +319,32 @@ describe('IdleRunnerScene', () => {
     expect(screen.queryByTestId('pack-banner')).toBeNull()
   })
 
+  it('shows the elite banner with aura victim while an elite is present', () => {
+    render(
+      <IdleRunnerScene
+        {...defaultProps}
+        currentMonster={'ogre'}
+        eliteName={'Ogre'}
+        eliteElement={'fire'}
+      />,
+    )
+    const banner = screen.getByTestId('elite-banner')
+    expect(banner).toBeInTheDocument()
+    expect(banner.textContent).toMatch(/ogre enragé/i)
+  })
+
+  it('hides the elite banner without elite or without monster', () => {
+    const { unmount } = render(
+      <IdleRunnerScene {...defaultProps} currentMonster={'ogre'} eliteName={null} />,
+    )
+    expect(screen.queryByTestId('elite-banner')).toBeNull()
+    unmount()
+    render(
+      <IdleRunnerScene {...defaultProps} currentMonster={null} eliteName={'Ogre'} />,
+    )
+    expect(screen.queryByTestId('elite-banner')).toBeNull()
+  })
+
   it('fires a burst opening fanfare when the event starts', () => {
     burstMock.active = false
     render(<IdleRunnerScene {...defaultProps} currentMonster={null} />)
