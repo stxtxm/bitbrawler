@@ -296,8 +296,104 @@ function buildPalette(features: SpriteFeatures): SpritePalette {
   return palette;
 }
 
-function finishGrid(base: SpriteGrid, features: SpriteFeatures): SpriteGrid {
+export type StridePhase = 0 | 1 | 2;
+
+interface LimbCell {
+  x: number;
+  y: number;
+  v: number;
+}
+
+function collectMove(
+  base: SpriteGrid,
+  cells: LimbCell[],
+  dx: number,
+  dy: number,
+): void {
+  if (dx === 0 && dy === 0) return;
+  for (const { x, y } of cells) {
+    if (y >= 0 && y < base.length && x >= 0 && x < base[y].length) base[y][x] = 0;
+  }
+  for (const { x, y, v } of cells) {
+    const px = x + dx;
+    const py = y + dy;
+    if (py < 0 || py >= base.length || px < 0 || px >= base[py].length) continue;
+    base[py][px] = v;
+  }
+}
+
+function runsInRow(row: number[], allowed: (v: number) => boolean): Array<[number, number]> {
+  const runs: Array<[number, number]> = [];
+  let start = -1;
+  for (let x = 0; x <= row.length; x++) {
+    const on = x < row.length && allowed(row[x]);
+    if (on && start < 0) start = x;
+    if (!on && start >= 0) {
+      runs.push([start, x - 1]);
+      start = -1;
+    }
+  }
+  return runs;
+}
+
+// Procedural run stride on the composed base grid (12x18 space: arms rows
+// 12-14, legs rows 15-16, feet row 17). Both legs stay visible every frame —
+// phase 1 is neutral, phases 0/2 mirror the scissor — so nothing teleports.
+function applyStride(base: SpriteGrid, phase: StridePhase): void {
+  if (phase === 1) return;
+  const mirror = phase === 2 ? -1 : 1;
+  const isCloth = (v: number): boolean => v !== 0;
+  const legRuns = runsInRow(base[16] ?? [], isCloth).filter(([a, b]) => {
+    const below = base[17] ?? [];
+    return below.slice(Math.max(0, a - 1), b + 2).some((c) => c !== 0);
+  });
+  if (legRuns.length >= 2) {
+    // Thighs (row 15) stay planted — only shins + feet swing, so legs bend
+    // instead of melting into the body. One foot lifts clear of the ground.
+    const left = legRuns[0];
+    const right = legRuns[legRuns.length - 1];
+    const shinCells = (run: [number, number]): LimbCell[] => {
+      const out: LimbCell[] = [];
+      for (const y of [16, 17]) {
+        for (let x = run[0]; x <= run[1]; x++) {
+          const v = base[y]?.[x] ?? 0;
+          if (v !== 0) out.push({ x, y, v });
+        }
+      }
+      return out;
+    };
+    collectMove(base, shinCells(left), -mirror, 0);
+    collectMove(base, shinCells(right), mirror, -1);
+  } else {
+    for (const y of [15, 16, 17]) {
+      const rowCells: LimbCell[] = [];
+      (base[y] ?? []).forEach((v, x) => {
+        if (v !== 0) rowCells.push({ x, y, v });
+      });
+      collectMove(base, rowCells, -mirror, 0);
+    }
+  }
+  const armDy = mirror;
+  const leftArm: LimbCell[] = [];
+  const rightArm: LimbCell[] = [];
+  for (const y of [12, 13, 14]) {
+    const row = base[y] ?? [];
+    const left = row.findIndex((c) => c !== 0);
+    if (left >= 0) leftArm.push({ x: left, y, v: row[left] });
+    for (let x = row.length - 1; x >= 0; x--) {
+      if (row[x] !== 0) {
+        rightArm.push({ x, y, v: row[x] });
+        break;
+      }
+    }
+  }
+  collectMove(base, leftArm, 0, armDy);
+  collectMove(base, rightArm, 0, -armDy);
+}
+
+function finishGrid(base: SpriteGrid, features: SpriteFeatures, phase: StridePhase = 1): SpriteGrid {
   applyBuild(base, features.build);
+  applyStride(base, phase);
   const grid = upscale(base);
   applySnes(grid);
   applyDetails(grid);
@@ -334,9 +430,16 @@ export function generateSpriteFrames(
   kind: SpriteAnimKind = 'run',
 ): GeneratedSprite[] | null {
   const features = resolveSpriteFeatures(seed, gender, appearance);
+  const palette = buildPalette(features);
+  if (kind === 'run') {
+    const phases: StridePhase[] = [0, 1, 2];
+    return phases.map((phase) => {
+      const grid = finishGrid(composeBaseGrid(features.headType, features.bodyType), features, phase);
+      return { grid, palette, width: SPRITE_WIDTH, height: SPRITE_HEIGHT };
+    });
+  }
   const runBody = (PIXEL_BODIES_RUN as Record<string, Record<string, number[][]>>)[features.bodyType];
   if (!runBody) return null;
-  const palette = buildPalette(features);
   return ANIM_KEYS[kind].map((key) => {
     const bodyGrid = runBody[key];
     if (!bodyGrid) return null;

@@ -128,8 +128,25 @@ describe('sprite generator v2', () => {
     expect(a).not.toBe(c);
   });
 
-  it('generates attack frames for every body type', () => {
-    for (const bodyType of ['basic', 'sleeveless', 'armor', 'jacket', 'vest', 'robe', 'hoodie', 'tunic']) {
+  it('keeps both legs visible on every run frame (no teleporting limbs)', () => {
+    for (const build of ['slim', 'standard', 'broad'] as const) {
+      const frames = generateSpriteFrames('noteleport-check', 'male', {
+        build,
+        bodyType: 'basic',
+        headType: 'male',
+      }, 'run')!;
+      expect(frames).toHaveLength(3);
+      for (const f of frames) {
+        const legZone = f.grid.slice(36, 42);
+        const left = legZone.flatMap((row) => row.slice(0, 12)).filter((v) => v !== 0).length;
+        const right = legZone.flatMap((row) => row.slice(12, 24)).filter((v) => v !== 0).length;
+        expect(left).toBeGreaterThan(4);
+        expect(right).toBeGreaterThan(4);
+      }
+    }
+  });
+
+  it('generates attack frames for every body type', () => {    for (const bodyType of ['basic', 'sleeveless', 'armor', 'jacket', 'vest', 'robe', 'hoodie', 'tunic']) {
       const frames = generateSpriteFrames('frame-all', 'female', { bodyType }, 'attack')!;
       expect(frames).toHaveLength(3);
     }
