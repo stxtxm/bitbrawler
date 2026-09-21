@@ -410,7 +410,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     <div className={`idle-runner-box${screenShake ? ' shake-screen' : ''}${levelUpFlash ? ' level-up-flash' : ''}`} ref={containerRef} onClick={dismissLevelUpFx}>
       {levelUpShockwave && <div className={`level-up-shockwave${isMilestoneCeremony ? ' milestone' : ''}`} style={{ pointerEvents: 'none' }} />}
 
-      <div key={animKey} ref={characterSlotRef} className={`idle-character-slot${animRun ? '' : ' anim-paused'} ${isAttacking ? 'attacking' : ''} ${isVictory ? 'victory' : ''} ${isMilestoneCeremony ? 'ceremony-milestone' : ''}`}>
+      <div key={animKey} ref={characterSlotRef} className={`idle-character-slot anim-frames${animRun ? '' : ' anim-paused'} ${isAttacking ? 'attacking' : ''} ${isVictory ? 'victory' : ''} ${isMilestoneCeremony ? 'ceremony-milestone' : ''}`}>
         {showLevelUpFx && (
           <div data-testid="level-up-overlay" className="levelup-overlay-wrapper" style={{ pointerEvents: 'none' }}>
             <div className="idle-levelup-glow" style={{ pointerEvents: 'none' }} />

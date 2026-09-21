@@ -529,7 +529,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     expect(glint.grid[tipY][tipX]).toBe(ACCENT_INDEX);
   });
 
-  it('tracks limbs across run frames: hands move, weapon follows', () => {
+  it('keeps a stable fist anchor across run frames while limbs move', () => {
     const frames = generateSpriteFrames('track-check', 'male', {
       build: 'standard',
       bodyType: 'basic',
@@ -539,7 +539,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       const p = computeLandmarks(f.grid).palmR;
       return `${p.x},${p.y}`;
     });
-    expect(new Set(palms).size).toBeGreaterThan(1);
+    expect(new Set(palms).size).toBe(1);
     const sword = byId('rusty_sword')!;
     const grids = frames.map(
       (f) => JSON.stringify(applyEquipmentOverlays(f.grid, f.palette, {

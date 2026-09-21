@@ -5,8 +5,10 @@ import { PixelGridCanvas } from './PixelGridCanvas';
 import { applyEquipmentOverlays, resolveLoadout } from './equipOverlays';
 import { generateSprite16, generateSpriteFrames, SpriteAnimKind } from './spriteGenerator';
 import { SPRITE_DISPLAY_SCALE } from './spriteTypes';
+import { useLowPerformanceMode } from '../../hooks/useLowPerformanceMode';
 
-export const SPRITE_FRAME_MS = 150;
+export const SPRITE_RUN_MS = 150;
+export const SPRITE_ATTACK_MS = 110;
 
 interface SpriteCanvasProps {
   seed: string;
@@ -33,17 +35,20 @@ export const SpriteCanvas = memo(function SpriteCanvas({
   aura,
   animate = null,
 }: SpriteCanvasProps) {
+  const lowPerf = useLowPerformanceMode();
+  const activeAnim = !lowPerf ? animate : null;
   const frames = useMemo(
-    () => (animate ? generateSpriteFrames(seed, gender, appearance, animate) : null),
-    [animate, seed, gender, appearance],
+    () => (activeAnim ? generateSpriteFrames(seed, gender, appearance, activeAnim) : null),
+    [activeAnim, seed, gender, appearance],
   );
+  const frameMs = activeAnim === 'attack' ? SPRITE_ATTACK_MS : SPRITE_RUN_MS;
   const [frameIdx, setFrameIdx] = useState(0);
   useEffect(() => {
     setFrameIdx(0);
     if (!frames || frames.length === 0) return;
-    const timer = setInterval(() => setFrameIdx((i) => (i + 1) % frames.length), SPRITE_FRAME_MS);
+    const timer = setInterval(() => setFrameIdx((i) => (i + 1) % frames.length), frameMs);
     return () => clearInterval(timer);
-  }, [frames]);
+  }, [frames, frameMs]);
 
   const { grid, palette } = useMemo(() => {
     const base = frames && frames.length > 0 ? frames[frameIdx % frames.length] : generateSprite16(seed, gender, appearance);
