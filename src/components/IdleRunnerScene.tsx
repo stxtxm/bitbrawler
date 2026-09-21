@@ -426,6 +426,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
           appearance={appearance ?? character.appearance}
           equippedItems={character.equippedItems}
           scale={charScale}
+          animate={scenePhase === 'combat' ? 'attack' : 'run'}
         />
       </div>
 

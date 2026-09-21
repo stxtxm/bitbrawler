@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateSprite16, resolveSpriteFeatures } from '../../components/sprite/spriteGenerator';
+import { generateSprite16, generateSpriteFrames, resolveSpriteFeatures } from '../../components/sprite/spriteGenerator';
 import { SPRITE_HEIGHT, SPRITE_WIDTH, highlightIndexOf, shadeIndexOf } from '../../components/sprite/spriteTypes';
 
 describe('sprite generator v2', () => {
@@ -81,7 +81,7 @@ describe('sprite generator v2', () => {
     const upperXs = [...new Set(eyes.filter(([, y]) => y === upperY).map(([x]) => x))];
     expect(upperXs.length).toBeGreaterThan(0);
     expect(upperXs.every((x) => grid[upperY - 2][x] === shadeIndexOf(4))).toBe(true);
-    expect(grid[24][faceCx]).toBe(shadeIndexOf(5));
+    expect(grid[24].filter((c) => c === 11).length).toBeGreaterThanOrEqual(2);
   });
 
   it('maps edge tones toward the outline color, not a 3d bevel', () => {
@@ -95,5 +95,46 @@ describe('sprite generator v2', () => {
     expect(flat).toContain(9);
     expect(sprite.grid[34][11]).toBe(9);
     expect(sprite.grid[34][12]).toBe(9);
+  });
+
+  it('trims the collar in logo color with pants stripes and shoe laces', () => {
+    const sprite = generateSprite16('finesse-check', 'male', {
+      build: 'standard',
+      bodyType: 'basic',
+      headType: 'male',
+    });
+    expect(sprite.grid[24].filter((c) => c === 11).length).toBeGreaterThanOrEqual(2);
+    const stripeRows = sprite.grid.slice(36, 40).flat();
+    expect(stripeRows).toContain(highlightIndexOf(6));
+    expect(sprite.grid[40].slice(0, 24)).toContain(2);
+  });
+
+  it('generates 3 run frames with moving limbs, same size and palette', () => {
+    const frames = generateSpriteFrames('frame-check', 'male', {
+      build: 'standard',
+      bodyType: 'basic',
+      headType: 'male',
+    }, 'run')!;
+    expect(frames).toHaveLength(3);
+    for (const f of frames) {
+      expect(f.grid.length).toBe(42);
+      expect(f.width).toBe(SPRITE_WIDTH);
+      expect(f.height).toBe(SPRITE_HEIGHT);
+      expect(f.palette).toBe(frames[0].palette);
+    }
+    const [a, b, c] = frames.map((f) => JSON.stringify(f.grid));
+    expect(a).not.toBe(b);
+    expect(b).not.toBe(c);
+    expect(a).not.toBe(c);
+  });
+
+  it('generates attack frames for every body type', () => {
+    for (const bodyType of ['basic', 'sleeveless', 'armor', 'jacket', 'vest', 'robe', 'hoodie', 'tunic']) {
+      const frames = generateSpriteFrames('frame-all', 'female', { bodyType }, 'attack')!;
+      expect(frames).toHaveLength(3);
+    }
+    const run = generateSpriteFrames('frame-kind', 'male', { bodyType: 'basic' }, 'run')!;
+    const attack = generateSpriteFrames('frame-kind', 'male', { bodyType: 'basic' }, 'attack')!;
+    expect(JSON.stringify(run.map((f) => f.grid))).not.toBe(JSON.stringify(attack.map((f) => f.grid)));
   });
 });
