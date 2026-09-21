@@ -535,8 +535,11 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       bodyType: 'basic',
       headType: 'male',
     }, 'run')!;
-    const hands = frames.map((f) => computeLandmarks(f.grid).handR.x);
-    expect(new Set(hands).size).toBeGreaterThan(1);
+    const palms = frames.map((f) => {
+      const p = computeLandmarks(f.grid).palmR;
+      return `${p.x},${p.y}`;
+    });
+    expect(new Set(palms).size).toBeGreaterThan(1);
     const sword = byId('rusty_sword')!;
     const grids = frames.map(
       (f) => JSON.stringify(applyEquipmentOverlays(f.grid, f.palette, {
