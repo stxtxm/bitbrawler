@@ -85,6 +85,12 @@
     animation-play-state: paused !important;
   }
 
+  // Les frames pilotent les membres : le wobble de boucle se battait avec
+  // elles (corps qui glisse/penche/pulse). Coupé quand les frames animent.
+  &.anim-frames:not(.attacking):not(.victory):not(.ceremony-milestone) {
+    animation: none;
+  }
+
   &.attacking {
     animation: attackLunge 0.35s ease-out;
   }

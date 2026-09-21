@@ -373,22 +373,34 @@ function applyStride(base: SpriteGrid, phase: StridePhase): void {
       collectMove(base, rowCells, -mirror, 0);
     }
   }
-  const armDy = mirror;
-  const leftArm: LimbCell[] = [];
-  const rightArm: LimbCell[] = [];
-  for (const y of [12, 13, 14]) {
-    const row = base[y] ?? [];
-    const left = row.findIndex((c) => c !== 0);
-    if (left >= 0) leftArm.push({ x: left, y, v: row[left] });
-    for (let x = row.length - 1; x >= 0; x--) {
-      if (row[x] !== 0) {
-        rightArm.push({ x, y, v: row[x] });
-        break;
+  // Arms pump by STRETCHING, never sliding: the shoulder row stays put and
+  // the arm duplicates one row down/up, so the joint never opens a gap.
+  // Read order runs opposite to the stretch so painted cells are never
+  // re-read within the same pass (no cascade).
+  const skinFamily = new Set([1, shadeIndexOf(1), highlightIndexOf(1)]);
+  const takeArm = (row: number[], fromLeft: boolean): LimbCell[] => {
+    const out: LimbCell[] = [];
+    const xs = fromLeft ? row.map((_, x) => x) : row.map((_, x) => row.length - 1 - x);
+    for (const x of xs) {
+      if (row[x] === 0) continue;
+      if (out.length >= 3 || !skinFamily.has(row[x])) break;
+      out.push({ x, y: 0, v: row[x] });
+    }
+    return out;
+  };
+  const stretch = mirror === 1 ? 1 : -1;
+  const pump = (fromLeft: boolean, dy: number): void => {
+    const ys = dy > 0 ? [14, 13, 12] : [12, 13, 14];
+    for (const y of ys) {
+      const row = base[y] ?? [];
+      for (const c of takeArm(row, fromLeft)) {
+        const py = y + dy;
+        if (py >= 0 && py < base.length) base[py][c.x] = c.v;
       }
     }
-  }
-  collectMove(base, leftArm, 0, armDy);
-  collectMove(base, rightArm, 0, -armDy);
+  };
+  pump(true, stretch);
+  pump(false, -stretch);
 }
 
 function finishGrid(base: SpriteGrid, features: SpriteFeatures, phase: StridePhase = 1): SpriteGrid {

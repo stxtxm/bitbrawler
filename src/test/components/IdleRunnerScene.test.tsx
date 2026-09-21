@@ -228,8 +228,7 @@ describe('IdleRunnerScene', () => {
     expect(defaultProps.onClearOfflineGains).not.toHaveBeenCalled()
   })
 
-  it('exposes level-up FX via data-testid level-up-overlay', () => {
-    const ui = render(<IdleRunnerScene {...defaultProps} />)
+  it('exposes level-up FX via data-testid level-up-overlay', () => {    const ui = render(<IdleRunnerScene {...defaultProps} />)
     renderLevelUpTo(ui, 6)
     const overlay = screen.getByTestId('level-up-overlay')
     expect(overlay).toBeInTheDocument()
@@ -267,4 +266,10 @@ describe('IdleRunnerScene', () => {
     document.body.removeChild(fightBtn)
   })
 
+  it('lets sprite frames drive the loop (no CSS wobble class conflict)', () => {
+    const { container } = render(<IdleRunnerScene {...defaultProps} />)
+    const slot = container.querySelector('.idle-character-slot')
+    expect(slot).not.toBeNull()
+    expect(slot?.classList.contains('anim-frames')).toBe(true)
+  })
 })
