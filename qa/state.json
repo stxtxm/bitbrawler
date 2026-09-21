@@ -1,7 +1,7 @@
 {
   "run": "2026-09-21",
-  "character": "FERALMONK",
-  "exhausted": true,
-  "updated_at": "2026-09-20T22:03:57.915Z",
-  "source": "created"
+  "character": "SOLARAQUA",
+  "exhausted": false,
+  "updated_at": "2026-09-21T01:08:11.233Z",
+  "source": "created-after-missing-fight-cta"
 }
