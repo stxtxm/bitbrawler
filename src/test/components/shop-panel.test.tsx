@@ -157,8 +157,8 @@ describe('ShopPanel', () => {
     });
   });
 
-  it('offer 2 (lootbox) buy button is disabled when essence < 31', () => {
-    setupGame({ essence: 30, activeCharacter: makeCharacter({ essence: 30 }) });
+  it('offer 2 (lootbox) buy button is disabled when essence < 34', () => {
+    setupGame({ essence: 33, activeCharacter: makeCharacter({ essence: 33 }) });
     render(<ShopPanel onClose={vi.fn()} />);
     const buyBtns = screen.getAllByRole('button', { name: /buy/i });
     // Last offer (lootbox) should be disabled
