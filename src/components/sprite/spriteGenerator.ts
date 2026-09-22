@@ -1,4 +1,4 @@
-import { PIXEL_HEADS, PIXEL_BODIES, PIXEL_BODIES_RUN } from '../PixelAssets';
+import { PIXEL_HEADS, PIXEL_BODIES } from '../PixelAssets';
 import { mulberry32, getSeedFromText } from '../../utils/randomUtils';
 import type { CharacterAppearance } from '../../types/Character';
 import {
@@ -322,6 +322,27 @@ function collectMove(
   }
 }
 
+const skinFamily = new Set([1, shadeIndexOf(1), highlightIndexOf(1)]);
+
+function takeArm(row: number[], y: number, fromLeft: boolean): LimbCell[] {
+  const out: LimbCell[] = [];
+  const xs = fromLeft ? row.map((_, x) => x) : row.map((_, x) => row.length - 1 - x);
+  for (const x of xs) {
+    if (row[x] === 0) continue;
+    if (out.length >= 3 || !skinFamily.has(row[x])) break;
+    out.push({ x, y, v: row[x] });
+  }
+  return out;
+}
+
+function rightArmBlock(base: SpriteGrid): LimbCell[] {
+  const out: LimbCell[] = [];
+  for (let y = 11; y <= 14; y++) {
+    for (const c of takeArm(base[y] ?? [], y, false)) out.push(c);
+  }
+  return out;
+}
+
 function runsInRow(row: number[], allowed: (v: number) => boolean): Array<[number, number]> {
   const runs: Array<[number, number]> = [];
   let start = -1;
@@ -336,11 +357,19 @@ function runsInRow(row: number[], allowed: (v: number) => boolean): Array<[numbe
   return runs;
 }
 
-// Procedural run stride on the composed base grid (12x18 space: arms rows
-// 12-14, legs rows 15-16, feet row 17). Both legs stay visible every frame —
-// phase 1 is neutral, phases 0/2 mirror the scissor — so nothing teleports.
+// Procedural run stride on the composed base grid (12x18 space). Arms stay
+// glued during the run (the punch carries all arm motion); legs scissor and
+// the neutral phase lifts rigidly (flight) — rigid or mirrored moves only,
+// so nothing teleports.
 function applyStride(base: SpriteGrid, phase: StridePhase): void {
-  if (phase === 1) return;
+  if (phase === 1) {
+    const all: LimbCell[] = [];
+    base.forEach((row, y) => row.forEach((v, x) => {
+      if (v !== 0) all.push({ x, y, v });
+    }));
+    collectMove(base, all, 0, -1);
+    return;
+  }
   const mirror = phase === 2 ? -1 : 1;
   const isCloth = (v: number): boolean => v !== 0;
   const legRuns = runsInRow(base[16] ?? [], isCloth).filter(([a, b]) => {
@@ -373,39 +402,22 @@ function applyStride(base: SpriteGrid, phase: StridePhase): void {
       collectMove(base, rowCells, -mirror, 0);
     }
   }
-  // Arms pump by STRETCHING, never sliding: the shoulder row stays put and
-  // the arm duplicates one row down/up, so the joint never opens a gap.
-  // Read order runs opposite to the stretch so painted cells are never
-  // re-read within the same pass (no cascade).
-  const skinFamily = new Set([1, shadeIndexOf(1), highlightIndexOf(1)]);
-  const takeArm = (row: number[], fromLeft: boolean): LimbCell[] => {
-    const out: LimbCell[] = [];
-    const xs = fromLeft ? row.map((_, x) => x) : row.map((_, x) => row.length - 1 - x);
-    for (const x of xs) {
-      if (row[x] === 0) continue;
-      if (out.length >= 3 || !skinFamily.has(row[x])) break;
-      out.push({ x, y: 0, v: row[x] });
-    }
-    return out;
-  };
-  const stretch = mirror === 1 ? 1 : -1;
-  const pump = (fromLeft: boolean, dy: number): void => {
-    const ys = dy > 0 ? [14, 13, 12] : [12, 13, 14];
-    for (const y of ys) {
-      const row = base[y] ?? [];
-      for (const c of takeArm(row, fromLeft)) {
-        const py = y + dy;
-        if (py >= 0 && py < base.length) base[py][c.x] = c.v;
-      }
-    }
-  };
-  pump(true, stretch);
-  pump(false, -stretch);
 }
 
-function finishGrid(base: SpriteGrid, features: SpriteFeatures, phase: StridePhase = 1): SpriteGrid {
+// Procedural attack: windup tucks the right fist toward the body, strike
+// thrusts it up-forward. Rigid block shifts only — torso and head never move,
+// nothing vanishes. The weapon follows the fist via per-frame landmarks.
+function applyAttackPose(base: SpriteGrid, phase: StridePhase): void {
+  if (phase === 2) return;
+  const fist = rightArmBlock(base);
+  if (fist.length === 0) return;
+  if (phase === 0) collectMove(base, fist, -1, 1);
+  else collectMove(base, fist, 1, -1);
+}
+
+function finishGrid(base: SpriteGrid, features: SpriteFeatures, pose?: (grid: SpriteGrid) => void): SpriteGrid {
   applyBuild(base, features.build);
-  applyStride(base, phase);
+  pose?.(base);
   const grid = upscale(base);
   applySnes(grid);
   applyDetails(grid);
@@ -427,14 +439,9 @@ export function generateSprite16(
 
 export type SpriteAnimKind = 'run' | 'attack';
 
-const ANIM_KEYS: Record<SpriteAnimKind, ['run1' | 'attack1', 'run2' | 'attack2', 'run3' | 'attack3']> = {
-  run: ['run1', 'run2', 'run3'],
-  attack: ['attack1', 'attack2', 'attack3'],
-};
-
-// Animation frames for the run cycle / attack swing. Same head, same colors,
-// same size — only the limbs move. Bodies unknown to PIXEL_BODIES_RUN fall
-// back to null (caller keeps the static sprite).
+// Animation frames for the run cycle / attack swing. Fully procedural from
+// the static body (windup / strike / recover): same head, same colors, same
+// size — torso never teleports, nothing vanishes. Works for every body type.
 export function generateSpriteFrames(
   seed: string,
   gender: 'male' | 'female',
@@ -443,19 +450,17 @@ export function generateSpriteFrames(
 ): GeneratedSprite[] | null {
   const features = resolveSpriteFeatures(seed, gender, appearance);
   const palette = buildPalette(features);
-  if (kind === 'run') {
-    const phases: StridePhase[] = [0, 1, 2];
-    return phases.map((phase) => {
-      const grid = finishGrid(composeBaseGrid(features.headType, features.bodyType), features, phase);
-      return { grid, palette, width: SPRITE_WIDTH, height: SPRITE_HEIGHT };
-    });
-  }
-  const runBody = (PIXEL_BODIES_RUN as Record<string, Record<string, number[][]>>)[features.bodyType];
-  if (!runBody) return null;
-  return ANIM_KEYS[kind].map((key) => {
-    const bodyGrid = runBody[key];
-    if (!bodyGrid) return null;
-    const grid = finishGrid(composeBaseGrid(features.headType, features.bodyType, bodyGrid), features);
+  const phases: StridePhase[] = [0, 1, 2];
+  return phases.map((phase) => {
+    const base = composeBaseGrid(features.headType, features.bodyType);
+    applyBuild(base, features.build);
+    if (kind === 'attack') applyAttackPose(base, phase);
+    else applyStride(base, phase);
+    const grid = upscale(base);
+    applySnes(grid);
+    applyDetails(grid);
+    applyFeatures(grid);
+    for (let i = 0; i < SPRITE_PAD_TOP; i++) grid.unshift(Array(SPRITE_WIDTH).fill(0));
     return { grid, palette, width: SPRITE_WIDTH, height: SPRITE_HEIGHT };
-  }).filter((s): s is GeneratedSprite => s !== null);
+  });
 }

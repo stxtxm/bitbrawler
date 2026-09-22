@@ -539,7 +539,11 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       const p = computeLandmarks(f.grid).palmR;
       return `${p.x},${p.y}`;
     });
-    expect(new Set(palms).size).toBe(1);
+    // same column always (no horizontal teleport), flight bob ±2 rows max
+    const xs = palms.map((s) => Number(s.split(',')[0]));
+    const ys = palms.map((s) => Number(s.split(',')[1]));
+    expect(new Set(xs).size).toBe(1);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeLessThanOrEqual(2);
     const sword = byId('rusty_sword')!;
     const grids = frames.map(
       (f) => JSON.stringify(applyEquipmentOverlays(f.grid, f.palette, {
@@ -549,6 +553,32 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       }).grid),
     );
     expect(new Set(grids).size).toBe(3);
+  });
+
+  it('thrusts the weapon with the punching fist on attack frames', () => {
+    const frames = generateSpriteFrames('jab-check', 'male', {
+      build: 'standard',
+      bodyType: 'basic',
+      headType: 'male',
+    }, 'attack')!;
+    const fists = frames.map((f) => computeLandmarks(f.grid).palmR.x);
+    // windup chambers, strike extends past neutral
+    expect(fists[0]).toBeLessThanOrEqual(fists[2]);
+    expect(fists[1]).toBeGreaterThan(fists[2]);
+    const sword = byId('rusty_sword')!;
+    const tips = frames.map(
+      (f) =>
+        Math.max(
+          ...applyEquipmentOverlays(f.grid, f.palette, {
+            weapon: sword,
+            armor: null,
+            accessory: null,
+          }).grid.flatMap((row) =>
+            row.map((c, x) => (c === BLADE_INDEX || c === BLADE_DARK || c === BLADE_LIGHT ? x : -1)),
+          ),
+        ),
+    );
+    expect(tips[1]).toBeGreaterThan(tips[2]);
   });
 
   it('uses the highest rarity for the trim and survives unknown ids', () => {

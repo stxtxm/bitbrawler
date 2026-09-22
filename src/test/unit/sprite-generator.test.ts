@@ -193,12 +193,27 @@ describe('sprite generator v2', () => {
     }
   });
 
-  it('generates attack frames for every body type', () => {    for (const bodyType of ['basic', 'sleeveless', 'armor', 'jacket', 'vest', 'robe', 'hoodie', 'tunic']) {
+  it('generates attack frames for every body type, fist thrusts, torso fixed', () => {
+    for (const bodyType of ['basic', 'sleeveless', 'armor', 'jacket', 'vest', 'robe', 'hoodie', 'tunic', 'nope']) {
       const frames = generateSpriteFrames('frame-all', 'female', { bodyType }, 'attack')!;
       expect(frames).toHaveLength(3);
     }
-    const run = generateSpriteFrames('frame-kind', 'male', { bodyType: 'basic' }, 'run')!;
-    const attack = generateSpriteFrames('frame-kind', 'male', { bodyType: 'basic' }, 'attack')!;
-    expect(JSON.stringify(run.map((f) => f.grid))).not.toBe(JSON.stringify(attack.map((f) => f.grid)));
+    const frames = generateSpriteFrames('punch-check', 'male', {
+      build: 'standard',
+      bodyType: 'basic',
+      headType: 'male',
+    }, 'attack')!;
+    const grids = frames.map((f) => JSON.stringify(f.grid));
+    expect(new Set(grids).size).toBe(3);
+    // head never moves during a punch; legs match on strike/recover
+    // (windup chambers the fist at the hip)
+    const head = frames.map((f) => JSON.stringify(f.grid.slice(8, 23)));
+    expect(new Set(head).size).toBe(1);
+    const legs = frames.map((f) => JSON.stringify(f.grid.slice(36, 42)));
+    expect(legs[1]).toBe(legs[2]);
+    // fist chambers then thrusts: cell count stable within the extended
+    // fist itself (no vanishing limbs)
+    const counts = frames.map((f) => f.grid.flat().filter((c) => c !== 0).length);
+    expect(Math.max(...counts) - Math.min(...counts)).toBeLessThanOrEqual(14);
   });
 });
