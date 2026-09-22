@@ -61,7 +61,7 @@ export const SpriteCanvas = memo(function SpriteCanvas({
     // Run-cycle weapon sway: the blade breathes with the stride (±1px).
     // Static in attack (the punch already moves it) and when still.
     const swayX = activeAnim === 'run' && frames && frames.length > 0
-      ? [1, 0, -1][frameIdx % frames.length] ?? 0
+      ? [1, 0, -1, 0][frameIdx % frames.length] ?? 0
       : 0;
     const overlaid = applyEquipmentOverlays(base.grid, base.palette, resolveLoadout(equippedItems), { swayX });
     return { grid: overlaid.grid, palette: overlaid.palette };
