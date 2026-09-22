@@ -58,9 +58,14 @@ export const SpriteCanvas = memo(function SpriteCanvas({
   const { grid, palette } = useMemo(() => {
     const base = frames && frames.length > 0 ? frames[frameIdx % frames.length] : generateSprite16(seed, gender, appearance);
     if (!equippedItems) return base;
-    const overlaid = applyEquipmentOverlays(base.grid, base.palette, resolveLoadout(equippedItems));
+    // Run-cycle weapon sway: the blade breathes with the stride (±1px).
+    // Static in attack (the punch already moves it) and when still.
+    const swayX = activeAnim === 'run' && frames && frames.length > 0
+      ? [1, 0, -1][frameIdx % frames.length] ?? 0
+      : 0;
+    const overlaid = applyEquipmentOverlays(base.grid, base.palette, resolveLoadout(equippedItems), { swayX });
     return { grid: overlaid.grid, palette: overlaid.palette };
-  }, [frames, frameIdx, seed, gender, appearance, equippedItems]);
+  }, [frames, frameIdx, activeAnim, seed, gender, appearance, equippedItems]);
 
   return (
     <PixelGridCanvas

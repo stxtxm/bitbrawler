@@ -441,35 +441,47 @@ function paintFist(grid: SpriteGrid, palm: { x: number; y: number }): void {
   paint(grid, palm.x + 1, palm.y, BLADE_INDEX);
 }
 
-function paintHeldWeapon(grid: SpriteGrid, item: PixelItemAsset, palm: { x: number; y: number }): void {
+export interface OverlayOptions {
+  // Horizontal sway of the held weapon (run-cycle life). The overlay is
+  // redrawn from scratch every frame, so shifting the grip is artifact-free.
+  swayX?: number;
+}
+
+function paintHeldWeapon(
+  grid: SpriteGrid,
+  item: PixelItemAsset,
+  palm: { x: number; y: number },
+  swayX = 0,
+): void {
   const kind = weaponVisualKind(item);
   const glint = item.rarity === 'epic' || item.rarity === 'legendary';
   const gem = item.element ? ACCENT_INDEX : TRIM_INDEX;
+  const grip = swayX === 0 ? palm : { x: palm.x + swayX, y: palm.y };
   if (kind === 'bow') {
-    paintBow(grid, palm);
+    paintBow(grid, grip);
     return;
   }
   if (kind === 'fist') {
-    paintFist(grid, palm);
+    paintFist(grid, grip);
     return;
   }
   if (kind === 'staff') {
-    paintStaff(grid, palm);
+    paintStaff(grid, grip);
     return;
   }
   if (kind === 'scepter') {
-    paintScepter(grid, palm);
+    paintScepter(grid, grip);
     return;
   }
   if (kind === 'scythe') {
-    paintScythe(grid, palm, glint);
+    paintScythe(grid, grip, glint);
     return;
   }
   if (kind === 'haft') {
-    paintHaft(grid, palm, item.element ? ACCENT_INDEX : WHEAD_INDEX);
+    paintHaft(grid, grip, item.element ? ACCENT_INDEX : WHEAD_INDEX);
     return;
   }
-  paintBlade(grid, palm, kind === 'dagger' ? 5 : 9, glint, gem);
+  paintBlade(grid, grip, kind === 'dagger' ? 5 : 9, glint, gem);
 }
 
 function paintShield(grid: SpriteGrid, palmL: { x: number; y: number }): void {
@@ -665,6 +677,7 @@ export function applyEquipmentOverlays(
   grid: SpriteGrid,
   palette: SpritePalette,
   loadout: ResolvedLoadout,
+  opts?: OverlayOptions,
 ): { grid: SpriteGrid; palette: SpritePalette } {
   const out = grid.map((row) => [...row]);
   const equipped = [loadout.weapon, loadout.armor, loadout.accessory].filter(
@@ -764,7 +777,7 @@ export function applyEquipmentOverlays(
   if (loadout.accessory && accessoryKind === 'brooch') paintBrooch(out, loadout.accessory, marks.chest);
   if (loadout.accessory && accessoryKind === 'necklace') paintNecklace(out, loadout.accessory, marks.neck);
   if (loadout.armor && armorKind === 'shield') paintShield(out, marks.palmL);
-  if (loadout.weapon) paintHeldWeapon(out, loadout.weapon, marks.palmR);
+  if (loadout.weapon) paintHeldWeapon(out, loadout.weapon, marks.palmR, opts?.swayX ?? 0);
   if (loadout.accessory && accessoryKind === 'ring') paintRing(out, marks.palmR);
   if (loadout.accessory && accessoryKind === 'orb') {
     paintOrbPendant(out, loadout.accessory, marks.neck, marks.chest);

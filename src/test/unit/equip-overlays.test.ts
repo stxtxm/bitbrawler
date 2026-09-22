@@ -555,8 +555,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     expect(new Set(grids).size).toBe(3);
   });
 
-  it('thrusts the weapon with the punching fist on attack frames', () => {
-    const frames = generateSpriteFrames('jab-check', 'male', {
+  it('thrusts the weapon with the punching fist on attack frames', () => {    const frames = generateSpriteFrames('jab-check', 'male', {
       build: 'standard',
       bodyType: 'basic',
       headType: 'male',
@@ -579,6 +578,28 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
         ),
     );
     expect(tips[1]).toBeGreaterThan(tips[2]);
+  });
+
+  it('sways the held weapon with the stride without losing cells', () => {
+    const base = generateSprite16('sway-check', 'male', { ...STD_MALE });
+    const loadout = { weapon: byId('rusty_sword'), armor: null, accessory: null };
+    const outs = [-1, 0, 1].map((swayX) =>
+      applyEquipmentOverlays(base.grid, base.palette, loadout, { swayX }),
+    );
+    const bladeMax = outs.map(
+      (o) =>
+        Math.max(
+          ...o.grid.flatMap((row) =>
+            row.map((c, x) => (c === BLADE_INDEX || c === BLADE_DARK || c === BLADE_LIGHT ? x : -1)),
+          ),
+        ),
+    );
+    expect(bladeMax[2]).toBe(bladeMax[1] + 1);
+    expect(bladeMax[0]).toBe(bladeMax[1] - 1);
+    const counts = outs.map(
+      (o) => o.grid.flat().filter((c) => c === BLADE_INDEX || c === BLADE_DARK || c === BLADE_LIGHT).length,
+    );
+    expect(new Set(counts).size).toBe(1);
   });
 
   it('uses the highest rarity for the trim and survives unknown ids', () => {
