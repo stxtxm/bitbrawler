@@ -31,6 +31,7 @@ export const WHEAD_LIGHT = 105;
 export const TRIM_LIGHT = 106;
 export const TINT_LIGHT = 107;
 export const TINT2_LIGHT = 108;
+export const WOOD_DARK = 109;
 
 const GRID_W = 24;
 const GRID_H = SPRITE_HEIGHT;
@@ -485,7 +486,7 @@ function paintHeldWeapon(
     paintFistGrip(grid, palm);
     return;
   }
-  paintBlade(grid, grip, kind === 'dagger' ? 5 : 9, glint, gem);
+  paintBlade(grid, grip, kind === 'dagger' ? 6 : 11, glint, gem);
   paintFistGrip(grid, palm);
 }
 
@@ -763,6 +764,7 @@ export function applyEquipmentOverlays(
     [BLADE_DARK]: mixHex(bladeHex, OUTLINE_HEX, 0.5),
     [BLADE_LIGHT]: highlightHex(bladeHex),
     [WOOD_LIGHT]: highlightHex(woodHex),
+    [WOOD_DARK]: mixHex(woodHex, OUTLINE_HEX, 0.5),
     [WHEAD_DARK]: mixHex(wheadHex, OUTLINE_HEX, 0.5),
     [WHEAD_LIGHT]: highlightHex(wheadHex),
     [FIELD_DARK]: mixHex(fieldHex, OUTLINE_HEX, 0.5),
@@ -811,6 +813,7 @@ function tintOverlayEdges(grid: SpriteGrid): void {
     [WHEAD_INDEX]: WHEAD_DARK,
     [FIELD_INDEX]: FIELD_DARK,
     [RIM_INDEX]: RIM_DARK,
+    [WOOD_INDEX]: WOOD_DARK,
   };
   const lightOf: Record<number, number> = {
     [BLADE_INDEX]: BLADE_LIGHT,
@@ -821,19 +824,54 @@ function tintOverlayEdges(grid: SpriteGrid): void {
     [TINT_INDEX]: TINT_LIGHT,
     [TINT2_INDEX]: TINT2_LIGHT,
   };
+  // Weapon bodies glow on the dark background instead of darkening into it:
+  // any free edge goes light. An edge pressed against the body goes dark as
+  // a separation line. Trim and armor keep the legacy top-light/edge-dark.
+  const glowOf: Record<number, number> = {
+    [BLADE_INDEX]: BLADE_LIGHT,
+    [WOOD_INDEX]: WOOD_LIGHT,
+    [WHEAD_INDEX]: WHEAD_LIGHT,
+  };
+  const equip = new Set<number>([
+    TRIM_INDEX, TRIM_DARK, TRIM_LIGHT,
+    PLATE_INDEX, PLATE_DARK, PLATE_LIGHT,
+    TINT_INDEX, TINT_DARK, TINT_LIGHT,
+    TINT2_INDEX, TINT2_DARK, TINT2_LIGHT,
+    BLADE_INDEX, BLADE_DARK, BLADE_LIGHT,
+    WOOD_INDEX, WOOD_DARK, WOOD_LIGHT,
+    WHEAD_INDEX, WHEAD_DARK, WHEAD_LIGHT,
+    FIELD_INDEX, FIELD_DARK, FIELD_LIGHT,
+    RIM_INDEX, RIM_DARK,
+    ACCENT_INDEX, ACCENT_DARK,
+    STRING_INDEX,
+  ]);
+  const at = (x: number, y: number): number => grid[y]?.[x] ?? 0;
   for (let y = 0; y < grid.length; y++) {
     for (let x = 0; x < grid[y].length; x++) {
       const v = grid[y][x];
+      const glow = glowOf[v];
+      if (glow !== undefined) {
+        const sides = [at(x, y - 1), at(x, y + 1), at(x - 1, y), at(x + 1, y)];
+        if (sides.some((n) => n === 0)) {
+          grid[y][x] = glow;
+          continue;
+        }
+        if (sides.some((n) => n !== 0 && !equip.has(n))) {
+          const dark = darkOf[v];
+          if (dark !== undefined) grid[y][x] = dark;
+        }
+        continue;
+      }
       const light = lightOf[v];
-      if (light !== undefined && grid[y - 1]?.[x] === 0) {
+      if (light !== undefined && at(x, y - 1) === 0) {
         grid[y][x] = light;
         continue;
       }
       const dark = darkOf[v];
       if (dark === undefined) continue;
       const edge =
-        grid[y - 1]?.[x] === 0 || grid[y + 1]?.[x] === 0 ||
-        grid[y][x - 1] === 0 || grid[y][x + 1] === 0;
+        at(x, y - 1) === 0 || at(x, y + 1) === 0 ||
+        at(x - 1, y) === 0 || at(x + 1, y) === 0;
       if (edge) grid[y][x] = dark;
     }
   }
