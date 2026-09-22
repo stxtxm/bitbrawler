@@ -26,7 +26,7 @@ import {
   RIM_INDEX,
 } from '../../components/sprite/equipOverlays';
 import { generateSprite16, generateSpriteFrames } from '../../components/sprite/spriteGenerator';
-import { ACCENT_INDEX, TRIM_INDEX } from '../../components/sprite/spriteTypes';
+import { ACCENT_INDEX, TRIM_INDEX, shadeIndexOf } from '../../components/sprite/spriteTypes';
 import { RARITY_TRIM } from '../../components/sprite/spritePalettes';
 import { ELEMENT_COLORS } from '../../types/Item';
 
@@ -111,8 +111,11 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     }
     expect(out.grid[marks.palmR.y - 1][marks.palmR.x]).toBe(TRIM_INDEX);
     expect(out.grid[marks.palmR.y - 1][marks.palmR.x + 1]).toBe(TRIM_INDEX);
-    expect(out.grid[marks.palmR.y + 1][marks.palmR.x]).toBe(WOOD_INDEX);
+    expect(out.grid[marks.palmR.y + 1][marks.palmR.x]).toBe(shadeIndexOf(1));
     expect(out.grid[marks.palmR.y + 2][marks.palmR.x - 1]).toBe(TRIM_INDEX);
+    // fist wrapped over the grip: skin cap + shaded knuckles
+    expect(out.grid[marks.palmR.y][marks.palmR.x]).toBe(1);
+    expect(out.grid[marks.palmR.y][marks.palmR.x + 1]).toBe(1);
     // blade colors come from the item art, not a fixed gray
     expect(out.palette[BLADE_INDEX]).toBe('#c0c0c0');
     const ember = applyEquipmentOverlays(base.grid, base.palette, {
@@ -184,7 +187,8 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       armor: null,
       accessory: null,
     });
-    expect(out.grid[marks.palmR.y][marks.palmR.x]).toBe(WOOD_INDEX);
+    expect(out.grid[marks.palmR.y][marks.palmR.x]).toBe(1);
+    expect(out.grid[marks.palmR.y + 1][marks.palmR.x]).toBe(shadeIndexOf(1));
     const headRows = out.grid.slice(marks.palmR.y - 11, marks.palmR.y - 8).flat();
     expect(headRows).toContain(WHEAD_INDEX);
     expect(headRows.some((c) => c === BLADE_INDEX || c === BLADE_DARK)).toBe(true);
@@ -206,7 +210,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       armor: null,
       accessory: null,
     });
-    expect(staff.grid[marks.palmR.y][marks.palmR.x]).toBe(WOOD_INDEX);
+    expect(staff.grid[marks.palmR.y][marks.palmR.x]).toBe(1);
     expect(staff.grid[marks.palmR.y + 3][marks.palmR.x - 1]).toBe(WOOD_INDEX);
     expect(staff.grid[marks.palmR.y - 12][marks.palmR.x + 5]).toBe(ACCENT_INDEX);
     const scythe = applyEquipmentOverlays(base.grid, base.palette, {
@@ -227,7 +231,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       accessory: null,
     });
     // handle in the fist, gem head at shoulder height — nothing above y20
-    expect(out.grid[marks.palmR.y][marks.palmR.x]).toBe(WOOD_INDEX);
+    expect(out.grid[marks.palmR.y][marks.palmR.x]).toBe(1);
     const tipRows = out.grid.slice(marks.palmR.y - 4, marks.palmR.y - 1).flat();
     expect(tipRows).toContain(WHEAD_INDEX);
     expect(out.grid[marks.palmR.y - 3][marks.palmR.x + 1]).toBe(ACCENT_INDEX);

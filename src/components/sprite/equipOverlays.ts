@@ -467,21 +467,36 @@ function paintHeldWeapon(
   }
   if (kind === 'staff') {
     paintStaff(grid, grip);
+    paintFistGrip(grid, palm);
     return;
   }
   if (kind === 'scepter') {
     paintScepter(grid, grip);
+    paintFistGrip(grid, palm);
     return;
   }
   if (kind === 'scythe') {
     paintScythe(grid, grip, glint);
+    paintFistGrip(grid, palm);
     return;
   }
   if (kind === 'haft') {
     paintHaft(grid, grip, item.element ? ACCENT_INDEX : WHEAD_INDEX);
+    paintFistGrip(grid, palm);
     return;
   }
   paintBlade(grid, grip, kind === 'dagger' ? 5 : 9, glint, gem);
+  paintFistGrip(grid, palm);
+}
+
+// Fingers wrapped OVER the handle: repaints the fist on top of the grip so
+// the weapon reads as HELD instead of floating beside the hand. Axis-aligned
+// (the fist is body), also on sway frames where the grip shifts underneath.
+function paintFistGrip(grid: SpriteGrid, palm: { x: number; y: number }): void {
+  paint(grid, palm.x, palm.y, 1);
+  paint(grid, palm.x + 1, palm.y, 1);
+  paint(grid, palm.x, palm.y + 1, shadeIndexOf(1));
+  paint(grid, palm.x + 1, palm.y + 1, shadeIndexOf(1));
 }
 
 function paintShield(grid: SpriteGrid, palmL: { x: number; y: number }): void {
