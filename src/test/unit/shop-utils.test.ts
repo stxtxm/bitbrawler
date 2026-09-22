@@ -273,7 +273,7 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
       const result = buyShopOffer(0, char, ITEM_ASSETS, getTodayStr(), () => 0);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(482); // 500 - 18 (issue #1033 rebalance -10%)
+      expect(result!.essence).toBe(480); // 500 - 20 (issue #1078 rebalance +10%)
       expect(result!.inventory).toHaveLength(1);
     });
 
@@ -293,7 +293,7 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
       const result = buyShopOffer(0, char, ITEM_ASSETS, getTodayStr(), () => 0);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(482);
+      expect(result!.essence).toBe(480);
       expect(result!.inventory!.length).toBe(1);
       // Marking moved to GameContext AFTER the DB write succeeds (#768 follow-up):
       // an early mark showed SOLD while a transient failure left the purchase unpersisted.
@@ -339,7 +339,7 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
       const result = buyShopOffer(2, char, ITEM_ASSETS, getTodayStr(), () => 0);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(469); // 500 - 31 (issue #1033 rebalance -10%)
+      expect(result!.essence).toBe(466); // 500 - 34 (issue #1078 rebalance +10%)
       expect(result!.inventory).toHaveLength(1);
       const itemData = ITEM_ASSETS.find(a => a.id === result!.inventory![0]);
       expect(itemData).toBeDefined();
@@ -349,27 +349,27 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 600, inventory: [] });
       const result = buyShopOffer(2, char, ITEM_ASSETS, getTodayStr(), () => 0.5);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(569); // 600 - 31 (issue #1033 rebalance -10%)
+      expect(result!.essence).toBe(566); // 600 - 34 (issue #1078 rebalance +10%)
     });
   });
 
   // ─── getShopPrice ────────────────────────────────────────────────────────
 
   describe('getShopPrice', () => {
-    it('returns 18 for offer 0', () => {
-      expect(getShopPrice(0)).toBe(18);
+    it('returns 20 for offer 0', () => {
+      expect(getShopPrice(0)).toBe(20);
     });
 
-    it('returns 36 for offer 1', () => {
-      expect(getShopPrice(1)).toBe(36);
+    it('returns 40 for offer 1', () => {
+      expect(getShopPrice(1)).toBe(40);
     });
 
-    it('returns 31 for offer 2', () => {
-      expect(getShopPrice(2)).toBe(31);
+    it('returns 34 for offer 2', () => {
+      expect(getShopPrice(2)).toBe(34);
     });
 
-    it('returns 54 for offer 3 (Objet épique)', () => {
-      expect(getShopPrice(3)).toBe(54);
+    it('returns 60 for offer 3 (Objet épique)', () => {
+      expect(getShopPrice(3)).toBe(60);
     });
 
     it('throws for invalid index', () => {
