@@ -46,9 +46,14 @@ export const SpriteCanvas = memo(function SpriteCanvas({
   useEffect(() => {
     setFrameIdx(0);
     if (!frames || frames.length === 0) return;
-    const timer = setInterval(() => setFrameIdx((i) => (i + 1) % frames.length), frameMs);
+    // Attack plays once per fight (windup → strike → recover hold) instead
+    // of looping: a jabbing loop reads as crude pumping at 110ms.
+    const timer = setInterval(() => setFrameIdx((i) => {
+      if (activeAnim === 'attack' && i >= frames.length - 1) return i;
+      return (i + 1) % frames.length;
+    }), frameMs);
     return () => clearInterval(timer);
-  }, [frames, frameMs]);
+  }, [frames, frameMs, activeAnim]);
 
   const { grid, palette } = useMemo(() => {
     const base = frames && frames.length > 0 ? frames[frameIdx % frames.length] : generateSprite16(seed, gender, appearance);
