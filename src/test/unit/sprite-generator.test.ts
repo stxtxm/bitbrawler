@@ -97,6 +97,17 @@ describe('sprite generator v2', () => {
     expect(sprite.grid[34][12]).toBe(9);
   });
 
+  it('shades the torso-facing side of bare arms for volume', () => {
+    const sprite = generateSprite16('armvol-check', 'male', {
+      build: 'standard',
+      bodyType: 'basic',
+      headType: 'male',
+    });
+    const zone = sprite.grid.slice(30, 36).flat();
+    expect(zone).toContain(shadeIndexOf(1));
+    expect(zone).toContain(1);
+  });
+
   it('trims the collar in logo color with pants stripes and shoe laces', () => {
     const sprite = generateSprite16('finesse-check', 'male', {
       build: 'standard',
@@ -109,23 +120,24 @@ describe('sprite generator v2', () => {
     expect(sprite.grid[40].slice(0, 24)).toContain(2);
   });
 
-  it('generates 3 run frames with moving limbs, same size and palette', () => {
+  it('generates a 4-beat run cycle with a shared flight frame', () => {
     const frames = generateSpriteFrames('frame-check', 'male', {
       build: 'standard',
       bodyType: 'basic',
       headType: 'male',
     }, 'run')!;
-    expect(frames).toHaveLength(3);
+    expect(frames).toHaveLength(4);
     for (const f of frames) {
       expect(f.grid.length).toBe(42);
       expect(f.width).toBe(SPRITE_WIDTH);
       expect(f.height).toBe(SPRITE_HEIGHT);
       expect(f.palette).toBe(frames[0].palette);
     }
-    const [a, b, c] = frames.map((f) => JSON.stringify(f.grid));
+    const [a, b, c, d] = frames.map((f) => JSON.stringify(f.grid));
     expect(a).not.toBe(b);
     expect(b).not.toBe(c);
-    expect(a).not.toBe(c);
+    expect(c).not.toBe(d);
+    expect(b).toBe(d);
   });
 
   it('keeps arms attached every frame: no gaps along the arm columns', () => {
@@ -135,7 +147,7 @@ describe('sprite generator v2', () => {
         bodyType: 'basic',
         headType: 'male',
       }, 'run')!;
-      expect(frames).toHaveLength(3);
+      expect(frames).toHaveLength(4);
       for (const f of frames) {
         // arm columns measured per frame (slim/broad shift them)
         const edgeCols = (fromLeft: boolean): number[] => {
@@ -182,7 +194,7 @@ describe('sprite generator v2', () => {
         bodyType: 'basic',
         headType: 'male',
       }, 'run')!;
-      expect(frames).toHaveLength(3);
+      expect(frames).toHaveLength(4);
       for (const f of frames) {
         const legZone = f.grid.slice(36, 42);
         const left = legZone.flatMap((row) => row.slice(0, 12)).filter((v) => v !== 0).length;
@@ -193,8 +205,7 @@ describe('sprite generator v2', () => {
     }
   });
 
-  it('generates attack frames for every body type, fist thrusts, torso fixed', () => {
-    for (const bodyType of ['basic', 'sleeveless', 'armor', 'jacket', 'vest', 'robe', 'hoodie', 'tunic', 'nope']) {
+  it('generates attack frames for every body type, fist thrusts, torso fixed', () => {    for (const bodyType of ['basic', 'sleeveless', 'armor', 'jacket', 'vest', 'robe', 'hoodie', 'tunic', 'nope']) {
       const frames = generateSpriteFrames('frame-all', 'female', { bodyType }, 'attack')!;
       expect(frames).toHaveLength(3);
     }

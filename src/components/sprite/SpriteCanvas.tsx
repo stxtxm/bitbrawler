@@ -7,8 +7,8 @@ import { generateSprite16, generateSpriteFrames, SpriteAnimKind } from './sprite
 import { SPRITE_DISPLAY_SCALE } from './spriteTypes';
 import { useLowPerformanceMode } from '../../hooks/useLowPerformanceMode';
 
-export const SPRITE_RUN_MS = 150;
-export const SPRITE_ATTACK_MS = 110;
+export const SPRITE_RUN_MS = 120;
+export const SPRITE_ATTACK_MS = 130;
 
 interface SpriteCanvasProps {
   seed: string;

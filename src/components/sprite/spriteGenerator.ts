@@ -268,6 +268,25 @@ function applyFeatures(grid: SpriteGrid): void {
       }
     }
   }
+  // Arm volume: shade the torso-facing side of bare arm runs so hanging
+  // arms read as cylinders instead of flat pixels. Edge-anchored runs only.
+  for (let y = 30; y <= 35; y++) {
+    const row = grid[y] ?? [];
+    let lx = -1;
+    for (let x = 0; x < row.length; x++) {
+      if (row[x] === 0) continue;
+      if (row[x] !== 1) break;
+      lx = x;
+    }
+    if (lx > 0) set(lx, y, shadeIndexOf(1), 1);
+    let rx = -1;
+    for (let x = row.length - 1; x >= 0; x--) {
+      if (row[x] === 0) continue;
+      if (row[x] !== 1) break;
+      rx = x;
+    }
+    if (rx >= 0 && rx !== lx) set(rx, y, shadeIndexOf(1), 1);
+  }
   const shoeRow = grid[34] ?? [];
   let runStart = -1;
   for (let x = 0; x <= shoeRow.length; x++) {
@@ -335,6 +354,22 @@ function takeArm(row: number[], y: number, fromLeft: boolean): LimbCell[] {
   return out;
 }
 
+// Secondary motion: on the flight frame the loose hair fringe trails one
+// cell down over the forehead (additive, skin-only destinations — never
+// floats in the air).
+function applyHairSway(base: SpriteGrid): void {
+  const isHair = (v: number): boolean =>
+    v === 4 || v === shadeIndexOf(4) || v === highlightIndexOf(4);
+  for (let x = 0; x < 12; x++) {
+    let fringe = -1;
+    for (let y = 0; y <= 8; y++) {
+      if (isHair(base[y]?.[x] ?? 0)) fringe = y;
+    }
+    if (fringe >= 0 && fringe + 1 < base.length && (base[fringe + 1]?.[x] ?? 0) === 1) {
+      base[fringe + 1][x] = base[fringe][x];
+    }
+  }
+}
 function rightArmBlock(base: SpriteGrid): LimbCell[] {
   const out: LimbCell[] = [];
   for (let y = 11; y <= 14; y++) {
@@ -450,12 +485,13 @@ export function generateSpriteFrames(
 ): GeneratedSprite[] | null {
   const features = resolveSpriteFeatures(seed, gender, appearance);
   const palette = buildPalette(features);
-  const phases: StridePhase[] = [0, 1, 2];
+  const phases: StridePhase[] = kind === 'attack' ? [0, 1, 2] : [0, 1, 2, 1];
   return phases.map((phase) => {
     const base = composeBaseGrid(features.headType, features.bodyType);
     applyBuild(base, features.build);
     if (kind === 'attack') applyAttackPose(base, phase);
     else applyStride(base, phase);
+    if (kind === 'run' && phase === 1) applyHairSway(base);
     const grid = upscale(base);
     applySnes(grid);
     applyDetails(grid);
