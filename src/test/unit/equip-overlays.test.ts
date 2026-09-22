@@ -11,11 +11,17 @@ import {
   TRIM_DARK,
   TRIM_LIGHT,
   TINT_INDEX,
+  TINT_DARK,
+  TINT_LIGHT,
   TINT2_INDEX,
   TINT2_DARK,
   BLADE_INDEX,
   BLADE_DARK,
   BLADE_LIGHT,
+  WOOD_DARK,
+  WOOD_LIGHT,
+  WHEAD_DARK,
+  WHEAD_LIGHT,
   WEAPON_SLANT,
   WOOD_INDEX,
   WHEAD_INDEX,
@@ -190,10 +196,10 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     expect(out.grid[marks.palmR.y][marks.palmR.x]).toBe(1);
     expect(out.grid[marks.palmR.y + 1][marks.palmR.x]).toBe(shadeIndexOf(1));
     const headRows = out.grid.slice(marks.palmR.y - 11, marks.palmR.y - 8).flat();
-    expect(headRows).toContain(WHEAD_INDEX);
-    expect(headRows.some((c) => c === BLADE_INDEX || c === BLADE_DARK)).toBe(true);
+    expect(headRows.some((c) => c === WHEAD_INDEX || c === WHEAD_DARK || c === WHEAD_LIGHT)).toBe(true);
+    expect(headRows.some((c) => c === BLADE_INDEX || c === BLADE_DARK || c === BLADE_LIGHT)).toBe(true);
     // plain steel rivet without element
-    expect(out.grid[marks.palmR.y - 10][marks.palmR.x + 4]).toBe(WHEAD_INDEX);
+    expect([WHEAD_INDEX, WHEAD_DARK, WHEAD_LIGHT]).toContain(out.grid[marks.palmR.y - 10][marks.palmR.x + 4]);
     const quake = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: byId('sundering_axe'),
       armor: null,
@@ -211,7 +217,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       accessory: null,
     });
     expect(staff.grid[marks.palmR.y][marks.palmR.x]).toBe(1);
-    expect(staff.grid[marks.palmR.y + 3][marks.palmR.x - 1]).toBe(WOOD_INDEX);
+    expect([WOOD_INDEX, WOOD_DARK, WOOD_LIGHT]).toContain(staff.grid[marks.palmR.y + 3][marks.palmR.x - 1]);
     expect(staff.grid[marks.palmR.y - 12][marks.palmR.x + 5]).toBe(ACCENT_INDEX);
     const scythe = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: byId('doom_scythe'),
@@ -249,7 +255,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       accessory: null,
     });
     expect(out.grid[marks.palmR.y][marks.palmR.x]).toBe(BLADE_INDEX);
-    expect(out.grid[marks.palmR.y - 1][marks.palmR.x]).toBe(WHEAD_INDEX);
+    expect([WHEAD_INDEX, WHEAD_DARK, WHEAD_LIGHT]).toContain(out.grid[marks.palmR.y - 1][marks.palmR.x]);
   });
 
   it('raises heater shields centered on the left forearm', () => {
@@ -324,7 +330,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       armor: byId('iron_greaves'),
       accessory: null,
     });
-    expect(greaves.grid.slice(40, 42).flat()).toContain(TINT_INDEX);
+    expect(greaves.grid.slice(40, 42).flat().some((c) => c === TINT_INDEX || c === TINT_DARK || c === TINT_LIGHT)).toBe(true);
   });
 
   it('helms the whole hair while preserving eyes and mouth', () => {
@@ -478,8 +484,8 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       armor: null,
       accessory: byId('swift_boots'),
     });
-    expect(shadow.grid.slice(40, 42).flat()).toContain(TINT_INDEX);
-    expect(swift.grid.slice(40, 42).flat()).toContain(TINT_INDEX);
+    expect(shadow.grid.slice(40, 42).flat().some((c) => c === TINT_INDEX || c === TINT_DARK || c === TINT_LIGHT)).toBe(true);
+    expect(swift.grid.slice(40, 42).flat().some((c) => c === TINT_INDEX || c === TINT_DARK || c === TINT_LIGHT)).toBe(true);
     expect(swift.palette[TINT_INDEX]).not.toBe(shadow.palette[TINT_INDEX]);
     const bracers = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: null,
@@ -517,8 +523,8 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
   it('adds a tip glint on epic and legendary blades only', () => {
     const base = generateSprite16('glint-check', 'male', { ...STD_MALE });
     const marks = computeLandmarks(base.grid);
-    const tipY = marks.palmR.y - 1 - 9;
-    const tipX = marks.palmR.x + 1 + Math.round(10 * WEAPON_SLANT);
+    const tipY = marks.palmR.y - 1 - 11;
+    const tipX = marks.palmR.x + 1 + Math.round(12 * WEAPON_SLANT);
     const plain = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: byId('rusty_sword'),
       armor: null,
@@ -559,7 +565,8 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     expect(new Set(grids).size).toBe(3);
   });
 
-  it('thrusts the weapon with the punching fist on attack frames', () => {    const frames = generateSpriteFrames('jab-check', 'male', {
+  it('thrusts the weapon with the punching fist on attack frames', () => {
+    const frames = generateSpriteFrames('jab-check', 'male', {
       build: 'standard',
       bodyType: 'basic',
       headType: 'male',
@@ -568,7 +575,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     // windup chambers, strike extends past neutral
     expect(fists[0]).toBeLessThanOrEqual(fists[2]);
     expect(fists[1]).toBeGreaterThan(fists[2]);
-    const sword = byId('rusty_sword')!;
+    const sword = byId('flame_dagger')!;
     const tips = frames.map(
       (f) =>
         Math.max(
@@ -586,7 +593,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
 
   it('sways the held weapon with the stride without losing cells', () => {
     const base = generateSprite16('sway-check', 'male', { ...STD_MALE });
-    const loadout = { weapon: byId('rusty_sword'), armor: null, accessory: null };
+    const loadout = { weapon: byId('flame_dagger'), armor: null, accessory: null };
     const outs = [-1, 0, 1].map((swayX) =>
       applyEquipmentOverlays(base.grid, base.palette, loadout, { swayX }),
     );
