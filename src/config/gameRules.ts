@@ -17,7 +17,7 @@ export const GAME_RULES = {
         SURGE_XP_MODIFIER: 3.1,
         SURGE_ESSENCE_MULTIPLIER: 1.25,
         BOUNTY_TARGET: 3,
-        STAT_MULTIPLIER: 1.8,
+        STAT_MULTIPLIER: 2.1,
         HP_MULTIPLIER: 1.0,
         LEVEL_BOOST: 4, // Monsters fight at playerLevel + this offset
     },
