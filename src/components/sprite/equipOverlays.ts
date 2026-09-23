@@ -446,6 +446,9 @@ export interface OverlayOptions {
   // Horizontal sway of the held weapon (run-cycle life). The overlay is
   // redrawn from scratch every frame, so shifting the grip is artifact-free.
   swayX?: number;
+  // Pendulum swing of hanging jewelry (necklaces, brooches, orb pendants).
+  // Worn gear (armor, helms, rings, shields) correctly stays put.
+  swingX?: number;
 }
 
 function paintHeldWeapon(
@@ -629,11 +632,11 @@ function paintBracers(grid: SpriteGrid): void {
   }
 }
 
-function paintNecklace(grid: SpriteGrid, item: PixelItemAsset, neck: { x: number; y: number }): void {
+function paintNecklace(grid: SpriteGrid, item: PixelItemAsset, neck: { x: number; y: number }, swingX = 0): void {
   const art = item.pixels;
   const artW = art[0]?.length ?? 8;
   const artH = art.length;
-  const ox = clamp(neck.x - 4, 0, GRID_W - artW);
+  const ox = clamp(neck.x - 4 + swingX, 0, GRID_W - artW);
   const oy = clamp(neck.y - 1, 0, GRID_H - artH);
   blitRaw(grid, art, ox, oy);
 }
@@ -674,17 +677,17 @@ function mini44(art: number[][]): number[][] {
   return out;
 }
 
-function paintBrooch(grid: SpriteGrid, item: PixelItemAsset, chest: { x: number; y: number }): void {
+function paintBrooch(grid: SpriteGrid, item: PixelItemAsset, chest: { x: number; y: number }, swingX = 0): void {
   const mini = mini44(item.pixels);
-  const ox = clamp(chest.x - 2, 0, GRID_W - 4);
+  const ox = clamp(chest.x - 2 + swingX, 0, GRID_W - 4);
   const oy = clamp(chest.y - 2, 0, GRID_H - 4);
   blitRaw(grid, mini, ox, oy);
 }
 
-function paintOrbPendant(grid: SpriteGrid, item: PixelItemAsset, neck: { x: number; y: number }, chest: { x: number; y: number }): void {
-  for (let y = neck.y; y <= chest.y - 2; y++) paint(grid, chest.x, y, TRIM_INDEX);
+function paintOrbPendant(grid: SpriteGrid, item: PixelItemAsset, neck: { x: number; y: number }, chest: { x: number; y: number }, swingX = 0): void {
+  for (let y = neck.y; y <= chest.y - 2; y++) paint(grid, chest.x + swingX, y, TRIM_INDEX);
   const mini = mini44(item.pixels);
-  const ox = clamp(chest.x - 2, 0, GRID_W - 4);
+  const ox = clamp(chest.x - 2 + swingX, 0, GRID_W - 4);
   const oy = clamp(chest.y - 2, 0, GRID_H - 4);
   blitRaw(grid, mini, ox, oy);
 }
@@ -791,13 +794,13 @@ export function applyEquipmentOverlays(
   if (loadout.accessory && accessoryKind === 'crown') {
     stampHeadgear(out, loadout.accessory, marks.head, marks.faceCx);
   }
-  if (loadout.accessory && accessoryKind === 'brooch') paintBrooch(out, loadout.accessory, marks.chest);
-  if (loadout.accessory && accessoryKind === 'necklace') paintNecklace(out, loadout.accessory, marks.neck);
+  if (loadout.accessory && accessoryKind === 'brooch') paintBrooch(out, loadout.accessory, marks.chest, opts?.swingX ?? 0);
+  if (loadout.accessory && accessoryKind === 'necklace') paintNecklace(out, loadout.accessory, marks.neck, opts?.swingX ?? 0);
   if (loadout.armor && armorKind === 'shield') paintShield(out, marks.palmL);
   if (loadout.weapon) paintHeldWeapon(out, loadout.weapon, marks.palmR, opts?.swayX ?? 0);
   if (loadout.accessory && accessoryKind === 'ring') paintRing(out, marks.palmR);
   if (loadout.accessory && accessoryKind === 'orb') {
-    paintOrbPendant(out, loadout.accessory, marks.neck, marks.chest);
+    paintOrbPendant(out, loadout.accessory, marks.neck, marks.chest, opts?.swingX ?? 0);
   }
   tintOverlayEdges(out);
   return { grid: out, palette: next };

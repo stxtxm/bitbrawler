@@ -32,7 +32,7 @@ import {
   RIM_INDEX,
 } from '../../components/sprite/equipOverlays';
 import { generateSprite16, generateSpriteFrames } from '../../components/sprite/spriteGenerator';
-import { ACCENT_INDEX, TRIM_INDEX, shadeIndexOf } from '../../components/sprite/spriteTypes';
+import { ACCENT_INDEX, ITEM_BLIT_OFFSET, TRIM_INDEX, shadeIndexOf } from '../../components/sprite/spriteTypes';
 import { RARITY_TRIM } from '../../components/sprite/spritePalettes';
 import { ELEMENT_COLORS } from '../../types/Item';
 
@@ -591,8 +591,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     expect(tips[1]).toBeGreaterThan(tips[2]);
   });
 
-  it('sways the held weapon with the stride without losing cells', () => {
-    const base = generateSprite16('sway-check', 'male', { ...STD_MALE });
+  it('sways the held weapon with the stride without losing cells', () => {    const base = generateSprite16('sway-check', 'male', { ...STD_MALE });
     const loadout = { weapon: byId('flame_dagger'), armor: null, accessory: null };
     const outs = [-1, 0, 1].map((swayX) =>
       applyEquipmentOverlays(base.grid, base.palette, loadout, { swayX }),
@@ -611,6 +610,45 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       (o) => o.grid.flat().filter((c) => c === BLADE_INDEX || c === BLADE_DARK || c === BLADE_LIGHT).length,
     );
     expect(new Set(counts).size).toBe(1);
+  });
+
+  it('swings hanging jewelry with the stride, worn gear stays put', () => {
+    const base = generateSprite16('swing-check', 'female', { ...STD_FEMALE });
+    const marks = computeLandmarks(base.grid);
+    const medallion = (grid: number[][]): number =>
+      Math.min(
+        ...grid.flatMap((row, y) =>
+          row.map((c, x) =>
+            c >= ITEM_BLIT_OFFSET && c < ITEM_BLIT_OFFSET + 10 &&
+            y >= marks.chest.y - 3 && y <= marks.chest.y + 3 ? x : 99,
+          ),
+        ),
+      );
+    for (const id of ['might_pendant', 'lucky_coin', 'pyrite_orb']) {
+      const item = byId(id)!;
+      const loadout = {
+        weapon: null,
+        armor: null,
+        accessory: item.slot === 'accessory' ? item : null,
+      };
+      const outs = [-1, 0, 1].map((swingX) => applyEquipmentOverlays(base.grid, base.palette, loadout, { swingX }));
+      const xs = outs.map((o) => medallion(o.grid));
+      expect(xs[2]).toBe(xs[1] + 1);
+      expect(xs[0]).toBe(xs[1] - 1);
+    }
+    // rings are worn, never swinging
+    const ring = applyEquipmentOverlays(
+      base.grid, base.palette,
+      { weapon: null, armor: null, accessory: byId('mystic_ring') },
+      { swingX: 1 },
+    );
+    expect(JSON.stringify(ring.grid)).toBe(
+      JSON.stringify(
+        applyEquipmentOverlays(base.grid, base.palette, {
+          weapon: null, armor: null, accessory: byId('mystic_ring'),
+        }).grid,
+      ),
+    );
   });
 
   it('uses the highest rarity for the trim and survives unknown ids', () => {
