@@ -105098,5 +105098,304 @@
       "purchased_offer": 0,
       "essence_after_purchase": 9
     }
+  },
+  {
+    "date": "2026-09-23T22:01:32.023Z",
+    "run": "2026-09-24",
+    "character": "QA-PERSI-3",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 0,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 11,
+      "vit": 7,
+      "dex": 16,
+      "luk": 9,
+      "int": 29,
+      "foc": 21,
+      "fights": 0
+    },
+    "initial_level": 13,
+    "initial_xp": {
+      "current": 8125,
+      "max": 8263
+    },
+    "initial_max_hp": 382,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flamberge",
+        "rarity": "EPIC"
+      },
+      {
+        "slot": "💍",
+        "name": "Swift Boots",
+        "rarity": "UNCOMMON"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 14,
+      "xp": 244,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 11,
+      "vit": 7,
+      "dex": 16,
+      "luk": 10,
+      "int": 29,
+      "foc": 21,
+      "last xp": 24,
+      "fights": 6
+    },
+    "final_max_hp": 402,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flamberge",
+        "rarity": "EPIC"
+      },
+      {
+        "slot": "💍",
+        "name": "Swift Boots",
+        "rarity": "UNCOMMON"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flamberge",
+        "rarity": "EPIC"
+      },
+      {
+        "slot": "💍",
+        "name": "Swift Boots",
+        "rarity": "UNCOMMON"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 44206,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "wraith",
+        "skeleton"
+      ],
+      "victories": 1,
+      "defeats": 1,
+      "xp_total": 110,
+      "xp_events": [
+        {
+          "time_ms": 3062,
+          "xp": 86,
+          "monster": "wraith",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 44206,
+          "xp": 24,
+          "monster": "skeleton",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        510,
+        1529,
+        3062,
+        11138,
+        12672,
+        44206
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 86,
+        "essence": 0.46,
+        "monster": "wraith"
+      },
+      {
+        "result": "defeat",
+        "xp": 24,
+        "essence": 0.14,
+        "monster": "skeleton"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.5,
+      "next_level_eta": "⬆ 20m 0s",
+      "power_ratio": "⚔ 0.62x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.30x",
+      "interval": "11.0s",
+      "streak_bonus": null
+    },
+    "initial_essence": 24.71,
+    "final_essence": 16,
+    "essence": {
+      "before_idle": 24.71,
+      "after_idle": 25.31,
+      "per_fight": [],
+      "forge_before": 25,
+      "forge_after_salvage": 45,
+      "forge_after_fusion": 45,
+      "forge_after_upgrade": 15,
+      "forge_after": 15,
+      "shop_before": 16,
+      "shop_after": 16,
+      "final": 16,
+      "flow": {
+        "idle_gained": 0.6,
+        "fights_change": null,
+        "salvage_gained": 20,
+        "fusion_cost": 0,
+        "upgrade_cost": 30,
+        "forge_net": -10,
+        "shop_cost": 0,
+        "net_change": -8.71
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 25,
+      "essence_after_salvage": 45,
+      "essence_after_fusion": 45,
+      "essence_after_upgrade": 15,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 15,
+      "items_after": 0,
+      "salvage_essence_gained": 20,
+      "fusion_cost": null,
+      "upgrade_cost": 30,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 16,
+      "essence_after": 16,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Guardian Shield",
+            "rarity": "UNCOMMON",
+            "price": 20
+          },
+          {
+            "name": "Spirit Orb",
+            "rarity": "EPIC",
+            "price": 40
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 34
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 16
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "exhausted"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1473,
+      "arena": 173
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Guardian Shield",
+          "rarity": "UNCOMMON",
+          "price": 20
+        },
+        {
+          "name": "Spirit Orb",
+          "rarity": "EPIC",
+          "price": 40
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 34
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 16
+    }
   }
 ]
