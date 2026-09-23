@@ -103666,5 +103666,301 @@
       "purchased_offer": 0,
       "essence_after_purchase": 32
     }
+  },
+  {
+    "date": "2026-09-23T13:01:35.553Z",
+    "run": "2026-09-23",
+    "character": "QA-PERSI-2",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 0,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 16,
+      "vit": 10,
+      "dex": 14,
+      "luk": 13,
+      "int": 17,
+      "foc": 41,
+      "fights": 0
+    },
+    "initial_level": 25,
+    "initial_xp": {
+      "current": 15118,
+      "max": 24309
+    },
+    "initial_max_hp": 636,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Sun Spear",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "💍",
+        "name": "Life Amulet",
+        "rarity": "RARE"
+      }
+    ],
+    "initial_streak": 2,
+    "final_stats": {
+      "level": 25,
+      "xp": 15493,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 16,
+      "vit": 10,
+      "dex": 14,
+      "luk": 13,
+      "int": 17,
+      "foc": 41,
+      "last xp": 106,
+      "fights": 3
+    },
+    "final_max_hp": 636,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Sun Spear",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "💍",
+        "name": "Life Amulet",
+        "rarity": "RARE"
+      }
+    ],
+    "final_streak": 2,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Sun Spear",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "💍",
+        "name": "Life Amulet",
+        "rarity": "RARE"
+      }
+    ],
+    "lootbox_streak": 2,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20443,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "skeleton",
+        "wraith"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 143,
+      "xp_events": [
+        {
+          "time_ms": 14389,
+          "xp": 37,
+          "monster": "skeleton",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 14903,
+          "xp": 106,
+          "monster": "wraith",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        509,
+        1529,
+        14389
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 37,
+        "essence": 0.23,
+        "monster": "skeleton"
+      },
+      {
+        "result": "victory",
+        "xp": 106,
+        "essence": 0.23,
+        "monster": "wraith"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.91,
+      "next_level_eta": "⬆ 14m 33s",
+      "power_ratio": "⚔ 0.54x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.38x",
+      "interval": "11.3s",
+      "streak_bonus": "🔥 1-win streak (+0%)"
+    },
+    "initial_essence": 66.19,
+    "final_essence": 52.52,
+    "essence": {
+      "before_idle": 66.19,
+      "after_idle": 66.65,
+      "per_fight": [],
+      "forge_before": 66,
+      "forge_after_salvage": 71,
+      "forge_after_fusion": 71,
+      "forge_after_upgrade": 71,
+      "forge_after": 71,
+      "shop_before": 72,
+      "shop_after": 52,
+      "final": 52.52,
+      "flow": {
+        "idle_gained": 0.46,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 5,
+        "shop_cost": 20,
+        "net_change": -13.67
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 66,
+      "essence_after_salvage": 71,
+      "essence_after_fusion": 71,
+      "essence_after_upgrade": 71,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": false,
+      "essence_after": 71,
+      "items_after": 0,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "RARE",
+      "cost": 20,
+      "essence_before": 72,
+      "essence_after": 52,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Leather Vest",
+            "rarity": "COMMON",
+            "price": 20
+          },
+          {
+            "name": "Tsunami Orb",
+            "rarity": "EPIC",
+            "price": 40
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 34
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 52
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "exhausted"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1932,
+      "arena": 656
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Leather Vest",
+          "rarity": "COMMON",
+          "price": 20
+        },
+        {
+          "name": "Tsunami Orb",
+          "rarity": "EPIC",
+          "price": 40
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 34
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 52
+    }
   }
 ]
