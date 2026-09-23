@@ -10,8 +10,8 @@ describe('idleConfig — essence economy tuning #930', () => {
   afterEach(() => {
     vi.useRealTimers()
   })
-  it('ESSENCE.BASE_RATE is 0.15 (+25% vs 0.12)', () => {
-    expect(IDLE_CONFIG.ESSENCE.BASE_RATE).toBe(0.15)
+  it('ESSENCE.BASE_RATE is 0.18 (+20% vs 0.15)', () => {
+    expect(IDLE_CONFIG.ESSENCE.BASE_RATE).toBe(0.18)
   })
 
   it('ESSENCE.LOSS_RATIO remains 0.3', () => {
@@ -22,9 +22,9 @@ describe('idleConfig — essence economy tuning #930', () => {
     expect(IDLE_CONFIG.ESSENCE.LEVEL_SCALE).toBe(0.03)
   })
 
-  it('calculateIdleEssence win at level 10 uses 0.15 base', () => {
+  it('calculateIdleEssence win at level 10 uses 0.18 base', () => {
     const essence = calculateIdleEssence(true, 10, 10, 10)
-    expect(essence).toBeCloseTo(0.15 * (1 + 9 * 0.03), 5)
+    expect(essence).toBeCloseTo(0.18 * (1 + 9 * 0.03), 5)
   })
 
   it('calculateIdleEssence loss at level 10 is 30% of win', () => {
@@ -33,9 +33,9 @@ describe('idleConfig — essence economy tuning #930', () => {
     expect(loss).toBeCloseTo(win * 0.3, 5)
   })
 
-  it('5 wins at level 10 total ~0.95', () => {
+  it('5 wins at level 10 total ~1.14', () => {
     let total = 0
     for (let i = 0; i < 5; i++) total += calculateIdleEssence(true, 10, 10, 10)
-    expect(total).toBeCloseTo(0.95, 1)
+    expect(total).toBeCloseTo(1.14, 1)
   })
 })
