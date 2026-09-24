@@ -106044,5 +106044,288 @@
       "purchased_offer": 0,
       "essence_after_purchase": 90
     }
+  },
+  {
+    "date": "2026-09-24T07:01:29.127Z",
+    "run": "2026-09-24",
+    "character": "QA-PERSI-3",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 0,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 16,
+      "vit": 8,
+      "dex": 21,
+      "luk": 11,
+      "int": 35,
+      "foc": 23,
+      "fights": 0
+    },
+    "initial_level": 24,
+    "initial_xp": {
+      "current": 8366,
+      "max": 22726
+    },
+    "initial_max_hp": 464,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flamberge",
+        "rarity": "EPIC"
+      },
+      {
+        "slot": "💍",
+        "name": "Swift Boots",
+        "rarity": "UNCOMMON"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 24,
+      "xp": 8729,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 16,
+      "vit": 8,
+      "dex": 21,
+      "luk": 11,
+      "int": 35,
+      "foc": 23,
+      "last xp": 99,
+      "fights": 4
+    },
+    "final_max_hp": 464,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flamberge",
+        "rarity": "EPIC"
+      },
+      {
+        "slot": "💍",
+        "name": "Swift Boots",
+        "rarity": "UNCOMMON"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flamberge",
+        "rarity": "EPIC"
+      },
+      {
+        "slot": "💍",
+        "name": "Swift Boots",
+        "rarity": "UNCOMMON"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 23921,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "chimera"
+      ],
+      "victories": 1,
+      "defeats": 0,
+      "xp_total": 37,
+      "xp_events": [
+        {
+          "time_ms": 23921,
+          "xp": 37,
+          "monster": "chimera",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        513,
+        1534,
+        23921
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 37,
+        "essence": 0.87,
+        "monster": "chimera"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.53,
+      "next_level_eta": "⬆ 22m 9s",
+      "power_ratio": "⚔ 0.53x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.38x",
+      "interval": "10.3s",
+      "streak_bonus": "🔥 1-win streak (+25%)"
+    },
+    "initial_essence": 147.48,
+    "final_essence": 45.01,
+    "essence": {
+      "before_idle": 147.48,
+      "after_idle": 148.35,
+      "per_fight": [],
+      "forge_before": 148,
+      "forge_after_salvage": 153,
+      "forge_after_fusion": 153,
+      "forge_after_upgrade": 63,
+      "forge_after": 63,
+      "shop_before": 65,
+      "shop_after": 45,
+      "final": 45.01,
+      "flow": {
+        "idle_gained": 0.87,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 90,
+        "forge_net": -85,
+        "shop_cost": 20,
+        "net_change": -102.47
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 148,
+      "essence_after_salvage": 153,
+      "essence_after_fusion": 153,
+      "essence_after_upgrade": 63,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 63,
+      "items_after": 0,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": 90,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 20,
+      "essence_before": 65,
+      "essence_after": 45,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Vitality Ring",
+            "rarity": "COMMON",
+            "price": 20
+          },
+          {
+            "name": "Wand of Storms",
+            "rarity": "EPIC",
+            "price": 60
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 34
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 45
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "exhausted"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1781,
+      "arena": 596
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Vitality Ring",
+          "rarity": "COMMON",
+          "price": 20
+        },
+        {
+          "name": "Wand of Storms",
+          "rarity": "EPIC",
+          "price": 60
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 34
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 45
+    }
   }
 ]
