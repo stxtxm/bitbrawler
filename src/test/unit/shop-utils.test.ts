@@ -273,7 +273,7 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
       const result = buyShopOffer(0, char, ITEM_ASSETS, getTodayStr(), () => 0);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(480); // 500 - 20 (issue #1078 rebalance +10%)
+      expect(result!.essence).toBe(478); // 500 - 22 (issue #1098 rebalance +10%)
       expect(result!.inventory).toHaveLength(1);
     });
 
@@ -293,7 +293,7 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
       const result = buyShopOffer(0, char, ITEM_ASSETS, getTodayStr(), () => 0);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(480);
+      expect(result!.essence).toBe(478);
       expect(result!.inventory!.length).toBe(1);
       // Marking moved to GameContext AFTER the DB write succeeds (#768 follow-up):
       // an early mark showed SOLD while a transient failure left the purchase unpersisted.
@@ -339,7 +339,7 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
       const result = buyShopOffer(2, char, ITEM_ASSETS, getTodayStr(), () => 0);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(466); // 500 - 34 (issue #1078 rebalance +10%)
+      expect(result!.essence).toBe(463); // 500 - 37 (issue #1098 rebalance +10%)
       expect(result!.inventory).toHaveLength(1);
       const itemData = ITEM_ASSETS.find(a => a.id === result!.inventory![0]);
       expect(itemData).toBeDefined();
@@ -349,27 +349,27 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 600, inventory: [] });
       const result = buyShopOffer(2, char, ITEM_ASSETS, getTodayStr(), () => 0.5);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(566); // 600 - 34 (issue #1078 rebalance +10%)
+      expect(result!.essence).toBe(563); // 600 - 37 (issue #1098 rebalance +10%)
     });
   });
 
   // ─── getShopPrice ────────────────────────────────────────────────────────
 
   describe('getShopPrice', () => {
-    it('returns 20 for offer 0', () => {
-      expect(getShopPrice(0)).toBe(20);
+    it('returns 22 for offer 0', () => {
+      expect(getShopPrice(0)).toBe(22);
     });
 
-    it('returns 40 for offer 1', () => {
-      expect(getShopPrice(1)).toBe(40);
+    it('returns 44 for offer 1', () => {
+      expect(getShopPrice(1)).toBe(44);
     });
 
-    it('returns 34 for offer 2', () => {
-      expect(getShopPrice(2)).toBe(34);
+    it('returns 37 for offer 2', () => {
+      expect(getShopPrice(2)).toBe(37);
     });
 
-    it('returns 60 for offer 3 (Objet épique)', () => {
-      expect(getShopPrice(3)).toBe(60);
+    it('returns 66 for offer 3 (Objet épique)', () => {
+      expect(getShopPrice(3)).toBe(66);
     });
 
     it('throws for invalid index', () => {
@@ -408,7 +408,7 @@ describe('shop-utils (TDD)', () => {
       const result = rerollShopOffers(char, ITEM_ASSETS, getTodayStr());
       expect(result).not.toBeNull();
       expect(result!.offers).toHaveLength(4);
-      expect(result!.character.essence).toBe(91); // 100 - 9 (issue #1033 rebalance -10%)
+      expect(result!.character.essence).toBe(90); // 100 - 10 (issue #1098 rebalance +10%)
     });
 
     it('returns offers with valid structure', () => {
@@ -423,7 +423,7 @@ describe('shop-utils (TDD)', () => {
       });
     });
 
-    it('returns null when character does not have 9 essence', () => {
+    it('returns null when character does not have 10 essence', () => {
       const char = makeCharacter({ essence: 5 });
       const result = rerollShopOffers(char, ITEM_ASSETS, getTodayStr());
       expect(result).toBeNull();
@@ -459,11 +459,11 @@ describe('shop-utils (TDD)', () => {
       expect(allSame).toBe(false);
     });
 
-    it('deducts exactly 9 essence from character', () => {
+    it('deducts exactly 10 essence from character', () => {
       const char = makeCharacter({ essence: 200 });
       const result = rerollShopOffers(char, ITEM_ASSETS, getTodayStr());
       expect(result).not.toBeNull();
-      expect(result!.character.essence).toBe(191); // 200 - 9 (issue #1033 rebalance -10%)
+      expect(result!.character.essence).toBe(190); // 200 - 10 (issue #1098 rebalance +10%)
     });
 
     it('does not modify the original character object (immutable)', () => {

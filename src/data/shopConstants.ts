@@ -22,18 +22,19 @@ export interface ShopOfferConfig {
  * - Pièce rare (rare/epic, EV 50+) at 36, Objet épique (epic, EV 80) at 54
  * - Rebalanced -10% in issue #1033 (2026-09-17): purchase_rate 8.26% <10% threshold
  * - Rebalanced +10% in issue #1078 (2026-09-21): purchase_rate 61% simulated / 74% visited >60% threshold
+ * - Rebalanced +10% in issue #1098 (2026-09-24): purchase_rate 67% >60% threshold
  * - Epic items only unlock for LVL >= 10 (EPIC_UNLOCK_LEVEL): low-level
  *   players (LVL 2-5 = 93% of runs) were offered 50% epic at epic prices
  */
 export const SHOP_OFFERS: ShopOfferConfig[] = [
-  { type: 'item', price: 20, label: 'Marchandise', rarityPool: ['common', 'uncommon', 'rare'] },
-  { type: 'item', price: 40, label: 'Pièce rare', rarityPool: ['rare', 'epic'] },
-  { type: 'lootbox', price: 34, label: 'Coffre mystère', rarityPool: null },
-  { type: 'item', price: 60, label: 'Objet épique', rarityPool: ['epic'] },
+  { type: 'item', price: 22, label: 'Marchandise', rarityPool: ['common', 'uncommon', 'rare'] },
+  { type: 'item', price: 44, label: 'Pièce rare', rarityPool: ['rare', 'epic'] },
+  { type: 'lootbox', price: 37, label: 'Coffre mystère', rarityPool: null },
+  { type: 'item', price: 66, label: 'Objet épique', rarityPool: ['epic'] },
 ];
 
 /** Cost to reroll today's shop offers (≈2 days of essence income). */
-export const REROLL_COST = 9;
+export const REROLL_COST = 10;
 
 /** Minimum character level for epic items to appear in shop offers. */
 export const EPIC_UNLOCK_LEVEL = 10;
