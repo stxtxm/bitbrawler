@@ -108793,5 +108793,353 @@
       "purchased_offer": 0,
       "essence_after_purchase": 131
     }
+  },
+  {
+    "date": "2026-09-25T04:01:31.395Z",
+    "run": "2026-09-25",
+    "character": "QA-PERSI-4",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 76,
+        "fight_duration_ms": 14747,
+        "max_hp": 593,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 177.93
+      },
+      {
+        "result": "victory",
+        "xp": 238,
+        "fight_duration_ms": 11853,
+        "max_hp": 593,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 177.93
+      },
+      {
+        "result": "victory",
+        "xp": 228,
+        "fight_duration_ms": 11284,
+        "max_hp": 593,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 178.07
+      },
+      {
+        "result": "defeat",
+        "xp": 75,
+        "fight_duration_ms": 9235,
+        "max_hp": 593,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 178.07
+      },
+      {
+        "result": "victory",
+        "xp": 235,
+        "fight_duration_ms": 9566,
+        "max_hp": 593,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 178.07
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 1,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 19,
+      "vit": 18,
+      "dex": 13,
+      "luk": 12,
+      "int": 14,
+      "foc": 28,
+      "fights": 0
+    },
+    "initial_level": 25,
+    "initial_xp": {
+      "current": 11609,
+      "max": 24309
+    },
+    "initial_max_hp": 593,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Spiked Club",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Reinforced Vest",
+        "rarity": "COMMON"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 25,
+      "xp": 13027,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 19,
+      "vit": 18,
+      "dex": 13,
+      "luk": 12,
+      "int": 16,
+      "foc": 28,
+      "last xp": 118,
+      "fights": 3
+    },
+    "final_max_hp": 593,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Spiked Club",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Reinforced Vest",
+        "rarity": "COMMON"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Spiked Club",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Reinforced Vest",
+        "rarity": "COMMON"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_locked_level": 30,
+      "boss_name": "VOID TITAN",
+      "boss_level": null,
+      "boss_hp": null,
+      "boss_max_hp": null
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20479,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "skeleton",
+        "wraith"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 153,
+      "xp_events": [
+        {
+          "time_ms": 14925,
+          "xp": 35,
+          "monster": "skeleton",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15440,
+          "xp": 118,
+          "monster": "wraith",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        522,
+        1545,
+        14925
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 35,
+        "essence": 0.3,
+        "monster": "skeleton"
+      },
+      {
+        "result": "victory",
+        "xp": 118,
+        "essence": 0.3,
+        "monster": "wraith"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.02,
+      "next_level_eta": "⬆ 23m 7s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.24x",
+      "interval": "11.5s",
+      "streak_bonus": "🔥 1-win streak (+2%)"
+    },
+    "initial_essence": 177.14,
+    "final_essence": 92.74,
+    "essence": {
+      "before_idle": 177.14,
+      "after_idle": 177.74,
+      "per_fight": [
+        177.93,
+        177.93,
+        178.07,
+        178.07,
+        178.07
+      ],
+      "forge_before": 178,
+      "forge_after_salvage": 183,
+      "forge_after_fusion": 183,
+      "forge_after_upgrade": 113,
+      "forge_after": 113,
+      "shop_before": 114,
+      "shop_after": 92,
+      "final": 92.74,
+      "flow": {
+        "idle_gained": 0.6,
+        "fights_change": 0.33,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 70,
+        "forge_net": -65,
+        "shop_cost": 22,
+        "net_change": -84.4
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 178,
+      "essence_after_salvage": 183,
+      "essence_after_fusion": 183,
+      "essence_after_upgrade": 113,
+      "items_before": 2,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 113,
+      "items_after": 0,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": 70,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 22,
+      "essence_before": 114,
+      "essence_after": 92,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Worn Bracers",
+            "rarity": "COMMON",
+            "price": 22
+          },
+          {
+            "name": "Tempest Blade",
+            "rarity": "EPIC",
+            "price": 66
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 37
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 92
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1727,
+      "arena": 319
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Worn Bracers",
+          "rarity": "COMMON",
+          "price": 22
+        },
+        {
+          "name": "Tempest Blade",
+          "rarity": "EPIC",
+          "price": 66
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 37
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 92
+    }
   }
 ]
