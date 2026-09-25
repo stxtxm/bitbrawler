@@ -109424,5 +109424,301 @@
       "purchased_offer": 0,
       "essence_after_purchase": 34
     }
+  },
+  {
+    "date": "2026-09-25T10:01:38.911Z",
+    "run": "2026-09-25",
+    "character": "QA-PERSI-4",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 0,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 21,
+      "vit": 18,
+      "dex": 14,
+      "luk": 12,
+      "int": 16,
+      "foc": 30,
+      "fights": 0
+    },
+    "initial_level": 28,
+    "initial_xp": {
+      "current": 26414,
+      "max": 29308
+    },
+    "initial_max_hp": 653,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Spiked Club",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Reinforced Vest",
+        "rarity": "COMMON"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 28,
+      "xp": 27344,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 21,
+      "vit": 18,
+      "dex": 14,
+      "luk": 12,
+      "int": 16,
+      "foc": 30,
+      "last xp": 127,
+      "fights": 3
+    },
+    "final_max_hp": 653,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Spiked Club",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Reinforced Vest",
+        "rarity": "COMMON"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Spiked Club",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Reinforced Vest",
+        "rarity": "COMMON"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20475,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "skeleton",
+        "goblin"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 165,
+      "xp_events": [
+        {
+          "time_ms": 14413,
+          "xp": 38,
+          "monster": "skeleton",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 14928,
+          "xp": 127,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        514,
+        1542,
+        14413
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 38,
+        "essence": 0.27,
+        "monster": "skeleton"
+      },
+      {
+        "result": "victory",
+        "xp": 127,
+        "essence": 0.27,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.2,
+      "next_level_eta": "⬆ 2m 54s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.26x",
+      "interval": "11.3s",
+      "streak_bonus": "🔥 1-win streak (+1%)"
+    },
+    "initial_essence": 80.77,
+    "final_essence": 66.35,
+    "essence": {
+      "before_idle": 80.77,
+      "after_idle": 81.31,
+      "per_fight": [],
+      "forge_before": 81,
+      "forge_after_salvage": 86,
+      "forge_after_fusion": 86,
+      "forge_after_upgrade": 86,
+      "forge_after": 86,
+      "shop_before": 88,
+      "shop_after": 66,
+      "final": 66.35,
+      "flow": {
+        "idle_gained": 0.54,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 5,
+        "shop_cost": 22,
+        "net_change": -14.42
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 81,
+      "essence_after_salvage": 86,
+      "essence_after_fusion": 86,
+      "essence_after_upgrade": 86,
+      "items_before": 2,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": false,
+      "essence_after": 86,
+      "items_after": 0,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 22,
+      "essence_before": 88,
+      "essence_after": 66,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Worn Bracers",
+            "rarity": "COMMON",
+            "price": 22
+          },
+          {
+            "name": "Tempest Blade",
+            "rarity": "EPIC",
+            "price": 66
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 37
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 66
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "exhausted"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1462,
+      "arena": 368
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Worn Bracers",
+          "rarity": "COMMON",
+          "price": 22
+        },
+        {
+          "name": "Tempest Blade",
+          "rarity": "EPIC",
+          "price": 66
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 37
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 66
+    }
   }
 ]
