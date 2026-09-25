@@ -108495,5 +108495,303 @@
       "purchased_offer": 0,
       "essence_after_purchase": 153
     }
+  },
+  {
+    "date": "2026-09-25T01:01:58.822Z",
+    "run": "2026-09-25",
+    "character": "QA-PERSI-4",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Storm Amulet",
+      "rarity": "RARE",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": null,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 18,
+      "vit": 18,
+      "dex": 13,
+      "luk": 12,
+      "int": 14,
+      "foc": 26,
+      "fights": 0
+    },
+    "initial_level": 23,
+    "initial_xp": {
+      "current": 7799,
+      "max": 21185
+    },
+    "initial_max_hp": 553,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Spiked Club",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Reinforced Vest",
+        "rarity": "COMMON"
+      }
+    ],
+    "initial_streak": 2,
+    "final_stats": {
+      "level": 23,
+      "xp": 8207,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 18,
+      "vit": 18,
+      "dex": 13,
+      "luk": 12,
+      "int": 14,
+      "foc": 26,
+      "fights": 0
+    },
+    "final_max_hp": 553,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Spiked Club",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Reinforced Vest",
+        "rarity": "COMMON"
+      }
+    ],
+    "final_streak": 2,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Spiked Club",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Reinforced Vest",
+        "rarity": "COMMON"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20442,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "chimera",
+        "goblin"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 138,
+      "xp_events": [
+        {
+          "time_ms": 14890,
+          "xp": 33,
+          "monster": "chimera",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15404,
+          "xp": 105,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        513,
+        1535,
+        14890
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 33,
+        "essence": 0.25,
+        "monster": "chimera"
+      },
+      {
+        "result": "victory",
+        "xp": 105,
+        "essence": 0.24,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.89,
+      "next_level_eta": "⬆ 21m 52s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.20x",
+      "interval": "11.5s",
+      "streak_bonus": "🔥 1-win streak (+0%)"
+    },
+    "initial_essence": 194.6,
+    "final_essence": 131.81,
+    "essence": {
+      "before_idle": 194.6,
+      "after_idle": 195.09,
+      "per_fight": [],
+      "forge_before": 195,
+      "forge_after_salvage": 200,
+      "forge_after_fusion": 200,
+      "forge_after_upgrade": 150,
+      "forge_after": 150,
+      "shop_before": 151,
+      "shop_after": 131,
+      "final": 131.81,
+      "flow": {
+        "idle_gained": 0.49,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 50,
+        "forge_net": -45,
+        "shop_cost": 20,
+        "net_change": -62.79
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": true,
+      "offline_time": "⏰ NaNh NaNm",
+      "fights": 0,
+      "xp_gained": 1380,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": true
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 195,
+      "essence_after_salvage": 200,
+      "essence_after_fusion": 200,
+      "essence_after_upgrade": 150,
+      "items_before": 2,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 150,
+      "items_after": 0,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": 50,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "COMMON",
+      "cost": 20,
+      "essence_before": 151,
+      "essence_after": 131,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Lucky Charm",
+            "rarity": "COMMON",
+            "price": 20
+          },
+          {
+            "name": "Sapphire Orb",
+            "rarity": "EPIC",
+            "price": 60
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 34
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 131
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "exhausted"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 2491,
+      "arena": 671,
+      "arena_reload": 10
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Lucky Charm",
+          "rarity": "COMMON",
+          "price": 20
+        },
+        {
+          "name": "Sapphire Orb",
+          "rarity": "EPIC",
+          "price": 60
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 34
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 131
+    }
   }
 ]
