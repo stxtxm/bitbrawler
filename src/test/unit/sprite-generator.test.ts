@@ -120,6 +120,103 @@ describe('sprite generator v2', () => {
     expect(sprite.grid[40].slice(0, 24)).toContain(2);
   });
 
+  it('lights the top of every form, not only the silhouette', () => {
+    // A shirt whose shoulders are covered by a slope still needs a lit top
+    // edge, otherwise the whole torso renders flat.
+    for (const bodyType of ['basic', 'sleeveless', 'armor', 'jacket', 'vest', 'robe', 'hoodie', 'tunic']) {
+      const sprite = generateSprite16(`lit-${bodyType}`, 'male', {
+        build: 'standard',
+        bodyType,
+        headType: 'male',
+      });
+      expect(sprite.grid.flat()).toContain(highlightIndexOf(5));
+    }
+  });
+
+  it('never renders a checkerboard dither on flat cloth', () => {
+    // The old diagonal dither read as noise at 2x: a lone shaded cell inside
+    // an otherwise flat cloth run. Solid shadow regions are fine.
+    const sprite = generateSprite16('nodither-check', 'male', {
+      build: 'standard',
+      bodyType: 'basic',
+      headType: 'male',
+    });
+    for (let y = 7; y < 42; y++) {
+      for (let x = 1; x < 23; x++) {
+        if (sprite.grid[y][x] !== shadeIndexOf(5)) continue;
+        const up = sprite.grid[y - 1][x];
+        const down = sprite.grid[y + 1][x];
+        const left = sprite.grid[y][x - 1];
+        const right = sprite.grid[y][x + 1];
+        const flatNeighbours = [up, down, left, right].every((c) => c === 5);
+        expect(flatNeighbours).toBe(false);
+      }
+    }
+  });
+
+  it('keeps head, neck and shoulders in one connected silhouette', () => {
+    for (const headType of ['male', 'male_beard', 'male_cap', 'male_spiky', 'female']) {
+      const sprite = generateSprite16(`neck-${headType}`, headType.startsWith('f') ? 'female' : 'male', {
+        build: 'standard',
+        bodyType: 'basic',
+        headType,
+      });
+      // Every occupied row between the chin and the chest must touch the row
+      // above it: no floating head, no notch at the neck.
+      let previous: number[] = [];
+      for (let y = 0; y < 42; y++) {
+        const xs = sprite.grid[y].map((c, x) => (c !== 0 ? x : -1)).filter((x) => x >= 0);
+        if (xs.length === 0) continue;
+        if (previous.length > 0) {
+          const joined = xs.some((x) => previous.includes(x) || previous.includes(x - 1) || previous.includes(x + 1));
+          expect(joined).toBe(true);
+        }
+        previous = xs;
+      }
+    }
+  });
+
+  it('keeps skin shading gentle so bare arms stay skin, not brown', () => {
+    const sprite = generateSprite16('skinramp-check', 'male', {
+      build: 'standard',
+      bodyType: 'basic',
+      headType: 'male',
+      skinColor: '#f5c6a5',
+    });
+    const skinShade = sprite.palette[shadeIndexOf(1)]!;
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(skinShade.slice(i, i + 2), 16));
+    // A 0.55 mix toward the outline collapsed light skin to ~40% luminance,
+    // which turned every 2px arm into a dark blob.
+    expect((r + g + b) / 3).toBeGreaterThan(150);
+  });
+
+  it('gives legs a knee break and shoes a lit top over a dark sole', () => {
+    const sprite = generateSprite16('legs-check', 'male', {
+      build: 'standard',
+      bodyType: 'basic',
+      headType: 'male',
+    });
+    // Rows are padded by SPRITE_PAD_TOP: knee line, then shoe top over sole.
+    expect(sprite.grid[38]).toContain(shadeIndexOf(6));
+    expect(sprite.grid[40]).toContain(7);
+    expect(sprite.grid[41]).toContain(shadeIndexOf(7));
+  });
+
+  it('tucks a shadow under the eyes so the face is not a flat mask', () => {
+    const sprite = generateSprite16('socket-check', 'male', {
+      build: 'standard',
+      bodyType: 'basic',
+      headType: 'male',
+    });
+    const eyes: Array<[number, number]> = [];
+    sprite.grid.forEach((row, y) => row.forEach((c, x) => {
+      if (c === 8) eyes.push([x, y]);
+    }));
+    expect(eyes.length).toBeGreaterThan(0);
+    const eyeY = Math.max(...eyes.map(([, y]) => y));
+    for (const [x] of eyes) expect(sprite.grid[eyeY + 1][x]).toBe(shadeIndexOf(1));
+  });
+
   it('generates a 4-beat run cycle with a shared flight frame', () => {
     const frames = generateSpriteFrames('frame-check', 'male', {
       build: 'standard',

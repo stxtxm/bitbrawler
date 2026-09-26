@@ -612,6 +612,42 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     expect(new Set(counts).size).toBe(1);
   });
 
+  it('draws the strike trail additively: it can never overwrite the body', () => {
+    const base = generateSprite16('trail-check', 'male', { ...STD_MALE });
+    // Body families must survive untouched. Overlay pixels may legitimately
+    // change because the new trail neighbours re-tint the weapon edges.
+    const isBody = (v: number): boolean => {
+      for (const fam of [1, 3, 4, 5, 6, 7, 9, 11, 12]) {
+        if (v === fam || v === 30 + fam || v === 40 + fam) return true;
+      }
+      return false;
+    };
+    let totalAdded = 0;
+    for (const id of ['dragon_blade', 'wand_of_storms', 'iron_sword', 'bone_wand']) {
+      const loadout = { weapon: byId(id)!, armor: byId('iron_cuirass'), accessory: byId('might_pendant') };
+      const plain = applyEquipmentOverlays(base.grid, base.palette, loadout, {});
+      const trailed = applyEquipmentOverlays(base.grid, base.palette, loadout, { punchTrail: 3 });
+      expect(trailed.grid.length).toBe(plain.grid.length);
+      let added = 0;
+      for (let y = 0; y < plain.grid.length; y++) {
+        for (let x = 0; x < plain.grid[y].length; x++) {
+          const before = plain.grid[y][x];
+          const after = trailed.grid[y][x];
+          if (before === after) continue;
+          if (isBody(before)) {
+            // A body cell changed: the trail punched a hole in the character.
+            expect(after).toBe(before);
+          }
+          if (before === 0 && after !== 0) added++;
+        }
+      }
+      totalAdded += added;
+    }
+    // Short weapons can legitimately have no free air behind them; at least
+    // one loadout must actually show the trail.
+    expect(totalAdded).toBeGreaterThan(0);
+  });
+
   it('swings hanging jewelry with the stride, worn gear stays put', () => {
     const base = generateSprite16('swing-check', 'female', { ...STD_FEMALE });
     const marks = computeLandmarks(base.grid);

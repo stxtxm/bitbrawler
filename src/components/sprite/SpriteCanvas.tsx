@@ -63,7 +63,9 @@ export const SpriteCanvas = memo(function SpriteCanvas({
     const running = activeAnim === 'run' && frames && frames.length > 0;
     const swayX = running ? ([1, 0, -1, 0][frameIdx % frames.length] ?? 0) : 0;
     const swingX = running ? ([-1, 0, 1, 0][frameIdx % 4] ?? 0) : 0;
-    const overlaid = applyEquipmentOverlays(base.grid, base.palette, resolveLoadout(equippedItems), { swayX, swingX });
+    // Strike frame only: the after-image that makes a 1px arm read as a punch.
+    const punchTrail = activeAnim === 'attack' && frameIdx === 1 ? 3 : 0;
+    const overlaid = applyEquipmentOverlays(base.grid, base.palette, resolveLoadout(equippedItems), { swayX, swingX, punchTrail });
     return { grid: overlaid.grid, palette: overlaid.palette };
   }, [frames, frameIdx, activeAnim, seed, gender, appearance, equippedItems]);
 
