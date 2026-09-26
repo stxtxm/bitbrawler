@@ -3,6 +3,8 @@ import { mulberry32, getSeedFromText } from '../../utils/randomUtils';
 import type { CharacterAppearance } from '../../types/Character';
 import {
   GeneratedSprite,
+  HIGHLIGHT_OFFSET,
+  SHADE_OFFSET,
   SPRITE_HEIGHT,
   SPRITE_PAD_TOP,
   SPRITE_WIDTH,
@@ -21,8 +23,8 @@ import {
   PANTS_TONES_16,
   SKIN_TONES_16,
   deepShadeHex,
-  highlightHex,
   mixHex,
+  shiftHex,
 } from './spritePalettes';
 
 export interface SpriteFeatures {
@@ -39,7 +41,8 @@ export interface SpriteFeatures {
 }
 
 const EDGE_BASES = new Set([1, 3, 4, 5, 6, 7, 9, 11, 12]);
-const DITHER_BASES = new Set([4, 5, 6]);
+// Bases that receive a volumetric ramp: light from top-left, shadow bottom-right.
+const RAMP_BASES = new Set([1, 4, 5, 6, 12]);
 const LIGHT_BASES = new Set([1, 4, 5, 6]);
 
 export function resolveSpriteFeatures(
@@ -79,7 +82,7 @@ function basePaletteOf(features: SpriteFeatures): SpritePalette {
   return {
     1: features.skinColor,
     2: '#FFFFFF',
-    3: '#aa0000',
+    3: '#b3392f',
     4: features.hairColor,
     5: features.shirtColor,
     6: features.pantsColor,
@@ -136,6 +139,23 @@ function applyBuild(grid: SpriteGrid, build: SpriteBuild): void {
   }
 }
 
+// Anatomy pass on the composed 12x18 grid. The raw assets leave a 1-cell notch
+// between the jaw and the shoulder line, which reads as a floating head. Fill
+// it with a trapezius slope that inherits the shoulder colour, so neck, traps
+// and head form one continuous silhouette.
+function applyAnatomy(base: SpriteGrid): void {
+  const NECK_Y = 9;
+  for (let x = 0; x < base[NECK_Y].length; x++) {
+    if (base[NECK_Y][x] !== 0) continue;
+    const below = base[NECK_Y + 1]?.[x] ?? 0;
+    if (below === 0 || below === 1) continue;
+    const upLeft = base[NECK_Y - 1]?.[x - 1] ?? 0;
+    const upRight = base[NECK_Y - 1]?.[x + 1] ?? 0;
+    if (upLeft === 0 && upRight === 0) continue;
+    base[NECK_Y][x] = below;
+  }
+}
+
 function upscale(grid: SpriteGrid): SpriteGrid {
   const out: SpriteGrid = [];
   for (const row of grid) {
@@ -143,6 +163,15 @@ function upscale(grid: SpriteGrid): SpriteGrid {
     out.push([...doubled], [...doubled]);
   }
   return out;
+}
+
+// Normalises a cell to its material family so a shaded or highlighted cell
+// still counts as "the same material" when looking for a lit top edge.
+function familyOf(v: number): number {
+  if (v === 0) return 0;
+  if (RAMP_BASES.has(v - SHADE_OFFSET)) return v - SHADE_OFFSET;
+  if (RAMP_BASES.has(v - HIGHLIGHT_OFFSET)) return v - HIGHLIGHT_OFFSET;
+  return v;
 }
 
 function applySnes(grid: SpriteGrid): void {
@@ -156,20 +185,43 @@ function applySnes(grid: SpriteGrid): void {
       const base = grid[y][x];
       if (base === 0 || !EDGE_BASES.has(base)) continue;
       const edge = emptyAt(x - 1, y) || emptyAt(x + 1, y) || emptyAt(x, y - 1) || emptyAt(x, y + 1);
-      if (LIGHT_BASES.has(base) && emptyAt(x, y - 1)) {
+      // Lit top: either open sky above, or a different material above (the top
+      // of a sleeve, a belt line, a shoulder under the jaw). Lighting only
+      // silhouette tops left every interior form flat.
+      const lit = LIGHT_BASES.has(base)
+        && (emptyAt(x, y - 1) || (grid[y - 1][x] !== 0 && familyOf(grid[y - 1][x]) !== base));
+      if (lit) {
         edits.push([y, x, highlightIndexOf(base)]);
         continue;
       }
-      if (edge) {
-        edits.push([y, x, shadeIndexOf(base)]);
-        continue;
-      }
-      if (DITHER_BASES.has(base) && (x + y) % 2 === 0) {
-        edits.push([y, x, shadeIndexOf(base)]);
-      }
+      if (edge) edits.push([y, x, shadeIndexOf(base)]);
     }
   }
   for (const [y, x, v] of edits) grid[y][x] = v;
+  spreadShadow(grid);
+}
+
+// Second shading pass: a lit cell directly above its own shaded family turns
+// shaded too, so shadow falls downward and reads as a gradient. Restricted to
+// horizontally-interior cells (both neighbours share the base) so thin 2px
+// limbs are never eaten. Replaces the old checkerboard dither, which read as
+// noise at this scale instead of volume.
+function spreadShadow(grid: SpriteGrid): void {
+  const h = grid.length;
+  const w = grid[0].length;
+  const spread: Array<[number, number, number]> = [];
+  for (let y = 1; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const base = grid[y][x];
+      if (base === 0 || !RAMP_BASES.has(base)) continue;
+      const row = grid[y];
+      const left = row[x - 1];
+      const right = row[x + 1];
+      if (left !== base || right !== base) continue;
+      if (grid[y - 1][x] === shadeIndexOf(base)) spread.push([y, x, shadeIndexOf(base)]);
+    }
+  }
+  for (const [y, x, v] of spread) grid[y][x] = v;
 }
 
 function applyDetails(grid: SpriteGrid): void {
@@ -177,13 +229,24 @@ function applyDetails(grid: SpriteGrid): void {
     for (const y of [26, 27]) {
       if (grid[y][x] === 5) grid[y][x] = shadeIndexOf(5);
     }
+    // Shoe volume: lit upper, dark sole — a single flat tone reads as a blob.
     for (const y of [34, 35]) {
-      if (grid[y][x] === 7) grid[y][x] = shadeIndexOf(7);
+      if (grid[y][x] === 7) grid[y][x] = y === 35 ? shadeIndexOf(7) : 7;
+    }
+    // Knee break so the leg reads as thigh + joint + calf instead of a bar.
+    for (const y of [32]) {
+      const c = grid[y][x];
+      if (c === 6 || c === highlightIndexOf(6) || c === shadeIndexOf(6)) grid[y][x] = shadeIndexOf(6);
     }
     for (const y of [28, 29]) {
-      if ((x === 11 || x === 12) && (grid[y][x] === 6 || grid[y][x] === shadeIndexOf(6))) {
-        grid[y][x] = 9;
-      }
+      // The belt line is now a lit top edge, so accept any pants tone.
+      if (x !== 11 && x !== 12) continue;
+      const c = grid[y][x];
+      if (c === 6 || c === shadeIndexOf(6) || c === highlightIndexOf(6)) grid[y][x] = 9;
+    }
+    // Lower lip: a shaded bottom edge turns the mouth block into lips.
+    for (const y of [13]) {
+      if (grid[y][x] === 3) grid[y][x] = shadeIndexOf(3);
     }
   }
   for (const y of [20, 21]) {
@@ -196,6 +259,42 @@ function applyDetails(grid: SpriteGrid): void {
         break;
       }
     }
+  }
+}
+
+// Collar trim in logo colour. It runs across the base of the neck and onto the
+// trapezius slope, so the emblem reads as a worn collar instead of a floating
+// bib, while the jaw and throat above it stay skin. Falls back to the neck
+// alone when a body has no shoulder slope.
+function applyCollarTrim(grid: SpriteGrid): void {
+  const isSkin = (v: number): boolean => v === 1 || v === shadeIndexOf(1) || v === highlightIndexOf(1);
+  const isCloth = (v: number): boolean => v === 5 || v === shadeIndexOf(5) || v === highlightIndexOf(5);
+  for (const y of [18, 19]) {
+    const row = grid[y];
+    if (!row) continue;
+    let neckL = -1;
+    let neckR = -1;
+    for (let x = 0; x < row.length; x++) {
+      if (isSkin(row[x])) {
+        if (neckL < 0) neckL = x;
+        neckR = x;
+      }
+    }
+    if (neckL < 0) continue;
+    let painted = false;
+    for (let x = neckL; x <= neckR; x++) {
+      if (isSkin(row[x])) {
+        row[x] = 11;
+        painted = true;
+      }
+    }
+    for (const x of [neckL - 1, neckR + 1]) {
+      if (x >= 0 && x < row.length && isCloth(row[x])) {
+        row[x] = 11;
+        painted = true;
+      }
+    }
+    if (!painted) for (let x = neckL; x <= neckR; x++) if (row[x] === 11) row[x] = 11;
   }
 }
 
@@ -236,6 +335,19 @@ function applyFeatures(grid: SpriteGrid): void {
   }
   set(faceCx, eyeY + 2, shadeIndexOf(1), 1);
   for (const ex of eyeXs) set(ex, eyeFirstY - 2, shadeIndexOf(4), 1);
+  // Eye sockets and nose: force the shadow over any skin tone. The lit-top
+  // pass now highlights the row under the eye, which would read as bright
+  // eye bags, so the socket has to win explicitly.
+  const forceSkin = (x: number, y: number): void => {
+    if (y < 0 || y >= grid.length || x < 0 || x >= grid[0].length) return;
+    const c = grid[y][x];
+    if (c === 1 || c === shadeIndexOf(1) || c === highlightIndexOf(1)) grid[y][x] = shadeIndexOf(1);
+  };
+  forceSkin(faceCx, eyeY + 2);
+  for (const ex of eyeXs) {
+    forceSkin(ex, eyeY + 1);
+    forceSkin(ex + 1, eyeY + 1);
+  }
   let torsoX0 = 99;
   let torsoX1 = -1;
   for (let y = 18; y <= 29; y++) {
@@ -248,10 +360,7 @@ function applyFeatures(grid: SpriteGrid): void {
     });
   }
   const torsoCx = Math.round((torsoX0 + torsoX1) / 2);
-  for (let x = torsoCx - 1; x <= torsoCx + 1; x++) {
-    set(x, 18, 11, 1);
-    set(x, 19, 11, 1);
-  }
+  applyCollarTrim(grid);
   for (let y = 22; y <= 26; y++) {
     set(torsoCx - 3, y, shadeIndexOf(5), 5);
     set(torsoCx + 3, y, shadeIndexOf(5), 5);
@@ -293,24 +402,39 @@ function applyFeatures(grid: SpriteGrid): void {
     const shoe = x < shoeRow.length && (shoeRow[x] === 7 || shoeRow[x] === shadeIndexOf(7));
     if (shoe && runStart < 0) runStart = x;
     if (!shoe && runStart >= 0) {
+      // One lace pixel per shoe: a 2px white block swallowed the whole shoe.
       const mid = Math.floor((runStart + x - 1) / 2);
-      set(mid, 34, 2, shoeRow[mid]);
-      if (x - runStart > 3) set(mid + 1, 34, 2, shoeRow[mid + 1]);
+      if (x - runStart >= 3) set(mid, 34, 2, shoeRow[mid]);
       runStart = -1;
     }
   }
 }
 
+// Per-material ramp strength. A single hard mix toward the outline turned light
+// skin into a dark blob on 2px arms; skin and cloth need a gentle ramp, metal
+// and shoes can take a deeper one.
+const RAMP_MIX: Record<number, { shade: number; light: number }> = {
+  1: { shade: 0.28, light: 1.14 },
+  3: { shade: 0.4, light: 1.15 },
+  4: { shade: 0.4, light: 1.2 },
+  5: { shade: 0.34, light: 1.2 },
+  6: { shade: 0.34, light: 1.18 },
+  7: { shade: 0.45, light: 1.25 },
+  9: { shade: 0.44, light: 1.3 },
+  11: { shade: 0.4, light: 1.2 },
+  12: { shade: 0.4, light: 1.2 },
+};
+
 function buildPalette(features: SpriteFeatures): SpritePalette {
   const colors = basePaletteOf(features);
   const palette: SpritePalette = { ...colors };
   for (const key of Object.keys(colors).map(Number)) {
-    if (EDGE_BASES.has(key)) palette[shadeIndexOf(key)] = mixHex(colors[key], OUTLINE_HEX, 0.55);
+    const ramp = RAMP_MIX[key];
+    if (EDGE_BASES.has(key) && ramp) palette[shadeIndexOf(key)] = mixHex(colors[key], OUTLINE_HEX, ramp.shade);
   }
-  palette[highlightIndexOf(4)] = highlightHex(colors[4]);
-  palette[highlightIndexOf(1)] = highlightHex(colors[1]);
-  palette[highlightIndexOf(5)] = highlightHex(colors[5]);
-  palette[highlightIndexOf(6)] = highlightHex(colors[6]);
+  for (const key of [1, 3, 4, 5, 6, 12]) {
+    if (palette[key]) palette[highlightIndexOf(key)] = shiftHex(colors[key], RAMP_MIX[key].light);
+  }
   palette[shadeIndexOf(5)] = deepShadeHex(colors[5]);
   return palette;
 }
@@ -452,6 +576,7 @@ function applyAttackPose(base: SpriteGrid, phase: StridePhase): void {
 
 function finishGrid(base: SpriteGrid, features: SpriteFeatures, pose?: (grid: SpriteGrid) => void): SpriteGrid {
   applyBuild(base, features.build);
+  applyAnatomy(base);
   pose?.(base);
   const grid = upscale(base);
   applySnes(grid);
@@ -489,6 +614,7 @@ export function generateSpriteFrames(
   return phases.map((phase) => {
     const base = composeBaseGrid(features.headType, features.bodyType);
     applyBuild(base, features.build);
+    applyAnatomy(base);
     if (kind === 'attack') applyAttackPose(base, phase);
     else applyStride(base, phase);
     if (kind === 'run' && phase === 1) applyHairSway(base);

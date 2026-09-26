@@ -449,6 +449,9 @@ export interface OverlayOptions {
   // Pendulum swing of hanging jewelry (necklaces, brooches, orb pendants).
   // Worn gear (armor, helms, rings, shields) correctly stays put.
   swingX?: number;
+  // 0 = none. Positive = strike frame: how many 1px steps of after-image to
+  // leave along the swing arc, which is what makes a 1px arm read as a punch.
+  punchTrail?: number;
 }
 
 function paintHeldWeapon(
@@ -692,6 +695,36 @@ function paintOrbPendant(grid: SpriteGrid, item: PixelItemAsset, neck: { x: numb
   blitRaw(grid, mini, ox, oy);
 }
 
+// After-image of the weapon along the swing arc. Strictly additive: it only
+// ever writes into empty cells, so it can never open a gap in the body. The
+// arm itself may only travel 1px before it detaches from the shoulder, so the
+// trail is what sells the thrust. `before` is the pre-weapon snapshot, which
+// keeps the ghost limited to the weapon instead of the whole kit.
+function paintSwingTrail(grid: SpriteGrid, before: SpriteGrid, steps: number): void {
+  const h = grid.length;
+  const w = grid[0].length;
+  const isWeapon = (v: number): boolean =>
+    v === TRIM_INDEX || v === ACCENT_INDEX || (v >= ITEM_BLIT_OFFSET && v < ITEM_BLIT_OFFSET + 10);
+  const cells: Array<[number, number, number]> = [];
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (grid[y][x] === before[y][x]) continue;
+      if (isWeapon(grid[y][x])) cells.push([x, y, grid[y][x]]);
+    }
+  }
+  for (let step = 1; step <= steps; step++) {
+    for (const [x, y, v] of cells) {
+      // Trail sweeps up-and-back into the empty air above the shoulder; the
+      // down-back direction is inside the body silhouette and never shows.
+      const tx = x - step;
+      const ty = y - step;
+      if (tx < 0 || ty < 0 || ty >= h || tx >= w) continue;
+      if (grid[ty][tx] !== 0) continue;
+      grid[ty][tx] = v;
+    }
+  }
+}
+
 export function applyEquipmentOverlays(
   grid: SpriteGrid,
   palette: SpritePalette,
@@ -797,7 +830,12 @@ export function applyEquipmentOverlays(
   if (loadout.accessory && accessoryKind === 'brooch') paintBrooch(out, loadout.accessory, marks.chest, opts?.swingX ?? 0);
   if (loadout.accessory && accessoryKind === 'necklace') paintNecklace(out, loadout.accessory, marks.neck, opts?.swingX ?? 0);
   if (loadout.armor && armorKind === 'shield') paintShield(out, marks.palmL);
-  if (loadout.weapon) paintHeldWeapon(out, loadout.weapon, marks.palmR, opts?.swayX ?? 0);
+  if (loadout.weapon) {
+    const trailSteps = opts?.punchTrail ?? 0;
+    const preWeapon = trailSteps > 0 ? out.map((row) => [...row]) : null;
+    paintHeldWeapon(out, loadout.weapon, marks.palmR, opts?.swayX ?? 0);
+    if (preWeapon) paintSwingTrail(out, preWeapon, trailSteps);
+  }
   if (loadout.accessory && accessoryKind === 'ring') paintRing(out, marks.palmR);
   if (loadout.accessory && accessoryKind === 'orb') {
     paintOrbPendant(out, loadout.accessory, marks.neck, marks.chest, opts?.swingX ?? 0);
