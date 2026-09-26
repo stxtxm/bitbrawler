@@ -217,6 +217,78 @@ describe('sprite generator v2', () => {
     for (const [x] of eyes) expect(sprite.grid[eyeY + 1][x]).toBe(shadeIndexOf(1));
   });
 
+  it('tapers the jaw so the head silhouette is not a hard rectangle', () => {
+    for (const headType of ['male', 'male_sidepart', 'male_beard', 'male_cap', 'male_spiky', 'female']) {
+      const sprite = generateSprite16(`jaw-${headType}`, headType.startsWith('f') ? 'female' : 'male', {
+        build: 'standard',
+        bodyType: 'basic',
+        headType,
+      });
+      // Head occupies padded rows 6..23 (base rows 0..8); the body starts at 24.
+      const headRows = sprite.grid.slice(6, 24);
+      const widthAt = (row: number[]): number => row.filter((c) => c !== 0).length;
+      const widths = headRows.map(widthAt).filter((w) => w > 0);
+      const max = Math.max(...widths);
+      // The lowest occupied head row must be narrower than the widest one.
+      expect(widths[widths.length - 1]).toBeLessThan(max);
+    }
+  });
+
+  it('derives the logo trim from the shirt so it never clashes', () => {
+    // A random logo hue put two bright bars across the chest.
+    const OUTLINE = '#15172e';
+    const parse = (hex: string): number[] => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+    const lum = (hex: string): number => {
+      const [r, g, b] = parse(hex);
+      return 0.299 * r + 0.587 * g + 0.114 * b;
+    };
+    for (const shirtColor of ['#16a085', '#e74c3c', '#f1c40f', '#9b59b6']) {
+      const features = resolveSpriteFeatures('logo-tone', 'male', {
+        build: 'standard',
+        bodyType: 'basic',
+        headType: 'male',
+        shirtColor,
+      });
+      const logo = features.logoColor;
+      expect(lum(logo)).toBeLessThan(lum(shirtColor));
+      // Same hue family: every channel only travels toward the outline, and
+      // all three travel the same fraction of the way (rounding aside).
+      const s = parse(shirtColor);
+      const l = parse(logo);
+      const o = parse(OUTLINE);
+      const ratios: number[] = [];
+      for (let i = 0; i < 3; i++) {
+        const gap = o[i] - s[i];
+        // Skip channels whose gap is smaller than the rounding step.
+        if (Math.abs(gap) < 8) continue;
+        const moved = (l[i] - s[i]) / gap;
+        expect(moved).toBeGreaterThan(0);
+        expect(moved).toBeLessThan(1);
+        ratios.push(moved);
+      }
+      expect(ratios.length).toBeGreaterThanOrEqual(2);
+      for (const r of ratios) expect(Math.abs(r - ratios[0])).toBeLessThan(0.1);
+    }
+  });
+
+  it('puts a white catchlight in each eye so it reads as an eye', () => {
+    const sprite = generateSprite16('glint-check', 'male', {
+      build: 'standard',
+      bodyType: 'basic',
+      headType: 'male',
+      eyeColor: '#16a085',
+    });
+    const eyes: Array<[number, number]> = [];
+    sprite.grid.forEach((row, y) => row.forEach((c, x) => {
+      if (c === 8) eyes.push([x, y]);
+    }));
+    expect(eyes.length).toBeGreaterThan(0);
+    const eyeY = Math.min(...eyes.map(([, y]) => y));
+    // one white pixel per eye, on the eye row
+    const whites = sprite.grid[eyeY].filter((c) => c === 2).length;
+    expect(whites).toBeGreaterThanOrEqual(2);
+  });
+
   it('generates a 4-beat run cycle with a shared flight frame', () => {
     const frames = generateSpriteFrames('frame-check', 'male', {
       build: 'standard',

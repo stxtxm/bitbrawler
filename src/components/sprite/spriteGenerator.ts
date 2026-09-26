@@ -64,14 +64,18 @@ export function resolveSpriteFeatures(
   const bodyType = appearance?.bodyType && appearance.bodyType in PIXEL_BODIES
     ? appearance.bodyType
     : pick(bodyPool);
+  const shirtColor = appearance?.shirtColor ?? pick(CLOTH_TONES_16);
   return {
     skinColor: appearance?.skinColor ?? pick(SKIN_TONES_16),
     hairColor: appearance?.hairColor ?? pick(HAIR_TONES_16),
-    shirtColor: appearance?.shirtColor ?? pick(CLOTH_TONES_16),
+    shirtColor,
     pantsColor: appearance?.pantsColor ?? pick(PANTS_TONES_16),
     shoesColor: '#333333',
     eyeColor: appearance?.eyeColor ?? pick(EYE_TONES_16),
-    logoColor: pick(CLOTH_TONES_16),
+    // Tonal, not a random hue: a clashing random colour turned the collar and
+    // the chest emblem into two bright bars that read as a sandwich board.
+    // Kept light too, otherwise the band under the chin reads as a gap.
+    logoColor: mixHex(shirtColor, OUTLINE_HEX, 0.25),
     headType,
     bodyType,
     build: appearance?.build ?? fallbackBuild,
@@ -110,7 +114,34 @@ function composeBaseGrid(headType: string, bodyType: string, bodyGrid?: number[]
       if (head[y][x] !== 0) grid[y + 1][x] = head[y][x];
     }
   }
+  taperJaw(grid);
   return grid;
+}
+
+// The raw heads are hard rectangles, which reads as a mask rather than a
+// face. Narrowing the two lowest head rows by one cell per side gives the
+// character a jaw and chin, so the silhouette tapers into the neck. Only the
+// outer cell goes, and never below 4 cells wide, so nothing can disconnect.
+function taperJaw(grid: SpriteGrid): void {
+  let chin = -1;
+  for (let y = 1; y <= 8; y++) {
+    if (grid[y].some((c) => c !== 0)) chin = y;
+  }
+  if (chin < 0) return;
+  for (const y of [chin - 1, chin]) {
+    const row = grid[y];
+    let left = -1;
+    let right = -1;
+    for (let x = 0; x < row.length; x++) {
+      if (row[x] !== 0) {
+        if (left < 0) left = x;
+        right = x;
+      }
+    }
+    if (left < 0 || right - left + 1 <= 4) continue;
+    row[left] = 0;
+    row[right] = 0;
+  }
 }
 
 function applyBuild(grid: SpriteGrid, build: SpriteBuild): void {
@@ -223,12 +254,8 @@ function spreadShadow(grid: SpriteGrid): void {
   }
   for (const [y, x, v] of spread) grid[y][x] = v;
 }
-
 function applyDetails(grid: SpriteGrid): void {
   for (let x = 0; x < 24; x++) {
-    for (const y of [26, 27]) {
-      if (grid[y][x] === 5) grid[y][x] = shadeIndexOf(5);
-    }
     // Shoe volume: lit upper, dark sole — a single flat tone reads as a blob.
     for (const y of [34, 35]) {
       if (grid[y][x] === 7) grid[y][x] = y === 35 ? shadeIndexOf(7) : 7;
@@ -348,6 +375,22 @@ function applyFeatures(grid: SpriteGrid): void {
     forceSkin(ex, eyeY + 1);
     forceSkin(ex + 1, eyeY + 1);
   }
+  // Catchlight: a single white pixel at the top-left of each eye. Without it
+  // a solid colour block reads as a lens, not an eye.
+  const sortedEyes = [...new Set(eyeXs)].sort((a, b) => a - b);
+  let groupStart = -1;
+  let prev = -10;
+  const glint = (x: number): void => {
+    if (x >= 0 && grid[eyeFirstY]?.[x] === 8) grid[eyeFirstY][x] = 2;
+  };
+  for (const ex of sortedEyes) {
+    if (ex !== prev + 1) {
+      glint(groupStart);
+      groupStart = ex;
+    }
+    prev = ex;
+  }
+  glint(groupStart);
   let torsoX0 = 99;
   let torsoX1 = -1;
   for (let y = 18; y <= 29; y++) {
