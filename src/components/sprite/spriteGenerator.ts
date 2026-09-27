@@ -114,25 +114,54 @@ function composeBaseGrid(headType: string, bodyType: string, bodyGrid?: number[]
       if (head[y][x] !== 0) grid[y + 1][x] = head[y][x];
     }
   }
-  taperJaw(grid);
+  reshapeHead(grid);
   return grid;
 }
 
-// The raw heads are hard rectangles, which reads as a mask rather than a
-// face. Narrowing the two lowest head rows by one cell per side gives the
-// character a jaw and chin, so the silhouette tapers into the neck. Only the
-// outer cell goes, and never below 4 cells wide, so nothing can disconnect.
-function taperJaw(grid: SpriteGrid): void {
+// Narrow the face (never the hair) so the head is clearly slimmer than the
+// shoulders. Head and body were the same width, which is why the silhouette
+// read as one brick. Hair keeps its volume; only bare skin at the row ends is
+// trimmed, so pigtails and sideburns survive.
+function narrowFace(base: SpriteGrid, chin: number, maxWidth: number): void {
+  for (let y = 1; y <= chin; y++) {
+    const row = base[y];
+    let left = -1;
+    let right = -1;
+    for (let x = 0; x < row.length; x++) {
+      if (row[x] !== 0) {
+        if (left < 0) left = x;
+        right = x;
+      }
+    }
+    if (left < 0) continue;
+    while (right - left + 1 > maxWidth) {
+      const l = row[left];
+      const r = row[right];
+      const lSkin = l === 1;
+      const rSkin = r === 1;
+      if (!lSkin && !rSkin) break;
+      if (lSkin) row[left] = 0;
+      if (rSkin) row[right] = 0;
+      left = lSkin ? left + 1 : left;
+      right = rSkin ? right - 1 : right;
+    }
+  }
+}
+
+// Reshape the head: cap the face width (hair keeps its volume) then taper the
+// lower face into a jaw. The raw heads are hard rectangles as wide as the
+// body, which is why the silhouette read as one brick rather than a person.
+function reshapeHead(grid: SpriteGrid): void {
   let chin = -1;
   for (let y = 1; y <= 8; y++) {
     if (grid[y].some((c) => c !== 0)) chin = y;
   }
   if (chin < 0) return;
-  // Narrow the lower face progressively: cheekbone full width, then one cell
-  // per side at the mouth, then a real chin. Parallel sides read as a brick.
-  for (const y of [chin - 3, chin - 2, chin - 1, chin]) {
-    const amount = y === chin ? 2 : y === chin - 3 ? 0 : 1;
-    if (amount === 0) continue;
+  narrowFace(grid, chin, 7);
+  // Taper only the last row. Narrowing the mouth row too turned the face into
+  // a funnel: 14px of cheek over a 6px snout, which reads as an animal.
+  for (const y of [chin]) {
+    const amount = 1;
     const row = grid[y];
     let left = -1;
     let right = -1;
@@ -364,9 +393,10 @@ function applyFeatures(grid: SpriteGrid): void {
   // The raw 2x2 block read as a bead lost on a huge blank cheek; a proper eye
   // needs an outline to read at this scale.
   const IRIS = 8;
-  const outline = shadeIndexOf(IRIS);
-  // The 4px block replaces the raw eye in place. There is no room left for a
-  // separate nose pixel on an 8-row head, and it read as a smudge anyway.
+  // A bright saturated iris slab read as a lens. Real eyes at this size are a
+  // dark mass with a single catchlight, so the iris uses the shaded eye tone.
+  const irisTone = shadeIndexOf(IRIS);
+  const outline = irisTone;
   const eyeTop = eyeFirstY;
   // Each eye shifts 1px away from the face centre. Centred on the raw eye they
   // sat 2px apart, which welded them into one band across the face.
@@ -374,16 +404,17 @@ function applyFeatures(grid: SpriteGrid): void {
     / Math.max(1, eyeGroups.length);
   const isSkinTone = (v: number): boolean =>
     v === 1 || v === shadeIndexOf(1) || v === highlightIndexOf(1);
+  const EYE_W = 3;
   for (const group of eyeGroups) {
     const cx = Math.round((group[0] + group[group.length - 1]) / 2);
-    const outward = cx < faceCx ? cx - 3 : cx - 1;
+    const outward = cx < faceCx ? cx - 2 : cx;
     // Only push the eye outward onto clear skin. On pigtail / ponytail /
     // pixie heads the outer slot is hair, and eating it punched a hole in
     // the hairstyle.
     let x0 = outward;
     let clear = true;
     for (let dy = 0; dy < 3 && clear; dy++) {
-      for (let dx = 0; dx < 4; dx++) {
+      for (let dx = 0; dx < EYE_W; dx++) {
         const x = outward + dx;
         const y = eyeTop + dy;
         if (x < 0 || y < 0 || y >= grid.length || x >= grid[y].length || !isSkinTone(grid[y][x])) {
@@ -392,17 +423,25 @@ function applyFeatures(grid: SpriteGrid): void {
         }
       }
     }
-    if (!clear) x0 = cx - 2;
+    if (!clear) x0 = cx - 1;
     for (let dy = 0; dy < 3; dy++) {
-      for (let dx = 0; dx < 4; dx++) {
+      for (let dx = 0; dx < EYE_W; dx++) {
         const x = x0 + dx;
         const y = eyeTop + dy;
         if (x < 0 || y < 0 || y >= grid.length || x >= grid[y].length) continue;
         // Iris with a lash line under it, not a full border: a 1px outline on
-        // all four sides of a 4px eye is half the eye and reads as a visor.
-        grid[y][x] = dy === 2 ? outline : (dy === 0 && dx === 1 ? 2 : IRIS);
+        // all four sides of the eye is half the eye and reads as a visor.
+        grid[y][x] = dy === 2 ? outline : (dy === 0 && dx === 1 ? 2 : irisTone);
       }
     }
+  }
+  // Nose: the one row left between the lash line and the mouth. Without it the
+  // profile had no bridge at all and the face read as a flat mask.
+  if (eyeGroups.length > 0) {
+    const first = eyeGroups[0];
+    const last = eyeGroups[eyeGroups.length - 1];
+    const noseX = Math.round((first[0] + last[last.length - 1]) / 2);
+    set(noseX, eyeTop + 3, shadeIndexOf(1), 1);
   }
   // Brows sit just above each rebuilt eye so they read as brows rather than
   // as a second pair of floating bars. They follow the eye's final slot.
@@ -411,10 +450,10 @@ function applyFeatures(grid: SpriteGrid): void {
       v === 1 || v === shadeIndexOf(1) || v === highlightIndexOf(1);
     for (const group of eyeGroups) {
       const cx = Math.round((group[0] + group[group.length - 1]) / 2);
-      const outward = cx < faceCx ? cx - 3 : cx - 1;
+      const outward = cx < faceCx ? cx - 2 : cx;
       let clear = true;
       for (let dy = 0; dy < 3 && clear; dy++) {
-        for (let dx = 0; dx < 4; dx++) {
+        for (let dx = 0; dx < 3; dx++) {
           const x = outward + dx;
           const y = eyeTop + dy;
           if (x < 0 || y < 0 || y >= grid.length || x >= grid[y].length || !isSkinTone2(grid[y][x])) {
@@ -423,13 +462,12 @@ function applyFeatures(grid: SpriteGrid): void {
           }
         }
       }
-      const x0 = clear ? outward : cx - 2;
-      for (let dx = 0; dx < 4; dx++) set(x0 + dx, eyeTop - 1, shadeIndexOf(4), 1);
+      const x0 = clear ? outward : cx - 1;
+      for (let dx = 0; dx < 3; dx++) set(x0 + dx, eyeTop - 1, shadeIndexOf(4), 1);
     }
   }
-  // Ears last, measured on their own row: with the eyes inset from the face
-  // edge the row extreme is always the head itself. Measuring across the hair
-  // rows instead left the ear floating in mid-air beside a narrower cheek.
+  // Ears last, measured on their own row. Only added next to bare skin:
+  // hanging one off a sideburn or a pigtail left a nub floating in the hair.
   for (const earY of [eyeTop + 1, eyeTop + 2]) {
     const earRow = grid[earY] ?? [];
     const earL = earRow.findIndex((c) => c !== 0);
@@ -441,8 +479,8 @@ function applyFeatures(grid: SpriteGrid): void {
       }
     }
     if (earL <= 0) continue;
-    if (earRow[earL - 1] === 0) earRow[earL - 1] = 1;
-    if (earR + 1 < earRow.length && earRow[earR + 1] === 0) earRow[earR + 1] = 1;
+    if (isSkinTone(earRow[earL])) earRow[earL - 1] = 1;
+    if (earR >= 0 && isSkinTone(earRow[earR])) earRow[earR + 1] = 1;
   }
   let torsoX0 = 99;
   let torsoX1 = -1;
