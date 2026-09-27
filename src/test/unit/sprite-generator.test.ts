@@ -63,9 +63,11 @@ describe('sprite generator v2', () => {
       headType: 'male',
     });
     const grid = sprite.grid;
+    // The iris is drawn in the shaded eye tone, not the bright base colour.
+    const IRIS = shadeIndexOf(8);
     const eyes: Array<[number, number]> = [];
     grid.forEach((row, y) => row.forEach((c, x) => {
-      if (c === 8) eyes.push([x, y]);
+      if (c === IRIS) eyes.push([x, y]);
     }));
     expect(eyes.length).toBeGreaterThan(0);
     const eyeY = Math.max(...eyes.map(([, y]) => y));
@@ -216,7 +218,7 @@ describe('sprite generator v2', () => {
       });
       const rows: number[] = [];
       sprite.grid.forEach((row, y) => row.forEach((c) => {
-        if (c === 8 || c === 38) rows.push(y);
+        if (c === 8 || c === shadeIndexOf(8)) rows.push(y);
       }));
       expect(rows.length).toBeGreaterThan(0);
       expect(Math.max(...rows) - Math.min(...rows) + 1).toBe(3);
@@ -287,13 +289,14 @@ describe('sprite generator v2', () => {
       headType: 'male',
       eyeColor: '#16a085',
     });
+    const IRIS = shadeIndexOf(8);
     const eyes: Array<[number, number]> = [];
     sprite.grid.forEach((row, y) => row.forEach((c, x) => {
-      if (c === 8) eyes.push([x, y]);
+      if (c === IRIS) eyes.push([x, y]);
     }));
     expect(eyes.length).toBeGreaterThan(0);
     const eyeY = Math.min(...eyes.map(([, y]) => y));
-    // one white pixel per eye, on the eye row
+    // one white catchlight per eye, on the eye row
     const whites = sprite.grid[eyeY].filter((c) => c === 2).length;
     expect(whites).toBeGreaterThanOrEqual(2);
   });
@@ -308,7 +311,7 @@ describe('sprite generator v2', () => {
       });
       const cols = new Set<number>();
       sprite.grid.forEach((row) => row.forEach((c, x) => {
-        if (c === 8 || c === 38) cols.add(x);
+        if (c === 8 || c === shadeIndexOf(8)) cols.add(x);
       }));
       const sorted = [...cols].sort((a, b) => a - b);
       // find the gap between the two eye clusters
@@ -329,6 +332,26 @@ describe('sprite generator v2', () => {
       });
       const hair = bare.grid.flat().filter((c) => c === 4 || c === 34 || c === 44).length;
       expect(hair).toBeGreaterThan(20);
+    }
+  });
+
+  it('keeps the face roughly parallel instead of funnelling into a snout', () => {
+    // Narrowing the mouth row as well as the chin left 14px of cheek over a
+    // 6px jaw, which read as an animal muzzle rather than a human face.
+    for (const headType of ['male', 'male_sidepart', 'male_beard', 'male_cap', 'female', 'female_bob']) {
+      const sprite = generateSprite16(`face-${headType}`, headType.startsWith('f') ? 'female' : 'male', {
+        build: 'standard',
+        bodyType: 'basic',
+        headType,
+        eyeColor: '#16a085',
+      });
+      const iris = shadeIndexOf(8);
+      const eyeY = sprite.grid.findIndex((row) => row.some((c) => c === iris));
+      expect(eyeY).toBeGreaterThan(0);
+      const widthAt = (y: number): number => (sprite.grid[y] ?? []).filter((c) => c !== 0).length;
+      const eyeWidth = widthAt(eyeY);
+      // two rows under the eyes (nose / mouth line) must not collapse
+      expect(widthAt(eyeY + 2)).toBeGreaterThanOrEqual(Math.floor(eyeWidth * 0.7));
     }
   });
 

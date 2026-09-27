@@ -350,7 +350,8 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
         .filter((c) => c === FIELD_INDEX || c === FIELD_DARK).length;
       expect(headField).toBeGreaterThan(10);
       const headZone = out.grid.slice(8, 23).flat();
-      expect(headZone).toContain(8);
+      // the iris uses the shaded eye tone, so accept it as well as the base
+      expect(headZone.some((c) => c === 8 || c === shadeIndexOf(8))).toBe(true);
       expect(headZone).toContain(3);
       expect(out.grid[marks.eyeY - 3][marks.faceCx]).toBe(ACCENT_INDEX);
     }
@@ -518,7 +519,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       expect(blitCells(out.grid).filter(([, y]) => y <= 15).length).toBeGreaterThan(0);
       expect(out.grid[marks.head.y0 + 1][marks.faceCx]).toBe(ACCENT_INDEX);
       const headZone = out.grid.slice(8, 23).flat();
-      expect(headZone).toContain(8);
+      expect(headZone.some((c) => c === 8 || c === shadeIndexOf(8))).toBe(true);
     }
   });
 
