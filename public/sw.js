@@ -1,4 +1,4 @@
-const VERSION = 'v14'
+const VERSION = 'v15'
 const APP_SHELL_CACHE = `bitbrawler-shell-${VERSION}`
 const ASSET_CACHE = `bitbrawler-assets-${VERSION}`
 const RUNTIME_CACHE = `bitbrawler-runtime-${VERSION}`

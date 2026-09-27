@@ -76,11 +76,13 @@ describe('sprite generator v2', () => {
     const rx = Math.max(...contentXs);
     expect(grid[eyeY][lx - 1]).toBe(1);
     expect(grid[eyeY][rx + 1]).toBe(1);
-    expect(grid[eyeY + 2][faceCx]).toBe(shadeIndexOf(1));
+    // the 4x4 eye leaves no room for a nose pixel on an 8-row head
+    expect(grid[eyeY + 2][faceCx]).not.toBe(8);
     const upperY = Math.min(...eyes.map(([, y]) => y));
     const upperXs = [...new Set(eyes.filter(([, y]) => y === upperY).map(([x]) => x))];
     expect(upperXs.length).toBeGreaterThan(0);
-    expect(upperXs.every((x) => grid[upperY - 2][x] === shadeIndexOf(4))).toBe(true);
+    // brows sit one row above the iris
+    for (const x of upperXs) expect(grid[upperY - 1][x]).toBe(shadeIndexOf(4));
     expect(grid[24].filter((c) => c === 11).length).toBeGreaterThanOrEqual(2);
   });
 
@@ -202,19 +204,26 @@ describe('sprite generator v2', () => {
     expect(sprite.grid[41]).toContain(shadeIndexOf(7));
   });
 
-  it('tucks a shadow under the eyes so the face is not a flat mask', () => {
-    const sprite = generateSprite16('socket-check', 'male', {
-      build: 'standard',
-      bodyType: 'basic',
-      headType: 'male',
-    });
-    const eyes: Array<[number, number]> = [];
-    sprite.grid.forEach((row, y) => row.forEach((c, x) => {
-      if (c === 8) eyes.push([x, y]);
-    }));
-    expect(eyes.length).toBeGreaterThan(0);
-    const eyeY = Math.max(...eyes.map(([, y]) => y));
-    for (const [x] of eyes) expect(sprite.grid[eyeY + 1][x]).toBe(shadeIndexOf(1));
+  it('builds each eye as a 4x3 iris with a lash line and a glint', () => {
+    // The raw asset eye is a 2x2 blob. Without a dark outline and an iris it
+    // read as a bead lost on a blank cheek.
+    for (const headType of ['male', 'male_sidepart', 'male_beard', 'male_cap', 'female']) {
+      const sprite = generateSprite16(`eye4-${headType}`, headType.startsWith('f') ? 'female' : 'male', {
+        build: 'standard',
+        bodyType: 'basic',
+        headType,
+        eyeColor: '#16a085',
+      });
+      const rows: number[] = [];
+      sprite.grid.forEach((row, y) => row.forEach((c) => {
+        if (c === 8 || c === 38) rows.push(y);
+      }));
+      expect(rows.length).toBeGreaterThan(0);
+      expect(Math.max(...rows) - Math.min(...rows) + 1).toBe(3);
+      // dark iris outline and the white glint must both be present
+      expect(sprite.grid.flat().filter((c) => c === 38).length).toBeGreaterThan(0);
+      expect(sprite.grid.flat().filter((c) => c === 2).length).toBeGreaterThan(0);
+    }
   });
 
   it('tapers the jaw so the head silhouette is not a hard rectangle', () => {

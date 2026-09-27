@@ -289,10 +289,10 @@ function applyDetails(grid: SpriteGrid): void {
   }
 }
 
-// Collar trim in logo colour. It runs across the base of the neck and onto the
-// trapezius slope, so the emblem reads as a worn collar instead of a floating
-// bib, while the jaw and throat above it stay skin. Falls back to the neck
-// alone when a body has no shoulder slope.
+// Collar trim in logo colour. It sits on the trapezius slope beside the neck
+// and never on the throat itself: painting the neck hid it completely and the
+// head then looked welded to the shoulders. Falls back to the neck alone when
+// a body has no shoulder slope at all.
 function applyCollarTrim(grid: SpriteGrid): void {
   const isSkin = (v: number): boolean => v === 1 || v === shadeIndexOf(1) || v === highlightIndexOf(1);
   const isCloth = (v: number): boolean => v === 5 || v === shadeIndexOf(5) || v === highlightIndexOf(5);
@@ -308,20 +308,16 @@ function applyCollarTrim(grid: SpriteGrid): void {
       }
     }
     if (neckL < 0) continue;
-    let painted = false;
-    for (let x = neckL; x <= neckR; x++) {
-      if (isSkin(row[x])) {
-        row[x] = 11;
-        painted = true;
-      }
-    }
+    let painted = 0;
     for (const x of [neckL - 1, neckR + 1]) {
       if (x >= 0 && x < row.length && isCloth(row[x])) {
         row[x] = 11;
-        painted = true;
+        painted++;
       }
     }
-    if (!painted) for (let x = neckL; x <= neckR; x++) if (row[x] === 11) row[x] = 11;
+    if (painted === 0) {
+      for (let x = neckL; x <= neckR; x++) if (isSkin(row[x])) row[x] = 11;
+    }
   }
 }
 
@@ -330,67 +326,78 @@ function applyFeatures(grid: SpriteGrid): void {
     if (y < 0 || y >= grid.length || x < 0 || x >= grid[0].length) return;
     if (grid[y][x] === onlyIf) grid[y][x] = v;
   };
-  let eyeSumX = 0;
-  let eyeCount = 0;
-  let eyeY = 10;
   let eyeFirstY = 99;
   const eyeXs: number[] = [];
   for (let y = 2; y <= 17; y++) {
     for (let x = 0; x < 24; x++) {
       if (grid[y][x] === 8) {
-        eyeSumX += x;
-        eyeCount++;
-        eyeY = y;
         if (y < eyeFirstY) eyeFirstY = y;
         eyeXs.push(x);
       }
     }
   }
-  const faceCx = eyeCount > 0 ? Math.round(eyeSumX / eyeCount) : 11;
-  const row = grid[eyeY] ?? [];
-  const lx = row.findIndex((c) => c !== 0);
-  let rx = -1;
-  for (let x = row.length - 1; x >= 0; x--) {
-    if (row[x] !== 0) {
-      rx = x;
-      break;
+  // Group the raw eye pixels into per-eye runs so each eye can be rebuilt.
+  const eyeGroups: number[][] = [];
+  {
+    const sorted = [...new Set(eyeXs)].sort((a, b) => a - b);
+    let run: number[] = [];
+    let prev = -10;
+    for (const ex of sorted) {
+      if (ex !== prev + 1) {
+        if (run.length) eyeGroups.push(run);
+        run = [ex];
+      } else {
+        run.push(ex);
+      }
+      prev = ex;
+    }
+    if (run.length) eyeGroups.push(run);
+  }
+  // Rebuild each eye at 4x4 px with a dark outline, a white glint and an iris.
+  // The raw 2x2 block read as a bead lost on a huge blank cheek; a proper eye
+  // needs an outline to read at this scale.
+  const IRIS = 8;
+  const outline = shadeIndexOf(IRIS);
+  // The 4px block replaces the raw eye in place. There is no room left for a
+  // separate nose pixel on an 8-row head, and it read as a smudge anyway.
+  const eyeTop = eyeFirstY;
+  for (const group of eyeGroups) {
+    const cx = Math.round((group[0] + group[group.length - 1]) / 2);
+    const x0 = cx - 2;
+    for (let dy = 0; dy < 3; dy++) {
+      for (let dx = 0; dx < 4; dx++) {
+        const x = x0 + dx;
+        const y = eyeTop + dy;
+        if (x < 0 || y < 0 || y >= grid.length || x >= grid[y].length) continue;
+        // Iris with a lash line under it, not a full border: a 1px outline on
+        // all four sides of a 4px eye is half the eye and reads as a visor.
+        grid[y][x] = dy === 2 ? outline : (dy === 0 && dx === 1 ? 2 : IRIS);
+      }
     }
   }
-  if (lx >= 0) {
-    if (grid[eyeY]?.[lx - 1] === 0) grid[eyeY][lx - 1] = 1;
-    if (grid[eyeY]?.[rx + 1] === 0) grid[eyeY][rx + 1] = 1;
+  // Brows sit just above each rebuilt eye so they read as brows rather than
+  // as a second pair of floating bars.
+  for (const group of eyeGroups) {
+    const cx = Math.round((group[0] + group[group.length - 1]) / 2);
+    for (let dx = 0; dx < 4; dx++) set(cx - 2 + dx, eyeTop - 1, shadeIndexOf(4), 1);
   }
-  set(faceCx, eyeY + 2, shadeIndexOf(1), 1);
-  for (const ex of eyeXs) set(ex, eyeFirstY - 2, shadeIndexOf(4), 1);
-  // Eye sockets and nose: force the shadow over any skin tone. The lit-top
-  // pass now highlights the row under the eye, which would read as bright
-  // eye bags, so the socket has to win explicitly.
-  const forceSkin = (x: number, y: number): void => {
-    if (y < 0 || y >= grid.length || x < 0 || x >= grid[0].length) return;
-    const c = grid[y][x];
-    if (c === 1 || c === shadeIndexOf(1) || c === highlightIndexOf(1)) grid[y][x] = shadeIndexOf(1);
-  };
-  forceSkin(faceCx, eyeY + 2);
-  for (const ex of eyeXs) {
-    forceSkin(ex, eyeY + 1);
-    forceSkin(ex + 1, eyeY + 1);
-  }
-  // Catchlight: a single white pixel at the top-left of each eye. Without it
-  // a solid colour block reads as a lens, not an eye.
-  const sortedEyes = [...new Set(eyeXs)].sort((a, b) => a - b);
-  let groupStart = -1;
-  let prev = -10;
-  const glint = (x: number): void => {
-    if (x >= 0 && grid[eyeFirstY]?.[x] === 8) grid[eyeFirstY][x] = 2;
-  };
-  for (const ex of sortedEyes) {
-    if (ex !== prev + 1) {
-      glint(groupStart);
-      groupStart = ex;
+  // Ears last: the rebuilt 4px eyes now cover the spot where the old 2px ones
+  // left room, so the ear has to be placed against the final silhouette. Two
+  // rows tall so it lines up with the eye block.
+  for (const earY of [eyeTop + 1, eyeTop + 2]) {
+    const earRow = grid[earY] ?? [];
+    const earL = earRow.findIndex((c) => c !== 0);
+    let earR = -1;
+    for (let x = earRow.length - 1; x >= 0; x--) {
+      if (earRow[x] !== 0) {
+        earR = x;
+        break;
+      }
     }
-    prev = ex;
+    if (earL < 0) continue;
+    if (earL - 1 >= 0 && earRow[earL - 1] === 0) earRow[earL - 1] = 1;
+    if (earR + 1 < earRow.length && earRow[earR + 1] === 0) earRow[earR + 1] = 1;
   }
-  glint(groupStart);
   let torsoX0 = 99;
   let torsoX1 = -1;
   for (let y = 18; y <= 29; y++) {
@@ -463,6 +470,7 @@ const RAMP_MIX: Record<number, { shade: number; light: number }> = {
   5: { shade: 0.34, light: 1.2 },
   6: { shade: 0.34, light: 1.18 },
   7: { shade: 0.45, light: 1.25 },
+  8: { shade: 0.45, light: 1.3 },
   9: { shade: 0.44, light: 1.3 },
   11: { shade: 0.4, light: 1.2 },
   12: { shade: 0.4, light: 1.2 },
@@ -479,6 +487,9 @@ function buildPalette(features: SpriteFeatures): SpritePalette {
     if (palette[key]) palette[highlightIndexOf(key)] = shiftHex(colors[key], RAMP_MIX[key].light);
   }
   palette[shadeIndexOf(5)] = deepShadeHex(colors[5]);
+  // Iris outline: 8 is not an edge base (eyes are never auto-shaded) but the
+  // rebuilt eyes need their outline tone to exist in the palette.
+  if (colors[8]) palette[shadeIndexOf(8)] = mixHex(colors[8], OUTLINE_HEX, 0.45);
   return palette;
 }
 
