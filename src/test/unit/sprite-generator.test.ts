@@ -298,6 +298,40 @@ describe('sprite generator v2', () => {
     expect(whites).toBeGreaterThanOrEqual(2);
   });
 
+  it('keeps a nose bridge between the eyes so they never fuse into a band', () => {
+    for (const headType of ['male', 'male_sidepart', 'male_beard', 'male_cap', 'female', 'female_bob', 'female_bun']) {
+      const sprite = generateSprite16(`bridge-${headType}`, headType.startsWith('f') ? 'female' : 'male', {
+        build: 'standard',
+        bodyType: 'basic',
+        headType,
+        eyeColor: '#16a085',
+      });
+      const cols = new Set<number>();
+      sprite.grid.forEach((row) => row.forEach((c, x) => {
+        if (c === 8 || c === 38) cols.add(x);
+      }));
+      const sorted = [...cols].sort((a, b) => a - b);
+      // find the gap between the two eye clusters
+      let gap = 0;
+      for (let i = 1; i < sorted.length; i++) {
+        if (sorted[i] - sorted[i - 1] > gap) gap = sorted[i] - sorted[i - 1];
+      }
+      expect(gap).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it('never lets the eye block eat the hairstyle', () => {
+    // Pushing the eye outward must not overwrite hair: on pigtail / ponytail
+    // heads the outer slot is hair, and it punched a hole in the hairstyle.
+    for (const headType of ['female_pigtails', 'female_ponytail', 'female_pixie', 'female_braid']) {
+      const bare = generateSprite16(`hair-${headType}-a`, 'female', {
+        build: 'standard', bodyType: 'basic', headType, hairColor: '#d2691e',
+      });
+      const hair = bare.grid.flat().filter((c) => c === 4 || c === 34 || c === 44).length;
+      expect(hair).toBeGreaterThan(20);
+    }
+  });
+
   it('generates a 4-beat run cycle with a shared flight frame', () => {
     const frames = generateSpriteFrames('frame-check', 'male', {
       build: 'standard',
