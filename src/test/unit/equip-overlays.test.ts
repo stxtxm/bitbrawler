@@ -304,8 +304,10 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       accessory: null,
     });
     expect(leather.palette[FIELD_INDEX]).not.toBe(golem.palette[FIELD_INDEX]);
-    // logo-color collar over the neck — armor follows clothing, never eats anatomy
-    expect(golem.grid[24][10]).toBe(11);
+    // logo-color collar on the trapezius slope beside the neck, never on the
+    // throat: painting the neck hid it and welded the head to the shoulders
+    expect(golem.grid[24][10]).not.toBe(11);
+    expect(golem.grid[24].filter((c) => c === 11).length).toBeGreaterThanOrEqual(2);
   });
 
   it('classifies wrap/coif/greaves by anatomy, not by word fragment', () => {
