@@ -114500,5 +114500,255 @@
       "purchased_offer": null,
       "essence_after_purchase": 19
     }
+  },
+  {
+    "date": "2026-09-27T04:02:01.743Z",
+    "run": "2026-09-27",
+    "character": "QA-PERSI-7",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": null,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 12,
+      "vit": 13,
+      "dex": 14,
+      "luk": 32,
+      "int": 11,
+      "foc": 10,
+      "fights": 0
+    },
+    "initial_level": 20,
+    "initial_xp": {
+      "current": 8636,
+      "max": 16822
+    },
+    "initial_max_hp": 456,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 20,
+      "xp": 9195,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 12,
+      "vit": 13,
+      "dex": 14,
+      "luk": 32,
+      "int": 11,
+      "foc": 10,
+      "fights": 0
+    },
+    "final_max_hp": 456,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 8,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 33079,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "goblin"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 30,
+      "xp_events": [
+        {
+          "time_ms": 33079,
+          "xp": 30,
+          "monster": "goblin",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        514,
+        1540,
+        33079
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 30,
+        "essence": 0.43,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.3,
+      "next_level_eta": "⬆ 15m 45s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.01x",
+      "interval": "11.3s",
+      "streak_bonus": null
+    },
+    "initial_essence": 54.64,
+    "final_essence": 24.66,
+    "essence": {
+      "before_idle": 54.64,
+      "after_idle": 55.07,
+      "per_fight": [],
+      "forge_before": 55,
+      "forge_after_salvage": 75,
+      "forge_after_fusion": 75,
+      "forge_after_upgrade": 45,
+      "forge_after": 45,
+      "shop_before": 46,
+      "shop_after": 24,
+      "final": 24.66,
+      "flow": {
+        "idle_gained": 0.43,
+        "fights_change": null,
+        "salvage_gained": 20,
+        "fusion_cost": 0,
+        "upgrade_cost": 30,
+        "forge_net": -10,
+        "shop_cost": 22,
+        "net_change": -29.98
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 55,
+      "essence_after_salvage": 75,
+      "essence_after_fusion": 75,
+      "essence_after_upgrade": 45,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 45,
+      "items_after": 1,
+      "salvage_essence_gained": 20,
+      "fusion_cost": null,
+      "upgrade_cost": 30,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "RARE",
+      "cost": 22,
+      "essence_before": 46,
+      "essence_after": 24,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Shadow Cloak",
+            "rarity": "RARE",
+            "price": 22
+          },
+          {
+            "name": "Rift Crystal",
+            "rarity": "EPIC",
+            "price": 66
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 37
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 24
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "exhausted"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1259,
+      "arena": 408,
+      "arena_reload": 12
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Shadow Cloak",
+          "rarity": "RARE",
+          "price": 22
+        },
+        {
+          "name": "Rift Crystal",
+          "rarity": "EPIC",
+          "price": 66
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 37
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 24
+    }
   }
 ]
