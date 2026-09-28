@@ -119407,5 +119407,303 @@
       "purchased_offer": 0,
       "essence_after_purchase": 2068
     }
+  },
+  {
+    "date": "2026-09-28T22:46:36.897Z",
+    "run": "2026-09-29",
+    "character": "QA-PERSI-2",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 5,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 14,
+      "vit": 20,
+      "dex": 23,
+      "luk": 15,
+      "int": 21,
+      "foc": 50,
+      "fights": 0
+    },
+    "initial_level": 55,
+    "initial_xp": {
+      "current": 20814,
+      "max": 89285
+    },
+    "initial_max_hp": 923,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Tidal Blade",
+        "rarity": "UNCOMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Warden's Plate",
+        "rarity": "EPIC"
+      },
+      {
+        "slot": "💍",
+        "name": "Pearl Necklace",
+        "rarity": "UNCOMMON"
+      }
+    ],
+    "initial_streak": 2,
+    "final_stats": {
+      "level": 55,
+      "xp": 21471,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 14,
+      "vit": 20,
+      "dex": 23,
+      "luk": 15,
+      "int": 21,
+      "foc": 50,
+      "fights": 0
+    },
+    "final_max_hp": 923,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Tidal Blade",
+        "rarity": "UNCOMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Warden's Plate",
+        "rarity": "EPIC"
+      },
+      {
+        "slot": "💍",
+        "name": "Pearl Necklace",
+        "rarity": "UNCOMMON"
+      }
+    ],
+    "final_streak": 2,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Tidal Blade",
+        "rarity": "UNCOMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Warden's Plate",
+        "rarity": "EPIC"
+      },
+      {
+        "slot": "💍",
+        "name": "Pearl Necklace",
+        "rarity": "UNCOMMON"
+      }
+    ],
+    "lootbox_streak": 2,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 23437,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "ogre"
+      ],
+      "victories": 1,
+      "defeats": 0,
+      "xp_total": 68,
+      "xp_events": [
+        {
+          "time_ms": 23437,
+          "xp": 68,
+          "monster": "ogre",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        511,
+        1532,
+        23437
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 68,
+        "essence": 1.32,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 4.42,
+      "next_level_eta": "⬆ 1h 3m",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.51x",
+      "interval": "10.0s",
+      "streak_bonus": "🔥 1-win streak (+1%)"
+    },
+    "initial_essence": 1693.16,
+    "final_essence": 1639.69,
+    "essence": {
+      "before_idle": 1693.16,
+      "after_idle": 1694.48,
+      "per_fight": [],
+      "forge_before": 1695,
+      "forge_after_salvage": 1700,
+      "forge_after_fusion": 1690,
+      "forge_after_upgrade": 1660,
+      "forge_after": 1660,
+      "shop_before": 1661,
+      "shop_after": 1639,
+      "final": 1639.69,
+      "flow": {
+        "idle_gained": 1.32,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 10,
+        "upgrade_cost": 30,
+        "forge_net": -35,
+        "shop_cost": 22,
+        "net_change": -53.47
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 1695,
+      "essence_after_salvage": 1700,
+      "essence_after_fusion": 1690,
+      "essence_after_upgrade": 1660,
+      "items_before": 6,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": true,
+      "fusion_succeeded": true,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 1660,
+      "items_after": 0,
+      "salvage_essence_gained": 5,
+      "fusion_cost": 10,
+      "upgrade_cost": 30,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 22,
+      "essence_before": 1661,
+      "essence_after": 1639,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Reinforced Vest",
+            "rarity": "COMMON",
+            "price": 22
+          },
+          {
+            "name": "Witchblade",
+            "rarity": "EPIC",
+            "price": 44
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 37
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 1639
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "exhausted"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1585,
+      "arena": 607,
+      "arena_reload": 13
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Reinforced Vest",
+          "rarity": "COMMON",
+          "price": 22
+        },
+        {
+          "name": "Witchblade",
+          "rarity": "EPIC",
+          "price": 44
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 37
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 1639
+    }
   }
 ]
