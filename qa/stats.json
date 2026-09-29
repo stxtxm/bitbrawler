@@ -120968,5 +120968,288 @@
       "purchased_offer": 0,
       "essence_after_purchase": 2005
     }
+  },
+  {
+    "date": "2026-09-29T11:49:51.227Z",
+    "run": "2026-09-29",
+    "character": "QA-PERSI-7",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 5,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 16,
+      "vit": 15,
+      "dex": 22,
+      "luk": 44,
+      "int": 15,
+      "foc": 13,
+      "fights": 0
+    },
+    "initial_level": 41,
+    "initial_xp": {
+      "current": 3106,
+      "max": 54988
+    },
+    "initial_max_hp": 788,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Sun Spear",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Shadow Cloak",
+        "rarity": "RARE"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 41,
+      "xp": 3868,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 16,
+      "vit": 15,
+      "dex": 22,
+      "luk": 44,
+      "int": 15,
+      "foc": 13,
+      "fights": 0
+    },
+    "final_max_hp": 788,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Sun Spear",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Shadow Cloak",
+        "rarity": "RARE"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Sun Spear",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Shadow Cloak",
+        "rarity": "RARE"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 33068,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "dragon_spawn"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 56,
+      "xp_events": [
+        {
+          "time_ms": 33068,
+          "xp": 56,
+          "monster": "dragon_spawn",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        510,
+        1532,
+        33068
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 56,
+        "essence": 0.56,
+        "monster": "dragon_spawn"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.61,
+      "next_level_eta": "⬆ 1h 0m",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.08x",
+      "interval": "10.2s",
+      "streak_bonus": null
+    },
+    "initial_essence": 726.02,
+    "final_essence": 682.04,
+    "essence": {
+      "before_idle": 726.02,
+      "after_idle": 726.58,
+      "per_fight": [],
+      "forge_before": 727,
+      "forge_after_salvage": 732,
+      "forge_after_fusion": 732,
+      "forge_after_upgrade": 702,
+      "forge_after": 702,
+      "shop_before": 704,
+      "shop_after": 682,
+      "final": 682.04,
+      "flow": {
+        "idle_gained": 0.56,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 30,
+        "forge_net": -25,
+        "shop_cost": 22,
+        "net_change": -43.98
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 727,
+      "essence_after_salvage": 732,
+      "essence_after_fusion": 732,
+      "essence_after_upgrade": 702,
+      "items_before": 3,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 702,
+      "items_after": 0,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": 30,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 22,
+      "essence_before": 704,
+      "essence_after": 682,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Glaive",
+            "rarity": "RARE",
+            "price": 22
+          },
+          {
+            "name": "Frostbrand",
+            "rarity": "EPIC",
+            "price": 44
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 37
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 682
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "exhausted"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1375,
+      "arena": 2805,
+      "arena_reload": 13
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Glaive",
+          "rarity": "RARE",
+          "price": 22
+        },
+        {
+          "name": "Frostbrand",
+          "rarity": "EPIC",
+          "price": 44
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 37
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 682
+    }
   }
 ]
