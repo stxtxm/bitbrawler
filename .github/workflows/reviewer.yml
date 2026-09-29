@@ -352,14 +352,17 @@ jobs:
 
           MODEL_ATTEMPTS=0
           # muse-spark-1.2 pendait >14min sans sortie (runs tués par timeout,
-          # ex #1062/#1063) — 1.3 est le modèle courant, nemotron le repli.
+          # ex #1062/#1063) — 1.3 est le modèle courant.
           # Le provider stalle parfois en silence même sur mini-PR : on
           # réessaie le même modèle une fois (stall transitoire) avant le
           # repli. Budget : 3×8m + ~4m de gates < timeout-minutes: 30.
+          # ⚠ nemotron (sans version) a été RETIRÉ du catalogue le 2026-09-25
+          # → UnknownError en <5s. Repli épinglé sur nemotron-3.5-lightning-free.
+          # Vérifier `opencode models | grep '^opencode/'` si les 3 échouent vite.
           MODELS=(
             "opencode/muse-spark-1.3-contributor-free"
             "opencode/muse-spark-1.3-contributor-free"
-            "opencode/nemotron"
+            "opencode/nemotron-3.5-lightning-free"
           )
 
           PROMPT="Tu es le reviewer de Bitbrawler. Tu réponds et agis UNIQUEMENT EN FRANÇAIS. Review la PR #${PR_NUMBER}.
