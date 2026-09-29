@@ -80,7 +80,15 @@ export const GAME_RULES = {
     LIVEOPS: {
         BURST_EXTRA_FIGHTS: 1,
         DEPTH_IDLE_RATIO_SAMPLE: true,
-    }
+    },
+    COMEBACK: {
+        SECOND_WIND_PER_LOSS: 5,
+        SECOND_WIND_CAP: 25,
+        LOSS_PITY_FLOOR_LOSSES: 3,
+        RECOVERY_QUEST_TRIGGER_LOSSES: 3,
+        RECOVERY_QUEST_WINDOW_MS: 24 * 60 * 60 * 1000,
+        RECOVERY_QUEST_ESSENCE: 40,
+    },
 } as const;
 
 export type CombatSpeed = (typeof GAME_RULES)['COMBAT']['SPEED_OPTIONS'][number];

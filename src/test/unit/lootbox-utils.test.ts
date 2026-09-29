@@ -286,4 +286,18 @@ describe('lootboxUtils', () => {
   it('PITY_THRESHOLD is 30', () => {
     expect(PITY_THRESHOLD).toBe(30);
   });
+
+  it('consecutiveLosses >= 3 exclut common (floor uncommon+)', () => {
+    const rng = () => 0.001;
+    const result = rollLootbox(ITEM_ASSETS, { rng, level: 10, consecutiveLosses: 3 });
+    expect(result.item).not.toBeNull();
+    expect(result.item!.rarity).not.toBe('common');
+  });
+
+  it('consecutiveLosses < 3 ne filtre pas common', () => {
+    const rng = () => 0.001;
+    const result = rollLootbox(ITEM_ASSETS, { rng, level: 1, consecutiveLosses: 2 });
+    expect(result.item).not.toBeNull();
+    expect(result.item!.rarity).toBe('common');
+  });
 });

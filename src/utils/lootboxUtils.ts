@@ -166,6 +166,7 @@ export interface RollLootboxOptions {
   level?: number;
   streak?: number; // Current streak for bonus application
   pityCount?: number; // Current pity counter (consecutive non-legendary rolls)
+  consecutiveLosses?: number;
 }
 
 export interface RollLootboxResult {
@@ -352,17 +353,19 @@ export function rollLootbox(
     pitySaturated = true;
   }
 
-  // Compute streak bonus
   const bonus = getStreakBonus(streak);
   const baseWeights = getLootboxRarityWeights(level);
   const weights = applyStreakWeights(baseWeights, bonus.weightBonus);
+  const lossFloorActive = (options.consecutiveLosses ?? 0) >= 3;
+  const lossFloor: ItemRarity | null = lossFloorActive ? 'uncommon' : null;
+  const rankOf = (r: ItemRarity | null): number => (r === null ? -1 : RARITY_RANK[r]);
+  const effectiveMinRarity = rankOf(bonus.minRarity) >= rankOf(lossFloor) ? bonus.minRarity : lossFloor;
 
   let item: PixelItemAsset | null;
 
-  // Handle double roll
   if (bonus.doubleRoll) {
-    const first = rollSingle(eligibleItems, weights, rng, bonus.minRarity);
-    const second = rollSingle(eligibleItems, weights, rng, bonus.minRarity);
+    const first = rollSingle(eligibleItems, weights, rng, effectiveMinRarity);
+    const second = rollSingle(eligibleItems, weights, rng, effectiveMinRarity);
     if (!first && !second) {
       item = null;
     } else if (!first) {
@@ -373,8 +376,7 @@ export function rollLootbox(
       item = pickBetterItem(first, second);
     }
   } else {
-    // Single roll with streak bonuses
-    item = rollSingle(eligibleItems, weights, rng, bonus.minRarity);
+    item = rollSingle(eligibleItems, weights, rng, effectiveMinRarity);
   }
 
   const pityCount = pitySaturated ? PITY_THRESHOLD : computePity(item, currentPity);
