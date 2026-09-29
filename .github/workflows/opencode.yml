@@ -1043,6 +1043,36 @@ jobs:
             echo "ℹ No pending docs PRs to merge"
           fi
 
+      # Anti-stale-claim : le label `dispatched` est posé AVANT le dispatch pour
+      # empêcher le fan-out N² (incident 2026-09-11), mais il n'était JAMAIS relâché
+      # en cas d'échec. Toute issue claimée par un run mort restait donc verrouillée
+      # pour toujours : le scan générique la sautait, et le watchdog la considérait
+      # "déjà traitée". 23 issues bloquées, dont 10 depuis 11 jours (incident du
+      # provider qui tuait tous les agents — voir shared.json provider-retires-model-slugs).
+      #
+      # On relâche le claim UNIQUEMENT si (a) le run a échoué, (b) le trigger était
+      # réel, et (c) aucune PR n'existe pour l'issue — sinon on laisserait un travail
+      # réellement en vol sans label, ce qui rouvrirait la porte au fan-out.
+      # Note : ne couvre PAS le timeout/cancel (GitHub n'exécute plus les steps) —
+      # c'est le rôle du watchdog (reclaim-stale-claims).
+      - name: Release stale `dispatched` claim on failure
+        if: failure() && env.REAL_TRIGGER == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -z "${ISSUE_NUMBER:-}" ]; then
+            echo "ℹ No ISSUE_NUMBER resolved — nothing to release"
+            exit 0
+          fi
+          HAS_PR=$(gh pr list --state open --search "$ISSUE_NUMBER in:body" \
+            --json number --limit 1 --jq 'length' 2>/dev/null || echo 0)
+          if [ "$HAS_PR" -gt 0 ]; then
+            echo "✅ Issue #$ISSUE_NUMBER has an open PR — keeping claim (work in flight)"
+            exit 0
+          fi
+          echo "♻️ Releasing stale 'dispatched' claim on #$ISSUE_NUMBER (run failed, no PR)"
+          gh issue edit "$ISSUE_NUMBER" --remove-label dispatched 2>/dev/null || true
+
       # CI et Reviewer sont déclenchés automatiquement par les events GitHub :
       # - pull_request [opened, synchronize] → CI (ci.yml)
       # - CI success → reviewer dispatché par ci.yml

@@ -12,7 +12,9 @@ concurrency:
 jobs:
   sweep:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    # 5min suffisaient pour le seul scan de PRs. Le reclaim stale-claims ajoute
+    # jusqu'à ~3 appels API par issue claimée (plafonné à 10) → on passe à 10min.
+    timeout-minutes: 10
     permissions:
       contents: read
       pull-requests: read
@@ -97,3 +99,61 @@ jobs:
             echo "✅ PR #$PR_NUMBER OK ou pas d'action"
           done
           echo "🏁 Watchdog terminé: $DISPATCHED dispatch(s) sur $COUNT PRs"
+
+      - name: Reclaim stale `dispatched` claims
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Filet de sécurité du claim `dispatched` (opencode.yml le relâche sur échec,
+          # mais GitHub n'exécute AUCUN step si le job est tué par timeout ou annulé —
+          # cas le plus fréquent ici, timeout-minutes: 30). Sans ce filet, un claim
+          # posé par un run mort verrouille l'issue POUR TOUJOURS : le scan générique la
+          # saute, le watchdog la compte comme "déjà traitée", et seul un dispatch manuel
+          # peut la libérer.
+          #
+          # On ne relâche que ce qui est prouvablement mort : claim posé il y a > 2h
+          # (donc tous les runs de 30 min sont terminés) ET aucune PR ouverte ET aucun
+          # workflow opencode en cours sur cette issue.
+          echo "♻️ Reclaim des claims 'dispatched' périmés (>2h, sans PR, sans run actif)"
+          STALE_HOURS=2
+          NOW=$(date -u +%s)
+          RECLAIMED=0
+          MAX_RECLAIM=10
+
+          gh issue list --label dispatched --state open --limit 100 \
+            --json number,updatedAt > /tmp/claimed.json 2>/dev/null || echo "[]" > /tmp/claimed.json
+          CLAIMED=$(jq 'length' /tmp/claimed.json 2>/dev/null || echo 0)
+          echo "📋 $CLAIMED issues portent le claim 'dispatched'"
+
+          # `seq 0 -1` it'dérerait sur des index invalides quand la liste est vide.
+          if [ "$CLAIMED" -eq 0 ]; then
+            echo "🏁 Reclaim: aucun claim à traiter"
+            exit 0
+          fi
+
+          for i in $(seq 0 $((CLAIMED-1))); do
+            [ "$RECLAIMED" -ge "$MAX_RECLAIM" ] && { echo "⏭ Max $MAX_RECLAIM reclaims atteint, arrêt"; break; }
+            ISSUE_NUMBER=$(jq -r ".[$i].number" /tmp/claimed.json)
+            UPDATED_AT=$(jq -r ".[$i].updatedAt // \"\"" /tmp/claimed.json)
+            UPDATED_TS=$(date -d "$UPDATED_AT" +%s 2>/dev/null || echo "$NOW")
+            AGE_MIN=$(( (NOW - UPDATED_TS) / 60 ))
+            if [ "$AGE_MIN" -lt $((STALE_HOURS * 60)) ]; then
+              continue
+            fi
+            # Une PR ouverte = travail réellement en vol → ne PAS relâcher.
+            if gh pr list --state open --search "$ISSUE_NUMBER in:body" --json number --limit 1 --jq 'length' 2>/dev/null | grep -qv '^0$'; then
+              echo "⏭ #$ISSUE_NUMBER (${AGE_MIN}min) a une PR ouverte — claim légitime, skip"
+              continue
+            fi
+            # Un run opencode en cours sur cette issue = claim légitime, skip.
+            if gh run list --workflow opencode.yml --status in_progress --limit 20 --json displayTitle \
+                 --jq ".[].displayTitle" 2>/dev/null | grep -q "#$ISSUE_NUMBER"; then
+              echo "⏭ #$ISSUE_NUMBER (${AGE_MIN}min) a un run opencode en cours — skip"
+              continue
+            fi
+            echo "♻️ #$ISSUE_NUMBER (${AGE_MIN}min, aucune PR, aucun run) → claim relâché"
+            gh issue edit "$ISSUE_NUMBER" --remove-label dispatched 2>/dev/null || true
+            RECLAIMED=$((RECLAIMED+1))
+            sleep 1
+          done
+          echo "🏁 Reclaim: $RECLAIMED claim(s) relâché(s) sur $CLAIMED"
