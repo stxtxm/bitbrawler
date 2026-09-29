@@ -34,6 +34,7 @@ import {
   performUpgrade,
 } from '../utils/forgeUtils';
 import { buyShopOffer as buyShopOfferUtil, rerollShopOffers as rerollShopOffersUtil, type ShopOffer } from '../utils/shopUtils';
+import { completeRecoveryQuest, getConsecutiveLosses, getSecondWindEssence, recordRecovery, startRecoveryQuest } from '../utils/comebackUtils';
 import { markOfferPurchased, markRerollUsed } from '../utils/shopStorage';
 import {
   checkMedals,
@@ -591,9 +592,19 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const pointsGained = xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL;
     const existingPoints = baseCharacter.statPoints || 0;
     const shouldConsumeEnergy = options?.consumeEnergy ?? !baseCharacter.pendingFight;
+    const consecutiveLosses = getConsecutiveLosses(newHistory);
+    const secondWindEssence = getSecondWindEssence(consecutiveLosses, won);
+    const comebackKey = baseCharacter.id ?? baseCharacter.seed;
+    if (!won && consecutiveLosses >= GAME_RULES.COMEBACK.RECOVERY_QUEST_TRIGGER_LOSSES) {
+      startRecoveryQuest(comebackKey, consecutiveLosses);
+    }
+    const recoveryReward = won ? completeRecoveryQuest(comebackKey, true) : null;
+    if (recoveryReward) recordRecovery(baseCharacter);
+    const comebackEssence = secondWindEssence + (recoveryReward?.essence ?? 0);
 
     let updatedChar: Character = normalizeCharacter({
       ...xpResult.updatedCharacter,
+      essence: (xpResult.updatedCharacter.essence ?? baseCharacter.essence ?? 0) + comebackEssence,
       fightsLeft: Math.max(0, (baseCharacter.fightsLeft || 0) - (shouldConsumeEnergy ? 1 : 0)),
       wins: won ? (baseCharacter.wins || 0) + 1 : (baseCharacter.wins || 0),
       losses: won ? (baseCharacter.losses || 0) : (baseCharacter.losses || 0) + 1,
@@ -625,6 +636,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
            losses: updatedChar.losses,
            fight_history: updatedChar.fightHistory,
            fought_today: updatedChar.foughtToday,
+           essence: updatedChar.essence,
            stat_points: updatedChar.statPoints,
            strength: updatedChar.strength,
            vitality: updatedChar.vitality,
