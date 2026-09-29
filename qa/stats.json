@@ -120617,5 +120617,356 @@
       "purchased_offer": 0,
       "essence_after_purchase": 804
     }
+  },
+  {
+    "date": "2026-09-29T10:01:33.548Z",
+    "run": "2026-09-29",
+    "character": "QA-PERSI-6",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 145,
+        "fight_duration_ms": 13241,
+        "max_hp": 1085,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 2065.03
+      },
+      {
+        "result": "defeat",
+        "xp": 135,
+        "fight_duration_ms": 17723,
+        "max_hp": 1085,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 2065.12
+      },
+      {
+        "result": "defeat",
+        "xp": 617,
+        "fight_duration_ms": 14702,
+        "max_hp": 1085,
+        "fight_type": "pve",
+        "monster_name": "VOID TITAN",
+        "xp_before_modifier": 617,
+        "xp_after_modifier": 1543,
+        "essence_after": 2080.12
+      },
+      {
+        "result": "defeat",
+        "xp": 144,
+        "fight_duration_ms": 13126,
+        "max_hp": 1085,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 2080.2
+      },
+      {
+        "result": "defeat",
+        "xp": 148,
+        "fight_duration_ms": 13975,
+        "max_hp": 1085,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 2080.2
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Brass Ring",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 2,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 25,
+      "vit": 31,
+      "dex": 14,
+      "luk": 25,
+      "int": 23,
+      "foc": 26,
+      "fights": 0
+    },
+    "initial_level": 62,
+    "initial_xp": {
+      "current": 57503,
+      "max": 108799
+    },
+    "initial_max_hp": 1085,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Iron Knuckles",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Shadow Cloak",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "💍",
+        "name": "Vitality Ring",
+        "rarity": "COMMON"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 62,
+      "xp": 59108,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 25,
+      "vit": 31,
+      "dex": 14,
+      "luk": 25,
+      "int": 23,
+      "foc": 26,
+      "last xp": 73,
+      "fights": 4
+    },
+    "final_max_hp": 1085,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Iron Knuckles",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Shadow Cloak",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "💍",
+        "name": "Vitality Ring",
+        "rarity": "COMMON"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Iron Knuckles",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Shadow Cloak",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "💍",
+        "name": "Vitality Ring",
+        "rarity": "COMMON"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 1,
+      "wins": 0,
+      "xp_total": 617,
+      "monsters_faced": [
+        "VOID TITAN"
+      ],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 33067,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "ogre"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 72,
+      "xp_events": [
+        {
+          "time_ms": 33067,
+          "xp": 72,
+          "monster": "ogre",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        510,
+        1531,
+        33067
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 72,
+        "essence": 0.6,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 3.52,
+      "next_level_eta": "⬆ 45m 55s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.29x",
+      "interval": "11.3s",
+      "streak_bonus": null
+    },
+    "initial_essence": 2064.43,
+    "final_essence": 2005.7,
+    "essence": {
+      "before_idle": 2064.43,
+      "after_idle": 2065.03,
+      "per_fight": [
+        2065.03,
+        2065.12,
+        2080.12,
+        2080.2,
+        2080.2
+      ],
+      "forge_before": 2080,
+      "forge_after_salvage": 2085,
+      "forge_after_fusion": 2075,
+      "forge_after_upgrade": 2025,
+      "forge_after": 2025,
+      "shop_before": 2027,
+      "shop_after": 2005,
+      "final": 2005.7,
+      "flow": {
+        "idle_gained": 0.6,
+        "fights_change": 15.17,
+        "salvage_gained": 5,
+        "fusion_cost": 10,
+        "upgrade_cost": 50,
+        "forge_net": -55,
+        "shop_cost": 22,
+        "net_change": -58.73
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 2080,
+      "essence_after_salvage": 2085,
+      "essence_after_fusion": 2075,
+      "essence_after_upgrade": 2025,
+      "items_before": 7,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": true,
+      "fusion_succeeded": true,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 2025,
+      "items_after": 0,
+      "salvage_essence_gained": 5,
+      "fusion_cost": 10,
+      "upgrade_cost": 50,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "RARE",
+      "cost": 22,
+      "essence_before": 2027,
+      "essence_after": 2005,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Dire Cleaver",
+            "rarity": "RARE",
+            "price": 22
+          },
+          {
+            "name": "Frostbrand",
+            "rarity": "EPIC",
+            "price": 44
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 37
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 2005
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1544,
+      "arena": 405
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Dire Cleaver",
+          "rarity": "RARE",
+          "price": 22
+        },
+        {
+          "name": "Frostbrand",
+          "rarity": "EPIC",
+          "price": 44
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 37
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 2005
+    }
   }
 ]
