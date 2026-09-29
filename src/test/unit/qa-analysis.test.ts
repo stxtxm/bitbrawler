@@ -2698,3 +2698,157 @@ describe('QA Bot No Opponents Skip Contract (#812)', () => {
     expect(isErrorRun).toBe(false)
   })
 })
+
+describe('QA Stall Detector per fight_type (#1112)', () => {
+  type StallFight = {
+    result: 'victory' | 'defeat' | 'draw'
+    xp: number | null
+    fight_duration_ms: number
+    fight_type?: 'pvp' | 'pve' | 'idle' | 'boss'
+    monster_name?: string | null
+  }
+
+  function median(values: number[]): number {
+    if (values.length === 0) return 0
+    const sorted = [...values].sort((a, b) => a - b)
+    const mid = Math.floor(sorted.length / 2)
+    return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid]
+  }
+
+  function isBossFight(f: StallFight): boolean {
+    return (
+      f.fight_type === 'boss' ||
+      (typeof f.monster_name === 'string' && f.monster_name.trim() === 'VOID TITAN')
+    )
+  }
+
+  function stallSuggestionsByType(fights: StallFight[]): string[] {
+    const suggestions: string[] = []
+    const groups: Array<{ label: string; durations: number[]; minMs: number }> = [
+      {
+        label: 'pvp',
+        durations: fights
+          .filter(f => !isBossFight(f) && f.fight_type !== 'pve' && f.fight_type !== 'idle')
+          .map(f => f.fight_duration_ms),
+        minMs: 60000,
+      },
+      {
+        label: 'pve',
+        durations: fights
+          .filter(f => f.fight_type === 'pve' && !isBossFight(f))
+          .map(f => f.fight_duration_ms),
+        minMs: 60000,
+      },
+      {
+        label: 'idle',
+        durations: fights
+          .filter(f => f.fight_type === 'idle')
+          .map(f => f.fight_duration_ms),
+        minMs: 60000,
+      },
+      {
+        label: 'boss',
+        durations: fights.filter(isBossFight).map(f => f.fight_duration_ms),
+        minMs: 120000,
+      },
+    ]
+    for (const group of groups) {
+      if (group.durations.length === 0) continue
+      const groupMedian = median(group.durations)
+      const groupMax = Math.max(...group.durations)
+      if (groupMax > group.minMs && groupMax > groupMedian * 3) {
+        suggestions.push(group.label)
+      }
+    }
+    return suggestions
+  }
+
+  function pvpFight(duration: number): StallFight {
+    return { result: 'victory', xp: 100, fight_duration_ms: duration, fight_type: 'pvp' }
+  }
+
+  function bossFight(duration: number): StallFight {
+    return { result: 'defeat', xp: 100, fight_duration_ms: duration, fight_type: 'boss', monster_name: 'VOID TITAN' }
+  }
+
+  it('ne suggere rien quand seul un boss long (95s watchdog) depasse le max global', () => {
+    const fights: StallFight[] = [
+      ...Array.from({ length: 10 }, () => pvpFight(15000)),
+      bossFight(94805),
+    ]
+    expect(stallSuggestionsByType(fights)).toEqual([])
+  })
+
+  it('suggere un stall pvp quand le max pvp depasse 3x sa mediane et 60s', () => {
+    const fights: StallFight[] = [
+      ...Array.from({ length: 10 }, () => pvpFight(15000)),
+      pvpFight(95000),
+    ]
+    expect(stallSuggestionsByType(fights)).toEqual(['pvp'])
+  })
+
+  it('ignore un outlier sous 60s meme avec un ratio eleve', () => {
+    const fights: StallFight[] = [
+      ...Array.from({ length: 10 }, () => pvpFight(10000)),
+      pvpFight(50000),
+    ]
+    expect(stallSuggestionsByType(fights)).toEqual([])
+  })
+
+  it('applique un seuil dedie de 120s aux boss fights longs par design', () => {
+    const bossAtWatchdog = [
+      ...Array.from({ length: 5 }, () => bossFight(30000)),
+      bossFight(95000),
+    ]
+    expect(stallSuggestionsByType(bossAtWatchdog)).toEqual([])
+    const bossStall = [
+      ...Array.from({ length: 5 }, () => bossFight(30000)),
+      bossFight(130000),
+    ]
+    expect(stallSuggestionsByType(bossStall)).toEqual(['boss'])
+  })
+
+  it('detecte un stall pve contre la mediane pve, pas la moyenne globale', () => {
+    const fights: StallFight[] = [
+      ...Array.from({ length: 10 }, () => pvpFight(15000)),
+      ...Array.from({ length: 5 }, () => ({ result: 'victory', xp: 100, fight_duration_ms: 10000, fight_type: 'pve', monster_name: 'Goblin' }) as StallFight),
+      { result: 'victory', xp: 100, fight_duration_ms: 70000, fight_type: 'pve', monster_name: 'Goblin' } as StallFight,
+    ]
+    expect(stallSuggestionsByType(fights)).toEqual(['pve'])
+  })
+
+  it('ignore les outliers antiques quand seule la fenetre recente est analysee', () => {
+    const allTimeFights: StallFight[] = [
+      ...Array.from({ length: 10 }, () => pvpFight(15000)),
+      pvpFight(82613),
+    ]
+    expect(stallSuggestionsByType(allTimeFights)).toEqual(['pvp'])
+    const recentFights: StallFight[] = [
+      ...Array.from({ length: 10 }, () => pvpFight(10201)),
+      pvpFight(23520),
+    ]
+    expect(stallSuggestionsByType(recentFights)).toEqual([])
+  })
+
+  describe('analyze-qa-stats.ts source contract (#1112)', () => {
+    it('calcule le stall-check par fight_type contre la mediane du type', () => {
+      const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+      expect(source).toContain('stallGroups')
+      expect(source).toContain('groupMedian')
+      expect(source).toContain('BOSS_STALL_MIN_MS')
+      expect(source).toContain('120000')
+    })
+
+    it('exclut les boss fights du check global et supprime le faux positif moyenne-globale', () => {
+      const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+      expect(source).toContain('nonBossFights')
+      expect(source).not.toContain('maxDuration > avgDuration * 3')
+    })
+
+    it('analyse la fenetre recente pour que les eres pre-fix ne declenchent plus le stall', () => {
+      const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+      expect(source).toContain('recentRuns.flatMap')
+      expect(source).toContain('recentFights')
+    })
+  })
+})
