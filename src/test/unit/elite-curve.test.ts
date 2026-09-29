@@ -16,6 +16,16 @@ function intBuild(level: number): Character {
   } as unknown as Character;
 }
 
+function mulberry32(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 describe('elite defeat curve', () => {
   it('pins the elite tuning constants', () => {
     expect(IDLE_CONFIG.ELITE.MIN_LEVEL).toBe(15);
@@ -26,8 +36,11 @@ describe('elite defeat curve', () => {
   });
 
   it('elites threaten average builds without being impossible (paired)', () => {
+    const originalRandom = Math.random;
+    Math.random = mulberry32(42);
+    try {
     const level = 20;
-    const N = 400;
+    const N = 1000;
     let normalWins = 0;
     let eliteWins = 0;
     for (let i = 0; i < N; i++) {
@@ -38,8 +51,10 @@ describe('elite defeat curve', () => {
     }
     const normalRate = normalWins / N;
     const eliteRate = eliteWins / N;
-    // elites strictly harder with margin, yet beatable
     expect(normalRate - eliteRate).toBeGreaterThan(0.05);
     expect(eliteRate).toBeGreaterThan(0.02);
+    } finally {
+      Math.random = originalRandom;
+    }
   });
 });
