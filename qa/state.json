@@ -1,9 +1,9 @@
 {
   "run": "2026-09-29",
   "character": "QA-PERSI-8",
-  "exhausted": false,
-  "updated_at": "2026-09-29T13:09:59.145Z",
-  "source": "created",
+  "exhausted": true,
+  "updated_at": "2026-09-29T16:04:19.479Z",
+  "source": "reused",
   "persistent_generation": 7,
   "persistent_created_at": "2026-09-29T13:01:36.186Z",
   "persistent_reset_ready": false
