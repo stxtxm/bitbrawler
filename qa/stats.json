@@ -122596,5 +122596,270 @@
       "purchased_offer": 0,
       "essence_after_purchase": 227
     }
+  },
+  {
+    "date": "2026-09-29T22:01:47.003Z",
+    "run": "2026-09-30",
+    "character": "QA-PERSI-8",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Brigandine",
+      "rarity": "UNCOMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 0,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 15,
+      "vit": 12,
+      "dex": 18,
+      "luk": 13,
+      "int": 20,
+      "foc": 25,
+      "fights": 0
+    },
+    "initial_level": 22,
+    "initial_xp": {
+      "current": 3098,
+      "max": 19686
+    },
+    "initial_max_hp": 502,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 22,
+      "xp": 3377,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 15,
+      "vit": 12,
+      "dex": 18,
+      "luk": 13,
+      "int": 20,
+      "foc": 25,
+      "last xp": 110,
+      "fights": 3
+    },
+    "final_max_hp": 502,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 2,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20436,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "chimera",
+        "goblin"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 149,
+      "xp_events": [
+        {
+          "time_ms": 13881,
+          "xp": 39,
+          "monster": "chimera",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 14392,
+          "xp": 110,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        511,
+        1530,
+        13881
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 39,
+        "essence": 0.26,
+        "monster": "chimera"
+      },
+      {
+        "result": "victory",
+        "xp": 110,
+        "essence": 0.25,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.1,
+      "next_level_eta": "⬆ 27m 6s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.25x",
+      "interval": "10.7s",
+      "streak_bonus": "🔥 1-win streak (+25%)"
+    },
+    "initial_essence": 233.31,
+    "final_essence": 200.88,
+    "essence": {
+      "before_idle": 233.31,
+      "after_idle": 233.82,
+      "per_fight": [],
+      "forge_before": 233,
+      "forge_after_salvage": 253,
+      "forge_after_fusion": 253,
+      "forge_after_upgrade": 223,
+      "forge_after": 223,
+      "shop_before": 224,
+      "shop_after": 200,
+      "final": 200.88,
+      "flow": {
+        "idle_gained": 0.51,
+        "fights_change": null,
+        "salvage_gained": 20,
+        "fusion_cost": 0,
+        "upgrade_cost": 30,
+        "forge_net": -10,
+        "shop_cost": 24,
+        "net_change": -32.43
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 233,
+      "essence_after_salvage": 253,
+      "essence_after_fusion": 253,
+      "essence_after_upgrade": 223,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 223,
+      "items_after": 1,
+      "salvage_essence_gained": 20,
+      "fusion_cost": null,
+      "upgrade_cost": 30,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "COMMON",
+      "cost": 24,
+      "essence_before": 224,
+      "essence_after": 200,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Iron Mace",
+            "rarity": "UNCOMMON",
+            "price": 24
+          },
+          {
+            "name": "Flamberge",
+            "rarity": "EPIC",
+            "price": 73
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 41
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 200
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "exhausted"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1808,
+      "arena": 690
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Iron Mace",
+          "rarity": "UNCOMMON",
+          "price": 24
+        },
+        {
+          "name": "Flamberge",
+          "rarity": "EPIC",
+          "price": 73
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 41
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 200
+    }
   }
 ]
