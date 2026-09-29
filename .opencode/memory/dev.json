@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-09-11T21:38:39Z",
+  "last_session": "2026-09-29T10:53:21Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -37,9 +37,9 @@
       "date": "2026-08-26"
     },
     {
-      "lesson": "Seasonal Pass Lite: config pure + hook localStorage pattern useSound + passProgress optional sans migration, XP sources 10/5/15 pour hybrid-casual pendulum",
-      "issue": "#947",
-      "date": "2026-09-11"
+      "lesson": "Issue #1108 shop +10%: seuls shopConstants.ts + shop-utils.test.ts portent les prix durs (22/44/37/66) — autres tests utilisent SHOP_OFFERS dynamique. TDD: maj tests d abord (8 RED), puis constantes (54 GREEN).",
+      "issue": "#1108",
+      "date": "2026-09-29"
     }
   ]
 }
