@@ -63,11 +63,14 @@
 
 ## Modèles
 
-- Modèle par défaut : `opencode/muse-spark-1.2-contributor-free` (= `muse`)
+- Modèle par défaut : `opencode/muse-spark-1.3-contributor-free` (= `muse`)
   (opencode.json + frontmatter `.opencode/agents/*.md` + tableaux de fallback dans
-  les workflows, repli `opencode/nemotron`).
-- Si un modèle disparaît : `sed` global du slug, push, relancer
+  les workflows, repli `opencode/nemotron-3.5-lightning-free`).
+- Si un modèle disparaît : vérifier `opencode models | grep '^opencode/'`,
+  puis `sed` global du slug, push, relancer
   `gh workflow run reviewer.yml -f pr_number=N`.
+  ⚠ Symptôme d'un slug retiré : `UnknownError: Unexpected server error` en <5s
+  sur TOUS les modèles du tableau de fallback (≠ timeout, ≠ 401/429).
 
 ## Incidents connus & procédures (2026-08-23)
 

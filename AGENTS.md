@@ -1021,7 +1021,9 @@ Voir **[docs/AGENT_PIPELINE.md](docs/AGENT_PIPELINE.md)** : flow issue→dev→C
 - **"Invalid API key"** = `SERVICE_ROLE_KEY` périmée/fausse dans Vercel (coller sans espace ni quote ; copier depuis le Dashboard Supabase)
 - **SW v6 servait de vieux bundles post-deploy** → v7 network-first JS/CSS. Après deploy majeur : hard refresh une fois
 - **Reviews CHANGES_REQUESTED obsolètes** bloquent les merges : dismisser via `gh api -X PUT repos/.../pulls/N/reviews/RID/dismissals -f message=...` puis relancer `reviewer.yml -f pr_number=N`
-- **Modèles agents** : `opencode/muse-spark-1.2-contributor-free` (= `muse`) partout (opencode.json, `.opencode/agents/*.md` frontmatter, tableaux de fallback des workflows avec repli `opencode/nemotron`)
+- **Modèles agents** : `opencode/muse-spark-1.3-contributor-free` (= `muse`) partout (opencode.json, `.opencode/agents/*.md` frontmatter, tableaux de fallback des workflows avec repli `opencode/nemotron-3.5-lightning-free`)
+- ⚠ **Le provider opencode RETIRE ses slugs sans préavis.** Incident 2026-09-25→29 : `muse-spark-1.2-contributor-free` et `nemotron` ont disparu du catalogue → *tous* les agents ont échoué 4 jours de suite avec `UnknownError: Unexpected server error` (~2s, pas un timeout). **Symptôme distinctif : échec INSTANTANÉ (<5s) sur les DEUX modèles du tableau de fallback.**
+  → Vérifier `opencode models | grep '^opencode/'` avant de conclure à un souci de clé API, de rate-limit ou de quota. Corriger par `sed` global du slug + re-dispatch (`gh workflow run <wf>.yml -f issue_number=N`).
 
 ### Auto-compaction des mémoires (ARG_MAX guard, 2026-08-23)
 - `node scripts/compact-memories.mjs` (= `npm run mem:compact`) : tronque toute string >300c, garde 3 session_notes (500c), 12 known_issues one-liners, budget global par fichier (shared 6KB / agents 4.5KB)

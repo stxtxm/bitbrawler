@@ -2,7 +2,7 @@
 name: orchestrator
 description: Agent orchestrateur pour découper les propositions complexes en sous-issues avec DAG.
 mode: subagent
-model: opencode/muse-spark-1.2-contributor-free
+model: opencode/muse-spark-1.3-contributor-free
 permission:
   edit: allow
   bash: allow
