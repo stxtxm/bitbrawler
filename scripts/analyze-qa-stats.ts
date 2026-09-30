@@ -548,6 +548,10 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   const draws = allFights.filter(f => f.result === 'draw')
   const winRate = allFights.length > 0 ? wins.length / allFights.length : 0
 
+  const isBossFight = (f: FightRecord): boolean =>
+    f.fight_type === 'boss' ||
+    (typeof f.monster_name === 'string' && f.monster_name.trim() === 'VOID TITAN')
+
   // XP analysis
   const fightsWithXp = allFights.filter((f): f is FightRecord => f.xp !== null)
   const avgXp = fightsWithXp.length > 0
@@ -687,6 +691,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   // ===================== ISSUES & SUGGESTIONS =====================
   const issues: string[] = []
   const suggestions: string[] = []
+  const recentRuns = stats.slice(-RECENT_WINDOW_RUNS)
 
   // Win rate
   if (winRate < 0.3) issues.push(`Win rate is very low (${(winRate * 100).toFixed(1)}%) — game may be too hard`)
@@ -701,7 +706,27 @@ function analyze(stats: RunRecord[]): AnalysisReport {
 
   // Fight duration
   if (avgDuration > 30000) issues.push(`Avg fight duration ${(avgDuration / 1000).toFixed(1)}s is too long`)
-  if (maxDuration > 60000 && maxDuration > avgDuration * 3) suggestions.push(`Max fight duration ${(maxDuration / 1000).toFixed(0)}s is ${(maxDuration / avgDuration).toFixed(1)}x the average — possible timeout issue`)
+  const STALL_MIN_MS = 60000
+  const STALL_RATIO = 3
+  const BOSS_STALL_MIN_MS = 120000
+  const recentFights = recentRuns.flatMap(r => r.fights ?? [])
+  const nonBossFights = recentFights.filter(f => !isBossFight(f))
+  const nonBossDurations = nonBossFights.map(f => f.fight_duration_ms)
+  const nonBossMedian = median(nonBossDurations)
+  const nonBossMax = nonBossDurations.length > 0 ? Math.max(...nonBossDurations) : 0
+  if (nonBossMax > STALL_MIN_MS && nonBossMax > nonBossMedian * STALL_RATIO) suggestions.push(`Max non-boss fight duration ${(nonBossMax / 1000).toFixed(0)}s is ${(nonBossMax / nonBossMedian).toFixed(1)}x its median over the last ${recentRuns.length} runs — possible timeout issue`)
+  const stallGroups: Array<{ label: string; durations: number[]; minMs: number }> = [
+    { label: 'pvp', durations: recentFights.filter(f => !isBossFight(f) && f.fight_type !== 'pve' && f.fight_type !== 'idle').map(f => f.fight_duration_ms), minMs: STALL_MIN_MS },
+    { label: 'pve', durations: recentFights.filter(f => f.fight_type === 'pve' && !isBossFight(f)).map(f => f.fight_duration_ms), minMs: STALL_MIN_MS },
+    { label: 'idle', durations: recentFights.filter(f => f.fight_type === 'idle').map(f => f.fight_duration_ms), minMs: STALL_MIN_MS },
+    { label: 'boss', durations: recentFights.filter(isBossFight).map(f => f.fight_duration_ms), minMs: BOSS_STALL_MIN_MS },
+  ]
+  for (const group of stallGroups) {
+    if (group.durations.length === 0) continue
+    const groupMedian = median(group.durations)
+    const groupMax = Math.max(...group.durations)
+    if (groupMax > group.minMs && groupMax > groupMedian * STALL_RATIO) suggestions.push(`Max ${group.label} fight duration ${(groupMax / 1000).toFixed(0)}s is ${(groupMax / groupMedian).toFixed(1)}x its median over the last ${recentRuns.length} runs — possible timeout issue`)
+  }
 
   // Level progression
   if (avgLevelGained < 1 && validRuns.length >= 3) {
@@ -746,7 +771,6 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   // Error rate — alerts use the recent 30-run window; the all-time cumulative
   // rate stays in the report, but stale failure eras must not keep triggering
   // alerts (#730).
-  const recentRuns = stats.slice(-RECENT_WINDOW_RUNS)
   const recentErrorRuns = recentRuns.filter(isErrorRun)
   const recentHalfwayRuns = recentRuns.filter(isHalfwayRun)
   const errorRate = recentRuns.length > 0 ? recentErrorRuns.length / recentRuns.length : 0
@@ -788,10 +812,8 @@ function analyze(stats: RunRecord[]): AnalysisReport {
 
   // --- PvE / Boss classification (#863, #705) ---
   // VOID TITAN emitted by the QA bot as fight_type 'pve' must be counted as a
-  // boss fight, not a legacy monster PvE fight. Detect boss by OR.
-  const isBossFight = (f: FightRecord): boolean =>
-    f.fight_type === 'boss' ||
-    (typeof f.monster_name === 'string' && f.monster_name.trim() === 'VOID TITAN')
+  // boss fight, not a legacy monster PvE fight. isBossFight is defined above
+  // for the per-type stall detector (#1112) and reused here.
   const bossFights = allFights.filter(isBossFight)
   const pveFights = allFights.filter(f => f.fight_type === 'pve' && !isBossFight(f))
   const pvpFights = allFights.filter(f => !isBossFight(f) && f.fight_type !== 'pve')
