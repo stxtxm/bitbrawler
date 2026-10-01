@@ -773,11 +773,20 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   // alerts (#730).
   const recentErrorRuns = recentRuns.filter(isErrorRun)
   const recentHalfwayRuns = recentRuns.filter(isHalfwayRun)
+  const isSiteDownRun = (r: RunRecord): boolean =>
+    !!r.errors && r.errors.some(e => String(e).includes('SITE_DOWN'))
+  const recentSiteDownRuns = recentRuns.filter(r => isErrorRun(r) && isSiteDownRun(r))
+  const recentLocatorRuns = recentErrorRuns.filter(r => !isSiteDownRun(r))
   const errorRate = recentRuns.length > 0 ? recentErrorRuns.length / recentRuns.length : 0
   const totalErrorRate = recentRuns.length > 0
     ? (recentErrorRuns.length + recentHalfwayRuns.length) / recentRuns.length
     : 0
-  if (errorRate > 0.3) {
+  if (recentSiteDownRuns.length > 0) {
+    issues.push(`Site outage (site_down): ${recentSiteDownRuns.length} of the last ${recentRuns.length} runs failed before game load (SITE_DOWN: HTTP 4xx/5xx or error page) — check hosting/billing, not selectors`)
+  }
+  if (recentLocatorRuns.length > 0 && recentLocatorRuns.length / Math.max(1, recentRuns.length) > 0.3) {
+    issues.push(`High error rate: ${(recentLocatorRuns.length / Math.max(1, recentRuns.length) * 100).toFixed(0)}% of the last ${recentRuns.length} runs failed completely (flaky_locator, excluding site_down)`)
+  } else if (recentSiteDownRuns.length === 0 && errorRate > 0.3) {
     issues.push(`High error rate: ${(errorRate * 100).toFixed(0)}% of the last ${recentRuns.length} runs failed completely`)
   }
   if (totalErrorRate > 0.5) {

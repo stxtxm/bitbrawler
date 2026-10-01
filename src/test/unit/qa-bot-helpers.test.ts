@@ -9,6 +9,15 @@ import {
   nextCombatSpeed,
   COMBAT_SPEED_TOGGLE_SELECTOR,
   COMBAT_SPEED_SETTINGS_SELECTOR,
+  SITE_DOWN_ERROR_PREFIX,
+  isSiteDownStatus,
+  looksLikeErrorPage,
+  hasGameContent,
+  buildSiteDownMessage,
+  buildSiteDownBodyMessage,
+  throwIfSiteDownResponse,
+  throwIfErrorPageBody,
+  classifyRunError,
 } from '../../utils/qa-bot-helpers'
 
 describe('qa-bot-helpers combat speed', () => {
@@ -95,6 +104,68 @@ describe('qa-bot-helpers combat speed', () => {
     it('falls back to 1 for invalid input', () => {
       expect(nextCombatSpeed(3 as unknown as number)).toBe(1)
       expect(nextCombatSpeed(null as unknown as number)).toBe(1)
+    })
+  })
+
+  describe('SITE_DOWN fail-fast (#1121)', () => {
+    it('exposes SITE_DOWN prefix constant', () => {
+      expect(SITE_DOWN_ERROR_PREFIX).toBe('SITE_DOWN')
+    })
+    it('isSiteDownStatus flags 4xx/5xx only', () => {
+      expect(isSiteDownStatus(402)).toBe(true)
+      expect(isSiteDownStatus(500)).toBe(true)
+      expect(isSiteDownStatus(200)).toBe(false)
+      expect(isSiteDownStatus(302)).toBe(false)
+      expect(isSiteDownStatus(null)).toBe(false)
+      expect(isSiteDownStatus(undefined)).toBe(false)
+    })
+    it('buildSiteDownMessage formats HTTP status and url', () => {
+      expect(buildSiteDownMessage(402, 'https://bitbrawler.vercel.app/login')).toBe(
+        'SITE_DOWN: HTTP 402 on https://bitbrawler.vercel.app/login'
+      )
+    })
+    it('buildSiteDownBodyMessage mentions error page and url', () => {
+      const msg = buildSiteDownBodyMessage('https://bitbrawler.vercel.app/login')
+      expect(msg).toContain('SITE_DOWN')
+      expect(msg).toContain('https://bitbrawler.vercel.app/login')
+    })
+    it('throwIfSiteDownResponse throws SITE_DOWN on 402 without touching locators', () => {
+      const response = { status: () => 402 }
+      expect(() => throwIfSiteDownResponse(response, 'https://bitbrawler.vercel.app/login')).toThrow(
+        /SITE_DOWN: HTTP 402/
+      )
+    })
+    it('throwIfSiteDownResponse passes through on 200 and null response', () => {
+      expect(() => throwIfSiteDownResponse({ status: () => 200 }, 'https://x/login')).not.toThrow()
+      expect(() => throwIfSiteDownResponse(null, 'https://x/login')).not.toThrow()
+      expect(() => throwIfSiteDownResponse(undefined, 'https://x/login')).not.toThrow()
+    })
+    it('looksLikeErrorPage detects vercel/billing markers', () => {
+      expect(looksLikeErrorPage('Vercel - 402 Payment Required')).toBe(true)
+      expect(looksLikeErrorPage('Deployment Protection active')).toBe(true)
+      expect(looksLikeErrorPage('ENTER ARENA LOGIN')).toBe(false)
+      expect(looksLikeErrorPage('')).toBe(false)
+    })
+    it('hasGameContent detects game markers', () => {
+      expect(hasGameContent('BATTLE ENERGY AUTO MODE')).toBe(true)
+      expect(hasGameContent('ENTER ARENA')).toBe(true)
+      expect(hasGameContent('Vercel 402 Payment Required')).toBe(false)
+    })
+    it('throwIfErrorPageBody throws only on error page without game content', () => {
+      expect(() =>
+        throwIfErrorPageBody('Vercel 402 Payment Required', 'https://x/login', false)
+      ).toThrow(/SITE_DOWN/)
+      expect(() =>
+        throwIfErrorPageBody('Vercel 402 Payment Required ENTER ARENA', 'https://x/login', true)
+      ).not.toThrow()
+      expect(() => throwIfErrorPageBody('BATTLE ENERGY', 'https://x/login', true)).not.toThrow()
+    })
+    it('classifyRunError distinguishes site_down from flaky_locator', () => {
+      expect(classifyRunError('SITE_DOWN: HTTP 402 on https://x')).toBe('site_down')
+      expect(classifyRunError('locator.waitFor: Timeout 10000ms exceeded input[type="text"]')).toBe(
+        'flaky_locator'
+      )
+      expect(classifyRunError('Fight 1: timeout waiting for result')).toBe('other')
     })
   })
 
