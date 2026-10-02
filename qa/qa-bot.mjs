@@ -10,6 +10,10 @@ import {
   COMBAT_SPEED_STORAGE_KEY,
   COMBAT_SPEED_SETTINGS_SELECTOR,
   getCombatSpeedFromStorageRaw,
+  SITE_DOWN_ERROR_PREFIX,
+  throwIfSiteDownResponse,
+  throwIfErrorPageBody,
+  hasGameContent,
 } from '../src/utils/qa-bot-helpers.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -285,13 +289,26 @@ async function waitForArena(page, timeout = 15000) {
   }
 }
 
+async function assertPageAlive(page, url, response) {
+  throwIfSiteDownResponse(response, url)
+  const bodyText = await page.evaluate(() => document.body?.innerText ?? '').catch(() => '')
+  if (!bodyText) return
+  const hasInput = await page
+    .evaluate(() => !!document.querySelector('input, button, canvas'))
+    .catch(() => false)
+  throwIfErrorPageBody(bodyText, url, hasInput || hasGameContent(bodyText))
+}
+
 async function openLogin(page) {
   const delays = [5000, 15000] // 5s, then 15s backoff
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      await page.goto(getAppUrl('/login'), { waitUntil: 'networkidle', timeout: 30000 })
+      const url = getAppUrl('/login')
+      const response = await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 })
+      await assertPageAlive(page, url, response)
       return // success
     } catch (err) {
+      if (String(err.message || '').includes(SITE_DOWN_ERROR_PREFIX)) throw err
       if (attempt === 3) {
         throw new Error(`Login page unavailable after 3 retries (last error: ${err.message})`)
       }
@@ -333,9 +350,12 @@ async function openCharacterCreation(page) {
   const delays = [5000, 15000] // 5s, then 15s backoff
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      await page.goto(getAppUrl('/create-character'), { waitUntil: 'networkidle', timeout: 30000 })
+      const url = getAppUrl('/create-character')
+      const response = await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 })
+      await assertPageAlive(page, url, response)
       return // success
     } catch (err) {
+      if (String(err.message || '').includes(SITE_DOWN_ERROR_PREFIX)) throw err
       if (attempt === 3) {
         throw new Error(`Site unavailable after 3 retries (last error: ${err.message})`)
       }

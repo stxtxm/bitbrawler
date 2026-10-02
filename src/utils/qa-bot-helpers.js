@@ -64,3 +64,54 @@ export function nextCombatSpeed(current) {
   if (current === 2) return 1
   return 1
 }
+
+export const SITE_DOWN_ERROR_PREFIX = 'SITE_DOWN'
+
+const ERROR_PAGE_MARKERS = ['vercel', '402', 'payment required', 'deployment protection']
+
+const GAME_CONTENT_MARKERS = ['battle energy', 'auto mode', 'enter arena', 'login', 'create', 'arena']
+
+export function isSiteDownStatus(status) {
+  return typeof status === 'number' && Number.isFinite(status) && status >= 400
+}
+
+export function looksLikeErrorPage(bodyText) {
+  if (typeof bodyText !== 'string' || bodyText.length === 0) return false
+  const lower = bodyText.toLowerCase()
+  return ERROR_PAGE_MARKERS.some(marker => lower.includes(marker))
+}
+
+export function hasGameContent(bodyText) {
+  if (typeof bodyText !== 'string' || bodyText.length === 0) return false
+  const lower = bodyText.toLowerCase()
+  return GAME_CONTENT_MARKERS.some(marker => lower.includes(marker))
+}
+
+export function buildSiteDownMessage(status, url) {
+  return `${SITE_DOWN_ERROR_PREFIX}: HTTP ${status} on ${url}`
+}
+
+export function buildSiteDownBodyMessage(url) {
+  return `${SITE_DOWN_ERROR_PREFIX}: error page served on ${url} (no game selector)`
+}
+
+export function throwIfSiteDownResponse(response, url) {
+  const status = typeof response?.status === 'function' ? response.status() : response?.status
+  if (isSiteDownStatus(status)) {
+    throw new Error(buildSiteDownMessage(status, url))
+  }
+}
+
+export function throwIfErrorPageBody(bodyText, url, hasGameSelector) {
+  const gamePresent = typeof hasGameSelector === 'boolean' ? hasGameSelector : hasGameContent(bodyText)
+  if (looksLikeErrorPage(bodyText) && !gamePresent) {
+    throw new Error(buildSiteDownBodyMessage(url))
+  }
+}
+
+export function classifyRunError(message) {
+  const text = String(message ?? '')
+  if (text.includes(SITE_DOWN_ERROR_PREFIX)) return 'site_down'
+  if (text.includes('locator.waitFor') || text.includes('waitFor')) return 'flaky_locator'
+  return 'other'
+}
