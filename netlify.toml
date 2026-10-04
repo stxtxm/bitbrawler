@@ -1,0 +1,18 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# BrowserRouter needs an SPA fallback. The /api/* exclusion is essential:
+# a catch-all redirect is evaluated before functions and would swallow
+# /api/idle-processor, silently killing idle processing.
+[[redirects]]
+  from = "!/api/*"
+  to = "/index.html"
+  status = 200
