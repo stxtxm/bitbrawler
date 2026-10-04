@@ -94,7 +94,9 @@ jobs:
           for i in $(seq 1 $MAX_WAIT); do
             # Count checks that are not completed or not successful/neutral (hors Vercel et hors review lui-même)
             CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
-              [.statusCheckRollup[]? | select((.app?.slug != "vercel") and (.name? != "Vercel") and (.context? != "Vercel")) | select(.name != "review" and .name != "PR Reviewer" and (.name | test("review";"i") | not)) | select(
+              [.statusCheckRollup[]? | select((.app?.slug != "vercel") and (.name? != "Vercel") and (.context? != "Vercel")) | select(((.name // "") != "review") and ((.name // "") != "PR Reviewer") and (((.name // "") | test("review";"i") | not))) | select(
+                (.status == null and .conclusion == null) | not
+              ) | select(
                 .status? != "COMPLETED" or (.conclusion? != "SUCCESS" and .conclusion? != "NEUTRAL")
               )] | length
             ' 2>/dev/null || echo "3")
@@ -293,11 +295,18 @@ jobs:
         run: |
           PR_NUMBER="${{ env.PR_NUMBER }}"
 
+          # Checks published without any status/conclusion are deployment
+          # previews (Netlify posts them that way). They are not check runs, so
+          # `status != "COMPLETED"` would count them as failing and block every
+          # merge forever. Skip them here; real pending checks report
+          # PENDING/QUEUED and are still caught.
           # Fresh check of the PR's checks at review time — never rely on a stale
           # status from the dispatch moment. The agent LLM must not be the only
           # guard here; this step hard-blocks review if CI is red.
           CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
-            [.statusCheckRollup[]? | select((.app?.slug != "vercel") and (.name? != "Vercel") and (.context? != "Vercel")) | select(.name != "review" and .name != "PR Reviewer" and (.name | test("review";"i") | not)) | select(
+            [.statusCheckRollup[]? | select((.app?.slug != "vercel") and (.name? != "Vercel") and (.context? != "Vercel")) | select(((.name // "") != "review") and ((.name // "") != "PR Reviewer") and (((.name // "") | test("review";"i") | not))) | select(
+              (.status == null and .conclusion == null) | not
+            ) | select(
               .status? != "COMPLETED" or (.conclusion? != "SUCCESS" and .conclusion? != "NEUTRAL")
             )] | length
           ' 2>/dev/null || echo "1")
