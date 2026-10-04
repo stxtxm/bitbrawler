@@ -40,6 +40,9 @@ jobs:
           git config user.name "opencode-agent"
           git config user.email "agent@opencode.ai"
           git add qa/stats.json qa/state.json
-          git diff --cached --quiet || git commit -m "chore: update QA stats"
+          # [skip ci] is mandatory here: this job runs hourly, and without it
+          # every stats commit triggers a full Netlify build, which burns the
+          # 300 build-minutes/month Hobby allowance in about two days.
+          git diff --cached --quiet || git commit -m "chore: update QA stats [skip ci]"
           git pull --rebase
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}

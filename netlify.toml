@@ -1,0 +1,20 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# BrowserRouter needs an SPA fallback. force = false (the default) makes this a
+# shadowing redirect: it only applies when nothing else matches, so the
+# /api/idle-processor function keeps priority. A forced catch-all would be
+# evaluated first and would swallow the API, silently killing idle processing.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
