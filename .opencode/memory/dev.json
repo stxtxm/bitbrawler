@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-06T22:55:17Z",
+  "last_session": "2026-10-06T22:56:36Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -37,8 +37,8 @@
       "date": "2026-08-26"
     },
     {
-      "lesson": "Issue #1132 qa-tester.yml: concurrency group top-level + retry push (pull --rebase || retry, push || repull+push) suffit a serialiser les commits QA stats sans toucher au bot",
-      "issue": "#1132",
+      "lesson": "Issue #1128 QA_BASE_URL: (1) import dynamique a chemin variable refuse par Vite/vitest (Unknown variable dynamic import) -> utiliser vi.resetModules() + import statique pour re-evaluer un module. (2) console.log dans qa-bot.config.js loggue aussi pendant les tests vitest qui l importent - acceptable, pas d echec.",
+      "issue": "#1128",
       "date": "2026-10-06"
     }
   ]
