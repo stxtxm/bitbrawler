@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-06T22:56:36Z",
+  "last_session": "2026-10-06T22:59:41Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -37,8 +37,8 @@
       "date": "2026-08-26"
     },
     {
-      "lesson": "Issue #1128 QA_BASE_URL: (1) import dynamique a chemin variable refuse par Vite/vitest (Unknown variable dynamic import) -> utiliser vi.resetModules() + import statique pour re-evaluer un module. (2) console.log dans qa-bot.config.js loggue aussi pendant les tests vitest qui l importent - acceptable, pas d echec.",
-      "issue": "#1128",
+      "lesson": "Issue #1131 nettoyage 77 branches orphelines: (1) dry-run d abord = commentaire issue avec listes+SHA AVANT git push --delete. (2) Surete = croiser gh pr list --head --state all par branche (MERGED/CLOSED/NO-PR/OPEN) + exclusions master/memory/balance/archive/PR-ouverte/jules. (3) CLOSED non-merge = contenu preserve dans la PR GitHub, suppression OK. (4) NO-PR = verifier ahead/behind vs master + noter SHA. (5) Supprimer par lots + re-verifier PR ouverte apres chaque lot. (6) Operation git-only = commit --allow-empty pour declencher la PR workflow.",
+      "issue": "#1131",
       "date": "2026-10-06"
     }
   ]
