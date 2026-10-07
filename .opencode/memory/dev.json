@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-06T23:05:01Z",
+  "last_session": "2026-10-07T23:28:23Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -37,9 +37,9 @@
       "date": "2026-08-26"
     },
     {
-      "lesson": "Issue #1128 QA_BASE_URL wiring: vars.QA_BASE_URL absent => chaine vide => fallback Vercel inchange (falsy). Log top-level dans qa-bot.config.js teste via vi.resetModules + import dynamique + spy console.log; 1 ligne de bruit dans les tests, acceptable.",
+      "lesson": "Issue #1128 cablage QA_BASE_URL: (1) config.js extrait baseUrl en const module + 1 ligne console.log au chargement - import statique dans tests/helpers propage le log, acceptable. (2) Tests wiring = assertions sur contenu fichier (readFileSync) plutot que re-import dynamique avec env - deterministe sous vitest. (3) qa-tester.yml: QA_BASE_URL via vars.QA_BASE_URL (repo variable, pas secret) - fallback Vercel inchange quand var absente.",
       "issue": "#1128",
-      "date": "2026-10-06"
+      "date": "2026-10-07"
     }
   ]
 }
