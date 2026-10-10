@@ -27,6 +27,8 @@ vi.mock('../../utils/lootboxUtils', () => ({
   canRollLootbox: vi.fn(() => true),
   computeNextStreak: vi.fn(() => 1),
   rollLootbox: vi.fn(),
+  loadEpicPityState: vi.fn(() => ({ epicPityCount: 0, commonStreak: 0 })),
+  saveEpicPityState: vi.fn(),
 }));
 
 // ─── Test Data ──────────────────────────────────────────────────────────────

@@ -272,6 +272,108 @@ describe('arena extracted components', () => {
     expect(screen.getByText('🎯 12/30')).toBeInTheDocument();
   });
 
+  it('InventoryPanel affiche la garantie épique restante (issue #1140)', () => {
+    render(
+      <InventoryPanel
+        inventory={[]}
+        inventoryCapacity={20}
+        equippedItems={[]}
+        previewItem={null}
+        previewSlotLabel=""
+        previewStats={[]}
+        totalBonusEntries={[]}
+        lootboxResult={null}
+        lootboxRolling={false}
+        canRollDailyLoot
+        inventoryFull={false}
+        streak={1}
+        pityCount={12}
+        epicPityCount={12}
+        itemStatMeta={ITEM_STAT_META}
+        isOfflineMode={false}
+        onClose={vi.fn()}
+        onEquip={vi.fn()}
+        onUnequip={vi.fn()}
+        onLootboxRoll={vi.fn()}
+        onCloseLootboxResult={vi.fn()}
+        onSelectItem={vi.fn()}
+        onHoverItem={vi.fn()}
+        previewItemId={null}
+      />,
+    );
+
+    expect(screen.getByText('✨ Épique garanti dans ≤ 4 ouvertures')).toBeInTheDocument();
+  });
+
+  it('InventoryPanel affiche le boost épique après des commons en série', () => {
+    render(
+      <InventoryPanel
+        inventory={[]}
+        inventoryCapacity={20}
+        equippedItems={[]}
+        previewItem={null}
+        previewSlotLabel=""
+        previewStats={[]}
+        totalBonusEntries={[]}
+        lootboxResult={null}
+        lootboxRolling={false}
+        canRollDailyLoot
+        inventoryFull={false}
+        streak={1}
+        pityCount={0}
+        epicPityCount={0}
+        commonStreak={6}
+        itemStatMeta={ITEM_STAT_META}
+        isOfflineMode={false}
+        onClose={vi.fn()}
+        onEquip={vi.fn()}
+        onUnequip={vi.fn()}
+        onLootboxRoll={vi.fn()}
+        onCloseLootboxResult={vi.fn()}
+        onSelectItem={vi.fn()}
+        onHoverItem={vi.fn()}
+        previewItemId={null}
+      />,
+    );
+
+    expect(screen.getByText('🍀 Chance épique boostée +3.0% !')).toBeInTheDocument();
+  });
+
+  it('InventoryPanel célèbre le pity dans la carte de récompense', () => {
+    const epicItem = ITEM_ASSETS.find((asset) => asset.rarity === 'epic');
+    if (!epicItem) throw new Error('Missing epic test item');
+    render(
+      <InventoryPanel
+        inventory={[]}
+        inventoryCapacity={20}
+        equippedItems={[]}
+        previewItem={null}
+        previewSlotLabel=""
+        previewStats={[]}
+        totalBonusEntries={[]}
+        lootboxResult={epicItem}
+        lootboxRolling={false}
+        canRollDailyLoot={false}
+        inventoryFull={false}
+        streak={1}
+        pityCount={0}
+        pityTriggered
+        itemStatMeta={ITEM_STAT_META}
+        isOfflineMode={false}
+        onClose={vi.fn()}
+        onEquip={vi.fn()}
+        onUnequip={vi.fn()}
+        onLootboxRoll={vi.fn()}
+        onCloseLootboxResult={vi.fn()}
+        onSelectItem={vi.fn()}
+        onHoverItem={vi.fn()}
+        previewItemId={null}
+      />,
+    );
+
+    expect(screen.getByText('🍀 Le destin se rééquilibre !')).toBeInTheDocument();
+  });
+
   it('InventoryPanel allows selecting an equipped item from the loadout to view its stats', () => {
     const rustySword = getItem('rusty_sword');
     const onSelectItem = vi.fn();

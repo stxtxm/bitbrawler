@@ -24,6 +24,8 @@ export const normalizeCharacter = (character: Character): Character => {
     lastLootRoll: character.lastLootRoll ?? 0,
     lootboxStreak: character.lootboxStreak ?? 0,
     lootboxPityCount: character.lootboxPityCount ?? 0,
+    lootboxEpicPityCount: character.lootboxEpicPityCount ?? 0,
+    lootboxCommonStreak: character.lootboxCommonStreak ?? 0,
     pveFightsLeft: character.pveFightsLeft ?? 5,
     incomingFightHistory: character.incomingFightHistory ?? [],
     equippedItems: character.equippedItems ?? { weapon: null, armor: null, accessory: null },

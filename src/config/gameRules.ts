@@ -89,6 +89,12 @@ export const GAME_RULES = {
         RECOVERY_QUEST_WINDOW_MS: 24 * 60 * 60 * 1000,
         RECOVERY_QUEST_ESSENCE: 40,
     },
+    LOOTBOX: {
+        EPIC_WITHIN: 16,
+        LEGENDARY_WITHIN: 30,
+        EPIC_BOOST_PER_COMMON: 0.005,
+        EPIC_BOOST_CAP: 0.10,
+    },
 } as const;
 
 export type CombatSpeed = (typeof GAME_RULES)['COMBAT']['SPEED_OPTIONS'][number];

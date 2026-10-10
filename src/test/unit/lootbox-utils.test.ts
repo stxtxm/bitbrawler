@@ -2,8 +2,13 @@ import { describe, it, expect } from 'vitest';
 import {
   canRollLootbox,
   getEligibleLootboxItems,
+  getEpicBoostBonus,
+  getEpicPityRemaining,
+  getLegendaryPityRemaining,
   getLootboxRarityWeights,
   getStreakBonus,
+  loadEpicPityState,
+  LOOTBOX_PITY,
   rollLootbox,
   PITY_THRESHOLD,
 } from '../../utils/lootboxUtils';
@@ -299,5 +304,85 @@ describe('lootboxUtils', () => {
     const result = rollLootbox(ITEM_ASSETS, { rng, level: 1, consecutiveLosses: 2 });
     expect(result.item).not.toBeNull();
     expect(result.item!.rarity).toBe('common');
+  });
+
+  // ─── Double Pity Guarantee (issue #1140) ──────────────────────────────
+
+  it('LOOTBOX_PITY expose les seuils épique et légendaire', () => {
+    expect(LOOTBOX_PITY.EPIC_WITHIN).toBe(16);
+    expect(LOOTBOX_PITY.LEGENDARY_WITHIN).toBe(PITY_THRESHOLD);
+  });
+
+  it('garantit un épique minimum après 15 tirages sans épique+', () => {
+    const rng = () => 0.001;
+    const result = rollLootbox(ITEM_ASSETS, { rng, level: 10, epicPityCount: LOOTBOX_PITY.EPIC_WITHIN - 1 });
+    expect(result.item).not.toBeNull();
+    expect(['epic', 'legendary']).toContain(result.item!.rarity);
+    expect(result.epicPityTriggered).toBe(true);
+    expect(result.epicPityCount).toBe(0);
+  });
+
+  it('ne déclenche pas le pity épique avant le seuil', () => {
+    const rng = () => 0.001;
+    const result = rollLootbox(ITEM_ASSETS, { rng, level: 10, epicPityCount: LOOTBOX_PITY.EPIC_WITHIN - 3 });
+    expect(result.item!.rarity).toBe('common');
+    expect(result.epicPityTriggered).toBe(false);
+    expect(result.epicPityCount).toBe(LOOTBOX_PITY.EPIC_WITHIN - 2);
+  });
+
+  it('le compteur épique reset sur un tirage épique naturel', () => {
+    const rng = () => 0.9;
+    const result = rollLootbox(ITEM_ASSETS, { rng, level: 10, epicPityCount: 10 });
+    expect(['epic', 'legendary']).toContain(result.item!.rarity);
+    expect(result.epicPityCount).toBe(0);
+  });
+
+  it('le compteur épique reset aussi sur un légendaire', () => {
+    const rng = () => 0.999;
+    const result = rollLootbox(ITEM_ASSETS, { rng, level: 10, epicPityCount: 7, pityCount: 5 });
+    expect(result.item!.rarity).toBe('legendary');
+    expect(result.epicPityCount).toBe(0);
+    expect(result.pityCount).toBe(0);
+  });
+
+  it('getEpicPityRemaining retourne les ouvertures restantes avant garanti', () => {
+    expect(getEpicPityRemaining(0)).toBe(LOOTBOX_PITY.EPIC_WITHIN);
+    expect(getEpicPityRemaining(15)).toBe(1);
+    expect(getEpicPityRemaining(99)).toBe(0);
+  });
+
+  it('getLegendaryPityRemaining retourne les ouvertures restantes avant garanti', () => {
+    expect(getLegendaryPityRemaining(0)).toBe(LOOTBOX_PITY.LEGENDARY_WITHIN);
+    expect(getLegendaryPityRemaining(29)).toBe(1);
+    expect(getLegendaryPityRemaining(99)).toBe(0);
+  });
+
+  it('getEpicBoostBonus ajoute +0.5% par common consécutive, capé à +10%', () => {
+    expect(getEpicBoostBonus(0)).toBe(0);
+    expect(getEpicBoostBonus(4)).toBeCloseTo(0.02, 5);
+    expect(getEpicBoostBonus(20)).toBeCloseTo(0.10, 5);
+    expect(getEpicBoostBonus(100)).toBeCloseTo(0.10, 5);
+  });
+
+  it('le boost progressif augmente le poids épique du tirage', () => {
+    const noBoost = rollLootbox(ITEM_ASSETS, { rng: () => 0.82, level: 10, commonStreak: 0 });
+    const boosted = rollLootbox(ITEM_ASSETS, { rng: () => 0.82, level: 10, commonStreak: 20 });
+    expect(boosted.epicBoost).toBeGreaterThan(noBoost.epicBoost);
+    expect(boosted.epicBoost).toBeCloseTo(0.10, 5);
+  });
+
+  it('commonStreak reset après un non-common, incrémenté après un common', () => {
+    const afterCommon = rollLootbox(ITEM_ASSETS, { rng: () => 0.001, level: 10, commonStreak: 3 });
+    expect(afterCommon.item!.rarity).toBe('common');
+    expect(afterCommon.commonStreak).toBe(4);
+    const afterRare = rollLootbox(ITEM_ASSETS, { rng: () => 0.9, level: 10, commonStreak: 3 });
+    expect(afterRare.item!.rarity).not.toBe('common');
+    expect(afterRare.commonStreak).toBe(0);
+  });
+
+  it('loadEpicPityState relit les compteurs locaux sans migration', () => {
+    const state = loadEpicPityState('test-char-1140');
+    expect(state.epicPityCount).toBeGreaterThanOrEqual(0);
+    expect(state.commonStreak).toBeGreaterThanOrEqual(0);
   });
 });
