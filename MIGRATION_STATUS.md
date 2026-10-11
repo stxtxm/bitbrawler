@@ -1,13 +1,23 @@
 # Migration Status: Supabase — ✅ Complete
 
-## 🔄 Compte actif: `gunuqjythwgbdbuyshoh` (switch 2026-08-23)
+## Base de référence: `bhbpvbfvuayafygdrbgb` (switch 2026-10-11)
 
-L'ancien compte `bhbpvbfvuayafygdrbgb` est restreint (`exceed_egress_quota`, reset ~4 sept).
-Bootstrap complet exécuté sur le nouveau projet (voir `.env.example` bloc ACTIF/LEGACY).
+Décision du 2026-10-11 : la base de référence est **revenue sur `bhbpvbfvuayafygdrbgb`**,
+alignée sur la cible de déploiement après la migration Vercel → Netlify.
 
-### Migrations exécutées sur `gunuqjythwgbdbuyshoh`
+Le compte `gunuqjythwgbdbuyshoh` (quota frais, switch du 2026-08-23) reste disponible
+comme **revert d'urgence** : 1 copier-coller du bloc LEGACY dans `.env.example`,
+puis `npx netlify deploy --prod`.
+
+⚠️ Conséquence : le fallback codé en dur dans `src/config/supabase.ts` ne se déclenche
+que si `VITE_SUPABASE_URL` manque au build. Dans ce cas **toute l'app bascule en
+silence sur l'autre base**. Après tout changement d'hébergeur, vérifier le
+sous-domaine réellement embarqué dans le bundle live (cf. runbook AGENTS.md).
+
+### Migrations exécutées sur `bhbpvbfvuayafygdrbgb`
 - [x] Bootstrap complet (`characters` + `maintenance` + `server_time` + indexes + RLS anon)
 - [x] **`essence ALTER TYPE double precision`** — les gains fractionnaires rejetaient l'UPDATE entier en 22P02
+- [ ] `appearance` column — voir `supabase/migrations/20261011_add_appearance_column.md` (**à exécuter manuellement** dans Supabase Dashboard > SQL Editor)
 - ⚠️ Toute future migration SQL = issue dédiée SANS `/oc`, exécutée manuellement (guard reviewer bloque les PR contenant du DDL)
 
 ## ✅ Executed migrations (recent, ancien compte — historique)

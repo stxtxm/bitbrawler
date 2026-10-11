@@ -996,29 +996,45 @@ Increase XP multiplier from 1.0 to 1.2 for level 20+.
 
 Voir **[docs/AGENT_PIPELINE.md](docs/AGENT_PIPELINE.md)** : flow issue→dev→CI→reviewer→merge, cycle de vie des mémoires (auto-compaction), modèles, incidents & procédures.
 
-## 🔧 Infra Runbook — Supabase & déploiement (ajouté 2026-08-23)
+## 🔧 Infra Runbook — Supabase & déploiement (mis à jour 2026-10-11)
 
-### Comptes/projets actifs
+### Comptes/projets
 | Projet | Rôle | Statut |
 |---|---|---|
-| `gunuqjythwgbdbuyshoh` | **ACTIF** (prod + scripts) | quota frais |
-| `bhbpvbfvuayafygdrbgb` | LEGACY (revert 1-copier-coller dans `.env.example`) | restreint `exceed_egress_quota` jusqu'à ~4 sept |
+| `bhbpvbfvuayafygdrbgb` | **BASE DE RÉFÉRENCE** (prod + scripts) | décidée le 2026-10-11 |
+| `gunuqjythwgbdbuyshoh` | Revert d'urgence (1 copier-coller dans `.env.example`) | ne plus utilisé en prod |
+
+⚠️ Décision du 2026-10-11 : la migration Vercel → Netlify a mis en évidence le
+split entre les deux comptes, et la base de référence est alignée sur la cible de
+déploiement. **Conséquence à surveiller** : le fallback codé en dur dans
+`src/config/supabase.ts` ne se déclenche que si `VITE_SUPABASE_URL` manque au
+build — et dans ce cas **toute l'app bascule en silence sur l'autre base**. Après
+tout changement d'hébergeur ou de build, vérifier le sous-domaine réellement
+embarqué dans le bundle :
+```bash
+curl -s https://<site>/ | grep -o 'assets/index-[A-Za-z0-9_-]*\.js'   # puis
+curl -s https://<site>/<bundle> | grep -o '[a-z]*\.supabase\.co' | sort -u
+```
 
 ⚠️ Le quota egress free tier est **par compte/organisation** — un 2e projet sur le même compte ne reset rien.
 
 ### Checklist de switch complète (les 8 points, sinon bugs silencieux)
 1. SQL bootstrap sur le nouveau projet (`characters`, `maintenance`, `server_time` + indexes + policies RLS anon). **`essence` = `double precision`** (gains fractionnaires — INTEGER rejetait l'UPDATE entier en 22P02)
-2. Vercel env vars **Production** : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (client) **ET** `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (fonctions serveur `/api/idle-processor`)
+2. Netlify env vars **Production** : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (client) **ET** `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (fonctions serveur `/api/idle-processor`). Script : `./scripts/netlify-setup.sh` (lit `.env`, n'affiche jamais les valeurs)
 3. GitHub Secrets : `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 4. `.env` local : bloc ACTIF mis à jour (LEGACY commenté pour revert)
-5. **Redeploy Vercel obligatoire après tout save d'env** (CLI `vercel env add` ne déploie pas non plus — `vercel --prod` requis depuis le dossier lié au BON projet)
+5. **Redéployer Netlify après tout save d'env** : `npx netlify deploy --prod`. Les variables sont injectées dans la fonction **au build** — les ajouter dans l'UI sans redéployer ne change rien
 6. Test end-to-end : créer un perso → vérifier ligne en DB
 7. Test idle API : `POST /api/idle-processor {"character_id":"<id existant>"}` → doit renvoyer `{fights:...}`, jamais `Character not found`/`Invalid API key`
-8. Cron-job.org : rien à changer (URL fixe `bitbrawler.vercel.app/api/idle-processor`), mais vérifier qu'il tourne
+8. Cron-job.org : l'URL **est** à changer (`bitbrawler.vercel.app` → `bitbrawler.netlify.app`), le path `/api/idle-processor` est identique par construction
 
 ### Pièges rencontrés (voir aussi memory/shared.json known_issues)
 - **404 "Character not found" sur un perso EXISTANT** = vars serveur périmées (erreur DB avalée). Depuis #754 la réponse inclut `db_target` + `detail` — toujours tester avec un ID réel
-- **"Invalid API key"** = `SERVICE_ROLE_KEY` périmée/fausse dans Vercel (coller sans espace ni quote ; copier depuis le Dashboard Supabase)
+- **"Invalid API key"** = `SERVICE_ROLE_KEY` périmée/fausse dans Netlify (coller sans espace ni quote ; copier depuis le Dashboard Supabase)
+- **"Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY"** = la variable n'existe pas sur le site Netlify. Depuis le 2026-10-11 l'erreur nomme la variable manquante (`missing_env`) au lieu d'un message ambigu — ne plus tâtonner, lire le `detail`
+- **502 `res.writeHead is not a function`** = la fonction a été écrite comme un handler Node `http`. Netlify Functions v2 expose le **standard Web** (`Request` → `Response`) : il faut un shim. C'est exactement ce qui a cassé l'idle le 2026-10-09, masqué par le cast TypeScript `as (req: IncomingMessage, …)`
+- **Vercel `402 DEPLOYMENT_DISABLED`** = projet désactivé au niveau du compte (quota/moyen de paiement). Aucun code ne contourne ; c'est ce qui a déclenché la migration Netlify du 2026-10-11
+- **Badge "Powered by Netlify"** = le HUD injecté par l'edge crée une `<iframe id="nl-hud-frame">` (pas de shadow DOM) → masquable en CSS. Le retirer de façon supportée demande un plan payant
 - **SW v6 servait de vieux bundles post-deploy** → v7 network-first JS/CSS. Après deploy majeur : hard refresh une fois
 - **Reviews CHANGES_REQUESTED obsolètes** bloquent les merges : dismisser via `gh api -X PUT repos/.../pulls/N/reviews/RID/dismissals -f message=...` puis relancer `reviewer.yml -f pr_number=N`
 - **Modèles agents** : `opencode/muse-spark-1.3-contributor-free` (= `muse`) partout (opencode.json, `.opencode/agents/*.md` frontmatter, tableaux de fallback des workflows avec repli `opencode/nemotron-3.5-lightning-free`)
