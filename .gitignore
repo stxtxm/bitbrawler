@@ -29,6 +29,8 @@ dist-ssr
 
 # Environment variables
 .env
+# Backups of local env files — may contain service_role keys
+.env.bak*
 .env.local
 .env.development.local
 .env.test.local

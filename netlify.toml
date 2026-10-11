@@ -1,5 +1,9 @@
 [build]
-  command = "npm run build"
+  # vite build only, not `npm run build`. The repo's `build` script is
+  # `tsc && vite build`, and CI already runs `npx tsc --noEmit` on every PR and
+  # blocks the merge when it fails — so master is always type-clean. Paying for
+  # a second type-check on every deploy is wasted build minutes.
+  command = "npx vite build"
   publish = "dist"
 
 [build.environment]
