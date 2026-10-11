@@ -1,0 +1,14 @@
+// Netlify injects its "Powered by Netlify" HUD at the edge: a script appended
+// after </html> that mounts an <iframe id="nl-hud-frame"> fixed to the
+// bottom-right of the document.
+//
+// The iframe lives in the top-level document (no shadow DOM), so it is
+// reachable from our own stylesheet. Netlify offers no toggle for this on the
+// Hobby plan, and hiding it is the only way to keep the frame clean on a free
+// tier — if they change the element id, this rule simply stops matching and the
+// badge comes back, which is the safe failure mode.
+#nl-hud-frame,
+#nl-badge-frame,
+a[data-netlify-badge] {
+  display: none !important;
+}
