@@ -147,11 +147,38 @@ const CharacterCreation = () => {
           name: trimmedName
         }
 
-        const { data: newChar, error: insertError } = await supabase
+        const payload = convertToSupabase(finalCharacter)
+        let { data: newChar, error: insertError } = await supabase
           .from('characters')
-          .insert([convertToSupabase(finalCharacter)])
+          .insert([payload])
           .select()
           .single();
+
+        // The cosmetic `appearance` column is optional and rolled out
+        // per-project, so a database that has not run the migration yet
+        // rejects the whole insert with PGRST204 — which silently aborted
+        // creation instead of saving the character. Retry once without the
+        // cosmetic payload so the character exists until the migration lands.
+        if (
+          insertError &&
+          insertError.code === 'PGRST204' &&
+          /appearance/.test(insertError.message) &&
+          payload.appearance !== undefined
+        ) {
+          console.warn(
+            '[CharacterCreation] `appearance` column missing — retrying without cosmetics:',
+            insertError.message,
+          )
+          const { appearance: _cosmetics, ...withoutAppearance } = payload as { appearance?: unknown }
+          void _cosmetics
+          const retry = await supabase
+            .from('characters')
+            .insert([withoutAppearance])
+            .select()
+            .single()
+          newChar = retry.data
+          insertError = retry.error
+        }
 
         if (insertError) throw insertError;
 
@@ -168,10 +195,17 @@ const CharacterCreation = () => {
       if (errMsg.includes('violates check constraint') || errMsg.includes('violates row-level')) {
         setNameError('DATABASE ERROR - Try again later');
         setShowErrorModal(true);
+      } else if (err.code === 'PGRST204' || /schema cache/.test(errMsg)) {
+        // A schema mismatch is NOT a connection problem — the connection works,
+        // which is why no modal ever appeared and creation failed with no
+        // visible cause. Say so instead of blaming the network.
+        console.error('[CharacterCreation] schema mismatch:', errMsg);
+        setNameError('DATABASE SCHEMA MISMATCH - try again later');
+        setShowErrorModal(true);
       } else {
         openModal(connectionMessage);
       }
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
   }
 
