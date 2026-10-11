@@ -434,8 +434,17 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !supabaseKey) {
+    const missing = [
+      !supabaseUrl ? 'SUPABASE_URL' : null,
+      !supabaseKey ? 'SUPABASE_SERVICE_ROLE_KEY' : null,
+    ].filter(Boolean)
+    console.error('[IdleProcessor] Missing env vars:', missing.join(', '))
     res.writeHead(500, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify({ error: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY' }))
+    res.end(JSON.stringify({
+      error: `Missing ${missing.join(' and ')}`,
+      missing_env: missing,
+      hint: 'Define them in Netlify (Site configuration > Environment variables, production context) or GitHub Actions secrets, then redeploy.',
+    }))
     return
   }
 

@@ -31,7 +31,10 @@ for key in "${required[@]}"; do
     continue
   fi
   echo "-> setting $key (${#value} chars)"
-  npx --yes netlify-cli env:set --context production "$key" "$value"
+  # key/value MUST come before the flags: --context is variadic (<context...>)
+  # and swallows the following positionals, which made it fail with
+  # "missing required argument 'key'".
+  npx --yes netlify-cli env:set "$key" "$value" --context production --force
 done
 
 if [ ${#missing[@]} -gt 0 ]; then

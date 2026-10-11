@@ -45,6 +45,20 @@ export default async function idleProcessor(req: Request): Promise<Response> {
     },
   }
 
-  await (handler as unknown as (r: ShimRequest, s: ShimResponse) => Promise<void>)(shimReq, shimRes)
+  try {
+    await (handler as unknown as (r: ShimRequest, s: ShimResponse) => Promise<void>)(shimReq, shimRes)
+  } catch (err) {
+    // Without this, an unhandled throw becomes an opaque 502 from the runtime
+    // with no trace of the cause — the exact shape of the failure that hid the
+    // broken shim for hours. The core handler already answers its own failures,
+    // so anything reaching here is an adapter-level bug.
+    const detail = err instanceof Error ? err.message : String(err)
+    console.error('[idle-processor] unhandled:', err)
+    return new Response(
+      JSON.stringify({ error: 'Internal function error', detail }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
+    )
+  }
+
   return new Response(body, { status, headers })
 }
