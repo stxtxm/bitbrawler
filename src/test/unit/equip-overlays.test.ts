@@ -353,7 +353,12 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       // the iris uses the shaded eye tone, so accept it as well as the base
       expect(headZone.some((c) => c === 8 || c === shadeIndexOf(8))).toBe(true);
       expect(headZone).toContain(3);
-      expect(out.grid[marks.eyeY - 3][marks.faceCx]).toBe(ACCENT_INDEX);
+      // The gem rides the brim, one row above the brow, not on the forehead.
+      expect(out.grid[marks.eyeY - 2][marks.faceCx]).toBe(ACCENT_INDEX);
+      // A helm must never cover the eyes: the cap stops at the brow line.
+      const eyeRow = out.grid[marks.eyeY] ?? [];
+      expect(eyeRow.filter((c) => c === FIELD_INDEX || c === FIELD_DARK).length).toBe(0);
+      expect(eyeRow.some((c) => c === 8 || c === shadeIndexOf(8))).toBe(true);
     }
     const iron = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: null,
@@ -705,5 +710,27 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       accessory: null,
     });
     expect(unknown.grid).toEqual(base.grid);
+  });
+
+  it('anchors a shield outboard of the hand, never across the torso', () => {
+    const base = generateSprite16('shield-anchor', 'male', { ...STD_MALE });
+    const marks = computeLandmarks(base.grid);
+    const out = applyEquipmentOverlays(base.grid, base.palette, {
+      weapon: null,
+      armor: byId('guardian_shield'),
+      accessory: null,
+    });
+    const rows: number[] = [];
+    for (let y = 0; y < out.grid.length; y++) {
+      if (out.grid[y].some((c) => c === FIELD_INDEX || c === TRIM_INDEX)) rows.push(y);
+    }
+    expect(rows.length).toBeGreaterThan(4);
+    // The shield must not start inside the torso: its leftmost cell has to sit
+    // at or before the hand, otherwise it reads as a slab painted on the chest.
+    let minX = 99;
+    rows.forEach((y) => out.grid[y].forEach((c, x) => {
+      if (c === FIELD_INDEX || c === TRIM_INDEX) minX = Math.min(minX, x);
+    }));
+    expect(minX).toBeLessThanOrEqual(marks.palmL.x);
   });
 });
