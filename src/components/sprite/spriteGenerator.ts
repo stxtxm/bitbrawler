@@ -12,6 +12,7 @@ import {
   SPRITE_BUILDS,
   SpriteGrid,
   SpritePalette,
+  SpriteAnimKind,
   highlightIndexOf,
   shadeIndexOf,
 } from './spriteTypes';
@@ -712,6 +713,73 @@ function applyAttackPose(base: SpriteGrid, phase: StridePhase): void {
   else collectMove(base, fist, 1, -1);
 }
 
+// Procedural idle breathing: chest, head and arms lift rhythmically while feet
+// stay grounded on rows 15-17. Secondary hair motion sways at peak breath.
+function applyIdleBreathing(base: SpriteGrid, phase: number): void {
+  if (phase === 0 || phase === 3) return;
+  const upper: LimbCell[] = [];
+  for (let y = 0; y <= 13; y++) {
+    for (let x = 0; x < 12; x++) {
+      const v = base[y]?.[x] ?? 0;
+      if (v !== 0) upper.push({ x, y, v });
+    }
+  }
+  collectMove(base, upper, 0, -1);
+  for (let x = 0; x < 12; x++) {
+    const below = base[14]?.[x] ?? 0;
+    if (below !== 0 && (base[13]?.[x] ?? 0) === 0) {
+      base[13][x] = below;
+    }
+  }
+}
+
+// Procedural hit recoil: upper body reels backward on impact and braces.
+function applyHitReaction(base: SpriteGrid, phase: number): void {
+  if (phase === 2) return;
+  const upper: LimbCell[] = [];
+  for (let y = 0; y <= 14; y++) {
+    for (let x = 0; x < 12; x++) {
+      const v = base[y]?.[x] ?? 0;
+      if (v !== 0) upper.push({ x, y, v });
+    }
+  }
+  const dx = -1;
+  const dy = phase === 0 ? 1 : 0;
+  collectMove(base, upper, dx, dy);
+  for (let x = 0; x < 12; x++) {
+    const below = base[15]?.[x] ?? 0;
+    if (below !== 0 && (base[14]?.[x] ?? 0) === 0) {
+      base[14][x] = below;
+    }
+  }
+}
+
+// Procedural victory celebration: anticipation dip then arm thrust high in the air.
+function applyVictoryPose(base: SpriteGrid, phase: number): void {
+  if (phase === 0) {
+    const upper: LimbCell[] = [];
+    for (let y = 0; y <= 14; y++) {
+      for (let x = 0; x < 12; x++) {
+        const v = base[y]?.[x] ?? 0;
+        if (v !== 0) upper.push({ x, y, v });
+      }
+    }
+    collectMove(base, upper, 0, 1);
+    return;
+  }
+  const fist = rightArmBlock(base);
+  if (fist.length > 0) {
+    collectMove(base, fist, 1, -2);
+  }
+  if (phase === 1 || phase === 2) {
+    const all: LimbCell[] = [];
+    base.forEach((row, y) => row.forEach((v, x) => {
+      if (v !== 0) all.push({ x, y, v });
+    }));
+    collectMove(base, all, 0, -1);
+  }
+}
+
 function finishGrid(base: SpriteGrid, features: SpriteFeatures, pose?: (grid: SpriteGrid) => void): SpriteGrid {
   applyBuild(base, features.build);
   applyAnatomy(base);
@@ -735,11 +803,10 @@ export function generateSprite16(
   return { grid, palette, width: SPRITE_WIDTH, height: SPRITE_HEIGHT };
 }
 
-export type SpriteAnimKind = 'run' | 'attack';
+export type { SpriteAnimKind } from './spriteTypes';
 
-// Animation frames for the run cycle / attack swing. Fully procedural from
-// the static body (windup / strike / recover): same head, same colors, same
-// size — torso never teleports, nothing vanishes. Works for every body type.
+// Animation frames for run cycle, attack swing, idle breathing, hit recoil,
+// and victory celebration. Fully procedural from the composed body.
 export function generateSpriteFrames(
   seed: string,
   gender: 'male' | 'female',
@@ -748,14 +815,33 @@ export function generateSpriteFrames(
 ): GeneratedSprite[] | null {
   const features = resolveSpriteFeatures(seed, gender, appearance);
   const palette = buildPalette(features);
-  const phases: StridePhase[] = kind === 'attack' ? [0, 1, 2] : [0, 1, 2, 1];
+  const phases: number[] =
+    kind === 'attack'
+      ? [0, 1, 2]
+      : kind === 'run'
+        ? [0, 1, 2, 1]
+        : kind === 'idle'
+          ? [0, 1, 2, 3]
+          : kind === 'hit'
+            ? [0, 1, 2]
+            : [0, 1, 2, 3]; // victory
   return phases.map((phase) => {
     const base = composeBaseGrid(features.headType, features.bodyType);
     applyBuild(base, features.build);
     applyAnatomy(base);
-    if (kind === 'attack') applyAttackPose(base, phase);
-    else applyStride(base, phase);
-    if (kind === 'run' && phase === 1) applyHairSway(base);
+    if (kind === 'attack') applyAttackPose(base, phase as StridePhase);
+    else if (kind === 'run') applyStride(base, phase as StridePhase);
+    else if (kind === 'idle') applyIdleBreathing(base, phase);
+    else if (kind === 'hit') applyHitReaction(base, phase);
+    else if (kind === 'victory') applyVictoryPose(base, phase);
+
+    if (
+      (kind === 'run' && phase === 1) ||
+      (kind === 'idle' && phase === 2) ||
+      (kind === 'victory' && phase === 2)
+    ) {
+      applyHairSway(base);
+    }
     const grid = upscale(base);
     applySnes(grid);
     applyDetails(grid);

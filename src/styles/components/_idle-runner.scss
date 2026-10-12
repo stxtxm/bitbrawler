@@ -81,6 +81,20 @@
   display: flex;
   animation: runCycle 0.32s ease-in-out infinite;
 
+  &::before {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 50%;
+    translate: -50%;
+    width: min(70%, 75px);
+    height: clamp(3px, 1cqi, 6px);
+    background: radial-gradient(ellipse, rgba(0, 0, 0, 0.45), transparent);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: -1;
+  }
+
   &.anim-paused {
     animation-play-state: paused !important;
   }

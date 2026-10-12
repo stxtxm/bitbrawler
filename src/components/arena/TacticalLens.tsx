@@ -18,7 +18,7 @@ export const TacticalLens = memo(function TacticalLens({ opponent, hint, onOpenI
       <div className="tactical-lens-label">TACTICAL LENS</div>
       <div className="tactical-lens-card">
         <div className="tactical-lens-avatar">
-          <SpriteCanvas seed={opponent.seed} gender={opponent.gender} appearance={opponent.appearance} scale={6} />
+          <SpriteCanvas seed={opponent.seed} gender={opponent.gender} appearance={opponent.appearance} scale={6} animate="idle" />
         </div>
         <div className="tactical-lens-info">
           <div className="tactical-lens-archetype" data-testid="tactical-archetype">

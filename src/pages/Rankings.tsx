@@ -194,7 +194,7 @@ const Rankings = () => {
                                     <div className={`col-rank rank-${index + 1}`}>{index + 1}</div>
                                     <div className="col-avatar">
                                         <div className="mini-avatar">
-                                            <SpriteCanvas seed={char.seed} gender={char.gender} appearance={char.appearance} scale={3} />
+                                            <SpriteCanvas seed={char.seed} gender={char.gender} appearance={char.appearance} scale={3} animate="idle" />
                                         </div>
                                     </div>
                                     <div className="col-name">

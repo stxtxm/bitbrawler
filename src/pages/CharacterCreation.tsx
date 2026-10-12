@@ -257,6 +257,7 @@ const CharacterCreation = () => {
                   gender={gender}
                   appearance={generatedCharacter.appearance}
                   scale={window.innerWidth > 768 ? 25 : 12}
+                  animate="idle"
                 />
               )}
             </div>

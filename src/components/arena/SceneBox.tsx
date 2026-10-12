@@ -60,7 +60,18 @@ export const SceneBox = memo(function SceneBox({
         />
       ) : (
         <div className="scene-pvp-center">
-          <SpriteCanvas seed={character.seed} gender={character.gender} appearance={character.appearance} equippedItems={character.equippedItems} scale={pvpScale} />
+          <div className="fighter-character-wrap">
+            <SpriteCanvas
+              seed={character.seed}
+              gender={character.gender}
+              appearance={character.appearance}
+              equippedItems={character.equippedItems}
+              scale={pvpScale}
+              animate="idle"
+              className="pixel-character"
+            />
+            <div className="fighter-shadow" />
+          </div>
         </div>
       )}
     </div>

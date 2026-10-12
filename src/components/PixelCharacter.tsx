@@ -4,9 +4,9 @@ import { PIXEL_HEADS, PIXEL_BODIES, PIXEL_PALETTES } from './PixelAssets';
 import { mulberry32, getSeedFromText } from '../utils/randomUtils';
 import type { CharacterAppearance } from '../types/Character';
 
-export const MALE_HEAD_TYPES = ['male', 'male_bald', 'male_cap', 'male_beard', 'male_mohawk', 'male_sidepart', 'male_spiky', 'male_afro', 'male_helmet', 'male_glasses', 'male_hood', 'male_long'] as const;
-export const FEMALE_HEAD_TYPES = ['female', 'female_pigtails', 'female_braid', 'female_ponytail', 'female_short', 'female_bob', 'female_waves', 'female_afro', 'female_helmet', 'female_pixie', 'female_bang', 'female_bun'] as const;
-export const BODY_TYPES = ['basic', 'sleeveless', 'armor', 'jacket', 'vest', 'robe', 'hoodie', 'tunic'] as const;
+export const MALE_HEAD_TYPES = ['male', 'male_bald', 'male_cap', 'male_beard', 'male_mohawk', 'male_sidepart', 'male_spiky', 'male_afro', 'male_helmet', 'male_glasses', 'male_hood', 'male_long', 'male_samurai', 'male_undercut', 'male_ninja', 'male_cyber', 'male_dreadlocks', 'male_paladin'] as const;
+export const FEMALE_HEAD_TYPES = ['female', 'female_pigtails', 'female_braid', 'female_ponytail', 'female_short', 'female_bob', 'female_waves', 'female_afro', 'female_helmet', 'female_pixie', 'female_bang', 'female_bun', 'female_valkyrie', 'female_twintails', 'female_ninja', 'female_cyber', 'female_goth', 'female_warrior'] as const;
+export const BODY_TYPES = ['basic', 'sleeveless', 'armor', 'jacket', 'vest', 'robe', 'hoodie', 'tunic', 'ninja_gi', 'paladin', 'cyber_suit', 'monk_gi', 'assassin'] as const;
 
 export type HeadType = keyof typeof PIXEL_HEADS;
 export type BodyType = keyof typeof PIXEL_BODIES;
