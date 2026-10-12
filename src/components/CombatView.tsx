@@ -731,7 +731,14 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                             <div className={`scan-card ${scanLocked ? 'locked' : 'scanning'}`}>
                                 <div className="scan-subtitle">{scanLocked ? 'OPPONENT FOUND' : 'SCANNING...'}</div>
                                 <div className="scan-avatar">
-                                    <SpriteCanvas seed={scanList[scanIndex]?.seed || opponent.seed} gender={scanList[scanIndex]?.gender || opponent.gender} appearance={scanList[scanIndex]?.appearance ?? opponent.appearance} scale={8} />
+                                    <SpriteCanvas
+                                        seed={scanList[scanIndex]?.seed || opponent.seed}
+                                        gender={scanList[scanIndex]?.gender || opponent.gender}
+                                        appearance={scanList[scanIndex]?.appearance ?? opponent.appearance}
+                                        scale={8}
+                                        animate="idle"
+                                        className="pixel-character"
+                                    />
                                 </div>
                                 <div className="scan-name">{scanList[scanIndex]?.name || opponent.name}</div>
                                 <div className="scan-level">LVL {scanList[scanIndex]?.level ?? opponent.level}</div>
@@ -749,7 +756,15 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                 {phase === 'vs' && (
                     <div key={`combat-vs-${visibilityKey}`} className="combat-vs">
                         <div className="vs-fighter vs-left">
-                            <SpriteCanvas seed={player.seed} gender={player.gender} appearance={player.appearance} equippedItems={player.equippedItems} scale={8} />
+                            <SpriteCanvas
+                                seed={player.seed}
+                                gender={player.gender}
+                                appearance={player.appearance}
+                                equippedItems={player.equippedItems}
+                                scale={8}
+                                animate="idle"
+                                className="pixel-character"
+                            />
                             <div className="vs-fighter-name">{player.name}</div>
                             <div className="vs-fighter-lvl">LVL {player.level}</div>
                         </div>
@@ -769,7 +784,15 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                     })()}
                                 </div>
                             ) : (
-                                <SpriteCanvas seed={opponent.seed} gender={opponent.gender} appearance={opponent.appearance} equippedItems={opponent.equippedItems} scale={8} />
+                                <SpriteCanvas
+                                    seed={opponent.seed}
+                                    gender={opponent.gender}
+                                    appearance={opponent.appearance}
+                                    equippedItems={opponent.equippedItems}
+                                    scale={8}
+                                    animate="idle"
+                                    className="pixel-character"
+                                />
                             )}
                             <div className="vs-fighter-name">{opponent.name}</div>
                             <div className="vs-fighter-lvl">LVL {opponent.level}</div>
@@ -786,7 +809,25 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                             {bossDef && <SceneBackground def={bossDef.background} />}
                             <div key={`player-${currentRound}`} className={`fighter-side left${fighterEntrance ? ' enter-left' : ''}${actionPulse?.actor === 'player' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'opponent' ? ` react-${reactionType}` : ''}${showPlayerDefeat ? ' defeated' : ''}`}>
                                 <div className="fighter-character-wrap">
-                                    <SpriteCanvas seed={player.seed} gender={player.gender} appearance={player.appearance} equippedItems={player.equippedItems} scale={6} />
+                                    <SpriteCanvas
+                                        seed={player.seed}
+                                        gender={player.gender}
+                                        appearance={player.appearance}
+                                        equippedItems={player.equippedItems}
+                                        scale={6}
+                                        animate={
+                                            showPlayerDefeat
+                                                ? 'hit'
+                                                : showOpponentDefeat
+                                                    ? 'victory'
+                                                    : actionPulse?.actor === 'player'
+                                                        ? 'attack'
+                                                        : actionPulse?.actor === 'opponent'
+                                                            ? 'hit'
+                                                            : 'idle'
+                                        }
+                                        className="pixel-character"
+                                    />
                                     <div className="fighter-shadow" />
                                 </div>
                                 <div className="fighter-name-small">{player.name}</div>
@@ -803,7 +844,25 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                     {(matchType === 'pve' || matchType === 'boss') && monsterId ? (
                                         <PixelMonster monsterId={monsterId} scale={5} aura={matchType === 'boss' ? bossDef?.element ?? null : null} />
                                     ) : (
-                                        <SpriteCanvas seed={opponent.seed} gender={opponent.gender} appearance={opponent.appearance} equippedItems={opponent.equippedItems} scale={6} />
+                                        <SpriteCanvas
+                                            seed={opponent.seed}
+                                            gender={opponent.gender}
+                                            appearance={opponent.appearance}
+                                            equippedItems={opponent.equippedItems}
+                                            scale={6}
+                                            animate={
+                                                showOpponentDefeat
+                                                    ? 'hit'
+                                                    : showPlayerDefeat
+                                                        ? 'victory'
+                                                        : actionPulse?.actor === 'opponent'
+                                                            ? 'attack'
+                                                            : actionPulse?.actor === 'player'
+                                                                ? 'hit'
+                                                                : 'idle'
+                                            }
+                                            className="pixel-character"
+                                        />
                                     )}
                                     <div className="fighter-shadow" />
                                 </div>

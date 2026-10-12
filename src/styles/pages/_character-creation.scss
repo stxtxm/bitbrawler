@@ -71,14 +71,31 @@
 
 .preview-box {
     flex: 1;
-    background: radial-gradient(circle, #0a0a0a 0%, #000 100%);
+    background: radial-gradient(circle at 50% 40%, #161824 0%, #05060a 80%, #000 100%);
     @include retro-border(4px, #fff);
     @include flex-center;
     min-height: 300px;
     box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.9);
     overflow: hidden;
+    position: relative;
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: 8%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 140px;
+        height: 18px;
+        background: radial-gradient(ellipse, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0) 70%);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 1;
+    }
 
     >* {
+        position: relative;
+        z-index: 2;
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;

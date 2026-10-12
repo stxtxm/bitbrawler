@@ -462,4 +462,78 @@ describe('sprite generator v2', () => {
     const counts = frames.map((f) => f.grid.flat().filter((c) => c !== 0).length);
     expect(Math.max(...counts) - Math.min(...counts)).toBeLessThanOrEqual(14);
   });
+
+  it('generates idle breathing frames with grounded feet and animated upper body', () => {
+    const frames = generateSpriteFrames('idle-check', 'male', {
+      build: 'standard',
+      bodyType: 'basic',
+      headType: 'male',
+    }, 'idle')!;
+    expect(frames).toHaveLength(4);
+    for (const f of frames) {
+      expect(f.grid.length).toBe(42);
+      expect(f.width).toBe(SPRITE_WIDTH);
+      expect(f.height).toBe(SPRITE_HEIGHT);
+      // Feet remain grounded on row 40/41
+      expect(f.grid[40].some((c) => c !== 0)).toBe(true);
+      expect(f.grid[41].some((c) => c !== 0)).toBe(true);
+    }
+    // Phase 1 (inhale) differs from Phase 0 (rest)
+    const [rest, inhale] = frames.map((f) => JSON.stringify(f.grid));
+    expect(rest).not.toBe(inhale);
+  });
+
+  it('generates hit recoil frames with impact flinch and recovery', () => {
+    const frames = generateSpriteFrames('hit-check', 'female', {
+      build: 'standard',
+      bodyType: 'basic',
+      headType: 'female',
+    }, 'hit')!;
+    expect(frames).toHaveLength(3);
+    for (const f of frames) {
+      expect(f.grid.length).toBe(42);
+      expect(f.width).toBe(SPRITE_WIDTH);
+      expect(f.height).toBe(SPRITE_HEIGHT);
+    }
+    const [impact, recoil, recovery] = frames.map((f) => JSON.stringify(f.grid));
+    expect(impact).not.toBe(recoil);
+    expect(recoil).not.toBe(recovery);
+  });
+
+  it('generates victory celebration frames with triumphant fist pump', () => {
+    const frames = generateSpriteFrames('victory-check', 'male', {
+      build: 'standard',
+      bodyType: 'basic',
+      headType: 'male',
+    }, 'victory')!;
+    expect(frames).toHaveLength(4);
+    for (const f of frames) {
+      expect(f.grid.length).toBe(42);
+      expect(f.width).toBe(SPRITE_WIDTH);
+      expect(f.height).toBe(SPRITE_HEIGHT);
+    }
+  });
+
+  it('renders all new stylized heads and body archetypes with full anatomical integrity', () => {
+    const testHeads = [
+      'male_samurai', 'male_undercut', 'male_ninja', 'male_cyber', 'male_dreadlocks', 'male_paladin',
+      'female_valkyrie', 'female_twintails', 'female_ninja', 'female_cyber', 'female_goth', 'female_warrior',
+    ];
+    const testBodies = ['ninja_gi', 'paladin', 'cyber_suit', 'monk_gi', 'assassin'];
+
+    for (const headType of testHeads) {
+      const gender = headType.startsWith('f') ? 'female' : 'male';
+      const sprite = generateSprite16(`test-${headType}`, gender, { headType, bodyType: 'basic' });
+      expect(sprite.grid.length).toBe(42);
+      expect(sprite.grid[0].length).toBe(24);
+      expect(sprite.grid.flat().some((c) => c !== 0)).toBe(true);
+    }
+
+    for (const bodyType of testBodies) {
+      const sprite = generateSprite16(`test-${bodyType}`, 'male', { headType: 'male', bodyType });
+      expect(sprite.grid.length).toBe(42);
+      expect(sprite.grid[0].length).toBe(24);
+      expect(sprite.grid.flat().some((c) => c !== 0)).toBe(true);
+    }
+  });
 });

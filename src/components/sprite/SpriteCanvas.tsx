@@ -9,6 +9,9 @@ import { useLowPerformanceMode } from '../../hooks/useLowPerformanceMode';
 
 export const SPRITE_RUN_MS = 120;
 export const SPRITE_ATTACK_MS = 130;
+export const SPRITE_IDLE_MS = 280;
+export const SPRITE_HIT_MS = 140;
+export const SPRITE_VICTORY_MS = 200;
 
 interface SpriteCanvasProps {
   seed: string;
@@ -41,15 +44,24 @@ export const SpriteCanvas = memo(function SpriteCanvas({
     () => (activeAnim ? generateSpriteFrames(seed, gender, appearance, activeAnim) : null),
     [activeAnim, seed, gender, appearance],
   );
-  const frameMs = activeAnim === 'attack' ? SPRITE_ATTACK_MS : SPRITE_RUN_MS;
+  const frameMs =
+    activeAnim === 'attack'
+      ? SPRITE_ATTACK_MS
+      : activeAnim === 'hit'
+        ? SPRITE_HIT_MS
+        : activeAnim === 'victory'
+          ? SPRITE_VICTORY_MS
+          : activeAnim === 'idle'
+            ? SPRITE_IDLE_MS
+            : SPRITE_RUN_MS;
+
   const [frameIdx, setFrameIdx] = useState(0);
   useEffect(() => {
     setFrameIdx(0);
     if (!frames || frames.length === 0) return;
-    // Attack plays once per fight (windup → strike → recover hold) instead
-    // of looping: a jabbing loop reads as crude pumping at 110ms.
+    const isOneShot = activeAnim === 'attack' || activeAnim === 'hit';
     const timer = setInterval(() => setFrameIdx((i) => {
-      if (activeAnim === 'attack' && i >= frames.length - 1) return i;
+      if (isOneShot && i >= frames.length - 1) return i;
       return (i + 1) % frames.length;
     }), frameMs);
     return () => clearInterval(timer);
@@ -58,13 +70,21 @@ export const SpriteCanvas = memo(function SpriteCanvas({
   const { grid, palette } = useMemo(() => {
     const base = frames && frames.length > 0 ? frames[frameIdx % frames.length] : generateSprite16(seed, gender, appearance);
     if (!equippedItems) return base;
-    // Run-cycle life: the blade breathes with the stride, hanging jewelry
-    // swings opposite. Static in attack (the punch already moves it).
+    // Dynamic life: weapon and jewelry sway with stride / breathing
     const running = activeAnim === 'run' && frames && frames.length > 0;
-    const swayX = running ? ([1, 0, -1, 0][frameIdx % frames.length] ?? 0) : 0;
-    const swingX = running ? ([-1, 0, 1, 0][frameIdx % 4] ?? 0) : 0;
-    // Strike frame only: the after-image that makes a 1px arm read as a punch.
-    const punchTrail = activeAnim === 'attack' && frameIdx === 1 ? 3 : 0;
+    const idling = activeAnim === 'idle' && frames && frames.length > 0;
+    const victory = activeAnim === 'victory' && frames && frames.length > 0;
+    const swayX = running
+      ? ([1, 0, -1, 0][frameIdx % frames.length] ?? 0)
+      : idling
+        ? ([0, 1, 1, 0][frameIdx % frames.length] ?? 0)
+        : 0;
+    const swingX = running
+      ? ([-1, 0, 1, 0][frameIdx % 4] ?? 0)
+      : idling
+        ? ([0, 0, 1, 0][frameIdx % 4] ?? 0)
+        : 0;
+    const punchTrail = (activeAnim === 'attack' && frameIdx === 1) || (victory && frameIdx === 1) ? 3 : 0;
     const overlaid = applyEquipmentOverlays(base.grid, base.palette, resolveLoadout(equippedItems), { swayX, swingX, punchTrail });
     return { grid: overlaid.grid, palette: overlaid.palette };
   }, [frames, frameIdx, activeAnim, seed, gender, appearance, equippedItems]);

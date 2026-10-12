@@ -29,3 +29,5 @@ export const ACCENT_INDEX = 61;
 
 export const shadeIndexOf = (base: number): number => SHADE_OFFSET + base;
 export const highlightIndexOf = (base: number): number => HIGHLIGHT_OFFSET + base;
+
+export type SpriteAnimKind = 'run' | 'attack' | 'idle' | 'hit' | 'victory';
