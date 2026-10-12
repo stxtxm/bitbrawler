@@ -507,7 +507,10 @@ function paintFistGrip(grid: SpriteGrid, palm: { x: number; y: number }): void {
 }
 
 function paintShield(grid: SpriteGrid, palmL: { x: number; y: number }): void {
-  const fc = clamp(palmL.x + 1, 2, GRID_W - 4);
+  // Outboard of the hand, not inboard. Anchoring at palmL.x + 1 put the
+  // shield's centre two pixels *inside* the torso, so it read as a slab
+  // painted across the chest instead of a shield held at the side.
+  const fc = clamp(palmL.x - 2, 3, GRID_W - 4);
   const top = clamp(palmL.y - 4, 18 + PAD, GRID_H - 9);
   const bottom = top + 7;
   for (let y = top; y <= bottom; y++) {
@@ -539,16 +542,25 @@ function isShirt(base: number): boolean {
 }
 
 function paintHelm(grid: SpriteGrid, head: Box, faceCx: number, eyeY: number, rim: number): void {
-  for (let y = head.y0; y <= head.y1; y++) {
+  // Stop at the brow line. Repainting hair all the way down to the chin left
+  // the whole head in field colour, and the rarity trim sat on the TOP rows —
+  // it read as a gold bar floating above the skull rather than a helmet.
+  const brimY = Math.min(Math.max(eyeY - 2, head.y0 + 2), head.y1);
+  for (let y = head.y0; y <= brimY; y++) {
     const row = grid[y];
     if (!row) continue;
     for (let x = head.x0; x <= head.x1; x++) {
       if (!isHair(row[x])) continue;
-      row[x] = y <= head.y0 + 3 ? rim : FIELD_INDEX;
+      row[x] = FIELD_INDEX;
     }
   }
-  paint(grid, faceCx, eyeY - 3, ACCENT_INDEX);
-  paint(grid, faceCx + 1, eyeY - 3, ACCENT_INDEX);
+  // Light catches the crown, the rarity trim rides the brim.
+  for (let x = head.x0; x <= head.x1; x++) {
+    if (grid[head.y0][x] !== 0) grid[head.y0][x] = FIELD_LIGHT;
+    if (grid[brimY][x] !== 0) grid[brimY][x] = rim;
+  }
+  // Gem at the front of the brim, never on the forehead.
+  paint(grid, clamp(faceCx, head.x0, head.x1), brimY, ACCENT_INDEX);
 }
 
 function paintChest(grid: SpriteGrid, torso: Box, cx: number, kind: 'chest' | 'robe'): void {
