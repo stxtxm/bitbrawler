@@ -44,7 +44,7 @@ if [ ${#missing[@]} -gt 0 ]; then
   exit 1
 fi
 
-cat <<'EOF'
+cat <<EOF
 
 Done: $pushed server variable(s) pushed to Cloudflare Pages (production).
 
