@@ -122,7 +122,7 @@ Infrastructure (v1.0.0 → v3.2.0)
 - Idle processing: **Vercel serverless** (`api/idle-processor.ts`) — replaces former GitHub Actions idle-processor workflow.
   - Cold start < 1s (vs 30s for GHA checkout + npm ci).
   - Self-contained: all utilities inlined (not imported from src/).
-  - Cron trigger: cron-job.org every 1 min → `POST https://bitbrawler.vercel.app/api/idle-processor`.
+  - Cron trigger: cron-job.org every 1 min → `POST https://bitbrawler.netlify.app/api/idle-processor`.
 - GitHub Actions secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
 
 Handoff (Next Agent)

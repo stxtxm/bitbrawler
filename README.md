@@ -21,7 +21,7 @@ Bitbrawler is a **retro 8-bit arena experience** where players create a pixel fi
 ## 🚀 Quick Start
 
 ### For Players
-- Visit **[bitbrawler.vercel.app](https://bitbrawler.vercel.app)** to play live
+- Visit **[bitbrawler.netlify.app](https://bitbrawler.netlify.app)** to play live
 - Create a character and start fighting!
 
 ### For Developers
@@ -477,7 +477,7 @@ The idle system uses an external free cron service to process inactive character
 
 | Field | Value |
 |-------|-------|
-| URL | `https://bitbrawler.vercel.app/api/idle-processor` |
+| URL | `https://bitbrawler.netlify.app/api/idle-processor` |
 | Method | `POST` |
 | Content-Type | `application/json` |
 | Body | `{}` |

@@ -291,7 +291,7 @@ Type: Proposition majeure (requires architecture changes)
    ```bash
    node qa/qa-bot.mjs
    ```
-   - Navigate to bitbrawler.vercel.app
+   - Navigate to bitbrawler.netlify.app
    - Create/load QA character
    - Perform 5 fights
    - Claim daily lootbox
@@ -433,7 +433,7 @@ Type: Proposition majeure (requires architecture changes)
 
 #### Cron Fallback
 
-- **URL**: `https://bitbrawler.vercel.app/api/idle-processor`
+- **URL**: `https://bitbrawler.netlify.app/api/idle-processor`
 - **Frequency**: Every 1 minute (configured on cron-job.org)
 - **Behavior**: When no `character_id` provided, processes ALL stale characters (`last_idle_check > 60s ago`)
 - **Purpose**: Catches bots, network failures, lost browser sessions
@@ -466,12 +466,12 @@ Set these in Vercel dashboard (Project Settings → Environment Variables).
 
 ```bash
 # Test on-demand (replaces X with a real character_id)
-curl -X POST https://bitbrawler.vercel.app/api/idle-processor \
+curl -X POST https://bitbrawler.netlify.app/api/idle-processor \
   -H "Content-Type: application/json" \
   -d '{"character_id": "X"}'
 
 # Test cron mode
-curl -X POST https://bitbrawler.vercel.app/api/idle-processor
+curl -X POST https://bitbrawler.netlify.app/api/idle-processor
 ```
 
 ---

@@ -48,7 +48,7 @@ Bitbrawler is a **full-stack web application** with the following layers:
 | **Database** | Supabase (PostgreSQL) | Relational data, real-time subscriptions |
 | **Authentication** | Supabase Auth | Email/password auth with JWT |
 | **CI/CD** | GitHub Actions | Automated testing, building, deployment |
-| **Hosting** | Vercel | CDN, serverless deployment (app + API), preview PRs |
+| **Hosting** | Netlify | CDN, serverless deployment (app + API), preview PRs |
 | **Autonomous Dev** | OpenCode Agents | AI-powered development automation |
 
 ### Architecture Layers
@@ -56,12 +56,12 @@ Bitbrawler is a **full-stack web application** with the following layers:
 ```
 ┌──────────────────────────────────────────┐
 │         Frontend (React + TypeScript)     │
-│   Vite build → Vercel CDN               │
+│   Vite build → Netlify CDN               │
 │   (Components, Pages, Game Logic)       │
 └──────────────┬───────────────────────────┘
                │
          ┌─────▼────────────┐
-         │  Vercel API      │
+         │  Netlify Functions      │
          │  api/*.ts        │
          │  (idle-processor)│
          └─────┬────────────┘
@@ -295,15 +295,15 @@ GameContext (useGame)
 ### Scripts & Utilities
 
 #### `api/idle-processor.ts`
-- **Purpose**: Server-side idle combat processing (self-contained Vercel serverless function)
+- **Purpose**: Server-side idle combat processing (self-contained Netlify serverless function)
 - **Trigger**: 
   - On-demand: client POSTs `{ character_id }` on reconnect
   - Cron: 1-minute cron from cron-job.org (no character_id → processes all stale characters)
 - **Function**: Simulates offline combat, applies XP/levels, updates `last_idle_check` watermark
 - **Output**: Returns `{ fights, xp, levels, updated }` JSON
-- **Why self-contained**: Vercel only compiles `api/` to JS; all utilities (monsters, combat, XP, efficiency) are inlined
+- **Why self-contained**: the idle maths is inlined (monsters, combat, XP, efficiency) so the core handler stays independent of the hosting runtime
 - **XP curve**: `Math.floor(100 * Math.pow(level, 1.6))` — must match `src/utils/xpUtils.ts`
-- **Cron URL**: `https://bitbrawler.vercel.app/api/idle-processor`
+- **Cron URL**: `https://bitbrawler.netlify.app/api/idle-processor`
 - **Env required**: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 
 #### `scripts/idle-processor.ts`
@@ -889,7 +889,7 @@ const subscription = supabase
 ### E2E Tests
 
 - **Framework**: Playwright
-- **Target**: Live site (bitbrawler.vercel.app)
+- **Target**: Live site (bitbrawler.netlify.app)
 - **Frequency**: Scheduled daily
 - **Output**: `qa/stats.json` with gameplay data
 
@@ -910,10 +910,10 @@ npm run dev
 ```bash
 npm run build
 # TypeScript check (tsc) + Vite production build → dist/
-# Ready for Vercel
+# Ready for deployment
 ```
 
-### Vercel Configuration
+### Hosting configuration (Netlify)
 
 `vercel.json` defines SPA rewrites:
 
@@ -936,8 +936,8 @@ npm run build
 1. **dev-agent pushes** a feature branch → GitHub Actions creates a PR
 2. **CI Workflow** (lint, type check, test, build) on the PR
 3. **Reviewer** approves & merges to `master`
-4. **Vercel** auto-deploys `master` → production (`bitbrawler.vercel.app`)
-5. Preview deployments on Vercel for every PR
+4. **Netlify** auto-deploys `master` → production (`bitbrawler.netlify.app`)
+5. Preview deployments on Netlify for every PR
 
 ---
 
@@ -947,7 +947,7 @@ npm run build
 
 - PostgreSQL handles 1000+ active players
 - Real-time subscriptions scale to 100+ concurrent clients
-- Vercel Edge Functions for API routes if needed
+- Netlify Functions for API routes if needed
 
 ### Future Optimizations
 
