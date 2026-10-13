@@ -10,7 +10,7 @@ import StreakIndicator from '../StreakIndicator';
 import { ShopPanel } from '../forge/ShopPanel';
 import { useGame } from '../../context/GameContext';
 import { PROGRESSION_GATES, isFeatureUnlocked } from '../../config/progressionConfig';
-import { PITY_THRESHOLD } from '../../utils/lootboxUtils';
+import { LOOTBOX_PITY, PITY_THRESHOLD, getEpicBoostBonus, getEpicPityRemaining } from '../../utils/lootboxUtils';
 import type {
   InventoryStatEntry,
   InventoryStatMetaMap,
@@ -40,6 +40,9 @@ interface InventoryPanelProps {
   onHoverItem: (id: string | null) => void;
   previewItemId: string | null;
   pityCount?: number;
+  epicPityCount?: number;
+  commonStreak?: number;
+  pityTriggered?: boolean;
   inventoryFilterElement?: string | null;
   // Forge integration
   itemUpgradeLevels?: Record<string, number>;
@@ -85,6 +88,9 @@ export const InventoryPanel = memo(function InventoryPanel({
   onHoverItem,
   previewItemId,
   pityCount = 0,
+  epicPityCount = 0,
+  commonStreak = 0,
+  pityTriggered = false,
   itemUpgradeLevels = {},
   onSalvage,
   essence = 0,
@@ -120,6 +126,10 @@ export const InventoryPanel = memo(function InventoryPanel({
     if (tab === 'shop' && !shopUnlocked) return;
     setActiveTab(tab);
   }, [shopUnlocked]);
+
+  const epicRemaining = getEpicPityRemaining(epicPityCount);
+  const epicBoost = getEpicBoostBonus(commonStreak);
+  const epicBoostPct = (epicBoost * 100).toFixed(1);
 
   return (
     <div className="retro-modal-overlay inventory-overlay" onClick={onClose}>
@@ -183,6 +193,18 @@ export const InventoryPanel = memo(function InventoryPanel({
                   </span>
                 )}
               </div>
+              {canRollDailyLoot && (
+                <div className="lootbox-pity-info">
+                  <span className="lootbox-epic-guarantee" title={`Épique minimum garanti après ${LOOTBOX_PITY.EPIC_WITHIN - 1} tirages sans épique`}>
+                    ✨ Épique garanti dans ≤ {epicRemaining} ouvertures
+                  </span>
+                  {epicBoost > 0 && (
+                    <span className="lootbox-epic-boost" title="Chaque common consécutive augmente la chance épique">
+                      🍀 Chance épique boostée +{epicBoostPct}% !
+                    </span>
+                  )}
+                </div>
+              )}
               <StreakIndicator streak={streak} canRoll={canRollDailyLoot} />
             </div>
             <div className="inv-loadout">
@@ -388,6 +410,11 @@ export const InventoryPanel = memo(function InventoryPanel({
             <div className={`lootbox-result-card rarity-${lootboxResult.rarity} ${lootboxResult.rarity === 'epic' ? 'rare-reveal-epic' : ''} ${lootboxResult.rarity === 'legendary' ? 'rare-reveal-legendary' : ''}`} onClick={onCloseLootboxResult}>
               <div className="lootbox-result-glow" />
               <div className="lootbox-result-title">NEW ITEM</div>
+              {pityTriggered && (
+                <div className="lootbox-pity-toast" role="status">
+                  🍀 Le destin se rééquilibre !
+                </div>
+              )}
               <div className="lootbox-result-item">
                 <div className="lootbox-result-icon">
                   <PixelItemIcon pixels={lootboxResult.pixels} size={64} />

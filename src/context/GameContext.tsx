@@ -7,7 +7,7 @@ import { GAME_RULES } from '../config/gameRules';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { findOpponent, MatchmakingResult } from '../utils/matchmakingUtils';
 import { ITEM_ASSETS } from '../data/itemAssets';
-import { canRollLootbox, computeNextStreak, rollLootbox } from '../utils/lootboxUtils';
+import { canRollLootbox, computeNextStreak, loadEpicPityState, rollLootbox, saveEpicPityState } from '../utils/lootboxUtils';
 import { ItemSlot, PixelItemAsset } from '../types/Item';
 import { getItemById } from '../utils/equipmentUtils';
 import { simulateCombat } from '../utils/combatUtils';
@@ -89,6 +89,9 @@ interface GameContextType {
   lastUnlockedMedal: MedalDef | null;
   clearMedalNotification: () => void;
   pityCount: number;
+  epicPityCount: number;
+  commonStreak: number;
+  pityTriggered: boolean;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -101,6 +104,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [lastLevelUp, setLastLevelUp] = useState<{ levelsGained: number; newLevel: number; hpGained: number } | null>(null);
   const [lastUnlockedMedal, setLastUnlockedMedal] = useState<MedalDef | null>(null);
   const [lootboxPityCount, setLootboxPityCount] = useState(0);
+  const [lootboxEpicPityCount, setLootboxEpicPityCount] = useState(0);
+  const [lootboxCommonStreak, setLootboxCommonStreak] = useState(0);
+  const [lastPityTriggered, setLastPityTriggered] = useState(false);
   const isOnline = useOnlineStatus();
   usePushReminders(activeCharacter);
   const initiatedMatchmakingRef = useRef(false);
@@ -129,10 +135,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     return normalized;
   }, []);
 
-  // Keep the in-memory pity counter in sync with the loaded character so it
-  // survives page reloads (was previously session-only React state — bug #690).
+  // Keep the in-memory pity counters in sync with the loaded character so they
+  // survive page reloads (was previously session-only React state — bug #690).
+  // Epic pity falls back to localStorage when the optional server field is absent.
   useEffect(() => {
     setLootboxPityCount(activeCharacter?.lootboxPityCount ?? 0);
+    const stored = activeCharacter?.id ? loadEpicPityState(activeCharacter.id) : null;
+    setLootboxEpicPityCount(activeCharacter?.lootboxEpicPityCount ?? stored?.epicPityCount ?? 0);
+    setLootboxCommonStreak(activeCharacter?.lootboxCommonStreak ?? stored?.commonStreak ?? 0);
   }, [activeCharacter]);
 
   // DB error handler
@@ -1192,11 +1202,21 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       level: char.level,
       streak: newStreak,
       pityCount: lootboxPityCount,
+      epicPityCount: lootboxEpicPityCount,
+      commonStreak: lootboxCommonStreak,
     });
     if (!result.item) {
       throw new Error('No new loot available.');
     }
+    const nextEpicPity = result.epicPityCount ?? lootboxEpicPityCount;
+    const nextCommonStreak = result.commonStreak ?? lootboxCommonStreak;
     setLootboxPityCount(result.pityCount);
+    setLootboxEpicPityCount(nextEpicPity);
+    setLootboxCommonStreak(nextCommonStreak);
+    setLastPityTriggered(result.pityTriggered || (result.epicPityTriggered ?? false));
+    if (char.id) {
+      saveEpicPityState(char.id, { epicPityCount: nextEpicPity, commonStreak: nextCommonStreak });
+    }
 
     const updatedChar = normalizeCharacter({
       ...char,
@@ -1204,6 +1224,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       lastLootRoll: now,
       lootboxStreak: newStreak,
       lootboxPityCount: result.pityCount,
+      lootboxEpicPityCount: nextEpicPity,
+      lootboxCommonStreak: nextCommonStreak,
     });
 
     try {
@@ -1266,7 +1288,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       }
       throw error;
     }
-  }, [activeCharacter, handleDbError, lootboxPityCount, persistCharacter]);
+  }, [activeCharacter, handleDbError, lootboxPityCount, lootboxEpicPityCount, lootboxCommonStreak, persistCharacter]);
 
   const setAutoMode = useCallback(async (enabled: boolean) => {
     if (!activeCharacter?.id) return null;
@@ -1669,6 +1691,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     lastUnlockedMedal,
     clearMedalNotification,
     pityCount: lootboxPityCount,
+    epicPityCount: lootboxEpicPityCount,
+    commonStreak: lootboxCommonStreak,
+    pityTriggered: lastPityTriggered,
   };
 
   return (

@@ -23,6 +23,8 @@ vi.mock('../../utils/lootboxUtils', () => ({
   canRollLootbox: vi.fn(),
   computeNextStreak: vi.fn(() => 1),
   rollLootbox: vi.fn(),
+  loadEpicPityState: vi.fn(() => ({ epicPityCount: 0, commonStreak: 0 })),
+  saveEpicPityState: vi.fn(),
 }));
 
 import { findOpponent } from '../../utils/matchmakingUtils';
@@ -466,6 +468,97 @@ describe('GameContext Integration', () => {
     // Pity counter must be persisted on the character (survives page reload)
     expect(result.current.activeCharacter?.lootboxPityCount).toBe(12);
     expect(result.current.pityCount).toBe(12);
+  });
+
+  it('should track the epic pity counters after a roll (issue #1140)', async () => {
+    const now = new Date('2025-01-01T00:00:00Z');
+    vi.setSystemTime(now);
+
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    setupMockCharacter(mockCharacter);
+
+    const mockItem: PixelItemAsset = {
+      id: 'test-item',
+      name: 'Test Item',
+      rarity: 'common',
+      slot: 'weapon',
+      stats: { strength: 1 },
+      pixels: [[1]],
+      requiredLevel: 1
+    };
+
+    (canRollLootbox as any).mockReturnValue(true);
+    (rollLootbox as any).mockReturnValue({
+      item: mockItem,
+      pityCount: 5,
+      pityTriggered: false,
+      epicPityCount: 7,
+      epicPityTriggered: false,
+      commonStreak: 3,
+      epicBoost: 0.015,
+    });
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.rollLootbox();
+    });
+
+    expect(result.current.activeCharacter?.lootboxEpicPityCount).toBe(7);
+    expect(result.current.activeCharacter?.lootboxCommonStreak).toBe(3);
+    expect(result.current.epicPityCount).toBe(7);
+    expect(result.current.commonStreak).toBe(3);
+    expect(result.current.pityTriggered).toBe(false);
+  });
+
+  it('should flag pityTriggered when the pity guarantee fires', async () => {
+    const now = new Date('2025-01-01T00:00:00Z');
+    vi.setSystemTime(now);
+
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(mockCharacter));
+    setupMockCharacter(mockCharacter);
+
+    const mockItem: PixelItemAsset = {
+      id: 'test-item',
+      name: 'Test Item',
+      rarity: 'epic',
+      slot: 'weapon',
+      stats: { strength: 3 },
+      pixels: [[1]],
+      requiredLevel: 1
+    };
+
+    (canRollLootbox as any).mockReturnValue(true);
+    (rollLootbox as any).mockReturnValue({
+      item: mockItem,
+      pityCount: 6,
+      pityTriggered: false,
+      epicPityCount: 0,
+      epicPityTriggered: true,
+      commonStreak: 0,
+      epicBoost: 0,
+    });
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.rollLootbox();
+    });
+
+    expect(result.current.pityTriggered).toBe(true);
+    expect(result.current.epicPityCount).toBe(0);
   });
 
   it('should restore the lootbox pity count from a loaded character', async () => {

@@ -1,4 +1,5 @@
 import { ItemRarity, PixelItemAsset } from '../types/Item';
+import { GAME_RULES } from '../config/gameRules';
 import { getDailyResetKey } from './dailyReset';
 
 export const LOOTBOX_RARITY_WEIGHTS: Record<ItemRarity, number> = {
@@ -10,7 +11,71 @@ export const LOOTBOX_RARITY_WEIGHTS: Record<ItemRarity, number> = {
 };
 
 /** Number of consecutive lootboxes without a legendary before pity forces one. */
-export const PITY_THRESHOLD = 30;
+export const PITY_THRESHOLD = GAME_RULES.LOOTBOX.LEGENDARY_WITHIN;
+
+export const LOOTBOX_PITY = {
+  EPIC_WITHIN: GAME_RULES.LOOTBOX.EPIC_WITHIN,
+  LEGENDARY_WITHIN: GAME_RULES.LOOTBOX.LEGENDARY_WITHIN,
+} as const;
+
+export const EPIC_BOOST_PER_COMMON = GAME_RULES.LOOTBOX.EPIC_BOOST_PER_COMMON;
+export const EPIC_BOOST_CAP = GAME_RULES.LOOTBOX.EPIC_BOOST_CAP;
+
+export function getEpicPityRemaining(epicPityCount: number): number {
+  const current = Number.isFinite(epicPityCount) ? Math.max(0, epicPityCount) : 0;
+  return Math.max(0, LOOTBOX_PITY.EPIC_WITHIN - current);
+}
+
+export function getLegendaryPityRemaining(pityCount: number): number {
+  const current = Number.isFinite(pityCount) ? Math.max(0, pityCount) : 0;
+  return Math.max(0, LOOTBOX_PITY.LEGENDARY_WITHIN - current);
+}
+
+export function getEpicBoostBonus(commonStreak: number): number {
+  const current = Number.isFinite(commonStreak) ? Math.max(0, commonStreak) : 0;
+  return Math.min(current * EPIC_BOOST_PER_COMMON, EPIC_BOOST_CAP);
+}
+
+export interface EpicPityState {
+  epicPityCount: number;
+  commonStreak: number;
+}
+
+function pityStorageKey(characterId: string): string {
+  return `bitbrawler_lootbox_pity_${characterId}`;
+}
+
+function sanitizePityValue(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+}
+
+export function loadEpicPityState(characterId: string): EpicPityState {
+  const fallback: EpicPityState = { epicPityCount: 0, commonStreak: 0 };
+  try {
+    const raw = localStorage.getItem(pityStorageKey(characterId));
+    if (!raw) return fallback;
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return fallback;
+    const record = parsed as Partial<Record<keyof EpicPityState, unknown>>;
+    return {
+      epicPityCount: sanitizePityValue(record.epicPityCount),
+      commonStreak: sanitizePityValue(record.commonStreak),
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+export function saveEpicPityState(characterId: string, state: EpicPityState): void {
+  try {
+    localStorage.setItem(pityStorageKey(characterId), JSON.stringify({
+      epicPityCount: sanitizePityValue(state.epicPityCount),
+      commonStreak: sanitizePityValue(state.commonStreak),
+    }));
+  } catch {
+    return;
+  }
+}
 
 export interface StreakBonus {
   weightBonus: number;      // Extra weight added to rare/epic
@@ -166,6 +231,8 @@ export interface RollLootboxOptions {
   level?: number;
   streak?: number; // Current streak for bonus application
   pityCount?: number; // Current pity counter (consecutive non-legendary rolls)
+  epicPityCount?: number; // Consecutive rolls without epic or better
+  commonStreak?: number; // Consecutive common rolls (progressive epic boost)
   consecutiveLosses?: number;
 }
 
@@ -173,6 +240,10 @@ export interface RollLootboxResult {
   item: PixelItemAsset | null;
   pityCount: number;
   pityTriggered: boolean;
+  epicPityCount: number;
+  epicPityTriggered: boolean;
+  commonStreak: number;
+  epicBoost: number;
 }
 
 function pickRandomItem(pool: PixelItemAsset[], rng: () => number): PixelItemAsset {
@@ -278,6 +349,29 @@ function forceLegendaryRoll(eligibleItems: PixelItemAsset[], rng: () => number):
   return pickRandomItem(legendaryItems, rng);
 }
 
+function isEpicOrBetter(item: PixelItemAsset | null): boolean {
+  return item !== null && (item.rarity === 'epic' || item.rarity === 'legendary');
+}
+
+function forceEpicMinimumRoll(
+  eligibleItems: PixelItemAsset[],
+  weights: Record<ItemRarity, number>,
+  rng: () => number
+): PixelItemAsset | null {
+  const epicItems = eligibleItems.filter((i) => i.rarity === 'epic');
+  const legendaryItems = eligibleItems.filter((i) => i.rarity === 'legendary');
+  if (!epicItems.length && !legendaryItems.length) return null;
+  if (epicItems.length && !legendaryItems.length) return pickRandomItem(epicItems, rng);
+  if (legendaryItems.length && !epicItems.length) return pickRandomItem(legendaryItems, rng);
+  const epicWeight = weights.epic ?? 0;
+  const legendaryWeight = weights.legendary ?? 0;
+  const total = epicWeight + legendaryWeight;
+  if (total <= 0) return pickRandomItem(epicItems, rng);
+  return rng() * total <= epicWeight
+    ? pickRandomItem(epicItems, rng)
+    : pickRandomItem(legendaryItems, rng);
+}
+
 /**
  * Computes the new pity count after a lootbox roll.
  * Resets to 0 on legendary, increments otherwise.
@@ -285,6 +379,16 @@ function forceLegendaryRoll(eligibleItems: PixelItemAsset[], rng: () => number):
 function computePity(item: PixelItemAsset | null, currentPity: number): number {
   if (!item) return currentPity + 1;
   return item.rarity === 'legendary' ? 0 : currentPity + 1;
+}
+
+function computeEpicPity(item: PixelItemAsset | null, currentEpicPity: number): number {
+  if (!item) return currentEpicPity + 1;
+  return isEpicOrBetter(item) ? 0 : currentEpicPity + 1;
+}
+
+function computeCommonStreak(item: PixelItemAsset | null, currentCommonStreak: number): number {
+  if (!item) return currentCommonStreak + 1;
+  return item.rarity === 'common' ? currentCommonStreak + 1 : 0;
 }
 
 /**
@@ -331,31 +435,80 @@ export function rollLootbox(
   items: PixelItemAsset[],
   options: RollLootboxOptions = {}
 ): RollLootboxResult {
-  if (!items.length) return { item: null, pityCount: 0, pityTriggered: false };
+  const emptyResult = (epicPity: number, commons: number): RollLootboxResult => ({
+    item: null,
+    pityCount: 0,
+    pityTriggered: false,
+    epicPityCount: epicPity,
+    epicPityTriggered: false,
+    commonStreak: commons,
+    epicBoost: getEpicBoostBonus(commons),
+  });
+  if (!items.length) return emptyResult(0, 0);
 
   const rng = options.rng ?? Math.random;
   const level = Math.max(1, options.level ?? 1);
   const excludeIds = options.excludeIds ?? [];
   const streak = Math.max(0, options.streak ?? 0);
   const currentPity = Math.max(0, options.pityCount ?? 0);
+  const currentEpicPity = Math.max(0, options.epicPityCount ?? 0);
+  const currentCommonStreak = Math.max(0, options.commonStreak ?? 0);
   const eligibleItems = getEligibleLootboxItems(items, level, excludeIds);
-  if (!eligibleItems.length) return { item: null, pityCount: currentPity + 1, pityTriggered: false };
+  if (!eligibleItems.length) {
+    return {
+      item: null,
+      pityCount: currentPity + 1,
+      pityTriggered: false,
+      epicPityCount: currentEpicPity + 1,
+      epicPityTriggered: false,
+      commonStreak: currentCommonStreak + 1,
+      epicBoost: getEpicBoostBonus(currentCommonStreak + 1),
+    };
+  }
+
+  const bonus = getStreakBonus(streak);
+  const baseWeights = getLootboxRarityWeights(level);
+  const epicBoost = getEpicBoostBonus(currentCommonStreak);
+  const boostedBase = { ...baseWeights, epic: (baseWeights.epic ?? 0) + epicBoost };
+  const weights = applyStreakWeights(boostedBase, bonus.weightBonus);
 
   // ─── Pity check: force legendary if threshold reached ─────────────────
   let pitySaturated = false;
   if (currentPity >= PITY_THRESHOLD) {
     const forcedItem = forceLegendaryRoll(eligibleItems, rng);
     if (forcedItem) {
-      return { item: forcedItem, pityCount: 0, pityTriggered: true };
+      return {
+        item: forcedItem,
+        pityCount: 0,
+        pityTriggered: true,
+        epicPityCount: 0,
+        epicPityTriggered: currentEpicPity >= LOOTBOX_PITY.EPIC_WITHIN,
+        commonStreak: 0,
+        epicBoost: 0,
+      };
     }
     // No legendary items available — keep pity at threshold
     // so it triggers when player levels up and legendaries become available
     pitySaturated = true;
   }
 
-  const bonus = getStreakBonus(streak);
-  const baseWeights = getLootboxRarityWeights(level);
-  const weights = applyStreakWeights(baseWeights, bonus.weightBonus);
+  // ─── Epic pity: force epic minimum after EPIC_WITHIN - 1 misses ───────
+  let epicSaturated = false;
+  if (currentEpicPity >= LOOTBOX_PITY.EPIC_WITHIN - 1) {
+    const forcedEpic = forceEpicMinimumRoll(eligibleItems, weights, rng);
+    if (forcedEpic) {
+      return {
+        item: forcedEpic,
+        pityCount: forcedEpic.rarity === 'legendary' ? 0 : computePity(forcedEpic, currentPity),
+        pityTriggered: currentPity >= PITY_THRESHOLD,
+        epicPityCount: 0,
+        epicPityTriggered: true,
+        commonStreak: 0,
+        epicBoost: 0,
+      };
+    }
+    epicSaturated = true;
+  }
   const lossFloorActive = (options.consecutiveLosses ?? 0) >= 3;
   const lossFloor: ItemRarity | null = lossFloorActive ? 'uncommon' : null;
   const rankOf = (r: ItemRarity | null): number => (r === null ? -1 : RARITY_RANK[r]);
@@ -381,6 +534,18 @@ export function rollLootbox(
 
   const pityCount = pitySaturated ? PITY_THRESHOLD : computePity(item, currentPity);
   const pityTriggered = currentPity >= PITY_THRESHOLD;
+  const epicPityCount = epicSaturated
+    ? LOOTBOX_PITY.EPIC_WITHIN - 1
+    : computeEpicPity(item, currentEpicPity);
+  const commonStreak = computeCommonStreak(item, currentCommonStreak);
 
-  return { item, pityCount, pityTriggered };
+  return {
+    item,
+    pityCount,
+    pityTriggered,
+    epicPityCount,
+    epicPityTriggered: false,
+    commonStreak,
+    epicBoost,
+  };
 }

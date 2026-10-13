@@ -41,6 +41,9 @@ const Arena = () => {
     setCharacter,
     syncCharacterToBackend,
     pityCount,
+    epicPityCount,
+    commonStreak,
+    pityTriggered,
     essence,
     salvageItems,
   } = useGame();
@@ -220,6 +223,9 @@ const Arena = () => {
         <InventoryPanel
           {...inventory}
           pityCount={pityCount}
+          epicPityCount={epicPityCount}
+          commonStreak={commonStreak}
+          pityTriggered={pityTriggered}
           itemUpgradeLevels={activeCharacter?.itemUpgrades ?? {}}
           essence={essence}
           onSalvage={salvageItems}

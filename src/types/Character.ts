@@ -136,6 +136,8 @@ export interface Character {
   lastLootRoll?: number; // Timestamp (UTC) of daily lootbox roll
   lootboxStreak?: number; // Consecutive daily lootbox claims
   lootboxPityCount?: number; // Consecutive non-legendary lootbox rolls (pity counter)
+  lootboxEpicPityCount?: number; // Consecutive rolls without epic or better (local-first, sans migration)
+  lootboxCommonStreak?: number; // Consecutive common rolls (boost épique progressif, local-first)
   pendingFight?: PendingFight;
   equippedItems?: {
     weapon: string | null;
