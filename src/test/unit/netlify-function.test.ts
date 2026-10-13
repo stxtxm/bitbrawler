@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import netlifyIdle, { config } from '../../../netlify/functions/idle-processor';
+import { onRequestPost } from '../../../functions/api/idle-processor';
+import { runIdleProcessor } from '../../../api/runIdleProcessor';
 
 const post = (body: string): Request =>
   new Request('https://example.test/api/idle-processor', {
@@ -62,6 +64,30 @@ describe('netlify idle-processor function', () => {
     } finally {
       if (savedUrl !== undefined) process.env.SUPABASE_URL = savedUrl;
       if (savedKey !== undefined) process.env.SUPABASE_SERVICE_ROLE_KEY = savedKey;
+    }
+  });
+
+  it('cloudflare adapter answers a Request through the same shared shim', async () => {
+    const req = new Request('https://example.test/api/idle-processor', { method: 'GET' });
+    const res = await onRequestPost({ request: req, env: {} });
+    expect(res).toBeInstanceOf(Response);
+    expect(res.status).toBe(405);
+    expect((await res.json() as { error: string }).error).toBe('POST required');
+  });
+
+  it('cloudflare adapter injects its env bindings into process.env', async () => {
+    const saved = process.env.SUPABASE_URL;
+    delete process.env.SUPABASE_URL;
+    try {
+      // The env binding must reach the core handler: without it the handler
+      // answers "Missing SUPABASE_URL" instead of failing later on credentials.
+      const res = await runIdleProcessor(
+        new Request('https://example.test/api/idle-processor', { method: 'GET' }),
+        { SUPABASE_URL: 'https://example.supabase.co' },
+      );
+      expect(res.status).toBe(405);
+    } finally {
+      if (saved !== undefined) process.env.SUPABASE_URL = saved;
     }
   });
 });

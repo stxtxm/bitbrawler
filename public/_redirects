@@ -1,0 +1,9 @@
+# BrowserRouter needs an SPA fallback: any unknown path serves index.html and
+# lets react-router take over.
+#
+# The /api/* route needs no exclusion here. Cloudflare resolves Pages Functions
+# before the static asset fallback, so /api/idle-processor always reaches the
+# function and never this catch-all. (Netlify was the opposite: a non-forced
+# catch-all is evaluated before functions, which is why netlify.toml needed
+# force = false there.)
+/*    /index.html   200
