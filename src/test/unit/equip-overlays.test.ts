@@ -733,4 +733,28 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     }));
     expect(minX).toBeLessThanOrEqual(marks.palmL.x);
   });
+
+  it('keeps a hafted weapon continuous: head, shaft and butt below the fist', () => {
+    const base = generateSprite16('haft-check', 'male', { ...STD_MALE });
+    const marks = computeLandmarks(base.grid);
+    const bare = applyEquipmentOverlays(base.grid, base.palette, { weapon: null, armor: null, accessory: null });
+    const armed = applyEquipmentOverlays(base.grid, base.palette, {
+      weapon: byId('bronze_axe'),
+      armor: null,
+      accessory: null,
+    });
+    const added: Array<[number, number]> = [];
+    armed.grid.forEach((row, y) => row.forEach((c, x) => {
+      if (c !== bare.grid[y][x]) added.push([x, y]);
+    }));
+    expect(added.length).toBeGreaterThan(12);
+    const ys = added.map(([, y]) => y);
+    // shaft reaches up to the head ...
+    expect(Math.min(...ys)).toBeLessThan(marks.palmR.y - 6);
+    // ... and continues below the fist, so the weapon is held not balanced
+    expect(Math.max(...ys)).toBeGreaterThan(marks.palmR.y + 1);
+    // and it stays attached: no far-flung island detached from the grip
+    const nearGrip = added.filter(([x]) => Math.abs(x - marks.palmR.x) <= 8).length;
+    expect(nearGrip).toBeGreaterThan(6);
+  });
 });
