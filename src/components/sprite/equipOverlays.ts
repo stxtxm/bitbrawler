@@ -353,7 +353,14 @@ function paintBlade(
 function paintHaft(grid: SpriteGrid, palm: { x: number; y: number }, rivet: number): void {
   const x0 = palm.x;
   const sx = (x: number, y: number): number => slantX(x, y, palm.y);
-  for (let y = palm.y - 8; y <= palm.y + 1; y++) {
+  // The shaft runs all the way up to the head. It used to stop at palm.y - 8
+  // while the head started at palm.y - 9, and the slant shifted a column
+  // between the two rows: the axe head read as a grey square floating off the
+  // handle.
+  // The butt of the handle continues below the fist. Without it the grip sat
+  // at the very bottom of the shaft and the weapon read as balanced on the
+  // palm rather than held.
+  for (let y = palm.y - 10; y <= palm.y + 3; y++) {
     paint(grid, sx(x0, y), y, WOOD_INDEX);
     paint(grid, sx(x0 + 1, y), y, WOOD_INDEX);
   }
@@ -370,7 +377,7 @@ function paintHaft(grid: SpriteGrid, palm: { x: number; y: number }, rivet: numb
 function paintStaff(grid: SpriteGrid, palm: { x: number; y: number }): void {
   const x0 = palm.x;
   const sx = (x: number, y: number): number => slantX(x, y, palm.y);
-  for (let y = palm.y - 11; y <= palm.y + 3; y++) {
+  for (let y = palm.y - 11; y <= palm.y + 5; y++) {
     paint(grid, sx(x0, y), y, WOOD_INDEX);
     paint(grid, sx(x0 + 1, y), y, WOOD_INDEX);
   }
@@ -506,6 +513,21 @@ function paintFistGrip(grid: SpriteGrid, palm: { x: number; y: number }): void {
   paint(grid, palm.x + 1, palm.y + 1, shadeIndexOf(1));
 }
 
+/**
+ * Stamps the left forearm back over the shield. The shield is drawn in depth
+ * mode (torso occludes it), which also eats the arm cells it overlaps, so the
+ * limb has to be restored or the shield looks detached from the body.
+ */
+function paintShieldArm(grid: SpriteGrid, palmL: { x: number; y: number }): void {
+  const skin = [1, shadeIndexOf(1), highlightIndexOf(1)];
+  const x = palmL.x;
+  for (let y = Math.max(0, palmL.y - 6); y <= Math.min(GRID_H - 1, palmL.y + 1); y++) {
+    for (let dx = 0; dx <= 1; dx++) {
+      if (skin.includes(grid[y][x + dx])) grid[y][x + dx] = dx === 1 ? shadeIndexOf(1) : 1;
+    }
+  }
+}
+
 function paintShield(grid: SpriteGrid, palmL: { x: number; y: number }): void {
   // Outboard of the hand, not inboard. Anchoring at palmL.x + 1 put the
   // shield's centre two pixels *inside* the torso, so it read as a slab
@@ -528,6 +550,9 @@ function paintShield(grid: SpriteGrid, palmL: { x: number; y: number }): void {
   paint(grid, fc + 1, top + 3, ACCENT_INDEX);
   paint(grid, fc, top + 4, ACCENT_INDEX);
   paint(grid, fc + 1, top + 4, ACCENT_INDEX);
+  // The hand wraps the boss: without this the shield reads as hovering beside
+  // the fist instead of being gripped.
+  paintFistGrip(grid, { x: fc + 3, y: clamp(palmL.y - 1, 0, GRID_H - 1) });
 }
 
 const HAIR_SET = new Set<number>([4]);
@@ -841,7 +866,12 @@ export function applyEquipmentOverlays(
   }
   if (loadout.accessory && accessoryKind === 'brooch') paintBrooch(out, loadout.accessory, marks.chest, opts?.swingX ?? 0);
   if (loadout.accessory && accessoryKind === 'necklace') paintNecklace(out, loadout.accessory, marks.neck, opts?.swingX ?? 0);
-  if (loadout.armor && armorKind === 'shield') paintShield(out, marks.palmL);
+  if (loadout.armor && armorKind === 'shield') {
+    // Shield first, then the arm on top: the limb crossing the shield face is
+    // what makes the grip read as a grip instead of a prop sliding around.
+    paintShield(out, marks.palmL);
+    paintShieldArm(out, marks.palmL);
+  }
   if (loadout.weapon) {
     const trailSteps = opts?.punchTrail ?? 0;
     const preWeapon = trailSteps > 0 ? out.map((row) => [...row]) : null;
