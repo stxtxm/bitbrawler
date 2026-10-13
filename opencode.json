@@ -19,7 +19,7 @@
       "permission": { "edit": "allow", "bash": "allow" }
     },
     "qa-tester": {
-      "description": "QA Tester. Execute les tests Playwright E2E sur le site live (bitbrawler.vercel.app). 5 tours/jour.",
+      "description": "QA Tester. Execute les tests Playwright E2E sur le site live (bitbrawler.netlify.app). 5 tours/jour.",
       "mode": "subagent",
       "permission": { "edit": "allow", "bash": "allow" }
     }
