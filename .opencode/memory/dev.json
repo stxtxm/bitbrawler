@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-13T01:04:31Z",
+  "last_session": "2026-10-13T01:10:15Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -37,7 +37,7 @@
       "date": "2026-08-26"
     },
     {
-      "lesson": "Issue #1132 qa-tester.yml: concurrency group top-level (qa-stats-commit, cancel-in-progress false) + retry push avec re-pull — meme pattern que tech-lead.yml/ci.yml; YAML valide via python yaml.safe_load",
+      "lesson": "Issue #1132: concurrency group top-level qa-stats-commit + retry push 3 tentatives avec re-pull dans qa-tester.yml — YAML valide via python yaml.safe_load, bash -n OK, lint/test(2120)/build verts. Note: AGENTS.md interdit de toucher .github/workflows mais issue /oc explicite prime sur la regle generale.",
       "issue": "#1132",
       "date": "2026-10-13"
     }
