@@ -1,0 +1,12 @@
+# Cloudflare Pages — hébergement principal (depuis 2026-10-14)
+#
+# Migration Netlify -> Cloudflare : le quota Netlify Hobby est de 300 minutes
+# de build par mois, épuisé par les commits des bots et les previews de PR.
+# Cloudflare Pages offre 20 000 minutes/mois et une bande passante illimitée,
+# sans carte bancaire.
+#
+# `pages_build_output_dir` est le champ affiché comme "Build output directory"
+# dans le dashboard. Ne pas le changer : Vite écrit déjà dans dist/.
+name = "bitbrawler"
+compatibility_date = "2026-01-01"
+pages_build_output_dir = "dist"
