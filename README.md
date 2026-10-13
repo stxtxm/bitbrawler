@@ -21,7 +21,7 @@ Bitbrawler is a **retro 8-bit arena experience** where players create a pixel fi
 ## 🚀 Quick Start
 
 ### For Players
-- Visit **[bitbrawler.vercel.app](https://bitbrawler.vercel.app)** to play live
+- Visit **[bitbrawler.netlify.app](https://bitbrawler.netlify.app)** to play live
 - Create a character and start fighting!
 
 ### For Developers
