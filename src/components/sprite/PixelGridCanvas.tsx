@@ -1,6 +1,13 @@
 import { memo, useEffect, useRef } from 'react';
 import type { SpriteGrid, SpritePalette } from './spriteTypes';
 
+/**
+ * Bump on every sprite-rendering change. Rendered as `data-render-rev` so
+ * the deployed revision can be read straight off the production bundle.
+ */
+export const SPRITE_RENDER_REV = 'r1149-equipment-grip';
+
+
 interface PixelGridCanvasProps {
   grid: SpriteGrid;
   palette: SpritePalette;
@@ -127,6 +134,11 @@ export const PixelGridCanvas = memo(function PixelGridCanvas({
       className={className}
       aria-label={label}
       data-glow={glowColor ? 'on' : 'off'}
+      // Deployment probe. Bump this string whenever the sprite renderer
+      // changes: it is greppable inside the minified production bundle, so a
+      // deployed revision can be confirmed from outside (curl on the built
+      // asset) without any access to the hosting dashboard.
+      data-render-rev={SPRITE_RENDER_REV}
       style={{ imageRendering: 'pixelated' }}
     />
   );
