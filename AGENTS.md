@@ -659,7 +659,7 @@ The tech-lead analyzes:
 ### Responsibilities
 
 ✅ **What the QA tester does**:
-1. Navigates to bitbrawler.vercel.app
+1. Navigates to bitbrawler.netlify.app
 2. Creates/loads QA character
 3. Performs **3 PvP fights + 2 PvE fights** (mixed run)
 4. Captures equipment, streak, and initial/final stats
@@ -884,7 +884,7 @@ Or visit: https://github.com/stxtxm/bitbrawler/actions
 ### QA Tester Failed
 
 **Check**:
-1. Is live site up? (bitbrawler.vercel.app)
+1. Is live site up? (bitbrawler.netlify.app)
 2. Network issue?
 3. Playwright crash?
 
@@ -1026,7 +1026,7 @@ curl -s https://<site>/<bundle> | grep -o '[a-z]*\.supabase\.co' | sort -u
 5. **Redéployer Netlify après tout save d'env** : `npx netlify deploy --prod`. Les variables sont injectées dans la fonction **au build** — les ajouter dans l'UI sans redéployer ne change rien
 6. Test end-to-end : créer un perso → vérifier ligne en DB
 7. Test idle API : `POST /api/idle-processor {"character_id":"<id existant>"}` → doit renvoyer `{fights:...}`, jamais `Character not found`/`Invalid API key`
-8. Cron-job.org : l'URL **est** à changer (`bitbrawler.vercel.app` → `bitbrawler.netlify.app`), le path `/api/idle-processor` est identique par construction
+8. Cron-job.org : l'URL **est** à changer (`bitbrawler.netlify.app` → `bitbrawler.netlify.app`), le path `/api/idle-processor` est identique par construction
 
 ### Pièges rencontrés (voir aussi memory/shared.json known_issues)
 - **404 "Character not found" sur un perso EXISTANT** = vars serveur périmées (erreur DB avalée). Depuis #754 la réponse inclut `db_target` + `detail` — toujours tester avec un ID réel
