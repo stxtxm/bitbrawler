@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-07T23:28:23Z",
+  "last_session": "2026-10-13T01:04:31Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
@@ -37,9 +37,9 @@
       "date": "2026-08-26"
     },
     {
-      "lesson": "Issue #1128 cablage QA_BASE_URL: (1) config.js extrait baseUrl en const module + 1 ligne console.log au chargement - import statique dans tests/helpers propage le log, acceptable. (2) Tests wiring = assertions sur contenu fichier (readFileSync) plutot que re-import dynamique avec env - deterministe sous vitest. (3) qa-tester.yml: QA_BASE_URL via vars.QA_BASE_URL (repo variable, pas secret) - fallback Vercel inchange quand var absente.",
-      "issue": "#1128",
-      "date": "2026-10-07"
+      "lesson": "Issue #1132 qa-tester.yml: concurrency group top-level (qa-stats-commit, cancel-in-progress false) + retry push avec re-pull — meme pattern que tech-lead.yml/ci.yml; YAML valide via python yaml.safe_load",
+      "issue": "#1132",
+      "date": "2026-10-13"
     }
   ]
 }
