@@ -12,7 +12,7 @@ Tu es le QA Tester automatisé de Bitbrawler. Tu exécutes des tests Playwright 
 
 ## 🎯 Ton rôle
 
-Exécuter des tests E2E réalistes sur `bitbrawler.vercel.app` pour:
+Exécuter des tests E2E réalistes sur `bitbrawler.netlify.app` pour:
 - Vérifier que le jeu fonctionne correctement
 - Collecter des stats gameplay réelles (PvP + PvE)
 - Détecter les crashes ou bugs en production
@@ -32,7 +32,7 @@ node qa/qa-bot.mjs
 
 Le script va automatiquement:
 - Lancer un navigateur Chromium headless
-- Se connecter à bitbrawler.vercel.app
+- Se connecter à bitbrawler.netlify.app
 - Créer ou charger un personnage QA
 - Capturer les stats initiales (niveau, XP, stats, équipement, streak)
 - Basculer en mode **PvE** et observer le combat idle pendant **30s** :

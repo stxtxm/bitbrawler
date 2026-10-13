@@ -429,7 +429,7 @@ gh issue close 171
 
 ### ✅ Before EVERY qa-tester-agent Run
 ```bash
-☑ bitbrawler.vercel.app is UP (test with curl)
+☑ bitbrawler.netlify.app is UP (test with curl)
 ☑ Playwright browsers installed (npx playwright install)
 ☑ QA character exists in localStorage (or create new)
 ☑ Run sequence: create char → 5 fights → claim lootbox
