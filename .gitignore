@@ -60,3 +60,5 @@ qa/analysis-latest.json
 
 # Local Netlify folder
 .netlify
+# Local Cloudflare CLI state (contains no secrets but must not be committed)
+.wrangler/

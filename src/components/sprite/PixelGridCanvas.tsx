@@ -5,7 +5,7 @@ import type { SpriteGrid, SpritePalette } from './spriteTypes';
  * Bump on every sprite-rendering change. Rendered as `data-render-rev` so
  * the deployed revision can be read straight off the production bundle.
  */
-export const SPRITE_RENDER_REV = 'r1149-equipment-grip';
+export const SPRITE_RENDER_REV = 'r1150-cloudflare-live';
 
 
 interface PixelGridCanvasProps {
