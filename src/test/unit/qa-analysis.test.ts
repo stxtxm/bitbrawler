@@ -87,6 +87,7 @@ interface RunRecord {
     purchased_offer?: number | null
     essence_after_purchase?: number | null
   }
+  skipped_fights?: Array<{ index: number; reason: string }>
   essence?: {
     shop_before?: number | null
     shop_after?: number | null
@@ -2523,7 +2524,7 @@ describe('QA Freshness-Gated Idle Suggestion (#858)', () => {
       expect(source).toContain('data_freshness')
       expect(source).toContain('stale')
       expect(source).toContain('[STALE]')
-      expect(source).toContain("trailing_error_runs >= 10")
+      expect(source).toContain('trailing_error_runs + trailing_empty_runs >= FRESHNESS_STALE_RUNS')
       expect(source).toContain('High idle win rate')
     })
 
@@ -2533,6 +2534,280 @@ describe('QA Freshness-Gated Idle Suggestion (#858)', () => {
       expect(source).toContain('collectIdleFights(recentIdleRuns)')
       expect(source).toContain('idle_win_rate')
       expect(source).toContain('trailing_error_runs')
+    })
+  })
+})
+
+describe('QA Empty-Run Validity & Window Coverage (#1186)', () => {
+  function isEmptyRunLocal(r: RunRecord): boolean {
+    return (!r.fights || r.fights.length === 0) && (!r.errors || r.errors.length === 0)
+  }
+
+  interface DataFreshnessEmpty {
+    last_valid_run_at: string | null
+    trailing_error_runs: number
+    trailing_empty_runs: number
+    stale: boolean
+  }
+
+  function computeDataFreshnessWithEmpty(runs: RunRecord[]): DataFreshnessEmpty {
+    let trailing_error_runs = 0
+    let trailing_empty_runs = 0
+    let lastValid: RunRecord | undefined
+    for (let i = runs.length - 1; i >= 0; i--) {
+      const r = runs[i]
+      const bad = isErrorRun(r)
+      const empty = isEmptyRunLocal(r)
+      if (!bad && !empty) {
+        lastValid = r
+        break
+      }
+      if (bad) trailing_error_runs++
+      else trailing_empty_runs++
+    }
+    return {
+      last_valid_run_at: lastValid?.date ?? null,
+      trailing_error_runs,
+      trailing_empty_runs,
+      stale: trailing_error_runs + trailing_empty_runs >= 10,
+    }
+  }
+
+  function computeRecentFightCoverage(runs: RunRecord[], windowSize = 30): number {
+    return runs.slice(-windowSize).reduce((s, r) => s + (r.fights?.length ?? 0), 0)
+  }
+
+  const MIN_RECENT_FIGHTS = 10
+
+  function starveIssues(runs: RunRecord[]): string[] {
+    const issues: string[] = []
+    const recent = runs.slice(-30)
+    const coverage = computeRecentFightCoverage(runs, recent.length)
+    if (coverage < MIN_RECENT_FIGHTS) {
+      issues.push(`QA window starved: only ${coverage} fights over last ${recent.length} runs — balance signals unreliable`)
+    }
+    return issues
+  }
+
+  function makeFightRun(id: string, fightCount = 5): RunRecord {
+    return {
+      date: `2026-10-17T14:40:40.472Z-${id}`,
+      run: id,
+      character: 'QA-PERSI-8',
+      fights: Array.from({ length: fightCount }, () => ({ result: 'victory' as const, xp: 100, fight_duration_ms: 5000 })),
+      errors: [],
+      character_type: 'persistent' as const,
+    }
+  }
+
+  function makeEmptyRun(id: string): RunRecord {
+    return {
+      date: `2026-10-17T21:02:42.387Z-${id}`,
+      run: id,
+      character: 'QA-PERSI-8',
+      fights: [],
+      skipped_fights: [{ index: 1, reason: 'no_start' }],
+      errors: [],
+      character_type: 'persistent' as const,
+    }
+  }
+
+  function makeErrorRunLocal(id: string): RunRecord {
+    return {
+      date: `2026-10-17T19:01:29.346Z-${id}`,
+      run: id,
+      character: 'QA-PERSI-8',
+      fights: [],
+      errors: ['PLAYWRIGHT_TIMEOUT: waiting for combat result'],
+      character_type: 'persistent' as const,
+    }
+  }
+
+  describe('isEmptyRun', () => {
+    it('détecte un run 0 combat / 0 erreur comme vide (#1186 run 872 no_start)', () => {
+      expect(isEmptyRunLocal(makeEmptyRun('no-start'))).toBe(true)
+    })
+
+    it('ne classe ni un run avec combats ni un run 0 combat avec erreurs comme vides', () => {
+      expect(isEmptyRunLocal(makeFightRun('r'))).toBe(false)
+      expect(isEmptyRunLocal(makeErrorRunLocal('r'))).toBe(false)
+    })
+
+    it('accepte un run sans tableau fights du tout (undefined)', () => {
+      const r: RunRecord = { date: '2026-10-17', run: 'r', character: 'C', fights: undefined as unknown as [], errors: [] }
+      expect(isEmptyRunLocal(r)).toBe(true)
+    })
+  })
+
+  describe('computeDataFreshness (empty-aware)', () => {
+    it('ne traite plus un run vide comme valide : last_valid_run_at vise le dernier run avec combats', () => {
+      const runs: RunRecord[] = [
+        ...Array.from({ length: 6 }, (_, i) => makeEmptyRun(`empty-${i}`)),
+        makeFightRun('f1'),
+        makeEmptyRun('tail-empty'),
+      ]
+      const freshness = computeDataFreshnessWithEmpty(runs)
+      expect(freshness.last_valid_run_at).toBe('2026-10-17T14:40:40.472Z-f1')
+      expect(freshness.trailing_error_runs).toBe(0)
+      expect(freshness.trailing_empty_runs).toBe(1)
+      expect(freshness.stale).toBe(false)
+    })
+
+    it('marque stale quand le segment chargé d erreurs est suivi d empties (somme >= 10)', () => {
+      const runs: RunRecord[] = [
+        makeFightRun('f1'),
+        ...Array.from({ length: 4 }, (_, i) => makeErrorRunLocal(`err-${i}`)),
+        ...Array.from({ length: 6 }, (_, i) => makeEmptyRun(`empty-${i}`)),
+      ]
+      const freshness = computeDataFreshnessWithEmpty(runs)
+      expect(freshness.trailing_error_runs).toBe(4)
+      expect(freshness.trailing_empty_runs).toBe(6)
+      expect(freshness.stale).toBe(true)
+      expect(freshness.last_valid_run_at).toBe('2026-10-17T14:40:40.472Z-f1')
+    })
+
+    it('compte errors et empties en zigzag sans les mélanger', () => {
+      const runs: RunRecord[] = [
+        makeFightRun('f1'),
+        makeEmptyRun('e1'),
+        makeErrorRunLocal('x1'),
+        makeEmptyRun('e2'),
+        makeEmptyRun('e3'),
+      ]
+      const freshness = computeDataFreshnessWithEmpty(runs)
+      expect(freshness.trailing_error_runs).toBe(1)
+      expect(freshness.trailing_empty_runs).toBe(3)
+      expect(freshness.stale).toBe(false)
+      expect(freshness.last_valid_run_at).toBe('2026-10-17T14:40:40.472Z-f1')
+    })
+
+    it('retourne last_valid_run_at null quand tous les runs sont vides ou en erreur', () => {
+      const runs: RunRecord[] = [
+        makeErrorRunLocal('x'),
+        ...Array.from({ length: 9 }, (_, i) => makeEmptyRun(`empty-${i}`)),
+      ]
+      const freshness = computeDataFreshnessWithEmpty(runs)
+      expect(freshness.last_valid_run_at).toBeNull()
+      expect(freshness.trailing_empty_runs).toBe(9)
+      expect(freshness.trailing_error_runs).toBe(1)
+      expect(freshness.stale).toBe(true)
+    })
+
+    it('reste non-stale quand seulement 9 runs de queue sont invalides', () => {
+      const runs: RunRecord[] = [
+        makeFightRun('f1'),
+        makeFightRun('f2'),
+        ...Array.from({ length: 8 }, (_, i) => makeEmptyRun(`empty-${i}`)),
+        makeErrorRunLocal('x'),
+      ]
+      const freshness = computeDataFreshnessWithEmpty(runs)
+      expect(freshness.trailing_error_runs).toBe(1)
+      expect(freshness.trailing_empty_runs).toBe(8)
+      expect(freshness.stale).toBe(false)
+    })
+  })
+
+  describe('recent_fight_coverage', () => {
+    it('cumule les combats sur la fenêtre de 30 runs (1 run à 5 combats → 5)', () => {
+      const runs: RunRecord[] = [
+        ...Array.from({ length: 25 }, (_, i) => makeEmptyRun(`empty-${i}`)),
+        makeFightRun('f1', 5),
+        ...Array.from({ length: 4 }, (_, i) => makeEmptyRun(`tail-${i}`)),
+      ]
+      expect(computeRecentFightCoverage(runs)).toBe(5)
+    })
+
+    it('retourne 0 quand tous les runs récents sont vides', () => {
+      const runs: RunRecord[] = Array.from({ length: 8 }, (_, i) => makeEmptyRun(`empty-${i}`))
+      expect(computeRecentFightCoverage(runs)).toBe(0)
+    })
+
+    it('couvre toute la série quand il y a moins de 30 runs', () => {
+      const runs: RunRecord[] = [makeFightRun('f1', 3)]
+      expect(computeRecentFightCoverage(runs)).toBe(3)
+    })
+  })
+
+  describe('alerte window starved', () => {
+    it('pousse l alerte quand la couverture réelle est insuffisante (5 combats / 30 runs)', () => {
+      const runs: RunRecord[] = [
+        ...Array.from({ length: 29 }, (_, i) => makeEmptyRun(`empty-${i}`)),
+        makeFightRun('f1', 5),
+      ]
+      const issues = starveIssues(runs)
+      expect(issues).toHaveLength(1)
+      expect(issues[0]).toContain('QA window starved: only 5 fights over last 30 runs — balance signals unreliable')
+    })
+
+    it('ne déclenche pas l alerte sur une fenêtre couverte', () => {
+      const runs: RunRecord[] = Array.from({ length: 12 }, (_, i) => makeFightRun(`r${i}`, 5))
+      expect(starveIssues(runs)).toHaveLength(0)
+    })
+
+    it('utilise la taille récente quand la série est plus courte que la fenêtre', () => {
+      const runs: RunRecord[] = [
+        ...Array.from({ length: 4 }, (_, i) => makeEmptyRun(`empty-${i}`)),
+        makeFightRun('f1', 2),
+      ]
+      const issues = starveIssues(runs)
+      expect(issues[0]).toContain('over last 5 runs')
+    })
+  })
+
+  describe('categorisation empty_runs separée de successful_runs', () => {
+    function categorize(runs: RunRecord[]): { successful: number; halfway: number; error: number; empty: number } {
+      const valid = runs.filter(r => r.fights && r.fights.length > 0)
+      const error = runs.filter(isErrorRun)
+      const empty = runs.filter(isEmptyRunLocal)
+      const halfway = valid.filter(r => r.errors.length > 0)
+      const successful = valid.filter(r => r.errors.length === 0)
+      return { successful: successful.length, halfway: halfway.length, error: error.length, empty: empty.length }
+    }
+
+    it('compte les runs vides à part : successful + halfway + error + empty == total', () => {
+      const runs: RunRecord[] = [
+        makeFightRun('ok1'),
+        makeFightRun('ok2'),
+        { ...makeFightRun('half', 2), errors: ['mid-run failure'] },
+        makeErrorRunLocal('err'),
+        makeEmptyRun('empty'),
+      ]
+      const counts = categorize(runs)
+      expect(counts.successful).toBe(2)
+      expect(counts.halfway).toBe(1)
+      expect(counts.error).toBe(1)
+      expect(counts.empty).toBe(1)
+      expect(counts.successful + counts.halfway + counts.error + counts.empty).toBe(runs.length)
+    })
+
+    it('un run 0 combat / 0 erreur n est plus ni successful ni error (catégorie dédiée)', () => {
+      const counts = categorize([makeEmptyRun('only')])
+      expect(counts.empty).toBe(1)
+      expect(counts.successful).toBe(0)
+      expect(counts.error).toBe(0)
+    })
+  })
+
+  describe('analyze-qa-stats.ts source contract (#1186)', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+
+    it('expose isEmptyRun et la fraicheur combinée errors + empty', () => {
+      expect(source).toContain('function isEmptyRun(')
+      expect(source).toContain('trailing_empty_runs')
+      expect(source).toContain('!isErrorRun(r) && !isEmptyRun(r)')
+      expect(source).toContain('trailing_error_runs + trailing_empty_runs >= FRESHNESS_STALE_RUNS')
+    })
+
+    it('expose la couverture récente et l alerte starved', () => {
+      expect(source).toContain('recent_fight_coverage')
+      expect(source).toContain('QA window starved')
+      expect(source).toContain('MIN_RECENT_FIGHTS')
+    })
+
+    it('sépare empty_runs de successful_runs dans le rapport et le CLI', () => {
+      expect(source).toContain('empty_runs: emptyRuns.length')
+      expect(source).toContain('${report.empty_runs} empty')
+      expect(source).toContain('trailing empty run(s)')
     })
   })
 })
