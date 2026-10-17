@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-17T22:04:50Z",
+  "last_session": "2026-10-17T23:26:03Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -79,6 +79,11 @@
     {
       "lesson": "Issue #1194 burst bonus: le calcul UI baseFightsLeft+1 et le garde-fou matchmaking (fightsLeft brut) avaient divergé. Regle: toute valeur de jeu affichee a l'ecran ET utilisee par un garde-fou doit venir d'un helper unique (getEffectiveFightsLeft dans src/data/liveOps.ts). Resolution des bonus via localStorage: ne pas ajouter de +1 au refund si la reservation etait bonus (sinon over-grant).",
       "issue": "#1194",
+      "date": "2026-10-17"
+    },
+    {
+      "lesson": "Issue #1197 (QA bot energy skip): Arena ActionPanel dishes the BURST-INFLATED effectiveFightsLeft (base+1) in the X/5 AVAILABLE text, so readArenaStatus().fightsAvailable can be 1 while DB fights_left=0. The real protection is capFightAttempts(min(fightsPerRun, fightsAvailable)) which limits the run to the displayed energy, plus shouldSkipForEnergy(0)=>no_energy. null read => attempt (safe fallback). Helpers live in src/utils/qa-bot-helpers.js and source-contract tests slice runFightSequence() from qa/qa-bot.mjs.",
+      "issue": "#1197",
       "date": "2026-10-17"
     }
   ]
