@@ -405,7 +405,7 @@ jobs:
           # Vérifier `opencode models | grep '^opencode/'` si les 3 échouent vite.
           MODELS=(
             "opencode/glm-5.3-flash-free"
-            "opencode/glm-5.3-flash-free"
+            "opencode/deepseek-v4.1-flash-free"
             "opencode/nemotron-3.5-lightning-free"
           )
 
@@ -467,7 +467,7 @@ jobs:
             MODEL_ATTEMPTS=$((MODEL_ATTEMPTS + 1))
             echo "Trying model: $MODEL (attempt $MODEL_ATTEMPTS, max 8m)"
             START=$(date +%s)
-            if timeout 8m opencode run --dangerously-skip-permissions --agent reviewer --model "$MODEL" "$PROMPT"; then
+            if timeout -k 30s 8m opencode run --dangerously-skip-permissions --agent reviewer --model "$MODEL" "$PROMPT"; then
               echo "Model selected: $MODEL ($(( $(date +%s) - START ))s)"
               SUCCESS=1
               break
