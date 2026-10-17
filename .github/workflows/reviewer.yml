@@ -40,6 +40,16 @@ jobs:
         id: gate
         env:
           GH_TOKEN: ${{ github.token }}
+          # Ce job n'a volontairement PAS de actions/checkout (il ne fait aucune
+          # lecture de code). Sans dépôt git dans le workspace, `gh` est incapable
+          # de deviner de quel dépôt on parle et sort sur
+          # « failed to run git: fatal: ... n'est pas un dépôt git ».
+          # GH_REPO le lui dit explicitement, sans checkout.
+          # Incident #1176 : sans cette variable, `gh pr view` échouait TOUJOURS,
+          # le `|| echo ""` transformait l'échec en « unknown », et le preflight
+          # sautait la revue en silence — toutes les PR restaient sans revue alors
+          # que le run affichait « success ».
+          GH_REPO: ${{ github.repository }}
         run: |
           PR_NUMBER="${{ github.event.inputs.pr_number }}"
           if [ -z "$PR_NUMBER" ]; then
@@ -47,10 +57,25 @@ jobs:
             echo "should_review=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          PR_STATE=$(gh pr view "$PR_NUMBER" --json state --jq '.state' 2>/dev/null || echo "")
-          echo "PR #$PR_NUMBER state: ${PR_STATE:-unknown}"
+          # On distingue « l'API dit que la PR est fermée » de « je n'ai pas pu
+          # lire ». Confondre les deux désactive tout le pipeline sans le moindre
+          # signal : on réessaie, puis on échoue BRUYAMMENT.
+          PR_STATE=""
+          for attempt in 1 2 3; do
+            if PR_STATE=$(gh pr view "$PR_NUMBER" --json state --jq '.state' 2>/tmp/gh_err); then
+              [ -n "$PR_STATE" ] && break
+            fi
+            PR_STATE=""
+            echo "⚠ tentative $attempt : état de la PR #$PR_NUMBER illisible — $(head -1 /tmp/gh_err 2>/dev/null)"
+            sleep 10
+          done
+          if [ -z "$PR_STATE" ]; then
+            echo "::error::État de la PR #$PR_NUMBER illisible après 3 tentatives. On n'annule PAS la revue en silence : un preflight aveugle éteint tout le reviewer en affichant du vert."
+            exit 1
+          fi
+          echo "PR #$PR_NUMBER state: $PR_STATE"
           if [ "$PR_STATE" != "OPEN" ]; then
-            echo "PR #$PR_NUMBER is ${PR_STATE:-unknown}, not OPEN — no review to perform"
+            echo "PR #$PR_NUMBER is $PR_STATE, not OPEN — no review to perform"
             echo "should_review=false" >> "$GITHUB_OUTPUT"
           else
             echo "should_review=true" >> "$GITHUB_OUTPUT"
