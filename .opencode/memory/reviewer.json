@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-17T20:44:55Z",
+  "last_session": "2026-10-17T21:25:17Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,7 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR du dev-agent avec statusCheckRollup VIDE (situee sur un commit [skip ci]) : verifier le gate complet en local (npm run lint && npm test && npm run build, tsc inclus) puis merger si vert ; precedent #1175 puis #1179 (merge OK, 435 lignes, 2190 tests verts). Ne pas request-changes pour cause de CI absente si le gate local est vert.",
-      "issue": "#1179",
+      "lesson_report": "PR #1180 mergee (squash, 96f31b1): fix ci.yml checkout refs/pull/N/head + marqueurs skip ci sur commits memoire + doc AGENTS.md + 4 tests workflow-integrity. Cas pratique confirme: statusCheckRollup vide sur PR externe -> gate locale complete (lint/tsc/2193 tests/build) rejouee avant merge, conforme a la note 2 AGENTS.md. Verifier toujours les regex de workflow-integrity.test.ts contre les lignes reelles des workflows (ex: \"docs: add vX.Y.Z\" ligne 304 opencode.yml) avant d'approuver une modification de contrat CI.",
       "date": "2026-10-17"
     }
   ]
