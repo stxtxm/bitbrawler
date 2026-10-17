@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-17T20:22:47Z",
+  "last_session": "2026-10-17T20:23:27Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -45,6 +45,11 @@
       "lesson": "Issue #1178 QA bot PvE-locked: le bot validait sa bascule PvP via aria-checked mais readArenaStatus renvoyait toujours LOCKED, et il attaquait quand meme -> 90s x3. Fix: helpers purs (isAttackableArenaStatus, didFightStart, FIGHT_START_GRACE_MS=3000, decideFightTypeForIndex) dans src/utils/qa-bot-helpers.js + forcedPvpIndexes (Set) pour epingler un index verrouille en PvP et casser l'oscillation PVP->PVE->PVP. Fail-fast: si didFightStart faux apres ~3s -> skipped_fights reason no_start sans errors.push. Toujours verifier l'etat REEL apres une bascule, jamais supposer qu'elle a marche.",
       "issue": "#1178",
       "date": "2026-10-17"
+    },
+    {
+      "issue": "#1178",
+      "date": "2026-10-17",
+      "lesson": "QA bot (#1178): le bouton FIGHT (.primary-btn.giant-btn de ActionPanel) reste 'visible' pour Playwright même pendant le combat, car .combat-overlay est position:fixed/z-index:1000 et isVisible n'ignore PAS l'occlusion. Le seul signal fiable 'combat demarre' est la presence/visibilite de .combat-overlay -> readArenaStatus expose combatVisible + hasCombatStarted le teste en premier. Toujours verifier le DOM reel (overlay) avant de fonder un fail-fast sur la visibilite d'un CTA. La tentative precedente non commitee de cet issue avait des tests faux (ordre indexOf inverses, slice trop court) -> relire/adapter les tests herites d'un worktree sale avant de commit."
     }
   ]
 }
