@@ -277,6 +277,7 @@ interface IdleAnalysis {
 interface DataFreshness {
   last_valid_run_at: string | null
   trailing_error_runs: number
+  trailing_empty_runs: number
   stale: boolean
 }
 
@@ -294,7 +295,9 @@ interface AnalysisReport {
   successful_runs: number
   halfway_runs: number
   error_runs: number
+  empty_runs: number
   data_freshness: DataFreshness
+  recent_fight_coverage: number
   character_type_breakdown: CharacterTypeBreakdown
   persistent_level_distribution: Record<string, number>
   win_rate: number
@@ -376,17 +379,40 @@ function isErrorRun(r: RunRecord): boolean {
   return !!r.errors && r.errors.length > 0 && (!r.fights || r.fights.length === 0)
 }
 
+// A run carrying NO combat data and NO error — e.g. every attempt skipped with
+// no_start/exhausted (#1186). Such runs were previously counted as "valid" by
+// computeDataFreshness, keeping data_freshness green while the QA window held
+// nothing but these silent zeros.
+function isEmptyRun(r: RunRecord): boolean {
+  return (!r.fights || r.fights.length === 0) && (!r.errors || r.errors.length === 0)
+}
+
+// Freshness staleness threshold: the number of consecutive trailing error runs
+// plus empty runs after which aggregates must be considered stale (#730, #1186).
+const FRESHNESS_STALE_RUNS = 10
+
+// Minimum total fights the recent alert window must carry for balance signals
+// (win rate, idle, shop, progression, streak) to be actionable (#1186).
+const MIN_RECENT_FIGHTS = 10
+
 function computeDataFreshness(stats: RunRecord[]): DataFreshness {
   let trailing_error_runs = 0
+  let trailing_empty_runs = 0
+  let lastValid: RunRecord | undefined
   for (let i = stats.length - 1; i >= 0; i--) {
-    if (isErrorRun(stats[i])) trailing_error_runs++
-    else break
+    const r = stats[i]
+    if (!isErrorRun(r) && !isEmptyRun(r)) {
+      lastValid = r
+      break
+    }
+    if (isErrorRun(r)) trailing_error_runs++
+    else trailing_empty_runs++
   }
-  const lastValid = [...stats].reverse().find(r => !isErrorRun(r))
   return {
     last_valid_run_at: lastValid?.date ?? null,
     trailing_error_runs,
-    stale: trailing_error_runs >= 10,
+    trailing_empty_runs,
+    stale: trailing_error_runs + trailing_empty_runs >= FRESHNESS_STALE_RUNS,
   }
 }
 
@@ -535,9 +561,11 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   const now = new Date().toISOString()
   const data_freshness = computeDataFreshness(stats)
 
-  // Categorize runs
+  // Categorize runs. Empty runs (0 fight, 0 error — silent skipped attempts,
+  // #1186) are their own category, never folded into successful_runs.
   const validRuns = stats.filter(r => r.fights && r.fights.length > 0)
   const errorRuns = stats.filter(isErrorRun)
+  const emptyRuns = stats.filter(isEmptyRun)
   const halfwayRuns = validRuns.filter(isHalfwayRun)
   const successfulRuns = validRuns.filter(r => !r.errors || r.errors.length === 0)
 
@@ -692,6 +720,15 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   const issues: string[] = []
   const suggestions: string[] = []
   const recentRuns = stats.slice(-RECENT_WINDOW_RUNS)
+
+  // Recent fight coverage (#1186): total fights carried by the recent window.
+  // Balance signals (win rate, idle, shop, progression, streak) are only
+  // actionable when the window actually holds combat data; a window starved of
+  // fights must be reported loudly instead of silently validating a balance call.
+  const recent_fight_coverage = recentRuns.reduce((s, r) => s + (r.fights?.length ?? 0), 0)
+  if (recent_fight_coverage < MIN_RECENT_FIGHTS) {
+    issues.push(`QA window starved: only ${recent_fight_coverage} fights over last ${recentRuns.length} runs — balance signals unreliable`)
+  }
 
   // Win rate
   if (winRate < 0.3) issues.push(`Win rate is very low (${(winRate * 100).toFixed(1)}%) — game may be too hard`)
@@ -1243,16 +1280,17 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     // Idle win-rate alerts use the recent idle-data window (#730): the all-time
     // cumulative rate includes the pre-#727 era (STAT_MULTIPLIER 20.0) and would
     // keep flagging "too strong" forever even after the fix.
-    // Freshness gate (#858): when trailing_error_runs >= 10 the last 15 idle
-    // runs are stale (pre-#738 era). Gate the High win-rate suggestion to avoid
-    // retuning in the wrong direction when fresh WR is <50%.
+    // Freshness gate (#858, #1186): when the trailing error + empty run count
+    // reaches the stale threshold the last 15 idle runs are stale (pre-#738
+    // era). Gate the High win-rate suggestion to avoid retuning in the wrong
+    // direction when fresh WR is <50%.
     const recentIdleRuns = runsWithIdleData.slice(-RECENT_IDLE_RUNS)
     const recentIdleFights = collectIdleFights(recentIdleRuns)
     const recentIdleWinRate = recentIdleFights.length > 0
       ? recentIdleFights.filter(f => f.result === 'victory').length / recentIdleFights.length
       : null
     if (recentIdleWinRate !== null) {
-      const isIdleStale = data_freshness.trailing_error_runs >= 10
+      const isIdleStale = data_freshness.stale
       if (recentIdleWinRate < 0.4) {
         if (!isIdleStale) {
           suggestions.push(`Low idle win rate (${(recentIdleWinRate * 100).toFixed(0)}% over the last ${recentIdleRuns.length} idle runs). Idle monsters may be too strong.`)
@@ -1278,7 +1316,9 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     successful_runs: successfulRuns.length,
     halfway_runs: halfwayRuns.length,
     error_runs: errorRuns.length,
+    empty_runs: emptyRuns.length,
     data_freshness,
+    recent_fight_coverage,
     character_type_breakdown: characterTypeBreakdown,
     persistent_level_distribution: persistentLevelDist,
     win_rate: Math.round(winRate * 1000) / 1000,
@@ -1342,7 +1382,8 @@ function printReport(report: AnalysisReport): void {
   console.log('═══════════════════════════════════════════════════════')
   console.log('')
   console.log(`  ${bold}Runs:${reset} ${report.total_runs} total`)
-  console.log(`        ${green}${report.successful_runs} successful${reset}, ${yellow}${report.halfway_runs} partial${reset}, ${red}${report.error_runs} errors${reset}`)
+  console.log(`        ${green}${report.successful_runs} successful${reset}, ${yellow}${report.halfway_runs} partial${reset}, ${red}${report.error_runs} errors${reset}, ${report.empty_runs} empty`)
+  console.log(`        ${bold}Fights in recent window:${reset} ${report.recent_fight_coverage} (min ${MIN_RECENT_FIGHTS} for reliable signals)`)
   const ct = report.character_type_breakdown
   console.log(`  ${bold}Characters:${reset} ${ct.persistent_runs} persistent (longitudinal), ${ct.fresh_runs} fresh (first-session), ${ct.unknown_runs} unknown`)
   if (Object.keys(report.persistent_level_distribution).length > 0) {
@@ -1350,9 +1391,9 @@ function printReport(report: AnalysisReport): void {
   }
   console.log(`  ${bold}Fights:${reset} ${report.total_fights} (avg ${report.avg_fights_per_run}/run)`)
   if (report.data_freshness.stale) {
-    console.log(`  ${yellow}DATA STALE — ${report.data_freshness.trailing_error_runs} consecutive errors since ${report.data_freshness.last_valid_run_at ?? 'unknown'} — aggregates reflect pre-outage data${reset}`)
-  } else if (report.data_freshness.trailing_error_runs > 0) {
-    console.log(`  Freshness:      ${report.data_freshness.trailing_error_runs} trailing error run(s), last valid ${report.data_freshness.last_valid_run_at ?? 'n/a'}`)
+    console.log(`  ${yellow}DATA STALE — ${report.data_freshness.trailing_error_runs} error run(s) + ${report.data_freshness.trailing_empty_runs} trailing empty run(s) since ${report.data_freshness.last_valid_run_at ?? 'unknown'} — aggregates reflect pre-outage data${reset}`)
+  } else if (report.data_freshness.trailing_error_runs > 0 || report.data_freshness.trailing_empty_runs > 0) {
+    console.log(`  Freshness:      ${report.data_freshness.trailing_error_runs} trailing error run(s), ${report.data_freshness.trailing_empty_runs} trailing empty run(s), last valid ${report.data_freshness.last_valid_run_at ?? 'n/a'}`)
   }
   console.log('')
   console.log(`  ── ${bold}Combat Balance${reset} ──`)
