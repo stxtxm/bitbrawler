@@ -12,7 +12,7 @@
  * qa-analysis.test.ts) so a regression in the merge reliability fix is caught.
  */
 import { describe, it, expect } from 'vitest'
-import { readFileSync } from 'fs'
+import { readFileSync, readdirSync } from 'fs'
 import { join } from 'path'
 
 const readWorkflow = (name: string): string =>
@@ -54,5 +54,45 @@ describe('Workflow contracts: auto bot-merge reliability ([skip ci] head)', () =
     expect(reviewer).toContain('npm test')
     expect(reviewer).toContain('npm run build')
     expect(reviewer).toContain('request-changes')
+  })
+})
+
+describe('Workflow files declare unique job names', () => {
+  // Regression: inserting the `preflight` job ahead of `review` left the
+  // `review:` key declared twice at the job level. Every local check passed —
+  // PyYAML silently keeps the last duplicate — but GitHub rejects the file
+  // with "'review' is already defined" and the entire reviewer dispatch dies
+  // on HTTP 422. The CI step then reported a bare "exit code 1", which points
+  // at the job that failed rather than at the malformed workflow behind it.
+  //
+  // Parsed line-by-line on purpose: a real YAML parser would need types for
+  // js-yaml, and job-level keys are exactly what GitHub complains about.
+  const jobNames = (source: string): string[] => {
+    const lines = source.split('\n')
+    const start = lines.findIndex(l => /^jobs:\s*$/.test(l))
+    if (start === -1) return []
+    const names: string[] = []
+    for (const line of lines.slice(start + 1)) {
+      // A top-level key ends the `jobs:` block.
+      if (/^[^\s#]/.test(line) && line.trim() !== '') break
+      const m = /^  ([A-Za-z0-9_-]+):\s*$/.exec(line)
+      if (m) names.push(m[1])
+    }
+    return names
+  }
+
+  const workflowDir = join(process.cwd(), '.github', 'workflows')
+  const workflowFiles = readdirSync(workflowDir).filter(f => f.endsWith('.yml'))
+
+  it('finds job names in a known-good workflow', () => {
+    // Guards the parser itself: if this returns nothing, the duplicate check
+    // below would pass vacuously for every file.
+    expect(jobNames(readWorkflow('reviewer.yml'))).toContain('review')
+  })
+
+  it.each(workflowFiles)('%s has no duplicated job key', file => {
+    const names = jobNames(readWorkflow(file))
+    const duplicates = names.filter((n, i) => names.indexOf(n) !== i)
+    expect(duplicates).toEqual([])
   })
 })
