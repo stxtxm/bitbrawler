@@ -11,6 +11,12 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'fs'
 import { join } from 'path'
+import {
+  isAttackableArenaStatus,
+  didFightStart,
+  decideFightTypeForIndex,
+  FIGHT_START_GRACE_MS,
+} from '../../utils/qa-bot-helpers'
 
 // ── Types matching RunRecord from analyze-qa-stats.ts ──
 
@@ -2849,6 +2855,279 @@ describe('QA Stall Detector per fight_type (#1112)', () => {
       const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
       expect(source).toContain('recentRuns.flatMap')
       expect(source).toContain('recentFights')
+    })
+  })
+})
+
+describe('QA Bot Fight Mode & Start Guards (#1178)', () => {
+  describe('isAttackableArenaStatus', () => {
+    it('rejette l\'arène dont le boss est verrouillé (isPveLocked) — on ne doit jamais armer un combat', () => {
+      expect(isAttackableArenaStatus({
+        fightButtonVisible: true,
+        fightButtonEnabled: false,
+        fightButtonLabel: 'LOCKED LVL 30',
+        isPveLocked: true,
+        bossLockedLevel: 30,
+      })).toBe(false)
+    })
+
+    it('accepte un CTA FIGHT! normal, visible et actif', () => {
+      expect(isAttackableArenaStatus({
+        fightButtonVisible: true,
+        fightButtonEnabled: true,
+        fightButtonLabel: 'FIGHT!',
+        isPveLocked: false,
+      })).toBe(true)
+    })
+
+    it('accepte un CTA ATTACK BOSS (boss déverrouillé en PvE)', () => {
+      expect(isAttackableArenaStatus({
+        fightButtonVisible: true,
+        fightButtonEnabled: true,
+        fightButtonLabel: 'ATTACK BOSS',
+        isPveLocked: false,
+      })).toBe(true)
+    })
+
+    it('rejette les états non-attaquables (null, absent, disabled, resting, searching, resolving, auto/offline)', () => {
+      expect(isAttackableArenaStatus(null)).toBe(false)
+      expect(isAttackableArenaStatus(undefined)).toBe(false)
+      expect(isAttackableArenaStatus({
+        fightButtonVisible: false,
+        fightButtonEnabled: true,
+        fightButtonLabel: 'FIGHT!',
+        isPveLocked: false,
+      })).toBe(false)
+      expect(isAttackableArenaStatus({
+        fightButtonVisible: true,
+        fightButtonEnabled: false,
+        fightButtonLabel: 'FIGHT!',
+        isPveLocked: false,
+      })).toBe(false)
+      expect(isAttackableArenaStatus({
+        fightButtonVisible: true,
+        fightButtonEnabled: true,
+        fightButtonLabel: 'REST NOW',
+        isPveLocked: false,
+      })).toBe(false)
+      expect(isAttackableArenaStatus({
+        fightButtonVisible: true,
+        fightButtonEnabled: true,
+        fightButtonLabel: 'SEARCHING...',
+        isPveLocked: false,
+        isSearching: true,
+      })).toBe(false)
+      expect(isAttackableArenaStatus({
+        fightButtonVisible: true,
+        fightButtonEnabled: true,
+        fightButtonLabel: 'RESOLVING...',
+        isPveLocked: false,
+        isResolving: true,
+      })).toBe(false)
+      expect(isAttackableArenaStatus({
+        fightButtonVisible: true,
+        fightButtonEnabled: true,
+        fightButtonLabel: 'AUTO MODE',
+        isPveLocked: false,
+      })).toBe(false)
+    })
+  })
+
+  describe('didFightStart', () => {
+    it('détecte que la vue de combat a remplacé le CTA de l\'arène', () => {
+      expect(didFightStart({ fightButtonVisible: false, fightButtonLabel: '', bodyText: '' })).toBe(true)
+    })
+
+    it('détecte un résultat déjà affiché ou une résolution en cours', () => {
+      expect(didFightStart({ fightButtonVisible: true, fightButtonLabel: 'FIGHT!', bodyText: 'VICTORY' })).toBe(true)
+      expect(didFightStart({ fightButtonVisible: true, fightButtonLabel: 'FIGHT!', bodyText: 'DEFEAT' })).toBe(true)
+      expect(didFightStart({ fightButtonVisible: true, fightButtonLabel: 'FIGHT!', bodyText: 'No opponents found' })).toBe(true)
+      expect(didFightStart({ fightButtonVisible: true, fightButtonLabel: 'RESOLVING...', bodyText: '' })).toBe(true)
+    })
+
+    it('renvoie false quand le CTA est inchangé (clic sans démarrage, #1178)', () => {
+      expect(didFightStart({ fightButtonVisible: true, fightButtonLabel: 'LOCKED LVL 30', bodyText: '' })).toBe(false)
+      expect(didFightStart({ fightButtonVisible: true, fightButtonEnabled: true, fightButtonLabel: 'FIGHT!', bodyText: '' })).toBe(false)
+      expect(didFightStart(null)).toBe(false)
+      expect(didFightStart(undefined)).toBe(false)
+    })
+
+    it('detecte un label RESOLVING présent dans le body même avec un label absent (defaut)', () => {
+      expect(didFightStart({ fightButtonVisible: true, fightButtonLabel: '', bodyText: 'RESOLVING' })).toBe(true)
+    })
+  })
+
+  describe('decideFightTypeForIndex', () => {
+    it('force PvP pour un index marqué verrouillé, même si pveOnly ou ratio dit PvE (#1178 anti-oscillation)', () => {
+      const forced = decideFightTypeForIndex({
+        forcedPvp: true,
+        pvpSinceLastPve: 0,
+        pveRatio: 0.33,
+        pveOnly: false,
+        characterLevel: 5,
+        pvpUnlockLevel: 0,
+      })
+      expect(forced.type).toBe('pvp')
+      expect(forced.pvpSinceLastPve).toBe(1)
+
+      const forcedDespitePveOnly = decideFightTypeForIndex({
+        forcedPvp: true,
+        pvpSinceLastPve: 2,
+        pveRatio: 0.33,
+        pveOnly: true,
+        characterLevel: 5,
+        pvpUnlockLevel: 0,
+      })
+      expect(forcedDespitePveOnly.type).toBe('pvp')
+      expect(forcedDespitePveOnly.pvpSinceLastPve).toBe(3)
+    })
+
+    it('délègue à determineNextFightType quand l\'index n\'est pas forcé', () => {
+      expect(decideFightTypeForIndex({
+        forcedPvp: false,
+        pvpSinceLastPve: 0,
+        pveRatio: 0,
+        pveOnly: false,
+        characterLevel: 5,
+        pvpUnlockLevel: 0,
+      }).type).toBe('pvp')
+
+      expect(decideFightTypeForIndex({
+        forcedPvp: false,
+        pvpSinceLastPve: 0,
+        pveRatio: 0.33,
+        pveOnly: true,
+        characterLevel: 5,
+        pvpUnlockLevel: 0,
+      }).type).toBe('pve')
+    })
+
+    it('garde le comportement déterministe de la planification standard', () => {
+      expect(decideFightTypeForIndex({
+        forcedPvp: false,
+        pvpSinceLastPve: 99,
+        pveRatio: 0.33,
+        pveOnly: false,
+        characterLevel: null,
+        pvpUnlockLevel: 1,
+      }).type).toBe('pve')
+    })
+  })
+
+  it('expose un budget de test de démarrage borné (fail fast, plus de 90s x 3)', () => {
+    expect(FIGHT_START_GRACE_MS).toBe(3000)
+  })
+
+  describe('runFightSequence source contract (#1178)', () => {
+    const qaBotSource = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
+
+    function extractAsyncFunction(source: string, name: string): string | null {
+      const start = source.indexOf(`async function ${name}(`)
+      if (start === -1) return null
+      const bodyStart = source.indexOf('{', start)
+      let depth = 0
+      for (let i = bodyStart; i < source.length; i++) {
+        if (source[i] === '{') depth++
+        else if (source[i] === '}') {
+          depth--
+          if (depth === 0) return source.slice(start, i + 1)
+        }
+      }
+      return null
+    }
+
+    function requireAsyncFunction(name: string): string {
+      const fn = extractAsyncFunction(qaBotSource, name)
+      expect(fn).not.toBeNull()
+      if (fn === null) throw new Error(`qa-bot.mjs missing async function ${name}()`)
+      return fn
+    }
+
+    it('ne peut pas armer un combat quand isPveLocked est vrai (garde anti-armement avant le clic)', () => {
+      const fn = requireAsyncFunction('runFightSequence')
+      const guardIdx = fn.indexOf('!isAttackableArenaStatus(arenaStatus)')
+      expect(guardIdx).toBeGreaterThan(-1)
+      const clickIdx = fn.indexOf('fightBtn.click(', guardIdx)
+      expect(clickIdx).toBeGreaterThan(guardIdx)
+    })
+
+    it('relit l\'arène après la bascule PvP et abandonne l\'index si le verrou persiste (#1178)', () => {
+      const fn = requireAsyncFunction('runFightSequence')
+      const lockIdx = fn.indexOf('isPveLocked')
+      expect(lockIdx).toBeGreaterThan(-1)
+      const toggleIdx = fn.indexOf('togglePveMode(page, false)', lockIdx)
+      expect(toggleIdx).toBeGreaterThan(lockIdx)
+      const recheckIdx = fn.indexOf('readArenaStatus(page)', toggleIdx)
+      expect(recheckIdx).toBeGreaterThan(toggleIdx)
+      const skipIdx = fn.indexOf("reason: 'pve_locked'", recheckIdx)
+      expect(skipIdx).toBeGreaterThan(recheckIdx)
+    })
+
+    it('marque la décision PvP pour l\'index verrouillé au lieu de re-décider en PvE (fin de l\'oscillation PVP→PVE→PVP)', () => {
+      const fn = requireAsyncFunction('runFightSequence')
+      expect(fn).toContain('forcedPvpIndexes')
+      expect(fn).toContain('forcedPvpIndexes.add(i)')
+      expect(fn).toContain('forcedPvpIndexes.has(i)')
+    })
+
+    it('bascule en PvP au plus une fois par index verrouillé', () => {
+      const fn = requireAsyncFunction('runFightSequence')
+      const guardIdx = fn.indexOf('forcedPvpIndexes.has(i)')
+      const fallbackIdx = fn.indexOf('forcedPvpIndexes.add(i)')
+      expect(guardIdx).toBeGreaterThan(-1)
+      expect(fallbackIdx).toBeGreaterThan(-1)
+      expect(guardIdx).toBeLessThan(fallbackIdx)
+    })
+
+    it('enregistre skipped_fights reason pve_locked sans erreur timeout waiting for result', () => {
+      const fn = requireAsyncFunction('runFightSequence')
+      const skipIdx = fn.indexOf("reason: 'pve_locked'")
+      expect(skipIdx).toBeGreaterThan(-1)
+      const block = fn.slice(fn.indexOf("reason: 'pve_locked'"), fn.indexOf("reason: 'pve_locked'") + 700)
+      expect(block).not.toContain('errors.push')
+      expect(block).toContain('pve-locked.png')
+    })
+
+    it('plafonne l\'attente post-clic via didFightStart + FIGHT_START_GRACE_MS avant le long polling', () => {
+      const fn = requireAsyncFunction('runFightSequence')
+      const graceIdx = fn.indexOf('didFightStart(')
+      expect(graceIdx).toBeGreaterThan(-1)
+      expect(fn).toContain('FIGHT_START_GRACE_MS')
+    })
+
+    it('saute un démarrage avorté en no_start sans erreur timeout et sans errors.push', () => {
+      const fn = requireAsyncFunction('runFightSequence')
+      const branchStart = fn.indexOf('if (!fightStarted)')
+      expect(branchStart).toBeGreaterThan(-1)
+      const skipIdx = fn.indexOf("reason: 'no_start'", branchStart)
+      expect(skipIdx).toBeGreaterThan(branchStart)
+      const branchEnd = fn.indexOf('if (isNoOpponents)', branchStart)
+      expect(branchEnd).toBeGreaterThan(skipIdx)
+      const block = fn.slice(branchStart, branchEnd)
+      expect(block).not.toContain('errors.push')
+      expect(block).toContain('no-start.png')
+    })
+
+    it('préserve le contrat existant exhausted / no_opponents (#812)', () => {
+      const fn = requireAsyncFunction('runFightSequence')
+      expect(fn).toContain("skipped_fights.push({ index: i + 1, reason: 'exhausted' }")
+      expect(fn).toContain("skipped_fights.push({ index: i + 1, reason: 'no_opponents' }")
+    })
+
+    it('runFightSequence est entièrement piloté par decideFightTypeForIndex avec forcedPvp', () => {
+      const fn = requireAsyncFunction('runFightSequence')
+      expect(fn).toContain('decideFightTypeForIndex')
+      expect(fn).not.toContain('determineNextFightType(')
+    })
+  })
+
+  describe('determineNextFightType déplacé dans qa-bot-helpers', () => {
+    it('qa-bot.mjs importe la décision de type depuis le module helpers', () => {
+      const qaBotSource = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
+      const helperSource = readFileSync(join(process.cwd(), 'src', 'utils', 'qa-bot-helpers.js'), 'utf-8')
+      expect(helperSource).toContain('export function determineNextFightType(')
+      expect(qaBotSource).toContain('decideFightTypeForIndex')
+      expect(qaBotSource).not.toMatch(/^function determineNextFightType\(/m)
     })
   })
 })

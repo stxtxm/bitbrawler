@@ -14,6 +14,10 @@ import {
   throwIfSiteDownResponse,
   throwIfErrorPageBody,
   hasGameContent,
+  decideFightTypeForIndex,
+  FIGHT_START_GRACE_MS,
+  isAttackableArenaStatus,
+  didFightStart,
 } from '../src/utils/qa-bot-helpers.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -1771,35 +1775,6 @@ async function humanDelay(page) {
 }
 
 /**
- * Determine whether the next fight should be PvP or PvE, and update
- * the `pvpSinceLastPve` counter accordingly.
- *
- * @param {number} pvpSinceLastPve - Number of consecutive PvP fights since last PvE.
- * @param {number} pveRatio - Fraction of fights that should be PvE (e.g. 0.33).
- * @param {boolean} pveOnly - If true, always return PvE.
- * @param {number|null} [characterLevel] - Current character level. If below PvP unlock, forces PvE.
- * @param {number} [pvpUnlockLevel=1] - Level at which PvP becomes available.
- * @returns {{ type: 'pvp'|'pve', pvpSinceLastPve: number }}
- */
-function determineNextFightType(pvpSinceLastPve, pveRatio, pveOnly, characterLevel = null, pvpUnlockLevel = 1) {
-  // Force PvE if character level is below PvP unlock threshold
-  if (characterLevel !== null && characterLevel < pvpUnlockLevel) {
-    return { type: 'pve', pvpSinceLastPve: 0 }
-  }
-  if (pveOnly) {
-    return { type: 'pve', pvpSinceLastPve: 0 }
-  }
-  if (pveRatio <= 0) {
-    return { type: 'pvp', pvpSinceLastPve: pvpSinceLastPve + 1 }
-  }
-  const pvpPerPve = Math.max(1, Math.round(1 / pveRatio) - 1)
-  if (pvpSinceLastPve >= pvpPerPve) {
-    return { type: 'pve', pvpSinceLastPve: 0 }
-  }
-  return { type: 'pvp', pvpSinceLastPve: pvpSinceLastPve + 1 }
-}
-
-/**
  * Map internal MonsterId to display name.
  */
 const MONSTER_DISPLAY_NAMES = {
@@ -2022,6 +1997,7 @@ async function runFightSequence(page, runKey, runRecord) {
   let currentLevel = runRecord.initial_level
   let pvpSinceLastPve = 0
   let pveLockedRecoveries = 0
+  const forcedPvpIndexes = new Set()
 
   for (let i = 0; i < config.fightsPerRun; i++) {
     await humanDelay(page)
@@ -2032,8 +2008,15 @@ async function runFightSequence(page, runKey, runRecord) {
       break
     }
 
-    // Determine if this fight should be PvE
-    const fightType = determineNextFightType(pvpSinceLastPve, config.pveRatio, config.pveOnly, currentLevel, config.pvpUnlockLevel)
+    const forcedPvp = forcedPvpIndexes.has(i)
+    const fightType = decideFightTypeForIndex({
+      forcedPvp,
+      pvpSinceLastPve,
+      pveRatio: config.pveRatio,
+      pveOnly: config.pveOnly,
+      characterLevel: currentLevel,
+      pvpUnlockLevel: config.pvpUnlockLevel,
+    })
     const isPve = fightType.type === 'pve'
     pvpSinceLastPve = fightType.pvpSinceLastPve
 
@@ -2118,9 +2101,27 @@ async function runFightSequence(page, runKey, runRecord) {
       }
 
       if (!config.pveOnly) {
-        console.log('   PvE boss locked — toggling back to PvP mode')
+        if (forcedPvpIndexes.has(i)) {
+          console.log(`   ⚠️ Arena still PvE-locked after PvP fallback — abandoning index ${i + 1} instead of attacking (#1178)`)
+          if (!runRecord.skipped_fights) runRecord.skipped_fights = []
+          runRecord.skipped_fights.push({ index: i + 1, reason: 'pve_locked' })
+          await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-pve-locked.png`) }).catch(() => {})
+          break
+        }
+
+        console.log('   PvE boss locked — falling back to PvP for this fight')
         await togglePveMode(page, false)
         await page.waitForTimeout(600)
+        const pvpStatus = await readArenaStatus(page)
+        runRecord.arena_status = buildArenaStatusRecord(pvpStatus)
+        if (pvpStatus.isPveLocked) {
+          console.log('   ⚠️ PvP fallback did not clear the locked boss — skipping this fight instead of attacking (#1178)')
+          if (!runRecord.skipped_fights) runRecord.skipped_fights = []
+          runRecord.skipped_fights.push({ index: i + 1, reason: 'pve_locked' })
+          await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-pve-locked.png`) }).catch(() => {})
+          break
+        }
+        forcedPvpIndexes.add(i)
         i--
         continue
       }
@@ -2171,6 +2172,16 @@ async function runFightSequence(page, runKey, runRecord) {
       break
     }
 
+    if (!isAttackableArenaStatus(arenaStatus)) {
+      const reason = arenaStatus.isPveLocked ? 'pve_locked' : 'not_attackable'
+      console.log(`   ⚠️ Arena CTA not attackable (label=${arenaStatus.fightButtonLabel || 'none'}) — skipping index ${i + 1} (${reason}) (#1178)`)
+      if (!runRecord.skipped_fights) runRecord.skipped_fights = []
+      runRecord.skipped_fights.push({ index: i + 1, reason })
+      await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-${reason}.png`) }).catch(() => {})
+      if (isPve) await togglePveMode(page, false).catch(() => {})
+      break
+    }
+
     console.log(`⚔️ ${isPve ? 'PvE' : 'PvP'} Fight ${i + 1}/${config.fightsPerRun}...`)
 
     const fightBtn = page.locator('button.primary-btn.giant-btn').first()
@@ -2196,6 +2207,27 @@ async function runFightSequence(page, runKey, runRecord) {
     console.log('   Fight started, waiting for result...')
 
     await sleep(1000)
+
+    let fightStarted = false
+    const startGraceDeadline = Date.now() + FIGHT_START_GRACE_MS
+    while (Date.now() < startGraceDeadline) {
+      const startStatus = await readArenaStatus(page)
+      if (didFightStart(startStatus)) {
+        fightStarted = true
+        break
+      }
+      await sleep(250)
+    }
+
+    if (!fightStarted) {
+      console.log(`   ⚠️ Fight did not start within ${FIGHT_START_GRACE_MS}ms of the click — skipping index ${i + 1} (no_start) (#1178)`)
+      await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-no-start.png`) }).catch(() => {})
+      if (!runRecord.skipped_fights) runRecord.skipped_fights = []
+      runRecord.skipped_fights.push({ index: i + 1, reason: 'no_start' })
+      if (isPve) await togglePveMode(page, false).catch(() => {})
+      await dismissModals(page).catch(() => {})
+      continue
+    }
 
     // If we didn't capture the monster name before the fight, try during
     // the VS/combat phase (the encounter intro is usually gone by now,

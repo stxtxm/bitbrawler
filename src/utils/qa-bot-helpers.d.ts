@@ -37,3 +37,45 @@ export declare function throwIfErrorPageBody(
   hasGameSelector?: boolean,
 ): void
 export declare function classifyRunError(message: string): 'site_down' | 'flaky_locator' | 'other'
+
+export declare interface FightTypeDecision {
+  type: 'pvp' | 'pve'
+  pvpSinceLastPve: number
+}
+
+export declare function determineNextFightType(
+  pvpSinceLastPve: number,
+  pveRatio: number,
+  pveOnly: boolean,
+  characterLevel?: number | null,
+  pvpUnlockLevel?: number,
+): FightTypeDecision
+
+export declare interface FightTypeDecisionInput {
+  forcedPvp: boolean
+  pvpSinceLastPve: number
+  pveRatio: number
+  pveOnly: boolean
+  characterLevel?: number | null
+  pvpUnlockLevel?: number
+}
+
+export declare function decideFightTypeForIndex(input: FightTypeDecisionInput): FightTypeDecision
+
+export declare const FIGHT_START_GRACE_MS: number
+
+export declare interface ArenaStatusInput {
+  fightButtonVisible?: boolean
+  fightButtonEnabled?: boolean
+  fightButtonLabel?: string | null
+  isPveLocked?: boolean
+  isResting?: boolean
+  isSearching?: boolean
+  isResolving?: boolean
+  bodyText?: string | null
+  bossLockedLevel?: number | null
+}
+
+export declare function isAttackableArenaStatus(status: ArenaStatusInput | null | undefined): boolean
+
+export declare function didFightStart(status: ArenaStatusInput | null | undefined): boolean
