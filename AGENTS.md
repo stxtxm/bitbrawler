@@ -998,6 +998,21 @@ Voir **[docs/AGENT_PIPELINE.md](docs/AGENT_PIPELINE.md)** : flow issue→dev→C
 
 ## 🔧 Infra Runbook — Supabase & déploiement (mis à jour 2026-10-11)
 
+### Hébergement
+**Cloudflare Pages** depuis le 2026-10-16 — https://bitbrawler.pages.dev
+Quota : 20 000 min de build/mois + bande passante illimitée, sans carte bancaire.
+Raison du move : le quota Netlify Hobby (300 min/mois) était épuisé par les commits
+de bots et les previews de PR.
+
+⚠️ **`nodejs_compat` est obligatoire.** Le cœur idle lit `process.env` ; sans le
+flag, le runtime Workers n'a pas de `process` et la fonction meurt avec un
+`error code: 1101` opaque. Guard dans `api/runIdleProcessor.ts` pour transformer
+ce 1101 en message lisible.
+
+⚠️ `[skip ci]` **et** `[CF-Pages-Skip]` dans le message des commits de bots :
+Cloudflare Pages saute le déploiement si l'un des deux apparaît (doc GitHub
+integration). Sans ça, ~24 commits/jour = un build de prod par heure.
+
 ### Comptes/projets
 | Projet | Rôle | Statut |
 |---|---|---|
@@ -1020,10 +1035,10 @@ curl -s https://<site>/<bundle> | grep -o '[a-z]*\.supabase\.co' | sort -u
 
 ### Checklist de switch complète (les 8 points, sinon bugs silencieux)
 1. SQL bootstrap sur le nouveau projet (`characters`, `maintenance`, `server_time` + indexes + policies RLS anon). **`essence` = `double precision`** (gains fractionnaires — INTEGER rejetait l'UPDATE entier en 22P02)
-2. Netlify env vars **Production** : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (client) **ET** `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (fonctions serveur `/api/idle-processor`). Script : `./scripts/netlify-setup.sh` (lit `.env`, n'affiche jamais les valeurs)
+2. Cloudflare Pages : `Settings → Environment variables` (**Production**) — secrets **chiffrés** pour `SUPABASE_SERVICE_ROLE_KEY`. Script : `./scripts/cf-env-setup.sh` (lit `.env`, n'affiche jamais les valeurs). Variables build : `VITE_*` + `VITE_VAPID_PUBLIC_KEY` : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (client) **ET** `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (fonctions serveur `/api/idle-processor`). Script : `./scripts/netlify-setup.sh` (lit `.env`, n'affiche jamais les valeurs)
 3. GitHub Secrets : `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 4. `.env` local : bloc ACTIF mis à jour (LEGACY commenté pour revert)
-5. **Redéployer Netlify après tout save d'env** : `npx netlify deploy --prod`. Les variables sont injectées dans la fonction **au build** — les ajouter dans l'UI sans redéployer ne change rien
+5. **Redéployer après tout ajout de secret** : `npm run build && npx wrangler pages deploy dist --project-name bitbrawler`. Un secret ajouté sans redéploiement n'est pas visible de la fonction
 6. Test end-to-end : créer un perso → vérifier ligne en DB
 7. Test idle API : `POST /api/idle-processor {"character_id":"<id existant>"}` → doit renvoyer `{fights:...}`, jamais `Character not found`/`Invalid API key`
 8. Cron-job.org : l'URL **est** à changer (`bitbrawler.netlify.app` → `bitbrawler.netlify.app`), le path `/api/idle-processor` est identique par construction
@@ -1034,6 +1049,8 @@ curl -s https://<site>/<bundle> | grep -o '[a-z]*\.supabase\.co' | sort -u
 - **"Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY"** = la variable n'existe pas sur le site Netlify. Depuis le 2026-10-11 l'erreur nomme la variable manquante (`missing_env`) au lieu d'un message ambigu — ne plus tâtonner, lire le `detail`
 - **502 `res.writeHead is not a function`** = la fonction a été écrite comme un handler Node `http`. Netlify Functions v2 expose le **standard Web** (`Request` → `Response`) : il faut un shim. C'est exactement ce qui a cassé l'idle le 2026-10-09, masqué par le cast TypeScript `as (req: IncomingMessage, …)`
 - **Vercel `402 DEPLOYMENT_DISABLED`** = projet désactivé au niveau du compte (quota/moyen de paiement). Aucun code ne contourne ; c'est ce qui a déclenché la migration Netlify du 2026-10-11
+- **`error code: 1101` sur Cloudflare Pages** = exception non capturée dans la Function. Deux causes vites rencontrées : (1) `process` inexistant sans `compatibility_flags = ["nodejs_compat"]` dans `wrangler.toml` ; (2) secret absent. Tester avec `curl -X POST .../api/idle-processor` — la réponse JSON details la cause
+- **`wrangler deploy` vs `wrangler pages deploy`** = deux produits differents. `wrangler deploy` sans point d'entree Worker genere un Worker **"Hello world"** ; seule la forme `pages deploy dist` publie le site + les Functions
 - **Badge "Powered by Netlify"** = le HUD injecté par l'edge crée une `<iframe id="nl-hud-frame">` (pas de shadow DOM) → masquable en CSS. Le retirer de façon supportée demande un plan payant
 - **SW v6 servait de vieux bundles post-deploy** → v7 network-first JS/CSS. Après deploy majeur : hard refresh une fois
 - **Reviews CHANGES_REQUESTED obsolètes** bloquent les merges : dismisser via `gh api -X PUT repos/.../pulls/N/reviews/RID/dismissals -f message=...` puis relancer `reviewer.yml -f pr_number=N`

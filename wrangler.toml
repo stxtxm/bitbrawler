@@ -9,4 +9,8 @@
 # dans le dashboard. Ne pas le changer : Vite écrit déjà dans dist/.
 name = "bitbrawler"
 compatibility_date = "2026-01-01"
+# The core idle handler reads process.env (Node). Without nodejs_compat the
+# Workers runtime has no `process` at all and the function dies with an opaque
+# Cloudflare "error code: 1101".
+compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = "dist"
