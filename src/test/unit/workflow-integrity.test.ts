@@ -13,7 +13,8 @@
  */
 import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync } from 'fs'
-import { join } from 'path'
+import { join, resolve, relative } from 'path'
+import qaBotConfig from '../../../qa/qa-bot.config.js'
 
 const readWorkflow = (name: string): string =>
   readFileSync(join(process.cwd(), '.github', 'workflows', name), 'utf8')
@@ -261,11 +262,12 @@ describe('QA failures stay diagnosable', () => {
   // Un run QA à 0 combat ne laissait aucune trace exploitable : le bot prend une
   // capture à chaque échec (no-start, pve-locked, timeout, skip) mais elle
   // restait sur le runner, donc on ne pouvait pas dire POURQUOI.
-  it('qa-tester.yml uploads the bot screenshots as an artifact', () => {
+  it('qa-tester.yml uploads the screenshotsDir resolved from qa-bot.config.js', () => {
     const qa = readWorkflow('qa-tester.yml')
     expect(qa).toContain('actions/upload-artifact@v4')
-    expect(qa).toContain('path: qa/screenshots/')
     expect(qa).toContain('if-no-files-found: ignore')
+    const botDir = relative(process.cwd(), resolve(process.cwd(), 'qa', qaBotConfig.screenshotsDir))
+    expect(qa).toContain(`path: ${botDir}/`)
   })
 })
 
