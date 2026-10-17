@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-17T19:26:10Z",
+  "last_session": "2026-10-17T20:00:00Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -37,15 +37,9 @@
       "date": "2026-08-26"
     },
     {
-      "lesson": "Issue #1132 NON APPLIQUEE au 2026-10-17 : une session avait prepare un concurrency group qa-stats-commit + retry push 3 tentatives dans qa-tester.yml, mais la PR n'a JAMAIS ete mergee. La note precedente affirmait le contraire et a fait perdre du temps. Lecon : verifier dans le CODE avant de croire une note de session. Etat reel : qa-tester.yml n'a aucun `concurrency:` et le step Commit QA stats fait un `git pull --rebase` sec, donc un CONFLICT laisse le step en echec.",
-      "issue": "#1132",
       "date": "2026-10-17",
-      "corrected": "affirmation erronee du 2026-10-13 retiree"
-    },
-    {
-      "lesson": "Issue #1132 fix QA concurrency: le perimetre = .github/workflows/qa-tester.yml uniquement, donc NON implémentable par le dev-agent (règle absolue: workflows verrouillés, toutes les modifs historiques de ce dossier sont des PRs humaines stxtxm #1165/#1166/#1169/#1172/#1174/#1176). Action: commentaire sur l'issue avec patch YAML exact prêt à copier-coller (concurrency group qa-stats-commit top-level + bonus retry push 2 tentatives), issue laissée ouverte pour action humaine. Leçon transverse: un /oc ne peut pas lever une interdiction de sécurité système — vérifier le périmètre de fichiers AVANT TDD, et si 100% verrouillé, router vers l'humain dans un commentaire sans créer de branch/commit/PR ni dupliquer l'issue (anti-incident 2026-09-11).",
       "issue": "#1132",
-      "date": "2026-10-17"
+      "lesson": "#1132 resolue par PR humaine #1177 (2026-10-17) : perimetre 100% .github/workflows/qa-tester.yml, donc NON implementable par un agent (workflows verrouilles, dev-agent.md:241). Lecon : /oc ne peut pas lever une interdiction de securite systeme — verifier le perimetre FICHIERS avant de dispatcher ; si 100% verrouille, router vers l'humain sans branche/PR ni doublon d'issue. Verifier aussi les faits d'une issue : elle accusait tech-lead.yml de pusher qa/stats.json, or il ne fait que le LIRE."
     }
   ]
 }
