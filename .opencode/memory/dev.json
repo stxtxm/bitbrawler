@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-17T18:30:00Z",
+  "last_session": "2026-10-17T19:26:10Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -41,6 +41,11 @@
       "issue": "#1132",
       "date": "2026-10-17",
       "corrected": "affirmation erronee du 2026-10-13 retiree"
+    },
+    {
+      "lesson": "Issue #1132 fix QA concurrency: le perimetre = .github/workflows/qa-tester.yml uniquement, donc NON implémentable par le dev-agent (règle absolue: workflows verrouillés, toutes les modifs historiques de ce dossier sont des PRs humaines stxtxm #1165/#1166/#1169/#1172/#1174/#1176). Action: commentaire sur l'issue avec patch YAML exact prêt à copier-coller (concurrency group qa-stats-commit top-level + bonus retry push 2 tentatives), issue laissée ouverte pour action humaine. Leçon transverse: un /oc ne peut pas lever une interdiction de sécurité système — vérifier le périmètre de fichiers AVANT TDD, et si 100% verrouillé, router vers l'humain dans un commentaire sans créer de branch/commit/PR ni dupliquer l'issue (anti-incident 2026-09-11).",
+      "issue": "#1132",
+      "date": "2026-10-17"
     }
   ]
 }
