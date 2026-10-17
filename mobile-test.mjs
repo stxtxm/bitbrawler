@@ -7,7 +7,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const SCREENSHOTS_DIR = join(__dirname, 'qa', 'screenshots')
 mkdirSync(SCREENSHOTS_DIR, { recursive: true })
 
-const BASE_URL = 'https://bitbrawler.vercel.app'
+const BASE_URL = 'https://bitbrawler.pages.dev'
 const CHAR_NAME = 'NOVAORACLE'
 
 const browser = await chromium.launch({ headless: true })

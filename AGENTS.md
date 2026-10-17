@@ -114,7 +114,7 @@ ALTER TABLE characters ADD COLUMN IF NOT EXISTS essence INTEGER NOT NULL DEFAULT
   "version": 1,
   "agent": "dev",
   "known_limitations": [
-    "L'API Vercel idle-processor peut être indisponible → fallback local obligatoire",
+    "L'API idle-processor (Pages Function) peut être indisponible → fallback local obligatoire",
     "Ne pas générer de SQL ALTER TABLE — créer une issue migration"
   ]
 }
@@ -659,7 +659,7 @@ The tech-lead analyzes:
 ### Responsibilities
 
 ✅ **What the QA tester does**:
-1. Navigates to bitbrawler.netlify.app
+1. Navigates to bitbrawler.pages.dev
 2. Creates/loads QA character
 3. Performs **3 PvP fights + 2 PvE fights** (mixed run)
 4. Captures equipment, streak, and initial/final stats
@@ -884,7 +884,7 @@ Or visit: https://github.com/stxtxm/bitbrawler/actions
 ### QA Tester Failed
 
 **Check**:
-1. Is live site up? (bitbrawler.netlify.app)
+1. Is live site up? (bitbrawler.pages.dev)
 2. Network issue?
 3. Playwright crash?
 
@@ -1019,7 +1019,7 @@ integration). Sans ça, ~24 commits/jour = un build de prod par heure.
 | `bhbpvbfvuayafygdrbgb` | **BASE DE RÉFÉRENCE** (prod + scripts) | décidée le 2026-10-11 |
 | `gunuqjythwgbdbuyshoh` | Revert d'urgence (1 copier-coller dans `.env.example`) | ne plus utilisé en prod |
 
-⚠️ Décision du 2026-10-11 : la migration Vercel → Netlify a mis en évidence le
+⚠️ Décision du 2026-10-11 : les migrations d'hébergement successives ont mis en évidence le
 split entre les deux comptes, et la base de référence est alignée sur la cible de
 déploiement. **Conséquence à surveiller** : le fallback codé en dur dans
 `src/config/supabase.ts` ne se déclenche que si `VITE_SUPABASE_URL` manque au
@@ -1035,23 +1035,24 @@ curl -s https://<site>/<bundle> | grep -o '[a-z]*\.supabase\.co' | sort -u
 
 ### Checklist de switch complète (les 8 points, sinon bugs silencieux)
 1. SQL bootstrap sur le nouveau projet (`characters`, `maintenance`, `server_time` + indexes + policies RLS anon). **`essence` = `double precision`** (gains fractionnaires — INTEGER rejetait l'UPDATE entier en 22P02)
-2. Cloudflare Pages : `Settings → Environment variables` (**Production**) — secrets **chiffrés** pour `SUPABASE_SERVICE_ROLE_KEY`. Script : `./scripts/cf-env-setup.sh` (lit `.env`, n'affiche jamais les valeurs). Variables build : `VITE_*` + `VITE_VAPID_PUBLIC_KEY` : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (client) **ET** `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (fonctions serveur `/api/idle-processor`). Script : `./scripts/netlify-setup.sh` (lit `.env`, n'affiche jamais les valeurs)
+2. Cloudflare Pages : `Settings → Environment variables` (**Production**) — secrets **chiffrés** pour `SUPABASE_SERVICE_ROLE_KEY`. Script : `./scripts/cf-env-setup.sh` (lit `.env`, n'affiche jamais les valeurs). Variables build : `VITE_*` + `VITE_VAPID_PUBLIC_KEY` : `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` (client) **ET** `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (fonctions serveur `/api/idle-processor`)
 3. GitHub Secrets : `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 4. `.env` local : bloc ACTIF mis à jour (LEGACY commenté pour revert)
 5. **Redéployer après tout ajout de secret** : `npm run build && npx wrangler pages deploy dist --project-name bitbrawler`. Un secret ajouté sans redéploiement n'est pas visible de la fonction
 6. Test end-to-end : créer un perso → vérifier ligne en DB
 7. Test idle API : `POST /api/idle-processor {"character_id":"<id existant>"}` → doit renvoyer `{fights:...}`, jamais `Character not found`/`Invalid API key`
-8. Cron-job.org : l'URL **est** à changer (`bitbrawler.netlify.app` → `bitbrawler.netlify.app`), le path `/api/idle-processor` est identique par construction
+8. Cron-job.org : l'URL **est** à changer (`bitbrawler.netlify.app` → `bitbrawler.pages.dev`), le path `/api/idle-processor` est identique par construction
 
-### Pièges rencontrés (voir aussi memory/shared.json known_issues)
+### Pièges rencontrés — pièges **historiques** d'hébergement, à ne pas reproduire
+> Conservés parce qu'ils expliquent des décisions actuelles. Le § ci-dessus
+> décrit l'état courant. Voir aussi memory/shared.json known_issues.
 - **404 "Character not found" sur un perso EXISTANT** = vars serveur périmées (erreur DB avalée). Depuis #754 la réponse inclut `db_target` + `detail` — toujours tester avec un ID réel
-- **"Invalid API key"** = `SERVICE_ROLE_KEY` périmée/fausse dans Netlify (coller sans espace ni quote ; copier depuis le Dashboard Supabase)
-- **"Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY"** = la variable n'existe pas sur le site Netlify. Depuis le 2026-10-11 l'erreur nomme la variable manquante (`missing_env`) au lieu d'un message ambigu — ne plus tâtonner, lire le `detail`
-- **502 `res.writeHead is not a function`** = la fonction a été écrite comme un handler Node `http`. Netlify Functions v2 expose le **standard Web** (`Request` → `Response`) : il faut un shim. C'est exactement ce qui a cassé l'idle le 2026-10-09, masqué par le cast TypeScript `as (req: IncomingMessage, …)`
-- **Vercel `402 DEPLOYMENT_DISABLED`** = projet désactivé au niveau du compte (quota/moyen de paiement). Aucun code ne contourne ; c'est ce qui a déclenché la migration Netlify du 2026-10-11
+- **"Invalid API key"** = `SERVICE_ROLE_KEY` périmée/fausse dans les variables serveur (collée avec un espace ou des quotes ; copier depuis le Dashboard Supabase)
+- **"Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY"** = la variable n'existe pas sur le site. Depuis le 2026-10-11 l'erreur nomme la variable manquante (`missing_env`) au lieu d'un message ambigu — ne plus tâtonner, lire le `detail`
+- **502 `res.writeHead is not a function`** = la fonction a été écrite comme un handler Node `http` alors que le runtime attend le **standard Web** (`Request` → `Response`) : il faut un shim. C'est exactement ce qui a cassé l'idle le 2026-10-09, masqué par le cast TypeScript `as (req: IncomingMessage, …)`
+- **`402 DEPLOYMENT_DISABLED`** = projet désactivé au niveau du compte (quota/moyen de paiement). Aucun code ne contourne ; c'est ce qui a déclenché les migrations d'hébergement de 2026-10-11
 - **`error code: 1101` sur Cloudflare Pages** = exception non capturée dans la Function. Deux causes vites rencontrées : (1) `process` inexistant sans `compatibility_flags = ["nodejs_compat"]` dans `wrangler.toml` ; (2) secret absent. Tester avec `curl -X POST .../api/idle-processor` — la réponse JSON details la cause
 - **`wrangler deploy` vs `wrangler pages deploy`** = deux produits differents. `wrangler deploy` sans point d'entree Worker genere un Worker **"Hello world"** ; seule la forme `pages deploy dist` publie le site + les Functions
-- **Badge "Powered by Netlify"** = le HUD injecté par l'edge crée une `<iframe id="nl-hud-frame">` (pas de shadow DOM) → masquable en CSS. Le retirer de façon supportée demande un plan payant
 - **SW v6 servait de vieux bundles post-deploy** → v7 network-first JS/CSS. Après deploy majeur : hard refresh une fois
 - **Reviews CHANGES_REQUESTED obsolètes** bloquent les merges : dismisser via `gh api -X PUT repos/.../pulls/N/reviews/RID/dismissals -f message=...` puis relancer `reviewer.yml -f pr_number=N`
 - **Modèles agents** : `opencode/glm-5.3-flash-free` (= `glm`) partout (opencode.json, `.opencode/agents/*.md` frontmatter, tableaux de fallback des workflows avec repli `opencode/nemotron-3.5-lightning-free`). **Remplace `muse-spark-1.3-contributor-free`, retiré du catalogue le 2026-10-17.**

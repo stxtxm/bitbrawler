@@ -3,11 +3,11 @@
 ## Base de référence: `bhbpvbfvuayafygdrbgb` (switch 2026-10-11)
 
 Décision du 2026-10-11 : la base de référence est **revenue sur `bhbpvbfvuayafygdrbgb`**,
-alignée sur la cible de déploiement après la migration Vercel → Netlify.
+alignée sur la cible de déploiement (hébergement migré vers Cloudflare Pages le 2026-10-16).
 
 Le compte `gunuqjythwgbdbuyshoh` (quota frais, switch du 2026-08-23) reste disponible
 comme **revert d'urgence** : 1 copier-coller du bloc LEGACY dans `.env.example`,
-puis `npx netlify deploy --prod`.
+puis `npm run build && npx wrangler pages deploy dist --project-name bitbrawler`.
 
 ⚠️ Conséquence : le fallback codé en dur dans `src/config/supabase.ts` ne se déclenche
 que si `VITE_SUPABASE_URL` manque au build. Dans ce cas **toute l'app bascule en

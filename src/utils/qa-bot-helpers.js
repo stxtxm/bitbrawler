@@ -67,7 +67,16 @@ export function nextCombatSpeed(current) {
 
 export const SITE_DOWN_ERROR_PREFIX = 'SITE_DOWN'
 
-const ERROR_PAGE_MARKERS = ['vercel', '402', 'payment required', 'deployment protection']
+// Pages d'erreur d'hebergement : on veut les detecter vite, sinon le bot
+// "collecte" des stats d'une page 402/500 et les remonte comme si c'etait
+// un run de jeu valide.
+const ERROR_PAGE_MARKERS = [
+  '402',
+  'payment required',
+  'deployment protection',
+  'error code: 1101',
+  'deployment_disabled',
+]
 
 const GAME_CONTENT_MARKERS = ['battle energy', 'auto mode', 'enter arena', 'login', 'create', 'arena']
 

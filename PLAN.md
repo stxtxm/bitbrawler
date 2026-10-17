@@ -2,7 +2,7 @@
 
 ## Contexte du Projet
 
-Bitbrawler est un jeu RPG pixel-art web (React + TypeScript + Vite) déployé sur Vercel.
+Bitbrawler est un jeu RPG pixel-art web (React + TypeScript + Vite) déployé sur Cloudflare Pages.
 Backend: Supabase. Style: rétro/pixel avec SCSS.
 
 **Commits récents:**
@@ -153,7 +153,7 @@ Wrap tous les composants arena/ avec `React.memo` pour éviter les re-rendus inu
 - Data flow (GameContext → hooks → components)
 - Système de combat (PvP + PvE idle + Boss VOID TITAN)
 - Système d'équipement/loot (inventory, forge, essence, shop, medals, achievements)
-- Déploiement Vercel (vercel.json, rewrites, env vars, pipeline)
+- Déploiement Cloudflare Pages (wrangler.toml, _redirects, env vars, pipeline)
 
 ---
 

@@ -21,7 +21,7 @@ Bitbrawler is a **retro 8-bit arena experience** where players create a pixel fi
 ## 🚀 Quick Start
 
 ### For Players
-- Visit **[bitbrawler.netlify.app](https://bitbrawler.netlify.app)** to play live
+- Visit **[bitbrawler.pages.dev](https://bitbrawler.pages.dev)** to play live
 - Create a character and start fighting!
 
 ### For Developers
@@ -83,7 +83,7 @@ Bitbrawler is a **frontend-first game** with a thin serverless layer:
 
 ```
 ┌─────────────────────────────────────────────┐
-│  React SPA (Vite build → Vercel CDN)        │
+│  React SPA (Vite build → Cloudflare CDN)     │
 │  ┌───────────────────────────────────────┐  │
 │  │ GameContext (src/context/GameContext) │  │  ← global state, Supabase sync, persistence
 │  └───────────────┬───────────────────────┘  │
@@ -105,7 +105,7 @@ Bitbrawler is a **frontend-first game** with a thin serverless layer:
 └─────────────────────────────────────────────┘
                ▲
 ┌──────────────┴──────────────────────────────┐
-│  Vercel Serverless API (api/idle-processor) │  ← offline idle combat processing
+│  Cloudflare Pages Fn (api/idle-processor)   │  ← offline idle combat processing
 └─────────────────────────────────────────────┘
 ```
 
@@ -148,7 +148,7 @@ state + presentational component for UI. See [AGENTS.md](AGENTS.md) for the full
 | Styling        | Sass (SCSS)                                     |
 | Fonts          | Press Start 2P (via Fontsource)                 |
 | Scripting      | tsx (TypeScript executor)                       |
-| CI/CD          | GitHub Actions + OpenCode + Vercel              |
+| CI/CD          | GitHub Actions + OpenCode + Cloudflare       |
 | E2E Testing    | Playwright                                      |
 
 ---
@@ -233,7 +233,7 @@ bitbrawler/
 │       ├── dev.json                # Dev agent lessons
 │       └── ...                     # reviewer/orchestrator/supervisor/tech-lead/qa-tester
 │
-├── api/                            # Vercel serverless functions
+├── api/                            # shared server logic (Pages Function)
 │   └── idle-processor.ts           # Offline idle combat processing (on-demand + cron)
 │
 ├── public/                         # Static assets
@@ -477,7 +477,7 @@ The idle system uses an external free cron service to process inactive character
 
 | Field | Value |
 |-------|-------|
-| URL | `https://bitbrawler.netlify.app/api/idle-processor` |
+| URL | `https://bitbrawler.pages.dev/api/idle-processor` |
 | Method | `POST` |
 | Content-Type | `application/json` |
 | Body | `{}` |
@@ -491,7 +491,7 @@ The idle system uses an external free cron service to process inactive character
 
 ### ⚠️ Important
 
-- Reconfigure cron-job.org after each Vercel project URL change
+- Reconfigure cron-job.org after each hosting URL change
 - The cron is a fallback — idle gains are processed instantly when the player reconnects
 - The `/api/idle-processor` cron mode only picks up characters with `last_idle_check` older than 60s, preventing double-processing
 

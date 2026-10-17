@@ -429,7 +429,7 @@ gh issue close 171
 
 ### ✅ Before EVERY qa-tester-agent Run
 ```bash
-☑ bitbrawler.netlify.app is UP (test with curl)
+☑ bitbrawler.pages.dev is UP (test with curl)
 ☑ Playwright browsers installed (npx playwright install)
 ☑ QA character exists in localStorage (or create new)
 ☑ Run sequence: create char → 5 fights → claim lootbox
@@ -569,11 +569,11 @@ npm test -- --reporter=verbose | grep "FAIL\|✓"
 
 ## 🧠 CRITICAL ARCHITECTURE CHANGES (v3.2.0+)
 
-### Idle Processing: Vercel Serverless (NOT GitHub Actions)
+### Idle Processing: Cloudflare Pages Function (NOT GitHub Actions)
 
-**File:** `api/idle-processor.ts` — SELF-CONTAINED Vercel serverless function
+**Files:** `functions/api/idle-processor.ts` (adapter) + `api/runIdleProcessor.ts` (shared shim) — SELF-CONTAINED Pages Function
 
-**Why self-contained:** Vercel only compiles `api/` files to JS. The idle processor inlines ALL utilities (monsters, combat, XP, efficiency). If you change logic in `src/utils/xpUtils.ts`, `src/utils/combatUtils.ts`, or `src/utils/monsterUtils.ts`, you **MUST mirror changes in `api/idle-processor.ts`**.
+**Why self-contained:** the Function only bundles from `functions/` and `api/`. The idle processor inlines ALL utilities (monsters, combat, XP, efficiency). If you change logic in `src/utils/xpUtils.ts`, `src/utils/combatUtils.ts`, or `src/utils/monsterUtils.ts`, you **MUST mirror changes in `api/idle-processor.ts`**.
 
 **Architecture:**
 - Primary: Client POSTs `{ character_id }` on reconnect → instant processing (< 1s cold start)

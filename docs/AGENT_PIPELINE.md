@@ -43,7 +43,7 @@
 │      approval humaine, après CI verte vérifiée à l'instant T)    │
 └──────────────────────────────┬───────────────────────────────────┘
                                ▼
-                    5. Vercel deploy production
+                    5. Cloudflare Pages deploy
 ```
 
 ## Mémoires d'agents — cycle de vie
@@ -81,12 +81,12 @@
 | Issue /oc d'un agent jamais déclenchée | Events GITHUB_TOKEN bloqués | Éditer l'issue ou dispatch manuel (sweeper retiré, non souhaité) |
 | Review CHANGES_REQUESTED obsolète bloque | Review prise avant fix | `gh api -X PUT .../reviews/RID/dismissals` puis re-dispatch reviewer |
 | SQL migration détectée → blocage | Guard volontaire reviewer | Issue dédiée SANS /oc, exécuter dans Supabase SQL Editor |
-| idle-processor « Character not found » | Vars serveur Vercel périmées (erreur DB avalée) | Réponse inclut `db_target`+`detail`; tester avec un ID existant |
+| idle-processor « Character not found » | Secrets serveur périmés (erreur DB avalée) | Réponse inclut `db_target`+`detail`; tester avec un ID existant |
 | PR bot sans run CI | Event GITHUB_TOKEN / skip-ci | `gh workflow run ci.yml -f pr_number=N` ; runs bot = `action_required` → `POST /actions/runs/{id}/approve` |
 
 ## Checklist « une PR est bloquée »
 
-1. `gh pr view N --json statusCheckRollup` — ignorer les checks Vercel (pending à vie sur compte gratuit)
+1. `gh pr view N --json statusCheckRollup` — le job `check` est le seul verdict qui compte pour le merge
 2. Aucun check CI ? → approuver runs `action_required` (`POST /actions/runs/{id}/approve`) puis `gh workflow run ci.yml -f pr_number=N`
 3. CI verte mais CHANGES_REQUESTED ? → dismisser les reviews obsolètes puis re-dispatch reviewer
 4. Reviewer échoue en <5 s sur tous les modèles ? → vérifier la taille des mémoires (`npm run mem:compact`)
