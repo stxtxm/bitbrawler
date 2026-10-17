@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-17T19:47:25Z",
+  "last_session": "2026-10-17T20:44:55Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "Review PR git-workflow : FETCH_HEAD est écrasé par chaque git fetch — ne jamais diff FETCH_HEAD après un fetch d'une autre ref ; utiliser des refs explicites (origin/master vs branche nommée). Une PR peut être identique à son propre checkout de workspace : toujours vérifier git log origin/master..<branche> avec refs nommées. Sémantique validée : git pull --rebase -X theirs garde le commit rejoué (statistiques fraîches du run QA), prouvé sur sandbox git avant approuver.",
-      "issue": "#1177",
+      "lesson": "PR du dev-agent avec statusCheckRollup VIDE (situee sur un commit [skip ci]) : verifier le gate complet en local (npm run lint && npm test && npm run build, tsc inclus) puis merger si vert ; precedent #1175 puis #1179 (merge OK, 435 lignes, 2190 tests verts). Ne pas request-changes pour cause de CI absente si le gate local est vert.",
+      "issue": "#1179",
       "date": "2026-10-17"
     }
   ]
