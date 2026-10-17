@@ -29,8 +29,8 @@ describe('Game rules', () => {
     expect(GAME_RULES.PVE.XP_MODIFIER).toBe(2.5);
   });
 
-  it('PVE stat multiplier keeps monster raw stats near player level (challenge comes from LEVEL_BOOST + monster growth)', () => {
-    expect(GAME_RULES.PVE.STAT_MULTIPLIER).toBe(2.1);
+  it('PVE stat multiplier scales monster stats above player level (idle WR treadmill counter #1181)', () => {
+    expect(GAME_RULES.PVE.STAT_MULTIPLIER).toBe(2.3);
   });
 
   it('PVE HP multiplier keeps monster HP at base + level growth (no raw HP inflation)', () => {
