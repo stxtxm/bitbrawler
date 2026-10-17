@@ -16,6 +16,10 @@ import {
   didFightStart,
   decideFightTypeForIndex,
   FIGHT_START_GRACE_MS,
+  shouldSkipForEnergy,
+  capFightAttempts,
+  aggregateSkipReasons,
+  formatSkipSummary,
 } from '../../utils/qa-bot-helpers'
 
 // ── Types matching RunRecord from analyze-qa-stats.ts ──
@@ -3403,6 +3407,173 @@ describe('QA Bot Fight Mode & Start Guards (#1178)', () => {
       expect(helperSource).toContain('export function determineNextFightType(')
       expect(qaBotSource).toContain('decideFightTypeForIndex')
       expect(qaBotSource).not.toMatch(/^function determineNextFightType\(/m)
+    })
+  })
+})
+
+describe('QA Bot Energy Skip Contract (#1197)', () => {
+  describe('shouldSkipForEnergy', () => {
+    it('skip quand l energie lue est 0', () => {
+      expect(shouldSkipForEnergy(0)).toBe(true)
+    })
+
+    it('tente le combat quand l energie est positive', () => {
+      expect(shouldSkipForEnergy(1)).toBe(false)
+      expect(shouldSkipForEnergy(2)).toBe(false)
+      expect(shouldSkipForEnergy(5)).toBe(false)
+    })
+
+    it('tente le combat quand la lecture est impossible (null/undefined)', () => {
+      expect(shouldSkipForEnergy(null)).toBe(false)
+      expect(shouldSkipForEnergy(undefined)).toBe(false)
+    })
+
+    it('rejette une lecture douteuse NaN — repli: on tente', () => {
+      expect(shouldSkipForEnergy(Number.NaN)).toBe(false)
+    })
+
+    it('skip sur une energie negative invalide', () => {
+      expect(shouldSkipForEnergy(-1)).toBe(true)
+    })
+  })
+
+  describe('capFightAttempts', () => {
+    it('plafonne les tentatives a l energie disponible (min(fightsPerRun, energy))', () => {
+      expect(capFightAttempts(5, 2)).toBe(2)
+      expect(capFightAttempts(5, 0)).toBe(0)
+      expect(capFightAttempts(3, 2)).toBe(2)
+    })
+
+    it('garde le budget plein quand l energie depasse le budget du run', () => {
+      expect(capFightAttempts(5, 8)).toBe(5)
+      expect(capFightAttempts(5, 5)).toBe(5)
+    })
+
+    it('repli sur le budget plein quand la lecture est impossible (null/undefined)', () => {
+      expect(capFightAttempts(5, null)).toBe(5)
+      expect(capFightAttempts(5, undefined)).toBe(5)
+    })
+  })
+
+  describe('aggregateSkipReasons', () => {
+    it('agrege les motifs de skip en compteurs par motif', () => {
+      expect(aggregateSkipReasons([
+        { index: 1, reason: 'no_energy' },
+        { index: 2, reason: 'no_energy' },
+        { index: 3, reason: 'no_energy' },
+        { index: 4, reason: 'pve_locked' },
+      ])).toEqual({ no_energy: 3, pve_locked: 1 })
+    })
+
+    it('retourne un objet vide sans skip', () => {
+      expect(aggregateSkipReasons([])).toEqual({})
+      expect(aggregateSkipReasons(null)).toEqual({})
+      expect(aggregateSkipReasons(undefined)).toEqual({})
+    })
+
+    it('classe les entrees sans raison comme unknown sans casser les autres motifs', () => {
+      expect(aggregateSkipReasons([{ index: 1 } as { index: number; reason?: string }]))
+        .toEqual({ unknown: 1 })
+    })
+  })
+
+  describe('formatSkipSummary', () => {
+    it('rend le format lisible par le tech-lead « skipped: 5 no_energy »', () => {
+      expect(formatSkipSummary({ no_energy: 5 })).toBe('skipped: 5 no_energy')
+    })
+
+    it('chaine plusieurs motifs', () => {
+      expect(formatSkipSummary({ no_energy: 5, no_start: 2 })).toBe('skipped: 5 no_energy, 2 no_start')
+    })
+
+    it('retourne une chaine vide quand rien n est skip', () => {
+      expect(formatSkipSummary({})).toBe('')
+      expect(formatSkipSummary(null)).toBe('')
+    })
+  })
+
+  describe('runFightSequence source contract (#1197)', () => {
+    const qaBotSource = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
+
+    function extractAsyncFunction(source: string, name: string): string | null {
+      const start = source.indexOf(`async function ${name}(`)
+      if (start === -1) return null
+      const bodyStart = source.indexOf('{', start)
+      let depth = 0
+      for (let i = bodyStart; i < source.length; i++) {
+        if (source[i] === '{') depth++
+        else if (source[i] === '}') {
+          depth--
+          if (depth === 0) return source.slice(start, i + 1)
+        }
+      }
+      return null
+    }
+
+    function requireAsyncFunction(name: string): string {
+      const fn = extractAsyncFunction(qaBotSource, name)
+      expect(fn).not.toBeNull()
+      if (fn === null) throw new Error(`qa-bot.mjs missing async function ${name}()`)
+      return fn
+    }
+
+    it('lit l energie avant de cliquer (pas de clic inconditionnel)', () => {
+      const fn = requireAsyncFunction('runFightSequence')
+      const energyIdx = fn.indexOf('shouldSkipForEnergy(')
+      expect(energyIdx).toBeGreaterThan(-1)
+      const clickIdx = fn.indexOf('fightBtn.click(')
+      expect(clickIdx).toBeGreaterThan(energyIdx)
+    })
+
+    it('energie a 0 → skip no_energy sans clic ni capture', () => {
+      const fn = requireAsyncFunction('runFightSequence')
+      const energyIdx = fn.indexOf('shouldSkipForEnergy(')
+      const searchingIdx = fn.indexOf('isSearching', energyIdx)
+      expect(searchingIdx).toBeGreaterThan(energyIdx)
+      const block = fn.slice(energyIdx, searchingIdx)
+      expect(block).toContain("reason: 'no_energy'")
+      expect(block).toContain('break')
+      expect(block).not.toContain('screenshot')
+      expect(block).not.toContain('.png')
+    })
+
+    it('pve_locked continue de primer sur no_energy (skip d energie evite si isPveLocked)', () => {
+      const fn = requireAsyncFunction('runFightSequence')
+      const energyIdx = fn.indexOf('shouldSkipForEnergy(')
+      const condition = fn.slice(energyIdx, energyIdx + 160)
+      expect(condition).toContain('!arenaStatus.isPveLocked')
+    })
+
+    it('plafonne les tentatives a l energie disponible via capFightAttempts, budget plein en repli null', () => {
+      const fn = requireAsyncFunction('runFightSequence')
+      const budgetIdx = fn.indexOf('let attemptBudget = config.fightsPerRun')
+      expect(budgetIdx).toBeGreaterThan(-1)
+      const loopIdx = fn.indexOf('i < attemptBudget')
+      expect(loopIdx).toBeGreaterThan(budgetIdx)
+      const energyIdx = fn.indexOf('const fightsAvailable = arenaStatus.fightsAvailable', budgetIdx)
+      expect(energyIdx).toBeGreaterThan(-1)
+      const capIdx = fn.indexOf('capFightAttempts(config.fightsPerRun, fightsAvailable)', energyIdx)
+      expect(capIdx).toBeGreaterThan(energyIdx)
+    })
+
+    it('replace le budget apres une creation de personnage (energie fraiche)', () => {
+      const fn = requireAsyncFunction('runFightSequence')
+      const replaceIdx = fn.indexOf("maybeReplaceExhaustedCharacter(page, runKey, runRecord, 'exhausted-energy')")
+      expect(replaceIdx).toBeGreaterThan(-1)
+      const budgetResetIdx = fn.indexOf('attemptBudget = config.fightsPerRun', replaceIdx)
+      expect(budgetResetIdx).toBeGreaterThan(replaceIdx)
+    })
+
+    it('expose skipped_summary agrege dans le run (motif agrégé, en plus du detail par index)', () => {
+      const fn = requireAsyncFunction('runFightSequence')
+      expect(fn).toContain('runRecord.skipped_summary = aggregateSkipReasons(')
+      expect(fn).toContain('formatSkipSummary(')
+    })
+
+    it('les motifs pve_locked et not_attackable restent distincts et enregistres', () => {
+      const fn = requireAsyncFunction('runFightSequence')
+      expect(fn).toContain("reason: 'pve_locked'")
+      expect(fn).toContain("'not_attackable'")
     })
   })
 })

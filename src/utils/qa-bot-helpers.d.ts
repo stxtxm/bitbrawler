@@ -79,3 +79,18 @@ export declare interface ArenaStatusInput {
 export declare function isAttackableArenaStatus(status: ArenaStatusInput | null | undefined): boolean
 
 export declare function didFightStart(status: ArenaStatusInput | null | undefined): boolean
+
+export declare function shouldSkipForEnergy(fightsAvailable: number | null | undefined): boolean
+
+export declare function capFightAttempts(fightsPerRun: number, fightsAvailable: number | null | undefined): number
+
+export declare interface SkippedFightEntry {
+  index?: number
+  reason?: string | null
+}
+
+export declare function aggregateSkipReasons(
+  skippedFights: SkippedFightEntry[] | null | undefined,
+): Record<string, number>
+
+export declare function formatSkipSummary(summary: Record<string, number> | null | undefined): string
