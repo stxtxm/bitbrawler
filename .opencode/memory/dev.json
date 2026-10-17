@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-17T20:23:27Z",
+  "last_session": "2026-10-17T21:23:26Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -50,6 +50,11 @@
       "issue": "#1178",
       "date": "2026-10-17",
       "lesson": "QA bot (#1178): le bouton FIGHT (.primary-btn.giant-btn de ActionPanel) reste 'visible' pour Playwright même pendant le combat, car .combat-overlay est position:fixed/z-index:1000 et isVisible n'ignore PAS l'occlusion. Le seul signal fiable 'combat demarre' est la presence/visibilite de .combat-overlay -> readArenaStatus expose combatVisible + hasCombatStarted le teste en premier. Toujours verifier le DOM reel (overlay) avant de fonder un fail-fast sur la visibilite d'un CTA. La tentative precedente non commitee de cet issue avait des tests faux (ordre indexOf inverses, slice trop court) -> relire/adapter les tests herites d'un worktree sale avant de commit."
+    },
+    {
+      "lesson": "Rebalance SHOP_OFFERS +10% (#1182): les assertions de prix sont éparses dans shop-utils.test.ts - la garde toBeLessThanOrEqual ET 4 tests essence (500-24→473, 500-41→455, 600-41→555) ET les 4 tests getShopPrice. Toujours grep 476|459|559|toBe(24) etc. pour tout attraper avant RED.",
+      "issue": "#1182",
+      "date": "2026-10-17"
     }
   ]
 }
