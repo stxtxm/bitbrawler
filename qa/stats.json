@@ -137926,5 +137926,248 @@
       "purchased_offer": 0,
       "essence_after_purchase": 65
     }
+  },
+  {
+    "date": "2026-10-17T19:01:29.346Z",
+    "run": "2026-10-17",
+    "character": "QA-PERSI-8",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "LOCKED LVL 30",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": null,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": true,
+      "bossLockedLevel": 30
+    },
+    "initial_stats": {
+      "str": 12,
+      "vit": 14,
+      "dex": 10,
+      "luk": 13,
+      "int": 33,
+      "foc": 14,
+      "fights": 0
+    },
+    "initial_level": 18,
+    "initial_xp": {
+      "current": 13719,
+      "max": 14137
+    },
+    "initial_max_hp": 534,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 19,
+      "xp": 2624,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 12,
+      "vit": 14,
+      "dex": 10,
+      "luk": 11,
+      "int": 35,
+      "foc": 15,
+      "fights": 0
+    },
+    "final_max_hp": 428,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_locked_level": 30,
+      "boss_name": "VOID TITAN",
+      "boss_level": null,
+      "boss_hp": null,
+      "boss_max_hp": null
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20277,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "wraith"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 234,
+      "xp_events": [
+        {
+          "time_ms": 3073,
+          "xp": 118,
+          "monster": "wraith",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15229,
+          "xp": 116,
+          "monster": "wraith",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        513,
+        1538,
+        3073,
+        12153,
+        13690,
+        15229
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 118,
+        "essence": 0.67,
+        "monster": "wraith"
+      },
+      {
+        "result": "victory",
+        "xp": 116,
+        "essence": 0.67,
+        "monster": "wraith"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.7,
+      "next_level_eta": "⬆ 31m 36s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.30x",
+      "interval": "12.0s",
+      "streak_bonus": "🔥 140-win streak (+25%)"
+    },
+    "initial_essence": 117.4,
+    "final_essence": 122.44,
+    "essence": {
+      "before_idle": 117.4,
+      "after_idle": 118.74,
+      "per_fight": [],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": 122.44,
+      "flow": {
+        "idle_gained": 1.34,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": 5.04
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": true,
+      "skip_reason": "time budget exceeded"
+    },
+    "shop": {
+      "visited": false,
+      "offers_count": 0,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": null,
+      "essence_after": null,
+      "skipped": true,
+      "skip_reason": "time budget exceeded",
+      "shop_data": {
+        "offers": [],
+        "purchased_offer": null,
+        "essence_after_purchase": null
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 2,
+        "reason": "exhausted"
+      }
+    ],
+    "errors": [
+      "Fight 1: timeout waiting for result (90000ms, 3 retries)",
+      "Fight 2: timeout waiting for result (90000ms, 3 retries)",
+      "Fight 3: timeout waiting for result (90000ms, 3 retries)",
+      "Fight 1: timeout waiting for result (90000ms, 3 retries)"
+    ],
+    "load_times_ms": {
+      "home": 1075,
+      "arena": 748,
+      "arena_reload": 14
+    },
+    "shop_data": {
+      "offers": [],
+      "purchased_offer": null,
+      "essence_after_purchase": null
+    }
   }
 ]
