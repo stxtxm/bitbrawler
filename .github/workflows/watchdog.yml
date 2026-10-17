@@ -64,8 +64,8 @@ jobs:
               echo "⏭ PR #$PR_NUMBER trop récente (${AGE_MIN}min), skip"
               continue
             fi
-            CHECK_COUNT=$(echo "$PR" | jq '[.statusCheckRollup[]? | select(((.name // .context // "") != "check") | not)] | length' 2>/dev/null || echo 0)
-            FAILED_COUNT=$(echo "$PR" | jq '[.statusCheckRollup[]? | select(((.name // .context // "") != "check" and .conclusion == "FAILURE"))] | length' 2>/dev/null || echo 0)
+            CHECK_COUNT=$(echo "$PR" | jq '[.statusCheckRollup[]? | select(((.name // .context // "") | test("vercel";"i") | not))] | length' 2>/dev/null || echo 0)
+            FAILED_COUNT=$(echo "$PR" | jq '[.statusCheckRollup[]? | select(((.name // .context // "") | test("vercel";"i") | not) and .conclusion == "FAILURE")] | length' 2>/dev/null || echo 0)
             echo "--- PR #$PR_NUMBER ($HEAD_REF, ${AGE_MIN}min, $CHECK_COUNT checks, $FAILED_COUNT failed, issue #$ISSUE_NUMBER) ---"
             if [ "$CHECK_COUNT" -eq 0 ] && [ -n "$HEAD_REF" ]; then
               echo "⚠ PR #$PR_NUMBER orpheline (0 check, >60min) → redispatch CI"
