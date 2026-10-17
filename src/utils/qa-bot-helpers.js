@@ -124,3 +124,53 @@ export function classifyRunError(message) {
   if (text.includes('locator.waitFor') || text.includes('waitFor')) return 'flaky_locator'
   return 'other'
 }
+
+export function determineNextFightType(pvpSinceLastPve, pveRatio, pveOnly, characterLevel = null, pvpUnlockLevel = 1) {
+  if (characterLevel !== null && characterLevel < pvpUnlockLevel) {
+    return { type: 'pve', pvpSinceLastPve: 0 }
+  }
+  if (pveOnly) {
+    return { type: 'pve', pvpSinceLastPve: 0 }
+  }
+  if (pveRatio <= 0) {
+    return { type: 'pvp', pvpSinceLastPve: pvpSinceLastPve + 1 }
+  }
+  const pvpPerPve = Math.max(1, Math.round(1 / pveRatio) - 1)
+  if (pvpSinceLastPve >= pvpPerPve) {
+    return { type: 'pve', pvpSinceLastPve: 0 }
+  }
+  return { type: 'pvp', pvpSinceLastPve: pvpSinceLastPve + 1 }
+}
+
+export function decideFightTypeForIndex({ forcedPvp, pvpSinceLastPve, pveRatio, pveOnly, characterLevel = null, pvpUnlockLevel = 1 }) {
+  if (forcedPvp) {
+    return { type: 'pvp', pvpSinceLastPve: pvpSinceLastPve + 1 }
+  }
+  return determineNextFightType(pvpSinceLastPve, pveRatio, pveOnly, characterLevel, pvpUnlockLevel)
+}
+
+export const FIGHT_START_GRACE_MS = 3000
+
+export function isAttackableArenaStatus(status) {
+  if (!status || typeof status !== 'object') return false
+  if (status.isPveLocked) return false
+  if (status.isResting) return false
+  if (status.isSearching) return false
+  if (status.isResolving) return false
+  if (status.fightButtonVisible !== true) return false
+  if (status.fightButtonEnabled !== true) return false
+  const label = String(status.fightButtonLabel ?? '')
+  return label.includes('FIGHT') || label.includes('ATTACK BOSS')
+}
+
+export function didFightStart(status) {
+  if (!status || typeof status !== 'object') return false
+  const body = String(status.bodyText ?? '')
+  if (body.includes('No opponents found')) return true
+  if (/(VICTORY|DEFEAT|DRAW)/.test(body)) return true
+  if (body.includes('RESOLVING')) return true
+  if (status.isResolving) return true
+  const label = String(status.fightButtonLabel ?? '')
+  if (label.includes('RESOLVING')) return true
+  return status.fightButtonVisible === false
+}
