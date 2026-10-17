@@ -216,6 +216,12 @@ export function isBurstBonusUsed(date: Date = new Date()): boolean {
   }
 }
 
+export function getEffectiveFightsLeft(fightsLeft: number | undefined | null, date: Date = new Date()): number {
+  const base = fightsLeft ?? 0;
+  if (isBurstActive(date) && !isBurstBonusUsed(date)) return base + 1;
+  return base;
+}
+
 export function markBurstBonusUsed(date: Date = new Date()): void {
   try {
     localStorage.setItem(getBurstBonusKey(date), '1');

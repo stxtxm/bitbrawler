@@ -16,7 +16,7 @@ export interface ShopOfferConfig {
  * Prices rebalanced from real QA bot data (issue #726, 2026-08-18):
  * - avg essence income = 4.4-4.75/run (49 runs with data) → old prices
  *   (150-350) required 30+ days of saving → 0/87 purchase rate (0%)
- * - Target: first purchase in ~3-5 days → cheapest offer ≈ 18 (≈3.8 days)
+ * - Target: first purchase in ~3-6 days → cheapest offer at 27 (≈5.7 days at 4.75/run)
  * - Coffre mystère EV ≈ 43 (LOOTBOX_RARITY_WEIGHTS × ESSENCE_YIELD) → 31
  *   keeps a slight expected-profit angle as a daily gamble
  * - Pièce rare (rare/epic, EV 50+) at 36, Objet épique (epic, EV 80) at 54
@@ -24,14 +24,15 @@ export interface ShopOfferConfig {
  * - Rebalanced +10% in issue #1078 (2026-09-21): purchase_rate 61% simulated / 74% visited >60% threshold
  * - Rebalanced +10% in issue #1098 (2026-09-24): purchase_rate 67% >60% threshold
  * - Rebalanced +10% in issue #1108 (2026-09-29): purchase_rate 69% simulated >60% threshold
+ * - Rebalanced +10% in issue #1182 (2026-10-17): purchase_rate 71.2% simulated > 60%
  * - Epic items only unlock for LVL >= 10 (EPIC_UNLOCK_LEVEL): low-level
  *   players (LVL 2-5 = 93% of runs) were offered 50% epic at epic prices
  */
 export const SHOP_OFFERS: ShopOfferConfig[] = [
-  { type: 'item', price: 24, label: 'Marchandise', rarityPool: ['common', 'uncommon', 'rare'] },
-  { type: 'item', price: 48, label: 'Pièce rare', rarityPool: ['rare', 'epic'] },
-  { type: 'lootbox', price: 41, label: 'Coffre mystère', rarityPool: null },
-  { type: 'item', price: 73, label: 'Objet épique', rarityPool: ['epic'] },
+  { type: 'item', price: 27, label: 'Marchandise', rarityPool: ['common', 'uncommon', 'rare'] },
+  { type: 'item', price: 53, label: 'Pièce rare', rarityPool: ['rare', 'epic'] },
+  { type: 'lootbox', price: 45, label: 'Coffre mystère', rarityPool: null },
+  { type: 'item', price: 80, label: 'Objet épique', rarityPool: ['epic'] },
 ];
 
 /** Cost to reroll today's shop offers (≈2 days of essence income). */

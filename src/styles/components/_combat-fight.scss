@@ -80,6 +80,15 @@
 }
 
 // ============================================
+// Hit Flash — brighten the struck sprite (~2 frames)
+// ============================================
+
+.fighter-side.hit-flash .pixel-character,
+.fighter-side.hit-flash canvas {
+    filter: brightness(2) !important;
+}
+
+// ============================================
 // Screen Flash Overlay — white/red flash on crit/KO
 // ============================================
 
