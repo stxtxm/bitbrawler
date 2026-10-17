@@ -992,34 +992,32 @@ jobs:
             fi
           fi
 
-          # --- Guarantee the reviewer gate runs even with a [skip ci] head ---
-          # The last commit pushed is the session-memory commit
-          # ("chore: update dev memory [skip ci]"). GitHub suppresses the
-          # pull_request CI trigger when the head commit contains a skip marker
-          # (→ 0 CI run → the CI→reviewer dispatch chain never fires → the PR
-          # stalls until the daily tech-lead sweep). Fix: re-dispatch CI on the
-          # PR branch explicitly. On success ci.yml dispatches the reviewer
-          # (ci_green=true), which runs its own integrity gate before merging.
+          # --- Guarantee the reviewer gate runs on EVERY bot PR ---
+          # On ne peut plus compter sur l'événement pull_request :
+          #  1. un commit de tête [skip ci] supprime le trigger (raison historique) ;
+          #  2. surtout, GitHub retient le run pull_request des PRs ouvertes avec
+          #     GITHUB_TOKEN : conclusion `action_required`, ZÉRO job, donc aucun
+          #     check sur la PR (constaté sur #1179 puis sur les 4 PRs bot de
+          #     21:23-21:39). Sans check, ci.yml ne dispatche jamais le reviewer
+          #     et la PR reste muette jusqu'au tech-lead du lendemain.
+          # On dispatch donc TOUJOURS la CI sur la branche de la PR : le run
+          # prend le SHA de la branche (donc ses checks se rattachent à la PR) et
+          # son succès déclenche le reviewer (ci_green=true). Si un run
+          # pull_request a quand même démarré, la concurrence `ci-<pr>` les
+          # sérialise (cancel-in-progress: false) — au pire un run en double.
           if [ -n "$PR_NUMBER" ]; then
-            # Plus de [skip ci] sur la PR grâce à A2a (mémoire sur branche memory), ce bloc ne sert qu'en fallback
-            # Mais on garde le dispatch explicite si un vieux commit skip-ci persiste
-            HEAD_MSG=$(git log -1 --format=%s)
-            if echo "$HEAD_MSG" | grep -qiE '\[skip ci\]|\[ci skip\]|\[skip actions\]'; then
-              echo "⏳ Head commit \"$HEAD_MSG\" is a skip-ci marker — dispatching CI explicitement sur $BRANCH pour PR #$PR_NUMBER"
-              set +e
-              OUT=$(gh workflow run ci.yml --ref "$BRANCH" -f pr_number="$PR_NUMBER" --repo "${{ github.repository }}" 2>&1)
-              RC=$?
-              set -e
-              if [ $RC -eq 0 ]; then
-                echo "✓ CI dispatchée pour PR #$PR_NUMBER → le reviewer sera déclenché automatiquement (ci_green=true)"
-                echo "$OUT"
-              else
-                echo "❌ Échec dispatch CI explicite : $OUT"
-                echo "⚠ Fallback : le reviewer tentera une validation locale si aucun check CI n'est présent"
-                gh pr comment "$PR_NUMBER" --body "⚠️ Le commit de tête \`[skip ci]\` a supprimé le trigger pull_request. Le dispatch CI explicite a échoué: $OUT" 2>/dev/null || true
-              fi
+            echo "⏳ Dispatch CI explicite sur $BRANCH pour PR #$PR_NUMBER"
+            set +e
+            OUT=$(gh workflow run ci.yml --ref "$BRANCH" -f pr_number="$PR_NUMBER" --repo "${{ github.repository }}" 2>&1)
+            RC=$?
+            set -e
+            if [ $RC -eq 0 ]; then
+              echo "✓ CI dispatchée pour PR #$PR_NUMBER → le reviewer sera déclenché automatiquement (ci_green=true)"
+              echo "$OUT"
             else
-              echo "✅ Head commit n'est pas skip-ci — l'événement pull_request va déclencher la CI normalement (A2a: mémoire sur branche memory)"
+              echo "❌ Échec dispatch CI explicite : $OUT"
+              echo "⚠ Fallback : le reviewer tentera une validation locale si aucun check CI n'est présent"
+              gh pr comment "$PR_NUMBER" --body "⚠️ Le dispatch CI explicite a échoué : $OUT — si aucun check n'apparaît, le reviewer rejouera la gate complète lui-même." 2>/dev/null || true
             fi
           fi
 

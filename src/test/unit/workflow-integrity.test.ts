@@ -24,11 +24,15 @@ describe('Workflow contracts: auto bot-merge reliability ([skip ci] head)', () =
   const reviewer = readWorkflow('reviewer.yml')
   const ci = readWorkflow('ci.yml')
 
-  it('opencode.yml dispatches CI explicitly for skip-ci bot PRs', () => {
+  it('opencode.yml dispatches CI explicitly on every bot PR', () => {
+    // GitHub retient le run pull_request des PRs ouvertes avec GITHUB_TOKEN
+    // (`action_required`, zéro job) : la PR n'a alors aucun check, ci.yml ne
+    // dispatche jamais le reviewer et la PR reste muette. Le dispatch ne doit
+    // donc plus être conditionné à un commit de tête [skip ci] (HEAD_MSG).
     expect(opencode).toContain('gh workflow run ci.yml')
     expect(opencode).toContain('--ref "$BRANCH"')
     expect(opencode).toContain('-f pr_number="$PR_NUMBER"')
-    expect(opencode).toMatch(/\[skip ci\]|\[ci skip\]|\[skip actions\]/)
+    expect(opencode).not.toContain('HEAD_MSG')
   })
 
   it('opencode.yml keeps the reviewer as the only merge authority', () => {
