@@ -97,6 +97,88 @@ describe('Workflow files declare unique job names', () => {
   })
 })
 
+describe('Memory save must never block the PR push', () => {
+  // Incident 2026-10-17 (issue #1132, run 39058690947): the dev agent implemented
+  // the fix and validation passed, then "Save agent session memory" died on
+  // `jq --argjson` because the agent had written invalid JSON. GitHub runs `run:`
+  // steps with `bash -e`, so jq's exit 2 killed the step — and "Push and manage
+  // PR" is guarded by success(), so the whole implementation was silently
+  // dropped. A perfectly good run produced nothing.
+  //
+  // The step also used to read `CURRENT` from master's `.opencode/memory/dev.json`
+  // before switching to the `memory` branch. Master only keeps a vestige that
+  // agents never read (the loader prefers refs/remotes/origin/memory), so every
+  // successful save overwrote the accumulated notes and known_limitations.
+  //
+  // Both invariants are asserted here so neither can regress quietly.
+  const source = readWorkflow('opencode.yml')
+  const start = source.indexOf('- name: Save agent session memory')
+  expect(start, 'step "Save agent session memory" is missing from opencode.yml').toBeGreaterThan(-1)
+  const nextStep = source.indexOf('\n      - name:', start + 1)
+  const step = source.slice(start, nextStep === -1 ? undefined : nextStep)
+
+  it('tolerates its own failure so the PR push still runs', () => {
+    expect(step).toContain('continue-on-error: true')
+  })
+
+  it('validates the agent notes before handing them to --argjson', () => {
+    // The agent writes /tmp/agent-session-notes.json by hand: trailing commas,
+    // raw newlines and markdown fences are all normal.
+    expect(step).toContain('jq -e . /tmp/agent-session-notes.json')
+    expect(step).toContain('--rawfile')
+  })
+
+  it('reads the accumulated memory from the memory branch, not from master', () => {
+    const readsCurrent = step.indexOf('CURRENT=$(cat .opencode/memory/dev.json')
+    const switchesBranch = step.indexOf('git checkout memory')
+    expect(readsCurrent).toBeGreaterThan(-1)
+    expect(switchesBranch).toBeGreaterThan(-1)
+    expect(readsCurrent).toBeGreaterThan(switchesBranch)
+  })
+})
+
+describe('Reviewer preflight must be able to see the PR', () => {
+  // Incident 2026-10-17 (PR #1176): the preflight job has no actions/checkout —
+  // it only reads the PR state — so there is no git repository in the workspace
+  // and `gh` cannot infer which repo it is talking to. It exits with
+  // « failed to run git: fatal: ... n'est pas un dépôt git ».
+  //
+  // The script swallowed that with `2>/dev/null || echo ""`, turned it into
+  // "unknown", and skipped the review. Every reviewer run was therefore green
+  // and did nothing: reviews were off across the board, invisibly. That is worse
+  // than a red run — nothing to look at, nothing to fix.
+  //
+  // Two invariants: gh is told which repo to use, and an unreadable state is a
+  // loud failure rather than a silent skip.
+  const source = readWorkflow('reviewer.yml')
+  const start = source.indexOf('- name: Skip review if the PR is not open')
+  expect(start, 'preflight gate step is missing from reviewer.yml').toBeGreaterThan(-1)
+  const end = source.indexOf('\n  review:', start)
+  const gate = source.slice(start, end === -1 ? undefined : end)
+
+  it('tells gh which repository to use, since the job has no checkout', () => {
+    expect(source.slice(source.indexOf('  preflight:'), source.indexOf('\n  review:'))).toContain(
+      'GH_REPO: ${{ github.repository }}'
+    )
+  })
+
+  it('fails loudly instead of silently skipping when the state is unreadable', () => {
+    // A blind preflight must not be able to disable the whole reviewer quietly:
+    // it retries, then exits non-zero so the run is red and visible.
+    expect(gate).toContain('exit 1')
+    expect(gate).toMatch(/for attempt in/)
+    // The exact anti-pattern that caused the outage: reading the state with
+    // stderr discarded and defaulting the result to "", which became "unknown".
+    expect(gate).not.toMatch(/gh pr view[^\n]*2>\/dev\/null/)
+  })
+
+  it('still skips a genuinely closed or merged PR', () => {
+    // The ghost-run fix must survive: a merged PR is not worth reviewing.
+    expect(gate).toContain('should_review=false')
+    expect(gate).toContain('should_review=true')
+  })
+})
+
 describe('Agent workflows send no OpenCode credential', () => {
   // Incident 2026-10-17: the repo secret OPENCODE_API_KEY had expired (last
   // rotated 2026-05-24). Every agent step exported it, so the provider answered
