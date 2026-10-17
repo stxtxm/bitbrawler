@@ -97,6 +97,46 @@ describe('Workflow files declare unique job names', () => {
   })
 })
 
+describe('Memory save must never block the PR push', () => {
+  // Incident 2026-10-17 (issue #1132, run 39058690947): the dev agent implemented
+  // the fix and validation passed, then "Save agent session memory" died on
+  // `jq --argjson` because the agent had written invalid JSON. GitHub runs `run:`
+  // steps with `bash -e`, so jq's exit 2 killed the step — and "Push and manage
+  // PR" is guarded by success(), so the whole implementation was silently
+  // dropped. A perfectly good run produced nothing.
+  //
+  // The step also used to read `CURRENT` from master's `.opencode/memory/dev.json`
+  // before switching to the `memory` branch. Master only keeps a vestige that
+  // agents never read (the loader prefers refs/remotes/origin/memory), so every
+  // successful save overwrote the accumulated notes and known_limitations.
+  //
+  // Both invariants are asserted here so neither can regress quietly.
+  const source = readWorkflow('opencode.yml')
+  const start = source.indexOf('- name: Save agent session memory')
+  expect(start, 'step "Save agent session memory" is missing from opencode.yml').toBeGreaterThan(-1)
+  const nextStep = source.indexOf('\n      - name:', start + 1)
+  const step = source.slice(start, nextStep === -1 ? undefined : nextStep)
+
+  it('tolerates its own failure so the PR push still runs', () => {
+    expect(step).toContain('continue-on-error: true')
+  })
+
+  it('validates the agent notes before handing them to --argjson', () => {
+    // The agent writes /tmp/agent-session-notes.json by hand: trailing commas,
+    // raw newlines and markdown fences are all normal.
+    expect(step).toContain('jq -e . /tmp/agent-session-notes.json')
+    expect(step).toContain('--rawfile')
+  })
+
+  it('reads the accumulated memory from the memory branch, not from master', () => {
+    const readsCurrent = step.indexOf('CURRENT=$(cat .opencode/memory/dev.json')
+    const switchesBranch = step.indexOf('git checkout memory')
+    expect(readsCurrent).toBeGreaterThan(-1)
+    expect(switchesBranch).toBeGreaterThan(-1)
+    expect(readsCurrent).toBeGreaterThan(switchesBranch)
+  })
+})
+
 describe('Agent workflows send no OpenCode credential', () => {
   // Incident 2026-10-17: the repo secret OPENCODE_API_KEY had expired (last
   // rotated 2026-05-24). Every agent step exported it, so the provider answered

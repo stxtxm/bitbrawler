@@ -847,37 +847,59 @@ jobs:
 
       - name: Save agent session memory
         if: success() && github.event.inputs.mode != 'supervisor'
+        # La mémoire est de la télémétrie : elle ne doit JAMAIS bloquer le push de
+        # la PR. Un JSON invalide faisait sortir jq en 2, l'étape échouait, et comme
+        # « Push and manage PR » est gardé par success(), tout le travail de l'agent
+        # était perdu (incident #1132, run 39058690947 : implémentation réussie,
+        # jamais poussée).
+        continue-on-error: true
         run: |
           if [ -f /tmp/agent-session-notes.json ]; then
-            NOTES=$(cat /tmp/agent-session-notes.json)
-            CURRENT=$(cat .opencode/memory/dev.json 2>/dev/null || echo '{}')
-            UPDATED=$(echo "$CURRENT" | jq --argjson notes "$NOTES" --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
-              .last_session = $date | .session_notes += [$notes] | .session_notes |= .[-30:]
-            ')
-            echo "$UPDATED" > /tmp/memory_dev_updated.json
-            echo "📝 Mémoire dev préparée (30 dernières notes gardées, push sur memory)"
             CURR_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "feat/auto-$ISSUE_NUMBER")
             git stash push -m "dev memory stash" --keep-index 2>/dev/null || true
             git fetch origin memory 2>/dev/null || git fetch origin memory/dev 2>/dev/null || true
             if git ls-remote --exit-code origin refs/heads/memory >/dev/null 2>&1; then
+              MEM_BRANCH=memory
               git checkout memory 2>/dev/null || git checkout -B memory origin/memory
               git pull origin memory --ff-only 2>/dev/null || true
             elif git ls-remote --exit-code origin refs/heads/memory/dev >/dev/null 2>&1; then
+              MEM_BRANCH=memory/dev
               git checkout memory/dev 2>/dev/null || git checkout -B memory origin/memory/dev
               git pull origin memory/dev --ff-only 2>/dev/null || true
             else
+              MEM_BRANCH=memory
               git checkout --orphan memory 2>/dev/null || git checkout -B memory
               git rm -rf . 2>/dev/null || true
-              mkdir -p .opencode/memory
             fi
             mkdir -p .opencode/memory
-            cp /tmp/memory_dev_updated.json .opencode/memory/dev.json
+
+            # On lit dev.json APRÈS être passé sur la branche memory. Le lire depuis
+            # master écrasait la mémoire accumulée : master n'en garde qu'un vestige
+            # que les agents ne lisent jamais (le loader privilégie
+            # refs/remotes/origin/memory, voir « Load agent memory context »).
+            CURRENT=$(cat .opencode/memory/dev.json 2>/dev/null || echo '{}')
+
+            # L'agent écrit ces notes à la main : le JSON est fréquemment invalide
+            # (virgule finale, saut de ligne brut, fence markdown). On ne jette pas
+            # la trace pour autant — on la conserve en texte brut.
+            if jq -e . /tmp/agent-session-notes.json >/dev/null 2>&1; then
+              NOTES=$(cat /tmp/agent-session-notes.json)
+            else
+              echo "⚠ Notes de session = JSON invalide → conservées en texte brut"
+              NOTES=$(jq -n --rawfile t /tmp/agent-session-notes.json --arg issue "#$ISSUE_NUMBER" \
+                '{lesson: ($t | .[0:500]), issue: $issue, invalid_json: true}')
+            fi
+
+            UPDATED=$(echo "$CURRENT" | jq --argjson notes "$NOTES" --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
+              .last_session = $date | .session_notes += [$notes] | .session_notes |= .[-30:]
+            ')
+            echo "$UPDATED" > .opencode/memory/dev.json
             git add .opencode/memory/dev.json
             git commit -m "chore: update dev memory #$ISSUE_NUMBER" 2>/dev/null || true
-            git push origin HEAD:memory 2>&1 | head -20 || git push origin memory 2>&1 | head -20 || git push origin HEAD:memory/dev 2>&1 | head -20 || echo "⚠ push memory échoué (retry plus tard)"
+            git push origin "HEAD:$MEM_BRANCH" 2>&1 | head -20 || echo "⚠ push memory échoué (retry plus tard)"
             git checkout "$CURR_BRANCH" 2>/dev/null || git checkout -B "$CURR_BRANCH" || true
             git stash pop 2>/dev/null || true
-            echo "✅ Dev memory poussée sur origin/memory (pas de [skip ci] sur la PR)"
+            echo "✅ Dev memory poussée sur origin/$MEM_BRANCH (pas de [skip ci] sur la PR)"
           else
             echo "ℹ No session notes found"
           fi
