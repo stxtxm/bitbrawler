@@ -16,10 +16,10 @@ PvE Idle Combat
 - Toggle switch in Arena (👹 PVE / ⚔ PVP). PvE mode enables the idle runner.
 - 5 PvE fights/day (separate from 5 PvP).
 - Monsters: Goblin (wind), Ogre (earth), Wraith (dark), Slime (water, lvl 1-8), Wolf (fire, lvl 5-18), Skeleton (dark, lvl 10-28), Chimera (fire, lvl 20-40), Dragon Spawn (fire, lvl 30-50) — scale to player level with tiered difficulty.
-- Idle processing: **Vercel serverless** (`api/idle-processor.ts`), NOT GitHub Actions.
+- Idle processing: **Cloudflare Pages Function** (`functions/api/idle-processor.ts`), NOT GitHub Actions.
   - On-demand: client POSTs on reconnect for instant gains.
   - Cron fallback: cron-job.org every 1 minute processes stale characters.
-  - Self-contained: inlines all combat/XP/monster utilities (Vercel doesn't compile src/).
+  - Self-contained: inlines all combat/XP/monster utilities (the Function bundles from `functions/`, not `src/`).
 - Two watermarks: `lastActive` (client, visibility change) + `last_idle_check` (client + server).
 - Unmount preserves `lastActive` (doesn't advance it) so character switching keeps idle time.
 - XP/min always visible with next-level ETA, efficiency multiplier, power ratio.
@@ -119,10 +119,10 @@ Infrastructure (v1.0.0 → v3.2.0)
 - Database migrated from Firebase Firestore to Supabase (PostgreSQL).
 - Scripts (`scripts/bot-engine.ts`, `scripts/daily-reset-engine.ts`) use `@supabase/supabase-js` via `scripts/supabaseAdmin.ts`.
 - GitHub Actions: daily reset scheduled for Paris midnight with a double cron (CET/CEST); bot engine runs every 2 hours.
-- Idle processing: **Vercel serverless** (`api/idle-processor.ts`) — replaces former GitHub Actions idle-processor workflow.
+- Idle processing: **Cloudflare Pages Function** (`api/runIdleProcessor.ts`) — replaces former GitHub Actions idle-processor workflow.
   - Cold start < 1s (vs 30s for GHA checkout + npm ci).
   - Self-contained: all utilities inlined (not imported from src/).
-  - Cron trigger: cron-job.org every 1 min → `POST https://bitbrawler.netlify.app/api/idle-processor`.
+  - Cron trigger: cron-job.org every 1 min → `POST https://bitbrawler.pages.dev/api/idle-processor`.
 - GitHub Actions secrets: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
 
 Handoff (Next Agent)
@@ -132,7 +132,7 @@ Handoff (Next Agent)
 - Name generator pools were expanded for more variety.
 - Supabase service role key required for scripts (`SUPABASE_SERVICE_ROLE_KEY`). RLS open for dev.
 - **Idle processor** (`api/idle-processor.ts`) is SELF-CONTAINED — no imports from `src/`.
-  Vercel only compiles `api/` files to JS. If you change logic in `src/utils/xpUtils.ts`,
+  The Function only bundles from `functions/` and `api/`. If you change logic in `src/utils/xpUtils.ts`,
   `src/utils/combatUtils.ts`, `src/utils/monsterUtils.ts`, you must mirror changes in
   `api/idle-processor.ts`.
 - Efficiency effect in `useIdleCombat.ts` depends on `[character]` identity — triggers on any change.

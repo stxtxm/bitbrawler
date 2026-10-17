@@ -48,7 +48,7 @@ Bitbrawler is a **full-stack web application** with the following layers:
 | **Database** | Supabase (PostgreSQL) | Relational data, real-time subscriptions |
 | **Authentication** | Supabase Auth | Email/password auth with JWT |
 | **CI/CD** | GitHub Actions | Automated testing, building, deployment |
-| **Hosting** | Netlify | CDN, serverless deployment (app + API), preview PRs |
+| **Hosting** | Cloudflare Pages | CDN, Functions (app + API), 20 000 min build/mois |
 | **Autonomous Dev** | OpenCode Agents | AI-powered development automation |
 
 ### Architecture Layers
@@ -56,12 +56,12 @@ Bitbrawler is a **full-stack web application** with the following layers:
 ```
 ┌──────────────────────────────────────────┐
 │         Frontend (React + TypeScript)     │
-│   Vite build → Netlify CDN               │
+│   Vite build → Cloudflare Pages CDN       │
 │   (Components, Pages, Game Logic)       │
 └──────────────┬───────────────────────────┘
                │
          ┌─────▼────────────┐
-         │  Netlify Functions      │
+         │  Cloudflare Pages Fn   │
          │  api/*.ts        │
          │  (idle-processor)│
          └─────┬────────────┘
@@ -295,7 +295,7 @@ GameContext (useGame)
 ### Scripts & Utilities
 
 #### `api/idle-processor.ts`
-- **Purpose**: Server-side idle combat processing (self-contained Netlify serverless function)
+- **Purpose**: Server-side idle combat processing (self-contained Cloudflare Pages Function)
 - **Trigger**: 
   - On-demand: client POSTs `{ character_id }` on reconnect
   - Cron: 1-minute cron from cron-job.org (no character_id → processes all stale characters)
@@ -303,7 +303,7 @@ GameContext (useGame)
 - **Output**: Returns `{ fights, xp, levels, updated }` JSON
 - **Why self-contained**: the idle maths is inlined (monsters, combat, XP, efficiency) so the core handler stays independent of the hosting runtime
 - **XP curve**: `Math.floor(100 * Math.pow(level, 1.6))` — must match `src/utils/xpUtils.ts`
-- **Cron URL**: `https://bitbrawler.netlify.app/api/idle-processor`
+- **Cron URL**: `https://bitbrawler.pages.dev/api/idle-processor`
 - **Env required**: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 
 #### `scripts/idle-processor.ts`
@@ -889,7 +889,7 @@ const subscription = supabase
 ### E2E Tests
 
 - **Framework**: Playwright
-- **Target**: Live site (bitbrawler.netlify.app)
+- **Target**: Live site (bitbrawler.pages.dev)
 - **Frequency**: Scheduled daily
 - **Output**: `qa/stats.json` with gameplay data
 
@@ -913,9 +913,9 @@ npm run build
 # Ready for deployment
 ```
 
-### Hosting configuration (Netlify)
+### Hosting configuration (Cloudflare Pages)
 
-`vercel.json` defines SPA rewrites:
+`wrangler.toml` + `public/_redirects` define SPA rewrites:
 
 ```json
 {
@@ -936,8 +936,7 @@ npm run build
 1. **dev-agent pushes** a feature branch → GitHub Actions creates a PR
 2. **CI Workflow** (lint, type check, test, build) on the PR
 3. **Reviewer** approves & merges to `master`
-4. **Netlify** auto-deploys `master` → production (`bitbrawler.netlify.app`)
-5. Preview deployments on Netlify for every PR
+4. **Cloudflare Pages** deploys via `npx wrangler pages deploy dist --project-name bitbrawler` → production (`bitbrawler.pages.dev`)
 
 ---
 
@@ -947,7 +946,7 @@ npm run build
 
 - PostgreSQL handles 1000+ active players
 - Real-time subscriptions scale to 100+ concurrent clients
-- Netlify Functions for API routes if needed
+- Cloudflare Pages Functions for API routes if needed
 
 ### Future Optimizations
 

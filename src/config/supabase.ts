@@ -2,10 +2,15 @@ import { createClient } from '@supabase/supabase-js'
 import type { CharacterAppearance, FightHistory, IncomingFightHistory, PendingFight } from '../types/Character'
 import type { BossProgress } from '../utils/bossUtils'
 
-// Database of record: bhbpvbfvuayafygdrbgb. Decided 2026-10-11 — the Netlify
-// migration exposed the split, so the fallback matches the deploy target
-// instead of silently disagreeing with it. ACTIF (gunuqjythwgbdbuyshoh) is kept
-// in .env.example as an emergency revert path.
+// Database of record: bhbpvbfvuayafygdrbgb. Decided 2026-10-11 — an hosting
+// migration exposed the split between two projects, so the hardcoded fallback
+// matches the deploy target instead of silently disagreeing with it. The
+// legacy project (gunuqjythwgbdbuyshoh) is kept in .env.example as an
+// emergency revert path.
+//
+// Note: this fallback only triggers when VITE_SUPABASE_URL is missing at build
+// time. If that ever happens the whole app silently talks to this database —
+// verify the subdomain actually embedded in the bundle after any host change.
 // These are public anon keys; the service_role key lives only in server env.
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://bhbpvbfvuayafygdrbgb.supabase.co'
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_TvmRepD1Trhu5bQIGZbkmg_YZ3FI3Gn'

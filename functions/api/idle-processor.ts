@@ -2,8 +2,7 @@ import { runIdleProcessor, type HandlerEnv } from '../../api/runIdleProcessor'
 
 // Minimal shape of the Cloudflare Pages handler context. Declared locally
 // instead of importing @cloudflare/workers-types so the repo keeps zero
-// hosting-specific devDependencies — the same reason the Netlify adapter does
-// not import @netlify/functions.
+// hosting-specific devDependencies.
 interface PagesContext {
   request: Request;
   env: HandlerEnv;
@@ -16,10 +15,9 @@ interface PagesContext {
 // what the client and cron-job.org already call. No URL change, no client
 // change.
 //
-// The only real difference from Netlify is where the credentials come from:
-// Cloudflare exposes them as bindings on the handler context rather than
-// through process.env. runIdleProcessor() bridges that, so the idle maths
-// stays single-sourced and its unit tests still cover the real logic.
+// Credentials arrive as bindings on the handler context rather than through
+// process.env. runIdleProcessor() bridges that, so the idle maths stays
+// single-sourced and its unit tests still cover the real logic.
 const handle = ({ request, env }: PagesContext): Promise<Response> =>
   runIdleProcessor(request, env)
 

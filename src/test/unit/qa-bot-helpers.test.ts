@@ -120,18 +120,18 @@ describe('qa-bot-helpers combat speed', () => {
       expect(isSiteDownStatus(undefined)).toBe(false)
     })
     it('buildSiteDownMessage formats HTTP status and url', () => {
-      expect(buildSiteDownMessage(402, 'https://bitbrawler.vercel.app/login')).toBe(
-        'SITE_DOWN: HTTP 402 on https://bitbrawler.vercel.app/login'
+      expect(buildSiteDownMessage(402, 'https://bitbrawler.pages.dev/login')).toBe(
+        'SITE_DOWN: HTTP 402 on https://bitbrawler.pages.dev/login'
       )
     })
     it('buildSiteDownBodyMessage mentions error page and url', () => {
-      const msg = buildSiteDownBodyMessage('https://bitbrawler.vercel.app/login')
+      const msg = buildSiteDownBodyMessage('https://bitbrawler.pages.dev/login')
       expect(msg).toContain('SITE_DOWN')
-      expect(msg).toContain('https://bitbrawler.vercel.app/login')
+      expect(msg).toContain('https://bitbrawler.pages.dev/login')
     })
     it('throwIfSiteDownResponse throws SITE_DOWN on 402 without touching locators', () => {
       const response = { status: () => 402 }
-      expect(() => throwIfSiteDownResponse(response, 'https://bitbrawler.vercel.app/login')).toThrow(
+      expect(() => throwIfSiteDownResponse(response, 'https://bitbrawler.pages.dev/login')).toThrow(
         /SITE_DOWN: HTTP 402/
       )
     })

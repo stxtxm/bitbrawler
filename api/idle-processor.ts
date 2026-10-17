@@ -443,7 +443,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     res.end(JSON.stringify({
       error: `Missing ${missing.join(' and ')}`,
       missing_env: missing,
-      hint: 'Define them in Netlify (Site configuration > Environment variables, production context) or GitHub Actions secrets, then redeploy.',
+      hint: 'Define them in Cloudflare Pages (Settings > Environment variables, Production) or GitHub Actions secrets, then redeploy.',
     }))
     return
   }

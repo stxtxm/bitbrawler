@@ -291,7 +291,7 @@ Type: Proposition majeure (requires architecture changes)
    ```bash
    node qa/qa-bot.mjs
    ```
-   - Navigate to bitbrawler.netlify.app
+   - Navigate to bitbrawler.pages.dev
    - Create/load QA character
    - Perform 5 fights
    - Claim daily lootbox
@@ -410,9 +410,9 @@ Type: Proposition majeure (requires architecture changes)
 
 ---
 
-## Idle Processor (Vercel Serverless)
+## Idle Processor (Cloudflare Pages Function)
 
-**Not a GitHub Actions workflow** — runs as a Vercel serverless function for low-latency idle combat processing.
+**Not a GitHub Actions workflow** — runs as a Cloudflare Pages Function for low-latency idle combat processing.
 
 ### File: `api/idle-processor.ts`
 
@@ -433,14 +433,14 @@ Type: Proposition majeure (requires architecture changes)
 
 #### Cron Fallback
 
-- **URL**: `https://bitbrawler.netlify.app/api/idle-processor`
+- **URL**: `https://bitbrawler.pages.dev/api/idle-processor`
 - **Frequency**: Every 1 minute (configured on cron-job.org)
 - **Behavior**: When no `character_id` provided, processes ALL stale characters (`last_idle_check > 60s ago`)
 - **Purpose**: Catches bots, network failures, lost browser sessions
 
 ### Self-Contained Design
 
-Vercel only compiles files in `api/` to JavaScript. The idle processor **inlines** all utilities:
+The Function is bundled from `functions/api/idle-processor.ts`, which delegates to the shared shim `api/runIdleProcessor.ts`. The idle processor **inlines** all utilities:
 - Monster generation (matching `src/utils/monsterUtils.ts`)
 - Combat simulation (matching `src/utils/combatUtils.ts`)
 - XP calculation with power curve (`100 × level^1.6`)
@@ -460,18 +460,18 @@ Vercel only compiles files in `api/` to JavaScript. The idle processor **inlines
 | `SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Admin key for direct DB access |
 
-Set these in Vercel dashboard (Project Settings → Environment Variables).
+Set these in the Cloudflare dashboard (Settings → Environment variables, Production, **encrypted**). `./scripts/cf-env-setup.sh` reads `.env` and never prints the values.
 
 ### Testing
 
 ```bash
 # Test on-demand (replaces X with a real character_id)
-curl -X POST https://bitbrawler.netlify.app/api/idle-processor \
+curl -X POST https://bitbrawler.pages.dev/api/idle-processor \
   -H "Content-Type: application/json" \
   -d '{"character_id": "X"}'
 
 # Test cron mode
-curl -X POST https://bitbrawler.netlify.app/api/idle-processor
+curl -X POST https://bitbrawler.pages.dev/api/idle-processor
 ```
 
 ---
@@ -577,7 +577,7 @@ git push
 **Problem**: Playwright tests fail on live site
 
 **Solution**:
-1. Usually temporary (Vercel deploy, network)
+1. Usually temporary (deploy, network)
 2. Fails don't block CI (continue-on-error: true)
 3. Check stats were collected anyway
 4. Manually re-run if needed
@@ -629,4 +629,4 @@ All secrets managed via GitHub repo settings.
 
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [OpenCode Documentation](https://opencode.ai/docs)
-- [Vercel Deployment Guide](https://vercel.com/docs)
+- [Cloudflare Pages Docs](https://developers.cloudflare.com/pages/)

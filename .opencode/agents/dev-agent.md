@@ -143,7 +143,7 @@ Le workflow sauvegardera automatiquement ces notes dans ta mémoire.
 - **Stack**: React + TypeScript + Vite
 - **Tests**: vitest (470+ tests, 55 fichiers)
 - **DB**: Supabase (PostgreSQL, pas Firebase)
-- **Déploiement**: Vercel
+- **Déploiement**: Cloudflare Pages (`wrangler.toml`, `functions/`)
 - **Linter**: ESLint
 - **Format**: Prettier (implicite dans le build)
 

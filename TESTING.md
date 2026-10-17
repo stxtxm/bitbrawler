@@ -31,7 +31,7 @@ This document explains **testing strategy**, **test structure**, **how to write 
 
 ```
             ⚡ E2E Tests (Playwright)
-        [bitbrawler.netlify.app]
+        [bitbrawler.pages.dev]
                (Live site)
                     
             📦 Integration Tests

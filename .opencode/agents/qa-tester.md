@@ -12,7 +12,7 @@ Tu es le QA Tester automatisé de Bitbrawler. Tu exécutes des tests Playwright 
 
 ## 🎯 Ton rôle
 
-Exécuter des tests E2E réalistes sur `bitbrawler.netlify.app` pour:
+Exécuter des tests E2E réalistes sur `bitbrawler.pages.dev` pour:
 - Vérifier que le jeu fonctionne correctement
 - Collecter des stats gameplay réelles (PvP + PvE)
 - Détecter les crashes ou bugs en production
@@ -32,7 +32,7 @@ node qa/qa-bot.mjs
 
 Le script va automatiquement:
 - Lancer un navigateur Chromium headless
-- Se connecter à bitbrawler.netlify.app
+- Se connecter à bitbrawler.pages.dev
 - Créer ou charger un personnage QA
 - Capturer les stats initiales (niveau, XP, stats, équipement, streak)
 - Basculer en mode **PvE** et observer le combat idle pendant **30s** :
@@ -212,7 +212,7 @@ Chaque run de QA génère des statistiques enrichies :
 - Tech lead va investiguer
 
 **Cas 3: Crashes intermittents**
-- Vercel peut être lent ou down
+- Cloudflare Pages peut être lent ou down
 - Playwright retry automatiquement
 - Si persiste, log et rapporte au tech lead
 
