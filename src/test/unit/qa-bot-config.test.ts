@@ -336,6 +336,28 @@ describe('QA Bot Fight Type Decision', () => {
     })
   })
 
+  describe('qa-bot.config baseUrl (production host)', () => {
+    it('defaults to the Cloudflare Pages production host', () => {
+      expect(qaBotConfig.baseUrl).toBe('https://bitbrawler.pages.dev')
+    })
+
+    it('uses https so the service worker and geolocation keep working', () => {
+      // A plain-http default would break SW registration and secure-context APIs.
+      expect(qaBotConfig.baseUrl.startsWith('https://')).toBe(true)
+    })
+
+    it('does not point at a decommissioned host (netlify/vercel)', () => {
+      // Both former hosts are retired; a regression here silently breaks all runs.
+      expect(qaBotConfig.baseUrl.toLowerCase().includes('netlify')).toBe(false)
+      expect(qaBotConfig.baseUrl.toLowerCase().includes('vercel')).toBe(false)
+    })
+
+    it('has no trailing slash (paths are built by string concatenation)', () => {
+      // Bot paths use `baseUrl + '/login'`, so a trailing slash would produce '//'.
+      expect(qaBotConfig.baseUrl.endsWith('/')).toBe(false)
+    })
+  })
+
   describe('persistent character reuse level guard (#820, #830)', () => {
     it('never reuses a persistent character whose current level reached the cap', () => {
       expect(shouldForcePersistentReset(qaBotConfig.persistentCharacterMaxLevel)).toBe(true)
