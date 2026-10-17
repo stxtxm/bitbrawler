@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { isBurstActive, isBurstWindow, getMaxDailyFights, getBurstGrowthChance, getDepthToIdleRatio, getBurstBonusKey, isBurstBonusUsed, markBurstBonusUsed, clearBurstBonusUsed } from '../../data/liveOps'
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
+import { isBurstActive, isBurstWindow, getMaxDailyFights, getBurstGrowthChance, getDepthToIdleRatio, getBurstBonusKey, isBurstBonusUsed, markBurstBonusUsed, clearBurstBonusUsed, getEffectiveFightsLeft } from '../../data/liveOps'
 import { GAME_RULES } from '../../config/gameRules'
 import { calculateIdleEssence, calculateIdleXp, calculateOfflineIdleXp } from '../../utils/idleXpUtils'
 import { calculateOfflineFightsWithEfficiency, isIdlePaused } from '../../utils/idleEfficiencyUtils'
@@ -152,6 +154,60 @@ describe('Weekend Active Burst 72h', () => {
       clearBurstBonusUsed(d)
       expect(isBurstBonusUsed(d)).toBe(false)
       expect(getBurstBonusKey(d)).toContain('bitbrawler_burst_bonus_')
+    })
+  })
+
+  describe('getEffectiveFightsLeft (single source of truth for burst bonus)', () => {
+    const burstDay = new Date('2026-09-12T10:00:00Z')
+    const normalDay = new Date('2026-09-14T10:00:00Z')
+
+    it('grants 1 fight at 0 energy when burst bonus is available', () => {
+      expect(isBurstActive(burstDay)).toBe(true)
+      expect(getEffectiveFightsLeft(0, burstDay)).toBe(1)
+    })
+
+    it('grants 0 once the burst bonus is consumed', () => {
+      markBurstBonusUsed(burstDay)
+      expect(getEffectiveFightsLeft(0, burstDay)).toBe(0)
+      clearBurstBonusUsed(burstDay)
+    })
+
+    it('grants 0 outside the burst window', () => {
+      expect(isBurstActive(normalDay)).toBe(false)
+      expect(getEffectiveFightsLeft(0, normalDay)).toBe(0)
+    })
+
+    it('tops positive energy by 1 while the bonus is unused (UI display rule)', () => {
+      expect(getEffectiveFightsLeft(2, burstDay)).toBe(3)
+      expect(getEffectiveFightsLeft(2, normalDay)).toBe(2)
+      markBurstBonusUsed(burstDay)
+      expect(getEffectiveFightsLeft(2, burstDay)).toBe(2)
+      clearBurstBonusUsed(burstDay)
+    })
+
+    it('treats undefined/null energy as 0', () => {
+      expect(getEffectiveFightsLeft(undefined, burstDay)).toBe(1)
+      expect(getEffectiveFightsLeft(undefined, normalDay)).toBe(0)
+      expect(getEffectiveFightsLeft(null, burstDay)).toBe(1)
+    })
+
+    it('defaults to the current date when omitted', () => {
+      const today = new Date()
+      const expected = getEffectiveFightsLeft(0, today)
+      expect(getEffectiveFightsLeft(0)).toBe(expected)
+    })
+  })
+
+  describe('burst bonus agreement between UI and matchmaking guard', () => {
+    it('useArenaCombat derives fightsLeft from the shared helper (no inline duplicate)', () => {
+      const src = readFileSync(resolve('src/hooks/useArenaCombat.ts'), 'utf8')
+      expect(src).toContain('getEffectiveFightsLeft(')
+      expect(src).not.toMatch(/baseFightsLeft \+ 1/)
+    })
+
+    it('matchmaking guard accepts the burst bonus at 0 energy via the shared helper', () => {
+      const src = readFileSync(resolve('src/context/GameContext.tsx'), 'utf8')
+      expect(src).toMatch(/getEffectiveFightsLeft\(activeCharacter\.fightsLeft\) <= 0/)
     })
   })
 })
