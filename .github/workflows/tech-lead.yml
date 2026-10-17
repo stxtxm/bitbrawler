@@ -67,7 +67,10 @@ jobs:
 
       - name: Run Tech Lead agent
         env:
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          # Les modeles opencode/*-free ne demandent AUCUN credential : `opencode auth list`
+          # ne liste aucun provider `opencode`, et un run anonyme aboutit. Exporter une cle
+          # EXPIREE fait au contraire repondre au provider "This API key has expired" et tue
+          # les 3 modeles de la chaine en 3 secondes chacun.
           GH_TOKEN: ${{ github.token }}
         run: |
           MODELS=(
