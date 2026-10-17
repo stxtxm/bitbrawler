@@ -1,6 +1,14 @@
 export default {
   baseUrl: process.env.QA_BASE_URL || 'https://bitbrawler.pages.dev',
-  fightsPerRun: 5,
+  // 1 combat par run : la partie n'accorde que COMBAT.MAX_DAILY_FIGHTS (5) par
+  // jour, et le premier run de la journée les consommait tous — les 2-3 runs
+  // suivants cliquaient dans le vide (`fights: []`, motif `no_start`). Un
+  // combat par run répartit l'allocation sur la journée : chaque run QA
+  // rapporte désormais de vraies données au tech-lead.
+  // Le mode reste PvP : le boss PvE est verrouillé sous le niveau 30, donc un
+  // combat unique tenté en PvE serait perdu en repli. L'observation idle PvE
+  // (idleObserveMs) continue de couvrir ce pan-là.
+  fightsPerRun: parseInt(process.env.QA_FIGHTS_PER_RUN || '1', 10),
   pveCount: 2,
   /** Fraction of fights that should be PvE (e.g. 0.33 = every 3rd fight). Set env QA_PVE_RATIO. */
   pveRatio: parseFloat(process.env.QA_PVE_RATIO || '0.33'),
