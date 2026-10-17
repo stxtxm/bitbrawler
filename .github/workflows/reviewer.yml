@@ -369,8 +369,8 @@ jobs:
           # → UnknownError en <5s. Repli épinglé sur nemotron-3.5-lightning-free.
           # Vérifier `opencode models | grep '^opencode/'` si les 3 échouent vite.
           MODELS=(
-            "opencode/muse-spark-1.3-contributor-free"
-            "opencode/muse-spark-1.3-contributor-free"
+            "opencode/glm-5.3-flash-free"
+            "opencode/glm-5.3-flash-free"
             "opencode/nemotron-3.5-lightning-free"
           )
 

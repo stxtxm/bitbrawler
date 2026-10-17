@@ -1054,9 +1054,10 @@ curl -s https://<site>/<bundle> | grep -o '[a-z]*\.supabase\.co' | sort -u
 - **Badge "Powered by Netlify"** = le HUD injecté par l'edge crée une `<iframe id="nl-hud-frame">` (pas de shadow DOM) → masquable en CSS. Le retirer de façon supportée demande un plan payant
 - **SW v6 servait de vieux bundles post-deploy** → v7 network-first JS/CSS. Après deploy majeur : hard refresh une fois
 - **Reviews CHANGES_REQUESTED obsolètes** bloquent les merges : dismisser via `gh api -X PUT repos/.../pulls/N/reviews/RID/dismissals -f message=...` puis relancer `reviewer.yml -f pr_number=N`
-- **Modèles agents** : `opencode/muse-spark-1.3-contributor-free` (= `muse`) partout (opencode.json, `.opencode/agents/*.md` frontmatter, tableaux de fallback des workflows avec repli `opencode/nemotron-3.5-lightning-free`)
+- **Modèles agents** : `opencode/glm-5.3-flash-free` (= `glm`) partout (opencode.json, `.opencode/agents/*.md` frontmatter, tableaux de fallback des workflows avec repli `opencode/nemotron-3.5-lightning-free`). **Remplace `muse-spark-1.3-contributor-free`, retiré du catalogue le 2026-10-17.**
 - ⚠ **Le provider opencode RETIRE ses slugs sans préavis.** Incident 2026-09-25→29 : `muse-spark-1.2-contributor-free` et `nemotron` ont disparu du catalogue → *tous* les agents ont échoué 4 jours de suite avec `UnknownError: Unexpected server error` (~2s, pas un timeout). **Symptôme distinctif : échec INSTANTANÉ (<5s) sur les DEUX modèles du tableau de fallback.**
   → Vérifier `opencode models | grep '^opencode/'` avant de conclure à un souci de clé API, de rate-limit ou de quota. Corriger par `sed` global du slug + re-dispatch (`gh workflow run <wf>.yml -f issue_number=N`).
+  → Incident 2026-10-17 : `muse-spark-1.3-contributor-free` a disparu du catalogue → le reviewer tombait en `UnknownError` alors que son fallback `nemotron-3.5-lightning-free` existait toujours. Le fallback ne rattrape pas un slug primaire **mort** : le workflow échoue sur le primaire avant d'atteindre le repli.
 
 ### Auto-compaction des mémoires (ARG_MAX guard, 2026-08-23)
 - `node scripts/compact-memories.mjs` (= `npm run mem:compact`) : tronque toute string >300c, garde 3 session_notes (500c), 12 known_issues one-liners, budget global par fichier (shared 6KB / agents 4.5KB)
