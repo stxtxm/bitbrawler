@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-17T21:23:26Z",
+  "last_session": "2026-10-17T21:23:57Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -55,6 +55,11 @@
       "lesson": "Rebalance SHOP_OFFERS +10% (#1182): les assertions de prix sont éparses dans shop-utils.test.ts - la garde toBeLessThanOrEqual ET 4 tests essence (500-24→473, 500-41→455, 600-41→555) ET les 4 tests getShopPrice. Toujours grep 476|459|559|toBe(24) etc. pour tout attraper avant RED.",
       "issue": "#1182",
       "date": "2026-10-17"
+    },
+    {
+      "date": "2026-10-17",
+      "issue": "#1181",
+      "lesson": "6e bump PVE.STAT_MULTIPLIER (2.1->2.3): pattern treadmill epollé — tests a mettre a jour dans DEUX fichiers (pveIdleBalance.test.ts + gameRules.test.ts qui pinne aussi la valeur). Verifie apres bump que le WR simule lvl8 reste dans le band [0.15,0.8] du test SAN. Aucun miroir serveur pour STAT_MULTIPLIER (uniquement calculateIdleEssence est recopie dans api/idle-processor). Si le 93% revient sous 1-2 semaines: croissance convexe des stats monstres (issue sans /oc) au lieu du 7e bump."
     }
   ]
 }
