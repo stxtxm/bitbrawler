@@ -138942,5 +138942,278 @@
       "purchased_offer": 0,
       "essence_after_purchase": 226
     }
+  },
+  {
+    "date": "2026-10-17T22:01:31.696Z",
+    "run": "2026-10-18",
+    "character": "QA-PERSI-8",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Bone Plate",
+      "rarity": "RARE",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 1,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 13,
+      "vit": 14,
+      "dex": 10,
+      "luk": 12,
+      "int": 36,
+      "foc": 16,
+      "fights": 0
+    },
+    "initial_level": 22,
+    "initial_xp": {
+      "current": 8565,
+      "max": 19686
+    },
+    "initial_max_hp": 488,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 22,
+      "xp": 9016,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 14,
+      "vit": 14,
+      "dex": 10,
+      "luk": 12,
+      "int": 36,
+      "foc": 16,
+      "last xp": 34,
+      "fights": 5
+    },
+    "final_max_hp": 488,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 2,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_locked_level": 30,
+      "boss_name": "VOID TITAN",
+      "boss_level": null,
+      "boss_hp": null,
+      "boss_max_hp": null
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 27434,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "chimera"
+      ],
+      "victories": 1,
+      "defeats": 0,
+      "xp_total": 32,
+      "xp_events": [
+        {
+          "time_ms": 27434,
+          "xp": 32,
+          "monster": "chimera",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        511,
+        1531,
+        27434
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 32,
+        "essence": 1.02,
+        "monster": "chimera"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.9,
+      "next_level_eta": "⬆ 22m 5s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.32x",
+      "interval": "12.0s",
+      "streak_bonus": "🔥 1-win streak (+25%)"
+    },
+    "initial_essence": 235.29,
+    "final_essence": 234.18,
+    "essence": {
+      "before_idle": 235.29,
+      "after_idle": 236.31,
+      "per_fight": [],
+      "forge_before": 236,
+      "forge_after_salvage": 286,
+      "forge_after_fusion": 286,
+      "forge_after_upgrade": 256,
+      "forge_after": 256,
+      "shop_before": 258,
+      "shop_after": 234,
+      "final": 234.18,
+      "flow": {
+        "idle_gained": 1.02,
+        "fights_change": null,
+        "salvage_gained": 50,
+        "fusion_cost": 0,
+        "upgrade_cost": 30,
+        "forge_net": 20,
+        "shop_cost": 24,
+        "net_change": -1.11
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 236,
+      "essence_after_salvage": 286,
+      "essence_after_fusion": 286,
+      "essence_after_upgrade": 256,
+      "items_before": 2,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 256,
+      "items_after": 1,
+      "salvage_essence_gained": 50,
+      "fusion_cost": null,
+      "upgrade_cost": 30,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "RARE",
+      "cost": 24,
+      "essence_before": 258,
+      "essence_after": 234,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Opal Pendant",
+            "rarity": "UNCOMMON",
+            "price": 24
+          },
+          {
+            "name": "Rift Crystal",
+            "rarity": "EPIC",
+            "price": 48
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 41
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 234
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "no_start"
+      },
+      {
+        "index": 2,
+        "reason": "no_start"
+      },
+      {
+        "index": 3,
+        "reason": "no_start"
+      },
+      {
+        "index": 4,
+        "reason": "no_start"
+      },
+      {
+        "index": 5,
+        "reason": "no_start"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1056,
+      "arena": 445
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Opal Pendant",
+          "rarity": "UNCOMMON",
+          "price": 24
+        },
+        {
+          "name": "Rift Crystal",
+          "rarity": "EPIC",
+          "price": 48
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 41
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 234
+    }
   }
 ]
