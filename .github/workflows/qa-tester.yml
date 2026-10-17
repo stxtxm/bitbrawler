@@ -46,6 +46,20 @@ jobs:
           QA_BASE_URL: https://bitbrawler.pages.dev
           QA_HEADLESS: 'true'
 
+      # Les captures que le bot prend sur chaque échec (no-start, pve-locked,
+      # timeout, skip…) vivaient et mouraient sur le runner. Résultat : on
+      # voyait « 0 combat » dans les stats sans jamais pouvoir dire POURQUOI —
+      # impossible de distinguer un CTA ignoré d'un écran de résultat manqué.
+      # On les garde 7 jours : chaque échec QA devient diagnosticable.
+      - name: Upload QA screenshots (failure evidence)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-screenshots
+          path: qa/screenshots/
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Commit QA stats
         if: always()
         run: |
