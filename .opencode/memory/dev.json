@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-17T21:35:25Z",
+  "last_session": "2026-10-17T21:38:53Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -69,6 +69,11 @@
     {
       "lesson": "Issue #1183 juice PvP: (1) le helper de test advanceUntilRoundPlayed NE DOIT PAS se baser sur '.combat-log .log-entry' car le round 0 est pre-rendu des le passage en phase combat (slice(0, currentRound+1) avec currentRound=0) -> il s'arretait avant le premier tick d'interval. Predicat correct: presence d'une classe action-(hit|crit|magic|miss|counter) sur .combat-action, posee par actionPulse au tick. (2) hitstop meSURé en fake timers avec pas de 2ms: une duree impaire (65) est arrondie a 66 -> utiliser 130ms (pair) pour crit/ko (4 frames) pour respecter les bornes des tests (speed2 66<=75). (3) build tsc inclut les tests: CombatSpeed est '1|2', typer le param atmosphere du helper '1|2|undefined' sinon TS2322.",
       "issue": "#1183",
+      "date": "2026-10-17"
+    },
+    {
+      "lesson": "Issue #1190: le guard workflow-integrity (artifact qa-screenshots) est desormais derive de qa/qa-bot.config.js (import ESM direct, pattern qa-bot-config.test.ts) au lieu du path litteral qa/screenshots/ - faillibilite verifiee par sed temporaire du config (echec attendu avant restauration)",
+      "issue": "#1190",
       "date": "2026-10-17"
     }
   ]
