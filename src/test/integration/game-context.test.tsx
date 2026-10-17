@@ -30,6 +30,7 @@ vi.mock('../../utils/lootboxUtils', () => ({
 import { findOpponent } from '../../utils/matchmakingUtils';
 import { canRollLootbox, rollLootbox } from '../../utils/lootboxUtils';
 import { ESSENCE_YIELD } from '../../data/forgeConstants';
+import { getBurstBonusKey } from '../../data/liveOps';
 
 function setupMockCharacter(char: any, options?: { error?: any }) {
   const row = characterToSupabaseRow(char);
@@ -1023,5 +1024,148 @@ describe('GameContext Integration', () => {
     expect(builder.update).toHaveBeenCalledWith(
       expect.objectContaining({ auto_mode: false, is_bot: false })
     );
+  });
+});
+
+describe('GameContext burst bonus matchmaking', () => {
+  const burstNow = new Date('2026-09-12T14:30:00Z'); // Saturday, burst window (Paris)
+  const baseChar: Character = {
+    name: 'Burst Hero',
+    gender: 'male',
+    seed: 'burst-seed',
+    level: 5,
+    hp: 150,
+    maxHp: 150,
+    strength: 14,
+    vitality: 12,
+    dexterity: 10,
+    luck: 8,
+    intelligence: 11,
+    focus: 10,
+    experience: 500,
+    wins: 10,
+    losses: 3,
+    fightsLeft: 0,
+    lastFightReset: burstNow.getTime(),
+    id: 'burst-character-id',
+    statPoints: 0,
+    inventory: [],
+    lastLootRoll: 0
+  };
+  const burstChar: Character = { ...baseChar, fightsLeft: 0, lastFightReset: burstNow.getTime() };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    Object.defineProperty(window, 'localStorage', {
+      value: {
+        getItem: vi.fn(),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+      },
+      writable: true
+    });
+
+    vi.setSystemTime(burstNow);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  function setupBurstMocks(char: Character) {
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(char));
+    const builder = setupMockCharacter(char);
+    builder.update.mockReturnValue(builder);
+    return builder;
+  }
+
+  it('starts matchmaking at 0 energy while the burst bonus is available', async () => {
+    const builder = setupBurstMocks(burstChar);
+
+    const opponent: Character = { ...burstChar, name: 'Opp', id: 'opp-burst-1' };
+    (findOpponent as any).mockResolvedValue({
+      opponent,
+      matchType: 'balanced',
+      candidates: [opponent]
+    });
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    let match: unknown = 'unset';
+    await act(async () => {
+      match = await result.current.startMatchmaking();
+    });
+
+    expect(match).not.toBeNull();
+    expect(result.current.activeCharacter?.fightsLeft).toBe(0);
+    expect(builder.update).toHaveBeenCalledWith(
+      expect.objectContaining({ fights_left: 0 })
+    );
+  });
+
+  it('does not over-grant a base fight when refunding a reserved bonus', async () => {
+    const builder = setupBurstMocks(burstChar);
+
+    (findOpponent as any).mockResolvedValue(null);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    let match: unknown = 'unset';
+    await act(async () => {
+      match = await result.current.startMatchmaking();
+    });
+
+    expect(match).toBeNull();
+    expect(result.current.activeCharacter?.fightsLeft).toBe(0);
+    expect(builder.update).toHaveBeenCalledWith(
+      expect.objectContaining({ fights_left: 0, pending_fight: null })
+    );
+  });
+
+  it('refuses matchmaking once the burst bonus is already consumed', async () => {
+    setupBurstMocks(burstChar);
+
+    const bonusKey = getBurstBonusKey(new Date());
+    (localStorage.getItem as any).mockImplementation((key: string) =>
+      key === bonusKey ? '1' : JSON.stringify(burstChar)
+    );
+
+    const opponent: Character = { ...burstChar, name: 'Opp', id: 'opp-burst-2' };
+    (findOpponent as any).mockResolvedValue({
+      opponent,
+      matchType: 'balanced',
+      candidates: [opponent]
+    });
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    let match: unknown = 'unset';
+    await act(async () => {
+      match = await result.current.startMatchmaking();
+    });
+
+    expect(match).toBeNull();
+    expect(findOpponent).not.toHaveBeenCalled();
   });
 });

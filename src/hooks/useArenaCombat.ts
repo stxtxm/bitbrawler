@@ -4,7 +4,7 @@ import { ABYSSAL_BOSS_ID, BOSS_ID, BossId } from '../data/bossAssets';
 import { Character } from '../types/Character';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
 import { getTacticalHint } from '../utils/tacticalLens';
-import { isBurstActive, getMaxDailyFights, isBurstBonusUsed, markBurstBonusUsed } from '../data/liveOps';
+import { isBurstActive, getMaxDailyFights, isBurstBonusUsed, markBurstBonusUsed, getEffectiveFightsLeft } from '../data/liveOps';
 import { BURST_MUTATORS, getStoredBurstMutator, setStoredBurstMutator } from '../utils/burstMutator';
 import type { BurstMutatorId } from '../utils/burstMutator';
 import {
@@ -82,7 +82,7 @@ export const useArenaCombat = ({
   const burstActive = isBurstActive();
   const maxDailyFights = getMaxDailyFights();
   const baseFightsLeft = character?.fightsLeft ?? 0;
-  const effectiveFightsLeft = burstActive && !isBurstBonusUsed() ? baseFightsLeft + 1 : baseFightsLeft;
+  const effectiveFightsLeft = getEffectiveFightsLeft(baseFightsLeft);
   const fightsLeft = effectiveFightsLeft;
   const [burstMutator, setBurstMutator] = useState<BurstMutatorId | null>(() => getStoredBurstMutator());
   const [draftChoices, setDraftChoices] = useState<BurstMutatorId[] | null>(null);

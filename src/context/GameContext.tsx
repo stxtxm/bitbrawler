@@ -20,6 +20,7 @@ import {
   setBossProgressForId,
 } from '../utils/bossUtils';
 import { ABYSSAL_BOSS_ID, BOSS_ID, BossId } from '../data/bossAssets';
+import { getEffectiveFightsLeft } from '../data/liveOps';
 import { convertFromSupabase, convertToSupabase } from '../utils/supabaseUtils';
 import {
   INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP,
@@ -980,7 +981,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   const startMatchmakingForPlayer = useCallback(async (): Promise<MatchmakingResult | null> => {
     if (!activeCharacter?.id) return null;
-    if ((activeCharacter.fightsLeft || 0) <= 0) return null;
+    if (getEffectiveFightsLeft(activeCharacter.fightsLeft) <= 0) return null;
+    const bonusFightReserved = (activeCharacter.fightsLeft || 0) === 0
+      && getEffectiveFightsLeft(activeCharacter.fightsLeft) > 0;
     if (activeCharacter.pendingFight) {
       throw new Error('Match already in progress.');
     }
@@ -1019,7 +1022,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     if (!match) {
       const refundedChar = normalizeCharacter({
         ...reservedChar,
-        fightsLeft: (reservedChar.fightsLeft || 0) + 1,
+        fightsLeft: bonusFightReserved
+          ? reservedChar.fightsLeft
+          : (reservedChar.fightsLeft || 0) + 1,
         pendingFight: undefined
       });
 
