@@ -92,9 +92,9 @@ jobs:
           MAX_WAIT=12
           echo "Dispatch manuel — attente CI sur PR #$PR_NUMBER (max 120s)..."
           for i in $(seq 1 $MAX_WAIT); do
-            # Count checks that are not completed or not successful/neutral (hors Vercel et hors review lui-même)
+            # Count checks that are not completed or not successful/neutral (hors le review lui-même)
             CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
-              [.statusCheckRollup[]? | select((.app?.slug != "vercel") and (.name? != "Vercel") and (.context? != "Vercel")) | select(((.name // "") != "review") and ((.name // "") != "PR Reviewer") and (((.name // "") | test("review";"i") | not))) | select(
+              [.statusCheckRollup[]? | select(((.name // "") != "review") and ((.name // "") != "PR Reviewer") and (((.name // "") | test("review";"i") | not))) | select(
                 (.status == null and .conclusion == null) | not
               ) | select(
                 .status? != "COMPLETED" or (.conclusion? != "SUCCESS" and .conclusion? != "NEUTRAL")
@@ -108,7 +108,7 @@ jobs:
             sleep 10
           done
 
-          echo "⚠ Timeout attente CI — on continue le review (Vercel ou checks lents supposés)."
+          echo "⚠ Timeout attente CI — on continue le review (checks lents supposés)."
           # Proceed with review even if some checks are still pending
 
       - name: Check PR author for self-review bypass
@@ -196,7 +196,7 @@ jobs:
           # makes GitHub ignore the pull_request CI trigger → the PR carries no
           # CI checks at all. In that case we run the full validation gate on
           # the PR branch ourselves so the reviewer never merges untested code.
-          CHECK_COUNT=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '[.statusCheckRollup[]? | select((((.app?.name // .name // .context // .app?.slug // "") | ascii_downcase | contains("vercel")) | not) and ((.name // "") | test("review";"i") | not))] | length' 2>/dev/null || echo "0")
+          CHECK_COUNT=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '[.statusCheckRollup[]? | select(((.name // "") | test("review";"i") | not))] | length' 2>/dev/null || echo "0")
           if [ "$CHECK_COUNT" -eq 0 ]; then
             echo "🔍 No CI checks attached to PR #$PR_NUMBER (skip-ci head?) — running full validation locally..."
             if ! (npm run lint && npx tsc --noEmit && npm test && npm run build); then
@@ -304,7 +304,7 @@ jobs:
           # status from the dispatch moment. The agent LLM must not be the only
           # guard here; this step hard-blocks review if CI is red.
           CHECKS=$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '
-            [.statusCheckRollup[]? | select((.app?.slug != "vercel") and (.name? != "Vercel") and (.context? != "Vercel")) | select(((.name // "") != "review") and ((.name // "") != "PR Reviewer") and (((.name // "") | test("review";"i") | not))) | select(
+            [.statusCheckRollup[]? | select(((.name // "") != "review") and ((.name // "") != "PR Reviewer") and (((.name // "") | test("review";"i") | not))) | select(
               (.status == null and .conclusion == null) | not
             ) | select(
               .status? != "COMPLETED" or (.conclusion? != "SUCCESS" and .conclusion? != "NEUTRAL")
@@ -409,7 +409,7 @@ jobs:
             8. **Performance** : pas de boucles inutiles, pas de requêtes N+1 Supabase
 
              ## Règles STRICTES (en français)
-            - ⚠️ **AVANT de merger** : re-vérifie la CI à l'instant T avec \`gh pr view "$PR_NUMBER" --json statusCheckRollup\`. Exclue les checks Vercel (app.slug == "vercel" OU name == "Vercel"). Si un seul check non-Vercel n'est pas COMPLETED avec conclusion SUCCESS/NEUTRAL → \`gh pr review "$PR_NUMBER" --request-changes --body \"...en français...\"\` et ne merge PAS. Cela va automatiquement re-déclencher le dev agent avec mémoire pour corriger.
+            - ⚠️ **AVANT de merger** : re-vérifie la CI à l'instant T avec \`gh pr view "$PR_NUMBER" --json statusCheckRollup\`. Ignore le check du review lui-meme. Si un seul check n'est pas COMPLETED avec conclusion SUCCESS/NEUTRAL → \`gh pr review "$PR_NUMBER" --request-changes --body \"...en français...\"\` et ne merge PAS. Cela va automatiquement re-déclencher le dev agent avec mémoire pour corriger.
             - Si SKIP_APPROVAL=true (PR auto-générée par bot) → passe directement au merge sans approval: \`gh pr merge "$PR_NUMBER" --squash --delete-branch\` (après re-vérification CI verte)
             - Sinon, si CI est verte ✅ et tout est bon → \`gh pr review --approve "$PR_NUMBER" --body \"✅ Review en français...\"\` puis \`gh pr merge "$PR_NUMBER" --squash --delete-branch\`
             - Si CI est rouge → \`gh pr review "$PR_NUMBER" --request-changes --body \"feedback en français...\"\` même si l'erreur est préexistante (cela déclenche le dev agent qui corrigera avec mémoire)
