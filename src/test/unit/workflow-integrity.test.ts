@@ -96,3 +96,36 @@ describe('Workflow files declare unique job names', () => {
     expect(duplicates).toEqual([])
   })
 })
+
+describe('Agent workflows send no OpenCode credential', () => {
+  // Incident 2026-10-17: the repo secret OPENCODE_API_KEY had expired (last
+  // rotated 2026-05-24). Every agent step exported it, so the provider answered
+  // "This API key has expired" and the whole model chain died in ~3s per model.
+  // The dev-agent implemented nothing and no PR could be reviewed — the runs
+  // looked like instant model failures, not like an expired secret.
+  //
+  // The `opencode/*-free` models need no credential at all. Verified locally:
+  // `opencode auth list` lists no `opencode` provider, and an unauthenticated
+  // run against the public endpoint succeeds. Exporting an expired key is
+  // therefore strictly worse than exporting nothing.
+  //
+  // If a paid model is ever wired in, it needs a key scoped to that step only —
+  // pair it with a rotation reminder and update this test deliberately.
+  const workflowDir = join(process.cwd(), '.github', 'workflows')
+  const workflowFiles = readdirSync(workflowDir).filter(f => f.endsWith('.yml'))
+
+  it.each(workflowFiles)('%s does not export OPENCODE_API_KEY', file => {
+    expect(readWorkflow(file)).not.toContain('OPENCODE_API_KEY')
+  })
+
+  it('keeps the agent model chain on free, credential-less slugs', () => {
+    const opencode = readWorkflow('opencode.yml')
+    for (const model of [
+      'opencode/glm-5.3-flash-free',
+      'opencode/deepseek-v4.1-flash-free',
+      'opencode/nemotron-3.5-lightning-free',
+    ]) {
+      expect(opencode).toContain(model)
+    }
+  })
+})

@@ -367,7 +367,10 @@ jobs:
       - name: Run Reviewer agent
         if: env.DEPS_BLOCKED != 'true' && env.CI_GATE_BLOCKED != 'true'
         env:
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          # Les modeles opencode/*-free ne demandent AUCUN credential : `opencode auth list`
+          # ne liste aucun provider `opencode`, et un run anonyme aboutit. Exporter une cle
+          # EXPIREE fait au contraire repondre au provider "This API key has expired" et tue
+          # les 3 modeles de la chaine en 3 secondes chacun.
           GH_TOKEN: ${{ github.token }}
           SKIP_APPROVAL: ${{ env.SKIP_APPROVAL }}
           DEPS_LIST: ${{ env.DEPS_LIST }}

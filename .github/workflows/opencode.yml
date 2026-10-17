@@ -272,7 +272,10 @@ jobs:
       - name: Run Supervisor agent
         if: github.event.inputs.mode == 'supervisor'
         env:
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          # Les modeles opencode/*-free ne demandent AUCUN credential : `opencode auth list`
+          # ne liste aucun provider `opencode`, et un run anonyme aboutit. Exporter une cle
+          # EXPIREE fait au contraire repondre au provider "This API key has expired" et tue
+          # les 3 modeles de la chaine en 3 secondes chacun.
           GH_TOKEN: ${{ github.token }}
         run: |
           echo "🔍 Supervisor mode — validating campaign for issue #$ISSUE_NUMBER..."
@@ -333,7 +336,10 @@ jobs:
       - name: Run Orchestrator agent (for proposals / complex issues)
         if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr == '' && env.REAL_TRIGGER == 'true'
         env:
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          # Les modeles opencode/*-free ne demandent AUCUN credential : `opencode auth list`
+          # ne liste aucun provider `opencode`, et un run anonyme aboutit. Exporter une cle
+          # EXPIREE fait au contraire repondre au provider "This API key has expired" et tue
+          # les 3 modeles de la chaine en 3 secondes chacun.
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ env.ISSUE_NUMBER }}
         run: |
@@ -460,7 +466,10 @@ jobs:
       - name: Implement (new PR)
         if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr == '' && env.ORCHESTRATOR_DID_RUN != 'true' && env.REAL_TRIGGER == 'true'
         env:
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          # Les modeles opencode/*-free ne demandent AUCUN credential : `opencode auth list`
+          # ne liste aucun provider `opencode`, et un run anonyme aboutit. Exporter une cle
+          # EXPIREE fait au contraire repondre au provider "This API key has expired" et tue
+          # les 3 modeles de la chaine en 3 secondes chacun.
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ env.ISSUE_NUMBER }}
         run: |
@@ -624,7 +633,10 @@ jobs:
       - name: Implement (fix existing PR)
         if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr != '' && env.SKIP_DEV_AGENT != 'true' && env.REAL_TRIGGER == 'true'
         env:
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          # Les modeles opencode/*-free ne demandent AUCUN credential : `opencode auth list`
+          # ne liste aucun provider `opencode`, et un run anonyme aboutit. Exporter une cle
+          # EXPIREE fait au contraire repondre au provider "This API key has expired" et tue
+          # les 3 modeles de la chaine en 3 secondes chacun.
           GH_TOKEN: ${{ github.token }}
         run: |
           PR_NUMBER="${{ steps.check_pr.outputs.existing_pr }}"
@@ -712,7 +724,10 @@ jobs:
       - name: Validate and retry (lint → test → build — recall agent on failure)
         if: success() && github.event.inputs.mode != 'supervisor' && env.REAL_TRIGGER == 'true'
         env:
-          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          # Les modeles opencode/*-free ne demandent AUCUN credential : `opencode auth list`
+          # ne liste aucun provider `opencode`, et un run anonyme aboutit. Exporter une cle
+          # EXPIREE fait au contraire repondre au provider "This API key has expired" et tue
+          # les 3 modeles de la chaine en 3 secondes chacun.
           GH_TOKEN: ${{ github.token }}
         run: |
           MAX_RETRIES=3
