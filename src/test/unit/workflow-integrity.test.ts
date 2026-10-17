@@ -257,6 +257,18 @@ describe('Agent workflows send no OpenCode credential', () => {
   })
 })
 
+describe('QA failures stay diagnosable', () => {
+  // Un run QA à 0 combat ne laissait aucune trace exploitable : le bot prend une
+  // capture à chaque échec (no-start, pve-locked, timeout, skip) mais elle
+  // restait sur le runner, donc on ne pouvait pas dire POURQUOI.
+  it('qa-tester.yml uploads the bot screenshots as an artifact', () => {
+    const qa = readWorkflow('qa-tester.yml')
+    expect(qa).toContain('actions/upload-artifact@v4')
+    expect(qa).toContain('path: qa/screenshots/')
+    expect(qa).toContain('if-no-files-found: ignore')
+  })
+})
+
 describe('Bookkeeping commits never consume a Pages build', () => {
   // La branche memory est un registre, jamais mergée dans master : chaque push
   // y déclenchait pourtant une preview Cloudflare pour rien (les commits de
