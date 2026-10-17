@@ -296,7 +296,7 @@ jobs:
           PR_NUMBER="${{ env.PR_NUMBER }}"
 
           # Checks published without any status/conclusion are deployment
-          # previews (Netlify posts them that way). They are not check runs, so
+          # previews. They are not check runs, so
           # `status != "COMPLETED"` would count them as failing and block every
           # merge forever. Skip them here; real pending checks report
           # PENDING/QUEUED and are still caught.

@@ -140,23 +140,27 @@ describe('qa-bot-helpers combat speed', () => {
       expect(() => throwIfSiteDownResponse(null, 'https://x/login')).not.toThrow()
       expect(() => throwIfSiteDownResponse(undefined, 'https://x/login')).not.toThrow()
     })
-    it('looksLikeErrorPage detects vercel/billing markers', () => {
-      expect(looksLikeErrorPage('Vercel - 402 Payment Required')).toBe(true)
+    it('looksLikeErrorPage detects billing and hosting-error markers', () => {
+      expect(looksLikeErrorPage('402 Payment Required')).toBe(true)
       expect(looksLikeErrorPage('Deployment Protection active')).toBe(true)
+      // Cloudflare Pages : la Function idle peut mourir avec un "error code:
+      // 1101" que rien d'autre dans la page ne signale.
+      expect(looksLikeErrorPage('error code: 1101')).toBe(true)
+      expect(looksLikeErrorPage('DEPLOYMENT_DISABLED')).toBe(true)
       expect(looksLikeErrorPage('ENTER ARENA LOGIN')).toBe(false)
       expect(looksLikeErrorPage('')).toBe(false)
     })
     it('hasGameContent detects game markers', () => {
       expect(hasGameContent('BATTLE ENERGY AUTO MODE')).toBe(true)
       expect(hasGameContent('ENTER ARENA')).toBe(true)
-      expect(hasGameContent('Vercel 402 Payment Required')).toBe(false)
+      expect(hasGameContent('402 Payment Required')).toBe(false)
     })
     it('throwIfErrorPageBody throws only on error page without game content', () => {
       expect(() =>
-        throwIfErrorPageBody('Vercel 402 Payment Required', 'https://x/login', false)
+        throwIfErrorPageBody('402 Payment Required', 'https://x/login', false)
       ).toThrow(/SITE_DOWN/)
       expect(() =>
-        throwIfErrorPageBody('Vercel 402 Payment Required ENTER ARENA', 'https://x/login', true)
+        throwIfErrorPageBody('402 Payment Required ENTER ARENA', 'https://x/login', true)
       ).not.toThrow()
       expect(() => throwIfErrorPageBody('BATTLE ENERGY', 'https://x/login', true)).not.toThrow()
     })
