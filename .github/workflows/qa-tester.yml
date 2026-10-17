@@ -40,9 +40,15 @@ jobs:
           git config user.name "opencode-agent"
           git config user.email "agent@opencode.ai"
           git add qa/stats.json qa/state.json
-          # [skip ci] is mandatory here: this job runs hourly, and without it
-          # every stats commit triggers a full Netlify build, which burns the
-          # 300 build-minutes/month Hobby allowance in about two days.
-          git diff --cached --quiet || git commit -m "chore: update QA stats [skip ci]"
+          # Skip flags are mandatory here: this job runs hourly and pushes to
+          # master, so every stats commit would otherwise trigger a full
+          # production build.
+          #   [skip ci]      -> GitHub Actions / Vercel convention
+          #   [CF-Pages-Skip] -> explicit Cloudflare Pages marker
+          # Cloudflare Pages skips a deployment when either appears anywhere in
+          # the commit message (case-insensitive, documented in the GitHub
+          # integration docs). Both are listed so the flag survives a change of
+          # hosting without having to be rediscovered the hard way.
+          git diff --cached --quiet || git commit -m "chore: update QA stats [skip ci] [CF-Pages-Skip]"
           git pull --rebase
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}

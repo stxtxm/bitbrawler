@@ -64,11 +64,21 @@ export async function runIdleProcessor(
   // Cloudflare passes its bindings on the request context rather than through
   // process.env, so mirror them for the duration of the call. On Netlify the
   // arguments are undefined and process.env already carries them.
+  // Without nodejs_compat the Workers runtime has no `process` at all. Fail
+  // with a readable message instead of Cloudflare's opaque "error code: 1101".
+  const proc: Record<string, string | undefined> | null =
+    typeof process !== 'undefined' ? (process.env as Record<string, string | undefined>) : null
+  if (!proc) {
+    return new Response(
+      JSON.stringify({ error: 'runtime missing process.env', fix: 'add compatibility_flags = ["nodejs_compat"] to wrangler.toml' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } },
+    )
+  }
   const saved: Record<string, string | undefined> = {}
   for (const key of ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'] as const) {
     if (env[key] === undefined) continue
-    saved[key] = process.env[key]
-    process.env[key] = env[key]
+    saved[key] = proc[key]
+    proc[key] = env[key]
   }
 
   try {
@@ -86,8 +96,8 @@ export async function runIdleProcessor(
     )
   } finally {
     for (const key of Object.keys(saved) as Array<keyof typeof saved>) {
-      if (saved[key] === undefined) delete process.env[key]
-      else process.env[key] = saved[key]
+      if (saved[key] === undefined) delete proc[key]
+      else proc[key] = saved[key]
     }
   }
 
