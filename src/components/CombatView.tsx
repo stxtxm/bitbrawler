@@ -18,10 +18,11 @@ import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode';
 import { SceneBackground } from './SceneBackground';
 
 const HIT_STOP_DURATION: Record<string, number> = {
-  hit: 100,
-  crit: 150,
-  ko: 150,
+  crit: 130,
+  ko: 130,
 };
+
+const HIT_FLASH_DURATION = 90;
 
 const SCREEN_FLASH_DURATION: Record<string, number> = {
   crit: 80,
@@ -91,9 +92,11 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const [showAutoResolve, setShowAutoResolve] = useState(false);
     const [hitStop, setHitStop] = useState(false);
     const [screenFlash, setScreenFlash] = useState<'none' | 'crit' | 'ko'>('none');
+    const [hitFlashSide, setHitFlashSide] = useState<'left' | 'right' | null>(null);
     const [isKO, setIsKO] = useState(false);
     const hitStopTimerRef = useRef<number | null>(null);
     const flashTimerRef = useRef<number | null>(null);
+    const hitFlashTimerRef = useRef<number | null>(null);
     const [visibilityKey, setVisibilityKey] = useState(0);
     const bgStartRef = useRef<number | null>(null);
     const roundIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -410,7 +413,17 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                             pulseTimeoutRef.current = null;
                         }, duration);
 
-                        // --- Hit Stop & Screen Shake / Flash ---
+                        // --- Hit Flash (target sprite) ---
+                        if (action.type !== 'miss') {
+                            setHitFlashSide(action.actor === 'player' ? 'right' : 'left');
+                            if (hitFlashTimerRef.current !== null) window.clearTimeout(hitFlashTimerRef.current);
+                            hitFlashTimerRef.current = window.setTimeout(() => {
+                                setHitFlashSide(null);
+                                hitFlashTimerRef.current = null;
+                            }, scaleDuration(HIT_FLASH_DURATION));
+                        }
+
+                        // --- Hit Stop & Screen Flash (crit & fatal blow only) ---
                         if (!lowPerf && action.type !== 'miss') {
                             const lastRound = roundIndex >= combatResult.details.length - 1;
                             const koBlow = lastRound && (
@@ -445,13 +458,6 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                     setScreenFlash('none');
                                     flashTimerRef.current = null;
                                 }, scaleDuration(SCREEN_FLASH_DURATION.crit));
-                            } else if (action.type === 'hit') {
-                                setHitStop(true);
-                                if (hitStopTimerRef.current !== null) window.clearTimeout(hitStopTimerRef.current);
-                                hitStopTimerRef.current = window.setTimeout(() => {
-                                    setHitStop(false);
-                                    hitStopTimerRef.current = null;
-                                }, scaleDuration(HIT_STOP_DURATION.hit));
                             }
                         }
 
@@ -569,6 +575,9 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
             if (flashTimerRef.current !== null) {
                 window.clearTimeout(flashTimerRef.current);
             }
+            if (hitFlashTimerRef.current !== null) {
+                window.clearTimeout(hitFlashTimerRef.current);
+            }
         };
     }, []);
 
@@ -578,6 +587,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
             setActionPulse(null);
             setHitStop(false);
             setScreenFlash('none');
+            setHitFlashSide(null);
             setIsKO(false);
             if (hitStopTimerRef.current !== null) {
                 window.clearTimeout(hitStopTimerRef.current);
@@ -586,6 +596,10 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
             if (flashTimerRef.current !== null) {
                 window.clearTimeout(flashTimerRef.current);
                 flashTimerRef.current = null;
+            }
+            if (hitFlashTimerRef.current !== null) {
+                window.clearTimeout(hitFlashTimerRef.current);
+                hitFlashTimerRef.current = null;
             }
         }
     }, [phase]);
@@ -807,7 +821,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                         {screenFlash !== 'none' && <div className={`screen-flash flash-${screenFlash}`} />}
                         <div className="combat-fighters">
                             {bossDef && <SceneBackground def={bossDef.background} />}
-                            <div key={`player-${currentRound}`} className={`fighter-side left${fighterEntrance ? ' enter-left' : ''}${actionPulse?.actor === 'player' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'opponent' ? ` react-${reactionType}` : ''}${showPlayerDefeat ? ' defeated' : ''}`}>
+                            <div key={`player-${currentRound}`} className={`fighter-side left${fighterEntrance ? ' enter-left' : ''}${actionPulse?.actor === 'player' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'opponent' ? ` react-${reactionType}` : ''}${hitFlashSide === 'left' ? ' hit-flash' : ''}${showPlayerDefeat ? ' defeated' : ''}`}>
                                 <div className="fighter-character-wrap">
                                     <SpriteCanvas
                                         seed={player.seed}
@@ -839,7 +853,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                     <div className="health-values">{playerHp} / {playerMaxHp}</div>
                                 </div>
                             </div>
-                            <div key={`opponent-${currentRound}`} className={`fighter-side right${fighterEntrance ? ' enter-right' : ''}${actionPulse?.actor === 'opponent' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'player' ? ` react-${reactionType}` : ''}${showOpponentDefeat ? ' defeated' : ''}`}>
+                            <div key={`opponent-${currentRound}`} className={`fighter-side right${fighterEntrance ? ' enter-right' : ''}${actionPulse?.actor === 'opponent' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'player' ? ` react-${reactionType}` : ''}${hitFlashSide === 'right' ? ' hit-flash' : ''}${showOpponentDefeat ? ' defeated' : ''}`}>
                                 <div className="fighter-character-wrap">
                                     {(matchType === 'pve' || matchType === 'boss') && monsterId ? (
                                         <PixelMonster monsterId={monsterId} scale={5} aura={matchType === 'boss' ? bossDef?.element ?? null : null} />

@@ -213,4 +213,85 @@ describe('CombatView combat speed', () => {
     vi.useRealTimers();
     vi.restoreAllMocks();
   });
+
+  describe('hit-stop duration scaling', () => {
+    const advanceUntil = (predicate: () => boolean, maxAdvance = 5000, step = 10) => {
+      let elapsed = 0;
+      while (elapsed < maxAdvance && !predicate()) {
+        act(() => { vi.advanceTimersByTime(step); });
+        elapsed += step;
+      }
+      return elapsed;
+    };
+
+    const measureHitStopDuration = (scene: HTMLElement, maxAdvance = 400) => {
+      const combatAction = () => scene.querySelector('.combat-action');
+      const present = () => combatAction()?.classList.contains('hit-stop') ?? false;
+      expect(present()).toBe(true);
+      let elapsed = 0;
+      while (elapsed < maxAdvance && present()) {
+        act(() => { vi.advanceTimersByTime(2); });
+        elapsed += 2;
+      }
+      return elapsed;
+    };
+
+    const startCritFight = (combatSpeed: 1 | 2 | undefined) => {
+      vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+        winner: 'attacker',
+        rounds: 2,
+        details: [
+          'Hero crits Villain for 25 DMG',
+          'Hero wins!',
+        ],
+        timeline: [
+          { attackerHp: 100, defenderHp: 75 },
+          { attackerHp: 100, defenderHp: 75 },
+        ],
+      });
+
+      const { container } = render(
+        <CombatView
+          player={player}
+          opponent={opponent}
+          matchType="balanced"
+          combatSpeed={combatSpeed}
+          onComplete={vi.fn()}
+          onClose={vi.fn()}
+        />
+      );
+
+      advanceUntil(
+        () => container.querySelector('.combat-action')?.classList.contains('hit-stop') === true,
+      );
+
+      return container;
+    };
+
+    it('divides hit-stop duration by 2 when combatSpeed is 2', () => {
+      vi.useFakeTimers();
+
+      const container = startCritFight(2);
+      const duration = measureHitStopDuration(container);
+
+      expect(duration).toBeGreaterThan(55);
+      expect(duration).toBeLessThanOrEqual(75);
+
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    });
+
+    it('keeps the full hit-stop duration when combatSpeed is 1', () => {
+      vi.useFakeTimers();
+
+      const container = startCritFight(1);
+      const duration = measureHitStopDuration(container);
+
+      expect(duration).toBeGreaterThan(120);
+      expect(duration).toBeLessThanOrEqual(145);
+
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    });
+  });
 });

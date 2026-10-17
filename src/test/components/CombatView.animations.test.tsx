@@ -47,6 +47,23 @@ describe('CombatView Animation Overhaul', () => {
         seed: 'def'
     };
 
+    const advanceUntil = (predicate: () => boolean, maxAdvance = 2000, step = 10) => {
+        let elapsed = 0;
+        while (elapsed < maxAdvance && !predicate()) {
+            act(() => { vi.advanceTimersByTime(step); });
+            elapsed += step;
+        }
+        return elapsed;
+    };
+
+    const advanceUntilRoundPlayed = (container: HTMLElement, maxAdvance: number) => {
+        const played = () => {
+            const action = container.querySelector('.combat-action');
+            return action !== null && /\baction-(hit|crit|magic|miss|counter)\b/.test(action.className);
+        };
+        advanceUntil(played, maxAdvance);
+    };
+
     // ─── Stage 1: Defeat animation ─────────────────────────
 
     it('should apply defeat class to the losing fighter in result phase', () => {
@@ -460,14 +477,14 @@ describe('CombatView Animation Overhaul', () => {
 
     // ─── Stage 8: Hit Stop & Screen Flash ────────────────
 
-    it('should apply hit-stop class on hit action', () => {
+    it('should apply hit-stop class on the fatal blow (KO) even for a regular hit', () => {
         vi.useFakeTimers();
 
         vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
             winner: 'attacker',
             rounds: 1,
-            details: ['Hero hits Villain for 12 DMG'],
-            timeline: [{ attackerHp: 100, defenderHp: 88 }]
+            details: ['Hero hits Villain for 100 DMG'],
+            timeline: [{ attackerHp: 100, defenderHp: 0 }]
         });
 
         vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
@@ -496,6 +513,245 @@ describe('CombatView Animation Overhaul', () => {
         vi.useRealTimers();
         vi.restoreAllMocks();
     });
+
+    it('should NOT apply hit-stop class on a regular hit (non-final round)', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 2,
+            details: ['Hero hits Villain for 12 DMG', 'Hero wins!'],
+            timeline: [
+                { attackerHp: 100, defenderHp: 88 },
+                { attackerHp: 100, defenderHp: 88 },
+            ]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit'
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        advanceUntilRoundPlayed(container, 2000);
+
+        const combatAction = container.querySelector('.combat-action');
+        expect(combatAction).not.toBeNull();
+        expect(combatAction?.classList.contains('hit-stop')).toBe(false);
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should apply hit-flash class to the target side on a regular hit', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 2,
+            details: ['Hero hits Villain for 12 DMG', 'Hero wins!'],
+            timeline: [
+                { attackerHp: 100, defenderHp: 88 },
+                { attackerHp: 100, defenderHp: 88 },
+            ]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit'
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        advanceUntilRoundPlayed(container, 2000);
+
+        const rightFighter = container.querySelector('.fighter-side.right');
+        const leftFighter = container.querySelector('.fighter-side.left');
+        expect(rightFighter?.classList.contains('hit-flash')).toBe(true);
+        expect(leftFighter?.classList.contains('hit-flash')).toBe(false);
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should apply hit-flash class to the player side when opponent hits', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 2,
+            details: ['Villain hits Hero for 12 DMG', 'Hero wins!'],
+            timeline: [
+                { attackerHp: 88, defenderHp: 100 },
+                { attackerHp: 88, defenderHp: 100 },
+            ]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'opponent',
+            type: 'hit'
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        advanceUntilRoundPlayed(container, 2000);
+
+        const rightFighter = container.querySelector('.fighter-side.right');
+        const leftFighter = container.querySelector('.fighter-side.left');
+        expect(leftFighter?.classList.contains('hit-flash')).toBe(true);
+        expect(rightFighter?.classList.contains('hit-flash')).toBe(false);
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should clear hit-flash class after ~90ms', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 2,
+            details: ['Hero hits Villain for 12 DMG', 'Hero wins!'],
+            timeline: [
+                { attackerHp: 100, defenderHp: 88 },
+                { attackerHp: 100, defenderHp: 88 },
+            ]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit'
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        advanceUntilRoundPlayed(container, 2000);
+
+        expect(container.querySelector('.fighter-side.right')?.classList.contains('hit-flash')).toBe(true);
+
+        const elapsed = advanceUntil(
+            () => !container.querySelector('.fighter-side.right')?.classList.contains('hit-flash'),
+        );
+
+        expect(elapsed).toBeLessThanOrEqual(115);
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should apply hit-flash and hit-stop on crit action to the target side', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 2,
+            details: ['Hero crits Villain for 25 DMG', 'Hero wins!'],
+            timeline: [
+                { attackerHp: 100, defenderHp: 75 },
+                { attackerHp: 100, defenderHp: 75 },
+            ]
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        advanceUntilRoundPlayed(container, 2000);
+
+        const rightFighter = container.querySelector('.fighter-side.right');
+        const combatAction = container.querySelector('.combat-action');
+        expect(rightFighter?.classList.contains('hit-flash')).toBe(true);
+        expect(combatAction?.classList.contains('hit-stop')).toBe(true);
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('should apply hit-flash class on the KO blow too', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 1,
+            details: ['Hero hits Villain for 100 DMG'],
+            timeline: [{ attackerHp: 100, defenderHp: 0 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit'
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(900); });
+        advanceUntilRoundPlayed(container, 2000);
+
+        const rightFighter = container.querySelector('.fighter-side.right');
+        expect(rightFighter?.classList.contains('hit-flash')).toBe(true);
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
 
     it('should apply hit-stop class on crit action', () => {
         vi.useFakeTimers();
