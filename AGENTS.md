@@ -848,8 +848,10 @@ Or visit: https://github.com/stxtxm/bitbrawler/actions
 **Check**:
 1. Is the PR head commit a `[skip ci]` marker (`chore: update dev memory [skip ci]`)?
    - GitHub ignores `pull_request` triggers when the head commit has a skip marker → no CI → no reviewer dispatch.
-   - Fix: opencode.yml now re-dispatches CI explicitly on the PR branch. If a PR is still stuck, re-dispatch manually: `gh workflow run ci.yml -f pr_number=<N> --repo stxtxm/bitbrawler` (CI pass → reviewer → auto-merge).
+   - Fix: opencode.yml now re-dispatches CI explicitly on the PR branch. If a PR is still stuck, re-dispatch manually : `gh workflow run ci.yml --ref <branche-de-la-PR> -f pr_number=<N> --repo stxtxm/bitbrawler` (CI pass → reviewer → auto-merge).
+   - ⚠️ Toujours passer `--ref <branche-de-la-PR>`. Sans lui le run part de master : le job compile master, affiche « success », et c'est ce verdict qui est présenté comme le check de la PR (incident #1179, run 39067317103). Depuis ce correctif `ci.yml` force `refs/pull/<N>/head` quand `pr_number` est fourni, donc le code validé est le bon — mais les checks restent rattachés au SHA du run, pas à la PR : sans `--ref`, le reviewer ne verra aucun check et rejouera la gate complète lui-même (plus lent, tout aussi sûr).
    - Note: when a PR has no CI checks at all, the reviewer itself runs the full gate (lint, tsc, tests, build) before merging — it never merges untested code.
+   - Note 2: un run `pull_request` peut rester coincé en `action_required` (aucun job) sur une PR de bot — GitHub retient le déclenchement. `gh pr checks <N>` renvoie alors « no checks reported » : c'est le cas prévu par la note ci-dessus, la gate locale du reviewer prend le relais.
 2. Is the issue description clear?
 3. Is the scope reasonable (1-2 files)?
 4. Any typos in `/oc` command?
@@ -1012,6 +1014,19 @@ ce 1101 en message lisible.
 ⚠️ `[skip ci]` **et** `[CF-Pages-Skip]` dans le message des commits de bots :
 Cloudflare Pages saute le déploiement si l'un des deux apparaît (doc GitHub
 integration). Sans ça, ~24 commits/jour = un build de prod par heure.
+
+Où les mettre — et surtout où ne PAS les mettre :
+- ✅ commits de **bookkeeping** qui ne déploient rien : stats QA, mémoire des
+  agents (branche `memory`). Ils portent `[skip ci] [CF-Pages-Skip]`.
+- ⛔ **jamais** sur un commit de **branche de PR**. Un squash merge recopie les
+  messages des commits dans le **corps** du commit poussé sur `master`, et
+  Cloudflare saute alors le déploiement de **production** au merge. Les commits
+  `feat: auto-implement #N` et `docs: … campaign #N` restent donc sans marqueur
+  (gardé par `workflow-integrity.test.ts`).
+- Pour supprimer les previews de façon globale et définitive : Cloudflare
+  Dashboard → Pages → projet → Settings → Builds & deployments → désactiver
+  les *automatic preview deployments*. Aucun marqueur de commit ne peut faire
+  mieux.
 
 ### Comptes/projets
 | Projet | Rôle | Statut |

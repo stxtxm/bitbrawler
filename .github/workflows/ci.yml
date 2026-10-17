@@ -26,7 +26,15 @@ jobs:
       actions: write
 
     steps:
+      # Un workflow_dispatch lancé sans `--ref` (ex. `gh workflow run ci.yml
+      # -f pr_number=1179`) s'exécute sur la branche par défaut : le job
+      # compilait master et présentait pourtant son verdict comme celui de la
+      # PR, puis dispatchait le reviewer avec ci_green=true (incident #1179 —
+      # run 39067317103 « success » sans jamais voir le code de la PR).
+      # Dès que pr_number est fourni, on force donc la tête de la PR.
       - uses: actions/checkout@v4
+        with:
+          ref: "${{ github.event_name == 'workflow_dispatch' && github.event.inputs.pr_number != '' && format('refs/pull/{0}/head', github.event.inputs.pr_number) || '' }}"
 
       - uses: actions/setup-node@v4
         with:

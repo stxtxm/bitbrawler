@@ -41,6 +41,17 @@ describe('Workflow contracts: auto bot-merge reliability ([skip ci] head)', () =
     expect(ci).toContain('pr_number')
   })
 
+  it('ci.yml validates the PR head on dispatch, not the default branch', () => {
+    // Un dispatch manuel sans `--ref` s'exécutait sur master : le job affichait
+    // « success » pour du code qu'il n'avait jamais compilé, puis transmettait
+    // ci_green=true au reviewer (#1179, run 39067317103).
+    expect(ci).toContain("format('refs/pull/{0}/head', github.event.inputs.pr_number)")
+    expect(ci).toContain("github.event_name == 'workflow_dispatch'")
+    // Hors dispatch, ref doit rester vide pour laisser checkout choisir le
+    // commit de merge de la PR.
+    expect(ci).toMatch(/ref:.*\|\| ''/)
+  })
+
   it('ci.yml still dispatches the reviewer on CI pass', () => {
     expect(ci).toContain('gh workflow run')
     expect(ci).toMatch(/reviewer/i)
@@ -243,5 +254,28 @@ describe('Agent workflows send no OpenCode credential', () => {
     ]) {
       expect(opencode).toContain(model)
     }
+  })
+})
+
+describe('Bookkeeping commits never consume a Pages build', () => {
+  // La branche memory est un registre, jamais mergée dans master : chaque push
+  // y déclenchait pourtant une preview Cloudflare pour rien (les commits de
+  // mémoire n'affichaient aucun marqueur, contrairement à ceux du bot QA).
+  it('memory-branch commits carry the skip markers', () => {
+    expect(readWorkflow('opencode.yml')).toContain(
+      'chore: update dev memory #$ISSUE_NUMBER [skip ci] [CF-Pages-Skip]'
+    )
+    expect(readWorkflow('reviewer.yml')).toContain(
+      'chore: update reviewer memory [skip ci] [CF-Pages-Skip]'
+    )
+  })
+
+  // Contre-exemple volontaire : un squash merge recopie les messages des commits
+  // dans le corps du commit poussé sur master. Un marqueur posé sur une branche
+  // de PR ferait donc sauter le déploiement de PRODUCTION au merge.
+  it('PR-branch commits stay marker-free', () => {
+    const opencode = readWorkflow('opencode.yml')
+    expect(opencode).toMatch(/git commit -m "feat: auto-implement #\$ISSUE_NUMBER"\s*$/m)
+    expect(opencode).toMatch(/git commit -m \\"docs: add vX\.Y\.Z patch notes[^\\]*\\" \|\| true/)
   })
 })
