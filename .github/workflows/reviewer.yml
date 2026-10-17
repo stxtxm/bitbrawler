@@ -633,7 +633,7 @@ jobs:
             mkdir -p .opencode/memory
             cp /tmp/memory_reviewer_updated.json .opencode/memory/reviewer.json
             git add .opencode/memory/reviewer.json
-            git commit -m "chore: update reviewer memory" 2>/dev/null || true
+            git commit -m "chore: update reviewer memory [skip ci] [CF-Pages-Skip]" 2>/dev/null || true
             git push origin HEAD:memory 2>&1 | head -20 || git push origin memory 2>&1 | head -20 || git push origin memory/dev 2>&1 | head -20 || echo "⚠ push memory échoué"
             git checkout "$CURR_BRANCH" 2>/dev/null || git checkout master 2>/dev/null || true
             git stash pop 2>/dev/null || true

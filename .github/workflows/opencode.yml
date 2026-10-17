@@ -895,7 +895,7 @@ jobs:
             ')
             echo "$UPDATED" > .opencode/memory/dev.json
             git add .opencode/memory/dev.json
-            git commit -m "chore: update dev memory #$ISSUE_NUMBER" 2>/dev/null || true
+            git commit -m "chore: update dev memory #$ISSUE_NUMBER [skip ci] [CF-Pages-Skip]" 2>/dev/null || true
             git push origin "HEAD:$MEM_BRANCH" 2>&1 | head -20 || echo "⚠ push memory échoué (retry plus tard)"
             git checkout "$CURR_BRANCH" 2>/dev/null || git checkout -B "$CURR_BRANCH" || true
             git stash pop 2>/dev/null || true
