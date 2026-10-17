@@ -72,6 +72,7 @@ jobs:
         run: |
           MODELS=(
             "opencode/glm-5.3-flash-free"
+            "opencode/deepseek-v4.1-flash-free"
             "opencode/nemotron-3.5-lightning-free"
           )
 
@@ -161,7 +162,7 @@ jobs:
           SUCCESS=0
           for MODEL in "${MODELS[@]}"; do
             echo "Trying model: $MODEL"
-            if opencode run --dangerously-skip-permissions --agent tech-lead --model "$MODEL" "$PROMPT"; then
+            if timeout -k 30s 8m opencode run --dangerously-skip-permissions --agent tech-lead --model "$MODEL" "$PROMPT"; then
               echo "Model selected: $MODEL"
               SUCCESS=1
               break

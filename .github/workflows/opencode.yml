@@ -46,7 +46,7 @@ jobs:
         contains(github.event.pull_request.head.ref, 'feat/auto-')
       )
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     permissions:
       actions: write
       contents: write
@@ -311,12 +311,13 @@ jobs:
            
            MODELS=(
              "opencode/glm-5.3-flash-free"
+             "opencode/deepseek-v4.1-flash-free"
              "opencode/nemotron-3.5-lightning-free"
            )
            SUCCESS=0
            for MODEL in "${MODELS[@]}"; do
              echo "Trying model: $MODEL"
-             if opencode run --dangerously-skip-permissions --agent supervisor --model "$MODEL" "$PROMPT"; then
+             if timeout -k 30s 6m opencode run --dangerously-skip-permissions --agent supervisor --model "$MODEL" "$PROMPT"; then
                echo "Model selected: $MODEL"
                SUCCESS=1
                break
@@ -414,12 +415,13 @@ jobs:
 
             MODELS=(
               "opencode/glm-5.3-flash-free"
+              "opencode/deepseek-v4.1-flash-free"
               "opencode/nemotron-3.5-lightning-free"
             )
             SUCCESS=0
             for MODEL in "${MODELS[@]}"; do
               echo "Trying model: $MODEL"
-              if opencode run --dangerously-skip-permissions --agent orchestrator --model "$MODEL" "$PROMPT"; then
+              if timeout -k 30s 6m opencode run --dangerously-skip-permissions --agent orchestrator --model "$MODEL" "$PROMPT"; then
                 echo "Model selected: $MODEL"
                 SUCCESS=1
                 break
@@ -502,12 +504,13 @@ jobs:
 
           MODELS=(
             "opencode/glm-5.3-flash-free"
+            "opencode/deepseek-v4.1-flash-free"
             "opencode/nemotron-3.5-lightning-free"
           )
           SUCCESS=0
           for MODEL in "${MODELS[@]}"; do
             echo "Trying model: $MODEL"
-            if opencode run --dangerously-skip-permissions --model "$MODEL" "$PROMPT"; then
+            if timeout -k 30s 10m opencode run --dangerously-skip-permissions --model "$MODEL" "$PROMPT"; then
               echo "Model selected: $MODEL"
               SUCCESS=1
               break
@@ -687,12 +690,13 @@ jobs:
 
           MODELS=(
             "opencode/glm-5.3-flash-free"
+            "opencode/deepseek-v4.1-flash-free"
             "opencode/nemotron-3.5-lightning-free"
           )
           SUCCESS=0
           for MODEL in "${MODELS[@]}"; do
             echo "Trying model: $MODEL"
-            if opencode run --dangerously-skip-permissions --model "$MODEL" "$PROMPT"; then
+            if timeout -k 30s 10m opencode run --dangerously-skip-permissions --model "$MODEL" "$PROMPT"; then
               echo "Model selected: $MODEL"
               SUCCESS=1
               break
@@ -807,12 +811,13 @@ jobs:
 
             MODELS=(
               "opencode/glm-5.3-flash-free"
+              "opencode/deepseek-v4.1-flash-free"
               "opencode/nemotron-3.5-lightning-free"
             )
             SUCCESS=0
             for MODEL in "${MODELS[@]}"; do
               echo "Trying model: $MODEL"
-              if opencode run --dangerously-skip-permissions --model "$MODEL" "$FIX_PROMPT"; then
+              if timeout -k 30s 10m opencode run --dangerously-skip-permissions --model "$MODEL" "$FIX_PROMPT"; then
                 echo "Model selected: $MODEL"
                 SUCCESS=1
                 break
