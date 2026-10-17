@@ -57,7 +57,6 @@ jobs:
           fi
 
   review:
-  review:
     needs: preflight
     if: (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') && needs.preflight.outputs.should_review == 'true'
     runs-on: ubuntu-latest
