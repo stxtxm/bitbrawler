@@ -5,8 +5,8 @@ import handler from './idle-processor'
  *
  * The core handler in `idle-processor.ts` is plain Node (`req.method`,
  * `req.on('data'|'end')`, `res.writeHead`, `res.end`) and reads its Supabase
- * credentials from `process.env`. Edge runtimes (Cloudflare Pages Functions,
- * Cloudflare Pages Functions) speak the Web standard instead, so every host
+ * credentials from `process.env`. Edge runtimes (Cloudflare Pages Functions)
+ * speak the Web standard instead, so every host
  * needs the same two shims:
  *
  *   1. Node req/res  <- Request / Response
