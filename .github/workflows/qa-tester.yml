@@ -6,6 +6,17 @@ on:
     - cron: '0 6,12,18 * * *'
   workflow_dispatch:
 
+concurrency:
+  # Issue #1132 : 3 runs QA par jour + les déclenchements manuels poussent tous
+  # qa/stats.json sur master. Sans sérialisation, deux runs se marchent dessus.
+  #
+  # L'annulation en cours de route doit rester DÉSACTIVÉE — un run QA ne doit
+  # jamais être annulé : il vient de jouer une vraie partie contre la prod, et
+  # l'interrompre perdrait ses stats. Les runs en attente sont donc rejoués à la
+  # suite, pas jetés.
+  group: qa-stats-commit
+  cancel-in-progress: false
+
 jobs:
   run-qa:
     runs-on: ubuntu-latest
@@ -51,5 +62,31 @@ jobs:
           # integration docs). Both are listed so the flag survives a change of
           # hosting without having to be rediscovered the hard way.
           git diff --cached --quiet || git commit -m "chore: update QA stats [skip ci] [CF-Pages-Skip]"
-          git pull --rebase
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
+
+          # Issue #1132 — pourquoi une reprise en boucle ici.
+          #
+          # Le `concurrency` en tête de fichier sérialise les runs QA ENTRE EUX,
+          # mais master bouge aussi pour d'autres raisons : merges de PR par le
+          # reviewer, commits des autres bots. Or qa/stats.json est réécrit EN
+          # ENTIER à chaque run, donc toute écriture concurrente produit un conflit
+          # de rebase — l'ancien `git pull --rebase` sec laissait alors l'étape en
+          # échec et les stats du run étaient perdues.
+          #
+          # `-X theirs` pendant le rebase garde la version du commit rejoué, donc
+          # les stats fraîches de CE run — seules dans le commit — et ne peut rien
+          # écraser d'autre : le commit ne porte que qa/stats.json et qa/state.json.
+          for tentative in 1 2 3; do
+            git rebase --abort 2>/dev/null || true
+            if git pull --rebase -X theirs \
+              && git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}; then
+              echo "✅ QA stats poussées (tentative $tentative)"
+              exit 0
+            fi
+            echo "⚠ tentative $tentative échouée — nouvel essai dans $((tentative * 10))s"
+            sleep $((tentative * 10))
+          done
+
+          # Échec sonore plutôt que silencieux : des stats perdues sans trace sont
+          # indiscernables d'un run qui n'aurait rien produit.
+          echo "::error::qa/stats.json non poussé après 3 tentatives — les stats de ce run sont perdues"
+          exit 1

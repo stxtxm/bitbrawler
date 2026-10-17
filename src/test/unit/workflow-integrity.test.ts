@@ -179,6 +179,40 @@ describe('Reviewer preflight must be able to see the PR', () => {
   })
 })
 
+describe('QA stats commits survive a concurrent master (#1132)', () => {
+  // Three QA runs a day plus manual dispatches all write qa/stats.json on master,
+  // and master also moves for other reasons (the reviewer merges PRs, other bots
+  // commit). qa/stats.json is rewritten whole on every run, so any concurrent
+  // write is a rebase conflict — the old bare `git pull --rebase` left the step
+  // red and the run's stats were lost.
+  //
+  // Proven on a real git sandbox with two runs writing different stats:
+  //   old step -> exit 1, master keeps A, B's stats gone
+  //   new step -> exit 0, master holds B, the fresh stats
+  const source = readWorkflow('qa-tester.yml')
+  const step = source.slice(source.indexOf('- name: Commit QA stats'))
+
+  it('serialises QA runs instead of racing them', () => {
+    expect(source).toMatch(/^concurrency:/m)
+    expect(source).toMatch(/^\s{2}group: qa-stats-commit$/m)
+    // A QA run must never be cancelled mid-flight: it just played a real fight.
+    // Line-anchored so a comment mentioning the setting cannot satisfy the guard.
+    expect(source).toMatch(/^\s{2}cancel-in-progress: false$/m)
+  })
+
+  it('retries the rebase and keeps the fresh stats on conflict', () => {
+    expect(step).toMatch(/for tentative in/)
+    expect(step).toContain('git rebase --abort')
+    // During a rebase, `theirs` is the commit being replayed: our fresh stats.
+    expect(step).toContain('git pull --rebase -X theirs')
+  })
+
+  it('fails loudly instead of losing stats silently', () => {
+    expect(step).toContain('::error::')
+    expect(step).toContain('exit 1')
+  })
+})
+
 describe('Agent workflows send no OpenCode credential', () => {
   // Incident 2026-10-17: the repo secret OPENCODE_API_KEY had expired (last
   // rotated 2026-05-24). Every agent step exported it, so the provider answered
