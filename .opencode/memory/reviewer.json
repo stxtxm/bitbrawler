@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-17T21:25:17Z",
+  "last_session": "2026-10-17T22:14:39Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,7 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson_report": "PR #1180 mergee (squash, 96f31b1): fix ci.yml checkout refs/pull/N/head + marqueurs skip ci sur commits memoire + doc AGENTS.md + 4 tests workflow-integrity. Cas pratique confirme: statusCheckRollup vide sur PR externe -> gate locale complete (lint/tsc/2193 tests/build) rejouee avant merge, conforme a la note 2 AGENTS.md. Verifier toujours les regex de workflow-integrity.test.ts contre les lignes reelles des workflows (ex: \"docs: add vX.Y.Z\" ligne 304 opencode.yml) avant d'approuver une modification de contrat CI.",
+      "lesson": "PR #1195 : le statusCheckRollup d'une PR reste VIDE même après un run workflow_dispatch réussi sur son head SHA (les check suites de workflow_dispatch ne sont pas rattachées au rollup de la PR). Ne pas conclure à un échec CI : vérifier gh api commits/<sha>/check-runs + rejouer la gate locale (lint/tsc/tests/build) avant merge.",
+      "issue": "#1195",
       "date": "2026-10-17"
     }
   ]
