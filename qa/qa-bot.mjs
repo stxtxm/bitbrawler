@@ -18,6 +18,10 @@ import {
   FIGHT_START_GRACE_MS,
   isAttackableArenaStatus,
   didFightStart,
+  shouldSkipForEnergy,
+  capFightAttempts,
+  aggregateSkipReasons,
+  formatSkipSummary,
 } from '../src/utils/qa-bot-helpers.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -1998,8 +2002,9 @@ async function runFightSequence(page, runKey, runRecord) {
   let pvpSinceLastPve = 0
   let pveLockedRecoveries = 0
   const forcedPvpIndexes = new Set()
+  let attemptBudget = config.fightsPerRun
 
-  for (let i = 0; i < config.fightsPerRun; i++) {
+  for (let i = 0; i < attemptBudget; i++) {
     await humanDelay(page)
 
     // Global time budget guard: stop the fight sequence cleanly if exceeded
@@ -2037,19 +2042,23 @@ async function runFightSequence(page, runKey, runRecord) {
     const isResting = arenaStatus.isResting
     runRecord.arena_status = buildArenaStatusRecord(arenaStatus)
 
-    if (fightsAvailable !== null && fightsAvailable <= 0) {
+    if (fightsAvailable !== null) {
+      attemptBudget = Math.min(attemptBudget, i + capFightAttempts(config.fightsPerRun, fightsAvailable))
+    }
+
+    if (shouldSkipForEnergy(fightsAvailable) && !arenaStatus.isPveLocked) {
       console.log('   No battle energy available for current fighter')
       if (!recreatedForExhaustion) {
         if (isPve) await togglePveMode(page, false)
         await maybeReplaceExhaustedCharacter(page, runKey, runRecord, 'exhausted-energy')
         recreatedForExhaustion = true
+        attemptBudget = config.fightsPerRun
         i = -1
         continue
       }
       if (isPve) await togglePveMode(page, false)
       if (!runRecord.skipped_fights) runRecord.skipped_fights = []
-      runRecord.skipped_fights.push({ index: i + 1, reason: 'exhausted' })
-      await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-skip.png`) }).catch(() => {})
+      runRecord.skipped_fights.push({ index: i + 1, reason: 'no_energy' })
       break
     }
 
@@ -2427,6 +2436,12 @@ async function runFightSequence(page, runKey, runRecord) {
     }
 
     await humanDelay(page)
+  }
+
+  runRecord.skipped_summary = aggregateSkipReasons(runRecord.skipped_fights)
+  const skipSummaryLine = formatSkipSummary(runRecord.skipped_summary)
+  if (skipSummaryLine) {
+    console.log(`   📋 Run skip summary — ${skipSummaryLine}`)
   }
 }
 

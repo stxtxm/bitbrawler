@@ -174,3 +174,38 @@ export function didFightStart(status) {
   if (label.includes('RESOLVING')) return true
   return status.fightButtonVisible === false
 }
+
+export function shouldSkipForEnergy(fightsAvailable) {
+  return (
+    typeof fightsAvailable === 'number'
+    && Number.isFinite(fightsAvailable)
+    && fightsAvailable <= 0
+  )
+}
+
+export function capFightAttempts(fightsPerRun, fightsAvailable) {
+  if (
+    typeof fightsAvailable !== 'number'
+    || !Number.isFinite(fightsAvailable)
+    || fightsAvailable < 0
+  ) return fightsPerRun
+  return Math.min(fightsPerRun, fightsAvailable)
+}
+
+export function aggregateSkipReasons(skippedFights) {
+  const summary = {}
+  if (!Array.isArray(skippedFights)) return summary
+  for (const skip of skippedFights) {
+    const reason = skip && typeof skip.reason === 'string' && skip.reason ? skip.reason : 'unknown'
+    summary[reason] = (summary[reason] || 0) + 1
+  }
+  return summary
+}
+
+export function formatSkipSummary(summary) {
+  if (!summary || typeof summary !== 'object') return ''
+  const entries = Object.entries(summary).filter(([, count]) => typeof count === 'number' && count > 0)
+  if (entries.length === 0) return ''
+  entries.sort((a, b) => b[1] - a[1])
+  return `skipped: ${entries.map(([reason, count]) => `${count} ${reason}`).join(', ')}`
+}
