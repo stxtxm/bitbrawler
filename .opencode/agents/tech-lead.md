@@ -2,7 +2,7 @@
 name: tech-lead
 description: Tech Lead autonome. Exécuté quotidiennement pour analyser la santé du projet, faire des recherches web, créer des issues et proposer des améliorations.
 mode: primary
-model: opencode/glm-5.3-flash-free
+model: opencode/deepseek-v4.1-flash-free
 permission:
   edit: allow
   bash: allow
