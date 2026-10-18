@@ -46,7 +46,7 @@ jobs:
         contains(github.event.pull_request.head.ref, 'feat/auto-')
       )
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 80
     permissions:
       actions: write
       contents: write
@@ -516,10 +516,18 @@ jobs:
             "opencode/deepseek-v4.1-flash-free"
             "opencode/nemotron-3.5-lightning-free"
           )
+          # Budget par modèle : le primaire écrit ET teste le code (18 min — il a besoin
+          # de lire les fichiers, d'implémenter, de lancer la suite et de l'ajuster).
+          # Les replis repartent de ZÉRO (aucune mémoire du travail du primaire) : une
+          # sonde courte suffit, inutile de patienter pendant qu'ils refont tout le tour.
+          MODEL_BUDGETS=("18m" "5m" "5m")
           SUCCESS=0
+          MODEL_IDX=0
           for MODEL in "${MODELS[@]}"; do
-            echo "Trying model: $MODEL"
-            if timeout -k 30s 10m opencode run --dangerously-skip-permissions --model "$MODEL" "$PROMPT"; then
+            MODEL_BUDGET="${MODEL_BUDGETS[$MODEL_IDX]}"
+            MODEL_IDX=$((MODEL_IDX + 1))
+            echo "Trying model: $MODEL (budget $MODEL_BUDGET)"
+            if timeout -k 30s "$MODEL_BUDGET" opencode run --dangerously-skip-permissions --model "$MODEL" "$PROMPT"; then
               echo "Model selected: $MODEL"
               SUCCESS=1
               break
@@ -705,10 +713,18 @@ jobs:
             "opencode/deepseek-v4.1-flash-free"
             "opencode/nemotron-3.5-lightning-free"
           )
+          # Budget par modèle : le primaire écrit ET teste le code (18 min — il a besoin
+          # de lire les fichiers, d'implémenter, de lancer la suite et de l'ajuster).
+          # Les replis repartent de ZÉRO (aucune mémoire du travail du primaire) : une
+          # sonde courte suffit, inutile de patienter pendant qu'ils refont tout le tour.
+          MODEL_BUDGETS=("18m" "5m" "5m")
           SUCCESS=0
+          MODEL_IDX=0
           for MODEL in "${MODELS[@]}"; do
-            echo "Trying model: $MODEL"
-            if timeout -k 30s 10m opencode run --dangerously-skip-permissions --model "$MODEL" "$PROMPT"; then
+            MODEL_BUDGET="${MODEL_BUDGETS[$MODEL_IDX]}"
+            MODEL_IDX=$((MODEL_IDX + 1))
+            echo "Trying model: $MODEL (budget $MODEL_BUDGET)"
+            if timeout -k 30s "$MODEL_BUDGET" opencode run --dangerously-skip-permissions --model "$MODEL" "$PROMPT"; then
               echo "Model selected: $MODEL"
               SUCCESS=1
               break
@@ -829,10 +845,16 @@ jobs:
               "opencode/deepseek-v4.1-flash-free"
               "opencode/nemotron-3.5-lightning-free"
             )
+            # Rappel après gate rouge : le primaire relit les sorties de gate et corrige
+            # (10 min) ; replis = sonde courte (ils repartent de zéro).
+            MODEL_BUDGETS=("10m" "4m" "4m")
             SUCCESS=0
+            MODEL_IDX=0
             for MODEL in "${MODELS[@]}"; do
-              echo "Trying model: $MODEL"
-              if timeout -k 30s 10m opencode run --dangerously-skip-permissions --model "$MODEL" "$FIX_PROMPT"; then
+              MODEL_BUDGET="${MODEL_BUDGETS[$MODEL_IDX]}"
+              MODEL_IDX=$((MODEL_IDX + 1))
+              echo "Trying model: $MODEL (budget $MODEL_BUDGET)"
+              if timeout -k 30s "$MODEL_BUDGET" opencode run --dangerously-skip-permissions --model "$MODEL" "$FIX_PROMPT"; then
                 echo "Model selected: $MODEL"
                 SUCCESS=1
                 break
