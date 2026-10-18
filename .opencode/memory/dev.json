@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-18T17:10:50Z",
+  "last_session": "2026-10-18T17:25:39Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -122,6 +122,11 @@
     {
       "lesson": "#1203: l'ancre de main ne tombait pas sur le poing parce que extremeHand prenait la rangee la PLUS HAUTE au x max : un bras droit vertical a le meme x externe en haut et en bas, donc l'ancre restait a l'epaule. Il faut deriver l'ancre du poing (1re rangee ou le run de peau externe fait >=2 cellules base) — change dans equipOverlays.ts, sanctionne par l'issue. Le poing doit s'elargir VERS LE TORSE : l'elargir vers l'exterieur fait passer palmR.x de 16 a 18 et casse 5 tests equip (lame/axe/glint/attack thrust/sway) car l'arme sort de la grille 24px.",
       "issue": "#1203",
+      "date": "2026-10-18"
+    },
+    {
+      "lesson": "Issue #1209 SceneBox v2: react-refresh/only-export-components interdit d'exporter constantes/helpers depuis un .tsx composant -> les mettre dans un module voisin (ici src/components/arena/sceneLighting.ts, precedent arenaTypes.ts). L'eclairage biome est pilote par getBiomeForCharacter(character) (props existantes du biome) et pousse des CSS vars --scene-tint/--scene-shadow-color/--scene-shadow-spread sur .scene-box; l'ombre du runner PvE (IdleRunnerScene non modifiable) les herite via les vars dans _idle-runner.scss. Test props-only = fichier de test sans mock GameContext (useGame throw sans provider). useLowPerformanceMode reduit l'alpha d'ombre via sceneLightingStyle.",
+      "issue": "#1209",
       "date": "2026-10-18"
     }
   ]
