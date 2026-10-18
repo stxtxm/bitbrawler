@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-18T15:26:27Z",
+  "last_session": "2026-10-18T17:10:50Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -118,6 +118,11 @@
       "date": "2026-10-18",
       "issue": "#1202",
       "lesson": "art:sheet (#1202) — scripts/*.mjs peuvent importer le TS de src/ en passant par tsx : 'art:sheet': 'tsx scripts/render-sprite-sheet.mjs' (tsx déjà devDep, aucune dépendance ajoutée). à l'inverse de gen-icons.mjs (JS pur, node direct). Le test vitest peut importer ce .mjs direct : vite transforme l'import TS. Piège tsc : target ES2020 interdit Array.prototype.at() dans les tests -> utiliser [len-1]. Encodeur PNG non carré : stride = width*4+1, Buffer.from(rgba.buffer, offset, len) et non rgba.copy."
+    },
+    {
+      "lesson": "#1203: l'ancre de main ne tombait pas sur le poing parce que extremeHand prenait la rangee la PLUS HAUTE au x max : un bras droit vertical a le meme x externe en haut et en bas, donc l'ancre restait a l'epaule. Il faut deriver l'ancre du poing (1re rangee ou le run de peau externe fait >=2 cellules base) — change dans equipOverlays.ts, sanctionne par l'issue. Le poing doit s'elargir VERS LE TORSE : l'elargir vers l'exterieur fait passer palmR.x de 16 a 18 et casse 5 tests equip (lame/axe/glint/attack thrust/sway) car l'arme sort de la grille 24px.",
+      "issue": "#1203",
+      "date": "2026-10-18"
     }
   ]
 }
