@@ -2,7 +2,7 @@
 name: dev-agent
 description: Agent autonome pour implémenter des features. Déclenché automatiquement par les issues avec /oc. Crée une PR et passe la revue au reviewer workflow.
 mode: primary
-model: opencode/glm-5.3-flash-free
+model: opencode/deepseek-v4.1-flash-free
 permission:
   edit: allow
   bash: allow
