@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-18T17:32:18Z",
+  "last_session": "2026-10-18T17:33:52Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -134,6 +134,11 @@
       "issue": "#1207",
       "date": "2026-10-18",
       "lesson": "Animations sprite: (1) les frames count sont centralisees dans SPRITE_FRAME_COUNTS (spriteTypes) et les phases derivees via FRAME_PHASES (Object.fromEntries) — toute nouvelle animation doit passer par la. (2) idle avait frames 0 et 3 IDENTIQUES (applyIdleBreathing renvoie pour 0 et 3) : un test 'toute frame consecutive differe' les attrape; le blink est rendu en passant un flag a applyFeatures (paupiere/cil/sous-oeil a la place de l'iris), ce qui casse l'egalite. (3) zone jambes du test = split upscale x<12 / x>=12 : un shin qui se deplace vers l'interieur traverse la frontiere sur les builds slim -> lift en place (dy=-1 sans dx) plutot que rentrer vers le centre. (4) mouvement secondaire arme = RUN_SECONDARY_SWAY/SWING indexes par frameIdx, cheveux = flight+SECONDARY_HAIR_OFFSET."
+    },
+    {
+      "lesson": "Issue #1204 (overlay arme v2, campaign-1201 [3/9]): la garde devait croiser le poing SANS deplacer la barre de garde existante, car les tests d'ancrage encodent guardY = palm.y - 1. Solution: garder la barre et ajouter paintGripCollar au rang palm.y (palm.x-1 / +2 / +3), cellules centrales recouvertes par paintFistGrip. Pour 'aucun recouvrement de tete' sur toutes les frames: clip generique clipWeaponFromHead qui restaure les pixels d'arme ecrits dans marks.head (snapshot preWeapon desormais toujours pris) — pas de longueurs par arme. Piege connu non corrige: extremeHand('right') scanne y in [30,37] et rate le poing remonte en victory f1/f2 -> palmR={x:4,y:30}, arme ancree du mauvais cote. Le corps de PR etant genere par le workflow ('Closes #N'), la preuve art:sheet avant/apres a ete postee en commentaire d'issue avec sha256 avant/apres (dimensions identiques 1212x23232, 162 sprites).",
+      "issue": "#1204",
+      "date": "2026-10-18"
     }
   ]
 }
