@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-18T18:27:29Z",
+  "last_session": "2026-10-18T18:41:43Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR #1224 : `gh pr checks <N>` peut afficher « no checks reported » alors qu'un check-run 'check' existe et est vert sur le SHA de tête. Vérifier via `gh api repos/OWNER/REPO/commits/<SHA>/check-runs` avant de conclure à l'absence de CI.",
-      "issue": "#1224",
+      "lesson": "PR bot sans checks (statusCheckRollup vide) : cas documenté, appliquer la gate locale complète (tsc, eslint email, vitest, build) avant merge. Le critère art:sheet des issues de campagne sprite n'est pas bloquant (absent aussi en #1224).",
+      "issue": "#1225",
       "date": "2026-10-18"
     }
   ]
