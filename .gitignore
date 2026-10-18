@@ -45,6 +45,9 @@ actions-runner/
 # Test output
 test_results.txt
 
+# Generated art review sheet (npm run art:sheet)
+sprite-sheet.png
+
 # Vite
 .vite
 
