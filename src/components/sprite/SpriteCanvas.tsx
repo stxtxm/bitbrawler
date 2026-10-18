@@ -3,7 +3,7 @@ import { ELEMENT_COLORS, Element } from '../../types/Item';
 import type { CharacterAppearance } from '../../types/Character';
 import { PixelGridCanvas } from './PixelGridCanvas';
 import { applyEquipmentOverlays, resolveLoadout } from './equipOverlays';
-import { generateSprite16, generateSpriteFrames, SpriteAnimKind } from './spriteGenerator';
+import { generateSprite16, generateSpriteFrames, ATTACK_IMPACT_FRAME, SpriteAnimKind } from './spriteGenerator';
 import { SPRITE_DISPLAY_SCALE } from './spriteTypes';
 import { useLowPerformanceMode } from '../../hooks/useLowPerformanceMode';
 
@@ -84,7 +84,7 @@ export const SpriteCanvas = memo(function SpriteCanvas({
       : idling
         ? ([0, 0, 1, 0, 0, 0][frameIdx % frames.length] ?? 0)
         : 0;
-    const punchTrail = (activeAnim === 'attack' && frameIdx === 1) || (victory && frameIdx === 1) ? 3 : 0;
+    const punchTrail = (activeAnim === 'attack' && frameIdx === ATTACK_IMPACT_FRAME) || (victory && frameIdx === 1) ? 3 : 0;
     const overlaid = applyEquipmentOverlays(base.grid, base.palette, resolveLoadout(equippedItems), { swayX, swingX, punchTrail });
     return { grid: overlaid.grid, palette: overlaid.palette };
   }, [frames, frameIdx, activeAnim, seed, gender, appearance, equippedItems]);

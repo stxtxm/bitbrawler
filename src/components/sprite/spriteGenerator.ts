@@ -578,8 +578,6 @@ function buildPalette(features: SpriteFeatures): SpritePalette {
   return palette;
 }
 
-export type StridePhase = 0 | 1 | 2;
-
 interface LimbCell {
   x: number;
   y: number;
@@ -779,15 +777,25 @@ function applyStride(base: SpriteGrid, phase: RunPhase): void {
   scissorLegs(base, mirror, step === 0);
 }
 
-// Procedural attack: windup tucks the right fist toward the body, strike
-// thrusts it up-forward. Rigid block shifts only — torso and head never move,
-// nothing vanishes. The weapon follows the fist via per-frame landmarks.
-function applyAttackPose(base: SpriteGrid, phase: StridePhase): void {
-  if (phase === 2) return;
+// Procedural attack, five beats: ready, chamber, anticipation hold, impact,
+// recovery. Rigid fist-block shifts only — torso and head never move, nothing
+// vanishes, and the weapon follows the fist via per-frame landmarks.
+export const ATTACK_IMPACT_FRAME = 3;
+
+const ATTACK_POSES: ReadonlyArray<readonly [number, number]> = [
+  [0, 0],
+  [-1, 1],
+  [-1, 0],
+  [1, -1],
+  [1, 0],
+];
+
+function applyAttackPose(base: SpriteGrid, phase: number): void {
+  const pose = ATTACK_POSES[phase] ?? [0, 0];
+  if (pose[0] === 0 && pose[1] === 0) return;
   const fist = rightArmBlock(base);
   if (fist.length === 0) return;
-  if (phase === 0) collectMove(base, fist, -1, 1);
-  else collectMove(base, fist, 1, -1);
+  collectMove(base, fist, pose[0], pose[1]);
 }
 
 // Procedural idle breathing: chest, head and arms sway rhythmically while feet
@@ -937,7 +945,9 @@ interface FramePlan {
 // Secondary motion rides the very same frame list as the body: the hair reacts
 // one beat after the body's extreme, and idle closes the eyes on its last beat.
 function framePlanOf(kind: SpriteAnimKind): FramePlan[] {
-  if (kind === 'attack') return [{ phase: 0 }, { phase: 1 }, { phase: 2 }];
+  if (kind === 'attack') {
+    return [0, 1, 2, 3, 4].map((phase) => ({ phase }));
+  }
   if (kind === 'run') {
     return [0, 1, 2, 3, 4, 5].map((phase) => ({
       phase,
@@ -970,7 +980,7 @@ export function generateSpriteFrames(
     applyBuild(base, features.build);
     applyAnatomy(base);
     applyFists(base);
-    if (kind === 'attack') applyAttackPose(base, phase as StridePhase);
+    if (kind === 'attack') applyAttackPose(base, phase);
     else if (kind === 'run') applyStride(base, phase as RunPhase);
     else if (kind === 'idle') applyIdleBreathing(base, phase);
     else if (kind === 'hit') applyHitReaction(base, phase);
