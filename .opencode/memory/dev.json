@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-18T18:50:17Z",
+  "last_session": "2026-10-18T21:21:32Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -190,6 +190,11 @@
     {
       "lesson": "Issue #1210 UI equipement: (1) PixelItemIcon rendait un SVG 8x8 avec size arbitraire -> passer par getIntegerIconScale (round(size/8)) + data-scale + style imageRendering 'pixelated' pour un rendu nearest-neighbor testable. (2) Toujours extraire l'etat du composant dans un hook dedie (useInventoryPanel) quand on touche InventoryPanel, conformement a AGENTS.md props-only. (3) npm run art:sheet ne depend que des sprites/equipOverlays, pas de l'inventaire : un changement UI/CSS produit un PNG identique (md5 inchange) — le documenter dans le commit au lieu de pretendre un diff.",
       "issue": "#1210",
+      "date": "2026-10-18"
+    },
+    {
+      "lesson": "Issue #1229 analyze-qa-stats: (1) qa/stats.json exposes shop.purchased/cost/item_rarity at run.shop AND a nested shop.shop_data (offers, purchased_offer) duplicated at top-level run.shop_data — the analyzer's RunRecord.shop type was stale (only essence_before/after). Real purchase rate on validRuns = 43/58 (the issue's 124/148 counts all runs incl. 0-fight). (2) The simulated affordability proxy is saturated by the persistent QA essence hoard (avg 435 vs cheapest ~20) → 5 blind +10% hikes. Branch price suggestion on real_purchase_rate when runs_with_shop_data >= REAL_SHOP_MIN_RUNS (10), fallback simulated. (3) TrendWindow gained fights_count; last_3/last_5 alerts now require >= MIN_TREND_FIGHTS=10 fights so fightsPerRun:1 no longer produces false declining/swing alerts.",
+      "issue": "#1229",
       "date": "2026-10-18"
     }
   ]
