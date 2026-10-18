@@ -5,6 +5,8 @@ import { SpriteCanvas } from '../sprite/SpriteCanvas';
 import { ProceduralTerrain } from '../procedural/ProceduralTerrain';
 import { BiomeTerrain } from '../procedural/BiomeTerrain';
 import { getBiomeForCharacter } from '../../data/biomes';
+import { useLowPerformanceMode } from '../../hooks/useLowPerformanceMode';
+import { getBiomeLighting, sceneLightingStyle } from './sceneLighting';
 import type { ArenaIdleViewModel } from './arenaTypes';
 
 interface SceneBoxProps {
@@ -21,15 +23,22 @@ export const SceneBox = memo(function SceneBox({
   idle,
 }: SceneBoxProps) {
   const pvpScale = typeof window !== 'undefined' && window.innerWidth < 480 ? 6 : 8;
+  const lowPerf = useLowPerformanceMode();
 
   // Once the first raid boss is slain the character enters the volcanic biome:
   // the PvE training ground trades its scrolling plains for the flowing volcanic
   // terrain — the world visibly warms up.
   const biome = getBiomeForCharacter(character);
   const volcanicBiome = biome.id === 'volcanic';
+  const lighting = getBiomeLighting(biome.id);
 
   return (
-    <div className="scene-box">
+    <div
+      className={`scene-box${lowPerf ? ' scene-low-perf' : ''}`}
+      data-biome={biome.id}
+      data-low-perf={lowPerf ? 'true' : 'false'}
+      style={sceneLightingStyle(lighting, lowPerf)}
+    >
       {volcanicBiome ? (
         <BiomeTerrain
           biomeId={biome.id}
@@ -42,6 +51,12 @@ export const SceneBox = memo(function SceneBox({
           animated={pveMode}
         />
       )}
+      <div
+        className="scene-lighting"
+        data-biome={biome.id}
+        data-low-perf={lowPerf ? 'true' : 'false'}
+        aria-hidden="true"
+      />
       {pveMode ? (
         <IdleRunnerScene
           character={effectiveCharacter}
@@ -70,7 +85,7 @@ export const SceneBox = memo(function SceneBox({
               animate="idle"
               className="pixel-character"
             />
-            <div className="fighter-shadow" />
+            <div className="scene-ground-shadow" aria-hidden="true" />
           </div>
         </div>
       )}
