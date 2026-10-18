@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-17T22:14:39Z",
+  "last_session": "2026-10-18T10:11:45Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,9 +21,9 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR #1195 : le statusCheckRollup d'une PR reste VIDE même après un run workflow_dispatch réussi sur son head SHA (les check suites de workflow_dispatch ne sont pas rattachées au rollup de la PR). Ne pas conclure à un échec CI : vérifier gh api commits/<sha>/check-runs + rejouer la gate locale (lint/tsc/tests/build) avant merge.",
-      "issue": "#1195",
-      "date": "2026-10-17"
+      "lesson": "PIL indisponible dans le runner reviewer : verifier un PNG (canal alpha, glyphe monochrome) via un decodeur Node zlib minimal (IHDR + inflate IDAT + unfilter scanlines). Confirme badge-96.png alpha 0..255, 15.6% pixels visibles, 100% blanc (>0 alpha).",
+      "issue": "#1200",
+      "date": "2026-10-18"
     }
   ]
 }
