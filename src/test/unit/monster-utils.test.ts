@@ -1,7 +1,15 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { generateMonster, getRandomMonsterId, getMonsterDef, generateMonsterForPlayer } from '../../utils/monsterUtils';
-import { MONSTER_ASSETS } from '../../data/monsterAssets';
+import { MONSTER_ASSETS, type MonsterId } from '../../data/monsterAssets';
 import { getBiomeMonsterPool } from '../../data/biomes';
+
+function sweepMonsterIds(playerLevel: number, draws = 50): MonsterId[] {
+  const randomSpy = vi.spyOn(Math, 'random');
+  return Array.from({ length: draws }, (_, i) => {
+    randomSpy.mockReturnValue(i / draws);
+    return getRandomMonsterId(playerLevel);
+  });
+}
 
 describe('monsterUtils', () => {
   afterEach(() => {
@@ -38,7 +46,7 @@ describe('monsterUtils', () => {
   });
 
   it('getRandomMonsterId filters by level — low level gets tier-appropriate monsters', () => {
-    const ids = Array.from({ length: 50 }, () => getRandomMonsterId(3));
+    const ids = sweepMonsterIds(3);
     // Level 3 should never get high-tier monsters
     ids.forEach(id => {
       const def = getMonsterDef(id)!;
@@ -54,7 +62,7 @@ describe('monsterUtils', () => {
   });
 
   it('getRandomMonsterId filters by level — high level gets tier-appropriate monsters', () => {
-    const ids = Array.from({ length: 50 }, () => getRandomMonsterId(35));
+    const ids = sweepMonsterIds(35);
     ids.forEach(id => {
       const def = getMonsterDef(id)!;
       if (def.minLevel !== undefined) {
@@ -71,7 +79,7 @@ describe('monsterUtils', () => {
   });
 
   it('getRandomMonsterId at mid level gets mid-tier monsters', () => {
-    const ids = Array.from({ length: 50 }, () => getRandomMonsterId(15));
+    const ids = sweepMonsterIds(15);
     // Level 15 should sometimes get wolf but never slime or dragon_spawn
     expect(ids.some(id => id === 'wolf')).toBe(true);
     expect(ids.every(id => id !== 'slime')).toBe(true);
