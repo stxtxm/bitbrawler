@@ -1,6 +1,39 @@
 import { describe, it, expect } from 'vitest';
 import { generateSprite16, generateSpriteFrames, resolveSpriteFeatures } from '../../components/sprite/spriteGenerator';
+import { computeLandmarks } from '../../components/sprite/equipOverlays';
 import { SPRITE_HEIGHT, SPRITE_WIDTH, highlightIndexOf, shadeIndexOf } from '../../components/sprite/spriteTypes';
+
+const SKIN_FAMILY = new Set([1, shadeIndexOf(1), highlightIndexOf(1)]);
+
+interface ArmCell {
+  x: number;
+  y: number;
+}
+
+// Flood-fills the bare-skin limb from the hand anchor: every pixel reachable
+// from the anchor inside the hanging-limb band (rows 28-35, above the legs).
+// The block is the arm plus the fist it ends in.
+function fistBlock(grid: number[][], seed: ArmCell): ArmCell[] {
+  const block: ArmCell[] = [];
+  const seen = new Set<string>();
+  const stack: ArmCell[] = [seed];
+  while (stack.length) {
+    const cell = stack.pop() as ArmCell;
+    const key = `${cell.x},${cell.y}`;
+    if (seen.has(key)) continue;
+    if (cell.y < 28 || cell.y > 35 || cell.x < 0 || cell.x >= 24) continue;
+    if (!SKIN_FAMILY.has(grid[cell.y][cell.x])) continue;
+    seen.add(key);
+    block.push(cell);
+    stack.push(
+      { x: cell.x + 1, y: cell.y },
+      { x: cell.x - 1, y: cell.y },
+      { x: cell.x, y: cell.y + 1 },
+      { x: cell.x, y: cell.y - 1 },
+    );
+  }
+  return block;
+}
 
 describe('sprite generator v2', () => {
   it('produces a 24x42 grid with transparent hover room on top', () => {
@@ -110,6 +143,44 @@ describe('sprite generator v2', () => {
     const zone = sprite.grid.slice(30, 36).flat();
     expect(zone).toContain(shadeIndexOf(1));
     expect(zone).toContain(1);
+  });
+
+  it('ends every arm in a contiguous 2x2 skin fist the hand anchors sit on', () => {
+    const bodies = [
+      'basic', 'sleeveless', 'armor', 'jacket', 'vest', 'robe', 'hoodie',
+      'tunic', 'ninja_gi', 'paladin', 'cyber_suit', 'monk_gi', 'assassin',
+    ];
+    for (const bodyType of bodies) {
+      for (const build of ['standard', 'broad'] as const) {
+        const sprite = generateSprite16(`fist-${bodyType}-${build}`, 'male', {
+          build,
+          bodyType,
+          headType: 'male',
+        });
+        const marks = computeLandmarks(sprite.grid);
+        const hands = [
+          { hand: marks.handL, palm: marks.palmL },
+          { hand: marks.handR, palm: marks.palmR },
+        ];
+        for (const { hand, palm } of hands) {
+          const block = fistBlock(sprite.grid, hand);
+          expect(block.length).toBeGreaterThanOrEqual(4);
+          const rows = [...new Set(block.map((c) => c.y))].sort((a, b) => a - b);
+          for (let k = 1; k < rows.length; k++) {
+            expect(rows[k] - rows[k - 1]).toBeLessThanOrEqual(1);
+          }
+          const bottom = rows[rows.length - 1];
+          const fistRows = [bottom - 1, bottom].map(
+            (y) => new Set(block.filter((c) => c.y === y).map((c) => Math.floor(c.x / 2))),
+          );
+          for (const cols of fistRows) expect(cols.size).toBeGreaterThanOrEqual(2);
+          const nearest = Math.min(
+            ...block.map((c) => Math.abs(c.x - palm.x) + Math.abs(c.y - palm.y)),
+          );
+          expect(nearest).toBeLessThanOrEqual(1);
+        }
+      }
+    }
   });
 
   it('trims the collar in logo color with pants stripes and shoe laces', () => {

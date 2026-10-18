@@ -641,6 +641,50 @@ function rightArmBlock(base: SpriteGrid): LimbCell[] {
   return out;
 }
 
+function armCellsOf(base: SpriteGrid, fromLeft: boolean): LimbCell[] {
+  const out: LimbCell[] = [];
+  for (let y = 11; y <= 14; y++) {
+    for (const c of takeArm(base[y] ?? [], y, fromLeft)) out.push(c);
+  }
+  return out;
+}
+
+function fistWidth(base: SpriteGrid, x: number, y: number, fromLeft: boolean): number {
+  const row = base[y] ?? [];
+  let width = 0;
+  if (fromLeft) {
+    for (let i = x; i < row.length && skinFamily.has(row[i]); i++) width++;
+  } else {
+    for (let i = x; i >= 0 && skinFamily.has(row[i]); i--) width++;
+  }
+  return width;
+}
+
+// A clenched fist: the two bottom cells of each arm grow one pixel toward the
+// body into a compact 2x2 block, marking the end of the limb without pushing
+// the hand anchors (and every held weapon) outward.
+function applyFists(base: SpriteGrid): void {
+  for (const fromLeft of [true, false]) {
+    const cells = armCellsOf(base, fromLeft);
+    if (cells.length === 0) continue;
+    const lowest = Math.max(...cells.map((c) => c.y));
+    const step = fromLeft ? 1 : -1;
+    for (const y of [lowest - 1, lowest]) {
+      const rowCells = cells.filter((c) => c.y === y);
+      if (rowCells.length === 0) continue;
+      const outer = fromLeft
+        ? Math.min(...rowCells.map((c) => c.x))
+        : Math.max(...rowCells.map((c) => c.x));
+      const row = base[y];
+      if (!row) continue;
+      if (fistWidth(base, outer, y, fromLeft) >= 2) continue;
+      const x = outer + step;
+      if (x < 0 || x >= row.length) continue;
+      row[x] = 1;
+    }
+  }
+}
+
 function runsInRow(row: number[], allowed: (v: number) => boolean): Array<[number, number]> {
   const runs: Array<[number, number]> = [];
   let start = -1;
@@ -783,6 +827,7 @@ function applyVictoryPose(base: SpriteGrid, phase: number): void {
 function finishGrid(base: SpriteGrid, features: SpriteFeatures, pose?: (grid: SpriteGrid) => void): SpriteGrid {
   applyBuild(base, features.build);
   applyAnatomy(base);
+  applyFists(base);
   pose?.(base);
   const grid = upscale(base);
   applySnes(grid);
@@ -829,6 +874,7 @@ export function generateSpriteFrames(
     const base = composeBaseGrid(features.headType, features.bodyType);
     applyBuild(base, features.build);
     applyAnatomy(base);
+    applyFists(base);
     if (kind === 'attack') applyAttackPose(base, phase as StridePhase);
     else if (kind === 'run') applyStride(base, phase as StridePhase);
     else if (kind === 'idle') applyIdleBreathing(base, phase);
