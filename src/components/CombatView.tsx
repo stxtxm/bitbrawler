@@ -806,6 +806,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                     scale={8}
                                     animate="idle"
                                     className="pixel-character"
+                                    flip
                                 />
                             )}
                             <div className="vs-fighter-name">{opponent.name}</div>
@@ -864,6 +865,9 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                             appearance={opponent.appearance}
                                             equippedItems={opponent.equippedItems}
                                             scale={6}
+                                            // PvP: the opponent stands on the right and faces the
+                                            // player, so their weapon ends up in the other hand.
+                                            flip
                                             animate={
                                                 showOpponentDefeat
                                                     ? 'hit'

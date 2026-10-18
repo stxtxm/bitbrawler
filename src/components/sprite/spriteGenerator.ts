@@ -936,6 +936,19 @@ export function generateSprite16(
 
 export type { SpriteAnimKind } from './spriteTypes';
 
+/**
+ * Mirror a sprite grid horizontally (left column <-> right column).
+ *
+ * PvP only: every procedural pose faces the same way as the PvE runner (to the
+ * right), so the opponent standing on the right side of the arena must be
+ * mirrored to face the player. Mirroring the pixels — rather than applying a CSS
+ * `scaleX(-1)` — also swaps the equipped weapon into the opponent's other hand,
+ * and cannot be cancelled by the CSS animations that drive `.pixel-character`.
+ */
+export function mirrorSpriteGrid(grid: SpriteGrid): SpriteGrid {
+  return grid.map((row) => row.slice().reverse());
+}
+
 interface FramePlan {
   phase: number;
   blink?: boolean;

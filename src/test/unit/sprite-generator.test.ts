@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateSprite16, generateSpriteFrames, resolveSpriteFeatures } from '../../components/sprite/spriteGenerator';
+import { generateSprite16, generateSpriteFrames, mirrorSpriteGrid, resolveSpriteFeatures } from '../../components/sprite/spriteGenerator';
 import { computeLandmarks } from '../../components/sprite/equipOverlays';
 import { SPRITE_HEIGHT, SPRITE_WIDTH, highlightIndexOf, shadeIndexOf } from '../../components/sprite/spriteTypes';
 
@@ -648,6 +648,53 @@ describe('sprite generator v2', () => {
       expect(sprite.grid.length).toBe(42);
       expect(sprite.grid[0].length).toBe(24);
       expect(sprite.grid.flat().some((c) => c !== 0)).toBe(true);
+    }
+  });
+});
+
+describe('mirrorSpriteGrid — PvP opponent faces the player', () => {
+  // The whole procedural animation set (idle, attack, hit, victory) faces right,
+  // like the PvE runner. The opponent stands on the right of the arena, so its
+  // pixels are mirrored instead of relying on a CSS transform: a CSS flip would
+  // be cancelled by the `fighterIdle` / action keyframes that drive transform,
+  // and it would leave the equipped weapon on the wrong hand.
+  it('swaps the columns and leaves the source grid untouched', () => {
+    const grid = [
+      [1, 2, 3],
+      [4, 5, 6],
+    ];
+    const mirrored = mirrorSpriteGrid(grid);
+
+    expect(mirrored).toEqual([
+      [3, 2, 1],
+      [6, 5, 4],
+    ]);
+    expect(grid).toEqual([[1, 2, 3], [4, 5, 6]]);
+    expect(mirrored[0]).not.toBe(grid[0]);
+  });
+
+  it('is an involution on a real sprite (mirror twice = identity)', () => {
+    const sprite = generateSprite16('pvp-opponent-seed', 'male');
+
+    expect(mirrorSpriteGrid(mirrorSpriteGrid(sprite.grid))).toEqual(sprite.grid);
+
+    // And the operation actually changes something: the sprite is asymmetric,
+    // which is what makes the weapon switch hands.
+    const once = mirrorSpriteGrid(sprite.grid);
+    const differs = sprite.grid.some((row, y) => row.some((v, x) => v !== once[y][x]));
+    expect(differs).toBe(true);
+  });
+
+  it('keeps every mirrored frame within the sprite bounds', () => {
+    const frames = generateSpriteFrames('pvp-idle-seed', 'female', null, 'idle');
+    expect(frames).not.toBeNull();
+
+    for (const frame of frames ?? []) {
+      const mirrored = mirrorSpriteGrid(frame.grid);
+      expect(mirrored.length).toBe(frame.grid.length);
+      for (const row of mirrored) {
+        expect(row.length).toBe(frame.grid[0].length);
+      }
     }
   });
 });

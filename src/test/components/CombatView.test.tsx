@@ -1050,4 +1050,74 @@ describe('CombatView Interface', () => {
         vi.useRealTimers();
         vi.restoreAllMocks();
     });
+
+    it('mirrors the PvP opponent so it faces the player (weapon in the other hand)', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 1,
+            details: ['Hero hits Villain for 12 DMG'],
+            timeline: [{ attackerHp: 100, defenderHp: 88 }]
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        // VS splash: the player faces right, the opponent is mirrored to face them.
+        act(() => { vi.advanceTimersByTime(2500); });
+        act(() => { vi.advanceTimersByTime(500); });
+        expect(container.querySelector('.vs-fighter.vs-left canvas')?.getAttribute('data-flip')).toBe('off');
+        expect(container.querySelector('.vs-fighter.vs-right canvas')?.getAttribute('data-flip')).toBe('on');
+
+        // Fight scene: same rule on both fighters.
+        act(() => { vi.advanceTimersByTime(1000); });
+        act(() => { vi.advanceTimersByTime(600); });
+        expect(container.querySelector('.fighter-side.left canvas')?.getAttribute('data-flip')).toBe('off');
+        expect(container.querySelector('.fighter-side.right canvas')?.getAttribute('data-flip')).toBe('on');
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('leaves the PvE monster unmirrored', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 1,
+            details: ['Hero hits goblin for 12 DMG'],
+            timeline: [{ attackerHp: 100, defenderHp: 88 }]
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="pve"
+                monsterId="goblin"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2500); });
+        act(() => { vi.advanceTimersByTime(500); });
+        act(() => { vi.advanceTimersByTime(1000); });
+        act(() => { vi.advanceTimersByTime(600); });
+
+        // The monster has its own artwork: nothing on the PvE side may be flipped.
+        expect(container.querySelector('.fighter-side.right canvas[data-flip="on"]')).toBeNull();
+        expect(container.querySelectorAll('canvas[data-flip="on"]').length).toBe(0);
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
 });
