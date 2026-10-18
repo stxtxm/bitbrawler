@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-18T17:13:08Z",
+  "last_session": "2026-10-18T17:46:37Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR #1215 : branche empilee (commits deja merges via #1212/#1214) => mergeable CONFLICTING sur .github/workflows/opencode.yml + AGENTS.md ; CI workflow_dispatch verte sur le SHA de tete mais rollup PR vide. Toujours verifier mergeable/mergeStateStatus via gh pr view AVANT de statuer, et faire git merge-tree pour lister les conflits.",
-      "issue": "PR #1215",
+      "lesson": "PR #1218 (commit authored par opencode-agent) modifiait .github/workflows/opencode.yml + reviewer.yml : politique projet = les agents ne touchent JAMAIS aux workflows (dev-agent.md:241, supervisor.md:135, orchestrator.json). Verifier l'auteur du commit (git log -1 --format=%an) et l'historique (git log -- .github/workflows/) avant de merger une PR CI. Correctif a porter par un humain via issue SANS /oc.",
+      "issue": "#1218",
       "date": "2026-10-18"
     }
   ]
