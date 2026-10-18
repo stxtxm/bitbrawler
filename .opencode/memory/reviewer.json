@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-18T17:58:25Z",
+  "last_session": "2026-10-18T18:27:29Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "Le test monster-utils 'getRandomMonsterId at mid level' est flaky (~0.3%, Math.random non seede, pool lvl15 = 7 monstres) : un gate local peut echouer au 1er run puis passer. Verifier en isolant le fichier avant de conclure a une regression. Issue de suivi #1221 creee.",
-      "pr": "#1220",
+      "lesson": "PR #1224 : `gh pr checks <N>` peut afficher « no checks reported » alors qu'un check-run 'check' existe et est vert sur le SHA de tête. Vérifier via `gh api repos/OWNER/REPO/commits/<SHA>/check-runs` avant de conclure à l'absence de CI.",
+      "issue": "#1224",
       "date": "2026-10-18"
     }
   ]
