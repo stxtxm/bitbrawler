@@ -140804,5 +140804,276 @@
       "purchased_offer": 0,
       "essence_after_purchase": 153
     }
+  },
+  {
+    "date": "2026-10-18T15:07:00.460Z",
+    "run": "2026-10-18",
+    "character": "QA-PERSI-9",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 73,
+        "fight_duration_ms": 11350,
+        "max_hp": 456,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 225.45
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 2,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 18,
+      "vit": 10,
+      "dex": 7,
+      "luk": 13,
+      "int": 43,
+      "foc": 19,
+      "fights": 0
+    },
+    "initial_level": 22,
+    "initial_xp": {
+      "current": 3001,
+      "max": 19686
+    },
+    "initial_max_hp": 456,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 22,
+      "xp": 3757,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 19,
+      "vit": 10,
+      "dex": 7,
+      "luk": 13,
+      "int": 44,
+      "foc": 20,
+      "last xp": 95,
+      "fights": 3
+    },
+    "final_max_hp": 456,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20468,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "ogre",
+        "wraith"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 131,
+      "xp_events": [
+        {
+          "time_ms": 15413,
+          "xp": 36,
+          "monster": "ogre",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15928,
+          "xp": 95,
+          "monster": "wraith",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        513,
+        1541,
+        15413
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 36,
+        "essence": 0.5,
+        "monster": "ogre"
+      },
+      {
+        "result": "victory",
+        "xp": 95,
+        "essence": 0.49,
+        "monster": "wraith"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 3.17,
+      "next_level_eta": "⬆ 33m 48s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.44x",
+      "interval": "12.0s",
+      "streak_bonus": "🔥 1-win streak (+25%)"
+    },
+    "initial_essence": 199.23,
+    "final_essence": 223.08,
+    "essence": {
+      "before_idle": 199.23,
+      "after_idle": 200.22,
+      "per_fight": [
+        225.45
+      ],
+      "forge_before": 225,
+      "forge_after_salvage": 245,
+      "forge_after_fusion": 245,
+      "forge_after_upgrade": 245,
+      "forge_after": 245,
+      "shop_before": 246,
+      "shop_after": 223,
+      "final": 223.08,
+      "flow": {
+        "idle_gained": 0.99,
+        "fights_change": null,
+        "salvage_gained": 20,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 20,
+        "shop_cost": 23,
+        "net_change": 23.85
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 225,
+      "essence_after_salvage": 245,
+      "essence_after_fusion": 245,
+      "essence_after_upgrade": 245,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": 245,
+      "items_after": null,
+      "salvage_essence_gained": 20,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 23,
+      "essence_before": 246,
+      "essence_after": 223,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Novice Wrap",
+            "rarity": "UNCOMMON",
+            "price": 24
+          },
+          {
+            "name": "Voidreaper",
+            "rarity": "EPIC",
+            "price": 48
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 41
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 223
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1077,
+      "arena": 655
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Novice Wrap",
+          "rarity": "UNCOMMON",
+          "price": 24
+        },
+        {
+          "name": "Voidreaper",
+          "rarity": "EPIC",
+          "price": 48
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 41
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 223
+    }
   }
 ]
