@@ -139215,5 +139215,265 @@
       "purchased_offer": 0,
       "essence_after_purchase": 234
     }
+  },
+  {
+    "date": "2026-10-18T01:01:28.240Z",
+    "run": "2026-10-18",
+    "character": "QA-PERSI-8",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 81,
+        "fight_duration_ms": 15253,
+        "max_hp": 508,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 312.41
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Phoenix Talisman",
+      "rarity": "EPIC",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 6,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 14,
+      "vit": 14,
+      "dex": 10,
+      "luk": 12,
+      "int": 39,
+      "foc": 16,
+      "fights": 0
+    },
+    "initial_level": 25,
+    "initial_xp": {
+      "current": 4071,
+      "max": 24309
+    },
+    "initial_max_hp": 548,
+    "initial_equipment": [],
+    "initial_streak": 2,
+    "final_stats": {
+      "level": 25,
+      "xp": 4303,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 15,
+      "vit": 15,
+      "dex": 10,
+      "luk": 12,
+      "int": 36,
+      "foc": 17,
+      "last xp": 40,
+      "fights": 4
+    },
+    "final_max_hp": 508,
+    "final_equipment": [],
+    "final_streak": 2,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 33071,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "ogre"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 38,
+      "xp_events": [
+        {
+          "time_ms": 33071,
+          "xp": 38,
+          "monster": "ogre",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        514,
+        1537,
+        33071
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 38,
+        "essence": 0.55,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 3.09,
+      "next_level_eta": "⬆ 35m 53s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.33x",
+      "interval": "12.0s",
+      "streak_bonus": null
+    },
+    "initial_essence": 291.86,
+    "final_essence": 260.54,
+    "essence": {
+      "before_idle": 291.86,
+      "after_idle": 292.41,
+      "per_fight": [
+        312.41
+      ],
+      "forge_before": 312,
+      "forge_after_salvage": 332,
+      "forge_after_fusion": 332,
+      "forge_after_upgrade": 282,
+      "forge_after": 282,
+      "shop_before": 284,
+      "shop_after": 260,
+      "final": 260.54,
+      "flow": {
+        "idle_gained": 0.55,
+        "fights_change": null,
+        "salvage_gained": 20,
+        "fusion_cost": 0,
+        "upgrade_cost": 50,
+        "forge_net": -30,
+        "shop_cost": 24,
+        "net_change": -31.32
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 312,
+      "essence_after_salvage": 332,
+      "essence_after_fusion": 332,
+      "essence_after_upgrade": 282,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 282,
+      "items_after": 0,
+      "salvage_essence_gained": 20,
+      "fusion_cost": null,
+      "upgrade_cost": 50,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "COMMON",
+      "cost": 24,
+      "essence_before": 284,
+      "essence_after": 260,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Mana Ring",
+            "rarity": "UNCOMMON",
+            "price": 24
+          },
+          {
+            "name": "Flame Dagger",
+            "rarity": "EPIC",
+            "price": 73
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 41
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 260
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1094,
+      "arena": 691
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Mana Ring",
+          "rarity": "UNCOMMON",
+          "price": 24
+        },
+        {
+          "name": "Flame Dagger",
+          "rarity": "EPIC",
+          "price": 73
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 41
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 260
+    }
   }
 ]
