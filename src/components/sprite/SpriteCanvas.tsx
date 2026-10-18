@@ -75,14 +75,14 @@ export const SpriteCanvas = memo(function SpriteCanvas({
     const idling = activeAnim === 'idle' && frames && frames.length > 0;
     const victory = activeAnim === 'victory' && frames && frames.length > 0;
     const swayX = running
-      ? ([1, 0, -1, 0][frameIdx % frames.length] ?? 0)
+      ? ([1, 1, 0, -1, -1, 0][frameIdx % frames.length] ?? 0)
       : idling
-        ? ([0, 1, 1, 0][frameIdx % frames.length] ?? 0)
+        ? ([0, 1, 1, 0, -1, 0][frameIdx % frames.length] ?? 0)
         : 0;
     const swingX = running
-      ? ([-1, 0, 1, 0][frameIdx % 4] ?? 0)
+      ? ([-1, -1, 0, 1, 1, 0][frameIdx % frames.length] ?? 0)
       : idling
-        ? ([0, 0, 1, 0][frameIdx % 4] ?? 0)
+        ? ([0, 0, 1, 0, 0, 0][frameIdx % frames.length] ?? 0)
         : 0;
     const punchTrail = (activeAnim === 'attack' && frameIdx === 1) || (victory && frameIdx === 1) ? 3 : 0;
     const overlaid = applyEquipmentOverlays(base.grid, base.palette, resolveLoadout(equippedItems), { swayX, swingX, punchTrail });
