@@ -549,7 +549,7 @@ jobs:
           echo "✅ PR #$PR_NUMBER already has all CI green — auto-merging via inline reviewer"
 
           # --- DAG dependency check (dédup sort -u : le body peut lister 2× la même dep) ---
-          DEPS=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body' 2>/dev/null | grep -oiE 'depends-on:\s*#[0-9]+([,\s]*#[0-9]+)*' | grep -oE '#[0-9]+' | tr -d '#' | sort -u -n || echo "")
+          DEPS=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body' 2>/dev/null | grep -oiE 'depends-on:\s*#+[0-9]+([,\s]*#+[0-9]+)*' | grep -oE '#+[0-9]+' | tr -d '#' | sort -u -n || echo "")
           if [ -n "$DEPS" ]; then
             ALL_RESOLVED=true
             for DEP in $DEPS; do
@@ -624,10 +624,15 @@ jobs:
           gh issue comment "$ISSUE_NUMBER" --body "✅ Auto-dev terminé : PR #$PR_NUMBER mergée ([run]($RUN_URL))." 2>/dev/null || true
           gh issue close "$ISSUE_NUMBER" --reason completed 2>/dev/null || echo "⚠ Fermeture issue #$ISSUE_NUMBER à vérifier manuellement"
 
-          # --- Post-merge: re-trigger dependant PRs ---
-          echo "🔍 Looking for PRs that depend on #$ISSUE_NUMBER..."
+          # --- Post-merge: lancer les dépendants du DAG ---
+          # Deux cas, et le second manquait : un dépendant qui a DÉJÀ une PR doit être
+          # ré-évalué, mais une sous-issue neuve (aucune PR) doit être LANCÉE. Sans ça la
+          # campagne s'arrête au premier maillon (2026-10-18 : #1202 mergée → #1203 jamais
+          # dispatchée, personne ne la réclame) : le dispatch d'origine ne couvrait que les
+          # PR existantes.
+          echo "🔍 Looking for issues that depend on #$ISSUE_NUMBER..."
           DEPENDANT_ISSUES=$(gh issue list --state open --json number,body --jq '
-            .[] | select(.body | test("depends-on:\\s*(#[0-9]+[,\\s]*)*#'"$ISSUE_NUMBER"'", "i")) | .number
+            .[] | select(.body | test("depends-on:\\s*(#+[0-9]+[,\\s]*)*#+'"$ISSUE_NUMBER"'([^0-9]|$)"; "i")) | .number
           ' 2>/dev/null || echo "")
           for DEP_ISSUE in $DEPENDANT_ISSUES; do
             DEP_PR=$(gh pr list --state open --head "feat/auto-$DEP_ISSUE" --json number --jq '.[0].number' 2>/dev/null || echo "")
@@ -635,7 +640,31 @@ jobs:
               echo "🔄 Re-dispatching opencode.yml for PR #$DEP_PR (issue #$DEP_ISSUE)"
               gh workflow run opencode.yml -f issue_number="$DEP_ISSUE" --repo "${{ github.repository }}"
               sleep 3
+              continue
             fi
+
+            # Aucune PR : ne lancer QUE si TOUTES les dépendances de la sous-issue sont
+            # fermées (sinon on coderait une brique dont l'API n'existe pas encore).
+            DEP_BODY=$(gh issue view "$DEP_ISSUE" --json body --jq '.body // ""' 2>/dev/null || echo "")
+            PENDING=0
+            for UPSTREAM in $(echo "$DEP_BODY" | grep -oiE 'depends-on:\s*#+[0-9]+([,\s]*#+[0-9]+)*' | grep -oE '#+[0-9]+' | tr -d '#' | sort -u -n); do
+              UPSTREAM_STATE=$(gh issue view "$UPSTREAM" --json state --jq '.state' 2>/dev/null || echo UNKNOWN)
+              if [ "$UPSTREAM_STATE" != "CLOSED" ]; then
+                echo "⏳ #$DEP_ISSUE attend encore #$UPSTREAM ($UPSTREAM_STATE)"
+                PENDING=1
+              fi
+            done
+            if [ "$PENDING" -eq 1 ]; then continue; fi
+
+            # Claim anti-doublon : le dev workflow pose ce label au démarrage.
+            if gh issue view "$DEP_ISSUE" --json labels --jq '[.labels[].name]|join(",")' 2>/dev/null | grep -qE '(^|,)dispatched(,|$)'; then
+              echo "⚠ #$DEP_ISSUE déjà claim (label dispatched) — skip"
+              continue
+            fi
+
+            echo "🚀 Dependencies resolved — dispatching dev-agent for #$DEP_ISSUE"
+            gh workflow run opencode.yml -f issue_number="$DEP_ISSUE" --repo "${{ github.repository }}"
+            sleep 3
           done
 
       - name: Implement (fix existing PR)
@@ -959,6 +988,11 @@ jobs:
                 COMMITS=$(git log --oneline origin/master..HEAD 2>/dev/null | wc -l)
                 if [ "$COMMITS" -eq 0 ]; then
                   echo "No commits found — no changes to push"
+                  # Le dev-agent n'a rien produit (modèle muet, tâche déjà couverte…).
+                  # Sans libérer le claim, la sous-issue reste « dispatched » à vie :
+                  # plus personne ne la relance et la campagne reste bloquée derrière
+                  # (2026-10-18 : #1203, run sans commit, claim jamais rendu).
+                  gh issue edit "$ISSUE_NUMBER" --remove-label "dispatched" 2>/dev/null || true
                   echo "PR_NUMBER=" >> $GITHUB_OUTPUT
                   exit 0
                 fi
