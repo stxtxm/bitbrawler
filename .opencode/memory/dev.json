@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-18T14:24:58Z",
+  "last_session": "2026-10-18T15:26:27Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -113,6 +113,11 @@
       ],
       "issues_encountered": [],
       "lesson": ""
+    },
+    {
+      "date": "2026-10-18",
+      "issue": "#1202",
+      "lesson": "art:sheet (#1202) — scripts/*.mjs peuvent importer le TS de src/ en passant par tsx : 'art:sheet': 'tsx scripts/render-sprite-sheet.mjs' (tsx déjà devDep, aucune dépendance ajoutée). à l'inverse de gen-icons.mjs (JS pur, node direct). Le test vitest peut importer ce .mjs direct : vite transforme l'import TS. Piège tsc : target ES2020 interdit Array.prototype.at() dans les tests -> utiliser [len-1]. Encodeur PNG non carré : stride = width*4+1, Buffer.from(rgba.buffer, offset, len) et non rgba.copy."
     }
   ]
 }
