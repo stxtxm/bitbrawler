@@ -226,5 +226,6 @@ Chaque run de QA génère des statistiques enrichies :
 - ✅ **PvE observation idle** 30s avec phases, XP, streak, FX
 - ✅ **Offline gains** testé avec reload + claim
 - ✅ **Forge** testée automatiquement après lootbox
-- ✅ **Shop** (8-Bit Emporium) testé après la forge — navigation onglet, lecture offres, achat si assez d'essence
+- ✅ **Shop** (8-Bit Emporium) testé après la forge — navigation onglet, lecture offres, achat si assez d'essence **ET si le prix tient dans le budget de la cohorte QA du run** (#1230)
+- ✅ **Cohortes QA v2** (#1230) : le profil est résolu au début du run depuis le niveau (`QA-FRESH` 1-5 / `QA-MID` 6-21 / `QA-END` 22+, budgets 50/150/400 💎), enregistré dans `cohort` et rappelé dans les logs. Un achat non tenté parce que l'offre abordable dépasse le budget est marqué `shop_data.budget_limited: true` — c'est le signal prix, pas un bug
 - ✅ **Plus d'overlay legacy** vérifié à chaque run

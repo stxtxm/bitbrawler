@@ -94,3 +94,22 @@ export declare function aggregateSkipReasons(
 ): Record<string, number>
 
 export declare function formatSkipSummary(summary: Record<string, number> | null | undefined): string
+
+export declare interface QaCohort {
+  /** Nom du profil persistant (`QA-FRESH`, `QA-MID`, `QA-END`). */
+  name: string
+  /** Niveau minimum du personnage pour ce profil. */
+  minLevel?: number
+  /** Niveau maximum (absent = pas de plafond). */
+  maxLevel?: number
+  /** Dépense maximale (💎) pour une seule offre shop (#1230). */
+  essenceBudget: number
+}
+
+export declare function resolveShopCohort(
+  cohorts: QaCohort[] | null | undefined,
+  level: number | null | undefined,
+  explicitName?: string | null,
+): QaCohort | null
+
+export declare function isPurchaseWithinBudget(price: number | null | undefined, budget: number | null | undefined): boolean

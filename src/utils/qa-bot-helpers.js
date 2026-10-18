@@ -209,3 +209,45 @@ export function formatSkipSummary(summary) {
   entries.sort((a, b) => b[1] - a[1])
   return `skipped: ${entries.map(([reason, count]) => `${count} ${reason}`).join(', ')}`
 }
+
+/**
+ * Cohortes QA v2 (#1230).
+ *
+ * Un seul profil QA persistait : il thésaurisait (435 💎 de moyenne pour une
+ * offre minimale à 24 💎) et achetait donc mécaniquement — real_purchase_rate
+ * saturé à 100 % sur les 20 derniers runs, cinq cycles de hausse des prix +10 %
+ * (#1033→#1182) sans aucun effet mesurable. Chaque cohorte cappe la dépense
+ * d'une offre à son budget : la métrique redevient sensible au prix.
+ *
+ * Le profil est résolu depuis le niveau du personnage au début du run (les
+ * générations du persistant traversent naturellement 1→30, et le run
+ * « fresh character » hebdomadaire couvre la première session), ou forcé via
+ * QA_COHORT pour un run ciblé.
+ */
+export function resolveShopCohort(cohorts, level, explicitName = null) {
+  if (!Array.isArray(cohorts) || cohorts.length === 0) return null
+  if (explicitName) {
+    const forced = cohorts.find((cohort) => cohort && cohort.name === explicitName)
+    if (forced) return forced
+    return null
+  }
+  if (typeof level !== 'number' || !Number.isFinite(level)) return null
+  const band = cohorts.find((cohort) => {
+    if (!cohort) return false
+    const min = typeof cohort.minLevel === 'number' ? cohort.minLevel : 0
+    const max = typeof cohort.maxLevel === 'number' ? cohort.maxLevel : Number.MAX_SAFE_INTEGER
+    return level >= min && level <= max
+  })
+  return band ?? null
+}
+
+/**
+ * Un profil QA n'achète une offre que si son prix tient dans son budget de
+ * dépense. Sans budget (runs historiques, budget désactivé), on garde le
+ * comportement d'avant : seule l'affordabilité (essence) décide.
+ */
+export function isPurchaseWithinBudget(price, budget) {
+  if (typeof price !== 'number' || !Number.isFinite(price)) return false
+  if (typeof budget !== 'number' || !Number.isFinite(budget) || budget <= 0) return true
+  return price <= budget
+}

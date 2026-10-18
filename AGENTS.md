@@ -706,6 +706,11 @@ gh workflow run qa-tester.yml
 - ✅ Lootbox system works (can claim, get items)
 - ✅ No crashes or errors
 - ✅ Stats are collected correctly
+- ✅ **Cohortes QA v2 (#1230)** — profil de dépense résolu au début du run depuis le
+  niveau (`QA-FRESH` 1-5 / `QA-MID` 6-21 / `QA-END` 22+, budgets 50/150/400 💎 dans
+  `qa/qa-bot.config.js`) ; `shop_data.budget_limited` = offre abordable mais refusée
+  car au-dessus du budget du profil → le signal prix qui remplace le taux saturé du
+  persistant thésauriseur (voir #1230)
 
 ### Data Usage
 

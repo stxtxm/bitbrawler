@@ -20,6 +20,8 @@ import {
   capFightAttempts,
   aggregateSkipReasons,
   formatSkipSummary,
+  resolveShopCohort,
+  isPurchaseWithinBudget,
 } from '../../utils/qa-bot-helpers'
 
 // ── Types matching RunRecord from analyze-qa-stats.ts ──
@@ -73,6 +75,7 @@ interface RunRecord {
   character_action?: string | null
   replaced_character?: string | null
   character_type?: 'fresh' | 'persistent' | null
+  cohort?: { name: string; essence_budget: number | null } | null
   final_stats?: { level: number | null; xp: number | null; wins: number | null; losses: number | null } | null
   pve_data?: {
     fights: number
@@ -96,6 +99,9 @@ interface RunRecord {
     offers?: Array<{ name: string; rarity?: string | null; price: number | null }>
     purchased_offer?: number | null
     essence_after_purchase?: number | null
+    essence_budget?: number | null
+    budget_limited?: boolean | null
+    budget_blocked_price?: number | null
   }
   skipped_fights?: Array<{ index: number; reason: string }>
   essence?: {
@@ -350,12 +356,13 @@ function computeHpAnalysis(runs: RunRecord[]): HpAnalysis | null {
   }
 }
 
-// ── Shop simulated affordability (mirror of analyze-qa-stats.ts #711) ──
+// ── Shop simulated affordability (mirror of analyze-qa-stats.ts #711/#1230) ──
 // Real shop purchases are near-impossible for fresh/mid-game QA characters
 // (prices 150/250/350 💎 vs avg ~14 💎), so avg_shop_spent stays null and the
 // economic balance is blind. We simulate rational purchases from the observed
 // offer pool + essence_before: a run "would purchase" when it can afford the
-// cheapest offer, and the simulated_purchase_rate proxies the real rate.
+// cheapest offer WITHIN its cohort budget (#1230 — the shared rule lives in
+// qa-bot-helpers so the bot and the analyzer can never drift apart).
 
 interface ShopSimulatedAnalysis {
   runs_with_shop_data: number
@@ -368,6 +375,7 @@ interface ShopSimulatedAnalysis {
   avg_affordable_offer_count: number | null
   would_purchase_runs: number
   simulated_purchase_rate: number | null
+  budget_limited_runs: number
 }
 
 function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis | null {
@@ -381,6 +389,7 @@ function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis 
   const rarityDist: Record<string, number> = {}
   let affordableTotal = 0
   let wouldPurchaseRuns = 0
+  let budgetLimitedRuns = 0
   let essenceSum = 0
   let essenceCount = 0
 
@@ -399,12 +408,16 @@ function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis 
     }
 
     const essenceBefore = r.shop?.essence_before ?? r.essence?.shop_before
+    const budget = r.cohort?.essence_budget ?? null
     if (typeof essenceBefore === 'number') {
       essenceSum += essenceBefore
       essenceCount++
       affordableTotal += prices.filter(p => p <= essenceBefore).length
-      if (prices.length > 0 && essenceBefore >= Math.min(...prices)) {
+      const purchasable = prices.filter(p => p <= essenceBefore && isPurchaseWithinBudget(p, budget))
+      if (purchasable.length > 0) {
         wouldPurchaseRuns++
+      } else if (typeof budget === 'number' && prices.some(p => p <= essenceBefore)) {
+        budgetLimitedRuns++
       }
     }
   }
@@ -424,13 +437,27 @@ function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis 
       : null,
     would_purchase_runs: wouldPurchaseRuns,
     simulated_purchase_rate: Math.round((wouldPurchaseRuns / runsWithShopData.length) * 1000) / 1000,
+    budget_limited_runs: budgetLimitedRuns,
   }
 }
 
-// ── Shop real purchase analysis (mirror of analyze-qa-stats.ts #1229) ──
+// ── Shop real purchase analysis (mirror of analyze-qa-stats.ts #1229/#1230) ──
 // Runs already carry the real purchase outcome (shop.purchased, shop.cost,
 // shop.item_rarity, shop_data.purchased_offer); the analyzer previously ignored
 // them and drove pricing decisions from the simulated affordability proxy alone.
+// #1230 adds the per-cohort breakdown: the single hoarding profile saturated the
+// rate, so each QA cohort now reports its own rate and its budget-blocked runs.
+
+interface ShopCohortAnalysis {
+  cohort: string
+  essence_budget: number | null
+  runs_with_shop_data: number
+  runs_with_purchase: number
+  real_purchase_rate: number | null
+  budget_limited_runs: number
+  avg_essence_before: number | null
+  min_offer_price: number | null
+}
 
 interface ShopRealAnalysis {
   runs_with_shop_data: number
@@ -439,6 +466,8 @@ interface ShopRealAnalysis {
   avg_purchase_cost: number | null
   purchase_rarity_distribution: Record<string, number>
   cheapest_offer_share: number | null
+  budget_limited_runs: number
+  cohorts: ShopCohortAnalysis[]
 }
 
 const REAL_SHOP_MIN_RUNS = 10
@@ -467,6 +496,39 @@ function computeShopRealAnalysis(runs: RunRecord[]): ShopRealAnalysis | null {
   const purchasesWithIndex = purchasedRuns.filter(r => typeof r.shop_data.purchased_offer === 'number')
   const cheapestPurchases = purchasesWithIndex.filter(r => r.shop_data.purchased_offer === 0)
 
+  const budgetLimitedRuns = runsWithShopData.filter(r => r.shop_data?.budget_limited === true).length
+
+  const cohortGroups = new Map<string, RunRecord[]>()
+  for (const r of runsWithShopData) {
+    const name = r.cohort?.name ?? 'unsegmented'
+    const group = cohortGroups.get(name)
+    if (group) group.push(r)
+    else cohortGroups.set(name, [r])
+  }
+  const cohorts: ShopCohortAnalysis[] = [...cohortGroups.entries()]
+    .map(([name, group]) => {
+      const purchased = group.filter(r => r.shop?.purchased === true).length
+      const prices = group
+        .flatMap(r => (r.shop_data?.offers ?? []).map(o => o.price))
+        .filter((p): p is number => typeof p === 'number')
+      const essences = group
+        .map(r => r.shop?.essence_before ?? r.essence?.shop_before)
+        .filter((e): e is number => typeof e === 'number')
+      return {
+        cohort: name,
+        essence_budget: group[0]?.cohort?.essence_budget ?? null,
+        runs_with_shop_data: group.length,
+        runs_with_purchase: purchased,
+        real_purchase_rate: Math.round((purchased / group.length) * 1000) / 1000,
+        budget_limited_runs: group.filter(r => r.shop_data?.budget_limited === true).length,
+        avg_essence_before: essences.length > 0
+          ? Math.round((essences.reduce((s, e) => s + e, 0) / essences.length) * 100) / 100
+          : null,
+        min_offer_price: prices.length > 0 ? Math.min(...prices) : null,
+      }
+    })
+    .sort((a, b) => a.cohort.localeCompare(b.cohort))
+
   return {
     runs_with_shop_data: runsWithShopData.length,
     runs_with_purchase: purchasedRuns.length,
@@ -478,6 +540,8 @@ function computeShopRealAnalysis(runs: RunRecord[]): ShopRealAnalysis | null {
     cheapest_offer_share: purchasesWithIndex.length > 0
       ? Math.round((cheapestPurchases.length / purchasesWithIndex.length) * 1000) / 1000
       : null,
+    budget_limited_runs: budgetLimitedRuns,
+    cohorts,
   }
 }
 
@@ -491,6 +555,9 @@ function shopRealSuggestions(real: ShopRealAnalysis | null): string[] {
   }
   if (real.cheapest_offer_share !== null && real.cheapest_offer_share >= 0.95) {
     out.push(`Real shop purchases target the cheapest offer (share ${(real.cheapest_offer_share * 100).toFixed(0)}%) — calibrate on cost relative to essence, not the raw purchase rate.`)
+  }
+  if (real.budget_limited_runs > 0) {
+    out.push(`QA cohort budgets (#1230) blocked ${real.budget_limited_runs}/${real.runs_with_shop_data} shop runs — that is the price signal. Read the cohorts before acting on the raw rate.`)
   }
   return out
 }
@@ -3844,5 +3911,208 @@ describe('QA Bot Energy Skip Contract (#1197)', () => {
       expect(fn).toContain("reason: 'pve_locked'")
       expect(fn).toContain("'not_attackable'")
     })
+  })
+})
+
+describe('QA Cohort v2 (#1230) — le taux shop redevient sensible au prix', () => {
+  // Avant : un seul profil persistant thésaurisait 435 💎 pour une offre min à
+  // 24 💎 → real_purchase_rate saturé (83,8 %, 100 % sur les 20 derniers runs) et
+  // cinq cycles de hausse des prix +10 % (#1033→#1182) sans effet mesurable.
+  // Maintenant : chaque profil plafonne la dépense d'UNE offre à son budget ;
+  // un run « budget limited » (abordable mais hors budget) est le signal prix.
+  const COHORTS = [
+    { name: 'QA-FRESH', minLevel: 1, maxLevel: 5, essenceBudget: 50 },
+    { name: 'QA-MID', minLevel: 6, maxLevel: 21, essenceBudget: 150 },
+    { name: 'QA-END', minLevel: 22, essenceBudget: 400 },
+  ]
+
+  function shopRun(opts: {
+    cohort?: { name: string; essence_budget: number | null } | null
+    prices: number[]
+    essenceBefore: number
+    purchased?: boolean
+    budgetLimited?: boolean
+  }): RunRecord {
+    return {
+      date: '2026-10-19',
+      run: 'qa',
+      character: 'QA-PERSIST',
+      fights: [],
+      errors: [],
+      shop: {
+        essence_before: opts.essenceBefore,
+        essence_after: opts.essenceBefore,
+        purchased: opts.purchased ?? false,
+        cost: null,
+        item_rarity: null,
+      },
+      shop_data: {
+        offers: opts.prices.map((price, index) => ({ name: `offer-${index}`, rarity: 'rare', price })),
+        purchased_offer: opts.purchased ? 0 : null,
+        essence_after_purchase: null,
+        essence_budget: opts.cohort?.essence_budget ?? null,
+        budget_limited: opts.budgetLimited ?? false,
+      },
+      cohort: opts.cohort ?? null,
+    }
+  }
+
+  describe('resolveShopCohort', () => {
+    it('résout le profil depuis le niveau du personnage au début du run', () => {
+      expect(resolveShopCohort(COHORTS, 3)?.name).toBe('QA-FRESH')
+      expect(resolveShopCohort(COHORTS, 5)?.name).toBe('QA-FRESH')
+      expect(resolveShopCohort(COHORTS, 6)?.name).toBe('QA-MID')
+      expect(resolveShopCohort(COHORTS, 21)?.name).toBe('QA-MID')
+      expect(resolveShopCohort(COHORTS, 22)?.name).toBe('QA-END')
+      expect(resolveShopCohort(COHORTS, 30)?.name).toBe('QA-END')
+    })
+
+    it('QA_COHORT force un profil, un nom inconnu rend le run legacy', () => {
+      expect(resolveShopCohort(COHORTS, 30, 'QA-FRESH')?.name).toBe('QA-FRESH')
+      expect(resolveShopCohort(COHORTS, 3, 'NOPE')).toBeNull()
+    })
+
+    it('reste silencieux sans niveau lisible ou sans cohortes configurées', () => {
+      expect(resolveShopCohort(COHORTS, null)).toBeNull()
+      expect(resolveShopCohort(COHORTS, NaN)).toBeNull()
+      expect(resolveShopCohort([], 10)).toBeNull()
+      expect(resolveShopCohort(undefined, 10)).toBeNull()
+    })
+  })
+
+  describe('isPurchaseWithinBudget (la règle partagée bot/analyse)', () => {
+    it('plafonne la dépense d\'une seule offre', () => {
+      expect(isPurchaseWithinBudget(27, 50)).toBe(true)
+      expect(isPurchaseWithinBudget(50, 50)).toBe(true)
+      expect(isPurchaseWithinBudget(80, 50)).toBe(false)
+    })
+
+    it('sans budget, garde la règle d\'affordabilité d\'avant (runs historiques)', () => {
+      expect(isPurchaseWithinBudget(27, null)).toBe(true)
+      expect(isPurchaseWithinBudget(27, undefined)).toBe(true)
+      expect(isPurchaseWithinBudget(27, 0)).toBe(true)
+    })
+
+    it('refuse une offre sans prix connu', () => {
+      expect(isPurchaseWithinBudget(null, 50)).toBe(false)
+      expect(isPurchaseWithinBudget(undefined, 50)).toBe(false)
+    })
+  })
+
+  describe('computeShopSimulatedAnalysis', () => {
+    it('ne compte plus un run bridé par le budget comme un achat', () => {
+      const runs = [
+        shopRun({ cohort: { name: 'QA-FRESH', essence_budget: 20 }, prices: [27, 53], essenceBefore: 435 }),
+        shopRun({ cohort: { name: 'QA-FRESH', essence_budget: 50 }, prices: [27, 53], essenceBefore: 435, purchased: true }),
+      ]
+
+      const analysis = computeShopSimulatedAnalysis(runs)
+
+      expect(analysis?.runs_with_shop_data).toBe(2)
+      expect(analysis?.would_purchase_runs).toBe(1)
+      expect(analysis?.simulated_purchase_rate).toBe(0.5)
+      expect(analysis?.budget_limited_runs).toBe(1)
+    })
+
+    it('sans cohorte (runs d\'avant #1230), l\'affordabilité seule décide', () => {
+      const runs = [shopRun({ prices: [27, 53], essenceBefore: 435 })]
+
+      const analysis = computeShopSimulatedAnalysis(runs)
+
+      expect(analysis?.would_purchase_runs).toBe(1)
+      expect(analysis?.budget_limited_runs).toBe(0)
+    })
+  })
+
+  describe('computeShopRealAnalysis — ventilation par cohorte', () => {
+    it('expose taux, budget et runs bridés pour chaque profil', () => {
+      const runs = [
+        shopRun({ cohort: { name: 'QA-FRESH', essence_budget: 50 }, prices: [27, 53], essenceBefore: 60, purchased: true }),
+        shopRun({ cohort: { name: 'QA-FRESH', essence_budget: 50 }, prices: [27, 53], essenceBefore: 90 }),
+        shopRun({ cohort: { name: 'QA-END', essence_budget: 400 }, prices: [27, 53], essenceBefore: 435, budgetLimited: true }),
+      ]
+
+      const analysis = computeShopRealAnalysis(runs)
+
+      expect(analysis?.budget_limited_runs).toBe(1)
+      expect(analysis?.cohorts.map(c => c.cohort)).toEqual(['QA-END', 'QA-FRESH'])
+
+      const fresh = analysis?.cohorts.find(c => c.cohort === 'QA-FRESH')
+      expect(fresh).toMatchObject({
+        essence_budget: 50,
+        runs_with_shop_data: 2,
+        runs_with_purchase: 1,
+        real_purchase_rate: 0.5,
+        budget_limited_runs: 0,
+        min_offer_price: 27,
+      })
+
+      const end = analysis?.cohorts.find(c => c.cohort === 'QA-END')
+      expect(end).toMatchObject({
+        essence_budget: 400,
+        runs_with_shop_data: 1,
+        runs_with_purchase: 0,
+        real_purchase_rate: 0,
+        budget_limited_runs: 1,
+      })
+    })
+
+    it('regroupe les runs sans cohorte sous unsegmented (rétrocompatibilité)', () => {
+      const runs = [shopRun({ prices: [27], essenceBefore: 300, purchased: true })]
+
+      const analysis = computeShopRealAnalysis(runs)
+
+      expect(analysis?.cohorts).toHaveLength(1)
+      expect(analysis?.cohorts[0]).toMatchObject({
+        cohort: 'unsegmented',
+        essence_budget: null,
+        runs_with_purchase: 1,
+        real_purchase_rate: 1,
+      })
+    })
+  })
+
+  describe('suggestions de prix', () => {
+    it('signale un taux porté par des runs bridés par l\'instrument', () => {
+      const runs = Array.from({ length: 10 }, () =>
+        shopRun({
+          cohort: { name: 'QA-FRESH', essence_budget: 20 },
+          prices: [27, 53],
+          essenceBefore: 435,
+          budgetLimited: true,
+        }),
+      )
+
+      const analysis = computeShopRealAnalysis(runs)
+      const suggestions = shopRealSuggestions(analysis)
+
+      expect(suggestions.some(s => s.includes('consider lowering') || s.includes('Consider lowering'))).toBe(true)
+      expect(suggestions.some(s => s.includes('#1230') && s.includes('price signal'))).toBe(true)
+    })
+  })
+})
+
+describe('QA Bot Cohort v2 Contract (#1230)', () => {
+  // Le miroir ci-dessus couvre la logique d'analyse ; ce contrat verrouille le
+  // câblage réel dans le bot : profil résolu une fois au début du run, budget
+  // appliqué à la décision d'achat, cohorte transmise au test shop et
+  // enregistrée dans le run record (sans quoi la ventilation par cohorte
+  // resterait vide et le taux shop retomberait sur la thésaurisation).
+  const qaBotSource = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
+
+  it('résout le profil au début du run et l\'enregistre dans le run record', () => {
+    expect(qaBotSource).toContain('resolveShopCohort(config.cohorts, runRecord.initial_level, config.cohort)')
+    expect(qaBotSource).toContain('runRecord.cohort = { name: cohort.name, essence_budget: cohort.essenceBudget }')
+  })
+
+  it('applique le budget de cohorte à chaque offre avant d\'acheter', () => {
+    expect(qaBotSource).toContain('isPurchaseWithinBudget(price, essenceBudget)')
+    expect(qaBotSource).toContain('shopResult.shop_data.budget_limited = true')
+    expect(qaBotSource).toContain('shopResult.shop_data.budget_blocked_price = budgetBlockedPrice')
+  })
+
+  it('transmet la cohorte au test shop et documente le refus d\'achat', () => {
+    expect(qaBotSource).toContain('testShopSystem(page, runKey, shopLevel, runRecord.cohort)')
+    expect(qaBotSource).toContain('async function testShopSystem(page, runKey, characterLevel = null, cohort = null)')
   })
 })

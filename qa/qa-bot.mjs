@@ -22,6 +22,8 @@ import {
   capFightAttempts,
   aggregateSkipReasons,
   formatSkipSummary,
+  resolveShopCohort,
+  isPurchaseWithinBudget,
 } from '../src/utils/qa-bot-helpers.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -2530,8 +2532,9 @@ async function leaveForge(page) {
  * @param {import('playwright').Page} page
  * @param {string} runKey
  * @param {number|null} [characterLevel] - Current character level for gate checks
+ * @param {{name: string, essence_budget: number}|null} [cohort] - Cohorte QA du run (#1230) : plafonne la dépense d'une offre
  */
-async function testShopSystem(page, runKey, characterLevel = null) {
+async function testShopSystem(page, runKey, characterLevel = null, cohort = null) {
   console.log('🏪 Testing shop system...')
 
   // Check level gate
@@ -2539,6 +2542,8 @@ async function testShopSystem(page, runKey, characterLevel = null) {
     console.log(`   ⏭️ Shop locked until LVL ${config.shopUnlockLevel} (current: ${characterLevel}), skipping`)
     return createSkippedShopResult(`shop requires LVL ${config.shopUnlockLevel}`)
   }
+
+  const essenceBudget = cohort?.essence_budget ?? null
 
   const shopResult = {
     visited: false,
@@ -2551,7 +2556,14 @@ async function testShopSystem(page, runKey, characterLevel = null) {
     essence_after: null,
     skipped: false,
     skip_reason: null,
-    shop_data: { offers: [], purchased_offer: null, essence_after_purchase: null },
+    shop_data: {
+      offers: [],
+      purchased_offer: null,
+      essence_after_purchase: null,
+      essence_budget: essenceBudget,
+      budget_limited: false,
+      budget_blocked_price: null,
+    },
   }
 
   // The shop is a tab inside the Inventory modal (InventoryPanel.tsx), not a
@@ -2639,12 +2651,24 @@ async function testShopSystem(page, runKey, characterLevel = null) {
   shopResult.essence_before = await parseEssence(page)
   console.log(`   Essence before: ${shopResult.essence_before ?? '?'}`)
 
-  // Try to buy the first available (cheapest) offer
+  // Try to buy the first available (cheapest) offer the cohort budget can absorb.
+  // Cohortes QA (#1230) : sans ce plafond, le persistant thésauriseur (435 💎
+  // pour une offre min à 24 💎) achetait mécaniquement — real_purchase_rate
+  // saturé et hausses de prix invisibles. Un run « budget limited » est le
+  // signal prix : l'offre est abordable mais la cohorte ne la paie pas.
   let purchasedIndex = null
   let purchaseBtn = null
+  let budgetBlockedPrice = null
   for (let i = 0; i < shopResult.offers_count; i++) {
     const btn = offerCards.nth(i).locator('.shop-buy-btn:not(.shop-sold-btn):not(:disabled)')
     if (await btn.count().catch(() => 0) > 0) {
+      const price = offersArr[i]?.price ?? null
+      if (!isPurchaseWithinBudget(price, essenceBudget)) {
+        if (price !== null && (budgetBlockedPrice === null || price < budgetBlockedPrice)) {
+          budgetBlockedPrice = price
+        }
+        continue
+      }
       purchasedIndex = i
       purchaseBtn = btn.first()
       break
@@ -2681,6 +2705,10 @@ async function testShopSystem(page, runKey, characterLevel = null) {
     } catch (err) {
       console.log(`   ⚠️ Shop purchase failed: ${err.message}`)
     }
+  } else if (budgetBlockedPrice !== null) {
+    shopResult.shop_data.budget_limited = true
+    shopResult.shop_data.budget_blocked_price = budgetBlockedPrice
+    console.log(`   ⏸️ Cohorte ${cohort?.name ?? '?'} : offre abordable la moins chère à ${budgetBlockedPrice} 💎 > budget ${essenceBudget} 💎 — achat non tenté`)
   } else {
     console.log('   No purchasable offers (already bought or insufficient essence)')
   }
@@ -3065,6 +3093,7 @@ async function run() {
     no_legacy_overlay: null,
     forge: null,
     shop: null,
+    cohort: null,
     combat_speed: 1,
     skipped_inventory: null,
     skipped_fights: [],
@@ -3152,6 +3181,19 @@ async function run() {
     console.log(`   Initial stats: level=${runRecord.initial_level}, xp=${JSON.stringify(runRecord.initial_xp)}, stats=${JSON.stringify(runRecord.initial_stats)}, maxHp=${runRecord.initial_max_hp}`)
     if (runRecord.initial_equipment.length > 0) {
       console.log(`   Equipment: ${runRecord.initial_equipment.map(e => `${e.slot}=${e.name}`).join(', ')}`)
+    }
+
+    // ── Cohorte QA (#1230) ────────────────────────────────────────
+    // Résolue UNE seule fois, au début du run, depuis le niveau du personnage :
+    // le profil plafonne la dépense d'une offre shop, il ne change pas en cours
+    // de session. Sans cohorte (config vide, niveau illisible), le run garde le
+    // comportement historique — seule l'affordabilité décide.
+    const cohort = resolveShopCohort(config.cohorts, runRecord.initial_level, config.cohort)
+    if (cohort) {
+      runRecord.cohort = { name: cohort.name, essence_budget: cohort.essenceBudget }
+      console.log(`🧪 QA cohort: ${cohort.name} (niveau ${runRecord.initial_level ?? '?'}, budget ${cohort.essenceBudget} 💎/offre)`)
+    } else if (config.cohort) {
+      console.log(`   ⚠️ QA_COHORT=${config.cohort} absent de config.cohorts — run sans budget de cohorte`)
     }
 
     try {
@@ -3414,13 +3456,16 @@ async function run() {
       console.log('   ⏰ Time budget exceeded, skipping shop test')
       runRecord.shop = createSkippedShopResult('time budget exceeded')
     } else {
-      runRecord.shop = await testShopSystem(page, runKey, shopLevel)
+      runRecord.shop = await testShopSystem(page, runKey, shopLevel, runRecord.cohort)
     }
     runRecord.essence.shop_before = runRecord.shop.essence_before
     runRecord.essence.shop_after = runRecord.shop.essence_after
     runRecord.shop_data = runRecord.shop.shop_data
     if (runRecord.shop.purchased) {
       console.log(`   ✅ Purchased offer #${(runRecord.shop_data?.purchased_offer ?? 0) + 1} (cost: ${runRecord.shop.cost}, rarity: ${runRecord.shop.item_rarity ?? 'N/A'})`)
+    }
+    if (runRecord.shop_data?.budget_limited) {
+      console.log(`   ⏸️ Achat bloqué par le budget de cohorte ${runRecord.cohort?.name ?? '?'} (${runRecord.shop_data.budget_blocked_price} 💎 > ${runRecord.shop_data.essence_budget} 💎)`)
     }
     if (runRecord.shop_data?.offers?.length > 0) {
       console.log(`   📋 Shop offers tracked: ${runRecord.shop_data.offers.length} offers`)
