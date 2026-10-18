@@ -710,12 +710,45 @@ function paintBracers(grid: SpriteGrid): void {
   }
 }
 
-function paintNecklace(grid: SpriteGrid, item: PixelItemAsset, neck: { x: number; y: number }, swingX = 0): void {
+function firstContentRow(art: number[][]): number {
+  for (let y = 0; y < art.length; y++) {
+    if (art[y].some((v) => v !== 0)) return y;
+  }
+  return 0;
+}
+
+function paintCollarSupport(grid: SpriteGrid, neck: { x: number; y: number }): void {
+  const x0 = clamp(neck.x - 3, 0, GRID_W - 1);
+  const x1 = clamp(neck.x + 3, 0, GRID_W - 1);
+  for (let x = x0; x <= x1; x++) paint(grid, x, neck.y, TRIM_INDEX);
+  paint(grid, neck.x, neck.y, ACCENT_INDEX);
+}
+
+function paintSupportStrand(
+  grid: SpriteGrid,
+  neck: { x: number; y: number },
+  cx: number,
+  topY: number,
+): void {
+  const x = clamp(cx, 0, GRID_W - 1);
+  for (let y = neck.y + 1; y <= topY; y++) paint(grid, x, y, TRIM_INDEX);
+}
+
+function paintNecklace(
+  grid: SpriteGrid,
+  item: PixelItemAsset,
+  neck: { x: number; y: number },
+  chest: { x: number; y: number },
+  swingX = 0,
+): void {
   const art = item.pixels;
   const artW = art[0]?.length ?? 8;
   const artH = art.length;
-  const ox = clamp(neck.x - 4 + swingX, 0, GRID_W - artW);
-  const oy = clamp(neck.y - 1, 0, GRID_H - artH);
+  const cx = clamp(neck.x + swingX, 0, GRID_W - 1);
+  const oy = clamp(chest.y - 3, 0, GRID_H - artH);
+  const ox = clamp(cx - Math.floor(artW / 2), 0, GRID_W - artW);
+  paintCollarSupport(grid, neck);
+  paintSupportStrand(grid, neck, cx, oy + firstContentRow(art));
   blitRaw(grid, art, ox, oy);
 }
 
@@ -755,15 +788,32 @@ function mini44(art: number[][]): number[][] {
   return out;
 }
 
-function paintBrooch(grid: SpriteGrid, item: PixelItemAsset, chest: { x: number; y: number }, swingX = 0): void {
+function paintBrooch(
+  grid: SpriteGrid,
+  item: PixelItemAsset,
+  neck: { x: number; y: number },
+  chest: { x: number; y: number },
+  swingX = 0,
+): void {
+  const cx = clamp(chest.x + swingX, 0, GRID_W - 1);
+  paintCollarSupport(grid, neck);
+  paintSupportStrand(grid, neck, cx, chest.y - 2);
   const mini = mini44(item.pixels);
   const ox = clamp(chest.x - 2 + swingX, 0, GRID_W - 4);
   const oy = clamp(chest.y - 2, 0, GRID_H - 4);
   blitRaw(grid, mini, ox, oy);
 }
 
-function paintOrbPendant(grid: SpriteGrid, item: PixelItemAsset, neck: { x: number; y: number }, chest: { x: number; y: number }, swingX = 0): void {
-  for (let y = neck.y; y <= chest.y - 2; y++) paint(grid, chest.x + swingX, y, TRIM_INDEX);
+function paintOrbPendant(
+  grid: SpriteGrid,
+  item: PixelItemAsset,
+  neck: { x: number; y: number },
+  chest: { x: number; y: number },
+  swingX = 0,
+): void {
+  const cx = clamp(chest.x + swingX, 0, GRID_W - 1);
+  paintCollarSupport(grid, neck);
+  paintSupportStrand(grid, neck, cx, chest.y - 2);
   const mini = mini44(item.pixels);
   const ox = clamp(chest.x - 2 + swingX, 0, GRID_W - 4);
   const oy = clamp(chest.y - 2, 0, GRID_H - 4);
@@ -925,8 +975,12 @@ export function applyEquipmentOverlays(
   if (loadout.accessory && accessoryKind === 'crown') {
     stampHeadgear(out, loadout.accessory, marks.head, marks.faceCx);
   }
-  if (loadout.accessory && accessoryKind === 'brooch') paintBrooch(out, loadout.accessory, marks.chest, opts?.swingX ?? 0);
-  if (loadout.accessory && accessoryKind === 'necklace') paintNecklace(out, loadout.accessory, marks.neck, opts?.swingX ?? 0);
+  if (loadout.accessory && accessoryKind === 'brooch') {
+    paintBrooch(out, loadout.accessory, marks.neck, marks.chest, opts?.swingX ?? 0);
+  }
+  if (loadout.accessory && accessoryKind === 'necklace') {
+    paintNecklace(out, loadout.accessory, marks.neck, marks.chest, opts?.swingX ?? 0);
+  }
   if (loadout.armor && armorKind === 'shield') {
     // Shield first, then the arm on top: the limb crossing the shield face is
     // what makes the grip read as a grip instead of a prop sliding around.

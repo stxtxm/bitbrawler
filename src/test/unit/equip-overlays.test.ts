@@ -64,6 +64,35 @@ const blitCells = (grid: number[][]): Array<[number, number]> => {
   return cells;
 };
 
+const nonZeroComponents = (grid: number[][]): Array<Array<[number, number]>> => {
+  const h = grid.length;
+  const w = grid[0].length;
+  const seen = Array.from({ length: h }, () => new Array<boolean>(w).fill(false));
+  const comps: Array<Array<[number, number]>> = [];
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (seen[y][x] || grid[y][x] === 0) continue;
+      const cells: Array<[number, number]> = [];
+      const stack: Array<[number, number]> = [[x, y]];
+      seen[y][x] = true;
+      while (stack.length > 0) {
+        const [cx, cy] = stack.pop()!;
+        cells.push([cx, cy]);
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+          const nx = cx + dx;
+          const ny = cy + dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          if (seen[ny][nx] || grid[ny][nx] === 0) continue;
+          seen[ny][nx] = true;
+          stack.push([nx, ny]);
+        }
+      }
+      comps.push(cells);
+    }
+  }
+  return comps;
+};
+
 describe('equipment overlays v4 — chunky fitted gear', () => {
   it('leaves the grid untouched when nothing is equipped', () => {
     const base = generateSprite16('naked', 'male');
@@ -568,6 +597,73 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     expect(JSON.stringify(pyrite.grid)).not.toBe(JSON.stringify(spirit.grid));
   });
 
+  it('anchors every hanging accessory to the neckline with a visible support', () => {
+    const seeds: Array<[string, 'male' | 'female']> = [
+      ['k3f9qz1a', 'male'],
+      ['v7m2xp4c', 'female'],
+    ];
+    const suspended = ITEM_ASSETS.filter((i) => {
+      if (i.slot !== 'accessory') return false;
+      const kind = accessoryVisualKind(i.name);
+      return kind === 'necklace' || kind === 'orb' || kind === 'brooch';
+    });
+    expect(suspended.length).toBeGreaterThan(10);
+    const support = new Set<number>([
+      TRIM_INDEX, TRIM_DARK, TRIM_LIGHT, ACCENT_INDEX, ACCENT_DARK,
+    ]);
+    for (const [seed, gender] of seeds) {
+      const base = generateSprite16(seed, gender);
+      const marks = computeLandmarks(base.grid);
+      for (const item of suspended) {
+        const out = applyEquipmentOverlays(base.grid, base.palette, {
+          weapon: null,
+          armor: null,
+          accessory: item,
+        });
+        const gemTop = Math.min(
+          ...out.grid.flatMap((row, y) =>
+            row.map((c) => (c >= ITEM_BLIT_OFFSET && c < ITEM_BLIT_OFFSET + 10 ? y : 99)),
+          ),
+        );
+        expect(gemTop, `${item.id} pendant row`).toBeLessThan(marks.chest.y + 4);
+        // the collar band rides the torso top, above the pendant
+        expect(
+          out.grid[marks.torso.y0].some(
+            (c, x) => support.has(c) && Math.abs(x - marks.neck.x) <= 3,
+          ),
+          `${item.id} collar`,
+        ).toBe(true);
+        // a visible strand links the collar to the pendant on every row between
+        for (let y = marks.torso.y0; y < gemTop; y++) {
+          expect(
+            out.grid[y].some((c, x) => support.has(c) && Math.abs(x - marks.neck.x) <= 3),
+            `${item.id} support y${y}`,
+          ).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('keeps every accessory a single contiguous zone anchored to the body', () => {
+    const accessories = ITEM_ASSETS.filter((i) => i.slot === 'accessory');
+    expect(accessories.length).toBeGreaterThan(20);
+    const builds = ['slim', 'standard', 'broad'] as const;
+    for (const seed of ['k3f9qz1a', 'v7m2xp4c', 'r8t5wd0b']) {
+      for (const build of builds) {
+        const base = generateSprite16(seed, 'male', { build, bodyType: 'basic', headType: 'male' });
+        expect(nonZeroComponents(base.grid).length, `${seed} ${build}`).toBe(1);
+        for (const item of accessories) {
+          const out = applyEquipmentOverlays(base.grid, base.palette, {
+            weapon: null,
+            armor: null,
+            accessory: item,
+          });
+          expect(nonZeroComponents(out.grid).length, `${item.id} ${build} islands`).toBe(1);
+        }
+      }
+    }
+  });
+
   it('tints boots and bracers with each item own colors', () => {
     const base = generateSprite16('tint-check', 'male', { ...STD_MALE });
     const shadow = applyEquipmentOverlays(base.grid, base.palette, {
@@ -987,6 +1083,24 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
         `${item.id} waist band`,
       ).toBe(true);
       expect(out.grid.slice(36), `${item.id} legs`).toEqual(base.grid.slice(36));
+    }
+  });
+
+  it('keeps pants and shoes intact under every worn accessory', () => {
+    const base = generateSprite16('r8t5wd0b', 'male', { ...STD_MALE });
+    const hip = hipRowOf(base.grid);
+    expect(hip).toBeGreaterThanOrEqual(36);
+    const worn = ITEM_ASSETS.filter(
+      (i) => i.slot === 'accessory' && accessoryVisualKind(i.name) !== 'boots',
+    );
+    expect(worn.length).toBeGreaterThan(10);
+    for (const item of worn) {
+      const out = applyEquipmentOverlays(base.grid, base.palette, {
+        weapon: null,
+        armor: null,
+        accessory: item,
+      });
+      expect(out.grid.slice(hip), `${item.id} legs`).toEqual(base.grid.slice(hip));
     }
   });
 });
