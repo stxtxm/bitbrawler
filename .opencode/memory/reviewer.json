@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-18T10:11:45Z",
+  "last_session": "2026-10-18T15:18:03Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "PIL indisponible dans le runner reviewer : verifier un PNG (canal alpha, glyphe monochrome) via un decodeur Node zlib minimal (IHDR + inflate IDAT + unfilter scanlines). Confirme badge-96.png alpha 0..255, 15.6% pixels visibles, 100% blanc (>0 alpha).",
-      "issue": "#1200",
+      "lesson": "PR #1212 (DeepSeek primaire partout) : pour un changement de chaîne de modèles, vérifier (1) que TOUS les tableaux MODELS=(...) sont réordonnés (7 ici : opencode.yml x5 + reviewer + tech-lead), (2) que MODEL_BUDGETS a le même cardinal et que la somme pire-cas < timeout-minutes du job (80 min), (3) workflow-integrity.test.ts vert. Le body de PR peut se tromper (annonçait 8 tableaux, il y en a 7) : compter soi-même.",
+      "issue": "#1212",
       "date": "2026-10-18"
     }
   ]
