@@ -236,3 +236,21 @@ jobs:
             sleep 3
           done
           echo "🏁 Campagnes: scan terminé"
+
+      - name: Watchdog — fraîcheur du déploiement production (#1228)
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # La prod a servi pendant des jours un bundle ANTÉRIEUR à master sans
+          # aucun signal : HTTP 200, QA verte, aucun crash — seul le contenu du
+          # bundle trahissait le décalage (prix shop 24/48/41/73 au lieu de
+          # 27/53/45/80). La sonde compare les marqueurs présents dans le bundle
+          # live (SPRITE_RENDER_REV + prix shop, deux littéraux qui survivent à la
+          # minification) à ceux de master, puis ouvre/ferme le ticket
+          # `deploy-stale` — sans jamais créer de doublon.
+          #
+          # --issue : le ticket EST le signal, la sonde ne fait donc pas échouer
+          # ce run quand la prod est stale (sinon un run rouge par heure en plus).
+          # Une sonde IMPOSSIBLE (site injoignable) reste un rouge, volontairement.
+          npx --yes tsx scripts/check-deploy-freshness.ts --issue

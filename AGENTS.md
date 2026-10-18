@@ -878,6 +878,12 @@ les crons, compter ~3-4 h dans les faits) : plus besoin d'intervenir à la main.
    parent ouvert + aucune PR `docs/campaign-N` » et dispatche le **supervisor**
    (`mode=supervisor`), avec claim `supervisor-dispatched` sur le parent, réarmé si le run
    meurt sans livrer sa PR docs.
+3. **Prod figée (bundle plus vieux que master)** — `scripts/check-deploy-freshness.ts`
+   compare deux marqueurs du bundle live (`SPRITE_RENDER_REV` + les prix `SHOP_OFFERS`,
+   des littéraux qui survivent à la minification) à ceux de master. Le watchdog ouvre le
+   ticket `deploy-stale` s'ils manquent, le ferme quand la prod rattrape, et ne crée jamais
+   de doublon. Un run **rouge** de ce step = site injoignable, pas prod stale (le ticket
+   est le signal, le step sort 0 en mode `--issue`).
 
 ⚠️ Un run `pull_request` en `failure` **avec 0 job** (fréquent sur les PRs de bot) est du
 bruit : aucun check n'en résulte, ce n'est pas un échec de build. Ne pas le confondre avec

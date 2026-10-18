@@ -388,3 +388,28 @@ describe('Watchdog — filets de sécurité (PR orphelines & fin de campagne)', 
     expect(wd).toContain('sort:updated-desc')
   })
 })
+
+describe('Fraîcheur du déploiement — le watchdog doit voir la prod gelée (#1228)', () => {
+  // La prod a servi pendant des jours un bundle antérieur à master : HTTP 200,
+  // QA verte, aucun crash. Le seul signal était le CONTENU du bundle (prix shop
+  // 24/48/41/73 au lieu de 27/53/45/80). Le watchdog sonde désormais ces
+  // marqueurs et ouvre/ferme un ticket `deploy-stale`.
+  const wd = readWorkflow('watchdog.yml')
+
+  it('sonde la prod à chaque passage', () => {
+    expect(wd).toContain('scripts/check-deploy-freshness.ts --issue')
+  })
+
+  it('la sonde ne fait jamais échouer le run quand la prod est stale', () => {
+    // --issue => exit 0 même si stale (le ticket est le signal) ; seul un site
+    // injoignable (exit 2) laisse le run rouge.
+    expect(wd).toContain('npx --yes tsx scripts/check-deploy-freshness.ts --issue')
+  })
+
+  it('les marqueurs sondés existent bien dans le dépôt', () => {
+    const revSource = readFileSync(join(process.cwd(), 'src', 'components', 'sprite', 'PixelGridCanvas.tsx'), 'utf8')
+    const offersSource = readFileSync(join(process.cwd(), 'src', 'data', 'shopConstants.ts'), 'utf8')
+    expect(revSource).toMatch(/SPRITE_RENDER_REV\s*=\s*'[^']+'/)
+    expect(offersSource).toMatch(/price:\s*\d+/)
+  })
+})
