@@ -46,4 +46,26 @@ export default {
   /** Recreate the persistent character once it is older than this many days
    *  (controlled reset by age, #731). 0 disables the age-based reset. */
   persistentCharacterMaxAgeDays: parseInt(process.env.QA_PERSISTENT_MAX_AGE_DAYS || '30', 10),
+  /** Cohortes QA v2 (#1230). Le harnais ne mesurait qu'un profil — le
+   *  persistant, qui thésaurise (435 💎 en moyenne pour une offre min à 24 💎)
+   *  et achetait donc mécaniquement : real_purchase_rate saturé (83,8 %,
+   *  100 % sur les 20 derniers runs), cinq cycles de hausse des prix +10 %
+   *  (#1033→#1182) sans effet mesurable. Chaque cohorte cappe la dépense d'une
+   *  offre à son budget : la métrique redevient sensible au prix, et le
+   *  tech-lead l'analyse par profil.
+   *
+   *  Le profil est résolu depuis le niveau du personnage au DÉBUT du run (les
+   *  générations du persistant traversent naturellement 1→30 ; le run
+   *  « fresh character » hebdomadaire alimente QA-FRESH). `QA_COHORT` force un
+   *  profil pour un run ciblé.
+   *
+   *  Les budgets reflètent l'essence qu'un joueur de ce stade peut réellement
+   *  consacrer à UNE offre — pas la thésaurisation du bot. */
+  cohorts: [
+    { name: 'QA-FRESH', minLevel: 1, maxLevel: 5, essenceBudget: 50 },
+    { name: 'QA-MID', minLevel: 6, maxLevel: 21, essenceBudget: 150 },
+    { name: 'QA-END', minLevel: 22, essenceBudget: 400 },
+  ],
+  /** Cohorte forcée (QA-FRESH | QA-MID | QA-END) — QA_COHORT env. */
+  cohort: process.env.QA_COHORT || null,
 }

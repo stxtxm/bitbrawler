@@ -21,6 +21,15 @@ export interface QaBotConfig {
   freshCharacterDay: number
   persistentCharacterMaxLevel: number
   persistentCharacterMaxAgeDays: number
+  /** Cohortes QA v2 (#1230) : profils de dépense par tranche de niveau. */
+  cohorts: Array<{
+    name: string
+    minLevel?: number
+    maxLevel?: number
+    essenceBudget: number
+  }>
+  /** Cohorte forcée pour ce run (QA_COHORT), sinon résolution par niveau. */
+  cohort: string | null
 }
 
 declare const config: QaBotConfig

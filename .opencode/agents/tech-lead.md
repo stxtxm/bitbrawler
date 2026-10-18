@@ -61,11 +61,15 @@ Lis le rapport QA complet. Les sections importantes:
 - **Essence Analysis** (NOUVEAU): essence gagnée par run, essence initiale vs finale
   - Si avg essence gained > 20/run → taux trop haut
   - Si avg essence gained < 1 et avg essence > 50 → les joueurs thésaurisent
-- **Shop Analysis** (NOUVEAU): analyser les métriques du shop depuis `qa/stats.json.shop`
+- **Shop Analysis** (NOUVEAU): analyser les métriques du shop depuis `qa/analysis-latest.json` (`shop.real` = achats OBSERVÉS, `shop.simulated` = affordabilité en repli)
   - Lire `shop.purchased`, `shop.cost`, `shop.item_rarity`, `shop.essence_before`, `shop.essence_after`
-  - **purchase_rate** = runs_with_purchase / total_runs (sur 5+ jours)
-    - Si purchase_rate < 10% → prix trop élevés, créer issue avec `/oc` pour ↓ prix de 10%
-    - Si purchase_rate > 60% → prix trop bas, créer issue avec `/oc` pour ↑ prix de 10%
+  - **real_purchase_rate** = runs_with_purchase / runs_with_shop_data (sur 5+ jours)
+    - Si real_purchase_rate < 10% → prix trop élevés, créer issue avec `/oc` pour ↓ prix de 10%
+    - Si real_purchase_rate > 60% → prix trop bas, créer issue avec `/oc` pour ↑ prix de 10%
+  - **Cohortes QA (#1230)** : `shop.real.cohorts[]` ventile taux, budget et runs bridés par profil (`QA-FRESH` 50 💎 / `QA-MID` 150 💎 / `QA-END` 400 💎 — budgets dans `qa/qa-bot.config.js`)
+    - `budget_limited_runs` = offres **abordables mais hors budget** du profil → **c'est le signal prix** (pas un désintérêt joueur) : si un profil est bridé, le shop est hors de portée à ce stade de jeu
+    - Un taux saturé (>60 %) **avec 0 run bridé partout** signifie que les budgets sont trop hauts pour mesurer quoi que ce soit — ajuster le budget de la cohorte avant de toucher aux prix
+    - Les runs antérieurs au 19/10/2026 n'ont pas de cohorte (`unsegmented`) : les ignorer pour le raisonnement par profil
   - **avg_essence_before** : moyenne essence avant achat
     - Si < 100 → les gains d'essence sont insuffisants
   - **lootbox_purchases** : si la lootbox (offre 3) est achetée plus souvent que les items

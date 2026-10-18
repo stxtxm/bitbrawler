@@ -12,6 +12,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
+import { isPurchaseWithinBudget } from '../src/utils/qa-bot-helpers.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
@@ -107,6 +108,8 @@ interface RunRecord {
   character_action?: string | null
   replaced_character?: string | null
   character_type?: 'fresh' | 'persistent' | null  // #731: persistent QA character vs fresh first-session runs
+  /** Cohorte QA du run (#1230) : profil de dépense résolu au début du run. */
+  cohort?: { name: string; essence_budget: number | null } | null
   fights: FightRecord[]
   idle_fights?: IdleFightRecord[]
   idle_runner?: {
@@ -173,6 +176,10 @@ interface RunRecord {
     offers?: Array<ShopOffer>
     purchased_offer?: number | null
     essence_after_purchase?: number | null
+    /** #1230 : budget de la cohorte pour une offre, et issue de la décision. */
+    essence_budget?: number | null
+    budget_limited?: boolean | null
+    budget_blocked_price?: number | null
   }
   errors: string[]
   load_times_ms?: Record<string, number>
@@ -270,6 +277,20 @@ interface ShopSimulatedAnalysis {
   avg_affordable_offer_count: number | null
   would_purchase_runs: number
   simulated_purchase_rate: number | null
+  /** #1230 : runs abordables mais bloqués par le budget de la cohorte. */
+  budget_limited_runs: number
+}
+
+/** Ventilation par cohorte QA (#1230) : quel profil produit quelle métrique. */
+interface ShopCohortAnalysis {
+  cohort: string
+  essence_budget: number | null
+  runs_with_shop_data: number
+  runs_with_purchase: number
+  real_purchase_rate: number | null
+  budget_limited_runs: number
+  avg_essence_before: number | null
+  min_offer_price: number | null
 }
 
 interface ShopRealAnalysis {
@@ -279,6 +300,9 @@ interface ShopRealAnalysis {
   avg_purchase_cost: number | null
   purchase_rarity_distribution: Record<string, number>
   cheapest_offer_share: number | null
+  /** #1230 : runs où l'offre était abordable mais hors budget de cohorte. */
+  budget_limited_runs: number
+  cohorts: ShopCohortAnalysis[]
 }
 
 interface IdleAnalysis {
@@ -513,6 +537,7 @@ function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis 
   const rarityDist: Record<string, number> = {}
   let affordableTotal = 0
   let wouldPurchaseRuns = 0
+  let budgetLimitedRuns = 0
   let essenceSum = 0
   let essenceCount = 0
 
@@ -531,12 +556,18 @@ function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis 
     }
 
     const essenceBefore = r.shop?.essence_before ?? r.essence?.shop_before
+    const budget = r.cohort?.essence_budget ?? null
     if (typeof essenceBefore === 'number') {
       essenceSum += essenceBefore
       essenceCount++
       affordableTotal += prices.filter(p => p <= essenceBefore).length
-      if (prices.length > 0 && essenceBefore >= Math.min(...prices)) {
+      // #1230 : la cohorte ne paie que ce que son budget absorbe. Sans budget
+      // (runs historiques), on garde la règle d'affordabilité pure.
+      const purchasable = prices.filter(p => p <= essenceBefore && isPurchaseWithinBudget(p, budget))
+      if (purchasable.length > 0) {
         wouldPurchaseRuns++
+      } else if (typeof budget === 'number' && prices.some(p => p <= essenceBefore)) {
+        budgetLimitedRuns++
       }
     }
   }
@@ -556,6 +587,7 @@ function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis 
       : null,
     would_purchase_runs: wouldPurchaseRuns,
     simulated_purchase_rate: Math.round((wouldPurchaseRuns / runsWithShopData.length) * 1000) / 1000,
+    budget_limited_runs: budgetLimitedRuns,
   }
 }
 
@@ -589,6 +621,44 @@ function computeShopRealAnalysis(runs: RunRecord[]): ShopRealAnalysis | null {
   const purchasesWithIndex = purchasedRuns.filter(r => typeof r.shop_data.purchased_offer === 'number')
   const cheapestPurchases = purchasesWithIndex.filter(r => r.shop_data.purchased_offer === 0)
 
+  // #1230 : un run « budget limited » est le signal prix — l'offre était
+  // abordable, la cohorte ne l'a pas payée parce qu'elle dépassait son budget.
+  const budgetLimitedRuns = runsWithShopData.filter(r => r.shop_data?.budget_limited === true).length
+
+  // #1230 : ventilation par cohorte. Un profil unique thésauriseur saturait le
+  // taux (100 % sur les 20 derniers runs) ; chaque profil a désormais son taux,
+  // ses moyens et son nombre de runs bridés par le budget.
+  const cohortGroups = new Map<string, RunRecord[]>()
+  for (const r of runsWithShopData) {
+    const name = r.cohort?.name ?? 'unsegmented'
+    const group = cohortGroups.get(name)
+    if (group) group.push(r)
+    else cohortGroups.set(name, [r])
+  }
+  const cohorts: ShopCohortAnalysis[] = [...cohortGroups.entries()]
+    .map(([name, group]) => {
+      const purchased = group.filter(r => r.shop?.purchased === true).length
+      const prices = group
+        .flatMap(r => (r.shop_data?.offers ?? []).map(o => o.price))
+        .filter((p): p is number => typeof p === 'number')
+      const essences = group
+        .map(r => r.shop?.essence_before ?? r.essence?.shop_before)
+        .filter((e): e is number => typeof e === 'number')
+      return {
+        cohort: name,
+        essence_budget: group[0]?.cohort?.essence_budget ?? null,
+        runs_with_shop_data: group.length,
+        runs_with_purchase: purchased,
+        real_purchase_rate: Math.round((purchased / group.length) * 1000) / 1000,
+        budget_limited_runs: group.filter(r => r.shop_data?.budget_limited === true).length,
+        avg_essence_before: essences.length > 0
+          ? Math.round((essences.reduce((s, e) => s + e, 0) / essences.length) * 100) / 100
+          : null,
+        min_offer_price: prices.length > 0 ? Math.min(...prices) : null,
+      }
+    })
+    .sort((a, b) => a.cohort.localeCompare(b.cohort))
+
   return {
     runs_with_shop_data: runsWithShopData.length,
     runs_with_purchase: purchasedRuns.length,
@@ -600,6 +670,8 @@ function computeShopRealAnalysis(runs: RunRecord[]): ShopRealAnalysis | null {
     cheapest_offer_share: purchasesWithIndex.length > 0
       ? Math.round((cheapestPurchases.length / purchasesWithIndex.length) * 1000) / 1000
       : null,
+    budget_limited_runs: budgetLimitedRuns,
+    cohorts,
   }
 }
 
@@ -1350,6 +1422,17 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     }
     if (shopReal.cheapest_offer_share !== null && shopReal.cheapest_offer_share >= 0.95) {
       suggestions.push(`Real shop purchases target the cheapest offer (share ${(shopReal.cheapest_offer_share * 100).toFixed(0)}%) — a uniform price increase will not change the behaviour; calibrate on cost relative to essence, not the raw purchase rate.`)
+    }
+    // Cohortes QA (#1230) : le signal prix. Une offre abordable mais au-dessus du
+    // budget d'un profil est un run « budget limited » — la métrique bouge avec
+    // le prix au lieu de saturer sur la thésaurisation du persistant.
+    if (shopReal.budget_limited_runs > 0) {
+      const limitedShare = Math.round((shopReal.budget_limited_runs / shopReal.runs_with_shop_data) * 100)
+      const perCohort = shopReal.cohorts
+        .filter(c => c.budget_limited_runs > 0)
+        .map(c => `${c.cohort} ${c.budget_limited_runs}/${c.runs_with_shop_data}`)
+        .join(', ')
+      suggestions.push(`QA cohort budgets (#1230) blocked ${shopReal.budget_limited_runs}/${shopReal.runs_with_shop_data} shop runs (${limitedShare}%${perCohort ? `: ${perCohort}` : ''}) — the cheapest affordable offer cost more than the profile's per-item budget. That is the price signal: the shop is out of reach for that cohort. Read shop.real.cohorts before acting on the raw rate.`)
     }
   } else if (shopSimulated && shopSimulated.runs_with_shop_data >= 3) {
     if (shopSimulated.simulated_purchase_rate !== null && shopSimulated.simulated_purchase_rate < 0.1) {
