@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-18T17:46:37Z",
+  "last_session": "2026-10-18T17:58:25Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR #1218 (commit authored par opencode-agent) modifiait .github/workflows/opencode.yml + reviewer.yml : politique projet = les agents ne touchent JAMAIS aux workflows (dev-agent.md:241, supervisor.md:135, orchestrator.json). Verifier l'auteur du commit (git log -1 --format=%an) et l'historique (git log -- .github/workflows/) avant de merger une PR CI. Correctif a porter par un humain via issue SANS /oc.",
-      "issue": "#1218",
+      "lesson": "Le test monster-utils 'getRandomMonsterId at mid level' est flaky (~0.3%, Math.random non seede, pool lvl15 = 7 monstres) : un gate local peut echouer au 1er run puis passer. Verifier en isolant le fichier avant de conclure a une regression. Issue de suivi #1221 creee.",
+      "pr": "#1220",
       "date": "2026-10-18"
     }
   ]
