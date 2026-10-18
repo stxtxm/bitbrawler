@@ -549,7 +549,7 @@ jobs:
           echo "✅ PR #$PR_NUMBER already has all CI green — auto-merging via inline reviewer"
 
           # --- DAG dependency check (dédup sort -u : le body peut lister 2× la même dep) ---
-          DEPS=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body' 2>/dev/null | grep -oiE 'depends-on:\s*#+[0-9]+([,\s]*#+[0-9]+)*' | grep -oE '#+[0-9]+' | tr -d '#' | sort -u -n || echo "")
+          DEPS=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body' 2>/dev/null | grep -oiE 'depends-on:[[:space:]]*#+[0-9]+([,[:space:]]*#+[0-9]+)*' | grep -oE '#+[0-9]+' | tr -d '#' | sort -u -n || echo "")
           if [ -n "$DEPS" ]; then
             ALL_RESOLVED=true
             for DEP in $DEPS; do
@@ -647,7 +647,7 @@ jobs:
             # fermées (sinon on coderait une brique dont l'API n'existe pas encore).
             DEP_BODY=$(gh issue view "$DEP_ISSUE" --json body --jq '.body // ""' 2>/dev/null || echo "")
             PENDING=0
-            for UPSTREAM in $(echo "$DEP_BODY" | grep -oiE 'depends-on:\s*#+[0-9]+([,\s]*#+[0-9]+)*' | grep -oE '#+[0-9]+' | tr -d '#' | sort -u -n); do
+            for UPSTREAM in $(echo "$DEP_BODY" | grep -oiE 'depends-on:[[:space:]]*#+[0-9]+([,[:space:]]*#+[0-9]+)*' | grep -oE '#+[0-9]+' | tr -d '#' | sort -u -n); do
               UPSTREAM_STATE=$(gh issue view "$UPSTREAM" --json state --jq '.state' 2>/dev/null || echo UNKNOWN)
               if [ "$UPSTREAM_STATE" != "CLOSED" ]; then
                 echo "⏳ #$DEP_ISSUE attend encore #$UPSTREAM ($UPSTREAM_STATE)"

@@ -338,3 +338,18 @@ describe('DAG — la syntaxe réelle des dépendances est reconnue', () => {
     }
   })
 })
+
+describe('DAG — extraction des dépendances (piège grep ERE)', () => {
+  // `[,\s]` en ERE grep n'est PAS « virgule ou blanc » : c'est l'ensemble des caractères
+  // littéraux {',', '\', 's'}. Mesuré le 2026-10-18 sur #1209 :
+  //   `depends-on: ##1203 ##1207` -> seule « 1203 » était extraite
+  // donc le gate « toutes les dépendances sont fermées » laissait partir un dépendant
+  // alors que #1207 était encore ouverte. La forme POSIX correcte est `[,[:space:]]`.
+  it('utilise [[:space:]] et non \\s dans les classes de caractères', () => {
+    for (const file of ['opencode.yml', 'reviewer.yml']) {
+      const wf = readWorkflow(file)
+      expect(wf).toContain('([,[:space:]]*#+[0-9]+)*')
+      expect(wf).not.toContain('([,\\s]*#+[0-9]+)*')
+    }
+  })
+})
