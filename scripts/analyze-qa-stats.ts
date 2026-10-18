@@ -162,7 +162,13 @@ interface RunRecord {
   progression_curve?: { level: number; total_xp: number; xp_for_next: number; percent: number }
   essence?: EssenceData
   forge?: ForgeResult | null
-  shop?: { essence_before?: number | null; essence_after?: number | null }
+  shop?: {
+    essence_before?: number | null
+    essence_after?: number | null
+    purchased?: boolean | null
+    cost?: number | null
+    item_rarity?: string | null
+  }
   shop_data?: {
     offers?: Array<ShopOffer>
     purchased_offer?: number | null
@@ -175,6 +181,7 @@ interface RunRecord {
 interface TrendWindow {
   label: string
   count: number
+  fights_count: number
   win_rate: number
   avg_fights: number
   avg_level: number | null
@@ -265,6 +272,15 @@ interface ShopSimulatedAnalysis {
   simulated_purchase_rate: number | null
 }
 
+interface ShopRealAnalysis {
+  runs_with_shop_data: number
+  runs_with_purchase: number
+  real_purchase_rate: number | null
+  avg_purchase_cost: number | null
+  purchase_rarity_distribution: Record<string, number>
+  cheapest_offer_share: number | null
+}
+
 interface IdleAnalysis {
   runs_with_idle_data: number
   total_idle_fights: number
@@ -322,6 +338,7 @@ interface AnalysisReport {
   progression_curve: ProgressionCurveSummary | null
   shop: {
     simulated: ShopSimulatedAnalysis | null
+    real: ShopRealAnalysis | null
   }
   lootbox: {
     runs_with_lootbox: number
@@ -394,6 +411,15 @@ const FRESHNESS_STALE_RUNS = 10
 // Minimum total fights the recent alert window must carry for balance signals
 // (win rate, idle, shop, progression, streak) to be actionable (#1186).
 const MIN_RECENT_FIGHTS = 10
+
+// Minimum fights a trend window must carry before a win-rate trend alert fires.
+// With fightsPerRun: 1, last_3/last_5 hold 3/5 fights: run-count guards alone
+// produced false-positive declining/swing alerts on tiny combat windows (#1229).
+const MIN_TREND_FIGHTS = 10
+
+// Minimum runs with captured shop offers before the real purchase rate drives
+// the price suggestion; below it, the simulated affordability proxy is used (#1229).
+const REAL_SHOP_MIN_RUNS = 10
 
 function computeDataFreshness(stats: RunRecord[]): DataFreshness {
   let trailing_error_runs = 0
@@ -533,6 +559,50 @@ function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis 
   }
 }
 
+// Real shop purchase rate (#1229): the runs already carry the observed outcome
+// (shop.purchased, shop.cost, shop.item_rarity, shop_data.purchased_offer). The
+// simulated affordability proxy measures whether the player *can* afford the
+// cheapest offer (essence >= price) and is saturated by the persistent QA
+// character's essence hoard — five blind +10% price hikes (#1033/#1078/#1098/
+// #1108/#1182) followed. The real rate is the metric that must drive pricing.
+function computeShopRealAnalysis(runs: RunRecord[]): ShopRealAnalysis | null {
+  const runsWithShopData = runs.filter(
+    (r): r is RunRecord & { shop_data: { offers: ShopOffer[] } } =>
+      r.shop_data?.offers != null && r.shop_data.offers.length > 0
+  )
+  if (runsWithShopData.length === 0) return null
+
+  const purchasedRuns = runsWithShopData.filter(r => r.shop?.purchased === true)
+  const costValues = purchasedRuns
+    .map(r => r.shop?.cost)
+    .filter((c): c is number => typeof c === 'number')
+
+  const rarityDist: Record<string, number> = {}
+  for (const r of purchasedRuns) {
+    const rarity = r.shop?.item_rarity
+    if (rarity && typeof rarity === 'string' && rarity.trim() !== '') {
+      const key = rarity.toLowerCase()
+      rarityDist[key] = (rarityDist[key] || 0) + 1
+    }
+  }
+
+  const purchasesWithIndex = purchasedRuns.filter(r => typeof r.shop_data.purchased_offer === 'number')
+  const cheapestPurchases = purchasesWithIndex.filter(r => r.shop_data.purchased_offer === 0)
+
+  return {
+    runs_with_shop_data: runsWithShopData.length,
+    runs_with_purchase: purchasedRuns.length,
+    real_purchase_rate: Math.round((purchasedRuns.length / runsWithShopData.length) * 1000) / 1000,
+    avg_purchase_cost: costValues.length > 0
+      ? Math.round((costValues.reduce((s, c) => s + c, 0) / costValues.length) * 100) / 100
+      : null,
+    purchase_rarity_distribution: rarityDist,
+    cheapest_offer_share: purchasesWithIndex.length > 0
+      ? Math.round((cheapestPurchases.length / purchasesWithIndex.length) * 1000) / 1000
+      : null,
+  }
+}
+
 function computeTrendWindow(runs: RunRecord[], count: number, label: string): TrendWindow | null {
   const window = runs.slice(-count)
   if (window.length === 0) return null
@@ -545,6 +615,7 @@ function computeTrendWindow(runs: RunRecord[], count: number, label: string): Tr
   return {
     label,
     count: window.length,
+    fights_count: fights.length,
     win_rate: fights.length > 0 ? wins.length / fights.length : 0,
     avg_fights: window.reduce((s, r) => s + r.fights.length, 0) / window.length,
     avg_level: levels.length > 0 ? levels.reduce((s, l) => s + l, 0) / levels.length : null,
@@ -833,7 +904,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   // Trend direction
   const allTimeTrend = trendWindows.find(t => t.label === 'all_time')
   const last5Trend = trendWindows.find(t => t.label === 'last_5')
-  if (allTimeTrend && last5Trend && last5Trend.count >= 3) {
+  if (allTimeTrend && last5Trend && last5Trend.count >= 3 && last5Trend.fights_count >= MIN_TREND_FIGHTS) {
     if (last5Trend.win_rate > allTimeTrend.win_rate + 0.15) {
       suggestions.push(`Win rate improving: ${(allTimeTrend.win_rate * 100).toFixed(0)}% → ${(last5Trend.win_rate * 100).toFixed(0)}% (last 5).`)
     }
@@ -847,7 +918,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
 
   // Win-rate swing detection (last 3 vs all time)
   const last3Trend = trendWindows.find(t => t.label === 'last_3')
-  if (allTimeTrend && last3Trend && last3Trend.count >= 2) {
+  if (allTimeTrend && last3Trend && last3Trend.count >= 2 && last3Trend.fights_count >= MIN_TREND_FIGHTS) {
     const swing = last3Trend.win_rate - allTimeTrend.win_rate
     if (swing > 0.20) {
       issues.push(`Win rate surged from ${(allTimeTrend.win_rate * 100).toFixed(0)}% to ${(last3Trend.win_rate * 100).toFixed(0)}% in last 3 runs. Monitor for over-correction — game may be too easy.`)
@@ -1167,6 +1238,9 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   // proxy from the observed offer pool + essence_before.
   const shopSimulated = computeShopSimulatedAnalysis(validRuns)
 
+  // --- Shop Real Purchases (#1229) ---
+  const shopReal = computeShopRealAnalysis(validRuns)
+
   // --- Idle Analysis ---
   // Collect idle fights from both structured idle_fights[] (new) and legacy idle_runner (backward compat)
   const runsWithIdleData = validRuns.filter(r =>
@@ -1262,9 +1336,22 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     }
   }
 
-  // Shop simulated affordability suggestions (#711): use the simulated purchase
-  // rate as a proxy when real purchases are impossible (essence too low).
-  if (shopSimulated && shopSimulated.runs_with_shop_data >= 3) {
+  // Shop purchase-rate suggestions (#711, #1229): once the window carries
+  // enough REAL purchase observations, the price suggestion is driven by the
+  // observed purchase rate. The simulated affordability proxy is only a fallback
+  // (fewer than REAL_SHOP_MIN_RUNS captured offers): it measures "can afford"
+  // rather than "buys" and is saturated by the persistent character's essence
+  // hoard, which previously produced five blind +10% price hikes.
+  if (shopReal && shopReal.runs_with_shop_data >= REAL_SHOP_MIN_RUNS && shopReal.real_purchase_rate !== null) {
+    if (shopReal.real_purchase_rate > 0.6) {
+      suggestions.push(`Real shop purchase rate is ${(shopReal.real_purchase_rate * 100).toFixed(0)}% (${shopReal.runs_with_purchase}/${shopReal.runs_with_shop_data} runs, avg cost ${shopReal.avg_purchase_cost?.toFixed(0) ?? 'n/a'} 💎) — offers are trivially affordable for players. Consider raising SHOP_OFFERS prices.`)
+    } else if (shopReal.real_purchase_rate < 0.1) {
+      suggestions.push(`Real shop purchase rate is ${(shopReal.real_purchase_rate * 100).toFixed(0)}% (${shopReal.runs_with_purchase}/${shopReal.runs_with_shop_data} runs) — players are not buying. Consider lowering SHOP_OFFERS prices.`)
+    }
+    if (shopReal.cheapest_offer_share !== null && shopReal.cheapest_offer_share >= 0.95) {
+      suggestions.push(`Real shop purchases target the cheapest offer (share ${(shopReal.cheapest_offer_share * 100).toFixed(0)}%) — a uniform price increase will not change the behaviour; calibrate on cost relative to essence, not the raw purchase rate.`)
+    }
+  } else if (shopSimulated && shopSimulated.runs_with_shop_data >= 3) {
     if (shopSimulated.simulated_purchase_rate !== null && shopSimulated.simulated_purchase_rate < 0.1) {
       suggestions.push(`Simulated shop purchase rate is ${(shopSimulated.simulated_purchase_rate * 100).toFixed(0)}% (${shopSimulated.would_purchase_runs}/${shopSimulated.runs_with_shop_data} runs) — shop prices (avg ${shopSimulated.avg_offer_price?.toFixed(0) ?? 'n/a'} 💎) exceed player essence (avg ${shopSimulated.avg_essence_before?.toFixed(1) ?? 'n/a'} 💎). Consider lowering SHOP_OFFERS prices.`)
     } else if (shopSimulated.simulated_purchase_rate !== null && shopSimulated.simulated_purchase_rate > 0.6) {
@@ -1345,6 +1432,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     progression_curve: progressionCurve,
     shop: {
       simulated: shopSimulated,
+      real: shopReal,
     },
     lootbox: {
       runs_with_lootbox: runsWithLootbox.length,
@@ -1524,6 +1612,21 @@ function printReport(report: AnalysisReport): void {
     if (rarities) console.log(`  Rarities:       ${rarities}`)
     console.log(`  Affordable:     ${s.affordable_offer_count} offers (avg ${s.avg_affordable_offer_count?.toFixed(1) ?? 'n/a'}/run)`)
     console.log(`  Would purchase: ${s.would_purchase_runs}/${s.runs_with_shop_data} runs (${(s.simulated_purchase_rate! * 100).toFixed(0)}%)`)
+    console.log('')
+  }
+
+  if (report.shop.real) {
+    const r = report.shop.real
+    console.log(`  ── ${bold}Shop Real Purchases${reset} ──`)
+    console.log(`  Runs with data: ${r.runs_with_shop_data}`)
+    console.log(`  Purchases:      ${r.runs_with_purchase} (${((r.real_purchase_rate ?? 0) * 100).toFixed(0)}%)`)
+    if (r.avg_purchase_cost !== null) console.log(`  Avg cost:       ${r.avg_purchase_cost.toFixed(1)} 💎`)
+    if (r.cheapest_offer_share !== null) console.log(`  Cheapest share: ${(r.cheapest_offer_share * 100).toFixed(0)}% of purchases on offer #1`)
+    const purchaseRarities = Object.entries(r.purchase_rarity_distribution)
+      .filter(([, count]) => count > 0)
+      .map(([k, v]) => `${k}=${v}`)
+      .join(', ')
+    if (purchaseRarities) console.log(`  Rarities:       ${purchaseRarities}`)
     console.log('')
   }
 
