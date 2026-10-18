@@ -353,3 +353,38 @@ describe('DAG — extraction des dépendances (piège grep ERE)', () => {
     }
   })
 })
+
+describe('Watchdog — filets de sécurité (PR orphelines & fin de campagne)', () => {
+  // Deux angles morts mesurés le 2026-10-18, tous les deux laissés pour compte par le sweep :
+  //  1. PR de bot dont le run `pull_request` est retenu par GitHub (action_required, ZÉRO
+  //     job) : aucun check n'est JAMAIS attaché, donc rien ne déclenche le reviewer. #1223
+  //     a attendu 1h36, #1227 1h54 — le passage de 20:37 a raté #1227 de 4 minutes
+  //     (56 min < seuil 60). Les PR sans check passent donc au seuil 30 min, et reçoivent
+  //     le REVIEWER (qui exécute sa propre gate), plus un redispatch CI sans effet.
+  //  2. Le dispatch du supervisor ne vit que dans reviewer.yml : quand la dernière
+  //     sous-issue est mergée par une autre voie, le parent reste ouvert pour toujours
+  //     (9/9 sous-issues fermées, #1201 encore ouverte à 19:41).
+  const wd = readWorkflow('watchdog.yml')
+
+  it('déclenche le reviewer (pas la CI) pour une PR sans check dès 30 min', () => {
+    expect(wd).toContain('if [ "$AGE_MIN" -lt 30 ]')
+    expect(wd).toContain('gh workflow run reviewer.yml -f pr_number="$PR_NUMBER"')
+    expect(wd).not.toContain('gh workflow run ci.yml --ref "$HEAD_REF"')
+  })
+
+  it('ne rejuge jamais deux fois le même commit (anti-tempête)', () => {
+    // Sans ça, une PR bloquée brûlerait une gate complète (lint+tsc+tests+build) à
+    // chaque passage horaire. Un push (nouveau SHA) réarme naturellement la règle.
+    expect(wd).toContain('headRefOid')
+    expect(wd).toContain('.state == \\"APPROVED\\" or .state == \\"CHANGES_REQUESTED\\"')
+  })
+
+  it('dispatche le supervisor quand toutes les sous-issues sont fermées', () => {
+    expect(wd).toContain('mode=supervisor')
+    // Claim anti-doublon + ré-armement si le run supervisor meurt sans livrer sa PR docs.
+    expect(wd).toContain('supervisor-dispatched')
+    // Le scan part des issues récemment actives : parcourir les ~160 labels campaign-*
+    // historiques coûterait ~2-3 appels API chacun, à chaque passage horaire.
+    expect(wd).toContain('sort:updated-desc')
+  })
+})

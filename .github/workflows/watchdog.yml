@@ -35,7 +35,7 @@ jobs:
           # NOTE: ne pas filtrer côté serveur par --label auto-generated : les PRs bot
           # créées quand le label manquait n'ont aucun label et devenaient invisibles
           # (orphelines à 0 check, jamais redispatchées — incident sept 2026 : 7 PRs bloquées).
-          gh pr list --state open --json number,updatedAt,statusCheckRollup,headRefName,body,author,labels,mergeable --limit 50 > /tmp/prs-all.json 2>/dev/null || echo "[]" > /tmp/prs-all.json
+          gh pr list --state open --json number,updatedAt,statusCheckRollup,headRefName,headRefOid,body,author,labels,mergeable --limit 50 > /tmp/prs-all.json 2>/dev/null || echo "[]" > /tmp/prs-all.json
           jq '[.[] | select(([.labels // [] | .[].name] | index("auto-generated")) or (.author.login == "app/github-actions"))]' /tmp/prs-all.json > /tmp/prs.json 2>/dev/null || echo "[]" > /tmp/prs.json
           COUNT=$(jq 'length' /tmp/prs.json 2>/dev/null || echo 0)
           echo "📋 $COUNT PRs bot ouvertes (labellisées ou auteur github-actions)"
@@ -60,22 +60,46 @@ jobs:
             fi
             UPDATED_TS=$(date -d "$UPDATED_AT" +%s 2>/dev/null || echo "$NOW")
             AGE_MIN=$(( (NOW - UPDATED_TS) / 60 ))
-            if [ "$AGE_MIN" -lt 60 ]; then
-              echo "⏭ PR #$PR_NUMBER trop récente (${AGE_MIN}min), skip"
-              continue
-            fi
             CHECK_COUNT=$(echo "$PR" | jq '[.statusCheckRollup[]?] | length' 2>/dev/null || echo 0)
             FAILED_COUNT=$(echo "$PR" | jq '[.statusCheckRollup[]? | select(.conclusion == "FAILURE")] | length' 2>/dev/null || echo 0)
             echo "--- PR #$PR_NUMBER ($HEAD_REF, ${AGE_MIN}min, $CHECK_COUNT checks, $FAILED_COUNT failed, issue #$ISSUE_NUMBER) ---"
+            # PR SANS aucun check = le seul cas où attendre 60 min est trop long. Un run
+            # `pull_request` retenu par GitHub (action_required) n'attachera JAMAIS de check,
+            # et le redispatch CI n'en attache pas toujours (mesuré sur #1223 le 2026-10-18 :
+            # run CI vert à 18:07, rollup toujours vide à 19:10). Dès 30 min on envoie donc
+            # le REVIEWER : sans check il exécute sa propre gate (lint/tsc/tests/build).
             if [ "$CHECK_COUNT" -eq 0 ] && [ -n "$HEAD_REF" ]; then
-              echo "⚠ PR #$PR_NUMBER orpheline (0 check, >60min) → redispatch CI"
-              if gh workflow run ci.yml --ref "$HEAD_REF" -f pr_number="$PR_NUMBER" --repo "${{ github.repository }}" 2>&1 | head -5; then
-                echo "✓ CI redispatchée pour #$PR_NUMBER"
+              if [ "$AGE_MIN" -lt 30 ]; then
+                echo "⏭ PR #$PR_NUMBER sans check mais récente (${AGE_MIN}min < 30min), skip (seuil orphelines)"
+                continue
+              fi
+              # Anti-tempête : ne JAMAIS rejuger deux fois le même commit. Le reviewer
+              # laisse une review APPROVED/CHANGES_REQUESTED portant commit_id = SHA jugé ;
+              # si elle existe et n'a pas été dismissée, un nouveau run ne produira rien de
+              # neuf (et une PR bloquée brûlerait une gate complète à chaque passage horaire).
+              # Un push (nouveau SHA) réarme naturellement la règle.
+              HEAD_SHA=$(echo "$PR" | jq -r '.headRefOid // ""')
+              REVIEWED=0
+              if [ -n "$HEAD_SHA" ]; then
+                REVIEWED=$(gh api "repos/${{ github.repository }}/pulls/$PR_NUMBER/reviews" \
+                  --jq "[.[]? | select(.commit_id == \"$HEAD_SHA\" and (.state == \"APPROVED\" or .state == \"CHANGES_REQUESTED\"))] | length" 2>/dev/null || echo 0)
+              fi
+              if [ "${REVIEWED:-0}" -gt 0 ]; then
+                echo "⏭ PR #$PR_NUMBER : commit ${HEAD_SHA:0:7} déjà jugé (review APPROVED/CHANGES_REQUESTED) — skip"
+                continue
+              fi
+              echo "⚠ PR #$PR_NUMBER orpheline (0 check, >30min) → dispatch reviewer (gate locale)"
+              if gh workflow run reviewer.yml -f pr_number="$PR_NUMBER" --repo "${{ github.repository }}" 2>&1; then
+                echo "✓ Reviewer dispatché pour #$PR_NUMBER"
                 DISPATCHED=$((DISPATCHED+1))
               else
-                echo "❌ redispatch CI échoué pour #$PR_NUMBER"
+                echo "❌ dispatch reviewer échoué pour #$PR_NUMBER"
               fi
               sleep 2
+              continue
+            fi
+            if [ "$AGE_MIN" -lt 60 ]; then
+              echo "⏭ PR #$PR_NUMBER trop récente (${AGE_MIN}min), skip"
               continue
             fi
             if [ "$FAILED_COUNT" -gt 0 ] && [ -n "$ISSUE_NUMBER" ]; then
@@ -157,3 +181,58 @@ jobs:
             sleep 1
           done
           echo "🏁 Reclaim: $RECLAIMED claim(s) relâché(s) sur $CLAIMED"
+
+      - name: Watchdog — campagne terminée mais parent ouvert (filet supervisor)
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Le dispatch du supervisor ne vit QUE dans reviewer.yml (step "Check campaign").
+          # Quand la dernière sous-issue d'une campagne est mergée par une autre voie
+          # (auto-merge inline, merge immédiat), ce step ne tourne jamais : 9/9 fermées
+          # mais parent toujours ouvert (incident #1201, 2026-10-18).
+          echo "🔍 Campagnes entièrement fermées mais parent encore ouvert ?"
+          # On part des issues récemment actives (updated-desc) : parcourir les ~160 labels
+          # campaign-* historiques coûterait ~2-3 appels API par label, à chaque passage.
+          CAMPAIGNS=$(gh issue list --state all --limit 40 --search "sort:updated-desc" \
+            --json labels --jq '[.[].labels[]?.name | select(startswith("campaign-"))] | unique | .[]' 2>/dev/null || echo "")
+          if [ -z "$CAMPAIGNS" ]; then
+            echo "🏁 Campagnes: rien à traiter"
+            exit 0
+          fi
+          INFLIGHT=$(gh run list --workflow=opencode.yml --status in_progress --status queued --limit 5 --json databaseId --jq 'length' 2>/dev/null || echo 0)
+          for LABEL in $CAMPAIGNS; do
+            PARENT="${LABEL#campaign-}"
+            OPEN_SUBS=$(gh issue list --state open --label "$LABEL" --limit 100 --json number --jq 'length' 2>/dev/null || echo "?")
+            if [ "$OPEN_SUBS" != "0" ]; then
+              echo "  ⏳ $LABEL : $OPEN_SUBS sous-issue(s) encore ouverte(s)"
+              continue
+            fi
+            PARENT_STATE=$(gh issue view "$PARENT" --json state --jq '.state' 2>/dev/null || echo UNKNOWN)
+            if [ "$PARENT_STATE" != "OPEN" ]; then
+              echo "  ✓ $LABEL : parent #$PARENT $PARENT_STATE"
+              continue
+            fi
+            DOCS_PR=$(gh pr list --state all --head "docs/campaign-$PARENT" --json number --jq '.[0].number' 2>/dev/null || echo "")
+            if [ -n "$DOCS_PR" ]; then
+              echo "  ✓ $LABEL : PR docs #$DOCS_PR déjà livrée — clôture de #$PARENT attendue"
+              continue
+            fi
+            # Claim anti-doublon + ré-armement : si le label est là mais qu'aucune PR docs
+            # n'existe (run supervisor mort), on le retire et on retente ce passage.
+            if gh issue view "$PARENT" --json labels --jq '[.labels[].name]|join(",")' 2>/dev/null | grep -qE '(^|,)supervisor-dispatched(,|$)'; then
+              echo "  ⚠ $LABEL : claim supervisor sans PR docs (run mort ?) → ré-armement"
+              gh issue edit "$PARENT" --remove-label "supervisor-dispatched" >/dev/null 2>&1 || true
+            fi
+            if [ "$INFLIGHT" != "0" ]; then
+              echo "  ⏳ $LABEL : un run opencode est déjà en cours — dispatch reporté au prochain passage"
+              continue
+            fi
+            echo "  🚀 $LABEL : 0 sous-issue ouverte — dispatch du supervisor pour #$PARENT"
+            gh label create "supervisor-dispatched" --color "5319e7" --description "Supervisor déjà dispatché pour cette campagne" 2>/dev/null || true
+            gh issue edit "$PARENT" --add-label "supervisor-dispatched" >/dev/null 2>&1 || true
+            gh workflow run opencode.yml -f issue_number="$PARENT" -f mode=supervisor --repo "${{ github.repository }}" || echo "  ✗ dispatch supervisor échoué"
+            INFLIGHT=$((INFLIGHT+1))
+            sleep 3
+          done
+          echo "🏁 Campagnes: scan terminé"
