@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-18T18:35:32Z",
+  "last_session": "2026-10-18T18:50:17Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -185,6 +185,11 @@
     {
       "lesson": "Issue #1206 accessoire v2: la gemme 'necklace' était blittée à neck.y sans support. Fix = bandeau de col (expectTrims) à torso.y0 + brin (chaîne) jusqu'à la première ligne de contenu de l'art, gemme descendue à chest.y-3. Astuce de test 'pas d'îlot isolé': le sprite de base est UNE seule composante connexe (vérifié), donc asserter nonZeroComponents(out).length===1 pour chaque accessoire sur slim/standard/broad est un garde-fou fiable. Le support doit être vérifié ligne par ligne entre torso.y0 et gemTop avec |x-neck.x|<=3.",
       "issue": "#1206",
+      "date": "2026-10-18"
+    },
+    {
+      "lesson": "Issue #1210 UI equipement: (1) PixelItemIcon rendait un SVG 8x8 avec size arbitraire -> passer par getIntegerIconScale (round(size/8)) + data-scale + style imageRendering 'pixelated' pour un rendu nearest-neighbor testable. (2) Toujours extraire l'etat du composant dans un hook dedie (useInventoryPanel) quand on touche InventoryPanel, conformement a AGENTS.md props-only. (3) npm run art:sheet ne depend que des sprites/equipOverlays, pas de l'inventaire : un changement UI/CSS produit un PNG identique (md5 inchange) — le documenter dans le commit au lieu de pretendre un diff.",
+      "issue": "#1210",
       "date": "2026-10-18"
     }
   ]
