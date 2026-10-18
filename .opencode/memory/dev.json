@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-18T21:21:32Z",
+  "last_session": "2026-10-18T21:25:35Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "date": "2026-08-25",
-      "issue": "#821",
-      "lesson": "Issue #821 combat speed x1/x2: (1) reglage local persiste = pattern useSound (localStorage module-level) - evite toute migration Supabase. (2) CombatView fake timers: le tick #1 du round interval fait setCurrentRound(0) donc .round-value reste '1/3' apres le premier round joue - discriminer x1/x2 v…"
-    },
     {
       "date": "2026-08-25",
       "issue": "#830",
@@ -194,6 +189,11 @@
     },
     {
       "lesson": "Issue #1229 analyze-qa-stats: (1) qa/stats.json exposes shop.purchased/cost/item_rarity at run.shop AND a nested shop.shop_data (offers, purchased_offer) duplicated at top-level run.shop_data — the analyzer's RunRecord.shop type was stale (only essence_before/after). Real purchase rate on validRuns = 43/58 (the issue's 124/148 counts all runs incl. 0-fight). (2) The simulated affordability proxy is saturated by the persistent QA essence hoard (avg 435 vs cheapest ~20) → 5 blind +10% hikes. Branch price suggestion on real_purchase_rate when runs_with_shop_data >= REAL_SHOP_MIN_RUNS (10), fallback simulated. (3) TrendWindow gained fights_count; last_3/last_5 alerts now require >= MIN_TREND_FIGHTS=10 fights so fightsPerRun:1 no longer produces false declining/swing alerts.",
+      "issue": "#1229",
+      "date": "2026-10-18"
+    },
+    {
+      "lesson": "analyze-qa-stats.ts #1229 : (1) le taux d'achat shop reel doit etre calcule sur TOUTES les runs portant shop_data.offers, pas sur validRuns — 90/148 observations shop sont sur des runs sans combat (sequence de combat skippee mais shop teste), validRuns ne donnait que 43/58 (74%) au lieu de 124/148 (83.8%). (2) gater les alertes de tendance win-rate sur fights_count (combats), pas count (runs) : fightsPerRun=1 rendait last_3/last_5 = 3-5 combats -> faux positifs 48%->0%.",
       "issue": "#1229",
       "date": "2026-10-18"
     }
