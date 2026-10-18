@@ -140533,5 +140533,276 @@
       "purchased_offer": 0,
       "essence_after_purchase": 90
     }
+  },
+  {
+    "date": "2026-10-18T13:01:31.618Z",
+    "run": "2026-10-18",
+    "character": "QA-PERSI-9",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 69,
+        "fight_duration_ms": 10746,
+        "max_hp": 396,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 170.28
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 3,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 17,
+      "vit": 8,
+      "dex": 7,
+      "luk": 13,
+      "int": 40,
+      "foc": 17,
+      "fights": 0
+    },
+    "initial_level": 19,
+    "initial_xp": {
+      "current": 7005,
+      "max": 15456
+    },
+    "initial_max_hp": 513,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 19,
+      "xp": 7744,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 18,
+      "vit": 10,
+      "dex": 7,
+      "luk": 13,
+      "int": 42,
+      "foc": 17,
+      "last xp": 100,
+      "fights": 3
+    },
+    "final_max_hp": 396,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20422,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "skeleton",
+        "goblin"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 137,
+      "xp_events": [
+        {
+          "time_ms": 15378,
+          "xp": 37,
+          "monster": "skeleton",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15890,
+          "xp": 100,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        511,
+        1529,
+        15378
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 37,
+        "essence": 0.38,
+        "monster": "skeleton"
+      },
+      {
+        "result": "victory",
+        "xp": 100,
+        "essence": 0.38,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.89,
+      "next_level_eta": "⬆ 19m 3s",
+      "power_ratio": "⚔ 0.51x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.39x",
+      "interval": "12.0s",
+      "streak_bonus": "🔥 1-win streak (+25%)"
+    },
+    "initial_essence": 149.31,
+    "final_essence": 153.47,
+    "essence": {
+      "before_idle": 149.31,
+      "after_idle": 150.07,
+      "per_fight": [
+        170.28
+      ],
+      "forge_before": 170,
+      "forge_after_salvage": 175,
+      "forge_after_fusion": 175,
+      "forge_after_upgrade": 175,
+      "forge_after": 175,
+      "shop_before": 177,
+      "shop_after": 153,
+      "final": 153.47,
+      "flow": {
+        "idle_gained": 0.76,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 5,
+        "shop_cost": 24,
+        "net_change": 4.16
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 170,
+      "essence_after_salvage": 175,
+      "essence_after_fusion": 175,
+      "essence_after_upgrade": 175,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": 175,
+      "items_after": null,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 24,
+      "essence_before": 177,
+      "essence_after": 153,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Novice Wrap",
+            "rarity": "UNCOMMON",
+            "price": 24
+          },
+          {
+            "name": "Tsunami Orb",
+            "rarity": "EPIC",
+            "price": 73
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 41
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 153
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1144,
+      "arena": 352
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Novice Wrap",
+          "rarity": "UNCOMMON",
+          "price": 24
+        },
+        {
+          "name": "Tsunami Orb",
+          "rarity": "EPIC",
+          "price": 73
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 41
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 153
+    }
   }
 ]
