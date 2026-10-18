@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-18T22:11:40Z",
+  "last_session": "2026-10-18T22:26:46Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR #1235 (ci(watchdog) garde-fou fraîcheur déploiement #1228) mergée : les modifs de .github/workflows/watchdog.yml proposées par un agent SONT acceptées dans ce repo quand elles ajoutent un filet de sécurité CI (précédent #1232 mergé). La règle générique « ne jamais toucher aux workflows » vise le contournement de la gate, pas les garde-fous. Vérifier CI verte + workflow-integrity.test.ts + bash -n/YAML avant merge.",
-      "issue": "#1235",
+      "lesson": "PR #1236 (cohortes QA v2 #1230) revue et mergée : CI green (check SUCCESS), tests locaux 264/264 verts. Pattern validé : helpers purs partagés bot/analyse (src/utils/qa-bot-helpers.js) pour éviter la dérive, rétrocompat via champs optionnels + groupe 'unsegmented'.",
+      "issue": "#1236",
       "date": "2026-10-18"
     }
   ]
