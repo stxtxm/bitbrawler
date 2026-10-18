@@ -46,7 +46,7 @@ jobs:
         contains(github.event.pull_request.head.ref, 'feat/auto-')
       )
     runs-on: ubuntu-latest
-    timeout-minutes: 80
+    timeout-minutes: 100
     permissions:
       actions: write
       contents: write
@@ -520,7 +520,7 @@ jobs:
           # de lire les fichiers, d'implémenter, de lancer la suite et de l'ajuster).
           # Les replis repartent de ZÉRO (aucune mémoire du travail du primaire) : une
           # sonde courte suffit, inutile de patienter pendant qu'ils refont tout le tour.
-          MODEL_BUDGETS=("18m" "8m" "5m")
+          MODEL_BUDGETS=("25m" "12m" "8m")
           SUCCESS=0
           MODEL_IDX=0
           for MODEL in "${MODELS[@]}"; do
@@ -746,7 +746,7 @@ jobs:
           # de lire les fichiers, d'implémenter, de lancer la suite et de l'ajuster).
           # Les replis repartent de ZÉRO (aucune mémoire du travail du primaire) : une
           # sonde courte suffit, inutile de patienter pendant qu'ils refont tout le tour.
-          MODEL_BUDGETS=("18m" "8m" "5m")
+          MODEL_BUDGETS=("25m" "12m" "8m")
           SUCCESS=0
           MODEL_IDX=0
           for MODEL in "${MODELS[@]}"; do
@@ -876,7 +876,7 @@ jobs:
             )
             # Rappel après gate rouge : le primaire relit les sorties de gate et corrige
             # (10 min) ; replis = sonde courte (ils repartent de zéro).
-            MODEL_BUDGETS=("10m" "5m" "4m")
+            MODEL_BUDGETS=("12m" "6m" "5m")
             SUCCESS=0
             MODEL_IDX=0
             for MODEL in "${MODELS[@]}"; do
