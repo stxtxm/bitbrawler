@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-18T18:03:51Z",
+  "last_session": "2026-10-18T18:06:25Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -165,6 +165,11 @@
     {
       "lesson": "Issue #1205 armure en couches (equipOverlays.ts): (1) la ligne de hanches du sprite 24x42 est y = 30 + SPRITE_PAD_TOP (=36) -- pantalon rows 36-39, chaussures 40-41. Toute peinture d'armure de torse doit s'arreter a 35. (2) Le leaf/paint du workflow cree TOUJOURS une PR avec body 'Closes #N' : impossible d'y mettre la sortie art:sheet -> la mettre dans le message de commit (le squash la recopie) ET en commentaire d'issue. (3) paintChest recolorait les cellules pantalon en TINT2 pour les robes (immortal_vestments -> aplat dore) : supprime. (4) Test invariant robuste: comparer grid par grid out vs bare pour y >= HIP pour tout item 'chest'/'robe' via armorVisualKind.",
       "issue": "#1205",
+      "date": "2026-10-18"
+    },
+    {
+      "lesson": "Issue #1208 attack 5 frames: (1) applyAttackPose prend desormais un tableau de poses indexe par phase (ATTACK_POSES), export ATTACK_IMPACT_FRAME=3 pour que SpriteCanvas place le punchTrail sur la bonne frame. (2) Tete inchangee pendant l'attack => NE PAS mettre hairSway sur les frames d'attack: le test 'head never moves' compare les pixels du crane et le fringe decale casse l'invariant. (3) Les jambes changent legerement via applyFeatures (torsoCx depend de l'extension du bras) => asserter legs[0]===legs[last] pas l'egalite globale. (4) art:sheet: attack 3->5 fait passer le sheet de 198 a 216 sprites, meme dimension 1812x23232 (cols fixe=6).",
+      "issue": "#1208",
       "date": "2026-10-18"
     }
   ]
