@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-18T17:49:45Z",
+  "last_session": "2026-10-18T18:03:51Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -160,6 +160,11 @@
     {
       "lesson": "Issue #1207 sprite run/idle: (1) le test existant 'arms attached' prend les colonnes de bras dans les lignes 30-35 puis verifie la continuite jusqu'a 37 — un pass frame qui scissor les jambes EN PLUS du lift pousse un tibia sous une colonne de bras et cree un faux gap (33->36). Fix: pass = tuck vertical du tibia arriere (aucun glissement horizontal) puis liftSkeleton. (2) idle 6 frames via balancement dx/dy du haut du corps (IDLE_SWAY) + applyBlink qui efface les 2 rangees d'iris (eyeTone=shadeIndexOf(8)) en gardant la ligne de cils (eyeTop+2) — compte d'iris 16 -> 6 pour detecter le blink en test. (3) Listes swayX/swingX de SpriteCanvas indexees par frameIdx%frames.length: a etendre a 6 sinon undefined->0.",
       "issue": "#1207",
+      "date": "2026-10-18"
+    },
+    {
+      "lesson": "Issue #1205 armure en couches (equipOverlays.ts): (1) la ligne de hanches du sprite 24x42 est y = 30 + SPRITE_PAD_TOP (=36) -- pantalon rows 36-39, chaussures 40-41. Toute peinture d'armure de torse doit s'arreter a 35. (2) Le leaf/paint du workflow cree TOUJOURS une PR avec body 'Closes #N' : impossible d'y mettre la sortie art:sheet -> la mettre dans le message de commit (le squash la recopie) ET en commentaire d'issue. (3) paintChest recolorait les cellules pantalon en TINT2 pour les robes (immortal_vestments -> aplat dore) : supprime. (4) Test invariant robuste: comparer grid par grid out vs bare pour y >= HIP pour tout item 'chest'/'robe' via armorVisualKind.",
+      "issue": "#1205",
       "date": "2026-10-18"
     }
   ]
