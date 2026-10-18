@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-18T18:06:25Z",
+  "last_session": "2026-10-18T18:07:08Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -170,6 +170,11 @@
     {
       "lesson": "Issue #1208 attack 5 frames: (1) applyAttackPose prend desormais un tableau de poses indexe par phase (ATTACK_POSES), export ATTACK_IMPACT_FRAME=3 pour que SpriteCanvas place le punchTrail sur la bonne frame. (2) Tete inchangee pendant l'attack => NE PAS mettre hairSway sur les frames d'attack: le test 'head never moves' compare les pixels du crane et le fringe decale casse l'invariant. (3) Les jambes changent legerement via applyFeatures (torsoCx depend de l'extension du bras) => asserter legs[0]===legs[last] pas l'egalite globale. (4) art:sheet: attack 3->5 fait passer le sheet de 198 a 216 sprites, meme dimension 1812x23232 (cols fixe=6).",
       "issue": "#1208",
+      "date": "2026-10-18"
+    },
+    {
+      "lesson": "Flaky randomness assertions: remplacer les tirages reels par un SWEEP deterministe de Math.random (mockReturnValue(i/draws), draws>=pool) garantit de visiter chaque index du pool -> plus de flakiness que 'augmenter le nombre de tirages'. Applique aux 3 tests some(...) de monster-utils (lvl 3/15/35). Verif RED en cassant temporairement le filtre minLevel/maxLevel de monsterUtils (6 tests tombent), puis revert.",
+      "issue": "#1221",
       "date": "2026-10-18"
     }
   ]
