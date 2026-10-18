@@ -329,6 +329,16 @@ function blitRaw(
 // colors sampled from each item's pixel art.
 // ---------------------------------------------------------------------------
 
+function paintGuardCollar(
+  grid: SpriteGrid,
+  palm: { x: number; y: number },
+  gem = TRIM_INDEX,
+): void {
+  for (let x = palm.x - 1; x <= palm.x + 3; x++) paint(grid, x, palm.y, TRIM_INDEX);
+  paint(grid, palm.x + 2, palm.y, gem);
+  paint(grid, palm.x + 3, palm.y, gem);
+}
+
 function paintBlade(
   grid: SpriteGrid,
   palm: { x: number; y: number },
@@ -337,7 +347,7 @@ function paintBlade(
   gem: number,
 ): void {
   const x0 = palm.x;
-  const guardY = palm.y - 1;
+  const guardY = palm.y;
   const tipY = Math.max(0, guardY - length);
   const sx = (x: number, y: number): number => slantX(x, y, palm.y);
   for (let y = tipY + 1; y < guardY; y++) {
@@ -349,9 +359,7 @@ function paintBlade(
   paint(grid, sx(x0 + 1, tipY), tipY, BLADE_LIGHT);
   paint(grid, sx(x0 + 2, tipY), tipY, BLADE_INDEX);
   if (glint) paint(grid, sx(x0 + 1, tipY), tipY, ACCENT_INDEX);
-  for (let x = x0 - 1; x <= x0 + 3; x++) paint(grid, x, guardY, TRIM_INDEX);
-  paint(grid, x0, guardY, gem);
-  paint(grid, x0 + 1, guardY, gem);
+  paintGuardCollar(grid, { x: x0, y: guardY }, gem);
   paint(grid, sx(x0, guardY + 1), guardY + 1, WOOD_INDEX);
   paint(grid, sx(x0 + 1, guardY + 1), guardY + 1, WOOD_INDEX);
   paint(grid, sx(x0, guardY + 2), guardY + 2, WOOD_INDEX);
@@ -483,6 +491,7 @@ function paintHeldWeapon(
   const grip = swayX === 0 ? palm : { x: palm.x + swayX, y: palm.y };
   if (kind === 'bow') {
     paintBow(grid, grip);
+    paintGuardCollar(grid, grip, gem);
     return;
   }
   if (kind === 'fist') {
@@ -491,21 +500,25 @@ function paintHeldWeapon(
   }
   if (kind === 'staff') {
     paintStaff(grid, grip);
+    paintGuardCollar(grid, grip, gem);
     paintFistGrip(grid, palm);
     return;
   }
   if (kind === 'scepter') {
     paintScepter(grid, grip);
+    paintGuardCollar(grid, grip, gem);
     paintFistGrip(grid, palm);
     return;
   }
   if (kind === 'scythe') {
     paintScythe(grid, grip, glint);
+    paintGuardCollar(grid, grip, gem);
     paintFistGrip(grid, palm);
     return;
   }
   if (kind === 'haft') {
     paintHaft(grid, grip, item.element ? ACCENT_INDEX : WHEAD_INDEX);
+    paintGuardCollar(grid, grip, gem);
     paintFistGrip(grid, palm);
     return;
   }
@@ -772,6 +785,29 @@ function paintSwingTrail(grid: SpriteGrid, before: SpriteGrid, steps: number): v
   }
 }
 
+const WEAPON_CELLS = new Set<number>([
+  TRIM_INDEX, TRIM_DARK, TRIM_LIGHT,
+  ACCENT_INDEX, ACCENT_DARK,
+  BLADE_INDEX, BLADE_DARK, BLADE_LIGHT,
+  WOOD_INDEX, WOOD_DARK, WOOD_LIGHT,
+  WHEAD_INDEX, WHEAD_DARK, WHEAD_LIGHT,
+  STRING_INDEX,
+]);
+
+function clipWeaponFromHead(grid: SpriteGrid, before: SpriteGrid, head: Box): void {
+  const y0 = Math.max(0, head.y0);
+  const y1 = Math.min(grid.length - 1, head.y1);
+  for (let y = y0; y <= y1; y++) {
+    const row = grid[y];
+    const w = row?.length ?? 0;
+    const x0 = Math.max(0, head.x0);
+    const x1 = Math.min(w - 1, head.x1);
+    for (let x = x0; x <= x1; x++) {
+      if (WEAPON_CELLS.has(row[x])) row[x] = before[y][x];
+    }
+  }
+}
+
 export function applyEquipmentOverlays(
   grid: SpriteGrid,
   palette: SpritePalette,
@@ -884,9 +920,10 @@ export function applyEquipmentOverlays(
   }
   if (loadout.weapon) {
     const trailSteps = opts?.punchTrail ?? 0;
-    const preWeapon = trailSteps > 0 ? out.map((row) => [...row]) : null;
+    const preWeapon = out.map((row) => [...row]);
     paintHeldWeapon(out, loadout.weapon, marks.palmR, opts?.swayX ?? 0);
-    if (preWeapon) paintSwingTrail(out, preWeapon, trailSteps);
+    if (trailSteps > 0) paintSwingTrail(out, preWeapon, trailSteps);
+    clipWeaponFromHead(out, preWeapon, marks.head);
   }
   if (loadout.accessory && accessoryKind === 'ring') paintRing(out, marks.palmR);
   if (loadout.accessory && accessoryKind === 'orb') {

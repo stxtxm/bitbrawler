@@ -22,6 +22,7 @@ import {
   WOOD_LIGHT,
   WHEAD_DARK,
   WHEAD_LIGHT,
+  ACCENT_DARK,
   WEAPON_SLANT,
   WOOD_INDEX,
   WHEAD_INDEX,
@@ -40,6 +41,17 @@ const byId = (id: string) => ITEM_ASSETS.find((i) => i.id === id) ?? null;
 
 const STD_MALE = { build: 'standard', bodyType: 'basic', headType: 'male' } as const;
 const STD_FEMALE = { build: 'standard', bodyType: 'basic', headType: 'female' } as const;
+
+const WEAPON_FAMILY = new Set<number>([
+  TRIM_INDEX, TRIM_DARK, TRIM_LIGHT,
+  ACCENT_INDEX, ACCENT_DARK,
+  BLADE_INDEX, BLADE_DARK, BLADE_LIGHT,
+  WOOD_INDEX, WOOD_DARK, WOOD_LIGHT,
+  WHEAD_INDEX, WHEAD_DARK, WHEAD_LIGHT,
+  STRING_INDEX,
+]);
+
+const weaponItems = () => ITEM_ASSETS.filter((i) => i.slot === 'weapon');
 
 const blitCells = (grid: number[][]): Array<[number, number]> => {
   const cells: Array<[number, number]> = [];
@@ -96,11 +108,11 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       armor: null,
       accessory: null,
     });
-    const tipY = marks.palmR.y - 1 - 9;
+    const tipY = marks.palmR.y - 11;
     // slanted 3-wide edge leans out from the fist: dark bevels, bright core
     const sh = (x: number, y: number): number =>
       x + Math.round((marks.palmR.y - y) * WEAPON_SLANT);
-    for (let y = tipY + 1; y < marks.palmR.y - 1; y++) {
+    for (let y = tipY + 1; y < marks.palmR.y; y++) {
       expect([BLADE_INDEX, BLADE_DARK, BLADE_LIGHT]).toContain(out.grid[y][sh(marks.palmR.x, y)]);
       expect(out.grid[y][sh(marks.palmR.x + 1, y)]).toBe(BLADE_LIGHT);
       expect([BLADE_INDEX, BLADE_DARK, BLADE_LIGHT]).toContain(out.grid[y][sh(marks.palmR.x + 2, y)]);
@@ -111,17 +123,17 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     }
     // tip leans visibly outward from the guard column
     expect(sh(marks.palmR.x, tipY)).toBeGreaterThan(marks.palmR.x);
-    // guard bar with plain steel gem (no element), wooden grip, pommel cap
-    for (let x = marks.palmR.x - 1; x <= marks.palmR.x + 3; x++) {
-      expect([TRIM_INDEX, TRIM_DARK, TRIM_LIGHT]).toContain(out.grid[marks.palmR.y - 1][x]);
+    // the guard rides the fist row: quillons straddle the closed fingers
+    for (const x of [marks.palmR.x - 1, marks.palmR.x + 2, marks.palmR.x + 3]) {
+      expect([TRIM_INDEX, TRIM_DARK, TRIM_LIGHT]).toContain(out.grid[marks.palmR.y][x]);
     }
-    expect(out.grid[marks.palmR.y - 1][marks.palmR.x]).toBe(TRIM_INDEX);
-    expect(out.grid[marks.palmR.y - 1][marks.palmR.x + 1]).toBe(TRIM_INDEX);
-    expect(out.grid[marks.palmR.y + 1][marks.palmR.x]).toBe(shadeIndexOf(1));
-    expect(out.grid[marks.palmR.y + 2][marks.palmR.x - 1]).toBe(TRIM_INDEX);
-    // fist wrapped over the grip: skin cap + shaded knuckles
+    // fist wrapped over the grip: skin cap + shaded knuckles below the guard
     expect(out.grid[marks.palmR.y][marks.palmR.x]).toBe(1);
     expect(out.grid[marks.palmR.y][marks.palmR.x + 1]).toBe(1);
+    expect(out.grid[marks.palmR.y + 1][marks.palmR.x]).toBe(shadeIndexOf(1));
+    // wooden grip and pommel cap continue below the fist
+    expect([WOOD_INDEX, WOOD_DARK, WOOD_LIGHT]).toContain(out.grid[marks.palmR.y + 2][marks.palmR.x]);
+    expect([TRIM_INDEX, TRIM_DARK, TRIM_LIGHT]).toContain(out.grid[marks.palmR.y + 3][marks.palmR.x - 1]);
     // blade colors come from the item art, not a fixed gray
     expect(out.palette[BLADE_INDEX]).toBe('#c0c0c0');
     const ember = applyEquipmentOverlays(base.grid, base.palette, {
@@ -130,9 +142,84 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       accessory: null,
     });
     expect(ember.palette[BLADE_INDEX]).not.toBe(out.palette[BLADE_INDEX]);
-    // elemental gem set into the guard
-    expect(ember.grid[marks.palmR.y - 1][marks.palmR.x]).toBe(ACCENT_INDEX);
-    expect(ember.grid[marks.palmR.y - 1][marks.palmR.x + 1]).toBe(ACCENT_INDEX);
+    // elemental gem set into the guard, clear of the closed fingers
+    expect(ember.grid[marks.palmR.y][marks.palmR.x + 2]).toBe(ACCENT_INDEX);
+    expect(ember.grid[marks.palmR.y][marks.palmR.x + 3]).toBe(ACCENT_INDEX);
+  });
+
+  it('holds every weapon with the guard crossing the fist column', () => {
+    const base = generateSprite16('guard-check', 'male', { ...STD_MALE });
+    const marks = computeLandmarks(base.grid);
+    for (const item of weaponItems()) {
+      const out = applyEquipmentOverlays(base.grid, base.palette, {
+        weapon: item,
+        armor: null,
+        accessory: null,
+      });
+      const row = out.grid[marks.palmR.y] ?? [];
+      let minX = 99;
+      let maxX = -1;
+      row.forEach((c, x) => {
+        if (!WEAPON_FAMILY.has(c)) return;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+      });
+      expect(minX, `${item.id} guard column`).toBeLessThanOrEqual(marks.palmR.x);
+      expect(maxX, `${item.id} guard column`).toBeGreaterThanOrEqual(marks.palmR.x + 1);
+    }
+  });
+
+  it('never lets a weapon pixel enter the head box across every frame', () => {
+    const kinds: Array<[string, string]> = [
+      ['blade', 'rusty_sword'],
+      ['dagger', 'flame_dagger'],
+      ['haft', 'bronze_axe'],
+      ['staff', 'oak_staff'],
+      ['scepter', 'wand_of_storms'],
+      ['scythe', 'doom_scythe'],
+      ['bow', 'hunter_bow'],
+      ['fist', 'iron_knuckles'],
+    ];
+    for (const [kind, id] of kinds) {
+      for (const anim of ['idle', 'run', 'attack', 'hit', 'victory'] as const) {
+        const frames = generateSpriteFrames('head-clear', 'male', { ...STD_MALE }, anim)!;
+        for (const frame of frames) {
+          const marks = computeLandmarks(frame.grid);
+          const out = applyEquipmentOverlays(frame.grid, frame.palette, {
+            weapon: byId(id),
+            armor: null,
+            accessory: null,
+          });
+          let inside = 0;
+          for (let y = marks.head.y0; y <= marks.head.y1; y++) {
+            for (let x = marks.head.x0; x <= marks.head.x1; x++) {
+              if (WEAPON_FAMILY.has(out.grid[y]?.[x] ?? 0)) inside++;
+            }
+          }
+          expect(inside, `${kind} ${anim}`).toBe(0);
+        }
+      }
+    }
+  });
+
+  it('keeps the blade above the hand for every bladed weapon', () => {
+    const base = generateSprite16('above-hand', 'male', { ...STD_MALE });
+    const marks = computeLandmarks(base.grid);
+    for (const item of weaponItems()) {
+      const kind = weaponVisualKind(item);
+      if (kind !== 'blade' && kind !== 'dagger') continue;
+      const out = applyEquipmentOverlays(base.grid, base.palette, {
+        weapon: item,
+        armor: null,
+        accessory: null,
+      });
+      let lowest = -1;
+      out.grid.forEach((row, y) => row.forEach((c) => {
+        if (c === BLADE_INDEX || c === BLADE_DARK || c === BLADE_LIGHT) lowest = Math.max(lowest, y);
+      }));
+      expect(lowest, `${item.id} blade bottom`).toBeGreaterThanOrEqual(0);
+      expect(lowest, `${item.id} blade bottom`).toBeLessThan(marks.palmR.y);
+    }
   });
 
   it('draws daggers shorter than swords', () => {
@@ -531,8 +618,8 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
   it('adds a tip glint on epic and legendary blades only', () => {
     const base = generateSprite16('glint-check', 'male', { ...STD_MALE });
     const marks = computeLandmarks(base.grid);
-    const tipY = marks.palmR.y - 1 - 11;
-    const tipX = marks.palmR.x + 1 + Math.round(12 * WEAPON_SLANT);
+    const tipY = marks.palmR.y - 11;
+    const tipX = marks.palmR.x + 1 + Math.round(11 * WEAPON_SLANT);
     const plain = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: byId('rusty_sword'),
       armor: null,
