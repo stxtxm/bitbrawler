@@ -111,28 +111,38 @@ function boxOf(grid: SpriteGrid, y0: number, y1: number): Box {
   return { x0, y0: top, x1, y1: bottom };
 }
 
+const SKIN_INDICES = new Set([1, shadeIndexOf(1), highlightIndexOf(1)]);
+
 function extremeHand(grid: SpriteGrid, side: 'left' | 'right'): { x: number; y: number } {
-  let best: { x: number; y: number } | null = null;
   for (let y = 24 + PAD; y <= 31 + PAD; y++) {
     const row = grid[y];
     if (!row) continue;
+    let x = -1;
     if (side === 'right') {
-      for (let x = row.length - 1; x >= 0; x--) {
-        if (row[x] !== 0) {
-          if (!best || x > best.x) best = { x, y };
+      for (let i = row.length - 1; i >= 0; i--) {
+        if (SKIN_INDICES.has(row[i])) {
+          x = i;
           break;
         }
       }
     } else {
-      for (let x = 0; x < row.length; x++) {
-        if (row[x] !== 0) {
-          if (!best || x < best.x) best = { x, y };
+      for (let i = 0; i < row.length; i++) {
+        if (SKIN_INDICES.has(row[i])) {
+          x = i;
           break;
         }
       }
     }
+    if (x < 0) continue;
+    let width = 0;
+    if (side === 'right') {
+      for (let i = x; i >= 0 && SKIN_INDICES.has(row[i]); i--) width++;
+    } else {
+      for (let i = x; i < row.length && SKIN_INDICES.has(row[i]); i++) width++;
+    }
+    if (width >= 4) return { x, y };
   }
-  return best ?? (side === 'right' ? { x: 17, y: 27 + PAD } : { x: 6, y: 27 + PAD });
+  return side === 'right' ? { x: 17, y: 27 + PAD } : { x: 6, y: 27 + PAD };
 }
 
 const clamp = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, Math.round(v)));
