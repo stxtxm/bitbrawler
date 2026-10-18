@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-18T17:45:52Z",
+  "last_session": "2026-10-18T17:47:05Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -144,6 +144,13 @@
       "lesson": "Issue #1201 (proposition parente, campagne-1201 déjà découpée en 9 sous-issues dont #1204/#1207/#1209 en vol) : le dev ne crée AUCUNE issue — il implémente un bloc cohérent du périmètre parent. Bloc livré = overlay équipement reçu : paintGuardPosts (2 posts TRIM à palm.x-1/+2 sur la ligne du poing, pour TOUTES les armes à prise), restoreHead (re-stampe les cellules occupées de la tête par-dessus l arme → aucune lame ne traverse le visage en attack), armure chest/robe s arrête à sa dernière rangée (plus de repeint des jambes par immortal_vestments), chaîne de collier ancrée sur les cellules du corps. Leçon technique : pour éviter qu un overlay recouvre une zone, snapshotter la grille avant l overlay puis restaurer la zone (ici boîte tête) — additif, ne crée pas de trou.",
       "issue": "#1201",
       "date": "2026-10-18"
+    },
+    {
+      "version": 1,
+      "agent": "dev",
+      "issue": "#1203",
+      "date": "2026-10-18",
+      "lesson": "Re-dispatch de #1203 sur feat/auto-1203 : l'issue est CLOSED et deja resolue par PR #1216 (mergee) — applyFists/fistWidth + test 'ends every arm in a contiguous 2x2 skin fist' presents et verts (lint/tsc/2270 tests/build). Branche identique a origin/master (0 commit d'ecart) : ne PAS recreer le travail (anti-duplication), le workflow gere le run sans commit (retrait du label dispatched, exit 0). Verifie TOUJOURS l'etat de l'issue (gh issue view) et git diff origin/master avant d'implementer. Cas non couvert (pre-existant, hors #1203) : build 'slim' supprime entierement les bras (applyBuild slim retire la colonne de peau externe) -> extremeHand retombe sur des constantes magiques {6|17,33}."
     }
   ]
 }
