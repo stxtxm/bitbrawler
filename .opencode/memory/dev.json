@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-18T17:33:52Z",
+  "last_session": "2026-10-18T17:45:52Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -138,6 +138,11 @@
     {
       "lesson": "Issue #1204 (overlay arme v2, campaign-1201 [3/9]): la garde devait croiser le poing SANS deplacer la barre de garde existante, car les tests d'ancrage encodent guardY = palm.y - 1. Solution: garder la barre et ajouter paintGripCollar au rang palm.y (palm.x-1 / +2 / +3), cellules centrales recouvertes par paintFistGrip. Pour 'aucun recouvrement de tete' sur toutes les frames: clip generique clipWeaponFromHead qui restaure les pixels d'arme ecrits dans marks.head (snapshot preWeapon desormais toujours pris) — pas de longueurs par arme. Piege connu non corrige: extremeHand('right') scanne y in [30,37] et rate le poing remonte en victory f1/f2 -> palmR={x:4,y:30}, arme ancree du mauvais cote. Le corps de PR etant genere par le workflow ('Closes #N'), la preuve art:sheet avant/apres a ete postee en commentaire d'issue avec sha256 avant/apres (dimensions identiques 1212x23232, 162 sprites).",
       "issue": "#1204",
+      "date": "2026-10-18"
+    },
+    {
+      "lesson": "Issue #1201 (proposition parente, campagne-1201 déjà découpée en 9 sous-issues dont #1204/#1207/#1209 en vol) : le dev ne crée AUCUNE issue — il implémente un bloc cohérent du périmètre parent. Bloc livré = overlay équipement reçu : paintGuardPosts (2 posts TRIM à palm.x-1/+2 sur la ligne du poing, pour TOUTES les armes à prise), restoreHead (re-stampe les cellules occupées de la tête par-dessus l arme → aucune lame ne traverse le visage en attack), armure chest/robe s arrête à sa dernière rangée (plus de repeint des jambes par immortal_vestments), chaîne de collier ancrée sur les cellules du corps. Leçon technique : pour éviter qu un overlay recouvre une zone, snapshotter la grille avant l overlay puis restaurer la zone (ici boîte tête) — additif, ne crée pas de trou.",
+      "issue": "#1201",
       "date": "2026-10-18"
     }
   ]
