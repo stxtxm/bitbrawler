@@ -3,7 +3,7 @@ import { ELEMENT_COLORS, Element } from '../../types/Item';
 import type { CharacterAppearance } from '../../types/Character';
 import { PixelGridCanvas } from './PixelGridCanvas';
 import { applyEquipmentOverlays, resolveLoadout } from './equipOverlays';
-import { generateSprite16, generateSpriteFrames, ATTACK_IMPACT_FRAME, SpriteAnimKind } from './spriteGenerator';
+import { generateSprite16, generateSpriteFrames, mirrorSpriteGrid, ATTACK_IMPACT_FRAME, SpriteAnimKind } from './spriteGenerator';
 import { SPRITE_DISPLAY_SCALE } from './spriteTypes';
 import { useLowPerformanceMode } from '../../hooks/useLowPerformanceMode';
 
@@ -26,6 +26,10 @@ interface SpriteCanvasProps {
   } | null;
   aura?: Element | null;
   animate?: SpriteAnimKind | null;
+  /** Mirror the sprite horizontally (PvP opponent: faces the player, weapon in
+   *  the other hand). Applied to the pixel grid, so CSS animations cannot
+   *  cancel it. */
+  flip?: boolean;
 }
 
 export const SpriteCanvas = memo(function SpriteCanvas({
@@ -37,6 +41,7 @@ export const SpriteCanvas = memo(function SpriteCanvas({
   equippedItems,
   aura,
   animate = null,
+  flip = false,
 }: SpriteCanvasProps) {
   const lowPerf = useLowPerformanceMode();
   const activeAnim = !lowPerf ? animate : null;
@@ -69,7 +74,9 @@ export const SpriteCanvas = memo(function SpriteCanvas({
 
   const { grid, palette } = useMemo(() => {
     const base = frames && frames.length > 0 ? frames[frameIdx % frames.length] : generateSprite16(seed, gender, appearance);
-    if (!equippedItems) return base;
+    if (!equippedItems) {
+      return flip ? { grid: mirrorSpriteGrid(base.grid), palette: base.palette } : base;
+    }
     // Dynamic life: weapon and jewelry sway with stride / breathing
     const running = activeAnim === 'run' && frames && frames.length > 0;
     const idling = activeAnim === 'idle' && frames && frames.length > 0;
@@ -86,8 +93,11 @@ export const SpriteCanvas = memo(function SpriteCanvas({
         : 0;
     const punchTrail = (activeAnim === 'attack' && frameIdx === ATTACK_IMPACT_FRAME) || (victory && frameIdx === 1) ? 3 : 0;
     const overlaid = applyEquipmentOverlays(base.grid, base.palette, resolveLoadout(equippedItems), { swayX, swingX, punchTrail });
-    return { grid: overlaid.grid, palette: overlaid.palette };
-  }, [frames, frameIdx, activeAnim, seed, gender, appearance, equippedItems]);
+    return {
+      grid: flip ? mirrorSpriteGrid(overlaid.grid) : overlaid.grid,
+      palette: overlaid.palette,
+    };
+  }, [frames, frameIdx, activeAnim, seed, gender, appearance, equippedItems, flip]);
 
   return (
     <PixelGridCanvas
@@ -97,6 +107,7 @@ export const SpriteCanvas = memo(function SpriteCanvas({
       label={`fighter-${seed}`}
       className={className}
       glowColor={aura ? ELEMENT_COLORS[aura] : null}
+      flip={flip}
     />
   );
 });

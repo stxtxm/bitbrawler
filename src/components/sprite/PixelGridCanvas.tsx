@@ -15,6 +15,9 @@ interface PixelGridCanvasProps {
   label?: string;
   className?: string;
   glowColor?: string | null;
+  /** Purely declarative: the grid is already mirrored by the caller. Exposed as
+   *  `data-flip` so the mirrored fighter can be asserted from tests / DOM. */
+  flip?: boolean;
 }
 
 interface BitmapEntry {
@@ -81,6 +84,7 @@ export const PixelGridCanvas = memo(function PixelGridCanvas({
   label,
   className,
   glowColor,
+  flip = false,
 }: PixelGridCanvasProps) {
   const ref = useRef<HTMLCanvasElement | null>(null);
   const height = grid.length;
@@ -134,6 +138,7 @@ export const PixelGridCanvas = memo(function PixelGridCanvas({
       className={className}
       aria-label={label}
       data-glow={glowColor ? 'on' : 'off'}
+      data-flip={flip ? 'on' : 'off'}
       // Deployment probe. Bump this string whenever the sprite renderer
       // changes: it is greppable inside the minified production bundle, so a
       // deployed revision can be confirmed from outside (curl on the built
