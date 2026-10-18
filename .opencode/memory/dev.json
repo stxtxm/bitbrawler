@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-18T17:47:05Z",
+  "last_session": "2026-10-18T17:47:41Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -151,6 +151,11 @@
       "issue": "#1203",
       "date": "2026-10-18",
       "lesson": "Re-dispatch de #1203 sur feat/auto-1203 : l'issue est CLOSED et deja resolue par PR #1216 (mergee) — applyFists/fistWidth + test 'ends every arm in a contiguous 2x2 skin fist' presents et verts (lint/tsc/2270 tests/build). Branche identique a origin/master (0 commit d'ecart) : ne PAS recreer le travail (anti-duplication), le workflow gere le run sans commit (retrait du label dispatched, exit 0). Verifie TOUJOURS l'etat de l'issue (gh issue view) et git diff origin/master avant d'implementer. Cas non couvert (pre-existant, hors #1203) : build 'slim' supprime entierement les bras (applyBuild slim retire la colonne de peau externe) -> extremeHand retombe sur des constantes magiques {6|17,33}."
+    },
+    {
+      "lesson": "Issue #1204 overlay arme v2: (1) la garde doit etre peinte AU RANG du poing (palmR.y) via un collier qui encadre le poing (paintFistGrip recouvre le centre) — sinon la garde reste au-dessus du poing et l'arme lit comme posee a cote. (2) clipWeaponFromHead restaure tout pixel d'arme ecrit dans la head box 2D (pas seulement la ligne) : indispensable car extremeHand('right') scanne y[30,37] et rate le poing sur victory f1/f2 (bras leve) -> palmR tombe a x=4 et la lame traverse la tete. (3) avant de modifier une geometrie artistique, regenerer art:sheet avant/apres via git stash pour fournir la preuve au workflow. (4) Ne pas ajouter de commentaires dans le code (instruction explicite, malgre le style commente du fichier).",
+      "issue": "#1204",
+      "date": "2026-10-18"
     }
   ]
 }
