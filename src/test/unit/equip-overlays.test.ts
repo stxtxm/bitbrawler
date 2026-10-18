@@ -15,6 +15,7 @@ import {
   TINT_LIGHT,
   TINT2_INDEX,
   TINT2_DARK,
+  TINT2_LIGHT,
   BLADE_INDEX,
   BLADE_DARK,
   BLADE_LIGHT,
@@ -33,7 +34,7 @@ import {
   RIM_INDEX,
 } from '../../components/sprite/equipOverlays';
 import { generateSprite16, generateSpriteFrames } from '../../components/sprite/spriteGenerator';
-import { ACCENT_INDEX, ITEM_BLIT_OFFSET, TRIM_INDEX, shadeIndexOf } from '../../components/sprite/spriteTypes';
+import { ACCENT_INDEX, ITEM_BLIT_OFFSET, TRIM_INDEX, highlightIndexOf, shadeIndexOf } from '../../components/sprite/spriteTypes';
 import { RARITY_TRIM } from '../../components/sprite/spritePalettes';
 import { ELEMENT_COLORS } from '../../types/Item';
 
@@ -843,5 +844,129 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     // and it stays attached: no far-flung island detached from the grip
     const nearGrip = added.filter(([x]) => Math.abs(x - marks.palmR.x) <= 8).length;
     expect(nearGrip).toBeGreaterThan(6);
+  });
+
+  const LEG_FAMILIES = new Set<number>([
+    6, shadeIndexOf(6), highlightIndexOf(6),
+    7, shadeIndexOf(7), highlightIndexOf(7),
+  ]);
+
+  const hipRowOf = (grid: number[][]): number => {
+    for (let y = 30; y < grid.length; y++) {
+      const cells = grid[y].filter((c) => c !== 0);
+      if (cells.length > 0 && cells.every((c) => LEG_FAMILIES.has(c))) return y;
+    }
+    return grid.length;
+  };
+
+  const isSkinTone = (v: number): boolean =>
+    v === 1 || v === shadeIndexOf(1) || v === highlightIndexOf(1);
+  const isHairTone = (v: number): boolean =>
+    v === 4 || v === shadeIndexOf(4) || v === highlightIndexOf(4);
+
+  it('wears body armour above the hips: every leg and shoe pixel stays intact', () => {
+    const seeds: Array<[string, 'male' | 'female']> = [
+      ['k3f9qz1a', 'male'],
+      ['v7m2xp4c', 'female'],
+      ['r8t5wd0b', 'male'],
+    ];
+    const bodyArmour = ITEM_ASSETS.filter(
+      (i) => i.slot === 'armor' && armorVisualKind(i.name) !== 'boots',
+    );
+    expect(bodyArmour.length).toBeGreaterThan(20);
+    for (const [seed, gender] of seeds) {
+      const base = generateSprite16(seed, gender);
+      const hip = hipRowOf(base.grid);
+      expect(hip, `${seed} hip line`).toBeGreaterThanOrEqual(36);
+      for (const item of bodyArmour) {
+        const out = applyEquipmentOverlays(base.grid, base.palette, {
+          weapon: null,
+          armor: item,
+          accessory: null,
+        });
+        for (let y = hip; y < base.grid.length; y++) {
+          expect(out.grid[y], `${item.id} y${y}`).toEqual(base.grid[y]);
+        }
+      }
+    }
+  });
+
+  it('keeps the player skin and hair readable under body armour', () => {
+    const seeds: Array<[string, 'male' | 'female']> = [
+      ['k3f9qz1a', 'male'],
+      ['v7m2xp4c', 'female'],
+      ['r8t5wd0b', 'male'],
+    ];
+    const torsoArmour = ITEM_ASSETS.filter((i) => {
+      if (i.slot !== 'armor') return false;
+      const kind = armorVisualKind(i.name);
+      return kind === 'chest' || kind === 'robe';
+    });
+    expect(torsoArmour.length).toBeGreaterThan(5);
+    for (const [seed, gender] of seeds) {
+      const base = generateSprite16(seed, gender);
+      for (const item of torsoArmour) {
+        const out = applyEquipmentOverlays(base.grid, base.palette, {
+          weapon: null,
+          armor: item,
+          accessory: null,
+        });
+        let skin = 0;
+        let hair = 0;
+        for (let y = 0; y < base.grid.length; y++) {
+          for (let x = 0; x < base.grid[y].length; x++) {
+            const cell = base.grid[y][x];
+            if (isSkinTone(cell)) {
+              skin++;
+              expect(out.grid[y][x], `${item.id} skin ${x},${y}`).toBe(cell);
+            } else if (isHairTone(cell)) {
+              hair++;
+              expect(out.grid[y][x], `${item.id} hair ${x},${y}`).toBe(cell);
+            }
+          }
+        }
+        expect(skin, `${item.id} skin pixels`).toBeGreaterThan(20);
+        expect(hair, `${item.id} hair pixels`).toBeGreaterThan(10);
+      }
+    }
+  });
+
+  it('layers body armour into trim pauldrons, field plastron and tinted waist band', () => {
+    const base = generateSprite16('k3f9qz1a', 'male', { ...STD_MALE });
+    const out = applyEquipmentOverlays(base.grid, base.palette, {
+      weapon: null,
+      armor: byId('immortal_vestments'),
+      accessory: null,
+    });
+    const torso = out.grid.slice(25, 36).flat();
+    expect(torso.some((c) => c === TRIM_INDEX || c === TRIM_DARK || c === TRIM_LIGHT)).toBe(true);
+    expect(torso).toContain(FIELD_INDEX);
+    const waist = out.grid.slice(33, 36).flat();
+    expect(waist.some((c) => c === TINT2_INDEX || c === TINT2_DARK || c === TINT2_LIGHT)).toBe(true);
+    // the tinted band is a torso layer: it never leaks onto the legs
+    const legs = out.grid.slice(36).flat();
+    expect(legs.some((c) => c === TINT2_INDEX || c === TINT2_DARK || c === TINT2_LIGHT)).toBe(false);
+    expect(out.grid.slice(36)).toEqual(base.grid.slice(36));
+  });
+
+  it('gives every body armour the same layered waist band, above the legs', () => {
+    const base = generateSprite16('r8t5wd0b', 'male', { ...STD_MALE });
+    const chestArmour = ITEM_ASSETS.filter(
+      (i) => i.slot === 'armor' && armorVisualKind(i.name) === 'chest',
+    );
+    expect(chestArmour.length).toBeGreaterThan(0);
+    for (const item of chestArmour) {
+      const out = applyEquipmentOverlays(base.grid, base.palette, {
+        weapon: null,
+        armor: item,
+        accessory: null,
+      });
+      const waist = out.grid.slice(33, 36).flat();
+      expect(
+        waist.some((c) => c === TINT2_INDEX || c === TINT2_DARK || c === TINT2_LIGHT),
+        `${item.id} waist band`,
+      ).toBe(true);
+      expect(out.grid.slice(36), `${item.id} legs`).toEqual(base.grid.slice(36));
+    }
   });
 });
