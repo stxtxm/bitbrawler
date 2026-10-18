@@ -297,3 +297,18 @@ describe('Bookkeeping commits never consume a Pages build', () => {
     expect(opencode).toMatch(/git commit -m \\"docs: add vX\.Y\.Z patch notes[^\\]*\\" \|\| true/)
   })
 })
+
+describe('Campagnes — le DAG avance sans intervention humaine', () => {
+  // 2026-10-18 (campagne #1201) : #1202 mergée → #1203 JAMAIS dispatchée. Le post-merge
+  // ne relançait que les dépendants ayant déjà une PR ; une sous-issue neuve, elle,
+  // n'était réclamée par personne, et la campagne s'arrêtait au premier maillon.
+  it('reviewer.yml lance le dev-agent pour un dépendant sans PR', () => {
+    const reviewer = readWorkflow('reviewer.yml')
+    expect(reviewer).toContain('dispatching dev-agent for')
+    expect(reviewer).toContain('gh workflow run opencode.yml -f issue_number=')
+  })
+
+  it('opencode.yml (auto-merge inline) fait de même', () => {
+    expect(readWorkflow('opencode.yml')).toContain('dispatching dev-agent for')
+  })
+})

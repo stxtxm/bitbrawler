@@ -580,13 +580,37 @@ jobs:
           for DEP_ISSUE in $DEPENDANT_ISSUES; do
             # Find the open PR for this issue
             DEP_PR=$(gh pr list --state open --head "feat/auto-$DEP_ISSUE" --json number --jq '.[0].number' 2>/dev/null || echo "")
-            if [ -z "$DEP_PR" ]; then
-              echo "⚠ No open PR found for issue #$DEP_ISSUE"
+            if [ -n "$DEP_PR" ]; then
+              echo "🔄 Re-triggering reviewer for PR #$DEP_PR (issue #$DEP_ISSUE) — dependency #$CLOSED_ISSUE now resolved"
+              gh workflow run reviewer.yml -f pr_number="$DEP_PR" --repo "${{ github.repository }}"
+              echo "✓ Reviewer re-triggered for PR #$DEP_PR"
+              sleep 3
               continue
             fi
-            echo "🔄 Re-triggering reviewer for PR #$DEP_PR (issue #$DEP_ISSUE) — dependency #$CLOSED_ISSUE now resolved"
-            gh workflow run reviewer.yml -f pr_number="$DEP_PR" --repo "${{ github.repository }}"
-            echo "✓ Reviewer re-triggered for PR #$DEP_PR"
+
+            # Aucune PR : le dépendant est une sous-issue NEUVE. L'ignorer arrêtait la
+            # campagne au premier maillon (2026-10-18 : #1202 mergée → #1203 jamais
+            # dispatchée). On la lance, mais seulement si TOUTES ses dépendances sont
+            # fermées (on ne code pas une brique dont l'API n'existe pas encore).
+            DEP_BODY=$(gh issue view "$DEP_ISSUE" --json body --jq '.body // ""' 2>/dev/null || echo "")
+            PENDING=0
+            for UPSTREAM in $(echo "$DEP_BODY" | grep -oiE 'depends-on:\s*#[0-9]+([,\s]*#[0-9]+)*' | grep -oE '#[0-9]+' | tr -d '#' | sort -u -n); do
+              UPSTREAM_STATE=$(gh issue view "$UPSTREAM" --json state --jq '.state' 2>/dev/null || echo UNKNOWN)
+              if [ "$UPSTREAM_STATE" != "CLOSED" ]; then
+                echo "⏳ #$DEP_ISSUE attend encore #$UPSTREAM ($UPSTREAM_STATE)"
+                PENDING=1
+              fi
+            done
+            if [ "$PENDING" -eq 1 ]; then continue; fi
+
+            # Claim anti-doublon : le dev workflow pose ce label au démarrage.
+            if gh issue view "$DEP_ISSUE" --json labels --jq '[.labels[].name]|join(",")' 2>/dev/null | grep -qE '(^|,)dispatched(,|$)'; then
+              echo "⚠ #$DEP_ISSUE déjà claim (label dispatched) — skip"
+              continue
+            fi
+
+            echo "🚀 Dependencies resolved — dispatching dev-agent for #$DEP_ISSUE"
+            gh workflow run opencode.yml -f issue_number="$DEP_ISSUE" --repo "${{ github.repository }}"
             sleep 3
           done
 
