@@ -667,9 +667,10 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
       headType: 'male',
     }, 'attack')!;
     const fists = frames.map((f) => computeLandmarks(f.grid).palmR.x);
-    // windup chambers, strike extends past neutral
-    expect(fists[0]).toBeLessThanOrEqual(fists[2]);
-    expect(fists[1]).toBeGreaterThan(fists[2]);
+    // the chambered anticipation comes before the extended impact
+    const anticipation = fists.indexOf(Math.min(...fists));
+    const impact = fists.indexOf(Math.max(...fists));
+    expect(anticipation).toBeLessThan(impact);
     const sword = byId('flame_dagger')!;
     const tips = frames.map(
       (f) =>
@@ -683,7 +684,26 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
           ),
         ),
     );
-    expect(tips[1]).toBeGreaterThan(tips[2]);
+    expect(tips[impact]).toBeGreaterThan(tips[anticipation]);
+    expect(tips[impact]).toBe(Math.max(...tips));
+  });
+
+  it('recoils the bust horizontally on hit frames', () => {
+    const frames = generateSpriteFrames('hit-recoil-check', 'male', { ...STD_MALE }, 'hit')!;
+    const bustX = frames.map((f) => {
+      let sum = 0;
+      let n = 0;
+      for (let y = 26; y <= 33; y++) {
+        f.grid[y]?.forEach((c, x) => {
+          if (c !== 0) {
+            sum += x;
+            n++;
+          }
+        });
+      }
+      return sum / n;
+    });
+    expect(Math.max(...bustX) - Math.min(...bustX)).toBeGreaterThanOrEqual(1);
   });
 
   it('sways the held weapon with the stride without losing cells', () => {    const base = generateSprite16('sway-check', 'male', { ...STD_MALE });

@@ -84,6 +84,12 @@ describe('SpriteCanvas liveliness', () => {
     render(<SpriteCanvas seed="low-hero" gender="male" animate="run" />);
     expect(generateSpriteFrames).not.toHaveBeenCalled();
   });
+
+  it('disables attack frames too in low performance mode', () => {
+    perf.low = true;
+    render(<SpriteCanvas seed="low-attack" gender="male" animate="attack" />);
+    expect(generateSpriteFrames).not.toHaveBeenCalled();
+  });
 });
 
 describe('PixelGridCanvas', () => {

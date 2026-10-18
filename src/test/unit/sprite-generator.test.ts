@@ -528,27 +528,43 @@ describe('sprite generator v2', () => {
     }
   });
 
-  it('generates attack frames for every body type, fist thrusts, torso fixed', () => {    for (const bodyType of ['basic', 'sleeveless', 'armor', 'jacket', 'vest', 'robe', 'hoodie', 'tunic', 'nope']) {
+  it('generates a 5-beat attack for every body type with torso fixed', () => {
+    for (const bodyType of ['basic', 'sleeveless', 'armor', 'jacket', 'vest', 'robe', 'hoodie', 'tunic', 'nope']) {
       const frames = generateSpriteFrames('frame-all', 'female', { bodyType }, 'attack')!;
-      expect(frames).toHaveLength(3);
+      expect(frames.length).toBeGreaterThanOrEqual(5);
     }
     const frames = generateSpriteFrames('punch-check', 'male', {
       build: 'standard',
       bodyType: 'basic',
       headType: 'male',
     }, 'attack')!;
+    expect(frames.length).toBeGreaterThanOrEqual(5);
     const grids = frames.map((f) => JSON.stringify(f.grid));
-    expect(new Set(grids).size).toBe(3);
-    // head never moves during a punch; legs match on strike/recover
-    // (windup chambers the fist at the hip)
+    expect(new Set(grids).size).toBe(frames.length);
+    // head never moves during a punch; the stance is planted again by recovery
     const head = frames.map((f) => JSON.stringify(f.grid.slice(8, 23)));
     expect(new Set(head).size).toBe(1);
     const legs = frames.map((f) => JSON.stringify(f.grid.slice(36, 42)));
-    expect(legs[1]).toBe(legs[2]);
-    // fist chambers then thrusts: cell count stable within the extended
+    expect(legs[0]).toBe(legs[legs.length - 1]);
+    // the swing chambers then thrusts: cell count stable within the extended
     // fist itself (no vanishing limbs)
     const counts = frames.map((f) => f.grid.flat().filter((c) => c !== 0).length);
     expect(Math.max(...counts) - Math.min(...counts)).toBeLessThanOrEqual(14);
+  });
+
+  it('draws an anticipation frame with the fist drawn back and a later impact frame', () => {
+    const frames = generateSpriteFrames('windup-check', 'male', {
+      build: 'standard',
+      bodyType: 'basic',
+      headType: 'male',
+    }, 'attack')!;
+    const fists = frames.map((f) => computeLandmarks(f.grid).palmR.x);
+    const minX = Math.min(...fists);
+    const maxX = Math.max(...fists);
+    const anticipation = fists.indexOf(minX);
+    const impact = fists.indexOf(maxX);
+    expect(maxX - minX).toBeGreaterThanOrEqual(2);
+    expect(anticipation).toBeLessThan(impact);
   });
 
   it('generates idle breathing frames with grounded feet, animated upper body and a blink', () => {
