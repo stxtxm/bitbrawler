@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ArenaHeader } from '../../components/arena/ArenaHeader';
@@ -655,6 +656,108 @@ describe('arena extracted components', () => {
       // Salvage stays available even when a copy is equipped
       const salvageBtn = screen.getByRole('button', { name: /salvage/i });
       expect(salvageBtn).not.toBeDisabled();
+    });
+  });
+
+  // ─── InventoryPanel equipment readability (issue #1210) ────────────────────
+
+  describe('InventoryPanel equipment readability', () => {
+    const baseProps: ComponentProps<typeof InventoryPanel> = {
+      inventory: [],
+      inventoryCapacity: 20,
+      equippedItems: [],
+      previewItem: null,
+      previewSlotLabel: '',
+      previewStats: [],
+      totalBonusEntries: [],
+      lootboxResult: null,
+      lootboxRolling: false,
+      canRollDailyLoot: false,
+      inventoryFull: false,
+      streak: 0,
+      itemStatMeta: ITEM_STAT_META,
+      isOfflineMode: false,
+      onClose: vi.fn(),
+      onEquip: vi.fn(),
+      onUnequip: vi.fn(),
+      onLootboxRoll: vi.fn(),
+      onCloseLootboxResult: vi.fn(),
+      onSelectItem: vi.fn(),
+      onHoverItem: vi.fn(),
+      previewItemId: null,
+    };
+
+    it('renders readable slot labels and a rarity frame on the equipped slot', () => {
+      const shadowBoots = getItem('shadowstep_boots');
+      render(
+        <InventoryPanel {...baseProps} equippedItems={[shadowBoots]} inventory={[shadowBoots.id]} />,
+      );
+
+      expect(screen.getByText('WEAPON')).toBeInTheDocument();
+      expect(screen.getByText('ARMOR')).toBeInTheDocument();
+      expect(screen.getByText('ACCESSORY')).toBeInTheDocument();
+
+      const armorSlot = document.querySelector('[data-slot="armor"]');
+      expect(armorSlot).not.toBeNull();
+      expect(armorSlot).toHaveClass('rarity-legendary');
+      expect(armorSlot).toHaveAttribute('data-rarity', 'legendary');
+    });
+
+    it('renders the bag item icon inside its rarity frame with a crisp integer scale', () => {
+      const glimmerBlade = getItem('glimmer_blade');
+      render(<InventoryPanel {...baseProps} inventory={[glimmerBlade.id]} />);
+
+      const card = screen.getByLabelText('View Glimmer Blade');
+      expect(card).toHaveClass('rarity-legendary');
+      expect(card).toHaveAttribute('data-rarity', 'legendary');
+
+      const svg = card.querySelector('svg');
+      expect(svg).not.toBeNull();
+      expect(Number.isInteger(Number(svg?.getAttribute('data-scale')))).toBe(true);
+      expect(svg?.style.imageRendering).toBe('pixelated');
+    });
+
+    it('compares the selected bag item against the equipped item in the same slot', () => {
+      const rustySword = getItem('rusty_sword');
+      const glimmerBlade = getItem('glimmer_blade');
+
+      render(
+        <InventoryPanel
+          {...baseProps}
+          inventory={[glimmerBlade.id]}
+          equippedItems={[rustySword]}
+          previewItem={glimmerBlade}
+          previewItemId={glimmerBlade.id}
+          previewStats={getItemStatEntries(glimmerBlade)}
+          previewSlotLabel="WEAPON"
+        />,
+      );
+
+      const comparison = screen.getByTestId('equipment-comparison');
+      expect(within(comparison).getByText('Rusty Sword')).toBeInTheDocument();
+
+      const strengthRow = comparison.querySelector('[data-stat="strength"]');
+      expect(strengthRow).not.toBeNull();
+      expect(strengthRow).toHaveTextContent('+1');
+      expect(comparison.querySelector('[data-stat="dexterity"]')).not.toBeNull();
+    });
+
+    it('omits the comparison when the selected item is already equipped', () => {
+      const rustySword = getItem('rusty_sword');
+
+      render(
+        <InventoryPanel
+          {...baseProps}
+          inventory={[rustySword.id]}
+          equippedItems={[rustySword]}
+          previewItem={rustySword}
+          previewItemId={rustySword.id}
+          previewStats={getItemStatEntries(rustySword)}
+          previewSlotLabel="WEAPON"
+        />,
+      );
+
+      expect(screen.queryByTestId('equipment-comparison')).toBeNull();
     });
   });
 });

@@ -65,11 +65,32 @@
     opacity: 0.5;
   }
 
+  &.filled.rarity-common { border-color: #666; }
+  &.filled.rarity-uncommon { border-color: #4cd964; }
+  &.filled.rarity-rare { border-color: #63b3ff; }
+  &.filled.rarity-epic { border-color: #9b59b6; }
+  &.filled.rarity-legendary {
+    border-color: $accent-gold;
+    box-shadow: 0 0 8px rgba(255, 204, 0, 0.35);
+  }
+
   @include mobile {
     min-height: 44px;
     padding: 4px 2px;
     border-width: 1px;
   }
+}
+
+.inv-loadout-slot-label {
+  font-size: 0.35rem;
+  line-height: 1;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #777;
+}
+
+.inv-loadout-slot.filled .inv-loadout-slot-label {
+  color: #c7c7c7;
 }
 
 .inv-loadout-slot-icon {
@@ -230,6 +251,10 @@
   &.rarity-uncommon { border-color: #4cd964; }
   &.rarity-rare { border-color: #63b3ff; }
   &.rarity-epic { border-color: #9b59b6; }
+  &.rarity-legendary {
+    border-color: $accent-gold;
+    box-shadow: inset 0 0 0 2px #000, 0 0 8px rgba(255, 204, 0, 0.35);
+  }
 }
 
 .inv-group-item .affinity-badge {
@@ -244,4 +269,82 @@
   font-size: 0.5rem;
   color: #555;
   letter-spacing: 1px;
+}
+
+// ============================================
+// Rarity frames + equipped/bag comparison
+// ============================================
+
+.inventory-item-head.rarity-legendary {
+  border-left-color: $accent-gold;
+}
+
+.inventory-comparison {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: rgba(255, 204, 0, 0.04);
+  border: 1px solid #333;
+}
+
+.inventory-comparison-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.45rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #8b8b8b;
+}
+
+.inventory-comparison-equipped-name {
+  color: $accent-gold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 55%;
+}
+
+.inventory-comparison-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inventory-comparison-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 12px auto auto;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.45rem;
+  letter-spacing: 0.5px;
+}
+
+.inventory-comparison-label {
+  color: #8b8b8b;
+}
+
+.inventory-comparison-equipped {
+  color: #999;
+}
+
+.inventory-comparison-arrow {
+  color: #555;
+  text-align: center;
+}
+
+.inventory-comparison-preview {
+  color: #e8e8e8;
+}
+
+.inventory-comparison-delta {
+  min-width: 22px;
+  text-align: right;
+  font-weight: bold;
+
+  &.up { color: #4cd964; }
+  &.down { color: $accent-red; }
+  &.even { color: #666; }
 }

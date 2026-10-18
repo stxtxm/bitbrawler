@@ -1,16 +1,16 @@
-import { memo, useMemo, useState } from 'react';
+import { memo, useMemo } from 'react';
 import { ItemSlot, PixelItemAsset } from '../../types/Item';
-import { getItemById } from '../../utils/equipmentUtils';
 import { getItemStatEntries } from '../../hooks/useInventory';
+import { useInventoryPanel } from '../../hooks/useInventoryPanel';
 import { ESSENCE_YIELD } from '../../data/forgeConstants';
 import { AffinityBadge } from '../AffinityBadge';
 import { PixelIcon } from '../PixelIcon';
 import { PixelItemIcon } from '../PixelItemIcon';
 import StreakIndicator from '../StreakIndicator';
 import { ShopPanel } from '../forge/ShopPanel';
-import { useGame } from '../../context/GameContext';
-import { PROGRESSION_GATES, isFeatureUnlocked } from '../../config/progressionConfig';
+import { PROGRESSION_GATES } from '../../config/progressionConfig';
 import { LOOTBOX_PITY, PITY_THRESHOLD, getEpicBoostBonus, getEpicPityRemaining } from '../../utils/lootboxUtils';
+import { EQUIPMENT_SLOTS, getRarityFrameClass } from '../../utils/equipmentPresentation';
 import type {
   InventoryStatEntry,
   InventoryStatMetaMap,
@@ -50,12 +50,16 @@ interface InventoryPanelProps {
   essence?: number;
 }
 
-const ITEM_SLOTS: ItemSlot[] = ['weapon', 'armor', 'accessory'];
-
 const SLOT_LABELS: Record<ItemSlot, string> = {
   weapon: '⚔️ WEAPONS',
   armor: '🛡️ ARMOR',
   accessory: '💍 ACCESSORIES',
+};
+
+const SLOT_SHORT_LABELS: Record<ItemSlot, string> = {
+  weapon: 'WEAPON',
+  armor: 'ARMOR',
+  accessory: 'ACCESSORY',
 };
 
 const SLOT_ICONS: Record<ItemSlot, string> = {
@@ -96,36 +100,20 @@ export const InventoryPanel = memo(function InventoryPanel({
   essence = 0,
   inventoryFilterElement = null,
 }: InventoryPanelProps) {
-  const groupedItems = useMemo(() => {
-    const bySlot: Record<ItemSlot, PixelItemAsset[]> = {
-      weapon: [],
-      armor: [],
-      accessory: [],
-    };
-
-    inventory.forEach((id) => {
-      const item = getItemById(id);
-      if (item) bySlot[item.slot].push(item);
-    });
-
-    return bySlot;
-  }, [inventory]);
+  const {
+    activeTab,
+    handleTabChange,
+    shopUnlocked,
+    groupedItems,
+    equippedForPreviewSlot,
+    comparison,
+  } = useInventoryPanel({ inventory, equippedItems, previewItem });
 
   const lootboxStats = useMemo(() => getItemStatEntries(lootboxResult), [lootboxResult]);
   const isPreviewEquipped = useMemo(
     () => previewItem ? equippedItems.some((item) => item.id === previewItem.id) : false,
     [equippedItems, previewItem],
   );
-  const [activeTab, setActiveTab] = useState<'inventory' | 'shop'>('inventory');
-
-  const { activeCharacter } = useGame();
-  const level = activeCharacter?.level ?? 1;
-  const shopUnlocked = isFeatureUnlocked(level, PROGRESSION_GATES.SHOP_UNLOCK_LEVEL);
-
-  const handleTabChange = useMemo(() => (tab: 'inventory' | 'shop') => {
-    if (tab === 'shop' && !shopUnlocked) return;
-    setActiveTab(tab);
-  }, [shopUnlocked]);
 
   const epicRemaining = getEpicPityRemaining(epicPityCount);
   const epicBoost = getEpicBoostBonus(commonStreak);
@@ -147,7 +135,7 @@ export const InventoryPanel = memo(function InventoryPanel({
         <div className="inventory-tabs">
           <button
             className={`inventory-tab ${activeTab === 'inventory' ? 'active' : ''}`}
-            onClick={() => setActiveTab('inventory')}
+            onClick={() => handleTabChange('inventory')}
             role="tab"
             aria-selected={activeTab === 'inventory'}
           >
@@ -210,11 +198,17 @@ export const InventoryPanel = memo(function InventoryPanel({
             <div className="inv-loadout">
               <div className="inv-loadout-label">EQUIPPED</div>
               <div className="inv-loadout-slots">
-                {ITEM_SLOTS.map((slot) => {
+                {EQUIPMENT_SLOTS.map((slot) => {
                   const item = equippedItems.find((equipped) => equipped.slot === slot);
                   return (
-                    <div key={slot} className={`inv-loadout-slot ${item ? 'filled' : 'empty'}`}>
+                    <div
+                      key={slot}
+                      className={`inv-loadout-slot ${item ? `filled ${getRarityFrameClass(item.rarity)}` : 'empty'}`}
+                      data-slot={slot}
+                      data-rarity={item ? item.rarity : 'empty'}
+                    >
                       <span className="inv-loadout-slot-icon">{SLOT_ICONS[slot]}</span>
+                      <span className="inv-loadout-slot-label">{SLOT_SHORT_LABELS[slot]}</span>
                       {item ? (
                         <div className="inv-loadout-item">
                           <button
@@ -256,7 +250,7 @@ export const InventoryPanel = memo(function InventoryPanel({
 
             <div className="inv-body-content">
               <div className="inv-groups">
-                {ITEM_SLOTS.map((slot) => {
+                {EQUIPMENT_SLOTS.map((slot) => {
                   const slotItems = groupedItems[slot];
                   if (slotItems.length === 0) return null;
 
@@ -270,7 +264,8 @@ export const InventoryPanel = memo(function InventoryPanel({
                           return (
                             <button
                               key={item.id}
-                              className={`inv-group-item rarity-${item.rarity} ${isSelected ? 'selected' : ''} ${isFilterMatch ? 'filter-match' : ''} ${(itemUpgradeLevels[item.id] ?? 0) > 0 ? `upgraded upgraded-level-${Math.min(itemUpgradeLevels[item.id] ?? 0, 5)}` : ''}`}
+                              className={`inv-group-item ${getRarityFrameClass(item.rarity)} ${isSelected ? 'selected' : ''} ${isFilterMatch ? 'filter-match' : ''} ${(itemUpgradeLevels[item.id] ?? 0) > 0 ? `upgraded upgraded-level-${Math.min(itemUpgradeLevels[item.id] ?? 0, 5)}` : ''}`}
+                              data-rarity={item.rarity}
                               onClick={() => onSelectItem(item.id)}
                               onMouseEnter={() => onHoverItem(item.id)}
                               onMouseLeave={() => onHoverItem(null)}
@@ -300,7 +295,7 @@ export const InventoryPanel = memo(function InventoryPanel({
               <div className={`inventory-details ${previewItem ? '' : 'empty'}`}>
                 {previewItem ? (
                   <>
-                    <div className={`inventory-item-head rarity-${previewItem.rarity}`}>
+                    <div className={`inventory-item-head ${getRarityFrameClass(previewItem.rarity)}`} data-rarity={previewItem.rarity}>
                       <PixelItemIcon pixels={previewItem.pixels} size={30} />
                       <div className="inventory-item-meta">
                         <div className="inventory-item-name">{previewItem.name}</div>
@@ -327,6 +322,36 @@ export const InventoryPanel = memo(function InventoryPanel({
                         );
                       })}
                     </div>
+                    {comparison.length > 0 && !isPreviewEquipped && equippedForPreviewSlot && (
+                      <div className="inventory-comparison" data-testid="equipment-comparison">
+                        <div className="inventory-comparison-title">
+                          <span>VS EQUIPPED</span>
+                          <span className="inventory-comparison-equipped-name">{equippedForPreviewSlot.name}</span>
+                        </div>
+                        <div className="inventory-comparison-rows">
+                          {comparison.map(({ key, preview, equipped, delta }) => {
+                            const meta = itemStatMeta[key];
+                            const direction = delta > 0 ? 'up' : delta < 0 ? 'down' : 'even';
+                            return (
+                              <div
+                                key={key}
+                                className="inventory-comparison-row"
+                                data-stat={key}
+                                data-direction={direction}
+                              >
+                                <span className="inventory-comparison-label">{meta.label}</span>
+                                <span className="inventory-comparison-equipped">{equipped}</span>
+                                <span className="inventory-comparison-arrow">→</span>
+                                <span className="inventory-comparison-preview">{preview}</span>
+                                <span className={`inventory-comparison-delta ${direction}`}>
+                                  {delta > 0 ? `+${delta}` : delta < 0 ? `${delta}` : '±0'}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                     <div className={`inventory-forge-actions ${onSalvage ? 'with-salvage' : ''}`}>
                       {onSalvage && (
                         <div className="inventory-essence-yield">
