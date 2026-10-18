@@ -283,7 +283,7 @@ jobs:
           fi
 
           # Extract all depends-on from issue body (supports "depends-on: #a, #b, #c" — sort -u: anti-doublons #947×2 vus sur #989)
-          DEPS=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body' 2>/dev/null | grep -oiE 'depends-on:\s*#[0-9]+([,\s]*#[0-9]+)*' | grep -oE '#[0-9]+' | tr -d '#' | sort -u -n || echo "")
+          DEPS=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body' 2>/dev/null | grep -oiE 'depends-on:\s*#+[0-9]+([,\s]*#+[0-9]+)*' | grep -oE '#+[0-9]+' | tr -d '#' | sort -u -n || echo "")
           echo "DEPS_LIST=$(echo "$DEPS" | tr '\n' ',')" >> "$GITHUB_ENV"
 
           if [ -z "$DEPS" ]; then
@@ -568,7 +568,7 @@ jobs:
           echo "🔍 PR #$PR_NUMBER merged — looking for PRs that depend on #$CLOSED_ISSUE..."
           # Find open issues whose body contains "depends-on: ... #CLOSED_ISSUE ..." (comma-separated lists supported)
           DEPENDANT_ISSUES=$(gh issue list --state open --json number,body --jq '
-            .[] | select(.body | test("depends-on:\\s*(#[0-9]+[,\\s]*)*#'"$CLOSED_ISSUE"'", "i")) | .number
+            .[] | select(.body | test("depends-on:\\s*(#+[0-9]+[,\\s]*)*#+'"$CLOSED_ISSUE"'([^0-9]|$)"; "i")) | .number
           ' 2>/dev/null || echo "")
 
           if [ -z "$DEPENDANT_ISSUES" ]; then
@@ -594,7 +594,7 @@ jobs:
             # fermées (on ne code pas une brique dont l'API n'existe pas encore).
             DEP_BODY=$(gh issue view "$DEP_ISSUE" --json body --jq '.body // ""' 2>/dev/null || echo "")
             PENDING=0
-            for UPSTREAM in $(echo "$DEP_BODY" | grep -oiE 'depends-on:\s*#[0-9]+([,\s]*#[0-9]+)*' | grep -oE '#[0-9]+' | tr -d '#' | sort -u -n); do
+            for UPSTREAM in $(echo "$DEP_BODY" | grep -oiE 'depends-on:\s*#+[0-9]+([,\s]*#+[0-9]+)*' | grep -oE '#+[0-9]+' | tr -d '#' | sort -u -n); do
               UPSTREAM_STATE=$(gh issue view "$UPSTREAM" --json state --jq '.state' 2>/dev/null || echo UNKNOWN)
               if [ "$UPSTREAM_STATE" != "CLOSED" ]; then
                 echo "⏳ #$DEP_ISSUE attend encore #$UPSTREAM ($UPSTREAM_STATE)"

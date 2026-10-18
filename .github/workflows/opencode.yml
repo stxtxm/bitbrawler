@@ -549,7 +549,7 @@ jobs:
           echo "✅ PR #$PR_NUMBER already has all CI green — auto-merging via inline reviewer"
 
           # --- DAG dependency check (dédup sort -u : le body peut lister 2× la même dep) ---
-          DEPS=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body' 2>/dev/null | grep -oiE 'depends-on:\s*#[0-9]+([,\s]*#[0-9]+)*' | grep -oE '#[0-9]+' | tr -d '#' | sort -u -n || echo "")
+          DEPS=$(gh issue view "$ISSUE_NUMBER" --json body --jq '.body' 2>/dev/null | grep -oiE 'depends-on:\s*#+[0-9]+([,\s]*#+[0-9]+)*' | grep -oE '#+[0-9]+' | tr -d '#' | sort -u -n || echo "")
           if [ -n "$DEPS" ]; then
             ALL_RESOLVED=true
             for DEP in $DEPS; do
@@ -632,7 +632,7 @@ jobs:
           # PR existantes.
           echo "🔍 Looking for issues that depend on #$ISSUE_NUMBER..."
           DEPENDANT_ISSUES=$(gh issue list --state open --json number,body --jq '
-            .[] | select(.body | test("depends-on:\\s*(#[0-9]+[,\\s]*)*#'"$ISSUE_NUMBER"'", "i")) | .number
+            .[] | select(.body | test("depends-on:\\s*(#+[0-9]+[,\\s]*)*#+'"$ISSUE_NUMBER"'([^0-9]|$)"; "i")) | .number
           ' 2>/dev/null || echo "")
           for DEP_ISSUE in $DEPENDANT_ISSUES; do
             DEP_PR=$(gh pr list --state open --head "feat/auto-$DEP_ISSUE" --json number --jq '.[0].number' 2>/dev/null || echo "")
@@ -647,7 +647,7 @@ jobs:
             # fermées (sinon on coderait une brique dont l'API n'existe pas encore).
             DEP_BODY=$(gh issue view "$DEP_ISSUE" --json body --jq '.body // ""' 2>/dev/null || echo "")
             PENDING=0
-            for UPSTREAM in $(echo "$DEP_BODY" | grep -oiE 'depends-on:\s*#[0-9]+([,\s]*#[0-9]+)*' | grep -oE '#[0-9]+' | tr -d '#' | sort -u -n); do
+            for UPSTREAM in $(echo "$DEP_BODY" | grep -oiE 'depends-on:\s*#+[0-9]+([,\s]*#+[0-9]+)*' | grep -oE '#+[0-9]+' | tr -d '#' | sort -u -n); do
               UPSTREAM_STATE=$(gh issue view "$UPSTREAM" --json state --jq '.state' 2>/dev/null || echo UNKNOWN)
               if [ "$UPSTREAM_STATE" != "CLOSED" ]; then
                 echo "⏳ #$DEP_ISSUE attend encore #$UPSTREAM ($UPSTREAM_STATE)"
@@ -988,6 +988,11 @@ jobs:
                 COMMITS=$(git log --oneline origin/master..HEAD 2>/dev/null | wc -l)
                 if [ "$COMMITS" -eq 0 ]; then
                   echo "No commits found — no changes to push"
+                  # Le dev-agent n'a rien produit (modèle muet, tâche déjà couverte…).
+                  # Sans libérer le claim, la sous-issue reste « dispatched » à vie :
+                  # plus personne ne la relance et la campagne reste bloquée derrière
+                  # (2026-10-18 : #1203, run sans commit, claim jamais rendu).
+                  gh issue edit "$ISSUE_NUMBER" --remove-label "dispatched" 2>/dev/null || true
                   echo "PR_NUMBER=" >> $GITHUB_OUTPUT
                   exit 0
                 fi

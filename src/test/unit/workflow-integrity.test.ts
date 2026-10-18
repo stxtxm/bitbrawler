@@ -312,3 +312,29 @@ describe('Campagnes — le DAG avance sans intervention humaine', () => {
     expect(readWorkflow('opencode.yml')).toContain('dispatching dev-agent for')
   })
 })
+
+describe('DAG — la syntaxe réelle des dépendances est reconnue', () => {
+  // 2026-10-18 : l'orchestrateur écrit `depends-on: ##1202` (double dièse, vérifié sur
+  // #1203). Les parseurs en `#[0-9]+` ne voyaient AUCUNE dépendance : le dev-agent
+  // démarrait sans ses prérequis et le post-merge ne détectait aucun dépendant.
+  it('les parseurs tolèrent un ou plusieurs dièses', () => {
+    for (const file of ['opencode.yml', 'reviewer.yml']) {
+      expect(readWorkflow(file)).toContain('#+[0-9]+')
+    }
+    const re = new RegExp('depends-on:\\s*(#+[0-9]+[,\\s]*)*#+1202([^0-9]|$)', 'i')
+    expect(re.test('/oc\ndepends-on: ##1202')).toBe(true)
+    expect(re.test('depends-on: #1202')).toBe(true)
+    expect(re.test('depends-on: #12021')).toBe(false)
+  })
+
+  // jq sépare les arguments d'une fonction par `;`. Avec une virgule, `test("re", "i")`
+  // devient un FLUX (`test("re")` puis `test("i")`) : la regex « i » matche alors toute
+  // issue contenant un i, soit toutes — mesuré 32/32 sur le dépôt. Fan-out N² garanti.
+  it('les tests jq passent les flags avec un point-virgule, jamais une virgule', () => {
+    for (const file of ['opencode.yml', 'reviewer.yml']) {
+      const wf = readWorkflow(file)
+      expect(wf).toContain('; "i"')
+      expect(wf).not.toContain('", "i")')
+    }
+  })
+})
