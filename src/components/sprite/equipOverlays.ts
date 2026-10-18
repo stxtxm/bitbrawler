@@ -611,11 +611,15 @@ function paintHelm(grid: SpriteGrid, head: Box, faceCx: number, eyeY: number, ri
   paint(grid, clamp(faceCx, head.x0, head.x1), brimY, ACCENT_INDEX);
 }
 
-function paintChest(grid: SpriteGrid, torso: Box, cx: number, kind: 'chest' | 'robe'): void {
+const ARMOR_TOP = 19 + PAD;
+const ARMOR_WAIST = 29 + PAD;
+const ARMOR_BAND_TOP = ARMOR_WAIST - 2;
+
+function paintChest(grid: SpriteGrid, torso: Box, cx: number): void {
   const ccx = clamp(cx, torso.x0 + 4, torso.x1 - 4);
-  const y0 = 19 + PAD;
-  const y1 = 29 + PAD;
-  for (let y = y0; y <= y1; y++) {
+  // Layer 1 — plastron: the armour field replaces the player's shirt from the
+  // chest down to the waist; skin, hair and legs are never touched.
+  for (let y = ARMOR_TOP; y <= ARMOR_WAIST; y++) {
     const row = grid[y];
     if (!row) continue;
     for (let x = torso.x0; x <= torso.x1; x++) {
@@ -623,18 +627,29 @@ function paintChest(grid: SpriteGrid, torso: Box, cx: number, kind: 'chest' | 'r
       row[x] = FIELD_INDEX;
     }
   }
+  // Layer 2 — pauldrons: two rarity-trim cells on each shoulder, over the
+  // plastron edge, so the armour reads as worn rather than poured on.
   for (const y of [torso.y0 + 2, torso.y0 + 3]) {
     const row = grid[y];
     if (!row) continue;
     const left = row.findIndex((c) => c !== 0);
-    if (left >= 0) row[left] = TRIM_INDEX;
+    for (let i = 0; i < 2 && left >= 0; i++) {
+      const x = left + i;
+      if (x < row.length && row[x] !== 0) row[x] = TRIM_INDEX;
+    }
+    let right = -1;
     for (let x = row.length - 1; x >= 0; x--) {
       if (row[x] !== 0) {
-        row[x] = TRIM_INDEX;
+        right = x;
         break;
       }
     }
+    for (let i = 0; i < 2 && right >= 0; i++) {
+      const x = right - i;
+      if (x >= 0 && row[x] !== 0) row[x] = TRIM_INDEX;
+    }
   }
+  // Ridge and clasp run down the plastron; the clasp faces the viewer.
   for (let y = torso.y0 + 3; y <= torso.y0 + 8; y++) {
     paint(grid, ccx - 1, y, FIELD_LIGHT);
     paint(grid, ccx, y, FIELD_LIGHT);
@@ -642,14 +657,14 @@ function paintChest(grid: SpriteGrid, torso: Box, cx: number, kind: 'chest' | 'r
   const cy = clamp(torso.y0 + 5, torso.y0, torso.y1);
   paint(grid, ccx - 1, cy, ACCENT_INDEX);
   paint(grid, ccx, cy, ACCENT_INDEX);
-  if (kind === 'robe') {
-    for (let y = 30 + PAD; y <= 33 + PAD; y++) {
-      const row = grid[y];
-      if (!row) continue;
-      for (let x = torso.x0; x <= torso.x1; x++) {
-        const cell = row[x] ?? 0;
-        if (cell === 6 || cell === shadeIndexOf(6)) row[x] = TINT2_INDEX;
-      }
+  // Layer 3 — waist band: a tinted cloth layer over the lower plastron, using
+  // the item's tint ramp. It stops at the hip line so the pants and shoes of
+  // the player survive untouched.
+  for (let y = ARMOR_BAND_TOP; y <= ARMOR_WAIST; y++) {
+    const row = grid[y];
+    if (!row) continue;
+    for (let x = torso.x0; x <= torso.x1; x++) {
+      if (row[x] === FIELD_INDEX) row[x] = TINT2_INDEX;
     }
   }
 }
@@ -902,7 +917,7 @@ export function applyEquipmentOverlays(
   if (bootsItem) paintBoots(out);
   if (loadout.armor && armorKind === 'bracers') paintBracers(out);
   if (loadout.armor && (armorKind === 'chest' || armorKind === 'robe')) {
-    paintChest(out, marks.torso, marks.faceCx, armorKind);
+    paintChest(out, marks.torso, marks.faceCx);
   }
   if (loadout.armor && armorKind === 'helm') {
     paintHelm(out, marks.head, marks.faceCx, marks.eyeY, rimHex !== null ? RIM_INDEX : TRIM_INDEX);
