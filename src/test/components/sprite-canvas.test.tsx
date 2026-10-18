@@ -1,8 +1,29 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, act } from '@testing-library/react';
-import { SpriteCanvas } from '../../components/sprite/SpriteCanvas';
+import {
+  SpriteCanvas,
+  SPRITE_IDLE_MS,
+  SPRITE_RUN_MS,
+} from '../../components/sprite/SpriteCanvas';
 import { PixelGridCanvas } from '../../components/sprite/PixelGridCanvas';
 import { SPRITE_DISPLAY_SCALE } from '../../components/sprite/spriteTypes';
+import { generateSpriteFrames } from '../../components/sprite/spriteGenerator';
+
+const perf = vi.hoisted(() => ({ low: false }));
+
+vi.mock('../../hooks/useLowPerformanceMode', () => ({
+  useLowPerformanceMode: () => perf.low,
+}));
+
+vi.mock('../../components/sprite/spriteGenerator', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../components/sprite/spriteGenerator')>();
+  return { ...actual, generateSpriteFrames: vi.fn(actual.generateSpriteFrames) };
+});
+
+beforeEach(() => {
+  perf.low = false;
+  vi.clearAllMocks();
+});
 
 describe('SpriteCanvas', () => {
   it('applies the global display shrink for a given scale', () => {
@@ -43,6 +64,25 @@ describe('SpriteCanvas', () => {
     expect(container.querySelector('canvas')).not.toBeNull();
     unmount();
     vi.useRealTimers();
+  });
+});
+
+describe('SpriteCanvas liveliness', () => {
+  it('keeps the mobile-first run and idle timings', () => {
+    expect(SPRITE_RUN_MS).toBe(120);
+    expect(SPRITE_IDLE_MS).toBe(280);
+  });
+
+  it('builds animation frames when performance allows', () => {
+    perf.low = false;
+    render(<SpriteCanvas seed="hi-hero" gender="male" animate="run" />);
+    expect(generateSpriteFrames).toHaveBeenCalled();
+  });
+
+  it('disables animation frames in low performance mode', () => {
+    perf.low = true;
+    render(<SpriteCanvas seed="low-hero" gender="male" animate="run" />);
+    expect(generateSpriteFrames).not.toHaveBeenCalled();
   });
 });
 

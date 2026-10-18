@@ -701,26 +701,27 @@ function runsInRow(row: number[], allowed: (v: number) => boolean): Array<[numbe
 
 // Procedural run stride on the composed base grid (12x18 space). Arms stay
 // glued during the run (the punch carries all arm motion); legs scissor and
-// the neutral phase lifts rigidly (flight) — rigid or mirrored moves only,
-// so nothing teleports.
-function applyStride(base: SpriteGrid, phase: StridePhase): void {
-  if (phase === 1) {
-    const all: LimbCell[] = [];
-    base.forEach((row, y) => row.forEach((v, x) => {
-      if (v !== 0) all.push({ x, y, v });
-    }));
-    collectMove(base, all, 0, -1);
-    return;
-  }
-  const mirror = phase === 2 ? -1 : 1;
-  const isCloth = (v: number): boolean => v !== 0;
-  const legRuns = runsInRow(base[16] ?? [], isCloth).filter(([a, b]) => {
+// the pass phase lifts rigidly (flight) — rigid or mirrored moves only, so
+// nothing teleports. Six phases: contact/down/pass per side.
+type RunPhase = 0 | 1 | 2 | 3 | 4 | 5;
+
+function liftSkeleton(base: SpriteGrid): void {
+  const all: LimbCell[] = [];
+  base.forEach((row, y) => row.forEach((v, x) => {
+    if (v !== 0) all.push({ x, y, v });
+  }));
+  collectMove(base, all, 0, -1);
+}
+
+function scissorLegs(base: SpriteGrid, mirror: number, liftTrailing: boolean): void {
+  const legRuns = runsInRow(base[16] ?? [], (v) => v !== 0).filter(([a, b]) => {
     const below = base[17] ?? [];
     return below.slice(Math.max(0, a - 1), b + 2).some((c) => c !== 0);
   });
   if (legRuns.length >= 2) {
     // Thighs (row 15) stay planted — only shins + feet swing, so legs bend
-    // instead of melting into the body. One foot lifts clear of the ground.
+    // instead of melting into the body. The trailing foot lifts clear of the
+    // ground on contact frames; the down frame plants it again.
     const left = legRuns[0];
     const right = legRuns[legRuns.length - 1];
     const shinCells = (run: [number, number]): LimbCell[] => {
@@ -734,7 +735,7 @@ function applyStride(base: SpriteGrid, phase: StridePhase): void {
       return out;
     };
     collectMove(base, shinCells(left), -mirror, 0);
-    collectMove(base, shinCells(right), mirror, -1);
+    collectMove(base, shinCells(right), mirror, liftTrailing ? -1 : 0);
   } else {
     for (const y of [15, 16, 17]) {
       const rowCells: LimbCell[] = [];
@@ -744,6 +745,38 @@ function applyStride(base: SpriteGrid, phase: StridePhase): void {
       collectMove(base, rowCells, -mirror, 0);
     }
   }
+}
+
+// Pass / flight: the trailing shin tucks straight up (no sideways slide, which
+// would push the leg under an arm column and read as a broken limb), then the
+// whole skeleton lifts. The two sides tuck opposite legs, so the two pass
+// frames of the cycle stay distinct.
+function tuckTrailingShin(base: SpriteGrid, mirror: number): void {
+  const legRuns = runsInRow(base[16] ?? [], (v) => v !== 0).filter(([a, b]) => {
+    const below = base[17] ?? [];
+    return below.slice(Math.max(0, a - 1), b + 2).some((c) => c !== 0);
+  });
+  if (legRuns.length < 2) return;
+  const run = mirror === 1 ? legRuns[legRuns.length - 1] : legRuns[0];
+  const cells: LimbCell[] = [];
+  for (const y of [16, 17]) {
+    for (let x = run[0]; x <= run[1]; x++) {
+      const v = base[y]?.[x] ?? 0;
+      if (v !== 0) cells.push({ x, y, v });
+    }
+  }
+  collectMove(base, cells, 0, -1);
+}
+
+function applyStride(base: SpriteGrid, phase: RunPhase): void {
+  const step = phase % 3;
+  const mirror = phase < 3 ? 1 : -1;
+  if (step === 2) {
+    tuckTrailingShin(base, mirror);
+    liftSkeleton(base);
+    return;
+  }
+  scissorLegs(base, mirror, step === 0);
 }
 
 // Procedural attack: windup tucks the right fist toward the body, strike
@@ -757,10 +790,20 @@ function applyAttackPose(base: SpriteGrid, phase: StridePhase): void {
   else collectMove(base, fist, 1, -1);
 }
 
-// Procedural idle breathing: chest, head and arms lift rhythmically while feet
-// stay grounded on rows 15-17. Secondary hair motion sways at peak breath.
-function applyIdleBreathing(base: SpriteGrid, phase: number): void {
-  if (phase === 0 || phase === 3) return;
+// Procedural idle breathing: chest, head and arms sway rhythmically while feet
+// stay grounded on rows 15-17. A shoulder-level weight shift (dx) makes each
+// breath frame read as a distinct pose, then a blink closes the eyes.
+const IDLE_SWAY: Array<[number, number]> = [
+  [0, 0],
+  [1, 0],
+  [1, -1],
+  [0, -1],
+  [-1, 0],
+  [0, 0],
+];
+
+function shiftUpperBody(base: SpriteGrid, dx: number, dy: number): void {
+  if (dx === 0 && dy === 0) return;
   const upper: LimbCell[] = [];
   for (let y = 0; y <= 13; y++) {
     for (let x = 0; x < 12; x++) {
@@ -768,11 +811,46 @@ function applyIdleBreathing(base: SpriteGrid, phase: number): void {
       if (v !== 0) upper.push({ x, y, v });
     }
   }
-  collectMove(base, upper, 0, -1);
-  for (let x = 0; x < 12; x++) {
-    const below = base[14]?.[x] ?? 0;
-    if (below !== 0 && (base[13]?.[x] ?? 0) === 0) {
-      base[13][x] = below;
+  collectMove(base, upper, dx, dy);
+  if (dy < 0) {
+    for (let x = 0; x < 12; x++) {
+      const below = base[14]?.[x] ?? 0;
+      if (below !== 0 && (base[13]?.[x] ?? 0) === 0) {
+        base[13][x] = below;
+      }
+    }
+  }
+}
+
+function applyIdleBreathing(base: SpriteGrid, phase: number): void {
+  const [dx, dy] = IDLE_SWAY[phase] ?? [0, 0];
+  shiftUpperBody(base, dx, dy);
+}
+
+// Blink: the rebuilt eyes sit on two iris rows above a lash line. Clearing the
+// iris rows back to skin leaves only the lash, which reads as closed eyes. The
+// touched columns are read from the eye block itself so no unrelated white
+// (glints live on eye rows too) is erased.
+function applyBlink(grid: SpriteGrid): void {
+  const eyeTone = shadeIndexOf(8);
+  let eyeTop = -1;
+  for (let y = 0; y < grid.length && eyeTop < 0; y++) {
+    if (grid[y].some((c) => c === eyeTone || c === 8)) eyeTop = y;
+  }
+  if (eyeTop < 0) return;
+  const eyeCols = new Set<number>();
+  for (const y of [eyeTop, eyeTop + 1, eyeTop + 2]) {
+    const row = grid[y];
+    if (!row) continue;
+    for (let x = 0; x < row.length; x++) {
+      if (row[x] === eyeTone || row[x] === 8 || row[x] === 2) eyeCols.add(x);
+    }
+  }
+  for (const y of [eyeTop, eyeTop + 1]) {
+    const row = grid[y];
+    if (!row) continue;
+    for (const x of eyeCols) {
+      if (row[x] === eyeTone || row[x] === 8 || row[x] === 2) row[x] = 1;
     }
   }
 }
@@ -850,8 +928,35 @@ export function generateSprite16(
 
 export type { SpriteAnimKind } from './spriteTypes';
 
-// Animation frames for run cycle, attack swing, idle breathing, hit recoil,
-// and victory celebration. Fully procedural from the composed body.
+interface FramePlan {
+  phase: number;
+  blink?: boolean;
+  hairSway?: boolean;
+}
+
+// Secondary motion rides the very same frame list as the body: the hair reacts
+// one beat after the body's extreme, and idle closes the eyes on its last beat.
+function framePlanOf(kind: SpriteAnimKind): FramePlan[] {
+  if (kind === 'attack') return [{ phase: 0 }, { phase: 1 }, { phase: 2 }];
+  if (kind === 'run') {
+    return [0, 1, 2, 3, 4, 5].map((phase) => ({
+      phase,
+      hairSway: phase === 2 || phase === 5,
+    }));
+  }
+  if (kind === 'idle') {
+    return [0, 1, 2, 3, 4, 5].map((phase) => ({
+      phase,
+      hairSway: phase === 2,
+      blink: phase === 5,
+    }));
+  }
+  if (kind === 'hit') return [{ phase: 0 }, { phase: 1 }, { phase: 2 }];
+  return [{ phase: 0 }, { phase: 1 }, { phase: 2, hairSway: true }, { phase: 3 }]; // victory
+}
+
+// Animation frames for run cycle, attack swing, idle breathing + blink, hit
+// recoil, and victory celebration. Fully procedural from the composed body.
 export function generateSpriteFrames(
   seed: string,
   gender: 'male' | 'female',
@@ -860,38 +965,23 @@ export function generateSpriteFrames(
 ): GeneratedSprite[] | null {
   const features = resolveSpriteFeatures(seed, gender, appearance);
   const palette = buildPalette(features);
-  const phases: number[] =
-    kind === 'attack'
-      ? [0, 1, 2]
-      : kind === 'run'
-        ? [0, 1, 2, 1]
-        : kind === 'idle'
-          ? [0, 1, 2, 3]
-          : kind === 'hit'
-            ? [0, 1, 2]
-            : [0, 1, 2, 3]; // victory
-  return phases.map((phase) => {
+  return framePlanOf(kind).map(({ phase, blink, hairSway }) => {
     const base = composeBaseGrid(features.headType, features.bodyType);
     applyBuild(base, features.build);
     applyAnatomy(base);
     applyFists(base);
     if (kind === 'attack') applyAttackPose(base, phase as StridePhase);
-    else if (kind === 'run') applyStride(base, phase as StridePhase);
+    else if (kind === 'run') applyStride(base, phase as RunPhase);
     else if (kind === 'idle') applyIdleBreathing(base, phase);
     else if (kind === 'hit') applyHitReaction(base, phase);
     else if (kind === 'victory') applyVictoryPose(base, phase);
 
-    if (
-      (kind === 'run' && phase === 1) ||
-      (kind === 'idle' && phase === 2) ||
-      (kind === 'victory' && phase === 2)
-    ) {
-      applyHairSway(base);
-    }
+    if (hairSway) applyHairSway(base);
     const grid = upscale(base);
     applySnes(grid);
     applyDetails(grid);
     applyFeatures(grid);
+    if (blink) applyBlink(grid);
     for (let i = 0; i < SPRITE_PAD_TOP; i++) grid.unshift(Array(SPRITE_WIDTH).fill(0));
     return { grid, palette, width: SPRITE_WIDTH, height: SPRITE_HEIGHT };
   });

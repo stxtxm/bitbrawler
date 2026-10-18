@@ -5,6 +5,21 @@ import { SPRITE_HEIGHT, SPRITE_WIDTH, highlightIndexOf, shadeIndexOf } from '../
 
 const SKIN_FAMILY = new Set([1, shadeIndexOf(1), highlightIndexOf(1)]);
 
+const RUN_FRAME_MIN_DIFF = 6;
+const IDLE_FRAME_MIN_DIFF = 6;
+
+// Counts changed cells between two frames: the liveliness floor each
+// consecutive pose must clear so no two frames read as the same image.
+function frameDiff(a: number[][], b: number[][]): number {
+  let diff = 0;
+  for (let y = 0; y < a.length; y++) {
+    for (let x = 0; x < a[y].length; x++) {
+      if (a[y][x] !== b[y][x]) diff++;
+    }
+  }
+  return diff;
+}
+
 interface ArmCell {
   x: number;
   y: number;
@@ -426,24 +441,26 @@ describe('sprite generator v2', () => {
     }
   });
 
-  it('generates a 4-beat run cycle with a shared flight frame', () => {
+  it('generates a 6-frame run cycle with distinct contact/pass poses', () => {
     const frames = generateSpriteFrames('frame-check', 'male', {
       build: 'standard',
       bodyType: 'basic',
       headType: 'male',
     }, 'run')!;
-    expect(frames).toHaveLength(4);
+    expect(frames).toHaveLength(6);
     for (const f of frames) {
       expect(f.grid.length).toBe(42);
       expect(f.width).toBe(SPRITE_WIDTH);
       expect(f.height).toBe(SPRITE_HEIGHT);
       expect(f.palette).toBe(frames[0].palette);
     }
-    const [a, b, c, d] = frames.map((f) => JSON.stringify(f.grid));
-    expect(a).not.toBe(b);
-    expect(b).not.toBe(c);
-    expect(c).not.toBe(d);
-    expect(b).toBe(d);
+    const grids = frames.map((f) => JSON.stringify(f.grid));
+    expect(new Set(grids).size).toBe(6);
+    // Every consecutive pair (cycle wrap included) must visibly differ.
+    for (let i = 0; i < frames.length; i++) {
+      const next = frames[(i + 1) % frames.length];
+      expect(frameDiff(frames[i].grid, next.grid)).toBeGreaterThanOrEqual(RUN_FRAME_MIN_DIFF);
+    }
   });
 
   it('keeps arms attached every frame: no gaps along the arm columns', () => {
@@ -453,7 +470,7 @@ describe('sprite generator v2', () => {
         bodyType: 'basic',
         headType: 'male',
       }, 'run')!;
-      expect(frames).toHaveLength(4);
+      expect(frames).toHaveLength(6);
       for (const f of frames) {
         // arm columns measured per frame (slim/broad shift them)
         const edgeCols = (fromLeft: boolean): number[] => {
@@ -500,7 +517,7 @@ describe('sprite generator v2', () => {
         bodyType: 'basic',
         headType: 'male',
       }, 'run')!;
-      expect(frames).toHaveLength(4);
+      expect(frames).toHaveLength(6);
       for (const f of frames) {
         const legZone = f.grid.slice(36, 42);
         const left = legZone.flatMap((row) => row.slice(0, 12)).filter((v) => v !== 0).length;
@@ -534,13 +551,13 @@ describe('sprite generator v2', () => {
     expect(Math.max(...counts) - Math.min(...counts)).toBeLessThanOrEqual(14);
   });
 
-  it('generates idle breathing frames with grounded feet and animated upper body', () => {
+  it('generates idle breathing frames with grounded feet, animated upper body and a blink', () => {
     const frames = generateSpriteFrames('idle-check', 'male', {
       build: 'standard',
       bodyType: 'basic',
       headType: 'male',
     }, 'idle')!;
-    expect(frames).toHaveLength(4);
+    expect(frames.length).toBeGreaterThanOrEqual(4);
     for (const f of frames) {
       expect(f.grid.length).toBe(42);
       expect(f.width).toBe(SPRITE_WIDTH);
@@ -549,9 +566,19 @@ describe('sprite generator v2', () => {
       expect(f.grid[40].some((c) => c !== 0)).toBe(true);
       expect(f.grid[41].some((c) => c !== 0)).toBe(true);
     }
-    // Phase 1 (inhale) differs from Phase 0 (rest)
-    const [rest, inhale] = frames.map((f) => JSON.stringify(f.grid));
-    expect(rest).not.toBe(inhale);
+    const eyeTone = shadeIndexOf(8);
+    const eyeCounts = frames.map((f) => f.grid.flat().filter((c) => c === eyeTone).length);
+    // At least one frame blinks: only the lash line is left over the open iris.
+    expect(Math.max(...eyeCounts)).toBeGreaterThan(0);
+    expect(Math.min(...eyeCounts)).toBeLessThanOrEqual(6);
+    expect(Math.min(...eyeCounts)).toBeLessThan(Math.max(...eyeCounts));
+    // Breathing: every consecutive pair (cycle wrap included) visibly differs.
+    const grids = frames.map((f) => JSON.stringify(f.grid));
+    expect(new Set(grids).size).toBeGreaterThanOrEqual(4);
+    for (let i = 0; i < frames.length; i++) {
+      const next = frames[(i + 1) % frames.length];
+      expect(frameDiff(frames[i].grid, next.grid)).toBeGreaterThanOrEqual(IDLE_FRAME_MIN_DIFF);
+    }
   });
 
   it('generates hit recoil frames with impact flinch and recovery', () => {

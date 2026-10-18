@@ -570,7 +570,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
         accessory: null,
       }).grid),
     );
-    expect(new Set(grids).size).toBe(3);
+    expect(new Set(grids).size).toBe(6);
   });
 
   it('thrusts the weapon with the punching fist on attack frames', () => {
