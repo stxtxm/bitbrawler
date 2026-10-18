@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-18T17:25:39Z",
+  "last_session": "2026-10-18T17:32:18Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -128,6 +128,12 @@
       "lesson": "Issue #1209 SceneBox v2: react-refresh/only-export-components interdit d'exporter constantes/helpers depuis un .tsx composant -> les mettre dans un module voisin (ici src/components/arena/sceneLighting.ts, precedent arenaTypes.ts). L'eclairage biome est pilote par getBiomeForCharacter(character) (props existantes du biome) et pousse des CSS vars --scene-tint/--scene-shadow-color/--scene-shadow-spread sur .scene-box; l'ombre du runner PvE (IdleRunnerScene non modifiable) les herite via les vars dans _idle-runner.scss. Test props-only = fichier de test sans mock GameContext (useGame throw sans provider). useLowPerformanceMode reduit l'alpha d'ombre via sceneLightingStyle.",
       "issue": "#1209",
       "date": "2026-10-18"
+    },
+    {
+      "agent": "dev",
+      "issue": "#1207",
+      "date": "2026-10-18",
+      "lesson": "Animations sprite: (1) les frames count sont centralisees dans SPRITE_FRAME_COUNTS (spriteTypes) et les phases derivees via FRAME_PHASES (Object.fromEntries) — toute nouvelle animation doit passer par la. (2) idle avait frames 0 et 3 IDENTIQUES (applyIdleBreathing renvoie pour 0 et 3) : un test 'toute frame consecutive differe' les attrape; le blink est rendu en passant un flag a applyFeatures (paupiere/cil/sous-oeil a la place de l'iris), ce qui casse l'egalite. (3) zone jambes du test = split upscale x<12 / x>=12 : un shin qui se deplace vers l'interieur traverse la frontiere sur les builds slim -> lift en place (dy=-1 sans dx) plutot que rentrer vers le centre. (4) mouvement secondaire arme = RUN_SECONDARY_SWAY/SWING indexes par frameIdx, cheveux = flight+SECONDARY_HAIR_OFFSET."
     }
   ]
 }
