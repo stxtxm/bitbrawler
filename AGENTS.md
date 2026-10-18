@@ -861,6 +861,28 @@ Or visit: https://github.com/stxtxm/bitbrawler/actions
 2. Add `/oc` again to trigger
 3. Check logs for errors
 
+### Filets de sécurité automatiques (watchdog, 2026-10-18)
+
+Deux rattrapages existent désormais dans `watchdog.yml` (cron horaire — GitHub peut retarder
+les crons, compter ~3-4 h dans les faits) : plus besoin d'intervenir à la main.
+
+1. **PR de bot sans aucun check** — le run `pull_request` est retenu par GitHub
+   (`action_required`, **zéro job**), donc aucun check n'est jamais attaché et ni la CI ni
+   le reviewer ne partent. À partir de **30 min**, le watchdog dispatche le **reviewer**
+   (qui exécute sa propre gate), au lieu d'un redispatch CI qui n'attache rien non plus.
+   Anti-tempête : une PR dont le commit de tête porte déjà un verdict
+   `APPROVED`/`CHANGES_REQUESTED` (hors `DISMISSED`) n'est jamais rejugée — un push réarme.
+2. **Campagne terminée mais parent ouvert** — quand la dernière sous-issue est mergée par
+   une voie qui ne passe pas par le check campagne de `reviewer.yml`, le parent restait
+   ouvert indéfiniment (#1201 : 9/9 fermées). Le watchdog détecte « 0 sous-issue ouverte +
+   parent ouvert + aucune PR `docs/campaign-N` » et dispatche le **supervisor**
+   (`mode=supervisor`), avec claim `supervisor-dispatched` sur le parent, réarmé si le run
+   meurt sans livrer sa PR docs.
+
+⚠️ Un run `pull_request` en `failure` **avec 0 job** (fréquent sur les PRs de bot) est du
+bruit : aucun check n'en résulte, ce n'est pas un échec de build. Ne pas le confondre avec
+une vraie CI rouge — `gh run view <id> --json jobs` renvoie `[]`.
+
 ### Reviewer Agent Failed
 
 **Check**:
