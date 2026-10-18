@@ -140001,5 +140001,279 @@
       "purchased_offer": null,
       "essence_after_purchase": null
     }
+  },
+  {
+    "date": "2026-10-18T10:01:31.174Z",
+    "run": "2026-10-18",
+    "character": "QA-PERSI-9",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 57,
+        "fight_duration_ms": 10156,
+        "max_hp": 413,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 60.57
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 5,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 16,
+      "vit": 7,
+      "dex": 6,
+      "luk": 11,
+      "int": 30,
+      "foc": 9,
+      "fights": 0
+    },
+    "initial_level": 14,
+    "initial_xp": {
+      "current": 3535,
+      "max": 9338
+    },
+    "initial_max_hp": 408,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 14,
+      "xp": 3970,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 17,
+      "vit": 8,
+      "dex": 7,
+      "luk": 13,
+      "int": 38,
+      "foc": 14,
+      "last xp": 72,
+      "fights": 3
+    },
+    "final_max_hp": 413,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20262,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "wraith",
+        "wolf"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 153,
+      "xp_events": [
+        {
+          "time_ms": 3071,
+          "xp": 81,
+          "monster": "wraith",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15217,
+          "xp": 72,
+          "monster": "wolf",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        512,
+        1535,
+        3071,
+        12150,
+        13681,
+        15217
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 81,
+        "essence": 0.55,
+        "monster": "wraith"
+      },
+      {
+        "result": "victory",
+        "xp": 72,
+        "essence": 0.55,
+        "monster": "wolf"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.44,
+      "next_level_eta": "⬆ 14m 59s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.30x",
+      "interval": "12.0s",
+      "streak_bonus": "🔥 2-win streak (+25%)"
+    },
+    "initial_essence": 49.28,
+    "final_essence": 89.71,
+    "essence": {
+      "before_idle": 49.28,
+      "after_idle": 50.38,
+      "per_fight": [
+        60.57
+      ],
+      "forge_before": 60,
+      "forge_after_salvage": 110,
+      "forge_after_fusion": 110,
+      "forge_after_upgrade": 110,
+      "forge_after": 110,
+      "shop_before": 113,
+      "shop_after": 89,
+      "final": 89.71,
+      "flow": {
+        "idle_gained": 1.1,
+        "fights_change": null,
+        "salvage_gained": 50,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 50,
+        "shop_cost": 24,
+        "net_change": 40.43
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 60,
+      "essence_after_salvage": 110,
+      "essence_after_fusion": 110,
+      "essence_after_upgrade": 110,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": 110,
+      "items_after": null,
+      "salvage_essence_gained": 50,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 24,
+      "essence_before": 113,
+      "essence_after": 89,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Worn Bracers",
+            "rarity": "COMMON",
+            "price": 24
+          },
+          {
+            "name": "Spirit Orb",
+            "rarity": "EPIC",
+            "price": 73
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 41
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 89
+      }
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1373,
+      "arena": 725
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Worn Bracers",
+          "rarity": "COMMON",
+          "price": 24
+        },
+        {
+          "name": "Spirit Orb",
+          "rarity": "EPIC",
+          "price": 73
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 41
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 89
+    }
   }
 ]
