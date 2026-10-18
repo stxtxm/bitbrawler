@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-18T18:19:30Z",
+  "last_session": "2026-10-18T18:35:32Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -180,6 +180,11 @@
     {
       "lesson": "Issue #1205 armure en couches : la grille sprite paddée (42 lignes) place les jambes à partir de y=36 (pantalon 36-39, chaussures 40-41) — le torse s'arrête à y=35. Le bug venait de la branche robe de paintChest qui repeignait les cellules pantalon (6/36) aux lignes 36-39 en TINT2. Fix : plastron FIELD (19+PAD..29+PAD), pauldrons TRIM 2 cellules, puis bande de taille TINT2 sur les lignes 33-35 (conversion des cellules FIELD uniquement, jamais les jambes). Vérif data-driven utile : script tsx qui itère tous les items armor × seeds et compte les diffs sous y=36 — seules les robes (paintChest) et les boots (paintBoots, intentionnel) touchaient les jambes. Côté PR : le body est auto-généré (\"Closes #N\"), donc la sortie art:sheet avant/après doit être postée en commentaire d'issue.",
       "issue": "#1205",
+      "date": "2026-10-18"
+    },
+    {
+      "lesson": "Issue #1206 accessoire v2: la gemme 'necklace' était blittée à neck.y sans support. Fix = bandeau de col (expectTrims) à torso.y0 + brin (chaîne) jusqu'à la première ligne de contenu de l'art, gemme descendue à chest.y-3. Astuce de test 'pas d'îlot isolé': le sprite de base est UNE seule composante connexe (vérifié), donc asserter nonZeroComponents(out).length===1 pour chaque accessoire sur slim/standard/broad est un garde-fou fiable. Le support doit être vérifié ligne par ligne entre torso.y0 et gemTop avec |x-neck.x|<=3.",
+      "issue": "#1206",
       "date": "2026-10-18"
     }
   ]
