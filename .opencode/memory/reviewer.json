@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-18T18:41:43Z",
+  "last_session": "2026-10-18T19:44:05Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR bot sans checks (statusCheckRollup vide) : cas documenté, appliquer la gate locale complète (tsc, eslint email, vitest, build) avant merge. Le critère art:sheet des issues de campagne sprite n'est pas bloquant (absent aussi en #1224).",
-      "issue": "#1225",
+      "lesson": "PR de bot sans check CI attaché (statusCheckRollup vide) : exécuter la gate locale complète (lint, tsc, vitest run, build) puis merger si verte. Pour un fix de test flaky, valider le déterminisme en bouclant le fichier de test plusieurs fois.",
+      "issue": "PR #1223",
       "date": "2026-10-18"
     }
   ]
