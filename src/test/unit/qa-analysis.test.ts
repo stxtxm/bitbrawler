@@ -85,7 +85,13 @@ interface RunRecord {
     boss_hp?: number | null
     boss_max_hp?: number | null
   }
-  shop?: { essence_before?: number | null; essence_after?: number | null }
+  shop?: {
+    essence_before?: number | null
+    essence_after?: number | null
+    purchased?: boolean | null
+    cost?: number | null
+    item_rarity?: string | null
+  }
   shop_data?: {
     offers?: Array<{ name: string; rarity?: string | null; price: number | null }>
     purchased_offer?: number | null
@@ -421,6 +427,74 @@ function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis 
   }
 }
 
+// ── Shop real purchase analysis (mirror of analyze-qa-stats.ts #1229) ──
+// Runs already carry the real purchase outcome (shop.purchased, shop.cost,
+// shop.item_rarity, shop_data.purchased_offer); the analyzer previously ignored
+// them and drove pricing decisions from the simulated affordability proxy alone.
+
+interface ShopRealAnalysis {
+  runs_with_shop_data: number
+  runs_with_purchase: number
+  real_purchase_rate: number | null
+  avg_purchase_cost: number | null
+  purchase_rarity_distribution: Record<string, number>
+  cheapest_offer_share: number | null
+}
+
+const REAL_SHOP_MIN_RUNS = 10
+
+function computeShopRealAnalysis(runs: RunRecord[]): ShopRealAnalysis | null {
+  const runsWithShopData = runs.filter(
+    (r): r is RunRecord & { shop_data: { offers: Array<{ name: string; rarity?: string | null; price: number | null }> } } =>
+      r.shop_data?.offers != null && r.shop_data.offers.length > 0
+  )
+  if (runsWithShopData.length === 0) return null
+
+  const purchasedRuns = runsWithShopData.filter(r => r.shop?.purchased === true)
+  const costValues = purchasedRuns
+    .map(r => r.shop?.cost)
+    .filter((c): c is number => typeof c === 'number')
+
+  const rarityDist: Record<string, number> = {}
+  for (const r of purchasedRuns) {
+    const rarity = r.shop?.item_rarity
+    if (rarity && typeof rarity === 'string' && rarity.trim() !== '') {
+      const key = rarity.toLowerCase()
+      rarityDist[key] = (rarityDist[key] || 0) + 1
+    }
+  }
+
+  const purchasesWithIndex = purchasedRuns.filter(r => typeof r.shop_data.purchased_offer === 'number')
+  const cheapestPurchases = purchasesWithIndex.filter(r => r.shop_data.purchased_offer === 0)
+
+  return {
+    runs_with_shop_data: runsWithShopData.length,
+    runs_with_purchase: purchasedRuns.length,
+    real_purchase_rate: Math.round((purchasedRuns.length / runsWithShopData.length) * 1000) / 1000,
+    avg_purchase_cost: costValues.length > 0
+      ? Math.round((costValues.reduce((s, c) => s + c, 0) / costValues.length) * 100) / 100
+      : null,
+    purchase_rarity_distribution: rarityDist,
+    cheapest_offer_share: purchasesWithIndex.length > 0
+      ? Math.round((cheapestPurchases.length / purchasesWithIndex.length) * 1000) / 1000
+      : null,
+  }
+}
+
+function shopRealSuggestions(real: ShopRealAnalysis | null): string[] {
+  const out: string[] = []
+  if (!real || real.runs_with_shop_data < REAL_SHOP_MIN_RUNS || real.real_purchase_rate === null) return out
+  if (real.real_purchase_rate > 0.6) {
+    out.push(`Real shop purchase rate is ${(real.real_purchase_rate * 100).toFixed(0)}% (${real.runs_with_purchase}/${real.runs_with_shop_data} runs) — offers are trivially affordable. Consider raising SHOP_OFFERS prices.`)
+  } else if (real.real_purchase_rate < 0.1) {
+    out.push(`Real shop purchase rate is ${(real.real_purchase_rate * 100).toFixed(0)}% (${real.runs_with_purchase}/${real.runs_with_shop_data} runs). Consider lowering SHOP_OFFERS prices.`)
+  }
+  if (real.cheapest_offer_share !== null && real.cheapest_offer_share >= 0.95) {
+    out.push(`Real shop purchases target the cheapest offer (share ${(real.cheapest_offer_share * 100).toFixed(0)}%) — calibrate on cost relative to essence, not the raw purchase rate.`)
+  }
+  return out
+}
+
 // ── Recent-window alert helpers (mirror of analyze-qa-stats.ts #730) ──
 // Issues/suggestions must be computed on a recent window: the all-time
 // cumulative rate stays in the report, but stale eras (pre-fix runs) must not
@@ -481,6 +555,50 @@ function computeRecentIdleWinRate(runsWithIdleData: RunRecord[], windowSize = RE
 
 function isStatKey(key: string): boolean {
   return STAT_KEYS.has(key)
+}
+
+// ── Win-rate trend alert helpers (mirror of analyze-qa-stats.ts #1229) ──
+// With fightsPerRun: 1, last_3 = 3 fights and last_5 = 5 fights: the run-count
+// guards alone produced false-positive declining/swing alerts on tiny combat
+// windows. Trend alerts now also require MIN_TREND_FIGHTS fights in the window.
+
+const MIN_TREND_FIGHTS = 10
+
+interface TrendWindowMirror {
+  label: string
+  count: number
+  fights_count: number
+  win_rate: number
+}
+
+function computeTrendWindowMirror(runs: RunRecord[], count: number, label: string): TrendWindowMirror | null {
+  const window = runs.slice(-count)
+  if (window.length === 0) return null
+  const fights = window.flatMap(r => r.fights)
+  const wins = fights.filter(f => f.result === 'victory')
+  return {
+    label,
+    count: window.length,
+    fights_count: fights.length,
+    win_rate: fights.length > 0 ? wins.length / fights.length : 0,
+  }
+}
+
+function computeWinRateTrendAlerts(runs: RunRecord[]): string[] {
+  const alerts: string[] = []
+  const allTime = computeTrendWindowMirror(runs, runs.length, 'all_time')
+  const last5 = computeTrendWindowMirror(runs, 5, 'last_5')
+  if (allTime && last5 && last5.count >= 3 && last5.fights_count >= MIN_TREND_FIGHTS) {
+    if (last5.win_rate > allTime.win_rate + 0.15) alerts.push('improving')
+    if (last5.win_rate < allTime.win_rate - 0.15) alerts.push('declining')
+  }
+  const last3 = computeTrendWindowMirror(runs, 3, 'last_3')
+  if (allTime && last3 && last3.count >= 2 && last3.fights_count >= MIN_TREND_FIGHTS) {
+    const swing = last3.win_rate - allTime.win_rate
+    if (swing > 0.2) alerts.push('surged')
+    else if (swing < -0.2) alerts.push('dropped')
+  }
+  return alerts
 }
 
 // ── Tests ──
@@ -1672,6 +1790,157 @@ describe('QA Shop Simulated Affordability Analysis (#711)', () => {
       expect(source).toContain('simulated: shopSimulated')
       expect(source).toContain('r.shop?.essence_before ?? r.essence?.shop_before')
     })
+  })
+})
+
+describe('QA Shop Real Purchase Analysis (#1229)', () => {
+  let shopRunSeq = 0
+
+  function shopRun(purchased: boolean, cost: number | null, rarity: string | null, offerIndex: number | null): RunRecord {
+    shopRunSeq++
+    return {
+      date: '2026-10-18', run: `s-${shopRunSeq}`, character: 'QA-PERSI', fights: [], errors: [],
+      shop: { purchased, cost, item_rarity: rarity },
+      shop_data: {
+        offers: [
+          { name: 'Marchandise', rarity: 'common', price: 24 },
+          { name: 'Pièce rare', rarity: 'rare', price: 48 },
+          { name: 'Coffre mystère', rarity: null, price: 41 },
+        ],
+        purchased_offer: offerIndex,
+      },
+    }
+  }
+
+  describe('computeShopRealAnalysis', () => {
+    it('returns null when no run has shop_data with offers', () => {
+      const runs: RunRecord[] = [
+        { date: '2026-10-18', run: 'r1', character: 'A', fights: [], errors: [], shop_data: { offers: [] } },
+        { date: '2026-10-18', run: 'r2', character: 'B', fights: [], errors: [] },
+      ]
+      expect(computeShopRealAnalysis(runs)).toBeNull()
+    })
+
+    it('computes real_purchase_rate from shop.purchased over runs with offers', () => {
+      const runs: RunRecord[] = Array.from({ length: 12 }, (_, i) => shopRun(i < 9, i < 9 ? 24 : null, i < 9 ? 'UNCOMMON' : null, i < 9 ? 0 : null))
+      const result = computeShopRealAnalysis(runs)
+      expect(result).not.toBeNull()
+      expect(result!.runs_with_shop_data).toBe(12)
+      expect(result!.runs_with_purchase).toBe(9)
+      expect(result!.real_purchase_rate).toBe(0.75)
+    })
+
+    it('aggregates avg purchase cost, rarity distribution and cheapest-offer share', () => {
+      const runs: RunRecord[] = [
+        shopRun(true, 24, 'UNCOMMON', 0),
+        shopRun(true, 30, 'RARE', 0),
+        shopRun(true, 60, 'EPIC', 1),
+        shopRun(false, null, null, null),
+      ]
+      const result = computeShopRealAnalysis(runs)
+      expect(result).not.toBeNull()
+      expect(result!.runs_with_purchase).toBe(3)
+      expect(result!.real_purchase_rate).toBe(0.75)
+      expect(result!.avg_purchase_cost).toBe(38)
+      expect(result!.purchase_rarity_distribution).toEqual({ uncommon: 1, rare: 1, epic: 1 })
+      expect(result!.cheapest_offer_share).toBe(0.667)
+    })
+
+    it('reports cheapest_offer_share 1 when every purchase targets offer index 0', () => {
+      const runs: RunRecord[] = Array.from({ length: 12 }, () => shopRun(true, 24, 'UNCOMMON', 0))
+      const result = computeShopRealAnalysis(runs)
+      expect(result!.real_purchase_rate).toBe(1)
+      expect(result!.cheapest_offer_share).toBe(1)
+    })
+
+    it('leaves cheapest_offer_share null when no purchased_offer index was captured', () => {
+      const runs: RunRecord[] = Array.from({ length: 12 }, () => shopRun(true, 24, 'UNCOMMON', null))
+      const result = computeShopRealAnalysis(runs)
+      expect(result!.cheapest_offer_share).toBeNull()
+    })
+  })
+
+  describe('shopRealSuggestions', () => {
+    it('drives the price suggestion from the real rate once >= 10 runs with offers', () => {
+      const runs: RunRecord[] = Array.from({ length: 12 }, () => shopRun(true, 24, 'UNCOMMON', 0))
+      const suggestions = shopRealSuggestions(computeShopRealAnalysis(runs))
+      expect(suggestions.some(s => s.includes('Real shop purchase rate') && s.includes('raising SHOP_OFFERS prices'))).toBe(true)
+      expect(suggestions.some(s => s.includes('cheapest offer'))).toBe(true)
+    })
+
+    it('suggests lowering prices on a near-zero real purchase rate', () => {
+      const runs: RunRecord[] = Array.from({ length: 12 }, (_, i) => shopRun(i === 0, i === 0 ? 24 : null, i === 0 ? 'UNCOMMON' : null, i === 0 ? 0 : null))
+      const suggestions = shopRealSuggestions(computeShopRealAnalysis(runs))
+      expect(suggestions.some(s => s.includes('lowering SHOP_OFFERS prices'))).toBe(true)
+    })
+
+    it('stays silent below REAL_SHOP_MIN_RUNS so the caller can fall back to the simulation', () => {
+      const runs: RunRecord[] = Array.from({ length: 9 }, () => shopRun(true, 24, 'UNCOMMON', 0))
+      expect(shopRealSuggestions(computeShopRealAnalysis(runs))).toEqual([])
+    })
+  })
+
+  describe('analyze-qa-stats.ts source contract (#1229)', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+
+    it('exposes the real purchase metrics alongside the simulated proxy', () => {
+      expect(source).toContain('computeShopRealAnalysis')
+      expect(source).toContain('runs_with_purchase')
+      expect(source).toContain('real_purchase_rate')
+      expect(source).toContain('avg_purchase_cost')
+      expect(source).toContain('purchase_rarity_distribution')
+      expect(source).toContain('cheapest_offer_share')
+      expect(source).toContain('real: shopReal')
+    })
+
+    it('switches the price suggestion to the real rate above REAL_SHOP_MIN_RUNS and keeps the simulated fallback', () => {
+      expect(source).toContain('REAL_SHOP_MIN_RUNS')
+      expect(source).toContain('Real shop purchase rate')
+      expect(source).toContain('Simulated shop purchase rate')
+      expect(source).toContain('calibrate on cost relative to essence')
+    })
+  })
+})
+
+describe('QA Win-Rate Trend Alert Min Fights (#1229)', () => {
+  function makeRun(id: string, result: 'victory' | 'defeat', fightsPerRun = 1): RunRecord {
+    return {
+      date: `2026-10-18-${id}`, run: id, character: 'QA-PERSI',
+      fights: Array.from({ length: fightsPerRun }, () => ({ result, xp: 100, fight_duration_ms: 5000 })),
+      errors: [],
+    }
+  }
+
+  it('aucune alerte de tendance win-rate sur 3 runs x 1 combat perdant', () => {
+    const runs = [makeRun('r1', 'defeat'), makeRun('r2', 'defeat'), makeRun('r3', 'defeat')]
+    expect(computeWinRateTrendAlerts(runs)).toEqual([])
+  })
+
+  it('ignore la chute 48% → 0% (last 5) quand la fenêtre ne porte que 5 combats', () => {
+    const runs: RunRecord[] = [
+      ...Array.from({ length: 10 }, (_, i) => makeRun(`w${i}`, 'victory')),
+      ...Array.from({ length: 5 }, (_, i) => makeRun(`l${i}`, 'defeat')),
+    ]
+    expect(computeWinRateTrendAlerts(runs)).toEqual([])
+  })
+
+  it('declenche l alerte declining quand la fenetre last_5 porte au moins 10 combats', () => {
+    const runs: RunRecord[] = [
+      ...Array.from({ length: 5 }, (_, i) => makeRun(`w${i}`, 'victory', 2)),
+      ...Array.from({ length: 5 }, (_, i) => makeRun(`l${i}`, 'defeat', 2)),
+    ]
+    expect(computeWinRateTrendAlerts(runs)).toContain('declining')
+  })
+
+  it('expose fights_count sur la fenetre de tendance', () => {
+    const runs = [makeRun('r1', 'victory', 3)]
+    expect(computeTrendWindowMirror(runs, 1, 'last_1')!.fights_count).toBe(3)
+  })
+
+  it('analyze-qa-stats.ts source contract (#1229): exige MIN_TREND_FIGHTS avant les alertes de tendance', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+    expect(source).toContain('MIN_TREND_FIGHTS')
+    expect(source).toContain('fights_count')
   })
 })
 
