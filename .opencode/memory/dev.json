@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-18T18:07:08Z",
+  "last_session": "2026-10-18T18:19:30Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -175,6 +175,11 @@
     {
       "lesson": "Flaky randomness assertions: remplacer les tirages reels par un SWEEP deterministe de Math.random (mockReturnValue(i/draws), draws>=pool) garantit de visiter chaque index du pool -> plus de flakiness que 'augmenter le nombre de tirages'. Applique aux 3 tests some(...) de monster-utils (lvl 3/15/35). Verif RED en cassant temporairement le filtre minLevel/maxLevel de monsterUtils (6 tests tombent), puis revert.",
       "issue": "#1221",
+      "date": "2026-10-18"
+    },
+    {
+      "lesson": "Issue #1205 armure en couches : la grille sprite paddée (42 lignes) place les jambes à partir de y=36 (pantalon 36-39, chaussures 40-41) — le torse s'arrête à y=35. Le bug venait de la branche robe de paintChest qui repeignait les cellules pantalon (6/36) aux lignes 36-39 en TINT2. Fix : plastron FIELD (19+PAD..29+PAD), pauldrons TRIM 2 cellules, puis bande de taille TINT2 sur les lignes 33-35 (conversion des cellules FIELD uniquement, jamais les jambes). Vérif data-driven utile : script tsx qui itère tous les items armor × seeds et compte les diffs sous y=36 — seules les robes (paintChest) et les boots (paintBoots, intentionnel) touchaient les jambes. Côté PR : le body est auto-généré (\"Closes #N\"), donc la sortie art:sheet avant/après doit être postée en commentaire d'issue.",
+      "issue": "#1205",
       "date": "2026-10-18"
     }
   ]
