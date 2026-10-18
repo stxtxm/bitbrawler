@@ -8,6 +8,22 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.8.0',
+    date: '2026-10-18',
+    title: '🎨 Direction artistique v2 — personnages lisibles, équipement porté, animations vivantes',
+    changes: [
+      '💪 ANATOMIE LISIBLE — each sprite now draws real arms and fists in skin tone with shading; the hand anchors derive from the sprite instead of magic constants, so held items finally sit in a hand.',
+      '🗡️ WEAPONS ARE HELD — the guard crosses the fist and the blade rises above the hand for every weapon kind (blade, blunt, polearm, bow, staff), with no overlap on the head.',
+      '🛡️ LAYERED ARMOUR — chestplate, pauldrons and waist band are layered over your clothes using trim/accent ramps, so trousers, boots and your character colours stay visible (no more full-body paint).',
+      '💎 ACCESSORIES ANCHORED — gemstones now hang from a visible support (chain, ring, cape or headband) instead of floating on the torso.',
+      '🏃 LIVING ANIMATIONS — run is now 6 frames (contact/pass), idle breathes and blinks, attack is 5 beats (windup → impact → recovery), plus recoil on hit and a real victory celebration; secondary motion (weapon, hair) follows one frame behind.',
+      '🌑 ARENA SCENE v2 — the fighter now casts a ground shadow and each biome applies its own lighting to the scene.',
+      '🎒 EQUIPMENT UI — clearer slot cards, crisp nearest-neighbour enlarged icons and rarity frames, with an equipped-vs-bag comparison.',
+      '🖼️ ART PREVIEW TOOL — `npm run art:sheet` renders a PNG sprite sheet (every animation state × loadouts × seeds) for human before/after review.',
+      '2302 tests passing across 138 test files.',
+    ],
+  },
+  {
     version: '5.7.4',
     date: '2026-09-17',
     title: '🎯 Overlays anatomiques v2 — fini la rotation, chaque item à sa place',
