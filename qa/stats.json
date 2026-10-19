@@ -144586,29 +144586,27 @@
     }
   },
   {
-    "date": "2026-10-19T22:01:33.920Z",
+    "date": "2026-10-19T22:04:52.506Z",
     "run": "2026-10-20",
     "character": "QA-PERSIST",
-    "character_action": "created",
+    "character_action": "reused",
     "replaced_character": null,
     "character_type": "persistent",
     "fights": [
       {
         "result": "victory",
-        "xp": 113,
-        "fight_duration_ms": 11972,
-        "max_hp": 297,
+        "xp": 100,
+        "fight_duration_ms": 12051,
+        "max_hp": 317,
         "fight_type": "pvp",
         "monster_name": null,
-        "essence_after": 0.53
+        "essence_after": 1.3
       }
     ],
     "lootbox": {
-      "available": true,
-      "opened": true,
-      "item": "Leather Vest",
-      "rarity": "COMMON",
-      "raw_text": "NEW ITEM"
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
     },
     "auto_mode_enabled": false,
     "auto_mode_sync_ok": true,
@@ -144616,7 +144614,7 @@
       "fightButtonLabel": "FIGHT!",
       "fightButtonVisible": true,
       "fightButtonEnabled": true,
-      "fightsAvailable": 5,
+      "fightsAvailable": 4,
       "isResting": false,
       "hasFightCta": true,
       "isSearching": false,
@@ -144625,19 +144623,19 @@
     },
     "initial_stats": {
       "str": 8,
-      "vit": 22,
+      "vit": 23,
       "dex": 10,
       "luk": 7,
       "int": 12,
       "foc": 7,
       "fights": 0
     },
-    "initial_level": 1,
+    "initial_level": 2,
     "initial_xp": {
-      "current": 0,
-      "max": 120
+      "current": 170,
+      "max": 376
     },
-    "initial_max_hp": 276,
+    "initial_max_hp": 296,
     "initial_equipment": [
       {
         "slot": "⚔️",
@@ -144648,24 +144646,24 @@
         "name": "ACCESSORY"
       }
     ],
-    "initial_streak": 0,
+    "initial_streak": 1,
     "final_stats": {
-      "level": 2,
-      "xp": 170,
+      "level": 3,
+      "xp": 270,
       "wins": null,
       "losses": null
     },
     "final_character_stats": {
       "str": 8,
-      "vit": 23,
+      "vit": 24,
       "dex": 10,
       "luk": 7,
       "int": 12,
       "foc": 7,
-      "last xp": 44,
-      "fights": 4
+      "last xp": 48,
+      "fights": 3
     },
-    "final_max_hp": 297,
+    "final_max_hp": 317,
     "final_equipment": [
       {
         "slot": "⚔️",
@@ -144676,7 +144674,7 @@
         "name": "ACCESSORY"
       }
     ],
-    "final_streak": 0,
+    "final_streak": 1,
     "lootbox_equipment": [
       {
         "slot": "⚔️",
@@ -144700,66 +144698,74 @@
         "fight_number": 1,
         "fight_type": "pvp",
         "levels_gained": 1,
-        "previous_level": 1,
-        "new_level": 2
+        "previous_level": 2,
+        "new_level": 3
       }
     ],
     "idle_runner": {
-      "observation_duration_ms": 27468,
-      "cycles_observed": 0,
+      "observation_duration_ms": 20461,
+      "cycles_observed": 1,
       "monsters_faced": [
-        "ogre"
+        "ogre",
+        "wraith"
       ],
-      "victories": 1,
+      "victories": 2,
       "defeats": 0,
-      "xp_total": 14,
+      "xp_total": 64,
       "xp_events": [
         {
-          "time_ms": 27468,
-          "xp": 14,
+          "time_ms": 15408,
+          "xp": 16,
           "monster": "ogre",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15923,
+          "xp": 48,
+          "monster": "wraith",
           "result": "VICTORY"
         }
       ],
       "streak_banner_shown": false,
-      "level_up_fx_detected": true,
-      "level_up_events": [
-        {
-          "time_ms": 27468,
-          "monster": "ogre"
-        }
-      ],
+      "level_up_fx_detected": false,
+      "level_up_events": [],
       "phase_transition_times_ms": [
-        510,
-        1535,
-        27468
+        514,
+        1540,
+        15408
       ]
     },
     "idle_fights": [
       {
         "result": "victory",
-        "xp": 14,
-        "essence": 0.28,
+        "xp": 16,
+        "essence": 0.14,
         "monster": "ogre"
+      },
+      {
+        "result": "victory",
+        "xp": 48,
+        "essence": 0.15,
+        "monster": "wraith"
       }
     ],
     "efficiency_panel": {
       "visible": true,
-      "essence_per_min": 0.92,
-      "next_level_eta": "⬆ 1m 38s",
-      "power_ratio": "⚔ 0.60x",
+      "essence_per_min": 0.94,
+      "next_level_eta": "⬆ 2m 56s",
+      "power_ratio": "⚔ 0.58x",
       "speed_ratio": "⚡ 0.50x",
       "magic_mult": "🧠 0.99x",
       "interval": "12.0s",
-      "streak_bonus": "🔥 1-win streak (+1%)"
+      "streak_bonus": "🔥 1-win streak (+4%)"
     },
-    "initial_essence": 0.18,
-    "final_essence": 0.53,
+    "initial_essence": 0.9,
+    "final_essence": 1.3,
     "essence": {
-      "before_idle": 0.18,
-      "after_idle": 0.46,
+      "before_idle": 0.9,
+      "after_idle": 1.19,
       "per_fight": [
-        0.53
+        1.3
       ],
       "forge_before": null,
       "forge_after_salvage": null,
@@ -144768,16 +144774,16 @@
       "forge_after": null,
       "shop_before": null,
       "shop_after": null,
-      "final": 0.53,
+      "final": 1.3,
       "flow": {
-        "idle_gained": 0.28,
+        "idle_gained": 0.29,
         "fights_change": null,
         "salvage_gained": null,
         "fusion_cost": null,
         "upgrade_cost": null,
         "forge_net": null,
         "shop_cost": null,
-        "net_change": 0.35
+        "net_change": 0.4
       }
     },
     "level_up_fx": {
@@ -144847,8 +144853,8 @@
     "skipped_fights": [],
     "errors": [],
     "load_times_ms": {
-      "home": 1217,
-      "arena": 2627
+      "home": 1528,
+      "arena": 461
     },
     "skipped_summary": {},
     "shop_data": {

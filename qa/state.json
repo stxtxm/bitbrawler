@@ -2,9 +2,9 @@
   "run": "2026-10-20",
   "character": "QA-PERSIST",
   "exhausted": false,
-  "updated_at": "2026-10-19T22:03:50.073Z",
-  "source": "created",
+  "updated_at": "2026-10-19T22:06:26.810Z",
+  "source": "reused",
   "persistent_generation": 0,
-  "persistent_created_at": "2026-10-19T22:01:33.920Z",
+  "persistent_created_at": "2026-10-19T22:04:52.506Z",
   "persistent_reset_ready": false
 }
