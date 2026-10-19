@@ -1,4 +1,7 @@
-const VERSION = 'v18'
+// v19 : badge-96.png remplacé par un glyphe creux (fini le carré blanc Android
+// dans la barre d'état, Pixel 9a) — le bump force le rafraîchissement du
+// pré-cache sur les téléphones, comme en v18.
+const VERSION = 'v19'
 const APP_SHELL_CACHE = `bitbrawler-shell-${VERSION}`
 const ASSET_CACHE = `bitbrawler-assets-${VERSION}`
 const RUNTIME_CACHE = `bitbrawler-runtime-${VERSION}`
