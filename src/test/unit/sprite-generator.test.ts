@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { generateSprite16, generateSpriteFrames, mirrorSpriteGrid, resolveSpriteFeatures } from '../../components/sprite/spriteGenerator';
 import { computeLandmarks } from '../../components/sprite/equipOverlays';
-import { SPRITE_HEIGHT, SPRITE_WIDTH, highlightIndexOf, shadeIndexOf } from '../../components/sprite/spriteTypes';
+import { SPRITE_HEIGHT, SPRITE_IDLE_MS, SPRITE_WIDTH, highlightIndexOf, shadeIndexOf } from '../../components/sprite/spriteTypes';
 
 const SKIN_FAMILY = new Set([1, shadeIndexOf(1), highlightIndexOf(1)]);
 
@@ -567,7 +567,7 @@ describe('sprite generator v2', () => {
     expect(anticipation).toBeLessThan(impact);
   });
 
-  it('generates idle breathing frames with grounded feet, animated upper body and a blink', () => {
+  it('generates idle breathing frames with grounded feet, a still lower body and a short blink', () => {
     const frames = generateSpriteFrames('idle-check', 'male', {
       build: 'standard',
       bodyType: 'basic',
@@ -586,14 +586,46 @@ describe('sprite generator v2', () => {
     const eyeCounts = frames.map((f) => f.grid.flat().filter((c) => c === eyeTone).length);
     // At least one frame blinks: only the lash line is left over the open iris.
     expect(Math.max(...eyeCounts)).toBeGreaterThan(0);
-    expect(Math.min(...eyeCounts)).toBeLessThanOrEqual(6);
-    expect(Math.min(...eyeCounts)).toBeLessThan(Math.max(...eyeCounts));
-    // Breathing: every consecutive pair (cycle wrap included) visibly differs.
+    const blinkIndex = eyeCounts.indexOf(Math.min(...eyeCounts));
+    expect(eyeCounts[blinkIndex]).toBeLessThanOrEqual(6);
+    expect(eyeCounts[blinkIndex]).toBeLessThan(Math.max(...eyeCounts));
+    // Rare (une fois par boucle) et COURT : le clignement impose sa propre durée,
+    // plus brève que la respiration, sinon il s'éternise.
+    expect(frames.filter((f) => f.ms !== undefined)).toHaveLength(1);
+    expect(frames[blinkIndex].ms).toBeLessThan(SPRITE_IDLE_MS);
+
+    // La silhouette monte et descend : plusieurs poses distinctes.
     const grids = frames.map((f) => JSON.stringify(f.grid));
     expect(new Set(grids).size).toBeGreaterThanOrEqual(4);
+
+    // Sous la ceinture, RIEN ne bouge : ni la ceinture, ni le bassin, ni les
+    // jambes, ni l'ombrage du pantalon (dérivé de la silhouette — déplacer le
+    // bassin le faisait clignoter).
+    const lower = frames.map((f) => JSON.stringify(f.grid.slice(32)));
+    expect(new Set(lower).size).toBe(1);
+
+    // Le buste respire par paliers d'une cellule au moins (6 px changés), et
+    // jamais latéralement : l'ancien idle balançait tout le haut du corps de
+    // ±1 cellule dans tous les sens, le personnage gigotait.
+    const centerX = (grid: number[][]): number => {
+      let sum = 0;
+      let count = 0;
+      for (let y = 6; y < 32; y++) {
+        for (let x = 0; x < grid[y].length; x++) {
+          if (grid[y][x] !== 0) {
+            sum += x;
+            count++;
+          }
+        }
+      }
+      return count === 0 ? 0 : sum / count;
+    };
     for (let i = 0; i < frames.length; i++) {
       const next = frames[(i + 1) % frames.length];
-      expect(frameDiff(frames[i].grid, next.grid)).toBeGreaterThanOrEqual(IDLE_FRAME_MIN_DIFF);
+      const diff = frameDiff(frames[i].grid, next.grid);
+      if (diff === 0) continue; // temps de maintien voulu (souffle retenu)
+      expect(diff).toBeGreaterThanOrEqual(IDLE_FRAME_MIN_DIFF);
+      expect(Math.abs(centerX(frames[i].grid) - centerX(next.grid))).toBeLessThan(0.5);
     }
   });
 

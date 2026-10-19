@@ -798,41 +798,53 @@ function applyAttackPose(base: SpriteGrid, phase: number): void {
   collectMove(base, fist, pose[0], pose[1]);
 }
 
-// Procedural idle breathing: chest, head and arms sway rhythmically while feet
-// stay grounded on rows 15-17. A shoulder-level weight shift (dx) makes each
-// breath frame read as a distinct pose, then a blink closes the eyes.
-const IDLE_SWAY: Array<[number, number]> = [
-  [0, 0],
-  [1, 0],
-  [1, -1],
-  [0, -1],
-  [-1, 0],
-  [0, 0],
+// Respiration d'attente : le buste (tête + torse + bras) monte d'UNE cellule et
+// redescend, les pieds restent au sol. Rien d'autre : l'ancien idle balançait
+// tout le haut du corps de ±1 cellule dans TOUS les sens à chaque frame de
+// 280 ms — le personnage gigotait au lieu de respirer.
+//
+// Une cellule = 2 px de sprite : c'est le plus petit déplacement possible en
+// pixel-art, et il se fait par paliers d'une cellule (jamais un demi-pixel).
+// Deux temps de maintien (haut puis bas) donnent un souffle posé.
+const IDLE_BREATH: number[] = [
+  0, // repos
+  -1, // les épaules montent
+  -1, // le buste tient (sommet de l'inspiration)
+  -1, // maintien
+  0, // les épaules redescendent
+  0, // repos
+  0, // repos
+  0, // repos (souffle retenu)
 ];
 
-function shiftUpperBody(base: SpriteGrid, dx: number, dy: number): void {
-  if (dx === 0 && dy === 0) return;
-  const upper: LimbCell[] = [];
-  for (let y = 0; y <= 13; y++) {
-    for (let x = 0; x < 12; x++) {
-      const v = base[y]?.[x] ?? 0;
-      if (v !== 0) upper.push({ x, y, v });
+// Dernière rangée du buste qui suit la respiration : le pan de chemise, juste
+// au-dessus de la ceinture. La ceinture, le bassin et les jambes ne bougent pas
+// d'un pixel — l'ombrage du pantalon est dérivé de la silhouette, donc bouger
+// le bassin faisait clignoter le haut du pantalon.
+const IDLE_BODY_BOTTOM = 12;
+
+function applyIdleBreathing(base: SpriteGrid, phase: number): void {
+  const dy = IDLE_BREATH[phase % IDLE_BREATH.length] ?? 0;
+  if (dy === 0) return;
+  const body: LimbCell[] = [];
+  for (let y = 0; y <= IDLE_BODY_BOTTOM; y++) {
+    for (let x = 0; x < (base[y]?.length ?? 0); x++) {
+      const v = base[y][x];
+      if (v !== 0) body.push({ x, y, v });
     }
   }
-  collectMove(base, upper, dx, dy);
+  // Raccord : le buste monte et la ceinture est doublée d'une rangée. On ne
+  // tire PAS les pixels de la rangée du dessous (ça versait le haut du
+  // pantalon dans la ceinture et faisait clignoter son ombrage).
+  const hem = dy < 0 ? [...(base[IDLE_BODY_BOTTOM] ?? [])] : [];
+  collectMove(base, body, 0, dy);
   if (dy < 0) {
-    for (let x = 0; x < 12; x++) {
-      const below = base[14]?.[x] ?? 0;
-      if (below !== 0 && (base[13]?.[x] ?? 0) === 0) {
-        base[13][x] = below;
+    for (let x = 0; x < hem.length; x++) {
+      if (hem[x] !== 0 && (base[IDLE_BODY_BOTTOM][x] ?? 0) === 0) {
+        base[IDLE_BODY_BOTTOM][x] = hem[x];
       }
     }
   }
-}
-
-function applyIdleBreathing(base: SpriteGrid, phase: number): void {
-  const [dx, dy] = IDLE_SWAY[phase] ?? [0, 0];
-  shiftUpperBody(base, dx, dy);
 }
 
 // Blink: the rebuilt eyes sit on two iris rows above a lash line. Clearing the
@@ -953,7 +965,16 @@ interface FramePlan {
   phase: number;
   blink?: boolean;
   hairSway?: boolean;
+  /** Durée propre à cette frame (ms). Sinon la cadence de l'animation. */
+  ms?: number;
 }
+
+// L'idle fait DEUX respirations par boucle (16 frames) : le clignement
+// n'arrive donc qu'une fois toutes les ~6 s, et il dure 140 ms. Cligner à
+// chaque cycle de 1,7 s (ancien réglage) donnait un personnage qui papillonne.
+export const IDLE_BREATH_FRAMES = 8;
+export const IDLE_BLINK_FRAME = 8;
+export const IDLE_BLINK_MS = 140;
 
 // Secondary motion rides the very same frame list as the body: the hair reacts
 // one beat after the body's extreme, and idle closes the eyes on its last beat.
@@ -968,10 +989,11 @@ function framePlanOf(kind: SpriteAnimKind): FramePlan[] {
     }));
   }
   if (kind === 'idle') {
-    return [0, 1, 2, 3, 4, 5].map((phase) => ({
+    return Array.from({ length: IDLE_BREATH_FRAMES * 2 }, (_, phase) => ({
       phase,
-      hairSway: phase === 2,
-      blink: phase === 5,
+      hairSway: phase === 3,
+      blink: phase === IDLE_BLINK_FRAME,
+      ms: phase === IDLE_BLINK_FRAME ? IDLE_BLINK_MS : undefined,
     }));
   }
   if (kind === 'hit') return [{ phase: 0 }, { phase: 1 }, { phase: 2 }];
@@ -988,7 +1010,7 @@ export function generateSpriteFrames(
 ): GeneratedSprite[] | null {
   const features = resolveSpriteFeatures(seed, gender, appearance);
   const palette = buildPalette(features);
-  return framePlanOf(kind).map(({ phase, blink, hairSway }) => {
+  return framePlanOf(kind).map(({ phase, blink, hairSway, ms }) => {
     const base = composeBaseGrid(features.headType, features.bodyType);
     applyBuild(base, features.build);
     applyAnatomy(base);
@@ -1006,6 +1028,6 @@ export function generateSpriteFrames(
     applyFeatures(grid);
     if (blink) applyBlink(grid);
     for (let i = 0; i < SPRITE_PAD_TOP; i++) grid.unshift(Array(SPRITE_WIDTH).fill(0));
-    return { grid, palette, width: SPRITE_WIDTH, height: SPRITE_HEIGHT };
+    return { grid, palette, width: SPRITE_WIDTH, height: SPRITE_HEIGHT, ms };
   });
 }

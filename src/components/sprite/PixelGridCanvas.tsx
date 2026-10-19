@@ -11,7 +11,7 @@ import { spritePixelScale } from './spritePixelScale';
  *         précédent échantillonnait à 2,875/3,45 px et étirait les sprites de
  *         17 %, ce qui faisait « grésiller » les animations.
  */
-export const SPRITE_RENDER_REV = 'r1160-pixels-entiers';
+export const SPRITE_RENDER_REV = 'r1160-pixels-entiers-souffle';
 
 function useDevicePixelRatio(): number {
   const [dpr, setDpr] = useState<number>(

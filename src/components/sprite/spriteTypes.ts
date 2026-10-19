@@ -9,6 +9,10 @@ export const SPRITE_PAD_TOP = 6;
 
 export const SPRITE_DISPLAY_SCALE = 1.15;
 
+// Cadence de la respiration d'attente, partagée entre le composant (minuteur
+// des frames) et le générateur (qui date sa frame de clignement).
+export const SPRITE_IDLE_MS = 400;
+
 export const ITEM_BLIT_OFFSET = 70;
 
 export type SpriteGrid = number[][];
@@ -20,6 +24,8 @@ export interface GeneratedSprite {
   palette: SpritePalette;
   width: number;
   height: number;
+  /** Durée d'affichage de cette frame (ms). Sinon la cadence de l'animation. */
+  ms?: number;
 }
 
 export const SHADE_OFFSET = 30;
