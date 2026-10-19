@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-19T23:16:08Z",
+  "last_session": "2026-10-19T23:16:15Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1178 QA bot PvE-locked: le bot validait sa bascule PvP via aria-checked mais readArenaStatus renvoyait toujours LOCKED, et il attaquait quand meme -> 90s x3. Fix: helpers purs (isAttackableArenaStatus, didFightStart, FIGHT_START_GRACE_MS=3000, decideFightTypeForIndex) dans src/utils/qa-bot-helpers.js + forcedPvpIndexes (Set) pour epingler un index verrouille en PvP et casser l'oscillation PVP->PVE->PVP. Fail-fast: si didFightStart faux apres ~3s -> skipped_fights reason no_start sans errors.push. Toujours verifier l'etat REEL apres une bascule, jamais supposer qu'elle a marche.",
-      "issue": "#1178",
-      "date": "2026-10-17"
-    },
     {
       "issue": "#1178",
       "date": "2026-10-17",
@@ -195,6 +190,11 @@
     {
       "lesson": "Issue #1116 ArmoryCard: getCodexHint exige un Set<string> mutable — convertir avec new Set(seenIds) depuis un ReadonlySet. Le prop seenIds optionnel permet le hint de voisinage sans violer les props de base {entry, discovered}.",
       "issue": "#1116",
+      "date": "2026-10-19"
+    },
+    {
+      "lesson": "Issue #1118 BestiaryCard: la dependance #1117 a ete mergee pendant la session -> git merge --ff-only origin/master pour recuperer src/utils/bestiaryUtils.ts au lieu de redupliquer BestiaryEntry. Reutiliser .medal-card (import du partial SCSS depuis le composant, comme MedalCard) + filtre inline brightness(0) opacity(0.45) + aria-hidden sur le wrapper pour la silhouette, sans creer de nouveau SCSS (contrainte 1-2 fichiers).",
+      "issue": "#1118",
       "date": "2026-10-19"
     }
   ]
