@@ -16,6 +16,7 @@ import {
   assessFreshness,
   assetPathOf,
   buildStaleIssueBody,
+  extractReferencedAssets,
   parseExpectedMarkers,
   pickTrackingIssue,
   type DeployMarkers,
@@ -85,18 +86,46 @@ function syncIssue(params: { fresh: boolean; missing: string[]; assetPath: strin
   console.log(`🚨 issue créée : ${created}`);
 }
 
-async function probe(url: string): Promise<{ assetPath: string; bundleText: string }> {
-  const htmlRes = await fetch(url, { redirect: 'follow' });
-  if (!htmlRes.ok) throw new Error(`index.html → HTTP ${htmlRes.status}`);
-  const html = await htmlRes.text();
+/** Budget de chunks scannés : borne les fetches d'un run horaire. */
+const MAX_CHUNKS = 40
 
+async function fetchText(url: string): Promise<string> {
+  const res = await fetch(url, { redirect: 'follow' });
+  if (!res.ok) throw new Error(`${url} → HTTP ${res.status}`);
+  return res.text();
+}
+
+async function probe(url: string): Promise<{ assetPath: string; bundleText: string; chunkCount: number }> {
+  const base = url.replace(/\/$/, '');
+  const html = await fetchText(url);
   const assetPath = assetPathOf(html);
   if (!assetPath) throw new Error('aucun assets/index-*.js référencé par index.html');
 
-  const bundleRes = await fetch(`${url.replace(/\/$/, '')}/${assetPath}`, { redirect: 'follow' });
-  if (!bundleRes.ok) throw new Error(`${assetPath} → HTTP ${bundleRes.status}`);
+  const entryText = await fetchText(`${base}/${assetPath}`);
 
-  return { assetPath, bundleText: await bundleRes.text() };
+  // L'app est code-split : les marqueurs les plus récents peuvent vivre dans un
+  // chunk (`assets/SpriteCanvas-*.js` pour SPRITE_RENDER_REV et le flip PvP du
+  // combat). Ne lire que le bundle d'entrée faisait crier « stale » sur une prod
+  // parfaitement à jour (constaté le 19/10 à la reconnexion du git). Un chunk
+  // illisible n'invalide pas la sonde : il peut avoir été purgé entre deux
+  // déploiements.
+  const chunkPaths = extractReferencedAssets(entryText, assetPath).slice(0, MAX_CHUNKS);
+  const chunkTexts: string[] = [];
+  const queue = [...chunkPaths];
+  const workers = Array.from({ length: Math.min(6, queue.length) }, async () => {
+    for (;;) {
+      const path = queue.shift();
+      if (!path) return;
+      try {
+        chunkTexts.push(await fetchText(`${base}/${path}`));
+      } catch (error) {
+        console.warn(`   ⚠️ chunk illisible : ${path} (${error instanceof Error ? error.message : String(error)})`);
+      }
+    }
+  });
+  await Promise.all(workers);
+
+  return { assetPath, bundleText: [entryText, ...chunkTexts].join('\n'), chunkCount: chunkPaths.length };
 }
 
 async function main(): Promise<void> {
@@ -108,17 +137,19 @@ async function main(): Promise<void> {
   console.log(`   marqueurs attendus : rev=${markers.rev}, ${markers.prices.join(' ')}`);
 
   let assetPath: string;
+  let chunkCount = 0;
   let verdict: ReturnType<typeof assessFreshness>;
   try {
     const probed = await probe(url);
     assetPath = probed.assetPath;
+    chunkCount = probed.chunkCount;
     verdict = assessFreshness(probed.bundleText, markers);
   } catch (error) {
     console.error(`⚠️ Sonde impossible : ${error instanceof Error ? error.message : String(error)}`);
     process.exit(2);
   }
 
-  console.log(`   bundle servi : ${assetPath}`);
+  console.log(`   bundle servi : ${assetPath} (+ ${chunkCount} chunk(s) scanné(s))`);
   if (verdict.fresh) {
     console.log('✅ Prod à jour : tous les marqueurs de master sont présents.');
   } else {
@@ -126,7 +157,7 @@ async function main(): Promise<void> {
   }
 
   if (args.includes('--json')) {
-    console.log(JSON.stringify({ url, assetPath, ...verdict, markers }, null, 2));
+    console.log(JSON.stringify({ url, assetPath, chunks: chunkCount, ...verdict, markers }, null, 2));
   }
   if (args.includes('--issue')) {
     // Le ticket EST le signal : on ne fait pas échouer le run du watchdog,

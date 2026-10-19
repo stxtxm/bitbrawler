@@ -889,6 +889,10 @@ les crons, compter ~3-4 h dans les faits) : plus besoin d'intervenir à la main.
    ticket `deploy-stale` s'ils manquent, le ferme quand la prod rattrape, et ne crée jamais
    de doublon. Un run **rouge** de ce step = site injoignable, pas prod stale (le ticket
    est le signal, le step sort 0 en mode `--issue`).
+   ⚠️ L'app est **code-split** : la sonde scanne le bundle d'entrée **et les chunks qu'il
+   référence** (`assets/SpriteCanvas-*.js` porte `SPRITE_RENDER_REV` et le flip PvP du
+   combat). Le 19/10, une sonde limitée à l'entrée a déclaré « stale » une prod qui
+   servait pourtant le fix PvP et les nouveaux prix.
 
 ⚠️ Un run `pull_request` en `failure` **avec 0 job** (fréquent sur les PRs de bot) est du
 bruit : aucun check n'en résulte, ce n'est pas un échec de build. Ne pas le confondre avec
