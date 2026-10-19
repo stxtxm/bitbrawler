@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-19T23:04:33Z",
+  "last_session": "2026-10-19T23:06:19Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR #1244 vide (aucun code bestiaire) : cause racine dans .github/workflows/opencode.yml — `ISSUE_LABELS=$(gh issue view ... --jq '[.[].name]')` renvoie toujours une chaine vide (jq error: cannot index array with name) au lieu de `[.labels[].name]`. Consequence : le garde sub-issue ne matche jamais, l'orchestrator tourne sur une sous-issue atomique, pose ORCHESTRATOR_DID_RUN=true et le step Implement est saute. Le mot `Phase` dans le body suffit a declencher IS_COMPLEX. Contournement applique : remplacer `Phase 1` par `Etape 1` dans les bodies des sous-issues (1117/1116/1118/1119) ; correctif workflow = issue #1247 (humain, sans /oc). Le token reviewer est celui du bot auteur : `gh pr review --request-changes` renvoie 'Can not request changes on your own pull request' → fermer la PR + commenter + re-dispatch.",
-      "issue": "#1244",
+      "lesson": "PR #1245 (fix reuse fresh QA fighter): gate locale verte (lint, tsc, 2378 tests, build) et Cloudflare Pages SUCCESS. Diff OK mais suppression non liée de la session note #1240 dans .opencode/memory/dev.json — signaler sans bloquer un petit fix QA.",
+      "issue": "#1245",
       "date": "2026-10-19"
     }
   ]
