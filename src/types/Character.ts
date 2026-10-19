@@ -169,6 +169,8 @@ export interface Character {
 
   // Monster kill tracking (per monster type for PvE medals)
   monsterKills?: Record<string, number>;
+  // Monster sightings (local-first compendium, counts losses too)
+  monsterEncounters?: Record<string, number>;
 
   // Achievement system
   achievementProgress?: Record<string, { completed: boolean; progress: number; target: number; unlockedAt?: number }>;

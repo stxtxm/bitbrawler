@@ -10,6 +10,7 @@ import { ITEM_ASSETS } from '../data/itemAssets';
 import { canRollLootbox, computeNextStreak, loadEpicPityState, rollLootbox, saveEpicPityState } from '../utils/lootboxUtils';
 import { ItemSlot, PixelItemAsset } from '../types/Item';
 import { getItemById } from '../utils/equipmentUtils';
+import { registerLoot } from '../utils/codexUtils';
 import { simulateCombat } from '../utils/combatUtils';
 import {
   createBossProgress,
@@ -352,8 +353,25 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         const mergedProgresses: any = { ...(anyBest.bossProgresses ?? anyLocal.bossProgresses ?? anyServer.bossProgresses ?? {}) };
         if (mergedVoid) mergedProgresses.void_titan = mergedVoid;
         if (mergedAbyss) mergedProgresses.abyssal_monarch = mergedAbyss;
+        const mergeCounters = (
+          localCounters?: Record<string, number>,
+          serverCounters?: Record<string, number>,
+        ): Record<string, number> | undefined => {
+          if (!localCounters && !serverCounters) return undefined;
+          const merged: Record<string, number> = { ...(serverCounters ?? {}) };
+          for (const [key, value] of Object.entries(localCounters ?? {})) {
+            merged[key] = Math.max(merged[key] ?? 0, value);
+          }
+          return merged;
+        };
+        const localCodex = Array.isArray(anyLocal.codex) ? anyLocal.codex as string[] : [];
+        const serverCodex = Array.isArray(anyServer.codex) ? anyServer.codex as string[] : [];
+        const mergedCodex = Array.from(new Set([...serverCodex, ...localCodex]));
         const mergedChar: Character = {
           ...bestChar,
+          codex: mergedCodex,
+          monsterKills: mergeCounters(anyLocal.monsterKills, anyServer.monsterKills),
+          monsterEncounters: mergeCounters(anyLocal.monsterEncounters, anyServer.monsterEncounters),
           bossProgress: mergedVoid ?? anyBest.bossProgress ?? anyLocal.bossProgress ?? undefined,
           bossProgresses: Object.keys(mergedProgresses).length > 0 ? mergedProgresses : undefined,
           abyssalBossProgress: mergedAbyss ?? anyBest.abyssalBossProgress ?? anyLocal.abyssalBossProgress ?? undefined,
@@ -1223,7 +1241,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       saveEpicPityState(char.id, { epicPityCount: nextEpicPity, commonStreak: nextCommonStreak });
     }
 
-    const updatedChar = normalizeCharacter({
+    const lootedChar = registerLoot(result.item.id, normalizeCharacter({
       ...char,
       inventory: [...inventory, result.item.id],
       lastLootRoll: now,
@@ -1231,7 +1249,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       lootboxPityCount: result.pityCount,
       lootboxEpicPityCount: nextEpicPity,
       lootboxCommonStreak: nextCommonStreak,
-    });
+    })).character;
+    const updatedChar = normalizeCharacter(lootedChar);
 
     try {
       // Optimistic lock: only update if last_loot_roll hasn't changed server-side

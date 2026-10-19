@@ -1,10 +1,12 @@
 import { memo, useMemo, useState } from 'react';
 import { PixelIcon } from '../PixelIcon';
 import { MedalCard } from '../MedalCard';
+import { CompendiumPanel } from '../compendium/CompendiumPanel';
 import { SettingsLogEntry, formatSettingsLogDate } from '../../utils/arenaUtils';
 import { getMedalsByCategory, getUnlockedCount, getTotalMedalCount } from '../../utils/medalUtils';
 import type { MedalCategory, MedalProgressMap } from '../../utils/medalUtils';
 import type { CombatSpeed } from '../../config/gameRules';
+import type { Character } from '../../types/Character';
 
 const CATEGORY_LABELS: Record<MedalCategory, string> = {
   combat: 'Combat',
@@ -17,7 +19,7 @@ const CATEGORY_LABELS: Record<MedalCategory, string> = {
 const CATEGORY_ORDERS: MedalCategory[] = ['combat', 'loot', 'progression', 'special', 'pve'];
 
 interface SettingsPanelProps {
-  settingsView: 'main' | 'logs' | 'medals';
+  settingsView: 'main' | 'logs' | 'medals' | 'compendium';
   autoModeEnabled: boolean;
   autoModeUpdating: boolean;
   soundEnabled: boolean;
@@ -26,6 +28,8 @@ interface SettingsPanelProps {
   combinedHistory: SettingsLogEntry[];
   isOfflineMode: boolean;
   medalProgress?: MedalProgressMap;
+  character?: Character | null;
+  compendiumPct?: number;
   combatSpeed: CombatSpeed;
   onClose: () => void;
   onToggleAutoMode: () => void;
@@ -34,6 +38,7 @@ interface SettingsPanelProps {
   onDeleteCharacter: () => void;
   onOpenLogs: () => void;
   onOpenMedals: () => void;
+  onOpenCompendium: () => void;
   onReturnToMain: () => void;
   onSetDeleteStep: (step: 'idle' | 'confirm') => void;
 }
@@ -41,9 +46,9 @@ interface SettingsPanelProps {
 export const SettingsPanel = memo(function SettingsPanel({
   settingsView, autoModeEnabled, autoModeUpdating, soundEnabled,
   deleteStep, deletePending, combinedHistory, isOfflineMode, medalProgress,
-  combatSpeed,
+  combatSpeed, character, compendiumPct = 0,
   onClose, onToggleAutoMode, onToggleSound, onToggleCombatSpeed, onDeleteCharacter,
-  onOpenLogs, onOpenMedals, onReturnToMain, onSetDeleteStep,
+  onOpenLogs, onOpenMedals, onOpenCompendium, onReturnToMain, onSetDeleteStep,
 }: SettingsPanelProps) {
   const groupedMedals = useMemo(() => getMedalsByCategory(), []);
   const unlockedCount = useMemo(() => getUnlockedCount(medalProgress ?? {}), [medalProgress]);
@@ -68,7 +73,8 @@ export const SettingsPanel = memo(function SettingsPanel({
             )}
             <h2 className="inventory-title">{
               settingsView === 'logs' ? 'COMBAT LOGS' :
-              settingsView === 'medals' ? 'MEDALS' : 'SETTINGS'
+              settingsView === 'medals' ? 'MEDALS' :
+              settingsView === 'compendium' ? 'COMPENDIUM' : 'SETTINGS'
             }</h2>
           </div>
           <button className="inventory-close" onClick={onClose} aria-label="Close settings">
@@ -76,7 +82,7 @@ export const SettingsPanel = memo(function SettingsPanel({
           </button>
         </div>
 
-        <div className={`settings-body ${settingsView === 'medals' ? 'settings-body--padded' : ''}`}>
+        <div className={`settings-body ${settingsView === 'medals' || settingsView === 'compendium' ? 'settings-body--padded' : ''}`}>
           {settingsView === 'logs' ? (
             <>
               <div className="history-list settings-history-list">
@@ -104,6 +110,8 @@ export const SettingsPanel = memo(function SettingsPanel({
               </div>
               <div className="inventory-footer">LAST 20 ENCOUNTERS</div>
             </>
+          ) : settingsView === 'compendium' ? (
+            <CompendiumPanel character={character ?? null} />
           ) : settingsView === 'medals' ? (
             <div className="settings-medals-list">
               <div className="settings-medals-categories">
@@ -207,6 +215,20 @@ export const SettingsPanel = memo(function SettingsPanel({
                   <button className="button settings-link" onClick={onOpenLogs}>
                     <PixelIcon type="history" size={14} />
                     VIEW LOGS
+                  </button>
+                </div>
+              </div>
+
+              <div className="settings-divider" />
+
+              <div className="settings-section">
+                <div className="settings-row">
+                  <div className="settings-label">
+                    <span>COMPENDIUM</span>
+                    <span className="settings-sub">Track monsters and gear collected.</span>
+                  </div>
+                  <button className="button settings-link" onClick={onOpenCompendium} aria-label="Open compendium">
+                    <span>{compendiumPct}%</span>
                   </button>
                 </div>
               </div>

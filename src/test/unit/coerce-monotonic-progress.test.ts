@@ -61,6 +61,42 @@ describe('coerceMonotonicProgress (level-up FX loop root fix)', () => {
     const inc = makeChar({ level: 3, experience: 100 });
     expect(coerceMonotonicProgress(inc, null)).toBe(inc);
   });
+
+  it('merges collection counters by max even when progression is stale', () => {
+    const current = makeChar({
+      level: 6,
+      experience: 700,
+      monsterKills: { goblin: 5, ogre: 2 },
+      monsterEncounters: { goblin: 7 },
+    });
+    const stale = makeChar({
+      level: 2,
+      experience: 300,
+      monsterKills: { goblin: 3, wraith: 1 },
+      monsterEncounters: { goblin: 4, wraith: 1 },
+    });
+    const out = coerceMonotonicProgress(stale, current);
+    expect(out.experience).toBe(700);
+    expect(out.monsterKills).toEqual({ goblin: 5, ogre: 2, wraith: 1 });
+    expect(out.monsterEncounters).toEqual({ goblin: 7, wraith: 1 });
+  });
+
+  it('keeps incoming collection counters when they are ahead', () => {
+    const current = makeChar({
+      level: 2,
+      experience: 300,
+      monsterKills: { goblin: 1 },
+    });
+    const fresh = makeChar({
+      level: 4,
+      experience: 900,
+      monsterKills: { goblin: 4 },
+      monsterEncounters: { goblin: 6 },
+    });
+    const out = coerceMonotonicProgress(fresh, current);
+    expect(out.monsterKills).toEqual({ goblin: 4 });
+    expect(out.monsterEncounters).toEqual({ goblin: 6 });
+  });
 });
 
 import { normalizeCharacter } from '../../utils/persistenceUtils';

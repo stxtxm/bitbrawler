@@ -6,6 +6,7 @@ import { initClickSound } from './hooks/useSound'
 import { HomePage, CharacterCreation, Rankings, Login, Arena, NotFound, Forge, Achievements } from './routes/lazyPages'
 import LoadingScreen from './components/LoadingScreen'
 import { MedalUnlockToast } from './components/MedalUnlockToast'
+import { CompendiumUnlockToast } from './components/compendium/CompendiumUnlockToast'
 import { PushOptInBanner } from './components/PushOptInBanner'
 import { buildPushSubscriptionUpdate } from './hooks/usePushReminders'
 import type { SerializedPushSubscription } from './utils/pushNotifications'
@@ -83,6 +84,8 @@ function App() {
           onDismiss={clearMedalNotification}
         />
       )}
+
+      {activeCharacter && <CompendiumUnlockToast />}
     </div>
   )
 }

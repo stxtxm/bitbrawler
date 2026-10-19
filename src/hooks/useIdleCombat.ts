@@ -22,6 +22,7 @@ import {
 import { MonsterId } from '../data/monsterAssets'
 import { getBiomeForCharacter } from '../data/biomes'
 import { getSurgeEssenceMultiplier, incrementBountyProgress } from '../utils/biomeSurge'
+import { recordMonsterEncounter } from '../utils/compendiumUtils'
 
 interface UseIdleCombatOptions {
   character: Character | null
@@ -165,6 +166,7 @@ export function useIdleCombat({
         const monster = generateMonsterForPlayer(char.level, biomeId)
         const result = simulateCombat(char, monster.character)
         const won = result.winner === 'attacker'
+        char = recordMonsterEncounter(char, monster.def.id, won)
 
         const baseXp = calculateOfflineIdleXp(won, char.level)
         const xpBonus = xpBonusRef.current - 1
@@ -533,9 +535,12 @@ export function useIdleCombat({
         // its fields prevents the idle write-back from reverting them — e.g.
         // reverting lastLootRoll would let the daily lootbox be claimed twice.
         const latest = charRef.current ?? currentChar
+        const collection = recordMonsterEncounter(latest, member.def.id, won)
         const updatedEssence = (latest.essence ?? running.essence ?? 0) + essenceGain
         const updatedChar: Character = {
           ...xpResult.updatedCharacter,
+          monsterKills: collection.monsterKills,
+          monsterEncounters: collection.monsterEncounters,
           inventory: latest.inventory,
           lastLootRoll: latest.lastLootRoll,
           lootboxStreak: latest.lootboxStreak,
@@ -705,6 +710,7 @@ export function useIdleCombat({
         const monster = generateMonsterForPlayer(char.level, biomeId)
         const result = simulateCombat(char, monster.character)
         const won = result.winner === 'attacker'
+        char = recordMonsterEncounter(char, monster.def.id, won)
 
         const baseXp = calculateOfflineIdleXp(won, char.level)
         const xpBonus = xpBonusRef.current - 1

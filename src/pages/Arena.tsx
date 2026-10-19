@@ -17,6 +17,7 @@ import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { useSettings } from '../hooks/useSettings';
 import { useSound } from '../hooks/useSound';
 import { applyEquipmentToCharacter } from '../utils/equipmentUtils';
+import { getCompendiumProgress } from '../utils/compendiumUtils';
 import { getSurgeBiome } from '../data/liveOps';
 import type { ArenaIdleViewModel, ArenaStatOption } from '../components/arena/arenaTypes';
 
@@ -185,6 +186,10 @@ const Arena = () => {
   }, [enabled, setEnabled]);
 
   const surgeBiome = useMemo(() => getSurgeBiome(new Date()), []);
+  const compendiumPct = useMemo(
+    () => getCompendiumProgress(activeCharacter).completionPct,
+    [activeCharacter],
+  );
 
   if (!activeCharacter || !effectiveCharacter) {
     return <Navigate to="/" replace />;
@@ -239,6 +244,8 @@ const Arena = () => {
           soundEnabled={enabled}
           onToggleSound={handleToggleSound}
           medalProgress={activeCharacter?.medalProgress}
+          character={activeCharacter}
+          compendiumPct={compendiumPct}
         />
       )}
 

@@ -3,7 +3,7 @@ import { Character } from '../types/Character';
 import { SettingsLogEntry } from '../utils/arenaUtils';
 import { GAME_RULES, type CombatSpeed } from '../config/gameRules';
 
-type SettingsView = 'main' | 'logs' | 'medals';
+type SettingsView = 'main' | 'logs' | 'medals' | 'compendium';
 type DeleteStep = 'idle' | 'confirm';
 
 const COMBAT_SPEED_STORAGE_KEY = 'bitbrawler_combat_speed';
@@ -82,6 +82,7 @@ export const useSettings = ({
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const handleOpenHistoryFromSettings = useCallback(() => setSettingsView('logs'), []);
   const handleOpenMedals = useCallback(() => setSettingsView('medals'), []);
+  const handleOpenCompendium = useCallback(() => setSettingsView('compendium'), []);
   const handleReturnToSettings = useCallback(() => setSettingsView('main'), []);
 
   const handleToggleAutoMode = useCallback(async () => {
@@ -185,12 +186,14 @@ export const useSettings = ({
     handleDeleteCharacter,
     handleOpenHistoryFromSettings,
     handleOpenMedals,
+    handleOpenCompendium,
     handleReturnToSettings,
     onClose: closeSettings,
     onToggleAutoMode: handleToggleAutoMode,
     onDeleteCharacter: handleDeleteCharacter,
     onOpenLogs: handleOpenHistoryFromSettings,
     onOpenMedals: handleOpenMedals,
+    onOpenCompendium: handleOpenCompendium,
     onReturnToMain: handleReturnToSettings,
     onSetDeleteStep: setDeleteStep,
     combatSpeed,

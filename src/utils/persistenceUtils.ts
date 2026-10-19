@@ -45,6 +45,7 @@ export const normalizeCharacter = (character: Character): Character => {
     medalTitle: character.medalTitle ?? undefined,
     medalAura: character.medalAura ?? false,
     monsterKills: character.monsterKills ?? {},
+    monsterEncounters: character.monsterEncounters ?? {},
     achievementProgress: character.achievementProgress ?? {},
     achievementTitle: character.achievementTitle ?? undefined,
     achievementXpBonus: character.achievementXpBonus ?? 0,
@@ -226,24 +227,56 @@ export function coerceMonotonicProgress<T extends {
   id?: string;
   experience?: number; level?: number; hp?: number; maxHp?: number;
   idleTotalXp?: number; idleTotalKills?: number;
+  monsterKills?: Record<string, number>;
+  monsterEncounters?: Record<string, number>;
 }>(incoming: T, current?: T | null): T {
   // Identity guard: the monotonic rule only applies WITHIN one character.
   // A freshly created / newly logged-in character (different id) must never
   // inherit the previous character's progression.
   if (!current || !current.id || !incoming.id || incoming.id !== current.id) return incoming;
-  if (typeof current.experience !== 'number') return incoming;
-  const incExp = incoming.experience ?? 0;
+
+  const merged = mergeCollectionCounters(incoming, current);
+  if (typeof current.experience !== 'number') return merged;
+  const incExp = merged.experience ?? 0;
   const curExp = current.experience;
-  if (incExp >= curExp) return incoming;
+  if (incExp >= curExp) return merged;
 
   // Current owns more XP -> adopt its whole progression block
   return {
-    ...incoming,
+    ...merged,
     experience: curExp,
-    level: Math.max(incoming.level ?? 1, current.level ?? 1),
-    hp: Math.max(incoming.hp ?? 0, current.hp ?? 0),
-    maxHp: Math.max(incoming.maxHp ?? 0, current.maxHp ?? 0),
-    idleTotalXp: Math.max(incoming.idleTotalXp ?? 0, current.idleTotalXp ?? 0),
-    idleTotalKills: Math.max(incoming.idleTotalKills ?? 0, current.idleTotalKills ?? 0),
+    level: Math.max(merged.level ?? 1, current.level ?? 1),
+    hp: Math.max(merged.hp ?? 0, current.hp ?? 0),
+    maxHp: Math.max(merged.maxHp ?? 0, current.maxHp ?? 0),
+    idleTotalXp: Math.max(merged.idleTotalXp ?? 0, current.idleTotalXp ?? 0),
+    idleTotalKills: Math.max(merged.idleTotalKills ?? 0, current.idleTotalKills ?? 0),
   } as T;
+}
+
+type CollectionCounterFields = {
+  monsterKills?: Record<string, number>;
+  monsterEncounters?: Record<string, number>;
+};
+
+function mergeCounterMaps(
+  first?: Record<string, number>,
+  second?: Record<string, number>,
+): Record<string, number> | undefined {
+  if (!first && !second) return undefined;
+  const merged: Record<string, number> = { ...(first ?? {}) };
+  for (const [key, value] of Object.entries(second ?? {})) {
+    merged[key] = Math.max(merged[key] ?? 0, value);
+  }
+  return merged;
+}
+
+function mergeCollectionCounters<T extends CollectionCounterFields>(incoming: T, current: T): T {
+  const monsterKills = mergeCounterMaps(incoming.monsterKills, current.monsterKills);
+  const monsterEncounters = mergeCounterMaps(incoming.monsterEncounters, current.monsterEncounters);
+  if (!monsterKills && !monsterEncounters) return incoming;
+  return {
+    ...incoming,
+    ...(monsterKills ? { monsterKills } : {}),
+    ...(monsterEncounters ? { monsterEncounters } : {}),
+  };
 }

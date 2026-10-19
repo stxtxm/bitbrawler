@@ -1,6 +1,7 @@
 import { Character } from '../types/Character';
 import type { ItemRarity } from '../types/Item';
 import { CODEX_ENTRIES, CODEX_BY_ID } from '../data/codex';
+import { notifyCompendiumUnlock } from './compendiumEvents';
 
 export const SHINY_PITY_THRESHOLD = 20;
 
@@ -65,6 +66,8 @@ export function registerLoot(
     return { character: { ...character, codex: [...current] }, newlyDiscovered: [] };
   }
   const next = [...current, itemId];
+  const entry = CODEX_BY_ID[itemId];
+  notifyCompendiumUnlock({ kind: 'armory', id: itemId, name: entry?.name ?? itemId });
   return { character: { ...character, codex: next }, newlyDiscovered: [itemId] };
 }
 

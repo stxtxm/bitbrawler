@@ -1,0 +1,265 @@
+@use '../variables' as *;
+
+.compendium-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.compendium-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  background: #0b0b0b;
+  border: 1px solid #2f2f2f;
+  border-radius: 6px;
+}
+
+.compendium-overview__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.compendium-overview__label {
+  font-family: $font-pixel;
+  font-size: 0.45rem;
+  color: #aaa;
+  letter-spacing: 1px;
+}
+
+.compendium-overview__value {
+  font-family: $font-pixel;
+  font-size: 0.45rem;
+  color: $accent-gold;
+}
+
+.compendium-progress-bar {
+  height: 12px;
+  background: #050505;
+  border: 1px solid #333;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.compendium-progress-bar__fill {
+  height: 100%;
+  background: linear-gradient(90deg, #b8860b, $accent-gold);
+  transition: width 0.4s ease;
+}
+
+.compendium-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.compendium-tab {
+  flex: 1;
+  padding: 8px 10px;
+  font-family: $font-pixel;
+  font-size: 0.42rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #888;
+  background: #050505;
+  border: 2px solid #333;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+
+  &.active {
+    color: $accent-gold;
+    border-color: $accent-gold;
+    background: rgba($accent-gold, 0.08);
+  }
+
+  &:hover:not(.active) {
+    color: #ccc;
+    border-color: #666;
+  }
+}
+
+.compendium-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+
+  @include mobile {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+}
+
+.compendium-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 8px;
+  background: #111;
+  border: 2px solid #333;
+  border-radius: 8px;
+  text-align: center;
+
+  &.is-discovered {
+    border-color: rgba($accent-gold, 0.55);
+  }
+
+  &.is-unknown {
+    opacity: 0.58;
+  }
+
+  &__art {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 58px;
+    filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.6));
+  }
+
+  &.is-unknown &__art {
+    filter: brightness(0) opacity(0.5);
+  }
+
+  &__name {
+    margin: 0;
+    font-size: 12px;
+    color: #fff;
+  }
+
+  &__meta {
+    margin: 0;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.58);
+  }
+
+  &__meta--accent {
+    color: $accent-gold;
+  }
+
+  &__owned {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    padding: 2px 5px;
+    font-size: 8px;
+    letter-spacing: 0.5px;
+    color: $accent-green;
+    border: 1px solid rgba($accent-green, 0.4);
+    background: rgba($accent-green, 0.08);
+    border-radius: 3px;
+  }
+
+  @include mobile {
+    padding: 8px 6px;
+
+    &__name {
+      font-size: 10px;
+    }
+
+    &__meta {
+      font-size: 9px;
+    }
+  }
+}
+
+.compendium-icon--unknown {
+  filter: brightness(0) opacity(0.6);
+}
+
+.compendium-footer {
+  font-family: $font-pixel;
+  font-size: 0.38rem;
+  text-align: center;
+  color: #777;
+  padding: 4px 0 8px;
+}
+
+.compendium-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 24px 12px;
+  color: #aaa;
+  text-align: center;
+}
+
+.compendium-empty__hint {
+  font-size: 10px;
+  color: #666;
+}
+
+.compendium-unlock-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 82px;
+  z-index: 2200;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 230px;
+  max-width: min(92vw, 360px);
+  padding: 10px 12px;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #151515, #080808);
+  border: 2px solid $accent-gold;
+  border-radius: 6px;
+  box-shadow: 0 0 18px rgba($accent-gold, 0.25);
+  animation: compendium-toast-in 0.25s ease-out;
+}
+
+.compendium-unlock-toast__badge {
+  flex-shrink: 0;
+  padding: 3px 6px;
+  font-family: $font-pixel;
+  font-size: 0.32rem;
+  color: $bg-dark;
+  background: $accent-gold;
+  border-radius: 3px;
+}
+
+.compendium-unlock-toast__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.compendium-unlock-toast__title {
+  font-size: 10px;
+  color: #bbb;
+  text-transform: uppercase;
+}
+
+.compendium-unlock-toast__name {
+  font-size: 13px;
+  font-weight: bold;
+  color: $accent-gold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compendium-unlock-toast__close {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  color: #999;
+  background: transparent;
+  border: 1px solid #444;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+@keyframes compendium-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
