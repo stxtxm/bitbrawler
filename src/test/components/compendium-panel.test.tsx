@@ -123,6 +123,37 @@ describe('CompendiumPanel', () => {
     expect(container.querySelector('.compendium-card__visual')).toBeNull();
   });
 
+  it('exposes the compendium header and bestiary style hooks', () => {
+    setupCharacter(makeCharacter({ monsterKills: { goblin: 2 } }));
+    const { container } = render(<CompendiumPanel />);
+
+    expect(container.querySelector('.compendium-panel')).not.toBeNull();
+    expect(container.querySelector('.compendium-global')).not.toBeNull();
+    expect(container.querySelector('.compendium-global__value')).not.toBeNull();
+    expect(container.querySelector('.compendium-global__label')).not.toBeNull();
+    expect(container.querySelector('.compendium-global__counts')).not.toBeNull();
+    expect(container.querySelector('.bestiary-card')).not.toBeNull();
+    expect(container.querySelector('.bestiary-card__sprite')).not.toBeNull();
+    expect(container.querySelector('.bestiary-card__info')).not.toBeNull();
+    expect(container.querySelector('.bestiary-card__element')).not.toBeNull();
+    expect(container.querySelector('.bestiary-card__kills')).not.toBeNull();
+  });
+
+  it('exposes the armory card style hooks', () => {
+    const item = CODEX_ENTRIES[0];
+    setupCharacter(makeCharacter({ codex: [item.id] }));
+    const { container } = render(<CompendiumPanel />);
+
+    fireEvent.click(screen.getByRole('tab', { name: /armory/i }));
+
+    const card = container.querySelector('.compendium-card--item');
+    expect(card).not.toBeNull();
+    expect(card?.querySelector('.compendium-card__art')).not.toBeNull();
+    expect(card?.querySelector('.compendium-card__name')).not.toBeNull();
+    expect(card?.querySelector('.compendium-card__meta')).not.toBeNull();
+    expect(card?.querySelector('.compendium-icon')).not.toBeNull();
+  });
+
   it('notifies once when a monster is discovered and never repeats it', () => {
     setupCharacter(makeCharacter());
     const { rerender } = render(<CompendiumPanel />);

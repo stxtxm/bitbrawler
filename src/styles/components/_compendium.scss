@@ -1,0 +1,191 @@
+@use '../variables' as *;
+
+$compendium-surface: #111;
+$compendium-border: #333;
+$compendium-text-muted: rgba(255, 255, 255, 0.6);
+$compendium-gold-light: #ffe680;
+
+.compendium-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  @include mobile {
+    gap: 10px;
+  }
+}
+
+.compendium-global {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, #1a120b 0%, #0d0906 100%);
+  border: 2px solid rgba($accent-gold, 0.5);
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.5);
+
+  @include mobile {
+    padding: 10px 12px;
+  }
+}
+
+.compendium-global__value {
+  font-family: $font-pixel;
+  font-size: 1.4rem;
+  color: $accent-gold;
+  text-shadow: 2px 2px 0 #000;
+
+  @include mobile {
+    font-size: 1.1rem;
+  }
+}
+
+.compendium-global__label {
+  font-family: $font-pixel;
+  font-size: 0.45rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: $compendium-text-muted;
+  text-align: center;
+
+  @include mobile {
+    font-size: 0.4rem;
+  }
+}
+
+.compendium-global__counts {
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  color: #b5b5b5;
+}
+
+.compendium-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: $compendium-surface;
+  border: 2px solid $compendium-border;
+  border-radius: 8px;
+  transition: opacity 0.3s ease, border-color 0.3s ease;
+
+  @include mobile {
+    padding: 10px;
+  }
+}
+
+.compendium-card.is-discovered {
+  border-color: rgba($accent-gold, 0.75);
+
+  .compendium-card__name {
+    color: $compendium-gold-light;
+  }
+}
+
+.compendium-card.is-unknown {
+  opacity: 0.55;
+}
+
+.compendium-card--item {
+  min-height: 148px;
+  justify-content: flex-start;
+
+  @include mobile {
+    min-height: 132px;
+  }
+}
+
+.compendium-card__art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+  background: $bg-dark;
+  border: 1px solid $compendium-border;
+  border-radius: 6px;
+
+  @include mobile {
+    width: 52px;
+    height: 52px;
+  }
+}
+
+.compendium-card__name {
+  margin: 0;
+  font-family: $font-pixel;
+  font-size: 0.5rem;
+  line-height: 1.4;
+  text-align: center;
+  color: #fff;
+  transition: color 0.3s ease;
+
+  @include mobile {
+    font-size: 0.45rem;
+  }
+}
+
+.compendium-card__meta {
+  margin: 0;
+  font-size: 0.6rem;
+  letter-spacing: 1px;
+  text-align: center;
+  color: $compendium-text-muted;
+}
+
+.compendium-card__placeholder {
+  font-family: $font-pixel;
+  font-size: 1.1rem;
+  color: #555;
+}
+
+.compendium-icon {
+  display: block;
+  image-rendering: pixelated;
+}
+
+.compendium-icon--unknown {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+
+.bestiary-card__sprite {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 92px;
+
+  @include mobile {
+    min-height: 80px;
+  }
+}
+
+.bestiary-card__sprite--silhouette {
+  opacity: 0.55;
+}
+
+.bestiary-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+}
+
+.bestiary-card__element {
+  margin: 0;
+  font-family: $font-pixel;
+  font-size: 0.4rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: $accent-gold;
+}
+
+.bestiary-card__kills {
+  margin: 0;
+  font-size: 0.65rem;
+  color: $compendium-text-muted;
+}
