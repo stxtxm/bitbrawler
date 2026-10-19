@@ -18,6 +18,10 @@ import {
   throwIfSiteDownResponse,
   throwIfErrorPageBody,
   classifyRunError,
+  QA_CHARACTER_TYPE_FRESH,
+  QA_CHARACTER_TYPE_PERSISTENT,
+  resolveReusableDailyCharacter,
+  shouldReplaceExhaustedCharacter,
 } from '../../utils/qa-bot-helpers'
 
 describe('qa-bot-helpers combat speed', () => {
@@ -182,6 +186,75 @@ describe('qa-bot-helpers combat speed', () => {
     it('defaults to 1 when toggle absent (fallback)', () => {
       const fallback = getCombatSpeedFromStorageRaw(null)
       expect(fallback).toBe(1)
+    })
+  })
+})
+
+describe('qa-bot-helpers fresh day character reuse (#1241)', () => {
+  describe('character type constants', () => {
+    it('exposes fresh and persistent character types', () => {
+      expect(QA_CHARACTER_TYPE_FRESH).toBe('fresh')
+      expect(QA_CHARACTER_TYPE_PERSISTENT).toBe('persistent')
+    })
+  })
+
+  describe('resolveReusableDailyCharacter', () => {
+    it('reuses the same-day fresh fighter even when its energy is exhausted', () => {
+      expect(resolveReusableDailyCharacter({
+        run: '2026-10-19',
+        character: 'QA-FRESH-4821',
+        character_type: 'fresh',
+        exhausted: true,
+      }, '2026-10-19')).toBe('QA-FRESH-4821')
+    })
+
+    it('does not reuse a fresh fighter from a previous day', () => {
+      expect(resolveReusableDailyCharacter({
+        run: '2026-10-18',
+        character: 'QA-FRESH-4821',
+        character_type: 'fresh',
+        exhausted: false,
+      }, '2026-10-19')).toBeNull()
+    })
+
+    it('never reuses a persistent fighter on a fresh day', () => {
+      expect(resolveReusableDailyCharacter({
+        run: '2026-10-19',
+        character: 'QA-PERSIST',
+        character_type: 'persistent',
+        exhausted: false,
+      }, '2026-10-19')).toBeNull()
+    })
+
+    it('does not reuse legacy state without character_type', () => {
+      expect(resolveReusableDailyCharacter({
+        run: '2026-10-19',
+        character: 'LEGACY-FIGHTER',
+        exhausted: false,
+      }, '2026-10-19')).toBeNull()
+    })
+
+    it('returns null for missing or invalid state', () => {
+      expect(resolveReusableDailyCharacter(null, '2026-10-19')).toBeNull()
+      expect(resolveReusableDailyCharacter(undefined, '2026-10-19')).toBeNull()
+      expect(resolveReusableDailyCharacter({}, '2026-10-19')).toBeNull()
+      expect(resolveReusableDailyCharacter({ run: '2026-10-19', character: '', character_type: 'fresh' }, '2026-10-19')).toBeNull()
+    })
+  })
+
+  describe('shouldReplaceExhaustedCharacter', () => {
+    it('keeps the fresh fighter across runs (idle/lootbox observation only)', () => {
+      expect(shouldReplaceExhaustedCharacter('fresh')).toBe(false)
+    })
+
+    it('keeps the persistent fighter across runs', () => {
+      expect(shouldReplaceExhaustedCharacter('persistent')).toBe(false)
+    })
+
+    it('replaces legacy daily fighters without a long-lived character type', () => {
+      expect(shouldReplaceExhaustedCharacter(null)).toBe(true)
+      expect(shouldReplaceExhaustedCharacter(undefined)).toBe(true)
+      expect(shouldReplaceExhaustedCharacter('other')).toBe(true)
     })
   })
 })

@@ -2484,6 +2484,16 @@ describe('QA Persistent Character Classification (#731)', () => {
       expect(qaBotSource).toContain("runRecord.character_type === 'persistent'")
     })
 
+    it('reuses the same-day fresh fighter instead of recreating it on every run (#1241)', () => {
+      expect(qaBotSource).toContain('resolveReusableDailyCharacter(state, runKey)')
+      expect(qaBotSource).toContain('savedDailyCharacterName')
+      expect(qaBotSource).toContain('character_type: runRecord.character_type')
+    })
+
+    it('keeps the fresh fighter when its energy is exhausted (#1241)', () => {
+      expect(qaBotSource).toContain('shouldReplaceExhaustedCharacter(runRecord.character_type)')
+    })
+
     it('respects the weekly fresh-character day for first-session calibration', () => {
       expect(qaBotSource).toContain('getZonedWeekday')
       expect(qaBotSource).toContain('config.freshCharacterDay')
