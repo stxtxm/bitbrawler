@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-18T22:26:46Z",
+  "last_session": "2026-10-19T09:05:35Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,9 +21,9 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR #1236 (cohortes QA v2 #1230) revue et mergée : CI green (check SUCCESS), tests locaux 264/264 verts. Pattern validé : helpers purs partagés bot/analyse (src/utils/qa-bot-helpers.js) pour éviter la dérive, rétrocompat via champs optionnels + groupe 'unsegmented'.",
-      "issue": "#1236",
-      "date": "2026-10-18"
+      "lesson": "PR #1238 review: verifier le contenu reel du diff avant de juger le scope — gh pr diff affichait des hunks deployFreshness/AGENTS.md deja sur master (contenu identique, aucun diff residuel). Toujours confirmer avec git diff origin/master origin/<branch>. Relancer node scripts/gen-icons.mjs et verifier git status propre pour prouver l extraction sans regression byte-identique.",
+      "issue": "#1238",
+      "date": "2026-10-19"
     }
   ]
 }
