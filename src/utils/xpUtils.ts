@@ -7,6 +7,9 @@ const BASE_XP = 120;
 const EXPONENT = 1.65;
 const EARLY_SHIFT = 0;
 const MAX_LEVEL = 99;
+const WIN_DIFF_BONUS_CAP = 0.5;
+const LOSS_DIFF_BONUS_CAP = 0.15;
+const DIFF_BONUS_FLOOR = -0.5;
 
 /**
  * Calculate the total XP required to reach a specific level.
@@ -75,7 +78,8 @@ export function calculateFightXp(
     let diffBonus = 0;
     if (opponentLevel !== undefined) {
         diffBonus = (opponentLevel - playerLevel) * 0.1;
-        diffBonus = Math.max(-0.5, Math.min(0.5, diffBonus)); // cap at +/- 50%
+        const diffBonusCap = won ? WIN_DIFF_BONUS_CAP : LOSS_DIFF_BONUS_CAP;
+        diffBonus = Math.max(DIFF_BONUS_FLOOR, Math.min(diffBonusCap, diffBonus));
     }
 
     // Small random variance (+/- 10%)
