@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-19T23:00:32Z",
+  "last_session": "2026-10-19T23:01:04Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #834 combat speed 2x for qa-bot: helpers moved to src/utils caused import './qa-bot.config.js' broken in that location -> fix to '../../qa/qa-bot.config.js' and qa-bot.mjs import broken './qa-bot-helpers.js' -> '../src/utils/qa-bot-helpers.js'. Toggle detection must use SettingsPanel switch (…",
-      "issue": "#834",
-      "date": "2026-08-26"
-    },
     {
       "date": "2026-10-17",
       "issue": "#1132",
@@ -195,6 +190,11 @@
     {
       "lesson": "Issue #1241 QA fresh day: state.json ne persistait pas character_type, donc savedCharacterName forcé à null chaque lundi. Fix = helper resolveReusableDailyCharacter(state, runKey) qui exige state.run === runKey ET character_type === 'fresh' (réutilise même si exhausted), + shouldReplaceExhaustedCharacter qui protège fresh et persistent. Persister character_type dans TOUS les persistQaState (initial, final, maybeReplace). Les tests source-contract de qa-bot.mjs exigent le littéral runRecord.character_type === 'persistent' : le garder dans le label de log pour ne pas casser le test #731.",
       "issue": "#1241",
+      "date": "2026-10-19"
+    },
+    {
+      "lesson": "Issue #1243 ratio XP win/loss : le diffBonus de calculateFightXp est désormais asymétrique (cap +0.5 victoire / +0.15 défaite, floor -0.5 commun). Les tests QC doivent figer Math.random (spy à 0.5 => variance exactement 1.0) pour asserter des valeurs entières stables. Attention : le ratio mesuré par analyze-qa-stats inclut les combats PvE (modifier 2.5) et des niveaux de persos différents entre wins/losses — filtrer fight_type==='pvp' avant de conclure.",
+      "issue": "#1243",
       "date": "2026-10-19"
     }
   ]
