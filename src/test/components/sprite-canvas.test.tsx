@@ -7,7 +7,7 @@ import {
 } from '../../components/sprite/SpriteCanvas';
 import { PixelGridCanvas } from '../../components/sprite/PixelGridCanvas';
 import { spritePixelScale } from '../../components/sprite/spritePixelScale';
-import { generateSpriteFrames } from '../../components/sprite/spriteGenerator';
+import { IDLE_BLINK_FRAME, IDLE_BLINK_MS, generateSpriteFrames } from '../../components/sprite/spriteGenerator';
 
 const perf = vi.hoisted(() => ({ low: false }));
 
@@ -103,7 +103,26 @@ describe('SpriteCanvas', () => {
 describe('SpriteCanvas liveliness', () => {
   it('keeps the mobile-first run and idle timings', () => {
     expect(SPRITE_RUN_MS).toBe(120);
-    expect(SPRITE_IDLE_MS).toBe(280);
+    // Respiration posée : 400 ms par palier (l'ancien 280 ms gigotait).
+    expect(SPRITE_IDLE_MS).toBe(400);
+  });
+
+  it("donne à la frame de clignement sa propre durée, plus courte que la respiration", () => {
+    vi.useFakeTimers();
+    const spy = vi.spyOn(globalThis, 'setTimeout');
+    const delays = (): number[] => spy.mock.calls.map(([, ms]) => Number(ms));
+    render(<SpriteCanvas seed="blink-hero" gender="male" animate="idle" />);
+    expect(delays()).toContain(SPRITE_IDLE_MS);
+    expect(delays()).not.toContain(IDLE_BLINK_MS);
+    for (let i = 0; i < IDLE_BLINK_FRAME; i++) {
+      act(() => {
+        vi.advanceTimersByTime(SPRITE_IDLE_MS);
+      });
+    }
+    // Arrivé sur la frame de clignement, le minuteur passe à sa durée propre.
+    expect(delays()).toContain(IDLE_BLINK_MS);
+    spy.mockRestore();
+    vi.useRealTimers();
   });
 
   it('builds animation frames when performance allows', () => {

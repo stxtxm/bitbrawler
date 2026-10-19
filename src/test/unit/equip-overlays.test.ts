@@ -757,6 +757,35 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     expect(new Set(grids).size).toBe(6);
   });
 
+  it("fait suivre la respiration par l'arme d'attente, sans la faire glisser", () => {
+    const frames = generateSpriteFrames('idle-gear', 'male', { ...STD_MALE }, 'idle')!;
+    const palms = frames.map((f) => computeLandmarks(f.grid).palmR);
+    // La main est un repère FIXE pendant la respiration : le souffle passe par
+    // le buste, au-dessus de la ceinture. Un poing qui glissait d'un pixel par
+    // frame faisait gigoter l'arme hors de la grille du corps.
+    expect(new Set(palms.map((p) => p.x)).size).toBe(1);
+    expect(new Set(palms.map((p) => p.y)).size).toBe(1);
+    const sword = byId('rusty_sword')!;
+    const weaponTops = frames.map((f) => {
+      const g = applyEquipmentOverlays(f.grid, f.palette, {
+        weapon: sword,
+        armor: null,
+        accessory: null,
+      }).grid;
+      // premier pixel qui n'existe pas sur le corps nu = le haut de l'arme
+      for (let y = 0; y < g.length; y++) {
+        for (let x = 0; x < g[y].length; x++) {
+          if (g[y][x] !== f.grid[y][x]) return y;
+        }
+      }
+      return -1;
+    });
+    // L'arme garde exactement le même écart à la main sur toutes les poses :
+    // elle ne se détache pas du poing.
+    expect(weaponTops.every((y) => y > 0)).toBe(true);
+    expect(new Set(weaponTops.map((y, i) => y - palms[i].y)).size).toBe(1);
+  });
+
   it('thrusts the weapon with the punching fist on attack frames', () => {
     const frames = generateSpriteFrames('jab-check', 'male', {
       build: 'standard',
