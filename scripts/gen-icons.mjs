@@ -56,6 +56,29 @@ const P = {
   armorLo: [52, 60, 76],
 };
 
+/**
+ * Tracé d'une épée pixel : ombre portée, lame 3 cellules, garde, poignée et
+ * pommeau — plus l'étincelle de la variante détaillée. Extrait de
+ * `buildArtwork` pour que le badge de notification dessine les MÊMES épées,
+ * sans le buste qui le faisait lire comme un carré blanc (voir buildBadgeArt).
+ */
+function drawSword(put, hx, hy, sx, len, pal, withSpark = false) {
+  for (let i = 0; i < len + 1; i++) put(hx + sx * i + 1, hy - i + 1, P.shadow);
+  for (let i = 0; i < len; i++) {
+    const x = hx + sx * i, y = hy - i;
+    put(x, y, pal.core);
+    put(x + sx, y, pal.hi);
+    put(x - sx, y, pal.lo);
+  }
+  put(hx + sx * len, hy - len, pal.hi);
+  if (withSpark) put(hx + sx * (len + 1), hy - len - 1, P.sparkW);
+  const gx = hx + sx * 3, gy = hy - 3;
+  for (let k = -2; k <= 2; k++) if (k !== 0) put(gx + k, gy + k, Math.abs(k) === 2 ? P.guardD : P.gCore);
+  put(gx, gy, P.gCore);
+  for (let i = 1; i <= 3; i++) put(hx - sx * i, hy + i, i % 2 ? P.grip : P.gripHi);
+  put(hx - sx * 4, hy + 4, P.pommel);
+}
+
 function buildArtwork(simple = false) {
   const g = Array.from({ length: GRID }, () => Array.from({ length: GRID }, () => ({ ...P.bgEdge })));
   const put = (x, y, c) => {
@@ -68,7 +91,6 @@ function buildArtwork(simple = false) {
     else rgb = { ...rgb };
     g[y][x] = rgb;
   };
-
   const cx = 15.5, cy = 15.5;
   for (let y = 0; y < GRID; y++) {
     for (let x = 0; x < GRID; x++) {
@@ -84,26 +106,10 @@ function buildArtwork(simple = false) {
 
 
   // ── Crossed swords (BEHIND the bust) ────────────────────────────────
-  function sword(hx, hy, sx, len, pal) {
-    for (let i = 0; i < len + 1; i++) put(hx + sx * i + 1, hy - i + 1, P.shadow);
-    for (let i = 0; i < len; i++) {
-      const x = hx + sx * i, y = hy - i;
-      put(x, y, pal.core);
-      put(x + sx, y, pal.hi);
-      put(x - sx, y, pal.lo);
-    }
-    put(hx + sx * len, hy - len, pal.hi);
-    if (!simple) put(hx + sx * (len + 1), hy - len - 1, P.sparkW);
-    const gx = hx + sx * 3, gy = hy - 3;
-    for (let k = -2; k <= 2; k++) if (k !== 0) put(gx + k, gy + k, Math.abs(k) === 2 ? P.guardD : P.gCore);
-    put(gx, gy, P.gCore);
-    for (let i = 1; i <= 3; i++) put(hx - sx * i, hy + i, i % 2 ? P.grip : P.gripHi);
-    put(hx - sx * 4, hy + 4, P.pommel);
-  }
   const steelPal = simple ? { core: P.flatSteel, hi: P.flatSteel, lo: P.flatSteel } : { core: P.sCore, hi: P.sHi, lo: P.sLo };
   const goldPal = simple ? { core: P.flatGold, hi: P.flatGold, lo: P.flatGold } : { core: P.gCore, hi: P.gHi, lo: P.gLo };
-  sword(27, 27, -1, 20, steelPal); // handle bottom-right -> tip top-left
-  sword(4, 27, 1, 20, goldPal);    // handle bottom-left  -> tip top-right
+  drawSword(put, 27, 27, -1, 20, steelPal, !simple); // handle bottom-right -> tip top-left
+  drawSword(put, 4, 27, 1, 20, goldPal, !simple);    // handle bottom-left  -> tip top-right
 
   // ── Figure outline pass helper ──────────────────────────────────────
   const figureCells = new Map(); // key "x,y" -> color key name
@@ -188,7 +194,36 @@ function buildArtwork(simple = false) {
   return g;
 }
 
-/** Render artwork at `size` px → RGBA buffer. */
+/**
+ * Badge de notification Android — deux épées croisées **creuses**, blanc
+ * monochrome sur fond transparent, sans buste ni fond.
+ *
+ * Android ne rend du badge que le canal alpha, redessiné en blanc par le
+ * système : toute zone pleine devient un aplat. Le buste du logo (12×10
+ * cellules pleines) se lisait donc comme un CARRÉ BLANC à ~24 dp dans la barre
+ * d'état — constaté sur Pixel 9a, y compris après #1200 qui n'avait réglé que
+ * la transparence. Ce glyphe ne contient aucune zone pleine : deux lames en
+ * diagonale, lues comme un X même minuscules.
+ *
+ * Marge extérieure de 3 cellules (≈9 %) : zone sûre des small icons Android.
+ */
+function buildBadgeArt() {
+  const g = Array.from({ length: GRID }, () => Array.from({ length: GRID }, () => null));
+  // Palette « tout blanc » : Android n'utilise que le canal alpha, mais
+  // drawSword lit core/hi/lo — un objet {r,g,b} seul laisserait les lames vides.
+  const white = { r: 255, g: 255, b: 255 };
+  const whitePal = { core: white, hi: white, lo: white };
+  const put = (x, y, c) => {
+    if (x < 0 || y < 0 || x >= GRID || y >= GRID) return;
+    if (c === undefined || c === null) return;
+    g[y][x] = white;
+  };
+  drawSword(put, 24, 24, -1, 16, whitePal, false); // manche bas-droite → pointe haut-gauche
+  drawSword(put, 7, 24, 1, 16, whitePal, false);   // manche bas-gauche → pointe haut-droite
+  return g;
+}
+
+/** Render artwork at `size` px → RGBA buffer. Les cellules `null` restent transparentes (badge). */
 function renderRGBA(art, size) {
   const buf = Buffer.alloc(size * size * 4);
   const cell = size / GRID;
@@ -197,6 +232,7 @@ function renderRGBA(art, size) {
     for (let px = 0; px < size; px++) {
       const gx = clamp(Math.floor(px / cell), 0, GRID - 1);
       const c = art[gy][gx];
+      if (c === null || c === undefined) continue;
       const i = (py * size + px) * 4;
       buf[i] = c.r ?? c[0];
       buf[i + 1] = c.g ?? c[1];
@@ -245,7 +281,7 @@ function encodePNG(rgba, size) {
   ]);
 }
 
-export { P, buildArtwork };
+export { P, buildArtwork, buildBadgeArt };
 
 const isMain = Boolean(process.argv[1]) && import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
 
@@ -261,7 +297,7 @@ if (isMain) {
     ['apple-touch-icon-167.png', 167, detailed],
     ['apple-touch-icon-152.png', 152, detailed],
     ['apple-touch-icon-120.png', 120, simple],
-    ['badge-96.png', 96, simple],
+    ['badge-96.png', 96, buildBadgeArt()],
     ['favicon-32.png', 32, simple],
     ['favicon-16.png', 16, simple],
   ];
@@ -286,15 +322,13 @@ if (isMain) {
   writeFileSync(resolve(PUB, 'icon.svg'), parts.join('\n'));
   console.log('✓ icon.svg');
 
-  // ── badge.svg: gold-only silhouette (band, swords, trim, pommels) ──
-  const badgeArt = buildArtwork(true);
+  // ── badge.svg : même glyphe que badge-96.png (épées croisées, monochrome) ──
+  const badgeArt = buildBadgeArt();
   const bp = [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${GRID * S} ${GRID * S}" shape-rendering="crispEdges">`];
   for (let y = 0; y < GRID; y++) {
     for (let x = 0; x < GRID; x++) {
-      const c = badgeArt[y][x];
-      const isGoldish = (Array.isArray(c) ? c[1] : c.g) > 150 && (Array.isArray(c) ? c[2] : c.b) < 140;
-      if (!isGoldish) continue;
-      bp.push(`<rect x="${x * S}" y="${y * S}" width="${S}" height="${S}" fill="#ffcc00"/>`);
+      if (badgeArt[y][x] === null) continue;
+      bp.push(`<rect x="${x * S}" y="${y * S}" width="${S}" height="${S}" fill="#ffffff"/>`);
     }
   }
   bp.push('</svg>');
