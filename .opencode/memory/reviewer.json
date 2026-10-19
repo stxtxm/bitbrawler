@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-19T23:06:19Z",
+  "last_session": "2026-10-19T23:22:28Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR #1245 (fix reuse fresh QA fighter): gate locale verte (lint, tsc, 2378 tests, build) et Cloudflare Pages SUCCESS. Diff OK mais suppression non liée de la session note #1240 dans .opencode/memory/dev.json — signaler sans bloquer un petit fix QA.",
-      "issue": "#1245",
+      "lesson": "Campagne #1115 : #1119 (4/4) mergée avant #1116/#1118 (3/4 et 2/4) → CompendiumPanel a inliné ArmoryTile/BestiaryTile, laissant ArmoryCard et BestiaryCard inutilisés. Vérifier l'ordre du DAG au merge ; suivi de dédup créé en #1253.",
+      "issue": "#1250",
       "date": "2026-10-19"
     }
   ]
