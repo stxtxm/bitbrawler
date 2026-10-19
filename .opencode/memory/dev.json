@@ -22,11 +22,6 @@
   },
   "session_notes": [
     {
-      "date": "2026-10-19",
-      "issue": "#1240",
-      "lesson": "Animation d'attente (idle) refaite : (1) jamais de deplacement horizontal — l'ancien idle balancait tout le buste de ±1 cellule dans tous les sens toutes les 280 ms = gigue ; (2) respiration = buste d'UNE cellule (2 px), ceinture/bassin/jambes figes : bloc de base 0..12 et raccord en dupliquant la rangee du bas (tirer les pixels du dessous versait le haut du pantalon dans la ceinture et faisait clignoter l'ombrage derive) ; (3) clignement RARE (1x par boucle de ~6 s, 2 respirations) et COURT : 140 ms via un champ ms par frame — SpriteCanvas utilise une chaine de setTimeout, plus setInterval ; (4) repasser un idle a ±1 px sur une grille de 2 px fait scintiller l'arme (demi-cellule) : les offsets d'equipement de l'idle sont a 0 et les ancres (computeLandmarks) suivent la respiration."
-    },
-    {
       "date": "2026-08-25",
       "issue": "#821",
       "lesson": "Issue #821 combat speed x1/x2: (1) reglage local persiste = pattern useSound (localStorage module-level) - evite toute migration Supabase. (2) CombatView fake timers: le tick #1 du round interval fait setCurrentRound(0) donc .round-value reste '1/3' apres le premier round joue - discriminer x1/x2 v…"
