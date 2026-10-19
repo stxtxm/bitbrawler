@@ -6,7 +6,7 @@ import {
   SPRITE_RUN_MS,
 } from '../../components/sprite/SpriteCanvas';
 import { PixelGridCanvas } from '../../components/sprite/PixelGridCanvas';
-import { SPRITE_DISPLAY_SCALE } from '../../components/sprite/spriteTypes';
+import { spritePixelScale } from '../../components/sprite/spritePixelScale';
 import { generateSpriteFrames } from '../../components/sprite/spriteGenerator';
 
 const perf = vi.hoisted(() => ({ low: false }));
@@ -26,12 +26,45 @@ beforeEach(() => {
 });
 
 describe('SpriteCanvas', () => {
-  it('applies the global display shrink for a given scale', () => {
+  it('renders on an integer pixel grid (pixel-perfect)', () => {
     const { container } = render(<SpriteCanvas seed="canvas-hero" gender="male" scale={4} />);
     const canvas = container.querySelector('canvas');
     expect(canvas).not.toBeNull();
-    expect(canvas?.getAttribute('width')).toBe(String(12 * 4 * SPRITE_DISPLAY_SCALE));
-    expect(canvas?.getAttribute('height')).toBe(String(21 * 4 * SPRITE_DISPLAY_SCALE));
+    const w = Number(canvas?.getAttribute('width'));
+    const h = Number(canvas?.getAttribute('height'));
+    // Sans boîte CSS, la cible reste la taille intrinsèque historique
+    // (grille 24×42 × (scale/2) × SPRITE_DISPLAY_SCALE) arrondie au nombre
+    // ENTIER de pixels physiques : fini l'échelle fractionnaire (2,3 ici) qui
+    // donnait des pixels de tailles inégales — c'est cette irrégularité qui
+    // faisait « grésiller » les animations.
+    expect(w).toBe(48);
+    expect(h).toBe(84);
+    expect(w / 24).toBe(h / 42); // ratio natif du sprite, aucun étirement
+    expect(Number.isInteger(w / 24)).toBe(true); // pixels physiques entiers
+    expect(canvas?.style.width).toBe('48px');
+    expect(canvas?.style.height).toBe('84px');
+  });
+
+  it('déduit l’échelle entière de la boîte CSS et du DPR du téléphone', () => {
+    const spy = vi.spyOn(window, 'getComputedStyle').mockReturnValue({
+      getPropertyValue: (prop: string) => (prop === '--sprite-box-h' ? '108px' : ''),
+    } as unknown as CSSStyleDeclaration);
+    const prevDpr = window.devicePixelRatio;
+    Object.defineProperty(window, 'devicePixelRatio', { value: 2.625, configurable: true });
+    try {
+      const { container } = render(<SpriteCanvas seed="canvas-hero" gender="male" scale={6} />);
+      const canvas = container.querySelector('canvas');
+      // 108 px CSS × 2,625 / 42 lignes = 6,75 → 7 px physiques par pixel de
+      // sprite : 7 est entier, donc chaque pixel reste carré et régulier.
+      expect(canvas?.getAttribute('width')).toBe(String(24 * 7));
+      expect(canvas?.getAttribute('height')).toBe(String(42 * 7));
+      // Affiché à sa taille physique exacte → aucun rééchantillonnage.
+      expect(canvas?.style.width).toBe(`${(24 * 7) / 2.625}px`);
+      expect(canvas?.style.height).toBe(`${(42 * 7) / 2.625}px`);
+    } finally {
+      spy.mockRestore();
+      Object.defineProperty(window, 'devicePixelRatio', { value: prevDpr, configurable: true });
+    }
   });
 
   it('flags baked glow when aura is set, without css filters', () => {
@@ -100,5 +133,19 @@ describe('PixelGridCanvas', () => {
     const canvas = container.querySelector('canvas');
     expect(canvas?.getAttribute('width')).toBe('16');
     expect(canvas?.getAttribute('height')).toBe('16');
+  });
+
+  it('choisit toujours un nombre entier de pixels physiques par pixel de sprite', () => {
+    // Boîte CSS de 108 px sur un Pixel 9a (DPR 2,625) : 108 × 2,625 / 42 = 6,75.
+    expect(spritePixelScale({ boxHeight: 108, gridHeight: 42, fallbackScale: 3.45, dpr: 2.625 })).toBe(7);
+    // Même boîte sur un écran DPR 1 : 108 / 42 = 2,57 → 3.
+    expect(spritePixelScale({ boxHeight: 108, gridHeight: 42, fallbackScale: 3.45, dpr: 1 })).toBe(3);
+    // Plus petit écran : 84 px de haut → 84 × 2,625 / 42 = 5,25 → 5.
+    expect(spritePixelScale({ boxHeight: 84, gridHeight: 42, fallbackScale: 3.45, dpr: 2.625 })).toBe(5);
+    // Sans boîte CSS, la cible est la taille intrinsèque historique, en px CSS.
+    expect(spritePixelScale({ boxHeight: null, gridHeight: 42, fallbackScale: 2.875, dpr: 2.625 })).toBe(8);
+    // Jamais zéro pixel (boîte minuscule) ni division par une grille vide.
+    expect(spritePixelScale({ boxHeight: 8, gridHeight: 42, fallbackScale: 1, dpr: 1 })).toBe(1);
+    expect(spritePixelScale({ boxHeight: null, gridHeight: 0, fallbackScale: 4, dpr: 2 })).toBe(1);
   });
 });

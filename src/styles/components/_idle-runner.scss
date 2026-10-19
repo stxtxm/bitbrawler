@@ -79,7 +79,9 @@
   bottom: clamp(12px, 4cqi, 28px);
   z-index: 5;
   display: flex;
-  animation: runCycle 0.32s ease-in-out infinite;
+  // Repli quand les frames ne tournent pas : rebond par paliers, calé sur la
+  // cadence de course (2 appuis par cycle de 720 ms). Aucune rotation.
+  animation: runCycle 0.36s steps(1, end) infinite;
 
   &::before {
     content: '';
@@ -118,38 +120,29 @@
   }
 }
 
+// Repli sans frames : petit rebond de course par paliers, sans rotation ni
+// échelle fractionnaire (du pixel-art ne tourne pas — il scintille).
 @keyframes runCycle {
-  0% {
-    transform: translateY(0px) translateX(0) rotate(-1deg) scale(1);
-  }
-  25% {
-    transform: translateY(-4px) translateX(0.5px) rotate(0deg) scale(1.02);
-  }
-  50% {
-    transform: translateY(-7px) translateX(0) rotate(2deg) scale(1.05);
-  }
-  75% {
-    transform: translateY(-3px) translateX(-0.5px) rotate(0deg) scale(1.01);
-  }
-  100% {
-    transform: translateY(0px) translateX(0) rotate(-1deg) scale(1);
-  }
+  0%, 49.9%  { transform: translateY(0); }
+  50%, 100%  { transform: translateY(-2px); }
 }
 
+// Allonge d'attaque : uniquement des translations en pixels entiers.
 @keyframes attackLunge {
-  0% { transform: translateX(0) translateY(0) scale(1); }
-  20% { transform: translateX(30px) translateY(-3px) scale(1.1); }
-  50% { transform: translateX(10px) translateY(0) scale(1.05); }
-  100% { transform: translateX(0) translateY(0) scale(1); }
+  0% { transform: translateX(0) translateY(0); }
+  20% { transform: translateX(30px) translateY(-3px); }
+  50% { transform: translateX(10px) translateY(0); }
+  100% { transform: translateX(0) translateY(0); }
 }
 
+// Saut de victoire : arc en pixels entiers, sans rotation ni mise à l'échelle.
 @keyframes victoryJump {
-  0% { transform: translateY(0) scale(1); }
-  20% { transform: translateY(-14px) scale(1.15) rotate(-3deg); }
-  40% { transform: translateY(-20px) scale(1.2) rotate(0deg); }
-  60% { transform: translateY(-8px) scale(1.08) rotate(3deg); }
-  80% { transform: translateY(-2px) scale(1.02) rotate(-1deg); }
-  100% { transform: translateY(0) scale(1) rotate(0deg); }
+  0% { transform: translateY(0); }
+  25% { transform: translateY(-16px); }
+  45% { transform: translateY(-20px); }
+  70% { transform: translateY(-6px); }
+  85% { transform: translateY(-1px); }
+  100% { transform: translateY(0); }
 }
 
 // ── Monster ────────────────────────────────────────
@@ -250,21 +243,23 @@
   100% { opacity: 0.6; width: 40%; }
 }
 
+// Défaite du monstre : écrasement vers le sol puis disparition. Pas de
+// rotation — faire tourner du pixel-art le rééchantillonne à chaque frame.
 @keyframes monsterDefeat {
-  0% { transform: scale(1); opacity: 1; }
-  12% { transform: scale(1.2) rotate(4deg); opacity: 1; }
-  35% { transform: scale(0.65) rotate(-10deg) translateY(18px); opacity: 0.85; }
-  65% { transform: scale(0.25) rotate(-22deg) translateY(45px); opacity: 0.35; }
-  100% { transform: scale(0) rotate(-35deg) translateY(80px); opacity: 0; }
+  0% { transform: scale(1, 1) translateY(0); opacity: 1; }
+  12% { transform: scale(1.12, 0.90) translateY(0); opacity: 1; }
+  35% { transform: scale(1, 0.60) translateY(14px); opacity: 0.85; }
+  65% { transform: scale(1.06, 0.30) translateY(34px); opacity: 0.35; }
+  100% { transform: scale(1.10, 0.05) translateY(52px); opacity: 0; }
 }
 
 @include small-mobile {
   @keyframes monsterDefeat {
-    0% { transform: scale(1); opacity: 1; }
-    12% { transform: scale(1.1) rotate(3deg); opacity: 1; }
-    35% { transform: scale(0.7) rotate(-8deg) translateY(12px); opacity: 0.85; }
-    65% { transform: scale(0.35) rotate(-18deg) translateY(30px); opacity: 0.35; }
-    100% { transform: scale(0) rotate(-25deg) translateY(50px); opacity: 0; }
+    0% { transform: scale(1, 1) translateY(0); opacity: 1; }
+    12% { transform: scale(1.08, 0.92) translateY(0); opacity: 1; }
+    35% { transform: scale(1, 0.65) translateY(10px); opacity: 0.85; }
+    65% { transform: scale(1.04, 0.4) translateY(24px); opacity: 0.35; }
+    100% { transform: scale(1.08, 0.08) translateY(38px); opacity: 0; }
   }
 }
 
@@ -274,31 +269,28 @@
   100% { transform: scale(2.2); opacity: 0; }
 }
 
+// Secousse du monstre : des translations ENTIÈRES, rien d'autre. Les rotations
+// et micro-échelles d'avant rééchantillonnaient le sprite à chaque frame.
 @keyframes monsterHitShake {
-  0%, 100% { transform: translateX(0) scale(1); }
-  12% { transform: translateX(-14px) rotate(-4deg) scale(1.06); }
-  28% { transform: translateX(12px) rotate(4deg) scale(1.04); }
-  44% { transform: translateX(-8px) rotate(-3deg) scale(1.02); }
-  60% { transform: translateX(6px) rotate(2deg) scale(1); }
-  78% { transform: translateX(-4px) rotate(-1deg) scale(1); }
+  0%, 100% { transform: translateX(0); }
+  12% { transform: translateX(-14px); }
+  28% { transform: translateX(12px); }
+  44% { transform: translateX(-8px); }
+  60% { transform: translateX(6px); }
+  78% { transform: translateX(-4px); }
   92% { transform: translateX(2px); }
 }
 
 @include small-mobile {
   @keyframes monsterHitShake {
-    0%, 100% { transform: translateX(0) scale(1); }
-    12% { transform: translateX(-8px) rotate(-2deg) scale(1.04); }
-    28% { transform: translateX(7px) rotate(2deg) scale(1.02); }
-    44% { transform: translateX(-5px) rotate(-1deg) scale(1); }
-    60% { transform: translateX(4px) rotate(1deg) scale(1); }
+    0%, 100% { transform: translateX(0); }
+    12% { transform: translateX(-8px); }
+    28% { transform: translateX(7px); }
+    44% { transform: translateX(-5px); }
+    60% { transform: translateX(4px); }
     78% { transform: translateX(-2px); }
     92% { transform: translateX(1px); }
   }
-}
-
-@keyframes monsterFloat {
-  0%, 100% { transform: scale(0.6) translateY(0); }
-  50% { transform: scale(0.6) translateY(-6px); }
 }
 
 // ── Combat flash ────────────────────────────────────

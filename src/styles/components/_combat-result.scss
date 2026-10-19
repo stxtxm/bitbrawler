@@ -365,8 +365,9 @@
     }
 
     .combat-fighters .pixel-character {
-        width: 56px;
-        height: 84px;
+        --sprite-box-h: 84px;
+        height: var(--sprite-box-h);
+        width: auto;
     }
 
     .scan-card {
@@ -412,8 +413,9 @@
     }
 
     .combat-fighters .pixel-character {
-        width: 48px;
-        height: 72px;
+        --sprite-box-h: 72px;
+        height: var(--sprite-box-h);
+        width: auto;
     }
 
     .fighter-name-small {

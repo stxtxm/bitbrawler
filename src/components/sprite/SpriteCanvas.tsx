@@ -108,6 +108,7 @@ export const SpriteCanvas = memo(function SpriteCanvas({
       className={className}
       glowColor={aura ? ELEMENT_COLORS[aura] : null}
       flip={flip}
+      anim={frames && frames.length > 0 ? (activeAnim ?? 'static') : 'static'}
     />
   );
 });
