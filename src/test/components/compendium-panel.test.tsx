@@ -91,6 +91,14 @@ describe('CompendiumPanel', () => {
     expect(screen.getAllByText('???').length).toBeGreaterThan(0);
   });
 
+  it('renders the shared BestiaryCard for every bestiary entry', () => {
+    setupCharacter(makeCharacter({ monsterKills: { goblin: 2 } }));
+    const { container } = render(<CompendiumPanel />);
+
+    expect(container.querySelectorAll('.bestiary-card')).toHaveLength(MONSTER_ASSETS.length);
+    expect(container.querySelector('.compendium-card__visual')).toBeNull();
+  });
+
   it('shows a discovered armory entry and its name in the armory tab', () => {
     const item = CODEX_ENTRIES[0];
     setupCharacter(makeCharacter({ codex: [item.id] }));
@@ -99,6 +107,20 @@ describe('CompendiumPanel', () => {
     fireEvent.click(screen.getByRole('tab', { name: /armory/i }));
 
     expect(screen.getByText(item.name)).toBeInTheDocument();
+    expect(screen.getByText(item.rarity.toUpperCase())).toBeInTheDocument();
+  });
+
+  it('renders the shared ArmoryCard for every codex entry', () => {
+    const item = CODEX_ENTRIES[0];
+    setupCharacter(makeCharacter({ codex: [item.id] }));
+    const { container } = render(<CompendiumPanel />);
+
+    fireEvent.click(screen.getByRole('tab', { name: /armory/i }));
+
+    expect(container.querySelectorAll('.compendium-card--item')).toHaveLength(
+      CODEX_ENTRIES.length,
+    );
+    expect(container.querySelector('.compendium-card__visual')).toBeNull();
   });
 
   it('notifies once when a monster is discovered and never repeats it', () => {
