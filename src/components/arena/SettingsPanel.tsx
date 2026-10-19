@@ -1,6 +1,7 @@
 import { memo, useMemo, useState } from 'react';
 import { PixelIcon } from '../PixelIcon';
 import { MedalCard } from '../MedalCard';
+import { CompendiumPanel } from '../compendium/CompendiumPanel';
 import { SettingsLogEntry, formatSettingsLogDate } from '../../utils/arenaUtils';
 import { getMedalsByCategory, getUnlockedCount, getTotalMedalCount } from '../../utils/medalUtils';
 import type { MedalCategory, MedalProgressMap } from '../../utils/medalUtils';
@@ -17,7 +18,7 @@ const CATEGORY_LABELS: Record<MedalCategory, string> = {
 const CATEGORY_ORDERS: MedalCategory[] = ['combat', 'loot', 'progression', 'special', 'pve'];
 
 interface SettingsPanelProps {
-  settingsView: 'main' | 'logs' | 'medals';
+  settingsView: 'main' | 'logs' | 'medals' | 'compendium';
   autoModeEnabled: boolean;
   autoModeUpdating: boolean;
   soundEnabled: boolean;
@@ -34,6 +35,7 @@ interface SettingsPanelProps {
   onDeleteCharacter: () => void;
   onOpenLogs: () => void;
   onOpenMedals: () => void;
+  onOpenCompendium: () => void;
   onReturnToMain: () => void;
   onSetDeleteStep: (step: 'idle' | 'confirm') => void;
 }
@@ -43,7 +45,7 @@ export const SettingsPanel = memo(function SettingsPanel({
   deleteStep, deletePending, combinedHistory, isOfflineMode, medalProgress,
   combatSpeed,
   onClose, onToggleAutoMode, onToggleSound, onToggleCombatSpeed, onDeleteCharacter,
-  onOpenLogs, onOpenMedals, onReturnToMain, onSetDeleteStep,
+  onOpenLogs, onOpenMedals, onOpenCompendium, onReturnToMain, onSetDeleteStep,
 }: SettingsPanelProps) {
   const groupedMedals = useMemo(() => getMedalsByCategory(), []);
   const unlockedCount = useMemo(() => getUnlockedCount(medalProgress ?? {}), [medalProgress]);
@@ -68,7 +70,8 @@ export const SettingsPanel = memo(function SettingsPanel({
             )}
             <h2 className="inventory-title">{
               settingsView === 'logs' ? 'COMBAT LOGS' :
-              settingsView === 'medals' ? 'MEDALS' : 'SETTINGS'
+              settingsView === 'medals' ? 'MEDALS' :
+              settingsView === 'compendium' ? 'COMPENDIUM' : 'SETTINGS'
             }</h2>
           </div>
           <button className="inventory-close" onClick={onClose} aria-label="Close settings">
@@ -76,7 +79,7 @@ export const SettingsPanel = memo(function SettingsPanel({
           </button>
         </div>
 
-        <div className={`settings-body ${settingsView === 'medals' ? 'settings-body--padded' : ''}`}>
+        <div className={`settings-body ${settingsView === 'medals' || settingsView === 'compendium' ? 'settings-body--padded' : ''}`}>
           {settingsView === 'logs' ? (
             <>
               <div className="history-list settings-history-list">
@@ -104,6 +107,8 @@ export const SettingsPanel = memo(function SettingsPanel({
               </div>
               <div className="inventory-footer">LAST 20 ENCOUNTERS</div>
             </>
+          ) : settingsView === 'compendium' ? (
+            <CompendiumPanel />
           ) : settingsView === 'medals' ? (
             <div className="settings-medals-list">
               <div className="settings-medals-categories">
@@ -222,6 +227,21 @@ export const SettingsPanel = memo(function SettingsPanel({
                   <button className="button settings-link" onClick={onOpenMedals}>
                     <PixelIcon type="trophy" size={14} />
                     <span>{unlockedCount}/{totalCount}</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="settings-divider" />
+
+              <div className="settings-section">
+                <div className="settings-row">
+                  <div className="settings-label">
+                    <span>COMPENDIUM</span>
+                    <span className="settings-sub">Track every monster and item discovered.</span>
+                  </div>
+                  <button className="button settings-link" onClick={onOpenCompendium}>
+                    <PixelIcon type="chest" size={14} />
+                    VIEW
                   </button>
                 </div>
               </div>
