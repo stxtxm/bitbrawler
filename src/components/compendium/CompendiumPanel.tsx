@@ -1,15 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
-import { getBestiaryProgress, type BestiaryEntry } from '../../utils/bestiaryUtils';
-import { getCodexHint, getCodexIds, getCodexProgress } from '../../utils/codexUtils';
-import { CODEX_ENTRIES, getCodexEntry, type CodexEntry } from '../../data/codex';
-import { ITEM_ASSETS } from '../../data/itemAssets';
-import { MONSTER_ASSETS, type MonsterId } from '../../data/monsterAssets';
-import { ELEMENT_LABELS } from '../../types/Item';
+import { getBestiaryProgress } from '../../utils/bestiaryUtils';
+import { getCodexIds, getCodexProgress } from '../../utils/codexUtils';
+import { CODEX_ENTRIES, getCodexEntry } from '../../data/codex';
 import type { Character } from '../../types/Character';
-import { PixelItemIcon } from '../PixelItemIcon';
-import { PixelMonster } from '../PixelMonster';
+import { ArmoryCard } from './ArmoryCard';
+import { BestiaryCard } from './BestiaryCard';
 
 type CompendiumTab = 'bestiary' | 'armory';
 
@@ -48,63 +45,6 @@ function createSnapshot(character: Character | null): CompendiumSnapshot | null 
       .map(([id]) => id),
   );
   return { monsters, items: new Set(getCodexIds(character)) };
-}
-
-function BestiaryTile({ entry }: { entry: BestiaryEntry }) {
-  const monster = MONSTER_ASSETS.find((asset) => asset.id === entry.id);
-  const stateClass = entry.seen ? 'medal-card--unlocked' : 'medal-card--locked';
-
-  return (
-    <div className={`medal-card compendium-card ${stateClass}`}>
-      <div className="medal-card__header">
-        <div className="medal-card__icon compendium-card__visual">
-          <div style={entry.seen ? undefined : { filter: 'brightness(0)', opacity: 0.45 }}>
-            <PixelMonster monsterId={entry.id as MonsterId} scale={2} />
-          </div>
-        </div>
-        <div className="medal-card__info">
-          <h3 className="medal-card__name">{entry.seen ? entry.name : '???'}</h3>
-          {entry.seen && (
-            <p className="medal-card__description">
-              {ELEMENT_LABELS[entry.element]}
-              {monster ? ` · ${monster.specialty}` : ''}
-              {` · ${entry.kills} kill${entry.kills > 1 ? 's' : ''}`}
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ArmoryTile({ entry, discovered, seenSet }: {
-  entry: CodexEntry;
-  discovered: boolean;
-  seenSet: Set<string>;
-}) {
-  const asset = ITEM_ASSETS.find((item) => item.id === entry.id);
-  const hint = getCodexHint(entry.id, seenSet);
-  const stateClass = discovered ? 'medal-card--unlocked' : 'medal-card--locked';
-
-  return (
-    <div className={`medal-card compendium-card ${stateClass}`}>
-      <div className="medal-card__header">
-        <div className="medal-card__icon compendium-card__visual">
-          {discovered && asset ? (
-            <PixelItemIcon pixels={asset.pixels} size={28} />
-          ) : (
-            <span className="compendium-card__locked">?</span>
-          )}
-        </div>
-        <div className="medal-card__info">
-          <h3 className="medal-card__name">{discovered ? entry.name : '???'}</h3>
-          <p className="medal-card__description">
-            {discovered ? `${entry.rarity.toUpperCase()} · ${entry.slot.toUpperCase()}` : hint}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 export const CompendiumPanel = ({ onClose }: CompendiumPanelProps) => {
@@ -183,17 +123,17 @@ export const CompendiumPanel = ({ onClose }: CompendiumPanelProps) => {
       {activeTab === 'bestiary' ? (
         <div className="settings-medals-grid" role="tabpanel" aria-label="Bestiary">
           {bestiary.entries.map((entry) => (
-            <BestiaryTile key={entry.id} entry={entry} />
+            <BestiaryCard key={entry.id} entry={entry} />
           ))}
         </div>
       ) : (
         <div className="settings-medals-grid" role="tabpanel" aria-label="Armory">
           {CODEX_ENTRIES.map((entry) => (
-            <ArmoryTile
+            <ArmoryCard
               key={entry.id}
               entry={entry}
               discovered={armorySeenSet.has(entry.id)}
-              seenSet={armorySeenSet}
+              seenIds={armorySeenSet}
             />
           ))}
         </div>
