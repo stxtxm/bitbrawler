@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
     getXpRequiredForNextLevel,
     getTotalXpForLevel,
@@ -247,6 +247,57 @@ describe('XP Utils', () => {
         it('should make loss XP feel meaningful — at least 30% of win XP', () => {
             // XP_LOSS=30 should be 33% of XP_WIN=90 (ratio 3:1)
             expect(GAME_RULES.COMBAT.XP_LOSS / GAME_RULES.COMBAT.XP_WIN).toBeGreaterThanOrEqual(0.30);
+        });
+    });
+
+    describe('XP tuning — asymmetrical opponent bonus', () => {
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        const fixVariance = () => {
+            vi.spyOn(Math, 'random').mockReturnValue(0.5);
+        };
+
+        it('keeps the +50% cap on wins against a much stronger opponent', () => {
+            fixVariance();
+            expect(calculateFightXp(true, 10, 99)).toBe(183);
+        });
+
+        it('caps the loss bonus at +15% against a much stronger opponent', () => {
+            fixVariance();
+            expect(calculateFightXp(false, 10, 99)).toBe(50);
+        });
+
+        it('saturates the loss bonus above +1.5 level gap', () => {
+            fixVariance();
+            const atTwoLevels = calculateFightXp(false, 10, 12);
+            const atTwentyLevels = calculateFightXp(false, 10, 30);
+
+            expect(atTwoLevels).toBe(50);
+            expect(atTwentyLevels).toBe(50);
+        });
+
+        it('keeps the -50% penalty on losses against a much weaker opponent', () => {
+            fixVariance();
+            expect(calculateFightXp(false, 10, 1)).toBe(31);
+        });
+
+        it('keeps a ~3x win/loss ratio at equal levels', () => {
+            fixVariance();
+            const winXp = calculateFightXp(true, 10, 10);
+            const lossXp = calculateFightXp(false, 10, 10);
+
+            expect(winXp / lossXp).toBeGreaterThanOrEqual(2.9);
+            expect(winXp / lossXp).toBeLessThanOrEqual(3.1);
+        });
+
+        it('keeps the win/loss ratio above 2.5x when losses face stronger opponents', () => {
+            fixVariance();
+            const winXp = calculateFightXp(true, 10, 10);
+            const lossXp = calculateFightXp(false, 10, 30);
+
+            expect(winXp / lossXp).toBeGreaterThanOrEqual(2.5);
         });
     });
 

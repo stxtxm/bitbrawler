@@ -8,6 +8,16 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.8.1',
+    date: '2026-10-19',
+    title: '⚖️ XP win/loss — une défaite contre un adversaire plus fort ne vaut plus une quasi-victoire',
+    changes: [
+      '⚖️ BONUS D’ADVERSAIRE ASYMÉTRIQUE — le bonus de niveau de l’adversaire reste plafonné à +50% sur une victoire, mais tombe à +15% maximum sur une défaite.',
+      '🎯 RATIO RESPECTÉ — le ratio XP victoire/défaite remonte vers le 3:1 du design (90/30), au lieu de récompenser les défaites à ~59% d’une victoire.',
+      '🛡️ MALUS INCHANGÉ — perdre contre un adversaire plus faible reste pénalisé jusqu’à -50%.',
+    ],
+  },
+  {
     version: '5.8.0',
     date: '2026-10-18',
     title: '🎨 Direction artistique v2 — personnages lisibles, équipement porté, animations vivantes',
