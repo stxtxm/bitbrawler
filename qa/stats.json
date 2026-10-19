@@ -144284,5 +144284,305 @@
       "purchased_offer": null,
       "essence_after_purchase": null
     }
+  },
+  {
+    "date": "2026-10-19T19:01:38.080Z",
+    "run": "2026-10-19",
+    "character": "REAVERBARD",
+    "character_action": "created",
+    "replaced_character": null,
+    "character_type": "fresh",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 100,
+        "fight_duration_ms": 10538,
+        "max_hp": 193,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 0.71
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Mystic Ring",
+      "rarity": "EPIC",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 5,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 19,
+      "vit": 10,
+      "dex": 7,
+      "luk": 8,
+      "int": 8,
+      "foc": 14,
+      "fights": 0
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 120
+    },
+    "initial_max_hp": 180,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "WEAPON"
+      },
+      {
+        "slot": "💍",
+        "name": "ACCESSORY"
+      }
+    ],
+    "initial_streak": 0,
+    "final_stats": {
+      "level": 2,
+      "xp": 209,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 19,
+      "vit": 10,
+      "dex": 8,
+      "luk": 8,
+      "int": 8,
+      "foc": 14,
+      "last xp": 41,
+      "fights": 3
+    },
+    "final_max_hp": 193,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "WEAPON"
+      },
+      {
+        "slot": "💍",
+        "name": "ACCESSORY"
+      }
+    ],
+    "final_streak": 0,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "WEAPON"
+      },
+      {
+        "slot": "💍",
+        "name": "ACCESSORY"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 20223,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "wraith",
+        "goblin"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 87,
+      "xp_events": [
+        {
+          "time_ms": 3059,
+          "xp": 46,
+          "monster": "wraith",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15182,
+          "xp": 41,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": true,
+      "level_up_events": [
+        {
+          "time_ms": 13652,
+          "monster": "goblin"
+        },
+        {
+          "time_ms": 14161,
+          "monster": "goblin"
+        },
+        {
+          "time_ms": 14672,
+          "monster": "goblin"
+        },
+        {
+          "time_ms": 15182,
+          "monster": "goblin"
+        }
+      ],
+      "phase_transition_times_ms": [
+        510,
+        1529,
+        3059,
+        12123,
+        13652,
+        15182
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 46,
+        "essence": 0.21,
+        "monster": "wraith"
+      },
+      {
+        "result": "victory",
+        "xp": 41,
+        "essence": 0.21,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 0.95,
+      "next_level_eta": "⬆ 1m 39s",
+      "power_ratio": "⚔ 0.59x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.02x",
+      "interval": "12.0s",
+      "streak_bonus": "🔥 3-win streak (+3%)"
+    },
+    "initial_essence": 0.18,
+    "final_essence": 0.71,
+    "essence": {
+      "before_idle": 0.18,
+      "after_idle": 0.6,
+      "per_fight": [
+        0.71
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": 0.71,
+      "flow": {
+        "idle_gained": 0.42,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": 0.53
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": true,
+      "skip_reason": "forge requires LVL 6"
+    },
+    "shop": {
+      "visited": false,
+      "offers_count": 0,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": null,
+      "essence_after": null,
+      "skipped": true,
+      "skip_reason": "shop requires LVL 5",
+      "shop_data": {
+        "offers": [],
+        "purchased_offer": null,
+        "essence_after_purchase": null
+      }
+    },
+    "cohort": {
+      "name": "QA-FRESH",
+      "essence_budget": 50
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1291,
+      "arena": 3257
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [],
+      "purchased_offer": null,
+      "essence_after_purchase": null
+    }
   }
 ]
