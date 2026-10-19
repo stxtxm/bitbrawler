@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-19T23:01:04Z",
+  "last_session": "2026-10-19T23:16:08Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "date": "2026-10-17",
-      "issue": "#1132",
-      "lesson": "#1132 resolue par PR humaine #1177 (2026-10-17) : perimetre 100% .github/workflows/qa-tester.yml, donc NON implementable par un agent (workflows verrouilles, dev-agent.md:241). Lecon : /oc ne peut pas lever une interdiction de securite systeme — verifier le perimetre FICHIERS avant de dispatcher ; si 100% verrouille, router vers l'humain sans branche/PR ni doublon d'issue. Verifier aussi les faits d'une issue : elle accusait tech-lead.yml de pusher qa/stats.json, or il ne fait que le LIRE."
-    },
     {
       "lesson": "Issue #1178 QA bot PvE-locked: le bot validait sa bascule PvP via aria-checked mais readArenaStatus renvoyait toujours LOCKED, et il attaquait quand meme -> 90s x3. Fix: helpers purs (isAttackableArenaStatus, didFightStart, FIGHT_START_GRACE_MS=3000, decideFightTypeForIndex) dans src/utils/qa-bot-helpers.js + forcedPvpIndexes (Set) pour epingler un index verrouille en PvP et casser l'oscillation PVP->PVE->PVP. Fail-fast: si didFightStart faux apres ~3s -> skipped_fights reason no_start sans errors.push. Toujours verifier l'etat REEL apres une bascule, jamais supposer qu'elle a marche.",
       "issue": "#1178",
@@ -195,6 +190,11 @@
     {
       "lesson": "Issue #1243 ratio XP win/loss : le diffBonus de calculateFightXp est désormais asymétrique (cap +0.5 victoire / +0.15 défaite, floor -0.5 commun). Les tests QC doivent figer Math.random (spy à 0.5 => variance exactement 1.0) pour asserter des valeurs entières stables. Attention : le ratio mesuré par analyze-qa-stats inclut les combats PvE (modifier 2.5) et des niveaux de persos différents entre wins/losses — filtrer fight_type==='pvp' avant de conclure.",
       "issue": "#1243",
+      "date": "2026-10-19"
+    },
+    {
+      "lesson": "Issue #1116 ArmoryCard: getCodexHint exige un Set<string> mutable — convertir avec new Set(seenIds) depuis un ReadonlySet. Le prop seenIds optionnel permet le hint de voisinage sans violer les props de base {entry, discovered}.",
+      "issue": "#1116",
       "date": "2026-10-19"
     }
   ]
