@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-19T23:23:57Z",
+  "last_session": "2026-10-19T23:33:06Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR #1249 (compendium via feat/auto-1115) en doublon avec la campagne #1116/#1118/#1119 deja mergee sur master (CompendiumPanel shell, BestiaryCard, ArmoryCard) -> conflits add/add, request-changes avec consigne de rebase + dedup, conserver seulement recordMonsterEncounter/fusion monotone/registerLoot. Verify mergeable AVANT de jouer la gate locale (conomie de temps). GITHUB_TOKEN ne peut ni approve ni request-changes sur une PR de la meme branche d agent -> passer par gh pr comment.",
-      "issue": "#1249",
+      "lesson": "PR #1255 : rollup CI ne contenait que Cloudflare Pages (aucun check lint/test/build) -> gate locale complete executee puis squash merge ; issue liee non auto-fermee apres merge, fermeture manuelle avec reference au commit",
+      "issue": "#1255",
       "date": "2026-10-19"
     }
   ]
