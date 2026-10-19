@@ -7,6 +7,7 @@ import { CODEX_ENTRIES, getCodexEntry } from '../../data/codex';
 import type { Character } from '../../types/Character';
 import { ArmoryCard } from './ArmoryCard';
 import { BestiaryCard } from './BestiaryCard';
+import '../../styles/components/_compendium.scss';
 
 type CompendiumTab = 'bestiary' | 'armory';
 
