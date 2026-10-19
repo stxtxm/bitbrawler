@@ -1,11 +1,29 @@
-import { memo, useEffect, useRef } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import type { SpriteGrid, SpritePalette } from './spriteTypes';
+import { spritePixelScale } from './spritePixelScale';
 
 /**
  * Bump on every sprite-rendering change. Rendered as `data-render-rev` so
  * the deployed revision can be read straight off the production bundle.
+ *
+ * r1160 : pixels entiers (device) + boîtes CSS à ratio natif — le rendu
+ *         précédent échantillonnait à 2,875/3,45 px et étirait les sprites de
+ *         17 %, ce qui faisait « grésiller » les animations.
  */
-export const SPRITE_RENDER_REV = 'r1150-cloudflare-live';
+export const SPRITE_RENDER_REV = 'r1160-pixels-entiers';
+
+function useDevicePixelRatio(): number {
+  const [dpr, setDpr] = useState<number>(
+    () => (typeof window !== 'undefined' && window.devicePixelRatio) || 1,
+  );
+  useEffect(() => {
+    const update = () => setDpr((window.devicePixelRatio || 1));
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+  return dpr;
+}
 
 
 interface PixelGridCanvasProps {
@@ -18,6 +36,10 @@ interface PixelGridCanvasProps {
   /** Purely declarative: the grid is already mirrored by the caller. Exposed as
    *  `data-flip` so the mirrored fighter can be asserted from tests / DOM. */
   flip?: boolean;
+  /** Animation d'origine du sprite — rendue en `data-anim`. Le CSS s'en sert
+   *  pour ne PAS superposer ses propres rebonds quand les frames animent déjà
+   *  le personnage (`static` = pas de frames, ex. mode basse performance). */
+  anim?: string;
 }
 
 interface BitmapEntry {
@@ -85,10 +107,41 @@ export const PixelGridCanvas = memo(function PixelGridCanvas({
   className,
   glowColor,
   flip = false,
+  anim,
 }: PixelGridCanvasProps) {
   const ref = useRef<HTMLCanvasElement | null>(null);
   const height = grid.length;
   const width = grid[0]?.length ?? 0;
+  const dpr = useDevicePixelRatio();
+
+  // Boîte CSS du sprite (px), lue depuis `--sprite-box-h` : c'est le CSS du
+  // contexte qui décide de la taille affichée (donc des media queries), et on
+  // en déduit un nombre entier de pixels physiques par pixel de sprite.
+  const [boxHeight, setBoxHeight] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const read = () => {
+      let raw = '';
+      try {
+        raw = getComputedStyle(el).getPropertyValue('--sprite-box-h');
+      } catch {
+        raw = '';
+      }
+      const parsed = Number.parseFloat(raw);
+      setBoxHeight((cur) => {
+        const next = Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+        return cur === next ? cur : next;
+      });
+    };
+    read();
+    window.addEventListener('resize', read);
+    return () => window.removeEventListener('resize', read);
+  }, []);
+
+  const pixelScale = spritePixelScale({ boxHeight, gridHeight: height, fallbackScale: scale, dpr });
+  const deviceWidth = Math.max(1, width * pixelScale);
+  const deviceHeight = Math.max(1, height * pixelScale);
 
   useEffect(() => {
     const canvas = ref.current;
@@ -128,23 +181,37 @@ export const PixelGridCanvas = memo(function PixelGridCanvas({
       }
     }
     ctx.drawImage(off, 0, 0, canvas.width, canvas.height);
-  }, [grid, palette, width, height, scale, glowColor]);
+  }, [grid, palette, width, height, pixelScale, glowColor]);
+
+  // Le canvas s'affiche exactement à sa taille physique : 1 pixel du bitmap =
+  // 1 pixel physique, dans les deux axes. Toute autre combinaison (taille CSS
+  // différente du bitmap) ferait rééchantillonner l'image — c'est précisément
+  // ce qui rendait les animations « chelou » (pixels de tailles inégales qui
+  // se déplacent). La taille cible reste pilotée par le CSS via
+  // `--sprite-box-h`, à ±7 % près (arrondi au nombre entier de pixels
+  // physiques le plus proche).
+  const style: CSSProperties = {
+    imageRendering: 'pixelated',
+    width: `${deviceWidth / dpr}px`,
+    height: `${deviceHeight / dpr}px`,
+  };
 
   return (
     <canvas
       ref={ref}
-      width={Math.max(1, width * scale)}
-      height={Math.max(1, height * scale)}
+      width={deviceWidth}
+      height={deviceHeight}
       className={className}
       aria-label={label}
       data-glow={glowColor ? 'on' : 'off'}
       data-flip={flip ? 'on' : 'off'}
+      data-anim={anim ?? 'static'}
       // Deployment probe. Bump this string whenever the sprite renderer
       // changes: it is greppable inside the minified production bundle, so a
       // deployed revision can be confirmed from outside (curl on the built
       // asset) without any access to the hosting dashboard.
       data-render-rev={SPRITE_RENDER_REV}
-      style={{ imageRendering: 'pixelated' }}
+      style={style}
     />
   );
 });

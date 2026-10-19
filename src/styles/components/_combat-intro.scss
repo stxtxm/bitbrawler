@@ -425,8 +425,9 @@
 }
 
 .vs-fighter .pixel-character {
-    width: 96px;
-    height: 144px;
+    --sprite-box-h: 144px;
+    height: var(--sprite-box-h);
+    width: auto;
 }
 
 .vs-fighter.vs-left {
@@ -514,8 +515,9 @@
     }
 
     .vs-fighter .pixel-character {
-        width: 64px;
-        height: 96px;
+        --sprite-box-h: 96px;
+        height: var(--sprite-box-h);
+        width: auto;
     }
 
     .vs-text {
