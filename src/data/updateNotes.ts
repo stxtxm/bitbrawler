@@ -8,6 +8,19 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.8.2',
+    date: '2026-10-19',
+    title: '📖 Compendium — bestiaire et armurerie à collectionner sans toucher à la balance',
+    changes: [
+      '📖 COMPENDIUM — un nouvel onglet dans les réglages rassemble ta collection permanente, accessible à tous les niveaux.',
+      '👾 BESTIAIRE — une carte par monstre (11 créatures, dont les 3 exclusives volcaniques) : silhouette « ??? » tant que tu ne l’as jamais croisé, puis nom, élément, spécialité et kills cumulés.',
+      '🗡️ ARMURERIE — chaque objet du jeu possède sa fiche : icône, rareté et slot une fois découvert, indice de voisinage pour les objets encore inconnus.',
+      '📊 PROGRESSION — un pourcentage de collection globale et un compteur par onglet (Bestiaire / Armurerie) pour voir ce qu’il te reste à débloquer.',
+      '🔔 DÉCOUVERTES — un toast « Nouveau : X débloqué ! » s’affiche dès qu’un monstre ou un objet rejoint ta collection.',
+      '⚖️ ZÉRO POWER CREEP — lecture seule pour cette version : aucun bonus de stats, aucune migration, la collection se remplit simplement en jouant.',
+    ],
+  },
+  {
     version: '5.8.1',
     date: '2026-10-19',
     title: '⚖️ XP win/loss — une défaite contre un adversaire plus fort ne vaut plus une quasi-victoire',
