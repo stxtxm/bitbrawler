@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-19T09:05:35Z",
+  "last_session": "2026-10-19T10:03:19Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,7 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR #1238 review: verifier le contenu reel du diff avant de juger le scope — gh pr diff affichait des hunks deployFreshness/AGENTS.md deja sur master (contenu identique, aucun diff residuel). Toujours confirmer avec git diff origin/master origin/<branch>. Relancer node scripts/gen-icons.mjs et verifier git status propre pour prouver l extraction sans regression byte-identique.",
-      "issue": "#1238",
+      "lesson": "PR #1239 mergee : garde-fou structurel SCSS (keyframes sprites sans rotation/sous-pixel) + echelle pixel entiere via spritePixelScale. Verifier les maths des multiplicateurs calc() a la main : les verifs node inline avec echappement shell produisent des faux positifs — la CI reste la source de verite.",
       "date": "2026-10-19"
     }
   ]
