@@ -12,6 +12,12 @@
  *   - `SPRITE_RENDER_REV` (code revision, bumped on sprite-rendering changes)
  *   - every `SHOP_OFFERS` price (`price:27`, …) baked into the bundle
  *
+ * The app is code-split, so a marker can live outside `assets/index-*.js`:
+ * after the git integration was reconnected (2026-10-19) production served the
+ * newest revision — PvP fix included — but only inside `assets/SpriteCanvas-*.js`.
+ * Scanning the entry bundle alone therefore called a perfectly fresh production
+ * « stale ». The probe concatenates the entry bundle with its referenced chunks.
+ *
  * Pure helpers only — the CLI shell lives in `scripts/check-deploy-freshness.ts`.
  */
 
@@ -46,6 +52,20 @@ export function parseExpectedMarkers(revSource: string, offersSource: string): D
 /** Path of the JS bundle referenced by the served index.html. */
 export function assetPathOf(html: string): string | null {
   return html.match(/assets\/index-[A-Za-z0-9_-]+\.js/)?.[0] ?? null
+}
+
+/**
+ * JS assets referenced by the entry bundle — its code-split chunks.
+ *
+ * Markers can live in a lazy chunk (`assets/SpriteCanvas-*.js` carries
+ * `SPRITE_RENDER_REV` and the PvP flip), so a probe that reads only the entry
+ * bundle reports « stale » on a fresh production. Returns unique paths, entry
+ * excluded.
+ */
+export function extractReferencedAssets(bundleText: string, entryPath?: string | null): string[] {
+  const referenced = bundleText.match(/assets\/[A-Za-z0-9_.-]+\.js/g) ?? []
+  const unique = [...new Set(referenced)]
+  return entryPath ? unique.filter((path) => path !== entryPath) : unique
 }
 
 /**

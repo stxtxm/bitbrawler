@@ -6,6 +6,7 @@ import {
   assessFreshness,
   assetPathOf,
   buildStaleIssueBody,
+  extractReferencedAssets,
   parseExpectedMarkers,
   pickTrackingIssue,
 } from '../../utils/deployFreshness';
@@ -65,6 +66,32 @@ describe('Fraîcheur du déploiement — sonde de production (#1228)', () => {
 
     expect(verdict.fresh).toBe(false);
     expect(verdict.missing).toEqual(['r9999-next-sprite-rev']);
+  });
+
+  describe('scanne aussi les chunks code-split (incident du 19/10)', () => {
+    // Le 19/10, à la reconnexion du git Cloudflare, la prod servait bien le fix
+    // PvP et `r1150-cloudflare-live` — mais dans `assets/SpriteCanvas-*.js`.
+    // Une sonde limitée au bundle d'entrée aurait crié « stale » indéfiniment
+    // sur une prod parfaitement à jour.
+    const entryBundle = 'const p=["assets/index-C1-O-J2W.js","assets/Arena-BIxOxmbE.js","assets/SpriteCanvas-HJ88hZjZ.js","assets/Arena-BIxOxmbE.js","assets/index-C1-O-J2W.css","assets/react-CEw6DVI2.js"];SHOP=[{price:27},{price:53},{price:45},{price:80}];';
+    const spriteChunk = 'data-render-rev:"r1150-cloudflare-live",flip:"on",data-flip:"on";';
+
+    it('extrait les chunks référencés — sans doublon, sans CSS, sans l\'entrée', () => {
+      expect(extractReferencedAssets(entryBundle, 'assets/index-C1-O-J2W.js')).toEqual([
+        'assets/Arena-BIxOxmbE.js',
+        'assets/SpriteCanvas-HJ88hZjZ.js',
+        'assets/react-CEw6DVI2.js',
+      ]);
+      expect(extractReferencedAssets('pas de chunks ici')).toEqual([]);
+    });
+
+    it('l\'entrée seule est déclarée stale, entrée + chunks est fraîche', () => {
+      const markers = { rev: 'r1150-cloudflare-live', prices: ['price:27', 'price:53', 'price:45', 'price:80'] };
+
+      // Reproduit le faux positif : les prix sont dans l'entrée, la rev non.
+      expect(assessFreshness(entryBundle, markers)).toEqual({ fresh: false, missing: ['r1150-cloudflare-live'] });
+      expect(assessFreshness([entryBundle, spriteChunk].join('\n'), markers)).toEqual({ fresh: true, missing: [] });
+    });
   });
 
   describe('retrouve le ticket de suivi sans dépendre de l\'index de recherche', () => {
