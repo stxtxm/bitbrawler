@@ -2,6 +2,24 @@ import config from '../../qa/qa-bot.config.js'
 
 export const PERSISTENT_RESET_LEVEL_HEADROOM = 2
 
+export const QA_CHARACTER_TYPE_FRESH = 'fresh'
+export const QA_CHARACTER_TYPE_PERSISTENT = 'persistent'
+
+export function resolveReusableDailyCharacter(state, runKey) {
+  if (!state || typeof state !== 'object') return null
+  if (state.run !== runKey) return null
+  if (state.character_type !== QA_CHARACTER_TYPE_FRESH) return null
+  if (typeof state.character !== 'string' || state.character.length === 0) return null
+  return state.character
+}
+
+export function shouldReplaceExhaustedCharacter(characterType) {
+  return (
+    characterType !== QA_CHARACTER_TYPE_FRESH
+    && characterType !== QA_CHARACTER_TYPE_PERSISTENT
+  )
+}
+
 export function persistentNameForGeneration(baseName, generation) {
   if (generation === 0) return baseName
   // Game name limit is 10 chars (CharacterCreation input maxLength=10). The

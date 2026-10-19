@@ -1,5 +1,26 @@
 export declare const PERSISTENT_RESET_LEVEL_HEADROOM: number
 
+export type QaCharacterType = 'fresh' | 'persistent'
+
+export declare const QA_CHARACTER_TYPE_FRESH: 'fresh'
+export declare const QA_CHARACTER_TYPE_PERSISTENT: 'persistent'
+
+export declare interface QaStateLike {
+  run?: string | null
+  character?: string | null
+  character_type?: QaCharacterType | string | null
+  exhausted?: boolean
+}
+
+export declare function resolveReusableDailyCharacter(
+  state: QaStateLike | null | undefined,
+  runKey: string,
+): string | null
+
+export declare function shouldReplaceExhaustedCharacter(
+  characterType: string | null | undefined,
+): boolean
+
 export declare function persistentNameForGeneration(baseName: string, generation: number): string
 
 export declare function shouldForcePersistentReset(
