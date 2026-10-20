@@ -138,6 +138,13 @@ describe('telemetry API (#1230 part 2)', () => {
     expect(await res.json()).toMatchObject({ stored: false, reason: 'migration_pending' });
   });
 
+  it('does not hide a bare 404 behind migration_pending (wrong project URL)', async () => {
+    fetchMock.mockResolvedValueOnce(new Response('not found', { status: 404 }));
+    const res = await handleTelemetry(post(validBody()), ENV);
+    expect(res.status).toBe(502);
+    expect(await res.json()).toMatchObject({ error: 'storage_failed', status: 404 });
+  });
+
   it('reports a storage failure without leaking the service key', async () => {
     fetchMock.mockResolvedValueOnce(new Response('boom', { status: 500 }));
     const res = await handleTelemetry(post(validBody()), ENV);

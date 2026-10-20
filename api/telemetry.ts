@@ -159,9 +159,14 @@ export async function storeTelemetry(
   if (response.ok) return new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } })
 
   const detail = await response.text().catch(() => '')
-  // PostgREST answers PGRST205 (or a plain 404) when the table is absent.
-  // Expected until the migration issue is executed: accept and drop the row.
-  if (response.status === 404 || detail.includes('PGRST205')) {
+  // PostgREST answers PGRST205 (or an explicit "relation does not exist") when
+  // the table is absent. Expected until the migration issue is executed: accept
+  // and drop the row. A bare 404 (wrong project URL, typo) stays a real error so
+  // a misconfigured deployment cannot silently swallow every event.
+  if (
+    response.status === 404 &&
+    (detail.includes('PGRST205') || /does not exist/i.test(detail))
+  ) {
     return json(202, { stored: false, reason: 'migration_pending' })
   }
   return json(502, {
