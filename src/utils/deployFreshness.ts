@@ -10,7 +10,7 @@
  *
  * The markers are plain string literals, so they survive minification:
  *   - `SPRITE_RENDER_REV` (code revision, bumped on sprite-rendering changes)
- *   - every `SHOP_OFFERS` price (`price:27`, …) baked into the bundle
+ *   - every `SHOP_OFFERS` price (`price:30`, …) baked into the bundle
  *
  * The app is code-split, so a marker can live outside `assets/index-*.js`:
  * after the git integration was reconnected (2026-10-19) production served the
@@ -27,7 +27,7 @@ export const STALE_TITLE_PREFIX = '🔴 Prod stale'
 export interface DeployMarkers {
   /** `SPRITE_RENDER_REV` value, or null when the source has no marker. */
   rev: string | null
-  /** Every shop price, as it appears in the minified bundle (`price:27`). */
+  /** Every shop price, as it appears in the minified bundle (`price:30`). */
   prices: string[]
 }
 

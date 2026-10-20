@@ -16,7 +16,7 @@ export interface ShopOffer {
  * Label + price of a purchased offer, keyed by CONFIG index.
  *
  * `ShopOffer.index` is the config index, not the array position: the daily
- * list puts the eager-epic offer (config 3, 80 💎) at position 1 above
+ * list puts the eager-epic offer (config 3, 88 💎) at position 1 above
  * level 10. Indexing the array there recorded price 0 for the most expensive
  * offer, which corrupted the telemetry `purchases.avgPrice` metric (#1230).
  */
