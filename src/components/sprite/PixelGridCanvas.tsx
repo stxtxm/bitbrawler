@@ -13,7 +13,7 @@ import { spritePixelScale } from './spritePixelScale';
  * r1170 : souffle en demi-pas — le buste monte en deux paliers d'un pixel au
  *         lieu d'un saut de cellule, sur un cycle de 8 s moins « lévitation ».
  */
-export const SPRITE_RENDER_REV = 'r1172-bouche-trois-pixels';
+export const SPRITE_RENDER_REV = 'r1173-visages-humains';
 
 function useDevicePixelRatio(): number {
   const [dpr, setDpr] = useState<number>(

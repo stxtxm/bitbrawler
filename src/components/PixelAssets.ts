@@ -1,10 +1,30 @@
 // Pixel Art Assets - 8-bit Retro Style
+// Natural, low-saturation character ramps. Random neon hair, red eyes and
+// independently-picked saturated clothes made the roster read as aliens in
+// costumes; a human 8-bit fighter needs natural hair/eye tones and a coherent
+// outfit before silhouette details can carry the design.
 export const PIXEL_PALETTES = {
-  skins: ['#f5c6a5', '#e0ac69', '#d1a27c', '#c68642', '#b87a4f', '#8d5524', '#4a2511', '#e8b89a', '#6e3d2b'],
-  clothes: ['#e74c3c', '#c0392b', '#3498db', '#2ecc71', '#9b59b6', '#f39c12', '#e67e22', '#34495e', '#16a085', '#ff6b6b', '#1dd1a1', '#feca57', '#ff9ff3'],
-  hair: ['#2c3e50', '#6b3f2a', '#8b4513', '#b9935a', '#d2691e', '#f4a460', '#c0c0c0', '#4a4a4a', '#1a1a1a', '#e84393', '#ffeaa7', '#a29bfe'],
-  eyes: ['#3498db', '#2ecc71', '#8e44ad', '#16a085', '#95a5a6', '#f1c40f', '#e74c3c', '#f39c12'],
-    pants: ['#2c3e50', '#34495e', '#7f8c8d', '#5d4037', '#1a1a1a', '#341f97', '#57606f'],
+  skins: ['#f5c6a5', '#eec39b', '#e0ac69', '#d1a27c', '#c68642', '#b87a4f', '#9c5f36', '#8d5524', '#6e3d2b', '#4a2511', '#f0d0b0', '#c9a06a', '#fae0d4', '#dfb186', '#8c5835', '#3b1d0c'],
+  clothes: [
+    '#b03a3a', '#3f6f9f', '#4a7a5a', '#8a5a3a', '#6a4a7a', '#c9a24a',
+    '#4a6a7a', '#d0d0d0', '#a84a6a', '#5a5a6a', '#e0e0e0', '#2e4a6a',
+    '#7a2f2f', '#3a7a6a',
+  ],
+  hair: [
+    '#161616', '#221a14', '#2b2118', '#35261c', '#3b2a1e', '#4a3527',
+    '#5a4030', '#6b4a2f', '#7a4a2a', '#8b5a2b', '#9c5a2e', '#a0522d',
+    '#b06a3a', '#c68642', '#d9a066', '#e6c27a',
+  ],
+  eyes: [
+    '#3b2a1e', '#5a4030', '#6b4a2f', '#7a5a35', '#4a6b3a', '#3d5c4a',
+    '#3a5a7a', '#2e5f8a', '#4a7ba6', '#6b7a8a', '#2b2b2b', '#5a6b5a',
+    '#6b5a4a', '#3b4a5a', '#7a6b4a', '#8a7a5a',
+  ],
+  pants: [
+    '#2f3b4a', '#2b2f3a', '#3a3a30', '#2e2e2e', '#2f2f3a', '#3a3028',
+    '#2a2a2a', '#3a4a5a', '#2f2f3a', '#2a2a2a', '#5a4030', '#1f2a36',
+    '#3a3a3a', '#2a2a30',
+  ],
     environment: {
         sky: ['#0f0c29', '#302b63', '#24243e', '#1a1a2e', '#16213e', '#0f3460'],
         ground: ['#2d5a27', '#3a7d32', '#4a9e3f', '#5c4033', '#6b4423', '#8b6914', '#4a3520'],
