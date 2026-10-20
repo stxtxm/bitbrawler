@@ -65,6 +65,26 @@ jobs:
             echo "QA_ANALYSIS_DONE=false" >> "$GITHUB_ENV"
           fi
 
+      # Real player retention (D1/D7, #1230 part 2). The service key is scoped
+      # to this shell step only: the agent reads the aggregate JSON, never the
+      # credentials, so it cannot touch the production database.
+      - name: Analyze player telemetry (D1/D7)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "⚠ SUPABASE secrets missing — telemetry report skipped"
+            echo '{}' > /tmp/telemetry-report.json
+          else
+            npx tsx scripts/telemetry-report.ts --json > /tmp/telemetry-report.json 2>/tmp/telemetry-report.err || {
+              echo "⚠ telemetry report failed:"
+              cat /tmp/telemetry-report.err
+              echo '{}' > /tmp/telemetry-report.json
+            }
+          fi
+          echo "TELEMETRY_REPORT=/tmp/telemetry-report.json" >> "$GITHUB_ENV"
+
       - name: Run Tech Lead agent
         env:
           # Les modeles opencode/*-free ne demandent AUCUN credential : `opencode auth list`

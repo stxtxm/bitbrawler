@@ -70,6 +70,11 @@ Lis le rapport QA complet. Les sections importantes:
     - `budget_limited_runs` = offres **abordables mais hors budget** du profil → **c'est le signal prix** (pas un désintérêt joueur) : si un profil est bridé, le shop est hors de portée à ce stade de jeu
     - Un taux saturé (>60 %) **avec 0 run bridé partout** signifie que les budgets sont trop hauts pour mesurer quoi que ce soit — ajuster le budget de la cohorte avant de toucher aux prix
     - Les runs antérieurs au 19/10/2026 n'ont pas de cohorte (`unsegmented`) : les ignorer pour le raisonnement par profil
+  - **Télémétrie réelle (D1/D7, #1230 partie 2)** : lire le fichier `$TELEMETRY_REPORT` (`/tmp/telemetry-report.json`, `{}` si indisponible) — ne pas lancer le script toi-même, la clé `service_role` n'est pas dans ton environnement
+    - `d1.rate` / `d7.rate` ne sont valides que si `eligible > 0` : `null` = cohorte pas encore mature, ne rien conclure
+    - D1 < 20 % sur 7+ jours → problème de first session : ne pas valider une nouvelle proposition rétention avant d'avoir corrigé le hook J1
+    - D7 < 5 % → churn structurel : croiser avec `walls[]` (niveau de stagnation) et `purchases` avant de conclure
+    - Données vides (`{}` ou `totalEvents: 0`) = migration #1258 pas encore exécutée ou aucun joueur réel — ce n'est pas un bug
   - **avg_essence_before** : moyenne essence avant achat
     - Si < 100 → les gains d'essence sont insuffisants
   - **lootbox_purchases** : si la lootbox (offre 3) est achetée plus souvent que les items
