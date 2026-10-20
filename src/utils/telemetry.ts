@@ -270,7 +270,9 @@ export function setTelemetryLevel(level: number | null | undefined): void {
  */
 export function initTelemetry(options?: { level?: number | null }): void {
   if (sessionStarted || !isTelemetryEnabled()) return
-  setTelemetryLevel(options?.level)
+  if (options?.level !== undefined && options.level !== null) {
+    setTelemetryLevel(options.level)
+  }
 
   const state = readState()
   const now = Date.now()
@@ -320,7 +322,9 @@ export function trackFightOutcome(won: boolean, level: number, consecutiveLosses
   if (state.walls.includes(level)) return
   state.walls = [...state.walls, level].slice(-MAX_WALL_LEVELS)
   writeState(state)
-  trackEvent('wall_reached', { losses: consecutiveLosses })
+  // Carry the level explicitly: the wall must not depend on the ambient
+  // currentLevel (offline/idle merges can move it between events).
+  trackEvent('wall_reached', { losses: consecutiveLosses, level })
 }
 
 /** Exposed for the report/tests: the local install id, if telemetry ran. */

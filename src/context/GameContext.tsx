@@ -34,7 +34,7 @@ import {
   performFusion,
   performUpgrade,
 } from '../utils/forgeUtils';
-import { buyShopOffer as buyShopOfferUtil, getShopOffers, rerollShopOffers as rerollShopOffersUtil, type ShopOffer } from '../utils/shopUtils';
+import { buyShopOffer as buyShopOfferUtil, getShopOfferPurchaseInfo, rerollShopOffers as rerollShopOffersUtil, type ShopOffer } from '../utils/shopUtils';
 import { completeRecoveryQuest, getConsecutiveLosses, getSecondWindEssence, recordRecovery, startRecoveryQuest } from '../utils/comebackUtils';
 import { markOfferPurchased, markRerollUsed } from '../utils/shopStorage';
 import {
@@ -1570,7 +1570,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         })
         .eq('id', baseChar.id!);
       persistCharacter(normalized);
-      const purchasedOffer = getShopOffers(baseChar, ITEM_ASSETS)[index];
+      const purchasedOffer = getShopOfferPurchaseInfo(index);
       trackEvent('purchase', {
         offer: purchasedOffer?.label ?? `slot_${index}`,
         price: purchasedOffer?.price ?? 0,

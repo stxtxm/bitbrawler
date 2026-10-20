@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { Character } from '../../types/Character';
 import { ITEM_ASSETS } from '../../data/itemAssets';
 import { SHOP_OFFERS, getShopPrice } from '../../data/shopConstants';
+import { getShopOfferPurchaseInfo } from '../../utils/shopUtils';
 
 // ─── Pure Functions Under Test ───────────────────────────────────────────
 
@@ -488,6 +489,25 @@ describe('shop-utils (TDD)', () => {
           expect(offer.item.rarity).not.toBe('epic');
         }
       });
+    });
+  });
+
+  // ─── getShopOfferPurchaseInfo (telemetry #1230) ─────────────────────────
+
+  describe('getShopOfferPurchaseInfo', () => {
+    it('maps the CONFIG index, not the array position (eager epic at position 1)', () => {
+      // The daily list above level 10 is [0, 3, 2]: config 3 (80 💎) sits at
+      // array position 1. Indexing the array recorded price 0 for the most
+      // expensive offer — this helper is the regression guard.
+      expect(getShopOfferPurchaseInfo(0)).toEqual({ label: 'Marchandise', price: 27 });
+      expect(getShopOfferPurchaseInfo(1)).toEqual({ label: 'Pièce rare', price: 53 });
+      expect(getShopOfferPurchaseInfo(2)).toEqual({ label: 'Coffre mystère', price: 45 });
+      expect(getShopOfferPurchaseInfo(3)).toEqual({ label: 'Objet épique', price: 80 });
+    });
+
+    it('returns null for an unknown index so the caller can fall back', () => {
+      expect(getShopOfferPurchaseInfo(99)).toBeNull();
+      expect(getShopOfferPurchaseInfo(-1)).toBeNull();
     });
   });
 });

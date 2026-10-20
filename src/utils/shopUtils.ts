@@ -13,6 +13,19 @@ export interface ShopOffer {
 }
 
 /**
+ * Label + price of a purchased offer, keyed by CONFIG index.
+ *
+ * `ShopOffer.index` is the config index, not the array position: the daily
+ * list puts the eager-epic offer (config 3, 80 💎) at position 1 above
+ * level 10. Indexing the array there recorded price 0 for the most expensive
+ * offer, which corrupted the telemetry `purchases.avgPrice` metric (#1230).
+ */
+export function getShopOfferPurchaseInfo(index: number): { label: string; price: number } | null {
+  const config = SHOP_OFFERS[index];
+  return config ? { label: config.label, price: config.price } : null;
+}
+
+/**
  * Simple seeded PRNG (mulberry32).
  */
 function seededRandom(seed: number): () => number {

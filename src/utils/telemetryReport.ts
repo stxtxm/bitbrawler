@@ -163,7 +163,14 @@ export function summarizeTelemetry(rows: TelemetryReportRow[]): TelemetrySummary
   const wallCounts = new Map<number, number>()
   for (const row of rows) {
     if (row.event !== 'wall_reached') continue
-    const level = typeof row.level === 'number' ? Math.round(row.level) : 0
+    // The client carries the wall level explicitly in props (the ambient level
+    // can move between events); fall back to the column for older rows.
+    const propLevel = row.props?.level
+    const level = typeof propLevel === 'number'
+      ? Math.round(propLevel)
+      : typeof row.level === 'number'
+        ? Math.round(row.level)
+        : 0
     if (level <= 0) continue
     wallCounts.set(level, (wallCounts.get(level) ?? 0) + 1)
   }

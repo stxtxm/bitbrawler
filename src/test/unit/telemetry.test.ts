@@ -170,9 +170,19 @@ describe('telemetry client (#1230 part 2)', () => {
     trackFightOutcome(false, 32, WALL_LOSS_STREAK);
     expect(events(sent, 'wall_reached')).toHaveLength(2);
     expect(events(sent, 'wall_reached')[1].body.props.losses).toBe(WALL_LOSS_STREAK);
+    expect(events(sent, 'wall_reached')[1].body.props.level).toBe(32);
 
     trackFightOutcome(true, 33, WALL_LOSS_STREAK);
     expect(events(sent, 'wall_reached')).toHaveLength(2);
+  });
+
+  it('keeps the level when an event starts the session before initTelemetry', () => {
+    const sent = capture();
+    setTelemetryLevel(9);
+    trackEvent('purchase', { offer: 'Bronze Axe', price: 27 });
+
+    expect(events(sent, 'session_start')[0].body.level).toBe(9);
+    expect(events(sent, 'purchase')[0].body.level).toBe(9);
   });
 
   it('never reports from automation (QA bot runs must not inflate D1/D7)', () => {

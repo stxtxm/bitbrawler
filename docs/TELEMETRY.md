@@ -18,7 +18,7 @@ blanche côté client **et** côté serveur.
 | `lootbox_opened` | `rarity` | lootbox quotidienne |
 | `purchase` | `offer`, `price` | achat shop réussi |
 | `boss_attempt` | `boss`, `won` | chaque attaque de boss |
-| `wall_reached` | `losses` | 3 défaites consécutives au même niveau (une fois par niveau) |
+| `wall_reached` | `losses`, `level` | 3 défaites consécutives au même niveau (une fois par niveau) |
 
 Le champ `level` est ajouté à chaque payload depuis le personnage actif.
 
@@ -84,6 +84,19 @@ taux de victoire boss.
 ```sql
 DELETE FROM telemetry_events WHERE created_at < NOW() - INTERVAL '90 days';
 ```
+
+## Limites connues
+
+- **Endpoint public, pas de rate-limit** : un acteur déterminé peut gonfler les volumes
+  en forgeant des UUID. Les métriques sont un signal, pas une preuve comptable ; si
+  l'abus apparaît, ajouter une règle **Cloudflare Rate Limiting** sur `/api/telemetry`
+  (par IP) avant d'envisager un captcha.
+- **Opt-out (ON par défaut)** : choix produit assumé pour avoir un échantillon dès le
+  premier jour ; le toggle est visible dans SETTINGS et supprime l'install id. À
+  re-valider humainement si la politique de confidentialité évolue.
+- **D1/D7 ne lisent que `session_start`** : un joueur qui ne recharge jamais la page
+  (PWA laissée ouverte) peut manquer une journée. Les jours sont en **UTC**, pas dans
+  le fuseau local du joueur.
 
 ## Fichiers
 

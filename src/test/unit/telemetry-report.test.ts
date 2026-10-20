@@ -87,8 +87,8 @@ describe('telemetry report (#1230 part 2)', () => {
       row('b', 'session_start', '2026-10-01T10:00:00Z', { level: 30 }),
       row('a', 'purchase', '2026-10-03T10:00:00Z', { props: { offer: 'Bronze Axe', price: 27 } }),
       row('b', 'purchase', '2026-10-03T11:00:00Z', { props: { offer: 'Coffre mystère', price: 53 } }),
-      row('a', 'wall_reached', '2026-10-05T10:00:00Z', { level: 31, props: { losses: 3 } }),
-      row('b', 'wall_reached', '2026-10-06T10:00:00Z', { level: 31, props: { losses: 4 } }),
+      row('a', 'wall_reached', '2026-10-05T10:00:00Z', { level: 31, props: { losses: 3, level: 31 } }),
+      row('b', 'wall_reached', '2026-10-06T10:00:00Z', { level: 31, props: { losses: 4, level: 31 } }),
       row('a', 'boss_attempt', '2026-10-07T10:00:00Z', { props: { boss: 'VOID TITAN', won: true } }),
       row('b', 'boss_attempt', '2026-10-07T11:00:00Z', { props: { boss: 'VOID TITAN', won: false } }),
       row('b', 'boss_attempt', '2026-10-08T11:00:00Z', { props: { boss: 'VOID TITAN', won: true } }),
@@ -109,5 +109,17 @@ describe('telemetry report (#1230 part 2)', () => {
     });
     expect(summary.events[0]).toEqual({ event: 'boss_attempt', count: 3 });
     expect(summary.events).toContainEqual({ event: 'purchase', count: 2 });
+  });
+
+  it('reads the wall level from props when the ambient level column is empty', () => {
+    const summary = summarizeTelemetry([
+      row('a', 'session_start', '2026-10-01T10:00:00Z'),
+      row('a', 'wall_reached', '2026-10-02T10:00:00Z', {
+        level: null,
+        props: { level: 12, losses: 3 },
+      }),
+    ]);
+
+    expect(summary.walls).toEqual([{ level: 12, count: 1 }]);
   });
 });
