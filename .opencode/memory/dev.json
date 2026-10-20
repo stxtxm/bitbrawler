@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-19T23:16:15Z",
+  "last_session": "2026-10-20T22:24:53Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "issue": "#1178",
-      "date": "2026-10-17",
-      "lesson": "QA bot (#1178): le bouton FIGHT (.primary-btn.giant-btn de ActionPanel) reste 'visible' pour Playwright même pendant le combat, car .combat-overlay est position:fixed/z-index:1000 et isVisible n'ignore PAS l'occlusion. Le seul signal fiable 'combat demarre' est la presence/visibilite de .combat-overlay -> readArenaStatus expose combatVisible + hasCombatStarted le teste en premier. Toujours verifier le DOM reel (overlay) avant de fonder un fail-fast sur la visibilite d'un CTA. La tentative precedente non commitee de cet issue avait des tests faux (ordre indexOf inverses, slice trop court) -> relire/adapter les tests herites d'un worktree sale avant de commit."
-    },
     {
       "lesson": "Rebalance SHOP_OFFERS +10% (#1182): les assertions de prix sont éparses dans shop-utils.test.ts - la garde toBeLessThanOrEqual ET 4 tests essence (500-24→473, 500-41→455, 600-41→555) ET les 4 tests getShopPrice. Toujours grep 476|459|559|toBe(24) etc. pour tout attraper avant RED.",
       "issue": "#1182",
@@ -196,6 +191,11 @@
       "lesson": "Issue #1118 BestiaryCard: la dependance #1117 a ete mergee pendant la session -> git merge --ff-only origin/master pour recuperer src/utils/bestiaryUtils.ts au lieu de redupliquer BestiaryEntry. Reutiliser .medal-card (import du partial SCSS depuis le composant, comme MedalCard) + filtre inline brightness(0) opacity(0.45) + aria-hidden sur le wrapper pour la silhouette, sans creer de nouveau SCSS (contrainte 1-2 fichiers).",
       "issue": "#1118",
       "date": "2026-10-19"
+    },
+    {
+      "lesson": "Hausse SHOP_OFFERS +10% (#1265) : arrondi Math.round (27→30, 53→58, 45→50, 80→88). Le garde-fou shop-utils (prix mini ≤ N / jours) doit être relevé à chaque hausse, et deployFreshness.ts + commentaires shopUtils/ShopPanel citent les prix en dur — les mettre à jour, sinon doc/tests incohérents. Les fixtures de deploy-freshness.test.ts (24/48/41/73 vs 27/53/45/80) sont historiques et ne doivent PAS être changées.",
+      "issue": "#1265",
+      "date": "2026-10-20"
     }
   ]
 }
