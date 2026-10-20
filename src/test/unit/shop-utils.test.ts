@@ -183,11 +183,11 @@ describe('shop-utils (TDD)', () => {
       expect(epics.length).toBeGreaterThanOrEqual(1);
     });
 
-    it('cheapest offer is reachable within 3-6 days of real essence income (~4.75/run, issue #726)', () => {
+    it('cheapest offer is reachable within 3-7 days of real essence income (~4.75/run, issue #726)', () => {
       const dailyIncome = 4.75;
       const firstPurchaseDays = SHOP_OFFERS[0].price / dailyIncome;
-      expect(SHOP_OFFERS[0].price).toBeLessThanOrEqual(27);
-      expect(firstPurchaseDays).toBeLessThanOrEqual(5.9);
+      expect(SHOP_OFFERS[0].price).toBeLessThanOrEqual(30);
+      expect(firstPurchaseDays).toBeLessThanOrEqual(6.4);
     });
 
     it('filters by date-based seed so same-day offers are identical regardless of call order', () => {
@@ -274,7 +274,7 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
       const result = buyShopOffer(0, char, ITEM_ASSETS, getTodayStr(), () => 0);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(473); // 500 - 27 (issue #1182 rebalance +10%)
+      expect(result!.essence).toBe(470); // 500 - 30 (issue #1265 rebalance +10%)
       expect(result!.inventory).toHaveLength(1);
     });
 
@@ -294,7 +294,7 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
       const result = buyShopOffer(0, char, ITEM_ASSETS, getTodayStr(), () => 0);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(473);
+      expect(result!.essence).toBe(470);
       expect(result!.inventory!.length).toBe(1);
       // Marking moved to GameContext AFTER the DB write succeeds (#768 follow-up):
       // an early mark showed SOLD while a transient failure left the purchase unpersisted.
@@ -340,7 +340,7 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
       const result = buyShopOffer(2, char, ITEM_ASSETS, getTodayStr(), () => 0);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(455); // 500 - 45 (issue #1182 rebalance +10%)
+      expect(result!.essence).toBe(450); // 500 - 50 (issue #1265 rebalance +10%)
       expect(result!.inventory).toHaveLength(1);
       const itemData = ITEM_ASSETS.find(a => a.id === result!.inventory![0]);
       expect(itemData).toBeDefined();
@@ -350,27 +350,27 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 600, inventory: [] });
       const result = buyShopOffer(2, char, ITEM_ASSETS, getTodayStr(), () => 0.5);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(555); // 600 - 45 (issue #1182 rebalance +10%)
+      expect(result!.essence).toBe(550); // 600 - 50 (issue #1265 rebalance +10%)
     });
   });
 
   // ─── getShopPrice ────────────────────────────────────────────────────────
 
   describe('getShopPrice', () => {
-    it('returns 27 for offer 0', () => {
-      expect(getShopPrice(0)).toBe(27);
+    it('returns 30 for offer 0', () => {
+      expect(getShopPrice(0)).toBe(30);
     });
 
-    it('returns 53 for offer 1', () => {
-      expect(getShopPrice(1)).toBe(53);
+    it('returns 58 for offer 1', () => {
+      expect(getShopPrice(1)).toBe(58);
     });
 
-    it('returns 45 for offer 2', () => {
-      expect(getShopPrice(2)).toBe(45);
+    it('returns 50 for offer 2', () => {
+      expect(getShopPrice(2)).toBe(50);
     });
 
-    it('returns 80 for offer 3 (Objet épique)', () => {
-      expect(getShopPrice(3)).toBe(80);
+    it('returns 88 for offer 3 (Objet épique)', () => {
+      expect(getShopPrice(3)).toBe(88);
     });
 
     it('throws for invalid index', () => {
@@ -499,10 +499,10 @@ describe('shop-utils (TDD)', () => {
       // The daily list above level 10 is [0, 3, 2]: config 3 (80 💎) sits at
       // array position 1. Indexing the array recorded price 0 for the most
       // expensive offer — this helper is the regression guard.
-      expect(getShopOfferPurchaseInfo(0)).toEqual({ label: 'Marchandise', price: 27 });
-      expect(getShopOfferPurchaseInfo(1)).toEqual({ label: 'Pièce rare', price: 53 });
-      expect(getShopOfferPurchaseInfo(2)).toEqual({ label: 'Coffre mystère', price: 45 });
-      expect(getShopOfferPurchaseInfo(3)).toEqual({ label: 'Objet épique', price: 80 });
+      expect(getShopOfferPurchaseInfo(0)).toEqual({ label: 'Marchandise', price: 30 });
+      expect(getShopOfferPurchaseInfo(1)).toEqual({ label: 'Pièce rare', price: 58 });
+      expect(getShopOfferPurchaseInfo(2)).toEqual({ label: 'Coffre mystère', price: 50 });
+      expect(getShopOfferPurchaseInfo(3)).toEqual({ label: 'Objet épique', price: 88 });
     });
 
     it('returns null for an unknown index so the caller can fall back', () => {
