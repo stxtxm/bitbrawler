@@ -36,6 +36,12 @@ const days = (() => {
 
 const since = new Date(Date.now() - days * 86_400_000).toISOString();
 
+class MissingTableError extends Error {
+  constructor() {
+    super('telemetry_events does not exist yet — run the migration issue attached to #1230.');
+  }
+}
+
 async function fetchRows(): Promise<TelemetryReportRow[]> {
   const rows: TelemetryReportRow[] = [];
   for (let from = 0; from < MAX_ROWS; from += PAGE_SIZE) {
@@ -48,8 +54,7 @@ async function fetchRows(): Promise<TelemetryReportRow[]> {
 
     if (error) {
       if (error.code === 'PGRST205' || /relation .* does not exist/i.test(error.message)) {
-        console.log('telemetry_events does not exist yet — run the migration issue attached to #1230.');
-        process.exit(0);
+        throw new MissingTableError();
       }
       throw new Error(`telemetry query failed: ${error.message}`);
     }
@@ -123,6 +128,13 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
+  if (error instanceof MissingTableError) {
+    // Not a failure: the migration has not been executed yet. Keep stdout
+    // valid JSON for the tech-lead step (`--json > report.json`).
+    if (asJson) console.log('{}');
+    else console.log(error.message);
+    process.exit(0);
+  }
   console.error(error instanceof Error ? error.message : error);
   process.exit(1);
 });
