@@ -418,8 +418,8 @@ function findMouth(grid: SpriteGrid): MouthBox | null {
 }
 
 // Lips derived from the skin tone: a dark upper line and a lighter lower lip.
-// Neutral is two pixels wide; expressions widen to four with only the centre
-// lower pixels lit, enough to read as a mouth without the old solid 4x2 brick.
+// Neutral is a three-pixel line with one lower-lip pixel; expressions widen to
+// four with two lower-lip pixels. A 2x2 square read as a red nose at 5x scale.
 function paintMouth(grid: SpriteGrid, shape: MouthShape, centerX?: number): void {
   const mouth = findMouth(grid);
   if (!mouth) return;
@@ -429,8 +429,11 @@ function paintMouth(grid: SpriteGrid, shape: MouthShape, centerX?: number): void
   // Neutral lets the character rest; a 2px mouth is a mouth, not a moustache.
   // Expressions widen it to 4px so the smile / teeth remain readable.
   const wide = shape !== 'neutral';
-  const left = wide ? Math.round(center - 2) : Math.round(center - 1);
-  const right = left + (wide ? 3 : 1);
+  // The nose is rounded to the nearest pixel, so centre a 3px neutral mouth on
+  // that pixel instead of on the half-pixel eye axis; otherwise it sits visibly
+  // left of the nose. Expressions keep the 4px block centred on the face.
+  const left = wide ? Math.round(center - 2) : Math.round(center) - 1;
+  const right = left + (wide ? 3 : 2);
   const row0 = grid[y0] ?? [];
   const row1 = grid[y1] ?? [];
   // Clear the union of the raw mouth and the centred mouth: the raw head is
@@ -457,7 +460,7 @@ function paintMouth(grid: SpriteGrid, shape: MouthShape, centerX?: number): void
     row1[mid1] = 2;
     return;
   }
-  for (let x = mid0; x <= mid1; x++) row1[x] = highlightIndexOf(3);
+  row1[mid0] = highlightIndexOf(3);
 }
 
 // The forehead under the fringe receives one step of skin shadow. Without it
