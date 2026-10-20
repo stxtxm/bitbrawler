@@ -146112,5 +146112,310 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-10-20T10:40:53.235Z",
+    "run": "2026-10-20",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 1,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 8,
+      "vit": 26,
+      "dex": 11,
+      "luk": 7,
+      "int": 13,
+      "foc": 8,
+      "fights": 0
+    },
+    "initial_level": 8,
+    "initial_xp": {
+      "current": 2836,
+      "max": 3709
+    },
+    "initial_max_hp": 400,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "WEAPON"
+      },
+      {
+        "slot": "💍",
+        "name": "ACCESSORY"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 9,
+      "xp": 1566,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 8,
+      "vit": 26,
+      "dex": 11,
+      "luk": 7,
+      "int": 13,
+      "foc": 9,
+      "last xp": 67,
+      "fights": 3
+    },
+    "final_max_hp": 420,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "WEAPON"
+      },
+      {
+        "slot": "💍",
+        "name": "ACCESSORY"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "WEAPON"
+      },
+      {
+        "slot": "💍",
+        "name": "ACCESSORY"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20286,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "goblin"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 141,
+      "xp_events": [
+        {
+          "time_ms": 3077,
+          "xp": 74,
+          "monster": "goblin",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15237,
+          "xp": 67,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        515,
+        1540,
+        3077,
+        12160,
+        13694,
+        15237
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 74,
+        "essence": 0.23,
+        "monster": "goblin"
+      },
+      {
+        "result": "victory",
+        "xp": 67,
+        "essence": 0.23,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.16,
+      "next_level_eta": "⬆ 8m 30s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.02x",
+      "interval": "11.8s",
+      "streak_bonus": "🔥 9-win streak (+6%)"
+    },
+    "initial_essence": 37.93,
+    "final_essence": 32.63,
+    "essence": {
+      "before_idle": 37.93,
+      "after_idle": 38.39,
+      "per_fight": [],
+      "forge_before": 38,
+      "forge_after_salvage": 58,
+      "forge_after_fusion": 58,
+      "forge_after_upgrade": 58,
+      "forge_after": 58,
+      "shop_before": 59,
+      "shop_after": 32,
+      "final": 32.63,
+      "flow": {
+        "idle_gained": 0.46,
+        "fights_change": null,
+        "salvage_gained": 20,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 20,
+        "shop_cost": 27,
+        "net_change": -5.3
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 38,
+      "essence_after_salvage": 58,
+      "essence_after_fusion": 58,
+      "essence_after_upgrade": 58,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": 58,
+      "items_after": 1,
+      "salvage_essence_gained": 20,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 27,
+      "essence_before": 59,
+      "essence_after": 32,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Bronze Axe",
+            "rarity": "UNCOMMON",
+            "price": 27
+          },
+          {
+            "name": "Aqua Shield",
+            "rarity": "RARE",
+            "price": 53
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 45
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 32,
+        "essence_budget": 150,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 150
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "no_start"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1125,
+      "arena": 983
+    },
+    "skipped_summary": {
+      "no_start": 1
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Bronze Axe",
+          "rarity": "UNCOMMON",
+          "price": 27
+        },
+        {
+          "name": "Aqua Shield",
+          "rarity": "RARE",
+          "price": 53
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 45
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 32,
+      "essence_budget": 150,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
