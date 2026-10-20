@@ -2,6 +2,7 @@ import { PIXEL_HEADS, PIXEL_BODIES } from '../PixelAssets';
 import { mulberry32, getSeedFromText } from '../../utils/randomUtils';
 import type { CharacterAppearance } from '../../types/Character';
 import {
+  BROW_INDEX,
   GeneratedSprite,
   HIGHLIGHT_OFFSET,
   SHADE_OFFSET,
@@ -87,7 +88,9 @@ function basePaletteOf(features: SpriteFeatures): SpritePalette {
   return {
     1: features.skinColor,
     2: '#FFFFFF',
-    3: '#b3392f',
+    // Rosé dérivé du teint : le rouge brique fixe faisait une moustache sombre
+    // sur tous les visages, quel que soit le phototype.
+    3: mixHex(features.skinColor, '#8e2f2f', 0.64),
     4: features.hairColor,
     5: features.shirtColor,
     6: features.pantsColor,
@@ -96,6 +99,7 @@ function basePaletteOf(features: SpriteFeatures): SpritePalette {
     9: '#95a5a6',
     11: features.logoColor,
     12: features.hairColor,
+    [BROW_INDEX]: mixHex(deepShadeHex(features.hairColor), OUTLINE_HEX, 0.22),
   };
 }
 
@@ -302,26 +306,48 @@ function applyDetails(grid: SpriteGrid): void {
       const c = grid[y][x];
       if (c === 6 || c === highlightIndexOf(6) || c === shadeIndexOf(6)) grid[y][x] = shadeIndexOf(6);
     }
-    for (const y of [28, 29]) {
-      // The belt line is now a lit top edge, so accept any pants tone.
-      if (x !== 11 && x !== 12) continue;
-      const c = grid[y][x];
-      if (c === 6 || c === shadeIndexOf(6) || c === highlightIndexOf(6)) grid[y][x] = 9;
-    }
-    // Lower lip: a shaded bottom edge turns the mouth block into lips.
-    for (const y of [13]) {
-      if (grid[y][x] === 3) grid[y][x] = shadeIndexOf(3);
-    }
   }
+  // Belt: a dark band across the waist with a centred metal buckle. The old
+  // single 2px grey square floated on the pants and read as a random pixel.
+  for (const y of [28, 29]) {
+    const row = grid[y] ?? [];
+    const pantsXs: number[] = [];
+    for (let x = 0; x < row.length; x++) {
+      const c = row[x];
+      if (c === 6 || c === shadeIndexOf(6) || c === highlightIndexOf(6)) pantsXs.push(x);
+    }
+    if (pantsXs.length < 3) continue;
+    const left = pantsXs[0];
+    const right = pantsXs[pantsXs.length - 1];
+    for (let x = left; x <= right; x++) {
+      const c = row[x];
+      if (c === 6 || c === shadeIndexOf(6) || c === highlightIndexOf(6)) row[x] = shadeIndexOf(6);
+    }
+    const buckle = Math.floor((left + right) / 2);
+    for (const bx of [buckle, buckle + 1]) {
+      if (bx > right) continue;
+      row[bx] = y === 28 ? 9 : shadeIndexOf(9);
+    }
+    if (y === 28) row[buckle] = highlightIndexOf(9);
+  }
+  // Shoulder trim: metal bodies keep a grey edge, cloth bodies get the same
+  // tonal trim as the collar. Painting every shoulder grey put pauldrons on
+  // plain T-shirts.
   for (const y of [20, 21]) {
     const row = grid[y];
+    if (!row) continue;
     const left = row.findIndex((c) => c !== 0);
-    if (left >= 0 && (row[left] === 5 || row[left] === shadeIndexOf(5))) row[left] = 9;
+    if (left >= 0) {
+      const c = row[left];
+      if (c === 5 || c === shadeIndexOf(5)) row[left] = 11;
+      else if (c === 9 || c === shadeIndexOf(9)) row[left] = 9;
+    }
     for (let x = row.length - 1; x >= 0; x--) {
-      if (row[x] !== 0) {
-        if (row[x] === 5 || row[x] === shadeIndexOf(5)) row[x] = 9;
-        break;
-      }
+      if (row[x] === 0) continue;
+      const c = row[x];
+      if (c === 5 || c === shadeIndexOf(5)) row[x] = 11;
+      else if (c === 9 || c === shadeIndexOf(9)) row[x] = 9;
+      break;
     }
   }
 }
@@ -358,11 +384,115 @@ function applyCollarTrim(grid: SpriteGrid): void {
   }
 }
 
+// A mouth box located from the actual mouth pixels, not from a hard-coded
+// row: the old lip pass used y=13 while the mouth sits on 14/15, so it never
+// touched the lips at all.
+type MouthShape = 'neutral' | 'smile' | 'grit';
+
+interface MouthBox {
+  y0: number;
+  y1: number;
+  left: number;
+  right: number;
+}
+
+const MOUTH_TONES = new Set([3, shadeIndexOf(3), highlightIndexOf(3)]);
+
+function findMouth(grid: SpriteGrid): MouthBox | null {
+  let y0 = -1;
+  let y1 = -1;
+  let left = 99;
+  let right = -1;
+  for (let y = 10; y <= 18 && y < grid.length; y++) {
+    const row = grid[y] ?? [];
+    for (let x = 0; x < row.length; x++) {
+      if (!MOUTH_TONES.has(row[x])) continue;
+      if (y0 < 0) y0 = y;
+      y1 = y;
+      if (x < left) left = x;
+      if (x > right) right = x;
+    }
+  }
+  if (y0 < 0 || right < left) return null;
+  return { y0, y1, left, right };
+}
+
+// Lips derived from the skin tone: a dark upper line and a lighter lower lip.
+// Neutral is two pixels wide; expressions widen to four with only the centre
+// lower pixels lit, enough to read as a mouth without the old solid 4x2 brick.
+function paintMouth(grid: SpriteGrid, shape: MouthShape, centerX?: number): void {
+  const mouth = findMouth(grid);
+  if (!mouth) return;
+  const { y0, left: rawLeft, right: rawRight } = mouth;
+  const y1 = mouth.y1 > y0 ? mouth.y1 : y0 + 1;
+  const center = centerX ?? (rawLeft + rawRight) / 2;
+  // Neutral lets the character rest; a 2px mouth is a mouth, not a moustache.
+  // Expressions widen it to 4px so the smile / teeth remain readable.
+  const wide = shape !== 'neutral';
+  const left = wide ? Math.round(center - 2) : Math.round(center - 1);
+  const right = left + (wide ? 3 : 1);
+  const row0 = grid[y0] ?? [];
+  const row1 = grid[y1] ?? [];
+  // Clear the union of the raw mouth and the centred mouth: the raw head is
+  // one pixel off-centre, so moving the lips right leaves old lip pixels
+  // behind unless both boxes are wiped.
+  const clearLeft = Math.min(rawLeft, left);
+  const clearRight = Math.max(rawRight, right);
+  for (let x = clearLeft; x <= clearRight; x++) {
+    if (MOUTH_TONES.has(row0[x])) row0[x] = 1;
+    if (MOUTH_TONES.has(row1[x])) row1[x] = 1;
+  }
+  const mid0 = Math.floor((left + right) / 2);
+  const mid1 = Math.min(right, mid0 + 1);
+  if (shape === 'smile') {
+    row0[left] = 3;
+    row0[right] = 3;
+    for (let x = mid0; x <= mid1; x++) row1[x] = highlightIndexOf(3);
+    return;
+  }
+  for (let x = left; x <= right; x++) row0[x] = 3;
+  if (shape === 'grit') {
+    for (let x = left; x <= right; x++) row1[x] = 3;
+    row1[mid0] = 2;
+    row1[mid1] = 2;
+    return;
+  }
+  for (let x = mid0; x <= mid1; x++) row1[x] = highlightIndexOf(3);
+}
+
+// The forehead under the fringe receives one step of skin shadow. Without it
+// the hair sat flat on a blank forehead like a wig.
+function applyFringeShadow(grid: SpriteGrid, eyeTop: number): void {
+  const isHair = (v: number): boolean =>
+    v === 4 || v === shadeIndexOf(4) || v === highlightIndexOf(4);
+  for (let x = 0; x < grid[0].length; x++) {
+    let hairBottom = -1;
+    for (let y = 1; y <= eyeTop - 3 && y < grid.length; y++) {
+      if (isHair(grid[y]?.[x] ?? 0)) hairBottom = y;
+    }
+    if (hairBottom < 0) continue;
+    const y = hairBottom + 1;
+    if (grid[y]?.[x] === 1) grid[y][x] = shadeIndexOf(1);
+  }
+}
+
 function applyFeatures(grid: SpriteGrid): void {
   const set = (x: number, y: number, v: number, onlyIf: number): void => {
     if (y < 0 || y >= grid.length || x < 0 || x >= grid[0].length) return;
     if (grid[y][x] === onlyIf) grid[y][x] = v;
   };
+  // Hair underside: the fringe/sideburns get one step of shadow where they
+  // meet skin. Without it the hair was a flat coloured cap sitting on a flat
+  // forehead; this single row gives the mass a bottom plane.
+  for (let y = 0; y < grid.length - 1; y++) {
+    for (let x = 0; x < grid[y].length; x++) {
+      if (grid[y][x] !== 4) continue;
+      const below = grid[y + 1]?.[x] ?? 0;
+      if (below === 1 || below === shadeIndexOf(1) || below === highlightIndexOf(1)) {
+        grid[y][x] = shadeIndexOf(4);
+      }
+    }
+  }
   let eyeFirstY = 99;
   const eyeXs: number[] = [];
   for (let y = 2; y <= 17; y++) {
@@ -390,82 +520,82 @@ function applyFeatures(grid: SpriteGrid): void {
     }
     if (run.length) eyeGroups.push(run);
   }
-  // Rebuild each eye at 4x4 px with a dark outline, a white glint and an iris.
-  // The raw 2x2 block read as a bead lost on a huge blank cheek; a proper eye
-  // needs an outline to read at this scale.
+  // Rebuild each eye as a 4x2 block: white sclera, a two-pixel coloured iris
+  // and a dark pupil. The old 3x3 block was a solid shaded iris with one white
+  // dot; at 24x42 it read as a pair of goggles. Narrow faces (pigtails) only
+  // have four pixels between the raw eyes, so they use a 3px variant: two 4px
+  // eyes touched and looked like a single visor.
   const IRIS = 8;
-  // A bright saturated iris slab read as a lens. Real eyes at this size are a
-  // dark mass with a single catchlight, so the iris uses the shaded eye tone.
-  const irisTone = shadeIndexOf(IRIS);
-  const outline = irisTone;
+  const eyeTone = shadeIndexOf(IRIS);
   const eyeTop = eyeFirstY;
-  // Each eye shifts 1px away from the face centre. Centred on the raw eye they
-  // sat 2px apart, which welded them into one band across the face.
-  const faceCx = eyeGroups.reduce((sum, g) => sum + (g[0] + g[g.length - 1]) / 2, 0)
-    / Math.max(1, eyeGroups.length);
   const isSkinTone = (v: number): boolean =>
     v === 1 || v === shadeIndexOf(1) || v === highlightIndexOf(1);
-  const EYE_W = 3;
-  for (const group of eyeGroups) {
-    const cx = Math.round((group[0] + group[group.length - 1]) / 2);
-    const outward = cx < faceCx ? cx - 2 : cx;
-    // Only push the eye outward onto clear skin. On pigtail / ponytail /
-    // pixie heads the outer slot is hair, and eating it punched a hole in
-    // the hairstyle.
-    let x0 = outward;
-    let clear = true;
-    for (let dy = 0; dy < 3 && clear; dy++) {
-      for (let dx = 0; dx < EYE_W; dx++) {
-        const x = outward + dx;
-        const y = eyeTop + dy;
-        if (x < 0 || y < 0 || y >= grid.length || x >= grid[y].length || !isSkinTone(grid[y][x])) {
-          clear = false;
-          break;
-        }
-      }
-    }
-    if (!clear) x0 = cx - 1;
+  const eyeCenters = eyeGroups.map((group) => Math.round((group[0] + group[group.length - 1]) / 2));
+  const narrow = eyeCenters.length >= 2
+    && eyeCenters[eyeCenters.length - 1] - eyeCenters[0] <= 4;
+  const eyeW = narrow ? 3 : 4;
+  // The raw eye pixels themselves are not skin; they are valid anchors for the
+  // rebuilt block. Hair is the only thing we must refuse to overwrite.
+  const isEyeCanvas = (v: number): boolean =>
+    isSkinTone(v) || v === IRIS || v === eyeTone || v === 2 || v === BROW_INDEX;
+  const clearAt = (x0: number): boolean => {
     for (let dy = 0; dy < 3; dy++) {
-      for (let dx = 0; dx < EYE_W; dx++) {
+      for (let dx = 0; dx < eyeW; dx++) {
         const x = x0 + dx;
         const y = eyeTop + dy;
-        if (x < 0 || y < 0 || y >= grid.length || x >= grid[y].length) continue;
-        // Iris with a lash line under it, not a full border: a 1px outline on
-        // all four sides of the eye is half the eye and reads as a visor.
-        grid[y][x] = dy === 2 ? outline : (dy === 0 && dx === 1 ? 2 : irisTone);
+        if (x < 0 || y < 0 || y >= grid.length || x >= grid[y].length) return false;
+        if (!isEyeCanvas(grid[y][x])) return false;
       }
     }
-  }
-  // Nose: the one row left between the lash line and the mouth. Without it the
-  // profile had no bridge at all and the face read as a flat mask.
-  if (eyeGroups.length > 0) {
-    const first = eyeGroups[0];
-    const last = eyeGroups[eyeGroups.length - 1];
-    const noseX = Math.round((first[0] + last[last.length - 1]) / 2);
-    set(noseX, eyeTop + 3, shadeIndexOf(1), 1);
-  }
-  // Brows sit just above each rebuilt eye so they read as brows rather than
-  // as a second pair of floating bars. They follow the eye's final slot.
-  {
-    const isSkinTone2 = (v: number): boolean =>
-      v === 1 || v === shadeIndexOf(1) || v === highlightIndexOf(1);
-    for (const group of eyeGroups) {
-      const cx = Math.round((group[0] + group[group.length - 1]) / 2);
-      const outward = cx < faceCx ? cx - 2 : cx;
-      let clear = true;
-      for (let dy = 0; dy < 3 && clear; dy++) {
-        for (let dx = 0; dx < 3; dx++) {
-          const x = outward + dx;
-          const y = eyeTop + dy;
-          if (x < 0 || y < 0 || y >= grid.length || x >= grid[y].length || !isSkinTone2(grid[y][x])) {
-            clear = false;
-            break;
-          }
+    return true;
+  };
+  const builtEyes: Array<{ x0: number }> = [];
+  for (const group of eyeGroups) {
+    const cx = Math.round((group[0] + group[group.length - 1]) / 2);
+    // cx - 1 centres a 4px eye on the same axis as the raw 2px eye, which
+    // keeps both eyes symmetric around the nose (6..9 and 12..15 on a 14px
+    // face). The other slots are fallbacks for narrow / hairy heads.
+    const slot = [cx - 1, cx - 2, cx, cx - 3].find(clearAt) ?? cx - 1;
+    const x0 = Math.max(0, Math.min(SPRITE_WIDTH - eyeW, slot));
+    // Wipe the raw 2x2 eye first. It is two cells tall and sits under the new
+    // block; leaving it behind added a stray iris pixel above the lash line
+    // (and made applyBlink mistake that row for the iris).
+    for (let dy = 0; dy < 3; dy++) {
+      for (let dx = 0; dx < eyeW; dx++) {
+        const v = grid[eyeTop + dy][x0 + dx];
+        if (v === IRIS || v === eyeTone || v === 2 || v === BROW_INDEX) {
+          grid[eyeTop + dy][x0 + dx] = 1;
         }
       }
-      const x0 = clear ? outward : cx - 1;
-      for (let dx = 0; dx < 3; dx++) set(x0 + dx, eyeTop - 1, shadeIndexOf(4), 1);
     }
+    // No separate lash row: the dark brow one cell above already frames the
+    // eye. A lash bar directly under the brow made a two-row unibrow.
+    // Sclera + iris (base tone on top, dark pupil below). Wide eyes look toward
+    // the opponent; the 3px variant is frontal because it has only one iris
+    // column.
+    grid[eyeTop + 1][x0] = 2;
+    grid[eyeTop + 1][x0 + 1] = IRIS;
+    grid[eyeTop + 1][x0 + 2] = eyeW === 4 ? IRIS : 2;
+    if (eyeW === 4) grid[eyeTop + 1][x0 + 3] = 2;
+    grid[eyeTop + 2][x0] = 2;
+    grid[eyeTop + 2][x0 + 1] = eyeW === 4 ? eyeTone : BROW_INDEX;
+    grid[eyeTop + 2][x0 + 2] = eyeW === 4 ? BROW_INDEX : 2;
+    if (eyeW === 4) grid[eyeTop + 2][x0 + 3] = 2;
+    builtEyes.push({ x0 });
+  }
+  // Nose: the row left below the eye block and above the mouth. Without it the
+  // profile had no bridge at all and the face read as a flat mask.
+  if (builtEyes.length > 0) {
+    const first = builtEyes[0];
+    const last = builtEyes[builtEyes.length - 1];
+    const noseX = Math.round((first.x0 + last.x0 + eyeW - 1) / 2);
+    set(noseX, eyeTop + 3, shadeIndexOf(1), 1);
+  }
+  // Brows sit one row above the eye block, separated by a skin row. They use a
+  // dedicated dark hair tone: shading the hair colour itself left blond/bright
+  // characters with almost invisible brows that merged into the fringe.
+  for (const { x0 } of builtEyes) {
+    for (let dx = 0; dx < 3; dx++) set(x0 + dx, eyeTop - 1, BROW_INDEX, 1);
   }
   // Ears last, measured on their own row. Only added next to bare skin:
   // hanging one off a sideburn or a pigtail left a nub floating in the hair.
@@ -483,25 +613,34 @@ function applyFeatures(grid: SpriteGrid): void {
     if (isSkinTone(earRow[earL])) earRow[earL - 1] = 1;
     if (earR >= 0 && isSkinTone(earRow[earR])) earRow[earR + 1] = 1;
   }
-  let torsoX0 = 99;
-  let torsoX1 = -1;
-  for (let y = 18; y <= 29; y++) {
+  // Centre the trouser shading on the hips, not on the whole upper body: an
+  // attack extends an arm and would otherwise shift the leg highlight/crease
+  // sideways even though the legs never move.
+  let hipX0 = 99;
+  let hipX1 = -1;
+  for (let y = 30; y <= 33; y++) {
     const r = grid[y] ?? [];
     r.forEach((c, x) => {
       if (c !== 0) {
-        if (x < torsoX0) torsoX0 = x;
-        if (x > torsoX1) torsoX1 = x;
+        if (x < hipX0) hipX0 = x;
+        if (x > hipX1) hipX1 = x;
       }
     });
   }
-  const torsoCx = Math.round((torsoX0 + torsoX1) / 2);
+  const hipCx = Math.round((hipX0 + hipX1) / 2);
   applyCollarTrim(grid);
-  for (let y = 22; y <= 26; y++) {
-    set(torsoCx - 3, y, shadeIndexOf(5), 5);
-    set(torsoCx + 3, y, shadeIndexOf(5), 5);
+  // Chest emblem: one lit pixel on the tonal badge. The old dark 2x4 logo
+  // read as a chest strap; a single highlight turns it into an insignia.
+  for (const y of [22, 23]) {
+    const row = grid[y] ?? [];
+    const logoXs = row.map((c, x) => (c === 11 ? x : -1)).filter((x) => x >= 0);
+    if (logoXs.length > 0) {
+      const cx = Math.round((logoXs[0] + logoXs[logoXs.length - 1]) / 2);
+      set(cx, y, highlightIndexOf(11), 11);
+    }
   }
   for (let y = 30; y <= 33; y++) {
-    set(torsoCx, y, shadeIndexOf(6), 6);
+    set(hipCx, y, shadeIndexOf(6), 6);
     const row = grid[y] ?? [];
     const left = row.findIndex((c) => c === 6 || c === shadeIndexOf(6));
     if (left >= 0) set(left, y, highlightIndexOf(6), row[left]);
@@ -543,6 +682,11 @@ function applyFeatures(grid: SpriteGrid): void {
       runStart = -1;
     }
   }
+  const faceCx = builtEyes.length > 0
+    ? (builtEyes[0].x0 + builtEyes[builtEyes.length - 1].x0 + eyeW - 1) / 2
+    : 12;
+  paintMouth(grid, 'neutral', faceCx);
+  applyFringeShadow(grid, eyeTop);
 }
 
 // Per-material ramp strength. A single hard mix toward the outline turned light
@@ -568,7 +712,7 @@ function buildPalette(features: SpriteFeatures): SpritePalette {
     const ramp = RAMP_MIX[key];
     if (EDGE_BASES.has(key) && ramp) palette[shadeIndexOf(key)] = mixHex(colors[key], OUTLINE_HEX, ramp.shade);
   }
-  for (const key of [1, 3, 4, 5, 6, 12]) {
+  for (const key of [1, 3, 4, 5, 6, 9, 11, 12]) {
     if (palette[key]) palette[highlightIndexOf(key)] = shiftHex(colors[key], RAMP_MIX[key].light);
   }
   palette[shadeIndexOf(5)] = deepShadeHex(colors[5]);
@@ -631,14 +775,6 @@ function applyHairSway(base: SpriteGrid): void {
     }
   }
 }
-function rightArmBlock(base: SpriteGrid): LimbCell[] {
-  const out: LimbCell[] = [];
-  for (let y = 11; y <= 14; y++) {
-    for (const c of takeArm(base[y] ?? [], y, false)) out.push(c);
-  }
-  return out;
-}
-
 function armCellsOf(base: SpriteGrid, fromLeft: boolean): LimbCell[] {
   const out: LimbCell[] = [];
   for (let y = 11; y <= 14; y++) {
@@ -777,25 +913,61 @@ function applyStride(base: SpriteGrid, phase: RunPhase): void {
   scissorLegs(base, mirror, step === 0);
 }
 
-// Procedural attack, five beats: ready, chamber, anticipation hold, impact,
-// recovery. Rigid fist-block shifts only — torso and head never move, nothing
-// vanishes, and the weapon follows the fist via per-frame landmarks.
+// Procedural attack, five beats: ready, low chamber, high chamber, impact,
+// recovery. The forearm and fist translate together; the torso stays planted
+// so a held weapon never sweeps through the head. Restoring the body cells
+// that the fist had grown over keeps the shirt/waist intact when the arm
+// leaves the silhouette.
 export const ATTACK_IMPACT_FRAME = 3;
 
 const ATTACK_POSES: ReadonlyArray<readonly [number, number]> = [
   [0, 0],
-  [-1, 1],
-  [-1, 0],
-  [1, -1],
   [1, 0],
+  [1, -1],
+  [2, -1],
+  [2, 0],
 ];
 
-function applyAttackPose(base: SpriteGrid, phase: number): void {
+function forearmBlock(base: SpriteGrid): LimbCell[] {
+  const out: LimbCell[] = [];
+  for (let y = 13; y <= 14; y++) {
+    for (const c of takeArm(base[y] ?? [], y, false)) out.push(c);
+  }
+  return out;
+}
+
+// Move a limb and put the body back where the limb used to be. `body` is a
+// snapshot taken before applyFists grew the 2x2 hands into the torso; without
+// it a punch leaves a transparent notch in the shirt.
+function moveLimbRestoringBody(
+  base: SpriteGrid,
+  body: SpriteGrid,
+  cells: LimbCell[],
+  dx: number,
+  dy: number,
+): void {
+  if (dx === 0 && dy === 0) return;
+  for (const { x, y } of cells) {
+    if (y >= 0 && y < base.length && x >= 0 && x < base[y].length) base[y][x] = 0;
+  }
+  for (const { x, y, v } of cells) {
+    const px = x + dx;
+    const py = y + dy;
+    if (py < 0 || py >= base.length || px < 0 || px >= base[py].length) continue;
+    base[py][px] = v;
+  }
+  for (const { x, y } of cells) {
+    const original = body[y]?.[x] ?? 0;
+    if (original !== 0 && original !== 1) base[y][x] = original;
+  }
+}
+
+function applyAttackPose(base: SpriteGrid, phase: number, body: SpriteGrid): void {
   const pose = ATTACK_POSES[phase] ?? [0, 0];
   if (pose[0] === 0 && pose[1] === 0) return;
-  const fist = rightArmBlock(base);
+  const fist = forearmBlock(base);
   if (fist.length === 0) return;
-  collectMove(base, fist, pose[0], pose[1]);
+  moveLimbRestoringBody(base, body, fist, pose[0], pose[1]);
 }
 
 // Respiration d'attente : le buste (tête + torse + bras) monte de 2 px de
@@ -834,35 +1006,76 @@ function applyIdleBreathingPx(grid: SpriteGrid, phase: number): void {
   }
 }
 
-// Blink: the rebuilt eyes sit on two iris rows above a lash line. Clearing the
-// iris rows back to skin leaves only the lash, which reads as closed eyes. The
-// touched columns are read from the eye block itself so no unrelated white
-// (glints live on eye rows too) is erased.
+// Blink: the rebuilt eye has a skin gap, an iris row and a pupil row. To close
+// it, clear all three rows back to skin and draw a two-pixel lid on the lower
+// row. The gap is cleared too so the brow never floats above a blank socket.
 function applyBlink(grid: SpriteGrid): void {
   const eyeTone = shadeIndexOf(8);
-  let eyeTop = -1;
-  for (let y = 0; y < grid.length && eyeTop < 0; y++) {
-    if (grid[y].some((c) => c === eyeTone || c === 8)) eyeTop = y;
+  let irisTop = -1;
+  for (let y = 0; y < grid.length && irisTop < 0; y++) {
+    if (grid[y].some((c) => c === 8)) irisTop = y;
   }
-  if (eyeTop < 0) return;
+  if (irisTop < 1) return;
   const eyeCols = new Set<number>();
-  for (const y of [eyeTop, eyeTop + 1, eyeTop + 2]) {
+  for (const y of [irisTop, irisTop + 1]) {
     const row = grid[y];
     if (!row) continue;
     for (let x = 0; x < row.length; x++) {
-      if (row[x] === eyeTone || row[x] === 8 || row[x] === 2) eyeCols.add(x);
+      if (row[x] === 8 || row[x] === eyeTone || row[x] === 2) eyeCols.add(x);
     }
   }
-  for (const y of [eyeTop, eyeTop + 1]) {
-    const row = grid[y];
-    if (!row) continue;
-    for (const x of eyeCols) {
-      if (row[x] === eyeTone || row[x] === 8 || row[x] === 2) row[x] = 1;
+  const sorted = [...eyeCols].sort((a, b) => a - b);
+  const runs: number[][] = [];
+  let run: number[] = [];
+  for (const x of sorted) {
+    if (run.length > 0 && x !== run[run.length - 1] + 1) {
+      runs.push(run);
+      run = [];
+    }
+    run.push(x);
+  }
+  if (run.length > 0) runs.push(run);
+  for (const group of runs) {
+    const x0 = group[0];
+    const x1 = group[group.length - 1];
+    for (let y = irisTop - 1; y <= irisTop + 1; y++) {
+      const row = grid[y];
+      if (!row) continue;
+      for (let x = x0; x <= x1; x++) {
+        if (row[x] === 8 || row[x] === eyeTone || row[x] === 2 || row[x] === BROW_INDEX) row[x] = 1;
+      }
+    }
+    const lidY = irisTop + 1;
+    const lidStart = x1 - x0 + 1 >= 4 ? x0 + 1 : x0;
+    for (const x of [lidStart, lidStart + 1]) {
+      if (x <= x1) grid[lidY][x] = eyeTone;
     }
   }
 }
 
-// Procedural hit recoil: upper body reels backward on impact and braces.
+// Facial reactions ride on top of the neutral face painted by applyFeatures.
+// They are deliberately limited to the mouth and the eyes: moving the face
+// with the pose would break the equipment head anchors.
+function applyFaceExpression(grid: SpriteGrid, kind: SpriteAnimKind, phase: number): void {
+  if (kind === 'hit') {
+    if (phase === 0) {
+      applyBlink(grid);
+      paintMouth(grid, 'grit');
+    } else if (phase === 1) {
+      paintMouth(grid, 'grit');
+    }
+    return;
+  }
+  if (kind === 'victory') {
+    if (phase === 0) return;
+    if (phase === 1 || phase === 2) applyBlink(grid);
+    paintMouth(grid, 'smile');
+    return;
+  }
+  if (kind === 'attack' && (phase === 2 || phase === 3)) {
+    paintMouth(grid, 'grit');
+  }
+}
 function applyHitReaction(base: SpriteGrid, phase: number): void {
   if (phase === 2) return;
   const upper: LimbCell[] = [];
@@ -883,8 +1096,12 @@ function applyHitReaction(base: SpriteGrid, phase: number): void {
   }
 }
 
-// Procedural victory celebration: anticipation dip then arm thrust high in the air.
-function applyVictoryPose(base: SpriteGrid, phase: number): void {
+// Procedural victory celebration: anticipation dip, then the fist pumps while
+// the finished frame hops. Only the forearm moves relative to the body: moving
+// the full arm block detached it from the shoulder and left a skin bar floating
+// beside the shirt. The hop is applied after detailing (see generateSpriteFrames)
+// so the belt, laces and collar travel with the body.
+function applyVictoryPose(base: SpriteGrid, phase: number, body: SpriteGrid): void {
   if (phase === 0) {
     const upper: LimbCell[] = [];
     for (let y = 0; y <= 14; y++) {
@@ -896,17 +1113,9 @@ function applyVictoryPose(base: SpriteGrid, phase: number): void {
     collectMove(base, upper, 0, 1);
     return;
   }
-  const fist = rightArmBlock(base);
-  if (fist.length > 0) {
-    collectMove(base, fist, 1, -2);
-  }
-  if (phase === 1 || phase === 2) {
-    const all: LimbCell[] = [];
-    base.forEach((row, y) => row.forEach((v, x) => {
-      if (v !== 0) all.push({ x, y, v });
-    }));
-    collectMove(base, all, 0, -1);
-  }
+  const fistPose: readonly [number, number] = phase === 1 ? [1, -1] : phase === 2 ? [2, -1] : [1, 0];
+  const fist = forearmBlock(base);
+  if (fist.length > 0) moveLimbRestoringBody(base, body, fist, fistPose[0], fistPose[1]);
 }
 
 function finishGrid(base: SpriteGrid, features: SpriteFeatures, pose?: (grid: SpriteGrid) => void): SpriteGrid {
@@ -1005,11 +1214,14 @@ export function generateSpriteFrames(
     const base = composeBaseGrid(features.headType, features.bodyType);
     applyBuild(base, features.build);
     applyAnatomy(base);
+    // Body snapshot before the fists grow inward: it lets a moving hand leave
+    // the shirt/waist behind instead of a transparent notch.
+    const body = base.map((row) => row.slice());
     applyFists(base);
-    if (kind === 'attack') applyAttackPose(base, phase);
+    if (kind === 'attack') applyAttackPose(base, phase, body);
     else if (kind === 'run') applyStride(base, phase as RunPhase);
     else if (kind === 'hit') applyHitReaction(base, phase);
-    else if (kind === 'victory') applyVictoryPose(base, phase);
+    else if (kind === 'victory') applyVictoryPose(base, phase, body);
 
     if (hairSway) applyHairSway(base);
     const grid = upscale(base);
@@ -1019,8 +1231,17 @@ export function generateSpriteFrames(
     // Le souffle déplace le buste déjà ombré : l'ombrage n'est pas recalculé
     // sur une grille décalée d'un demi-pixel, et le clignement suit la tête.
     if (kind === 'idle') applyIdleBreathingPx(grid, phase);
+    applyFaceExpression(grid, kind, phase);
     if (blink) applyBlink(grid);
     for (let i = 0; i < SPRITE_PAD_TOP; i++) grid.unshift(Array(SPRITE_WIDTH).fill(0));
+    // Victory hop: shift the finished frame so the laces, belt and collar move
+    // with the body instead of being repainted on stale rows.
+    if (kind === 'victory' && (phase === 1 || phase === 2)) {
+      const hop = 2;
+      for (let y = 0; y < SPRITE_HEIGHT; y++) {
+        grid[y] = y + hop < SPRITE_HEIGHT ? grid[y + hop].slice() : Array(SPRITE_WIDTH).fill(0);
+      }
+    }
     return { grid, palette, width: SPRITE_WIDTH, height: SPRITE_HEIGHT, ms };
   });
 }
