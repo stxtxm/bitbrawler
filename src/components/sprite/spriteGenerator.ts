@@ -798,24 +798,17 @@ function applyAttackPose(base: SpriteGrid, phase: number): void {
   collectMove(base, fist, pose[0], pose[1]);
 }
 
-// Respiration d'attente : le buste (tête + torse + bras) monte d'UNE cellule et
-// redescend, les pieds restent au sol. Rien d'autre : l'ancien idle balançait
-// tout le haut du corps de ±1 cellule dans TOUS les sens à chaque frame de
-// 280 ms — le personnage gigotait au lieu de respirer.
+// Respiration d'attente : le buste (tête + torse + bras) monte de 2 px de
+// sprite puis redescend, les pieds et les mains restent fixes. Le mouvement
+// est appliqué APRÈS le rendu (voir applyIdleBreathingPx), sur la grille
+// upscalée : on peut ainsi découper la montée en deux paliers de 1 px au lieu
+// d'un saut d'une cellule entière. L'ancien saut de 2 px toutes les 3,2 s
+// faisait léviter le personnage ; ce souffle monte, tient, redescend, puis
+// marque un vrai repos.
 //
-// Une cellule = 2 px de sprite : c'est le plus petit déplacement possible en
-// pixel-art, et il se fait par paliers d'une cellule (jamais un demi-pixel).
-// Deux temps de maintien (haut puis bas) donnent un souffle posé.
-const IDLE_BREATH: number[] = [
-  0, // repos
-  -1, // les épaules montent
-  -1, // le buste tient (sommet de l'inspiration)
-  -1, // maintien
-  0, // les épaules redescendent
-  0, // repos
-  0, // repos
-  0, // repos (souffle retenu)
-];
+// 10 frames de 400 ms par respiration (4 s, ~15/min) : 0→1→2, maintien en
+// haut, 2→1→0, puis 4 frames au repos. Deux respirations par boucle (8 s).
+const IDLE_BREATH_PX: readonly number[] = [0, 1, 2, 2, 2, 1, 0, 0, 0, 0];
 
 // Dernière rangée du buste qui suit la respiration : le pan de chemise, juste
 // au-dessus de la ceinture. La ceinture, le bassin et les jambes ne bougent pas
@@ -823,27 +816,21 @@ const IDLE_BREATH: number[] = [
 // le bassin faisait clignoter le haut du pantalon.
 const IDLE_BODY_BOTTOM = 12;
 
-function applyIdleBreathing(base: SpriteGrid, phase: number): void {
-  const dy = IDLE_BREATH[phase % IDLE_BREATH.length] ?? 0;
-  if (dy === 0) return;
-  const body: LimbCell[] = [];
-  for (let y = 0; y <= IDLE_BODY_BOTTOM; y++) {
-    for (let x = 0; x < (base[y]?.length ?? 0); x++) {
-      const v = base[y][x];
-      if (v !== 0) body.push({ x, y, v });
-    }
-  }
-  // Raccord : le buste monte et la ceinture est doublée d'une rangée. On ne
-  // tire PAS les pixels de la rangée du dessous (ça versait le haut du
-  // pantalon dans la ceinture et faisait clignoter son ombrage).
-  const hem = dy < 0 ? [...(base[IDLE_BODY_BOTTOM] ?? [])] : [];
-  collectMove(base, body, 0, dy);
-  if (dy < 0) {
-    for (let x = 0; x < hem.length; x++) {
-      if (hem[x] !== 0 && (base[IDLE_BODY_BOTTOM][x] ?? 0) === 0) {
-        base[IDLE_BODY_BOTTOM][x] = hem[x];
-      }
-    }
+// Décale le buste déjà ombré de `px` pixels de sprite vers le haut. On agit
+// sur la grille upscalée (24×36 avant le padding haut) pour autoriser le
+// demi-pas : un déplacement de 2 px se fait en deux paliers de 1 px, sans
+// rééchantillonnage. La rangée charnière est dupliquée pour combler le vide,
+// comme le faisait la version cellule entière ; les rangées du bas (≥ 32 une
+// fois le padding appliqué) restent intactes.
+function applyIdleBreathingPx(grid: SpriteGrid, phase: number): void {
+  const px = IDLE_BREATH_PX[phase % IDLE_BREATH_PX.length] ?? 0;
+  if (px <= 0) return;
+  const bottom = IDLE_BODY_BOTTOM * 2 + 1;
+  const seam = [...(grid[bottom] ?? [])];
+  for (let y = 0; y <= bottom; y++) {
+    const src = y + px;
+    const row = src <= bottom ? grid[src] : seam;
+    for (let x = 0; x < grid[y].length; x++) grid[y][x] = row[x] ?? 0;
   }
 }
 
@@ -969,15 +956,19 @@ interface FramePlan {
   ms?: number;
 }
 
-// L'idle fait DEUX respirations par boucle (16 frames) : le clignement
-// n'arrive donc qu'une fois toutes les ~6 s, et il dure 140 ms. Cligner à
+// L'idle fait DEUX respirations par boucle (20 frames = 8 s) : le clignement
+// n'arrive donc qu'une fois toutes les 8 s, et il dure 140 ms. Cligner à
 // chaque cycle de 1,7 s (ancien réglage) donnait un personnage qui papillonne.
-export const IDLE_BREATH_FRAMES = 8;
-export const IDLE_BLINK_FRAME = 8;
+// Chaque respiration est découpée en paliers d'un pixel de sprite (une
+// demi-cellule, voir IDLE_BREATH_PX) pour un souffle progressif plutôt qu'un
+// saut de cellule.
+export const IDLE_BREATH_FRAMES = 10;
+export const IDLE_BLINK_FRAME = 10;
 export const IDLE_BLINK_MS = 140;
 
 // Secondary motion rides the very same frame list as the body: the hair reacts
-// one beat after the body's extreme, and idle closes the eyes on its last beat.
+// one beat after the body's extreme, and idle blinks once per loop, at the
+// start of the second breath.
 function framePlanOf(kind: SpriteAnimKind): FramePlan[] {
   if (kind === 'attack') {
     return [0, 1, 2, 3, 4].map((phase) => ({ phase }));
@@ -1017,7 +1008,6 @@ export function generateSpriteFrames(
     applyFists(base);
     if (kind === 'attack') applyAttackPose(base, phase);
     else if (kind === 'run') applyStride(base, phase as RunPhase);
-    else if (kind === 'idle') applyIdleBreathing(base, phase);
     else if (kind === 'hit') applyHitReaction(base, phase);
     else if (kind === 'victory') applyVictoryPose(base, phase);
 
@@ -1026,6 +1016,9 @@ export function generateSpriteFrames(
     applySnes(grid);
     applyDetails(grid);
     applyFeatures(grid);
+    // Le souffle déplace le buste déjà ombré : l'ombrage n'est pas recalculé
+    // sur une grille décalée d'un demi-pixel, et le clignement suit la tête.
+    if (kind === 'idle') applyIdleBreathingPx(grid, phase);
     if (blink) applyBlink(grid);
     for (let i = 0; i < SPRITE_PAD_TOP; i++) grid.unshift(Array(SPRITE_WIDTH).fill(0));
     return { grid, palette, width: SPRITE_WIDTH, height: SPRITE_HEIGHT, ms };
