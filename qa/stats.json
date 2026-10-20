@@ -147609,5 +147609,313 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-10-20T22:01:23.369Z",
+    "run": "2026-10-21",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Flint Knife",
+      "rarity": "RARE",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 0,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 9,
+      "vit": 27,
+      "dex": 12,
+      "luk": 9,
+      "int": 14,
+      "foc": 11,
+      "fights": 0
+    },
+    "initial_level": 11,
+    "initial_xp": {
+      "current": 4387,
+      "max": 6273
+    },
+    "initial_max_hp": 460,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "WEAPON"
+      },
+      {
+        "slot": "💍",
+        "name": "ACCESSORY"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 12,
+      "xp": 701,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 9,
+      "vit": 28,
+      "dex": 12,
+      "luk": 9,
+      "int": 14,
+      "foc": 11,
+      "last xp": 78,
+      "fights": 4
+    },
+    "final_max_hp": 480,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "WEAPON"
+      },
+      {
+        "slot": "💍",
+        "name": "ACCESSORY"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "WEAPON"
+      },
+      {
+        "slot": "💍",
+        "name": "ACCESSORY"
+      }
+    ],
+    "lootbox_streak": 2,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 26483,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "wraith",
+        "ogre"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 117,
+      "xp_events": [
+        {
+          "time_ms": 3055,
+          "xp": 86,
+          "monster": "wraith",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 26483,
+          "xp": 31,
+          "monster": "ogre",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        509,
+        1525,
+        3055,
+        12117,
+        13643,
+        26483
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 86,
+        "essence": 0.36,
+        "monster": "wraith"
+      },
+      {
+        "result": "victory",
+        "xp": 31,
+        "essence": 0.35,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.3,
+      "next_level_eta": "⬆ 16m 24s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.05x",
+      "interval": "11.7s",
+      "streak_bonus": "🔥 1-win streak (+25%)"
+    },
+    "initial_essence": 22.83,
+    "final_essence": 14.36,
+    "essence": {
+      "before_idle": 22.83,
+      "after_idle": 23.54,
+      "per_fight": [],
+      "forge_before": 23,
+      "forge_after_salvage": 43,
+      "forge_after_fusion": 43,
+      "forge_after_upgrade": 13,
+      "forge_after": 13,
+      "shop_before": 14,
+      "shop_after": 14,
+      "final": 14.36,
+      "flow": {
+        "idle_gained": 0.71,
+        "fights_change": null,
+        "salvage_gained": 20,
+        "fusion_cost": 0,
+        "upgrade_cost": 30,
+        "forge_net": -10,
+        "shop_cost": 0,
+        "net_change": -8.47
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 23,
+      "essence_after_salvage": 43,
+      "essence_after_fusion": 43,
+      "essence_after_upgrade": 13,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 13,
+      "items_after": 1,
+      "salvage_essence_gained": 20,
+      "fusion_cost": null,
+      "upgrade_cost": 30,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 14,
+      "essence_after": 14,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Tidal Blade",
+            "rarity": "UNCOMMON",
+            "price": 27
+          },
+          {
+            "name": "Crystal Pendant",
+            "rarity": "EPIC",
+            "price": 80
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 45
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 14,
+        "essence_budget": 150,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 150
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "no_energy"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1516,
+      "arena": 732
+    },
+    "skipped_summary": {
+      "no_energy": 1
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Tidal Blade",
+          "rarity": "UNCOMMON",
+          "price": 27
+        },
+        {
+          "name": "Crystal Pendant",
+          "rarity": "EPIC",
+          "price": 80
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 45
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 14,
+      "essence_budget": 150,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
