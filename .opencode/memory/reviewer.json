@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-19T23:33:06Z",
+  "last_session": "2026-10-20T16:28:43Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,9 +21,9 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR #1255 : rollup CI ne contenait que Cloudflare Pages (aucun check lint/test/build) -> gate locale complete executee puis squash merge ; issue liee non auto-fermee apres merge, fermeture manuelle avec reference au commit",
-      "issue": "#1255",
-      "date": "2026-10-19"
+      "lesson": "PR #1259: la telemetrie purchase utilisait getShopOffers()[index] (position tableau) au lieu de l index config -> offre epique (index 3, 80 diamants) enregistree price 0 / slot_3. Piege deja connu en shared.json mais reintroduit dans un nouveau code : verifier tout usage d offer.index dans les nouvelles features shop. Rappel: les agents ne modifient jamais .github/workflows/*.yml (issue humaine sans /oc).",
+      "issue": "#1259",
+      "date": "2026-10-20"
     }
   ]
 }
