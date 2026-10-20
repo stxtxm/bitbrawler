@@ -2994,6 +2994,17 @@ async function run() {
     deviceScaleFactor: 1,
   })
 
+  // Telemetry must never count QA runs as players (#1230 part 2): the bot is a
+  // smoke test, not an audience. navigator.webdriver already disables it, this
+  // is the explicit belt-and-braces opt-out for every page of the context.
+  await context.addInitScript(() => {
+    try {
+      localStorage.setItem('bitbrawler_telemetry_v1', JSON.stringify({ enabled: false }))
+    } catch {
+      // Storage unavailable on this page (about:blank): nothing to do.
+    }
+  })
+
   const page = await context.newPage()
 
   page.on('console', msg => {

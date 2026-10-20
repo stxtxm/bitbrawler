@@ -711,6 +711,9 @@ gh workflow run qa-tester.yml
   `qa/qa-bot.config.js`) ; `shop_data.budget_limited` = offre abordable mais refusée
   car au-dessus du budget du profil → le signal prix qui remplace le taux saturé du
   persistant thésauriseur (voir #1230)
+- ✅ **Télémétrie joueur (#1230 partie 2)** — événements anonymes (session, level-up,
+  lootbox, achat, boss, mur), opt-out dans SETTINGS, rapport D1/D7 via
+  `npm run telemetry:report` ; table + SQL dans `docs/TELEMETRY.md`
 
 ### Data Usage
 

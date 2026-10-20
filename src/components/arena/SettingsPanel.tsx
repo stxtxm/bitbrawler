@@ -28,10 +28,12 @@ interface SettingsPanelProps {
   isOfflineMode: boolean;
   medalProgress?: MedalProgressMap;
   combatSpeed: CombatSpeed;
+  telemetryEnabled: boolean;
   onClose: () => void;
   onToggleAutoMode: () => void;
   onToggleSound: () => void;
   onToggleCombatSpeed: () => void;
+  onToggleTelemetry: () => void;
   onDeleteCharacter: () => void;
   onOpenLogs: () => void;
   onOpenMedals: () => void;
@@ -44,7 +46,8 @@ export const SettingsPanel = memo(function SettingsPanel({
   settingsView, autoModeEnabled, autoModeUpdating, soundEnabled,
   deleteStep, deletePending, combinedHistory, isOfflineMode, medalProgress,
   combatSpeed,
-  onClose, onToggleAutoMode, onToggleSound, onToggleCombatSpeed, onDeleteCharacter,
+  telemetryEnabled,
+  onClose, onToggleAutoMode, onToggleSound, onToggleCombatSpeed, onToggleTelemetry, onDeleteCharacter,
   onOpenLogs, onOpenMedals, onOpenCompendium, onReturnToMain, onSetDeleteStep,
 }: SettingsPanelProps) {
   const groupedMedals = useMemo(() => getMedalsByCategory(), []);
@@ -178,6 +181,28 @@ export const SettingsPanel = memo(function SettingsPanel({
                     <span className="switch-text">{soundEnabled ? 'ON' : 'OFF'}</span>
                   </button>
                 </div>
+              </div>
+
+              <div className="settings-divider" />
+
+              <div className="settings-section">
+                <div className="settings-row">
+                  <div className="settings-label">
+                    <span>ANONYMOUS STATS</span>
+                    <span className="settings-sub">Help tune the game. No account, no personal data.</span>
+                  </div>
+                  <button
+                    className={`pixel-switch ${telemetryEnabled ? 'on' : 'off'}`}
+                    onClick={onToggleTelemetry}
+                    role="switch"
+                    aria-checked={telemetryEnabled}
+                    aria-label="Anonymous stats"
+                  >
+                    <span className="switch-knob" />
+                    <span className="switch-text">{telemetryEnabled ? 'ON' : 'OFF'}</span>
+                  </button>
+                </div>
+                <div className="settings-hint">Turning this off deletes the anonymous device id.</div>
               </div>
 
               <div className="settings-divider" />
