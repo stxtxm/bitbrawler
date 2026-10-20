@@ -148,12 +148,12 @@ describe('sprite generator v2', () => {
       expect(browRow.some((c, x) => c === BROW_INDEX && x >= x0 - 1 && x <= x1)).toBe(true);
       expect(grid[eyeTop - 1][x0 + 1]).not.toBe(BROW_INDEX);
     }
-    // A shade-skin nose sits below the eyes, and the neutral mouth is compact
-    // (two pixels), not the four-pixel red bar that read as a moustache.
+    // A shade-skin nose sits below the eyes, and the neutral mouth is a 3px
+    // line with one lower-lip pixel, not the four-pixel red bar that read as a
+    // moustache nor the 2x2 square that read as a red nose at 5x scale.
     expect((grid[eyeTop + 2] ?? []).filter((c) => c === shadeIndexOf(1)).length).toBeGreaterThan(0);
-    const mouthXs = (grid[eyeTop + 3] ?? []).filter((c) => c === 3).length;
-    expect(mouthXs).toBeGreaterThan(0);
-    expect(mouthXs).toBeLessThanOrEqual(2);
+    expect((grid[eyeTop + 3] ?? []).filter((c) => c === 3).length).toBe(3);
+    expect((grid[eyeTop + 4] ?? []).filter((c) => c === highlightIndexOf(3)).length).toBe(1);
     expect(grid[24].filter((c) => c === 11).length).toBeGreaterThanOrEqual(2);
   });
 
