@@ -147303,5 +147303,311 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-10-20T21:00:55.192Z",
+    "run": "2026-10-20",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 0,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 9,
+      "vit": 27,
+      "dex": 12,
+      "luk": 9,
+      "int": 14,
+      "foc": 11,
+      "fights": 0
+    },
+    "initial_level": 11,
+    "initial_xp": {
+      "current": 1377,
+      "max": 6273
+    },
+    "initial_max_hp": 460,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "WEAPON"
+      },
+      {
+        "slot": "💍",
+        "name": "ACCESSORY"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 11,
+      "xp": 4118,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 9,
+      "vit": 27,
+      "dex": 12,
+      "luk": 9,
+      "int": 14,
+      "foc": 11,
+      "last xp": 66,
+      "fights": 4
+    },
+    "final_max_hp": 460,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "WEAPON"
+      },
+      {
+        "slot": "💍",
+        "name": "ACCESSORY"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "WEAPON"
+      },
+      {
+        "slot": "💍",
+        "name": "ACCESSORY"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 26581,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "wraith",
+        "wolf"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 106,
+      "xp_events": [
+        {
+          "time_ms": 3079,
+          "xp": 81,
+          "monster": "wraith",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 26581,
+          "xp": 25,
+          "monster": "wolf",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        512,
+        1540,
+        3079,
+        11670,
+        13209,
+        26581
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 81,
+        "essence": 0.32,
+        "monster": "wraith"
+      },
+      {
+        "result": "victory",
+        "xp": 25,
+        "essence": 0.31,
+        "monster": "wolf"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.27,
+      "next_level_eta": "⬆ 5m 57s",
+      "power_ratio": "⚔ 0.51x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.05x",
+      "interval": "11.7s",
+      "streak_bonus": "🔥 1-win streak (+15%)"
+    },
+    "initial_essence": 25.63,
+    "final_essence": 20.52,
+    "essence": {
+      "before_idle": 25.63,
+      "after_idle": 26.26,
+      "per_fight": [],
+      "forge_before": 26,
+      "forge_after_salvage": 46,
+      "forge_after_fusion": 46,
+      "forge_after_upgrade": 46,
+      "forge_after": 46,
+      "shop_before": 47,
+      "shop_after": 20,
+      "final": 20.52,
+      "flow": {
+        "idle_gained": 0.63,
+        "fights_change": null,
+        "salvage_gained": 20,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 20,
+        "shop_cost": 27,
+        "net_change": -5.11
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 26,
+      "essence_after_salvage": 46,
+      "essence_after_fusion": 46,
+      "essence_after_upgrade": 46,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": 46,
+      "items_after": null,
+      "salvage_essence_gained": 20,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 27,
+      "essence_before": 47,
+      "essence_after": 20,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Hunter Bow",
+            "rarity": "UNCOMMON",
+            "price": 27
+          },
+          {
+            "name": "Crystal Pendant",
+            "rarity": "EPIC",
+            "price": 80
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 45
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 20,
+        "essence_budget": 150,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 150
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "no_energy"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1349,
+      "arena": 12672
+    },
+    "skipped_summary": {
+      "no_energy": 1
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Hunter Bow",
+          "rarity": "UNCOMMON",
+          "price": 27
+        },
+        {
+          "name": "Crystal Pendant",
+          "rarity": "EPIC",
+          "price": 80
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 45
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 20,
+      "essence_budget": 150,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
