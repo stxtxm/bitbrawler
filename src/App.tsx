@@ -10,11 +10,24 @@ import { PushOptInBanner } from './components/PushOptInBanner'
 import { buildPushSubscriptionUpdate } from './hooks/usePushReminders'
 import type { SerializedPushSubscription } from './utils/pushNotifications'
 import { isPushSupported } from './utils/pushNotifications'
+import { initTelemetry, setTelemetryLevel } from './utils/telemetry'
 
 function App() {
   useEffect(() => { initClickSound() }, [])
   const { activeCharacter, loading, dbAvailable, lastUnlockedMedal, clearMedalNotification, updatePushSubscription } = useGame()
   const isOnline = useOnlineStatus()
+
+  // Anonymous retention telemetry (#1230): one session_start per page load,
+  // and the player's level attached to every event. Inert until the character
+  // is loaded so the first payload already carries the level.
+  useEffect(() => {
+    setTelemetryLevel(activeCharacter?.level)
+  }, [activeCharacter?.level])
+
+  useEffect(() => {
+    if (loading) return
+    initTelemetry({ level: activeCharacter?.level })
+  }, [loading, activeCharacter?.level])
 
   const handlePushSubscribe = (subscription: SerializedPushSubscription) => {
     updatePushSubscription(buildPushSubscriptionUpdate(subscription))

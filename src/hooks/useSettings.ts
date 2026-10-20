@@ -2,6 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Character } from '../types/Character';
 import { SettingsLogEntry } from '../utils/arenaUtils';
 import { GAME_RULES, type CombatSpeed } from '../config/gameRules';
+import {
+  getTelemetryPreference,
+  setTelemetryEnabled as applyTelemetryPreference,
+} from '../utils/telemetry';
 
 type SettingsView = 'main' | 'logs' | 'medals' | 'compendium';
 type DeleteStep = 'idle' | 'confirm';
@@ -55,6 +59,7 @@ export const useSettings = ({
   const [deleteStep, setDeleteStep] = useState<DeleteStep>('idle');
   const [deletePending, setDeletePending] = useState(false);
   const [combatSpeed, setCombatSpeed] = useState<CombatSpeed>(readStoredCombatSpeed);
+  const [telemetryEnabled, setTelemetryEnabledState] = useState<boolean>(getTelemetryPreference);
 
   const autoModeEnabled = !!character?.autoMode;
 
@@ -122,6 +127,14 @@ export const useSettings = ({
       } catch {
         return prev;
       }
+      return next;
+    });
+  }, []);
+
+  const handleToggleTelemetry = useCallback(() => {
+    setTelemetryEnabledState((prev) => {
+      const next = !prev;
+      applyTelemetryPreference(next);
       return next;
     });
   }, []);
@@ -199,5 +212,8 @@ export const useSettings = ({
     combatSpeed,
     handleToggleCombatSpeed,
     onToggleCombatSpeed: handleToggleCombatSpeed,
+    telemetryEnabled,
+    handleToggleTelemetry,
+    onToggleTelemetry: handleToggleTelemetry,
   };
 };

@@ -34,7 +34,7 @@ import {
   performFusion,
   performUpgrade,
 } from '../utils/forgeUtils';
-import { buyShopOffer as buyShopOfferUtil, rerollShopOffers as rerollShopOffersUtil, type ShopOffer } from '../utils/shopUtils';
+import { buyShopOffer as buyShopOfferUtil, getShopOffers, rerollShopOffers as rerollShopOffersUtil, type ShopOffer } from '../utils/shopUtils';
 import { completeRecoveryQuest, getConsecutiveLosses, getSecondWindEssence, recordRecovery, startRecoveryQuest } from '../utils/comebackUtils';
 import { markOfferPurchased, markRerollUsed } from '../utils/shopStorage';
 import {
@@ -44,6 +44,7 @@ import {
 } from '../utils/medalUtils';
 import type { MedalDef, SpecialMedalContext } from '../utils/medalUtils';
 import { usePushReminders, type PushSubscriptionUpdate } from '../hooks/usePushReminders';
+import { setTelemetryLevel, trackEvent, trackFightOutcome } from '../utils/telemetry';
 
 interface GameContextType {
   activeCharacter: Character | null;
@@ -130,6 +131,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const current = charRef.current;
     const guarded = coerceMonotonicProgress(character, current);
     const normalized = normalizeCharacter(guarded);
+    // Single choke point for every level change (PvP, boss, idle, offline
+    // merge): the monotonic guard already dropped stale snapshots, so any
+    // remaining increase is a real level-up worth one telemetry row (#1230).
+    if (current && normalized.level > current.level) {
+      trackEvent('level_up', { from: current.level, to: normalized.level });
+    }
+    setTelemetryLevel(normalized.level);
     charRef.current = normalized;
     setActiveCharacter(normalized);
     saveLocalData(normalized);
@@ -664,6 +672,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         if (error) throw error;
 
         persistCharacter(updatedChar);
+        trackFightOutcome(won, updatedChar.level, consecutiveLosses);
         initiatedMatchmakingRef.current = false;
         // Clear stale debounced sync (old 0xp) that would overwrite fresh XP on next flush/logout
         pendingSyncCharRef.current = null;
@@ -830,6 +839,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
 
     persistCharacter(updatedChar);
+    trackEvent('boss_attempt', { boss: bossName, won });
     // Clear stale debounced sync that would overwrite fresh XP
     pendingSyncCharRef.current = null;
     if (syncToBackendTimeoutRef.current !== null) {
@@ -1257,6 +1267,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       }
 
       persistCharacter(updatedChar);
+      trackEvent('lootbox_opened', { rarity: String(result.item.rarity ?? 'unknown') });
 
       // Best-effort pity persistence (lootbox_pity column, migration #692).
       // Emitted via the explicit fields param only — silently ignored while the
@@ -1559,6 +1570,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         })
         .eq('id', baseChar.id!);
       persistCharacter(normalized);
+      const purchasedOffer = getShopOffers(baseChar, ITEM_ASSETS)[index];
+      trackEvent('purchase', {
+        offer: purchasedOffer?.label ?? `slot_${index}`,
+        price: purchasedOffer?.price ?? 0,
+      });
       // Mark sold-out ONLY after persistence succeeded — marking earlier showed
       // SOLD while a transient failure left essence/inventory untouched.
       markOfferPurchased(baseChar.id!, index, new Date().toISOString().slice(0, 10));
