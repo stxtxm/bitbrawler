@@ -32,6 +32,12 @@ export const SHADE_OFFSET = 30;
 export const HIGHLIGHT_OFFSET = 40;
 export const TRIM_INDEX = 60;
 export const ACCENT_INDEX = 61;
+/**
+ * Trait de visage sombre, dérivé de la couleur de cheveux : sourcils et
+ * pupilles. Un index à part évite de réutiliser l'ombre du vêtement (qui
+ * disparaît sur les cheveux clairs) ou le blanc des yeux.
+ */
+export const BROW_INDEX = 62;
 
 export const shadeIndexOf = (base: number): number => SHADE_OFFSET + base;
 export const highlightIndexOf = (base: number): number => HIGHLIGHT_OFFSET + base;

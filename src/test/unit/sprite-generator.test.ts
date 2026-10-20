@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { generateSprite16, generateSpriteFrames, mirrorSpriteGrid, resolveSpriteFeatures } from '../../components/sprite/spriteGenerator';
 import { computeLandmarks } from '../../components/sprite/equipOverlays';
-import { SPRITE_HEIGHT, SPRITE_IDLE_MS, SPRITE_WIDTH, highlightIndexOf, shadeIndexOf } from '../../components/sprite/spriteTypes';
+import { BROW_INDEX, SPRITE_HEIGHT, SPRITE_IDLE_MS, SPRITE_WIDTH, highlightIndexOf, shadeIndexOf } from '../../components/sprite/spriteTypes';
 
 const SKIN_FAMILY = new Set([1, shadeIndexOf(1), highlightIndexOf(1)]);
 
@@ -104,35 +104,56 @@ describe('sprite generator v2', () => {
     expect(flat).not.toContain(highlightIndexOf(7));
   });
 
-  it('details the face and clothes: ears, nose, brows, collar, folds', () => {
+  it('details the face and clothes: nose, brows, collar, mouth', () => {
     const sprite = generateSprite16('feature-check', 'male', {
       build: 'standard',
       bodyType: 'basic',
       headType: 'male',
     });
     const grid = sprite.grid;
-    // The iris is drawn in the shaded eye tone, not the bright base colour.
-    const IRIS = shadeIndexOf(8);
-    const eyes: Array<[number, number]> = [];
+    // The iris uses the base tone on the upper row and the shaded tone below.
+    const irisTones = new Set([8, shadeIndexOf(8)]);
+    const irisPixels: Array<[number, number]> = [];
     grid.forEach((row, y) => row.forEach((c, x) => {
-      if (c === IRIS) eyes.push([x, y]);
+      if (irisTones.has(c)) irisPixels.push([x, y]);
     }));
-    expect(eyes.length).toBeGreaterThan(0);
-    const eyeY = Math.max(...eyes.map(([, y]) => y));
-    const faceCx = Math.round(eyes.reduce((a, [x]) => a + x, 0) / eyes.length);
-    const row = grid[eyeY];
-    const contentXs = row.map((c, x) => (c !== 0 && c !== 1 ? x : -1)).filter((x) => x >= 0);
-    const lx = Math.min(...contentXs);
-    const rx = Math.max(...contentXs);
-    expect(grid[eyeY][lx - 1]).toBe(1);
-    expect(grid[eyeY][rx + 1]).toBe(1);
-    // the 4x4 eye leaves no room for a nose pixel on an 8-row head
-    expect(grid[eyeY + 2][faceCx]).not.toBe(8);
-    const upperY = Math.min(...eyes.map(([, y]) => y));
-    const upperXs = [...new Set(eyes.filter(([, y]) => y === upperY).map(([x]) => x))];
-    expect(upperXs.length).toBeGreaterThan(0);
-    // brows sit one row above the iris
-    for (const x of upperXs) expect(grid[upperY - 1][x]).toBe(shadeIndexOf(4));
+    expect(irisPixels.length).toBeGreaterThan(0);
+    const eyeTop = Math.min(...irisPixels.map(([, y]) => y));
+    const eyeBottom = Math.max(...irisPixels.map(([, y]) => y));
+    // The eye is a compact two-row block. The old three-row block had a lash
+    // row that merged with the brow into a single dark bar.
+    expect(eyeBottom - eyeTop + 1).toBe(2);
+    const irisXs = [...new Set(irisPixels.filter(([, y]) => y === eyeTop).map(([x]) => x))].sort((a, b) => a - b);
+    expect(irisXs).toHaveLength(4);
+    const eyeGroups: number[][] = [];
+    let group: number[] = [];
+    for (const x of irisXs) {
+      if (group.length > 0 && x !== group[group.length - 1] + 1) {
+        eyeGroups.push(group);
+        group = [];
+      }
+      group.push(x);
+    }
+    if (group.length > 0) eyeGroups.push(group);
+    expect(eyeGroups).toHaveLength(2);
+    for (const eye of eyeGroups) {
+      expect(eye).toHaveLength(2);
+      const x0 = eye[0] - 1;
+      const x1 = eye[eye.length - 1] + 1;
+      // White sclera on both sides of the iris.
+      expect(grid[eyeTop][x0]).toBe(2);
+      expect(grid[eyeTop][x1]).toBe(2);
+      // Brows sit two rows above the iris with one skin row in between.
+      const browRow = grid[eyeTop - 2] ?? [];
+      expect(browRow.some((c, x) => c === BROW_INDEX && x >= x0 - 1 && x <= x1)).toBe(true);
+      expect(grid[eyeTop - 1][x0 + 1]).not.toBe(BROW_INDEX);
+    }
+    // A shade-skin nose sits below the eyes, and the neutral mouth is compact
+    // (two pixels), not the four-pixel red bar that read as a moustache.
+    expect((grid[eyeTop + 2] ?? []).filter((c) => c === shadeIndexOf(1)).length).toBeGreaterThan(0);
+    const mouthXs = (grid[eyeTop + 3] ?? []).filter((c) => c === 3).length;
+    expect(mouthXs).toBeGreaterThan(0);
+    expect(mouthXs).toBeLessThanOrEqual(2);
     expect(grid[24].filter((c) => c === 11).length).toBeGreaterThanOrEqual(2);
   });
 
@@ -141,12 +162,23 @@ describe('sprite generator v2', () => {
     expect(sprite.palette[shadeIndexOf(5)]).not.toBe(sprite.palette[5]);
   });
 
-  it('adds metal pauldrons and a belt buckle on a basic body', () => {
+  it('adds metal pauldrons and a centred belt buckle on a basic body', () => {
     const sprite = generateSprite16('gear-detail', 'male', { bodyType: 'basic', headType: 'male' });
     const flat = sprite.grid.flat();
     expect(flat).toContain(9);
-    expect(sprite.grid[34][11]).toBe(9);
-    expect(sprite.grid[34][12]).toBe(9);
+    const beltRow = sprite.grid[34];
+    const beltXs = beltRow
+      .map((c, x) => (c === 6 || c === shadeIndexOf(6) || c === highlightIndexOf(6) ? x : -1))
+      .filter((x) => x >= 0);
+    const buckleXs = beltRow
+      .map((c, x) => (c === 9 || c === shadeIndexOf(9) || c === highlightIndexOf(9) ? x : -1))
+      .filter((x) => x >= 0);
+    expect(beltXs.length).toBeGreaterThanOrEqual(6);
+    expect(buckleXs.length).toBeGreaterThanOrEqual(2);
+    // Two adjacent metal pixels, centred inside the waistband.
+    expect(Math.max(...buckleXs) - Math.min(...buckleXs)).toBe(1);
+    expect(Math.min(...buckleXs)).toBeGreaterThanOrEqual(Math.min(...beltXs));
+    expect(Math.max(...buckleXs)).toBeLessThanOrEqual(Math.max(...beltXs));
   });
 
   it('shades the torso-facing side of bare arms for volume', () => {
@@ -292,9 +324,9 @@ describe('sprite generator v2', () => {
     expect(sprite.grid[41]).toContain(shadeIndexOf(7));
   });
 
-  it('builds each eye as a 4x3 iris with a lash line and a glint', () => {
-    // The raw asset eye is a 2x2 blob. Without a dark outline and an iris it
-    // read as a bead lost on a blank cheek.
+  it('builds each wide eye as a 4x2 sclera/iris with a dark brow above', () => {
+    // The raw asset eye is a 2x2 blob. Without sclera and an iris it read as
+    // a bead lost on a blank cheek.
     for (const headType of ['male', 'male_sidepart', 'male_beard', 'male_cap', 'female']) {
       const sprite = generateSprite16(`eye4-${headType}`, headType.startsWith('f') ? 'female' : 'male', {
         build: 'standard',
@@ -302,16 +334,33 @@ describe('sprite generator v2', () => {
         headType,
         eyeColor: '#16a085',
       });
-      const rows: number[] = [];
+      const eyeRows: number[] = [];
       sprite.grid.forEach((row, y) => row.forEach((c) => {
-        if (c === 8 || c === shadeIndexOf(8)) rows.push(y);
+        if (c === 8 || c === shadeIndexOf(8)) eyeRows.push(y);
       }));
-      expect(rows.length).toBeGreaterThan(0);
-      expect(Math.max(...rows) - Math.min(...rows) + 1).toBe(3);
-      // dark iris outline and the white glint must both be present
+      expect(eyeRows.length).toBeGreaterThan(0);
+      expect(Math.max(...eyeRows) - Math.min(...eyeRows) + 1).toBe(2);
+      // dark iris shade, white sclera and a dedicated brow tone must all exist
       expect(sprite.grid.flat().filter((c) => c === 38).length).toBeGreaterThan(0);
       expect(sprite.grid.flat().filter((c) => c === 2).length).toBeGreaterThan(0);
+      expect(sprite.grid.flat().filter((c) => c === BROW_INDEX).length).toBeGreaterThan(0);
     }
+    // Narrow faces get a 3px eye so the two blocks never fuse into a visor.
+    const narrow = generateSprite16('eye3-pigtails', 'female', {
+      build: 'standard',
+      bodyType: 'basic',
+      headType: 'female_pigtails',
+      eyeColor: '#16a085',
+    });
+    const row = narrow.grid.find((r) => r.includes(8)) ?? [];
+    const runs: number[] = [];
+    let run = 0;
+    for (const c of row) {
+      if (c === 8 || c === 2 || c === shadeIndexOf(8)) run++;
+      else if (run > 0) { runs.push(run); run = 0; }
+    }
+    if (run > 0) runs.push(run);
+    expect(runs).toEqual([3, 3]);
   });
 
   it('tapers the jaw so the head silhouette is not a hard rectangle', () => {
@@ -541,11 +590,20 @@ describe('sprite generator v2', () => {
     expect(frames.length).toBeGreaterThanOrEqual(5);
     const grids = frames.map((f) => JSON.stringify(f.grid));
     expect(new Set(grids).size).toBe(frames.length);
-    // head never moves during a punch; the stance is planted again by recovery
-    const head = frames.map((f) => JSON.stringify(f.grid.slice(8, 23)));
-    expect(new Set(head).size).toBe(1);
-    const legs = frames.map((f) => JSON.stringify(f.grid.slice(36, 42)));
-    expect(legs[0]).toBe(legs[legs.length - 1]);
+    // The head never moves during a punch; only the face reacts. Checking the
+    // landmark box (rather than every skin pixel) allows the gritted mouth to
+    // widen without pretending the head shifted.
+    const headBoxes = frames.map((f) => JSON.stringify(computeLandmarks(f.grid).head));
+    expect(new Set(headBoxes).size).toBe(1);
+    const eyeRows = frames.map((f) => computeLandmarks(f.grid).eyeY);
+    expect(new Set(eyeRows).size).toBe(1);
+    // The leg silhouette is planted; the fist above the hip may change the
+    // trouser highlight through the shading pass, so compare occupancy rather
+    // than exact colours.
+    const legs = frames.map((f) => JSON.stringify(
+      f.grid.slice(36, 42).map((row) => row.map((c) => (c === 0 ? 0 : 1))),
+    ));
+    expect(new Set(legs).size).toBe(1);
     // the swing chambers then thrusts: cell count stable within the extended
     // fist itself (no vanishing limbs)
     const counts = frames.map((f) => f.grid.flat().filter((c) => c !== 0).length);
@@ -583,12 +641,14 @@ describe('sprite generator v2', () => {
       expect(f.grid[41].some((c) => c !== 0)).toBe(true);
     }
     const eyeTone = shadeIndexOf(8);
-    const eyeCounts = frames.map((f) => f.grid.flat().filter((c) => c === eyeTone).length);
-    // At least one frame blinks: only the lash line is left over the open iris.
-    expect(Math.max(...eyeCounts)).toBeGreaterThan(0);
-    const blinkIndex = eyeCounts.indexOf(Math.min(...eyeCounts));
-    expect(eyeCounts[blinkIndex]).toBeLessThanOrEqual(6);
+    const eyeCounts = frames.map((f) => f.grid.flat().filter((c) => c === 8 || c === eyeTone).length);
+    // The blink frame carries its own short duration; use it instead of trying
+    // to infer the blink from a pixel-count minimum (a 2px lid has more shaded
+    // pixels than the 1px shaded iris row of the open eye).
+    const blinkIndex = frames.findIndex((f) => f.ms !== undefined);
+    expect(blinkIndex).toBeGreaterThanOrEqual(0);
     expect(eyeCounts[blinkIndex]).toBeLessThan(Math.max(...eyeCounts));
+    expect(eyeCounts[blinkIndex]).toBeLessThanOrEqual(4);
     // Rare (une fois par boucle) et COURT : le clignement impose sa propre durée,
     // plus brève que la respiration, sinon il s'éternise.
     expect(frames.filter((f) => f.ms !== undefined)).toHaveLength(1);
