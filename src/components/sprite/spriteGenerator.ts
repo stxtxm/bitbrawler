@@ -18,16 +18,17 @@ import {
   shadeIndexOf,
 } from './spriteTypes';
 import {
-  CLOTH_TONES_16,
   EYE_TONES_16,
   HAIR_TONES_16,
   OUTLINE_HEX,
-  PANTS_TONES_16,
+  OUTFIT_SCHEMES,
   SKIN_TONES_16,
   deepShadeHex,
   mixHex,
+  shadeHex,
   shiftHex,
 } from './spritePalettes';
+import { pickBodyType, pickHeadType } from './headSelection';
 
 export interface SpriteFeatures {
   skinColor: string;
@@ -47,6 +48,18 @@ const EDGE_BASES = new Set([1, 3, 4, 5, 6, 7, 9, 11, 12]);
 const RAMP_BASES = new Set([1, 4, 5, 6, 12]);
 const LIGHT_BASES = new Set([1, 4, 5, 6]);
 
+// Heads where the raw cap of hair ends in a straight line. A one-row fringe
+// sweep on the viewer-left gives these cuts a part instead of a helmet brim.
+// Caps, helmets, masks and bald heads are excluded: moving their brim/hairline
+// would break the headwear silhouette.
+const FRINGE_HEAD_TYPES: ReadonlySet<string> = new Set([
+  'male', 'male_beard', 'male_mohawk', 'male_sidepart', 'male_spiky',
+  'male_afro', 'male_glasses', 'male_long', 'male_undercut', 'male_dreadlocks',
+  'female', 'female_pigtails', 'female_braid', 'female_ponytail', 'female_short',
+  'female_bob', 'female_waves', 'female_afro', 'female_pixie', 'female_bang',
+  'female_bun', 'female_twintails', 'female_goth',
+]);
+
 export function resolveSpriteFeatures(
   seed: string,
   gender: 'male' | 'female',
@@ -62,16 +75,17 @@ export function resolveSpriteFeatures(
   const fallbackBuild: SpriteBuild = SPRITE_BUILDS[seedNum % SPRITE_BUILDS.length];
   const headType = appearance?.headType && appearance.headType in PIXEL_HEADS
     ? appearance.headType
-    : pick(headPool);
+    : pickHeadType(headPool, rng);
   const bodyType = appearance?.bodyType && appearance.bodyType in PIXEL_BODIES
     ? appearance.bodyType
-    : pick(bodyPool);
-  const shirtColor = appearance?.shirtColor ?? pick(CLOTH_TONES_16);
+    : pickBodyType(bodyPool, rng);
+  const outfit = pick(OUTFIT_SCHEMES);
+  const shirtColor = appearance?.shirtColor ?? outfit.shirt;
   return {
     skinColor: appearance?.skinColor ?? pick(SKIN_TONES_16),
     hairColor: appearance?.hairColor ?? pick(HAIR_TONES_16),
     shirtColor,
-    pantsColor: appearance?.pantsColor ?? pick(PANTS_TONES_16),
+    pantsColor: appearance?.pantsColor ?? outfit.pants,
     shoesColor: '#333333',
     eyeColor: appearance?.eyeColor ?? pick(EYE_TONES_16),
     // Tonal, not a random hue: a clashing random colour turned the collar and
@@ -89,8 +103,9 @@ function basePaletteOf(features: SpriteFeatures): SpritePalette {
     1: features.skinColor,
     2: '#FFFFFF',
     // Rosé dérivé du teint : le rouge brique fixe faisait une moustache sombre
-    // sur tous les visages, quel que soit le phototype.
-    3: mixHex(features.skinColor, '#8e2f2f', 0.64),
+    // sur tous les visages, quel que soit le phototype. Mélangé à l'ombre de la
+    // peau, il reste une lèvre sans devenir un nez de clown à l'échelle 5x.
+    3: mixHex(shadeHex(features.skinColor), '#6b3a2e', 0.45),
     4: features.hairColor,
     5: features.shirtColor,
     6: features.pantsColor,
@@ -417,16 +432,17 @@ function findMouth(grid: SpriteGrid): MouthBox | null {
   return { y0, y1, left, right };
 }
 
-// Lips derived from the skin tone: a dark upper line and a lighter lower lip.
-// Neutral is a three-pixel line with one lower-lip pixel; expressions widen to
-// four with two lower-lip pixels. A 2x2 square read as a red nose at 5x scale.
+// Lips derived from the skin tone: a muted dark upper line and a lighter lower
+// lip on expressions. Neutral is a three-pixel line with no lower lip; a 2x2
+// square read as a red nose at 5x scale, and the T-shaped version as a tongue.
 function paintMouth(grid: SpriteGrid, shape: MouthShape, centerX?: number): void {
   const mouth = findMouth(grid);
   if (!mouth) return;
   const { y0, left: rawLeft, right: rawRight } = mouth;
   const y1 = mouth.y1 > y0 ? mouth.y1 : y0 + 1;
   const center = centerX ?? (rawLeft + rawRight) / 2;
-  // Neutral lets the character rest; a 2px mouth is a mouth, not a moustache.
+  // Neutral lets the character rest; a three-pixel line is a mouth, not a
+  // moustache.
   // Expressions widen it to 4px so the smile / teeth remain readable.
   const wide = shape !== 'neutral';
   // The nose is rounded to the nearest pixel, so centre a 3px neutral mouth on
@@ -453,6 +469,9 @@ function paintMouth(grid: SpriteGrid, shape: MouthShape, centerX?: number): void
     for (let x = mid0; x <= mid1; x++) row1[x] = highlightIndexOf(3);
     return;
   }
+  // Neutral is a single dark line directly under the nose. The old bright red
+  // T with a lower lip read as a nose/moustache; a muted brown one-row line
+  // does not, and sitting it on the lower row made the chin look long.
   for (let x = left; x <= right; x++) row0[x] = 3;
   if (shape === 'grit') {
     for (let x = left; x <= right; x++) row1[x] = 3;
@@ -460,7 +479,6 @@ function paintMouth(grid: SpriteGrid, shape: MouthShape, centerX?: number): void
     row1[mid1] = 2;
     return;
   }
-  row1[mid0] = highlightIndexOf(3);
 }
 
 // The forehead under the fringe receives one step of skin shadow. Without it
@@ -479,23 +497,65 @@ function applyFringeShadow(grid: SpriteGrid, eyeTop: number): void {
   }
 }
 
-function applyFeatures(grid: SpriteGrid): void {
+// Lower the hairline by one row on the viewer-left side of the forehead. The
+// raw hair is a flat cap; this single asymmetric row reads as a side-swept
+// fringe (and the fringe shadow below gives it depth) without cutting holes in
+// the hairstyle. Destinations are skin-only, so a bang/hat is left untouched.
+function styleSideFringe(grid: SpriteGrid, headType: string, eyeTop: number, faceCx: number): void {
+  if (!FRINGE_HEAD_TYPES.has(headType)) return;
+  const isHair = (v: number): boolean =>
+    v === 4 || v === shadeIndexOf(4) || v === highlightIndexOf(4);
+  const isSkin = (v: number): boolean =>
+    v === 1 || v === shadeIndexOf(1) || v === highlightIndexOf(1);
+  const start = Math.floor(faceCx) - 4;
+  const end = Math.floor(faceCx) - 1;
+  for (let x = start; x <= end; x++) {
+    if (x < 0 || x >= grid[0].length) continue;
+    let fringeY = -1;
+    for (let y = 0; y <= eyeTop - 3 && y < grid.length; y++) {
+      if (isHair(grid[y]?.[x] ?? 0)) fringeY = y;
+    }
+    if (fringeY < 0 || fringeY + 1 >= grid.length) continue;
+    if (!isSkin(grid[fringeY + 1]?.[x] ?? 0)) continue;
+    grid[fringeY + 1][x] = 4;
+  }
+  // A single lit cell on the outer edge of the new fringe; the rest stays the
+  // hair base so the sweep is not a solid second cap.
+  const litX = start;
+  for (let y = 0; y <= eyeTop - 2; y++) {
+    if (grid[y]?.[litX] === 4) {
+      grid[y][litX] = highlightIndexOf(4);
+      break;
+    }
+  }
+}
+
+// Raw heads paint a checkerboard of skin shade on one cheek. At 24x42 those
+// patches run down the face like a long nose or a bruise, and they are not
+// mirrored. Flatten the shade inside the face before adding features; the raw
+// jaw row, the fringe shadow and the nose keep enough volume to avoid a mask.
+function cleanFaceSkin(grid: SpriteGrid, eyeTop: number): void {
+  if (eyeTop > 20) return;
+  const shade = shadeIndexOf(1);
+  const top = Math.max(1, eyeTop - 3);
+  const bottom = Math.min(grid.length - 2, eyeTop + 5);
+  for (let y = top; y <= bottom; y++) {
+    const row = grid[y];
+    for (let x = 0; x < row.length; x++) {
+      if (row[x] === shade) row[x] = 1;
+    }
+  }
+}
+
+function applyFeatures(grid: SpriteGrid, headType: string): void {
   const set = (x: number, y: number, v: number, onlyIf: number): void => {
     if (y < 0 || y >= grid.length || x < 0 || x >= grid[0].length) return;
     if (grid[y][x] === onlyIf) grid[y][x] = v;
   };
-  // Hair underside: the fringe/sideburns get one step of shadow where they
-  // meet skin. Without it the hair was a flat coloured cap sitting on a flat
-  // forehead; this single row gives the mass a bottom plane.
-  for (let y = 0; y < grid.length - 1; y++) {
-    for (let x = 0; x < grid[y].length; x++) {
-      if (grid[y][x] !== 4) continue;
-      const below = grid[y + 1]?.[x] ?? 0;
-      if (below === 1 || below === shadeIndexOf(1) || below === highlightIndexOf(1)) {
-        grid[y][x] = shadeIndexOf(4);
-      }
-    }
-  }
+  // No hair-underside band. A full row of dark hair where the fringe met the
+  // forehead read as a headband/visor on every light-haired head. The fringe
+  // shadow below paints the forehead instead, so the hair keeps its volume
+  // without looking like a helmet.
   let eyeFirstY = 99;
   const eyeXs: number[] = [];
   for (let y = 2; y <= 17; y++) {
@@ -523,27 +583,23 @@ function applyFeatures(grid: SpriteGrid): void {
     }
     if (run.length) eyeGroups.push(run);
   }
-  // Rebuild each eye as a 4x2 block: white sclera, a two-pixel coloured iris
-  // and a dark pupil. The old 3x3 block was a solid shaded iris with one white
-  // dot; at 24x42 it read as a pair of goggles. Narrow faces (pigtails) only
-  // have four pixels between the raw eyes, so they use a 3px variant: two 4px
-  // eyes touched and looked like a single visor.
+  // Rebuild each eye as a 3x2 block: one white sclera column, a two-pixel
+  // coloured iris and a dark pupil on the lower-right. The previous 4x2 eye
+  // filled two thirds of the face and read as a goggle; 3px is the pixel-art
+  // sweet spot on a 12px head.
   const IRIS = 8;
   const eyeTone = shadeIndexOf(IRIS);
   const eyeTop = eyeFirstY;
+  const EYE_W = 3;
   const isSkinTone = (v: number): boolean =>
     v === 1 || v === shadeIndexOf(1) || v === highlightIndexOf(1);
-  const eyeCenters = eyeGroups.map((group) => Math.round((group[0] + group[group.length - 1]) / 2));
-  const narrow = eyeCenters.length >= 2
-    && eyeCenters[eyeCenters.length - 1] - eyeCenters[0] <= 4;
-  const eyeW = narrow ? 3 : 4;
   // The raw eye pixels themselves are not skin; they are valid anchors for the
   // rebuilt block. Hair is the only thing we must refuse to overwrite.
   const isEyeCanvas = (v: number): boolean =>
     isSkinTone(v) || v === IRIS || v === eyeTone || v === 2 || v === BROW_INDEX;
   const clearAt = (x0: number): boolean => {
     for (let dy = 0; dy < 3; dy++) {
-      for (let dx = 0; dx < eyeW; dx++) {
+      for (let dx = 0; dx < EYE_W; dx++) {
         const x = x0 + dx;
         const y = eyeTop + dy;
         if (x < 0 || y < 0 || y >= grid.length || x >= grid[y].length) return false;
@@ -552,19 +608,39 @@ function applyFeatures(grid: SpriteGrid): void {
     }
     return true;
   };
-  const builtEyes: Array<{ x0: number }> = [];
-  for (const group of eyeGroups) {
+  cleanFaceSkin(grid, eyeTop);
+  // After flattening the raw patches, give the face a symmetric contour. The
+  // outer skin column on each side is one step darker, from the cheek down to
+  // the jaw. Without it the cleaned face was a flat mask; with the old raw
+  // shading it was a lopsided bruise. This is the middle ground.
+  const faceShade = shadeIndexOf(1);
+  for (let y = eyeTop + 2; y <= eyeTop + 5; y++) {
+    const row = grid[y];
+    if (!row) continue;
+    let left = -1;
+    let right = -1;
+    for (let x = 0; x < row.length; x++) {
+      if (isSkinTone(row[x])) {
+        if (left < 0) left = x;
+        right = x;
+      }
+    }
+    if (left >= 0 && row[left] === 1) row[left] = faceShade;
+    if (right > left && row[right] === 1) row[right] = faceShade;
+  }
+  const builtEyes: Array<{ x0: number; side: number }> = [];
+  eyeGroups.forEach((group, side) => {
     const cx = Math.round((group[0] + group[group.length - 1]) / 2);
-    // cx - 1 centres a 4px eye on the same axis as the raw 2px eye, which
-    // keeps both eyes symmetric around the nose (6..9 and 12..15 on a 14px
+    // cx - 1 centres a 3px eye on the same axis as the raw 2px eye, which
+    // keeps the pair symmetric around the nose (6..8 and 12..14 on a 14px
     // face). The other slots are fallbacks for narrow / hairy heads.
-    const slot = [cx - 1, cx - 2, cx, cx - 3].find(clearAt) ?? cx - 1;
-    const x0 = Math.max(0, Math.min(SPRITE_WIDTH - eyeW, slot));
+    const slot = [cx - 1, side === 0 ? cx - 2 : cx, cx - 2, cx + 1].find(clearAt) ?? cx - 1;
+    const x0 = Math.max(0, Math.min(SPRITE_WIDTH - EYE_W, slot));
     // Wipe the raw 2x2 eye first. It is two cells tall and sits under the new
     // block; leaving it behind added a stray iris pixel above the lash line
     // (and made applyBlink mistake that row for the iris).
     for (let dy = 0; dy < 3; dy++) {
-      for (let dx = 0; dx < eyeW; dx++) {
+      for (let dx = 0; dx < EYE_W; dx++) {
         const v = grid[eyeTop + dy][x0 + dx];
         if (v === IRIS || v === eyeTone || v === 2 || v === BROW_INDEX) {
           grid[eyeTop + dy][x0 + dx] = 1;
@@ -572,33 +648,30 @@ function applyFeatures(grid: SpriteGrid): void {
       }
     }
     // No separate lash row: the dark brow one cell above already frames the
-    // eye. A lash bar directly under the brow made a two-row unibrow.
-    // Sclera + iris (base tone on top, dark pupil below). Wide eyes look toward
-    // the opponent; the 3px variant is frontal because it has only one iris
-    // column.
+    // eye. Sclera + iris (base tone on top, shaded iris and dark pupil below).
+    // The white column stays on the left, so the gaze is aimed at the opponent.
     grid[eyeTop + 1][x0] = 2;
     grid[eyeTop + 1][x0 + 1] = IRIS;
-    grid[eyeTop + 1][x0 + 2] = eyeW === 4 ? IRIS : 2;
-    if (eyeW === 4) grid[eyeTop + 1][x0 + 3] = 2;
+    grid[eyeTop + 1][x0 + 2] = IRIS;
     grid[eyeTop + 2][x0] = 2;
-    grid[eyeTop + 2][x0 + 1] = eyeW === 4 ? eyeTone : BROW_INDEX;
-    grid[eyeTop + 2][x0 + 2] = eyeW === 4 ? BROW_INDEX : 2;
-    if (eyeW === 4) grid[eyeTop + 2][x0 + 3] = 2;
-    builtEyes.push({ x0 });
-  }
+    grid[eyeTop + 2][x0 + 1] = eyeTone;
+    grid[eyeTop + 2][x0 + 2] = BROW_INDEX;
+    builtEyes.push({ x0, side });
+  });
   // Nose: the row left below the eye block and above the mouth. Without it the
   // profile had no bridge at all and the face read as a flat mask.
   if (builtEyes.length > 0) {
     const first = builtEyes[0];
     const last = builtEyes[builtEyes.length - 1];
-    const noseX = Math.round((first.x0 + last.x0 + eyeW - 1) / 2);
+    const noseX = Math.round((first.x0 + last.x0 + EYE_W - 1) / 2);
     set(noseX, eyeTop + 3, shadeIndexOf(1), 1);
   }
-  // Brows sit one row above the eye block, separated by a skin row. They use a
-  // dedicated dark hair tone: shading the hair colour itself left blond/bright
-  // characters with almost invisible brows that merged into the fringe.
-  for (const { x0 } of builtEyes) {
-    for (let dx = 0; dx < 3; dx++) set(x0 + dx, eyeTop - 1, BROW_INDEX, 1);
+  // Brows sit one row above the eye block, separated by a skin row. Two pixels
+  // over the iris are enough; the old 3px bars made every character look angry.
+  // Bias each brow toward the nose so the pair keeps a human gap.
+  for (const { x0, side } of builtEyes) {
+    const start = builtEyes.length > 1 && side > 0 ? x0 : x0 + 1;
+    for (let dx = 0; dx < 2; dx++) set(start + dx, eyeTop - 1, BROW_INDEX, 1);
   }
   // Ears last, measured on their own row. Only added next to bare skin:
   // hanging one off a sideburn or a pigtail left a nub floating in the hair.
@@ -686,8 +759,9 @@ function applyFeatures(grid: SpriteGrid): void {
     }
   }
   const faceCx = builtEyes.length > 0
-    ? (builtEyes[0].x0 + builtEyes[builtEyes.length - 1].x0 + eyeW - 1) / 2
+    ? (builtEyes[0].x0 + builtEyes[builtEyes.length - 1].x0 + EYE_W - 1) / 2
     : 12;
+  styleSideFringe(grid, headType, eyeTop, faceCx);
   paintMouth(grid, 'neutral', faceCx);
   applyFringeShadow(grid, eyeTop);
 }
@@ -1129,7 +1203,7 @@ function finishGrid(base: SpriteGrid, features: SpriteFeatures, pose?: (grid: Sp
   const grid = upscale(base);
   applySnes(grid);
   applyDetails(grid);
-  applyFeatures(grid);
+  applyFeatures(grid, features.headType);
   for (let i = 0; i < SPRITE_PAD_TOP; i++) grid.unshift(Array(SPRITE_WIDTH).fill(0));
   return grid;
 }
@@ -1230,7 +1304,7 @@ export function generateSpriteFrames(
     const grid = upscale(base);
     applySnes(grid);
     applyDetails(grid);
-    applyFeatures(grid);
+    applyFeatures(grid, features.headType);
     // Le souffle déplace le buste déjà ombré : l'ombrage n'est pas recalculé
     // sur une grille décalée d'un demi-pixel, et le clignement suit la tête.
     if (kind === 'idle') applyIdleBreathingPx(grid, phase);

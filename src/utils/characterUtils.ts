@@ -3,6 +3,8 @@ import { Character, CharacterAppearance } from '../types/Character';
 import { getHpForVitality, STAT_KEYS, StatKey } from './statUtils';
 import { PIXEL_HEADS, PIXEL_BODIES, PIXEL_PALETTES } from '../components/PixelAssets';
 import { mulberry32, getSeedFromText } from './randomUtils';
+import { OUTFIT_SCHEMES } from '../components/sprite/spritePalettes';
+import { pickBodyType, pickHeadType } from '../components/sprite/headSelection';
 
 const MAX_NAME_LENGTH = 10;
 const MIN_SUFFIX_LENGTH = 2;
@@ -252,26 +254,30 @@ export const generateAppearance = (
     const headPool = getHeadTypesForGender(gender);
     const bodyPool = getBodyTypes();
     const builds: Array<'slim' | 'standard' | 'broad'> = ['slim', 'standard', 'broad'];
+    const outfit = pick(OUTFIT_SCHEMES);
     return {
-        headType: pick(headPool),
-        bodyType: pick(bodyPool),
+        headType: pickHeadType(headPool, rng),
+        bodyType: pickBodyType(bodyPool, rng),
         build: pick(builds),
         skinColor: pick(PIXEL_PALETTES.skins as unknown as string[]),
         hairColor: pick(PIXEL_PALETTES.hair as unknown as string[]),
-        shirtColor: pick(PIXEL_PALETTES.clothes as unknown as string[]),
-        pantsColor: pick(PIXEL_PALETTES.pants as unknown as string[]),
+        shirtColor: outfit.shirt,
+        pantsColor: outfit.pants,
         eyeColor: pick(PIXEL_PALETTES.eyes as unknown as string[]),
     };
 };
 
-export const randomizeAppearanceColors = (appearance: CharacterAppearance): CharacterAppearance => ({
-    ...appearance,
-    skinColor: PIXEL_PALETTES.skins[Math.floor(Math.random() * PIXEL_PALETTES.skins.length)] as string,
-    hairColor: PIXEL_PALETTES.hair[Math.floor(Math.random() * PIXEL_PALETTES.hair.length)] as string,
-    shirtColor: PIXEL_PALETTES.clothes[Math.floor(Math.random() * PIXEL_PALETTES.clothes.length)] as string,
-    pantsColor: PIXEL_PALETTES.pants[Math.floor(Math.random() * PIXEL_PALETTES.pants.length)] as string,
-    eyeColor: PIXEL_PALETTES.eyes[Math.floor(Math.random() * PIXEL_PALETTES.eyes.length)] as string,
-});
+export const randomizeAppearanceColors = (appearance: CharacterAppearance): CharacterAppearance => {
+    const outfit = OUTFIT_SCHEMES[Math.floor(Math.random() * OUTFIT_SCHEMES.length)]!;
+    return {
+        ...appearance,
+        skinColor: PIXEL_PALETTES.skins[Math.floor(Math.random() * PIXEL_PALETTES.skins.length)] as string,
+        hairColor: PIXEL_PALETTES.hair[Math.floor(Math.random() * PIXEL_PALETTES.hair.length)] as string,
+        shirtColor: outfit.shirt,
+        pantsColor: outfit.pants,
+        eyeColor: PIXEL_PALETTES.eyes[Math.floor(Math.random() * PIXEL_PALETTES.eyes.length)] as string,
+    };
+};
 
 /**
  * Generates initial stats for a new character using GAME_RULES

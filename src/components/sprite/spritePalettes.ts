@@ -1,4 +1,5 @@
 import type { ItemRarity } from '../../types/Item';
+import { PIXEL_PALETTES } from '../PixelAssets';
 
 const clampByte = (v: number): number => Math.max(0, Math.min(255, Math.round(v)));
 
@@ -17,39 +18,39 @@ export const shadeHex = (hex: string): string => shiftHex(hex, 0.62);
 export const deepShadeHex = (hex: string): string => shiftHex(hex, 0.42);
 export const highlightHex = (hex: string): string => shiftHex(hex, 1.28);
 
-export const SKIN_TONES_16 = [
-  '#f5c6a5', '#eec39b', '#e0ac69', '#d1a27c', '#c68642',
-  '#b87a4f', '#9c5f36', '#8d5524', '#6e3d2b', '#4a2511',
-  '#f0d0b0', '#c9a06a',
-  '#fae0d4', '#dfb186', '#8c5835', '#3b1d0c',
-];
+// A single source of truth for the natural ramps: the creation preview stores
+// these colours in CharacterAppearance, while seed-only opponents resolve them
+// here. Keeping both paths on the same arrays prevents a natural preview from
+// turning into a neon opponent (or vice versa).
+export const SKIN_TONES_16 = PIXEL_PALETTES.skins;
+export const HAIR_TONES_16 = PIXEL_PALETTES.hair;
+export const CLOTH_TONES_16 = PIXEL_PALETTES.clothes;
+export const PANTS_TONES_16 = PIXEL_PALETTES.pants;
+export const EYE_TONES_16 = PIXEL_PALETTES.eyes;
 
-export const HAIR_TONES_16 = [
-  '#2c3e50', '#4a4a4a', '#1a1a1a', '#6b3f2a', '#8b4513',
-  '#b9935a', '#d2691e', '#f4a460', '#c0c0c0', '#e84393',
-  '#ffeaa7', '#a29bfe', '#7bed9f', '#70a1ff', '#eccc68',
-  '#ff6b81',
-  '#ff758f', '#38ef7d', '#ff9900', '#f1f2f6', '#7d5fff', '#1e90ff',
-];
+// Shirt and pants are picked as a pair, not independently. Fourteen matching
+// schemes keep the silhouette readable; the old independent picks produced
+// green-on-teal and orange-on-yellow fighters.
+export interface OutfitScheme {
+  readonly shirt: string;
+  readonly pants: string;
+}
 
-export const CLOTH_TONES_16 = [
-  '#e74c3c', '#c0392b', '#ff6b6b', '#3498db', '#2e86de',
-  '#2ecc71', '#1dd1a1', '#9b59b6', '#a55eea', '#f39c12',
-  '#feca57', '#e67e22', '#34495e', '#57606f', '#16a085',
-  '#ff9ff3',
-  '#ff4757', '#2ed573', '#1e272e', '#ffa502', '#5352ed', '#3742fa',
-];
-
-export const PANTS_TONES_16 = [
-  '#2c3e50', '#34495e', '#57606f', '#7f8c8d', '#5d4037',
-  '#1a1a1a', '#341f97', '#222f3e', '#3d3d3d', '#6b4f2a',
-  '#182C61', '#2C3A47', '#1B1464', '#485460',
-];
-
-export const EYE_TONES_16 = [
-  '#3498db', '#2ecc71', '#8e44ad', '#16a085', '#95a5a6',
-  '#f1c40f', '#e74c3c', '#f39c12', '#7bed9f', '#70a1ff',
-  '#ff3838', '#00d2d3', '#ff9f43', '#a29bfe', '#54a0ff',
+export const OUTFIT_SCHEMES: readonly OutfitScheme[] = [
+  { shirt: '#b03a3a', pants: '#2f3b4a' },
+  { shirt: '#3f6f9f', pants: '#2b2f3a' },
+  { shirt: '#4a7a5a', pants: '#3a3a30' },
+  { shirt: '#8a5a3a', pants: '#2e2e2e' },
+  { shirt: '#6a4a7a', pants: '#2f2f3a' },
+  { shirt: '#c9a24a', pants: '#3a3028' },
+  { shirt: '#4a6a7a', pants: '#2a2a2a' },
+  { shirt: '#d0d0d0', pants: '#3a4a5a' },
+  { shirt: '#a84a6a', pants: '#2f2f3a' },
+  { shirt: '#5a5a6a', pants: '#2a2a2a' },
+  { shirt: '#e0e0e0', pants: '#5a4030' },
+  { shirt: '#2e4a6a', pants: '#1f2a36' },
+  { shirt: '#7a2f2f', pants: '#3a3a3a' },
+  { shirt: '#3a7a6a', pants: '#2a2a30' },
 ];
 
 export const RARITY_TRIM: Record<ItemRarity, string> = {

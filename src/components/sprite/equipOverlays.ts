@@ -632,31 +632,43 @@ function paintChest(grid: SpriteGrid, torso: Box, cx: number): void {
   for (const y of [torso.y0 + 2, torso.y0 + 3]) {
     const row = grid[y];
     if (!row) continue;
-    const left = row.findIndex((c) => c !== 0);
+    // Pauldrons sit on the plastron/shirt, not on bare skin. A sleeveless or
+    // monk body has a skin arm in the outer column; painting the trim over it
+    // turned the shoulder into a metal amputee and hid the player's skin.
+    const isArmourField = (c: number): boolean => c === FIELD_INDEX || isShirt(c);
+    const left = row.findIndex(isArmourField);
     for (let i = 0; i < 2 && left >= 0; i++) {
       const x = left + i;
-      if (x < row.length && row[x] !== 0) row[x] = TRIM_INDEX;
+      if (x < row.length && isArmourField(row[x])) row[x] = TRIM_INDEX;
     }
     let right = -1;
     for (let x = row.length - 1; x >= 0; x--) {
-      if (row[x] !== 0) {
+      if (isArmourField(row[x])) {
         right = x;
         break;
       }
     }
     for (let i = 0; i < 2 && right >= 0; i++) {
       const x = right - i;
-      if (x >= 0 && row[x] !== 0) row[x] = TRIM_INDEX;
+      if (x >= 0 && isArmourField(row[x])) row[x] = TRIM_INDEX;
     }
   }
   // Ridge and clasp run down the plastron; the clasp faces the viewer.
+  // Ridge/clasp are armour details, so they only overwrite the plastron.
+  // Painting them unconditionally punched a steel line through the skin of
+  // open-chest bodies (monk/sleeveless).
   for (let y = torso.y0 + 3; y <= torso.y0 + 8; y++) {
-    paint(grid, ccx - 1, y, FIELD_LIGHT);
-    paint(grid, ccx, y, FIELD_LIGHT);
+    const row = grid[y];
+    if (!row) continue;
+    for (const x of [ccx - 1, ccx]) {
+      if (row[x] === FIELD_INDEX) row[x] = FIELD_LIGHT;
+    }
   }
   const cy = clamp(torso.y0 + 5, torso.y0, torso.y1);
-  paint(grid, ccx - 1, cy, ACCENT_INDEX);
-  paint(grid, ccx, cy, ACCENT_INDEX);
+  for (const x of [ccx - 1, ccx]) {
+    const cell = grid[cy]?.[x];
+    if (cell === FIELD_INDEX || cell === FIELD_LIGHT) grid[cy][x] = ACCENT_INDEX;
+  }
   // Layer 3 — waist band: a tinted cloth layer over the lower plastron, using
   // the item's tint ramp. It stops at the hip line so the pants and shoes of
   // the player survive untouched.

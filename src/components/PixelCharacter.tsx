@@ -2,6 +2,8 @@
 import React, { useMemo } from 'react';
 import { PIXEL_HEADS, PIXEL_BODIES, PIXEL_PALETTES } from './PixelAssets';
 import { mulberry32, getSeedFromText } from '../utils/randomUtils';
+import { OUTFIT_SCHEMES, OUTLINE_HEX, mixHex } from './sprite/spritePalettes';
+import { pickBodyType, pickHeadType } from './sprite/headSelection';
 import type { CharacterAppearance } from '../types/Character';
 
 export const MALE_HEAD_TYPES = ['male', 'male_bald', 'male_cap', 'male_beard', 'male_mohawk', 'male_sidepart', 'male_spiky', 'male_afro', 'male_helmet', 'male_glasses', 'male_hood', 'male_long', 'male_samurai', 'male_undercut', 'male_ninja', 'male_cyber', 'male_dreadlocks', 'male_paladin'] as const;
@@ -28,10 +30,12 @@ export const PixelCharacter: React.FC<PixelCharacterProps> = ({ seed, gender, sc
         const pick = <T,>(arr: readonly T[] | T[]) => arr[Math.floor(rng() * arr.length)];
 
         // Resolve head/body — appearance overrides seed, fallback to RNG with full variant pool
-        const fallbackHead: HeadType = gender === 'male'
-            ? pick(MALE_HEAD_TYPES)
-            : pick(FEMALE_HEAD_TYPES);
-        const fallbackBody: BodyType = pick(BODY_TYPES);
+        const fallbackHead: HeadType = pickHeadType(
+            gender === 'male' ? MALE_HEAD_TYPES : FEMALE_HEAD_TYPES,
+            rng,
+        ) as HeadType;
+        const fallbackBody: BodyType = pickBodyType(BODY_TYPES, rng) as BodyType;
+        const outfit = OUTFIT_SCHEMES[Math.floor(rng() * OUTFIT_SCHEMES.length)]!;
 
         const headType: HeadType = (appearance?.headType && (appearance.headType in PIXEL_HEADS) ? appearance.headType : fallbackHead) as HeadType;
         const bodyType: BodyType = (appearance?.bodyType && (appearance.bodyType in PIXEL_BODIES) ? appearance.bodyType : fallbackBody) as BodyType;
@@ -39,11 +43,11 @@ export const PixelCharacter: React.FC<PixelCharacterProps> = ({ seed, gender, sc
         return {
             skinColor: appearance?.skinColor ?? (pick(PIXEL_PALETTES.skins) as string),
             hairColor: appearance?.hairColor ?? (pick(PIXEL_PALETTES.hair) as string),
-            shirtColor: appearance?.shirtColor ?? (pick(PIXEL_PALETTES.clothes) as string),
-            pantsColor: appearance?.pantsColor ?? (pick(PIXEL_PALETTES.pants) as string),
+            shirtColor: appearance?.shirtColor ?? outfit.shirt,
+            pantsColor: appearance?.pantsColor ?? outfit.pants,
             shoesColor: '#333',
             eyeColor: appearance?.eyeColor ?? (pick(PIXEL_PALETTES.eyes) as string),
-            logoColor: pick(PIXEL_PALETTES.clothes) as string,
+            logoColor: mixHex(appearance?.shirtColor ?? outfit.shirt, OUTLINE_HEX, 0.25),
             headType,
             bodyType,
         };

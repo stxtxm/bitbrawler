@@ -139,21 +139,24 @@ describe('sprite generator v2', () => {
     for (const eye of eyeGroups) {
       expect(eye).toHaveLength(2);
       const x0 = eye[0] - 1;
-      const x1 = eye[eye.length - 1] + 1;
-      // White sclera on both sides of the iris.
+      const x1 = eye[eye.length - 1];
+      // One white sclera column on the left, a two-pixel iris to its right.
       expect(grid[eyeTop][x0]).toBe(2);
-      expect(grid[eyeTop][x1]).toBe(2);
+      expect(grid[eyeTop][x0 + 1]).toBe(8);
+      expect(grid[eyeTop][x0 + 2]).toBe(8);
       // Brows sit two rows above the iris with one skin row in between.
       const browRow = grid[eyeTop - 2] ?? [];
-      expect(browRow.some((c, x) => c === BROW_INDEX && x >= x0 - 1 && x <= x1)).toBe(true);
+      expect(browRow.some((c, x) => c === BROW_INDEX && x >= x0 - 1 && x <= x1 + 1)).toBe(true);
       expect(grid[eyeTop - 1][x0 + 1]).not.toBe(BROW_INDEX);
     }
     // A shade-skin nose sits below the eyes, and the neutral mouth is a 3px
-    // line with one lower-lip pixel, not the four-pixel red bar that read as a
+    // line with no lower lip, not the four-pixel red bar that read as a
     // moustache nor the 2x2 square that read as a red nose at 5x scale.
     expect((grid[eyeTop + 2] ?? []).filter((c) => c === shadeIndexOf(1)).length).toBeGreaterThan(0);
+    // Neutral mouth: one dark 3px line, no bright red lower lip. The nose sits
+    // on the row above; the colours (not a gap) keep them from merging.
     expect((grid[eyeTop + 3] ?? []).filter((c) => c === 3).length).toBe(3);
-    expect((grid[eyeTop + 4] ?? []).filter((c) => c === highlightIndexOf(3)).length).toBe(1);
+    expect((grid[eyeTop + 4] ?? []).filter((c) => c === highlightIndexOf(3)).length).toBe(0);
     expect(grid[24].filter((c) => c === 11).length).toBeGreaterThanOrEqual(2);
   });
 
@@ -345,7 +348,8 @@ describe('sprite generator v2', () => {
       expect(sprite.grid.flat().filter((c) => c === 2).length).toBeGreaterThan(0);
       expect(sprite.grid.flat().filter((c) => c === BROW_INDEX).length).toBeGreaterThan(0);
     }
-    // Narrow faces get a 3px eye so the two blocks never fuse into a visor.
+    // Every face uses the 3px eye; pigtails is the tightest pair, so it is the
+    // regression guard against the two blocks fusing into a visor.
     const narrow = generateSprite16('eye3-pigtails', 'female', {
       build: 'standard',
       bodyType: 'basic',
