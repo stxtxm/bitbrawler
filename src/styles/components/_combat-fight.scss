@@ -247,7 +247,7 @@
 // en pixels ENTIERS et par paliers : du pixel-art ne glisse pas sur des
 // demi-pixels et ne tourne pas de 0,5° (scintillement).
 .fighter-side .pixel-character[data-anim='static'] {
-    animation: fighterIdle 2.4s steps(1, end) infinite;
+    animation: fighterIdle 8s steps(1, end) infinite;
 }
 
 .fighter-side.action-hit .pixel-character,
@@ -537,14 +537,19 @@
 // No sprite pixel data is modified
 // ============================================
 
-// --- Idle (repli sans frames) : respiration par paliers d'1 px ---
-// 4 positions entières, sans rotation ni demi-pixel : le sprite reste net.
+// --- Idle (repli sans frames) : même rythme que les frames du sprite ---
+// Deux respirations de 4 s par boucle de 8 s : montée 0→-1→-2, maintien,
+// descente, puis repos plus long que le sommet. Paliers entiers uniquement.
 @keyframes fighterIdle {
-    0%, 24.9%   { transform: translateY(0); }
-    25%, 49.9%  { transform: translateY(-1px); }
-    50%, 74.9%  { transform: translateY(-2px); }
-    75%, 99.9%  { transform: translateY(-1px); }
-    100%        { transform: translateY(0); }
+    0%, 4.9%    { transform: translateY(0); }
+    5%, 9.9%    { transform: translateY(-1px); }
+    10%, 24.9%  { transform: translateY(-2px); }
+    25%, 29.9%  { transform: translateY(-1px); }
+    30%, 54.9%  { transform: translateY(0); }
+    55%, 59.9%  { transform: translateY(-1px); }
+    60%, 74.9%  { transform: translateY(-2px); }
+    75%, 79.9%  { transform: translateY(-1px); }
+    80%, 100%   { transform: translateY(0); }
 }
 
 // --- HIT : armé → allonge → impact → retour ---

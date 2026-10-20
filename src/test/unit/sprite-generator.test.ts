@@ -598,15 +598,32 @@ describe('sprite generator v2', () => {
     const grids = frames.map((f) => JSON.stringify(f.grid));
     expect(new Set(grids).size).toBeGreaterThanOrEqual(4);
 
+    // Le souffle est découpé en DEMI-pas : la montée passe par une altitude
+    // intermédiaire (1 px de sprite) avant le sommet (2 px), au lieu de sauter
+    // d'une cellule entière. Le sommet de la tête doit donc passer par 3
+    // altitudes, avec des écarts d'un seul pixel entre paliers.
+    const topRow = (grid: number[][]): number => {
+      const y = grid.findIndex((row) => row.some((c) => c !== 0));
+      return y < 0 ? grid.length : y;
+    };
+    const restTop = topRow(frames[0].grid);
+    const offsets = frames.map((f) => restTop - topRow(f.grid));
+    expect(new Set(offsets)).toEqual(new Set([0, 1, 2]));
+    for (let i = 0; i < offsets.length; i++) {
+      const step = offsets[(i + 1) % offsets.length] - offsets[i];
+      if (step !== 0) expect(Math.abs(step)).toBe(1);
+    }
+
     // Sous la ceinture, RIEN ne bouge : ni la ceinture, ni le bassin, ni les
     // jambes, ni l'ombrage du pantalon (dérivé de la silhouette — déplacer le
     // bassin le faisait clignoter).
     const lower = frames.map((f) => JSON.stringify(f.grid.slice(32)));
     expect(new Set(lower).size).toBe(1);
 
-    // Le buste respire par paliers d'une cellule au moins (6 px changés), et
-    // jamais latéralement : l'ancien idle balançait tout le haut du corps de
-    // ±1 cellule dans tous les sens, le personnage gigotait.
+    // Le buste respire par paliers d'un pixel de sprite (une demi-cellule, 6 px
+    // changés au minimum), et jamais latéralement : l'ancien idle balançait
+    // tout le haut du corps de ±1 cellule dans tous les sens, le personnage
+    // gigotait.
     const centerX = (grid: number[][]): number => {
       let sum = 0;
       let count = 0;

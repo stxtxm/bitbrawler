@@ -10,8 +10,10 @@ import { spritePixelScale } from './spritePixelScale';
  * r1160 : pixels entiers (device) + boîtes CSS à ratio natif — le rendu
  *         précédent échantillonnait à 2,875/3,45 px et étirait les sprites de
  *         17 %, ce qui faisait « grésiller » les animations.
+ * r1170 : souffle en demi-pas — le buste monte en deux paliers d'un pixel au
+ *         lieu d'un saut de cellule, sur un cycle de 8 s moins « lévitation ».
  */
-export const SPRITE_RENDER_REV = 'r1160-pixels-entiers-souffle';
+export const SPRITE_RENDER_REV = 'r1170-souffle-demi-pas';
 
 function useDevicePixelRatio(): number {
   const [dpr, setDpr] = useState<number>(
