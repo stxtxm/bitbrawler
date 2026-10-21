@@ -474,6 +474,50 @@ describe('sprite generator v2', () => {
     }
   });
 
+  it('sways only the outer hair locks, never the forehead or eyes', () => {
+    // The old secondary motion dragged the whole hairline down for one frame:
+    // a wig flap that covered the brows. Align the lifted run frame with the
+    // previous one and check that no hair moves onto the central face; only
+    // the outer lock columns may change.
+    const frames = generateSpriteFrames('hair-sway-face', 'female', {
+      build: 'standard',
+      bodyType: 'basic',
+      headType: 'female_ponytail',
+      skinColor: '#eec39b',
+      hairColor: '#9c5a2e',
+      shirtColor: '#3f6f9f',
+      pantsColor: '#2b2f3a',
+      eyeColor: '#16a085',
+    }, 'run')!;
+    const topRow = (grid: number[][]): number => {
+      const y = grid.findIndex((row) => row.some((cell) => cell !== 0));
+      return y < 0 ? grid.length : y;
+    };
+    // Phase 2 is the flight frame: the whole skeleton lifts one sprite cell
+    // (2 px) and the outer locks trail one cell down.
+    const lift = topRow(frames[1].grid) - topRow(frames[2].grid);
+    expect(lift).toBeGreaterThan(0);
+
+    // Central face + forehead, away from the outer lock columns. Compare the
+    // hair mask rather than exact tones: an outer lock legitimately shifts the
+    // hair highlight one pixel inward, but no new hair may appear on the face.
+    const isHair = (cell: number): boolean => cell === 4 || cell === 34 || cell === 44;
+    for (let y = 10; y <= 23; y++) {
+      for (let x = 6; x <= 17; x++) {
+        expect(isHair(frames[2].grid[y - lift]?.[x] ?? 0)).toBe(isHair(frames[1].grid[y]?.[x] ?? 0));
+      }
+    }
+
+    let outerChanges = 0;
+    for (let y = 8; y <= 23; y++) {
+      for (let x = 0; x < SPRITE_WIDTH; x++) {
+        if (x >= 6 && x <= 17) continue;
+        if (frames[1].grid[y]?.[x] !== frames[2].grid[y - lift]?.[x]) outerChanges++;
+      }
+    }
+    expect(outerChanges).toBeGreaterThan(0);
+  });
+
   it('keeps the face roughly parallel instead of funnelling into a snout', () => {
     // Narrowing the mouth row as well as the chin left 14px of cheek over a
     // 6px jaw, which read as an animal muzzle rather than a human face.

@@ -94,17 +94,16 @@ export const SpriteCanvas = memo(function SpriteCanvas({
     if (!equippedItems) {
       return flip ? { grid: mirrorSpriteGrid(base.grid), palette: base.palette } : base;
     }
-    // Dynamic life: weapon and jewelry sway with stride / breathing.
-    // Idle: aucun décalage horizontal. Les ancres (computeLandmarks) sont
-    // recalculées sur la grille animée, donc l'arme monte déjà avec la
-    // respiration ; un ±1 px en plus la posait sur une demi-cellule (1 px alors
-    // que les pixels du corps en font 2) → micro-tremblement de l'arme.
+    // Dynamic life: jewelry swings with the stride. The weapon does NOT get a
+    // fake horizontal sway: the run keeps the arms glued, so a ±1 px weapon
+    // offset slid the hilt through a stationary fist. The palm anchors are
+    // recomputed on the animated grid, so the weapon still follows breathing,
+    // recoil and the punch without ever leaving the hand.
     const running = activeAnim === 'run' && frames && frames.length > 0;
     const victory = activeAnim === 'victory' && frames && frames.length > 0;
-    const swayX = running ? ([1, 1, 0, -1, -1, 0][frameIdx % frames.length] ?? 0) : 0;
     const swingX = running ? ([-1, -1, 0, 1, 1, 0][frameIdx % frames.length] ?? 0) : 0;
     const punchTrail = (activeAnim === 'attack' && frameIdx === ATTACK_IMPACT_FRAME) || (victory && frameIdx === 1) ? 3 : 0;
-    const overlaid = applyEquipmentOverlays(base.grid, base.palette, resolveLoadout(equippedItems), { swayX, swingX, punchTrail });
+    const overlaid = applyEquipmentOverlays(base.grid, base.palette, resolveLoadout(equippedItems), { swingX, punchTrail });
     return {
       grid: flip ? mirrorSpriteGrid(overlaid.grid) : overlaid.grid,
       palette: overlaid.palette,

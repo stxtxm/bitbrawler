@@ -836,18 +836,28 @@ function takeArm(row: number[], y: number, fromLeft: boolean): LimbCell[] {
   return out;
 }
 
-// Secondary motion: on the flight frame the loose hair fringe trails one
-// cell down over the forehead (additive, skin-only destinations — never
-// floats in the air).
-function applyHairSway(base: SpriteGrid): void {
+// Secondary motion: on the flight frame the OUTER locks of loose hair trail
+// one cell down. The forehead columns are deliberately untouched — dragging
+// the whole hairline down for a single frame covered the brows/eyes and read
+// as a wig flap rather than a sway. Hats, caps and bald heads are skipped for
+// the same reason the side fringe skips them: they have no loose hair.
+// Base grid is 12 columns: 0-1 and 9-11 are the outer locks, 2-8 the face.
+const HAIR_SWAY_COLUMNS = [0, 1, 9, 10, 11] as const;
+
+function applyHairSway(base: SpriteGrid, headType: string): void {
+  if (!FRINGE_HEAD_TYPES.has(headType)) return;
   const isHair = (v: number): boolean =>
     v === 4 || v === shadeIndexOf(4) || v === highlightIndexOf(4);
-  for (let x = 0; x < 12; x++) {
+  for (const x of HAIR_SWAY_COLUMNS) {
     let fringe = -1;
     for (let y = 0; y <= 8; y++) {
       if (isHair(base[y]?.[x] ?? 0)) fringe = y;
     }
-    if (fringe >= 0 && fringe + 1 < base.length && (base[fringe + 1]?.[x] ?? 0) === 1) {
+    if (fringe < 0) continue;
+    const below = base[fringe + 1]?.[x] ?? -1;
+    // Skin keeps the lock rooted to the head; an empty cell lets a ponytail
+    // tip swing past the silhouette. Never paint over the face or gear.
+    if (below === 0 || below === 1) {
       base[fringe + 1][x] = base[fringe][x];
     }
   }
@@ -1268,7 +1278,8 @@ function framePlanOf(kind: SpriteAnimKind): FramePlan[] {
   if (kind === 'idle') {
     return Array.from({ length: IDLE_BREATH_FRAMES * 2 }, (_, phase) => ({
       phase,
-      hairSway: phase === 3,
+      // The breathing already carries the head/hair up and down. A one-frame
+      // lock twitch every breath only read as a glitch, so idle has none.
       blink: phase === IDLE_BLINK_FRAME,
       ms: phase === IDLE_BLINK_FRAME ? IDLE_BLINK_MS : undefined,
     }));
@@ -1300,7 +1311,7 @@ export function generateSpriteFrames(
     else if (kind === 'hit') applyHitReaction(base, phase);
     else if (kind === 'victory') applyVictoryPose(base, phase, body);
 
-    if (hairSway) applyHairSway(base);
+    if (hairSway) applyHairSway(base, features.headType);
     const grid = upscale(base);
     applySnes(grid);
     applyDetails(grid);
