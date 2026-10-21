@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-21T22:25:03Z",
+  "last_session": "2026-10-21T22:34:20Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1209 SceneBox v2: react-refresh/only-export-components interdit d'exporter constantes/helpers depuis un .tsx composant -> les mettre dans un module voisin (ici src/components/arena/sceneLighting.ts, precedent arenaTypes.ts). L'eclairage biome est pilote par getBiomeForCharacter(character) (props existantes du biome) et pousse des CSS vars --scene-tint/--scene-shadow-color/--scene-shadow-spread sur .scene-box; l'ombre du runner PvE (IdleRunnerScene non modifiable) les herite via les vars dans _idle-runner.scss. Test props-only = fichier de test sans mock GameContext (useGame throw sans provider). useLowPerformanceMode reduit l'alpha d'ombre via sceneLightingStyle.",
-      "issue": "#1209",
-      "date": "2026-10-18"
-    },
     {
       "agent": "dev",
       "issue": "#1207",
@@ -172,6 +167,11 @@
     {
       "lesson": "QA report fields must be emitted by qa-bot.mjs: progression_curve was only declared in analyzer types, so aggregation stayed null. Equipment group labels list is duplicated in qa-bot.mjs, analyze-qa-stats.ts and the mirror test - update all three (singular slot labels WEAPON/ACCESSORY were leaking).",
       "issue": "#1283",
+      "date": "2026-10-21"
+    },
+    {
+      "lesson": "Issue #1144 Pixel Season Pass: implémentation localStorage-first (aucune migration DB requise) pour ne pas bloquer sur Supabase. Les compteurs de missions sont branchés au choke point persistCharacter (delta wins/idleTotalKills/idleStreak) + appel explicite après salvage, ce qui évite de modifier chaque hook de combat/idle. Attention aux requêtes Testing Library par regex /claim tier 1/ qui matchent aussi tier 10/11... : utiliser le name exact.",
+      "issue": "#1144",
       "date": "2026-10-21"
     }
   ]
