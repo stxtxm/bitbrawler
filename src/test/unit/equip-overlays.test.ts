@@ -33,8 +33,9 @@ import {
   RIM_INDEX,
   WEAPON_OUTLINE_INDEX,
 } from '../../components/sprite/equipOverlays';
-import { generateSprite16, generateSpriteFrames } from '../../components/sprite/spriteGenerator';
-import { weaponAngleFor } from '../../components/sprite/weaponPoses';
+import { generateSprite16, generateSpriteFrames, ATTACK_IMPACT_FRAME } from '../../components/sprite/spriteGenerator';
+import { weaponAngleFor, weaponStrikeAngle } from '../../components/sprite/weaponPoses';
+import type { WeaponVisualKind } from '../../components/sprite/equipOverlays';
 import { ACCENT_INDEX, ITEM_BLIT_OFFSET, TRIM_INDEX, highlightIndexOf, shadeIndexOf } from '../../components/sprite/spriteTypes';
 import { RARITY_TRIM } from '../../components/sprite/spritePalettes';
 import { ELEMENT_COLORS } from '../../types/Item';
@@ -966,21 +967,88 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     const anticipation = fists.indexOf(Math.min(...fists));
     const impact = fists.indexOf(Math.max(...fists));
     expect(anticipation).toBeLessThan(impact);
-    const sword = byId('flame_dagger')!;
-    const tips = frames.map(
-      (f) =>
-        Math.max(
-          ...applyEquipmentOverlays(f.grid, f.palette, {
-            weapon: sword,
-            armor: null,
-            accessory: null,
-          }).grid.flatMap((row) =>
-            row.map((c, x) => (c === BLADE_INDEX || c === BLADE_DARK || c === BLADE_LIGHT ? x : -1)),
-          ),
-        ),
-    );
-    expect(tips[impact]).toBeGreaterThan(tips[anticipation]);
+    expect(impact).toBe(ATTACK_IMPACT_FRAME);
+    const dagger = byId('flame_dagger')!;
+    const kind = weaponVisualKind(dagger);
+    // En jeu (SpriteCanvas), seule la frame d'impact prend l'amplitude mesurée
+    // pour la famille ; les autres suivent la courbe nominale.
+    const angles = frames.map((_, i) => (i === impact ? weaponStrikeAngle(kind) : weaponAngleFor('attack', i)));
+    const maxWeaponX = (f: (typeof frames)[number], angle: number): number => {
+      const out = applyEquipmentOverlays(
+        f.grid,
+        f.palette,
+        { weapon: dagger, armor: null, accessory: null },
+        { weaponAngle: angle },
+      ).grid;
+      const bare = applyEquipmentOverlays(f.grid, f.palette, { weapon: null, armor: null, accessory: null }).grid;
+      let max = -1;
+      for (let y = 0; y < out.length; y++) {
+        for (let x = 0; x < out[y].length; x++) {
+          const v = out[y][x];
+          if (v === 0 || v === WEAPON_OUTLINE_INDEX || v === bare[y][x]) continue;
+          max = Math.max(max, x);
+        }
+      }
+      return max;
+    };
+    const tips = frames.map((f, i) => maxWeaponX(f, angles[i]));
+    // La lame recule à l'armé puis balaie jusqu'au bord de la grille : c'est
+    // cette course de pointe (et pas l'allonge du poing, limitée à 2 px) qui
+    // rend la frappe lisible.
+    expect(tips[impact]).toBeGreaterThanOrEqual(tips[anticipation] + 4);
     expect(tips[impact]).toBe(Math.max(...tips));
+  });
+
+  it("garde chaque famille d'arme dans la grille pendant la frappe", () => {
+    const frames = generateSpriteFrames('strike-grid', 'male', { ...STD_MALE }, 'attack')!;
+    const impact = ATTACK_IMPACT_FRAME;
+    // Grille élargie de 36 colonnes : en jeu (24 px) les cellules au-delà de
+    // la 23e n'existent pas — l'arme serait coupée net.
+    const WIDE = 60;
+    const reps = new Map<WeaponVisualKind, string>();
+    for (const item of ITEM_ASSETS) {
+      const kind = weaponVisualKind(item);
+      if (kind !== 'fist' && !reps.has(kind)) reps.set(kind, item.id);
+    }
+    expect(reps.size).toBeGreaterThanOrEqual(8);
+    const problems: string[] = [];
+    for (const [kind, itemId] of reps) {
+      const item = byId(itemId)!;
+      const strike = weaponStrikeAngle(kind);
+      const maxX = (frameIdx: number, angle: number): number => {
+        const f = frames[frameIdx];
+        const wide = f.grid.map((row) => [...row, ...Array(WIDE - row.length).fill(0)]);
+        const opts = { weaponAngle: angle };
+        const out = applyEquipmentOverlays(wide.map((r) => r.slice()), f.palette, { weapon: item, armor: null, accessory: null }, opts).grid;
+        const bare = applyEquipmentOverlays(wide.map((r) => r.slice()), f.palette, { weapon: null, armor: null, accessory: null }, {}).grid;
+        let max = -1;
+        for (let y = 0; y < out.length; y++) {
+          for (let x = 0; x < out[y].length; x++) {
+            const v = out[y][x];
+            if (v === 0 || v === WEAPON_OUTLINE_INDEX || v === bare[y][x]) continue;
+            max = Math.max(max, x);
+          }
+        }
+        return max;
+      };
+      // L'arme doit rester dans la grille à TOUTES les frames d'attaque...
+      for (let i = 0; i < frames.length; i++) {
+        const angle = i === impact ? strike : weaponAngleFor('attack', i);
+        const x = maxX(i, angle);
+        // ...avec une seule exception : la corde de l'arc est large de 6 px et
+        // l'allonge du poing lui coûte son dernier pixel (aucun angle ne le
+        // récupère, mesuré).
+        const budget = kind === 'bow' ? 24 : 23;
+        if (x > budget) problems.push(`${kind} frame ${i} : arme jusqu'à x${x} (budget ${budget})`);
+      }
+      // ...et balayer vraiment : ≥ 3 px de course sur le bord droit entre la
+      // chambre et l'impact (2 px pour l'arc, physiquement plus large).
+      const chamber = Math.min(maxX(1, weaponAngleFor('attack', 1)), maxX(2, weaponAngleFor('attack', 2)));
+      const travel = maxX(impact, strike) - chamber;
+      const minTravel = kind === 'bow' ? 2 : 3;
+      if (travel < minTravel) problems.push(`${kind} : frappe de ${travel} px (attendu ≥ ${minTravel})`);
+    }
+    expect(problems).toEqual([]);
   });
 
   it('recoils the bust horizontally on hit frames', () => {
