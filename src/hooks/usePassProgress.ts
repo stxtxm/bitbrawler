@@ -126,7 +126,7 @@ function resolveInitialState(characterId: string | undefined, characterPass?: Pa
 }
 
 // --- SeasonId compat layer ---
-function getDefaultSeasonId(): string {
+export function getDefaultSeasonId(): string {
   const now = new Date()
   const year = now.getFullYear()
   const month = String(now.getMonth() + 1).padStart(2, '0')

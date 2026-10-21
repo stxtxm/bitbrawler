@@ -2,6 +2,7 @@ import { memo, useMemo, useState } from 'react';
 import { PixelIcon } from '../PixelIcon';
 import { MedalCard } from '../MedalCard';
 import { CompendiumPanel } from '../compendium/CompendiumPanel';
+import { SeasonPassPanel } from '../pass/SeasonPassPanel';
 import { SettingsLogEntry, formatSettingsLogDate } from '../../utils/arenaUtils';
 import { getMedalsByCategory, getUnlockedCount, getTotalMedalCount } from '../../utils/medalUtils';
 import type { MedalCategory, MedalProgressMap } from '../../utils/medalUtils';
@@ -18,7 +19,7 @@ const CATEGORY_LABELS: Record<MedalCategory, string> = {
 const CATEGORY_ORDERS: MedalCategory[] = ['combat', 'loot', 'progression', 'special', 'pve'];
 
 interface SettingsPanelProps {
-  settingsView: 'main' | 'logs' | 'medals' | 'compendium';
+  settingsView: 'main' | 'logs' | 'medals' | 'compendium' | 'pass';
   autoModeEnabled: boolean;
   autoModeUpdating: boolean;
   soundEnabled: boolean;
@@ -38,6 +39,7 @@ interface SettingsPanelProps {
   onOpenLogs: () => void;
   onOpenMedals: () => void;
   onOpenCompendium: () => void;
+  onOpenPass: () => void;
   onReturnToMain: () => void;
   onSetDeleteStep: (step: 'idle' | 'confirm') => void;
 }
@@ -48,7 +50,7 @@ export const SettingsPanel = memo(function SettingsPanel({
   combatSpeed,
   telemetryEnabled,
   onClose, onToggleAutoMode, onToggleSound, onToggleCombatSpeed, onToggleTelemetry, onDeleteCharacter,
-  onOpenLogs, onOpenMedals, onOpenCompendium, onReturnToMain, onSetDeleteStep,
+  onOpenLogs, onOpenMedals, onOpenCompendium, onOpenPass, onReturnToMain, onSetDeleteStep,
 }: SettingsPanelProps) {
   const groupedMedals = useMemo(() => getMedalsByCategory(), []);
   const unlockedCount = useMemo(() => getUnlockedCount(medalProgress ?? {}), [medalProgress]);
@@ -74,7 +76,8 @@ export const SettingsPanel = memo(function SettingsPanel({
             <h2 className="inventory-title">{
               settingsView === 'logs' ? 'COMBAT LOGS' :
               settingsView === 'medals' ? 'MEDALS' :
-              settingsView === 'compendium' ? 'COMPENDIUM' : 'SETTINGS'
+              settingsView === 'compendium' ? 'COMPENDIUM' :
+              settingsView === 'pass' ? 'SEASON PASS' : 'SETTINGS'
             }</h2>
           </div>
           <button className="inventory-close" onClick={onClose} aria-label="Close settings">
@@ -82,7 +85,7 @@ export const SettingsPanel = memo(function SettingsPanel({
           </button>
         </div>
 
-        <div className={`settings-body ${settingsView === 'medals' || settingsView === 'compendium' ? 'settings-body--padded' : ''}`}>
+        <div className={`settings-body ${settingsView === 'medals' || settingsView === 'compendium' || settingsView === 'pass' ? 'settings-body--padded' : ''}`}>
           {settingsView === 'logs' ? (
             <>
               <div className="history-list settings-history-list">
@@ -112,6 +115,8 @@ export const SettingsPanel = memo(function SettingsPanel({
             </>
           ) : settingsView === 'compendium' ? (
             <CompendiumPanel />
+          ) : settingsView === 'pass' ? (
+            <SeasonPassPanel onClose={onReturnToMain} />
           ) : settingsView === 'medals' ? (
             <div className="settings-medals-list">
               <div className="settings-medals-categories">
@@ -266,6 +271,21 @@ export const SettingsPanel = memo(function SettingsPanel({
                   </div>
                   <button className="button settings-link" onClick={onOpenCompendium}>
                     <PixelIcon type="chest" size={14} />
+                    VIEW
+                  </button>
+                </div>
+              </div>
+
+              <div className="settings-divider" />
+
+              <div className="settings-section">
+                <div className="settings-row">
+                  <div className="settings-label">
+                    <span>SEASON PASS</span>
+                    <span className="settings-sub">Claim tier rewards earned from fights, forge and idle.</span>
+                  </div>
+                  <button className="button settings-link" onClick={onOpenPass} aria-label="Open season pass">
+                    <PixelIcon type="trophy" size={14} />
                     VIEW
                   </button>
                 </div>
