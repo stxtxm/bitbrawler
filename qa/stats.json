@@ -149028,5 +149028,225 @@
       "arena": 773
     },
     "skipped_summary": {}
+  },
+  {
+    "date": "2026-10-21T13:01:42.093Z",
+    "run": "2026-10-21",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 145,
+        "fight_duration_ms": 11861,
+        "max_hp": 496,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 104.3
+      }
+    ],
+    "lootbox": null,
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 1,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 9,
+      "vit": 29,
+      "dex": 16,
+      "luk": 12,
+      "int": 14,
+      "foc": 11,
+      "fights": 0
+    },
+    "initial_level": 13,
+    "initial_xp": {
+      "current": 7957,
+      "max": 8263
+    },
+    "initial_max_hp": 476,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "WEAPON"
+      },
+      {
+        "slot": "💍",
+        "name": "ACCESSORY"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 14,
+      "xp": 2705,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 9,
+      "vit": 29,
+      "dex": 17,
+      "luk": 12,
+      "int": 14,
+      "foc": 11,
+      "last xp": 27,
+      "fights": 9
+    },
+    "final_max_hp": 496,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "WEAPON"
+      },
+      {
+        "slot": "💍",
+        "name": "ACCESSORY"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": null,
+    "lootbox_streak": null,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 13,
+        "new_level": 14
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 42716,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "wraith",
+        "ogre"
+      ],
+      "victories": 1,
+      "defeats": 1,
+      "xp_total": 108,
+      "xp_events": [
+        {
+          "time_ms": 2058,
+          "xp": 84,
+          "monster": "wraith",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 42716,
+          "xp": 24,
+          "monster": "ogre",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        514,
+        2058,
+        10138,
+        11681,
+        42716
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 84,
+        "essence": 0.71,
+        "monster": "wraith"
+      },
+      {
+        "result": "defeat",
+        "xp": 24,
+        "essence": 0.21,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.48,
+      "next_level_eta": "⬆ 15m 41s",
+      "power_ratio": "⚔ 0.54x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.05x",
+      "interval": "10.9s",
+      "streak_bonus": "🔥 1-win streak (+11%)"
+    },
+    "initial_essence": null,
+    "final_essence": null,
+    "essence": {
+      "before_idle": 103.3,
+      "after_idle": 104.22,
+      "per_fight": [
+        104.3
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": null,
+      "flow": {
+        "idle_gained": 0.92,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": null
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": null,
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": null,
+    "shop": null,
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 150
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('button[aria-label=\"Inventory\"], button[title=\"Inventory\"]').first()\n    - found locator('.inventory-overlay'), intercepting action to run the handler\n    - locator handler has finished\n    - interception handler has finished, continuing\n    - locator resolved to <button title=\"Inventory\" aria-label=\"Inventory\" class=\"button icon-btn inventory-btn\">…</button>\n  - attempting click action\n    2 × found locator('.inventory-overlay'), intercepting action to run the handler\n      - locator handler has finished\n      - interception handler has finished, continuing\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay inventory-overlay\">…</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × found locator('.inventory-overlay'), intercepting action to run the handler\n      - locator handler has finished\n      - interception handler has finished, continuing\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay inventory-overlay\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    3 × found locator('.inventory-overlay'), intercepting action to run the handler\n      - locator handler has finished\n      - interception handler has finished, continuing\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay inventory-overlay\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - found locator('.inventory-overlay'), intercepting action to run the handler\n      - locator handler has finished\n      - interception handler has finished, continuing\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal inventory-modal \">…</div> from <div class=\"retro-modal-overlay inventory-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n    3 × found locator('.inventory-overlay'), intercepting action to run the handler\n      - locator handler has finished\n      - interception handler has finished, continuing\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay inventory-overlay\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n    9 × found locator('.inventory-overlay'), intercepting action to run the handler\n      - locator handler has finished\n      - interception handler has finished, continuing\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal inventory-modal \">…</div> from <div class=\"retro-modal-overlay inventory-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - found locator('.inventory-overlay'), intercepting action to run the handler\n      - locator handler has finished\n      - interception handler has finished, continuing\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay inventory-overlay\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n    2 × found locator('.inventory-overlay'), intercepting action to run the handler\n      - locator handler has finished\n      - interception handler has finished, continuing\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal inventory-modal \">…</div> from <div class=\"retro-modal-overlay inventory-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - found locator('.inventory-overlay'), intercepting action to run the handler\n      - locator handler has finished\n      - interception handler has finished, continuing\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal inventory-modal \">…</div> from <div class=\"retro-modal-overlay inventory-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - found locator('.inventory-overlay'), intercepting action to run the handler\n      - locator handler has finished\n      - interception handler has finished, continuing\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay inventory-overlay\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - found locator('.inventory-overlay'), intercepting action to run the handler\n      - locator handler has finished\n      - interception handler has finished, continuing\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal inventory-modal \">…</div> from <div class=\"retro-modal-overlay inventory-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - found locator('.inventory-overlay'), intercepting action to run the handler\n      - locator handler has finished\n      - interception handler has finished, continuing\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay inventory-overlay\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n    5 × found locator('.inventory-overlay'), intercepting action to run the handler\n      - locator handler has finished\n      - interception handler has finished, continuing\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal-overlay inventory-overlay\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n      - found locator('.inventory-overlay'), intercepting action to run the handler\n      - locator handler has finished\n      - interception handler has finished, continuing\n      - waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"retro-modal inventory-modal \">…</div> from <div class=\"retro-modal-overlay inventory-overlay\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 500ms\n    - found locator('.inventory-overlay'), intercepting action to run the handler\n    - locator handler has finished\n    - interception handler has finished, continuing\n    - waiting for element to be visible, enabled and stable\n    - element is visible, enabled and stable\n    - scrolling into view if needed\n    - done scrolling\n    - <div class=\"retro-modal-overlay inventory-overlay\">…</div> intercepts pointer events\n  - retrying click action\n    - waiting 500ms\n"
+    ],
+    "load_times_ms": {
+      "home": 1348,
+      "arena": 3853
+    },
+    "skipped_summary": {}
   }
 ]
