@@ -18,8 +18,11 @@ import { spritePixelScale } from './spritePixelScale';
  *         avec des têtes de masse/marteau lisibles et une lame effilée.
  * r1177 : le feedback du coup (dégâts, réaction, flash) attend la frame
  *         d'impact de l'attaque au lieu de partir au début du round.
+ * r1178 : la main se referme sur l'arme — la poignée ne repeint plus l'avant-
+ *         bras, le pommeau dépasse sous le poing et un liseré sombre détache
+ *         l'arme du fond.
  */
-export const SPRITE_RENDER_REV = 'r1177-impact-sync';
+export const SPRITE_RENDER_REV = 'r1178-fist-wrap';
 
 function useDevicePixelRatio(): number {
   const [dpr, setDpr] = useState<number>(
