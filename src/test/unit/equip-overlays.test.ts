@@ -31,6 +31,7 @@ import {
   FIELD_LIGHT,
   STRING_INDEX,
   RIM_INDEX,
+  WEAPON_OUTLINE_INDEX,
 } from '../../components/sprite/equipOverlays';
 import { generateSprite16, generateSpriteFrames } from '../../components/sprite/spriteGenerator';
 import { weaponAngleFor } from '../../components/sprite/weaponPoses';
@@ -53,6 +54,19 @@ const WEAPON_FAMILY = new Set<number>([
 ]);
 
 const weaponItems = () => ITEM_ASSETS.filter((i) => i.slot === 'weapon');
+
+/** Un représentant de chaque famille de peintre, pour les tests transverses. */
+const WEAPON_KINDS: Array<[string, string]> = [
+  ['blade', 'rusty_sword'],
+  ['dagger', 'flame_dagger'],
+  ['haft', 'bronze_axe'],
+  ['staff', 'oak_staff'],
+  ['spear', 'short_spear'],
+  ['scepter', 'wand_of_storms'],
+  ['scythe', 'doom_scythe'],
+  ['bow', 'hunter_bow'],
+  ['fist', 'iron_knuckles'],
+];
 
 type Cell = [x: number, y: number];
 const cellsOf = (grid: number[][], accept: (value: number) => boolean): Cell[] => {
@@ -166,15 +180,16 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     expect(tip[1]).toBeLessThan(marks.palmR.y - 8);
     expect(tip[0]).toBeGreaterThan(marks.palmR.x);
     // The guard sits above the fist, so it stays readable instead of being
-    // painted over by the hand.
+    // painted over by the hand. The fist's top row may bite its lower row.
     const guard = cellsOf(out.grid, (v) => v === TRIM_INDEX || v === ACCENT_INDEX || v === BLADE_INDEX)
       .filter(([x, y]) => inBox([x, y], marks.palmR.x - 4, marks.palmR.x + 5, marks.palmR.y - 3, marks.palmR.y - 1));
-    expect(guard.length).toBeGreaterThan(2);
-    // The fist is stamped over the grip; wood and the pommel continue below it.
+    expect(guard.length).toBeGreaterThanOrEqual(2);
+    // The fist closes over the handle and is never painted over: the wood grip
+    // and the pommel show below it instead of across the back of the hand.
     expect(out.grid[marks.palmR.y][marks.palmR.x]).toBe(1);
     expect(out.grid[marks.palmR.y][marks.palmR.x + 1]).toBe(1);
     const grip = cellsOf(out.grid, isWoodCell)
-      .filter(([x, y]) => inBox([x, y], marks.palmR.x - 2, marks.palmR.x + 3, marks.palmR.y + 1, marks.palmR.y + 3));
+      .filter(([x, y]) => inBox([x, y], marks.palmR.x - 2, marks.palmR.x + 3, marks.palmR.y + 3, marks.palmR.y + 6));
     expect(grip.length).toBeGreaterThan(0);
     expect(out.palette[BLADE_INDEX]).toBe('#c0c0c0');
     const ember = applyEquipmentOverlays(base.grid, base.palette, {
@@ -239,26 +254,17 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
         armor: null,
         accessory: null,
       });
+      // The hand closes over the handle, so the weapon is read through the
+      // column it crosses: shaft, limb or pommel above and below the fist.
       const region = cellsOf(out.grid, (v) => WEAPON_FAMILY.has(v))
-        .filter(([x, y]) => inBox([x, y], marks.palmR.x - 3, marks.palmR.x + 3, marks.palmR.y - 1, marks.palmR.y + 2));
+        .filter(([x, y]) => inBox([x, y], marks.palmR.x - 3, marks.palmR.x + 3, marks.palmR.y - 6, marks.palmR.y + 6));
       expect(region.length, `${item.id} grip beside fist`).toBeGreaterThan(0);
       expect(out.grid[marks.palmR.y][marks.palmR.x], `${item.id} fist`).not.toBe(0);
     }
   });
 
   it('keeps weapon pixels behind the body inside the head box across every frame', () => {
-    const kinds: Array<[string, string]> = [
-      ['blade', 'rusty_sword'],
-      ['dagger', 'flame_dagger'],
-      ['haft', 'bronze_axe'],
-      ['staff', 'oak_staff'],
-      ['spear', 'short_spear'],
-      ['scepter', 'wand_of_storms'],
-      ['scythe', 'doom_scythe'],
-      ['bow', 'hunter_bow'],
-      ['fist', 'iron_knuckles'],
-    ];
-    for (const [kind, id] of kinds) {
+    for (const [kind, id] of WEAPON_KINDS) {
       for (const anim of ['idle', 'run', 'attack', 'hit', 'victory'] as const) {
         const frames = generateSpriteFrames('head-clear', 'male', { ...STD_MALE }, anim)!;
         for (const [frameIdx, frame] of frames.entries()) {
@@ -279,6 +285,74 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
           // over the face or the hair.
           expect(overBody, `${kind} ${anim}`).toBe(0);
         }
+      }
+    }
+  });
+
+  it('closes the fist over the handle across every weapon family', () => {
+    for (const [kind, id] of WEAPON_KINDS) {
+      // Les knuckles sont portés PAR le poing : seule famille qui peint sur
+      // la peau. Toutes les autres passent sous la main.
+      if (kind === 'fist') continue;
+      for (const anim of ['idle', 'run', 'attack', 'hit', 'victory'] as const) {
+        const frames = generateSpriteFrames('fist-clear', 'male', { ...STD_MALE }, anim)!;
+        for (const [frameIdx, frame] of frames.entries()) {
+          const marks = computeLandmarks(frame.grid);
+          const out = applyEquipmentOverlays(frame.grid, frame.palette, {
+            weapon: byId(id),
+            armor: null,
+            accessory: null,
+          }, { weaponAngle: weaponAngleFor(anim, frameIdx) });
+          for (let y = marks.palmR.y - 4; y <= marks.palmR.y + 3; y++) {
+            for (let x = marks.palmR.x - 4; x <= marks.palmR.x + 4; x++) {
+              const skin = frame.grid[y]?.[x] ?? 0;
+              if (skin !== 1 && skin !== shadeIndexOf(1) && skin !== highlightIndexOf(1)) continue;
+              expect(
+                WEAPON_FAMILY.has(out.grid[y][x]),
+                `${kind} ${anim} f${frameIdx} hand ${x},${y}`,
+              ).toBe(false);
+            }
+          }
+        }
+      }
+    }
+  });
+
+  it('leaves the handle end visible below the closed fist', () => {
+    const base = generateSprite16('butt-check', 'male', { ...STD_MALE });
+    const marks = computeLandmarks(base.grid);
+    for (const [kind, id] of WEAPON_KINDS) {
+      if (kind === 'fist') continue;
+      const out = applyEquipmentOverlays(base.grid, base.palette, {
+        weapon: byId(id),
+        armor: null,
+        accessory: null,
+      });
+      const below = cellsOf(out.grid, (v) => WEAPON_FAMILY.has(v))
+        .filter(([x, y]) => inBox([x, y], marks.palmR.x - 3, marks.palmR.x + 3, marks.palmR.y + 3, marks.palmR.y + 7));
+      expect(below.length, `${kind} handle below the fist`).toBeGreaterThan(0);
+    }
+  });
+
+  it('outlines the held weapon on the background only', () => {
+    const base = generateSprite16('outline-check', 'male', { ...STD_MALE });
+    const body = applyEquipmentOverlays(base.grid, base.palette, {
+      weapon: null,
+      armor: null,
+      accessory: null,
+    }, {});
+    for (const [kind, id] of WEAPON_KINDS) {
+      const out = applyEquipmentOverlays(base.grid, base.palette, {
+        weapon: byId(id),
+        armor: null,
+        accessory: null,
+      }, {});
+      const outline = cellsOf(out.grid, (v) => v === WEAPON_OUTLINE_INDEX);
+      expect(outline.length, `${kind} outline`).toBeGreaterThan(0);
+      for (const [x, y] of outline) {
+        // Le contour découpe la silhouette sur le fond ; posé sur le corps, il
+        // ferait croire que l'arme est devant la main qui la tient.
+        expect(body.grid[y][x], `${kind} outline over body ${x},${y}`).toBe(0);
       }
     }
   });
@@ -334,7 +408,11 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     expect(Math.min(...limbs.map(([, y]) => y))).toBeLessThanOrEqual(marks.palmR.y - 4);
     expect(Math.max(...limbs.map(([, y]) => y))).toBeGreaterThanOrEqual(marks.palmR.y + 2);
     const strings = cellsOf(out.grid, (v) => v === STRING_INDEX);
-    expect(strings.length).toBeGreaterThan(5);
+    // The fist covers the middle of the string (it is on the grip column):
+    // the cord is read above and below the hand instead of through it.
+    expect(strings.length).toBeGreaterThanOrEqual(3);
+    expect(strings.some(([, y]) => y <= marks.palmR.y - 3), 'string above the fist').toBe(true);
+    expect(strings.some(([, y]) => y >= marks.palmR.y + 3), 'string below the fist').toBe(true);
     const xs = new Set(strings.map(([x]) => x));
     // The rigid bow is tilted at the rest angle, so its string is not a
     // one-column vertical line anymore.
@@ -358,7 +436,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     expect(cellsOf(out.grid, isHeadCell).length).toBeGreaterThan(3);
     expect(cellsOf(out.grid, isMetalCell).length).toBeGreaterThan(0);
     expect(
-      cellsOf(out.grid, isWoodCell).filter(([, y]) => y > marks.palmR.y && y < marks.palmR.y + 4).length,
+      cellsOf(out.grid, isWoodCell).filter(([, y]) => y > marks.palmR.y + 2 && y <= marks.palmR.y + 6).length,
     ).toBeGreaterThan(0);
     const quake = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: byId('sundering_axe'),
@@ -381,7 +459,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     });
     expect(staff.grid[marks.palmR.y][marks.palmR.x]).toBe(1);
     expect(
-      cellsOf(staff.grid, isWoodCell).some(([, y]) => y > marks.palmR.y && y <= marks.palmR.y + 4),
+      cellsOf(staff.grid, isWoodCell).some(([, y]) => y > marks.palmR.y + 2 && y <= marks.palmR.y + 6),
     ).toBe(true);
     expect(
       cellsOf(staff.grid, (v) => v === ACCENT_INDEX).some(([, y]) => y < marks.palmR.y - 5),
@@ -410,7 +488,7 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     expect(metal.length).toBeGreaterThan(3);
     expect(Math.min(...metal.map(([, y]) => y))).toBeLessThan(marks.palmR.y - 7);
     expect(
-      cellsOf(out.grid, isWoodCell).some(([, y]) => y > marks.palmR.y && y < marks.palmR.y + 4),
+      cellsOf(out.grid, isWoodCell).some(([, y]) => y > marks.palmR.y + 2 && y <= marks.palmR.y + 6),
     ).toBe(true);
     expect(out.grid[marks.palmR.y][marks.palmR.x]).toBe(1);
   });
@@ -923,25 +1001,35 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     expect(Math.max(...bustX) - Math.min(...bustX)).toBeGreaterThanOrEqual(1);
   });
 
-  it('sways the held weapon with the stride without losing cells', () => {    const base = generateSprite16('sway-check', 'male', { ...STD_MALE });
+  it('sways the held weapon with the stride without losing cells', () => {
+    const base = generateSprite16('sway-check', 'male', { ...STD_MALE });
+    const marks = computeLandmarks(base.grid);
     const loadout = { weapon: byId('flame_dagger'), armor: null, accessory: null };
     const outs = [-1, 0, 1].map((swayX) =>
       applyEquipmentOverlays(base.grid, base.palette, loadout, { swayX }),
     );
+    const isBlade = (c: number): boolean => c === BLADE_INDEX || c === BLADE_DARK || c === BLADE_LIGHT;
     const bladeMax = outs.map(
       (o) =>
         Math.max(
           ...o.grid.flatMap((row) =>
-            row.map((c, x) => (c === BLADE_INDEX || c === BLADE_DARK || c === BLADE_LIGHT ? x : -1)),
+            row.map((c, x) => (isBlade(c) ? x : -1)),
           ),
         ),
     );
     expect(bladeMax[2]).toBe(bladeMax[1] + 1);
     expect(bladeMax[0]).toBe(bladeMax[1] - 1);
-    const counts = outs.map(
-      (o) => o.grid.flat().filter((c) => c === BLADE_INDEX || c === BLADE_DARK || c === BLADE_LIGHT).length,
+    // The blade translates rigidly with the stride. The closed fist only ever
+    // clips the hilt-side row, so the cells above the hand keep the exact same
+    // count on all three sway frames.
+    const aboveHand = outs.map((o) =>
+      o.grid.reduce(
+        (n, row, y) => (y <= marks.palmR.y - 3 ? n + row.filter(isBlade).length : n),
+        0,
+      ),
     );
-    expect(new Set(counts).size).toBe(1);
+    expect(aboveHand[1]).toBe(aboveHand[0]);
+    expect(aboveHand[2]).toBe(aboveHand[0]);
   });
 
   it('draws the strike trail additively: it can never overwrite the body', () => {

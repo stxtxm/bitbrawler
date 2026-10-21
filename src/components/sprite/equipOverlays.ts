@@ -33,6 +33,10 @@ export const TRIM_LIGHT = 106;
 export const TINT_LIGHT = 107;
 export const TINT2_LIGHT = 108;
 export const WOOD_DARK = 109;
+// Contour sombre ajouté autour de l'arme visible. Sans lui, une garde dorée
+// posée sur le plastron gris ou une garde brune posée sur la peau se lisaient
+// comme un simple mélange de pixels au lieu d'un objet tenu devant le corps.
+export const WEAPON_OUTLINE_INDEX = 110;
 
 const GRID_W = 24;
 const GRID_H = SPRITE_HEIGHT;
@@ -396,6 +400,13 @@ function blitRaw(
 // colors sampled from each item's pixel art.
 // ---------------------------------------------------------------------------
 
+// Bas de la poignée dans le repère de la paume (0 = centre du poing, +y vers
+// le haut). La main mesure ~5px de haut : une poignée qui s'arrêtait à -3.2
+// disparaissait entièrement derrière le poing une fois que la main recouvre
+// l'arme, et l'arme semblait flotter sans manche. Les 2px qui dépassent sous
+// le poing donnent un pommeau/cul-de-manche visible, donc une prise crédible.
+const HANDLE_BOTTOM = -5.4;
+
 function paintBlade(
   grid: SpriteGrid,
   palm: WeaponPalm,
@@ -409,7 +420,7 @@ function paintBlade(
   const taperStart = bladeTop - 2.5;
   const bladeAngle = angle * 0.7;
   paintLocalShape(grid, palm, bladeAngle, (lx, ly) => {
-    if (Math.abs(ly + 3.2) <= 0.6 && Math.abs(lx) <= 1.2) return BLADE_INDEX;
+    if (Math.abs(ly - HANDLE_BOTTOM) <= 0.6 && Math.abs(lx) <= 1.2) return BLADE_INDEX;
 
     const guard = Math.abs(ly - guardLy) <= 0.6 && Math.abs(lx) <= 2.1;
     if (guard) {
@@ -431,7 +442,7 @@ function paintBlade(
       return 0;
     }
 
-    if (ly >= -3.2 && ly < guardLy && Math.abs(lx) <= 1) {
+    if (ly >= HANDLE_BOTTOM && ly < guardLy && Math.abs(lx) <= 1) {
       return Math.abs(lx) < 0.4 ? WOOD_INDEX : WOOD_DARK;
     }
     return 0;
@@ -506,8 +517,8 @@ function paintHaft(
     }
     if (bandAt(lx, ly, 7, 1, BLADE_INDEX)) return BLADE_INDEX;
     if (bandAt(lx, ly, 0, 1, WHEAD_DARK)) return WHEAD_DARK;
-    if (Math.abs(ly + 3.2) <= 0.6 && Math.abs(lx) <= 1.2) return BLADE_INDEX;
-    return shaftAt(lx, ly, -3.2, headCenterY, WOOD_INDEX);
+    if (Math.abs(ly - HANDLE_BOTTOM) <= 0.6 && Math.abs(lx) <= 1.2) return BLADE_INDEX;
+    return shaftAt(lx, ly, HANDLE_BOTTOM, headCenterY, WOOD_INDEX);
   });
 }
 
@@ -526,8 +537,8 @@ function paintStaff(grid: SpriteGrid, palm: WeaponPalm, angle: number): void {
     if (mv === 2) return ACCENT_INDEX;
     if (mv !== 0) return WHEAD_INDEX;
     if (bandAt(lx, ly, 0, 1, WOOD_DARK)) return WOOD_DARK;
-    if (Math.abs(ly + 3.2) <= 0.6 && Math.abs(lx) <= 1.2) return BLADE_INDEX;
-    return shaftAt(lx, ly, -3.2, 12, WOOD_INDEX);
+    if (Math.abs(ly - HANDLE_BOTTOM) <= 0.6 && Math.abs(lx) <= 1.2) return BLADE_INDEX;
+    return shaftAt(lx, ly, HANDLE_BOTTOM, 12, WOOD_INDEX);
   });
 }
 
@@ -547,8 +558,8 @@ function paintSpear(grid: SpriteGrid, palm: WeaponPalm, angle: number): void {
     if (mv !== 0) return BLADE_INDEX;
     if (bandAt(lx, ly, 8, 1, BLADE_INDEX)) return BLADE_INDEX;
     if (bandAt(lx, ly, 0, 1, WOOD_DARK)) return WOOD_DARK;
-    if (Math.abs(ly + 3.2) <= 0.6 && Math.abs(lx) <= 1.2) return BLADE_INDEX;
-    return shaftAt(lx, ly, -3.2, 10, WOOD_INDEX);
+    if (Math.abs(ly - HANDLE_BOTTOM) <= 0.6 && Math.abs(lx) <= 1.2) return BLADE_INDEX;
+    return shaftAt(lx, ly, HANDLE_BOTTOM, 10, WOOD_INDEX);
   });
 }
 
@@ -567,8 +578,8 @@ function paintScepter(grid: SpriteGrid, palm: WeaponPalm, angle: number): void {
     if (mv === 2) return ACCENT_INDEX;
     if (mv !== 0) return WHEAD_INDEX;
     if (bandAt(lx, ly, 0, 1, WOOD_DARK)) return WOOD_DARK;
-    if (Math.abs(ly + 3.2) <= 0.6 && Math.abs(lx) <= 1.2) return BLADE_INDEX;
-    return shaftAt(lx, ly, -3.2, 4, WOOD_INDEX);
+    if (Math.abs(ly - HANDLE_BOTTOM) <= 0.6 && Math.abs(lx) <= 1.2) return BLADE_INDEX;
+    return shaftAt(lx, ly, HANDLE_BOTTOM, 4, WOOD_INDEX);
   });
 }
 
@@ -594,8 +605,8 @@ function paintScythe(grid: SpriteGrid, palm: WeaponPalm, angle: number, glint: b
     // the head, which looked like a giant purple flag behind the character.
     if (glint && ly > 12.4 && ly < 14.6 && lx < -0.2 && lx > -2.8) return ACCENT_INDEX;
     if (bandAt(lx, ly, 0, 1, WOOD_DARK)) return WOOD_DARK;
-    if (Math.abs(ly + 3.2) <= 0.6 && Math.abs(lx) <= 1.2) return BLADE_INDEX;
-    return shaftAt(lx, ly, -3.2, 10, WOOD_INDEX);
+    if (Math.abs(ly - HANDLE_BOTTOM) <= 0.6 && Math.abs(lx) <= 1.2) return BLADE_INDEX;
+    return shaftAt(lx, ly, HANDLE_BOTTOM, 10, WOOD_INDEX);
   });
 }
 
@@ -1038,6 +1049,9 @@ const WEAPON_CELLS = new Set<number>([
   STRING_INDEX,
 ]);
 
+/** Peau nue (base, ombre, lumière) : les seules cellules qui recouvrent l'arme. */
+const SKIN_CELLS = new Set<number>([1, shadeIndexOf(1), highlightIndexOf(1)]);
+
 function clipWeaponFromHead(grid: SpriteGrid, before: SpriteGrid, head: Box): void {
   const y0 = Math.max(0, head.y0);
   const y1 = Math.min(grid.length - 1, head.y1);
@@ -1053,6 +1067,60 @@ function clipWeaponFromHead(grid: SpriteGrid, before: SpriteGrid, head: Box): vo
       // head. Empty cells inside the box are background: the weapon may pass
       // there without covering the face.
       if (WEAPON_CELLS.has(row[x]) && before[y][x] !== 0) row[x] = before[y][x];
+    }
+  }
+}
+
+// Le poing se referme sur la poignée. La poignée tourne autour de la paume :
+// son extrémité basse sortait du poing et repeignait l'avant-bras en brun, et
+// la garde traversait le dos de la main. C'était le « l'arme se mélange avec
+// le personnage ». On restaure donc la peau de la main (peau, ombre, lumière
+// — le gantelet/bracelet est restauré tel quel depuis `before`) sur tout pixel
+// d'arme posé dessus, dans une boîte qui couvre le poing dans toutes les
+// postures (mesurée : au pire -4..+1 en x, -4..+3 en y autour de la paume).
+// La manche, elle, reste derrière l'arme : une lame au-dessus du poing ne
+// perd pas de longueur, et le manche dépasse sous le poing (HANDLE_BOTTOM).
+const FIST_RESTORE_X = 4;
+const FIST_RESTORE_UP = 4;
+const FIST_RESTORE_DOWN = 3;
+
+function restoreFistOverWeapon(
+  grid: SpriteGrid,
+  before: SpriteGrid,
+  skin: boolean[][],
+  palm: { x: number; y: number },
+): void {
+  const y0 = Math.max(0, palm.y - FIST_RESTORE_UP);
+  const y1 = Math.min(grid.length - 1, palm.y + FIST_RESTORE_DOWN);
+  for (let y = y0; y <= y1; y++) {
+    const row = grid[y];
+    const w = row?.length ?? 0;
+    const x0 = Math.max(0, palm.x - FIST_RESTORE_X);
+    const x1 = Math.min(w - 1, palm.x + FIST_RESTORE_X);
+    for (let x = x0; x <= x1; x++) {
+      if (!skin[y]?.[x]) continue;
+      if (WEAPON_CELLS.has(row[x])) row[x] = before[y][x];
+    }
+  }
+}
+
+// Un contour d'un pixel autour de l'arme découpe sa silhouette sur le fond.
+// Il n'est écrit que dans le vide : poser un liseré sombre sur le corps ferait
+// croire que l'arme est devant alors que la boîte du poing vient justement de
+// la passer derrière la main.
+function outlineWeapon(grid: SpriteGrid): void {
+  const h = grid.length;
+  const w = grid[0].length;
+  const snapshot = grid.map((row) => [...row]);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (!WEAPON_CELLS.has(snapshot[y][x])) continue;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+        const nx = x + dx;
+        const ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+        if (snapshot[ny][nx] === 0) grid[ny][nx] = WEAPON_OUTLINE_INDEX;
+      }
     }
   }
 }
@@ -1139,6 +1207,7 @@ export function applyEquipmentOverlays(
     [TRIM_LIGHT]: highlightHex(trim),
     [TINT_LIGHT]: highlightHex(tintHex),
     [TINT2_LIGHT]: highlightHex(tint2Hex),
+    [WEAPON_OUTLINE_INDEX]: OUTLINE_HEX,
   };
   for (const key of Object.keys(ITEM_PALETTE).map(Number)) {
     if (key === 0) continue;
@@ -1186,6 +1255,13 @@ export function applyEquipmentOverlays(
     paintHeldWeapon(out, loadout.weapon, marks.palmR, opts?.swayX ?? 0, weaponAngle);
     if (trailSteps > 0) paintSwingTrail(out, preWeapon, trailSteps);
     clipWeaponFromHead(out, preWeapon, marks.head);
+    // Les knuckles sont portés PAR le poing : restaurer la main effacerait
+    // l'arme elle-même. Toutes les autres familles passent sous la main.
+    if (weaponVisualKind(loadout.weapon) !== 'fist') {
+      const skin = grid.map((row) => row.map((v) => SKIN_CELLS.has(v)));
+      restoreFistOverWeapon(out, preWeapon, skin, marks.palmR);
+    }
+    outlineWeapon(out);
   }
   if (loadout.accessory && accessoryKind === 'ring') paintRing(out, marks.palmR);
   return { grid: out, palette: next };
