@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-20T16:28:43Z",
+  "last_session": "2026-10-21T14:14:59Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,9 +21,9 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR #1259: la telemetrie purchase utilisait getShopOffers()[index] (position tableau) au lieu de l index config -> offre epique (index 3, 80 diamants) enregistree price 0 / slot_3. Piege deja connu en shared.json mais reintroduit dans un nouveau code : verifier tout usage d offer.index dans les nouvelles features shop. Rappel: les agents ne modifient jamais .github/workflows/*.yml (issue humaine sans /oc).",
-      "issue": "#1259",
-      "date": "2026-10-20"
+      "lesson": "PR #1271: synchroniser FX avec SPRITE_ATTACK_IMPACT_MS reduit la fenetre de reaction au tick suivant (130ms a x1, 65ms a x2) et cree 390ms de latence en lowPerf ou les sprites ne s animent pas — verifier le couplage delai/animation avant merge.",
+      "issue": "#1271",
+      "date": "2026-10-21"
     }
   ]
 }
