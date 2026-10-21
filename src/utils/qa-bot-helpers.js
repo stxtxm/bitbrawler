@@ -44,6 +44,41 @@ export function parseLevelFromText(text) {
   return match ? parseInt(match[1]) : null
 }
 
+export const XP_BASE = 120
+export const XP_EXPONENT = 1.65
+export const XP_MAX_LEVEL = 99
+
+export function getXpRequiredForNextLevel(level) {
+  if (level >= XP_MAX_LEVEL) return Infinity
+  const shifted = Math.max(1, level)
+  return Math.floor(XP_BASE * Math.pow(shifted, XP_EXPONENT))
+}
+
+export function getTotalXpForLevel(level) {
+  if (level <= 1) return 0
+  let totalXp = 0
+  for (let i = 1; i < level; i++) {
+    totalXp += getXpRequiredForNextLevel(i)
+  }
+  return Math.floor(totalXp)
+}
+
+export function parseProgressionCurve(xpText, level) {
+  if (typeof level !== 'number' || !Number.isFinite(level)) return null
+  const match = String(xpText ?? '').match(/(\d+)\s*\/\s*(\d+)\s*XP/i)
+  if (!match) return null
+  const currentXp = parseInt(match[1], 10)
+  const xpForNext = parseInt(match[2], 10)
+  if (!Number.isFinite(currentXp) || !Number.isFinite(xpForNext) || xpForNext <= 0) return null
+  const percent = Math.min(100, Math.max(0, (currentXp / xpForNext) * 100))
+  return {
+    level,
+    total_xp: getTotalXpForLevel(level) + currentXp,
+    xp_for_next: xpForNext,
+    percent: Math.round(percent * 10) / 10,
+  }
+}
+
 export const COMBAT_SPEED_STORAGE_KEY = 'bitbrawler_combat_speed'
 export const COMBAT_SPEED_OPTIONS = [1, 2]
 export const COMBAT_SPEED_TOGGLE_SELECTOR = '.combat-speed-toggle'

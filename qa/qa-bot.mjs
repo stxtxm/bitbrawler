@@ -5,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'url'
 import config from './qa-bot.config.js'
 import {
   parseLevelFromText,
+  parseProgressionCurve,
   persistentNameForGeneration,
   shouldForcePersistentReset,
   COMBAT_SPEED_STORAGE_KEY,
@@ -769,6 +770,20 @@ function parseXpFromText(text) {
   return match ? { current: parseInt(match[1]), max: parseInt(match[2]) } : null
 }
 
+async function parseProgressionCurveFromPage(page, level) {
+  try {
+    const xpTextEl = page.locator('.xp-text').first()
+    const xpText = (await xpTextEl.textContent({ timeout: 1000 }).catch(() => '')) || ''
+    const fromBar = parseProgressionCurve(xpText, level)
+    if (fromBar) return fromBar
+
+    const bodyText = await page.locator('body').innerText().catch(() => '')
+    return parseProgressionCurve(bodyText, level)
+  } catch {
+    return null
+  }
+}
+
 /**
  * Parse the idle efficiency panel (essence/min, next level ETA, ratios).
  * Returns structured data or null if panel not visible.
@@ -1388,6 +1403,8 @@ const EQUIPMENT_GROUP_LABELS = new Set([
   'WANDS', 'STAFFS', 'BOWS', 'DAGGERS', 'HELMETS', 'BOOTS', 'GLOVES', 'CLOAKS', 'ROBES', 'CHARMS',
 ])
 
+const EQUIPMENT_SLOT_FALLBACK_LABELS = new Set(['WEAPON', 'ARMOR', 'ACCESSORY'])
+
 function sanitizeItemName(name) {
   return String(name)
     .replace(/^[\p{Extended_Pictographic}\uFE0F\u200D\s\-–—.:*"'()\[\]{}]+/u, '')
@@ -1400,13 +1417,19 @@ function isEquipmentGroupLabel(name) {
   return EQUIPMENT_GROUP_LABELS.has(lettersOnly)
 }
 
+function isSlotFallbackLabel(name) {
+  const lettersOnly = String(name).replace(/[^a-zA-Z]/g, '').toUpperCase()
+  return EQUIPMENT_SLOT_FALLBACK_LABELS.has(lettersOnly)
+}
+
 function isValidItemName(name) {
   const sanitized = sanitizeItemName(name)
   return (
     sanitized.length >= 2 &&
     /[a-zA-Z]/.test(sanitized) &&
     sanitized.toUpperCase() !== 'EMPTY' &&
-    !isEquipmentGroupLabel(sanitized)
+    !isEquipmentGroupLabel(sanitized) &&
+    !isSlotFallbackLabel(sanitized)
   )
 }
 
@@ -1499,7 +1522,7 @@ async function parseEquippedItems(page) {
         }
       }
 
-      if (name && name.trim().length > 0) {
+      if (name && name.trim().length > 0 && isValidItemName(name)) {
         items.push({ slot: slotLabel?.trim() || '?', name: name.trim(), ...(rarity ? { rarity } : {}) })
       } else {
         console.log(`   ⚠️ parseEquippedItems: skipped empty/corrupted item at slot ${i}`)
@@ -1577,6 +1600,7 @@ async function parseEquippedItemsFromBody(page) {
         for (let next = li + 1; next < lines.length; next++) {
           const nextTrimmed = lines[next].trim()
           if (!nextTrimmed) continue
+          if (isSlotFallbackLabel(nextTrimmed)) continue
           if (nextTrimmed === 'EMPTY' || nextTrimmed === '×' || isEquipmentGroupLabel(nextTrimmed)) break
           name = nextTrimmed
           break
@@ -3079,6 +3103,7 @@ async function run() {
     initial_stats: null,
     initial_level: null,
     initial_xp: null,
+    progression_curve: null,
     initial_max_hp: null,
     initial_equipment: null,
     initial_streak: null,
@@ -3215,11 +3240,12 @@ async function run() {
     const preFightText = await page.locator('body').innerText().catch(() => '')
     runRecord.initial_level = parseLevelFromText(preFightText)
     runRecord.initial_xp = parseXpFromText(preFightText)
+    runRecord.progression_curve = await parseProgressionCurveFromPage(page, runRecord.initial_level)
     runRecord.initial_stats = await parseCharacterStats(page)
     runRecord.initial_max_hp = await parseMaxHp(page)
     runRecord.initial_equipment = await parseEquippedItems(page)
     runRecord.initial_streak = await parseStreak(page)
-    console.log(`   Initial stats: level=${runRecord.initial_level}, xp=${JSON.stringify(runRecord.initial_xp)}, stats=${JSON.stringify(runRecord.initial_stats)}, maxHp=${runRecord.initial_max_hp}`)
+    console.log(`   Initial stats: level=${runRecord.initial_level}, xp=${JSON.stringify(runRecord.initial_xp)}, progression=${JSON.stringify(runRecord.progression_curve)}, stats=${JSON.stringify(runRecord.initial_stats)}, maxHp=${runRecord.initial_max_hp}`)
     if (runRecord.initial_equipment.length > 0) {
       console.log(`   Equipment: ${runRecord.initial_equipment.map(e => `${e.slot}=${e.name}`).join(', ')}`)
     }

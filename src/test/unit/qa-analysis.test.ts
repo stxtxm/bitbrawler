@@ -154,6 +154,8 @@ const EQUIPMENT_GROUP_LABELS = new Set([
   'WANDS', 'STAFFS', 'BOWS', 'DAGGERS', 'HELMETS', 'BOOTS', 'GLOVES', 'CLOAKS', 'ROBES', 'CHARMS',
 ])
 
+const EQUIPMENT_SLOT_FALLBACK_LABELS = new Set(['WEAPON', 'ARMOR', 'ACCESSORY'])
+
 function sanitizeEquippedItemName(name: string): string {
   return String(name)
     .replace(/^[\p{Extended_Pictographic}\uFE0F\u200D\s\-–—.:*"'()\[\]{}]+/u, '')
@@ -172,7 +174,8 @@ function isValidEquippedItemName(name: string): boolean {
     sanitized.length >= 2 &&
     /[a-zA-Z]/.test(sanitized) &&
     sanitized.toUpperCase() !== 'EMPTY' &&
-    !isEquipmentGroupLabel(sanitized)
+    !isEquipmentGroupLabel(sanitized) &&
+    !EQUIPMENT_SLOT_FALLBACK_LABELS.has(sanitized.toUpperCase())
   )
 }
 
@@ -2125,6 +2128,14 @@ describe('QA Equipment Name Sanitization Contract (#710)', () => {
     expect(isValidEquippedItemName('💍 ACCESSORIES')).toBe(false)
   })
 
+  it('rejects singular slot fallback labels captured next to the equipped icon (#1283)', () => {
+    expect(isValidEquippedItemName('WEAPON')).toBe(false)
+    expect(isValidEquippedItemName('ACCESSORY')).toBe(false)
+    expect(isValidEquippedItemName('ARMOR')).toBe(false)
+    expect(isValidEquippedItemName('⚔️ WEAPON')).toBe(false)
+    expect(isValidEquippedItemName('💍 ACCESSORY')).toBe(false)
+  })
+
   it('sanitizes leading emoji/variation-selector remnants and accepts real item names', () => {
     expect(sanitizeEquippedItemName('\uFE0F ARMOR')).toBe('ARMOR')
     expect(isValidEquippedItemName('\uFE0F ARMOR')).toBe(false) // group label after sanitize
@@ -2272,6 +2283,45 @@ describe('QA Bot Equipment Parse Contract (#710)', () => {
     expect(source).toContain('isValidEquippedItemName')
     expect(source).toContain('EQUIPMENT_GROUP_LABELS')
     expect(source).toContain('filter')
+  })
+
+  it('qa-bot rejects singular slot fallback labels and skips them when peeking the next line (#1283)', () => {
+    expect(qaBotSource).toContain('EQUIPMENT_SLOT_FALLBACK_LABELS')
+    expect(qaBotSource).toContain('isSlotFallbackLabel')
+    const fallbackStart = qaBotSource.indexOf('const EQUIPMENT_SLOT_FALLBACK_LABELS')
+    expect(fallbackStart).toBeGreaterThan(-1)
+    const fallbackBlock = qaBotSource.slice(fallbackStart, fallbackStart + 200)
+    expect(fallbackBlock).toContain('WEAPON')
+    expect(fallbackBlock).toContain('ACCESSORY')
+
+    const isValidFnStart = qaBotSource.indexOf('function isValidItemName(')
+    expect(isValidFnStart).toBeGreaterThan(-1)
+    const isValidFn = qaBotSource.slice(isValidFnStart, qaBotSource.indexOf('}', isValidFnStart) + 1)
+    expect(isValidFn).toContain('isSlotFallbackLabel')
+
+    const bodyFn = requireAsyncFunction('parseEquippedItemsFromBody')
+    expect(bodyFn).toContain('isSlotFallbackLabel')
+  })
+
+  it('analyze-qa-stats.ts excludes singular slot fallback labels from equipment_analysis (#1283)', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+    expect(source).toContain('EQUIPMENT_SLOT_FALLBACK_LABELS')
+    expect(source).toContain('WEAPON')
+    expect(source).toContain('ACCESSORY')
+  })
+})
+
+describe('QA Bot Progression Curve Capture (#1283)', () => {
+  const qaBotSource = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
+
+  it('declares progression_curve in the run record', () => {
+    expect(qaBotSource).toContain('progression_curve: null')
+  })
+
+  it('reads the ExperienceBar XP text and stores the captured curve', () => {
+    expect(qaBotSource).toContain('.xp-text')
+    expect(qaBotSource).toContain('parseProgressionCurve')
+    expect(qaBotSource).toMatch(/runRecord\.progression_curve\s*=/)
   })
 })
 
