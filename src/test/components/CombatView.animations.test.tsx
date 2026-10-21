@@ -6,6 +6,7 @@ import * as combatUtils from '../../utils/combatUtils';
 import * as combatLogUtils from '../../utils/combatLogUtils';
 import * as xpUtils from '../../utils/xpUtils';
 import { ParticleSystem, type ParticleType } from '../../utils/particleSystem';
+import { SPRITE_ATTACK_IMPACT_MS } from '../../components/sprite/SpriteCanvas';
 
 describe('CombatView Animation Overhaul', () => {
     const mountedContainers = new Map<ParticleSystem, HTMLElement>();
@@ -62,6 +63,15 @@ describe('CombatView Animation Overhaul', () => {
             return action !== null && /\baction-(hit|crit|magic|miss|counter)\b/.test(action.className);
         };
         advanceUntil(played, maxAdvance);
+        // The action class is applied on the round tick (wind-up); its hit
+        // feedback only lands on the sprite's impact frame.
+        if (played()) {
+            act(() => { vi.advanceTimersByTime(SPRITE_ATTACK_IMPACT_MS + 20); });
+        }
+    };
+
+    const advanceToImpact = () => {
+        act(() => { vi.advanceTimersByTime(SPRITE_ATTACK_IMPACT_MS + 20); });
     };
 
     // ─── Stage 1: Defeat animation ─────────────────────────
@@ -186,6 +196,7 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(900); });
         act(() => { vi.advanceTimersByTime(500); });
         act(() => { vi.advanceTimersByTime(600); });
+        advanceToImpact();
 
         const emitCalls = (ParticleSystem.prototype.emit as ReturnType<typeof vi.fn>).mock.calls;
         const hasCritRelated = emitCalls.some(c => (c as Array<unknown>)[0] === 'hit_ring' || (c as Array<unknown>)[0] === 'dust');
@@ -223,6 +234,7 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(900); });
         act(() => { vi.advanceTimersByTime(500); });
         act(() => { vi.advanceTimersByTime(600); });
+        advanceToImpact();
 
         expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('dust', expect.any(Number), expect.any(Number), expect.any(Number));
     });
@@ -256,6 +268,7 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(900); });
         act(() => { vi.advanceTimersByTime(500); });
         act(() => { vi.advanceTimersByTime(600); });
+        advanceToImpact();
 
         expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('hit_ring', expect.any(Number), expect.any(Number), expect.any(Number));
     });
@@ -315,6 +328,7 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(900); });
         act(() => { vi.advanceTimersByTime(500); });
         act(() => { vi.advanceTimersByTime(600); });
+        advanceToImpact();
 
         expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('hit', expect.any(Number), expect.any(Number), expect.any(Number));
     });
@@ -465,6 +479,7 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(900); });
         act(() => { vi.advanceTimersByTime(500); });
         act(() => { vi.advanceTimersByTime(600); });
+        advanceToImpact();
         act(() => { vi.advanceTimersByTime(2000); });
 
         const emitCalls = (ParticleSystem.prototype.emit as ReturnType<typeof vi.fn>).mock.calls;
@@ -506,6 +521,7 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(900); });
         act(() => { vi.advanceTimersByTime(500); });
         act(() => { vi.advanceTimersByTime(600); });
+        advanceToImpact();
 
         const combatAction = container.querySelector('.combat-action');
         expect(combatAction?.classList.contains('hit-stop')).toBe(true);
@@ -782,6 +798,7 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(900); });
         act(() => { vi.advanceTimersByTime(500); });
         act(() => { vi.advanceTimersByTime(600); });
+        advanceToImpact();
 
         const combatAction = container.querySelector('.combat-action');
         expect(combatAction?.classList.contains('hit-stop')).toBe(true);
@@ -819,6 +836,7 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(900); });
         act(() => { vi.advanceTimersByTime(500); });
         act(() => { vi.advanceTimersByTime(600); });
+        advanceToImpact();
 
         const combatAction = container.querySelector('.combat-action');
         expect(combatAction?.classList.contains('hit-stop')).toBe(false);
@@ -862,6 +880,7 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(900); });
         act(() => { vi.advanceTimersByTime(500); });
         act(() => { vi.advanceTimersByTime(520); });
+        advanceToImpact();
 
         const flash = container.querySelector('.screen-flash.flash-crit');
         expect(flash).not.toBeNull();
@@ -903,6 +922,7 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(900); });
         act(() => { vi.advanceTimersByTime(500); });
         act(() => { vi.advanceTimersByTime(600); });
+        advanceToImpact();
 
         const combatAction = container.querySelector('.combat-action') as HTMLElement;
         const shakeDir = combatAction?.style.getPropertyValue('--shake-dir');
@@ -941,6 +961,7 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(900); });
         act(() => { vi.advanceTimersByTime(500); });
         act(() => { vi.advanceTimersByTime(600); });
+        advanceToImpact();
 
         const combatAction = container.querySelector('.combat-action') as HTMLElement;
         const shakeDir = combatAction?.style.getPropertyValue('--shake-dir');
@@ -979,6 +1000,7 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(900); });
         act(() => { vi.advanceTimersByTime(500); });
         act(() => { vi.advanceTimersByTime(600); });
+        advanceToImpact();
 
         const combatAction = container.querySelector('.combat-action');
         expect(combatAction?.classList.contains('action-ko')).toBe(true);
@@ -1016,6 +1038,7 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(900); });
         act(() => { vi.advanceTimersByTime(500); });
         act(() => { vi.advanceTimersByTime(600); });
+        advanceToImpact();
 
         const flash = container.querySelector('.screen-flash.flash-ko');
         expect(flash).not.toBeNull();
@@ -1115,6 +1138,7 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(900); });
         act(() => { vi.advanceTimersByTime(500); });
         act(() => { vi.advanceTimersByTime(600); });
+        advanceToImpact();
 
         expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('spark_burst', expect.any(Number), expect.any(Number), expect.any(Number));
     });
@@ -1151,6 +1175,7 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(900); });
         act(() => { vi.advanceTimersByTime(500); });
         act(() => { vi.advanceTimersByTime(600); });
+        advanceToImpact();
 
         expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('blood_pixel', expect.any(Number), expect.any(Number), expect.any(Number));
     });
@@ -1186,6 +1211,7 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(900); });
         act(() => { vi.advanceTimersByTime(500); });
         act(() => { vi.advanceTimersByTime(600); });
+        advanceToImpact();
 
         expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('counter_text', expect.any(Number), expect.any(Number), expect.any(Number));
     });
@@ -1219,6 +1245,7 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(900); });
         act(() => { vi.advanceTimersByTime(500); });
         act(() => { vi.advanceTimersByTime(600); });
+        advanceToImpact();
 
         expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('blocked', expect.any(Number), expect.any(Number), expect.any(Number));
     });
@@ -1252,6 +1279,7 @@ describe('CombatView Animation Overhaul', () => {
         act(() => { vi.advanceTimersByTime(900); });
         act(() => { vi.advanceTimersByTime(500); });
         act(() => { vi.advanceTimersByTime(600); });
+        advanceToImpact();
 
         expect(vi.mocked(ParticleSystem.prototype.emit)).toHaveBeenCalledWith('dodge', expect.any(Number), expect.any(Number), expect.any(Number));
     });

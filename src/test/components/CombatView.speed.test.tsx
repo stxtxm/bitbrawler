@@ -89,10 +89,13 @@ describe('CombatView combat speed', () => {
 
     expect(document.querySelector('.combat-action')).not.toBeNull();
 
-    act(() => { vi.advanceTimersByTime(320); });
+    // Hit particles now land on the sprite's impact frame, 195 ms after the
+    // round tick at x2. Leave enough time for the first impact, but not for
+    // the second round's impact.
+    act(() => { vi.advanceTimersByTime(380); });
     expect(playedRounds()).toBe(1);
 
-    act(() => { vi.advanceTimersByTime(320); });
+    act(() => { vi.advanceTimersByTime(260); });
     expect(playedRounds()).toBe(2);
     expect(roundValue()).toBe('2/3');
 
@@ -123,7 +126,9 @@ describe('CombatView combat speed', () => {
     act(() => { vi.advanceTimersByTime(320); });
     expect(playedRounds()).toBe(0);
 
-    act(() => { vi.advanceTimersByTime(320); });
+    // At x1 the round tick is followed by a 390 ms wind-up. Add that delay
+    // when checking that the first impact has landed.
+    act(() => { vi.advanceTimersByTime(700); });
     expect(playedRounds()).toBe(1);
 
     vi.useRealTimers();

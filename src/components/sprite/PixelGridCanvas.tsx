@@ -16,8 +16,10 @@ import { spritePixelScale } from './spritePixelScale';
  *         le front) et l'arme reste ancrée dans le poing pendant le run.
  * r1175 : l'arme pivote autour de la paume (run, attaque, touche, victoire),
  *         avec des têtes de masse/marteau lisibles et une lame effilée.
+ * r1177 : le feedback du coup (dégâts, réaction, flash) attend la frame
+ *         d'impact de l'attaque au lieu de partir au début du round.
  */
-export const SPRITE_RENDER_REV = 'r1176-armes-rigides';
+export const SPRITE_RENDER_REV = 'r1177-impact-sync';
 
 function useDevicePixelRatio(): number {
   const [dpr, setDpr] = useState<number>(

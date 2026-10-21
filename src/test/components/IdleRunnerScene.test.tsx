@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, act } from '@testing-library/react'
 import { IdleRunnerScene } from '../../components/IdleRunnerScene'
+import { SPRITE_ATTACK_IMPACT_MS } from '../../components/sprite/SpriteCanvas'
+import { ParticleSystem } from '../../utils/particleSystem'
 
 // Mock PixelCharacter — renders a simple div with provided props
 vi.mock('../../components/PixelCharacter', () => ({
@@ -164,6 +166,31 @@ describe('IdleRunnerScene', () => {
 
     expect(screen.getByText('LVL 6')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /continue/i })).not.toBeInTheDocument()
+  })
+
+  it('delays the combat impact particles until the punch lands', () => {
+    const emitSpy = vi.spyOn(ParticleSystem.prototype, 'emit')
+    const ui = render(<IdleRunnerScene {...defaultProps} />)
+
+    ui.rerender(<IdleRunnerScene {...defaultProps} scenePhase="monster_appears" />)
+    ui.rerender(<IdleRunnerScene {...defaultProps} scenePhase="combat" />)
+
+    const dealtDamage = () =>
+      emitSpy.mock.calls.filter(([type]) => type === 'damage').length
+
+    expect(dealtDamage()).toBe(0)
+
+    act(() => {
+      vi.advanceTimersByTime(SPRITE_ATTACK_IMPACT_MS - 1)
+    })
+    expect(dealtDamage()).toBe(0)
+
+    act(() => {
+      vi.advanceTimersByTime(2)
+    })
+    expect(dealtDamage()).toBe(1)
+
+    emitSpy.mockRestore()
   })
 
   it('renders the offline gains popup with a CLAIM REWARDS button', () => {

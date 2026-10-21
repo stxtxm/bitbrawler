@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Character } from '../types/Character';
-import { SpriteCanvas } from './sprite/SpriteCanvas';
+import { SpriteCanvas, SPRITE_ATTACK_IMPACT_MS } from './sprite/SpriteCanvas';
 import { PixelMonster } from './PixelMonster';
 import { PixelIcon } from './PixelIcon';
 import { simulateCombat } from '../utils/combatUtils';
@@ -76,6 +76,11 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const lowPerf = useLowPerformanceMode();
     const [phase, setPhase] = useState<'intro' | 'vs' | 'combat' | 'result'>('intro');
     const scaleDuration = (ms: number) => Math.max(16, Math.round(ms / combatSpeed));
+    // The attack pose only reaches ATTACK_IMPACT_FRAME after a wind-up. Hit
+    // feedback (damage number, target reaction, screen shake) must wait for
+    // that frame instead of firing on the round tick — otherwise the hit
+    // visibly happens before the punch.
+    const attackImpactDelay = scaleDuration(SPRITE_ATTACK_IMPACT_MS);
     const [combatResult, setCombatResult] = useState<{
         winner: 'attacker' | 'defender' | 'draw';
         rounds: number;
@@ -85,7 +90,9 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const [currentRound, setCurrentRound] = useState(0);
     const logRef = useRef<HTMLDivElement | null>(null);
     const [actionPulse, setActionPulse] = useState<CombatAction | null>(null);
+    const [impactPulse, setImpactPulse] = useState<CombatAction | null>(null);
     const pulseTimeoutRef = useRef<number | null>(null);
+    const impactTimeoutRef = useRef<number | null>(null);
     const [scanIndex, setScanIndex] = useState(0);
     const [scanLocked, setScanLocked] = useState(false);
     const [fighterEntrance, setFighterEntrance] = useState(false);
@@ -403,118 +410,134 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                     const action = parseCombatDetail(detail, player.name, opponent.name);
 
                     if (action) {
+                        const actionRoundIndex = roundIndex;
                         setActionPulse(action);
+                        setImpactPulse(null);
                         if (pulseTimeoutRef.current !== null) {
                             window.clearTimeout(pulseTimeoutRef.current);
                         }
-                        const duration = scaleDuration(ACTION_DURATIONS[action.type] ?? 320);
+                        if (impactTimeoutRef.current !== null) {
+                            window.clearTimeout(impactTimeoutRef.current);
+                        }
+                        const duration = Math.max(
+                            scaleDuration(ACTION_DURATIONS[action.type] ?? 320),
+                            attackImpactDelay + scaleDuration(260),
+                        );
                         pulseTimeoutRef.current = window.setTimeout(() => {
                             setActionPulse(null);
                             pulseTimeoutRef.current = null;
                         }, duration);
 
-                        // --- Hit Flash (target sprite) ---
-                        if (action.type !== 'miss') {
-                            setHitFlashSide(action.actor === 'player' ? 'right' : 'left');
-                            if (hitFlashTimerRef.current !== null) window.clearTimeout(hitFlashTimerRef.current);
-                            hitFlashTimerRef.current = window.setTimeout(() => {
-                                setHitFlashSide(null);
-                                hitFlashTimerRef.current = null;
-                            }, scaleDuration(HIT_FLASH_DURATION));
-                        }
-
-                        // --- Hit Stop & Screen Flash (crit & fatal blow only) ---
-                        if (!lowPerf && action.type !== 'miss') {
-                            const lastRound = roundIndex >= combatResult.details.length - 1;
-                            const koBlow = lastRound && (
-                                (action.actor === 'player' && combatResult.winner === 'attacker') ||
-                                (action.actor === 'opponent' && combatResult.winner === 'defender')
-                            );
-
-                            if (koBlow) {
-                                setIsKO(true);
-                                setHitStop(true);
-                                setScreenFlash('ko');
-                                if (hitStopTimerRef.current !== null) window.clearTimeout(hitStopTimerRef.current);
-                                hitStopTimerRef.current = window.setTimeout(() => {
-                                    setHitStop(false);
-                                    hitStopTimerRef.current = null;
-                                }, scaleDuration(HIT_STOP_DURATION.ko));
-                                if (flashTimerRef.current !== null) window.clearTimeout(flashTimerRef.current);
-                                flashTimerRef.current = window.setTimeout(() => {
-                                    setScreenFlash('none');
-                                    flashTimerRef.current = null;
-                                }, scaleDuration(SCREEN_FLASH_DURATION.ko));
-                            } else if (action.type === 'crit') {
-                                setHitStop(true);
-                                setScreenFlash('crit');
-                                if (hitStopTimerRef.current !== null) window.clearTimeout(hitStopTimerRef.current);
-                                hitStopTimerRef.current = window.setTimeout(() => {
-                                    setHitStop(false);
-                                    hitStopTimerRef.current = null;
-                                }, scaleDuration(HIT_STOP_DURATION.crit));
-                                if (flashTimerRef.current !== null) window.clearTimeout(flashTimerRef.current);
-                                flashTimerRef.current = window.setTimeout(() => {
-                                    setScreenFlash('none');
-                                    flashTimerRef.current = null;
-                                }, scaleDuration(SCREEN_FLASH_DURATION.crit));
-                            }
-                        }
-
-                        const dmg = extractDamage(detail);
-                        const targetPs = action.actor === 'player' ? rightParticleSystemRef.current : leftParticleSystemRef.current;
-                        const targetLayer = action.actor === 'player' ? rightLayerRef.current : leftLayerRef.current;
-                        const targetLayerWidth = targetLayer?.clientWidth || 300;
-                        const x = action.actor === 'player' ? targetLayerWidth * 0.3 : targetLayerWidth * 0.7;
-
-                        // Damage number
-                        // Always emit action-specific VFX
-                        const actionParticleType: ParticleType =
-                            action.type === 'magic' ? 'magic' :
-                            action.type === 'crit' ? 'crit' :
-                            action.type === 'hit' ? 'hit' :
-                            action.type === 'counter' ? 'hit' : 'hit';
-
-                        if (!lowPerf) {
-                            if (action.type === 'crit') {
-                                targetPs?.emit('hit_ring', x, 36, 1);
-                                targetPs?.emit('dust', x, 50, 2);
-                                targetPs?.emit('spark_burst', x, 40, 6);
-                            } else if (action.type !== 'miss') {
-                                targetPs?.emit('dust', x, 50, 1);
+                        // The punch starts on the round tick but only lands on
+                        // ATTACK_IMPACT_FRAME. Keep the damage number, target
+                        // reaction and screen FX on that frame, otherwise the
+                        // hit visibly resolves before the animation.
+                        impactTimeoutRef.current = window.setTimeout(() => {
+                            impactTimeoutRef.current = null;
+                            setImpactPulse(action);
+                            // --- Hit Flash (target sprite) ---
+                            if (action.type !== 'miss') {
+                                setHitFlashSide(action.actor === 'player' ? 'right' : 'left');
+                                if (hitFlashTimerRef.current !== null) window.clearTimeout(hitFlashTimerRef.current);
+                                hitFlashTimerRef.current = window.setTimeout(() => {
+                                    setHitFlashSide(null);
+                                    hitFlashTimerRef.current = null;
+                                }, scaleDuration(HIT_FLASH_DURATION));
                             }
 
-                            // Special floating text based on action type
-                            if (action.type === 'counter') {
-                                targetPs?.emit('counter_text', x, 30, 1);
-                            } else if (action.type === 'miss') {
-                                targetPs?.emit('dodge', x, 30, 1);
-                            } else if (action.type === 'hit') {
-                                targetPs?.emit('blocked', x, 30, 1);
-                            }
+                            // --- Hit Stop & Screen Flash (crit & fatal blow only) ---
+                            if (!lowPerf && action.type !== 'miss') {
+                                const lastRound = actionRoundIndex >= combatResult.details.length - 1;
+                                const koBlow = lastRound && (
+                                    (action.actor === 'player' && combatResult.winner === 'attacker') ||
+                                    (action.actor === 'opponent' && combatResult.winner === 'defender')
+                                );
 
-                            // Blood pixel splatter when target HP is below 25%
-                            // Use timeline data to check post-action HP
-                            const timelineIndex = roundIndex + 1;
-                            const postActionHp = combatResult.timeline[timelineIndex];
-                            if (postActionHp) {
-                                const targetPostHp = action.actor === 'player' ? postActionHp.defenderHp : postActionHp.attackerHp;
-                                const targetMax = action.actor === 'player' ? opponentMaxHp : playerMaxHp;
-                                const targetHpPercent = targetMax > 0 ? (targetPostHp / targetMax) * 100 : 100;
-                                if (targetHpPercent <= 25 && action.type !== 'miss') {
-                                    targetPs?.emit('blood_pixel', x, 44, 3);
+                                if (koBlow) {
+                                    setIsKO(true);
+                                    setHitStop(true);
+                                    setScreenFlash('ko');
+                                    if (hitStopTimerRef.current !== null) window.clearTimeout(hitStopTimerRef.current);
+                                    hitStopTimerRef.current = window.setTimeout(() => {
+                                        setHitStop(false);
+                                        hitStopTimerRef.current = null;
+                                    }, scaleDuration(HIT_STOP_DURATION.ko));
+                                    if (flashTimerRef.current !== null) window.clearTimeout(flashTimerRef.current);
+                                    flashTimerRef.current = window.setTimeout(() => {
+                                        setScreenFlash('none');
+                                        flashTimerRef.current = null;
+                                    }, scaleDuration(SCREEN_FLASH_DURATION.ko));
+                                } else if (action.type === 'crit') {
+                                    setHitStop(true);
+                                    setScreenFlash('crit');
+                                    if (hitStopTimerRef.current !== null) window.clearTimeout(hitStopTimerRef.current);
+                                    hitStopTimerRef.current = window.setTimeout(() => {
+                                        setHitStop(false);
+                                        hitStopTimerRef.current = null;
+                                    }, scaleDuration(HIT_STOP_DURATION.crit));
+                                    if (flashTimerRef.current !== null) window.clearTimeout(flashTimerRef.current);
+                                    flashTimerRef.current = window.setTimeout(() => {
+                                        setScreenFlash('none');
+                                        flashTimerRef.current = null;
+                                    }, scaleDuration(SCREEN_FLASH_DURATION.crit));
                                 }
                             }
-                        }
 
-                        // Damage number (always, even alongside crit FX)
-                        if (dmg !== null) {
-                            targetPs?.emit('damage', x, 44, 1, dmg);
-                        } else if (action.type === 'miss') {
-                            targetPs?.emit('miss', x, 44, 1);
-                        } else {
-                            targetPs?.emit(actionParticleType, x, 44, 1);
-                        }
+                            const dmg = extractDamage(detail);
+                            const targetPs = action.actor === 'player' ? rightParticleSystemRef.current : leftParticleSystemRef.current;
+                            const targetLayer = action.actor === 'player' ? rightLayerRef.current : leftLayerRef.current;
+                            const targetLayerWidth = targetLayer?.clientWidth || 300;
+                            const x = action.actor === 'player' ? targetLayerWidth * 0.3 : targetLayerWidth * 0.7;
+
+                            // Damage number
+                            // Always emit action-specific VFX
+                            const actionParticleType: ParticleType =
+                                action.type === 'magic' ? 'magic' :
+                                action.type === 'crit' ? 'crit' :
+                                action.type === 'hit' ? 'hit' :
+                                action.type === 'counter' ? 'hit' : 'hit';
+
+                            if (!lowPerf) {
+                                if (action.type === 'crit') {
+                                    targetPs?.emit('hit_ring', x, 36, 1);
+                                    targetPs?.emit('dust', x, 50, 2);
+                                    targetPs?.emit('spark_burst', x, 40, 6);
+                                } else if (action.type !== 'miss') {
+                                    targetPs?.emit('dust', x, 50, 1);
+                                }
+
+                                // Special floating text based on action type
+                                if (action.type === 'counter') {
+                                    targetPs?.emit('counter_text', x, 30, 1);
+                                } else if (action.type === 'miss') {
+                                    targetPs?.emit('dodge', x, 30, 1);
+                                } else if (action.type === 'hit') {
+                                    targetPs?.emit('blocked', x, 30, 1);
+                                }
+
+                                // Blood pixel splatter when target HP is below 25%
+                                // Use timeline data to check post-action HP
+                                const timelineIndex = actionRoundIndex + 1;
+                                const postActionHp = combatResult.timeline[timelineIndex];
+                                if (postActionHp) {
+                                    const targetPostHp = action.actor === 'player' ? postActionHp.defenderHp : postActionHp.attackerHp;
+                                    const targetMax = action.actor === 'player' ? opponentMaxHp : playerMaxHp;
+                                    const targetHpPercent = targetMax > 0 ? (targetPostHp / targetMax) * 100 : 100;
+                                    if (targetHpPercent <= 25 && action.type !== 'miss') {
+                                        targetPs?.emit('blood_pixel', x, 44, 3);
+                                    }
+                                }
+                            }
+
+                            // Damage number (always, even alongside crit FX)
+                            if (dmg !== null) {
+                                targetPs?.emit('damage', x, 44, 1, dmg);
+                            } else if (action.type === 'miss') {
+                                targetPs?.emit('miss', x, 44, 1);
+                            } else {
+                                targetPs?.emit(actionParticleType, x, 44, 1);
+                            }
+                        }, attackImpactDelay);
                     }
                     roundIndex++;
                     roundIndexRef.current = roundIndex;
@@ -554,15 +577,19 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
             return () => {
                 roundIntervalRef.current = null;
                 clearInterval(roundInterval);
+                if (impactTimeoutRef.current !== null) {
+                    window.clearTimeout(impactTimeoutRef.current);
+                    impactTimeoutRef.current = null;
+                }
             };
         }
     }, [phase, combatResult, player.name, opponent.name, lowPerf, comboCount, combatSpeed]);
 
     useEffect(() => {
-        if (actionPulse) {
-            play(actionPulse.type);
+        if (impactPulse) {
+            play(impactPulse.type);
         }
-    }, [actionPulse, play]);
+    }, [impactPulse, play]);
 
     useEffect(() => {
         return () => {
@@ -578,6 +605,9 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
             if (hitFlashTimerRef.current !== null) {
                 window.clearTimeout(hitFlashTimerRef.current);
             }
+            if (impactTimeoutRef.current !== null) {
+                window.clearTimeout(impactTimeoutRef.current);
+            }
         };
     }, []);
 
@@ -585,6 +615,11 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
         if (phase !== 'combat') {
             roundIndexRef.current = 0;
             setActionPulse(null);
+            setImpactPulse(null);
+            if (impactTimeoutRef.current !== null) {
+                window.clearTimeout(impactTimeoutRef.current);
+                impactTimeoutRef.current = null;
+            }
             setHitStop(false);
             setScreenFlash('none');
             setHitFlashSide(null);
@@ -670,7 +705,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const opponentHp = Math.max(0, Math.min(opponentMaxHp, snapshot.defenderHp));
     const playerHpPercent = Math.max(0, Math.min(100, (playerHp / playerMaxHp) * 100));
     const opponentHpPercent = Math.max(0, Math.min(100, (opponentHp / opponentMaxHp) * 100));
-    const reactionType = actionPulse && actionPulse.type !== 'miss' ? actionPulse.type : null;
+    const reactionType = impactPulse && impactPulse.type !== 'miss' ? impactPulse.type : null;
 
     // Manage ghost bar transitions — when HP changes, ghost first snaps to old then transitions to new
     // Placed here after variable definitions so all dependencies are available
@@ -700,8 +735,8 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const opponentDefeated = phase === 'result' && won;
     const isLastRound = phase === 'result' ||
         (combatResult && currentRound >= combatResult.details.length - 1);
-    const showPlayerDefeat = (phase === 'combat' && isLastRound && combatResult?.winner === 'defender') || playerDefeated;
-    const showOpponentDefeat = (phase === 'combat' && isLastRound && combatResult?.winner === 'attacker') || opponentDefeated;
+    const showPlayerDefeat = (phase === 'combat' && isLastRound && impactPulse !== null && combatResult?.winner === 'defender') || playerDefeated;
+    const showOpponentDefeat = (phase === 'combat' && isLastRound && impactPulse !== null && combatResult?.winner === 'attacker') || opponentDefeated;
 
     return (
         <div className="combat-overlay" onClick={(e) => e.target === e.currentTarget && phase === 'result' && handleFinish()}>
@@ -817,12 +852,17 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                 {phase === 'combat' && combatResult && (
                     <div key={`combat-action-${visibilityKey}`}
                         className={`combat-action${actionPulse ? ` action-${actionPulse.type}` : ''}${hitStop ? ' hit-stop' : ''}${isKO ? ' action-ko' : ''}`}
-                        style={{ '--shake-dir': actionPulse?.actor === 'player' ? -1 : 1 } as React.CSSProperties}
+                        style={{
+                            '--shake-dir': actionPulse?.actor === 'player' ? -1 : 1,
+                            // The CSS hit sparks/shake follow the sprite impact,
+                            // not the wind-up tick.
+                            '--impact-delay': `${attackImpactDelay}ms`,
+                        } as React.CSSProperties}
                     >
                         {screenFlash !== 'none' && <div className={`screen-flash flash-${screenFlash}`} />}
                         <div className="combat-fighters">
                             {bossDef && <SceneBackground def={bossDef.background} />}
-                            <div key={`player-${currentRound}`} className={`fighter-side left${fighterEntrance ? ' enter-left' : ''}${actionPulse?.actor === 'player' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'opponent' ? ` react-${reactionType}` : ''}${hitFlashSide === 'left' ? ' hit-flash' : ''}${showPlayerDefeat ? ' defeated' : ''}`}>
+                            <div key={`player-${currentRound}`} className={`fighter-side left${fighterEntrance ? ' enter-left' : ''}${actionPulse?.actor === 'player' ? ` action-${actionPulse.type}` : reactionType && impactPulse?.actor === 'opponent' ? ` react-${reactionType}` : ''}${hitFlashSide === 'left' ? ' hit-flash' : ''}${showPlayerDefeat ? ' defeated' : ''}`}>
                                 <div className="fighter-character-wrap">
                                     <SpriteCanvas
                                         seed={player.seed}
@@ -830,6 +870,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                         appearance={player.appearance}
                                         equippedItems={player.equippedItems}
                                         scale={6}
+                                        speed={combatSpeed}
                                         animate={
                                             showPlayerDefeat
                                                 ? 'hit'
@@ -837,7 +878,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                                     ? 'victory'
                                                     : actionPulse?.actor === 'player'
                                                         ? 'attack'
-                                                        : actionPulse?.actor === 'opponent'
+                                                        : impactPulse?.actor === 'opponent' && impactPulse.type !== 'miss'
                                                             ? 'hit'
                                                             : 'idle'
                                         }
@@ -854,7 +895,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                     <div className="health-values">{playerHp} / {playerMaxHp}</div>
                                 </div>
                             </div>
-                            <div key={`opponent-${currentRound}`} className={`fighter-side right${fighterEntrance ? ' enter-right' : ''}${actionPulse?.actor === 'opponent' ? ` action-${actionPulse.type}` : reactionType && actionPulse?.actor === 'player' ? ` react-${reactionType}` : ''}${hitFlashSide === 'right' ? ' hit-flash' : ''}${showOpponentDefeat ? ' defeated' : ''}`}>
+                            <div key={`opponent-${currentRound}`} className={`fighter-side right${fighterEntrance ? ' enter-right' : ''}${actionPulse?.actor === 'opponent' ? ` action-${actionPulse.type}` : reactionType && impactPulse?.actor === 'player' ? ` react-${reactionType}` : ''}${hitFlashSide === 'right' ? ' hit-flash' : ''}${showOpponentDefeat ? ' defeated' : ''}`}>
                                 <div className="fighter-character-wrap">
                                     {(matchType === 'pve' || matchType === 'boss') && monsterId ? (
                                         <PixelMonster monsterId={monsterId} scale={5} aura={matchType === 'boss' ? bossDef?.element ?? null : null} />
@@ -865,6 +906,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                             appearance={opponent.appearance}
                                             equippedItems={opponent.equippedItems}
                                             scale={6}
+                                            speed={combatSpeed}
                                             // PvP: the opponent stands on the right and faces the
                                             // player, so their weapon ends up in the other hand.
                                             flip
@@ -875,7 +917,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                                                         ? 'victory'
                                                         : actionPulse?.actor === 'opponent'
                                                             ? 'attack'
-                                                            : actionPulse?.actor === 'player'
+                                                            : impactPulse?.actor === 'player' && impactPulse.type !== 'miss'
                                                                 ? 'hit'
                                                                 : 'idle'
                                             }

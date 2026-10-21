@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Character } from '../types/Character'
 import { MonsterId } from '../data/monsterAssets'
 import { ScenePhase } from '../types/IdleCombat'
-import { SpriteCanvas } from './sprite/SpriteCanvas'
+import { SpriteCanvas, SPRITE_ATTACK_IMPACT_MS } from './sprite/SpriteCanvas'
 import { PixelMonster } from './PixelMonster'
 import { ParticleSystem } from '../utils/particleSystem'
 import { useLowPerformanceMode } from '../hooks/useLowPerformanceMode'
@@ -267,13 +267,20 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
     const cy = rect.height * 0.55
 
     if (scenePhase === 'combat' && prevPhase === 'monster_appears') {
-      ps.emit('spark', cx, cy, lowPerf ? 2 : 6)
-      ps.emit('hit_ring', cx - 20, cy, lowPerf ? 4 : 12)
-      if (!lowPerf) ps.emit('dust', cx, cy + 30, 2)
+      // The sprite starts its attack on the combat beat and only connects on
+      // ATTACK_IMPACT_FRAME. Emitting the hit FX immediately made the damage
+      // number appear before the punch. Hold the whole impact burst until the
+      // frame that actually lands.
+      const impactTimer = window.setTimeout(() => {
+        ps.emit('spark', cx, cy, lowPerf ? 2 : 6)
+        ps.emit('hit_ring', cx - 20, cy, lowPerf ? 4 : 12)
+        if (!lowPerf) ps.emit('dust', cx, cy + 30, 2)
 
-      const simulatedDmg = randomDamage(characterLevelRef.current)
-      if (simulatedDmg.value > 0) ps.emit('damage', cx, cy, 1, simulatedDmg.value)
-      if (simulatedDmg.isCrit) ps.emit('crit', cx, cy, 1)
+        const simulatedDmg = randomDamage(characterLevelRef.current)
+        if (simulatedDmg.value > 0) ps.emit('damage', cx, cy, 1, simulatedDmg.value)
+        if (simulatedDmg.isCrit) ps.emit('crit', cx, cy, 1)
+      }, SPRITE_ATTACK_IMPACT_MS)
+      return () => window.clearTimeout(impactTimer)
     }
 
     if (scenePhase === 'result' && prevPhase !== 'result' && lastCombatResult) {
@@ -433,7 +440,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
       {currentMonster && (
         <div className={`idle-monster-slot phase-${scenePhase}`} data-monster={currentMonster}>
           <PixelMonster monsterId={currentMonster} scale={monsterScaleFor(currentMonster, charScale)} aura={eliteName ? eliteElement : undefined} />
-          {scenePhase === 'combat' && <div className="combat-flash" />}
+          {scenePhase === 'combat' && <div className="combat-flash" style={{ animationDelay: `${SPRITE_ATTACK_IMPACT_MS}ms` }} />}
         </div>
       )}
 
