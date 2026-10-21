@@ -202,15 +202,16 @@ describe('Forge Page', () => {
 
     // Get all tabpanels
     const tabpanels = screen.getAllByRole('tabpanel', { hidden: true });
-    // There should be 3 tabpanels (shop was moved to inventory)
-    expect(tabpanels.length).toBe(3);
+    // There should be 4 tabpanels (shop was moved to inventory, season pass added)
+    expect(tabpanels.length).toBe(4);
 
     // First tabpanel (salvage) should be visible (no hidden attr)
     expect(tabpanels[0]).not.toHaveAttribute('hidden');
 
-    // Second and third should be hidden
+    // The other tabs should be hidden
     expect(tabpanels[1]).toHaveAttribute('hidden');
     expect(tabpanels[2]).toHaveAttribute('hidden');
+    expect(tabpanels[3]).toHaveAttribute('hidden');
   });
 
   it('renders correctly on mobile viewport', () => {
