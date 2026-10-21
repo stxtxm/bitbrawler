@@ -8,6 +8,7 @@ import {
 import { PixelGridCanvas } from '../../components/sprite/PixelGridCanvas';
 import { spritePixelScale } from '../../components/sprite/spritePixelScale';
 import { IDLE_BLINK_FRAME, IDLE_BLINK_MS, generateSpriteFrames } from '../../components/sprite/spriteGenerator';
+import { applyEquipmentOverlays } from '../../components/sprite/equipOverlays';
 
 const perf = vi.hoisted(() => ({ low: false }));
 
@@ -18,6 +19,11 @@ vi.mock('../../hooks/useLowPerformanceMode', () => ({
 vi.mock('../../components/sprite/spriteGenerator', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../components/sprite/spriteGenerator')>();
   return { ...actual, generateSpriteFrames: vi.fn(actual.generateSpriteFrames) };
+});
+
+vi.mock('../../components/sprite/equipOverlays', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../components/sprite/equipOverlays')>();
+  return { ...actual, applyEquipmentOverlays: vi.fn(actual.applyEquipmentOverlays) };
 });
 
 beforeEach(() => {
@@ -96,6 +102,29 @@ describe('SpriteCanvas', () => {
     });
     expect(container.querySelector('canvas')).not.toBeNull();
     unmount();
+    vi.useRealTimers();
+  });
+
+  it('keeps the weapon anchored to the hand during the run (no fake sway)', () => {
+    vi.useFakeTimers();
+    render(
+      <SpriteCanvas
+        seed="weapon-run-hero"
+        gender="male"
+        animate="run"
+        equippedItems={{ weapon: 'rusty_sword', armor: null, accessory: null }}
+      />,
+    );
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    const calls = vi.mocked(applyEquipmentOverlays).mock.calls;
+    expect(calls.length).toBeGreaterThan(0);
+    for (const call of calls) {
+      // swayX used to slide the hilt through a stationary fist; the weapon may
+      // only translate with the palm anchors now.
+      expect((call[3] as { swayX?: number } | undefined)?.swayX ?? 0).toBe(0);
+    }
     vi.useRealTimers();
   });
 });

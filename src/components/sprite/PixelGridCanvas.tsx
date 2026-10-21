@@ -12,8 +12,10 @@ import { spritePixelScale } from './spritePixelScale';
  *         17 %, ce qui faisait « grésiller » les animations.
  * r1170 : souffle en demi-pas — le buste monte en deux paliers d'un pixel au
  *         lieu d'un saut de cellule, sur un cycle de 8 s moins « lévitation ».
+ * r1174 : les mèches extérieures bougent seules (plus de frange qui claque sur
+ *         le front) et l'arme reste ancrée dans le poing pendant le run.
  */
-export const SPRITE_RENDER_REV = 'r1173-visages-humains';
+export const SPRITE_RENDER_REV = 'r1174-cheveux-arme-ancres';
 
 function useDevicePixelRatio(): number {
   const [dpr, setDpr] = useState<number>(
