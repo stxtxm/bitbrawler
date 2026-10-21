@@ -14,8 +14,10 @@ import { spritePixelScale } from './spritePixelScale';
  *         lieu d'un saut de cellule, sur un cycle de 8 s moins « lévitation ».
  * r1174 : les mèches extérieures bougent seules (plus de frange qui claque sur
  *         le front) et l'arme reste ancrée dans le poing pendant le run.
+ * r1175 : l'arme pivote autour de la paume (run, attaque, touche, victoire),
+ *         avec des têtes de masse/marteau lisibles et une lame effilée.
  */
-export const SPRITE_RENDER_REV = 'r1174-cheveux-arme-ancres';
+export const SPRITE_RENDER_REV = 'r1175-armes-animees';
 
 function useDevicePixelRatio(): number {
   const [dpr, setDpr] = useState<number>(

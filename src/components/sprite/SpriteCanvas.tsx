@@ -3,8 +3,15 @@ import { ELEMENT_COLORS, Element } from '../../types/Item';
 import type { CharacterAppearance } from '../../types/Character';
 import { PixelGridCanvas } from './PixelGridCanvas';
 import { applyEquipmentOverlays, resolveLoadout } from './equipOverlays';
-import { generateSprite16, generateSpriteFrames, mirrorSpriteGrid, ATTACK_IMPACT_FRAME, SpriteAnimKind } from './spriteGenerator';
+import {
+  generateSprite16,
+  generateSpriteFrames,
+  mirrorSpriteGrid,
+  ATTACK_IMPACT_FRAME,
+  SpriteAnimKind,
+} from './spriteGenerator';
 import { SPRITE_DISPLAY_SCALE, SPRITE_IDLE_MS } from './spriteTypes';
+import { weaponTiltFor } from './weaponPoses';
 import { useLowPerformanceMode } from '../../hooks/useLowPerformanceMode';
 
 export const SPRITE_RUN_MS = 120;
@@ -96,14 +103,22 @@ export const SpriteCanvas = memo(function SpriteCanvas({
     }
     // Dynamic life: jewelry swings with the stride. The weapon does NOT get a
     // fake horizontal sway: the run keeps the arms glued, so a ±1 px weapon
-    // offset slid the hilt through a stationary fist. The palm anchors are
-    // recomputed on the animated grid, so the weapon still follows breathing,
-    // recoil and the punch without ever leaving the hand.
+    // offset slid the hilt through a stationary fist. Instead it pivots at
+    // the palm; the grip therefore stays welded to the hand while the head
+    // and tip travel through the run, strike and victory arcs.
     const running = activeAnim === 'run' && frames && frames.length > 0;
     const victory = activeAnim === 'victory' && frames && frames.length > 0;
     const swingX = running ? ([-1, -1, 0, 1, 1, 0][frameIdx % frames.length] ?? 0) : 0;
-    const punchTrail = (activeAnim === 'attack' && frameIdx === ATTACK_IMPACT_FRAME) || (victory && frameIdx === 1) ? 3 : 0;
-    const overlaid = applyEquipmentOverlays(base.grid, base.palette, resolveLoadout(equippedItems), { swingX, punchTrail });
+    const punchTrail =
+      (activeAnim === 'attack' && frameIdx === ATTACK_IMPACT_FRAME) || (victory && frameIdx === 1)
+        ? 3
+        : 0;
+    const weaponTilt = activeAnim ? weaponTiltFor(activeAnim, frameIdx) : 0;
+    const overlaid = applyEquipmentOverlays(base.grid, base.palette, resolveLoadout(equippedItems), {
+      swingX,
+      punchTrail,
+      weaponTilt,
+    });
     return {
       grid: flip ? mirrorSpriteGrid(overlaid.grid) : overlaid.grid,
       palette: overlaid.palette,

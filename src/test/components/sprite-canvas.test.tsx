@@ -1,10 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, act } from '@testing-library/react';
-import {
-  SpriteCanvas,
-  SPRITE_IDLE_MS,
-  SPRITE_RUN_MS,
-} from '../../components/sprite/SpriteCanvas';
+import { SpriteCanvas, SPRITE_IDLE_MS, SPRITE_RUN_MS } from '../../components/sprite/SpriteCanvas';
+import { WEAPON_TILTS, weaponTiltFor } from '../../components/sprite/weaponPoses';
 import { PixelGridCanvas } from '../../components/sprite/PixelGridCanvas';
 import { spritePixelScale } from '../../components/sprite/spritePixelScale';
 import { IDLE_BLINK_FRAME, IDLE_BLINK_MS, generateSpriteFrames } from '../../components/sprite/spriteGenerator';
@@ -120,12 +117,26 @@ describe('SpriteCanvas', () => {
     });
     const calls = vi.mocked(applyEquipmentOverlays).mock.calls;
     expect(calls.length).toBeGreaterThan(0);
+    const tilts = calls.map(
+      (call) => (call[3] as { weaponTilt?: number } | undefined)?.weaponTilt ?? 0,
+    );
     for (const call of calls) {
       // swayX used to slide the hilt through a stationary fist; the weapon may
-      // only translate with the palm anchors now.
+      // only pivot on the palm anchors now.
       expect((call[3] as { swayX?: number } | undefined)?.swayX ?? 0).toBe(0);
     }
+    // ...but it must actually move: a static weapon reads as glued to the hand.
+    expect(tilts.some((tilt) => tilt !== 0)).toBe(true);
     vi.useRealTimers();
+  });
+
+  it('plans a distinct pivot for every weapon animation', () => {
+    expect(weaponTiltFor('idle', 7)).toBe(0);
+    expect(weaponTiltFor('run', 1)).toBe(WEAPON_TILTS.run[1]);
+    expect(weaponTiltFor('run', 4)).toBeLessThan(0);
+    expect(weaponTiltFor('attack', 3)).not.toBe(0);
+    expect(weaponTiltFor('victory', 2)).not.toBe(0);
+    expect(weaponTiltFor('hit', 1)).toBeGreaterThan(0);
   });
 });
 
