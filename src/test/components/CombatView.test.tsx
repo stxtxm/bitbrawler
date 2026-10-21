@@ -6,6 +6,7 @@ import * as combatUtils from '../../utils/combatUtils';
 import * as combatLogUtils from '../../utils/combatLogUtils';
 import * as xpUtils from '../../utils/xpUtils';
 import { ParticleSystem, type ParticleType } from '../../utils/particleSystem';
+import { SPRITE_ATTACK_IMPACT_MS } from '../../components/sprite/SpriteCanvas';
 
 describe('CombatView Interface', () => {
     const mountedContainers = new Map<ParticleSystem, HTMLElement>();
@@ -112,7 +113,8 @@ describe('CombatView Interface', () => {
 
         act(() => { vi.advanceTimersByTime(2500); });
         act(() => { vi.advanceTimersByTime(1500); });
-        act(() => { vi.advanceTimersByTime(600); });
+        // The hit feedback is held until the sprite's impact frame.
+        act(() => { vi.advanceTimersByTime(1000); });
 
         const combatAction = container.querySelector('.combat-action.action-crit');
         expect(combatAction).not.toBeNull();
@@ -154,7 +156,8 @@ describe('CombatView Interface', () => {
 
         act(() => { vi.advanceTimersByTime(2500); });
         act(() => { vi.advanceTimersByTime(1500); });
-        act(() => { vi.advanceTimersByTime(600); });
+        // The hit feedback is held until the sprite's impact frame.
+        act(() => { vi.advanceTimersByTime(1000); });
 
         const combatAction = container.querySelector('.combat-action.action-miss');
         expect(combatAction).not.toBeNull();
@@ -192,13 +195,61 @@ describe('CombatView Interface', () => {
 
         act(() => { vi.advanceTimersByTime(2500); });
         act(() => { vi.advanceTimersByTime(1500); });
-        act(() => { vi.advanceTimersByTime(600); });
+        // The hit feedback is held until the sprite's impact frame.
+        act(() => { vi.advanceTimersByTime(1000); });
 
         const leftLayer = container.querySelector('.particle-layer.left');
         const rightLayer = container.querySelector('.particle-layer.right');
 
         expect(leftLayer?.querySelector('.particle-damage')).toBeNull();
         expect(rightLayer?.querySelector('.particle-damage')?.textContent).toBe('12');
+    });
+
+    it('holds hit feedback until the attack reaches its impact frame', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 1,
+            details: ['Hero hits Villain for 12 DMG'],
+            timeline: [{ attackerHp: 100, defenderHp: 88 }]
+        });
+
+        vi.spyOn(combatLogUtils, 'parseCombatDetail').mockReturnValue({
+            actor: 'player',
+            type: 'hit'
+        });
+
+        const { container } = render(
+            <CombatView
+                player={player}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2500); });
+        act(() => { vi.advanceTimersByTime(1500); });
+        // Enter the combat phase, then wait for the first round tick. The
+        // attacker must still be winding up at this point.
+        act(() => { vi.advanceTimersByTime(520); });
+
+        const rightLayer = container.querySelector('.particle-layer.right');
+        expect(rightLayer?.querySelector('.particle-damage')).toBeNull();
+        expect(container.querySelector('.fighter-side.right.react-hit')).toBeNull();
+
+        act(() => { vi.advanceTimersByTime(SPRITE_ATTACK_IMPACT_MS - 1); });
+        expect(rightLayer?.querySelector('.particle-damage')).toBeNull();
+
+        // …the damage number and the target reaction only appear on impact.
+        act(() => { vi.advanceTimersByTime(2); });
+        expect(rightLayer?.querySelector('.particle-damage')?.textContent).toBe('12');
+        expect(container.querySelector('.fighter-side.right.react-hit')).not.toBeNull();
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
     });
 
     it('should emit miss particles on the target side layer', () => {
@@ -228,7 +279,8 @@ describe('CombatView Interface', () => {
 
         act(() => { vi.advanceTimersByTime(2500); });
         act(() => { vi.advanceTimersByTime(1500); });
-        act(() => { vi.advanceTimersByTime(600); });
+        // The hit feedback is held until the sprite's impact frame.
+        act(() => { vi.advanceTimersByTime(1000); });
 
         const leftLayer = container.querySelector('.particle-layer.left');
         const rightLayer = container.querySelector('.particle-layer.right');
@@ -571,7 +623,8 @@ describe('CombatView Interface', () => {
 
         act(() => { vi.advanceTimersByTime(2500); });
         act(() => { vi.advanceTimersByTime(1500); });
-        act(() => { vi.advanceTimersByTime(600); });
+        // The hit feedback is held until the sprite's impact frame.
+        act(() => { vi.advanceTimersByTime(1000); });
 
         const roundCounter = document.querySelector('.round-counter');
         expect(roundCounter).not.toBeNull();
@@ -611,7 +664,8 @@ describe('CombatView Interface', () => {
 
         act(() => { vi.advanceTimersByTime(2500); });
         act(() => { vi.advanceTimersByTime(1500); });
-        act(() => { vi.advanceTimersByTime(600); });
+        // The hit feedback is held until the sprite's impact frame.
+        act(() => { vi.advanceTimersByTime(1000); });
 
         const progressFill = container.querySelector('.combat-progress-fill') as HTMLElement;
         expect(progressFill).not.toBeNull();

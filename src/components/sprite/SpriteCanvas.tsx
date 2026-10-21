@@ -16,6 +16,8 @@ import { useLowPerformanceMode } from '../../hooks/useLowPerformanceMode';
 
 export const SPRITE_RUN_MS = 120;
 export const SPRITE_ATTACK_MS = 130;
+/** Time from the first attack frame to the frame that actually connects. */
+export const SPRITE_ATTACK_IMPACT_MS = SPRITE_ATTACK_MS * ATTACK_IMPACT_FRAME;
 // Respiration d'attente : 400 ms par palier (constante partagée avec le
 // générateur, qui date sa frame de clignement). L'ancien réglage (280 ms)
 // faisait gigoter le buste — un souffle posé tient ses poses plus longtemps.
@@ -40,6 +42,10 @@ interface SpriteCanvasProps {
    *  the other hand). Applied to the pixel grid, so CSS animations cannot
    *  cancel it. */
   flip?: boolean;
+  /** Playback multiplier for the frames (CombatView's 2× speed setting). The
+   *  attack overlay and the hit feedback use the same clock, so the punch
+   *  still lands on the impact frame at every speed. */
+  speed?: number;
 }
 
 export const SpriteCanvas = memo(function SpriteCanvas({
@@ -52,6 +58,7 @@ export const SpriteCanvas = memo(function SpriteCanvas({
   aura,
   animate = null,
   flip = false,
+  speed = 1,
 }: SpriteCanvasProps) {
   const lowPerf = useLowPerformanceMode();
   const activeAnim = !lowPerf ? animate : null;
@@ -59,7 +66,8 @@ export const SpriteCanvas = memo(function SpriteCanvas({
     () => (activeAnim ? generateSpriteFrames(seed, gender, appearance, activeAnim) : null),
     [activeAnim, seed, gender, appearance],
   );
-  const frameMs =
+  const animSpeed = speed > 0 ? speed : 1;
+  const baseFrameMs =
     activeAnim === 'attack'
       ? SPRITE_ATTACK_MS
       : activeAnim === 'hit'
@@ -69,6 +77,7 @@ export const SpriteCanvas = memo(function SpriteCanvas({
           : activeAnim === 'idle'
             ? SPRITE_IDLE_MS
             : SPRITE_RUN_MS;
+  const frameMs = Math.max(16, Math.round(baseFrameMs / animSpeed));
 
   const [frameIdx, setFrameIdx] = useState(0);
   useEffect(() => {
@@ -81,6 +90,8 @@ export const SpriteCanvas = memo(function SpriteCanvas({
     let index = 0;
     let timer: ReturnType<typeof setTimeout>;
     const schedule = () => {
+      const customMs = frames[index]?.ms;
+      const delay = customMs !== undefined ? Math.max(16, Math.round(customMs / animSpeed)) : frameMs;
       timer = setTimeout(() => {
         if (index + 1 >= frames.length) {
           if (isOneShot) return; // l'animation reste sur sa dernière image
@@ -90,11 +101,11 @@ export const SpriteCanvas = memo(function SpriteCanvas({
         }
         setFrameIdx(index);
         schedule();
-      }, frames[index]?.ms ?? frameMs);
+      }, delay);
     };
     schedule();
     return () => clearTimeout(timer);
-  }, [frames, frameMs, activeAnim]);
+  }, [frames, frameMs, animSpeed, activeAnim]);
 
   const { grid, palette } = useMemo(() => {
     const base = frames && frames.length > 0 ? frames[frameIdx % frames.length] : generateSprite16(seed, gender, appearance);

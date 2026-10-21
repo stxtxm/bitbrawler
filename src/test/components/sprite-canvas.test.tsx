@@ -102,6 +102,37 @@ describe('SpriteCanvas', () => {
     vi.useRealTimers();
   });
 
+  it('scales attack frames with combat speed so the impact frame still lines up', () => {
+    vi.useFakeTimers();
+    render(
+      <SpriteCanvas
+        seed="speed-attack-hero"
+        gender="male"
+        animate="attack"
+        speed={2}
+        equippedItems={{ weapon: 'rusty_sword', armor: null, accessory: null }}
+      />,
+    );
+
+    const usedImpactAngle = () =>
+      vi
+        .mocked(applyEquipmentOverlays)
+        .mock.calls.some((call) => call[3]?.weaponAngle === WEAPON_ANGLES.attack[3]);
+
+    // 130 ms per attack frame at x1 → 65 ms at x2. Frame 3 is the impact.
+    act(() => {
+      vi.advanceTimersByTime(194);
+    });
+    expect(usedImpactAngle()).toBe(false);
+
+    act(() => {
+      vi.advanceTimersByTime(2);
+    });
+    expect(usedImpactAngle()).toBe(true);
+
+    vi.useRealTimers();
+  });
+
   it('keeps the weapon anchored to the hand during the run (no fake sway)', () => {
     vi.useFakeTimers();
     render(

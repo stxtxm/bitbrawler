@@ -41,12 +41,32 @@
     mix-blend-mode: normal;
 }
 
+.combat-action {
+    // Set inline by CombatView to the sprite's impact frame. The hit sparks,
+    // shake and flashes must start when the punch actually lands, not while
+    // the attacker is still winding up.
+    --impact-delay: 0ms;
+}
+
 .combat-action.action-hit     { --flash-color: rgba(255,224,102,0.18); --burst-color: rgba(255,224,102,0.12); --shake-intensity: 1;   animation: screenShakeLite 0.18s steps(2) both; }
 .combat-action.action-crit    { --flash-color: rgba(255,215,0,0.28);   --burst-color: rgba(255,215,0,0.18);   --shake-intensity: 1.5; animation: screenShake 0.25s steps(2) both; }
 .combat-action.action-magic   { --flash-color: rgba(94,234,212,0.22);  --burst-color: rgba(94,234,212,0.14); }
 .combat-action.action-miss    { --flash-color: rgba(154,160,166,0.14); --burst-color: rgba(154,160,166,0.08); --shake-intensity: 0.5; animation: screenShakeLite 0.15s steps(2) both; }
 .combat-action.action-counter { --flash-color: rgba(255,107,107,0.22); --burst-color: rgba(255,107,107,0.14); --shake-intensity: 1.2; animation: screenShakeLite 0.2s steps(2) both; }
 .combat-action.action-ko      { --flash-color: rgba(255,50,50,0.35);   --burst-color: rgba(255,50,50,0.2);    --shake-intensity: 2;   animation: screenShakeHeavy 0.35s steps(3) both; }
+
+.combat-action.action-hit,
+.combat-action.action-crit,
+.combat-action.action-miss,
+.combat-action.action-counter {
+    animation-delay: var(--impact-delay);
+}
+
+// action-ko is added when the blow lands (isKO is set on impact), so its
+// screen shake is already late and must not add the wind-up delay on top.
+.combat-action.action-ko {
+    animation-delay: 0ms;
+}
 
 .combat-action.action-hit::before,
 .combat-action.action-crit::before,
@@ -61,6 +81,24 @@
 .combat-action.action-miss::after,
 .combat-action.action-counter::after,
 .combat-action.action-ko::after { animation: pixelBurst 0.5s steps(2) both; }
+
+.combat-action.action-hit::before,
+.combat-action.action-crit::before,
+.combat-action.action-magic::before,
+.combat-action.action-miss::before,
+.combat-action.action-counter::before,
+.combat-action.action-hit::after,
+.combat-action.action-crit::after,
+.combat-action.action-magic::after,
+.combat-action.action-miss::after,
+.combat-action.action-counter::after {
+    animation-delay: var(--impact-delay);
+}
+
+.combat-action.action-ko::before,
+.combat-action.action-ko::after {
+    animation-delay: 0ms;
+}
 
 // ============================================
 // Hit Stop — freeze all animations on impact
@@ -399,6 +437,22 @@
     background: #ff6b6b;
     box-shadow: 6px 0 0 #ff6b6b, -6px 0 0 #ff6b6b;
     animation: counterSpark 0.45s steps(3) both;
+}
+
+// The attacker starts leaning on the round tick, but the contact sparks only
+// exist once the punch reaches the impact frame (--impact-delay is set on the
+// parent .combat-action by CombatView).
+.fighter-side.action-hit::before,
+.fighter-side.action-hit::after,
+.fighter-side.action-crit::before,
+.fighter-side.action-crit::after,
+.fighter-side.action-magic::before,
+.fighter-side.action-magic::after,
+.fighter-side.action-miss::before,
+.fighter-side.action-miss::after,
+.fighter-side.action-counter::before,
+.fighter-side.action-counter::after {
+    animation-delay: var(--impact-delay);
 }
 
 // ============================================
