@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-21T22:11:36Z",
+  "last_session": "2026-10-21T22:41:15Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR en conflit add/add avec master = souvent un doublon d une fonctionnalite deja livree par une campagne : verifier git log master -- <fichiers> avant de tenter un merge. PR #1249 dupliquait le Compendium deja merge (#1248/#1250/#1252/#1255/#1257) -> commentaire + close, reliquat utile (monsterEncounters) envoye en issue de suivi #1281. L API review refuse request-changes sur une PR creee par la meme identite app/github-actions.",
-      "issue": "#1249",
+      "lesson": "PR #1292 : 'Closes #1290' dans le body n'a PAS ferme l'issue au merge squash (issue sans lien detecte) -> verifier l'etat apres merge et fermer manuellement avec un commentaire referencant la PR. Gate locale rejouee (lint/tsc/2503 tests/build) car seul Cloudflare Pages etait rattache.",
+      "issue": "#1292",
       "date": "2026-10-21"
     }
   ]
