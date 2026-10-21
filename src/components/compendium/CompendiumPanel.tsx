@@ -41,9 +41,9 @@ function computeGlobalPercentage(
 function createSnapshot(character: Character | null): CompendiumSnapshot | null {
   if (!character) return null;
   const monsters = new Set(
-    Object.entries(character.monsterKills ?? {})
-      .filter(([, kills]) => kills > 0)
-      .map(([id]) => id),
+    getBestiaryProgress(character)
+      .entries.filter((entry) => entry.seen)
+      .map((entry) => entry.id),
   );
   return { monsters, items: new Set(getCodexIds(character)) };
 }

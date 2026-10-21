@@ -22,6 +22,7 @@ import {
 import { MonsterId } from '../data/monsterAssets'
 import { getBiomeForCharacter } from '../data/biomes'
 import { getSurgeEssenceMultiplier, incrementBountyProgress } from '../utils/biomeSurge'
+import { incrementMonsterCounter, mergeMonsterCounters } from '../utils/bestiaryUtils'
 
 interface UseIdleCombatOptions {
   character: Character | null
@@ -187,6 +188,10 @@ export function useIdleCombat({
         char = {
           ...xpResult.updatedCharacter,
           statPoints: (xpResult.updatedCharacter.statPoints || 0) + pointsGained,
+          monsterEncounters: incrementMonsterCounter(char.monsterEncounters, monster.def.id),
+          monsterKills: won
+            ? incrementMonsterCounter(char.monsterKills, monster.def.id)
+            : char.monsterKills,
         }
       } catch {
         continue
@@ -547,6 +552,16 @@ export function useIdleCombat({
           idleTotalKills: kills,
           idleTotalXp: idleXp,
           statPoints: (xpResult.updatedCharacter.statPoints || 0) + xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL,
+          monsterEncounters: incrementMonsterCounter(
+            mergeMonsterCounters(latest.monsterEncounters, running.monsterEncounters),
+            member.def.id,
+          ),
+          monsterKills: won
+            ? incrementMonsterCounter(
+                mergeMonsterCounters(latest.monsterKills, running.monsterKills),
+                member.def.id,
+              )
+            : mergeMonsterCounters(latest.monsterKills, running.monsterKills),
           lastIdleCheck: now,
           lastActive: now,
         }
@@ -733,6 +748,10 @@ export function useIdleCombat({
         char = {
           ...xpResult.updatedCharacter,
           statPoints: (xpResult.updatedCharacter.statPoints || 0) + pointsGained,
+          monsterEncounters: incrementMonsterCounter(char.monsterEncounters, monster.def.id),
+          monsterKills: won
+            ? incrementMonsterCounter(char.monsterKills, monster.def.id)
+            : char.monsterKills,
         }
       } catch {
         continue

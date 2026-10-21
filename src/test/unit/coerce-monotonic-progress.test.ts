@@ -49,6 +49,25 @@ describe('coerceMonotonicProgress (level-up FX loop root fix)', () => {
     expect(out.essence).toBe(10);
   });
 
+  it('merges monster counters monotonically, even when incoming owns more XP', () => {
+    const current = makeChar({
+      level: 2,
+      experience: 300,
+      monsterKills: { goblin: 3 },
+      monsterEncounters: { goblin: 5, ogre: 2 },
+    });
+    const incoming = makeChar({
+      level: 4,
+      experience: 900,
+      monsterKills: { goblin: 1, wraith: 2 },
+      monsterEncounters: { goblin: 2, wraith: 3 },
+    });
+    const out = coerceMonotonicProgress(incoming, current);
+
+    expect(out.monsterKills).toEqual({ goblin: 3, wraith: 2 });
+    expect(out.monsterEncounters).toEqual({ goblin: 5, ogre: 2, wraith: 3 });
+  });
+
   it('never coerces a DIFFERENT character id (new char after logout)', () => {
     const previous = makeChar({ id: 'old-char', level: 14, experience: 5000 });
     const fresh = makeChar({ id: 'new-char', level: 1, experience: 0 });

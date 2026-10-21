@@ -2,6 +2,7 @@ import { Character, PendingFightOpponent } from '../types/Character';
 import { GAME_RULES } from '../config/gameRules';
 import { getTotalXpForLevel } from './xpUtils';
 import { getHpForVitality } from './statUtils';
+import { mergeMonsterCounters } from './bestiaryUtils';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -45,6 +46,7 @@ export const normalizeCharacter = (character: Character): Character => {
     medalTitle: character.medalTitle ?? undefined,
     medalAura: character.medalAura ?? false,
     monsterKills: character.monsterKills ?? {},
+    monsterEncounters: character.monsterEncounters ?? {},
     achievementProgress: character.achievementProgress ?? {},
     achievementTitle: character.achievementTitle ?? undefined,
     achievementXpBonus: character.achievementXpBonus ?? 0,
@@ -226,15 +228,23 @@ export function coerceMonotonicProgress<T extends {
   id?: string;
   experience?: number; level?: number; hp?: number; maxHp?: number;
   idleTotalXp?: number; idleTotalKills?: number;
+  monsterKills?: Record<string, number>;
+  monsterEncounters?: Record<string, number>;
 }>(incoming: T, current?: T | null): T {
   // Identity guard: the monotonic rule only applies WITHIN one character.
   // A freshly created / newly logged-in character (different id) must never
   // inherit the previous character's progression.
   if (!current || !current.id || !incoming.id || incoming.id !== current.id) return incoming;
   if (typeof current.experience !== 'number') return incoming;
+
+  const monsterKills = mergeMonsterCounters(current.monsterKills, incoming.monsterKills);
+  const monsterEncounters = mergeMonsterCounters(current.monsterEncounters, incoming.monsterEncounters);
+
   const incExp = incoming.experience ?? 0;
   const curExp = current.experience;
-  if (incExp >= curExp) return incoming;
+  if (incExp >= curExp) {
+    return { ...incoming, monsterKills, monsterEncounters } as T;
+  }
 
   // Current owns more XP -> adopt its whole progression block
   return {
@@ -245,5 +255,7 @@ export function coerceMonotonicProgress<T extends {
     maxHp: Math.max(incoming.maxHp ?? 0, current.maxHp ?? 0),
     idleTotalXp: Math.max(incoming.idleTotalXp ?? 0, current.idleTotalXp ?? 0),
     idleTotalKills: Math.max(incoming.idleTotalKills ?? 0, current.idleTotalKills ?? 0),
+    monsterKills,
+    monsterEncounters,
   } as T;
 }

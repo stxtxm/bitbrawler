@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { getBestiaryProgress } from '../../utils/bestiaryUtils';
+import {
+  getBestiaryProgress,
+  incrementMonsterCounter,
+  mergeMonsterCounters,
+} from '../../utils/bestiaryUtils';
 import { MONSTER_ASSETS } from '../../data/monsterAssets';
 
 describe('bestiaryUtils', () => {
@@ -13,6 +17,7 @@ describe('bestiaryUtils', () => {
       expect(progress.entries).toHaveLength(MONSTER_ASSETS.length);
       expect(progress.entries.every((entry) => entry.seen === false)).toBe(true);
       expect(progress.entries.every((entry) => entry.kills === 0)).toBe(true);
+      expect(progress.entries.every((entry) => entry.encounters === 0)).toBe(true);
     });
 
     it('computes a rounded completion percentage from partial kills', () => {
@@ -49,6 +54,7 @@ describe('bestiaryUtils', () => {
         element: 'wind',
         seen: true,
         kills: 7,
+        encounters: 7,
       });
     });
 
@@ -59,6 +65,83 @@ describe('bestiaryUtils', () => {
       getBestiaryProgress({ monsterKills });
 
       expect(JSON.stringify(monsterKills)).toBe(before);
+    });
+
+    it('reveals monsters that were only encountered in defeat', () => {
+      const progress = getBestiaryProgress({ monsterEncounters: { goblin: 3 } });
+      const goblin = progress.entries.find((entry) => entry.id === 'goblin');
+
+      expect(goblin).toMatchObject({ seen: true, kills: 0, encounters: 3 });
+      expect(progress.seen).toBe(1);
+    });
+
+    it('counts legacy kills as encounters when the encounter map is missing', () => {
+      const progress = getBestiaryProgress({ monsterKills: { ogre: 2 } });
+      const ogre = progress.entries.find((entry) => entry.id === 'ogre');
+
+      expect(ogre).toMatchObject({ seen: true, kills: 2, encounters: 2 });
+    });
+
+    it('keeps counters monotonic when kills exceed encounters', () => {
+      const progress = getBestiaryProgress({
+        monsterKills: { wraith: 4 },
+        monsterEncounters: { wraith: 2 },
+      });
+      const wraith = progress.entries.find((entry) => entry.id === 'wraith');
+
+      expect(wraith).toMatchObject({ kills: 4, encounters: 4 });
+    });
+
+    it('does not mutate encounter counters', () => {
+      const monsterEncounters = { goblin: 5 };
+      const before = JSON.stringify(monsterEncounters);
+
+      getBestiaryProgress({ monsterEncounters });
+
+      expect(JSON.stringify(monsterEncounters)).toBe(before);
+    });
+  });
+
+  describe('mergeMonsterCounters', () => {
+    it('keeps the highest count per monster from both sources', () => {
+      const merged = mergeMonsterCounters(
+        { goblin: 2, ogre: 5 },
+        { goblin: 4, wraith: 1 },
+      );
+
+      expect(merged).toEqual({ goblin: 4, ogre: 5, wraith: 1 });
+    });
+
+    it('never lowers an existing counter and tolerates missing maps', () => {
+      expect(mergeMonsterCounters(undefined, { goblin: 2 })).toEqual({ goblin: 2 });
+      expect(mergeMonsterCounters({ goblin: 2 }, undefined)).toEqual({ goblin: 2 });
+      expect(mergeMonsterCounters({ goblin: 2 }, { goblin: 1 })).toEqual({ goblin: 2 });
+      expect(mergeMonsterCounters()).toEqual({});
+    });
+
+    it('does not mutate its inputs', () => {
+      const current = { goblin: 1 };
+      const incoming = { goblin: 3 };
+      const before = JSON.stringify({ current, incoming });
+
+      mergeMonsterCounters(current, incoming);
+
+      expect(JSON.stringify({ current, incoming })).toBe(before);
+    });
+  });
+
+  describe('incrementMonsterCounter', () => {
+    it('increments a single monster without mutating the source map', () => {
+      const counters = { goblin: 1 };
+      const next = incrementMonsterCounter(counters, 'goblin');
+
+      expect(next).toEqual({ goblin: 2 });
+      expect(counters).toEqual({ goblin: 1 });
+    });
+
+    it('creates the counter map when missing and ignores empty ids', () => {
+      expect(incrementMonsterCounter(undefined, 'ogre')).toEqual({ ogre: 1 });
+      expect(incrementMonsterCounter(undefined, '')).toEqual({});
     });
   });
 });

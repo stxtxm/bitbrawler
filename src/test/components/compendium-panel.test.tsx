@@ -168,6 +168,17 @@ describe('CompendiumPanel', () => {
     expect(notify).toHaveBeenCalledTimes(1);
   });
 
+  it('notifies when a monster is discovered through an encounter in defeat', () => {
+    setupCharacter(makeCharacter());
+    const { rerender } = render(<CompendiumPanel />);
+
+    setupCharacter(makeCharacter({ monsterEncounters: { goblin: 1 } }));
+    rerender(<CompendiumPanel />);
+
+    expect(notify).toHaveBeenCalledTimes(1);
+    expect(notify).toHaveBeenCalledWith('Nouveau : Goblin débloqué !', 'success', 3000);
+  });
+
   it('notifies once when an item is discovered and never repeats it', () => {
     const item = CODEX_ENTRIES[0];
     setupCharacter(makeCharacter());
