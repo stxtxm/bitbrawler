@@ -1,5 +1,14 @@
 import { describe, it, expect } from 'vitest'
-import { convertFromSupabase, convertToSupabase, RANKINGS_SELECT_COLUMNS, MATCHMAKING_SELECT_COLUMNS } from '../../utils/supabaseUtils'
+import {
+  convertFromSupabase,
+  convertToSupabase,
+  isMissingMonsterCounterColumn,
+  omitMonsterCounters,
+  RANKINGS_SELECT_COLUMNS,
+  MATCHMAKING_SELECT_COLUMNS,
+  SERVER_MERGE_SELECT_COLUMNS,
+  LEGACY_SERVER_MERGE_SELECT_COLUMNS,
+} from '../../utils/supabaseUtils'
 import { CharacterRow } from '../../config/supabase'
 import { Character } from '../../types/Character'
 
@@ -139,6 +148,24 @@ describe('convertFromSupabase', () => {
   it('defaults lootboxPityCount to 0 when row has no lootbox_pity', () => {
     const char = convertFromSupabase(row)
     expect(char.lootboxPityCount).toBe(0)
+  })
+
+  it('maps monster counters from CharacterRow to Character', () => {
+    const char = convertFromSupabase({
+      ...row,
+      monster_kills: { GOBLIN: 3, OGRE: 1 },
+      monster_encounters: { GOBLIN: 5, OGRE: 2 },
+    })
+
+    expect(char.monsterKills).toEqual({ GOBLIN: 3, OGRE: 1 })
+    expect(char.monsterEncounters).toEqual({ GOBLIN: 5, OGRE: 2 })
+  })
+
+  it('defaults monster counters to undefined when the columns are absent', () => {
+    const char = convertFromSupabase(row)
+
+    expect(char.monsterKills).toBeUndefined()
+    expect(char.monsterEncounters).toBeUndefined()
   })
 
   it('handles a bot character correctly', () => {
@@ -282,6 +309,24 @@ describe('convertToSupabase', () => {
     expect(row.boss_progress).toBeUndefined()
   })
 
+  it('maps monster counters to monster_kills and monster_encounters', () => {
+    const row = convertToSupabase({
+      ...character,
+      monsterKills: { GOBLIN: 3, OGRE: 1 },
+      monsterEncounters: { GOBLIN: 5, OGRE: 2 },
+    })
+
+    expect(row.monster_kills).toEqual({ GOBLIN: 3, OGRE: 1 })
+    expect(row.monster_encounters).toEqual({ GOBLIN: 5, OGRE: 2 })
+  })
+
+  it('omits monster counters when not set on Character (never nulls server data)', () => {
+    const row = convertToSupabase(character)
+
+    expect(row.monster_kills).toBeUndefined()
+    expect(row.monster_encounters).toBeUndefined()
+  })
+
   it('omits lootbox_pity in the default sync path (column may not exist yet)', () => {
     const row = convertToSupabase({ ...character, lootboxPityCount: 23 })
     expect(row.lootbox_pity).toBeUndefined()
@@ -413,5 +458,47 @@ describe('Supabase egress projections', () => {
 
   it('matchmaking projection includes item_upgrades (combat-critical upgrades)', () => {
     expect(MATCHMAKING_SELECT_COLUMNS.split(',')).toContain('item_upgrades')
+  })
+})
+
+describe('monster counter persistence fallback', () => {
+  it('requests monster counters in the server merge projection', () => {
+    const cols = SERVER_MERGE_SELECT_COLUMNS.split(',')
+    expect(cols).toContain('monster_kills')
+    expect(cols).toContain('monster_encounters')
+    expect(cols).toEqual(expect.arrayContaining(LEGACY_SERVER_MERGE_SELECT_COLUMNS.split(',')))
+  })
+
+  it('detects a missing monster counter column from PostgREST errors', () => {
+    expect(
+      isMissingMonsterCounterColumn({
+        code: 'PGRST204',
+        message: "Could not find the 'monster_encounters' column of 'characters' in the schema cache",
+      }),
+    ).toBe(true)
+    expect(
+      isMissingMonsterCounterColumn({
+        code: '42703',
+        message: 'column characters.monster_kills does not exist',
+      }),
+    ).toBe(true)
+    expect(isMissingMonsterCounterColumn({ code: 'PGRST116', message: 'no rows returned' })).toBe(false)
+    expect(isMissingMonsterCounterColumn(null)).toBe(false)
+  })
+
+  it('strips monster counters from a payload without mutating the source', () => {
+    const payload = {
+      id: 'abc-123',
+      monster_kills: { GOBLIN: 1 },
+      monster_encounters: { GOBLIN: 2 },
+    }
+    const stripped = omitMonsterCounters(payload)
+
+    expect(stripped).toEqual({ id: 'abc-123' })
+    expect(payload).toEqual({
+      id: 'abc-123',
+      monster_kills: { GOBLIN: 1 },
+      monster_encounters: { GOBLIN: 2 },
+    })
   })
 })

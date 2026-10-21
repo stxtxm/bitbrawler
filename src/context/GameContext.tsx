@@ -1,5 +1,5 @@
 import { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from 'react';
-import { supabase } from '../config/supabase';
+import { supabase, type CharacterRow } from '../config/supabase';
 import { Character, IncomingFightHistory, PendingFight } from '../types/Character';
 import { gainXp, calculateFightXp } from '../utils/xpUtils';
 import { applyStatPoint, autoAllocateStatPoints, HP_PER_LEVEL, StatKey } from '../utils/statUtils';
@@ -21,7 +21,14 @@ import {
 } from '../utils/bossUtils';
 import { ABYSSAL_BOSS_ID, BOSS_ID, BossId } from '../data/bossAssets';
 import { getEffectiveFightsLeft } from '../data/liveOps';
-import { convertFromSupabase, convertToSupabase } from '../utils/supabaseUtils';
+import {
+  convertFromSupabase,
+  convertToSupabase,
+  isMissingMonsterCounterColumn,
+  omitMonsterCounters,
+  SERVER_MERGE_SELECT_COLUMNS,
+  LEGACY_SERVER_MERGE_SELECT_COLUMNS,
+} from '../utils/supabaseUtils';
 import {
   INVENTORY_CAPACITY, COMBAT_LOG_HISTORY_CAP,
   normalizeCharacter, buildPendingOpponent, hydratePendingOpponent,
@@ -258,27 +265,50 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     } as any)
   }, [])
 
+  const fetchServerProgress = useCallback(async (characterId: string) => {
+    const query = (columns: string) => supabase
+      .from('characters')
+      .select(columns)
+      .eq('id', characterId)
+      .single()
+    const { data, error } = await query(SERVER_MERGE_SELECT_COLUMNS)
+    if (error && (error.code === '42703' || isMissingMonsterCounterColumn(error))) {
+      const legacy = await query(LEGACY_SERVER_MERGE_SELECT_COLUMNS)
+      return legacy.data
+    }
+    return data
+  }, [])
+
+  const writeServerProgress = useCallback(async (
+    characterId: string,
+    payload: Partial<CharacterRow>,
+  ) => {
+    const write = (body: Partial<CharacterRow>) => supabase
+      .from('characters')
+      .update(body)
+      .eq('id', characterId)
+    const first = await write(payload)
+    if (isMissingMonsterCounterColumn(first.error)) {
+      return write(omitMonsterCounters(payload))
+    }
+    return first
+  }, [])
+
   const flushSyncToBackend = useCallback(async () => {
     const toSync = pendingSyncCharRef.current
     pendingSyncCharRef.current = null
     syncToBackendTimeoutRef.current = null
     if (!toSync?.id) return
+    const characterId = toSync.id
 
     const attempt = async (retriesLeft: number): Promise<void> => {
       try {
         // Cross-source guard: the idle cron may have granted XP/essence server-side
         // while this stale local snapshot sat in the queue. Never let a debounced
         // flush DOWNGRADE progress fields — take the max per field before writing.
-        const { data: fresh } = await supabase
-          .from('characters')
-          .select('experience,level,hp,max_hp,idle_streak,idle_max_streak,idle_total_kills,idle_total_xp,essence,stat_points')
-          .eq('id', toSync.id)
-          .single()
+        const fresh = await fetchServerProgress(characterId)
         const merged = fresh ? mergeWithServerProgress(toSync, fresh) : toSync
-        const { error } = await supabase
-          .from('characters')
-          .update(convertToSupabase(merged))
-          .eq('id', toSync.id)
+        const { error } = await writeServerProgress(characterId, convertToSupabase(merged))
         if (error) throw error
       } catch (error: any) {
         // Wake-up grace: timers resumed right after unlock can fire while the
@@ -293,7 +323,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
 
     await attempt(1)
-  }, [handleDbError, mergeWithServerProgress])
+  }, [handleDbError, mergeWithServerProgress, fetchServerProgress, writeServerProgress])
 
   const syncCharacterToBackend = useCallback(async (char: Character) => {
     if (!char.id) return
@@ -444,13 +474,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       try {
         // Same cross-source guard as flushSyncToBackend: never downgrade
         // server-side idle/cron gains with a stale snapshot at logout.
-        const { data: fresh } = await supabase
-          .from('characters')
-          .select('experience,level,hp,max_hp,idle_streak,idle_max_streak,idle_total_kills,idle_total_xp,essence,stat_points')
-          .eq('id', toFlush.id)
-          .single();
+        const fresh = await fetchServerProgress(toFlush.id);
         const merged = fresh ? mergeWithServerProgress(toFlush, fresh) : toFlush;
-        const { error } = await supabase.from('characters').update(convertToSupabase(merged)).eq('id', toFlush.id);
+        const { error } = await writeServerProgress(toFlush.id, convertToSupabase(merged));
         if (error) handleDbError(error, 'logout-flush');
       } catch (e) {
         handleDbError(e, 'logout-flush');
@@ -461,7 +487,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     charRef.current = null;
     setActiveCharacter(null);
     clearLocalData();
-  }, [handleDbError, mergeWithServerProgress]);
+  }, [handleDbError, mergeWithServerProgress, fetchServerProgress, writeServerProgress]);
 
   // Set character function
   const setCharacter = useCallback((char: Character) => {

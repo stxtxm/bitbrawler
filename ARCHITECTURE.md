@@ -394,6 +394,7 @@ last_active     TIMESTAMP
 boss_progress   JSONB { bossHp, bossMaxHp, ... }
 medal_progress  JSONB
 monster_kills   JSONB { monsterId: count }
+monster_encounters JSONB { monsterId: count }
 achievement_progress JSONB
 achievement_title TEXT
 push_subscribed BOOLEAN

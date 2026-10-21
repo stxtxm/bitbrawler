@@ -10,6 +10,28 @@ export const RANKINGS_SELECT_COLUMNS = 'id,name,gender,seed,level,appearance';
 export const MATCHMAKING_SELECT_COLUMNS =
   'id,name,gender,seed,appearance,level,hp,max_hp,is_bot,strength,vitality,dexterity,luck,intelligence,focus,equipped_items,item_upgrades';
 
+export const SERVER_MERGE_SELECT_COLUMNS =
+  'experience,level,hp,max_hp,idle_streak,idle_max_streak,idle_total_kills,idle_total_xp,essence,stat_points,monster_kills,monster_encounters';
+export const LEGACY_SERVER_MERGE_SELECT_COLUMNS =
+  'experience,level,hp,max_hp,idle_streak,idle_max_streak,idle_total_kills,idle_total_xp,essence,stat_points';
+
+const MONSTER_COUNTER_COLUMN_PATTERN = /monster_(kills|encounters)/;
+
+export function isMissingMonsterCounterColumn(
+  error: { code?: string; message?: string } | null | undefined,
+): boolean {
+  if (!error) return false;
+  if (error.code !== 'PGRST204' && error.code !== '42703') return false;
+  return MONSTER_COUNTER_COLUMN_PATTERN.test(error.message ?? '');
+}
+
+export function omitMonsterCounters<T extends Partial<CharacterRow>>(payload: T): T {
+  const clone: Record<string, unknown> = { ...payload };
+  delete clone.monster_kills;
+  delete clone.monster_encounters;
+  return clone as T;
+}
+
 /** Convert a partial row (light projection) into a combat-ready Character.
  * Heavy state (inventory, histories, medals...) is left as defaults — only
  * combat-critical fields are populated from the row. */
@@ -105,6 +127,8 @@ export function convertFromSupabase(row: CharacterRow): Character {
     id: row.id,
     lastIdleCheck: row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0,
     lastActive: row.last_active ? new Date(row.last_active).toISOString() : 0,
+    monsterKills: row.monster_kills ?? undefined,
+    monsterEncounters: row.monster_encounters ?? undefined,
     idleStreak: row.idle_streak ?? 0,
     idleMaxStreak: row.idle_max_streak ?? 0,
     idleTotalKills: row.idle_total_kills ?? 0,
@@ -162,6 +186,8 @@ export function convertToSupabase(character: Character, fields?: string[]): Part
     idle_max_streak: character.idleMaxStreak ?? 0,
     idle_total_kills: character.idleTotalKills ?? 0,
     idle_total_xp: character.idleTotalXp ?? 0,
+    ...(character.monsterKills !== undefined ? { monster_kills: character.monsterKills } : {}),
+    ...(character.monsterEncounters !== undefined ? { monster_encounters: character.monsterEncounters } : {}),
     ...(character.essence !== undefined ? { essence: character.essence } : {}),
     ...(character.itemUpgrades !== undefined ? { item_upgrades: character.itemUpgrades } : {}),
     ...(character.medalProgress !== undefined ? { medal_progress: character.medalProgress } : {}),
