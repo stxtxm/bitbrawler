@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-21T22:22:52Z",
+  "last_session": "2026-10-21T22:23:06Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,34 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "session": "2026-10-18T14:23:46Z",
-      "parent_issue": 1201,
-      "title": "Direction artistique v2 (campaign-1201)",
-      "sub_issues_created": [
-        1202,
-        1203,
-        1204,
-        1205,
-        1206,
-        1207,
-        1208,
-        1209,
-        1210
-      ],
-      "sub_issues_dispatched": [
-        1202
-      ],
-      "dispatched_workflow_run": "39135766471",
-      "lessons_learned": [
-        "DEC 9 sous-issues au lieu des 4 axes proposés: axe 2 (overlay) splité en 3 (#1204/#1205/#1206 car equipOverlays.ts 961 lignes > 1 shot), axe 3 splité en 2 (#1207/#1208 même fichier donc séquentielles), axe 4 splité scène/UI (#1209/#1210)",
-        "Outil art:sheet en Level 0 = preuve avant/après pour toutes les PRs suivantes de la campagne",
-        "Anti-duplication vérifié: gh issue list --label campaign-1201 --state all vide avant création",
-        "Labels created via --force pour éviter conflits API"
-      ],
-      "issues_encountered": [],
-      "lesson": ""
-    },
     {
       "date": "2026-10-18",
       "issue": "#1202",
@@ -195,6 +167,11 @@
     {
       "lesson": "Bestiaire #1281: monsterEncounters est un compteur local-first (pas de colonne DB). Les writes se font dans les 3 boucles idle (runLocalCatchUp, catchUpBackgroundFights, runCombatTick) et la fusion monotone max-par-clef passe par mergeMonsterCounters dans coerceMonotonicProgress + GameContext. Tests useIdleCombat: pour accumuler entre ticks il faut rerender le hook avec onCharacterUpdate, sinon charRef reste stale.",
       "issue": "#1281",
+      "date": "2026-10-21"
+    },
+    {
+      "lesson": "Issue #1284 : PassTrack dormait car aucun composant hôte. Solution minimale : wrapper SeasonPassPanel (usePassProgress avec seasonId explicite = getDefaultSeasonId exporté) monté depuis un nouvel onglet SettingsPanel 'pass' + handler onOpenPass dans useSettings. Important : usePassProgress sans options utilise le store legacy (paliers xp/100) alors que PassTrack affiche les xpRequired progressifs -> toujours passer un seasonId explicite pour que effectiveXp/claimTier restent cohérents. Les sources d'XP (addFightXp/addForgeXp/addIdleClaimXp) restent non branchées : suivi à faire.",
+      "issue": "#1284",
       "date": "2026-10-21"
     }
   ]
