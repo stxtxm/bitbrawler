@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-21T22:22:49Z",
+  "last_session": "2026-10-21T22:22:52Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1197 (QA bot energy skip): Arena ActionPanel dishes the BURST-INFLATED effectiveFightsLeft (base+1) in the X/5 AVAILABLE text, so readArenaStatus().fightsAvailable can be 1 while DB fights_left=0. The real protection is capFightAttempts(min(fightsPerRun, fightsAvailable)) which limits the run to the displayed energy, plus shouldSkipForEnergy(0)=>no_energy. null read => attempt (safe fallback). Helpers live in src/utils/qa-bot-helpers.js and source-contract tests slice runFightSequence() from qa/qa-bot.mjs.",
-      "issue": "#1197",
-      "date": "2026-10-17"
-    },
     {
       "session": "2026-10-18T14:23:46Z",
       "parent_issue": 1201,
@@ -195,6 +190,11 @@
     {
       "lesson": "Issue #1284 Season Pass: usePassProgress() sans options utilise le legacy store bitbrawler_pass_progress, pas passStorage. Pour monter PassTrack sur le track progressif, passer { seasonId } explicite (helper getDefaultSeasonId exporte) sinon claimTier lit passStorage alors que passXp lit le legacy -> boutons CLAIM visibles mais claims qui echouent.",
       "issue": "#1284",
+      "date": "2026-10-21"
+    },
+    {
+      "lesson": "Bestiaire #1281: monsterEncounters est un compteur local-first (pas de colonne DB). Les writes se font dans les 3 boucles idle (runLocalCatchUp, catchUpBackgroundFights, runCombatTick) et la fusion monotone max-par-clef passe par mergeMonsterCounters dans coerceMonotonicProgress + GameContext. Tests useIdleCombat: pour accumuler entre ticks il faut rerender le hook avec onCharacterUpdate, sinon charRef reste stale.",
+      "issue": "#1281",
       "date": "2026-10-21"
     }
   ]
