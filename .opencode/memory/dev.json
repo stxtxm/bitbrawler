@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-21T22:10:48Z",
+  "last_session": "2026-10-21T22:10:59Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1183 juice PvP: (1) le helper de test advanceUntilRoundPlayed NE DOIT PAS se baser sur '.combat-log .log-entry' car le round 0 est pre-rendu des le passage en phase combat (slice(0, currentRound+1) avec currentRound=0) -> il s'arretait avant le premier tick d'interval. Predicat correct: presence d'une classe action-(hit|crit|magic|miss|counter) sur .combat-action, posee par actionPulse au tick. (2) hitstop meSURé en fake timers avec pas de 2ms: une duree impaire (65) est arrondie a 66 -> utiliser 130ms (pair) pour crit/ko (4 frames) pour respecter les bornes des tests (speed2 66<=75). (3) build tsc inclut les tests: CombatSpeed est '1|2', typer le param atmosphere du helper '1|2|undefined' sinon TS2322.",
-      "issue": "#1183",
-      "date": "2026-10-17"
-    },
     {
       "lesson": "Issue #1190: le guard workflow-integrity (artifact qa-screenshots) est desormais derive de qa/qa-bot.config.js (import ESM direct, pattern qa-bot-config.test.ts) au lieu du path litteral qa/screenshots/ - faillibilite verifiee par sed temporaire du config (echec attendu avant restauration)",
       "issue": "#1190",
@@ -195,6 +190,11 @@
     {
       "lesson": "QA analyze shop suggestions (#1277): gate the raise on segmentation (unsegmented > half or segmented < REAL_SHOP_MIN_RUNS) and on cheapest_offer_share >= 0.95 -> hoarding/offer-structure message. Keep lowering (<0.1) outside the gate. Mirror lives in src/test/unit/qa-analysis.test.ts.",
       "issue": "#1277",
+      "date": "2026-10-21"
+    },
+    {
+      "lesson": "QA bot handleDailyLootbox (#1276): le check alreadyOpen .inventory-overlay doit être AVANT suppressInventoryHandler = true car le handler ne ferme plus l overlay quand il est supprimé -> clic Inventory intercepté. Fermer via close button puis attendre detached. Tests contrat qa-analysis: slice(overlayCheckIdx, setIdx) pour verifier l ordre.",
+      "issue": "#1276",
       "date": "2026-10-21"
     }
   ]
