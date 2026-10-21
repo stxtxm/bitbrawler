@@ -76,6 +76,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
   const [levelUpShockwave, setLevelUpShockwave] = useState(false)
   const [isMilestoneCeremony, setIsMilestoneCeremony] = useState(false)
   const lowPerf = useLowPerformanceMode()
+  const impactDelayMs = lowPerf ? 0 : SPRITE_ATTACK_IMPACT_MS
   const prevPhaseRef = useRef<ScenePhase>('running')
   const characterLevelRef = useRef(character.level)
   const [animKey, setAnimKey] = useState(0)
@@ -279,7 +280,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
         const simulatedDmg = randomDamage(characterLevelRef.current)
         if (simulatedDmg.value > 0) ps.emit('damage', cx, cy, 1, simulatedDmg.value)
         if (simulatedDmg.isCrit) ps.emit('crit', cx, cy, 1)
-      }, SPRITE_ATTACK_IMPACT_MS)
+      }, impactDelayMs)
       return () => window.clearTimeout(impactTimer)
     }
 
@@ -290,7 +291,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
         ps.emit('hit_ring', cx - 20, cy, 6)
       }
     }
-  }, [scenePhase, lastCombatResult, lowPerf])
+  }, [scenePhase, lastCombatResult, lowPerf, impactDelayMs])
 
   // Screen shake on monster defeat
   useEffect(() => {
@@ -440,7 +441,7 @@ export const IdleRunnerScene = memo(function IdleRunnerScene({
       {currentMonster && (
         <div className={`idle-monster-slot phase-${scenePhase}`} data-monster={currentMonster}>
           <PixelMonster monsterId={currentMonster} scale={monsterScaleFor(currentMonster, charScale)} aura={eliteName ? eliteElement : undefined} />
-          {scenePhase === 'combat' && <div className="combat-flash" style={{ animationDelay: `${SPRITE_ATTACK_IMPACT_MS}ms` }} />}
+          {scenePhase === 'combat' && <div className="combat-flash" style={{ animationDelay: `${impactDelayMs}ms` }} />}
         </div>
       )}
 
