@@ -31,6 +31,24 @@ export declare function shouldForcePersistentReset(
 
 export declare function parseLevelFromText(text: string): number | null
 
+export declare const XP_BASE: number
+export declare const XP_EXPONENT: number
+export declare const XP_MAX_LEVEL: number
+
+export declare interface ProgressionCurve {
+  level: number
+  total_xp: number
+  xp_for_next: number
+  percent: number
+}
+
+export declare function getXpRequiredForNextLevel(level: number): number
+export declare function getTotalXpForLevel(level: number): number
+export declare function parseProgressionCurve(
+  xpText: string | null | undefined,
+  level: number | null | undefined,
+): ProgressionCurve | null
+
 export declare const COMBAT_SPEED_STORAGE_KEY: string
 export declare const COMBAT_SPEED_OPTIONS: readonly [1, 2]
 export declare const COMBAT_SPEED_TOGGLE_SELECTOR: string

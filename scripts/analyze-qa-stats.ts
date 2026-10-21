@@ -1082,6 +1082,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     'WEAPONS', 'ARMOR', 'ACCESSORIES', 'TRINKETS', 'SHIELDS', 'RINGS', 'AMULETS',
     'WANDS', 'STAFFS', 'BOWS', 'DAGGERS', 'HELMETS', 'BOOTS', 'GLOVES', 'CLOAKS', 'ROBES', 'CHARMS',
   ])
+  const EQUIPMENT_SLOT_FALLBACK_LABELS = new Set(['WEAPON', 'ARMOR', 'ACCESSORY'])
   const sanitizeEquippedItemName = (name: string): string =>
     String(name)
       .replace(/^[\p{Extended_Pictographic}\uFE0F\u200D\s\-–—.:*"'()\[\]{}]+/u, '')
@@ -1094,7 +1095,8 @@ function analyze(stats: RunRecord[]): AnalysisReport {
       sanitized.length >= 2 &&
       /[a-zA-Z]/.test(sanitized) &&
       sanitized.toUpperCase() !== 'EMPTY' &&
-      !EQUIPMENT_GROUP_LABELS.has(lettersOnly)
+      !EQUIPMENT_GROUP_LABELS.has(lettersOnly) &&
+      !EQUIPMENT_SLOT_FALLBACK_LABELS.has(lettersOnly)
     )
   }
   const runsWithEquipment = validRuns.filter(

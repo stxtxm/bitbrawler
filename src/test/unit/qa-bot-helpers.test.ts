@@ -22,6 +22,9 @@ import {
   QA_CHARACTER_TYPE_PERSISTENT,
   resolveReusableDailyCharacter,
   shouldReplaceExhaustedCharacter,
+  getXpRequiredForNextLevel,
+  getTotalXpForLevel,
+  parseProgressionCurve,
 } from '../../utils/qa-bot-helpers'
 
 describe('qa-bot-helpers combat speed', () => {
@@ -256,5 +259,49 @@ describe('qa-bot-helpers fresh day character reuse (#1241)', () => {
       expect(shouldReplaceExhaustedCharacter(undefined)).toBe(true)
       expect(shouldReplaceExhaustedCharacter('other')).toBe(true)
     })
+  })
+})
+
+describe('qa-bot-helpers progression curve (#1283)', () => {
+  it('mirrors the game XP curve constants', () => {
+    expect(getXpRequiredForNextLevel(1)).toBe(120)
+    expect(getXpRequiredForNextLevel(2)).toBe(376)
+    expect(getXpRequiredForNextLevel(5)).toBe(1707)
+    expect(getTotalXpForLevel(1)).toBe(0)
+    expect(getTotalXpForLevel(5)).toBe(2412)
+  })
+
+  it('parses the ExperienceBar text into level, total XP, next threshold and percent', () => {
+    expect(parseProgressionCurve('42 / 189 XP', 3)).toEqual({
+      level: 3,
+      total_xp: 496 + 42,
+      xp_for_next: 189,
+      percent: 22.2,
+    })
+  })
+
+  it('rounds the percentage to one decimal', () => {
+    expect(parseProgressionCurve('21 / 189 XP', 3)?.percent).toBe(11.1)
+  })
+
+  it('returns null when the level is unknown', () => {
+    expect(parseProgressionCurve('42 / 189 XP', null)).toBeNull()
+  })
+
+  it('returns null for the MAX LEVEL display', () => {
+    expect(parseProgressionCurve('MAX LEVEL', 99)).toBeNull()
+  })
+
+  it('returns null when the text has no XP bar pattern', () => {
+    expect(parseProgressionCurve('', 3)).toBeNull()
+    expect(parseProgressionCurve('BATTLE ENERGY 5/5 AVAILABLE', 3)).toBeNull()
+  })
+
+  it('returns null when the next-level threshold is zero', () => {
+    expect(parseProgressionCurve('0 / 0 XP', 3)).toBeNull()
+  })
+
+  it('clamps the percentage to 100', () => {
+    expect(parseProgressionCurve('250 / 189 XP', 3)?.percent).toBe(100)
   })
 })
