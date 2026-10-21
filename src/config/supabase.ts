@@ -69,6 +69,8 @@ export type CharacterRow = {
   idle_max_streak: number;
   idle_total_kills: number;
   idle_total_xp: number;
+  monster_kills?: Record<string, number> | null;
+  monster_encounters?: Record<string, number> | null;
   essence: number;
   item_upgrades: Record<string, number> | null;
   medal_progress?: Record<string, { completed: boolean; progress: number; unlockedAt?: number }> | null;
