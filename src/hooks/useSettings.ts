@@ -7,7 +7,7 @@ import {
   setTelemetryEnabled as applyTelemetryPreference,
 } from '../utils/telemetry';
 
-type SettingsView = 'main' | 'logs' | 'medals' | 'compendium';
+type SettingsView = 'main' | 'logs' | 'medals' | 'compendium' | 'pass';
 type DeleteStep = 'idle' | 'confirm';
 
 const COMBAT_SPEED_STORAGE_KEY = 'bitbrawler_combat_speed';
@@ -88,6 +88,7 @@ export const useSettings = ({
   const handleOpenHistoryFromSettings = useCallback(() => setSettingsView('logs'), []);
   const handleOpenMedals = useCallback(() => setSettingsView('medals'), []);
   const handleOpenCompendium = useCallback(() => setSettingsView('compendium'), []);
+  const handleOpenPass = useCallback(() => setSettingsView('pass'), []);
   const handleReturnToSettings = useCallback(() => setSettingsView('main'), []);
 
   const handleToggleAutoMode = useCallback(async () => {
@@ -200,6 +201,7 @@ export const useSettings = ({
     handleOpenHistoryFromSettings,
     handleOpenMedals,
     handleOpenCompendium,
+    handleOpenPass,
     handleReturnToSettings,
     onClose: closeSettings,
     onToggleAutoMode: handleToggleAutoMode,
@@ -207,6 +209,7 @@ export const useSettings = ({
     onOpenLogs: handleOpenHistoryFromSettings,
     onOpenMedals: handleOpenMedals,
     onOpenCompendium: handleOpenCompendium,
+    onOpenPass: handleOpenPass,
     onReturnToMain: handleReturnToSettings,
     onSetDeleteStep: setDeleteStep,
     combatSpeed,

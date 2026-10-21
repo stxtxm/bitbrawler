@@ -165,6 +165,25 @@ describe('Arena settings modal', () => {
     expect(deleteCharacter).toHaveBeenCalled()
   })
 
+  it('opens the season pass and claims a reachable tier', () => {
+    const season = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
+    const storageKey = `pass_progress_${season}_auto-id`
+    localStorage.setItem(storageKey, JSON.stringify({ xp: 100, claimed: [] }))
+
+    const { getByLabelText, getByText } = renderWithRouter(<Arena />)
+
+    fireEvent.click(getByLabelText('Settings'))
+    fireEvent.click(screen.getByRole('button', { name: 'Season pass' }))
+
+    expect(getByText(/MASTERY PASS/)).toBeInTheDocument()
+    expect(getByText(/Tier 1 \/ 20/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Claim tier 1' }))
+
+    const stored = JSON.parse(localStorage.getItem(storageKey) ?? '{}')
+    expect(stored.claimed).toContain(1)
+  })
+
   it('hides attacker type and xp details in combat logs', async () => {
     const { getByLabelText, getByText, queryByText } = renderWithRouter(<Arena />)
 
