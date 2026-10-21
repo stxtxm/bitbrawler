@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-21T22:09:12Z",
+  "last_session": "2026-10-21T22:10:48Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1186 analyze-qa-stats: un run 0 combat/0 erreur doit être une catégorie à part (empty_runs) et non 'successful'. computeDataFreshness doit compter errors + empties en queue (FRESHNESS_STALE_RUNS=10) et recent_fight_coverage (combats sur RECENT_WINDOW_RUNS=30) déclenche issues[] 'QA window starved'. Le gate idle (#858) réutilise data_freshness.stale au lieu de trailing_error_runs>=10.",
-      "issue": "#1186",
-      "date": "2026-10-17"
-    },
     {
       "lesson": "Issue #1183 juice PvP: (1) le helper de test advanceUntilRoundPlayed NE DOIT PAS se baser sur '.combat-log .log-entry' car le round 0 est pre-rendu des le passage en phase combat (slice(0, currentRound+1) avec currentRound=0) -> il s'arretait avant le premier tick d'interval. Predicat correct: presence d'une classe action-(hit|crit|magic|miss|counter) sur .combat-action, posee par actionPulse au tick. (2) hitstop meSURé en fake timers avec pas de 2ms: une duree impaire (65) est arrondie a 66 -> utiliser 130ms (pair) pour crit/ko (4 frames) pour respecter les bornes des tests (speed2 66<=75). (3) build tsc inclut les tests: CombatSpeed est '1|2', typer le param atmosphere du helper '1|2|undefined' sinon TS2322.",
       "issue": "#1183",
@@ -195,6 +190,11 @@
     {
       "lesson": "#1247 : 'gh issue view --json labels' renvoie {\"labels\":[...]} → jq '[.[].name]' indexe l'objet racine et échoue silencieusement sous '|| echo \"\"' (variable toujours vide). Toujours '[.labels[].name]'. Un readWorkflow + assertion source dans workflow-integrity.test.ts verrouille le pattern (attention : 'gh issue list' renvoie un tableau, donc '[.[].labels[]?.name]' y reste correct).",
       "issue": "#1247",
+      "date": "2026-10-21"
+    },
+    {
+      "lesson": "QA analyze shop suggestions (#1277): gate the raise on segmentation (unsegmented > half or segmented < REAL_SHOP_MIN_RUNS) and on cheapest_offer_share >= 0.95 -> hoarding/offer-structure message. Keep lowering (<0.1) outside the gate. Mirror lives in src/test/unit/qa-analysis.test.ts.",
+      "issue": "#1277",
       "date": "2026-10-21"
     }
   ]
