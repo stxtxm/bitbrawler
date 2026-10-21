@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-21T22:10:59Z",
+  "last_session": "2026-10-21T22:16:50Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1190: le guard workflow-integrity (artifact qa-screenshots) est desormais derive de qa/qa-bot.config.js (import ESM direct, pattern qa-bot-config.test.ts) au lieu du path litteral qa/screenshots/ - faillibilite verifiee par sed temporaire du config (echec attendu avant restauration)",
-      "issue": "#1190",
-      "date": "2026-10-17"
-    },
     {
       "lesson": "Issue #1194 burst bonus: le calcul UI baseFightsLeft+1 et le garde-fou matchmaking (fightsLeft brut) avaient divergé. Regle: toute valeur de jeu affichee a l'ecran ET utilisee par un garde-fou doit venir d'un helper unique (getEffectiveFightsLeft dans src/data/liveOps.ts). Resolution des bonus via localStorage: ne pas ajouter de +1 au refund si la reservation etait bonus (sinon over-grant).",
       "issue": "#1194",
@@ -195,6 +190,11 @@
     {
       "lesson": "QA bot handleDailyLootbox (#1276): le check alreadyOpen .inventory-overlay doit être AVANT suppressInventoryHandler = true car le handler ne ferme plus l overlay quand il est supprimé -> clic Inventory intercepté. Fermer via close button puis attendre detached. Tests contrat qa-analysis: slice(overlayCheckIdx, setIdx) pour verifier l ordre.",
       "issue": "#1276",
+      "date": "2026-10-21"
+    },
+    {
+      "lesson": "Issue #1247 : 'gh issue view --json labels --jq '[.[].name] | join(\",\")'' renvoie {labels:[...]} donc .[] s'applique a la racine puis .name sur un tableau -> jq exit 5. Le '|| echo \"\"' avalait l'erreur et ISSUE_LABELS restait vide, ce qui relancait l'orchestrator sur les sous-issues. La forme correcte est '[.labels[].name]'. Garde-fou ajoute dans workflow-integrity.test.ts (interdit '[.[].name]' dans tous les workflows). Attention : le step 'Push and manage PR' retire les modifs .github/workflows non commitees, il faut donc committer le correctif.",
+      "issue": "#1247",
       "date": "2026-10-21"
     }
   ]
