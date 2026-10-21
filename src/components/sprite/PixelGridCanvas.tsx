@@ -21,8 +21,12 @@ import { spritePixelScale } from './spritePixelScale';
  * r1178 : la main se referme sur l'arme — la poignée ne repeint plus l'avant-
  *         bras, le pommeau dépasse sous le poing et un liseré sombre détache
  *         l'arme du fond.
+ * r1179 : l'arme frappe vraiment — chambre à la verticale puis balayage
+ *         jusqu'au bord de la grille, amplitude mesurée par famille d'arme
+ *         (une dague balaie 49°, un bâton 14°), allonge du poing ramenée de
+ *         4 à 2 px et corps calé sur la frame d'impact.
  */
-export const SPRITE_RENDER_REV = 'r1178-fist-wrap';
+export const SPRITE_RENDER_REV = 'r1179-strike-arc';
 
 function useDevicePixelRatio(): number {
   const [dpr, setDpr] = useState<number>(

@@ -108,7 +108,11 @@
   }
 
   &.attacking {
-    animation: attackLunge 0.35s ease-out;
+    // 620 ms et non 350 : la frappe de sprite touche à 390 ms
+    // (SPRITE_ATTACK_IMPACT_MS), c'est donc là que le corps doit être au bout
+    // de son allonge. L'ancien réglage finissait son élan à 175 ms — le
+    // personnage se jetait en avant puis l'arme frappait dans le vide.
+    animation: attackLunge 0.62s ease-out;
   }
 
   @include small-mobile {
@@ -127,11 +131,15 @@
   50%, 100%  { transform: translateY(-2px); }
 }
 
-// Allonge d'attaque : uniquement des translations en pixels entiers.
+// Allonge d'attaque : armé (petit recul), impact à 63 % — calé sur
+// SPRITE_ATTACK_IMPACT_MS (390 ms) — puis retour au sol à 90 %, quand le sprite
+// a fini sa récupération (520 ms). Uniquement des translations en pixels
+// entiers (voir sprite-animations.test.ts).
 @keyframes attackLunge {
-  0% { transform: translateX(0) translateY(0); }
-  20% { transform: translateX(30px) translateY(-3px); }
-  50% { transform: translateX(10px) translateY(0); }
+  0%   { transform: translateX(0) translateY(0); }
+  10%  { transform: translateX(-6px) translateY(0); }
+  63%  { transform: translateX(30px) translateY(-3px); }
+  90%  { transform: translateX(0) translateY(0); }
   100% { transform: translateX(0) translateY(0); }
 }
 

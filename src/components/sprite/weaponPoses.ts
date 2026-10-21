@@ -1,4 +1,5 @@
 import type { SpriteAnimKind } from './spriteTypes';
+import type { WeaponVisualKind } from './equipOverlays';
 
 /**
  * Angle of the whole weapon around the palm, in radians. 0 = vertical,
@@ -8,9 +9,10 @@ import type { SpriteAnimKind } from './spriteTypes';
  * blade/shaft/head, instead of shearing each row independently. That keeps a
  * sword straight and stops the old "rubber band" look.
  *
- * The grid is only 24px wide and the weapon is held on the right edge, so the
- * strike cannot be a full 90° slash without pushing the tip off-screen. The
- * body/hand carries most of the motion; the weapon angle reinforces it.
+ * La grille fait 24 px de large et l'arme est tenue sur le bord droit : la
+ * pointe ne peut pas balayer 90°. L'amplitude de la frappe est donc plafonnée
+ * par la place restante à droite de la paume, mesurée arme par arme
+ * (WEAPON_STRIKE_ANGLE). Le corps porte le reste du mouvement.
  */
 export const WEAPON_REST_ANGLE = 0.34;
 
@@ -20,12 +22,48 @@ export const WEAPON_ANGLES: Record<SpriteAnimKind, readonly number[]> = {
   // weapon that rotates by itself reads as a floppy rubber prop. The whole
   // silhouette already bobs with the run cycle.
   run: [WEAPON_REST_ANGLE],
-  // Chamber inward, then drive the weapon out with the punch. The values stay
-  // small enough for the 24px grid and for the mace head to clear the edge.
-  attack: [WEAPON_REST_ANGLE, 0.1, 0.05, 0.14, 0.12],
+  // Recul → chambre → frappe → garde. La chambre (index 2) ramène l'arme à la
+  // verticale : la pointe recule de 3 à 5 px, c'est l'armé. La frappe (index 3)
+  // l'envoie au bord de la grille. L'angle de la frappe n'est qu'un repli : en
+  // jeu, chaque famille utilise son propre budget mesuré (WEAPON_STRIKE_ANGLE)
+  // — une dague peut balayer 50°, un bâton 14°. Les index 0, 1 et 4 gardent
+  // l'angle de repos : le poing recule et remonte sans faire pivoter l'arme,
+  // et la dernière frame retrouve exactement la posture d'attente.
+  attack: [WEAPON_REST_ANGLE, WEAPON_REST_ANGLE, 0.0, 0.78, WEAPON_REST_ANGLE],
   hit: [WEAPON_REST_ANGLE, 0.46, 0.38],
   victory: [WEAPON_REST_ANGLE, 0.2, 0.08, 0.24],
 };
+
+/**
+ * Angle de frappe par famille, mesuré pour que **toutes** les cellules de
+ * l'arme restent dans la grille au moment de l'impact (paume à x18, poing
+ * avancé de 2 px) : au-delà, la pointe ou la tête sort du sprite et se fait
+ * couper. Chaque famille balaie ainsi le maximum que la grille autorise, ce
+ * qui donne la même amplitude *visible* (4 à 7 px de course de pointe) à une
+ * dague courte et à un bâton long.
+ */
+export const WEAPON_STRIKE_ANGLE: Record<WeaponVisualKind, number> = {
+  blade: 0.6,
+  dagger: 0.85,
+  scepter: 0.6,
+  staff: 0.24,
+  spear: 0.34,
+  haft: 0.3,
+  scythe: 0.18,
+  // L'arc est large de 6 px à hauteur de paume : c'est l'allonge du poing
+  // (+2 px), pas l'angle, qui lui coûte son dernier pixel ; un angle plus
+  // grand ne changerait rien. Petite amplitude quand même, pour que la corde
+  // accompagne le coup.
+  bow: 0.2,
+  // Les knuckles sont portés PAR le poing : pas de manche à balayer.
+  fist: WEAPON_REST_ANGLE,
+};
+
+/** Angle de l'arme à la frame d'impact de l'attaque, pour une famille donnée. */
+export function weaponStrikeAngle(kind?: WeaponVisualKind): number {
+  if (!kind) return WEAPON_ANGLES.attack[3] ?? WEAPON_REST_ANGLE;
+  return WEAPON_STRIKE_ANGLE[kind] ?? WEAPON_ANGLES.attack[3] ?? WEAPON_REST_ANGLE;
+}
 
 export function weaponAngleFor(anim: SpriteAnimKind, frameIdx: number): number {
   const angles = WEAPON_ANGLES[anim];

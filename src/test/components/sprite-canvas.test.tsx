@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, act } from '@testing-library/react';
 import { SpriteCanvas, SPRITE_IDLE_MS, SPRITE_RUN_MS } from '../../components/sprite/SpriteCanvas';
-import { WEAPON_ANGLES, WEAPON_REST_ANGLE, weaponAngleFor } from '../../components/sprite/weaponPoses';
+import { WEAPON_ANGLES, WEAPON_REST_ANGLE, weaponAngleFor, weaponStrikeAngle } from '../../components/sprite/weaponPoses';
 import { PixelGridCanvas } from '../../components/sprite/PixelGridCanvas';
 import { spritePixelScale } from '../../components/sprite/spritePixelScale';
 import { IDLE_BLINK_FRAME, IDLE_BLINK_MS, generateSpriteFrames } from '../../components/sprite/spriteGenerator';
@@ -114,10 +114,12 @@ describe('SpriteCanvas', () => {
       />,
     );
 
+    // La frame d'impact prend l'amplitude mesurée pour l'arme équipée
+    // (épée rouillée → famille « blade »), sinon la pointe sort de la grille.
     const usedImpactAngle = () =>
       vi
         .mocked(applyEquipmentOverlays)
-        .mock.calls.some((call) => call[3]?.weaponAngle === WEAPON_ANGLES.attack[3]);
+        .mock.calls.some((call) => call[3]?.weaponAngle === weaponStrikeAngle('blade'));
 
     // 130 ms per attack frame at x1 → 65 ms at x2. Frame 3 is the impact.
     act(() => {
@@ -167,6 +169,28 @@ describe('SpriteCanvas', () => {
     expect(weaponAngleFor('victory', 2)).not.toBe(WEAPON_REST_ANGLE);
     expect(weaponAngleFor('hit', 1)).toBeGreaterThan(WEAPON_REST_ANGLE);
     expect(WEAPON_ANGLES.attack.length).toBe(5);
+    // Recul et garde au repos, chambre à la verticale : la frappe est le seul
+    // écart vers l'extérieur. Reculer le poing ne fait pas pivoter l'arme (le
+    // bord droit de la grille est déjà atteint), c'est la chambre qui l'arme.
+    expect(weaponAngleFor('attack', 1)).toBe(WEAPON_REST_ANGLE);
+    expect(weaponAngleFor('attack', 2)).toBeLessThan(WEAPON_REST_ANGLE);
+    expect(weaponAngleFor('attack', 3)).toBeGreaterThan(WEAPON_REST_ANGLE);
+    expect(weaponAngleFor('attack', 4)).toBe(WEAPON_REST_ANGLE);
+  });
+
+  it("donne à chaque famille d'arme l'amplitude de frappe que la grille permet", () => {
+    // 24 px de large, arme tenue sur le bord droit : une dague courte peut
+    // balayer bien plus qu'un bâton, sinon la pointe sort du sprite et se fait
+    // couper. C'est cette table qui décide de l'amplitude réelle en jeu.
+    expect(weaponStrikeAngle('dagger')).toBeGreaterThan(weaponStrikeAngle('blade'));
+    expect(weaponStrikeAngle('blade')).toBeGreaterThan(weaponStrikeAngle('staff'));
+    expect(weaponStrikeAngle('staff')).toBeGreaterThan(0);
+    // Plus ample que la garde, sinon la frappe ne se voit pas.
+    for (const kind of ['blade', 'dagger', 'scepter', 'staff', 'spear', 'haft', 'scythe', 'bow'] as const) {
+      expect(weaponStrikeAngle(kind)).toBeGreaterThan(WEAPON_REST_ANGLE * 0.4);
+    }
+    // Repli quand l'arme est inconnue (pas d'équipement résolu).
+    expect(weaponStrikeAngle()).toBe(WEAPON_ANGLES.attack[3]);
   });
 });
 

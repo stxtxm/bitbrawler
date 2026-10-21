@@ -1000,19 +1000,28 @@ function applyStride(base: SpriteGrid, phase: RunPhase): void {
   scissorLegs(base, mirror, step === 0);
 }
 
-// Procedural attack, five beats: ready, low chamber, high chamber, impact,
-// recovery. The forearm and fist translate together; the torso stays planted
-// so a held weapon never sweeps through the head. Restoring the body cells
-// that the fist had grown over keeps the shirt/waist intact when the arm
-// leaves the silhouette.
+// Procedural attack, five beats: ready, wrist cock, chamber, drive, guard. The
+// forearm and fist translate together; the torso stays planted so a held
+// weapon never sweeps through the head. Restoring the body cells that the
+// fist had grown over keeps the shirt/waist intact when the arm leaves the
+// silhouette.
+//
+// La grille ne fait que 24 px de large et l'arme est tenue sur le bord droit :
+// chaque pixel gagné vers la droite par le poing est un pixel perdu pour la
+// rotation de l'arme (mesuré : la pointe de l'épée ne peut sortir de 5 px de
+// plus que la paume). L'ancienne allonge poussait donc le poing de 4 px et ne
+// laissait à l'arme que 8° d'amplitude — la frappe ne se voyait pas. Le poing
+// ne gagne maintenant que 2 px, l'arme balaie tout ce que la grille permet
+// (voir WEAPON_STRIKE_ANGLE) et la dernière frame revient à la garde : la pose
+// tenue après l'impact est la posture de repos, plus un poing figé en l'air.
 export const ATTACK_IMPACT_FRAME = 3;
 
 const ATTACK_POSES: ReadonlyArray<readonly [number, number]> = [
-  [0, 0],
-  [1, 0],
+  [-1, 0],
+  [-1, -1],
+  [0, -1],
   [1, -1],
-  [2, -1],
-  [2, 0],
+  [0, 0],
 ];
 
 function forearmBlock(base: SpriteGrid): LimbCell[] {

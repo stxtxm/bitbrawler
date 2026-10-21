@@ -2,7 +2,7 @@ import { memo, useEffect, useMemo, useState } from 'react';
 import { ELEMENT_COLORS, Element } from '../../types/Item';
 import type { CharacterAppearance } from '../../types/Character';
 import { PixelGridCanvas } from './PixelGridCanvas';
-import { applyEquipmentOverlays, resolveLoadout } from './equipOverlays';
+import { applyEquipmentOverlays, resolveLoadout, weaponVisualKind } from './equipOverlays';
 import {
   generateSprite16,
   generateSpriteFrames,
@@ -11,7 +11,7 @@ import {
   SpriteAnimKind,
 } from './spriteGenerator';
 import { SPRITE_DISPLAY_SCALE, SPRITE_IDLE_MS } from './spriteTypes';
-import { WEAPON_REST_ANGLE, weaponAngleFor } from './weaponPoses';
+import { WEAPON_REST_ANGLE, weaponAngleFor, weaponStrikeAngle } from './weaponPoses';
 import { useLowPerformanceMode } from '../../hooks/useLowPerformanceMode';
 
 export const SPRITE_RUN_MS = 120;
@@ -124,8 +124,18 @@ export const SpriteCanvas = memo(function SpriteCanvas({
       (activeAnim === 'attack' && frameIdx === ATTACK_IMPACT_FRAME) || (victory && frameIdx === 1)
         ? 3
         : 0;
-    const weaponAngle = activeAnim ? weaponAngleFor(activeAnim, frameIdx) : WEAPON_REST_ANGLE;
-    const overlaid = applyEquipmentOverlays(base.grid, base.palette, resolveLoadout(equippedItems), {
+    // La frappe d'attaque utilise l'amplitude maximale que la grille autorise
+    // pour CETTE arme (une dague balaie 50°, un bâton 14°) : sans ça, la pointe
+    // sort du sprite et se fait couper. Les autres frames suivent la courbe
+    // commune (chambre à la verticale, garde au repos).
+    const loadout = resolveLoadout(equippedItems);
+    const weaponKind = loadout.weapon ? weaponVisualKind(loadout.weapon) : undefined;
+    const weaponAngle = activeAnim
+      ? activeAnim === 'attack' && frameIdx === ATTACK_IMPACT_FRAME
+        ? weaponStrikeAngle(weaponKind)
+        : weaponAngleFor(activeAnim, frameIdx)
+      : WEAPON_REST_ANGLE;
+    const overlaid = applyEquipmentOverlays(base.grid, base.palette, loadout, {
       swingX,
       punchTrail,
       weaponAngle,
