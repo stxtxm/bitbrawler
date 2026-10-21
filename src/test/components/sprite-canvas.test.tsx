@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, act } from '@testing-library/react';
 import { SpriteCanvas, SPRITE_IDLE_MS, SPRITE_RUN_MS } from '../../components/sprite/SpriteCanvas';
-import { WEAPON_TILTS, weaponTiltFor } from '../../components/sprite/weaponPoses';
+import { WEAPON_ANGLES, WEAPON_REST_ANGLE, weaponAngleFor } from '../../components/sprite/weaponPoses';
 import { PixelGridCanvas } from '../../components/sprite/PixelGridCanvas';
 import { spritePixelScale } from '../../components/sprite/spritePixelScale';
 import { IDLE_BLINK_FRAME, IDLE_BLINK_MS, generateSpriteFrames } from '../../components/sprite/spriteGenerator';
@@ -117,26 +117,25 @@ describe('SpriteCanvas', () => {
     });
     const calls = vi.mocked(applyEquipmentOverlays).mock.calls;
     expect(calls.length).toBeGreaterThan(0);
-    const tilts = calls.map(
-      (call) => (call[3] as { weaponTilt?: number } | undefined)?.weaponTilt ?? 0,
-    );
     for (const call of calls) {
-      // swayX used to slide the hilt through a stationary fist; the weapon may
-      // only pivot on the palm anchors now.
-      expect((call[3] as { swayX?: number } | undefined)?.swayX ?? 0).toBe(0);
+      const opts = call[3] as { swayX?: number; weaponAngle?: number } | undefined;
+      // The hilt never slides through the fist and the arm is glued to the
+      // body during the run: rotating the weapon by itself there read as a
+      // floppy rubber prop. The run pose keeps the rigid rest angle.
+      expect(opts?.swayX ?? 0).toBe(0);
+      expect(opts?.weaponAngle ?? WEAPON_REST_ANGLE).toBe(WEAPON_REST_ANGLE);
     }
-    // ...but it must actually move: a static weapon reads as glued to the hand.
-    expect(tilts.some((tilt) => tilt !== 0)).toBe(true);
     vi.useRealTimers();
   });
 
-  it('plans a distinct pivot for every weapon animation', () => {
-    expect(weaponTiltFor('idle', 7)).toBe(0);
-    expect(weaponTiltFor('run', 1)).toBe(WEAPON_TILTS.run[1]);
-    expect(weaponTiltFor('run', 4)).toBeLessThan(0);
-    expect(weaponTiltFor('attack', 3)).not.toBe(0);
-    expect(weaponTiltFor('victory', 2)).not.toBe(0);
-    expect(weaponTiltFor('hit', 1)).toBeGreaterThan(0);
+  it('plans a rigid whole-weapon angle for every animation', () => {
+    expect(weaponAngleFor('idle', 7)).toBe(WEAPON_REST_ANGLE);
+    expect(weaponAngleFor('run', 1)).toBe(WEAPON_REST_ANGLE);
+    expect(weaponAngleFor('run', 4)).toBe(WEAPON_REST_ANGLE);
+    expect(weaponAngleFor('attack', 3)).not.toBe(WEAPON_REST_ANGLE);
+    expect(weaponAngleFor('victory', 2)).not.toBe(WEAPON_REST_ANGLE);
+    expect(weaponAngleFor('hit', 1)).toBeGreaterThan(WEAPON_REST_ANGLE);
+    expect(WEAPON_ANGLES.attack.length).toBe(5);
   });
 });
 

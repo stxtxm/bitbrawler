@@ -11,7 +11,7 @@ import {
   SpriteAnimKind,
 } from './spriteGenerator';
 import { SPRITE_DISPLAY_SCALE, SPRITE_IDLE_MS } from './spriteTypes';
-import { weaponTiltFor } from './weaponPoses';
+import { WEAPON_REST_ANGLE, weaponAngleFor } from './weaponPoses';
 import { useLowPerformanceMode } from '../../hooks/useLowPerformanceMode';
 
 export const SPRITE_RUN_MS = 120;
@@ -101,11 +101,11 @@ export const SpriteCanvas = memo(function SpriteCanvas({
     if (!equippedItems) {
       return flip ? { grid: mirrorSpriteGrid(base.grid), palette: base.palette } : base;
     }
-    // Dynamic life: jewelry swings with the stride. The weapon does NOT get a
-    // fake horizontal sway: the run keeps the arms glued, so a ±1 px weapon
-    // offset slid the hilt through a stationary fist. Instead it pivots at
-    // the palm; the grip therefore stays welded to the hand while the head
-    // and tip travel through the run, strike and victory arcs.
+    // Dynamic life: jewelry swings with the stride. The run keeps the arms
+    // glued to the body, so the weapon must not get a free wrist wobble: that
+    // was what made swords and maces look like floppy rubber props. The whole
+    // rigid weapon instead rotates around the palm for the strike, hit and
+    // victory poses.
     const running = activeAnim === 'run' && frames && frames.length > 0;
     const victory = activeAnim === 'victory' && frames && frames.length > 0;
     const swingX = running ? ([-1, -1, 0, 1, 1, 0][frameIdx % frames.length] ?? 0) : 0;
@@ -113,11 +113,11 @@ export const SpriteCanvas = memo(function SpriteCanvas({
       (activeAnim === 'attack' && frameIdx === ATTACK_IMPACT_FRAME) || (victory && frameIdx === 1)
         ? 3
         : 0;
-    const weaponTilt = activeAnim ? weaponTiltFor(activeAnim, frameIdx) : 0;
+    const weaponAngle = activeAnim ? weaponAngleFor(activeAnim, frameIdx) : WEAPON_REST_ANGLE;
     const overlaid = applyEquipmentOverlays(base.grid, base.palette, resolveLoadout(equippedItems), {
       swingX,
       punchTrail,
-      weaponTilt,
+      weaponAngle,
     });
     return {
       grid: flip ? mirrorSpriteGrid(overlaid.grid) : overlaid.grid,

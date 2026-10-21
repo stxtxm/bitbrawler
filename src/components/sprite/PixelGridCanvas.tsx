@@ -17,7 +17,7 @@ import { spritePixelScale } from './spritePixelScale';
  * r1175 : l'arme pivote autour de la paume (run, attaque, touche, victoire),
  *         avec des têtes de masse/marteau lisibles et une lame effilée.
  */
-export const SPRITE_RENDER_REV = 'r1175-armes-animees';
+export const SPRITE_RENDER_REV = 'r1176-armes-rigides';
 
 function useDevicePixelRatio(): number {
   const [dpr, setDpr] = useState<number>(
