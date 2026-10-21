@@ -1152,6 +1152,23 @@ async function checkOfflineGains(page, runKey) {
 async function handleDailyLootbox(page, runKey) {
   console.log('🎁 Checking lootbox...')
 
+  const alreadyOpen = await page.locator('.inventory-overlay').first().isVisible({ timeout: 1000 }).catch(() => false)
+  if (alreadyOpen) {
+    console.log('   Inventory overlay already open, closing it before the lootbox check')
+    const closeLeftover = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
+    if (await closeLeftover.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await closeLeftover.click().catch(() => {
+        console.warn('   ⚠️ Leftover inventory close click failed, forcing backdrop dismiss')
+        return dismissModals(page)
+      })
+    } else {
+      await dismissModals(page)
+    }
+    await page.waitForSelector('.inventory-overlay', { state: 'detached', timeout: 3000 }).catch(() => {
+      console.warn('   ⚠️ Leftover inventory overlay still attached after close')
+    })
+  }
+
   const inventoryBtn = page.locator('button[aria-label="Inventory"], button[title="Inventory"]').first()
   if (!(await inventoryBtn.isVisible({ timeout: 5000 }).catch(() => false))) {
     console.log('   Inventory button not found')
