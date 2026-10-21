@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-21T22:41:15Z",
+  "last_session": "2026-10-21T22:45:51Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR #1292 : 'Closes #1290' dans le body n'a PAS ferme l'issue au merge squash (issue sans lien detecte) -> verifier l'etat apres merge et fermer manuellement avec un commentaire referencant la PR. Gate locale rejouee (lint/tsc/2503 tests/build) car seul Cloudflare Pages etait rattache.",
-      "issue": "#1292",
+      "lesson": "PR #1294 : quand aucun check CI n'est rattaché à la PR (seul Cloudflare Pages vert), le reviewer doit exécuter lui-même lint/tsc/vitest/build avant merge. Les migrations en .md sous supabase/migrations sont une convention acceptée (précédent 20261011_add_appearance_column.md) si une issue dédiée sans /oc existe.",
+      "issue": "#1294",
       "date": "2026-10-21"
     }
   ]
