@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-20T22:24:53Z",
+  "last_session": "2026-10-21T14:20:32Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Rebalance SHOP_OFFERS +10% (#1182): les assertions de prix sont éparses dans shop-utils.test.ts - la garde toBeLessThanOrEqual ET 4 tests essence (500-24→473, 500-41→455, 600-41→555) ET les 4 tests getShopPrice. Toujours grep 476|459|559|toBe(24) etc. pour tout attraper avant RED.",
-      "issue": "#1182",
-      "date": "2026-10-17"
-    },
     {
       "date": "2026-10-17",
       "issue": "#1181",
@@ -196,6 +191,11 @@
       "lesson": "Hausse SHOP_OFFERS +10% (#1265) : arrondi Math.round (27→30, 53→58, 45→50, 80→88). Le garde-fou shop-utils (prix mini ≤ N / jours) doit être relevé à chaque hausse, et deployFreshness.ts + commentaires shopUtils/ShopPanel citent les prix en dur — les mettre à jour, sinon doc/tests incohérents. Les fixtures de deploy-freshness.test.ts (24/48/41/73 vs 27/53/45/80) sont historiques et ne doivent PAS être changées.",
       "issue": "#1265",
       "date": "2026-10-20"
+    },
+    {
+      "lesson": "Issue #1272 low-perf timing: SpriteCanvas sets activeAnim=null when lowPerf, so CombatView/IdleRunnerScene must use a 0ms attack impact delay there. Isolate low-perf tests in a dedicated test file with vi.mock returning true (or a vi.hoisted mutable flag) to avoid breaking existing timing tests that assume full animations.",
+      "issue": "#1272",
+      "date": "2026-10-21"
     }
   ]
 }
