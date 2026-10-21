@@ -1269,6 +1269,26 @@ describe('QA Bot Overlay Deadlock Contract', () => {
     expect(unsets).toBe(returnsAfter)
   })
 
+  it('handleDailyLootbox dismisses a leftover inventory overlay before suppressing the handler and clicking Inventory (#1276)', () => {
+    const fn = requireAsyncFunction('handleDailyLootbox')
+    const overlayCheckIdx = fn.indexOf(".inventory-overlay")
+    const setIdx = fn.indexOf('suppressInventoryHandler = true')
+    const clickIdx = fn.indexOf('inventoryBtn.click()')
+    expect(overlayCheckIdx).toBeGreaterThan(-1)
+    expect(setIdx).toBeGreaterThan(-1)
+    expect(clickIdx).toBeGreaterThan(-1)
+    expect(overlayCheckIdx).toBeLessThan(setIdx)
+
+    const guarded = fn.slice(overlayCheckIdx, setIdx)
+    expect(guarded).toContain('isVisible')
+    expect(guarded).toContain('alreadyOpen')
+    expect(guarded).toContain('dismissModals(page)')
+    expect(guarded).toContain("state: 'detached'")
+
+    const beforeClick = fn.slice(overlayCheckIdx, clickIdx)
+    expect(beforeClick).toContain("state: 'detached'")
+  })
+
   it('syncAutoMode targets the Auto mode switch with a strict locator, never the generic [role="switch"] fallback (#653)', () => {
     // The composite locator '[role="switch"][aria-label="Auto mode"], [role="switch"],
     // .pixel-switch' .first() resolved to the PvE switch (ActionPanel, higher in DOM)
