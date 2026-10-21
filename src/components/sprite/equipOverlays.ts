@@ -3,6 +3,7 @@ import { ELEMENT_COLORS, ItemRarity, PixelItemAsset } from '../../types/Item';
 import { getItemById } from '../../utils/equipmentUtils';
 import { ACCENT_INDEX, ITEM_BLIT_OFFSET, SPRITE_HEIGHT, SPRITE_PAD_TOP, SpriteGrid, SpritePalette, TRIM_INDEX, highlightIndexOf, shadeIndexOf } from './spriteTypes';
 import { OUTLINE_HEX, RARITY_TRIM, highlightHex, mixHex } from './spritePalettes';
+import { WEAPON_REST_ANGLE } from './weaponPoses';
 
 export const PLATE_INDEX = 62;
 export const PLATE_STEEL = '#a8b4c0';
@@ -36,11 +37,6 @@ export const WOOD_DARK = 109;
 const GRID_W = 24;
 const GRID_H = SPRITE_HEIGHT;
 const PAD = SPRITE_PAD_TOP;
-
-export const WEAPON_SLANT = 0.4;
-
-const slantX = (x: number, y: number, pivotY: number, tilt = 0): number =>
-  x + Math.round((pivotY - y) * (WEAPON_SLANT + tilt));
 
 const DEFAULT_BLADE = '#c0c0c0';
 const DEFAULT_WOOD = '#8b5a2b';
@@ -198,6 +194,77 @@ function paint(grid: SpriteGrid, x: number, y: number, v: number): void {
   grid[y][x] = v;
 }
 
+type WeaponPalm = { x: number; y: number };
+
+/**
+ * Inverse-map every world pixel into the weapon's local space. Local x runs
+ * across the weapon (grip at 0), local y runs from the grip toward the tip.
+ *
+ * Sampling in this direction is intentional. Forward-projecting hundreds of
+ * local samples into the 24px grid overdraws the same world pixel from several
+ * local rows: on a diagonal shaft that alternates the light and dark edge cells
+ * and reads as a wavy rubber prop. Inverse sampling gives every world pixel
+ * exactly one local coordinate, so a rotated shaft is a clean parallelogram and
+ * a rotated blade is a clean, straight taper.
+ */
+function paintLocalShape(
+  grid: SpriteGrid,
+  palm: WeaponPalm,
+  angle: number,
+  colorAt: (lx: number, ly: number) => number,
+): void {
+  const c = Math.cos(angle);
+  const s = Math.sin(angle);
+  for (let y = 0; y < grid.length; y++) {
+    for (let x = 0; x < grid[0].length; x++) {
+      const dx = x - palm.x;
+      const dy = y - palm.y;
+      const lx = dx * c + dy * s;
+      const ly = dx * s - dy * c;
+      const value = colorAt(lx, ly);
+      if (value !== 0) paint(grid, x, y, value);
+    }
+  }
+}
+
+function shaftAt(
+  lx: number,
+  ly: number,
+  from: number,
+  to: number,
+  center: number,
+): number {
+  // A single flat colour avoids the light/dark stripe that used to crawl up
+  // diagonal shafts and read as a twisted rubber band.
+  if (ly < from || ly > to || Math.abs(lx) > 1) return 0;
+  return center;
+}
+
+function bandAt(
+  lx: number,
+  ly: number,
+  bandLy: number,
+  halfWidth: number,
+  value: number,
+): number {
+  return Math.abs(ly - bandLy) <= 0.6 && Math.abs(lx) <= halfWidth ? value : 0;
+}
+
+function maskValueAt(
+  rows: readonly number[][],
+  centerLy: number,
+  lx: number,
+  ly: number,
+): number {
+  const cols = rows[0]?.length ?? 0;
+  const halfCols = Math.floor(cols / 2);
+  const topLy = centerLy + Math.floor(rows.length / 2);
+  const row = topLy - Math.round(ly);
+  const col = Math.round(lx) + halfCols;
+  if (row < 0 || row >= rows.length || col < 0 || col >= cols) return 0;
+  return rows[row][col];
+}
+
 function freqOf(art: number[][], y0: number, y1: number, allowed?: Set<number>): Map<number, number> {
   const freq = new Map<number, number>();
   for (let y = Math.max(0, y0); y <= Math.min(art.length - 1, y1); y++) {
@@ -329,46 +396,46 @@ function blitRaw(
 // colors sampled from each item's pixel art.
 // ---------------------------------------------------------------------------
 
-function paintGuardCollar(
-  grid: SpriteGrid,
-  palm: { x: number; y: number },
-  gem = TRIM_INDEX,
-): void {
-  for (let x = palm.x - 1; x <= palm.x + 3; x++) paint(grid, x, palm.y, TRIM_INDEX);
-  paint(grid, palm.x + 2, palm.y, gem);
-  paint(grid, palm.x + 3, palm.y, gem);
-}
-
 function paintBlade(
   grid: SpriteGrid,
-  palm: { x: number; y: number },
+  palm: WeaponPalm,
+  angle: number,
   length: number,
   glint: boolean,
   gem: number,
-  tilt = 0,
 ): void {
-  const x0 = palm.x;
-  const guardY = palm.y;
-  const tipY = Math.max(0, guardY - length);
-  const sx = (x: number, y: number): number => slantX(x, y, palm.y, tilt);
-  // Taper the last two rows into a real point. A flat 3px cap read as a
-  // paddle, especially once the blade is outlined against the night sky.
-  for (let y = tipY + 2; y < guardY; y++) {
-    paint(grid, sx(x0, y), y, BLADE_INDEX);
-    paint(grid, sx(x0 + 1, y), y, BLADE_LIGHT);
-    paint(grid, sx(x0 + 2, y), y, BLADE_INDEX);
-  }
-  paint(grid, sx(x0 + 1, tipY + 1), tipY + 1, BLADE_LIGHT);
-  paint(grid, sx(x0 + 2, tipY + 1), tipY + 1, BLADE_INDEX);
-  paint(grid, sx(x0 + 1, tipY), tipY, BLADE_LIGHT);
-  if (glint) paint(grid, sx(x0 + 1, tipY), tipY, ACCENT_INDEX);
-  paintGuardCollar(grid, { x: x0, y: guardY }, gem);
-  paint(grid, sx(x0, guardY + 1), guardY + 1, WOOD_INDEX);
-  paint(grid, sx(x0 + 1, guardY + 1), guardY + 1, WOOD_INDEX);
-  paint(grid, sx(x0, guardY + 2), guardY + 2, WOOD_INDEX);
-  paint(grid, sx(x0 + 1, guardY + 2), guardY + 2, WOOD_INDEX);
-  paint(grid, sx(x0, guardY + 3), guardY + 3, TRIM_INDEX);
-  paint(grid, sx(x0 + 1, guardY + 3), guardY + 3, TRIM_INDEX);
+  const guardLy = 2;
+  const bladeTop = guardLy + length;
+  const taperStart = bladeTop - 2.5;
+  const bladeAngle = angle * 0.7;
+  paintLocalShape(grid, palm, bladeAngle, (lx, ly) => {
+    if (Math.abs(ly + 3.2) <= 0.6 && Math.abs(lx) <= 1.2) return BLADE_INDEX;
+
+    const guard = Math.abs(ly - guardLy) <= 0.6 && Math.abs(lx) <= 2.1;
+    if (guard) {
+      if (Math.round(lx) >= 1) return gem;
+      return Math.abs(lx) > 1.25 ? BLADE_DARK : BLADE_INDEX;
+    }
+
+    if (ly >= guardLy - 0.35 && ly <= bladeTop) {
+      // Keep a one-pixel point at the very tip; a taper that reaches exactly
+      // zero can miss the world-pixel sampling grid and leave the sword blunt.
+      if (ly > bladeTop - 1.1 && Math.abs(lx) <= 0.55) {
+        return glint ? ACCENT_INDEX : BLADE_LIGHT;
+      }
+      const halfWidth = ly <= taperStart ? 1 : Math.max(0.55, 1 - (ly - taperStart) / 2.5);
+      if (Math.abs(lx) <= halfWidth + 0.01) {
+        if (Math.abs(lx) > 0.55) return BLADE_DARK;
+        return BLADE_LIGHT;
+      }
+      return 0;
+    }
+
+    if (ly >= -3.2 && ly < guardLy && Math.abs(lx) <= 1) {
+      return Math.abs(lx) < 0.4 ? WOOD_INDEX : WOOD_DARK;
+    }
+    return 0;
+  });
 }
 
 type HaftShape = 'axe' | 'mace' | 'hammer' | 'club' | 'pick';
@@ -384,195 +451,170 @@ function haftShapeOf(name: string): HaftShape {
 
 function paintHaft(
   grid: SpriteGrid,
-  palm: { x: number; y: number },
+  palm: WeaponPalm,
+  angle: number,
   rivet: number,
-  tilt = 0,
   shape: HaftShape = 'axe',
 ): void {
-  const x0 = palm.x;
-  const sx = (x: number, y: number): number => slantX(x, y, palm.y, tilt);
-  // The shaft runs all the way up to the head. It used to stop at palm.y - 8
-  // while the head started at palm.y - 9, and the slant shifted a column
-  // between the two rows: the axe head read as a grey square floating off the
-  // handle.
-  // The butt of the handle continues below the fist. Without it the grip sat
-  // at the very bottom of the shaft and the weapon read as balanced on the
-  // palm rather than held.
-  for (let y = palm.y - 10; y <= palm.y + 3; y++) {
-    paint(grid, sx(x0, y), y, WOOD_INDEX);
-    paint(grid, sx(x0 + 1, y), y, WOOD_INDEX);
-  }
-  if (shape === 'axe') {
-    // A crescent head: wide near the haft, with the cutting edge outboard.
-    // The old three-row square read as a second fist at the top of the pole.
-    const headRows: Array<[number, number, number]> = [
-      [-12, 0, 2],
-      [-11, -2, 3],
-      [-10, -2, 3],
-      [-9, -2, 3],
-      [-8, 0, 2],
-    ];
-    for (const [dy, from, to] of headRows) {
-      for (let x = x0 + from; x <= x0 + to; x++) paint(grid, sx(x, palm.y + dy), palm.y + dy, WHEAD_INDEX);
-    }
-    for (let y = palm.y - 11; y <= palm.y - 9; y++) {
-      paint(grid, sx(x0 + 3, y), y, BLADE_INDEX);
-      paint(grid, sx(x0 + 4, y), y, y === palm.y - 10 ? BLADE_LIGHT : BLADE_INDEX);
-    }
-    paint(grid, sx(x0, palm.y - 10), palm.y - 10, rivet);
-    paint(grid, sx(x0 + 1, palm.y - 10), palm.y - 10, rivet);
-  } else {
-    // Blunt weapons used to share the axe head: a four-column grey square
-    // floating above the fist. A mace/hammer now gets a compact, readable
-    // head of its own, kept outboard of the face and low enough that the
-    // thrust pose cannot push it off the 24px grid.
-    const headBaseY = palm.y - 8;
-    const headCenterX = sx(x0 + 2, headBaseY);
-    const maceHead = [
-      [0, 0, 1, 0, 0],
-      [0, 1, 1, 1, 0],
-      [1, 1, 3, 1, 1],
-      [0, 1, 1, 1, 0],
-      [0, 0, 2, 0, 0],
-    ];
-    const hammerHead = [
+  const headCenterY = 9;
+  const masks: Record<HaftShape, number[][]> = {
+    axe: [
+      [0, 0, 5, 5, 2],
+      [0, 5, 1, 1, 2],
+      [5, 1, 1, 3, 4],
+      [0, 5, 1, 1, 2],
+      [0, 0, 5, 5, 2],
+    ],
+    mace: [
+      [0, 5, 5, 5, 0],
+      [5, 4, 1, 1, 5],
+      [2, 1, 1, 1, 2],
+      [5, 1, 3, 1, 5],
+      [0, 5, 4, 5, 0],
+    ],
+    hammer: [
       [2, 2, 2, 2, 2],
-      [1, 1, 1, 1, 1],
-      [1, 1, 3, 1, 1],
-      [1, 1, 1, 1, 1],
-      [0, 2, 2, 2, 0],
-    ];
-    const clubHead = [
+      [5, 1, 1, 1, 5],
+      [5, 1, 3, 1, 5],
+      [5, 1, 1, 1, 5],
+      [0, 5, 5, 5, 0],
+    ],
+    club: [
+      [0, 0, 5, 0, 0],
+      [0, 5, 1, 5, 0],
+      [5, 1, 3, 1, 5],
+      [0, 5, 1, 5, 0],
       [0, 0, 1, 0, 0],
-      [0, 1, 1, 1, 0],
-      [1, 1, 3, 1, 1],
-      [0, 1, 1, 1, 0],
-      [0, 0, 2, 0, 0],
-    ];
-    const pickHead = [
-      [0, 0, 0, 2, 2],
-      [0, 1, 1, 2, 0],
-      [1, 1, 3, 0, 0],
-      [0, 1, 1, 0, 0],
-      [0, 0, 2, 0, 0],
-    ];
-    const head =
-      shape === 'hammer' ? hammerHead
-        : shape === 'club' ? clubHead
-          : shape === 'pick' ? pickHead
-            : maceHead;
-    for (let row = 0; row < head.length; row++) {
-      for (let col = 0; col < head[row].length; col++) {
-        const v = head[row][col];
-        if (v === 0) continue;
-        paint(
-          grid,
-          headCenterX + col - 2,
-          headBaseY - 2 + row,
-          v === 3 ? rivet : v === 2 ? BLADE_INDEX : WHEAD_INDEX,
-        );
-      }
+    ],
+    pick: [
+      [0, 0, 0, 5, 4],
+      [0, 5, 5, 2, 0],
+      [5, 1, 3, 0, 0],
+      [0, 5, 2, 0, 0],
+      [0, 0, 5, 0, 0],
+    ],
+  };
+  const head = masks[shape];
+  paintLocalShape(grid, palm, angle, (lx, ly) => {
+    const mv = maskValueAt(head, headCenterY, lx, ly);
+    if (mv !== 0) {
+      if (mv === 1) return WHEAD_INDEX;
+      if (mv === 2) return BLADE_INDEX;
+      if (mv === 3) return rivet;
+      if (mv === 4) return BLADE_LIGHT;
+      return WHEAD_DARK;
     }
-    // A metal collar solders the head to the shaft; without it the round
-    // silhouette reads as a sticker hovering over the handle.
-    paint(grid, sx(x0, headBaseY + 2), headBaseY + 2, TRIM_INDEX);
-    paint(grid, sx(x0 + 1, headBaseY + 2), headBaseY + 2, TRIM_INDEX);
-  }
-  paint(grid, sx(x0, palm.y + 2), palm.y + 2, TRIM_INDEX);
-  paint(grid, sx(x0 + 1, palm.y + 2), palm.y + 2, TRIM_INDEX);
+    if (bandAt(lx, ly, 7, 1, BLADE_INDEX)) return BLADE_INDEX;
+    if (bandAt(lx, ly, 0, 1, WHEAD_DARK)) return WHEAD_DARK;
+    if (Math.abs(ly + 3.2) <= 0.6 && Math.abs(lx) <= 1.2) return BLADE_INDEX;
+    return shaftAt(lx, ly, -3.2, headCenterY, WOOD_INDEX);
+  });
 }
 
-function paintStaff(grid: SpriteGrid, palm: { x: number; y: number }, tilt = 0): void {
-  const x0 = palm.x;
-  const sx = (x: number, y: number): number => slantX(x, y, palm.y, tilt);
-  for (let y = palm.y - 11; y <= palm.y + 5; y++) {
-    paint(grid, sx(x0, y), y, WOOD_INDEX);
-    paint(grid, sx(x0 + 1, y), y, WOOD_INDEX);
-  }
-  for (let y = palm.y - 13; y <= palm.y - 12; y++) {
-    paint(grid, sx(x0, y), y, WHEAD_INDEX);
-    paint(grid, sx(x0 + 1, y), y, WHEAD_INDEX);
-  }
-  paint(grid, sx(x0, palm.y - 12), palm.y - 12, ACCENT_INDEX);
+function paintStaff(grid: SpriteGrid, palm: WeaponPalm, angle: number): void {
+  const headCenterY = 13;
+  const head = [
+    [0, 5, 5, 5, 0],
+    [5, 1, 1, 1, 5],
+    [5, 1, 2, 1, 5],
+    [5, 1, 1, 1, 5],
+    [0, 5, 5, 5, 0],
+  ];
+  paintLocalShape(grid, palm, angle, (lx, ly) => {
+    const mv = maskValueAt(head, headCenterY, lx, ly);
+    if (mv === 5) return WHEAD_DARK;
+    if (mv === 2) return ACCENT_INDEX;
+    if (mv !== 0) return WHEAD_INDEX;
+    if (bandAt(lx, ly, 0, 1, WOOD_DARK)) return WOOD_DARK;
+    if (Math.abs(ly + 3.2) <= 0.6 && Math.abs(lx) <= 1.2) return BLADE_INDEX;
+    return shaftAt(lx, ly, -3.2, 12, WOOD_INDEX);
+  });
 }
 
-function paintSpear(grid: SpriteGrid, palm: { x: number; y: number }, tilt = 0): void {
-  const x0 = palm.x;
-  const sx = (x: number, y: number): number => slantX(x, y, palm.y, tilt);
-  const tipY = palm.y - 12;
-  // A spear used to share the staff painter: a long pole with a tiny gem on
-  // top, which read as a walking cane. The pointed head is the whole point of
-  // the weapon, so it gets a proper tapered metal blade and a socket.
-  paint(grid, sx(x0 + 1, tipY), tipY, BLADE_LIGHT);
-  for (let y = tipY + 1; y <= tipY + 2; y++) {
-    paint(grid, sx(x0, y), y, BLADE_INDEX);
-    paint(grid, sx(x0 + 1, y), y, BLADE_LIGHT);
-    paint(grid, sx(x0 + 2, y), y, BLADE_INDEX);
-  }
-  paint(grid, sx(x0, tipY + 3), tipY + 3, BLADE_INDEX);
-  paint(grid, sx(x0 + 1, tipY + 3), tipY + 3, BLADE_LIGHT);
-  for (let y = tipY + 5; y <= palm.y + 3; y++) {
-    paint(grid, sx(x0, y), y, WOOD_INDEX);
-    paint(grid, sx(x0 + 1, y), y, WOOD_INDEX);
-  }
-  paint(grid, sx(x0, tipY + 4), tipY + 4, TRIM_INDEX);
-  paint(grid, sx(x0 + 1, tipY + 4), tipY + 4, TRIM_INDEX);
-  paint(grid, sx(x0, palm.y + 2), palm.y + 2, TRIM_INDEX);
-  paint(grid, sx(x0 + 1, palm.y + 2), palm.y + 2, TRIM_INDEX);
+function paintSpear(grid: SpriteGrid, palm: WeaponPalm, angle: number): void {
+  const headCenterY = 11;
+  const head = [
+    [0, 4, 0],
+    [5, 2, 5],
+    [5, 1, 5],
+    [0, 5, 0],
+    [0, 5, 0],
+  ];
+  paintLocalShape(grid, palm, angle, (lx, ly) => {
+    const mv = maskValueAt(head, headCenterY, lx, ly);
+    if (mv === 5) return BLADE_DARK;
+    if (mv === 4) return BLADE_LIGHT;
+    if (mv !== 0) return BLADE_INDEX;
+    if (bandAt(lx, ly, 8, 1, BLADE_INDEX)) return BLADE_INDEX;
+    if (bandAt(lx, ly, 0, 1, WOOD_DARK)) return WOOD_DARK;
+    if (Math.abs(ly + 3.2) <= 0.6 && Math.abs(lx) <= 1.2) return BLADE_INDEX;
+    return shaftAt(lx, ly, -3.2, 10, WOOD_INDEX);
+  });
 }
 
-function paintScepter(grid: SpriteGrid, palm: { x: number; y: number }, tilt = 0): void {
-  const x0 = palm.x;
-  const sx = (x: number, y: number): number => slantX(x, y, palm.y, tilt);
-  for (let y = palm.y - 1; y <= palm.y + 1; y++) {
-    paint(grid, sx(x0, y), y, WOOD_INDEX);
-    paint(grid, sx(x0 + 1, y), y, WOOD_INDEX);
-  }
-  paint(grid, sx(x0, palm.y + 2), palm.y + 2, TRIM_INDEX);
-  paint(grid, sx(x0 + 1, palm.y + 2), palm.y + 2, TRIM_INDEX);
-  for (let y = palm.y - 4; y <= palm.y - 2; y++) {
-    for (let x = x0 - 1; x <= x0 + 1; x++) paint(grid, sx(x, y), y, WHEAD_INDEX);
-  }
-  paint(grid, sx(x0, palm.y - 3), palm.y - 3, ACCENT_INDEX);
+function paintScepter(grid: SpriteGrid, palm: WeaponPalm, angle: number): void {
+  const headCenterY = 5;
+  const head = [
+    [0, 5, 5, 5, 0],
+    [5, 1, 1, 1, 5],
+    [5, 1, 2, 1, 5],
+    [5, 1, 1, 1, 5],
+    [0, 5, 5, 5, 0],
+  ];
+  paintLocalShape(grid, palm, angle, (lx, ly) => {
+    const mv = maskValueAt(head, headCenterY, lx, ly);
+    if (mv === 5) return WHEAD_DARK;
+    if (mv === 2) return ACCENT_INDEX;
+    if (mv !== 0) return WHEAD_INDEX;
+    if (bandAt(lx, ly, 0, 1, WOOD_DARK)) return WOOD_DARK;
+    if (Math.abs(ly + 3.2) <= 0.6 && Math.abs(lx) <= 1.2) return BLADE_INDEX;
+    return shaftAt(lx, ly, -3.2, 4, WOOD_INDEX);
+  });
 }
 
-function paintScythe(grid: SpriteGrid, palm: { x: number; y: number }, glint: boolean, tilt = 0): void {
-  const x0 = palm.x;
-  const sx = (x: number, y: number): number => slantX(x, y, palm.y, tilt);
-  for (let y = palm.y - 10; y <= palm.y + 1; y++) {
-    paint(grid, sx(x0, y), y, WOOD_INDEX);
-    paint(grid, sx(x0 + 1, y), y, WOOD_INDEX);
-  }
-  for (let y = palm.y - 12; y <= palm.y - 11; y++) {
-    for (let x = x0 - 3; x <= x0 + 2; x++) paint(grid, sx(x, y), y, BLADE_INDEX);
-  }
-  paint(grid, sx(x0 - 3, palm.y - 12), palm.y - 12, BLADE_INDEX);
-  if (glint) paint(grid, sx(x0 - 3, palm.y - 12), palm.y - 12, ACCENT_INDEX);
-  paint(grid, sx(x0, palm.y + 2), palm.y + 2, TRIM_INDEX);
-  paint(grid, sx(x0 + 1, palm.y + 2), palm.y + 2, TRIM_INDEX);
+function paintScythe(grid: SpriteGrid, palm: WeaponPalm, angle: number, glint: boolean): void {
+  const headCenterY = 11;
+  // A scythe blade is a leftward crescent, not a centred mace head. The
+  // seven-column local shape wraps around the shaft and reads as a blade even
+  // at the 6px display scale.
+  const head = [
+    [0, 0, 0, 0, 5, 5, 4],
+    [0, 0, 5, 5, 2, 2, 5],
+    [0, 5, 2, 2, 2, 5, 0],
+    [5, 2, 2, 2, 5, 0, 0],
+    [0, 5, 5, 5, 0, 0, 0],
+  ];
+  paintLocalShape(grid, palm, angle, (lx, ly) => {
+    const mv = maskValueAt(head, headCenterY, lx, ly);
+    if (mv === 5) return BLADE_DARK;
+    if (mv === 4) return BLADE_LIGHT;
+    if (mv !== 0) return BLADE_INDEX;
+    // Bound the glint to the scythe's upper-left tip. Without the local box
+    // this condition painted every cell in the half-plane above and left of
+    // the head, which looked like a giant purple flag behind the character.
+    if (glint && ly > 12.4 && ly < 14.6 && lx < -0.2 && lx > -2.8) return ACCENT_INDEX;
+    if (bandAt(lx, ly, 0, 1, WOOD_DARK)) return WOOD_DARK;
+    if (Math.abs(ly + 3.2) <= 0.6 && Math.abs(lx) <= 1.2) return BLADE_INDEX;
+    return shaftAt(lx, ly, -3.2, 10, WOOD_INDEX);
+  });
 }
 
-function paintBow(grid: SpriteGrid, palm: { x: number; y: number }, tilt = 0): void {
-  const bx = clamp(palm.x + 2, 0, GRID_W - 5);
-  const top = palm.y - 6;
-  const bottom = palm.y + 5;
-  const span = bottom - top;
-  const sx = (x: number, y: number): number => x + Math.round((palm.y - y) * tilt);
-  for (let y = top; y <= bottom; y++) {
-    const t = (y - top) / Math.max(1, span);
-    const bend = Math.round(2 * Math.sin(Math.PI * t));
-    paint(grid, sx(bx + bend, y), y, WOOD_INDEX);
-    paint(grid, sx(bx + bend + 1, y), y, WOOD_INDEX);
-  }
-  for (let y = top; y <= bottom; y++) paint(grid, sx(bx, y), y, STRING_INDEX);
-  paint(grid, sx(bx, top), top, TRIM_INDEX);
-  paint(grid, sx(bx, bottom), bottom, TRIM_INDEX);
-  paint(grid, palm.x, palm.y - 1, TRIM_INDEX);
-  paint(grid, palm.x + 1, palm.y - 1, TRIM_INDEX);
-  paint(grid, palm.x, palm.y, TRIM_INDEX);
-  paint(grid, palm.x + 1, palm.y, TRIM_INDEX);
-  paint(grid, palm.x, palm.y + 1, TRIM_INDEX);
-  paint(grid, palm.x + 1, palm.y + 1, TRIM_INDEX);
+function paintBow(grid: SpriteGrid, palm: WeaponPalm, angle: number): void {
+  const top = 6;
+  const bottom = -5;
+  const span = top - bottom;
+  paintLocalShape(grid, palm, angle, (lx, ly) => {
+    if (ly < bottom || ly > top) return 0;
+    if (Math.abs(ly) <= 0.6 && Math.abs(lx) <= 1) return BLADE_INDEX;
+    if (ly >= top - 0.6 && Math.abs(lx - 2) <= 1) return WOOD_LIGHT;
+    if (ly <= bottom + 0.6 && Math.abs(lx - 2) <= 1) return WOOD_LIGHT;
+    if (Math.abs(lx) < 0.45) return STRING_INDEX;
+    const bend = Math.round(2 * Math.sin(Math.PI * (top - ly) / span));
+    if (Math.abs(lx - (2 + bend)) <= 1 || Math.abs(lx - (3 + bend)) <= 1) {
+      return lx < 2.5 + bend ? WOOD_INDEX : WOOD_DARK;
+    }
+    return 0;
+  });
 }
 
 function paintFist(grid: SpriteGrid, palm: { x: number; y: number }): void {
@@ -584,14 +626,14 @@ function paintFist(grid: SpriteGrid, palm: { x: number; y: number }): void {
 }
 
 export interface OverlayOptions {
-  // Horizontal sway of the held weapon (run-cycle life). Kept for the
-  // overlay API, but UI animation now pivots the weapon around the grip
-  // instead of sliding the hilt through the fist.
+  // Legacy horizontal offset for the held weapon. The UI keeps it at zero:
+  // animation pivots around the grip instead of sliding the hilt through the
+  // fist. Kept so older callers/tests can still exercise the anchor.
   swayX?: number;
-  // Extra slant (in pixels per row) applied around the palm. Positive tips the
-  // weapon forward/right, negative tips it back/left. The grip itself never
-  // moves through the hand: this is a rotation around the palm.
-  weaponTilt?: number;
+  // Angle of the whole weapon around the palm, in radians. Positive leans the
+  // tip outboard (to the right for the player fighter). The grip itself never
+  // moves through the hand: every weapon part rotates together.
+  weaponAngle?: number;
   // Pendulum swing of hanging jewelry (necklaces, brooches, orb pendants).
   // Worn gear (armor, helms, rings, shields) correctly stays put.
   swingX?: number;
@@ -605,15 +647,17 @@ function paintHeldWeapon(
   item: PixelItemAsset,
   palm: { x: number; y: number },
   swayX = 0,
-  tilt = 0,
+  angle = WEAPON_REST_ANGLE,
 ): void {
   const kind = weaponVisualKind(item);
   const glint = item.rarity === 'epic' || item.rarity === 'legendary';
   const gem = item.element ? ACCENT_INDEX : TRIM_INDEX;
-  const grip = swayX === 0 ? palm : { x: palm.x + swayX, y: palm.y };
+  // Keep the grip centred in the fist. Head clearance comes from drawing the
+  // weapon behind the body (see clipWeaponFromHead), not from sliding it out.
+  const grip = { x: palm.x + swayX, y: palm.y };
   if (kind === 'bow') {
-    paintBow(grid, grip, tilt);
-    paintGuardCollar(grid, grip, gem);
+    paintBow(grid, grip, angle);
+    paintFistGrip(grid, palm);
     return;
   }
   if (kind === 'fist') {
@@ -621,42 +665,31 @@ function paintHeldWeapon(
     return;
   }
   if (kind === 'staff') {
-    paintStaff(grid, grip, tilt);
-    paintGuardCollar(grid, grip, gem);
+    paintStaff(grid, grip, angle);
     paintFistGrip(grid, palm);
     return;
   }
   if (kind === 'spear') {
-    paintSpear(grid, grip, tilt);
-    paintGuardCollar(grid, grip, gem);
+    paintSpear(grid, grip, angle);
     paintFistGrip(grid, palm);
     return;
   }
   if (kind === 'scepter') {
-    paintScepter(grid, grip, tilt);
-    paintGuardCollar(grid, grip, gem);
+    paintScepter(grid, grip, angle);
     paintFistGrip(grid, palm);
     return;
   }
   if (kind === 'scythe') {
-    paintScythe(grid, grip, glint, tilt);
-    paintGuardCollar(grid, grip, gem);
+    paintScythe(grid, grip, angle, glint);
     paintFistGrip(grid, palm);
     return;
   }
   if (kind === 'haft') {
-    paintHaft(
-      grid,
-      grip,
-      item.element ? ACCENT_INDEX : WHEAD_INDEX,
-      tilt,
-      haftShapeOf(item.name),
-    );
-    paintGuardCollar(grid, grip, gem);
+    paintHaft(grid, grip, angle, item.element ? ACCENT_INDEX : WHEAD_INDEX, haftShapeOf(item.name));
     paintFistGrip(grid, palm);
     return;
   }
-  paintBlade(grid, grip, kind === 'dagger' ? 6 : 11, glint, gem, tilt);
+  paintBlade(grid, grip, angle, kind === 'dagger' ? 6 : 11, glint, gem);
   paintFistGrip(grid, palm);
 }
 
@@ -1014,7 +1047,12 @@ function clipWeaponFromHead(grid: SpriteGrid, before: SpriteGrid, head: Box): vo
     const x0 = Math.max(0, head.x0);
     const x1 = Math.min(w - 1, head.x1);
     for (let x = x0; x <= x1; x++) {
-      if (WEAPON_CELLS.has(row[x])) row[x] = before[y][x];
+      // Restore only pixels that were actually occupied by the body. The old
+      // pass restored the whole head bounding box, including empty air, which
+      // sliced rectangular notches out of maces and axes raised beside the
+      // head. Empty cells inside the box are background: the weapon may pass
+      // there without covering the face.
+      if (WEAPON_CELLS.has(row[x]) && before[y][x] !== 0) row[x] = before[y][x];
     }
   }
 }
@@ -1133,19 +1171,23 @@ export function applyEquipmentOverlays(
     paintShield(out, marks.palmL);
     paintShieldArm(out, marks.palmL);
   }
+  if (loadout.accessory && accessoryKind === 'orb') {
+    paintOrbPendant(out, loadout.accessory, marks.neck, marks.chest, opts?.swingX ?? 0);
+  }
+  // Tint armour and accessories before stamping the weapon. The old generic
+  // edge pass turned every stair-step on a diagonal blade into a light or dark
+  // cell, producing a wavy "rubber band" highlight along the weapon. Weapon
+  // painters shade themselves explicitly below.
+  tintOverlayEdges(out);
   if (loadout.weapon) {
     const trailSteps = opts?.punchTrail ?? 0;
-    const weaponTilt = opts?.weaponTilt ?? 0;
+    const weaponAngle = opts?.weaponAngle ?? WEAPON_REST_ANGLE;
     const preWeapon = out.map((row) => [...row]);
-    paintHeldWeapon(out, loadout.weapon, marks.palmR, opts?.swayX ?? 0, weaponTilt);
+    paintHeldWeapon(out, loadout.weapon, marks.palmR, opts?.swayX ?? 0, weaponAngle);
     if (trailSteps > 0) paintSwingTrail(out, preWeapon, trailSteps);
     clipWeaponFromHead(out, preWeapon, marks.head);
   }
   if (loadout.accessory && accessoryKind === 'ring') paintRing(out, marks.palmR);
-  if (loadout.accessory && accessoryKind === 'orb') {
-    paintOrbPendant(out, loadout.accessory, marks.neck, marks.chest, opts?.swingX ?? 0);
-  }
-  tintOverlayEdges(out);
   return { grid: out, palette: next };
 }
 
