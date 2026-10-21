@@ -80,7 +80,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     // feedback (damage number, target reaction, screen shake) must wait for
     // that frame instead of firing on the round tick — otherwise the hit
     // visibly happens before the punch.
-    const attackImpactDelay = scaleDuration(SPRITE_ATTACK_IMPACT_MS);
+    const attackImpactDelay = lowPerf ? 0 : scaleDuration(SPRITE_ATTACK_IMPACT_MS);
     const [combatResult, setCombatResult] = useState<{
         winner: 'attacker' | 'defender' | 'draw';
         rounds: number;

@@ -28,8 +28,9 @@ vi.mock('../../utils/particleSystem', () => ({
 }))
 
 // Mock useLowPerformanceMode
+const perf = vi.hoisted(() => ({ low: false }))
 vi.mock('../../hooks/useLowPerformanceMode', () => ({
-  useLowPerformanceMode: () => false,
+  useLowPerformanceMode: () => perf.low,
 }))
 
 // Mock monsterVisualScale
@@ -77,10 +78,12 @@ describe('IdleRunnerScene', () => {
 
   beforeEach(() => {
     vi.useFakeTimers()
+    perf.low = false
     defaultProps.onClearOfflineGains.mockClear()
   })
 
   afterEach(() => {
+    perf.low = false
     vi.useRealTimers()
   })
 
@@ -189,6 +192,30 @@ describe('IdleRunnerScene', () => {
       vi.advanceTimersByTime(2)
     })
     expect(dealtDamage()).toBe(1)
+
+    emitSpy.mockRestore()
+  })
+
+  it('resolves the combat impact immediately when low performance mode disables the attack animation', () => {
+    perf.low = true
+    const emitSpy = vi.spyOn(ParticleSystem.prototype, 'emit')
+    const ui = render(<IdleRunnerScene {...defaultProps} />)
+
+    ui.rerender(<IdleRunnerScene {...defaultProps} scenePhase="monster_appears" />)
+    ui.rerender(<IdleRunnerScene {...defaultProps} scenePhase="combat" />)
+
+    const dealtDamage = () =>
+      emitSpy.mock.calls.filter(([type]) => type === 'damage').length
+
+    expect(dealtDamage()).toBe(0)
+
+    act(() => {
+      vi.advanceTimersByTime(1)
+    })
+    expect(dealtDamage()).toBe(1)
+
+    const flash = ui.container.querySelector('.combat-flash') as HTMLElement | null
+    expect(flash?.style.animationDelay).toBe('0ms')
 
     emitSpy.mockRestore()
   })
