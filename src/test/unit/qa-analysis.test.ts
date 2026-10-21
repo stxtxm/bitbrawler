@@ -548,13 +548,32 @@ function computeShopRealAnalysis(runs: RunRecord[]): ShopRealAnalysis | null {
 function shopRealSuggestions(real: ShopRealAnalysis | null): string[] {
   const out: string[] = []
   if (!real || real.runs_with_shop_data < REAL_SHOP_MIN_RUNS || real.real_purchase_rate === null) return out
-  if (real.real_purchase_rate > 0.6) {
-    out.push(`Real shop purchase rate is ${(real.real_purchase_rate * 100).toFixed(0)}% (${real.runs_with_purchase}/${real.runs_with_shop_data} runs) — offers are trivially affordable. Consider raising SHOP_OFFERS prices.`)
-  } else if (real.real_purchase_rate < 0.1) {
-    out.push(`Real shop purchase rate is ${(real.real_purchase_rate * 100).toFixed(0)}% (${real.runs_with_purchase}/${real.runs_with_shop_data} runs). Consider lowering SHOP_OFFERS prices.`)
+  const unsegmentedRuns = real.cohorts.find(c => c.cohort === 'unsegmented')?.runs_with_shop_data ?? 0
+  const segmentedRuns = real.runs_with_shop_data - unsegmentedRuns
+  const measurementPending = unsegmentedRuns > real.runs_with_shop_data / 2 || segmentedRuns < REAL_SHOP_MIN_RUNS
+  const cheapestOnly = real.cheapest_offer_share !== null && real.cheapest_offer_share >= 0.95
+  const ratePct = (real.real_purchase_rate * 100).toFixed(0)
+  const cohortEssence = real.cohorts.filter(
+    (c): c is ShopCohortAnalysis & { avg_essence_before: number } => c.avg_essence_before !== null
+  )
+  const cohortEssenceRuns = cohortEssence.reduce((s, c) => s + c.runs_with_shop_data, 0)
+  const avgEssenceBefore = cohortEssenceRuns > 0
+    ? cohortEssence.reduce((s, c) => s + c.avg_essence_before * c.runs_with_shop_data, 0) / cohortEssenceRuns
+    : null
+  const avgPurchaseCost = real.avg_purchase_cost
+  const essenceCostRatio = avgEssenceBefore !== null && avgPurchaseCost !== null && avgPurchaseCost > 0
+    ? Math.round(avgEssenceBefore / avgPurchaseCost)
+    : null
+
+  if (real.real_purchase_rate < 0.1) {
+    out.push(`Real shop purchase rate is ${ratePct}% (${real.runs_with_purchase}/${real.runs_with_shop_data} runs). Consider lowering SHOP_OFFERS prices.`)
+  } else if (real.real_purchase_rate > 0.6 && measurementPending) {
+    out.push(`Real shop purchase rate is ${ratePct}% (${real.runs_with_purchase}/${real.runs_with_shop_data} runs) — measurement pending: ${unsegmentedRuns} unsegmented run(s) vs ${segmentedRuns} segmented (below REAL_SHOP_MIN_RUNS=${REAL_SHOP_MIN_RUNS}). The rate is carried by the legacy hoarding character; no price action until fresh segmented runs exist.`)
+  } else if (real.real_purchase_rate > 0.6 && !cheapestOnly) {
+    out.push(`Real shop purchase rate is ${ratePct}% (${real.runs_with_purchase}/${real.runs_with_shop_data} runs) — offers are trivially affordable. Consider raising SHOP_OFFERS prices.`)
   }
-  if (real.cheapest_offer_share !== null && real.cheapest_offer_share >= 0.95) {
-    out.push(`Real shop purchases target the cheapest offer (share ${(real.cheapest_offer_share * 100).toFixed(0)}%) — calibrate on cost relative to essence, not the raw purchase rate.`)
+  if (cheapestOnly) {
+    out.push(`Real shop purchases target the cheapest offer (share ${(real.cheapest_offer_share! * 100).toFixed(0)}%) — available essence${avgEssenceBefore !== null ? ` (avg ${avgEssenceBefore.toFixed(0)} 💎)` : ''} is ${essenceCostRatio !== null ? `~${essenceCostRatio}× ` : ''}the purchased offer cost (avg ${avgPurchaseCost?.toFixed(0) ?? 'n/a'} 💎): hoarding / offer-structure, not a price signal. A uniform price increase will not change the behaviour; calibrate on cost relative to essence, not the raw purchase rate.`)
   }
   if (real.budget_limited_runs > 0) {
     out.push(`QA cohort budgets (#1230) blocked ${real.budget_limited_runs}/${real.runs_with_shop_data} shop runs — that is the price signal. Read the cohorts before acting on the raw rate.`)
@@ -1863,11 +1882,18 @@ describe('QA Shop Simulated Affordability Analysis (#711)', () => {
 describe('QA Shop Real Purchase Analysis (#1229)', () => {
   let shopRunSeq = 0
 
-  function shopRun(purchased: boolean, cost: number | null, rarity: string | null, offerIndex: number | null): RunRecord {
+  function shopRun(
+    purchased: boolean,
+    cost: number | null,
+    rarity: string | null,
+    offerIndex: number | null,
+    cohort: { name: string; essence_budget: number | null } | null = null,
+    essenceBefore = 435,
+  ): RunRecord {
     shopRunSeq++
     return {
       date: '2026-10-18', run: `s-${shopRunSeq}`, character: 'QA-PERSI', fights: [], errors: [],
-      shop: { purchased, cost, item_rarity: rarity },
+      shop: { essence_before: essenceBefore, purchased, cost, item_rarity: rarity },
       shop_data: {
         offers: [
           { name: 'Marchandise', rarity: 'common', price: 24 },
@@ -1876,6 +1902,7 @@ describe('QA Shop Real Purchase Analysis (#1229)', () => {
         ],
         purchased_offer: offerIndex,
       },
+      cohort,
     }
   }
 
@@ -1928,11 +1955,14 @@ describe('QA Shop Real Purchase Analysis (#1229)', () => {
   })
 
   describe('shopRealSuggestions', () => {
-    it('drives the price suggestion from the real rate once >= 10 runs with offers', () => {
-      const runs: RunRecord[] = Array.from({ length: 12 }, () => shopRun(true, 24, 'UNCOMMON', 0))
+    const MID_COHORT = { name: 'QA-MID', essence_budget: 150 }
+
+    it('drives the price suggestion from the real rate once >= 10 segmented runs with offers', () => {
+      const runs: RunRecord[] = Array.from({ length: 12 }, (_, i) =>
+        shopRun(true, 24, 'UNCOMMON', i % 2, MID_COHORT))
       const suggestions = shopRealSuggestions(computeShopRealAnalysis(runs))
       expect(suggestions.some(s => s.includes('Real shop purchase rate') && s.includes('raising SHOP_OFFERS prices'))).toBe(true)
-      expect(suggestions.some(s => s.includes('cheapest offer'))).toBe(true)
+      expect(suggestions.some(s => s.includes('cheapest offer'))).toBe(false)
     })
 
     it('suggests lowering prices on a near-zero real purchase rate', () => {
@@ -1944,6 +1974,46 @@ describe('QA Shop Real Purchase Analysis (#1229)', () => {
     it('stays silent below REAL_SHOP_MIN_RUNS so the caller can fall back to the simulation', () => {
       const runs: RunRecord[] = Array.from({ length: 9 }, () => shopRun(true, 24, 'UNCOMMON', 0))
       expect(shopRealSuggestions(computeShopRealAnalysis(runs))).toEqual([])
+    })
+
+    it('ne recommande pas de hausse quand tous les achats visent l\'offre la moins chère', () => {
+      const runs: RunRecord[] = Array.from({ length: 12 }, () => shopRun(true, 24, 'UNCOMMON', 0, MID_COHORT))
+      const suggestions = shopRealSuggestions(computeShopRealAnalysis(runs))
+      expect(suggestions.some(s => s.includes('raising SHOP_OFFERS prices'))).toBe(false)
+      expect(suggestions.some(s => s.includes('hoarding / offer-structure'))).toBe(true)
+    })
+
+    it('fixture #1277 : taux 0,72 + cheapest 1.0 + 58 unsegmented → aucune suggestion de hausse', () => {
+      const fresh = { name: 'QA-FRESH', essence_budget: 50 }
+      const mid = { name: 'QA-MID', essence_budget: 150 }
+      const runs: RunRecord[] = [
+        ...Array.from({ length: 58 }, (_, i) =>
+          shopRun(i < 44, i < 44 ? 21 : null, i < 44 ? 'UNCOMMON' : null, i < 44 ? 0 : null)),
+        shopRun(false, null, null, null, fresh),
+        shopRun(false, null, null, null, fresh),
+        shopRun(false, null, null, null, mid),
+      ]
+      const analysis = computeShopRealAnalysis(runs)
+      expect(analysis?.runs_with_shop_data).toBe(61)
+      expect(analysis?.runs_with_purchase).toBe(44)
+      expect(analysis?.real_purchase_rate).toBe(0.721)
+      expect(analysis?.cheapest_offer_share).toBe(1)
+
+      const suggestions = shopRealSuggestions(analysis)
+      expect(suggestions.some(s => s.includes('raising SHOP_OFFERS prices'))).toBe(false)
+      expect(suggestions.some(s => s.includes('measurement pending'))).toBe(true)
+    })
+
+    it('fixture #1277 : taux 0,72 + cheapest 0.5 + 10 runs segmentés → la hausse reste possible', () => {
+      const runs: RunRecord[] = Array.from({ length: 25 }, (_, i) =>
+        shopRun(i < 18, i < 18 ? 21 : null, i < 18 ? 'UNCOMMON' : null, i < 18 ? i % 2 : null, MID_COHORT))
+      const analysis = computeShopRealAnalysis(runs)
+      expect(analysis?.real_purchase_rate).toBe(0.72)
+      expect(analysis?.cheapest_offer_share).toBe(0.5)
+
+      const suggestions = shopRealSuggestions(analysis)
+      expect(suggestions.some(s => s.includes('raising SHOP_OFFERS prices'))).toBe(true)
+      expect(suggestions.some(s => s.includes('measurement pending'))).toBe(false)
     })
   })
 

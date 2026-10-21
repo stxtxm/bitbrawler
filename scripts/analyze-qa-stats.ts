@@ -1415,13 +1415,32 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   // rather than "buys" and is saturated by the persistent character's essence
   // hoard, which previously produced five blind +10% price hikes.
   if (shopReal && shopReal.runs_with_shop_data >= REAL_SHOP_MIN_RUNS && shopReal.real_purchase_rate !== null) {
-    if (shopReal.real_purchase_rate > 0.6) {
-      suggestions.push(`Real shop purchase rate is ${(shopReal.real_purchase_rate * 100).toFixed(0)}% (${shopReal.runs_with_purchase}/${shopReal.runs_with_shop_data} runs, avg cost ${shopReal.avg_purchase_cost?.toFixed(0) ?? 'n/a'} 💎) — offers are trivially affordable for players. Consider raising SHOP_OFFERS prices.`)
-    } else if (shopReal.real_purchase_rate < 0.1) {
-      suggestions.push(`Real shop purchase rate is ${(shopReal.real_purchase_rate * 100).toFixed(0)}% (${shopReal.runs_with_purchase}/${shopReal.runs_with_shop_data} runs) — players are not buying. Consider lowering SHOP_OFFERS prices.`)
+    const unsegmentedRuns = shopReal.cohorts.find(c => c.cohort === 'unsegmented')?.runs_with_shop_data ?? 0
+    const segmentedRuns = shopReal.runs_with_shop_data - unsegmentedRuns
+    const measurementPending = unsegmentedRuns > shopReal.runs_with_shop_data / 2 || segmentedRuns < REAL_SHOP_MIN_RUNS
+    const cheapestOnly = shopReal.cheapest_offer_share !== null && shopReal.cheapest_offer_share >= 0.95
+    const ratePct = (shopReal.real_purchase_rate * 100).toFixed(0)
+    const cohortEssence = shopReal.cohorts.filter(
+      (c): c is ShopCohortAnalysis & { avg_essence_before: number } => c.avg_essence_before !== null
+    )
+    const cohortEssenceRuns = cohortEssence.reduce((s, c) => s + c.runs_with_shop_data, 0)
+    const avgEssenceBefore = cohortEssenceRuns > 0
+      ? cohortEssence.reduce((s, c) => s + c.avg_essence_before * c.runs_with_shop_data, 0) / cohortEssenceRuns
+      : null
+    const avgPurchaseCost = shopReal.avg_purchase_cost
+    const essenceCostRatio = avgEssenceBefore !== null && avgPurchaseCost !== null && avgPurchaseCost > 0
+      ? Math.round(avgEssenceBefore / avgPurchaseCost)
+      : null
+
+    if (shopReal.real_purchase_rate < 0.1) {
+      suggestions.push(`Real shop purchase rate is ${ratePct}% (${shopReal.runs_with_purchase}/${shopReal.runs_with_shop_data} runs) — players are not buying. Consider lowering SHOP_OFFERS prices.`)
+    } else if (shopReal.real_purchase_rate > 0.6 && measurementPending) {
+      suggestions.push(`Real shop purchase rate is ${ratePct}% (${shopReal.runs_with_purchase}/${shopReal.runs_with_shop_data} runs) — measurement pending: ${unsegmentedRuns} unsegmented run(s) vs ${segmentedRuns} segmented (below REAL_SHOP_MIN_RUNS=${REAL_SHOP_MIN_RUNS}). The rate is carried by the legacy hoarding character; no price action until fresh segmented runs exist.`)
+    } else if (shopReal.real_purchase_rate > 0.6 && !cheapestOnly) {
+      suggestions.push(`Real shop purchase rate is ${ratePct}% (${shopReal.runs_with_purchase}/${shopReal.runs_with_shop_data} runs, avg cost ${shopReal.avg_purchase_cost?.toFixed(0) ?? 'n/a'} 💎) — offers are trivially affordable for players. Consider raising SHOP_OFFERS prices.`)
     }
-    if (shopReal.cheapest_offer_share !== null && shopReal.cheapest_offer_share >= 0.95) {
-      suggestions.push(`Real shop purchases target the cheapest offer (share ${(shopReal.cheapest_offer_share * 100).toFixed(0)}%) — a uniform price increase will not change the behaviour; calibrate on cost relative to essence, not the raw purchase rate.`)
+    if (cheapestOnly) {
+      suggestions.push(`Real shop purchases target the cheapest offer (share ${(shopReal.cheapest_offer_share! * 100).toFixed(0)}%) — available essence${avgEssenceBefore !== null ? ` (avg ${avgEssenceBefore.toFixed(0)} 💎)` : ''} is ${essenceCostRatio !== null ? `~${essenceCostRatio}× ` : ''}the purchased offer cost (avg ${avgPurchaseCost?.toFixed(0) ?? 'n/a'} 💎): hoarding / offer-structure, not a price signal. A uniform price increase will not change the behaviour; calibrate on cost relative to essence, not the raw purchase rate.`)
     }
     // Cohortes QA (#1230) : le signal prix. Une offre abordable mais au-dessus du
     // budget d'un profil est un run « budget limited » — la métrique bouge avec
