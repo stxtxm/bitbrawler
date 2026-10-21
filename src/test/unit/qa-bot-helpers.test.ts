@@ -311,9 +311,9 @@ describe('qa-bot-helpers progression curve (#1283)', () => {
 })
 
 describe('qa-bot-helpers XP curve sync with xpUtils (#1290)', () => {
-  const levels = Array.from({ length: 30 }, (_, index) => index + 1)
+  const levels = Array.from({ length: 99 }, (_, index) => index + 1)
 
-  it('mirrors getXpRequiredForNextLevel for levels 1 to 30', () => {
+  it('mirrors getXpRequiredForNextLevel for levels 1 to 99', () => {
     const mismatches = levels
       .filter((level) => getXpRequiredForNextLevel(level) !== getGameXpRequiredForNextLevel(level))
       .map((level) => ({
@@ -325,7 +325,7 @@ describe('qa-bot-helpers XP curve sync with xpUtils (#1290)', () => {
     expect(mismatches).toEqual([])
   })
 
-  it('mirrors getTotalXpForLevel for levels 1 to 30', () => {
+  it('mirrors getTotalXpForLevel for levels 1 to 99', () => {
     const mismatches = levels
       .filter((level) => getTotalXpForLevel(level) !== getGameTotalXpForLevel(level))
       .map((level) => ({
@@ -335,5 +335,10 @@ describe('qa-bot-helpers XP curve sync with xpUtils (#1290)', () => {
       }))
 
     expect(mismatches).toEqual([])
+  })
+
+  it('locks Infinity for the next-level requirement at max level', () => {
+    expect(getXpRequiredForNextLevel(99)).toBe(Infinity)
+    expect(getGameXpRequiredForNextLevel(99)).toBe(Infinity)
   })
 })
