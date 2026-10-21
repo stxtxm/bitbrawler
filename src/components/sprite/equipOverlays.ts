@@ -39,8 +39,8 @@ const PAD = SPRITE_PAD_TOP;
 
 export const WEAPON_SLANT = 0.4;
 
-const slantX = (x: number, y: number, pivotY: number): number =>
-  x + Math.round((pivotY - y) * WEAPON_SLANT);
+const slantX = (x: number, y: number, pivotY: number, tilt = 0): number =>
+  x + Math.round((pivotY - y) * (WEAPON_SLANT + tilt));
 
 const DEFAULT_BLADE = '#c0c0c0';
 const DEFAULT_WOOD = '#8b5a2b';
@@ -252,7 +252,7 @@ function headTopHexOf(art: number[][], fallback: string): string {
 
 export type ArmorVisualKind = 'shield' | 'helm' | 'boots' | 'bracers' | 'robe' | 'chest';
 export type AccessoryVisualKind = 'crown' | 'boots' | 'necklace' | 'orb' | 'ring' | 'brooch';
-export type WeaponVisualKind = 'bow' | 'fist' | 'staff' | 'scepter' | 'scythe' | 'haft' | 'dagger' | 'blade';
+export type WeaponVisualKind = 'bow' | 'fist' | 'staff' | 'scepter' | 'scythe' | 'haft' | 'spear' | 'dagger' | 'blade';
 
 export function armorVisualKind(name: string): ArmorVisualKind {
   const n = name.toLowerCase();
@@ -284,7 +284,7 @@ export function weaponVisualKind(item: PixelItemAsset): WeaponVisualKind {
   if (n.includes('knuckle')) return 'fist';
   if (n.includes('wand')) return 'scepter';
   if (n.includes('staff')) return 'staff';
-  if (n.includes('spear') || n.includes('glaive') || n.includes('halberd') || n.includes('pike')) return 'staff';
+  if (n.includes('spear') || n.includes('glaive') || n.includes('halberd') || n.includes('pike')) return 'spear';
   if (n.includes('scythe') || n.includes('reaper')) return 'scythe';
   if (
     n.includes('axe') || n.includes('hammer') || n.includes('mace') ||
@@ -345,19 +345,22 @@ function paintBlade(
   length: number,
   glint: boolean,
   gem: number,
+  tilt = 0,
 ): void {
   const x0 = palm.x;
   const guardY = palm.y;
   const tipY = Math.max(0, guardY - length);
-  const sx = (x: number, y: number): number => slantX(x, y, palm.y);
-  for (let y = tipY + 1; y < guardY; y++) {
+  const sx = (x: number, y: number): number => slantX(x, y, palm.y, tilt);
+  // Taper the last two rows into a real point. A flat 3px cap read as a
+  // paddle, especially once the blade is outlined against the night sky.
+  for (let y = tipY + 2; y < guardY; y++) {
     paint(grid, sx(x0, y), y, BLADE_INDEX);
     paint(grid, sx(x0 + 1, y), y, BLADE_LIGHT);
     paint(grid, sx(x0 + 2, y), y, BLADE_INDEX);
   }
-  paint(grid, sx(x0, tipY), tipY, BLADE_INDEX);
+  paint(grid, sx(x0 + 1, tipY + 1), tipY + 1, BLADE_LIGHT);
+  paint(grid, sx(x0 + 2, tipY + 1), tipY + 1, BLADE_INDEX);
   paint(grid, sx(x0 + 1, tipY), tipY, BLADE_LIGHT);
-  paint(grid, sx(x0 + 2, tipY), tipY, BLADE_INDEX);
   if (glint) paint(grid, sx(x0 + 1, tipY), tipY, ACCENT_INDEX);
   paintGuardCollar(grid, { x: x0, y: guardY }, gem);
   paint(grid, sx(x0, guardY + 1), guardY + 1, WOOD_INDEX);
@@ -368,9 +371,26 @@ function paintBlade(
   paint(grid, sx(x0 + 1, guardY + 3), guardY + 3, TRIM_INDEX);
 }
 
-function paintHaft(grid: SpriteGrid, palm: { x: number; y: number }, rivet: number): void {
+type HaftShape = 'axe' | 'mace' | 'hammer' | 'club' | 'pick';
+
+function haftShapeOf(name: string): HaftShape {
+  const n = name.toLowerCase();
+  if (n.includes('mace')) return 'mace';
+  if (n.includes('hammer') || n.includes('maul')) return 'hammer';
+  if (n.includes('club')) return 'club';
+  if (n.includes('pick')) return 'pick';
+  return 'axe';
+}
+
+function paintHaft(
+  grid: SpriteGrid,
+  palm: { x: number; y: number },
+  rivet: number,
+  tilt = 0,
+  shape: HaftShape = 'axe',
+): void {
   const x0 = palm.x;
-  const sx = (x: number, y: number): number => slantX(x, y, palm.y);
+  const sx = (x: number, y: number): number => slantX(x, y, palm.y, tilt);
   // The shaft runs all the way up to the head. It used to stop at palm.y - 8
   // while the head started at palm.y - 9, and the slant shifted a column
   // between the two rows: the axe head read as a grey square floating off the
@@ -382,19 +402,89 @@ function paintHaft(grid: SpriteGrid, palm: { x: number; y: number }, rivet: numb
     paint(grid, sx(x0, y), y, WOOD_INDEX);
     paint(grid, sx(x0 + 1, y), y, WOOD_INDEX);
   }
-  for (let y = palm.y - 11; y <= palm.y - 9; y++) {
-    for (let x = x0 - 1; x <= x0 + 2; x++) paint(grid, sx(x, y), y, WHEAD_INDEX);
+  if (shape === 'axe') {
+    // A crescent head: wide near the haft, with the cutting edge outboard.
+    // The old three-row square read as a second fist at the top of the pole.
+    const headRows: Array<[number, number, number]> = [
+      [-12, 0, 2],
+      [-11, -2, 3],
+      [-10, -2, 3],
+      [-9, -2, 3],
+      [-8, 0, 2],
+    ];
+    for (const [dy, from, to] of headRows) {
+      for (let x = x0 + from; x <= x0 + to; x++) paint(grid, sx(x, palm.y + dy), palm.y + dy, WHEAD_INDEX);
+    }
+    for (let y = palm.y - 11; y <= palm.y - 9; y++) {
+      paint(grid, sx(x0 + 3, y), y, BLADE_INDEX);
+      paint(grid, sx(x0 + 4, y), y, y === palm.y - 10 ? BLADE_LIGHT : BLADE_INDEX);
+    }
+    paint(grid, sx(x0, palm.y - 10), palm.y - 10, rivet);
+    paint(grid, sx(x0 + 1, palm.y - 10), palm.y - 10, rivet);
+  } else {
+    // Blunt weapons used to share the axe head: a four-column grey square
+    // floating above the fist. A mace/hammer now gets a compact, readable
+    // head of its own, kept outboard of the face and low enough that the
+    // thrust pose cannot push it off the 24px grid.
+    const headBaseY = palm.y - 8;
+    const headCenterX = sx(x0 + 2, headBaseY);
+    const maceHead = [
+      [0, 0, 1, 0, 0],
+      [0, 1, 1, 1, 0],
+      [1, 1, 3, 1, 1],
+      [0, 1, 1, 1, 0],
+      [0, 0, 2, 0, 0],
+    ];
+    const hammerHead = [
+      [2, 2, 2, 2, 2],
+      [1, 1, 1, 1, 1],
+      [1, 1, 3, 1, 1],
+      [1, 1, 1, 1, 1],
+      [0, 2, 2, 2, 0],
+    ];
+    const clubHead = [
+      [0, 0, 1, 0, 0],
+      [0, 1, 1, 1, 0],
+      [1, 1, 3, 1, 1],
+      [0, 1, 1, 1, 0],
+      [0, 0, 2, 0, 0],
+    ];
+    const pickHead = [
+      [0, 0, 0, 2, 2],
+      [0, 1, 1, 2, 0],
+      [1, 1, 3, 0, 0],
+      [0, 1, 1, 0, 0],
+      [0, 0, 2, 0, 0],
+    ];
+    const head =
+      shape === 'hammer' ? hammerHead
+        : shape === 'club' ? clubHead
+          : shape === 'pick' ? pickHead
+            : maceHead;
+    for (let row = 0; row < head.length; row++) {
+      for (let col = 0; col < head[row].length; col++) {
+        const v = head[row][col];
+        if (v === 0) continue;
+        paint(
+          grid,
+          headCenterX + col - 2,
+          headBaseY - 2 + row,
+          v === 3 ? rivet : v === 2 ? BLADE_INDEX : WHEAD_INDEX,
+        );
+      }
+    }
+    // A metal collar solders the head to the shaft; without it the round
+    // silhouette reads as a sticker hovering over the handle.
+    paint(grid, sx(x0, headBaseY + 2), headBaseY + 2, TRIM_INDEX);
+    paint(grid, sx(x0 + 1, headBaseY + 2), headBaseY + 2, TRIM_INDEX);
   }
-  for (let y = palm.y - 11; y <= palm.y - 9; y++) paint(grid, sx(x0 + 2, y), y, BLADE_INDEX);
-  paint(grid, sx(x0, palm.y - 10), palm.y - 10, rivet);
-  paint(grid, sx(x0 + 1, palm.y - 10), palm.y - 10, rivet);
   paint(grid, sx(x0, palm.y + 2), palm.y + 2, TRIM_INDEX);
   paint(grid, sx(x0 + 1, palm.y + 2), palm.y + 2, TRIM_INDEX);
 }
 
-function paintStaff(grid: SpriteGrid, palm: { x: number; y: number }): void {
+function paintStaff(grid: SpriteGrid, palm: { x: number; y: number }, tilt = 0): void {
   const x0 = palm.x;
-  const sx = (x: number, y: number): number => slantX(x, y, palm.y);
+  const sx = (x: number, y: number): number => slantX(x, y, palm.y, tilt);
   for (let y = palm.y - 11; y <= palm.y + 5; y++) {
     paint(grid, sx(x0, y), y, WOOD_INDEX);
     paint(grid, sx(x0 + 1, y), y, WOOD_INDEX);
@@ -406,9 +496,34 @@ function paintStaff(grid: SpriteGrid, palm: { x: number; y: number }): void {
   paint(grid, sx(x0, palm.y - 12), palm.y - 12, ACCENT_INDEX);
 }
 
-function paintScepter(grid: SpriteGrid, palm: { x: number; y: number }): void {
+function paintSpear(grid: SpriteGrid, palm: { x: number; y: number }, tilt = 0): void {
   const x0 = palm.x;
-  const sx = (x: number, y: number): number => slantX(x, y, palm.y);
+  const sx = (x: number, y: number): number => slantX(x, y, palm.y, tilt);
+  const tipY = palm.y - 12;
+  // A spear used to share the staff painter: a long pole with a tiny gem on
+  // top, which read as a walking cane. The pointed head is the whole point of
+  // the weapon, so it gets a proper tapered metal blade and a socket.
+  paint(grid, sx(x0 + 1, tipY), tipY, BLADE_LIGHT);
+  for (let y = tipY + 1; y <= tipY + 2; y++) {
+    paint(grid, sx(x0, y), y, BLADE_INDEX);
+    paint(grid, sx(x0 + 1, y), y, BLADE_LIGHT);
+    paint(grid, sx(x0 + 2, y), y, BLADE_INDEX);
+  }
+  paint(grid, sx(x0, tipY + 3), tipY + 3, BLADE_INDEX);
+  paint(grid, sx(x0 + 1, tipY + 3), tipY + 3, BLADE_LIGHT);
+  for (let y = tipY + 5; y <= palm.y + 3; y++) {
+    paint(grid, sx(x0, y), y, WOOD_INDEX);
+    paint(grid, sx(x0 + 1, y), y, WOOD_INDEX);
+  }
+  paint(grid, sx(x0, tipY + 4), tipY + 4, TRIM_INDEX);
+  paint(grid, sx(x0 + 1, tipY + 4), tipY + 4, TRIM_INDEX);
+  paint(grid, sx(x0, palm.y + 2), palm.y + 2, TRIM_INDEX);
+  paint(grid, sx(x0 + 1, palm.y + 2), palm.y + 2, TRIM_INDEX);
+}
+
+function paintScepter(grid: SpriteGrid, palm: { x: number; y: number }, tilt = 0): void {
+  const x0 = palm.x;
+  const sx = (x: number, y: number): number => slantX(x, y, palm.y, tilt);
   for (let y = palm.y - 1; y <= palm.y + 1; y++) {
     paint(grid, sx(x0, y), y, WOOD_INDEX);
     paint(grid, sx(x0 + 1, y), y, WOOD_INDEX);
@@ -421,9 +536,9 @@ function paintScepter(grid: SpriteGrid, palm: { x: number; y: number }): void {
   paint(grid, sx(x0, palm.y - 3), palm.y - 3, ACCENT_INDEX);
 }
 
-function paintScythe(grid: SpriteGrid, palm: { x: number; y: number }, glint: boolean): void {
+function paintScythe(grid: SpriteGrid, palm: { x: number; y: number }, glint: boolean, tilt = 0): void {
   const x0 = palm.x;
-  const sx = (x: number, y: number): number => slantX(x, y, palm.y);
+  const sx = (x: number, y: number): number => slantX(x, y, palm.y, tilt);
   for (let y = palm.y - 10; y <= palm.y + 1; y++) {
     paint(grid, sx(x0, y), y, WOOD_INDEX);
     paint(grid, sx(x0 + 1, y), y, WOOD_INDEX);
@@ -437,20 +552,21 @@ function paintScythe(grid: SpriteGrid, palm: { x: number; y: number }, glint: bo
   paint(grid, sx(x0 + 1, palm.y + 2), palm.y + 2, TRIM_INDEX);
 }
 
-function paintBow(grid: SpriteGrid, palm: { x: number; y: number }): void {
+function paintBow(grid: SpriteGrid, palm: { x: number; y: number }, tilt = 0): void {
   const bx = clamp(palm.x + 2, 0, GRID_W - 5);
   const top = palm.y - 6;
   const bottom = palm.y + 5;
   const span = bottom - top;
+  const sx = (x: number, y: number): number => x + Math.round((palm.y - y) * tilt);
   for (let y = top; y <= bottom; y++) {
     const t = (y - top) / Math.max(1, span);
     const bend = Math.round(2 * Math.sin(Math.PI * t));
-    paint(grid, bx + bend, y, WOOD_INDEX);
-    paint(grid, bx + bend + 1, y, WOOD_INDEX);
+    paint(grid, sx(bx + bend, y), y, WOOD_INDEX);
+    paint(grid, sx(bx + bend + 1, y), y, WOOD_INDEX);
   }
-  for (let y = top; y <= bottom; y++) paint(grid, bx, y, STRING_INDEX);
-  paint(grid, bx, top, TRIM_INDEX);
-  paint(grid, bx, bottom, TRIM_INDEX);
+  for (let y = top; y <= bottom; y++) paint(grid, sx(bx, y), y, STRING_INDEX);
+  paint(grid, sx(bx, top), top, TRIM_INDEX);
+  paint(grid, sx(bx, bottom), bottom, TRIM_INDEX);
   paint(grid, palm.x, palm.y - 1, TRIM_INDEX);
   paint(grid, palm.x + 1, palm.y - 1, TRIM_INDEX);
   paint(grid, palm.x, palm.y, TRIM_INDEX);
@@ -468,9 +584,14 @@ function paintFist(grid: SpriteGrid, palm: { x: number; y: number }): void {
 }
 
 export interface OverlayOptions {
-  // Horizontal sway of the held weapon (run-cycle life). The overlay is
-  // redrawn from scratch every frame, so shifting the grip is artifact-free.
+  // Horizontal sway of the held weapon (run-cycle life). Kept for the
+  // overlay API, but UI animation now pivots the weapon around the grip
+  // instead of sliding the hilt through the fist.
   swayX?: number;
+  // Extra slant (in pixels per row) applied around the palm. Positive tips the
+  // weapon forward/right, negative tips it back/left. The grip itself never
+  // moves through the hand: this is a rotation around the palm.
+  weaponTilt?: number;
   // Pendulum swing of hanging jewelry (necklaces, brooches, orb pendants).
   // Worn gear (armor, helms, rings, shields) correctly stays put.
   swingX?: number;
@@ -484,13 +605,14 @@ function paintHeldWeapon(
   item: PixelItemAsset,
   palm: { x: number; y: number },
   swayX = 0,
+  tilt = 0,
 ): void {
   const kind = weaponVisualKind(item);
   const glint = item.rarity === 'epic' || item.rarity === 'legendary';
   const gem = item.element ? ACCENT_INDEX : TRIM_INDEX;
   const grip = swayX === 0 ? palm : { x: palm.x + swayX, y: palm.y };
   if (kind === 'bow') {
-    paintBow(grid, grip);
+    paintBow(grid, grip, tilt);
     paintGuardCollar(grid, grip, gem);
     return;
   }
@@ -499,30 +621,42 @@ function paintHeldWeapon(
     return;
   }
   if (kind === 'staff') {
-    paintStaff(grid, grip);
+    paintStaff(grid, grip, tilt);
+    paintGuardCollar(grid, grip, gem);
+    paintFistGrip(grid, palm);
+    return;
+  }
+  if (kind === 'spear') {
+    paintSpear(grid, grip, tilt);
     paintGuardCollar(grid, grip, gem);
     paintFistGrip(grid, palm);
     return;
   }
   if (kind === 'scepter') {
-    paintScepter(grid, grip);
+    paintScepter(grid, grip, tilt);
     paintGuardCollar(grid, grip, gem);
     paintFistGrip(grid, palm);
     return;
   }
   if (kind === 'scythe') {
-    paintScythe(grid, grip, glint);
+    paintScythe(grid, grip, glint, tilt);
     paintGuardCollar(grid, grip, gem);
     paintFistGrip(grid, palm);
     return;
   }
   if (kind === 'haft') {
-    paintHaft(grid, grip, item.element ? ACCENT_INDEX : WHEAD_INDEX);
+    paintHaft(
+      grid,
+      grip,
+      item.element ? ACCENT_INDEX : WHEAD_INDEX,
+      tilt,
+      haftShapeOf(item.name),
+    );
     paintGuardCollar(grid, grip, gem);
     paintFistGrip(grid, palm);
     return;
   }
-  paintBlade(grid, grip, kind === 'dagger' ? 6 : 11, glint, gem);
+  paintBlade(grid, grip, kind === 'dagger' ? 6 : 11, glint, gem, tilt);
   paintFistGrip(grid, palm);
 }
 
@@ -1001,8 +1135,9 @@ export function applyEquipmentOverlays(
   }
   if (loadout.weapon) {
     const trailSteps = opts?.punchTrail ?? 0;
+    const weaponTilt = opts?.weaponTilt ?? 0;
     const preWeapon = out.map((row) => [...row]);
-    paintHeldWeapon(out, loadout.weapon, marks.palmR, opts?.swayX ?? 0);
+    paintHeldWeapon(out, loadout.weapon, marks.palmR, opts?.swayX ?? 0, weaponTilt);
     if (trailSteps > 0) paintSwingTrail(out, preWeapon, trailSteps);
     clipWeaponFromHead(out, preWeapon, marks.head);
   }
@@ -1035,44 +1170,10 @@ function tintOverlayEdges(grid: SpriteGrid): void {
     [TINT_INDEX]: TINT_LIGHT,
     [TINT2_INDEX]: TINT2_LIGHT,
   };
-  // Weapon bodies glow on the dark background instead of darkening into it:
-  // any free edge goes light. An edge pressed against the body goes dark as
-  // a separation line. Trim and armor keep the legacy top-light/edge-dark.
-  const glowOf: Record<number, number> = {
-    [BLADE_INDEX]: BLADE_LIGHT,
-    [WOOD_INDEX]: WOOD_LIGHT,
-    [WHEAD_INDEX]: WHEAD_LIGHT,
-  };
-  const equip = new Set<number>([
-    TRIM_INDEX, TRIM_DARK, TRIM_LIGHT,
-    PLATE_INDEX, PLATE_DARK, PLATE_LIGHT,
-    TINT_INDEX, TINT_DARK, TINT_LIGHT,
-    TINT2_INDEX, TINT2_DARK, TINT2_LIGHT,
-    BLADE_INDEX, BLADE_DARK, BLADE_LIGHT,
-    WOOD_INDEX, WOOD_DARK, WOOD_LIGHT,
-    WHEAD_INDEX, WHEAD_DARK, WHEAD_LIGHT,
-    FIELD_INDEX, FIELD_DARK, FIELD_LIGHT,
-    RIM_INDEX, RIM_DARK,
-    ACCENT_INDEX, ACCENT_DARK,
-    STRING_INDEX,
-  ]);
   const at = (x: number, y: number): number => grid[y]?.[x] ?? 0;
   for (let y = 0; y < grid.length; y++) {
     for (let x = 0; x < grid[y].length; x++) {
       const v = grid[y][x];
-      const glow = glowOf[v];
-      if (glow !== undefined) {
-        const sides = [at(x, y - 1), at(x, y + 1), at(x - 1, y), at(x + 1, y)];
-        if (sides.some((n) => n === 0)) {
-          grid[y][x] = glow;
-          continue;
-        }
-        if (sides.some((n) => n !== 0 && !equip.has(n))) {
-          const dark = darkOf[v];
-          if (dark !== undefined) grid[y][x] = dark;
-        }
-        continue;
-      }
       const light = lightOf[v];
       if (light !== undefined && at(x, y - 1) === 0) {
         grid[y][x] = light;
