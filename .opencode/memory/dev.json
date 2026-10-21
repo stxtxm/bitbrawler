@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-21T22:23:06Z",
+  "last_session": "2026-10-21T22:24:18Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "date": "2026-10-18",
-      "issue": "#1202",
-      "lesson": "art:sheet (#1202) — scripts/*.mjs peuvent importer le TS de src/ en passant par tsx : 'art:sheet': 'tsx scripts/render-sprite-sheet.mjs' (tsx déjà devDep, aucune dépendance ajoutée). à l'inverse de gen-icons.mjs (JS pur, node direct). Le test vitest peut importer ce .mjs direct : vite transforme l'import TS. Piège tsc : target ES2020 interdit Array.prototype.at() dans les tests -> utiliser [len-1]. Encodeur PNG non carré : stride = width*4+1, Buffer.from(rgba.buffer, offset, len) et non rgba.copy."
-    },
     {
       "lesson": "#1203: l'ancre de main ne tombait pas sur le poing parce que extremeHand prenait la rangee la PLUS HAUTE au x max : un bras droit vertical a le meme x externe en haut et en bas, donc l'ancre restait a l'epaule. Il faut deriver l'ancre du poing (1re rangee ou le run de peau externe fait >=2 cellules base) — change dans equipOverlays.ts, sanctionne par l'issue. Le poing doit s'elargir VERS LE TORSE : l'elargir vers l'exterieur fait passer palmR.x de 16 a 18 et casse 5 tests equip (lame/axe/glint/attack thrust/sway) car l'arme sort de la grille 24px.",
       "issue": "#1203",
@@ -172,6 +167,11 @@
     {
       "lesson": "Issue #1284 : PassTrack dormait car aucun composant hôte. Solution minimale : wrapper SeasonPassPanel (usePassProgress avec seasonId explicite = getDefaultSeasonId exporté) monté depuis un nouvel onglet SettingsPanel 'pass' + handler onOpenPass dans useSettings. Important : usePassProgress sans options utilise le store legacy (paliers xp/100) alors que PassTrack affiche les xpRequired progressifs -> toujours passer un seasonId explicite pour que effectiveXp/claimTier restent cohérents. Les sources d'XP (addFightXp/addForgeXp/addIdleClaimXp) restent non branchées : suivi à faire.",
       "issue": "#1284",
+      "date": "2026-10-21"
+    },
+    {
+      "lesson": "QA stats: la pollution équipement WEAPON/ACCESSORY vient du fallback body-text (labels SLOT_SHORT_LABELS sur lignes séparées, flex-column) — filtrer via un set singulier distinct de EQUIPMENT_GROUP_LABELS (le set pluriel sert de break de section). progression_curve dérivable du .xp-text 'cur / next XP' + getTotalXpForLevel miroir de xpUtils.",
+      "issue": "#1283",
       "date": "2026-10-21"
     }
   ]
