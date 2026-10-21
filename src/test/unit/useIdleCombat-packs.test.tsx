@@ -162,6 +162,52 @@ describe('useIdleCombat packs', () => {
     expect(result.current.currentMonster).toBeNull();
   });
 
+  it('records every idle encounter and only counts wins as kills', () => {
+    const script: Array<'win' | 'lose' | 'win'> = ['win', 'lose', 'win'];
+    const ids = ['goblin', 'ogre', 'wraith'];
+    let genCall = 0;
+    let simCall = 0;
+    generateMock.mockImplementation(() => {
+      const id = ids[genCall % ids.length] ?? 'goblin';
+      genCall++;
+      return weakMonster(id, id);
+    });
+    simMock.mockImplementation(() => {
+      const outcome = script[Math.min(simCall, script.length - 1)];
+      simCall++;
+      return outcome === 'lose'
+        ? { winner: 'defender', timeline: [{ attackerHp: 0, defenderHp: 10 }] }
+        : { winner: 'attacker', timeline: [{ attackerHp: 95, defenderHp: 0 }] };
+    });
+
+    let current = makeCharacter();
+    let rerender: (props: { character: Character }) => void = () => {};
+    const onSyncCharacter = vi.fn();
+    const onLevelUp = vi.fn();
+    const onCharacterUpdate = vi.fn((char: Character) => {
+      current = char;
+      rerender({ character: current });
+    });
+    const rendered = renderHook(
+      ({ character }: { character: Character }) =>
+        useIdleCombat({
+          character,
+          isPaused: false,
+          onCharacterUpdate,
+          onSyncCharacter,
+          onLevelUp,
+        }),
+      { initialProps: { character: current } },
+    );
+    rerender = rendered.rerender;
+
+    advanceUntilQuiescent(rendered.result, 3);
+
+    const lastUpdate = onCharacterUpdate.mock.calls[onCharacterUpdate.mock.calls.length - 1][0] as Character;
+    expect(lastUpdate.monsterEncounters).toEqual({ goblin: 1, ogre: 1, wraith: 1 });
+    expect(lastUpdate.monsterKills).toEqual({ goblin: 1, wraith: 1 });
+  });
+
   it('never wounds in idle: every pack member faces arrival-shape HP', () => {
     const { result, onCharacterUpdate } = setup(
       Array(30).fill('win'),

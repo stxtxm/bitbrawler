@@ -9,6 +9,7 @@ const unseen: BestiaryEntry = {
   element: 'wind',
   seen: false,
   kills: 0,
+  encounters: 0,
 };
 
 const seen: BestiaryEntry = {
@@ -17,6 +18,7 @@ const seen: BestiaryEntry = {
   element: 'earth',
   seen: true,
   kills: 7,
+  encounters: 7,
 };
 
 describe('BestiaryCard', () => {
@@ -46,7 +48,7 @@ describe('BestiaryCard', () => {
   it('renders a revealed volcanic monster', () => {
     render(
       <BestiaryCard
-        entry={{ id: 'lava_hound', name: 'Lava Hound', element: 'fire', seen: true, kills: 1 }}
+        entry={{ id: 'lava_hound', name: 'Lava Hound', element: 'fire', seen: true, kills: 1, encounters: 1 }}
       />,
     );
 
@@ -59,7 +61,7 @@ describe('BestiaryCard', () => {
   it('keeps an unseen volcanic monster fully hidden', () => {
     const { container } = render(
       <BestiaryCard
-        entry={{ id: 'cinder_imp', name: 'Cinder Imp', element: 'fire', seen: false, kills: 0 }}
+        entry={{ id: 'cinder_imp', name: 'Cinder Imp', element: 'fire', seen: false, kills: 0, encounters: 0 }}
       />,
     );
 
@@ -71,6 +73,16 @@ describe('BestiaryCard', () => {
     const card = container.querySelector('.bestiary-card');
     expect(card).toHaveClass('medal-card--locked');
     expect(card).not.toHaveClass('medal-card--unlocked');
+  });
+
+  it('shows encounters for a monster only met in defeat', () => {
+    render(
+      <BestiaryCard
+        entry={{ id: 'goblin', name: 'Goblin', element: 'wind', seen: true, kills: 0, encounters: 3 }}
+      />,
+    );
+
+    expect(screen.getByText('3 encounters')).toBeInTheDocument();
   });
 
   it('marks a seen card as unlocked', () => {

@@ -43,6 +43,7 @@ import {
   getDefaultMedalProgress,
 } from '../utils/medalUtils';
 import type { MedalDef, SpecialMedalContext } from '../utils/medalUtils';
+import { mergeMonsterCounters } from '../utils/bestiaryUtils';
 import { usePushReminders, type PushSubscriptionUpdate } from '../hooks/usePushReminders';
 import { setTelemetryLevel, trackEvent, trackFightOutcome } from '../utils/telemetry';
 
@@ -249,6 +250,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       idleTotalXp: Math.max(local.idleTotalXp ?? 0, freshRow?.idle_total_xp ?? 0),
       essence: Math.max(local.essence ?? 0, freshRow?.essence ?? 0),
       statPoints: Math.max(local.statPoints ?? 0, freshRow?.stat_points ?? 0),
+      monsterKills: mergeMonsterCounters(local.monsterKills, freshRow?.monster_kills),
+      monsterEncounters: mergeMonsterCounters(local.monsterEncounters, freshRow?.monster_encounters),
       bossProgress: mergedVoid ?? (local as any).bossProgress ?? undefined,
       bossProgresses: Object.keys(mergedProgresses).length > 0 ? mergedProgresses : undefined,
       abyssalBossProgress: mergedAbyss ?? (local as any).abyssalBossProgress ?? undefined,
@@ -365,6 +368,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           bossProgress: mergedVoid ?? anyBest.bossProgress ?? anyLocal.bossProgress ?? undefined,
           bossProgresses: Object.keys(mergedProgresses).length > 0 ? mergedProgresses : undefined,
           abyssalBossProgress: mergedAbyss ?? anyBest.abyssalBossProgress ?? anyLocal.abyssalBossProgress ?? undefined,
+          monsterKills: mergeMonsterCounters(anyLocal.monsterKills, anyServer.monsterKills),
+          monsterEncounters: mergeMonsterCounters(anyLocal.monsterEncounters, anyServer.monsterEncounters),
         } as any;
         const normalized = normalizeCharacter(mergedChar);
         persistCharacter(normalized);

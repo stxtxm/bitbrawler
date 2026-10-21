@@ -9,8 +9,8 @@ interface BestiaryCardProps {
   entry: BestiaryEntry;
 }
 
-function formatKills(kills: number): string {
-  return `${kills} ${kills === 1 ? 'kill' : 'kills'}`;
+function formatCounter(value: number, singular: string, plural: string): string {
+  return `${value} ${value === 1 ? singular : plural}`;
 }
 
 export function BestiaryCard({ entry }: BestiaryCardProps) {
@@ -41,7 +41,11 @@ export function BestiaryCard({ entry }: BestiaryCardProps) {
             <p className="medal-card__description">
               {monster?.specialty ?? 'Unknown specialty'}
             </p>
-            <p className="bestiary-card__kills">{formatKills(entry.kills)}</p>
+            <p className="bestiary-card__kills">
+              {entry.kills > 0
+                ? formatCounter(entry.kills, 'kill', 'kills')
+                : formatCounter(entry.encounters, 'encounter', 'encounters')}
+            </p>
           </>
         ) : (
           <p className="medal-card__description">Not yet encountered</p>
