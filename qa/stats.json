@@ -147917,5 +147917,307 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-10-21T01:01:16.770Z",
+    "run": "2026-10-21",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Spiked Gauntlets",
+      "rarity": "RARE",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": null,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 9,
+      "vit": 28,
+      "dex": 15,
+      "luk": 11,
+      "int": 14,
+      "foc": 11,
+      "fights": 0
+    },
+    "initial_level": 12,
+    "initial_xp": {
+      "current": 1269,
+      "max": 7241
+    },
+    "initial_max_hp": 480,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "WEAPON"
+      },
+      {
+        "slot": "💍",
+        "name": "ACCESSORY"
+      }
+    ],
+    "initial_streak": 2,
+    "final_stats": {
+      "level": 12,
+      "xp": 3990,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 9,
+      "vit": 28,
+      "dex": 15,
+      "luk": 11,
+      "int": 14,
+      "foc": 11,
+      "fights": 0
+    },
+    "final_max_hp": 480,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife",
+        "rarity": "RARE"
+      }
+    ],
+    "final_streak": 2,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife",
+        "rarity": "RARE"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20173,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "wolf",
+        "skeleton"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 158,
+      "xp_events": [
+        {
+          "time_ms": 3044,
+          "xp": 75,
+          "monster": "wolf",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 14138,
+          "xp": 83,
+          "monster": "skeleton",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        507,
+        1521,
+        3044,
+        11093,
+        12613,
+        14138
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 75,
+        "essence": 0.26,
+        "monster": "wolf"
+      },
+      {
+        "result": "victory",
+        "xp": 83,
+        "essence": 0.25,
+        "monster": "skeleton"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.37,
+      "next_level_eta": "⬆ 7m 59s",
+      "power_ratio": "⚔ 0.55x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.05x",
+      "interval": "11.2s",
+      "streak_bonus": "🔥 2-win streak (+7%)"
+    },
+    "initial_essence": 16.76,
+    "final_essence": 19.18,
+    "essence": {
+      "before_idle": 16.76,
+      "after_idle": 17.27,
+      "per_fight": [],
+      "forge_before": 17,
+      "forge_after_salvage": 67,
+      "forge_after_fusion": 67,
+      "forge_after_upgrade": 17,
+      "forge_after": 17,
+      "shop_before": 19,
+      "shop_after": 19,
+      "final": 19.18,
+      "flow": {
+        "idle_gained": 0.51,
+        "fights_change": null,
+        "salvage_gained": 50,
+        "fusion_cost": 0,
+        "upgrade_cost": 50,
+        "forge_net": 0,
+        "shop_cost": 0,
+        "net_change": 2.42
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 17,
+      "essence_after_salvage": 67,
+      "essence_after_fusion": 67,
+      "essence_after_upgrade": 17,
+      "items_before": 2,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 17,
+      "items_after": 0,
+      "salvage_essence_gained": 50,
+      "fusion_cost": null,
+      "upgrade_cost": 50,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 19,
+      "essence_after": 19,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Chipped Wand",
+            "rarity": "UNCOMMON",
+            "price": 30
+          },
+          {
+            "name": "Crystal Pendant",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 19,
+        "essence_budget": 150,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 150
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "exhausted"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1320,
+      "arena": 1102,
+      "arena_reload": 7
+    },
+    "skipped_summary": {
+      "exhausted": 1
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Chipped Wand",
+          "rarity": "UNCOMMON",
+          "price": 30
+        },
+        {
+          "name": "Crystal Pendant",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 19,
+      "essence_budget": 150,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
