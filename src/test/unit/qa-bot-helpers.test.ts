@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import {
+  getXpRequiredForNextLevel as getGameXpRequiredForNextLevel,
+  getTotalXpForLevel as getGameTotalXpForLevel,
+} from '../../utils/xpUtils'
+import {
   COMBAT_SPEED_STORAGE_KEY,
   COMBAT_SPEED_OPTIONS,
   isCombatSpeed,
@@ -303,5 +307,33 @@ describe('qa-bot-helpers progression curve (#1283)', () => {
 
   it('clamps the percentage to 100', () => {
     expect(parseProgressionCurve('250 / 189 XP', 3)?.percent).toBe(100)
+  })
+})
+
+describe('qa-bot-helpers XP curve sync with xpUtils (#1290)', () => {
+  const levels = Array.from({ length: 30 }, (_, index) => index + 1)
+
+  it('mirrors getXpRequiredForNextLevel for levels 1 to 30', () => {
+    const mismatches = levels
+      .filter((level) => getXpRequiredForNextLevel(level) !== getGameXpRequiredForNextLevel(level))
+      .map((level) => ({
+        level,
+        qa: getXpRequiredForNextLevel(level),
+        game: getGameXpRequiredForNextLevel(level),
+      }))
+
+    expect(mismatches).toEqual([])
+  })
+
+  it('mirrors getTotalXpForLevel for levels 1 to 30', () => {
+    const mismatches = levels
+      .filter((level) => getTotalXpForLevel(level) !== getGameTotalXpForLevel(level))
+      .map((level) => ({
+        level,
+        qa: getTotalXpForLevel(level),
+        game: getGameTotalXpForLevel(level),
+      }))
+
+    expect(mismatches).toEqual([])
   })
 })
