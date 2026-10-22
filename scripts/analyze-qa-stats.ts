@@ -328,6 +328,21 @@ interface ProgressionCurveSummary {
   avg_xp_for_next: number
 }
 
+interface XpTypeBreakdown {
+  win_avg: number
+  loss_avg: number
+  ratio: number
+  n_win: number
+  n_loss: number
+}
+
+interface XpByFightType {
+  pvp: XpTypeBreakdown
+  idle: XpTypeBreakdown
+  boss: XpTypeBreakdown
+  pve: XpTypeBreakdown
+}
+
 interface AnalysisReport {
   generated_at: string
   total_runs: number
@@ -348,6 +363,7 @@ interface AnalysisReport {
   avg_xp_per_win: number
   avg_xp_per_loss: number
   xp_win_loss_ratio: number
+  xp_by_fight_type: XpByFightType
   avg_fight_duration_ms: number
   min_fight_duration_ms: number
   max_fight_duration_ms: number
@@ -396,6 +412,25 @@ function loadStats(): RunRecord[] {
   return JSON.parse(readFileSync(STATS_FILE, 'utf-8'))
 }
 
+function computeXpTypeBreakdown(fights: FightRecord[]): XpTypeBreakdown {
+  const winXp = fights
+    .filter((f): f is FightRecord & { xp: number } => f.result === 'victory' && typeof f.xp === 'number')
+    .map(f => f.xp)
+  const lossXp = fights
+    .filter((f): f is FightRecord & { xp: number } => f.result === 'defeat' && typeof f.xp === 'number')
+    .map(f => f.xp)
+  const winAvg = winXp.length > 0 ? winXp.reduce((s, v) => s + v, 0) / winXp.length : 0
+  const lossAvg = lossXp.length > 0 ? lossXp.reduce((s, v) => s + v, 0) / lossXp.length : 0
+  const ratio = winAvg > 0 && lossAvg > 0 ? winAvg / lossAvg : 0
+  return {
+    win_avg: Math.round(winAvg * 100) / 100,
+    loss_avg: Math.round(lossAvg * 100) / 100,
+    ratio: Math.round(ratio * 100) / 100,
+    n_win: winXp.length,
+    n_loss: lossXp.length,
+  }
+}
+
 function median(values: number[]): number {
   if (values.length === 0) return 0
   const sorted = [...values].sort((a, b) => a - b)
@@ -440,6 +475,12 @@ const MIN_RECENT_FIGHTS = 10
 // With fightsPerRun: 1, last_3/last_5 hold 3/5 fights: run-count guards alone
 // produced false-positive declining/swing alerts on tiny combat windows (#1229).
 const MIN_TREND_FIGHTS = 10
+
+// Minimum PvP fights in the recent window before the XP win/loss ratio drives
+// a matchmaking suggestion. The global ratio mixes PvP (100/25), idle, boss
+// (~478 XP) and PvE economies; only a PvP-only window can be read as a
+// matchmaking symptom (#1303).
+const MIN_PVP_XP_FIGHTS = 20
 
 // Minimum runs with captured shop offers before the real purchase rate drives
 // the price suggestion; below it, the simulated affordability proxy is used (#1229).
@@ -864,6 +905,32 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   const suggestions: string[] = []
   const recentRuns = stats.slice(-RECENT_WINDOW_RUNS)
 
+  // Fight-type classification (#863, #705, #1303). VOID TITAN emitted as
+  // 'pve' is a boss fight; idle fights live in idle_fights[] (legacy runs may
+  // still carry fight_type 'idle' in fights[]).
+  const bossFights = allFights.filter(isBossFight)
+  const pveFights = allFights.filter(f => f.fight_type === 'pve' && !isBossFight(f))
+  const pvpFights = allFights.filter(f => !isBossFight(f) && f.fight_type !== 'pve' && f.fight_type !== 'idle')
+
+  const allIdleFightsFromRuns = validRuns.flatMap(
+    r => (r.idle_fights ?? []).map(f => ({ ...f, fight_duration_ms: 0, result: f.result } as FightRecord))
+  )
+  const idleFightsForXp = [
+    ...allFights.filter(f => f.fight_type === 'idle' && !isBossFight(f)),
+    ...allIdleFightsFromRuns,
+  ]
+  const xpByFightType: XpByFightType = {
+    pvp: computeXpTypeBreakdown(pvpFights),
+    idle: computeXpTypeBreakdown(idleFightsForXp),
+    boss: computeXpTypeBreakdown(bossFights),
+    pve: computeXpTypeBreakdown(pveFights),
+  }
+  const recentPvpCoverage = recentRuns
+    .flatMap(r => r.fights ?? [])
+    .filter(f => !isBossFight(f) && f.fight_type !== 'pve' && f.fight_type !== 'idle')
+    .filter(f => f.result === 'victory' || f.result === 'defeat')
+    .length
+
   // Recent fight coverage (#1186): total fights carried by the recent window.
   // Balance signals (win rate, idle, shop, progression, streak) are only
   // actionable when the window actually holds combat data; a window starved of
@@ -879,10 +946,15 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   if (winRate > 0.8) issues.push(`Win rate is very high (${(winRate * 100).toFixed(1)}%) — game may be too easy`)
   else if (winRate > 0.7) suggestions.push(`Win rate is high (${(winRate * 100).toFixed(1)}%). Consider increasing opponent difficulty.`)
 
-  // XP balance
+  // XP balance. The matchmaking suggestion only reads the PvP bucket and only
+  // when the recent window carries enough PvP fights: boss defeats (~478 XP)
+  // and idle XP otherwise drag the global ratio below the ~4x target (#1303).
   if (avgXpWin < 50) issues.push(`Avg XP per win is only ${avgXpWin.toFixed(0)} — may feel unrewarding`)
-  if (xpWinRatio < 2) suggestions.push(`XP win/loss ratio is ${xpWinRatio.toFixed(1)}x (expected ~4x). Often a matchmaking symptom (#570/#725) — investigate MM before adjusting COMBAT.XP_WIN/XP_LOSS in gameRules.ts (100/25).`)
-  if (xpWinRatio > 8) suggestions.push(`XP win/loss ratio is ${xpWinRatio.toFixed(1)}x — very punishing. Consider raising COMBAT.XP_LOSS (currently 25).`)
+  const pvpXp = xpByFightType.pvp
+  if (recentPvpCoverage >= MIN_PVP_XP_FIGHTS && pvpXp.n_win > 0 && pvpXp.n_loss > 0) {
+    if (pvpXp.ratio < 2) suggestions.push(`PvP XP win/loss ratio is ${pvpXp.ratio.toFixed(1)}x (expected ~4x). Often a matchmaking symptom (#570/#725) — investigate MM before adjusting COMBAT.XP_WIN/XP_LOSS in gameRules.ts (100/25).`)
+    if (pvpXp.ratio > 8) suggestions.push(`PvP XP win/loss ratio is ${pvpXp.ratio.toFixed(1)}x — very punishing. Consider raising COMBAT.XP_LOSS (currently 25).`)
+  }
 
   // Fight duration
   if (avgDuration > 30000) issues.push(`Avg fight duration ${(avgDuration / 1000).toFixed(1)}s is too long`)
@@ -1000,12 +1072,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   }
 
   // --- PvE / Boss classification (#863, #705) ---
-  // VOID TITAN emitted by the QA bot as fight_type 'pve' must be counted as a
-  // boss fight, not a legacy monster PvE fight. isBossFight is defined above
-  // for the per-type stall detector (#1112) and reused here.
-  const bossFights = allFights.filter(isBossFight)
-  const pveFights = allFights.filter(f => f.fight_type === 'pve' && !isBossFight(f))
-  const pvpFights = allFights.filter(f => !isBossFight(f) && f.fight_type !== 'pve')
+  // Fight buckets are built above (issues/suggestions need them for #1303).
   const pveShiftedRuns = validRuns.filter(r => r.pve_data?.pve_shifted === true)
   let pveAnalysis: PveAnalysis | null = null
 
@@ -1199,9 +1266,6 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   const bossWinsForBreakdown = bossFights.filter(f => f.result === 'victory')
 
   // Idle fights come from idle_fights on each run (separate from active fights[])
-  const allIdleFightsFromRuns = validRuns.flatMap(
-    r => (r.idle_fights ?? []).map(f => ({ ...f, fight_duration_ms: 0, result: f.result } as FightRecord))
-  )
   const idleWinsFromRuns = allIdleFightsFromRuns.filter(f => f.result === 'victory')
 
   const fightTypeBreakdown = {
@@ -1522,6 +1586,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     avg_xp_per_win: Math.round(avgXpWin * 100) / 100,
     avg_xp_per_loss: Math.round(avgXpLoss * 100) / 100,
     xp_win_loss_ratio: Math.round(xpWinRatio * 100) / 100,
+    xp_by_fight_type: xpByFightType,
     avg_fight_duration_ms: Math.round(avgDuration),
     min_fight_duration_ms: Math.round(minDuration),
     max_fight_duration_ms: Math.round(maxDuration),
@@ -1621,6 +1686,21 @@ function printReport(report: AnalysisReport): void {
     console.log(`  Idle:           ${report.fight_type_breakdown.idle_fights} fights, ${fmtPct(report.fight_type_breakdown.idle_win_rate)} win rate`)
     if (report.fight_type_breakdown.boss_fights > 0) {
       console.log(`  Boss:           ${report.fight_type_breakdown.boss_fights} fights, ${report.fight_type_breakdown.boss_win_rate !== null ? fmtPct(report.fight_type_breakdown.boss_win_rate) : 'n/a'} win rate`)
+    }
+    console.log('')
+  }
+
+  const xpTypes: Array<[string, XpTypeBreakdown]> = [
+    ['PvP', report.xp_by_fight_type.pvp],
+    ['PvE', report.xp_by_fight_type.pve],
+    ['Idle', report.xp_by_fight_type.idle],
+    ['Boss', report.xp_by_fight_type.boss],
+  ]
+  if (xpTypes.some(([, xp]) => xp.n_win + xp.n_loss > 0)) {
+    console.log(`  ── ${bold}XP by Fight Type${reset} ──`)
+    for (const [label, xp] of xpTypes) {
+      if (xp.n_win + xp.n_loss === 0) continue
+      console.log(`  ${label.padEnd(5)} win ${xp.win_avg.toFixed(0)} (${xp.n_win}) / loss ${xp.loss_avg.toFixed(0)} (${xp.n_loss}) — ratio ${xp.ratio.toFixed(1)}x`)
     }
     console.log('')
   }

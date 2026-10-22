@@ -31,7 +31,7 @@ interface FightRecord {
   xp: number | null
   fight_duration_ms: number
   max_hp?: number | null
-  fight_type?: 'pvp' | 'pve' | 'boss'
+  fight_type?: 'pvp' | 'pve' | 'boss' | 'idle'
   monster_name?: string | null
   boss_hp_left?: number | null
   boss_max_hp?: number | null
@@ -4264,5 +4264,182 @@ describe('QA Bot Cohort v2 Contract (#1230)', () => {
   it('transmet la cohorte au test shop et documente le refus d\'achat', () => {
     expect(qaBotSource).toContain('testShopSystem(page, runKey, shopLevel, runRecord.cohort)')
     expect(qaBotSource).toContain('async function testShopSystem(page, runKey, characterLevel = null, cohort = null)')
+  })
+})
+
+// ── XP win/loss by fight type (#1303) ──
+// The global XP win/loss ratio mixes PvP (100/25), idle, boss (~478 XP) and
+// PvE economies. Boss defeats alone drag the loss average up and make the
+// matchmaking signal unreadable, so the report must expose a per-type
+// breakdown and only flag matchmaking on the PvP bucket.
+
+type XpFightType = 'pvp' | 'idle' | 'boss' | 'pve'
+
+interface XpTypeBreakdownMirror {
+  win_avg: number
+  loss_avg: number
+  ratio: number
+  n_win: number
+  n_loss: number
+}
+
+function isBossFightMirror(f: FightRecord): boolean {
+  return f.fight_type === 'boss' || (typeof f.monster_name === 'string' && f.monster_name.trim() === 'VOID TITAN')
+}
+
+function fightTypeOfMirror(f: FightRecord): XpFightType {
+  if (isBossFightMirror(f)) return 'boss'
+  if (f.fight_type === 'pve') return 'pve'
+  if (f.fight_type === 'idle') return 'idle'
+  return 'pvp'
+}
+
+function computeXpTypeBreakdownMirror(fights: FightRecord[]): XpTypeBreakdownMirror {
+  const winXp = fights
+    .filter((f): f is FightRecord & { xp: number } => f.result === 'victory' && typeof f.xp === 'number')
+    .map(f => f.xp)
+  const lossXp = fights
+    .filter((f): f is FightRecord & { xp: number } => f.result === 'defeat' && typeof f.xp === 'number')
+    .map(f => f.xp)
+  const winAvg = winXp.length > 0 ? winXp.reduce((s, v) => s + v, 0) / winXp.length : 0
+  const lossAvg = lossXp.length > 0 ? lossXp.reduce((s, v) => s + v, 0) / lossXp.length : 0
+  const ratio = winAvg > 0 && lossAvg > 0 ? winAvg / lossAvg : 0
+  return {
+    win_avg: Math.round(winAvg * 100) / 100,
+    loss_avg: Math.round(lossAvg * 100) / 100,
+    ratio: Math.round(ratio * 100) / 100,
+    n_win: winXp.length,
+    n_loss: lossXp.length,
+  }
+}
+
+function computeXpByFightTypeMirror(
+  fights: FightRecord[],
+  idleFights: IdleFightRecord[],
+): Record<XpFightType, XpTypeBreakdownMirror> {
+  const idleFromFights = fights.filter(f => fightTypeOfMirror(f) === 'idle')
+  const idleAsFights = idleFights.map(f => ({
+    result: f.result,
+    xp: f.xp,
+    fight_duration_ms: 0,
+    fight_type: 'idle' as const,
+  }))
+  return {
+    pvp: computeXpTypeBreakdownMirror(fights.filter(f => fightTypeOfMirror(f) === 'pvp')),
+    idle: computeXpTypeBreakdownMirror([...idleFromFights, ...idleAsFights]),
+    boss: computeXpTypeBreakdownMirror(fights.filter(f => fightTypeOfMirror(f) === 'boss')),
+    pve: computeXpTypeBreakdownMirror(fights.filter(f => fightTypeOfMirror(f) === 'pve')),
+  }
+}
+
+const MIN_PVP_XP_FIGHTS = 20
+
+function xpRatioSuggestions(
+  xpByFightType: Record<XpFightType, XpTypeBreakdownMirror>,
+  recentPvpCoverage: number,
+): string[] {
+  const out: string[] = []
+  const pvp = xpByFightType.pvp
+  if (recentPvpCoverage < MIN_PVP_XP_FIGHTS) return out
+  if (pvp.n_win === 0 || pvp.n_loss === 0) return out
+  if (pvp.ratio < 2) out.push('matchmaking')
+  if (pvp.ratio > 8) out.push('punishing')
+  return out
+}
+
+describe('QA XP Win/Loss By Fight Type (#1303)', () => {
+  function pvp(result: 'victory' | 'defeat', xp: number): FightRecord {
+    return { result, xp, fight_duration_ms: 5000, fight_type: 'pvp' }
+  }
+  function boss(result: 'victory' | 'defeat', xp: number): FightRecord {
+    return { result, xp, fight_duration_ms: 30000, fight_type: 'boss', monster_name: 'VOID TITAN' }
+  }
+  function pve(result: 'victory' | 'defeat', xp: number): FightRecord {
+    return { result, xp, fight_duration_ms: 5000, fight_type: 'pve', monster_name: 'GOBLIN' }
+  }
+  function idleRecord(result: 'victory' | 'defeat', xp: number): IdleFightRecord {
+    return { result, xp, essence: 0.1, monster: 'GOBLIN' }
+  }
+
+  function pollutedFights(): { fights: FightRecord[]; idle: IdleFightRecord[] } {
+    const fights: FightRecord[] = [
+      ...Array.from({ length: 25 }, () => pvp('victory', 100)),
+      ...Array.from({ length: 5 }, () => pvp('defeat', 25)),
+      ...Array.from({ length: 2 }, () => boss('victory', 500)),
+      ...Array.from({ length: 24 }, () => boss('defeat', 478)),
+      ...Array.from({ length: 4 }, () => pve('victory', 87)),
+      ...Array.from({ length: 1 }, () => pve('defeat', 25)),
+    ]
+    const idle: IdleFightRecord[] = [
+      ...Array.from({ length: 7 }, () => idleRecord('victory', 51)),
+      ...Array.from({ length: 3 }, () => idleRecord('defeat', 51)),
+    ]
+    return { fights, idle }
+  }
+
+  it('isole le ratio PvP de l’économie boss/idle/PvE', () => {
+    const { fights, idle } = pollutedFights()
+    const breakdown = computeXpByFightTypeMirror(fights, idle)
+
+    expect(breakdown.pvp).toMatchObject({ win_avg: 100, loss_avg: 25, ratio: 4, n_win: 25, n_loss: 5 })
+    expect(breakdown.boss).toMatchObject({ win_avg: 500, loss_avg: 478, n_win: 2, n_loss: 24 })
+    expect(breakdown.pve).toMatchObject({ win_avg: 87, loss_avg: 25, ratio: 3.48, n_win: 4, n_loss: 1 })
+    expect(breakdown.idle.n_win).toBe(7)
+    expect(breakdown.idle.n_loss).toBe(3)
+    expect(breakdown.idle.win_avg).toBe(51)
+  })
+
+  it('le ratio global est pollué alors que le PvP pur est à la cible', () => {
+    const { fights } = pollutedFights()
+    const wins = fights.filter(f => f.result === 'victory' && f.xp !== null)
+    const losses = fights.filter(f => f.result === 'defeat' && f.xp !== null)
+    const globalRatio =
+      (wins.reduce((s, f) => s + (f.xp ?? 0), 0) / wins.length) /
+      (losses.reduce((s, f) => s + (f.xp ?? 0), 0) / losses.length)
+
+    const breakdown = computeXpByFightTypeMirror(fights, [])
+    expect(globalRatio).toBeLessThan(1.5)
+    expect(breakdown.pvp.ratio).toBe(4)
+  })
+
+  it('ne déclenche aucune suggestion matchmaking sous 20 combats PvP récents', () => {
+    const { fights, idle } = pollutedFights()
+    const breakdown = computeXpByFightTypeMirror(fights, idle)
+    expect(xpRatioSuggestions(breakdown, 19)).toEqual([])
+  })
+
+  it('déclenche la suggestion matchmaking PvP quand la couverture récente est suffisante', () => {
+    const { fights, idle } = pollutedFights()
+    const breakdown = computeXpByFightTypeMirror(fights, idle)
+    breakdown.pvp.ratio = 1.7
+    expect(xpRatioSuggestions(breakdown, 20)).toEqual(['matchmaking'])
+  })
+
+  it('ignore un ratio global bas si le PvP ne porte pas assez de combats', () => {
+    const breakdown = computeXpByFightTypeMirror([], [])
+    expect(xpRatioSuggestions(breakdown, 0)).toEqual([])
+  })
+
+  describe('analyze-qa-stats.ts source contract (#1303)', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+
+    it('expose xp_by_fight_type avec les quatre économies', () => {
+      expect(source).toContain('xp_by_fight_type')
+      expect(source).toContain('computeXpTypeBreakdown')
+      expect(source).toContain('n_win')
+      expect(source).toContain('n_loss')
+    })
+
+    it('conserve les métriques globales pour la rétrocompatibilité du tech-lead', () => {
+      expect(source).toContain('avg_xp_per_fight:')
+      expect(source).toContain('xp_win_loss_ratio:')
+    })
+
+    it('gate la suggestion matchmaking sur le ratio PvP et la couverture récente', () => {
+      expect(source).toContain('MIN_PVP_XP_FIGHTS')
+      expect(source).toContain('recentPvpCoverage')
+      expect(source).toContain('xpByFightType.pvp')
+      expect(source).toContain('#570/#725')
+    })
   })
 })
