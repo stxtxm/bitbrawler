@@ -19,7 +19,14 @@ concurrency:
 
 jobs:
   run-qa:
-    runs-on: ubuntu-latest
+    # Épinglé, pas `ubuntu-latest`. Le 2026-10-22 `latest` a basculé sur Ubuntu
+    # 26.04, que Playwright 1.60 (celui du package) ne connaît pas encore :
+    #   Error: ERROR: Playwright does not support chromium on ubuntu26.04-x64
+    # Le job mourait à l'installation du navigateur, avant le premier combat —
+    # neuf runs QA rouges d'affilée, plus une seule stat pour le tech-lead.
+    # C'est Playwright qui doit monter de version pour suivre un nouvel OS ;
+    # en attendant, la QA reste sur l'image LTS 24.04 qui est supportée.
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
 
     steps:
@@ -36,7 +43,12 @@ jobs:
         run: npm ci
 
       - name: Install Playwright
-        run: npx playwright install chromium --with-deps
+        run: |
+          # La version est loguée : « Playwright does not support chromium on
+          # ubuntuXX.YY-x64 » ne se diagnostique qu'en connaissant les deux
+          # côtés du couple (version du paquet × image du runner).
+          npx playwright --version
+          npx playwright install chromium --with-deps
 
       - name: Run QA Tests
         id: qa-tests
