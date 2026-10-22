@@ -227,6 +227,19 @@ describe('QA stats commits survive a concurrent master (#1132)', () => {
     expect(step).toContain('::error::')
     expect(step).toContain('exit 1')
   })
+
+  it('pins the runner image instead of following ubuntu-latest', () => {
+    // 2026-10-22 : `ubuntu-latest` a basculé sur Ubuntu 26.04, que
+    // playwright@1.60 ne connaît pas encore :
+    //   ERROR: Playwright does not support chromium on ubuntu26.04-x64
+    // Le job mourait à l'installation du navigateur, avant le premier combat,
+    // neuf runs d'affilée. Une image épinglée garde la QA debout quand
+    // `latest` roule : c'est au navigateur de suivre l'OS, pas l'inverse.
+    expect(source).toMatch(/^\s{4}runs-on: ubuntu-24\.04$/m)
+    expect(source).not.toMatch(/^\s{4}runs-on: ubuntu-latest$/m)
+    // La version est loguée : l'erreur ne nomme que l'OS, jamais le paquet.
+    expect(source).toMatch(/npx playwright --version/)
+  })
 })
 
 describe('Agent workflows send no OpenCode credential', () => {
