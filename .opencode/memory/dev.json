@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-22T22:11:09Z",
+  "last_session": "2026-10-22T22:12:47Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1201 (proposition parente, campagne-1201 déjà découpée en 9 sous-issues dont #1204/#1207/#1209 en vol) : le dev ne crée AUCUNE issue — il implémente un bloc cohérent du périmètre parent. Bloc livré = overlay équipement reçu : paintGuardPosts (2 posts TRIM à palm.x-1/+2 sur la ligne du poing, pour TOUTES les armes à prise), restoreHead (re-stampe les cellules occupées de la tête par-dessus l arme → aucune lame ne traverse le visage en attack), armure chest/robe s arrête à sa dernière rangée (plus de repeint des jambes par immortal_vestments), chaîne de collier ancrée sur les cellules du corps. Leçon technique : pour éviter qu un overlay recouvre une zone, snapshotter la grille avant l overlay puis restaurer la zone (ici boîte tête) — additif, ne crée pas de trou.",
-      "issue": "#1201",
-      "date": "2026-10-18"
-    },
     {
       "version": 1,
       "agent": "dev",
@@ -171,6 +166,11 @@
     {
       "lesson": "Issue #1298 (QA aveugle): le label ubuntu-latest a basculé sur ubuntu-26.04 que Playwright 1.60 ne supporte pas -> le job mourait à playwright install AVANT le bot, et le step commit sortait vert car rien à pousser. Fix: runs-on ubuntu-24.04 épinglé + guard git diff --cached --quiet -> ::error + exit 1. Contrat dans workflow-integrity.test.ts pour empêcher un retour à ubuntu-latest.",
       "issue": "#1298",
+      "date": "2026-10-22"
+    },
+    {
+      "lesson": "#1299 watchdog: statusCheckRollup contient aussi Cloudflare Pages (workflowName vide) -> filtrer select(.workflowName == \"CI\") sinon PR sans CI jamais envoyées au reviewer. Anti-tempête: le reviewer ne peut pas poser de review formelle sur une PR github-actions[bot], compter aussi un commentaire \"## Review PR #\" postérieur au SHA de tête.",
+      "issue": "#1299",
       "date": "2026-10-22"
     }
   ]
