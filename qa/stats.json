@@ -150251,5 +150251,312 @@
     "skipped_summary": {
       "no_energy": 1
     }
+  },
+  {
+    "date": "2026-10-22T01:01:35.611Z",
+    "run": "2026-10-22",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 180,
+        "fight_duration_ms": 17077,
+        "max_hp": 536,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 132.36
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Life Amulet",
+      "rarity": "RARE",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 5,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 10,
+      "vit": 29,
+      "dex": 17,
+      "luk": 13,
+      "int": 14,
+      "foc": 11,
+      "fights": 0
+    },
+    "initial_level": 16,
+    "initial_xp": {
+      "current": 4962,
+      "max": 11640
+    },
+    "progression_curve": {
+      "level": 16,
+      "total_xp": 69515,
+      "xp_for_next": 11640,
+      "percent": 42.6
+    },
+    "initial_max_hp": 536,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 16,
+      "xp": 8131,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 10,
+      "vit": 29,
+      "dex": 17,
+      "luk": 13,
+      "int": 14,
+      "foc": 11,
+      "last xp": 93,
+      "fights": 6
+    },
+    "final_max_hp": 536,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife",
+        "rarity": "RARE"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 24020,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "goblin",
+        "ogre"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 107,
+      "xp_events": [
+        {
+          "time_ms": 2058,
+          "xp": 79,
+          "monster": "goblin",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 24020,
+          "xp": 28,
+          "monster": "ogre",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        511,
+        2058,
+        10127,
+        11661,
+        24020
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 79,
+        "essence": 0.4,
+        "monster": "goblin"
+      },
+      {
+        "result": "victory",
+        "xp": 28,
+        "essence": 0.4,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.55,
+      "next_level_eta": "⬆ 8m 2s",
+      "power_ratio": "⚔ 0.52x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.05x",
+      "interval": "10.9s",
+      "streak_bonus": "🔥 1-win streak (+12%)"
+    },
+    "initial_essence": 131.47,
+    "final_essence": 84.01,
+    "essence": {
+      "before_idle": 131.47,
+      "after_idle": 132.27,
+      "per_fight": [
+        132.36
+      ],
+      "forge_before": 132,
+      "forge_after_salvage": 182,
+      "forge_after_fusion": 182,
+      "forge_after_upgrade": 112,
+      "forge_after": 112,
+      "shop_before": 114,
+      "shop_after": 84,
+      "final": 84.01,
+      "flow": {
+        "idle_gained": 0.8,
+        "fights_change": null,
+        "salvage_gained": 50,
+        "fusion_cost": 0,
+        "upgrade_cost": 70,
+        "forge_net": -20,
+        "shop_cost": 30,
+        "net_change": -47.46
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 132,
+      "essence_after_salvage": 182,
+      "essence_after_fusion": 182,
+      "essence_after_upgrade": 112,
+      "items_before": 2,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 112,
+      "items_after": 0,
+      "salvage_essence_gained": 50,
+      "fusion_cost": null,
+      "upgrade_cost": 70,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 30,
+      "essence_before": 114,
+      "essence_after": 84,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Jade Amulet",
+            "rarity": "RARE",
+            "price": 30
+          },
+          {
+            "name": "Aegis Plate",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 84,
+        "essence_budget": 150,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 150
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1362,
+      "arena": 925
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Jade Amulet",
+          "rarity": "RARE",
+          "price": 30
+        },
+        {
+          "name": "Aegis Plate",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 84,
+      "essence_budget": 150,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
