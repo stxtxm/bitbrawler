@@ -150558,5 +150558,312 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-10-22T22:01:09.677Z",
+    "run": "2026-10-23",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 69,
+        "fight_duration_ms": 10500,
+        "max_hp": 524,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 34.36
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Dusk Blade",
+      "rarity": "RARE",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 3,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 11,
+      "vit": 29,
+      "dex": 19,
+      "luk": 15,
+      "int": 14,
+      "foc": 11,
+      "fights": 0
+    },
+    "initial_level": 17,
+    "initial_xp": {
+      "current": 184,
+      "max": 12865
+    },
+    "progression_curve": {
+      "level": 17,
+      "total_xp": 76377,
+      "xp_for_next": 12865,
+      "percent": 1.4
+    },
+    "initial_max_hp": 524,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife",
+        "rarity": "RARE"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 17,
+      "xp": 1010,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 11,
+      "vit": 29,
+      "dex": 19,
+      "luk": 15,
+      "int": 14,
+      "foc": 11,
+      "last xp": 97,
+      "fights": 3
+    },
+    "final_max_hp": 524,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife",
+        "rarity": "RARE"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife",
+        "rarity": "RARE"
+      }
+    ],
+    "lootbox_streak": 2,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20465,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "wolf",
+        "goblin"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 124,
+      "xp_events": [
+        {
+          "time_ms": 13904,
+          "xp": 27,
+          "monster": "wolf",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 14419,
+          "xp": 97,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        514,
+        1539,
+        13904
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 27,
+        "essence": 0.23,
+        "monster": "wolf"
+      },
+      {
+        "result": "victory",
+        "xp": 97,
+        "essence": 0.23,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.63,
+      "next_level_eta": "⬆ 25m 15s",
+      "power_ratio": "⚔ 0.54x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.05x",
+      "interval": "10.6s",
+      "streak_bonus": "🔥 1-win streak (+25%)"
+    },
+    "initial_essence": 23.76,
+    "final_essence": 55.46,
+    "essence": {
+      "before_idle": 23.76,
+      "after_idle": 24.22,
+      "per_fight": [
+        34.36
+      ],
+      "forge_before": 34,
+      "forge_after_salvage": 84,
+      "forge_after_fusion": 84,
+      "forge_after_upgrade": 84,
+      "forge_after": 84,
+      "shop_before": 85,
+      "shop_after": 55,
+      "final": 55.46,
+      "flow": {
+        "idle_gained": 0.46,
+        "fights_change": null,
+        "salvage_gained": 50,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 50,
+        "shop_cost": 30,
+        "net_change": 31.7
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 34,
+      "essence_after_salvage": 84,
+      "essence_after_fusion": 84,
+      "essence_after_upgrade": 84,
+      "items_before": 3,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": false,
+      "essence_after": 84,
+      "items_after": 0,
+      "salvage_essence_gained": 50,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "COMMON",
+      "cost": 30,
+      "essence_before": 85,
+      "essence_after": 55,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Broad Axe",
+            "rarity": "UNCOMMON",
+            "price": 30
+          },
+          {
+            "name": "Obsidian Idol",
+            "rarity": "EPIC",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 55,
+        "essence_budget": 150,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 150
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1697,
+      "arena": 726
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Broad Axe",
+          "rarity": "UNCOMMON",
+          "price": 30
+        },
+        {
+          "name": "Obsidian Idol",
+          "rarity": "EPIC",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 55,
+      "essence_budget": 150,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
