@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateSprite16, generateSpriteFrames, mirrorSpriteGrid, resolveSpriteFeatures } from '../../components/sprite/spriteGenerator';
+import { generateSprite16, generateSpriteFrames, jewelGlint, jewelSwing, mirrorSpriteGrid, resolveSpriteFeatures } from '../../components/sprite/spriteGenerator';
 import { computeLandmarks } from '../../components/sprite/equipOverlays';
 import { BROW_INDEX, SPRITE_HEIGHT, SPRITE_IDLE_MS, SPRITE_WIDTH, highlightIndexOf, shadeIndexOf } from '../../components/sprite/spriteTypes';
 
@@ -805,6 +805,51 @@ describe('sprite generator v2', () => {
       expect(sprite.grid.length).toBe(42);
       expect(sprite.grid[0].length).toBe(24);
       expect(sprite.grid.flat().some((c) => c !== 0)).toBe(true);
+    }
+  });
+
+  it('sways the worn jewel inside a one-pixel budget on every animation', () => {
+    const kinds = ['idle', 'run', 'attack', 'hit', 'victory'] as const;
+    for (const kind of kinds) {
+      const frames = generateSpriteFrames('jewel-check', 'male', {
+        build: 'standard',
+        bodyType: 'basic',
+        headType: 'male',
+      }, kind)!;
+      const swings = frames.map((_, i) => jewelSwing(kind, i));
+      // un pendentif qui battrait plus large qu'un pixel sortirait du buste
+      for (const swing of swings) {
+        expect(Number.isInteger(swing)).toBe(true);
+        expect(Math.abs(swing)).toBeLessThanOrEqual(1);
+      }
+      // il oscille vraiment des deux côtés (l'esquive est trop courte)
+      if (kind !== 'hit') {
+        expect(swings.some((s) => s > 0), `${kind} à droite`).toBe(true);
+        expect(swings.some((s) => s < 0), `${kind} à gauche`).toBe(true);
+      }
+      // les boucles se referment sans saut entre la dernière et la première image
+      if (kind === 'idle' || kind === 'run') {
+        expect(Math.abs(swings[0] - swings[swings.length - 1])).toBeLessThanOrEqual(1);
+      }
+    }
+    // un index hors boucle retombe sur la bonne image, sans exploser
+    expect(jewelSwing('run', -1)).toBe(jewelSwing('run', 5));
+  });
+
+  it('sparkles the stone at the breath peak and on the victory hop', () => {
+    const frames = generateSpriteFrames('glint-check', 'male', {
+      build: 'standard',
+      bodyType: 'basic',
+      headType: 'male',
+    }, 'idle')!;
+    const glints = frames.map((_, i) => jewelGlint('idle', i));
+    expect(glints.filter(Boolean)).toHaveLength(2);
+    expect(jewelGlint('idle', 3)).toBe(true);
+    expect(jewelGlint('idle', 2)).toBe(false);
+    expect(jewelGlint('victory', 1)).toBe(true);
+    // ni en course ni en attaque : le bijou y saute déjà
+    for (const kind of ['run', 'attack', 'hit'] as const) {
+      expect(frames.map((_, i) => jewelGlint(kind, i)).some(Boolean), kind).toBe(false);
     }
   });
 });

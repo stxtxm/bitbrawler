@@ -449,15 +449,20 @@ describe('shop-utils (TDD)', () => {
 
     it('returns different offers than the original getShopOffers', () => {
       const char = makeCharacter({ essence: 100, level: 10 });
-      const original = getShopOffers(char, ITEM_ASSETS, getTodayStr(), () => 0);
-      const result = rerollShopOffers(char, ITEM_ASSETS, getTodayStr());
-      expect(result).not.toBeNull();
-      // At least one offer should differ due to different seed
-      const originalIds = original.map(o => o.item?.id ?? 'lootbox');
-      const rerollIds = result!.offers.map(o => o.item?.id ?? 'lootbox');
-      const allSame = originalIds.every((id, i) => id === rerollIds[i]);
-      // With different seeds, they should not all be identical
-      expect(allSame).toBe(false);
+      // Le tirage d'un jour donné peut retomber sur les mêmes objets (les
+      // paliers bas puisent dans le même petit vivier) : on vérifie plusieurs
+      // dates au lieu de parier la CI sur la graine du jour.
+      const days = [getTodayStr(), '2026-01-01', '2026-07-07', '2026-10-01'];
+      const changed = days.some((day) => {
+        const original = getShopOffers(char, ITEM_ASSETS, day, () => 0);
+        const result = rerollShopOffers(char, ITEM_ASSETS, day);
+        if (!result) return false;
+        const originalIds = original.map((o) => o.item?.id ?? 'lootbox');
+        const rerollIds = result.offers.map((o) => o.item?.id ?? 'lootbox');
+        // With different seeds, they should not all be identical
+        return originalIds.some((id, i) => id !== rerollIds[i]);
+      });
+      expect(changed).toBe(true);
     });
 
     it('deducts exactly 10 essence from character', () => {

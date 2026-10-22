@@ -1271,6 +1271,33 @@ export const IDLE_BREATH_FRAMES = 10;
 export const IDLE_BLINK_FRAME = 10;
 export const IDLE_BLINK_MS = 140;
 
+// Balancement latéral du bijou porté, en pixels, image par image. Le pendentif
+// est ancré sur les épaules (il suit donc le buste, respiration comprise) ;
+// ce décalage est le mouvement propre de l'objet qui pend : il retarde sur la
+// foulée, part en arrière au wind-up de l'attaque puis revient, et se balance
+// doucement au rythme du souffle. Une table par animation plutôt qu'une
+// sinusoïde : à 400 ms par image, un balancement lissé serait invisible.
+const JEWEL_SWAY: Record<SpriteAnimKind, readonly number[]> = {
+  idle: [0, 0, 1, 1, 1, 1, 0, -1, -1, -1],
+  run: [-1, -1, 0, 1, 1, 0],
+  attack: [-1, -1, -1, 0, 1],
+  hit: [1, 1, 0],
+  victory: [0, -1, 1, 0],
+};
+
+export function jewelSwing(kind: SpriteAnimKind, frameIdx: number): number {
+  const table = JEWEL_SWAY[kind];
+  if (!table || table.length === 0) return 0;
+  return table[((frameIdx % table.length) + table.length) % table.length] ?? 0;
+}
+
+/** Éclat de la pierre : au pic d'inspiration, et au sommet du saut de victoire. */
+export function jewelGlint(kind: SpriteAnimKind, frameIdx: number): boolean {
+  if (kind === 'idle') return frameIdx % IDLE_BREATH_FRAMES === 3;
+  if (kind === 'victory') return frameIdx === 1;
+  return false;
+}
+
 // Secondary motion rides the very same frame list as the body: the hair reacts
 // one beat after the body's extreme, and idle blinks once per loop, at the
 // start of the second breath.

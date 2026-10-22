@@ -161,6 +161,35 @@ describe('SpriteCanvas', () => {
     vi.useRealTimers();
   });
 
+  it('sparkles and sways the pendant through the idle loop', () => {
+    vi.useFakeTimers();
+    render(
+      <SpriteCanvas
+        seed="jewel-idle-hero"
+        gender="male"
+        animate="idle"
+        equippedItems={{ weapon: null, armor: null, accessory: 'life_amulet' }}
+      />,
+    );
+    // une image à la fois : chaque respiration doit être rendue pour de vrai
+    // (un seul grand saut de timer ne rend que la dernière image)
+    for (let i = 0; i < 8; i++) {
+      act(() => {
+        vi.advanceTimersByTime(SPRITE_IDLE_MS);
+      });
+    }
+    const calls = vi.mocked(applyEquipmentOverlays).mock.calls;
+    // image 3 = pic d'inspiration : la pierre doit éclater une fois par souffle
+    expect(calls.some((call) => call[3]?.glint === true)).toBe(true);
+    const swings = new Set(calls.map((call) => call[3]?.swingX ?? 0));
+    expect(swings.has(0)).toBe(true);
+    expect(swings.has(1)).toBe(true);
+    expect(swings.has(-1)).toBe(true);
+    // jamais plus d'un pixel : la pierre resterait accrochée hors du buste
+    for (const swing of swings) expect(Math.abs(swing)).toBeLessThanOrEqual(1);
+    vi.useRealTimers();
+  });
+
   it('plans a rigid whole-weapon angle for every animation', () => {
     expect(weaponAngleFor('idle', 7)).toBe(WEAPON_REST_ANGLE);
     expect(weaponAngleFor('run', 1)).toBe(WEAPON_REST_ANGLE);
