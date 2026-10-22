@@ -37,6 +37,12 @@ export const WOOD_DARK = 109;
 // posée sur le plastron gris ou une garde brune posée sur la peau se lisaient
 // comme un simple mélange de pixels au lieu d'un objet tenu devant le corps.
 export const WEAPON_OUTLINE_INDEX = 110;
+// Pierre du bijou porté (pendentifs, orbes, broches). Trois tons dérivés de la
+// couleur dominante de l'objet : la gemme est ainsi éclairée par la même
+// lumière que le sprite, au lieu d'être collée en aplat comme une icône.
+export const STONE_INDEX = 111;
+export const STONE_DARK = 112;
+export const STONE_LIGHT = 113;
 
 const GRID_W = 24;
 const GRID_H = SPRITE_HEIGHT;
@@ -172,9 +178,61 @@ export function computeLandmarks(grid: SpriteGrid): BodyLandmarks {
   const eyeY = eyeCount > 0 ? Math.round(eyeSumY / eyeCount) : head.y0 + 8;
   const palmR = { x: clamp(handR.x - 1, 0, GRID_W - 1), y: handR.y };
   const palmL = { x: clamp(handL.x + 1, 0, GRID_W - 1), y: handL.y };
-  const neck = { x: clamp(faceCx, torso.x0, torso.x1), y: torso.y0 };
-  const chest = { x: neck.x, y: clamp(torso.y0 + 5, torso.y0, torso.y1) };
+  const shoulder = shoulderRowOf(grid);
+  const bodyCx = chestCenterOf(grid, shoulder);
+  const neck = { x: bodyCx, y: shoulder };
+  const chest = { x: bodyCx, y: shoulder + 4 };
   return { head, torso, handR, handL, faceCx, eyeY, palmR, palmL, neck, chest };
+}
+
+function rowWidthOf(grid: SpriteGrid, y: number): number {
+  const row = grid[y];
+  if (!row) return 0;
+  let n = 0;
+  for (const cell of row) if (cell !== 0) n++;
+  return n;
+}
+
+function rowSpanOf(grid: SpriteGrid, y: number): { x0: number; x1: number } | null {
+  const row = grid[y];
+  if (!row) return null;
+  let x0 = -1;
+  let x1 = -1;
+  for (let x = 0; x < row.length; x++) {
+    if (row[x] === 0) continue;
+    if (x0 < 0) x0 = x;
+    x1 = x;
+  }
+  return x0 < 0 ? null : { x0, x1 };
+}
+
+// Haut du buste : première rangée sous le visage franchement plus large que
+// celle du dessus (les épaules). Le buste monte de 2 px à l'inspiration, saute
+// de 2 px à la victoire et recule de 2 px quand il encaisse : un repère figé
+// sur une rangée absolue faisait glisser pendentifs et chaînes sur la poitrine
+// à chaque souffle. La détection est purement silhouette, donc elle tient aussi
+// sur les corps sans chemise (armor, paladin, monk_gi).
+function shoulderRowOf(grid: SpriteGrid): number {
+  for (let y = 20; y <= 36; y++) {
+    const width = rowWidthOf(grid, y);
+    if (width >= 8 && width >= rowWidthOf(grid, y - 1) + 2) return y;
+  }
+  return 18 + PAD;
+}
+
+// Centre du buste, mesuré sur les rangées de poitrine. Le visage est décalé
+// d'un pixel et demi dans la pose 3/4 : chaînes et pendentifs centrés sur
+// `faceCx` pendaient visiblement à droite du sternum.
+function chestCenterOf(grid: SpriteGrid, shoulder: number): number {
+  let x0 = Number.MAX_SAFE_INTEGER;
+  let x1 = -1;
+  for (let y = shoulder + 2; y <= shoulder + 4; y++) {
+    const span = rowSpanOf(grid, y);
+    if (!span) continue;
+    x0 = Math.min(x0, span.x0);
+    x1 = Math.max(x1, span.x1);
+  }
+  return x1 < 0 ? GRID_W / 2 - 0.5 : (x0 + x1) / 2;
 }
 
 interface ArtCell {
@@ -363,36 +421,6 @@ export function weaponVisualKind(item: PixelItemAsset): WeaponVisualKind {
   ) return 'haft';
   if (n.includes('dagger') || n.includes('knife') || n.includes('fang') || n.includes('rapier') || n.includes('stiletto')) return 'dagger';
   return 'blade';
-}
-
-function blitRaw(
-  grid: SpriteGrid,
-  art: number[][],
-  ox: number,
-  oy: number,
-  remap?: (v: number) => number,
-): { minX: number; maxX: number; minY: number; maxY: number; count: number; tip: { x: number; y: number } | null } {
-  const toIndex = remap ?? ((v: number) => ITEM_BLIT_OFFSET + v);
-  let minX = Infinity;
-  let maxX = -Infinity;
-  let minY = Infinity;
-  let maxY = -Infinity;
-  let count = 0;
-  let tip: { x: number; y: number } | null = null;
-  for (const { x, y, v } of artCells(art)) {
-    const px = ox + x;
-    const py = oy + y;
-    if (py < 0 || py >= grid.length || px < 0 || px >= grid[0].length) continue;
-    grid[py][px] = toIndex(v);
-    count++;
-    if (px < minX) minX = px;
-    if (px > maxX) maxX = px;
-    if (py < minY) minY = py;
-    if (py > maxY) maxY = py;
-    if (!tip || py < tip.y) tip = { x: px, y: py };
-  }
-  if (count === 0) return { minX: 0, maxX: 0, minY: 0, maxY: 0, count, tip };
-  return { minX, maxX, minY, maxY, count, tip };
 }
 
 // ---------------------------------------------------------------------------
@@ -648,6 +676,9 @@ export interface OverlayOptions {
   // Pendulum swing of hanging jewelry (necklaces, brooches, orb pendants).
   // Worn gear (armor, helms, rings, shields) correctly stays put.
   swingX?: number;
+  // Éclat de la pierre : un pixel blanc sur la gemme, au pic d'inspiration et
+  // au saut de victoire.
+  glint?: boolean;
   // 0 = none. Positive = strike frame: how many 1px steps of after-image to
   // leave along the swing arc, which is what makes a 1px arm read as a punch.
   punchTrail?: number;
@@ -900,46 +931,138 @@ function paintBracers(grid: SpriteGrid): void {
   }
 }
 
-function firstContentRow(art: number[][]): number {
-  for (let y = 0; y < art.length; y++) {
-    if (art[y].some((v) => v !== 0)) return y;
+// Forme de la pierre portée. Les icônes d'inventaire (8×8, chaîne et bélière
+// comprises) sont des images d'objet : les coller telles quelles sur un buste
+// large de dix pixels donnait une pastille plate plus grosse que le torse.
+// On redessine donc le bijou dans la langue du sprite — trois tons, trois
+// pixels de large.
+export type PendantShape = 'gem' | 'charm' | 'medallion';
+
+export function pendantShapeOf(name: string): PendantShape {
+  const n = name.toLowerCase();
+  if (n.includes('charm') || n.includes('bead') || n.includes('talisman')) return 'charm';
+  if (
+    n.includes('coin') || n.includes('seal') || n.includes('ring') || n.includes('stone') ||
+    n.includes('idol') || n.includes('rune') || n.includes('orb')
+  ) return 'medallion';
+  return 'gem';
+}
+
+// Teintes de l'iconographie d'objet, par ordre de préférence pour une pierre :
+// les couleurs franches d'abord (bois, rouge, vert, bleu, violet), l'or et
+// l'argent en repli. Prendre simplement la couleur la plus fréquente donnait
+// une bague dorée à presque tous les bijoux, l'or étant le métal des icônes.
+const STONE_HUES = [3, 5, 6, 7, 8];
+const STONE_FALLBACKS = [4, 2];
+
+/** Teinte de la pierre : couleur franche dominante, sinon métal de l'icône. */
+function stoneValueOf(art: number[][]): number | null {
+  const freq = freqOf(art, 0, art.length - 1);
+  for (const palette of [STONE_HUES, STONE_FALLBACKS]) {
+    let best: number | null = null;
+    let bestCount = 0;
+    for (const v of palette) {
+      const count = freq.get(v) ?? 0;
+      if (count > bestCount) {
+        best = v;
+        bestCount = count;
+      }
+    }
+    if (best !== null) return best;
   }
-  return 0;
+  return null;
 }
 
-function paintCollarSupport(grid: SpriteGrid, neck: { x: number; y: number }): void {
-  const x0 = clamp(neck.x - 3, 0, GRID_W - 1);
-  const x1 = clamp(neck.x + 3, 0, GRID_W - 1);
-  for (let x = x0; x <= x1; x++) paint(grid, x, neck.y, TRIM_INDEX);
-  paint(grid, neck.x, neck.y, ACCENT_INDEX);
+/** Cellule de chaîne ramenée sur le corps : un maillon ne flotte jamais à côté. */
+function chainXAt(grid: SpriteGrid, x: number, y: number): number {
+  const span = rowSpanOf(grid, y);
+  if (!span) return x;
+  return clamp(x, span.x0, span.x1);
 }
 
-function paintSupportStrand(
+/**
+ * Chaîne portée : un U d'un pixel d'épaisseur qui descend des deux côtés du
+ * cou et s'affaisse sur le col. Une barre horizontale avec une tige centrale
+ * se lisait comme une fermeture éclair ; le U, lui, se lit comme un collier.
+ */
+function paintJewelChain(grid: SpriteGrid, cx: number, topY: number): void {
+  const left = cx - 2;
+  const right = cx + 2;
+  // Les deux attaches en métal franc, le creux plus sombre. Un creux au ton
+  // clair disparaissait sur une chemise de la même famille de couleur
+  // (chaîne « rare » bleue sur chemise bleue) : le sombre tient sur tout fond.
+  paint(grid, chainXAt(grid, left, topY + 1), topY + 1, TRIM_INDEX);
+  paint(grid, chainXAt(grid, right, topY + 1), topY + 1, TRIM_INDEX);
+  for (let x = left; x <= right; x++) {
+    paint(grid, chainXAt(grid, x, topY + 2), topY + 2, TRIM_DARK);
+  }
+}
+
+/**
+ * Pierre de 3 px de large, taillée en goutte : coins sombres (le contour
+ * rond), cœur à la teinte de l'objet et une seule facette claire. Trois tons
+ * pour que la gemme reçoive la même lumière que le sprite au lieu d'être un
+ * aplat collé sur la chemise. `medallion` (pièces, sceaux, orbes) est ronde,
+ * le reste pend en pointe.
+ */
+function paintPendantStone(
   grid: SpriteGrid,
-  neck: { x: number; y: number },
-  cx: number,
-  topY: number,
+  shape: PendantShape,
+  x0: number,
+  y0: number,
+  glint: boolean,
 ): void {
-  const x = clamp(cx, 0, GRID_W - 1);
-  for (let y = neck.y + 1; y <= topY; y++) paint(grid, x, y, TRIM_INDEX);
+  const put = (dx: number, dy: number, v: number): void => paint(grid, x0 + dx, y0 + dy, v);
+  // Coins sombres = contour rond de la pierre, un seul pixel de lumière au
+  // centre : deux pixels clairs en équerre se lisaient comme une croix.
+  put(0, 0, STONE_DARK);
+  put(2, 0, STONE_DARK);
+  put(1, 0, STONE_INDEX);
+  put(0, 1, STONE_INDEX);
+  put(1, 1, STONE_LIGHT);
+  put(2, 1, STONE_INDEX);
+  if (shape === 'medallion') {
+    put(0, 2, STONE_DARK);
+    put(1, 2, STONE_INDEX);
+    put(2, 2, STONE_DARK);
+    if (glint) put(1, 1, 2);
+    return;
+  }
+  put(0, 2, STONE_INDEX);
+  put(1, 2, STONE_INDEX);
+  put(2, 2, STONE_INDEX);
+  put(1, 3, STONE_DARK);
+  if (glint) put(1, 1, 2);
 }
 
+/**
+ * Pendentif porté : chaîne au creux du cou, bélière de deux maillons puis
+ * pierre sur le sternum. Rien n'est blitté depuis l'icône — seule sa couleur
+ * dominante est reprise.
+ */
 function paintNecklace(
   grid: SpriteGrid,
-  item: PixelItemAsset,
   neck: { x: number; y: number },
-  chest: { x: number; y: number },
-  swingX = 0,
+  shape: PendantShape,
+  swing = 0,
+  glint = false,
 ): void {
-  const art = item.pixels;
-  const artW = art[0]?.length ?? 8;
-  const artH = art.length;
-  const cx = clamp(neck.x + swingX, 0, GRID_W - 1);
-  const oy = clamp(chest.y - 3, 0, GRID_H - artH);
-  const ox = clamp(cx - Math.floor(artW / 2), 0, GRID_W - artW);
-  paintCollarSupport(grid, neck);
-  paintSupportStrand(grid, neck, cx, oy + firstContentRow(art));
-  blitRaw(grid, art, ox, oy);
+  const cx = clamp(Math.round(neck.x), 3, GRID_W - 4);
+  paintJewelChain(grid, cx, neck.y);
+  // La pierre pend sous le creux de la chaîne, une rangée plus bas : le bijou
+  // balaie d'un pixel autour de son axe, la chaîne reste accrochée au cou.
+  paintPendantStone(grid, shape, cx - 1 + swing, neck.y + 3, glint);
+}
+
+/** Broche épinglée : médaillon posé au bord du col, sans chaîne. */
+function paintBrooch(
+  grid: SpriteGrid,
+  neck: { x: number; y: number },
+  shape: PendantShape,
+  glint = false,
+): void {
+  const cx = clamp(Math.round(neck.x), 3, GRID_W - 4);
+  paintPendantStone(grid, shape, cx - 1, neck.y + 1, glint);
 }
 
 function paintRing(grid: SpriteGrid, palmR: { x: number; y: number }): void {
@@ -949,65 +1072,6 @@ function paintRing(grid: SpriteGrid, palmR: { x: number; y: number }): void {
   if ((grid[fy]?.[fx + 1] ?? 0) !== 0) paint(grid, fx + 1, fy, TRIM_INDEX);
   if ((grid[fy + 1]?.[fx] ?? 0) !== 0) paint(grid, fx, fy + 1, ACCENT_INDEX);
   if ((grid[fy + 1]?.[fx + 1] ?? 0) !== 0) paint(grid, fx + 1, fy + 1, ACCENT_INDEX);
-}
-
-function mini44(art: number[][]): number[][] {
-  const out: number[][] = [];
-  for (let by = 0; by < 4; by++) {
-    const row: number[] = [];
-    for (let bx = 0; bx < 4; bx++) {
-      const freq = new Map<number, number>();
-      for (let dy = 0; dy < 2; dy++) {
-        for (let dx = 0; dx < 2; dx++) {
-          const v = art[by * 2 + dy]?.[bx * 2 + dx] ?? 0;
-          if (v !== 0) freq.set(v, (freq.get(v) ?? 0) + 1);
-        }
-      }
-      let best = 0;
-      let bestCount = 0;
-      for (const [v, count] of freq) {
-        if (count > bestCount) {
-          best = v;
-          bestCount = count;
-        }
-      }
-      row.push(best);
-    }
-    out.push(row);
-  }
-  return out;
-}
-
-function paintBrooch(
-  grid: SpriteGrid,
-  item: PixelItemAsset,
-  neck: { x: number; y: number },
-  chest: { x: number; y: number },
-  swingX = 0,
-): void {
-  const cx = clamp(chest.x + swingX, 0, GRID_W - 1);
-  paintCollarSupport(grid, neck);
-  paintSupportStrand(grid, neck, cx, chest.y - 2);
-  const mini = mini44(item.pixels);
-  const ox = clamp(chest.x - 2 + swingX, 0, GRID_W - 4);
-  const oy = clamp(chest.y - 2, 0, GRID_H - 4);
-  blitRaw(grid, mini, ox, oy);
-}
-
-function paintOrbPendant(
-  grid: SpriteGrid,
-  item: PixelItemAsset,
-  neck: { x: number; y: number },
-  chest: { x: number; y: number },
-  swingX = 0,
-): void {
-  const cx = clamp(chest.x + swingX, 0, GRID_W - 1);
-  paintCollarSupport(grid, neck);
-  paintSupportStrand(grid, neck, cx, chest.y - 2);
-  const mini = mini44(item.pixels);
-  const ox = clamp(chest.x - 2 + swingX, 0, GRID_W - 4);
-  const oy = clamp(chest.y - 2, 0, GRID_H - 4);
-  blitRaw(grid, mini, ox, oy);
 }
 
 // After-image of the weapon along the swing arc. Strictly additive: it only
@@ -1152,6 +1216,13 @@ export function applyEquipmentOverlays(
   const tintHex = tintSource
     ? hexOfArtValue(dominantArtValue(tintSource.pixels), trim)
     : trim;
+  const stoneSource = loadout.accessory
+    ? hexOfArtValue(stoneValueOf(loadout.accessory.pixels), trim)
+    : trim;
+  // La pierre est enfoncée d'un cran dans le contour : les teintes d'icône
+  // (bleu ciel, jaune vif) sont plus claires que le sprite et seules elles se
+  // lisaient comme des autocollants posés sur la chemise.
+  const stoneHex = mixHex(stoneSource, OUTLINE_HEX, 0.14);
   const tint2Hex = tint2Source
     ? hexOfArtValue(dominantArtValue(tint2Source.pixels), trim)
     : trim;
@@ -1207,6 +1278,9 @@ export function applyEquipmentOverlays(
     [TRIM_LIGHT]: highlightHex(trim),
     [TINT_LIGHT]: highlightHex(tintHex),
     [TINT2_LIGHT]: highlightHex(tint2Hex),
+    [STONE_INDEX]: stoneHex,
+    [STONE_DARK]: mixHex(stoneHex, OUTLINE_HEX, 0.55),
+    [STONE_LIGHT]: highlightHex(stoneHex),
     [WEAPON_OUTLINE_INDEX]: OUTLINE_HEX,
   };
   for (const key of Object.keys(ITEM_PALETTE).map(Number)) {
@@ -1229,10 +1303,16 @@ export function applyEquipmentOverlays(
     stampHeadgear(out, loadout.accessory, marks.head, marks.faceCx);
   }
   if (loadout.accessory && accessoryKind === 'brooch') {
-    paintBrooch(out, loadout.accessory, marks.neck, marks.chest, opts?.swingX ?? 0);
+    paintBrooch(out, marks.neck, pendantShapeOf(loadout.accessory.name), opts?.glint ?? false);
   }
   if (loadout.accessory && accessoryKind === 'necklace') {
-    paintNecklace(out, loadout.accessory, marks.neck, marks.chest, opts?.swingX ?? 0);
+    paintNecklace(
+      out,
+      marks.neck,
+      pendantShapeOf(loadout.accessory.name),
+      opts?.swingX ?? 0,
+      opts?.glint ?? false,
+    );
   }
   if (loadout.armor && armorKind === 'shield') {
     // Shield first, then the arm on top: the limb crossing the shield face is
@@ -1241,7 +1321,13 @@ export function applyEquipmentOverlays(
     paintShieldArm(out, marks.palmL);
   }
   if (loadout.accessory && accessoryKind === 'orb') {
-    paintOrbPendant(out, loadout.accessory, marks.neck, marks.chest, opts?.swingX ?? 0);
+    paintNecklace(
+      out,
+      marks.neck,
+      pendantShapeOf(loadout.accessory.name) === 'charm' ? 'charm' : 'medallion',
+      opts?.swingX ?? 0,
+      opts?.glint ?? false,
+    );
   }
   // Tint armour and accessories before stamping the weapon. The old generic
   // edge pass turned every stair-step on a diagonal blade into a light or dark

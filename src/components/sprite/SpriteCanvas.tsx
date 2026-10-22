@@ -6,6 +6,8 @@ import { applyEquipmentOverlays, resolveLoadout, weaponVisualKind } from './equi
 import {
   generateSprite16,
   generateSpriteFrames,
+  jewelGlint,
+  jewelSwing,
   mirrorSpriteGrid,
   ATTACK_IMPACT_FRAME,
   SpriteAnimKind,
@@ -117,9 +119,10 @@ export const SpriteCanvas = memo(function SpriteCanvas({
     // was what made swords and maces look like floppy rubber props. The whole
     // rigid weapon instead rotates around the palm for the strike, hit and
     // victory poses.
-    const running = activeAnim === 'run' && frames && frames.length > 0;
+    const animated = Boolean(activeAnim && frames && frames.length > 0);
     const victory = activeAnim === 'victory' && frames && frames.length > 0;
-    const swingX = running ? ([-1, -1, 0, 1, 1, 0][frameIdx % frames.length] ?? 0) : 0;
+    const swingX = animated && activeAnim ? jewelSwing(activeAnim, frameIdx) : 0;
+    const glint = animated && activeAnim ? jewelGlint(activeAnim, frameIdx) : false;
     const punchTrail =
       (activeAnim === 'attack' && frameIdx === ATTACK_IMPACT_FRAME) || (victory && frameIdx === 1)
         ? 3
@@ -137,6 +140,7 @@ export const SpriteCanvas = memo(function SpriteCanvas({
       : WEAPON_REST_ANGLE;
     const overlaid = applyEquipmentOverlays(base.grid, base.palette, loadout, {
       swingX,
+      glint,
       punchTrail,
       weaponAngle,
     });

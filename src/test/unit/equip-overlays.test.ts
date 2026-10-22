@@ -31,12 +31,21 @@ import {
   FIELD_LIGHT,
   STRING_INDEX,
   RIM_INDEX,
+  STONE_INDEX,
+  STONE_DARK,
+  STONE_LIGHT,
   WEAPON_OUTLINE_INDEX,
 } from '../../components/sprite/equipOverlays';
-import { generateSprite16, generateSpriteFrames, ATTACK_IMPACT_FRAME } from '../../components/sprite/spriteGenerator';
+import {
+  generateSprite16,
+  generateSpriteFrames,
+  jewelGlint,
+  jewelSwing,
+  ATTACK_IMPACT_FRAME,
+} from '../../components/sprite/spriteGenerator';
 import { weaponAngleFor, weaponStrikeAngle } from '../../components/sprite/weaponPoses';
 import type { WeaponVisualKind } from '../../components/sprite/equipOverlays';
-import { ACCENT_INDEX, ITEM_BLIT_OFFSET, TRIM_INDEX, highlightIndexOf, shadeIndexOf } from '../../components/sprite/spriteTypes';
+import { ACCENT_INDEX, TRIM_INDEX, highlightIndexOf, shadeIndexOf } from '../../components/sprite/spriteTypes';
 import { RARITY_TRIM } from '../../components/sprite/spritePalettes';
 import { ELEMENT_COLORS } from '../../types/Item';
 
@@ -96,6 +105,29 @@ const blitCells = (grid: number[][]): Array<[number, number]> => {
   );
   return cells;
 };
+
+/** Le bijou porté est peint dans la palette du sprite, jamais blitté. */
+const isStoneCell = (value: number): boolean =>
+  value === STONE_INDEX || value === STONE_DARK || value === STONE_LIGHT;
+
+/** Cellules de la pierre du bijou (gemme, médaillon ou broche). */
+const stoneCells = (grid: number[][]): Cell[] => cellsOf(grid, isStoneCell);
+
+const rowCellsAt = (grid: number[][], y: number, accept: (value: number) => boolean): number[] =>
+  (grid[y] ?? []).flatMap((value, x) => (accept(value) ? [x] : []));
+
+const rgbOf = (hex: string): [number, number, number] => [
+  parseInt(hex.slice(1, 3), 16),
+  parseInt(hex.slice(3, 5), 16),
+  parseInt(hex.slice(5, 7), 16),
+];
+
+/** Rangée où commence la chemise du joueur : repère indépendant des repères. */
+const SHIRT_VALUES = new Set([5, shadeIndexOf(5), highlightIndexOf(5)]);
+const shirtTopRow = (grid: number[][]): number =>
+  grid.findIndex(
+    (row, y) => y >= 20 && row.some((value) => SHIRT_VALUES.has(value)),
+  );
 
 const nonZeroComponents = (grid: number[][]): Array<Array<[number, number]>> => {
   const h = grid.length;
@@ -563,7 +595,15 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     const torsoField = golem.grid.slice(25, 36).flat().filter((c) => c === FIELD_INDEX).length;
     expect(torsoField).toBeGreaterThan(20);
     expect(golem.grid.slice(25, 36).flat()).toContain(FIELD_LIGHT);
-    expect(golem.grid[marks.chest.y][marks.chest.x]).toBe(ACCENT_INDEX);
+    // the clasp sits on the plastron, centred on the bust (the pendant hangs
+    // over it), not on the face which is offset in the 3/4 pose
+    const clasp = cellsOf(golem.grid, (v) => v === ACCENT_INDEX);
+    expect(clasp.length).toBeGreaterThan(0);
+    for (const [x, y] of clasp) {
+      expect(y).toBeGreaterThanOrEqual(marks.chest.y);
+      expect(y).toBeLessThanOrEqual(marks.chest.y + 2);
+      expect(Math.abs(x - marks.chest.x)).toBeLessThanOrEqual(1.5);
+    }
     const leather = applyEquipmentOverlays(base.grid, base.palette, {
       weapon: null,
       armor: byId('leather_vest'),
@@ -661,9 +701,10 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
     }
   });
 
-  it('hangs necklaces as chain plus gem over neck and chest', () => {
+  it('hangs necklaces as a chain U and a stone centred on the bust', () => {
     const base = generateSprite16('neck-check', 'female', { ...STD_FEMALE });
     const marks = computeLandmarks(base.grid);
+    const cx = Math.round(marks.neck.x);
     for (const id of ['might_pendant', 'storm_amulet']) {
       expect(accessoryVisualKind(byId(id)!.name)).toBe('necklace');
       const out = applyEquipmentOverlays(base.grid, base.palette, {
@@ -671,29 +712,36 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
         armor: null,
         accessory: byId(id),
       });
-      const cells = blitCells(out.grid).filter(
-        ([x, y]) => y >= 23 && y <= 31 && Math.abs(x - marks.neck.x) <= 4,
+      // gemme de trois pixels de large, quatre de haut, pendue sous le col
+      const cells = stoneCells(out.grid);
+      expect(cells.length).toBe(10);
+      expect(Math.min(...cells.map(([, y]) => y))).toBe(marks.neck.y + 3);
+      expect(Math.max(...cells.map(([, y]) => y))).toBe(marks.neck.y + 6);
+      for (const [x] of cells) expect(Math.abs(x - marks.neck.x)).toBeLessThanOrEqual(1.5);
+      // la chaîne remonte des deux côtés du cou puis s'affaisse sur le col
+      const clasps = rowCellsAt(out.grid, marks.neck.y + 1, (v) => v === TRIM_INDEX).filter(
+        (x) => Math.abs(x - cx) <= 3,
       );
-      expect(cells.length).toBeGreaterThan(5);
+      expect(clasps).toEqual([cx - 2, cx + 2]);
+      const sag = rowCellsAt(out.grid, marks.neck.y + 2, (v) => v === TRIM_DARK).filter(
+        (x) => Math.abs(x - cx) <= 3,
+      );
+      expect(sag).toContain(cx);
+      expect(sag.length).toBeGreaterThanOrEqual(3);
+      // l'icône d'inventaire (8×8) n'est plus collée sur le buste
+      expect(blitCells(out.grid).filter(([, y]) => y >= 22 && y <= 32)).toEqual([]);
     }
-    const a = JSON.stringify(
+    // deux bijoux de teintes différentes ne partagent pas la même pierre
+    const stoneOf = (id: string): string =>
       applyEquipmentOverlays(base.grid, base.palette, {
         weapon: null,
         armor: null,
-        accessory: byId('might_pendant'),
-      }).grid,
-    );
-    const b = JSON.stringify(
-      applyEquipmentOverlays(base.grid, base.palette, {
-        weapon: null,
-        armor: null,
-        accessory: byId('storm_amulet'),
-      }).grid,
-    );
-    expect(a).not.toBe(b);
+        accessory: byId(id),
+      }).palette[STONE_INDEX];
+    expect(stoneOf('might_pendant')).not.toBe(stoneOf('storm_amulet'));
   });
 
-  it('pins brooches as a mini medallion on the chest', () => {
+  it('pins brooches flush on the collar, without a chain', () => {
     const base = generateSprite16('brooch-check', 'male', { ...STD_MALE });
     const marks = computeLandmarks(base.grid);
     for (const id of ['lucky_coin', 'cosmic_seal']) {
@@ -703,17 +751,21 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
         armor: null,
         accessory: byId(id),
       });
-      const cells = blitCells(out.grid).filter(
-        ([x, y]) => Math.abs(x - marks.chest.x) <= 2 && Math.abs(y - marks.chest.y) <= 2,
-      );
-      expect(cells.length).toBeGreaterThan(0);
-      expect(cells.length).toBeLessThanOrEqual(16);
+      // médaillon rond posé au bord du col : trois pixels de large, trois de haut
+      const cells = stoneCells(out.grid);
+      expect(cells.length).toBe(9);
+      expect(Math.min(...cells.map(([, y]) => y))).toBe(marks.neck.y + 1);
+      expect(Math.max(...cells.map(([, y]) => y))).toBe(marks.neck.y + 3);
+      for (const [x] of cells) expect(Math.abs(x - marks.neck.x)).toBeLessThanOrEqual(1.5);
+      // épinglée, elle ne pend pas : aucune chaîne à l'écran
+      expect(out.grid.flat().filter((v) => v === TRIM_INDEX || v === TRIM_DARK)).toEqual([]);
     }
   });
 
-  it('hangs orbs as pendants: chain plus medallion on the chest', () => {
+  it('hangs orbs as a round medallion on the same chain', () => {
     const base = generateSprite16('orb-check', 'female', { ...STD_FEMALE });
     const marks = computeLandmarks(base.grid);
+    const cx = Math.round(marks.neck.x);
     for (const id of ['spirit_orb', 'tsunami_orb', 'pyrite_orb']) {
       expect(accessoryVisualKind(byId(id)!.name)).toBe('orb');
       const out = applyEquipmentOverlays(base.grid, base.palette, {
@@ -721,75 +773,154 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
         armor: null,
         accessory: byId(id),
       });
-      // miniature medallion of the orb art, centered on the chest
-      const cells = blitCells(out.grid).filter(
-        ([x, y]) => Math.abs(x - marks.chest.x) <= 3 && Math.abs(y - marks.chest.y) <= 3,
-      );
-      expect(cells.length).toBeGreaterThan(0);
-      expect(cells.length).toBeLessThanOrEqual(16);
-      // rarity chain running from the neck down to the medallion
+      // médaillon rond de trois pixels : une rangée de moins que la gemme
+      const cells = stoneCells(out.grid);
+      expect(cells.length).toBe(9);
+      expect(Math.min(...cells.map(([, y]) => y))).toBe(marks.neck.y + 3);
+      expect(Math.max(...cells.map(([, y]) => y))).toBe(marks.neck.y + 5);
+      for (const [x] of cells) expect(Math.abs(x - marks.neck.x)).toBeLessThanOrEqual(1.5);
       const chain = out.grid
-        .slice(marks.neck.y, marks.chest.y - 1)
-        .map((row) => row[marks.chest.x]);
-      expect(chain).toContain(TRIM_INDEX);
+        .slice(marks.neck.y + 1, marks.neck.y + 3)
+        .map((row) => row[cx]);
+      expect(chain.length).toBe(2);
+      expect(chain.some((v) => v === TRIM_INDEX || v === TRIM_DARK)).toBe(true);
     }
-    const pyrite = applyEquipmentOverlays(base.grid, base.palette, {
-      weapon: null,
-      armor: null,
-      accessory: byId('pyrite_orb'),
-    });
-    const spirit = applyEquipmentOverlays(base.grid, base.palette, {
-      weapon: null,
-      armor: null,
-      accessory: byId('spirit_orb'),
-    });
-    expect(JSON.stringify(pyrite.grid)).not.toBe(JSON.stringify(spirit.grid));
+    // deux orbes de teintes différentes ne partagent pas la même pierre
+    const stoneOf = (id: string): string =>
+      applyEquipmentOverlays(base.grid, base.palette, {
+        weapon: null,
+        armor: null,
+        accessory: byId(id),
+      }).palette[STONE_INDEX];
+    expect(stoneOf('obsidian_idol')).not.toBe(stoneOf('spirit_orb'));
   });
 
-  it('anchors every hanging accessory to the neckline with a visible support', () => {
+  it('anchors every suspended accessory under the shoulder line, always on the body', () => {
     const seeds: Array<[string, 'male' | 'female']> = [
       ['k3f9qz1a', 'male'],
       ['v7m2xp4c', 'female'],
     ];
+    const builds = ['slim', 'standard', 'broad'] as const;
     const suspended = ITEM_ASSETS.filter((i) => {
       if (i.slot !== 'accessory') return false;
       const kind = accessoryVisualKind(i.name);
       return kind === 'necklace' || kind === 'orb' || kind === 'brooch';
     });
     expect(suspended.length).toBeGreaterThan(10);
-    const support = new Set<number>([
-      TRIM_INDEX, TRIM_DARK, TRIM_LIGHT, ACCENT_INDEX, ACCENT_DARK,
-    ]);
     for (const [seed, gender] of seeds) {
-      const base = generateSprite16(seed, gender);
-      const marks = computeLandmarks(base.grid);
-      for (const item of suspended) {
-        const out = applyEquipmentOverlays(base.grid, base.palette, {
-          weapon: null,
-          armor: null,
-          accessory: item,
-        });
-        const gemTop = Math.min(
-          ...out.grid.flatMap((row, y) =>
-            row.map((c) => (c >= ITEM_BLIT_OFFSET && c < ITEM_BLIT_OFFSET + 10 ? y : 99)),
-          ),
-        );
-        expect(gemTop, `${item.id} pendant row`).toBeLessThan(marks.chest.y + 4);
-        // the collar band rides the torso top, above the pendant
-        expect(
-          out.grid[marks.torso.y0].some(
-            (c, x) => support.has(c) && Math.abs(x - marks.neck.x) <= 3,
-          ),
-          `${item.id} collar`,
-        ).toBe(true);
-        // a visible strand links the collar to the pendant on every row between
-        for (let y = marks.torso.y0; y < gemTop; y++) {
-          expect(
-            out.grid[y].some((c, x) => support.has(c) && Math.abs(x - marks.neck.x) <= 3),
-            `${item.id} support y${y}`,
-          ).toBe(true);
+      for (const build of builds) {
+        const base = generateSprite16(seed, gender, { build, bodyType: 'basic', headType: gender });
+        const marks = computeLandmarks(base.grid);
+        const cx = Math.round(marks.neck.x);
+        for (const item of suspended) {
+          const kind = accessoryVisualKind(item.name);
+          const out = applyEquipmentOverlays(base.grid, base.palette, {
+            weapon: null,
+            armor: null,
+            accessory: item,
+          });
+          const cells = stoneCells(out.grid);
+          const top = marks.neck.y + (kind === 'brooch' ? 1 : 3);
+          expect(Math.min(...cells.map(([, y]) => y)), `${item.id} ${build} top`).toBe(top);
+          for (const [x, y] of cells) {
+            // un bijou est porté : il ne peint jamais de pixel dans le vide
+            expect(base.grid[y][x], `${item.id} ${build} floats at ${x},${y}`).not.toBe(0);
+            expect(Math.abs(x - marks.neck.x), `${item.id} ${build} off-centre`).toBeLessThanOrEqual(1.5);
+          }
+          if (kind !== 'brooch') {
+            // les deux attaches de la chaîne reposent sur le col, pas dans l'air
+            expect(
+              rowCellsAt(out.grid, marks.neck.y + 1, (v) => v === TRIM_INDEX).filter(
+                (x) => Math.abs(x - cx) <= 3,
+              ),
+              `${item.id} ${build} chain`,
+            ).toHaveLength(2);
+          }
         }
       }
+    }
+  });
+
+  it('welds the pendant to the bust through the whole breathing loop', () => {
+    for (const build of ['slim', 'standard', 'broad'] as const) {
+      const frames = generateSpriteFrames('breath-check', 'male', { ...STD_MALE, build }, 'idle')!;
+      expect(frames.length).toBeGreaterThanOrEqual(10);
+      const offsets = new Set<number>();
+      for (const frame of frames) {
+        const out = applyEquipmentOverlays(frame.grid, frame.palette, {
+          weapon: null,
+          armor: null,
+          accessory: byId('crystal_pendant'),
+        });
+        const stoneTop = Math.min(...stoneCells(out.grid).map(([, y]) => y));
+        const bustTop = shirtTopRow(frame.grid);
+        expect(bustTop, `${build} bust row`).toBeGreaterThan(19);
+        offsets.add(stoneTop - bustTop);
+      }
+      // le buste monte de deux pixels à l'inspiration : la pierre monte avec lui
+      // au lieu de glisser le long du torse
+      expect([...offsets], build).toEqual([3]);
+    }
+  });
+
+  it('glints the stone at the breath peak without lighting a stray pixel', () => {
+    const base = generateSprite16('glint-check', 'male', { ...STD_MALE });
+    const marks = computeLandmarks(base.grid);
+    const cx = Math.round(marks.neck.x);
+    const loadout = { weapon: null, armor: null, accessory: byId('crystal_pendant') };
+    const plain = applyEquipmentOverlays(base.grid, base.palette, loadout, { glint: false });
+    const lit = applyEquipmentOverlays(base.grid, base.palette, loadout, { glint: true });
+    const whiteCells = (grid: number[][]): Cell[] => cellsOf(grid, (v) => v === 2);
+    expect(whiteCells(lit.grid).length).toBe(whiteCells(plain.grid).length + 1);
+    // le reflet tombe sur la facette de la pierre, pas à côté
+    expect(plain.grid[marks.neck.y + 4][cx]).toBe(STONE_LIGHT);
+    expect(lit.grid[marks.neck.y + 4][cx]).toBe(2);
+  });
+
+  it('colours the stone from the item, never from the rarity trim', () => {
+    const base = generateSprite16('stone-check', 'male', { ...STD_MALE });
+    const stoneOf = (id: string): string =>
+      applyEquipmentOverlays(base.grid, base.palette, {
+        weapon: null,
+        armor: null,
+        accessory: byId(id),
+      }).palette[STONE_INDEX];
+    // amulette de vie : icône verte, chaîne « rare » bleue → pierre verte
+    const [lifeR, lifeG, lifeB] = rgbOf(stoneOf('life_amulet'));
+    expect(lifeG).toBeGreaterThan(lifeR);
+    expect(lifeG).toBeGreaterThan(lifeB);
+    // pendentif de cristal : icône bleue, chaîne « épique » magenta → pierre bleue
+    const [crystalR, crystalG, crystalB] = rgbOf(stoneOf('crystal_pendant'));
+    expect(crystalB).toBeGreaterThan(crystalR);
+    expect(crystalB).toBeGreaterThan(crystalG);
+  });
+
+  it('keeps the jewel on the body in every animation frame', () => {
+    const accessory = byId('crystal_pendant');
+    for (const kind of ['idle', 'run', 'attack', 'hit', 'victory'] as const) {
+      const frames = generateSpriteFrames('anim-check', 'male', { ...STD_MALE }, kind)!;
+      expect(frames.length, kind).toBeGreaterThan(0);
+      frames.forEach((frame, frameIdx) => {
+        const out = applyEquipmentOverlays(
+          frame.grid,
+          frame.palette,
+          { weapon: null, armor: null, accessory },
+          { swingX: jewelSwing(kind, frameIdx), glint: jewelGlint(kind, frameIdx) },
+        );
+        const cells = stoneCells(out.grid);
+        // l'éclat remplace une cellule de la pierre par du blanc, il n'en ajoute pas
+        expect(cells.length, `${kind}${frameIdx} stone`).toBe(
+          jewelGlint(kind, frameIdx) ? 9 : 10,
+        );
+        for (const [x, y] of cells) {
+          // un bijou porté remplace un pixel du corps : il ne flotte jamais
+          expect(frame.grid[y][x], `${kind}${frameIdx} floats at ${x},${y}`).not.toBe(0);
+        }
+        // et il ne détache jamais un morceau du personnage
+        expect(nonZeroComponents(out.grid).length, `${kind}${frameIdx} islands`).toBe(
+          nonZeroComponents(frame.grid).length,
+        );
+      });
     }
   });
 
@@ -1138,28 +1269,29 @@ describe('equipment overlays v4 — chunky fitted gear', () => {
 
   it('swings hanging jewelry with the stride, worn gear stays put', () => {
     const base = generateSprite16('swing-check', 'female', { ...STD_FEMALE });
-    const marks = computeLandmarks(base.grid);
-    const medallion = (grid: number[][]): number =>
-      Math.min(
-        ...grid.flatMap((row, y) =>
-          row.map((c, x) =>
-            c >= ITEM_BLIT_OFFSET && c < ITEM_BLIT_OFFSET + 10 &&
-            y >= marks.chest.y - 3 && y <= marks.chest.y + 3 ? x : 99,
-          ),
-        ),
-      );
-    for (const id of ['might_pendant', 'lucky_coin', 'pyrite_orb']) {
-      const item = byId(id)!;
-      const loadout = {
-        weapon: null,
-        armor: null,
-        accessory: item.slot === 'accessory' ? item : null,
-      };
+    for (const id of ['might_pendant', 'pyrite_orb']) {
+      const loadout = { weapon: null, armor: null, accessory: byId(id) };
       const outs = [-1, 0, 1].map((swingX) => applyEquipmentOverlays(base.grid, base.palette, loadout, { swingX }));
-      const xs = outs.map((o) => medallion(o.grid));
+      const xs = outs.map((o) => Math.min(...stoneCells(o.grid).map(([x]) => x)));
       expect(xs[2]).toBe(xs[1] + 1);
       expect(xs[0]).toBe(xs[1] - 1);
+      // la chaîne ne balaie pas : seule la pierre oscille sous son creux
+      const chainMask = (grid: number[][]): string =>
+        JSON.stringify(grid.map((row) => row.map((v) => (v === TRIM_INDEX || v === TRIM_DARK ? v : 0))));
+      expect(chainMask(outs[0].grid)).toBe(chainMask(outs[2].grid));
+      expect(chainMask(outs[1].grid)).toBe(chainMask(outs[2].grid));
     }
+    // une broche est épinglée : elle ne bouge pas d'un pixel
+    const brooch = (swingX: number): string =>
+      JSON.stringify(
+        applyEquipmentOverlays(
+          base.grid, base.palette,
+          { weapon: null, armor: null, accessory: byId('lucky_coin') },
+          { swingX },
+        ).grid,
+      );
+    expect(brooch(1)).toBe(brooch(0));
+    expect(brooch(-1)).toBe(brooch(0));
     // rings are worn, never swinging
     const ring = applyEquipmentOverlays(
       base.grid, base.palette,

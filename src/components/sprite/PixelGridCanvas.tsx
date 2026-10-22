@@ -26,7 +26,7 @@ import { spritePixelScale } from './spritePixelScale';
  *         (une dague balaie 49°, un bâton 14°), allonge du poing ramenée de
  *         4 à 2 px et corps calé sur la frame d'impact.
  */
-export const SPRITE_RENDER_REV = 'r1179-strike-arc';
+export const SPRITE_RENDER_REV = 'r1180-jewel-anchor';
 
 function useDevicePixelRatio(): number {
   const [dpr, setDpr] = useState<number>(
