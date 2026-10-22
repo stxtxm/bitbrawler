@@ -166,6 +166,10 @@ interface RunRecord {
   essence?: EssenceData
   forge?: ForgeResult | null
   shop?: {
+    visited?: boolean | null
+    offers_count?: number | null
+    skipped?: boolean | null
+    skip_reason?: string | null
     essence_before?: number | null
     essence_after?: number | null
     purchased?: boolean | null
@@ -266,7 +270,17 @@ interface EssenceAnalysis {
   runs_excluded_by_character_replacement: number
 }
 
-interface ShopSimulatedAnalysis {
+/** #1300 : funnel shop complet, y compris les runs sans offre (shop verrouillé). */
+interface ShopFunnel {
+  shop_visits: number
+  shop_locked_runs: number
+  no_offer_runs: number
+  unaffordable_runs: number
+  affordable_runs: number
+  purchasable_within_budget_runs: number
+}
+
+interface ShopSimulatedAnalysis extends ShopFunnel {
   runs_with_shop_data: number
   avg_essence_before: number | null
   avg_offer_price: number | null
@@ -279,10 +293,12 @@ interface ShopSimulatedAnalysis {
   simulated_purchase_rate: number | null
   /** #1230 : runs abordables mais bloqués par le budget de la cohorte. */
   budget_limited_runs: number
+  /** #1300 : funnel imbriqué, en plus des champs aplatis ci-dessus. */
+  funnel: ShopFunnel
 }
 
 /** Ventilation par cohorte QA (#1230) : quel profil produit quelle métrique. */
-interface ShopCohortAnalysis {
+interface ShopCohortAnalysis extends ShopFunnel {
   cohort: string
   essence_budget: number | null
   runs_with_shop_data: number
@@ -291,9 +307,11 @@ interface ShopCohortAnalysis {
   budget_limited_runs: number
   avg_essence_before: number | null
   min_offer_price: number | null
+  /** #1300 : funnel imbriqué, en plus des champs aplatis ci-dessus. */
+  funnel: ShopFunnel
 }
 
-interface ShopRealAnalysis {
+interface ShopRealAnalysis extends ShopFunnel {
   runs_with_shop_data: number
   runs_with_purchase: number
   real_purchase_rate: number | null
@@ -303,6 +321,8 @@ interface ShopRealAnalysis {
   /** #1230 : runs où l'offre était abordable mais hors budget de cohorte. */
   budget_limited_runs: number
   cohorts: ShopCohortAnalysis[]
+  /** #1300 : funnel imbriqué, en plus des champs aplatis ci-dessus. */
+  funnel: ShopFunnel
 }
 
 interface IdleAnalysis {
@@ -519,6 +539,52 @@ function isCharacterReplacedRun(r: RunRecord): boolean {
   return false
 }
 
+function hasShopResult(r: RunRecord): boolean {
+  return r.shop != null || r.shop_data != null
+}
+
+// #1300 : le funnel compte aussi les runs SANS offre (shop verrouillé, inventaire
+// inaccessible). Les ignorer faisait disparaître la cohorte QA-FRESH des stats :
+// 10 runs verrouillés + 2 runs inabordables ressemblaient à une absence de mesure.
+function computeShopFunnel(runs: RunRecord[]): ShopFunnel {
+  const funnel: ShopFunnel = {
+    shop_visits: 0,
+    shop_locked_runs: 0,
+    no_offer_runs: 0,
+    unaffordable_runs: 0,
+    affordable_runs: 0,
+    purchasable_within_budget_runs: 0,
+  }
+  for (const r of runs) {
+    if (!hasShopResult(r)) continue
+    funnel.shop_visits++
+    if (r.shop?.skipped === true) {
+      funnel.shop_locked_runs++
+      continue
+    }
+    const offers = r.shop_data?.offers ?? []
+    if (r.shop?.visited === true && offers.length === 0) {
+      funnel.no_offer_runs++
+    }
+    const prices = offers
+      .map(o => o.price)
+      .filter((p): p is number => typeof p === 'number')
+    if (prices.length === 0) continue
+    const essenceBefore = r.shop?.essence_before ?? r.essence?.shop_before
+    if (typeof essenceBefore !== 'number') continue
+    if (essenceBefore < Math.min(...prices)) {
+      funnel.unaffordable_runs++
+      continue
+    }
+    funnel.affordable_runs++
+    const budget = r.cohort?.essence_budget ?? null
+    if (prices.some(p => p <= essenceBefore && isPurchaseWithinBudget(p, budget))) {
+      funnel.purchasable_within_budget_runs++
+    }
+  }
+  return funnel
+}
+
 // Shop simulated affordability (#711): real purchases are near-impossible for
 // fresh/mid-game QA characters (prices 150/250/350 💎 vs avg ~14 💎), so
 // avg_shop_spent stays null and the economic balance is blind. We simulate a
@@ -572,7 +638,11 @@ function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis 
     }
   }
 
+  const funnel = computeShopFunnel(runs.filter(hasShopResult))
+
   return {
+    ...funnel,
+    funnel,
     runs_with_shop_data: runsWithShopData.length,
     avg_essence_before: essenceCount > 0 ? Math.round((essenceSum / essenceCount) * 100) / 100 : null,
     avg_offer_price: allPrices.length > 0
@@ -628,8 +698,11 @@ function computeShopRealAnalysis(runs: RunRecord[]): ShopRealAnalysis | null {
   // #1230 : ventilation par cohorte. Un profil unique thésauriseur saturait le
   // taux (100 % sur les 20 derniers runs) ; chaque profil a désormais son taux,
   // ses moyens et son nombre de runs bridés par le budget.
+  // #1300 : on groupe tous les runs avec un résultat shop (même sans offre) pour
+  // que le funnel expose les runs verrouillés/inabordables de chaque cohorte.
+  const shopResultRuns = runs.filter(hasShopResult)
   const cohortGroups = new Map<string, RunRecord[]>()
-  for (const r of runsWithShopData) {
+  for (const r of shopResultRuns) {
     const name = r.cohort?.name ?? 'unsegmented'
     const group = cohortGroups.get(name)
     if (group) group.push(r)
@@ -637,29 +710,39 @@ function computeShopRealAnalysis(runs: RunRecord[]): ShopRealAnalysis | null {
   }
   const cohorts: ShopCohortAnalysis[] = [...cohortGroups.entries()]
     .map(([name, group]) => {
-      const purchased = group.filter(r => r.shop?.purchased === true).length
-      const prices = group
+      const groupWithOffers = group.filter(r => (r.shop_data?.offers?.length ?? 0) > 0)
+      const purchased = groupWithOffers.filter(r => r.shop?.purchased === true).length
+      const prices = groupWithOffers
         .flatMap(r => (r.shop_data?.offers ?? []).map(o => o.price))
         .filter((p): p is number => typeof p === 'number')
-      const essences = group
+      const essences = groupWithOffers
         .map(r => r.shop?.essence_before ?? r.essence?.shop_before)
         .filter((e): e is number => typeof e === 'number')
+      const funnel = computeShopFunnel(group)
       return {
         cohort: name,
         essence_budget: group[0]?.cohort?.essence_budget ?? null,
-        runs_with_shop_data: group.length,
+        runs_with_shop_data: groupWithOffers.length,
         runs_with_purchase: purchased,
-        real_purchase_rate: Math.round((purchased / group.length) * 1000) / 1000,
+        real_purchase_rate: groupWithOffers.length > 0
+          ? Math.round((purchased / groupWithOffers.length) * 1000) / 1000
+          : null,
         budget_limited_runs: group.filter(r => r.shop_data?.budget_limited === true).length,
         avg_essence_before: essences.length > 0
           ? Math.round((essences.reduce((s, e) => s + e, 0) / essences.length) * 100) / 100
           : null,
         min_offer_price: prices.length > 0 ? Math.min(...prices) : null,
+        ...funnel,
+        funnel,
       }
     })
     .sort((a, b) => a.cohort.localeCompare(b.cohort))
 
+  const funnel = computeShopFunnel(shopResultRuns)
+
   return {
+    ...funnel,
+    funnel,
     runs_with_shop_data: runsWithShopData.length,
     runs_with_purchase: purchasedRuns.length,
     real_purchase_rate: Math.round((purchasedRuns.length / runsWithShopData.length) * 1000) / 1000,
@@ -1434,7 +1517,22 @@ function analyze(stats: RunRecord[]): AnalysisReport {
       ? Math.round(avgEssenceBefore / avgPurchaseCost)
       : null
 
-    if (shopReal.real_purchase_rate < 0.1) {
+    // #1300 : le taux agrégé ne dit rien de la cohorte FRESH quand son funnel est
+    // vide (shop verrouillé) ou hors de portée (essence sous le prix plancher).
+    const freshCohort = shopReal.cohorts.find(c => c.cohort === 'QA-FRESH')
+    const freshFunnel = freshCohort?.funnel
+    const freshOutOfReach = freshCohort !== undefined && freshFunnel !== undefined
+      && freshCohort.runs_with_purchase === 0
+      && (freshFunnel.unaffordable_runs > 0 || freshFunnel.shop_locked_runs > 0)
+
+    if (freshOutOfReach && freshCohort !== undefined && freshFunnel !== undefined) {
+      if (freshFunnel.unaffordable_runs > 0) {
+        const lockedDetail = freshFunnel.shop_locked_runs > 0 ? `, ${freshFunnel.shop_locked_runs} locked` : ''
+        suggestions.push(`QA-FRESH funnel: shop hors de portée à ce stade (${freshFunnel.unaffordable_runs} runs sous le prix plancher) — ${freshFunnel.unaffordable_runs}/${freshFunnel.shop_visits} shop visit(s) below the cheapest offer${lockedDetail}; ${freshCohort.runs_with_purchase}/${freshCohort.runs_with_shop_data} purchase(s). The aggregate rate carries no price signal until this cohort can reach the cheapest offer.`)
+      } else {
+        suggestions.push(`QA-FRESH funnel: ${freshFunnel.shop_locked_runs} run(s) locked by shopUnlockLevel (${freshFunnel.shop_visits} shop visit(s), ${freshCohort.runs_with_purchase}/${freshCohort.runs_with_shop_data} purchase(s)). Wait for fresh runs above the gate before reading a price signal.`)
+      }
+    } else if (shopReal.real_purchase_rate < 0.1) {
       suggestions.push(`Real shop purchase rate is ${ratePct}% (${shopReal.runs_with_purchase}/${shopReal.runs_with_shop_data} runs) — players are not buying. Consider lowering SHOP_OFFERS prices.`)
     } else if (shopReal.real_purchase_rate > 0.6 && measurementPending) {
       suggestions.push(`Real shop purchase rate is ${ratePct}% (${shopReal.runs_with_purchase}/${shopReal.runs_with_shop_data} runs) — measurement pending: ${unsegmentedRuns} unsegmented run(s) vs ${segmentedRuns} segmented (below REAL_SHOP_MIN_RUNS=${REAL_SHOP_MIN_RUNS}). The rate is carried by the legacy hoarding character; no price action until fresh segmented runs exist.`)
@@ -1716,6 +1814,7 @@ function printReport(report: AnalysisReport): void {
     if (rarities) console.log(`  Rarities:       ${rarities}`)
     console.log(`  Affordable:     ${s.affordable_offer_count} offers (avg ${s.avg_affordable_offer_count?.toFixed(1) ?? 'n/a'}/run)`)
     console.log(`  Would purchase: ${s.would_purchase_runs}/${s.runs_with_shop_data} runs (${(s.simulated_purchase_rate! * 100).toFixed(0)}%)`)
+    console.log(`  Funnel:         ${s.funnel.shop_visits} visit(s), ${s.funnel.shop_locked_runs} locked, ${s.funnel.no_offer_runs} no offer, ${s.funnel.unaffordable_runs} unaffordable`)
     console.log('')
   }
 
@@ -1731,6 +1830,7 @@ function printReport(report: AnalysisReport): void {
       .map(([k, v]) => `${k}=${v}`)
       .join(', ')
     if (purchaseRarities) console.log(`  Rarities:       ${purchaseRarities}`)
+    console.log(`  Funnel:         ${r.funnel.shop_visits} visit(s), ${r.funnel.shop_locked_runs} locked, ${r.funnel.no_offer_runs} no offer, ${r.funnel.unaffordable_runs} unaffordable, ${r.funnel.affordable_runs} affordable`)
     console.log('')
   }
 
