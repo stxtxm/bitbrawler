@@ -89,6 +89,10 @@ interface RunRecord {
     boss_max_hp?: number | null
   }
   shop?: {
+    visited?: boolean | null
+    offers_count?: number | null
+    skipped?: boolean | null
+    skip_reason?: string | null
     essence_before?: number | null
     essence_after?: number | null
     purchased?: boolean | null
@@ -367,7 +371,16 @@ function computeHpAnalysis(runs: RunRecord[]): HpAnalysis | null {
 // cheapest offer WITHIN its cohort budget (#1230 — the shared rule lives in
 // qa-bot-helpers so the bot and the analyzer can never drift apart).
 
-interface ShopSimulatedAnalysis {
+interface ShopFunnel {
+  shop_visits: number
+  shop_locked_runs: number
+  no_offer_runs: number
+  unaffordable_runs: number
+  affordable_runs: number
+  purchasable_within_budget_runs: number
+}
+
+interface ShopSimulatedAnalysis extends ShopFunnel {
   runs_with_shop_data: number
   avg_essence_before: number | null
   avg_offer_price: number | null
@@ -379,6 +392,50 @@ interface ShopSimulatedAnalysis {
   would_purchase_runs: number
   simulated_purchase_rate: number | null
   budget_limited_runs: number
+  funnel: ShopFunnel
+}
+
+function hasShopResult(r: RunRecord): boolean {
+  return r.shop != null || r.shop_data != null
+}
+
+function computeShopFunnel(runs: RunRecord[]): ShopFunnel {
+  const funnel: ShopFunnel = {
+    shop_visits: 0,
+    shop_locked_runs: 0,
+    no_offer_runs: 0,
+    unaffordable_runs: 0,
+    affordable_runs: 0,
+    purchasable_within_budget_runs: 0,
+  }
+  for (const r of runs) {
+    if (!hasShopResult(r)) continue
+    funnel.shop_visits++
+    if (r.shop?.skipped === true) {
+      funnel.shop_locked_runs++
+      continue
+    }
+    const offers = r.shop_data?.offers ?? []
+    if (r.shop?.visited === true && offers.length === 0) {
+      funnel.no_offer_runs++
+    }
+    const prices = offers
+      .map(o => o.price)
+      .filter((p): p is number => typeof p === 'number')
+    if (prices.length === 0) continue
+    const essenceBefore = r.shop?.essence_before ?? r.essence?.shop_before
+    if (typeof essenceBefore !== 'number') continue
+    if (essenceBefore < Math.min(...prices)) {
+      funnel.unaffordable_runs++
+      continue
+    }
+    funnel.affordable_runs++
+    const budget = r.cohort?.essence_budget ?? null
+    if (prices.some(p => p <= essenceBefore && isPurchaseWithinBudget(p, budget))) {
+      funnel.purchasable_within_budget_runs++
+    }
+  }
+  return funnel
 }
 
 function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis | null {
@@ -425,7 +482,11 @@ function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis 
     }
   }
 
+  const funnel = computeShopFunnel(runs.filter(hasShopResult))
+
   return {
+    ...funnel,
+    funnel,
     runs_with_shop_data: runsWithShopData.length,
     avg_essence_before: essenceCount > 0 ? Math.round((essenceSum / essenceCount) * 100) / 100 : null,
     avg_offer_price: allPrices.length > 0
@@ -451,7 +512,7 @@ function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis 
 // #1230 adds the per-cohort breakdown: the single hoarding profile saturated the
 // rate, so each QA cohort now reports its own rate and its budget-blocked runs.
 
-interface ShopCohortAnalysis {
+interface ShopCohortAnalysis extends ShopFunnel {
   cohort: string
   essence_budget: number | null
   runs_with_shop_data: number
@@ -460,9 +521,10 @@ interface ShopCohortAnalysis {
   budget_limited_runs: number
   avg_essence_before: number | null
   min_offer_price: number | null
+  funnel: ShopFunnel
 }
 
-interface ShopRealAnalysis {
+interface ShopRealAnalysis extends ShopFunnel {
   runs_with_shop_data: number
   runs_with_purchase: number
   real_purchase_rate: number | null
@@ -471,6 +533,7 @@ interface ShopRealAnalysis {
   cheapest_offer_share: number | null
   budget_limited_runs: number
   cohorts: ShopCohortAnalysis[]
+  funnel: ShopFunnel
 }
 
 const REAL_SHOP_MIN_RUNS = 10
@@ -501,8 +564,9 @@ function computeShopRealAnalysis(runs: RunRecord[]): ShopRealAnalysis | null {
 
   const budgetLimitedRuns = runsWithShopData.filter(r => r.shop_data?.budget_limited === true).length
 
+  const shopResultRuns = runs.filter(hasShopResult)
   const cohortGroups = new Map<string, RunRecord[]>()
-  for (const r of runsWithShopData) {
+  for (const r of shopResultRuns) {
     const name = r.cohort?.name ?? 'unsegmented'
     const group = cohortGroups.get(name)
     if (group) group.push(r)
@@ -510,29 +574,39 @@ function computeShopRealAnalysis(runs: RunRecord[]): ShopRealAnalysis | null {
   }
   const cohorts: ShopCohortAnalysis[] = [...cohortGroups.entries()]
     .map(([name, group]) => {
-      const purchased = group.filter(r => r.shop?.purchased === true).length
-      const prices = group
+      const groupWithOffers = group.filter(r => (r.shop_data?.offers?.length ?? 0) > 0)
+      const purchased = groupWithOffers.filter(r => r.shop?.purchased === true).length
+      const prices = groupWithOffers
         .flatMap(r => (r.shop_data?.offers ?? []).map(o => o.price))
         .filter((p): p is number => typeof p === 'number')
-      const essences = group
+      const essences = groupWithOffers
         .map(r => r.shop?.essence_before ?? r.essence?.shop_before)
         .filter((e): e is number => typeof e === 'number')
+      const funnel = computeShopFunnel(group)
       return {
         cohort: name,
         essence_budget: group[0]?.cohort?.essence_budget ?? null,
-        runs_with_shop_data: group.length,
+        runs_with_shop_data: groupWithOffers.length,
         runs_with_purchase: purchased,
-        real_purchase_rate: Math.round((purchased / group.length) * 1000) / 1000,
+        real_purchase_rate: groupWithOffers.length > 0
+          ? Math.round((purchased / groupWithOffers.length) * 1000) / 1000
+          : null,
         budget_limited_runs: group.filter(r => r.shop_data?.budget_limited === true).length,
         avg_essence_before: essences.length > 0
           ? Math.round((essences.reduce((s, e) => s + e, 0) / essences.length) * 100) / 100
           : null,
         min_offer_price: prices.length > 0 ? Math.min(...prices) : null,
+        ...funnel,
+        funnel,
       }
     })
     .sort((a, b) => a.cohort.localeCompare(b.cohort))
 
+  const funnel = computeShopFunnel(shopResultRuns)
+
   return {
+    ...funnel,
+    funnel,
     runs_with_shop_data: runsWithShopData.length,
     runs_with_purchase: purchasedRuns.length,
     real_purchase_rate: Math.round((purchasedRuns.length / runsWithShopData.length) * 1000) / 1000,
@@ -568,7 +642,20 @@ function shopRealSuggestions(real: ShopRealAnalysis | null): string[] {
     ? Math.round(avgEssenceBefore / avgPurchaseCost)
     : null
 
-  if (real.real_purchase_rate < 0.1) {
+  const freshCohort = real.cohorts.find(c => c.cohort === 'QA-FRESH')
+  const freshFunnel = freshCohort?.funnel
+  const freshOutOfReach = freshCohort !== undefined && freshFunnel !== undefined
+    && freshCohort.runs_with_purchase === 0
+    && (freshFunnel.unaffordable_runs > 0 || freshFunnel.shop_locked_runs > 0)
+
+  if (freshOutOfReach && freshCohort !== undefined && freshFunnel !== undefined) {
+    if (freshFunnel.unaffordable_runs > 0) {
+      const lockedDetail = freshFunnel.shop_locked_runs > 0 ? `, ${freshFunnel.shop_locked_runs} locked` : ''
+      out.push(`QA-FRESH funnel: shop hors de portée à ce stade (${freshFunnel.unaffordable_runs} runs sous le prix plancher) — ${freshFunnel.unaffordable_runs}/${freshFunnel.shop_visits} shop visit(s) below the cheapest offer${lockedDetail}; ${freshCohort.runs_with_purchase}/${freshCohort.runs_with_shop_data} purchase(s). The aggregate rate carries no price signal until this cohort can reach the cheapest offer.`)
+    } else {
+      out.push(`QA-FRESH funnel: ${freshFunnel.shop_locked_runs} run(s) locked by shopUnlockLevel (${freshFunnel.shop_visits} shop visit(s), ${freshCohort.runs_with_purchase}/${freshCohort.runs_with_shop_data} purchase(s)). Wait for fresh runs above the gate before reading a price signal.`)
+    }
+  } else if (real.real_purchase_rate < 0.1) {
     out.push(`Real shop purchase rate is ${ratePct}% (${real.runs_with_purchase}/${real.runs_with_shop_data} runs). Consider lowering SHOP_OFFERS prices.`)
   } else if (real.real_purchase_rate > 0.6 && measurementPending) {
     out.push(`Real shop purchase rate is ${ratePct}% (${real.runs_with_purchase}/${real.runs_with_shop_data} runs) — measurement pending: ${unsegmentedRuns} unsegmented run(s) vs ${segmentedRuns} segmented (below REAL_SHOP_MIN_RUNS=${REAL_SHOP_MIN_RUNS}). The rate is carried by the legacy hoarding character; no price action until fresh segmented runs exist.`)
@@ -2059,6 +2146,135 @@ describe('QA Shop Real Purchase Analysis (#1229)', () => {
       expect(source).toContain('Simulated shop purchase rate')
       expect(source).toContain('calibrate on cost relative to essence')
     })
+  })
+})
+
+describe('QA Shop Funnel (#1300)', () => {
+  const FRESH = { name: 'QA-FRESH', essence_budget: 50 }
+  let funnelRunSeq = 0
+
+  function funnelRun(opts: {
+    cohort?: { name: string; essence_budget: number | null } | null
+    locked?: boolean
+    essenceBefore?: number | null
+    prices?: number[]
+    purchased?: boolean
+  }): RunRecord {
+    funnelRunSeq++
+    const cohort = opts.cohort === undefined ? FRESH : opts.cohort
+    return {
+      date: '2026-10-19', run: `funnel-${funnelRunSeq}`, character: 'QA-FRESH', fights: [], errors: [],
+      cohort,
+      shop: {
+        visited: opts.locked !== true,
+        offers_count: opts.prices?.length ?? 0,
+        skipped: opts.locked === true,
+        skip_reason: opts.locked === true ? 'shop requires LVL 5' : null,
+        essence_before: opts.essenceBefore ?? null,
+        essence_after: opts.essenceBefore ?? null,
+        purchased: opts.purchased ?? false,
+        cost: null,
+        item_rarity: null,
+      },
+      shop_data: {
+        offers: (opts.prices ?? []).map((price, index) => ({ name: `offer-${index}`, rarity: 'rare', price })),
+        purchased_offer: opts.purchased ? 0 : null,
+        essence_after_purchase: null,
+        essence_budget: cohort?.essence_budget ?? null,
+        budget_limited: false,
+        budget_blocked_price: null,
+      },
+    }
+  }
+
+  function lockedFreshRuns(count: number): RunRecord[] {
+    return Array.from({ length: count }, () => funnelRun({ locked: true }))
+  }
+
+  function unaffordableFreshRuns(): RunRecord[] {
+    return [
+      funnelRun({ essenceBefore: 3.44, prices: [30, 88, 50] }),
+      funnelRun({ essenceBefore: 6.29, prices: [30, 88, 50] }),
+    ]
+  }
+
+  it('expose les runs verrouillés et inabordables au lieu de les ignorer', () => {
+    const analysis = computeShopRealAnalysis([...lockedFreshRuns(10), ...unaffordableFreshRuns()])
+
+    expect(analysis).not.toBeNull()
+    expect(analysis?.runs_with_shop_data).toBe(2)
+    expect(analysis?.runs_with_purchase).toBe(0)
+    expect(analysis?.real_purchase_rate).toBe(0)
+    expect(analysis?.funnel).toMatchObject({
+      shop_visits: 12,
+      shop_locked_runs: 10,
+      no_offer_runs: 0,
+      unaffordable_runs: 2,
+      affordable_runs: 0,
+      purchasable_within_budget_runs: 0,
+    })
+    expect(analysis).toMatchObject({
+      shop_visits: 12,
+      shop_locked_runs: 10,
+      unaffordable_runs: 2,
+    })
+
+    const fresh = analysis?.cohorts.find(c => c.cohort === 'QA-FRESH')
+    expect(fresh).toMatchObject({
+      runs_with_shop_data: 2,
+      runs_with_purchase: 0,
+      real_purchase_rate: 0,
+    })
+    expect(fresh?.funnel).toMatchObject({
+      shop_visits: 12,
+      shop_locked_runs: 10,
+      unaffordable_runs: 2,
+      affordable_runs: 0,
+    })
+    expect(fresh).toMatchObject({
+      shop_visits: 12,
+      shop_locked_runs: 10,
+      unaffordable_runs: 2,
+      affordable_runs: 0,
+    })
+  })
+
+  it('la suggestion lit le funnel FRESH au lieu de conclure à une mesure manquante', () => {
+    const unsegmented = Array.from({ length: 8 }, () =>
+      funnelRun({ cohort: null, essenceBefore: 435, prices: [30, 88, 50], purchased: true }))
+    const analysis = computeShopRealAnalysis([...unsegmented, ...lockedFreshRuns(10), ...unaffordableFreshRuns()])
+
+    expect(analysis?.runs_with_shop_data).toBe(10)
+    const suggestions = shopRealSuggestions(analysis)
+    expect(suggestions.some(s => s.includes('shop hors de portée à ce stade (2 runs sous le prix plancher)'))).toBe(true)
+    expect(suggestions.some(s => s.includes('measurement pending'))).toBe(false)
+  })
+
+  it('expose aussi le funnel dans l\'analyse simulée', () => {
+    const analysis = computeShopSimulatedAnalysis([
+      ...lockedFreshRuns(10),
+      funnelRun({ essenceBefore: 3.44, prices: [30, 88, 50] }),
+    ])
+
+    expect(analysis).not.toBeNull()
+    expect(analysis?.funnel).toMatchObject({
+      shop_visits: 11,
+      shop_locked_runs: 10,
+      unaffordable_runs: 1,
+      affordable_runs: 0,
+    })
+    expect(analysis?.funnel.purchasable_within_budget_runs).toBe(analysis?.would_purchase_runs)
+  })
+
+  it('le source expose ShopFunnel sur les analyses réelle, simulée et par cohorte', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+    expect(source).toContain('interface ShopFunnel')
+    expect(source).toContain('computeShopFunnel(shopResultRuns)')
+    expect(source).toContain('computeShopFunnel(group)')
+    expect(source).toContain('funnel: ShopFunnel')
+    expect(source).toContain('shop_locked_runs')
+    expect(source).toContain('unaffordable_runs')
+    expect(source).toContain('shop hors de portée à ce stade')
   })
 })
 
