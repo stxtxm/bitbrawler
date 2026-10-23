@@ -60,11 +60,14 @@ export default {
    *  profil pour un run ciblé.
    *
    *  Les budgets reflètent l'essence qu'un joueur de ce stade peut réellement
-   *  consacrer à UNE offre — pas la thésaurisation du bot. */
+   *  consacrer à UNE offre — pas la thésaurisation du bot. Un budget doit
+   *  rester INFÉRIEUR à l'offre médiane du profil, et non supérieur à son
+   *  essence moyenne : au-dessus, le plafond ne mord jamais et le taux d'achat
+   *  ne mesure plus le prix (#1308 — 0 run bridé sur 927). */
   cohorts: [
     { name: 'QA-FRESH', minLevel: 1, maxLevel: 5, essenceBudget: 50 },
-    { name: 'QA-MID', minLevel: 6, maxLevel: 21, essenceBudget: 150 },
-    { name: 'QA-END', minLevel: 22, essenceBudget: 400 },
+    { name: 'QA-MID', minLevel: 6, maxLevel: 21, essenceBudget: 40 },
+    { name: 'QA-END', minLevel: 22, essenceBudget: 120 },
   ],
   /** Cohorte forcée (QA-FRESH | QA-MID | QA-END) — QA_COHORT env. */
   cohort: process.env.QA_COHORT || null,

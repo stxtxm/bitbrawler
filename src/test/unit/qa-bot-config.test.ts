@@ -336,6 +336,38 @@ describe('QA Bot Fight Type Decision', () => {
     })
   })
 
+  describe('qa-bot.config cohort budgets (#1308)', () => {
+    const budgetFor = (name: string): number | undefined =>
+      qaBotConfig.cohorts.find(c => c.name === name)?.essenceBudget
+
+    it('caps QA-MID at 40 so the ceiling can bite on the median offer', () => {
+      // 150 was above the profile's average essence (72) and the offer set, so
+      // budget_limited_runs stayed at 0 over 927 runs and the rate measured
+      // hoarding instead of price.
+      expect(budgetFor('QA-MID')).toBe(40)
+    })
+
+    it('caps QA-END at 120', () => {
+      expect(budgetFor('QA-END')).toBe(120)
+    })
+
+    it('leaves QA-FRESH at 50 until the early-game essence fix (#1301)', () => {
+      expect(budgetFor('QA-FRESH')).toBe(50)
+    })
+
+    it('gives the end-game cohort more headroom than the mid-game one', () => {
+      expect(budgetFor('QA-MID')).toBeLessThan(budgetFor('QA-END') as number)
+    })
+
+    it('defines one budget per cohort with no missing value', () => {
+      expect(qaBotConfig.cohorts.length).toBe(3)
+      for (const cohort of qaBotConfig.cohorts) {
+        expect(typeof cohort.essenceBudget).toBe('number')
+        expect(cohort.essenceBudget).toBeGreaterThan(0)
+      }
+    })
+  })
+
   describe('qa-bot.config baseUrl (production host)', () => {
     it('defaults to the Cloudflare Pages production host', () => {
       expect(qaBotConfig.baseUrl).toBe('https://bitbrawler.pages.dev')
