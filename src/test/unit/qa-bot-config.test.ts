@@ -16,6 +16,7 @@ import {
   shouldForcePersistentReset,
 } from '../../utils/qa-bot-helpers'
 import { PROGRESSION_GATES } from '../../config/progressionConfig'
+import { SHOP_OFFERS } from '../../data/shopConstants'
 
 // ── Fight type decision function (mirrors qa-bot.mjs logic) ──
 
@@ -336,9 +337,10 @@ describe('QA Bot Fight Type Decision', () => {
     })
   })
 
-  describe('qa-bot.config cohort budgets (#1308)', () => {
+  describe('qa-bot.config cohort budgets (#1308, #1310)', () => {
     const budgetFor = (name: string): number | undefined =>
       qaBotConfig.cohorts.find(c => c.name === name)?.essenceBudget
+    const maxOfferPrice = Math.max(...SHOP_OFFERS.map(offer => offer.price))
 
     it('caps QA-MID at 40 so the ceiling can bite on the median offer', () => {
       // 150 was above the profile's average essence (72) and the offer set, so
@@ -347,8 +349,10 @@ describe('QA Bot Fight Type Decision', () => {
       expect(budgetFor('QA-MID')).toBe(40)
     })
 
-    it('caps QA-END at 120', () => {
-      expect(budgetFor('QA-END')).toBe(120)
+    it('caps QA-END at 60, below the most expensive offer, so the ceiling can bite', () => {
+      // 120 was above the priciest offer (88), so budget_limited could never
+      // trigger for the end-game cohort.
+      expect(budgetFor('QA-END')).toBe(60)
     })
 
     it('leaves QA-FRESH at 50 until the early-game essence fix (#1301)', () => {
@@ -357,6 +361,12 @@ describe('QA Bot Fight Type Decision', () => {
 
     it('gives the end-game cohort more headroom than the mid-game one', () => {
       expect(budgetFor('QA-MID')).toBeLessThan(budgetFor('QA-END') as number)
+    })
+
+    it('keeps every cohort budget below the priciest offer so budget_limited can trigger', () => {
+      for (const cohort of qaBotConfig.cohorts) {
+        expect(cohort.essenceBudget).toBeLessThan(maxOfferPrice)
+      }
     })
 
     it('defines one budget per cohort with no missing value', () => {
