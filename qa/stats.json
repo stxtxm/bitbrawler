@@ -151778,5 +151778,312 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-10-23T10:01:29.153Z",
+    "run": "2026-10-23",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 175,
+        "fight_duration_ms": 15071,
+        "max_hp": 536,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 25.02
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 2,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 11,
+      "vit": 29,
+      "dex": 20,
+      "luk": 17,
+      "int": 16,
+      "foc": 12,
+      "fights": 0
+    },
+    "initial_level": 18,
+    "initial_xp": {
+      "current": 457,
+      "max": 14137
+    },
+    "progression_curve": {
+      "level": 18,
+      "total_xp": 89515,
+      "xp_for_next": 14137,
+      "percent": 3.2
+    },
+    "initial_max_hp": 536,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife",
+        "rarity": "RARE"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 18,
+      "xp": 3546,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 11,
+      "vit": 29,
+      "dex": 20,
+      "luk": 17,
+      "int": 17,
+      "foc": 12,
+      "last xp": 88,
+      "fights": 3
+    },
+    "final_max_hp": 536,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife",
+        "rarity": "RARE"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife",
+        "rarity": "RARE"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20206,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "wraith"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 184,
+      "xp_events": [
+        {
+          "time_ms": 3053,
+          "xp": 96,
+          "monster": "wraith",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 13660,
+          "xp": 88,
+          "monster": "wraith",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        507,
+        1524,
+        3053,
+        10605,
+        12128,
+        13660
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 96,
+        "essence": 0.38,
+        "monster": "wraith"
+      },
+      {
+        "result": "victory",
+        "xp": 88,
+        "essence": 0.38,
+        "monster": "wraith"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.74,
+      "next_level_eta": "⬆ 19m 58s",
+      "power_ratio": "⚔ 0.55x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.08x",
+      "interval": "10.4s",
+      "streak_bonus": "🔥 2-win streak (+15%)"
+    },
+    "initial_essence": 24.15,
+    "final_essence": 15.84,
+    "essence": {
+      "before_idle": 24.15,
+      "after_idle": 24.91,
+      "per_fight": [
+        25.02
+      ],
+      "forge_before": 25,
+      "forge_after_salvage": 75,
+      "forge_after_fusion": 75,
+      "forge_after_upgrade": 45,
+      "forge_after": 45,
+      "shop_before": 45,
+      "shop_after": 15,
+      "final": 15.84,
+      "flow": {
+        "idle_gained": 0.76,
+        "fights_change": null,
+        "salvage_gained": 50,
+        "fusion_cost": 0,
+        "upgrade_cost": 30,
+        "forge_net": 20,
+        "shop_cost": 30,
+        "net_change": -8.31
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 25,
+      "essence_after_salvage": 75,
+      "essence_after_fusion": 75,
+      "essence_after_upgrade": 45,
+      "items_before": 2,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 45,
+      "items_after": 1,
+      "salvage_essence_gained": 50,
+      "fusion_cost": null,
+      "upgrade_cost": 30,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "COMMON",
+      "cost": 30,
+      "essence_before": 45,
+      "essence_after": 15,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Iron Helm",
+            "rarity": "COMMON",
+            "price": 30
+          },
+          {
+            "name": "Mystic Ring",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 15,
+        "essence_budget": 150,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 150
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1017,
+      "arena": 282
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Iron Helm",
+          "rarity": "COMMON",
+          "price": 30
+        },
+        {
+          "name": "Mystic Ring",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 15,
+      "essence_budget": 150,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
