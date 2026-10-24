@@ -1,8 +1,8 @@
 {
   "run": "2026-10-24",
   "character": "QA-PERSIST",
-  "exhausted": false,
-  "updated_at": "2026-10-24T13:04:31.015Z",
+  "exhausted": true,
+  "updated_at": "2026-10-24T15:14:37.336Z",
   "source": "reused",
   "character_type": "persistent",
   "persistent_generation": 0,
