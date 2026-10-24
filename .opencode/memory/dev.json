@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-24T21:35:07Z",
+  "last_session": "2026-10-24T21:36:14Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1229 analyze-qa-stats: (1) qa/stats.json exposes shop.purchased/cost/item_rarity at run.shop AND a nested shop.shop_data (offers, purchased_offer) duplicated at top-level run.shop_data — the analyzer's RunRecord.shop type was stale (only essence_before/after). Real purchase rate on validRuns = 43/58 (the issue's 124/148 counts all runs incl. 0-fight). (2) The simulated affordability proxy is saturated by the persistent QA essence hoard (avg 435 vs cheapest ~20) → 5 blind +10% hikes. Branch price suggestion on real_purchase_rate when runs_with_shop_data >= REAL_SHOP_MIN_RUNS (10), fallback simulated. (3) TrendWindow gained fights_count; last_3/last_5 alerts now require >= MIN_TREND_FIGHTS=10 fights so fightsPerRun:1 no longer produces false declining/swing alerts.",
-      "issue": "#1229",
-      "date": "2026-10-18"
-    },
     {
       "lesson": "analyze-qa-stats.ts #1229 : (1) le taux d'achat shop reel doit etre calcule sur TOUTES les runs portant shop_data.offers, pas sur validRuns — 90/148 observations shop sont sur des runs sans combat (sequence de combat skippee mais shop teste), validRuns ne donnait que 43/58 (74%) au lieu de 124/148 (83.8%). (2) gater les alertes de tendance win-rate sur fights_count (combats), pas count (runs) : fightsPerRun=1 rendait last_3/last_5 = 3-5 combats -> faux positifs 48%->0%.",
       "issue": "#1229",
@@ -171,6 +166,11 @@
     {
       "lesson": "Issue #1260: modification de workflow explicitement demandée par l'issue (step TELEMETRY_REPORT dans tech-lead.yml) malgré la règle générale 'ne pas toucher aux workflows'. Pattern: step dédié avec secrets SUPABASE_* scopés à son shell, écrit /tmp/telemetry-report.json (fallback '{}' si secrets/table absents), exporte TELEMETRY_REPORT via GITHUB_ENV, l'agent ne reçoit que le JSON. Garde-fou ajouté dans workflow-integrity.test.ts (secret hors step agent + fallback).",
       "issue": "#1260",
+      "date": "2026-10-24"
+    },
+    {
+      "lesson": "Issue #1299 watchdog: statusCheckRollup contient aussi les checks de deploiement (Cloudflare Pages, workflowName vide) -> filtrer select(.workflowName == \"CI\") sinon CHECK_COUNT>=1 sur les PR sans CI et le filet orphelines ne part jamais. Anti-tempete: le reviewer ne peut pas poster de review formelle sur une PR auteur github-actions[bot] (meme identite) -> detecter aussi les commentaires contenant 'Review PR #' posterieurs au commit (comparaison ISO created_at > commit.committer.date).",
+      "issue": "#1299",
       "date": "2026-10-24"
     }
   ]
