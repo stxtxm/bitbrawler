@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-24T21:38:25Z",
+  "last_session": "2026-10-24T21:44:32Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1241 QA fresh day: state.json ne persistait pas character_type, donc savedCharacterName forcé à null chaque lundi. Fix = helper resolveReusableDailyCharacter(state, runKey) qui exige state.run === runKey ET character_type === 'fresh' (réutilise même si exhausted), + shouldReplaceExhaustedCharacter qui protège fresh et persistent. Persister character_type dans TOUS les persistQaState (initial, final, maybeReplace). Les tests source-contract de qa-bot.mjs exigent le littéral runRecord.character_type === 'persistent' : le garder dans le label de log pour ne pas casser le test #731.",
-      "issue": "#1241",
-      "date": "2026-10-19"
-    },
     {
       "lesson": "Issue #1243 ratio XP win/loss : le diffBonus de calculateFightXp est désormais asymétrique (cap +0.5 victoire / +0.15 défaite, floor -0.5 commun). Les tests QC doivent figer Math.random (spy à 0.5 => variance exactement 1.0) pour asserter des valeurs entières stables. Attention : le ratio mesuré par analyze-qa-stats inclut les combats PvE (modifier 2.5) et des niveaux de persos différents entre wins/losses — filtrer fight_type==='pvp' avant de conclure.",
       "issue": "#1243",
@@ -171,6 +166,11 @@
     {
       "lesson": "Issue #1312 QA XP: le regex body-wide /\\+(\\d+)\\s*XP/ ramassait le popup .xp-gain-popup perime de l arene. Toujours lire .result-xp-popup (texte exact +N XP ou BOSS REMAINS=>0) via parseResultXpPopup. boss_avg_xp_per_fight ne doit moyenner que les victoires; boss_avg_xp_per_loss expose les defaites.",
       "issue": "#1312",
+      "date": "2026-10-24"
+    },
+    {
+      "lesson": "Issue #1299 : statusCheckRollup (gh pr list --json) contient les déploiements Cloudflare Pages (workflowName vide). Filtrer sur workflowName == \"CI\" pour compter la vraie CI. Anti-tempête watchdog : le reviewer ne peut pas poster de review formelle sur une PR github-actions[bot], il commente \"## Review PR #<n>\" → comparer created_at des commentaires au committer.date du commit de tête.",
+      "issue": "#1299",
       "date": "2026-10-24"
     }
   ]
