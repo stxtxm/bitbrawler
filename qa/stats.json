@@ -155491,5 +155491,304 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-10-24T19:01:34.206Z",
+    "run": "2026-10-24",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 68,
+        "fight_duration_ms": 15055,
+        "max_hp": 597,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 34.41
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 1,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 12,
+      "vit": 31,
+      "dex": 21,
+      "luk": 17,
+      "int": 25,
+      "foc": 19,
+      "fights": 0
+    },
+    "initial_level": 21,
+    "initial_xp": {
+      "current": 4630,
+      "max": 18232
+    },
+    "progression_curve": {
+      "level": 21,
+      "total_xp": 140103,
+      "xp_for_next": 18232,
+      "percent": 25.4
+    },
+    "initial_max_hp": 597,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife"
+      },
+      {
+        "slot": "🛡",
+        "name": "Void Robe"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 21,
+      "xp": 7857,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 12,
+      "vit": 31,
+      "dex": 21,
+      "luk": 17,
+      "int": 25,
+      "foc": 19,
+      "last xp": 106,
+      "fights": 6
+    },
+    "final_max_hp": 597,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife"
+      },
+      {
+        "slot": "🛡",
+        "name": "Void Robe"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife"
+      },
+      {
+        "slot": "🛡",
+        "name": "Void Robe"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 24395,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "chimera"
+      ],
+      "victories": 1,
+      "defeats": 0,
+      "xp_total": 33,
+      "xp_events": [
+        {
+          "time_ms": 24395,
+          "xp": 33,
+          "monster": "chimera",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": true,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        24395
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 33,
+        "essence": 0.8,
+        "monster": "chimera"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 3.22,
+      "next_level_eta": "⬆ 16m 24s",
+      "power_ratio": "⚔ 0.61x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.24x",
+      "interval": "10.3s",
+      "streak_bonus": "🔥 1-win streak (+5%)"
+    },
+    "initial_essence": 23.51,
+    "final_essence": 26.45,
+    "essence": {
+      "before_idle": 23.51,
+      "after_idle": 24.31,
+      "per_fight": [
+        34.41
+      ],
+      "forge_before": 34,
+      "forge_after_salvage": 54,
+      "forge_after_fusion": 54,
+      "forge_after_upgrade": 54,
+      "forge_after": 54,
+      "shop_before": 56,
+      "shop_after": 26,
+      "final": 26.45,
+      "flow": {
+        "idle_gained": 0.8,
+        "fights_change": null,
+        "salvage_gained": 20,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 20,
+        "shop_cost": 30,
+        "net_change": 2.94
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 34,
+      "essence_after_salvage": 54,
+      "essence_after_fusion": 54,
+      "essence_after_upgrade": 54,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": false,
+      "essence_after": 54,
+      "items_after": 4,
+      "salvage_essence_gained": 20,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "COMMON",
+      "cost": 30,
+      "essence_before": 56,
+      "essence_after": 26,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Flame Gauntlets",
+            "rarity": "UNCOMMON",
+            "price": 30
+          },
+          {
+            "name": "Flame Dagger",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 26,
+        "essence_budget": 40,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 40
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1155,
+      "arena": 1270
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Flame Gauntlets",
+          "rarity": "UNCOMMON",
+          "price": 30
+        },
+        {
+          "name": "Flame Dagger",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 26,
+      "essence_budget": 40,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
