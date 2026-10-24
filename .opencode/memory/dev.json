@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-24T21:36:14Z",
+  "last_session": "2026-10-24T21:38:25Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "analyze-qa-stats.ts #1229 : (1) le taux d'achat shop reel doit etre calcule sur TOUTES les runs portant shop_data.offers, pas sur validRuns — 90/148 observations shop sont sur des runs sans combat (sequence de combat skippee mais shop teste), validRuns ne donnait que 43/58 (74%) au lieu de 124/148 (83.8%). (2) gater les alertes de tendance win-rate sur fights_count (combats), pas count (runs) : fightsPerRun=1 rendait last_3/last_5 = 3-5 combats -> faux positifs 48%->0%.",
-      "issue": "#1229",
-      "date": "2026-10-18"
-    },
     {
       "lesson": "Issue #1241 QA fresh day: state.json ne persistait pas character_type, donc savedCharacterName forcé à null chaque lundi. Fix = helper resolveReusableDailyCharacter(state, runKey) qui exige state.run === runKey ET character_type === 'fresh' (réutilise même si exhausted), + shouldReplaceExhaustedCharacter qui protège fresh et persistent. Persister character_type dans TOUS les persistQaState (initial, final, maybeReplace). Les tests source-contract de qa-bot.mjs exigent le littéral runRecord.character_type === 'persistent' : le garder dans le label de log pour ne pas casser le test #731.",
       "issue": "#1241",
@@ -171,6 +166,11 @@
     {
       "lesson": "Issue #1299 watchdog: statusCheckRollup contient aussi les checks de deploiement (Cloudflare Pages, workflowName vide) -> filtrer select(.workflowName == \"CI\") sinon CHECK_COUNT>=1 sur les PR sans CI et le filet orphelines ne part jamais. Anti-tempete: le reviewer ne peut pas poster de review formelle sur une PR auteur github-actions[bot] (meme identite) -> detecter aussi les commentaires contenant 'Review PR #' posterieurs au commit (comparaison ISO created_at > commit.committer.date).",
       "issue": "#1299",
+      "date": "2026-10-24"
+    },
+    {
+      "lesson": "Issue #1312 QA XP: le regex body-wide /\\+(\\d+)\\s*XP/ ramassait le popup .xp-gain-popup perime de l arene. Toujours lire .result-xp-popup (texte exact +N XP ou BOSS REMAINS=>0) via parseResultXpPopup. boss_avg_xp_per_fight ne doit moyenner que les victoires; boss_avg_xp_per_loss expose les defaites.",
+      "issue": "#1312",
       "date": "2026-10-24"
     }
   ]
