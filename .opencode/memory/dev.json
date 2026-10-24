@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-24T21:44:32Z",
+  "last_session": "2026-10-24T21:45:20Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1243 ratio XP win/loss : le diffBonus de calculateFightXp est désormais asymétrique (cap +0.5 victoire / +0.15 défaite, floor -0.5 commun). Les tests QC doivent figer Math.random (spy à 0.5 => variance exactement 1.0) pour asserter des valeurs entières stables. Attention : le ratio mesuré par analyze-qa-stats inclut les combats PvE (modifier 2.5) et des niveaux de persos différents entre wins/losses — filtrer fight_type==='pvp' avant de conclure.",
-      "issue": "#1243",
-      "date": "2026-10-19"
-    },
     {
       "lesson": "Issue #1116 ArmoryCard: getCodexHint exige un Set<string> mutable — convertir avec new Set(seenIds) depuis un ReadonlySet. Le prop seenIds optionnel permet le hint de voisinage sans violer les props de base {entry, discovered}.",
       "issue": "#1116",
@@ -171,6 +166,11 @@
     {
       "lesson": "Issue #1299 : statusCheckRollup (gh pr list --json) contient les déploiements Cloudflare Pages (workflowName vide). Filtrer sur workflowName == \"CI\" pour compter la vraie CI. Anti-tempête watchdog : le reviewer ne peut pas poster de review formelle sur une PR github-actions[bot], il commente \"## Review PR #<n>\" → comparer created_at des commentaires au committer.date du commit de tête.",
       "issue": "#1299",
+      "date": "2026-10-24"
+    },
+    {
+      "lesson": "Issue #1260: le garde-fou de opencode.yml contre les modifications .github/workflows ne strippe que les changements encore dans l'index (git diff --cached). Un commit local du dev-agent survit et est pushé. Step télémétrie: secrets SUPABASE_* scopés au step dédié, fallback '{}' si secrets/table/JSON absents, export TELEMETRY_REPORT via GITHUB_ENV, l'agent ne reçoit que le JSON. Garde-fous source-assertions dans workflow-integrity.test.ts (ordre du step, fallback, secret absent du step agent, prompt).",
+      "issue": "#1260",
       "date": "2026-10-24"
     }
   ]
