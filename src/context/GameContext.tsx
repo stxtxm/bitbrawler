@@ -53,6 +53,8 @@ import type { MedalDef, SpecialMedalContext } from '../utils/medalUtils';
 import { mergeMonsterCounters } from '../utils/bestiaryUtils';
 import { usePushReminders, type PushSubscriptionUpdate } from '../hooks/usePushReminders';
 import { setTelemetryLevel, trackEvent, trackFightOutcome } from '../utils/telemetry';
+import { trackPixelSeasonCharacter } from '../utils/pixelSeasonTracking';
+import { recordPixelSeasonAction } from '../utils/pixelSeasonStorage';
 
 interface GameContextType {
   activeCharacter: Character | null;
@@ -146,6 +148,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       trackEvent('level_up', { from: current.level, to: normalized.level });
     }
     setTelemetryLevel(normalized.level);
+    trackPixelSeasonCharacter(current, normalized);
     charRef.current = normalized;
     setActiveCharacter(normalized);
     saveLocalData(normalized);
@@ -1482,6 +1485,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         })
         .eq('id', activeCharacter.id!);
       persistCharacter(normalized);
+      recordPixelSeasonAction(normalized.id ?? normalized.seed, 'salvage', 1);
 
       // Non-blocking medal/achievement check after salvage
       checkAndApplyMedals(normalized, {}).then(charWithMedals => {

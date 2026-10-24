@@ -4,10 +4,11 @@ import { useGame } from '../context/GameContext';
 import { SalvagePanel } from '../components/forge/SalvagePanel';
 import { FusionPanel } from '../components/forge/FusionPanel';
 import { UpgradePanel } from '../components/forge/UpgradePanel';
+import { PixelSeasonPanel } from '../components/pass/PixelSeasonPanel';
 import { PROGRESSION_GATES, isFeatureUnlocked } from '../config/progressionConfig';
 import '../styles/forge.scss';
 
-type ForgeTab = 'salvage' | 'fusion' | 'upgrade';
+type ForgeTab = 'salvage' | 'fusion' | 'upgrade' | 'season';
 
 const Forge = () => {
   const navigate = useNavigate();
@@ -75,6 +76,15 @@ const Forge = () => {
         >
           ✨ Upgrade
         </button>
+        <button
+          className={`forge-tab ${activeTab === 'season' ? 'active' : ''}`}
+          onClick={() => handleTabChange('season')}
+          role="tab"
+          aria-selected={activeTab === 'season'}
+          aria-controls="forge-panel-season"
+        >
+          🌟 Season
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -99,6 +109,13 @@ const Forge = () => {
           hidden={activeTab !== 'upgrade'}
         >
           {activeTab === 'upgrade' && <UpgradePanel onClose={handleBack} />}
+        </div>
+        <div
+          id="forge-panel-season"
+          role="tabpanel"
+          hidden={activeTab !== 'season'}
+        >
+          {activeTab === 'season' && <PixelSeasonPanel onClose={handleBack} />}
         </div>
       </div>
     </div>

@@ -1,0 +1,328 @@
+@use '../variables' as *;
+
+.season-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  max-height: 76vh;
+  overflow-y: auto;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 15%, rgba(30, 45, 70, 0.35) 0%, transparent 100%),
+    radial-gradient(ellipse at top, #0f1622 0%, #070a10 100%);
+  border: 3px solid #2f4a63;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.9), 0 0 20px rgba(47, 74, 99, 0.4);
+  position: relative;
+
+  @include mobile {
+    padding: 10px;
+  }
+}
+
+.season-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.season-title {
+  font-family: $font-pixel;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  color: #63b3ff;
+  text-transform: uppercase;
+  text-shadow: 2px 2px 0 #000;
+}
+
+.season-theme {
+  font-family: $font-pixel;
+  font-size: 0.45rem;
+  letter-spacing: 2px;
+  color: $accent-gold;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.season-season-label {
+  font-size: 0.4rem;
+  letter-spacing: 1px;
+  color: #7d8b99;
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+
+.season-close-btn {
+  width: 28px;
+  height: 28px;
+  background: #000;
+  color: $accent-red;
+  border: 2px solid $accent-red;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  transition: transform 0.15s ease, background 0.2s ease;
+
+  &:hover {
+    background: $accent-red;
+    color: #000;
+    transform: translateY(-2px);
+  }
+}
+
+.season-calendar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.4rem;
+  letter-spacing: 1px;
+  color: #9aa0a6;
+  text-transform: uppercase;
+}
+
+.season-progress-bar {
+  position: relative;
+  z-index: 1;
+  height: 14px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid #1e3345;
+  overflow: hidden;
+}
+
+.season-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2f6f9f 0%, #63b3ff 100%);
+  transition: width 0.4s ease;
+  box-shadow: 0 0 8px rgba(99, 179, 255, 0.45);
+}
+
+.season-progress-text {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 0.4rem;
+  letter-spacing: 1px;
+  color: #9aa0a6;
+}
+
+.season-section,
+.season-track,
+.season-leaderboard {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.season-section-title {
+  font-family: $font-pixel;
+  font-size: 0.48rem;
+  letter-spacing: 2px;
+  color: #63b3ff;
+  text-transform: uppercase;
+}
+
+.season-missions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.season-mission {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px;
+  background: linear-gradient(180deg, rgba(12, 20, 30, 0.95) 0%, rgba(6, 10, 16, 0.98) 100%);
+  border: 2px solid #1e3345;
+  border-left-width: 4px;
+
+  @include mobile {
+    padding: 6px;
+  }
+}
+
+.season-mission-complete {
+  border-color: #2a4a2a;
+  border-left-color: $accent-green;
+}
+
+.season-mission-label {
+  font-size: 0.42rem;
+  letter-spacing: 1px;
+  color: #c7c7c7;
+  text-transform: uppercase;
+}
+
+.season-mission-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.36rem;
+  letter-spacing: 1px;
+  color: #7d8b99;
+}
+
+.season-mission-bar {
+  height: 5px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid #1e3345;
+  overflow: hidden;
+}
+
+.season-mission-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2f6f9f 0%, #63b3ff 100%);
+  transition: width 0.3s ease;
+}
+
+.season-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 8px;
+}
+
+.season-tier-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 6px 8px;
+  background: linear-gradient(180deg, rgba(12, 20, 30, 0.95) 0%, rgba(6, 10, 16, 0.98) 100%);
+  border: 2px solid #1e3345;
+  border-left-width: 4px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 3px 0 #0a1018, inset 0 1px 0 rgba(99, 179, 255, 0.08);
+
+  &:hover {
+    border-color: #3f6f96;
+    transform: translateY(-1px);
+  }
+}
+
+.season-tier-card.season-unlocked {
+  border-color: #63b3ff;
+  box-shadow: 0 0 12px rgba(99, 179, 255, 0.25), 0 3px 0 #0a1018;
+}
+
+.season-tier-card.season-claimed {
+  opacity: 0.55;
+  filter: grayscale(0.5);
+  border-color: #2a4a2a;
+}
+
+.season-tier-level {
+  font-family: $font-pixel;
+  font-size: 0.42rem;
+  color: #63b3ff;
+  letter-spacing: 1px;
+}
+
+.season-tier-reward {
+  font-size: 0.38rem;
+  letter-spacing: 1px;
+  color: #c7c7c7;
+  text-transform: uppercase;
+  text-align: center;
+  min-height: 20px;
+}
+
+.season-reward-skin { color: $accent-gold; }
+.season-reward-palette { color: #9b59b6; }
+.season-reward-frame { color: #63b3ff; }
+
+.season-tier-threshold {
+  font-size: 0.32rem;
+  letter-spacing: 1px;
+  color: #666;
+}
+
+.season-claim-btn {
+  width: 100%;
+  padding: 4px 8px;
+  font-family: $font-pixel;
+  font-size: 0.35rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  border: 2px solid #63b3ff;
+  background: rgba(99, 179, 255, 0.1);
+  color: #63b3ff;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background: #63b3ff;
+    color: #000;
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    border-color: #444;
+    color: #555;
+  }
+}
+
+.season-premium-track {
+  padding-top: 8px;
+  border-top: 2px dashed #1e3345;
+}
+
+.season-premium-card {
+  border-style: dashed;
+}
+
+.season-premium-locked {
+  font-size: 0.38rem;
+  letter-spacing: 1px;
+  color: $accent-gold;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 204, 0, 0.35);
+  background: rgba(255, 204, 0, 0.05);
+  padding: 6px 8px;
+}
+
+.season-leaderboard-row {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 5px 8px;
+  font-size: 0.4rem;
+  letter-spacing: 1px;
+  color: #9aa0a6;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid #14212e;
+}
+
+.season-leaderboard-player {
+  color: $accent-gold;
+  border-color: rgba(255, 204, 0, 0.35);
+}
+
+.season-leaderboard-rank {
+  font-family: $font-pixel;
+  font-size: 0.38rem;
+  color: #63b3ff;
+}
+
+.season-leaderboard-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.season-leaderboard-points {
+  font-family: $font-pixel;
+  font-size: 0.36rem;
+  color: #d4a55a;
+}

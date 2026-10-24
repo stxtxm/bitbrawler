@@ -379,7 +379,7 @@ describe('Forge Accessibility', () => {
     renderForge();
 
     const tabs = screen.getAllByRole('tab');
-    expect(tabs).toHaveLength(3);
+    expect(tabs).toHaveLength(4);
 
     tabs.forEach((tab) => {
       expect(tab).toHaveAttribute('aria-selected');
@@ -394,7 +394,7 @@ describe('Forge Accessibility', () => {
     renderForge();
 
     const tabpanels = screen.getAllByRole('tabpanel', { hidden: true });
-    expect(tabpanels).toHaveLength(3);
+    expect(tabpanels).toHaveLength(4);
 
     tabpanels.forEach((panel) => {
       expect(panel).toHaveAttribute('id');
