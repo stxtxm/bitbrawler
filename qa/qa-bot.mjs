@@ -6,6 +6,7 @@ import config from './qa-bot.config.js'
 import {
   parseLevelFromText,
   parseProgressionCurve,
+  parseResultXpPopup,
   persistentNameForGeneration,
   shouldForcePersistentReset,
   COMBAT_SPEED_STORAGE_KEY,
@@ -2015,8 +2016,8 @@ async function captureBossFight(page, runKey, fightNumber) {
   const pageText = await page.locator('body').innerText()
   const isVictory = pageText.includes('VICTORY')
   const isDefeat = pageText.includes('DEFEAT')
-  const xpMatch = pageText.match(/\+(\d+)\s*XP/)
-  const xpGained = xpMatch ? parseInt(xpMatch[1]) : null
+  const xpPopupText = await page.locator('.result-xp-popup').first().textContent({ timeout: 1000 }).catch(() => '')
+  const xpGained = parseResultXpPopup(xpPopupText)
 
   console.log(`   Boss result: ${isVictory ? '✅ VICTORY' : isDefeat ? '❌ DEFEAT' : '🤝 DRAW'} (${fightDuration}ms)`)
 
@@ -2405,8 +2406,8 @@ async function runFightSequence(page, runKey, runRecord) {
     const isVictory = pageText.includes('VICTORY')
     const isDefeat = pageText.includes('DEFEAT')
 
-    const xpMatch = pageText.match(/\+(\d+)\s*XP/)
-    const xpGained = xpMatch ? parseInt(xpMatch[1]) : null
+    const xpPopupText = await page.locator('.result-xp-popup').first().textContent({ timeout: 1000 }).catch(() => '')
+    const xpGained = parseResultXpPopup(xpPopupText)
 
     // Fallback: try parsing monster name from the result screen if not already captured
     if (isPve && !monsterName) {

@@ -79,6 +79,19 @@ export function parseProgressionCurve(xpText, level) {
   }
 }
 
+export const BOSS_REMAINS_LABEL = 'BOSS REMAINS'
+
+export function parseResultXpPopup(text) {
+  if (typeof text !== 'string') return null
+  const trimmed = text.trim()
+  if (trimmed.length === 0) return null
+  if (trimmed.toUpperCase().includes(BOSS_REMAINS_LABEL)) return 0
+  const match = trimmed.match(/^\+(\d+)\s*XP$/i)
+  if (!match) return null
+  const xp = parseInt(match[1], 10)
+  return Number.isFinite(xp) ? xp : null
+}
+
 export const COMBAT_SPEED_STORAGE_KEY = 'bitbrawler_combat_speed'
 export const COMBAT_SPEED_OPTIONS = [1, 2]
 export const COMBAT_SPEED_TOGGLE_SELECTOR = '.combat-speed-toggle'

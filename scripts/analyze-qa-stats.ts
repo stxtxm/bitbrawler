@@ -213,7 +213,8 @@ interface PveAnalysis {
   boss_observations: number               // runs that detected the locked boss (PvE-observation)
   boss_fights: number                     // actual boss fights (fight_type === 'boss')
   boss_win_rate: number | null            // boss fight win rate
-  boss_avg_xp_per_fight: number | null    // average XP per boss fight
+  boss_avg_xp_per_fight: number | null    // average XP per won boss fight (losses never grant XP)
+  boss_avg_xp_per_loss: number | null     // average XP per lost boss fight (expected 0)
   boss_avg_hp_left: number | null         // average boss HP remaining after boss fights (pool progress)
 }
 
@@ -1194,7 +1195,10 @@ function analyze(stats: RunRecord[]): AnalysisReport {
 
     // Boss fight aggregation (#705): fight_type === 'boss' records from captureBossFight
     const bossWins = bossFights.filter(f => f.result === 'victory')
-    const bossXpFights = bossFights.filter((f): f is FightRecord => f.xp !== null)
+    const bossWinXpFights = bossWins.filter((f): f is FightRecord => f.xp !== null)
+    const bossLossXpFights = bossFights
+      .filter(f => f.result === 'defeat')
+      .filter((f): f is FightRecord => f.xp !== null)
     const bossHpLeftFights = bossFights.filter((f): f is FightRecord & { boss_hp_left: number } =>
       f.boss_hp_left !== null && f.boss_hp_left !== undefined
     )
@@ -1214,8 +1218,11 @@ function analyze(stats: RunRecord[]): AnalysisReport {
       boss_observations: pveShiftedRuns.length,
       boss_fights: bossFights.length,
       boss_win_rate: bossFights.length > 0 ? bossWins.length / bossFights.length : null,
-      boss_avg_xp_per_fight: bossXpFights.length > 0
-        ? Math.round((bossXpFights.reduce((s, f) => s + (f.xp ?? 0), 0) / bossXpFights.length) * 100) / 100
+      boss_avg_xp_per_fight: bossWinXpFights.length > 0
+        ? Math.round((bossWinXpFights.reduce((s, f) => s + (f.xp ?? 0), 0) / bossWinXpFights.length) * 100) / 100
+        : null,
+      boss_avg_xp_per_loss: bossLossXpFights.length > 0
+        ? Math.round((bossLossXpFights.reduce((s, f) => s + (f.xp ?? 0), 0) / bossLossXpFights.length) * 100) / 100
         : null,
       boss_avg_hp_left: bossHpLeftFights.length > 0
         ? Math.round((bossHpLeftFights.reduce((s, f) => s + f.boss_hp_left, 0) / bossHpLeftFights.length) * 100) / 100
@@ -1812,7 +1819,10 @@ function printReport(report: AnalysisReport): void {
     if (report.pve_analysis.boss_fights > 0) {
       console.log(`  Boss fights:    ${report.pve_analysis.boss_fights} (${report.pve_analysis.boss_win_rate !== null ? fmtPct(report.pve_analysis.boss_win_rate) : 'n/a'} win rate)`)
       if (report.pve_analysis.boss_avg_xp_per_fight !== null) {
-        console.log(`  Boss XP/fight:  ${report.pve_analysis.boss_avg_xp_per_fight.toFixed(0)}`)
+        console.log(`  Boss XP/win:    ${report.pve_analysis.boss_avg_xp_per_fight.toFixed(0)}`)
+      }
+      if (report.pve_analysis.boss_avg_xp_per_loss !== null) {
+        console.log(`  Boss XP/loss:   ${report.pve_analysis.boss_avg_xp_per_loss.toFixed(0)}`)
       }
       if (report.pve_analysis.boss_avg_hp_left !== null) {
         console.log(`  Boss HP left:   ${report.pve_analysis.boss_avg_hp_left.toFixed(0)} (pool progress)`)

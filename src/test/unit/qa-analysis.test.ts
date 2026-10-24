@@ -300,19 +300,26 @@ function computeBossFightStats(fights: FightRecord[]): {
   boss_fights: number
   boss_win_rate: number | null
   boss_avg_xp_per_fight: number | null
+  boss_avg_xp_per_loss: number | null
 } {
   const bossFights = fights.filter(isBossFight)
   if (bossFights.length === 0) {
-    return { boss_fights: 0, boss_win_rate: null, boss_avg_xp_per_fight: null }
+    return { boss_fights: 0, boss_win_rate: null, boss_avg_xp_per_fight: null, boss_avg_xp_per_loss: null }
   }
   const bossWins = bossFights.filter(f => f.result === 'victory')
-  const bossXpFights = bossFights.filter((f): f is FightRecord & { xp: number } => f.xp !== null)
+  const bossWinXp = bossWins.filter((f): f is FightRecord & { xp: number } => f.xp !== null)
+  const bossLossXp = bossFights
+    .filter(f => f.result === 'defeat')
+    .filter((f): f is FightRecord & { xp: number } => f.xp !== null)
   return {
     boss_fights: bossFights.length,
     boss_win_rate: bossWins.length / bossFights.length,
-    boss_avg_xp_per_fight: bossXpFights.length > 0
-      ? bossXpFights.reduce((s, f) => s + f.xp, 0) / bossXpFights.length
+    boss_avg_xp_per_fight: bossWinXp.length > 0
+      ? bossWinXp.reduce((s, f) => s + f.xp, 0) / bossWinXp.length
       : 0,
+    boss_avg_xp_per_loss: bossLossXp.length > 0
+      ? bossLossXp.reduce((s, f) => s + f.xp, 0) / bossLossXp.length
+      : null,
   }
 }
 
@@ -893,10 +900,15 @@ describe('QA PvE→Boss Shift Analysis (#705)', () => {
         { result: 'victory', xp: 100, fight_duration_ms: 5000, fight_type: 'pvp' },
         { result: 'victory', xp: 100, fight_duration_ms: 5000, fight_type: 'pve', monster_name: 'Goblin' },
       ]
-      expect(computeBossFightStats(fights)).toEqual({ boss_fights: 0, boss_win_rate: null, boss_avg_xp_per_fight: null })
+      expect(computeBossFightStats(fights)).toEqual({
+        boss_fights: 0,
+        boss_win_rate: null,
+        boss_avg_xp_per_fight: null,
+        boss_avg_xp_per_loss: null,
+      })
     })
 
-    it('aggregates boss fights with win rate and avg XP', () => {
+    it('aggregates boss wins and losses separately (#1312)', () => {
       const fights: FightRecord[] = [
         { result: 'victory', xp: 360, fight_duration_ms: 20000, fight_type: 'boss', monster_name: 'VOID TITAN' },
         { result: 'defeat', xp: 0, fight_duration_ms: 30000, fight_type: 'boss', monster_name: 'VOID TITAN' },
@@ -904,7 +916,8 @@ describe('QA PvE→Boss Shift Analysis (#705)', () => {
       const stats = computeBossFightStats(fights)
       expect(stats.boss_fights).toBe(2)
       expect(stats.boss_win_rate).toBeCloseTo(0.5, 5)
-      expect(stats.boss_avg_xp_per_fight).toBe(180)
+      expect(stats.boss_avg_xp_per_fight).toBe(360)
+      expect(stats.boss_avg_xp_per_loss).toBe(0)
     })
 
     it('ignores non-boss fights entirely', () => {
