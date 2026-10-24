@@ -49,6 +49,10 @@ export declare function parseProgressionCurve(
   level: number | null | undefined,
 ): ProgressionCurve | null
 
+export declare const BOSS_REMAINS_LABEL: string
+
+export declare function parseResultXpPopup(text: string | null | undefined): number | null
+
 export declare const COMBAT_SPEED_STORAGE_KEY: string
 export declare const COMBAT_SPEED_OPTIONS: readonly [1, 2]
 export declare const COMBAT_SPEED_TOGGLE_SELECTOR: string

@@ -29,6 +29,7 @@ import {
   getXpRequiredForNextLevel,
   getTotalXpForLevel,
   parseProgressionCurve,
+  parseResultXpPopup,
 } from '../../utils/qa-bot-helpers'
 
 describe('qa-bot-helpers combat speed', () => {
@@ -340,5 +341,34 @@ describe('qa-bot-helpers XP curve sync with xpUtils (#1290)', () => {
   it('locks Infinity for the next-level requirement at max level', () => {
     expect(getXpRequiredForNextLevel(99)).toBe(Infinity)
     expect(getGameXpRequiredForNextLevel(99)).toBe(Infinity)
+  })
+})
+
+describe('qa-bot-helpers result XP popup (#1312)', () => {
+  it('returns 0 when a boss defeat popup says BOSS REMAINS', () => {
+    expect(parseResultXpPopup('BOSS REMAINS')).toBe(0)
+    expect(parseResultXpPopup('  Boss remains  ')).toBe(0)
+  })
+
+  it('reads the result popup XP instead of a stale arena popup', () => {
+    const staleArenaPopup = '+574 XP'
+    const resultPopup = '+160 XP'
+    expect(staleArenaPopup).toContain('+574 XP')
+    expect(parseResultXpPopup(resultPopup)).toBe(160)
+  })
+
+  it('accepts the exact +N XP format only', () => {
+    expect(parseResultXpPopup('+120 XP')).toBe(120)
+    expect(parseResultXpPopup('+0 XP')).toBe(0)
+    expect(parseResultXpPopup('X +120 XP')).toBeNull()
+    expect(parseResultXpPopup('+120 XP BONUS')).toBeNull()
+    expect(parseResultXpPopup('+120')).toBeNull()
+    expect(parseResultXpPopup('BATTLE ENERGY 5/5')).toBeNull()
+  })
+
+  it('returns null when the popup text is missing', () => {
+    expect(parseResultXpPopup('')).toBeNull()
+    expect(parseResultXpPopup(null)).toBeNull()
+    expect(parseResultXpPopup(undefined)).toBeNull()
   })
 })
