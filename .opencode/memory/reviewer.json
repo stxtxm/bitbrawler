@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-21T22:45:51Z",
+  "last_session": "2026-10-24T21:26:20Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,9 +21,9 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR #1294 : quand aucun check CI n'est rattaché à la PR (seul Cloudflare Pages vert), le reviewer doit exécuter lui-même lint/tsc/vitest/build avant merge. Les migrations en .md sous supabase/migrations sont une convention acceptée (précédent 20261011_add_appearance_column.md) si une issue dédiée sans /oc existe.",
-      "issue": "#1294",
-      "date": "2026-10-21"
+      "lesson": "PR authorée par github-actions[bot] = même App que le reviewer : gh pr review --request-changes/--approve renvoie 'Can not request changes on your own pull request'. Fallback : poster le feedback en commentaire gh pr comment et NE PAS merger. Vérifié sur PR #1291 (Pixel Season Pass).",
+      "issue": "#1291",
+      "date": "2026-10-24"
     }
   ]
 }
