@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-23T22:11:46Z",
+  "last_session": "2026-10-24T21:28:02Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1206 accessoire v2: la gemme 'necklace' était blittée à neck.y sans support. Fix = bandeau de col (expectTrims) à torso.y0 + brin (chaîne) jusqu'à la première ligne de contenu de l'art, gemme descendue à chest.y-3. Astuce de test 'pas d'îlot isolé': le sprite de base est UNE seule composante connexe (vérifié), donc asserter nonZeroComponents(out).length===1 pour chaque accessoire sur slim/standard/broad est un garde-fou fiable. Le support doit être vérifié ligne par ligne entre torso.y0 et gemTop avec |x-neck.x|<=3.",
-      "issue": "#1206",
-      "date": "2026-10-18"
-    },
     {
       "lesson": "Issue #1210 UI equipement: (1) PixelItemIcon rendait un SVG 8x8 avec size arbitraire -> passer par getIntegerIconScale (round(size/8)) + data-scale + style imageRendering 'pixelated' pour un rendu nearest-neighbor testable. (2) Toujours extraire l'etat du composant dans un hook dedie (useInventoryPanel) quand on touche InventoryPanel, conformement a AGENTS.md props-only. (3) npm run art:sheet ne depend que des sprites/equipOverlays, pas de l'inventaire : un changement UI/CSS produit un PNG identique (md5 inchange) — le documenter dans le commit au lieu de pretendre un diff.",
       "issue": "#1210",
@@ -172,6 +167,11 @@
       "issue": "#1310",
       "date": "2026-10-23",
       "lesson": "QA cohort budgets must stay below the priciest SHOP_OFFERS entry (88 💎) or budget_limited can never trigger. Test now asserts every cohort budget < max(SHOP_OFFERS.price) so a future price change forces a budget review. QA-END=60, QA-MID=40, QA-FRESH=50."
+    },
+    {
+      "lesson": "Watchdog (#1299): statusCheckRollup contient aussi Cloudflare Pages (workflowName vide) → compter tout le rollup empêchait le filet 'PR orpheline' (CHECK_COUNT jamais 0). Filtrer select(.workflowName == \"CI\") pour CHECK_COUNT ET FAILED_COUNT. Le reviewer ne peut pas poster de review formelle sur une PR github-actions[bot] → détecter aussi un commentaire 'Review PR #' postérieur au dernier commit (gh api issues/N/comments + pulls/N/commits), sinon re-dispatch horaire.",
+      "issue": "#1299",
+      "date": "2026-10-24"
     }
   ]
 }
