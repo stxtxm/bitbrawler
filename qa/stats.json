@@ -154563,7 +154563,7 @@
     }
   },
   {
-    "date": "2026-10-24T10:00:39.654Z",
+    "date": "2026-10-24T10:05:59.084Z",
     "run": "2026-10-24",
     "character": "QA-PERSIST",
     "character_action": "reused",
@@ -154572,12 +154572,12 @@
     "fights": [
       {
         "result": "victory",
-        "xp": 236,
-        "fight_duration_ms": 13307,
+        "xp": 229,
+        "fight_duration_ms": 13612,
         "max_hp": 576,
         "fight_type": "pvp",
         "monster_name": null,
-        "essence_after": 35.88
+        "essence_after": 30.89
       }
     ],
     "lootbox": {
@@ -154585,13 +154585,13 @@
       "opened": false,
       "reason": "already-opened"
     },
-    "auto_mode_enabled": false,
+    "auto_mode_enabled": true,
     "auto_mode_sync_ok": true,
     "arena_status": {
       "fightButtonLabel": "FIGHT!",
       "fightButtonVisible": true,
       "fightButtonEnabled": true,
-      "fightsAvailable": 3,
+      "fightsAvailable": 2,
       "isResting": false,
       "hasFightCta": true,
       "isSearching": false,
@@ -154609,14 +154609,14 @@
     },
     "initial_level": 20,
     "initial_xp": {
-      "current": 5052,
+      "current": 9164,
       "max": 16822
     },
     "progression_curve": {
       "level": 20,
-      "total_xp": 123703,
+      "total_xp": 127815,
       "xp_for_next": 16822,
-      "percent": 30
+      "percent": 54.5
     },
     "initial_max_hp": 576,
     "initial_equipment": [
@@ -154633,7 +154633,7 @@
     "initial_streak": 1,
     "final_stats": {
       "level": 20,
-      "xp": 8453,
+      "xp": 10032,
       "wins": null,
       "losses": null
     },
@@ -154644,8 +154644,8 @@
       "luk": 17,
       "int": 24,
       "foc": 18,
-      "last xp": 103,
-      "fights": 7
+      "last xp": 29,
+      "fights": 8
     },
     "final_max_hp": 576,
     "final_equipment": [
@@ -154681,90 +154681,74 @@
     },
     "level_up_events": [],
     "idle_runner": {
-      "observation_duration_ms": 23988,
-      "cycles_observed": 1,
+      "observation_duration_ms": 33049,
+      "cycles_observed": 0,
       "monsters_faced": [
-        "goblin",
-        "ogre"
+        "skeleton"
       ],
-      "victories": 2,
-      "defeats": 0,
-      "xp_total": 138,
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 35,
       "xp_events": [
         {
-          "time_ms": 3059,
-          "xp": 104,
-          "monster": "goblin",
-          "result": "VICTORY"
-        },
-        {
-          "time_ms": 23988,
-          "xp": 34,
-          "monster": "ogre",
-          "result": "VICTORY"
+          "time_ms": 33049,
+          "xp": 35,
+          "monster": "skeleton",
+          "result": "unknown"
         }
       ],
       "streak_banner_shown": false,
       "level_up_fx_detected": false,
       "level_up_events": [],
       "phase_transition_times_ms": [
-        510,
-        1526,
-        3059,
-        10619,
-        12145,
-        23988
+        508,
+        1522,
+        33049
       ]
     },
     "idle_fights": [
       {
-        "result": "victory",
-        "xp": 104,
-        "essence": 0.69,
-        "monster": "goblin"
-      },
-      {
-        "result": "victory",
-        "xp": 34,
-        "essence": 0.69,
-        "monster": "ogre"
+        "result": "defeat",
+        "xp": 35,
+        "essence": 0.72,
+        "monster": "skeleton"
       }
     ],
     "efficiency_panel": {
       "visible": true,
       "essence_per_min": 3.11,
-      "next_level_eta": "⬆ 15m 40s",
+      "next_level_eta": "⬆ 12m 59s",
       "power_ratio": "⚔ 0.61x",
       "speed_ratio": "⚡ 0.50x",
       "magic_mult": "🧠 1.22x",
       "interval": "10.3s",
-      "streak_bonus": "🔥 1-win streak (+25%)"
+      "streak_bonus": null
     },
-    "initial_essence": 34.43,
-    "final_essence": 28.73,
+    "initial_essence": 30.17,
+    "final_essence": 22.4,
     "essence": {
-      "before_idle": 34.43,
-      "after_idle": 35.81,
+      "before_idle": 30.17,
+      "after_idle": 30.89,
       "per_fight": [
-        35.88
+        30.89
       ],
-      "forge_before": 35,
-      "forge_after_salvage": 56,
-      "forge_after_fusion": 56,
-      "forge_after_upgrade": 56,
-      "forge_after": 56,
-      "shop_before": 58,
-      "shop_after": 28,
-      "final": 28.73,
+      "forge_before": 30,
+      "forge_after_salvage": 51,
+      "forge_after_fusion": 51,
+      "forge_after_upgrade": 51,
+      "forge_after": 51,
+      "shop_before": 52,
+      "shop_after": 22,
+      "final": 22.4,
       "flow": {
-        "idle_gained": 1.38,
+        "idle_gained": 0.72,
         "fights_change": null,
         "salvage_gained": 21,
         "fusion_cost": 0,
         "upgrade_cost": 0,
         "forge_net": 21,
         "shop_cost": 30,
-        "net_change": -5.7
+        "net_change": -7.77
       }
     },
     "level_up_fx": {
@@ -154789,10 +154773,10 @@
     },
     "forge": {
       "visited": true,
-      "essence_before": 35,
-      "essence_after_salvage": 56,
-      "essence_after_fusion": 56,
-      "essence_after_upgrade": 56,
+      "essence_before": 30,
+      "essence_after_salvage": 51,
+      "essence_after_fusion": 51,
+      "essence_after_upgrade": 51,
       "items_before": 1,
       "salvage_attempted": true,
       "salvage_succeeded": true,
@@ -154800,7 +154784,7 @@
       "fusion_succeeded": false,
       "upgrade_attempted": true,
       "upgrade_succeeded": false,
-      "essence_after": 56,
+      "essence_after": 51,
       "items_after": 3,
       "salvage_essence_gained": 21,
       "fusion_cost": null,
@@ -154815,8 +154799,8 @@
       "offer_type": "item",
       "item_rarity": "COMMON",
       "cost": 30,
-      "essence_before": 58,
-      "essence_after": 28,
+      "essence_before": 52,
+      "essence_after": 22,
       "skipped": false,
       "skip_reason": null,
       "shop_data": {
@@ -154838,7 +154822,7 @@
           }
         ],
         "purchased_offer": 0,
-        "essence_after_purchase": 28,
+        "essence_after_purchase": 22,
         "essence_budget": 40,
         "budget_limited": false,
         "budget_blocked_price": null
@@ -154853,8 +154837,8 @@
     "skipped_fights": [],
     "errors": [],
     "load_times_ms": {
-      "home": 2040,
-      "arena": 1295
+      "home": 1281,
+      "arena": 446
     },
     "skipped_summary": {},
     "shop_data": {
@@ -154876,7 +154860,7 @@
         }
       ],
       "purchased_offer": 0,
-      "essence_after_purchase": 28,
+      "essence_after_purchase": 22,
       "essence_budget": 40,
       "budget_limited": false,
       "budget_blocked_price": null
