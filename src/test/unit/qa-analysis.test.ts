@@ -121,10 +121,22 @@ interface EquipmentAnalysis {
   unique_item_count: number
 }
 
+type StreakCohort = 'persistent' | 'fresh' | 'unknown'
+
+interface StreakCohortAnalysis {
+  cohort: StreakCohort
+  runs_with_data: number
+  avg_initial_streak: number
+  avg_final_streak: number
+}
+
 interface StreakAnalysis {
   avg_initial_streak: number
   avg_final_streak: number
   runs_with_data: number
+  runs_excluded_by_character_replacement: number
+  mixed_cohorts: boolean
+  cohorts: StreakCohortAnalysis[]
 }
 
 interface HpAnalysis {
@@ -207,7 +219,19 @@ function computeEquipmentAnalysis(runs: RunRecord[]): EquipmentAnalysis | null {
   }
 }
 
-function computeStreakAnalysis(runs: RunRecord[]): StreakAnalysis | null {
+interface StreakStats {
+  avg_initial_streak: number
+  avg_final_streak: number
+  runs_with_data: number
+}
+
+function resolveStreakCohort(r: RunRecord): StreakCohort {
+  if (r.character_type === 'persistent') return 'persistent'
+  if (r.character_type === 'fresh') return 'fresh'
+  return 'unknown'
+}
+
+function computeStreakStats(runs: RunRecord[]): StreakStats | null {
   const STREAK_MIN = 0
   const STREAK_MAX = 100
   const isValidStreak = (v: number) => v >= STREAK_MIN && v <= STREAK_MAX
@@ -222,7 +246,6 @@ function computeStreakAnalysis(runs: RunRecord[]): StreakAnalysis | null {
     (r): r is RunRecord & { lootbox_streak: number } => typeof r.lootbox_streak === 'number'
   )
 
-  if (runsWithInitStreak.length === 0 && runsWithLootboxStreak.length === 0 && runsWithFinalStreak.length === 0) return null
   if (runsWithInitStreak.length === 0 && runsWithLootboxStreak.length === 0) return null
 
   const filteredInit = runsWithInitStreak.filter(r => isValidStreak(r.initial_streak))
@@ -273,6 +296,45 @@ function computeStreakAnalysis(runs: RunRecord[]): StreakAnalysis | null {
     avg_initial_streak: avgInitial,
     avg_final_streak: avgFinal,
     runs_with_data: runsWithData,
+  }
+}
+
+function computeStreakAnalysis(runs: RunRecord[]): StreakAnalysis | null {
+  const hasAnyStreakData = (r: RunRecord) =>
+    typeof r.initial_streak === 'number' ||
+    typeof r.final_streak === 'number' ||
+    typeof r.lootbox_streak === 'number'
+
+  const runsExcludedByReplacement = runs.filter(r => hasAnyStreakData(r) && isCharacterReplacedRun(r)).length
+  const eligibleRuns = runs.filter(r => !isCharacterReplacedRun(r))
+  const globalStats = computeStreakStats(eligibleRuns)
+
+  const cohortGroups = new Map<StreakCohort, RunRecord[]>()
+  for (const r of eligibleRuns) {
+    const name = resolveStreakCohort(r)
+    const group = cohortGroups.get(name)
+    if (group) group.push(r)
+    else cohortGroups.set(name, [r])
+  }
+
+  const cohortOrder: StreakCohort[] = ['persistent', 'fresh', 'unknown']
+  const cohorts: StreakCohortAnalysis[] = cohortOrder.flatMap(name => {
+    const group = cohortGroups.get(name)
+    if (!group) return []
+    const stats = computeStreakStats(group)
+    if (!stats) return []
+    return [{ cohort: name, ...stats }]
+  })
+
+  if (!globalStats && runsExcludedByReplacement === 0) return null
+
+  return {
+    avg_initial_streak: globalStats?.avg_initial_streak ?? 0,
+    avg_final_streak: globalStats?.avg_final_streak ?? 0,
+    runs_with_data: globalStats?.runs_with_data ?? 0,
+    runs_excluded_by_character_replacement: runsExcludedByReplacement,
+    mixed_cohorts: cohorts.length > 1,
+    cohorts,
   }
 }
 
@@ -1204,6 +1266,49 @@ describe('QA Streak Analysis', () => {
       { date: '2026-01-02', run: 'r2', character: 'C2', fights: [], errors: [], initial_streak: undefined },
     ]
     expect(computeStreakAnalysis(runs)).toBeNull()
+  })
+
+  it('segments streaks by cohort instead of averaging fresh and persistent together (#1319)', () => {
+    const runs: RunRecord[] = [
+      {
+        date: '2026-01-01', run: 'r1', character: 'QA-FRESH', fights: [], errors: [],
+        initial_streak: 0, final_streak: 0, character_type: 'fresh',
+      },
+      {
+        date: '2026-01-02', run: 'r2', character: 'QA-PERSI', fights: [], errors: [],
+        initial_streak: 5, final_streak: 5, character_type: 'persistent',
+      },
+    ]
+    const result = computeStreakAnalysis(runs)
+    expect(result).not.toBeNull()
+    expect(result!.avg_initial_streak).toBe(2.5)
+    expect(result!.mixed_cohorts).toBe(true)
+    const fresh = result!.cohorts.find(c => c.cohort === 'fresh')
+    const persistent = result!.cohorts.find(c => c.cohort === 'persistent')
+    expect(fresh!.runs_with_data).toBe(1)
+    expect(fresh!.avg_initial_streak).toBe(0)
+    expect(persistent!.runs_with_data).toBe(1)
+    expect(persistent!.avg_initial_streak).toBe(5)
+  })
+
+  it('excludes created-after-* replaced-character runs from streak analysis (#1319)', () => {
+    const runs: RunRecord[] = [
+      {
+        date: '2026-01-01', run: 'r1', character: 'QA-PERSI', fights: [], errors: [],
+        initial_streak: 2, final_streak: 3, character_type: 'persistent',
+      },
+      {
+        date: '2026-01-02', run: 'r2', character: 'QA-PERSI', fights: [], errors: [],
+        initial_streak: 0, final_streak: 4,
+        character_action: 'created-after-exhausted-energy', replaced_character: 'QA-PERSI-4',
+      },
+    ]
+    const result = computeStreakAnalysis(runs)
+    expect(result).not.toBeNull()
+    expect(result!.runs_excluded_by_character_replacement).toBe(1)
+    expect(result!.runs_with_data).toBe(1)
+    expect(result!.avg_initial_streak).toBe(2)
+    expect(result!.cohorts.find(c => c.cohort === 'persistent')!.runs_with_data).toBe(1)
   })
 })
 
