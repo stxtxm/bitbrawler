@@ -233,10 +233,28 @@ interface CharacterTypeBreakdown {
   unknown_runs: number
 }
 
+type StreakCohort = 'persistent' | 'fresh' | 'unknown'
+
+interface StreakCohortAnalysis {
+  cohort: StreakCohort
+  runs_with_data: number
+  avg_initial_streak: number
+  avg_final_streak: number
+}
+
+interface StreakStats {
+  avg_initial_streak: number
+  avg_final_streak: number
+  runs_with_data: number
+}
+
 interface StreakAnalysis {
   avg_initial_streak: number
   avg_final_streak: number
   runs_with_data: number
+  runs_excluded_by_character_replacement: number
+  mixed_cohorts: boolean
+  cohorts: StreakCohortAnalysis[]
 }
 
 interface HpAnalysis {
@@ -579,6 +597,73 @@ function isCharacterReplacedRun(r: RunRecord): boolean {
     }
   }
   return false
+}
+
+function resolveStreakCohort(r: RunRecord): StreakCohort {
+  if (r.character_type === 'persistent') return 'persistent'
+  if (r.character_type === 'fresh') return 'fresh'
+  return 'unknown'
+}
+
+function computeStreakStats(runs: RunRecord[]): StreakStats | null {
+  const STREAK_MIN = 0
+  const STREAK_MAX = 100
+  const isValidStreak = (v: number) => v >= STREAK_MIN && v <= STREAK_MAX
+
+  const runsWithInitStreak = runs.filter((r): r is RunRecord & { initial_streak: number } => typeof r.initial_streak === 'number')
+  const runsWithFinalStreak = runs.filter((r): r is RunRecord & { final_streak: number } => typeof r.final_streak === 'number')
+  const runsWithLootboxStreak = runs.filter((r): r is RunRecord & { lootbox_streak: number } => typeof r.lootbox_streak === 'number')
+  if (runsWithInitStreak.length === 0 && runsWithLootboxStreak.length === 0) return null
+
+  const filteredInit = runsWithInitStreak.filter(r => isValidStreak(r.initial_streak))
+  const filteredFinalHard = runsWithFinalStreak.filter(r => isValidStreak(r.final_streak))
+  const filteredLootbox = runsWithLootboxStreak.filter(r => isValidStreak(r.lootbox_streak))
+
+  let finalForAvg = filteredFinalHard
+  if (filteredFinalHard.length >= 30) {
+    const vals = filteredFinalHard.map(r => r.final_streak)
+    const m = vals.reduce((s, v) => s + v, 0) / vals.length
+    const variance = vals.reduce((s, v) => s + (v - m) * (v - m), 0) / vals.length
+    const std = Math.sqrt(variance)
+    if (std > 0) {
+      finalForAvg = filteredFinalHard.filter(r => Math.abs(r.final_streak - m) / std <= 3)
+    }
+  }
+
+  let initForAvg = filteredInit
+  if (filteredInit.length >= 30) {
+    const vals = filteredInit.map(r => r.initial_streak)
+    const m = vals.reduce((s, v) => s + v, 0) / vals.length
+    const variance = vals.reduce((s, v) => s + (v - m) * (v - m), 0) / vals.length
+    const std = Math.sqrt(variance)
+    if (std > 0) {
+      initForAvg = filteredInit.filter(r => Math.abs(r.initial_streak - m) / std <= 3)
+    }
+  }
+
+  const avgInitial = initForAvg.length > 0
+    ? initForAvg.reduce((s, r) => s + r.initial_streak, 0) / initForAvg.length
+    : 0
+  const avgFinal = finalForAvg.length > 0
+    ? finalForAvg.reduce((s, r) => s + r.final_streak, 0) / finalForAvg.length
+    : (filteredLootbox.length > 0
+      ? filteredLootbox.reduce((s, r) => s + r.lootbox_streak, 0) / filteredLootbox.length
+      : 0)
+
+  let runsWithData: number
+  if (finalForAvg.length > 0) runsWithData = finalForAvg.length
+  else if (filteredLootbox.length > 0) runsWithData = filteredLootbox.length
+  else runsWithData = initForAvg.length
+
+  if (runsWithInitStreak.length > 0 && runsWithLootboxStreak.length === 0 && finalForAvg.length === 0) {
+    runsWithData = initForAvg.length
+  }
+
+  return {
+    avg_initial_streak: avgInitial,
+    avg_final_streak: avgFinal,
+    runs_with_data: runsWithData,
+  }
 }
 
 function hasShopResult(r: RunRecord): boolean {
@@ -1282,21 +1367,22 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   }
 
   // --- Streak Analysis ---
-  // Use initial_streak, final_streak, and lootbox_streak
   // #924: filter corrupted streak outliers (e.g. 73/1509 on QA-PERSI-4 2026-08-30) that dominate the mean.
-  // Hard cap: 0..100 (max 60 théorique + marge), puis sigma |z|>3 si N>=30 (optionnel safe, commenté mais actif pour 73).
-  const STREAK_MIN = 0
-  const STREAK_MAX = 100
-  const isValidStreak = (v: number) => v >= STREAK_MIN && v <= STREAK_MAX
-  const runsWithInitStreak = validRuns.filter((r): r is RunRecord & { initial_streak: number } => typeof r.initial_streak === 'number')
-  const runsWithFinalStreak = validRuns.filter((r): r is RunRecord & { final_streak: number } => typeof r.final_streak === 'number')
-  const runsWithLootboxStreak = validRuns.filter((r): r is RunRecord & { lootbox_streak: number } => typeof r.lootbox_streak === 'number')
+  // Hard cap 0..100, then sigma |z|>3 when N>=30.
+  // #1319: exclude character-replacement runs (same rule as HP/essence, #696) and
+  // segment by cohort — fresh runs are structurally at 0 and must not dilute the
+  // persistent streak.
+  const hasAnyStreakData = (r: RunRecord) =>
+    typeof r.initial_streak === 'number' ||
+    typeof r.final_streak === 'number' ||
+    typeof r.lootbox_streak === 'number'
+  const runsExcludedByReplacement = validRuns.filter(r => hasAnyStreakData(r) && isCharacterReplacedRun(r)).length
+  const streakRuns = validRuns.filter(r => !isCharacterReplacedRun(r))
+
+  const isValidStreak = (v: number) => v >= 0 && v <= 100
+  const runsWithFinalStreak = streakRuns.filter((r): r is RunRecord & { final_streak: number } => typeof r.final_streak === 'number')
   const streakOutliersHard = runsWithFinalStreak.filter(r => !isValidStreak(r.final_streak))
-  const filteredInitHard = runsWithInitStreak.filter(r => isValidStreak(r.initial_streak))
   const filteredFinalHard = runsWithFinalStreak.filter(r => isValidStreak(r.final_streak))
-  const filteredLootboxHard = runsWithLootboxStreak.filter(r => isValidStreak(r.lootbox_streak))
-  let finalForAvg = filteredFinalHard
-  let initForAvg = filteredInitHard
   const streakSigmaOutliers: RunRecord[] = []
   if (filteredFinalHard.length >= 30) {
     const vals = filteredFinalHard.map(r => r.final_streak)
@@ -1304,42 +1390,39 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     const variance = vals.reduce((s, v) => s + (v - m) * (v - m), 0) / vals.length
     const std = Math.sqrt(variance)
     if (std > 0) {
-      const kept: RunRecord[] = []
       for (const r of filteredFinalHard) {
         if (Math.abs(r.final_streak - m) / std > 3) streakSigmaOutliers.push(r)
-        else kept.push(r)
       }
-      finalForAvg = kept
-    }
-  }
-  if (filteredInitHard.length >= 30) {
-    const vals = filteredInitHard.map(r => r.initial_streak)
-    const m = vals.reduce((s, v) => s + v, 0) / vals.length
-    const variance = vals.reduce((s, v) => s + (v - m) * (v - m), 0) / vals.length
-    const std = Math.sqrt(variance)
-    if (std > 0) {
-      initForAvg = filteredInitHard.filter(r => Math.abs(r.initial_streak - m) / std <= 3)
     }
   }
   const streakOutliers = [...streakOutliersHard, ...streakSigmaOutliers]
+
+  const globalStreakStats = computeStreakStats(streakRuns)
+  const cohortGroups = new Map<StreakCohort, RunRecord[]>()
+  for (const r of streakRuns) {
+    const name = resolveStreakCohort(r)
+    const group = cohortGroups.get(name)
+    if (group) group.push(r)
+    else cohortGroups.set(name, [r])
+  }
+  const cohortOrder: StreakCohort[] = ['persistent', 'fresh', 'unknown']
+  const streakCohorts: StreakCohortAnalysis[] = cohortOrder.flatMap(name => {
+    const group = cohortGroups.get(name)
+    if (!group) return []
+    const stats = computeStreakStats(group)
+    if (!stats) return []
+    return [{ cohort: name, ...stats }]
+  })
+
   let streakAnalysis: StreakAnalysis | null = null
-  if (runsWithInitStreak.length > 0 || runsWithLootboxStreak.length > 0) {
-    const avgInitial = initForAvg.length > 0
-      ? initForAvg.reduce((s, r) => s + r.initial_streak, 0) / initForAvg.length
-      : 0
-    const avgFinal = finalForAvg.length > 0
-      ? finalForAvg.reduce((s, r) => s + r.final_streak, 0) / finalForAvg.length
-      : (filteredLootboxHard.length > 0
-        ? filteredLootboxHard.reduce((s, r) => s + r.lootbox_streak, 0) / filteredLootboxHard.length
-        : 0)
-    let runsWithData: number
-    if (finalForAvg.length > 0) runsWithData = finalForAvg.length
-    else if (filteredLootboxHard.length > 0) runsWithData = filteredLootboxHard.length
-    else runsWithData = initForAvg.length
+  if (globalStreakStats !== null || runsExcludedByReplacement > 0) {
     streakAnalysis = {
-      avg_initial_streak: avgInitial,
-      avg_final_streak: avgFinal,
-      runs_with_data: runsWithData,
+      avg_initial_streak: globalStreakStats?.avg_initial_streak ?? 0,
+      avg_final_streak: globalStreakStats?.avg_final_streak ?? 0,
+      runs_with_data: globalStreakStats?.runs_with_data ?? 0,
+      runs_excluded_by_character_replacement: runsExcludedByReplacement,
+      mixed_cohorts: streakCohorts.length > 1,
+      cohorts: streakCohorts,
     }
   }
 
@@ -1405,7 +1488,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   }
 
   // --- Streak suggestions ---
-  if (streakAnalysis && streakAnalysis.runs_with_data >= 3) {
+  if (streakAnalysis && streakAnalysis.runs_with_data >= 3 && !streakAnalysis.mixed_cohorts) {
     if (streakAnalysis.avg_initial_streak === 0 && streakAnalysis.avg_final_streak === 0) {
       suggestions.push(`Lootbox streak is consistently 0 — players may not be claiming daily lootboxes consistently. Check invite flow.`)
     }
@@ -1852,8 +1935,12 @@ function printReport(report: AnalysisReport): void {
 
   if (report.streak_analysis) {
     console.log(`  ── ${bold}Lootbox Streak${reset} ──`)
-    console.log(`  Avg initial:    ${report.streak_analysis.avg_initial_streak.toFixed(1)}`)
+    console.log(`  Avg initial:    ${report.streak_analysis.avg_initial_streak.toFixed(1)}${report.streak_analysis.mixed_cohorts ? ' (mixed cohorts — read per-cohort rows)' : ''}`)
     console.log(`  Avg final:      ${report.streak_analysis.avg_final_streak.toFixed(1)}`)
+    console.log(`  Excluded:       ${report.streak_analysis.runs_excluded_by_character_replacement} replaced-character run(s)`)
+    for (const c of report.streak_analysis.cohorts) {
+      console.log(`  ${c.cohort.padEnd(11)} ${c.runs_with_data} run(s), initial ${c.avg_initial_streak.toFixed(2)}, final ${c.avg_final_streak.toFixed(2)}`)
+    }
     console.log('')
   }
 
