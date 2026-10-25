@@ -156720,5 +156720,312 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-10-25T05:01:36.134Z",
+    "run": "2026-10-25",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 68,
+        "fight_duration_ms": 15724,
+        "max_hp": 608,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 20.23
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 4,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 13,
+      "vit": 31,
+      "dex": 15,
+      "luk": 11,
+      "int": 17,
+      "foc": 16,
+      "fights": 0
+    },
+    "initial_level": 22,
+    "initial_xp": {
+      "current": 1937,
+      "max": 19686
+    },
+    "progression_curve": {
+      "level": 22,
+      "total_xp": 155642,
+      "xp_for_next": 19686,
+      "percent": 9.8
+    },
+    "initial_max_hp": 608,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Tidal Blade",
+        "rarity": "UNCOMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Linen Robe",
+        "rarity": "COMMON"
+      }
+    ],
+    "initial_streak": 2,
+    "final_stats": {
+      "level": 22,
+      "xp": 5166,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 13,
+      "vit": 31,
+      "dex": 15,
+      "luk": 11,
+      "int": 17,
+      "foc": 16,
+      "last xp": 110,
+      "fights": 6
+    },
+    "final_max_hp": 608,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Tidal Blade",
+        "rarity": "UNCOMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Linen Robe",
+        "rarity": "COMMON"
+      }
+    ],
+    "final_streak": 2,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Tidal Blade",
+        "rarity": "UNCOMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Linen Robe",
+        "rarity": "COMMON"
+      }
+    ],
+    "lootbox_streak": 2,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 25447,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "skeleton"
+      ],
+      "victories": 1,
+      "defeats": 0,
+      "xp_total": 33,
+      "xp_events": [
+        {
+          "time_ms": 25447,
+          "xp": 33,
+          "monster": "skeleton",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        513,
+        1538,
+        25447
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 33,
+        "essence": 0.99,
+        "monster": "skeleton"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.71,
+      "next_level_eta": "⬆ 29m 33s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.13x",
+      "interval": "11.2s",
+      "streak_bonus": "🔥 1-win streak (+7%)"
+    },
+    "initial_essence": 3,
+    "final_essence": 27.83,
+    "essence": {
+      "before_idle": 3,
+      "after_idle": 3.99,
+      "per_fight": [
+        20.23
+      ],
+      "forge_before": 20,
+      "forge_after_salvage": 25,
+      "forge_after_fusion": 25,
+      "forge_after_upgrade": 25,
+      "forge_after": 25,
+      "shop_before": 27,
+      "shop_after": 27,
+      "final": 27.83,
+      "flow": {
+        "idle_gained": 0.99,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 5,
+        "shop_cost": 0,
+        "net_change": 24.83
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 20,
+      "essence_after_salvage": 25,
+      "essence_after_fusion": 25,
+      "essence_after_upgrade": 25,
+      "items_before": 2,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": false,
+      "essence_after": 25,
+      "items_after": 0,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 27,
+      "essence_after": 27,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Oak Staff",
+            "rarity": "COMMON",
+            "price": 30
+          },
+          {
+            "name": "Phoenix Talisman",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 27,
+        "essence_budget": 60,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-END",
+      "essence_budget": 60
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1023,
+      "arena": 730
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Oak Staff",
+          "rarity": "COMMON",
+          "price": 30
+        },
+        {
+          "name": "Phoenix Talisman",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 27,
+      "essence_budget": 60,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
