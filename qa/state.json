@@ -1,11 +1,8 @@
 {
-  "run": "2026-10-25",
-  "character": "QA-PERSIST",
-  "exhausted": true,
-  "updated_at": "2026-10-25T20:13:35.043Z",
-  "source": "reused",
-  "character_type": "persistent",
-  "persistent_generation": 0,
-  "persistent_created_at": "2026-10-19T22:04:52.506Z",
-  "persistent_reset_ready": false
+  "run": "2026-10-26",
+  "character": "BOLDRAPTOR",
+  "exhausted": false,
+  "updated_at": "2026-10-25T23:03:13.361Z",
+  "source": "created",
+  "character_type": "fresh"
 }
