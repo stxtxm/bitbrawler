@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-25T21:29:28Z",
+  "last_session": "2026-10-25T21:45:34Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1118 BestiaryCard: la dependance #1117 a ete mergee pendant la session -> git merge --ff-only origin/master pour recuperer src/utils/bestiaryUtils.ts au lieu de redupliquer BestiaryEntry. Reutiliser .medal-card (import du partial SCSS depuis le composant, comme MedalCard) + filtre inline brightness(0) opacity(0.45) + aria-hidden sur le wrapper pour la silhouette, sans creer de nouveau SCSS (contrainte 1-2 fichiers).",
-      "issue": "#1118",
-      "date": "2026-10-19"
-    },
     {
       "lesson": "Hausse SHOP_OFFERS +10% (#1265) : arrondi Math.round (27→30, 53→58, 45→50, 80→88). Le garde-fou shop-utils (prix mini ≤ N / jours) doit être relevé à chaque hausse, et deployFreshness.ts + commentaires shopUtils/ShopPanel citent les prix en dur — les mettre à jour, sinon doc/tests incohérents. Les fixtures de deploy-freshness.test.ts (24/48/41/73 vs 27/53/45/80) sont historiques et ne doivent PAS être changées.",
       "issue": "#1265",
@@ -171,6 +166,11 @@
     {
       "lesson": "Watchdog #1299 : statusCheckRollup inclut Cloudflare Pages (workflowName vide) → toujours filtrer select(.workflowName == \"CI\") avant de conclure 'pas de CI'. Le reviewer ne peut pas poser de review formelle sur une PR github-actions[bot] (même identité) : il commente '## Review PR #<n>' → l'anti-tempête doit comparer created_at du commentaire au commit de tête.",
       "issue": "#1299",
+      "date": "2026-10-25"
+    },
+    {
+      "lesson": "tech-lead.yml: le PROMPT= contient ${QA_REPORT:-\"...\"} avec des guillemets NON échappés, ce qui ferme puis rouvre la chaîne shell. Un \\\"VAR\\\" inséré plus loin est alors avalé (les guillemets servent de délimiteurs) ; écrire \\$VAR sans guillemets dans le prompt, ou vérifier le rendu en exécutant le run: jusqu'à PROMPT.",
+      "issue": "#1260",
       "date": "2026-10-25"
     }
   ]
