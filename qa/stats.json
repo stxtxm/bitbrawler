@@ -160049,5 +160049,303 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-10-26T05:01:35.614Z",
+    "run": "2026-10-26",
+    "character": "BOLDRAPTOR",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "fresh",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 113,
+        "fight_duration_ms": 15671,
+        "max_hp": 350,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 6.93
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 4,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 8,
+      "vit": 18,
+      "dex": 10,
+      "luk": 7,
+      "int": 15,
+      "foc": 12,
+      "fights": 0
+    },
+    "initial_level": 5,
+    "initial_xp": {
+      "current": 519,
+      "max": 1707
+    },
+    "progression_curve": {
+      "level": 5,
+      "total_xp": 2931,
+      "xp_for_next": 1707,
+      "percent": 30.4
+    },
+    "initial_max_hp": 324,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 6,
+      "xp": 1418,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 8,
+      "vit": 18,
+      "dex": 10,
+      "luk": 7,
+      "int": 15,
+      "foc": 12,
+      "last xp": 72,
+      "fights": 3
+    },
+    "final_max_hp": 350,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 5,
+        "new_level": 6
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 20219,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "slime",
+        "goblin"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 150,
+      "xp_events": [
+        {
+          "time_ms": 3058,
+          "xp": 78,
+          "monster": "slime",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15177,
+          "xp": 72,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        510,
+        1528,
+        3058,
+        12123,
+        13646,
+        15177
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 78,
+        "essence": 0.28,
+        "monster": "slime"
+      },
+      {
+        "result": "victory",
+        "xp": 72,
+        "essence": 0.27,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.11,
+      "next_level_eta": "⬆ 4m 22s",
+      "power_ratio": "⚔ 0.53x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.07x",
+      "interval": "12.0s",
+      "streak_bonus": "🔥 67-win streak (+25%)"
+    },
+    "initial_essence": 6.26,
+    "final_essence": 13.21,
+    "essence": {
+      "before_idle": 6.26,
+      "after_idle": 6.81,
+      "per_fight": [
+        6.93
+      ],
+      "forge_before": 6,
+      "forge_after_salvage": 11,
+      "forge_after_fusion": 11,
+      "forge_after_upgrade": 11,
+      "forge_after": 11,
+      "shop_before": 13,
+      "shop_after": 13,
+      "final": 13.21,
+      "flow": {
+        "idle_gained": 0.55,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 5,
+        "shop_cost": 0,
+        "net_change": 6.95
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 6,
+      "essence_after_salvage": 11,
+      "essence_after_fusion": 11,
+      "essence_after_upgrade": 11,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": 11,
+      "items_after": null,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 13,
+      "essence_after": 13,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Ember Blade",
+            "rarity": "RARE",
+            "price": 30
+          },
+          {
+            "name": "Stone Cleaver",
+            "rarity": "RARE",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 13,
+        "essence_budget": 50,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-FRESH",
+      "essence_budget": 50
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1347,
+      "arena": 775
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Ember Blade",
+          "rarity": "RARE",
+          "price": 30
+        },
+        {
+          "name": "Stone Cleaver",
+          "rarity": "RARE",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 13,
+      "essence_budget": 50,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
