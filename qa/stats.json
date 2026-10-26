@@ -160347,5 +160347,302 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-10-26T08:01:49.770Z",
+    "run": "2026-10-26",
+    "character": "BOLDRAPTOR",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "fresh",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 113,
+        "fight_duration_ms": 12406,
+        "max_hp": 324,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 16.16
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 3,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 8,
+      "vit": 18,
+      "dex": 10,
+      "luk": 7,
+      "int": 15,
+      "foc": 12,
+      "fights": 0
+    },
+    "initial_level": 6,
+    "initial_xp": {
+      "current": 1693,
+      "max": 2307
+    },
+    "progression_curve": {
+      "level": 6,
+      "total_xp": 5812,
+      "xp_for_next": 2307,
+      "percent": 73.4
+    },
+    "initial_max_hp": 350,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 7,
+      "xp": 2048,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 8,
+      "vit": 19,
+      "dex": 10,
+      "luk": 7,
+      "int": 15,
+      "foc": 12,
+      "last xp": 78,
+      "fights": 3
+    },
+    "final_max_hp": 324,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 6,
+        "new_level": 7
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 20322,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "slime"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 146,
+      "xp_events": [
+        {
+          "time_ms": 3089,
+          "xp": 68,
+          "monster": "slime",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15268,
+          "xp": 78,
+          "monster": "slime",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        514,
+        1542,
+        3089,
+        12177,
+        13724,
+        15268
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 68,
+        "essence": 0.28,
+        "monster": "slime"
+      },
+      {
+        "result": "victory",
+        "xp": 78,
+        "essence": 0.29,
+        "monster": "slime"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.14,
+      "next_level_eta": "⬆ 3m 52s",
+      "power_ratio": "⚔ 0.52x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.07x",
+      "interval": "12.0s",
+      "streak_bonus": "🔥 122-win streak (+25%)"
+    },
+    "initial_essence": 15.47,
+    "final_essence": 7.07,
+    "essence": {
+      "before_idle": 15.47,
+      "after_idle": 16.04,
+      "per_fight": [
+        16.16
+      ],
+      "forge_before": 16,
+      "forge_after_salvage": 36,
+      "forge_after_fusion": 36,
+      "forge_after_upgrade": 36,
+      "forge_after": 36,
+      "shop_before": 37,
+      "shop_after": 7,
+      "final": 7.07,
+      "flow": {
+        "idle_gained": 0.57,
+        "fights_change": null,
+        "salvage_gained": 20,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 20,
+        "shop_cost": 30,
+        "net_change": -8.4
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 16,
+      "essence_after_salvage": 36,
+      "essence_after_fusion": 36,
+      "essence_after_upgrade": 36,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": 36,
+      "items_after": null,
+      "salvage_essence_gained": 20,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 30,
+      "essence_before": 37,
+      "essence_after": 7,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Storm Amulet",
+            "rarity": "RARE",
+            "price": 30
+          },
+          {
+            "name": "Flint Knife",
+            "rarity": "RARE",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 7,
+        "essence_budget": 40,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 40
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1052,
+      "arena": 973
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Storm Amulet",
+          "rarity": "RARE",
+          "price": 30
+        },
+        {
+          "name": "Flint Knife",
+          "rarity": "RARE",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 7,
+      "essence_budget": 40,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
