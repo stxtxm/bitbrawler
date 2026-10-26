@@ -160644,5 +160644,303 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-10-26T11:05:36.764Z",
+    "run": "2026-10-26",
+    "character": "BOLDRAPTOR",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "fresh",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 99,
+        "fight_duration_ms": 13136,
+        "max_hp": 344,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 10.16
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 2,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 8,
+      "vit": 19,
+      "dex": 10,
+      "luk": 7,
+      "int": 15,
+      "foc": 12,
+      "fights": 0
+    },
+    "initial_level": 7,
+    "initial_xp": {
+      "current": 2244,
+      "max": 2975
+    },
+    "progression_curve": {
+      "level": 7,
+      "total_xp": 8670,
+      "xp_for_next": 2975,
+      "percent": 75.4
+    },
+    "initial_max_hp": 324,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 8,
+      "xp": 1717,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 8,
+      "vit": 19,
+      "dex": 12,
+      "luk": 7,
+      "int": 15,
+      "foc": 12,
+      "last xp": 58,
+      "fights": 4
+    },
+    "final_max_hp": 344,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 7,
+        "new_level": 8
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 27072,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "goblin",
+        "ogre"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 98,
+      "xp_events": [
+        {
+          "time_ms": 3077,
+          "xp": 71,
+          "monster": "goblin",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 27072,
+          "xp": 27,
+          "monster": "ogre",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        515,
+        1539,
+        3077,
+        12160,
+        13699,
+        27072
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 71,
+        "essence": 0.34,
+        "monster": "goblin"
+      },
+      {
+        "result": "victory",
+        "xp": 27,
+        "essence": 0.33,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.19,
+      "next_level_eta": "⬆ 7m 10s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.07x",
+      "interval": "11.8s",
+      "streak_bonus": "🔥 1-win streak (+25%)"
+    },
+    "initial_essence": 9.41,
+    "final_essence": 31.51,
+    "essence": {
+      "before_idle": 9.41,
+      "after_idle": 10.08,
+      "per_fight": [
+        10.16
+      ],
+      "forge_before": 10,
+      "forge_after_salvage": 60,
+      "forge_after_fusion": 60,
+      "forge_after_upgrade": 60,
+      "forge_after": 60,
+      "shop_before": 61,
+      "shop_after": 31,
+      "final": 31.51,
+      "flow": {
+        "idle_gained": 0.67,
+        "fights_change": null,
+        "salvage_gained": 50,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 50,
+        "shop_cost": 30,
+        "net_change": 22.1
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 10,
+      "essence_after_salvage": 60,
+      "essence_after_fusion": 60,
+      "essence_after_upgrade": 60,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": 60,
+      "items_after": null,
+      "salvage_essence_gained": 50,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "RARE",
+      "cost": 30,
+      "essence_before": 61,
+      "essence_after": 31,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Shadow Cloak",
+            "rarity": "RARE",
+            "price": 30
+          },
+          {
+            "name": "Spiked Gauntlets",
+            "rarity": "RARE",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 31,
+        "essence_budget": 40,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 40
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1054,
+      "arena": 1106
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Shadow Cloak",
+          "rarity": "RARE",
+          "price": 30
+        },
+        {
+          "name": "Spiked Gauntlets",
+          "rarity": "RARE",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 31,
+      "essence_budget": 40,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
