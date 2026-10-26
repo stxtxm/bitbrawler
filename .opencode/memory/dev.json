@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-26T23:12:16Z",
+  "last_session": "2026-10-26T23:15:51Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1272 low-perf timing: SpriteCanvas sets activeAnim=null when lowPerf, so CombatView/IdleRunnerScene must use a 0ms attack impact delay there. Isolate low-perf tests in a dedicated test file with vi.mock returning true (or a vi.hoisted mutable flag) to avoid breaking existing timing tests that assume full animations.",
-      "issue": "#1272",
-      "date": "2026-10-21"
-    },
     {
       "lesson": "#1247 : 'gh issue view --json labels' renvoie {\"labels\":[...]} → jq '[.[].name]' indexe l'objet racine et échoue silencieusement sous '|| echo \"\"' (variable toujours vide). Toujours '[.labels[].name]'. Un readWorkflow + assertion source dans workflow-integrity.test.ts verrouille le pattern (attention : 'gh issue list' renvoie un tableau, donc '[.[].labels[]?.name]' y reste correct).",
       "issue": "#1247",
@@ -171,6 +166,11 @@
     {
       "lesson": "Issue #1323: qa-bot.config persistentCharacterMaxLevel doit rester > 30 (boss unlock) sinon le reset de generation tombe pile au deblocage boss et boss_win_rate se fige. shouldForcePersistentReset utilise cap - HEADROOM(2), donc le cap doit etre >= 33 pour laisser de l'exposition boss. Logique de fraicheur partagee dans qa-bot-helpers (computeBossDataFreshness + buildBossDataStaleIssue) pour que bot/analyzer/test ne divergent pas.",
       "issue": "#1323",
+      "date": "2026-10-26"
+    },
+    {
+      "lesson": "Issue #1325: le combat speed existait déjà en x1/x2. Étendre GAME_RULES.COMBAT.SPEED_OPTIONS, garder la clé localStorage bitbrawler_combat_speed (pas bb_), passer le switch SETTINGS en radiogroup x1/x2/x4 et mettre à jour qa-bot (COMBAT_SPEED_SETTINGS_SELECTOR + option x2). La vitesse ne touche que les timers de CombatView, jamais simulateCombat ni le XP.",
+      "issue": "#1325",
       "date": "2026-10-26"
     }
   ]
