@@ -161521,5 +161521,274 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-10-26T17:56:37.706Z",
+    "run": "2026-10-26",
+    "character": "BOLDRAPTOR",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "fresh",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 0,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 8,
+      "vit": 19,
+      "dex": 13,
+      "luk": 7,
+      "int": 15,
+      "foc": 12,
+      "fights": 0
+    },
+    "initial_level": 9,
+    "initial_xp": {
+      "current": 3997,
+      "max": 4504
+    },
+    "progression_curve": {
+      "level": 9,
+      "total_xp": 17107,
+      "xp_for_next": 4504,
+      "percent": 88.7
+    },
+    "initial_max_hp": 364,
+    "initial_equipment": [],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 10,
+      "xp": 2140,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 8,
+      "vit": 19,
+      "dex": 13,
+      "luk": 7,
+      "int": 15,
+      "foc": 13,
+      "last xp": 76,
+      "fights": 4
+    },
+    "final_max_hp": 384,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 26456,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "ogre"
+      ],
+      "victories": 1,
+      "defeats": 0,
+      "xp_total": 23,
+      "xp_events": [
+        {
+          "time_ms": 26456,
+          "xp": 23,
+          "monster": "ogre",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        513,
+        1539,
+        26456
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 23,
+        "essence": 0.5,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.3,
+      "next_level_eta": "⬆ 9m 8s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.08x",
+      "interval": "11.5s",
+      "streak_bonus": "🔥 1-win streak (+25%)"
+    },
+    "initial_essence": 41.84,
+    "final_essence": 17.91,
+    "essence": {
+      "before_idle": 41.84,
+      "after_idle": 42.34,
+      "per_fight": [],
+      "forge_before": 42,
+      "forge_after_salvage": 47,
+      "forge_after_fusion": 47,
+      "forge_after_upgrade": 47,
+      "forge_after": 47,
+      "shop_before": 47,
+      "shop_after": 17,
+      "final": 17.91,
+      "flow": {
+        "idle_gained": 0.5,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 5,
+        "shop_cost": 30,
+        "net_change": -23.93
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 42,
+      "essence_after_salvage": 47,
+      "essence_after_fusion": 47,
+      "essence_after_upgrade": 47,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": 47,
+      "items_after": null,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "RARE",
+      "cost": 30,
+      "essence_before": 47,
+      "essence_after": 17,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Silver Ring",
+            "rarity": "COMMON",
+            "price": 30
+          },
+          {
+            "name": "Phoenix Talisman",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 17,
+        "essence_budget": 40,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 40
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "no_energy"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1255,
+      "arena": 1125
+    },
+    "skipped_summary": {
+      "no_energy": 1
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Silver Ring",
+          "rarity": "COMMON",
+          "price": 30
+        },
+        {
+          "name": "Phoenix Talisman",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 17,
+      "essence_budget": 40,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
