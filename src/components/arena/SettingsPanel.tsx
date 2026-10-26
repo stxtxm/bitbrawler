@@ -6,7 +6,7 @@ import { PassTrack } from '../pass/PassTrack';
 import { SettingsLogEntry, formatSettingsLogDate } from '../../utils/arenaUtils';
 import { getMedalsByCategory, getUnlockedCount, getTotalMedalCount } from '../../utils/medalUtils';
 import type { MedalCategory, MedalProgressMap } from '../../utils/medalUtils';
-import type { CombatSpeed } from '../../config/gameRules';
+import { GAME_RULES, type CombatSpeed } from '../../config/gameRules';
 import { getDefaultSeasonId, usePassProgress } from '../../hooks/usePassProgress';
 
 const CATEGORY_LABELS: Record<MedalCategory, string> = {
@@ -31,10 +31,10 @@ interface SettingsPanelProps {
   medalProgress?: MedalProgressMap;
   combatSpeed: CombatSpeed;
   telemetryEnabled: boolean;
+  onSelectCombatSpeed: (speed: CombatSpeed) => void;
   onClose: () => void;
   onToggleAutoMode: () => void;
   onToggleSound: () => void;
-  onToggleCombatSpeed: () => void;
   onToggleTelemetry: () => void;
   onDeleteCharacter: () => void;
   onOpenLogs: () => void;
@@ -70,7 +70,8 @@ export const SettingsPanel = memo(function SettingsPanel({
   deleteStep, deletePending, combinedHistory, isOfflineMode, medalProgress,
   combatSpeed,
   telemetryEnabled,
-  onClose, onToggleAutoMode, onToggleSound, onToggleCombatSpeed, onToggleTelemetry, onDeleteCharacter,
+  onSelectCombatSpeed,
+  onClose, onToggleAutoMode, onToggleSound, onToggleTelemetry, onDeleteCharacter,
   onOpenLogs, onOpenMedals, onOpenCompendium, onOpenPass, onReturnToMain, onSetDeleteStep,
 }: SettingsPanelProps) {
   const groupedMedals = useMemo(() => getMedalsByCategory(), []);
@@ -237,18 +238,23 @@ export const SettingsPanel = memo(function SettingsPanel({
                 <div className="settings-row">
                   <div className="settings-label">
                     <span>COMBAT SPEED</span>
-                    <span className="settings-sub">Compress fight animations.</span>
+                    <span className="settings-sub">Compress fight animations. Rewards are unchanged.</span>
                   </div>
-                  <button
-                    className={`pixel-switch ${combatSpeed === 2 ? 'on' : 'off'}`}
-                    onClick={onToggleCombatSpeed}
-                    role="switch"
-                    aria-checked={combatSpeed === 2}
-                    aria-label="Combat speed"
-                  >
-                    <span className="switch-knob" />
-                    <span className="switch-text">x{combatSpeed}</span>
-                  </button>
+                  <div className="combat-speed-dial" role="radiogroup" aria-label="Combat speed">
+                    {GAME_RULES.COMBAT.SPEED_OPTIONS.map((speed) => (
+                      <button
+                        key={speed}
+                        type="button"
+                        role="radio"
+                        aria-checked={combatSpeed === speed}
+                        aria-label={`Combat speed x${speed}`}
+                        className={`combat-speed-dial-option${combatSpeed === speed ? ' active' : ''}`}
+                        onClick={() => onSelectCombatSpeed(speed)}
+                      >
+                        x{speed}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 

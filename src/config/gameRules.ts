@@ -9,7 +9,7 @@ export const GAME_RULES = {
         MAX_DAILY_PVE_FIGHTS: 5,
         XP_WIN: 90,
         XP_LOSS: 30,
-        SPEED_OPTIONS: [1, 2],
+        SPEED_OPTIONS: [1, 2, 4],
         MAX_DURATION_MS: 30000,
     },
     PVE: {

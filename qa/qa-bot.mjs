@@ -633,18 +633,21 @@ async function ensureCombatSpeed2x(page) {
       await dismissModals(page)
       await settingsBtn.click()
       await page.waitForTimeout(800)
-      const toggle = page.locator(COMBAT_SPEED_SETTINGS_SELECTOR).first()
-      if (await toggle.isVisible({ timeout: 2000 }).catch(() => false)) {
-        const checked = await toggle.getAttribute('aria-checked').catch(() => null)
-        if (checked !== 'true') {
-          await toggle.click()
-          await page.waitForTimeout(600)
-          const verified = await toggle.getAttribute('aria-checked').catch(() => null)
-          if (verified === 'true') {
-            console.log('   ⚡ Combat speed toggled to 2x via settings ✅ (speed_toggled_to_2x)')
-          } else {
-            await toggle.click({ force: true }).catch(() => {})
+      const dial = page.locator(COMBAT_SPEED_SETTINGS_SELECTOR).first()
+      if (await dial.isVisible({ timeout: 2000 }).catch(() => false)) {
+        const option = dial.locator('button[aria-label="Combat speed x2"]').first()
+        if (await option.isVisible({ timeout: 1000 }).catch(() => false)) {
+          const checked = await option.getAttribute('aria-checked').catch(() => null)
+          if (checked !== 'true') {
+            await option.click()
             await page.waitForTimeout(600)
+            const verified = await option.getAttribute('aria-checked').catch(() => null)
+            if (verified === 'true') {
+              console.log('   ⚡ Combat speed toggled to 2x via settings ✅ (speed_toggled_to_2x)')
+            } else {
+              await option.click({ force: true }).catch(() => {})
+              await page.waitForTimeout(600)
+            }
           }
         }
       }

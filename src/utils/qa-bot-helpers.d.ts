@@ -72,15 +72,15 @@ export declare const BOSS_REMAINS_LABEL: string
 export declare function parseResultXpPopup(text: string | null | undefined): number | null
 
 export declare const COMBAT_SPEED_STORAGE_KEY: string
-export declare const COMBAT_SPEED_OPTIONS: readonly [1, 2]
+export declare const COMBAT_SPEED_OPTIONS: readonly [1, 2, 4]
 export declare const COMBAT_SPEED_TOGGLE_SELECTOR: string
 export declare const COMBAT_SPEED_SETTINGS_SELECTOR: string
 
-export declare function isCombatSpeed(value: unknown): value is 1 | 2
-export declare function parseCombatSpeed(value: unknown): 1 | 2 | null
-export declare function parseCombatSpeedText(text: string): 1 | 2 | null
-export declare function getCombatSpeedFromStorageRaw(raw: string | null): 1 | 2
-export declare function nextCombatSpeed(current: number): 1 | 2
+export declare function isCombatSpeed(value: unknown): value is 1 | 2 | 4
+export declare function parseCombatSpeed(value: unknown): 1 | 2 | 4 | null
+export declare function parseCombatSpeedText(text: string): 1 | 2 | 4 | null
+export declare function getCombatSpeedFromStorageRaw(raw: string | null): 1 | 2 | 4
+export declare function nextCombatSpeed(current: number): 1 | 2 | 4
 
 export declare const SITE_DOWN_ERROR_PREFIX: string
 export declare function isSiteDownStatus(status: unknown): boolean
