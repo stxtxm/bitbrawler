@@ -1,8 +1,8 @@
 {
   "run": "2026-10-26",
   "character": "BOLDRAPTOR",
-  "exhausted": false,
-  "updated_at": "2026-10-26T11:07:17.995Z",
+  "exhausted": true,
+  "updated_at": "2026-10-26T11:55:42.636Z",
   "source": "reused",
   "character_type": "fresh"
 }
