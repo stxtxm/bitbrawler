@@ -354,6 +354,54 @@
 }
 
 // ============================================
+// Combat Speed Dial
+// ============================================
+
+.combat-speed-dial {
+    display: inline-flex;
+    align-items: stretch;
+    gap: 4px;
+    padding: 3px;
+    border: 2px solid #333;
+    background: #050505;
+
+    @include mobile {
+        width: 100%;
+    }
+}
+
+.combat-speed-dial-option {
+    flex: 1;
+    min-width: 48px;
+    padding: 6px 10px;
+    font-family: $font-pixel;
+    font-size: 0.5rem;
+    letter-spacing: 1px;
+    color: #888;
+    background: #000;
+    border: 2px solid #222;
+    cursor: pointer;
+    transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+
+    &:hover:not(.active) {
+        color: #ccc;
+        border-color: #666;
+    }
+
+    &.active {
+        color: $accent-gold;
+        border-color: $accent-gold;
+        background: rgba($accent-gold, 0.12);
+    }
+
+    @include mobile {
+        min-width: 0;
+        padding: 6px 8px;
+        font-size: 0.45rem;
+    }
+}
+
+// ============================================
 // Danger Zone
 // ============================================
 

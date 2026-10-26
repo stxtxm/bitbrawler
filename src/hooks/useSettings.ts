@@ -119,6 +119,16 @@ export const useSettings = ({
     setAutoMode,
   ]);
 
+  const handleSelectCombatSpeed = useCallback((speed: CombatSpeed) => {
+    if (!isCombatSpeed(speed)) return;
+    try {
+      localStorage.setItem(COMBAT_SPEED_STORAGE_KEY, JSON.stringify(speed));
+    } catch {
+      return;
+    }
+    setCombatSpeed(speed);
+  }, []);
+
   const handleToggleCombatSpeed = useCallback(() => {
     setCombatSpeed((prev) => {
       const options = GAME_RULES.COMBAT.SPEED_OPTIONS;
@@ -213,7 +223,9 @@ export const useSettings = ({
     onReturnToMain: handleReturnToSettings,
     onSetDeleteStep: setDeleteStep,
     combatSpeed,
+    handleSelectCombatSpeed,
     handleToggleCombatSpeed,
+    onSelectCombatSpeed: handleSelectCombatSpeed,
     onToggleCombatSpeed: handleToggleCombatSpeed,
     telemetryEnabled,
     handleToggleTelemetry,

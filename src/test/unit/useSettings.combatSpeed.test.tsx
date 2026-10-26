@@ -46,8 +46,8 @@ describe('useSettings combatSpeed', () => {
     localStorage.clear();
   });
 
-  it('exposes only the supported speed options [1, 2]', () => {
-    expect(GAME_RULES.COMBAT.SPEED_OPTIONS).toEqual([1, 2]);
+  it('exposes the supported speed options [1, 2, 4]', () => {
+    expect(GAME_RULES.COMBAT.SPEED_OPTIONS).toEqual([1, 2, 4]);
   });
 
   it('defaults to x1 when nothing is stored', () => {
@@ -55,19 +55,21 @@ describe('useSettings combatSpeed', () => {
     expect(result.current.combatSpeed).toBe(1);
   });
 
-  it('cycles from x1 to x2 and persists the choice', () => {
+  it('cycles through x1 -> x2 -> x4 -> x1 and persists each choice', () => {
     const { result } = renderSettings();
+
     act(() => {
       result.current.onToggleCombatSpeed();
     });
     expect(result.current.combatSpeed).toBe(2);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '')).toBe(2);
-  });
 
-  it('starts from the persisted value and cycles back to x1', () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(2));
-    const { result } = renderSettings();
-    expect(result.current.combatSpeed).toBe(2);
+    act(() => {
+      result.current.onToggleCombatSpeed();
+    });
+    expect(result.current.combatSpeed).toBe(4);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '')).toBe(4);
+
     act(() => {
       result.current.onToggleCombatSpeed();
     });
@@ -75,8 +77,29 @@ describe('useSettings combatSpeed', () => {
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '')).toBe(1);
   });
 
-  it('ignores unsupported stored speeds and falls back to x1', () => {
+  it('selects an exact speed from the dial and persists it', () => {
+    const { result } = renderSettings();
+
+    act(() => {
+      result.current.onSelectCombatSpeed(4);
+    });
+    expect(result.current.combatSpeed).toBe(4);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '')).toBe(4);
+
+    act(() => {
+      result.current.onSelectCombatSpeed(1);
+    });
+    expect(result.current.combatSpeed).toBe(1);
+  });
+
+  it('starts from a persisted x4 value', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(4));
+    const { result } = renderSettings();
+    expect(result.current.combatSpeed).toBe(4);
+  });
+
+  it('ignores unsupported stored speeds and falls back to x1', () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(3));
     const { result } = renderSettings();
     expect(result.current.combatSpeed).toBe(1);
   });

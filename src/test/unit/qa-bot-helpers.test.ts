@@ -37,19 +37,20 @@ describe('qa-bot-helpers combat speed', () => {
     it('exports correct storage key', () => {
       expect(COMBAT_SPEED_STORAGE_KEY).toBe('bitbrawler_combat_speed')
     })
-    it('exports options [1,2]', () => {
-      expect(COMBAT_SPEED_OPTIONS).toEqual([1, 2])
+    it('exports options [1,2,4]', () => {
+      expect(COMBAT_SPEED_OPTIONS).toEqual([1, 2, 4])
     })
     it('exports toggle selectors', () => {
       expect(COMBAT_SPEED_TOGGLE_SELECTOR).toBe('.combat-speed-toggle')
-      expect(COMBAT_SPEED_SETTINGS_SELECTOR).toBe('button[aria-label="Combat speed"]')
+      expect(COMBAT_SPEED_SETTINGS_SELECTOR).toBe('[role="radiogroup"][aria-label="Combat speed"]')
     })
   })
 
   describe('isCombatSpeed', () => {
-    it('returns true for 1 and 2', () => {
+    it('returns true for 1, 2 and 4', () => {
       expect(isCombatSpeed(1)).toBe(true)
       expect(isCombatSpeed(2)).toBe(true)
+      expect(isCombatSpeed(4)).toBe(true)
     })
     it('returns false for other numbers', () => {
       expect(isCombatSpeed(0)).toBe(false)
@@ -61,9 +62,10 @@ describe('qa-bot-helpers combat speed', () => {
   })
 
   describe('parseCombatSpeed', () => {
-    it('returns 1 or 2 when valid', () => {
+    it('returns 1, 2 or 4 when valid', () => {
       expect(parseCombatSpeed(1)).toBe(1)
       expect(parseCombatSpeed(2)).toBe(2)
+      expect(parseCombatSpeed(4)).toBe(4)
     })
     it('returns null for invalid', () => {
       expect(parseCombatSpeed(0)).toBeNull()
@@ -74,11 +76,13 @@ describe('qa-bot-helpers combat speed', () => {
   })
 
   describe('parseCombatSpeedText', () => {
-    it('parses x1 and x2 variants', () => {
+    it('parses x1, x2 and x4 variants', () => {
       expect(parseCombatSpeedText('x1')).toBe(1)
       expect(parseCombatSpeedText('x2')).toBe(2)
+      expect(parseCombatSpeedText('x4')).toBe(4)
       expect(parseCombatSpeedText('⏩ x1')).toBe(1)
       expect(parseCombatSpeedText('⏩ x2')).toBe(2)
+      expect(parseCombatSpeedText('»» x4 »»')).toBe(4)
       expect(parseCombatSpeedText('COMBAT SPEED x2')).toBe(2)
     })
     it('is case-insensitive and tolerant of spaces', () => {
@@ -89,6 +93,7 @@ describe('qa-bot-helpers combat speed', () => {
       expect(parseCombatSpeedText('no speed')).toBeNull()
       expect(parseCombatSpeedText('')).toBeNull()
       expect(parseCombatSpeedText('x3')).toBeNull()
+      expect(parseCombatSpeedText('x5')).toBeNull()
     })
   })
 
@@ -96,8 +101,10 @@ describe('qa-bot-helpers combat speed', () => {
     it('parses valid JSON stored values', () => {
       expect(getCombatSpeedFromStorageRaw('1')).toBe(1)
       expect(getCombatSpeedFromStorageRaw('2')).toBe(2)
+      expect(getCombatSpeedFromStorageRaw('4')).toBe(4)
       expect(getCombatSpeedFromStorageRaw(JSON.stringify(1))).toBe(1)
       expect(getCombatSpeedFromStorageRaw(JSON.stringify(2))).toBe(2)
+      expect(getCombatSpeedFromStorageRaw(JSON.stringify(4))).toBe(4)
     })
     it('falls back to 1 for null/invalid', () => {
       expect(getCombatSpeedFromStorageRaw(null)).toBe(1)
@@ -109,9 +116,10 @@ describe('qa-bot-helpers combat speed', () => {
   })
 
   describe('nextCombatSpeed', () => {
-    it('toggles 1 -> 2 and 2 -> 1', () => {
+    it('cycles 1 -> 2 -> 4 -> 1', () => {
       expect(nextCombatSpeed(1)).toBe(2)
-      expect(nextCombatSpeed(2)).toBe(1)
+      expect(nextCombatSpeed(2)).toBe(4)
+      expect(nextCombatSpeed(4)).toBe(1)
     })
     it('falls back to 1 for invalid input', () => {
       expect(nextCombatSpeed(3 as unknown as number)).toBe(1)

@@ -239,27 +239,34 @@ describe('Arena settings modal', () => {
     expect(fightButton).not.toBeDisabled()
   })
 
-  it('toggles combat speed from settings and persists the choice', () => {
+  it('exposes the x1, x2 and x4 speed dial from settings', () => {
     const { getByLabelText } = renderWithRouter(<Arena />)
 
     fireEvent.click(getByLabelText('Settings'))
 
-    const speedSwitch = screen.getByRole('switch', { name: 'Combat speed' })
-    expect(speedSwitch).toHaveAttribute('aria-checked', 'false')
-    expect(speedSwitch.textContent).toContain('x1')
+    const dial = screen.getByRole('radiogroup', { name: 'Combat speed' })
+    expect(dial).toBeInTheDocument()
+    expect(screen.getByRole('radio', { name: 'Combat speed x1' })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByRole('radio', { name: 'Combat speed x2' })).toHaveAttribute('aria-checked', 'false')
+    expect(screen.getByRole('radio', { name: 'Combat speed x4' })).toHaveAttribute('aria-checked', 'false')
+  })
 
-    fireEvent.click(speedSwitch)
+  it('selects x4 from the speed dial and persists the choice', () => {
+    const { getByLabelText } = renderWithRouter(<Arena />)
 
-    expect(screen.getByRole('switch', { name: 'Combat speed' })).toHaveAttribute('aria-checked', 'true')
-    expect(JSON.parse(localStorage.getItem('bitbrawler_combat_speed') ?? '')).toBe(2)
+    fireEvent.click(getByLabelText('Settings'))
+    fireEvent.click(screen.getByRole('radio', { name: 'Combat speed x4' }))
+
+    expect(screen.getByRole('radio', { name: 'Combat speed x4' })).toHaveAttribute('aria-checked', 'true')
+    expect(JSON.parse(localStorage.getItem('bitbrawler_combat_speed') ?? '')).toBe(4)
   })
 
   it('starts combat speed from persisted value', () => {
-    localStorage.setItem('bitbrawler_combat_speed', JSON.stringify(2))
+    localStorage.setItem('bitbrawler_combat_speed', JSON.stringify(4))
     const { getByLabelText } = renderWithRouter(<Arena />)
 
     fireEvent.click(getByLabelText('Settings'))
 
-    expect(screen.getByRole('switch', { name: 'Combat speed' })).toHaveAttribute('aria-checked', 'true')
+    expect(screen.getByRole('radio', { name: 'Combat speed x4' })).toHaveAttribute('aria-checked', 'true')
   })
 })

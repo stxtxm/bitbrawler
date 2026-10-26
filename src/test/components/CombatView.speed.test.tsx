@@ -103,6 +103,42 @@ describe('CombatView combat speed', () => {
     vi.restoreAllMocks();
   });
 
+  it('reaches the first hit much faster at x4 than at x1', () => {
+    const timeToFirstHit = (speed: 1 | 4) => {
+      vi.useFakeTimers();
+      mockThreeRounds();
+
+      const { unmount } = render(
+        <CombatView
+          player={player}
+          opponent={opponent}
+          matchType="balanced"
+          combatSpeed={speed}
+          onComplete={vi.fn()}
+          onClose={vi.fn()}
+        />
+      );
+
+      let elapsed = 0;
+      while (elapsed < 6000 && playedRounds() === 0) {
+        act(() => { vi.advanceTimersByTime(10); });
+        elapsed += 10;
+      }
+
+      unmount();
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+      return elapsed;
+    };
+
+    const atX1 = timeToFirstHit(1);
+    const atX4 = timeToFirstHit(4);
+
+    expect(atX1).toBeGreaterThan(0);
+    expect(atX4).toBeGreaterThan(0);
+    expect(atX4).toBeLessThan(atX1 / 2);
+  });
+
   it('keeps the default x1 pacing when combatSpeed is not provided', () => {
     vi.useFakeTimers();
     mockThreeRounds();
@@ -162,6 +198,45 @@ describe('CombatView combat speed', () => {
 
     vi.useRealTimers();
     vi.restoreAllMocks();
+  });
+
+  it('forwards the same win result and xp at x1 and x4', async () => {
+    const runFight = async (combatSpeed: 1 | 4) => {
+      vi.useFakeTimers();
+      mockThreeRounds();
+      vi.spyOn(xpUtils, 'calculateFightXp').mockReturnValue(90);
+      const onComplete = vi.fn();
+
+      const { unmount } = render(
+        <CombatView
+          player={player}
+          opponent={opponent}
+          matchType="balanced"
+          combatSpeed={combatSpeed}
+          onComplete={onComplete}
+          onClose={vi.fn()}
+        />
+      );
+
+      for (let elapsed = 0; elapsed < 10000; elapsed += 50) {
+        act(() => { vi.advanceTimersByTime(50); });
+      }
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'CONTINUE' }));
+      });
+
+      const calls = onComplete.mock.calls;
+      unmount();
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+      return calls[0];
+    };
+
+    const atX1 = await runFight(1);
+    const atX4 = await runFight(4);
+
+    expect(atX1).toEqual([true, 90, undefined]);
+    expect(atX4).toEqual(atX1);
   });
 
   it('shows the speed toggle during combat and calls onToggleCombatSpeed on click', () => {
@@ -241,7 +316,7 @@ describe('CombatView combat speed', () => {
       return elapsed;
     };
 
-    const startCritFight = (combatSpeed: 1 | 2 | undefined) => {
+    const startCritFight = (combatSpeed: 1 | 2 | 4 | undefined) => {
       vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
         winner: 'attacker',
         rounds: 2,
