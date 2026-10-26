@@ -22,6 +22,9 @@ import {
   formatSkipSummary,
   resolveShopCohort,
   isPurchaseWithinBudget,
+  computeBossDataFreshness,
+  buildBossDataStaleIssue,
+  BOSS_DATA_STALE_DAYS,
 } from '../../utils/qa-bot-helpers'
 
 // ── Types matching RunRecord from analyze-qa-stats.ts ──
@@ -1067,6 +1070,81 @@ describe('QA PvE→Boss Shift Analysis (#705)', () => {
       ]
       expect(computeBossFightStats(fights).boss_fights).toBe(2)
     })
+  })
+})
+
+describe('QA Boss Data Freshness (#1323)', () => {
+  const NOW = new Date('2026-10-26T12:00:00Z')
+
+  function collectBossRunDates(runs: RunRecord[]): string[] {
+    return runs
+      .filter(r => r.fights.some(isBossFight))
+      .map(r => r.date)
+  }
+
+  it('flags boss metrics frozen when the last boss fight is 20 days old', () => {
+    const runs: RunRecord[] = [
+      {
+        date: '2026-10-06T10:00:00Z', run: 'r1', character: 'QA-PERSIST', errors: [],
+        fights: [
+          { result: 'defeat', xp: 100, fight_duration_ms: 30000, fight_type: 'boss', monster_name: 'VOID TITAN' },
+        ],
+      },
+      {
+        date: '2026-10-25T10:00:00Z', run: 'r2', character: 'QA-PERSIST', errors: [],
+        fights: [
+          { result: 'victory', xp: 100, fight_duration_ms: 5000, fight_type: 'pvp' },
+        ],
+      },
+    ]
+    const freshness = computeBossDataFreshness(collectBossRunDates(runs), NOW)
+    expect(freshness.boss_last_fight_at).toBe('2026-10-06T10:00:00.000Z')
+    expect(freshness.boss_data_stale).toBe(true)
+    expect(buildBossDataStaleIssue(freshness, NOW)).toBe(
+      'Boss metrics frozen since 2026-10-06 (20 days) — do not use for balance'
+    )
+  })
+
+  it('does not flag recent boss data', () => {
+    const runs: RunRecord[] = [
+      {
+        date: '2026-10-21T12:00:00Z', run: 'r1', character: 'QA-PERSIST', errors: [],
+        fights: [
+          { result: 'defeat', xp: 100, fight_duration_ms: 30000, fight_type: 'boss', monster_name: 'VOID TITAN' },
+        ],
+      },
+    ]
+    const freshness = computeBossDataFreshness(collectBossRunDates(runs), NOW)
+    expect(freshness.boss_data_stale).toBe(false)
+    expect(buildBossDataStaleIssue(freshness, NOW)).toBeNull()
+  })
+
+  it('keeps data live up to the exclusive staleness threshold', () => {
+    const atThreshold = new Date(NOW.getTime() - BOSS_DATA_STALE_DAYS * 24 * 60 * 60 * 1000).toISOString()
+    const freshness = computeBossDataFreshness([atThreshold], NOW)
+    expect(BOSS_DATA_STALE_DAYS).toBe(14)
+    expect(freshness.boss_data_stale).toBe(false)
+  })
+
+  it('returns null and false when no boss fight was ever recorded', () => {
+    expect(computeBossDataFreshness([], NOW)).toEqual({
+      boss_last_fight_at: null,
+      boss_data_stale: false,
+    })
+    expect(buildBossDataStaleIssue({ boss_last_fight_at: null, boss_data_stale: false }, NOW)).toBeNull()
+  })
+
+  it('ignores unparseable run dates instead of throwing', () => {
+    const freshness = computeBossDataFreshness(['not-a-date'], NOW)
+    expect(freshness.boss_last_fight_at).toBeNull()
+    expect(freshness.boss_data_stale).toBe(false)
+  })
+
+  it('exposes the freshness fields and the stale warning in the analyzer', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+    expect(source).toContain('boss_last_fight_at')
+    expect(source).toContain('boss_data_stale')
+    expect(source).toContain('buildBossDataStaleIssue')
   })
 })
 

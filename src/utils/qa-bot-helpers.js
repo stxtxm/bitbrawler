@@ -2,6 +2,34 @@ import config from '../../qa/qa-bot.config.js'
 
 export const PERSISTENT_RESET_LEVEL_HEADROOM = 2
 
+export const BOSS_DATA_STALE_DAYS = 14
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+export function computeBossDataFreshness(dates, now = new Date(), staleDays = BOSS_DATA_STALE_DAYS) {
+  const timestamps = (Array.isArray(dates) ? dates : [])
+    .map(date => (typeof date === 'string' ? Date.parse(date) : Number.NaN))
+    .filter(timestamp => Number.isFinite(timestamp))
+  if (timestamps.length === 0) {
+    return { boss_last_fight_at: null, boss_data_stale: false }
+  }
+  const lastTimestamp = Math.max(...timestamps)
+  return {
+    boss_last_fight_at: new Date(lastTimestamp).toISOString(),
+    boss_data_stale: now.getTime() - lastTimestamp > staleDays * DAY_MS,
+  }
+}
+
+export function buildBossDataStaleIssue(freshness, now = new Date()) {
+  if (!freshness || freshness.boss_data_stale !== true) return null
+  if (typeof freshness.boss_last_fight_at !== 'string') return null
+  const ageDays = Math.max(
+    0,
+    Math.floor((now.getTime() - Date.parse(freshness.boss_last_fight_at)) / DAY_MS),
+  )
+  return `Boss metrics frozen since ${freshness.boss_last_fight_at.slice(0, 10)} (${ageDays} days) — do not use for balance`
+}
+
 export const QA_CHARACTER_TYPE_FRESH = 'fresh'
 export const QA_CHARACTER_TYPE_PERSISTENT = 'persistent'
 

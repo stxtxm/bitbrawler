@@ -328,8 +328,13 @@ describe('QA Bot Fight Type Decision', () => {
       expect(qaBotConfig.freshCharacterDay).toBe(1)
     })
 
-    it('persistentCharacterMaxLevel defaults to 30 (controlled reset at the level cap)', () => {
-      expect(qaBotConfig.persistentCharacterMaxLevel).toBe(30)
+    it('persistentCharacterMaxLevel defaults to 36 (controlled reset above the boss unlock)', () => {
+      expect(qaBotConfig.persistentCharacterMaxLevel).toBe(36)
+    })
+
+    it('keeps the cap above the LVL 30 boss unlock so boss metrics stay live (#1323)', () => {
+      expect(qaBotConfig.persistentCharacterMaxLevel).toBeGreaterThan(30)
+      expect(qaBotConfig.persistentCharacterMaxLevel - PERSISTENT_RESET_LEVEL_HEADROOM).toBeGreaterThan(30)
     })
 
     it('persistentCharacterMaxAgeDays defaults to 30 (controlled reset by age)', () => {
@@ -402,18 +407,21 @@ describe('QA Bot Fight Type Decision', () => {
 
   describe('persistent character reuse level guard (#820, #830)', () => {
     it('never reuses a persistent character whose current level reached the cap', () => {
-      expect(shouldForcePersistentReset(qaBotConfig.persistentCharacterMaxLevel)).toBe(true)
-      expect(shouldForcePersistentReset(33)).toBe(true)
+      const cap = qaBotConfig.persistentCharacterMaxLevel
+      expect(shouldForcePersistentReset(cap)).toBe(true)
+      expect(shouldForcePersistentReset(cap + 3)).toBe(true)
       expect(shouldForcePersistentReset(100)).toBe(true)
     })
 
     it('triggers early inside the anticipation window (cap - headroom)', () => {
-      expect(shouldForcePersistentReset(29)).toBe(true)
-      expect(shouldForcePersistentReset(28)).toBe(true)
+      const cap = qaBotConfig.persistentCharacterMaxLevel
+      expect(shouldForcePersistentReset(cap - PERSISTENT_RESET_LEVEL_HEADROOM)).toBe(true)
+      expect(shouldForcePersistentReset(cap - PERSISTENT_RESET_LEVEL_HEADROOM + 1)).toBe(true)
     })
 
     it('keeps reusing below the anticipation window', () => {
-      expect(shouldForcePersistentReset(27)).toBe(false)
+      const cap = qaBotConfig.persistentCharacterMaxLevel
+      expect(shouldForcePersistentReset(cap - PERSISTENT_RESET_LEVEL_HEADROOM - 1)).toBe(false)
       expect(shouldForcePersistentReset(16)).toBe(false)
       expect(shouldForcePersistentReset(1)).toBe(false)
     })

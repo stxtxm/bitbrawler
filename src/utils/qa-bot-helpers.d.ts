@@ -1,5 +1,23 @@
 export declare const PERSISTENT_RESET_LEVEL_HEADROOM: number
 
+export declare const BOSS_DATA_STALE_DAYS: number
+
+export declare interface BossDataFreshness {
+  boss_last_fight_at: string | null
+  boss_data_stale: boolean
+}
+
+export declare function computeBossDataFreshness(
+  dates: Array<string | null | undefined> | null | undefined,
+  now?: Date,
+  staleDays?: number,
+): BossDataFreshness
+
+export declare function buildBossDataStaleIssue(
+  freshness: BossDataFreshness | null | undefined,
+  now?: Date,
+): string | null
+
 export type QaCharacterType = 'fresh' | 'persistent'
 
 export declare const QA_CHARACTER_TYPE_FRESH: 'fresh'
