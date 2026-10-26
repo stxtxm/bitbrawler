@@ -41,8 +41,10 @@ export default {
    *  to calibrate the first-session experience (#473). Default 1 = Monday. */
   freshCharacterDay: parseInt(process.env.QA_FRESH_CHARACTER_DAY || '1', 10),
   /** Recreate the persistent character once it reaches this level (controlled
-   *  reset, #731). Default 30 = the boss unlock cap. */
-  persistentCharacterMaxLevel: parseInt(process.env.QA_PERSISTENT_MAX_LEVEL || '30', 10),
+   *  reset, #731). Must stay above the LVL 30 boss unlock, otherwise the
+   *  generation is reset exactly when the boss becomes fightable and boss
+   *  metrics freeze forever (#1323). */
+  persistentCharacterMaxLevel: parseInt(process.env.QA_PERSISTENT_MAX_LEVEL || '36', 10),
   /** Recreate the persistent character once it is older than this many days
    *  (controlled reset by age, #731). 0 disables the age-based reset. */
   persistentCharacterMaxAgeDays: parseInt(process.env.QA_PERSISTENT_MAX_AGE_DAYS || '30', 10),

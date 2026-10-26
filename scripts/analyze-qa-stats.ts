@@ -12,7 +12,11 @@
 import { readFileSync, writeFileSync, existsSync } from 'fs'
 import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
-import { isPurchaseWithinBudget } from '../src/utils/qa-bot-helpers.js'
+import {
+  isPurchaseWithinBudget,
+  computeBossDataFreshness,
+  buildBossDataStaleIssue,
+} from '../src/utils/qa-bot-helpers.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
@@ -216,6 +220,8 @@ interface PveAnalysis {
   boss_avg_xp_per_fight: number | null    // average XP per won boss fight (losses never grant XP)
   boss_avg_xp_per_loss: number | null     // average XP per lost boss fight (expected 0)
   boss_avg_hp_left: number | null         // average boss HP remaining after boss fights (pool progress)
+  boss_last_fight_at: string | null       // most recent run date carrying a boss fight
+  boss_data_stale: boolean                // true when boss metrics are older than BOSS_DATA_STALE_DAYS (#1323)
 }
 
 interface EquipmentAnalysis {
@@ -1243,6 +1249,10 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   // --- PvE / Boss classification (#863, #705) ---
   // Fight buckets are built above (issues/suggestions need them for #1303).
   const pveShiftedRuns = validRuns.filter(r => r.pve_data?.pve_shifted === true)
+  const bossFightRunDates = validRuns
+    .filter(r => (r.fights ?? []).some(isBossFight))
+    .map(r => r.date)
+  const bossFreshness = computeBossDataFreshness(bossFightRunDates, new Date(now))
   let pveAnalysis: PveAnalysis | null = null
 
   if (pveFights.length > 0 || bossFights.length > 0 || pveShiftedRuns.length > 0) {
@@ -1312,7 +1322,15 @@ function analyze(stats: RunRecord[]): AnalysisReport {
       boss_avg_hp_left: bossHpLeftFights.length > 0
         ? Math.round((bossHpLeftFights.reduce((s, f) => s + f.boss_hp_left, 0) / bossHpLeftFights.length) * 100) / 100
         : null,
+      boss_last_fight_at: bossFreshness.boss_last_fight_at,
+      boss_data_stale: bossFreshness.boss_data_stale,
     }
+
+    const bossStaleIssue = buildBossDataStaleIssue(
+      { boss_last_fight_at: pveAnalysis.boss_last_fight_at, boss_data_stale: pveAnalysis.boss_data_stale },
+      new Date(now),
+    )
+    if (bossStaleIssue) issues.push(bossStaleIssue)
   }
 
   // --- Equipment Analysis ---
@@ -1909,6 +1927,10 @@ function printReport(report: AnalysisReport): void {
       }
       if (report.pve_analysis.boss_avg_hp_left !== null) {
         console.log(`  Boss HP left:   ${report.pve_analysis.boss_avg_hp_left.toFixed(0)} (pool progress)`)
+      }
+      if (report.pve_analysis.boss_last_fight_at !== null) {
+        const staleLabel = report.pve_analysis.boss_data_stale ? ` ${red}STALE${reset}` : ''
+        console.log(`  Boss last fight: ${report.pve_analysis.boss_last_fight_at.slice(0, 10)}${staleLabel}`)
       }
     }
     console.log(`  XP/fight:       ${report.pve_analysis.avg_xp_per_fight.toFixed(0)}`)
