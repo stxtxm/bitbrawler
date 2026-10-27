@@ -165419,5 +165419,289 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-10-27T23:01:30.788Z",
+    "run": "2026-10-28",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 0,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 12,
+      "vit": 31,
+      "dex": 16,
+      "luk": 14,
+      "int": 17,
+      "foc": 15,
+      "fights": 0
+    },
+    "initial_level": 25,
+    "initial_xp": {
+      "current": 11704,
+      "max": 24309
+    },
+    "progression_curve": {
+      "level": 25,
+      "total_xp": 229006,
+      "xp_for_next": 24309,
+      "percent": 48.1
+    },
+    "initial_max_hp": 652,
+    "initial_equipment": [
+      {
+        "slot": "💍",
+        "name": "Silver Ring"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 25,
+      "xp": 14577,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 12,
+      "vit": 31,
+      "dex": 16,
+      "luk": 14,
+      "int": 17,
+      "foc": 15,
+      "last xp": 34,
+      "fights": 7
+    },
+    "final_max_hp": 652,
+    "final_equipment": [
+      {
+        "slot": "💍",
+        "name": "Silver Ring"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "💍",
+        "name": "Silver Ring"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 32544,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "goblin"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 33,
+      "xp_events": [
+        {
+          "time_ms": 32544,
+          "xp": 33,
+          "monster": "goblin",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        507,
+        1017,
+        32544
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 33,
+        "essence": 0.53,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.92,
+      "next_level_eta": "⬆ 15m 9s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.12x",
+      "interval": "11.0s",
+      "streak_bonus": null
+    },
+    "initial_essence": 25.12,
+    "final_essence": 2.26,
+    "essence": {
+      "before_idle": 25.12,
+      "after_idle": 25.65,
+      "per_fight": [],
+      "forge_before": 25,
+      "forge_after_salvage": 31,
+      "forge_after_fusion": 31,
+      "forge_after_upgrade": 1,
+      "forge_after": 1,
+      "shop_before": 2,
+      "shop_after": 2,
+      "final": 2.26,
+      "flow": {
+        "idle_gained": 0.53,
+        "fights_change": null,
+        "salvage_gained": 6,
+        "fusion_cost": 0,
+        "upgrade_cost": 30,
+        "forge_net": -24,
+        "shop_cost": 0,
+        "net_change": -22.86
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 25,
+      "essence_after_salvage": 31,
+      "essence_after_fusion": 31,
+      "essence_after_upgrade": 1,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 1,
+      "items_after": 1,
+      "salvage_essence_gained": 6,
+      "fusion_cost": null,
+      "upgrade_cost": 30,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 2,
+      "essence_after": 2,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Lucky Charm",
+            "rarity": "COMMON",
+            "price": 30
+          },
+          {
+            "name": "Frostbrand",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 2,
+        "essence_budget": 60,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-END",
+      "essence_budget": 60
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "no_energy"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1394,
+      "arena": 542
+    },
+    "skipped_summary": {
+      "no_energy": 1
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Lucky Charm",
+          "rarity": "COMMON",
+          "price": 30
+        },
+        {
+          "name": "Frostbrand",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 2,
+      "essence_budget": 60,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
