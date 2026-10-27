@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-26T23:15:51Z",
+  "last_session": "2026-10-27T22:53:51Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "#1247 : 'gh issue view --json labels' renvoie {\"labels\":[...]} → jq '[.[].name]' indexe l'objet racine et échoue silencieusement sous '|| echo \"\"' (variable toujours vide). Toujours '[.labels[].name]'. Un readWorkflow + assertion source dans workflow-integrity.test.ts verrouille le pattern (attention : 'gh issue list' renvoie un tableau, donc '[.[].labels[]?.name]' y reste correct).",
-      "issue": "#1247",
-      "date": "2026-10-21"
-    },
     {
       "lesson": "QA analyze shop suggestions (#1277): gate the raise on segmentation (unsegmented > half or segmented < REAL_SHOP_MIN_RUNS) and on cheapest_offer_share >= 0.95 -> hoarding/offer-structure message. Keep lowering (<0.1) outside the gate. Mirror lives in src/test/unit/qa-analysis.test.ts.",
       "issue": "#1277",
@@ -172,6 +167,11 @@
       "lesson": "Issue #1325: le combat speed existait déjà en x1/x2. Étendre GAME_RULES.COMBAT.SPEED_OPTIONS, garder la clé localStorage bitbrawler_combat_speed (pas bb_), passer le switch SETTINGS en radiogroup x1/x2/x4 et mettre à jour qa-bot (COMBAT_SPEED_SETTINGS_SELECTOR + option x2). La vitesse ne touche que les timers de CombatView, jamais simulateCombat ni le XP.",
       "issue": "#1325",
       "date": "2026-10-26"
+    },
+    {
+      "lesson": "Issue #1322: les tests de scripts/analyze-qa-stats.ts vivent dans src/test/unit/qa-analysis.test.ts sous forme de MIROIR recopie de l implementation + tests source contract readFileSync. Toute correction du script doit etre repliquee dans le miroir du test. Shop: analyser stats (pas validRuns, qui exclut les runs sans combat = 62% des achats) ; cohortes: essence_budget = dernier run + budget_generations.",
+      "issue": "#1322",
+      "date": "2026-10-27"
     }
   ]
 }
