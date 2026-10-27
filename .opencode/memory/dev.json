@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-27T22:53:51Z",
+  "last_session": "2026-10-27T22:55:26Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "QA analyze shop suggestions (#1277): gate the raise on segmentation (unsegmented > half or segmented < REAL_SHOP_MIN_RUNS) and on cheapest_offer_share >= 0.95 -> hoarding/offer-structure message. Keep lowering (<0.1) outside the gate. Mirror lives in src/test/unit/qa-analysis.test.ts.",
-      "issue": "#1277",
-      "date": "2026-10-21"
-    },
     {
       "lesson": "QA bot handleDailyLootbox (#1276): le check alreadyOpen .inventory-overlay doit être AVANT suppressInventoryHandler = true car le handler ne ferme plus l overlay quand il est supprimé -> clic Inventory intercepté. Fermer via close button puis attendre detached. Tests contrat qa-analysis: slice(overlayCheckIdx, setIdx) pour verifier l ordre.",
       "issue": "#1276",
@@ -171,6 +166,11 @@
     {
       "lesson": "Issue #1322: les tests de scripts/analyze-qa-stats.ts vivent dans src/test/unit/qa-analysis.test.ts sous forme de MIROIR recopie de l implementation + tests source contract readFileSync. Toute correction du script doit etre repliquee dans le miroir du test. Shop: analyser stats (pas validRuns, qui exclut les runs sans combat = 62% des achats) ; cohortes: essence_budget = dernier run + budget_generations.",
       "issue": "#1322",
+      "date": "2026-10-27"
+    },
+    {
+      "lesson": "Issue #1329 QA analysis: win_rate_ci95 is stored in percentage points (Math.round(196*sqrt(0.25/n))) not a proportion; the /100 in the issue text contradicts its own expected values (15 fights -> 25, 100 -> 10). qa-analysis.test.ts mirrors analyzer logic locally, so source-contract assertions (toContain) must be updated when an alert message is replaced.",
+      "issue": "#1329",
       "date": "2026-10-27"
     }
   ]
