@@ -163602,5 +163602,322 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-10-27T11:01:40.090Z",
+    "run": "2026-10-27",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 215,
+        "fight_duration_ms": 24554,
+        "max_hp": 632,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 314.07
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 3,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 18,
+      "vit": 31,
+      "dex": 18,
+      "luk": 12,
+      "int": 17,
+      "foc": 15,
+      "fights": 0
+    },
+    "initial_level": 24,
+    "initial_xp": {
+      "current": 9258,
+      "max": 22726
+    },
+    "progression_curve": {
+      "level": 24,
+      "total_xp": 203834,
+      "xp_for_next": 22726,
+      "percent": 40.7
+    },
+    "initial_max_hp": 632,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Iron Knuckles"
+      },
+      {
+        "slot": "🛡",
+        "name": "Shadow Boots"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 24,
+      "xp": 12814,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 18,
+      "vit": 31,
+      "dex": 18,
+      "luk": 12,
+      "int": 17,
+      "foc": 15,
+      "last xp": 40,
+      "fights": 6
+    },
+    "final_max_hp": 632,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Iron Knuckles"
+      },
+      {
+        "slot": "🛡",
+        "name": "Shadow Boots"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Iron Knuckles"
+      },
+      {
+        "slot": "🛡",
+        "name": "Shadow Boots"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20551,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "goblin",
+        "skeleton"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 218,
+      "xp_events": [
+        {
+          "time_ms": 2052,
+          "xp": 115,
+          "monster": "goblin",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 13218,
+          "xp": 103,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        513,
+        1026,
+        2052,
+        10130,
+        11669,
+        13218
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 115,
+        "essence": 0.5,
+        "monster": "goblin"
+      },
+      {
+        "result": "victory",
+        "xp": 103,
+        "essence": 0.5,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.95,
+      "next_level_eta": "⬆ 16m 3s",
+      "power_ratio": "⚔ 0.51x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.12x",
+      "interval": "10.7s",
+      "streak_bonus": null
+    },
+    "initial_essence": 313.07,
+    "final_essence": 201.38,
+    "essence": {
+      "before_idle": 313.07,
+      "after_idle": 314.07,
+      "per_fight": [
+        314.07
+      ],
+      "forge_before": 314,
+      "forge_after_salvage": 319,
+      "forge_after_fusion": 319,
+      "forge_after_upgrade": 229,
+      "forge_after": 229,
+      "shop_before": 231,
+      "shop_after": 201,
+      "final": 201.38,
+      "flow": {
+        "idle_gained": 1,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 90,
+        "forge_net": -85,
+        "shop_cost": 30,
+        "net_change": -111.69
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 314,
+      "essence_after_salvage": 319,
+      "essence_after_fusion": 319,
+      "essence_after_upgrade": 229,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 229,
+      "items_after": 0,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": 90,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "COMMON",
+      "cost": 30,
+      "essence_before": 231,
+      "essence_after": 201,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Lucky Charm",
+            "rarity": "COMMON",
+            "price": 30
+          },
+          {
+            "name": "Obsidian Idol",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 201,
+        "essence_budget": 60,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-END",
+      "essence_budget": 60
+    },
+    "combat_speed": 1,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1153,
+      "arena": 510
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Lucky Charm",
+          "rarity": "COMMON",
+          "price": 30
+        },
+        {
+          "name": "Obsidian Idol",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 201,
+      "essence_budget": 60,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
