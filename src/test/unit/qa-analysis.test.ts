@@ -111,6 +111,7 @@ interface RunRecord {
     budget_blocked_price?: number | null
   }
   skipped_fights?: Array<{ index: number; reason: string }>
+  skipped_summary?: Record<string, number>
   essence?: {
     shop_before?: number | null
     shop_after?: number | null
@@ -3700,9 +3701,9 @@ describe('QA Empty-Run Validity & Window Coverage (#1186)', () => {
       expect(source).toContain('trailing_error_runs + trailing_empty_runs >= FRESHNESS_STALE_RUNS')
     })
 
-    it('expose la couverture récente et l alerte starved', () => {
+    it('expose la couverture récente et l alerte de précision (#1329)', () => {
       expect(source).toContain('recent_fight_coverage')
-      expect(source).toContain('QA window starved')
+      expect(source).toContain('QA window imprecise')
       expect(source).toContain('MIN_RECENT_FIGHTS')
     })
 
@@ -3711,6 +3712,143 @@ describe('QA Empty-Run Validity & Window Coverage (#1186)', () => {
       expect(source).toContain('${report.empty_runs} empty')
       expect(source).toContain('trailing empty run(s)')
     })
+  })
+})
+
+describe('QA Combat Yield & Win-Rate Precision (#1329)', () => {
+  const WINDOW = 30
+
+  interface CombatYield {
+    runs: number
+    attempted: number
+    executed: number
+    skipped: number
+    yield_rate: number
+    fights_per_run: number
+    skip_reasons: Record<string, number>
+  }
+
+  function computeCombatYield(runs: RunRecord[]): CombatYield {
+    const executed = runs.reduce((s, r) => s + (r.fights?.length ?? 0), 0)
+    const skip_reasons: Record<string, number> = {}
+    let skipped = 0
+    for (const r of runs) {
+      if (!r.skipped_summary) continue
+      for (const [reason, count] of Object.entries(r.skipped_summary)) {
+        if (typeof count !== 'number' || count <= 0) continue
+        skip_reasons[reason] = (skip_reasons[reason] ?? 0) + count
+        skipped += count
+      }
+    }
+    const attempted = executed + skipped
+    return {
+      runs: runs.length,
+      attempted,
+      executed,
+      skipped,
+      yield_rate: attempted > 0 ? Math.round((executed / attempted) * 1000) / 1000 : 1,
+      fights_per_run: runs.length > 0 ? Math.round((executed / runs.length) * 100) / 100 : 0,
+      skip_reasons,
+    }
+  }
+
+  function computeWinRateCi95(fights: FightRecord[]): number | null {
+    const n = fights.filter(f => typeof f.result === 'string' && f.result.length > 0).length
+    if (n === 0) return null
+    return Math.round(196 * Math.sqrt(0.25 / n))
+  }
+
+  function precisionIssues(runs: RunRecord[]): string[] {
+    const issues: string[] = []
+    const recent = runs.slice(-WINDOW)
+    const yieldStats = computeCombatYield(recent)
+    const resultFights = recent
+      .flatMap(r => r.fights ?? [])
+      .filter(f => typeof f.result === 'string' && f.result.length > 0)
+    const ci = computeWinRateCi95(resultFights)
+    if (ci !== null && ci > 15) {
+      issues.push(`QA window imprecise: ${resultFights.length} fights over last ${recent.length} runs (95% CI ±${ci} pts) — balance signals unreliable`)
+    }
+    if (yieldStats.yield_rate < 0.75) {
+      const dominant = Object.entries(yieldStats.skip_reasons).sort((a, b) => b[1] - a[1])[0]
+      const reason = dominant ? dominant[0] : 'unknown'
+      issues.push(`QA combat yield ${Math.round(yieldStats.yield_rate * 100)}%: ${yieldStats.skipped}/${yieldStats.attempted} attempts skipped (${reason}) — daily quota exhausted before the run`)
+    }
+    return issues
+  }
+
+  function makeRun(id: string, fights: number, skipped?: Record<string, number>): RunRecord {
+    return {
+      date: `2026-10-27T12:00:00.000Z-${id}`,
+      run: id,
+      character: 'QA-PERSI-9',
+      fights: Array.from({ length: fights }, () => ({
+        result: 'victory' as const,
+        xp: 100,
+        fight_duration_ms: 5000,
+        fight_type: 'pvp' as const,
+      })),
+      skipped_summary: skipped,
+      errors: [],
+      character_type: 'persistent',
+    }
+  }
+
+  it('30 runs / 15 combats / 15 no_energy → yield 0.5, CI 25 et 2 issues', () => {
+    const runs: RunRecord[] = [
+      ...Array.from({ length: 15 }, (_, i) => makeRun(`fight-${i}`, 1)),
+      ...Array.from({ length: 15 }, (_, i) => makeRun(`skip-${i}`, 0, { no_energy: 1 })),
+    ]
+    const yieldStats = computeCombatYield(runs)
+    expect(yieldStats.executed).toBe(15)
+    expect(yieldStats.attempted).toBe(30)
+    expect(yieldStats.skipped).toBe(15)
+    expect(yieldStats.yield_rate).toBe(0.5)
+    expect(yieldStats.fights_per_run).toBe(0.5)
+    expect(yieldStats.skip_reasons).toEqual({ no_energy: 15 })
+    expect(computeWinRateCi95(runs.flatMap(r => r.fights))).toBe(25)
+
+    const issues = precisionIssues(runs)
+    expect(issues).toHaveLength(2)
+    expect(issues[0]).toBe('QA window imprecise: 15 fights over last 30 runs (95% CI ±25 pts) — balance signals unreliable')
+    expect(issues[1]).toBe('QA combat yield 50%: 15/30 attempts skipped (no_energy) — daily quota exhausted before the run')
+  })
+
+  it('100 combats sans skip → CI 10 et aucune issue', () => {
+    const runs: RunRecord[] = Array.from({ length: 20 }, (_, i) => makeRun(`r${i}`, 5))
+    const fights = runs.flatMap(r => r.fights)
+    expect(fights).toHaveLength(100)
+    expect(computeWinRateCi95(fights)).toBe(10)
+    expect(computeCombatYield(runs).yield_rate).toBe(1)
+    expect(precisionIssues(runs)).toHaveLength(0)
+  })
+
+  it('skipped_summary absent → attempted === executed, yield 1, pas de crash', () => {
+    const runs: RunRecord[] = Array.from({ length: 5 }, (_, i) => makeRun(`r${i}`, 2))
+    const yieldStats = computeCombatYield(runs)
+    expect(yieldStats.executed).toBe(10)
+    expect(yieldStats.attempted).toBe(10)
+    expect(yieldStats.skipped).toBe(0)
+    expect(yieldStats.yield_rate).toBe(1)
+    expect(yieldStats.skip_reasons).toEqual({})
+  })
+
+  it('fights sans result → n = 0 → CI null sans division par zéro', () => {
+    const fightsWithoutResult = [
+      { xp: 100, fight_duration_ms: 5000 },
+      { xp: 25, fight_duration_ms: 3000 },
+    ] as unknown as FightRecord[]
+    expect(computeWinRateCi95(fightsWithoutResult)).toBeNull()
+    expect(computeWinRateCi95([])).toBeNull()
+  })
+
+  it('expose combat_yield, skipped_summary et win_rate_ci95 dans l analyseur', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+    expect(source).toContain('combat_yield')
+    expect(source).toContain('skipped_summary?: Record<string, number>')
+    expect(source).toContain('win_rate_ci95')
+    expect(source).toContain('QA window imprecise')
+    expect(source).toContain('QA combat yield')
   })
 })
 
