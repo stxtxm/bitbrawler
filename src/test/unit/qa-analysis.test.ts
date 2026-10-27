@@ -584,9 +584,15 @@ function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis 
 // #1230 adds the per-cohort breakdown: the single hoarding profile saturated the
 // rate, so each QA cohort now reports its own rate and its budget-blocked runs.
 
+interface ShopBudgetGeneration {
+  essence_budget: number | null
+  runs: number
+}
+
 interface ShopCohortAnalysis extends ShopFunnel {
   cohort: string
   essence_budget: number | null
+  budget_generations: ShopBudgetGeneration[]
   runs_with_shop_data: number
   runs_with_purchase: number
   real_purchase_rate: number | null
@@ -655,9 +661,18 @@ function computeShopRealAnalysis(runs: RunRecord[]): ShopRealAnalysis | null {
         .map(r => r.shop?.essence_before ?? r.essence?.shop_before)
         .filter((e): e is number => typeof e === 'number')
       const funnel = computeShopFunnel(group)
+      const budgetGenerations = new Map<number | null, number>()
+      for (const r of group) {
+        const budget = r.cohort?.essence_budget ?? null
+        budgetGenerations.set(budget, (budgetGenerations.get(budget) ?? 0) + 1)
+      }
+      const budget_generations: ShopBudgetGeneration[] = [...budgetGenerations.entries()]
+        .map(([essence_budget, runs]) => ({ essence_budget, runs }))
+      const lastRun = group[group.length - 1]
       return {
         cohort: name,
-        essence_budget: group[0]?.cohort?.essence_budget ?? null,
+        essence_budget: lastRun?.cohort?.essence_budget ?? null,
+        budget_generations,
         runs_with_shop_data: groupWithOffers.length,
         runs_with_purchase: purchased,
         real_purchase_rate: groupWithOffers.length > 0
@@ -2342,6 +2357,81 @@ describe('QA Shop Real Purchase Analysis (#1229)', () => {
       expect(source).toContain('Simulated shop purchase rate')
       expect(source).toContain('calibrate on cost relative to essence')
     })
+  })
+})
+
+describe('QA Shop Full Corpus & Budget Generations (#1322)', () => {
+  function corpusRun(opts: {
+    run: string
+    fights?: number
+    purchased?: boolean
+    cohort?: { name: string; essence_budget: number | null } | null
+  }): RunRecord {
+    return {
+      date: '2026-10-26',
+      run: opts.run,
+      character: 'QA-MID',
+      fights: Array.from({ length: opts.fights ?? 0 }, () => ({
+        result: 'victory' as const,
+        xp: 100,
+        fight_duration_ms: 5000,
+      })),
+      errors: [],
+      cohort: opts.cohort ?? null,
+      shop: {
+        visited: true,
+        essence_before: 60,
+        purchased: opts.purchased ?? false,
+        cost: opts.purchased ? 24 : null,
+        item_rarity: opts.purchased ? 'UNCOMMON' : null,
+      },
+      shop_data: {
+        offers: [{ name: 'Marchandise', rarity: 'common', price: 24 }],
+        purchased_offer: opts.purchased ? 0 : null,
+      },
+    }
+  }
+
+  it('compte un run sans combat avec achat dans runs_with_purchase', () => {
+    const runs: RunRecord[] = [
+      corpusRun({ run: 'no-fight-buy', fights: 0, purchased: true }),
+      corpusRun({ run: 'fight-buy', fights: 1, purchased: true }),
+    ]
+
+    const analysis = computeShopRealAnalysis(runs)
+
+    expect(analysis).not.toBeNull()
+    expect(analysis?.runs_with_shop_data).toBe(2)
+    expect(analysis?.runs_with_purchase).toBe(2)
+    expect(analysis?.real_purchase_rate).toBe(1)
+  })
+
+  it('garde une seule ligne QA-MID avec le budget du dernier run et ses générations', () => {
+    const runs: RunRecord[] = [
+      corpusRun({ run: 'mid-150', cohort: { name: 'QA-MID', essence_budget: 150 } }),
+      corpusRun({ run: 'mid-40', cohort: { name: 'QA-MID', essence_budget: 40 } }),
+    ]
+
+    const analysis = computeShopRealAnalysis(runs)
+
+    expect(analysis?.cohorts).toHaveLength(1)
+    const mid = analysis?.cohorts[0]
+    expect(mid?.cohort).toBe('QA-MID')
+    expect(mid?.essence_budget).toBe(40)
+    expect(mid?.budget_generations).toEqual([
+      { essence_budget: 150, runs: 1 },
+      { essence_budget: 40, runs: 1 },
+    ])
+  })
+
+  it('le source analyse le corpus complet et expose les générations de budget', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+    expect(source).toContain('computeShopRealAnalysis(stats)')
+    expect(source).toContain('computeShopSimulatedAnalysis(stats)')
+    expect(source).toContain('budget_generations')
+    expect(source).not.toContain('computeShopRealAnalysis(validRuns)')
+    expect(source).not.toContain('computeShopSimulatedAnalysis(validRuns)')
+    expect(source).not.toContain('essence_budget: group[0]?.cohort?.essence_budget')
   })
 })
 
