@@ -164521,7 +164521,7 @@
     }
   },
   {
-    "date": "2026-10-27T17:01:51.091Z",
+    "date": "2026-10-27T17:08:49.790Z",
     "run": "2026-10-27",
     "character": "QA-PERSIST",
     "character_action": "reused",
@@ -164550,23 +164550,23 @@
       "str": 20,
       "vit": 31,
       "dex": 19,
-      "luk": 13,
+      "luk": 14,
       "int": 17,
       "foc": 15,
       "fights": 0
     },
-    "initial_level": 24,
+    "initial_level": 25,
     "initial_xp": {
-      "current": 22146,
-      "max": 22726
+      "current": 2939,
+      "max": 24309
     },
     "progression_curve": {
-      "level": 24,
-      "total_xp": 216722,
-      "xp_for_next": 22726,
-      "percent": 97.4
+      "level": 25,
+      "total_xp": 220241,
+      "xp_for_next": 24309,
+      "percent": 12.1
     },
-    "initial_max_hp": 632,
+    "initial_max_hp": 652,
     "initial_equipment": [
       {
         "slot": "⚔️",
@@ -164580,7 +164580,7 @@
     "initial_streak": 1,
     "final_stats": {
       "level": 25,
-      "xp": 2340,
+      "xp": 4113,
       "wins": null,
       "losses": null
     },
@@ -164591,8 +164591,8 @@
       "luk": 14,
       "int": 17,
       "foc": 15,
-      "last xp": 118,
-      "fights": 6
+      "last xp": 110,
+      "fights": 7
     },
     "final_max_hp": 652,
     "final_equipment": [
@@ -164626,85 +164626,71 @@
     },
     "level_up_events": [],
     "idle_runner": {
-      "observation_duration_ms": 20472,
-      "cycles_observed": 1,
+      "observation_duration_ms": 31564,
+      "cycles_observed": 0,
       "monsters_faced": [
-        "chimera",
-        "wraith"
+        "chimera"
       ],
-      "victories": 2,
-      "defeats": 0,
-      "xp_total": 146,
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 36,
       "xp_events": [
         {
-          "time_ms": 12375,
-          "xp": 39,
+          "time_ms": 31564,
+          "xp": 36,
           "monster": "chimera",
-          "result": "VICTORY"
-        },
-        {
-          "time_ms": 12891,
-          "xp": 107,
-          "monster": "wraith",
-          "result": "VICTORY"
+          "result": "unknown"
         }
       ],
       "streak_banner_shown": false,
       "level_up_fx_detected": false,
       "level_up_events": [],
       "phase_transition_times_ms": [
-        519,
-        12375,
-        19956
+        520,
+        31564
       ]
     },
     "idle_fights": [
       {
-        "result": "victory",
-        "xp": 39,
-        "essence": 0.51,
+        "result": "defeat",
+        "xp": 36,
+        "essence": 0.85,
         "monster": "chimera"
-      },
-      {
-        "result": "victory",
-        "xp": 107,
-        "essence": 0.51,
-        "monster": "wraith"
       }
     ],
     "efficiency_panel": {
       "visible": true,
       "essence_per_min": 2.02,
-      "next_level_eta": "⬆ 36m 56s",
+      "next_level_eta": "⬆ 30m 25s",
       "power_ratio": "⚔ 0.52x",
       "speed_ratio": "⚡ 0.50x",
       "magic_mult": "🧠 1.12x",
       "interval": "10.6s",
-      "streak_bonus": "🔥 2-win streak (+1%)"
+      "streak_bonus": "🔥 1-win streak (+1%)"
     },
-    "initial_essence": 25.77,
-    "final_essence": 3.35,
+    "initial_essence": 4.39,
+    "final_essence": 12.28,
     "essence": {
-      "before_idle": 25.77,
-      "after_idle": 26.79,
+      "before_idle": 4.39,
+      "after_idle": 5.24,
       "per_fight": [],
-      "forge_before": 26,
-      "forge_after_salvage": 32,
-      "forge_after_fusion": 32,
-      "forge_after_upgrade": 32,
-      "forge_after": 32,
-      "shop_before": 33,
-      "shop_after": 3,
-      "final": 3.35,
+      "forge_before": 5,
+      "forge_after_salvage": 10,
+      "forge_after_fusion": 10,
+      "forge_after_upgrade": 10,
+      "forge_after": 10,
+      "shop_before": 12,
+      "shop_after": 12,
+      "final": 12.28,
       "flow": {
-        "idle_gained": 1.02,
+        "idle_gained": 0.85,
         "fights_change": null,
-        "salvage_gained": 6,
+        "salvage_gained": 5,
         "fusion_cost": 0,
         "upgrade_cost": 0,
-        "forge_net": 6,
-        "shop_cost": 30,
-        "net_change": -22.42
+        "forge_net": 5,
+        "shop_cost": 0,
+        "net_change": 7.89
       }
     },
     "level_up_fx": {
@@ -164714,13 +164700,13 @@
       "level": null
     },
     "offline_gains": {
-      "notification_shown": false,
-      "offline_time": null,
-      "fights": null,
-      "xp_gained": null,
-      "essence_gained": null,
+      "notification_shown": true,
+      "offline_time": "⏰ NaNh NaNm",
+      "fights": 0,
+      "xp_gained": 0,
+      "essence_gained": 0,
       "levels_gained": null,
-      "claimed": false
+      "claimed": true
     },
     "no_legacy_overlay": {
       "level_up_pop_overlay": false,
@@ -164729,20 +164715,20 @@
     },
     "forge": {
       "visited": true,
-      "essence_before": 26,
-      "essence_after_salvage": 32,
-      "essence_after_fusion": 32,
-      "essence_after_upgrade": 32,
+      "essence_before": 5,
+      "essence_after_salvage": 10,
+      "essence_after_fusion": 10,
+      "essence_after_upgrade": 10,
       "items_before": 1,
       "salvage_attempted": true,
       "salvage_succeeded": true,
       "fusion_attempted": false,
       "fusion_succeeded": false,
-      "upgrade_attempted": true,
+      "upgrade_attempted": false,
       "upgrade_succeeded": false,
-      "essence_after": 32,
+      "essence_after": 10,
       "items_after": 1,
-      "salvage_essence_gained": 6,
+      "salvage_essence_gained": 5,
       "fusion_cost": null,
       "upgrade_cost": null,
       "skipped": false,
@@ -164751,12 +164737,12 @@
     "shop": {
       "visited": true,
       "offers_count": 3,
-      "purchased": true,
-      "offer_type": "item",
-      "item_rarity": "COMMON",
-      "cost": 30,
-      "essence_before": 33,
-      "essence_after": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 12,
+      "essence_after": 12,
       "skipped": false,
       "skip_reason": null,
       "shop_data": {
@@ -164777,8 +164763,8 @@
             "price": 50
           }
         ],
-        "purchased_offer": 0,
-        "essence_after_purchase": 3,
+        "purchased_offer": null,
+        "essence_after_purchase": 12,
         "essence_budget": 60,
         "budget_limited": false,
         "budget_blocked_price": null
@@ -164798,8 +164784,8 @@
     ],
     "errors": [],
     "load_times_ms": {
-      "home": 1447,
-      "arena": 992
+      "home": 1307,
+      "arena": 786
     },
     "skipped_summary": {
       "no_energy": 1
@@ -164822,8 +164808,8 @@
           "price": 50
         }
       ],
-      "purchased_offer": 0,
-      "essence_after_purchase": 3,
+      "purchased_offer": null,
+      "essence_after_purchase": 12,
       "essence_budget": 60,
       "budget_limited": false,
       "budget_blocked_price": null
