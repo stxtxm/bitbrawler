@@ -323,9 +323,15 @@ interface ShopSimulatedAnalysis extends ShopFunnel {
 }
 
 /** Ventilation par cohorte QA (#1230) : quel profil produit quelle métrique. */
+interface ShopBudgetGeneration {
+  essence_budget: number | null
+  runs: number
+}
+
 interface ShopCohortAnalysis extends ShopFunnel {
   cohort: string
   essence_budget: number | null
+  budget_generations: ShopBudgetGeneration[]
   runs_with_shop_data: number
   runs_with_purchase: number
   real_purchase_rate: number | null
@@ -852,9 +858,18 @@ function computeShopRealAnalysis(runs: RunRecord[]): ShopRealAnalysis | null {
         .map(r => r.shop?.essence_before ?? r.essence?.shop_before)
         .filter((e): e is number => typeof e === 'number')
       const funnel = computeShopFunnel(group)
+      const budgetGenerations = new Map<number | null, number>()
+      for (const r of group) {
+        const budget = r.cohort?.essence_budget ?? null
+        budgetGenerations.set(budget, (budgetGenerations.get(budget) ?? 0) + 1)
+      }
+      const budget_generations: ShopBudgetGeneration[] = [...budgetGenerations.entries()]
+        .map(([essence_budget, runs]) => ({ essence_budget, runs }))
+      const lastRun = group[group.length - 1]
       return {
         cohort: name,
-        essence_budget: group[0]?.cohort?.essence_budget ?? null,
+        essence_budget: lastRun?.cohort?.essence_budget ?? null,
+        budget_generations,
         runs_with_shop_data: groupWithOffers.length,
         runs_with_purchase: purchased,
         real_purchase_rate: groupWithOffers.length > 0
@@ -1565,10 +1580,10 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   // Real shop purchases are impossible for fresh/mid-game characters, so the
   // purchase_rate would be blind without a simulation. Compute the affordability
   // proxy from the observed offer pool + essence_before.
-  const shopSimulated = computeShopSimulatedAnalysis(validRuns)
+  const shopSimulated = computeShopSimulatedAnalysis(stats)
 
   // --- Shop Real Purchases (#1229) ---
-  const shopReal = computeShopRealAnalysis(validRuns)
+  const shopReal = computeShopRealAnalysis(stats)
 
   // --- Idle Analysis ---
   // Collect idle fights from both structured idle_fights[] (new) and legacy idle_runner (backward compat)
