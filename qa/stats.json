@@ -166293,5 +166293,302 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-10-28T08:01:35.510Z",
+    "run": "2026-10-28",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 253,
+        "fight_duration_ms": 15452,
+        "max_hp": 672,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 8.58
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 3,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 17,
+      "vit": 31,
+      "dex": 16,
+      "luk": 12,
+      "int": 17,
+      "foc": 15,
+      "fights": 0
+    },
+    "initial_level": 25,
+    "initial_xp": {
+      "current": 23354,
+      "max": 24309
+    },
+    "progression_curve": {
+      "level": 25,
+      "total_xp": 240656,
+      "xp_for_next": 24309,
+      "percent": 96.1
+    },
+    "initial_max_hp": 652,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Warpick"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 26,
+      "xp": 2696,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 17,
+      "vit": 31,
+      "dex": 16,
+      "luk": 12,
+      "int": 18,
+      "foc": 15,
+      "last xp": 108,
+      "fights": 6
+    },
+    "final_max_hp": 672,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Warpick"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Warpick"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 25,
+        "new_level": 26
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 24426,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "chimera"
+      ],
+      "victories": 1,
+      "defeats": 0,
+      "xp_total": 39,
+      "xp_events": [
+        {
+          "time_ms": 24426,
+          "xp": 39,
+          "monster": "chimera",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        511,
+        1021,
+        24426
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 39,
+        "essence": 0.73,
+        "monster": "chimera"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.97,
+      "next_level_eta": "⬆ 39m 21s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.13x",
+      "interval": "11.0s",
+      "streak_bonus": "🔥 1-win streak (+1%)"
+    },
+    "initial_essence": 7.74,
+    "final_essence": 10.67,
+    "essence": {
+      "before_idle": 7.74,
+      "after_idle": 8.47,
+      "per_fight": [
+        8.58
+      ],
+      "forge_before": 8,
+      "forge_after_salvage": 8,
+      "forge_after_fusion": 8,
+      "forge_after_upgrade": 8,
+      "forge_after": 8,
+      "shop_before": 10,
+      "shop_after": 10,
+      "final": 10.67,
+      "flow": {
+        "idle_gained": 0.73,
+        "fights_change": null,
+        "salvage_gained": 0,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 0,
+        "shop_cost": 0,
+        "net_change": 2.93
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 8,
+      "essence_after_salvage": 8,
+      "essence_after_fusion": 8,
+      "essence_after_upgrade": 8,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": 8,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 10,
+      "essence_after": 10,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Short Spear",
+            "rarity": "COMMON",
+            "price": 30
+          },
+          {
+            "name": "Warden's Plate",
+            "rarity": "EPIC",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 10,
+        "essence_budget": 60,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-END",
+      "essence_budget": 60
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1372,
+      "arena": 1176
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Short Spear",
+          "rarity": "COMMON",
+          "price": 30
+        },
+        {
+          "name": "Warden's Plate",
+          "rarity": "EPIC",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 10,
+      "essence_budget": 60,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
