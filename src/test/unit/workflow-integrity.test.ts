@@ -275,6 +275,57 @@ describe('Agent workflows send no OpenCode credential', () => {
   })
 })
 
+describe('Agents lancés par --agent sont primaires', () => {
+  // Incident 2026-10-27 (issue #1334, run reviewer 40598684499) : `opencode run
+  // --agent reviewer` répondait « agent "reviewer" is a subagent, not a primary
+  // agent. Falling back to default agent » puis tournait comme dev-agent. Le
+  // prompt de .opencode/agents/reviewer.md (qui porte la consigne « merge après
+  // gate ») n'était donc jamais chargé : le modèle produisait un texte de review
+  // et s'arrêtait, sans commentaire ni merge. Même piège pour tech-lead,
+  // orchestrator et supervisor, tous lancés avec --agent.
+  interface AgentConfigEntry {
+    mode?: string
+    permission?: { edit?: string; bash?: string }
+  }
+  interface OpencodeConfig {
+    agent?: Record<string, AgentConfigEntry>
+  }
+
+  const readConfig = (): OpencodeConfig => {
+    const raw: unknown = JSON.parse(readFileSync(join(process.cwd(), 'opencode.json'), 'utf8'))
+    return raw as OpencodeConfig
+  }
+
+  const readAgentFrontmatterMode = (name: string): string | undefined => {
+    const source = readFileSync(join(process.cwd(), '.opencode', 'agents', `${name}.md`), 'utf8')
+    return /^mode:\s*(\S+)\s*$/m.exec(source)?.[1]
+  }
+
+  const workflowDir = join(process.cwd(), '.github', 'workflows')
+  const workflowFiles = readdirSync(workflowDir).filter(f => f.endsWith('.yml'))
+  const usedAgents = new Set<string>()
+  for (const file of workflowFiles) {
+    for (const match of readWorkflow(file).matchAll(/--agent\s+([A-Za-z0-9_-]+)/g)) {
+      usedAgents.add(match[1])
+    }
+  }
+
+  it('détecte les agents réellement passés à --agent', () => {
+    expect([...usedAgents].sort()).toEqual(['orchestrator', 'reviewer', 'supervisor', 'tech-lead'])
+  })
+
+  it.each([...usedAgents])('%s est déclaré primary partout où il est défini', name => {
+    const configMode = readConfig().agent?.[name]?.mode
+    if (configMode !== undefined) expect(configMode).toBe('primary')
+    expect(readAgentFrontmatterMode(name)).toBe('primary')
+  })
+
+  it('reviewer peut lancer gh pr review/merge (bash autorisé)', () => {
+    expect(readConfig().agent?.reviewer?.mode).toBe('primary')
+    expect(readConfig().agent?.reviewer?.permission?.bash).toBe('allow')
+  })
+})
+
 describe('QA failures stay diagnosable', () => {
   // Un run QA à 0 combat ne laissait aucune trace exploitable : le bot prend une
   // capture à chaque échec (no-start, pve-locked, timeout, skip) mais elle

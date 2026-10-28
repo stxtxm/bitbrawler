@@ -10,12 +10,12 @@
     },
     "reviewer": {
       "description": "Agent de revue de code. Review les PRs et valide la qualite.",
-      "mode": "subagent",
-      "permission": { "edit": "deny", "bash": "ask" }
+      "mode": "primary",
+      "permission": { "edit": "deny", "bash": "allow" }
     },
     "tech-lead": {
       "description": "Tech Lead. Merge les PRs auto-generees, lit les stats QA, analyse le code, cree des issues avec /oc. Tourne 1x/jour a 21h.",
-      "mode": "subagent",
+      "mode": "primary",
       "permission": { "edit": "allow", "bash": "allow" }
     },
     "qa-tester": {

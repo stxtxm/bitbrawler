@@ -1,7 +1,7 @@
 ---
 name: orchestrator
 description: Agent orchestrateur pour découper les propositions complexes en sous-issues avec DAG.
-mode: subagent
+mode: primary
 model: opencode/deepseek-v4.1-flash-free
 permission:
   edit: allow
