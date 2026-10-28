@@ -646,6 +646,29 @@ The tech-lead analyzes:
 }
 ```
 
+### Shop Analysis
+
+Source de vérité : `qa/analysis-latest.json` (`shop.real` = achats OBSERVÉS, `shop.simulated` = affordabilité en repli). Les budgets de cohorte vivent dans `qa/qa-bot.config.js`.
+
+**Cohortes QA (#1230)** : `shop.real.cohorts[]` ventile taux, budget et runs bridés par profil.
+
+| Cohorte | Niveaux | Budget par offre |
+|---|---|---|
+| `QA-FRESH` | 1-5 | 50 💎 |
+| `QA-MID` | 6-21 | 40 💎 |
+| `QA-END` | 22+ | 60 💎 |
+
+Ces budgets représentent l'essence qu'un joueur de ce stade peut consacrer à **une** offre, pas la thésaurisation du bot. Un budget doit rester **inférieur** au prix de l'offre la plus chère (88 💎), sinon le plafond ne mord jamais et le taux d'achat ne mesure plus le prix (#1308/#1310).
+
+**Arbre de décision par cohorte** (dans cet ordre) :
+
+1. `budget_limited_runs > 0` sur une cohorte → **c'est le signal prix** : l'offre était abordable mais au-dessus du budget du profil, donc le shop est hors de portée à ce stade. Lire `shop.real.cohorts` avant d'agir sur le taux agrégé.
+2. `unaffordable` dominant + `budget_limited_runs: 0` → problème de **dotation d'essence** (#1318/#1301), pas de prix.
+3. Taux **saturé (> 60 %) avec 0 `budget_limited`** partout → le budget ne mord pas (budget ≥ prix de l'offre cheap) : ajuster le budget de la cohorte avant tout verdict prix.
+4. Taux **agrégé** (incluant `unsegmented`) = **indicatif uniquement**, jamais un déclencheur de décision prix.
+
+`unsegmented` = runs antérieurs au 19/10/2026 sans cohorte : à ignorer pour le raisonnement par profil.
+
 ---
 
 ## QA Tester Agent
@@ -707,7 +730,7 @@ gh workflow run qa-tester.yml
 - ✅ No crashes or errors
 - ✅ Stats are collected correctly
 - ✅ **Cohortes QA v2 (#1230)** — profil de dépense résolu au début du run depuis le
-  niveau (`QA-FRESH` 1-5 / `QA-MID` 6-21 / `QA-END` 22+, budgets 50/150/400 💎 dans
+  niveau (`QA-FRESH` 1-5 / `QA-MID` 6-21 / `QA-END` 22+, budgets 50/40/60 💎 dans
   `qa/qa-bot.config.js`) ; `shop_data.budget_limited` = offre abordable mais refusée
   car au-dessus du budget du profil → le signal prix qui remplace le taux saturé du
   persistant thésauriseur (voir #1230)
