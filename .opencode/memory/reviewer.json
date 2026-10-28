@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-24T21:26:20Z",
+  "last_session": "2026-10-28T23:11:05Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,9 +21,9 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR authorée par github-actions[bot] = même App que le reviewer : gh pr review --request-changes/--approve renvoie 'Can not request changes on your own pull request'. Fallback : poster le feedback en commentaire gh pr comment et NE PAS merger. Vérifié sur PR #1291 (Pixel Season Pass).",
-      "issue": "#1291",
-      "date": "2026-10-24"
+      "lesson": "opencode run --agent <nom> exige mode: primary dans le frontmatter ET opencode.json ; un subagent retombe silencieusement sur dev-agent (prompt non chargé, pas de merge). De plus permission bash doit être allow (pas ask) pour les agents autonomes qui lancent gh pr review/merge. Guard: workflow-integrity.test.ts vérifie les 4 agents passés à --agent.",
+      "issue": "#1334",
+      "pr": "#1336"
     }
   ]
 }
