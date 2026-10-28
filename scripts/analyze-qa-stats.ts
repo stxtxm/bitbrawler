@@ -115,6 +115,7 @@ interface RunRecord {
   /** Cohorte QA du run (#1230) : profil de dépense résolu au début du run. */
   cohort?: { name: string; essence_budget: number | null } | null
   fights: FightRecord[]
+  skipped_summary?: Record<string, number>
   idle_fights?: IdleFightRecord[]
   idle_runner?: {
     xp_events?: Array<{ result?: string; xp?: number; monster?: string; essence?: number | null }>
@@ -202,6 +203,16 @@ interface TrendWindow {
   avg_level: number | null
   avg_xp_per_fight: number
   avg_duration_ms: number
+}
+
+interface CombatYield {
+  runs: number
+  attempted: number
+  executed: number
+  skipped: number
+  yield_rate: number
+  fights_per_run: number
+  skip_reasons: Record<string, number>
 }
 
 interface PveAnalysis {
@@ -404,6 +415,8 @@ interface AnalysisReport {
   empty_runs: number
   data_freshness: DataFreshness
   recent_fight_coverage: number
+  combat_yield: CombatYield
+  win_rate_ci95: number | null
   character_type_breakdown: CharacterTypeBreakdown
   persistent_level_distribution: Record<string, number>
   win_rate: number
@@ -931,6 +944,39 @@ function computeTrendWindow(runs: RunRecord[], count: number, label: string): Tr
   }
 }
 
+function computeCombatYield(runs: RunRecord[]): CombatYield {
+  const executed = runs.reduce((s, r) => s + (r.fights?.length ?? 0), 0)
+  const skipReasons: Record<string, number> = {}
+  let skipped = 0
+  for (const r of runs) {
+    if (!r.skipped_summary) continue
+    for (const [reason, count] of Object.entries(r.skipped_summary)) {
+      if (typeof count !== 'number' || count <= 0) continue
+      skipReasons[reason] = (skipReasons[reason] ?? 0) + count
+      skipped += count
+    }
+  }
+  const attempted = executed + skipped
+  return {
+    runs: runs.length,
+    attempted,
+    executed,
+    skipped,
+    yield_rate: attempted > 0 ? Math.round((executed / attempted) * 1000) / 1000 : 1,
+    fights_per_run: runs.length > 0 ? Math.round((executed / runs.length) * 100) / 100 : 0,
+    skip_reasons: skipReasons,
+  }
+}
+
+// Half-width of the 95% normal approximation on a 50% win rate, expressed in
+// percentage points: 1.96 * sqrt(0.25 / n) * 100. A fixed fight threshold
+// cannot tell an actionable window from a noisy one (#1329).
+function computeWinRateCi95(fights: FightRecord[]): number | null {
+  const n = fights.filter(f => typeof f.result === 'string' && f.result.length > 0).length
+  if (n === 0) return null
+  return Math.round(196 * Math.sqrt(0.25 / n))
+}
+
 function analyze(stats: RunRecord[]): AnalysisReport {
   const now = new Date().toISOString()
   const data_freshness = computeDataFreshness(stats)
@@ -1123,11 +1169,23 @@ function analyze(stats: RunRecord[]): AnalysisReport {
 
   // Recent fight coverage (#1186): total fights carried by the recent window.
   // Balance signals (win rate, idle, shop, progression, streak) are only
-  // actionable when the window actually holds combat data; a window starved of
-  // fights must be reported loudly instead of silently validating a balance call.
+  // actionable when the window actually holds combat data. #1329 replaces the
+  // fixed coverage threshold (structurally unreachable: 5 fights/day × 3 days =
+  // 15) with the win-rate confidence interval and the combat yield, both of
+  // which name the actionable cause.
   const recent_fight_coverage = recentRuns.reduce((s, r) => s + (r.fights?.length ?? 0), 0)
-  if (recent_fight_coverage < MIN_RECENT_FIGHTS) {
-    issues.push(`QA window starved: only ${recent_fight_coverage} fights over last ${recentRuns.length} runs — balance signals unreliable`)
+  const combat_yield = computeCombatYield(recentRuns)
+  const recentResultFights = recentRuns
+    .flatMap(r => r.fights ?? [])
+    .filter(f => typeof f.result === 'string' && f.result.length > 0)
+  const win_rate_ci95 = computeWinRateCi95(recentResultFights)
+  if (win_rate_ci95 !== null && win_rate_ci95 > 15) {
+    issues.push(`QA window imprecise: ${recentResultFights.length} fights over last ${recentRuns.length} runs (95% CI ±${win_rate_ci95} pts) — balance signals unreliable`)
+  }
+  if (combat_yield.yield_rate < 0.75) {
+    const dominantSkip = Object.entries(combat_yield.skip_reasons).sort((a, b) => b[1] - a[1])[0]
+    const dominantReason = dominantSkip ? dominantSkip[0] : 'unknown'
+    issues.push(`QA combat yield ${Math.round(combat_yield.yield_rate * 100)}%: ${combat_yield.skipped}/${combat_yield.attempted} attempts skipped (${dominantReason}) — daily quota exhausted before the run`)
   }
 
   // Win rate
@@ -1795,6 +1853,8 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     empty_runs: emptyRuns.length,
     data_freshness,
     recent_fight_coverage,
+    combat_yield,
+    win_rate_ci95,
     character_type_breakdown: characterTypeBreakdown,
     persistent_level_distribution: persistentLevelDist,
     win_rate: Math.round(winRate * 1000) / 1000,
@@ -1862,7 +1922,10 @@ function printReport(report: AnalysisReport): void {
   console.log(`  ${bold}Runs:${reset} ${report.total_runs} total`)
   console.log(`        ${green}${report.successful_runs} successful${reset}, ${yellow}${report.halfway_runs} partial${reset}, ${red}${report.error_runs} errors${reset}, ${report.empty_runs} empty`)
   console.log(`        ${bold}Fights in recent window:${reset} ${report.recent_fight_coverage} (min ${MIN_RECENT_FIGHTS} for reliable signals)`)
-  const ct = report.character_type_breakdown
+  console.log(`        ${bold}Combat yield:${reset} ${report.combat_yield.executed}/${report.combat_yield.attempted} attempts (${(report.combat_yield.yield_rate * 100).toFixed(0)}%), ${report.combat_yield.fights_per_run.toFixed(1)} fights/run`)
+  if (report.win_rate_ci95 !== null) {
+    console.log(`        ${bold}Win-rate 95% CI:${reset} ±${report.win_rate_ci95} pts`)
+  }  const ct = report.character_type_breakdown
   console.log(`  ${bold}Characters:${reset} ${ct.persistent_runs} persistent (longitudinal), ${ct.fresh_runs} fresh (first-session), ${ct.unknown_runs} unknown`)
   if (Object.keys(report.persistent_level_distribution).length > 0) {
     console.log(`  ${bold}Persistent LVL dist:${reset} ${Object.entries(report.persistent_level_distribution).map(([k, v]) => `${k}=${v}`).join(', ')}`)
