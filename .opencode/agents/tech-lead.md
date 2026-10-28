@@ -63,13 +63,14 @@ Lis le rapport QA complet. Les sections importantes:
   - Si avg essence gained < 1 et avg essence > 50 → les joueurs thésaurisent
 - **Shop Analysis** (NOUVEAU): analyser les métriques du shop depuis `qa/analysis-latest.json` (`shop.real` = achats OBSERVÉS, `shop.simulated` = affordabilité en repli)
   - Lire `shop.purchased`, `shop.cost`, `shop.item_rarity`, `shop.essence_before`, `shop.essence_after`
-  - **real_purchase_rate** = runs_with_purchase / runs_with_shop_data (sur 5+ jours)
-    - Si real_purchase_rate < 10% → prix trop élevés, créer issue avec `/oc` pour ↓ prix de 10%
-    - Si real_purchase_rate > 60% → prix trop bas, créer issue avec `/oc` pour ↑ prix de 10%
-  - **Cohortes QA (#1230)** : `shop.real.cohorts[]` ventile taux, budget et runs bridés par profil (`QA-FRESH` 50 💎 / `QA-MID` 150 💎 / `QA-END` 400 💎 — budgets dans `qa/qa-bot.config.js`)
-    - `budget_limited_runs` = offres **abordables mais hors budget** du profil → **c'est le signal prix** (pas un désintérêt joueur) : si un profil est bridé, le shop est hors de portée à ce stade de jeu
-    - Un taux saturé (>60 %) **avec 0 run bridé partout** signifie que les budgets sont trop hauts pour mesurer quoi que ce soit — ajuster le budget de la cohorte avant de toucher aux prix
-    - Les runs antérieurs au 19/10/2026 n'ont pas de cohorte (`unsegmented`) : les ignorer pour le raisonnement par profil
+  - **Cohortes QA (#1230)** : `shop.real.cohorts[]` ventile taux, budget et runs bridés par profil (`QA-FRESH` 1-5 → 50 💎 / `QA-MID` 6-21 → 40 💎 / `QA-END` 22+ → 60 💎 — budgets dans `qa/qa-bot.config.js`). Ces budgets = essence consacrable à **une** offre à ce stade, pas la thésaurisation du bot ; ils doivent rester sous le prix de l'offre la plus chère (88 💎) pour que le plafond morde (#1308/#1310)
+  - **Arbre de décision par cohorte** (dans cet ordre) :
+    1. `budget_limited_runs > 0` sur une cohorte → **c'est le signal prix** : l'offre était abordable mais au-dessus du budget du profil, donc le shop est hors de portée à ce stade. Lire `shop.real.cohorts` avant d'agir sur le taux agrégé
+    2. `unaffordable` dominant + `budget_limited_runs: 0` → problème de **dotation d'essence** (#1318/#1301), pas de prix
+    3. Taux **saturé (> 60 %) avec 0 `budget_limited`** partout → le budget ne mord pas (budget ≥ prix de l'offre cheap) : ajuster le budget de la cohorte avant tout verdict prix
+    4. Taux **agrégé** (incluant `unsegmented`) = **indicatif uniquement**, jamais un déclencheur de décision prix
+  - `unsegmented` = runs antérieurs au 19/10/2026 sans cohorte : à ignorer pour le raisonnement par profil
+  - **real_purchase_rate** = runs_with_purchase / runs_with_shop_data (sur 5+ jours) : métrique agrégée, à ne jamais interpréter seule — appliquer l'arbre par cohorte ci-dessus
   - **Télémétrie réelle (D1/D7, #1230 partie 2)** : si `$TELEMETRY_REPORT` est défini (step à ajouter, voir #1260), lire ce JSON (`{}` = pas de données) ; sinon ignorer. Ne lance jamais `npm run telemetry:report` toi-même : la clé `service_role` n'est pas dans ton environnement
     - `d1.rate` / `d7.rate` ne sont valides que si `eligible > 0` : `null` = cohorte pas encore mature, ne rien conclure
     - D1 < 20 % sur 7+ jours → problème de first session : ne pas valider une nouvelle proposition rétention avant d'avoir corrigé le hook J1
