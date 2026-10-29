@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-28T23:11:05Z",
+  "last_session": "2026-10-29T23:24:06Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,9 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "opencode run --agent <nom> exige mode: primary dans le frontmatter ET opencode.json ; un subagent retombe silencieusement sur dev-agent (prompt non chargé, pas de merge). De plus permission bash doit être allow (pas ask) pour les agents autonomes qui lancent gh pr review/merge. Guard: workflow-integrity.test.ts vérifie les 4 agents passés à --agent.",
-      "issue": "#1334",
-      "pr": "#1336"
+      "lesson": "PR de bot sans checks lint/test/build rattaches : executer la gate complete en local (lint, tsc, vitest run, build) avant merge, puis re-verifier statusCheckRollup. Attention aux agregats trompeurs qui persistent sous un autre nom (xp_by_fight_type.boss vs pve_analysis) -> issue de suivi.",
+      "issue": "#1341"
     }
   ]
 }
