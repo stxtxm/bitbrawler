@@ -291,6 +291,15 @@ interface LootRarityDistribution {
   unknown: number
 }
 
+interface EssenceFlowSampleSizes {
+  idle_gained: number
+  forge_net: number
+  shop_spent: number
+  salvage_gained: number
+  fusion_cost: number
+  upgrade_cost: number
+}
+
 interface EssenceAnalysis {
   runs_with_essence_data: number
   avg_essence_gained_per_run: number
@@ -302,6 +311,7 @@ interface EssenceAnalysis {
   avg_salvage_gained: number | null
   avg_fusion_cost: number | null
   avg_upgrade_cost: number | null
+  flow_sample_sizes: EssenceFlowSampleSizes
   runs_with_flow_data: number
   runs_excluded_by_character_replacement: number
 }
@@ -737,6 +747,24 @@ function computeShopFunnel(runs: RunRecord[]): ShopFunnel {
   return funnel
 }
 
+function computeRecentOfferPriceStats(runs: RunRecord[]): {
+  avg_offer_price: number | null
+  min_offer_price: number | null
+  max_offer_price: number | null
+} {
+  const prices = runs
+    .slice(-RECENT_WINDOW_RUNS)
+    .flatMap(r => (r.shop_data?.offers ?? []).map(o => o.price))
+    .filter((p): p is number => typeof p === 'number')
+  return {
+    avg_offer_price: prices.length > 0
+      ? Math.round((prices.reduce((s, p) => s + p, 0) / prices.length) * 100) / 100
+      : null,
+    min_offer_price: prices.length > 0 ? Math.min(...prices) : null,
+    max_offer_price: prices.length > 0 ? Math.max(...prices) : null,
+  }
+}
+
 // Shop simulated affordability (#711): real purchases are near-impossible for
 // fresh/mid-game QA characters (prices 150/250/350 💎 vs avg ~14 💎), so
 // avg_shop_spent stays null and the economic balance is blind. We simulate a
@@ -751,7 +779,6 @@ function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis 
   )
   if (runsWithShopData.length === 0) return null
 
-  const allPrices: number[] = []
   const rarityDist: Record<string, number> = {}
   let affordableTotal = 0
   let wouldPurchaseRuns = 0
@@ -764,7 +791,6 @@ function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis 
     const prices = offers
       .map(o => o.price)
       .filter((p): p is number => typeof p === 'number')
-    allPrices.push(...prices)
 
     for (const o of offers) {
       if (o.rarity && typeof o.rarity === 'string' && o.rarity.trim() !== '') {
@@ -797,11 +823,7 @@ function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis 
     funnel,
     runs_with_shop_data: runsWithShopData.length,
     avg_essence_before: essenceCount > 0 ? Math.round((essenceSum / essenceCount) * 100) / 100 : null,
-    avg_offer_price: allPrices.length > 0
-      ? Math.round((allPrices.reduce((s, p) => s + p, 0) / allPrices.length) * 100) / 100
-      : null,
-    min_offer_price: allPrices.length > 0 ? Math.min(...allPrices) : null,
-    max_offer_price: allPrices.length > 0 ? Math.max(...allPrices) : null,
+    ...computeRecentOfferPriceStats(runs),
     offer_rarity_distribution: rarityDist,
     affordable_offer_count: affordableTotal,
     avg_affordable_offer_count: essenceCount > 0
@@ -853,6 +875,7 @@ function computeShopRealAnalysis(runs: RunRecord[]): ShopRealAnalysis | null {
   // #1300 : on groupe tous les runs avec un résultat shop (même sans offre) pour
   // que le funnel expose les runs verrouillés/inabordables de chaque cohorte.
   const shopResultRuns = runs.filter(hasShopResult)
+  const recentRunSet = new Set(runs.slice(-RECENT_WINDOW_RUNS))
   const cohortGroups = new Map<string, RunRecord[]>()
   for (const r of shopResultRuns) {
     const name = r.cohort?.name ?? 'unsegmented'
@@ -865,6 +888,7 @@ function computeShopRealAnalysis(runs: RunRecord[]): ShopRealAnalysis | null {
       const groupWithOffers = group.filter(r => (r.shop_data?.offers?.length ?? 0) > 0)
       const purchased = groupWithOffers.filter(r => r.shop?.purchased === true).length
       const prices = groupWithOffers
+        .filter(r => recentRunSet.has(r))
         .flatMap(r => (r.shop_data?.offers ?? []).map(o => o.price))
         .filter((p): p is number => typeof p === 'number')
       const essences = groupWithOffers
@@ -1363,8 +1387,11 @@ function analyze(stats: RunRecord[]): AnalysisReport {
 
     // Boss fight aggregation (#705): fight_type === 'boss' records from captureBossFight
     const bossWins = bossFights.filter(f => f.result === 'victory')
-    const bossWinXpFights = bossWins.filter((f): f is FightRecord => f.xp !== null)
-    const bossLossXpFights = bossFights
+    const bossXpCaptureFights = bossFights.filter(f => f.fight_type === 'boss')
+    const bossWinXpFights = bossXpCaptureFights
+      .filter(f => f.result === 'victory')
+      .filter((f): f is FightRecord => f.xp !== null)
+    const bossLossXpFights = bossXpCaptureFights
       .filter(f => f.result === 'defeat')
       .filter((f): f is FightRecord => f.xp !== null)
     const bossHpLeftFights = bossFights.filter((f): f is FightRecord & { boss_hp_left: number } =>
@@ -1629,6 +1656,14 @@ function analyze(stats: RunRecord[]): AnalysisReport {
       avg_upgrade_cost: withUpgrade.length > 0
         ? Math.round((withUpgrade.reduce((s, r) => s + (r.essence!.flow.upgrade_cost as number), 0) / withUpgrade.length) * 100) / 100
         : null,
+      flow_sample_sizes: {
+        idle_gained: withIdle.length,
+        forge_net: withForge.length,
+        shop_spent: withShop.length,
+        salvage_gained: withSalvage.length,
+        fusion_cost: withFusion.length,
+        upgrade_cost: withUpgrade.length,
+      },
       runs_with_flow_data: runsWithFlow.length,
       runs_excluded_by_character_replacement: essenceExcludedRuns,
     }
@@ -2065,13 +2100,14 @@ function printReport(report: AnalysisReport): void {
       const salvage = report.essence_analysis.avg_salvage_gained
       const fusion = report.essence_analysis.avg_fusion_cost
       const upgrade = report.essence_analysis.avg_upgrade_cost
+      const n = report.essence_analysis.flow_sample_sizes
       console.log(`  ── Flow (avg) ─`)
-      if (idle !== null) console.log(`  Idle gain:      +${idle.toFixed(2)}`)
-      if (salvage !== null) console.log(`  Salvage gain:   +${salvage.toFixed(2)}`)
-      if (fusion !== null) console.log(`  Fusion cost:    -${fusion.toFixed(2)}`)
-      if (upgrade !== null) console.log(`  Upgrade cost:   -${upgrade.toFixed(2)}`)
-      if (forge !== null) console.log(`  Forge net:      ${forge >= 0 ? '+' : ''}${forge.toFixed(2)}`)
-      if (shop !== null) console.log(`  Shop spent:     -${shop.toFixed(2)}`)
+      if (idle !== null) console.log(`  Idle gain:      +${idle.toFixed(2)} (n=${n.idle_gained})`)
+      if (salvage !== null) console.log(`  Salvage gain:   +${salvage.toFixed(2)} (n=${n.salvage_gained})`)
+      if (fusion !== null) console.log(`  Fusion cost:    -${fusion.toFixed(2)} (n=${n.fusion_cost})`)
+      if (upgrade !== null) console.log(`  Upgrade cost:   -${upgrade.toFixed(2)} (n=${n.upgrade_cost})`)
+      if (forge !== null) console.log(`  Forge net:      ${forge >= 0 ? '+' : ''}${forge.toFixed(2)} (n=${n.forge_net})`)
+      if (shop !== null) console.log(`  Shop spent:     -${shop.toFixed(2)} (n=${n.shop_spent})`)
     }
     console.log(`  Data from:      ${report.essence_analysis.runs_with_essence_data} run(s)`)
     console.log(`  Excluded:       ${report.essence_analysis.runs_excluded_by_character_replacement} replaced-character run(s)`)

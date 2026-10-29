@@ -115,6 +115,14 @@ interface RunRecord {
   essence?: {
     shop_before?: number | null
     shop_after?: number | null
+    flow?: {
+      idle_gained: number | null
+      forge_net: number | null
+      shop_cost: number | null
+      salvage_gained: number | null
+      fusion_cost: number | null
+      upgrade_cost: number | null
+    } | null
   }
   errors: string[]
 }
@@ -373,8 +381,11 @@ function computeBossFightStats(fights: FightRecord[]): {
     return { boss_fights: 0, boss_win_rate: null, boss_avg_xp_per_fight: null, boss_avg_xp_per_loss: null }
   }
   const bossWins = bossFights.filter(f => f.result === 'victory')
-  const bossWinXp = bossWins.filter((f): f is FightRecord & { xp: number } => f.xp !== null)
-  const bossLossXp = bossFights
+  const bossXpCaptureFights = bossFights.filter(f => f.fight_type === 'boss')
+  const bossWinXp = bossXpCaptureFights
+    .filter(f => f.result === 'victory')
+    .filter((f): f is FightRecord & { xp: number } => f.xp !== null)
+  const bossLossXp = bossXpCaptureFights
     .filter(f => f.result === 'defeat')
     .filter((f): f is FightRecord & { xp: number } => f.xp !== null)
   return {
@@ -382,7 +393,7 @@ function computeBossFightStats(fights: FightRecord[]): {
     boss_win_rate: bossWins.length / bossFights.length,
     boss_avg_xp_per_fight: bossWinXp.length > 0
       ? bossWinXp.reduce((s, f) => s + f.xp, 0) / bossWinXp.length
-      : 0,
+      : null,
     boss_avg_xp_per_loss: bossLossXp.length > 0
       ? bossLossXp.reduce((s, f) => s + f.xp, 0) / bossLossXp.length
       : null,
@@ -518,7 +529,10 @@ function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis 
   )
   if (runsWithShopData.length === 0) return null
 
-  const allPrices: number[] = []
+  const recentOfferPrices = runs
+    .slice(-RECENT_WINDOW_RUNS_MIRROR)
+    .flatMap(r => (r.shop_data?.offers ?? []).map(o => o.price))
+    .filter((p): p is number => typeof p === 'number')
   const rarityDist: Record<string, number> = {}
   let affordableTotal = 0
   let wouldPurchaseRuns = 0
@@ -531,7 +545,6 @@ function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis 
     const prices = offers
       .map(o => o.price)
       .filter((p): p is number => typeof p === 'number')
-    allPrices.push(...prices)
 
     for (const o of offers) {
       if (o.rarity && typeof o.rarity === 'string' && o.rarity.trim() !== '') {
@@ -562,11 +575,11 @@ function computeShopSimulatedAnalysis(runs: RunRecord[]): ShopSimulatedAnalysis 
     funnel,
     runs_with_shop_data: runsWithShopData.length,
     avg_essence_before: essenceCount > 0 ? Math.round((essenceSum / essenceCount) * 100) / 100 : null,
-    avg_offer_price: allPrices.length > 0
-      ? Math.round((allPrices.reduce((s, p) => s + p, 0) / allPrices.length) * 100) / 100
+    avg_offer_price: recentOfferPrices.length > 0
+      ? Math.round((recentOfferPrices.reduce((s, p) => s + p, 0) / recentOfferPrices.length) * 100) / 100
       : null,
-    min_offer_price: allPrices.length > 0 ? Math.min(...allPrices) : null,
-    max_offer_price: allPrices.length > 0 ? Math.max(...allPrices) : null,
+    min_offer_price: recentOfferPrices.length > 0 ? Math.min(...recentOfferPrices) : null,
+    max_offer_price: recentOfferPrices.length > 0 ? Math.max(...recentOfferPrices) : null,
     offer_rarity_distribution: rarityDist,
     affordable_offer_count: affordableTotal,
     avg_affordable_offer_count: essenceCount > 0
@@ -644,6 +657,7 @@ function computeShopRealAnalysis(runs: RunRecord[]): ShopRealAnalysis | null {
   const budgetLimitedRuns = runsWithShopData.filter(r => r.shop_data?.budget_limited === true).length
 
   const shopResultRuns = runs.filter(hasShopResult)
+  const recentRunSet = new Set(runs.slice(-RECENT_WINDOW_RUNS_MIRROR))
   const cohortGroups = new Map<string, RunRecord[]>()
   for (const r of shopResultRuns) {
     const name = r.cohort?.name ?? 'unsegmented'
@@ -656,6 +670,7 @@ function computeShopRealAnalysis(runs: RunRecord[]): ShopRealAnalysis | null {
       const groupWithOffers = group.filter(r => (r.shop_data?.offers?.length ?? 0) > 0)
       const purchased = groupWithOffers.filter(r => r.shop?.purchased === true).length
       const prices = groupWithOffers
+        .filter(r => recentRunSet.has(r))
         .flatMap(r => (r.shop_data?.offers ?? []).map(o => o.price))
         .filter((p): p is number => typeof p === 'number')
       const essences = groupWithOffers
@@ -5080,6 +5095,198 @@ describe('QA XP Win/Loss By Fight Type (#1303)', () => {
       expect(source).toContain('recentPvpCoverage')
       expect(source).toContain('xpByFightType.pvp')
       expect(source).toContain('#570/#725')
+    })
+  })
+})
+
+const RECENT_WINDOW_RUNS_MIRROR = 30
+
+type EssenceFlow = NonNullable<NonNullable<RunRecord['essence']>['flow']>
+
+interface EssenceFlowSampleSizes {
+  idle_gained: number
+  forge_net: number
+  shop_spent: number
+  salvage_gained: number
+  fusion_cost: number
+  upgrade_cost: number
+}
+
+function computeEssenceFlowSampleSizes(runs: RunRecord[]): EssenceFlowSampleSizes {
+  const flows = runs
+    .map(r => r.essence?.flow)
+    .filter((f): f is EssenceFlow => f !== null && f !== undefined)
+  const count = (key: keyof EssenceFlow): number => flows.filter(f => typeof f[key] === 'number').length
+  return {
+    idle_gained: count('idle_gained'),
+    forge_net: count('forge_net'),
+    shop_spent: count('shop_cost'),
+    salvage_gained: count('salvage_gained'),
+    fusion_cost: count('fusion_cost'),
+    upgrade_cost: count('upgrade_cost'),
+  }
+}
+
+describe('QA Recent-Window Aggregates (#1340)', () => {
+  describe('computeShopSimulatedAnalysis — prix bornés à la fenêtre récente', () => {
+    function shopRun(date: string, prices: number[], essenceBefore = 200): RunRecord {
+      return {
+        date, run: date, character: 'QA', fights: [], errors: [],
+        shop: { essence_before: essenceBefore },
+        shop_data: { offers: prices.map((price, i) => ({ name: `Offer ${i}`, rarity: 'common', price })) },
+      }
+    }
+
+    it('ignore les prix pré-#1265 (18/350) portés par les runs hors fenêtre', () => {
+      const legacy = shopRun('2026-08-25T05:00:00.000Z', [18, 350])
+      const recent = Array.from({ length: RECENT_WINDOW_RUNS_MIRROR }, (_, i) =>
+        shopRun(`2026-10-${String((i % 28) + 1).padStart(2, '0')}T05:00:00.000Z`, [30, 58, 50, 88])
+      )
+      const result = computeShopSimulatedAnalysis([legacy, ...recent])
+      expect(result).not.toBeNull()
+      expect(result!.min_offer_price).toBe(30)
+      expect(result!.max_offer_price).toBe(88)
+      expect(result!.avg_offer_price).toBe(56.5)
+    })
+
+    it('garde les prix de la fenêtre courante quand aucun run historique ne subsiste', () => {
+      const runs = [shopRun('2026-10-29T05:00:00.000Z', [30, 58, 50])]
+      const result = computeShopSimulatedAnalysis(runs)
+      expect(result!.min_offer_price).toBe(30)
+      expect(result!.max_offer_price).toBe(58)
+    })
+
+    it('conserve les compteurs de runs et le funnel sur le corpus complet', () => {
+      const legacy = shopRun('2026-08-25T05:00:00.000Z', [18, 350])
+      const recent = Array.from({ length: RECENT_WINDOW_RUNS_MIRROR }, (_, i) =>
+        shopRun(`2026-10-${String((i % 28) + 1).padStart(2, '0')}T05:00:00.000Z`, [30, 58, 50, 88])
+      )
+      const result = computeShopSimulatedAnalysis([legacy, ...recent])
+      expect(result!.runs_with_shop_data).toBe(31)
+    })
+  })
+
+  describe('computeShopRealAnalysis — min_offer_price borné à la fenêtre récente', () => {
+    function cohortRun(date: string, prices: number[], cohort: { name: string; essence_budget: number | null } | null): RunRecord {
+      return {
+        date, run: date, character: 'QA', fights: [], errors: [],
+        shop: { essence_before: 300 },
+        shop_data: { offers: prices.map((price, i) => ({ name: `Offer ${i}`, rarity: 'common', price })) },
+        cohort,
+      }
+    }
+
+    it("n'hérite plus du plancher pré-#726 (18) pour la cohorte unsegmented", () => {
+      const legacy = cohortRun('2026-08-25T05:00:00.000Z', [18, 350], null)
+      const recent = Array.from({ length: RECENT_WINDOW_RUNS_MIRROR }, (_, i) =>
+        cohortRun(`2026-10-${String((i % 28) + 1).padStart(2, '0')}T05:00:00.000Z`, [30, 88], { name: 'QA-END', essence_budget: 60 })
+      )
+      const analysis = computeShopRealAnalysis([legacy, ...recent])
+      expect(analysis).not.toBeNull()
+      const unsegmented = analysis!.cohorts.find(c => c.cohort === 'unsegmented')
+      expect(unsegmented).toBeDefined()
+      expect(unsegmented!.min_offer_price).toBeNull()
+      const end = analysis!.cohorts.find(c => c.cohort === 'QA-END')
+      expect(end!.min_offer_price).toBe(30)
+    })
+
+    it('garde le min de la cohorte quand tous ses runs sont dans la fenêtre', () => {
+      const runs = [cohortRun('2026-10-29T05:00:00.000Z', [30, 58], { name: 'QA-MID', essence_budget: 40 })]
+      const analysis = computeShopRealAnalysis(runs)
+      expect(analysis!.cohorts[0].min_offer_price).toBe(30)
+    })
+  })
+
+  describe('computeBossFightStats — XP limitée au chemin captureBossFight', () => {
+    it("n'attribue pas l'XP PvE des défaites VOID TITAN à boss_avg_xp_per_loss", () => {
+      const fights: FightRecord[] = [
+        { result: 'defeat', xp: 574, fight_duration_ms: 30000, fight_type: 'pve', monster_name: 'VOID TITAN' },
+        { result: 'defeat', xp: 894, fight_duration_ms: 30000, fight_type: 'pve', monster_name: 'VOID TITAN' },
+        { result: 'defeat', xp: 0, fight_duration_ms: 30000, fight_type: 'boss', monster_name: 'VOID TITAN' },
+      ]
+      const stats = computeBossFightStats(fights)
+      expect(stats.boss_fights).toBe(3)
+      expect(stats.boss_win_rate).toBe(0)
+      expect(stats.boss_avg_xp_per_loss).toBe(0)
+    })
+
+    it('retourne null quand seuls des records pve classés boss portent de l XP', () => {
+      const fights: FightRecord[] = [
+        { result: 'defeat', xp: 574, fight_duration_ms: 30000, fight_type: 'pve', monster_name: 'VOID TITAN' },
+        { result: 'defeat', xp: null, fight_duration_ms: 30000, fight_type: 'pve', monster_name: 'VOID TITAN' },
+      ]
+      const stats = computeBossFightStats(fights)
+      expect(stats.boss_fights).toBe(2)
+      expect(stats.boss_win_rate).toBe(0)
+      expect(stats.boss_avg_xp_per_loss).toBeNull()
+      expect(stats.boss_avg_xp_per_fight).toBeNull()
+    })
+
+    it('garde boss_fights et le win rate sur la classification isBossFight', () => {
+      const fights: FightRecord[] = [
+        { result: 'victory', xp: 360, fight_duration_ms: 20000, fight_type: 'boss', monster_name: 'VOID TITAN' },
+        { result: 'defeat', xp: 700, fight_duration_ms: 30000, fight_type: 'pve', monster_name: 'VOID TITAN' },
+      ]
+      const stats = computeBossFightStats(fights)
+      expect(stats.boss_fights).toBe(2)
+      expect(stats.boss_win_rate).toBe(0.5)
+      expect(stats.boss_avg_xp_per_fight).toBe(360)
+      expect(stats.boss_avg_xp_per_loss).toBeNull()
+    })
+  })
+
+  describe('essence flow sample sizes', () => {
+    it('expose un n par moyenne, sur des dénominateurs distincts', () => {
+      const runs: RunRecord[] = [
+        {
+          date: '2026-10-29', run: 'r1', character: 'QA', fights: [], errors: [],
+          essence: { flow: { idle_gained: 12, forge_net: null, shop_cost: null, salvage_gained: null, fusion_cost: null, upgrade_cost: null } },
+        },
+        {
+          date: '2026-10-29', run: 'r2', character: 'QA', fights: [], errors: [],
+          essence: { flow: { idle_gained: null, forge_net: null, shop_cost: 50, salvage_gained: 8, fusion_cost: null, upgrade_cost: null } },
+        },
+        {
+          date: '2026-10-29', run: 'r3', character: 'QA', fights: [], errors: [],
+          essence: { flow: { idle_gained: null, forge_net: -4, shop_cost: null, salvage_gained: null, fusion_cost: 20, upgrade_cost: 15 } },
+        },
+      ]
+      expect(computeEssenceFlowSampleSizes(runs)).toEqual({
+        idle_gained: 1,
+        forge_net: 1,
+        shop_spent: 1,
+        salvage_gained: 1,
+        fusion_cost: 1,
+        upgrade_cost: 1,
+      })
+    })
+
+    it('compte zéro quand aucun run ne porte de flow', () => {
+      expect(computeEssenceFlowSampleSizes([])).toEqual({
+        idle_gained: 0,
+        forge_net: 0,
+        shop_spent: 0,
+        salvage_gained: 0,
+        fusion_cost: 0,
+        upgrade_cost: 0,
+      })
+    })
+  })
+
+  describe('analyze-qa-stats.ts source contract (#1340)', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+
+    it('borne les prix shop à la fenêtre récente', () => {
+      expect(source).toContain('computeRecentOfferPriceStats')
+      expect(source).toContain('RECENT_WINDOW_RUNS')
+    })
+
+    it('limite les métriques XP boss aux records fight_type boss', () => {
+      expect(source).toContain('bossXpCaptureFights')
+    })
+
+    it('expose un n par moyenne du flow essence', () => {
+      expect(source).toContain('flow_sample_sizes')
     })
   })
 })
