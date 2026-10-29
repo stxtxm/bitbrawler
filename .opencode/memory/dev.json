@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-27T22:55:26Z",
+  "last_session": "2026-10-29T23:17:57Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "QA bot handleDailyLootbox (#1276): le check alreadyOpen .inventory-overlay doit être AVANT suppressInventoryHandler = true car le handler ne ferme plus l overlay quand il est supprimé -> clic Inventory intercepté. Fermer via close button puis attendre detached. Tests contrat qa-analysis: slice(overlayCheckIdx, setIdx) pour verifier l ordre.",
-      "issue": "#1276",
-      "date": "2026-10-21"
-    },
     {
       "lesson": "Issue #1247 : 'gh issue view --json labels --jq '[.[].name] | join(\",\")'' renvoie {labels:[...]} donc .[] s'applique a la racine puis .name sur un tableau -> jq exit 5. Le '|| echo \"\"' avalait l'erreur et ISSUE_LABELS restait vide, ce qui relancait l'orchestrator sur les sous-issues. La forme correcte est '[.labels[].name]'. Garde-fou ajoute dans workflow-integrity.test.ts (interdit '[.[].name]' dans tous les workflows). Attention : le step 'Push and manage PR' retire les modifs .github/workflows non commitees, il faut donc committer le correctif.",
       "issue": "#1247",
@@ -172,6 +167,11 @@
       "lesson": "Issue #1329 QA analysis: win_rate_ci95 is stored in percentage points (Math.round(196*sqrt(0.25/n))) not a proportion; the /100 in the issue text contradicts its own expected values (15 fights -> 25, 100 -> 10). qa-analysis.test.ts mirrors analyzer logic locally, so source-contract assertions (toContain) must be updated when an alert message is replaced.",
       "issue": "#1329",
       "date": "2026-10-27"
+    },
+    {
+      "lesson": "QA analyzer aggregates: bound all-time families with the existing RECENT_WINDOW_RUNS pattern. Shop price window must be applied on the GLOBAL run timeline (Set of runs.slice(-30)) then filtered per cohort, not per-cohort slice(-30) — otherwise old cohorts (unsegmented) still expose pre-rebalance prices. Boss XP metrics must read only fight_type===\"boss\" (captureBossFight) while boss_fights/win_rate/hp_left keep isBossFight() (VOID TITAN emitted as pve).",
+      "issue": "#1340",
+      "date": "2026-10-29"
     }
   ]
 }
