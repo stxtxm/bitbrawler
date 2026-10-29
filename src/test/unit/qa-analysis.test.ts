@@ -4982,7 +4982,7 @@ function computeXpByFightTypeMirror(
   return {
     pvp: computeXpTypeBreakdownMirror(fights.filter(f => fightTypeOfMirror(f) === 'pvp')),
     idle: computeXpTypeBreakdownMirror([...idleFromFights, ...idleAsFights]),
-    boss: computeXpTypeBreakdownMirror(fights.filter(f => fightTypeOfMirror(f) === 'boss')),
+    boss: computeXpTypeBreakdownMirror(fights.filter(f => f.fight_type === 'boss')),
     pve: computeXpTypeBreakdownMirror(fights.filter(f => fightTypeOfMirror(f) === 'pve')),
   }
 }
@@ -5095,6 +5095,54 @@ describe('QA XP Win/Loss By Fight Type (#1303)', () => {
       expect(source).toContain('recentPvpCoverage')
       expect(source).toContain('xpByFightType.pvp')
       expect(source).toContain('#570/#725')
+    })
+  })
+})
+
+// ── XP boss bucket bounded to fight_type boss (#1342) ──
+// VOID TITAN emitted as 'pve' is still a boss fight for the count/win rate,
+// but its XP must not feed the boss economy: those legacy records carry
+// ~574 XP per defeat and made xp_by_fight_type.boss unreadable. #1340 removed
+// them from pve_analysis; the per-type breakdown needs the same bound.
+describe('QA XP boss bucket bounded to fight_type boss (#1342)', () => {
+  function pveVoidTitanDefeat(xp: number | null): FightRecord {
+    return { result: 'defeat', xp, fight_duration_ms: 30000, fight_type: 'pve', monster_name: 'VOID TITAN' }
+  }
+  function bossCapture(result: 'victory' | 'defeat', xp: number): FightRecord {
+    return { result, xp, fight_duration_ms: 30000, fight_type: 'boss', monster_name: 'VOID TITAN' }
+  }
+
+  it("n'attribue pas l'XP des défaites VOID TITAN émises en pve au bucket boss", () => {
+    const fights: FightRecord[] = [
+      ...Array.from({ length: 14 }, () => pveVoidTitanDefeat(574.36)),
+      bossCapture('defeat', 0),
+    ]
+    const breakdown = computeXpByFightTypeMirror(fights, [])
+    expect(breakdown.boss.n_loss).toBe(1)
+    expect(breakdown.boss.loss_avg).toBe(0)
+  })
+
+  it('laisse le bucket boss vide quand seuls des records pve VOID TITAN portent de XP', () => {
+    const fights: FightRecord[] = [pveVoidTitanDefeat(574), pveVoidTitanDefeat(null)]
+    const breakdown = computeXpByFightTypeMirror(fights, [])
+    expect(breakdown.boss).toMatchObject({ win_avg: 0, loss_avg: 0, ratio: 0, n_win: 0, n_loss: 0 })
+  })
+
+  it('conserve les victoires et défaites du chemin captureBossFight', () => {
+    const fights: FightRecord[] = [
+      bossCapture('victory', 500),
+      bossCapture('defeat', 478),
+      pveVoidTitanDefeat(574),
+    ]
+    const breakdown = computeXpByFightTypeMirror(fights, [])
+    expect(breakdown.boss).toMatchObject({ win_avg: 500, loss_avg: 478, ratio: 1.05, n_win: 1, n_loss: 1 })
+  })
+
+  describe('analyze-qa-stats.ts source contract (#1342)', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+
+    it('alimente xp_by_fight_type.boss avec les seuls records fight_type boss', () => {
+      expect(source).toContain('computeXpTypeBreakdown(bossXpCaptureFights)')
     })
   })
 })

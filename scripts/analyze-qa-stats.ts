@@ -1169,6 +1169,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   // 'pve' is a boss fight; idle fights live in idle_fights[] (legacy runs may
   // still carry fight_type 'idle' in fights[]).
   const bossFights = allFights.filter(isBossFight)
+  const bossXpCaptureFights = bossFights.filter(f => f.fight_type === 'boss')
   const pveFights = allFights.filter(f => f.fight_type === 'pve' && !isBossFight(f))
   const pvpFights = allFights.filter(f => !isBossFight(f) && f.fight_type !== 'pve' && f.fight_type !== 'idle')
 
@@ -1182,7 +1183,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   const xpByFightType: XpByFightType = {
     pvp: computeXpTypeBreakdown(pvpFights),
     idle: computeXpTypeBreakdown(idleFightsForXp),
-    boss: computeXpTypeBreakdown(bossFights),
+    boss: computeXpTypeBreakdown(bossXpCaptureFights),
     pve: computeXpTypeBreakdown(pveFights),
   }
   const recentPvpCoverage = recentRuns
@@ -1387,7 +1388,6 @@ function analyze(stats: RunRecord[]): AnalysisReport {
 
     // Boss fight aggregation (#705): fight_type === 'boss' records from captureBossFight
     const bossWins = bossFights.filter(f => f.result === 'victory')
-    const bossXpCaptureFights = bossFights.filter(f => f.fight_type === 'boss')
     const bossWinXpFights = bossXpCaptureFights
       .filter(f => f.result === 'victory')
       .filter((f): f is FightRecord => f.xp !== null)
