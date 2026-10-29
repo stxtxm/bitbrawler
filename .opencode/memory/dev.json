@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-29T23:17:57Z",
+  "last_session": "2026-10-29T23:29:34Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1247 : 'gh issue view --json labels --jq '[.[].name] | join(\",\")'' renvoie {labels:[...]} donc .[] s'applique a la racine puis .name sur un tableau -> jq exit 5. Le '|| echo \"\"' avalait l'erreur et ISSUE_LABELS restait vide, ce qui relancait l'orchestrator sur les sous-issues. La forme correcte est '[.labels[].name]'. Garde-fou ajoute dans workflow-integrity.test.ts (interdit '[.[].name]' dans tous les workflows). Attention : le step 'Push and manage PR' retire les modifs .github/workflows non commitees, il faut donc committer le correctif.",
-      "issue": "#1247",
-      "date": "2026-10-21"
-    },
     {
       "lesson": "Issue #1284 Season Pass: usePassProgress() sans options utilise le legacy store bitbrawler_pass_progress, pas passStorage. Pour monter PassTrack sur le track progressif, passer { seasonId } explicite (helper getDefaultSeasonId exporte) sinon claimTier lit passStorage alors que passXp lit le legacy -> boutons CLAIM visibles mais claims qui echouent.",
       "issue": "#1284",
@@ -171,6 +166,11 @@
     {
       "lesson": "QA analyzer aggregates: bound all-time families with the existing RECENT_WINDOW_RUNS pattern. Shop price window must be applied on the GLOBAL run timeline (Set of runs.slice(-30)) then filtered per cohort, not per-cohort slice(-30) — otherwise old cohorts (unsegmented) still expose pre-rebalance prices. Boss XP metrics must read only fight_type===\"boss\" (captureBossFight) while boss_fights/win_rate/hp_left keep isBossFight() (VOID TITAN emitted as pve).",
       "issue": "#1340",
+      "date": "2026-10-29"
+    },
+    {
+      "lesson": "Issue #1342: xp_by_fight_type.boss doit utiliser bossXpCaptureFights (fight_type===\"boss\") et non bossFights (isBossFight) — les records pve VOID TITAN legacy portent ~574 XP de défaite et faussaient loss_avg. Même périmètre que #1340 pour pve_analysis; boss_fights/win_rate restent sur isBossFight.",
+      "issue": "#1342",
       "date": "2026-10-29"
     }
   ]
