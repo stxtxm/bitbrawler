@@ -170451,5 +170451,301 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-10-29T14:01:36.564Z",
+    "run": "2026-10-29",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 84,
+        "fight_duration_ms": 11779,
+        "max_hp": 688,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 59.64
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 1,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 15,
+      "vit": 32,
+      "dex": 20,
+      "luk": 12,
+      "int": 18,
+      "foc": 15,
+      "fights": 0
+    },
+    "initial_level": 27,
+    "initial_xp": {
+      "current": 26781,
+      "max": 27601
+    },
+    "progression_curve": {
+      "level": 27,
+      "total_xp": 294327,
+      "xp_for_next": 27601,
+      "percent": 97
+    },
+    "initial_max_hp": 668,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Dusk Blade"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 28,
+      "xp": 2117,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 15,
+      "vit": 33,
+      "dex": 20,
+      "luk": 12,
+      "int": 18,
+      "foc": 15,
+      "last xp": 37,
+      "fights": 7
+    },
+    "final_max_hp": 688,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Dusk Blade"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Dusk Blade"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 27,
+        "new_level": 28
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 31023,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "ogre"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 36,
+      "xp_events": [
+        {
+          "time_ms": 31023,
+          "xp": 36,
+          "monster": "ogre",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        512,
+        31023
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 36,
+        "essence": 0.46,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.18,
+      "next_level_eta": "⬆ 39m 22s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.13x",
+      "interval": "10.4s",
+      "streak_bonus": null
+    },
+    "initial_essence": 44.18,
+    "final_essence": 11.36,
+    "essence": {
+      "before_idle": 44.18,
+      "after_idle": 44.64,
+      "per_fight": [
+        59.64
+      ],
+      "forge_before": 59,
+      "forge_after_salvage": 80,
+      "forge_after_fusion": 80,
+      "forge_after_upgrade": 10,
+      "forge_after": 10,
+      "shop_before": 11,
+      "shop_after": 11,
+      "final": 11.36,
+      "flow": {
+        "idle_gained": 0.46,
+        "fights_change": null,
+        "salvage_gained": 21,
+        "fusion_cost": 0,
+        "upgrade_cost": 70,
+        "forge_net": -49,
+        "shop_cost": 0,
+        "net_change": -32.82
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 59,
+      "essence_after_salvage": 80,
+      "essence_after_fusion": 80,
+      "essence_after_upgrade": 10,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 10,
+      "items_after": 3,
+      "salvage_essence_gained": 21,
+      "fusion_cost": null,
+      "upgrade_cost": 70,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 11,
+      "essence_after": 11,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Bronze Axe",
+            "rarity": "UNCOMMON",
+            "price": 30
+          },
+          {
+            "name": "Voidreaper",
+            "rarity": "EPIC",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 11,
+        "essence_budget": 60,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-END",
+      "essence_budget": 60
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1499,
+      "arena": 1205
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Bronze Axe",
+          "rarity": "UNCOMMON",
+          "price": 30
+        },
+        {
+          "name": "Voidreaper",
+          "rarity": "EPIC",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 11,
+      "essence_budget": 60,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
