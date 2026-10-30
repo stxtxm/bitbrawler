@@ -1168,6 +1168,61 @@ async function checkOfflineGains(page, runKey) {
   return result
 }
 
+function isEquippedItemName(name, equippedNames) {
+  const normalized = (name || '').trim().toLowerCase()
+  if (!normalized) return false
+  return equippedNames.some((equipped) => (equipped || '').trim().toLowerCase() === normalized)
+}
+
+async function pickSalvageCard(page, equippedNames) {
+  const cards = page.locator('.forge-item-card:not(.salvaged-item)')
+  const count = await cards.count().catch(() => 0)
+  for (let i = 0; i < count; i++) {
+    const card = cards.nth(i)
+    const name = ((await card.locator('.forge-item-name').textContent().catch(() => '')) || '').trim()
+    const aria = ((await card.getAttribute('aria-label').catch(() => '')) || '').trim()
+    const itemName = name || aria.replace(/^Salvage\s+/i, '').trim()
+    if (itemName && isEquippedItemName(itemName, equippedNames)) continue
+    return { card, count, itemName }
+  }
+  return { card: null, count, itemName: null }
+}
+
+async function equipItemInInventory(page, itemLocator) {
+  if (!(await itemLocator.isVisible({ timeout: 1500 }).catch(() => false))) return false
+  await itemLocator.click({ timeout: 2000 }).catch(() => {})
+  await page.waitForTimeout(350)
+  const equipBtn = page.locator('button[aria-label^="Equip "]').first()
+  if (!(await equipBtn.isVisible({ timeout: 1200 }).catch(() => false))) return false
+  if (!(await equipBtn.isEnabled().catch(() => false))) return false
+  await equipBtn.click({ timeout: 2000 }).catch(() => {})
+  await page.waitForTimeout(600)
+  return true
+}
+
+async function equipLootboxItem(page, rewardName) {
+  if (!rewardName) return false
+  const rewardItem = page.getByRole('button', { name: `View ${rewardName}`, exact: true }).first()
+  return equipItemInInventory(page, rewardItem)
+}
+
+async function fillEmptyLoadoutSlots(page) {
+  const groups = [
+    { slot: 'weapon', label: 'WEAPONS' },
+    { slot: 'armor', label: 'ARMOR' },
+    { slot: 'accessory', label: 'ACCESSORIES' },
+  ]
+  let filled = 0
+  for (const { slot, label } of groups) {
+    const emptySlot = page.locator(`.inv-loadout-slot.empty[data-slot="${slot}"]`).first()
+    if (!(await emptySlot.isVisible({ timeout: 500 }).catch(() => false))) continue
+    const group = page.locator('.inv-group').filter({ has: page.locator('.inv-group-label', { hasText: label }) }).first()
+    const firstItem = group.locator('.inv-group-item').first()
+    if (await equipItemInInventory(page, firstItem)) filled += 1
+  }
+  return filled
+}
+
 async function handleDailyLootbox(page, runKey) {
   console.log('🎁 Checking lootbox...')
 
@@ -1295,6 +1350,20 @@ async function handleDailyLootbox(page, runKey) {
       console.warn('   ⚠️ Lootbox result overlay click failed')
     })
     await page.waitForTimeout(500)
+  }
+  await page.waitForSelector('.lootbox-result-overlay', { state: 'detached', timeout: 2000 }).catch(() => {})
+
+  const lootboxEquipped = await equipLootboxItem(page, rewardName)
+  if (lootboxEquipped) {
+    console.log(`   Lootbox item equipped: ${rewardName}`)
+  } else if (rewardName) {
+    console.warn(`   ⚠️ Could not equip lootbox item: ${rewardName}`)
+  }
+  const filledLoadoutSlots = await page.locator('.inv-loadout-slot.filled').count().catch(() => 0)
+  console.log(`   Equipped lootbox item (${filledLoadoutSlots} filled loadout slot(s))`)
+  const extraFilledSlots = await fillEmptyLoadoutSlots(page)
+  if (extraFilledSlots > 0) {
+    console.log(`   Filled ${extraFilledSlots} empty loadout slot(s) from inventory`)
   }
 
   const closeInventory = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
@@ -2788,8 +2857,9 @@ async function testShopSystem(page, runKey, characterLevel = null, cohort = null
  * @param {import('playwright').Page} page
  * @param {string} runKey
  * @param {number|null} [characterLevel] - Current character level for gate checks
+ * @param {string[]} [equippedItemNames] - Items currently equipped and never salvageable
  */
-async function testForgeSystem(page, runKey, characterLevel = null) {
+async function testForgeSystem(page, runKey, characterLevel = null, equippedItemNames = []) {
   console.log('🔨 Testing forge system...')
 
   // Check level gate
@@ -2835,14 +2905,12 @@ async function testForgeSystem(page, runKey, characterLevel = null) {
   console.log(`   Essence: ${forgeResult.essence_before ?? '?'}, Items: ${forgeResult.items_before ?? '?'}`)
 
   // ── Attempt Salvage ─────────────────────────────────────────────
-  const salvageCards = page.locator('.forge-item-card:not(.salvaged-item)')
-  const salvageCardCount = await salvageCards.count().catch(() => 0)
-  if (salvageCardCount > 0) {
+  const salvageTarget = await pickSalvageCard(page, equippedItemNames)
+  if (salvageTarget.card) {
     forgeResult.salvage_attempted = true
-    console.log(`   Salvaging first item (${salvageCardCount} items available)...`)
+    console.log(`   Salvaging ${salvageTarget.itemName || 'first item'} (${salvageTarget.count} items available)...`)
     try {
-      // Click first salvageable item
-      await salvageCards.first().click({ timeout: 3000 })
+      await salvageTarget.card.click({ timeout: 3000 })
       await page.waitForTimeout(600)
 
       // Confirm salvage dialog
@@ -3495,11 +3563,14 @@ async function run() {
 
     // ── Forge ─────────────────────────────────────────────────────
     const forgeLevel = runRecord.final_stats?.level ?? runRecord.initial_level
+    const equippedItemNames = [...(runRecord.final_equipment ?? []), ...(runRecord.lootbox_equipment ?? [])]
+      .map((item) => item.name)
+      .filter(Boolean)
     if (timeBudgetExceeded()) {
       console.log('   ⏰ Time budget exceeded, skipping forge test')
       runRecord.forge = createSkippedForgeResult('time budget exceeded')
     } else {
-      runRecord.forge = await testForgeSystem(page, runKey, forgeLevel)
+      runRecord.forge = await testForgeSystem(page, runKey, forgeLevel, equippedItemNames)
     }
     runRecord.essence.forge_before = runRecord.forge.essence_before
     runRecord.essence.forge_after_salvage = runRecord.forge.essence_after_salvage

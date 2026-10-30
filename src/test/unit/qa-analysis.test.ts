@@ -5338,3 +5338,64 @@ describe('QA Recent-Window Aggregates (#1340)', () => {
     })
   })
 })
+
+describe('QA Bot Loadout Fidelity Contract (#1344)', () => {
+  const qaBotSource = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
+
+  function extractAsyncFunction(source: string, name: string): string | null {
+    const start = source.indexOf(`async function ${name}(`)
+    if (start === -1) return null
+    const bodyStart = source.indexOf('{', start)
+    let depth = 0
+    for (let i = bodyStart; i < source.length; i++) {
+      if (source[i] === '{') depth++
+      else if (source[i] === '}') {
+        depth--
+        if (depth === 0) return source.slice(start, i + 1)
+      }
+    }
+    return null
+  }
+
+  function requireAsyncFunction(name: string): string {
+    const fn = extractAsyncFunction(qaBotSource, name)
+    expect(fn).not.toBeNull()
+    if (fn === null) throw new Error(`qa-bot.mjs missing async function ${name}()`)
+    return fn
+  }
+
+  it('équipe l’item du lootbox avant de fermer l’inventaire', () => {
+    const fn = requireAsyncFunction('handleDailyLootbox')
+    expect(fn).toContain('.inv-loadout-slot.filled')
+    expect(fn).toContain('Equipped lootbox item')
+    const equipIdx = fn.indexOf('equipLootboxItem(page, rewardName)')
+    const closeIdx = fn.lastIndexOf('closeInventory')
+    expect(equipIdx).toBeGreaterThan(-1)
+    expect(closeIdx).toBeGreaterThan(equipIdx)
+    const equipFn = requireAsyncFunction('equipItemInInventory')
+    expect(equipFn).toContain('aria-label^="Equip "')
+  })
+
+  it('remplit les slots vides restants avec l’inventaire', () => {
+    expect(qaBotSource).toContain('fillEmptyLoadoutSlots(page)')
+    const fn = requireAsyncFunction('fillEmptyLoadoutSlots')
+    expect(fn).toContain('.inv-loadout-slot.empty')
+    expect(fn).toContain('equipItemInInventory(page, firstItem)')
+    const equipFn = requireAsyncFunction('equipItemInInventory')
+    expect(equipFn).toContain('aria-label^="Equip "')
+  })
+
+  it('ne salvage jamais un item équipé', () => {
+    const fn = requireAsyncFunction('testForgeSystem')
+    expect(fn).toContain('pickSalvageCard(page, equippedItemNames)')
+    expect(fn).toContain('equippedItemNames')
+    const pickFn = requireAsyncFunction('pickSalvageCard')
+    expect(pickFn).toContain('.forge-item-card:not(.salvaged-item)')
+    expect(pickFn).toContain('isEquippedItemName')
+  })
+
+  it('transmet le loadout équipé au test forge', () => {
+    const runFn = requireAsyncFunction('run')
+    expect(runFn).toContain('testForgeSystem(page, runKey, forgeLevel, equippedItemNames)')
+  })
+})
