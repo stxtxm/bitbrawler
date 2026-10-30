@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-29T23:24:06Z",
+  "last_session": "2026-10-30T23:05:36Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR de bot sans checks lint/test/build rattaches : executer la gate complete en local (lint, tsc, vitest run, build) avant merge, puis re-verifier statusCheckRollup. Attention aux agregats trompeurs qui persistent sous un autre nom (xp_by_fight_type.boss vs pve_analysis) -> issue de suivi.",
-      "issue": "#1341"
+      "lesson": "PRs QA bot (#1346/#1348) : les contrats de test lisent qa-bot.mjs en source (indexOf/ordre des blocs). Aucune CI n'est rattachée aux PR de bot (seul Cloudflare Pages) -> la gate locale lint+tsc+vitest+build du reviewer est le seul verrou réel, la lancer avant merge.",
+      "issue": "#1348"
     }
   ]
 }
