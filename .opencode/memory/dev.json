@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-29T23:29:34Z",
+  "last_session": "2026-10-30T22:52:02Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1284 Season Pass: usePassProgress() sans options utilise le legacy store bitbrawler_pass_progress, pas passStorage. Pour monter PassTrack sur le track progressif, passer { seasonId } explicite (helper getDefaultSeasonId exporte) sinon claimTier lit passStorage alors que passXp lit le legacy -> boutons CLAIM visibles mais claims qui echouent.",
-      "issue": "#1284",
-      "date": "2026-10-21"
-    },
     {
       "lesson": "Bestiaire #1281: monsterEncounters est un compteur local-first (pas de colonne DB). Les writes se font dans les 3 boucles idle (runLocalCatchUp, catchUpBackgroundFights, runCombatTick) et la fusion monotone max-par-clef passe par mergeMonsterCounters dans coerceMonotonicProgress + GameContext. Tests useIdleCombat: pour accumuler entre ticks il faut rerender le hook avec onCharacterUpdate, sinon charRef reste stale.",
       "issue": "#1281",
@@ -172,6 +167,11 @@
       "lesson": "Issue #1342: xp_by_fight_type.boss doit utiliser bossXpCaptureFights (fight_type===\"boss\") et non bossFights (isBossFight) — les records pve VOID TITAN legacy portent ~574 XP de défaite et faussaient loss_avg. Même périmètre que #1340 pour pve_analysis; boss_fights/win_rate restent sur isBossFight.",
       "issue": "#1342",
       "date": "2026-10-29"
+    },
+    {
+      "lesson": "QA bot #1344: equip action requires selecting the inventory item first (button[aria-label=\"View <name>\"]) before the EQUIP button appears; forge salvage excludes equipped item names passed from final_equipment + lootbox_equipment.",
+      "issue": "#1344",
+      "date": "2026-10-30"
     }
   ]
 }
