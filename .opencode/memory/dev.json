@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-30T22:52:02Z",
+  "last_session": "2026-10-30T23:01:37Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Bestiaire #1281: monsterEncounters est un compteur local-first (pas de colonne DB). Les writes se font dans les 3 boucles idle (runLocalCatchUp, catchUpBackgroundFights, runCombatTick) et la fusion monotone max-par-clef passe par mergeMonsterCounters dans coerceMonotonicProgress + GameContext. Tests useIdleCombat: pour accumuler entre ticks il faut rerender le hook avec onCharacterUpdate, sinon charRef reste stale.",
-      "issue": "#1281",
-      "date": "2026-10-21"
-    },
     {
       "lesson": "Issue #1284 : PassTrack dormait car aucun composant hôte. Solution minimale : wrapper SeasonPassPanel (usePassProgress avec seasonId explicite = getDefaultSeasonId exporté) monté depuis un nouvel onglet SettingsPanel 'pass' + handler onOpenPass dans useSettings. Important : usePassProgress sans options utilise le store legacy (paliers xp/100) alors que PassTrack affiche les xpRequired progressifs -> toujours passer un seasonId explicite pour que effectiveXp/claimTier restent cohérents. Les sources d'XP (addFightXp/addForgeXp/addIdleClaimXp) restent non branchées : suivi à faire.",
       "issue": "#1284",
@@ -171,6 +166,11 @@
     {
       "lesson": "QA bot #1344: equip action requires selecting the inventory item first (button[aria-label=\"View <name>\"]) before the EQUIP button appears; forge salvage excludes equipped item names passed from final_equipment + lootbox_equipment.",
       "issue": "#1344",
+      "date": "2026-10-30"
+    },
+    {
+      "lesson": "Issue #1347 qa-bot: fillEmptyLoadoutSlots doit être appelé juste après l'ouverture de l'inventaire (suppressInventoryHandler=true), AVANT les early returns already-opened/inventory-full/unexpected-label/lootbox-button-missing. Sinon un persistant sous-équipé reste bloqué. Le path inventory-button-missing reste non couvert (inventaire jamais ouvert). Test contract dans qa-analysis.test.ts via extraction de source.",
+      "issue": "#1347",
       "date": "2026-10-30"
     }
   ]
