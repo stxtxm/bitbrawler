@@ -174788,5 +174788,305 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-10-30T23:01:29.991Z",
+    "run": "2026-10-31",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "AUTO MODE",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": null,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 12,
+      "vit": 33,
+      "dex": 17,
+      "luk": 12,
+      "int": 18,
+      "foc": 15,
+      "fights": 0
+    },
+    "initial_level": 29,
+    "initial_xp": {
+      "current": 25400,
+      "max": 31055
+    },
+    "progression_curve": {
+      "level": 29,
+      "total_xp": 349855,
+      "xp_for_next": 31055,
+      "percent": 81.8
+    },
+    "initial_max_hp": 713,
+    "initial_equipment": [
+      {
+        "slot": "💍",
+        "name": "Vitality Ring"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 29,
+      "xp": 28867,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 12,
+      "vit": 33,
+      "dex": 17,
+      "luk": 12,
+      "int": 18,
+      "foc": 15,
+      "fights": 0
+    },
+    "final_max_hp": 713,
+    "final_equipment": [
+      {
+        "slot": "💍",
+        "name": "Vitality Ring"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "💍",
+        "name": "Vitality Ring",
+        "rarity": "COMMON"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 36647,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "goblin",
+        "wraith"
+      ],
+      "victories": 1,
+      "defeats": 1,
+      "xp_total": 151,
+      "xp_events": [
+        {
+          "time_ms": 2050,
+          "xp": 110,
+          "monster": "goblin",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 36647,
+          "xp": 41,
+          "monster": "wraith",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        515,
+        2050,
+        3584,
+        5116,
+        36647
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 110,
+        "essence": 0.97,
+        "monster": "goblin"
+      },
+      {
+        "result": "defeat",
+        "xp": 41,
+        "essence": 0.29,
+        "monster": "wraith"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 3.17,
+      "next_level_eta": "⬆ 3m 31s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.13x",
+      "interval": "10.9s",
+      "streak_bonus": null
+    },
+    "initial_essence": 17.8,
+    "final_essence": 24.29,
+    "essence": {
+      "before_idle": 17.8,
+      "after_idle": 19.06,
+      "per_fight": [],
+      "forge_before": 22,
+      "forge_after_salvage": 22,
+      "forge_after_fusion": 22,
+      "forge_after_upgrade": 22,
+      "forge_after": 22,
+      "shop_before": 24,
+      "shop_after": 24,
+      "final": 24.29,
+      "flow": {
+        "idle_gained": 1.26,
+        "fights_change": null,
+        "salvage_gained": 0,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 0,
+        "shop_cost": 0,
+        "net_change": 6.49
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 22,
+      "essence_after_salvage": 22,
+      "essence_after_fusion": 22,
+      "essence_after_upgrade": 22,
+      "items_before": 1,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": 22,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 24,
+      "essence_after": 24,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Shadow Boots",
+            "rarity": "UNCOMMON",
+            "price": 30
+          },
+          {
+            "name": "Sapphire Orb",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 24,
+        "essence_budget": 60,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-END",
+      "essence_budget": 60
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "exhausted"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1380,
+      "arena": 628,
+      "arena_reload": 13
+    },
+    "skipped_summary": {
+      "exhausted": 1
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Shadow Boots",
+          "rarity": "UNCOMMON",
+          "price": 30
+        },
+        {
+          "name": "Sapphire Orb",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 24,
+      "essence_budget": 60,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
