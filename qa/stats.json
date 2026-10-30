@@ -173913,5 +173913,293 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-10-30T17:28:41.943Z",
+    "run": "2026-10-30",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "draw",
+        "xp": 87,
+        "fight_duration_ms": 17417,
+        "max_hp": 708,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 43.81
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": true,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 1,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 12,
+      "vit": 33,
+      "dex": 17,
+      "luk": 12,
+      "int": 18,
+      "foc": 22,
+      "fights": 0
+    },
+    "initial_level": 29,
+    "initial_xp": {
+      "current": 13728,
+      "max": 31055
+    },
+    "progression_curve": {
+      "level": 29,
+      "total_xp": 338183,
+      "xp_for_next": 31055,
+      "percent": 44.2
+    },
+    "initial_max_hp": 708,
+    "initial_equipment": [
+      {
+        "slot": "💍",
+        "name": "Pearl Necklace"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 29,
+      "xp": 16603,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 12,
+      "vit": 33,
+      "dex": 17,
+      "luk": 12,
+      "int": 18,
+      "foc": 22,
+      "last xp": 39,
+      "fights": 6
+    },
+    "final_max_hp": 708,
+    "final_equipment": [
+      {
+        "slot": "💍",
+        "name": "Pearl Necklace"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "💍",
+        "name": "Pearl Necklace"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 32040,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "chimera"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 42,
+      "xp_events": [
+        {
+          "time_ms": 32040,
+          "xp": 42,
+          "monster": "chimera",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        510,
+        32040
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 42,
+        "essence": 0.52,
+        "monster": "chimera"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 3.36,
+      "next_level_eta": "⬆ 20m 27s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.20x",
+      "interval": "10.9s",
+      "streak_bonus": null
+    },
+    "initial_essence": 18.29,
+    "final_essence": 16.44,
+    "essence": {
+      "before_idle": 18.29,
+      "after_idle": 18.81,
+      "per_fight": [
+        43.81
+      ],
+      "forge_before": 43,
+      "forge_after_salvage": 43,
+      "forge_after_fusion": 43,
+      "forge_after_upgrade": 43,
+      "forge_after": 43,
+      "shop_before": 46,
+      "shop_after": 16,
+      "final": 16.44,
+      "flow": {
+        "idle_gained": 0.52,
+        "fights_change": null,
+        "salvage_gained": 0,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 0,
+        "shop_cost": 30,
+        "net_change": -1.85
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 43,
+      "essence_after_salvage": 43,
+      "essence_after_fusion": 43,
+      "essence_after_upgrade": 43,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": false,
+      "essence_after": 43,
+      "items_after": 4,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 30,
+      "essence_before": 46,
+      "essence_after": 16,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Dusk Blade",
+            "rarity": "RARE",
+            "price": 30
+          },
+          {
+            "name": "Sapphire Orb",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 16,
+        "essence_budget": 60,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-END",
+      "essence_budget": 60
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1330,
+      "arena": 1249
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Dusk Blade",
+          "rarity": "RARE",
+          "price": 30
+        },
+        {
+          "name": "Sapphire Orb",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 16,
+      "essence_budget": 60,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
