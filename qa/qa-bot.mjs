@@ -1253,6 +1253,11 @@ async function handleDailyLootbox(page, runKey) {
   await inventoryBtn.click()
   await page.waitForTimeout(800)
 
+  const prefilledSlots = await fillEmptyLoadoutSlots(page)
+  if (prefilledSlots > 0) {
+    console.log(`   Filled ${prefilledSlots} empty loadout slot(s) from inventory`)
+  }
+
   const lootboxBtn = page.locator('button[aria-label="Daily lootbox roll"], .lootbox-btn').first()
   if (!(await lootboxBtn.isVisible({ timeout: 5000 }).catch(() => false))) {
     console.log('   Lootbox button not found in inventory')
@@ -1361,10 +1366,6 @@ async function handleDailyLootbox(page, runKey) {
   }
   const filledLoadoutSlots = await page.locator('.inv-loadout-slot.filled').count().catch(() => 0)
   console.log(`   Equipped lootbox item (${filledLoadoutSlots} filled loadout slot(s))`)
-  const extraFilledSlots = await fillEmptyLoadoutSlots(page)
-  if (extraFilledSlots > 0) {
-    console.log(`   Filled ${extraFilledSlots} empty loadout slot(s) from inventory`)
-  }
 
   const closeInventory = page.locator('button[aria-label="Close inventory"], .inventory-close').first()
   if (await closeInventory.isVisible({ timeout: 2000 }).catch(() => false)) {
