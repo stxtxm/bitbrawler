@@ -5399,3 +5399,57 @@ describe('QA Bot Loadout Fidelity Contract (#1344)', () => {
     expect(runFn).toContain('testForgeSystem(page, runKey, forgeLevel, equippedItemNames)')
   })
 })
+
+describe('QA Bot Loadout Backfill Before Early Exit Contract (#1347)', () => {
+  const qaBotSource = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
+
+  function extractAsyncFunction(source: string, name: string): string | null {
+    const start = source.indexOf(`async function ${name}(`)
+    if (start === -1) return null
+    const bodyStart = source.indexOf('{', start)
+    let depth = 0
+    for (let i = bodyStart; i < source.length; i++) {
+      if (source[i] === '{') depth++
+      else if (source[i] === '}') {
+        depth--
+        if (depth === 0) return source.slice(start, i + 1)
+      }
+    }
+    return null
+  }
+
+  function requireAsyncFunction(name: string): string {
+    const fn = extractAsyncFunction(qaBotSource, name)
+    expect(fn).not.toBeNull()
+    if (fn === null) throw new Error(`qa-bot.mjs missing async function ${name}()`)
+    return fn
+  }
+
+  it('remplit les slots vides avant la sortie anticipée already-opened', () => {
+    const fn = requireAsyncFunction('handleDailyLootbox')
+    const fillIdx = fn.indexOf('fillEmptyLoadoutSlots(page)')
+    const alreadyOpenedIdx = fn.indexOf("reason: 'already-opened'")
+    expect(fillIdx).toBeGreaterThan(-1)
+    expect(alreadyOpenedIdx).toBeGreaterThan(-1)
+    expect(fillIdx).toBeLessThan(alreadyOpenedIdx)
+  })
+
+  it('remplit les slots vides avant toutes les sorties anticipées où l’inventaire est ouvert', () => {
+    const fn = requireAsyncFunction('handleDailyLootbox')
+    const fillIdx = fn.indexOf('fillEmptyLoadoutSlots(page)')
+    expect(fillIdx).toBeGreaterThan(-1)
+    for (const reason of ['lootbox-button-missing', 'already-opened', 'inventory-full', 'unexpected-label']) {
+      const reasonIdx = fn.indexOf(`reason: '${reason}'`)
+      expect(reasonIdx).toBeGreaterThan(-1)
+      expect(fillIdx).toBeLessThan(reasonIdx)
+    }
+  })
+
+  it('ouvre l’inventaire avant de remplir les slots vides', () => {
+    const fn = requireAsyncFunction('handleDailyLootbox')
+    const openIdx = fn.indexOf('inventoryBtn.click()')
+    const fillIdx = fn.indexOf('fillEmptyLoadoutSlots(page)')
+    expect(openIdx).toBeGreaterThan(-1)
+    expect(fillIdx).toBeGreaterThan(openIdx)
+  })
+})
