@@ -28,6 +28,9 @@ import {
   isPurchaseWithinBudget,
   resolveReusableDailyCharacter,
   shouldReplaceExhaustedCharacter,
+  resolveRunPvpSinceLastPve,
+  isAutoModeArenaStatus,
+  classifyArenaSkipReason,
 } from '../src/utils/qa-bot-helpers.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -573,18 +576,19 @@ async function syncAutoMode(page, desiredEnabled) {
 
   const currentValue = await autoSwitch.getAttribute('aria-checked').catch(() => null)
   const isEnabled = currentValue === 'true'
-  if (isEnabled !== desiredEnabled) {
+  let verified = isEnabled === desiredEnabled
+  if (!verified) {
     await autoSwitch.click()
     await page.waitForTimeout(1000)
-    const verified = await autoSwitch.getAttribute('aria-checked').catch(() => null)
-    if (verified === String(desiredEnabled)) {
+    verified = (await autoSwitch.getAttribute('aria-checked').catch(() => null)) === String(desiredEnabled)
+    if (verified) {
       console.log(`   Auto mode changed to ${desiredEnabled ? 'ON' : 'OFF'} ✅`)
     } else {
       console.log('   ⚠️ First toggle attempt may have failed, retrying...')
       await autoSwitch.click({ force: true }).catch(() => {})
       await page.waitForTimeout(1000)
-      const retryVerified = await autoSwitch.getAttribute('aria-checked').catch(() => null)
-      if (retryVerified === String(desiredEnabled)) {
+      verified = (await autoSwitch.getAttribute('aria-checked').catch(() => null)) === String(desiredEnabled)
+      if (verified) {
         console.log(`   Auto mode changed to ${desiredEnabled ? 'ON' : 'OFF'} (after retry) ✅`)
       } else {
         console.log(`   ❌ Failed to toggle auto mode to ${desiredEnabled ? 'ON' : 'OFF'}`)
@@ -600,7 +604,31 @@ async function syncAutoMode(page, desiredEnabled) {
     await page.waitForTimeout(500)
   }
 
-  return true
+  return verified
+}
+
+async function disableAutoModeAtRunStart(page, runRecord) {
+  const initialStatus = await readArenaStatus(page)
+  if (!isAutoModeArenaStatus(initialStatus)) return true
+
+  console.log('   ⚠️ AUTO MODE detected at run start — disabling it')
+  await syncAutoMode(page, false)
+  const arenaLoadMs = await retryArenaReload(page)
+  if (arenaLoadMs !== null) {
+    runRecord.load_times_ms.arena_reload = arenaLoadMs
+  }
+  const recheck = await readArenaStatus(page)
+  runRecord.arena_status = buildArenaStatusRecord(recheck)
+
+  if (!isAutoModeArenaStatus(recheck)) {
+    console.log('   Auto mode disabled at run start ✅')
+    return true
+  }
+
+  console.log('   ❌ AUTO MODE persisted after reload — fights will be skipped (auto_mode)')
+  if (!runRecord.skipped_fights) runRecord.skipped_fights = []
+  runRecord.skipped_fights.push({ index: 0, reason: 'auto_mode' })
+  return false
 }
 
 async function getCombatSpeed(page) {
@@ -1429,6 +1457,7 @@ async function maybeReplaceExhaustedCharacter(page, runKey, runRecord, reason) {
   console.log(`🎭 Active QA fighter: ${runRecord.character}`)
   persistQaState(runKey, runRecord.character, runRecord.character_action, false, {
     character_type: runRecord.character_type,
+    pvp_since_last_pve: runRecord.pvp_since_last_pve ?? 0,
   })
   await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-03-arena-replacement.png`) })
 }
@@ -2121,7 +2150,7 @@ async function captureBossFight(page, runKey, fightNumber) {
 async function runFightSequence(page, runKey, runRecord) {
   let recreatedForExhaustion = false
   let currentLevel = runRecord.initial_level
-  let pvpSinceLastPve = 0
+  let pvpSinceLastPve = runRecord.pvp_since_last_pve ?? 0
   let pveLockedRecoveries = 0
   const forcedPvpIndexes = new Set()
   let attemptBudget = config.fightsPerRun
@@ -2146,6 +2175,7 @@ async function runFightSequence(page, runKey, runRecord) {
     })
     const isPve = fightType.type === 'pve'
     pvpSinceLastPve = fightType.pvpSinceLastPve
+    runRecord.pvp_since_last_pve = pvpSinceLastPve
 
     // Toggle to PvE mode if needed
     if (isPve) {
@@ -2163,6 +2193,19 @@ async function runFightSequence(page, runKey, runRecord) {
     const fightsAvailable = arenaStatus.fightsAvailable
     const isResting = arenaStatus.isResting
     runRecord.arena_status = buildArenaStatusRecord(arenaStatus)
+
+    if (isAutoModeArenaStatus(arenaStatus)) {
+      const reason = classifyArenaSkipReason({
+        fightsAvailable,
+        fightButtonLabel: arenaStatus.fightButtonLabel,
+      })
+      console.log(`   ⚠️ AUTO MODE is still enabled — skipping fight (${reason})`)
+      if (isPve) await togglePveMode(page, false).catch(() => {})
+      if (!runRecord.skipped_fights) runRecord.skipped_fights = []
+      runRecord.skipped_fights.push({ index: i + 1, reason })
+      await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-auto-mode.png`) }).catch(() => {})
+      break
+    }
 
     if (fightsAvailable !== null) {
       attemptBudget = Math.min(attemptBudget, i + capFightAttempts(config.fightsPerRun, fightsAvailable))
@@ -2261,6 +2304,17 @@ async function runFightSequence(page, runKey, runRecord) {
       break
     }
 
+    if (isPve && arenaStatus.fightButtonLabel.includes('ATTACK BOSS')) {
+      runRecord.pve_data.pve_shifted = true
+      const bossFight = await captureBossFight(page, runKey, i + 1)
+      if (bossFight) {
+        runRecord.fights.push(bossFight)
+        const postBossLevel = parseLevelFromText(await page.locator('body').innerText().catch(() => ''))
+        if (postBossLevel !== null) currentLevel = postBossLevel
+      }
+      continue
+    }
+
     if (isResting || !arenaStatus.fightButtonEnabled) {
       console.log(`   Fight CTA not available (label=${arenaStatus.fightButtonLabel || 'no label'}, enabled=${arenaStatus.fightButtonEnabled})`)
       if (!isResting) {
@@ -2298,7 +2352,15 @@ async function runFightSequence(page, runKey, runRecord) {
       }
       if (isPve) await togglePveMode(page, false)
       if (!runRecord.skipped_fights) runRecord.skipped_fights = []
-      runRecord.skipped_fights.push({ index: i + 1, reason: 'exhausted' })
+      const skipReason = classifyArenaSkipReason({
+        fightsAvailable,
+        fightButtonLabel: arenaStatus.fightButtonLabel,
+      })
+      if (skipReason === 'exhausted') {
+        runRecord.skipped_fights.push({ index: i + 1, reason: 'exhausted' })
+      } else {
+        runRecord.skipped_fights.push({ index: i + 1, reason: skipReason })
+      }
       await page.screenshot({ path: join(SCREENSHOTS_DIR, `${runKey}-fight-${i + 1}-skip.png`) }).catch(() => {})
       break
     }
@@ -3083,7 +3145,7 @@ async function run() {
   console.log(`    runKey:         ${runKey}`)
   console.log(`    savedFighter:   ${savedDailyCharacterName || 'none'}`)
   console.log(`    savedExhausted: ${state.run === runKey ? String(state.exhausted === true) : 'false'}`)
-  console.log('    autoMode:       enable after daily fights are exhausted')
+  console.log('    autoMode:       always disabled on the QA character')
   console.log('    offlineCheck:   after forge (page reload)')
   console.log(`    headless:       ${config.headless}`)
   console.log(`    slowMo:         ${config.slowMo}`)
@@ -3230,6 +3292,7 @@ async function run() {
     shop: null,
     cohort: null,
     combat_speed: 1,
+    pvp_since_last_pve: resolveRunPvpSinceLastPve(state, runKey),
     skipped_inventory: null,
     skipped_fights: [],
     errors: [],
@@ -3279,6 +3342,7 @@ async function run() {
           persistent_generation: activeGeneration,
           persistent_created_at: activeCreatedAt,
           persistent_reset_ready: true,
+          pvp_since_last_pve: runRecord.pvp_since_last_pve ?? 0,
         })
         const nextGeneration = activeGeneration + 1
         const forcedReset = await createCharacterWithName(
@@ -3300,10 +3364,12 @@ async function run() {
         persistent_generation: activeGeneration,
         persistent_created_at: activeCreatedAt,
         persistent_reset_ready: false,
+        pvp_since_last_pve: runRecord.pvp_since_last_pve ?? 0,
       })
     } else {
       persistQaState(runKey, runRecord.character, authResult.outcome, false, {
         character_type: runRecord.character_type,
+        pvp_since_last_pve: runRecord.pvp_since_last_pve ?? 0,
       })
     }
 
@@ -3322,6 +3388,8 @@ async function run() {
     if (runRecord.initial_equipment.length > 0) {
       console.log(`   Equipment: ${runRecord.initial_equipment.map(e => `${e.slot}=${e.name}`).join(', ')}`)
     }
+
+    await disableAutoModeAtRunStart(page, runRecord)
 
     // ── Cohorte QA (#1230) ────────────────────────────────────────
     // Résolue UNE seule fois, au début du run, depuis le niveau du personnage :
@@ -3539,8 +3607,8 @@ async function run() {
       }
     }
 
-    runRecord.auto_mode_enabled = fighterExhausted
-    runRecord.auto_mode_sync_ok = await syncAutoMode(page, fighterExhausted)
+    runRecord.auto_mode_enabled = false
+    runRecord.auto_mode_sync_ok = await syncAutoMode(page, false)
     if (persistentInfo) {
       const persistentResetReady =
         runRecord.final_stats?.level !== null &&
@@ -3551,6 +3619,7 @@ async function run() {
         persistent_generation: activeGeneration,
         persistent_created_at: activeCreatedAt,
         persistent_reset_ready: persistentResetReady,
+        pvp_since_last_pve: runRecord.pvp_since_last_pve ?? 0,
       })
       if (persistentResetReady) {
         console.log(`   ♻️ Persistent fighter reached LVL ${runRecord.final_stats.level} (cap ${config.persistentCharacterMaxLevel}) — next run will create a new generation`)
@@ -3558,6 +3627,7 @@ async function run() {
     } else {
       persistQaState(runKey, runRecord.character, runRecord.character_action, fighterExhausted, {
         character_type: runRecord.character_type,
+        pvp_since_last_pve: runRecord.pvp_since_last_pve ?? 0,
       })
     }
     console.log(`   Fighter exhausted for today: ${fighterExhausted ? 'yes' : 'no'}`)

@@ -28,6 +28,7 @@ export declare interface QaStateLike {
   character?: string | null
   character_type?: QaCharacterType | string | null
   exhausted?: boolean
+  pvp_since_last_pve?: number | null
 }
 
 export declare function resolveReusableDailyCharacter(
@@ -122,6 +123,24 @@ export declare interface FightTypeDecisionInput {
 }
 
 export declare function decideFightTypeForIndex(input: FightTypeDecisionInput): FightTypeDecision
+
+export declare function resolveRunPvpSinceLastPve(
+  state: QaStateLike | null | undefined,
+  runKey: string,
+): number
+
+export declare const AUTO_MODE_ARENA_LABEL: string
+
+export declare function isAutoModeArenaStatus(
+  status: Pick<ArenaStatusInput, 'fightButtonLabel'> | null | undefined,
+): boolean
+
+export declare type ArenaSkipReason = 'auto_mode' | 'no_energy' | 'exhausted' | 'not_attackable'
+
+export declare function classifyArenaSkipReason(input?: {
+  fightsAvailable?: number | null
+  fightButtonLabel?: string | null
+}): ArenaSkipReason
 
 export declare const FIGHT_START_GRACE_MS: number
 

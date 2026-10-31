@@ -244,6 +244,30 @@ export function decideFightTypeForIndex({ forcedPvp, pvpSinceLastPve, pveRatio, 
   return determineNextFightType(pvpSinceLastPve, pveRatio, pveOnly, characterLevel, pvpUnlockLevel)
 }
 
+export function resolveRunPvpSinceLastPve(state, runKey) {
+  if (!state || typeof state !== 'object') return 0
+  if (state.run !== runKey) return 0
+  const value = state.pvp_since_last_pve
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return 0
+  return Math.floor(value)
+}
+
+export const AUTO_MODE_ARENA_LABEL = 'AUTO MODE'
+
+export function isAutoModeArenaStatus(status) {
+  if (!status || typeof status !== 'object') return false
+  const label = String(status.fightButtonLabel ?? '').trim().toUpperCase()
+  return label === AUTO_MODE_ARENA_LABEL
+}
+
+export function classifyArenaSkipReason({ fightsAvailable, fightButtonLabel } = {}) {
+  if (isAutoModeArenaStatus({ fightButtonLabel })) return 'auto_mode'
+  if (typeof fightsAvailable === 'number' && Number.isFinite(fightsAvailable)) {
+    return fightsAvailable > 0 ? 'not_attackable' : 'no_energy'
+  }
+  return 'exhausted'
+}
+
 export const FIGHT_START_GRACE_MS = 3000
 
 export function isAttackableArenaStatus(status) {
