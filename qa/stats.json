@@ -175674,5 +175674,310 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-10-31T08:01:33.094Z",
+    "run": "2026-10-31",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 90,
+        "fight_duration_ms": 14339,
+        "max_hp": 720,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 28.37
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 4,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 12,
+      "vit": 34,
+      "dex": 17,
+      "luk": 12,
+      "int": 21,
+      "foc": 17,
+      "fights": 0
+    },
+    "initial_level": 30,
+    "initial_xp": {
+      "current": 5645,
+      "max": 32842
+    },
+    "progression_curve": {
+      "level": 30,
+      "total_xp": 361155,
+      "xp_for_next": 32842,
+      "percent": 17.2
+    },
+    "initial_max_hp": 720,
+    "initial_equipment": [
+      {
+        "slot": "💍",
+        "name": "Frost Band"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 30,
+      "xp": 8451,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 12,
+      "vit": 34,
+      "dex": 17,
+      "luk": 12,
+      "int": 21,
+      "foc": 17,
+      "last xp": 133,
+      "fights": 5
+    },
+    "final_max_hp": 720,
+    "final_equipment": [
+      {
+        "slot": "💍",
+        "name": "Frost Band"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Sun Spear"
+      },
+      {
+        "slot": "💍",
+        "name": "Frost Band"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20493,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "ogre",
+        "goblin"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 174,
+      "xp_events": [
+        {
+          "time_ms": 15423,
+          "xp": 41,
+          "monster": "ogre",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15944,
+          "xp": 133,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        512,
+        15423
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 41,
+        "essence": 0.38,
+        "monster": "ogre"
+      },
+      {
+        "result": "victory",
+        "xp": 133,
+        "essence": 0.38,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 3.36,
+      "next_level_eta": "⬆ 33m 29s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.18x",
+      "interval": "10.9s",
+      "streak_bonus": "🔥 1-win streak (+1%)"
+    },
+    "initial_essence": 7.56,
+    "final_essence": 0.17,
+    "essence": {
+      "before_idle": 7.56,
+      "after_idle": 8.32,
+      "per_fight": [
+        28.37
+      ],
+      "forge_before": 28,
+      "forge_after_salvage": 28,
+      "forge_after_fusion": 28,
+      "forge_after_upgrade": 28,
+      "forge_after": 28,
+      "shop_before": 30,
+      "shop_after": 0,
+      "final": 0.17,
+      "flow": {
+        "idle_gained": 0.76,
+        "fights_change": null,
+        "salvage_gained": 0,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 0,
+        "shop_cost": 30,
+        "net_change": -7.39
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 28,
+      "essence_after_salvage": 28,
+      "essence_after_fusion": 28,
+      "essence_after_upgrade": 28,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": false,
+      "essence_after": 28,
+      "items_after": 1,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "RARE",
+      "cost": 30,
+      "essence_before": 30,
+      "essence_after": 0,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Sun Spear",
+            "rarity": "RARE",
+            "price": 30
+          },
+          {
+            "name": "Bloodfang",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 0,
+        "essence_budget": 60,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-END",
+      "essence_budget": 60
+    },
+    "combat_speed": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1199,
+      "arena": 1243
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Sun Spear",
+          "rarity": "RARE",
+          "price": 30
+        },
+        {
+          "name": "Bloodfang",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 0,
+      "essence_budget": 60,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
