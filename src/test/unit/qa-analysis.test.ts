@@ -4541,6 +4541,45 @@ describe('QA Bot Fight Mode & Start Guards (#1178)', () => {
     })
   })
 
+  describe('runFightSequence source contract (#1352)', () => {
+    const qaBotSource = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
+
+    function extractAsyncFunction(source: string, name: string): string | null {
+      const start = source.indexOf(`async function ${name}(`)
+      if (start === -1) return null
+      const bodyStart = source.indexOf('{', start)
+      let depth = 0
+      for (let i = bodyStart; i < source.length; i++) {
+        if (source[i] === '{') depth++
+        else if (source[i] === '}') {
+          depth--
+          if (depth === 0) return source.slice(start, i + 1)
+        }
+      }
+      return null
+    }
+
+    function requireAsyncFunction(name: string): string {
+      const fn = extractAsyncFunction(qaBotSource, name)
+      expect(fn).not.toBeNull()
+      if (fn === null) throw new Error(`qa-bot.mjs missing async function ${name}()`)
+      return fn
+    }
+
+    it('repasse en PvP après chaque combat boss pour ne pas cliquer le boss à l itération suivante', () => {
+      const fn = requireAsyncFunction('runFightSequence')
+      const matches = [...fn.matchAll(/captureBossFight\(page, runKey/g)]
+      expect(matches.length).toBeGreaterThan(0)
+      for (const match of matches) {
+        const start = match.index ?? 0
+        const continueIdx = fn.indexOf('continue', start)
+        expect(continueIdx).toBeGreaterThan(start)
+        const block = fn.slice(start, continueIdx)
+        expect(block).toContain('togglePveMode(page, false)')
+      }
+    })
+  })
+
   describe('determineNextFightType déplacé dans qa-bot-helpers', () => {
     it('qa-bot.mjs importe la décision de type depuis le module helpers', () => {
       const qaBotSource = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
