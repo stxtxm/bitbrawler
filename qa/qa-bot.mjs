@@ -2266,6 +2266,7 @@ async function runFightSequence(page, runKey, runRecord) {
       // Option B (#705): the character reached the boss gate — launch a real boss fight.
       if (!config.pveOnly && currentLevel !== null && currentLevel >= bossLockedLevel) {
         const bossFight = await captureBossFight(page, runKey, i + 1)
+        await togglePveMode(page, false).catch(() => {})
         if (bossFight) {
           runRecord.fights.push(bossFight)
           const postBossLevel = parseLevelFromText(await page.locator('body').innerText().catch(() => ''))
@@ -2307,6 +2308,7 @@ async function runFightSequence(page, runKey, runRecord) {
     if (isPve && arenaStatus.fightButtonLabel.includes('ATTACK BOSS')) {
       runRecord.pve_data.pve_shifted = true
       const bossFight = await captureBossFight(page, runKey, i + 1)
+      await togglePveMode(page, false).catch(() => {})
       if (bossFight) {
         runRecord.fights.push(bossFight)
         const postBossLevel = parseLevelFromText(await page.locator('body').innerText().catch(() => ''))
