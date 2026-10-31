@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-30T23:01:37Z",
+  "last_session": "2026-10-31T22:25:09Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1284 : PassTrack dormait car aucun composant hôte. Solution minimale : wrapper SeasonPassPanel (usePassProgress avec seasonId explicite = getDefaultSeasonId exporté) monté depuis un nouvel onglet SettingsPanel 'pass' + handler onOpenPass dans useSettings. Important : usePassProgress sans options utilise le store legacy (paliers xp/100) alors que PassTrack affiche les xpRequired progressifs -> toujours passer un seasonId explicite pour que effectiveXp/claimTier restent cohérents. Les sources d'XP (addFightXp/addForgeXp/addIdleClaimXp) restent non branchées : suivi à faire.",
-      "issue": "#1284",
-      "date": "2026-10-21"
-    },
     {
       "lesson": "QA stats: la pollution équipement WEAPON/ACCESSORY vient du fallback body-text (labels SLOT_SHORT_LABELS sur lignes séparées, flex-column) — filtrer via un set singulier distinct de EQUIPMENT_GROUP_LABELS (le set pluriel sert de break de section). progression_curve dérivable du .xp-text 'cur / next XP' + getTotalXpForLevel miroir de xpUtils.",
       "issue": "#1283",
@@ -172,6 +167,11 @@
       "lesson": "Issue #1347 qa-bot: fillEmptyLoadoutSlots doit être appelé juste après l'ouverture de l'inventaire (suppressInventoryHandler=true), AVANT les early returns already-opened/inventory-full/unexpected-label/lootbox-button-missing. Sinon un persistant sous-équipé reste bloqué. Le path inventory-button-missing reste non couvert (inventaire jamais ouvert). Test contract dans qa-analysis.test.ts via extraction de source.",
       "issue": "#1347",
       "date": "2026-10-30"
+    },
+    {
+      "lesson": "Issue #1352: après captureBossFight dans runFightSequence, le mode PvE restait actif → l'itération suivante pouvait cliquer ATTACK BOSS en croyant faire du PvP (ou finir en not_attackable). Fix: togglePveMode(page,false) juste après captureBossFight, dans les DEUX branches (gate isPveLocked + label ATTACK BOSS), avant le if (bossFight) pour couvrir aussi le timeout/null. Test de contrat source: pour chaque captureBossFight(page, runKey, slice jusqu'au premier continue doit contenir togglePveMode(page,false).",
+      "issue": "#1352",
+      "date": "2026-10-31"
     }
   ]
 }
