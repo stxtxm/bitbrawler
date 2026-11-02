@@ -183391,5 +183391,323 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-02T17:01:37.748Z",
+    "run": "2026-11-02",
+    "character": "CALMSEER",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "fresh",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "REST NOW",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 0,
+      "isResting": true,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 26,
+      "vit": 8,
+      "dex": 9,
+      "luk": 15,
+      "int": 17,
+      "foc": 7,
+      "fights": 0
+    },
+    "initial_level": 10,
+    "initial_xp": {
+      "current": 4485,
+      "max": 5360
+    },
+    "progression_curve": {
+      "level": 10,
+      "total_xp": 22099,
+      "xp_for_next": 5360,
+      "percent": 83.7
+    },
+    "initial_max_hp": 285,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      },
+      {
+        "slot": "💍",
+        "name": "Vitality Ring"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 11,
+      "xp": 2292,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 27,
+      "vit": 8,
+      "dex": 9,
+      "luk": 15,
+      "int": 17,
+      "foc": 7,
+      "last xp": 78,
+      "fights": 5
+    },
+    "final_max_hp": 305,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      },
+      {
+        "slot": "💍",
+        "name": "Vitality Ring"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      },
+      {
+        "slot": "💍",
+        "name": "Vitality Ring"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_locked_level": 30,
+      "boss_name": "VOID TITAN",
+      "boss_level": null,
+      "boss_hp": null,
+      "boss_max_hp": null
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20292,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "wolf",
+        "wraith"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 155,
+      "xp_events": [
+        {
+          "time_ms": 3074,
+          "xp": 77,
+          "monster": "wolf",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15241,
+          "xp": 78,
+          "monster": "wraith",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        512,
+        1538,
+        3074,
+        12161,
+        13696,
+        15241
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 77,
+        "essence": 0.24,
+        "monster": "wolf"
+      },
+      {
+        "result": "victory",
+        "xp": 78,
+        "essence": 0.23,
+        "monster": "wraith"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.22,
+      "next_level_eta": "⬆ 10m 55s",
+      "power_ratio": "⚔ 0.51x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.04x",
+      "interval": "12.0s",
+      "streak_bonus": "🔥 2-win streak (+25%)"
+    },
+    "initial_essence": 9.33,
+    "final_essence": 11.44,
+    "essence": {
+      "before_idle": 9.33,
+      "after_idle": 9.8,
+      "per_fight": [],
+      "forge_before": 9,
+      "forge_after_salvage": 9,
+      "forge_after_fusion": 9,
+      "forge_after_upgrade": 9,
+      "forge_after": 9,
+      "shop_before": 11,
+      "shop_after": 11,
+      "final": 11.44,
+      "flow": {
+        "idle_gained": 0.47,
+        "fights_change": null,
+        "salvage_gained": 0,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 0,
+        "shop_cost": 0,
+        "net_change": 2.11
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 9,
+      "essence_after_salvage": 9,
+      "essence_after_fusion": 9,
+      "essence_after_upgrade": 9,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": 9,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 11,
+      "essence_after": 11,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Shadow Cloak",
+            "rarity": "RARE",
+            "price": 30
+          },
+          {
+            "name": "Voidreaper",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 11,
+        "essence_budget": 40,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 40
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "no_energy"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1288,
+      "arena": 708
+    },
+    "skipped_summary": {
+      "no_energy": 1
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Shadow Cloak",
+          "rarity": "RARE",
+          "price": 30
+        },
+        {
+          "name": "Voidreaper",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 11,
+      "essence_budget": 40,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
