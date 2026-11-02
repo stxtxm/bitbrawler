@@ -2,8 +2,8 @@
   "run": "2026-11-02",
   "character": "CALMSEER",
   "exhausted": false,
-  "updated_at": "2026-11-01T23:03:15.788Z",
-  "source": "created",
+  "updated_at": "2026-11-02T02:05:01.224Z",
+  "source": "reused",
   "character_type": "fresh",
-  "pvp_since_last_pve": 1
+  "pvp_since_last_pve": 2
 }

@@ -181448,5 +181448,324 @@
       "purchased_offer": null,
       "essence_after_purchase": null
     }
+  },
+  {
+    "date": "2026-11-02T02:01:35.063Z",
+    "run": "2026-11-02",
+    "character": "CALMSEER",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "fresh",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 96,
+        "fight_duration_ms": 7649,
+        "max_hp": 210,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 8.48
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Vitality Ring",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 5,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 22,
+      "vit": 6,
+      "dex": 6,
+      "luk": 13,
+      "int": 15,
+      "foc": 6,
+      "fights": 0
+    },
+    "initial_level": 2,
+    "initial_xp": {
+      "current": 135,
+      "max": 376
+    },
+    "progression_curve": {
+      "level": 2,
+      "total_xp": 255,
+      "xp_for_next": 376,
+      "percent": 35.9
+    },
+    "initial_max_hp": 160,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 5,
+      "xp": 266,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 24,
+      "vit": 7,
+      "dex": 6,
+      "luk": 13,
+      "int": 15,
+      "foc": 6,
+      "last xp": 52,
+      "fights": 5
+    },
+    "final_max_hp": 210,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      },
+      {
+        "slot": "💍",
+        "name": "Vitality Ring"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 3,
+        "previous_level": 2,
+        "new_level": 5
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 20311,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "goblin"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 109,
+      "xp_events": [
+        {
+          "time_ms": 3091,
+          "xp": 57,
+          "monster": "goblin",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15260,
+          "xp": 52,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        512,
+        1546,
+        3091,
+        12181,
+        13720,
+        15260
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 57,
+        "essence": 0.2,
+        "monster": "goblin"
+      },
+      {
+        "result": "victory",
+        "xp": 52,
+        "essence": 0.19,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.02,
+      "next_level_eta": "⬆ 6m 33s",
+      "power_ratio": "⚔ 0.54x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.01x",
+      "interval": "12.0s",
+      "streak_bonus": "🔥 3-win streak (+3%)"
+    },
+    "initial_essence": 7.97,
+    "final_essence": 8.72,
+    "essence": {
+      "before_idle": 7.97,
+      "after_idle": 8.36,
+      "per_fight": [
+        8.48
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": 8,
+      "shop_after": 8,
+      "final": 8.72,
+      "flow": {
+        "idle_gained": 0.39,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": 0,
+        "net_change": 0.75
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": true,
+      "offline_time": "⏰ NaNh NaNm",
+      "fights": 9,
+      "xp_gained": 387,
+      "essence_gained": 0.35,
+      "levels_gained": null,
+      "claimed": true
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": true,
+      "skip_reason": "forge requires LVL 6"
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 8,
+      "essence_after": 8,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Bronze Axe",
+            "rarity": "UNCOMMON",
+            "price": 30
+          },
+          {
+            "name": "Stone Cleaver",
+            "rarity": "RARE",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 8,
+        "essence_budget": 50,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-FRESH",
+      "essence_budget": 50
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1116,
+      "arena": 1178
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Bronze Axe",
+          "rarity": "UNCOMMON",
+          "price": 30
+        },
+        {
+          "name": "Stone Cleaver",
+          "rarity": "RARE",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 8,
+      "essence_budget": 50,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
