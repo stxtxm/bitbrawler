@@ -184690,5 +184690,342 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-03T02:01:34.017Z",
+    "run": "2026-11-03",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "draw",
+        "xp": 0,
+        "fight_duration_ms": 15744,
+        "max_hp": null,
+        "fight_type": "boss",
+        "monster_name": "VOID TITAN",
+        "boss_hp_left": 5282,
+        "boss_max_hp": 5469
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "ATTACK BOSS",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 5,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 16,
+      "vit": 35,
+      "dex": 17,
+      "luk": 15,
+      "int": 18,
+      "foc": 19,
+      "fights": 0
+    },
+    "initial_level": 31,
+    "initial_xp": {
+      "current": 33626,
+      "max": 34667
+    },
+    "progression_curve": {
+      "level": 31,
+      "total_xp": 421978,
+      "xp_for_next": 34667,
+      "percent": 97
+    },
+    "initial_max_hp": 745,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Sun Spear",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Reinforced Vest",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Tin Charm",
+        "rarity": "COMMON"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 32,
+      "xp": 1479,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 16,
+      "vit": 35,
+      "dex": 17,
+      "luk": 15,
+      "int": 18,
+      "foc": 20,
+      "last xp": 140,
+      "fights": 3
+    },
+    "final_max_hp": 765,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Sun Spear",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Reinforced Vest",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Tin Charm",
+        "rarity": "COMMON"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Sun Spear",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Reinforced Vest",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Tin Charm",
+        "rarity": "COMMON"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_fights": 1,
+      "boss_wins": 0
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20455,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "dragon_spawn",
+        "wraith"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 183,
+      "xp_events": [
+        {
+          "time_ms": 13894,
+          "xp": 43,
+          "monster": "dragon_spawn",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 14408,
+          "xp": 140,
+          "monster": "wraith",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        512,
+        1536,
+        13894
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 43,
+        "essence": 0.27,
+        "monster": "dragon_spawn"
+      },
+      {
+        "result": "victory",
+        "xp": 140,
+        "essence": 0.26,
+        "monster": "wraith"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.31,
+      "next_level_eta": "⬆ 48m 54s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.18x",
+      "interval": "10.9s",
+      "streak_bonus": "🔥 1-win streak (+0%)"
+    },
+    "initial_essence": 6.6,
+    "final_essence": 3.1,
+    "essence": {
+      "before_idle": 6.6,
+      "after_idle": 7.13,
+      "per_fight": [],
+      "forge_before": 22,
+      "forge_after_salvage": 72,
+      "forge_after_fusion": 72,
+      "forge_after_upgrade": 2,
+      "forge_after": 2,
+      "shop_before": 3,
+      "shop_after": 3,
+      "final": 3.1,
+      "flow": {
+        "idle_gained": 0.53,
+        "fights_change": null,
+        "salvage_gained": 50,
+        "fusion_cost": 0,
+        "upgrade_cost": 70,
+        "forge_net": -20,
+        "shop_cost": 0,
+        "net_change": -3.5
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 22,
+      "essence_after_salvage": 72,
+      "essence_after_fusion": 72,
+      "essence_after_upgrade": 2,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 2,
+      "items_after": 0,
+      "salvage_essence_gained": 50,
+      "fusion_cost": null,
+      "upgrade_cost": 70,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 3,
+      "essence_after": 3,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Adamant Plate",
+            "rarity": "RARE",
+            "price": 30
+          },
+          {
+            "name": "Rune Stone",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 3,
+        "essence_budget": 60,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-END",
+      "essence_budget": 60
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 0,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1445,
+      "arena": 1464
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Adamant Plate",
+          "rarity": "RARE",
+          "price": 30
+        },
+        {
+          "name": "Rune Stone",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 3,
+      "essence_budget": 60,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
