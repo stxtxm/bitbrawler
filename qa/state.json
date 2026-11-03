@@ -1,12 +1,12 @@
 {
   "run": "2026-11-03",
   "character": "QA-PERSIST",
-  "exhausted": false,
-  "updated_at": "2026-11-03T17:03:39.706Z",
+  "exhausted": true,
+  "updated_at": "2026-11-03T20:03:32.498Z",
   "source": "reused",
   "character_type": "persistent",
   "persistent_generation": 0,
   "persistent_created_at": "2026-11-02T23:01:35.616Z",
   "persistent_reset_ready": false,
-  "pvp_since_last_pve": 0
+  "pvp_since_last_pve": 1
 }
