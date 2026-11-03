@@ -185365,5 +185365,344 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-03T08:01:33.623Z",
+    "run": "2026-11-03",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 298,
+        "fight_duration_ms": 14547,
+        "max_hp": 765,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 25.66
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 4,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 17,
+      "vit": 35,
+      "dex": 17,
+      "luk": 15,
+      "int": 18,
+      "foc": 21,
+      "fights": 0
+    },
+    "initial_level": 32,
+    "initial_xp": {
+      "current": 5282,
+      "max": 36532
+    },
+    "progression_curve": {
+      "level": 32,
+      "total_xp": 428301,
+      "xp_for_next": 36532,
+      "percent": 14.5
+    },
+    "initial_max_hp": 765,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Sun Spear",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Iron Cuirass",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Tin Charm",
+        "rarity": "COMMON"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 32,
+      "xp": 8191,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 17,
+      "vit": 35,
+      "dex": 17,
+      "luk": 15,
+      "int": 18,
+      "foc": 21,
+      "last xp": 129,
+      "fights": 4
+    },
+    "final_max_hp": 765,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Sun Spear",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Iron Cuirass",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Tin Charm",
+        "rarity": "COMMON"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Sun Spear",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Iron Cuirass",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Tin Charm",
+        "rarity": "COMMON"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 25051,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "goblin",
+        "dragon_spawn"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 163,
+      "xp_events": [
+        {
+          "time_ms": 3080,
+          "xp": 123,
+          "monster": "goblin",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 25051,
+          "xp": 40,
+          "monster": "dragon_spawn",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        512,
+        1538,
+        3080,
+        11154,
+        12691,
+        25051
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 123,
+        "essence": 0.47,
+        "monster": "goblin"
+      },
+      {
+        "result": "victory",
+        "xp": 40,
+        "essence": 0.46,
+        "monster": "dragon_spawn"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.33,
+      "next_level_eta": "⬆ 41m 49s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.19x",
+      "interval": "10.9s",
+      "streak_bonus": "🔥 1-win streak (+1%)"
+    },
+    "initial_essence": 24.61,
+    "final_essence": 2.26,
+    "essence": {
+      "before_idle": 24.61,
+      "after_idle": 25.54,
+      "per_fight": [
+        25.66
+      ],
+      "forge_before": 25,
+      "forge_after_salvage": 30,
+      "forge_after_fusion": 30,
+      "forge_after_upgrade": 30,
+      "forge_after": 30,
+      "shop_before": 32,
+      "shop_after": 2,
+      "final": 2.26,
+      "flow": {
+        "idle_gained": 0.93,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 5,
+        "shop_cost": 30,
+        "net_change": -22.35
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 25,
+      "essence_after_salvage": 30,
+      "essence_after_fusion": 30,
+      "essence_after_upgrade": 30,
+      "items_before": 2,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": false,
+      "essence_after": 30,
+      "items_after": 0,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 30,
+      "essence_before": 32,
+      "essence_after": 2,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Adamant Plate",
+            "rarity": "RARE",
+            "price": 30
+          },
+          {
+            "name": "Rune Stone",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 2,
+        "essence_budget": 60,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-END",
+      "essence_budget": 60
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1144,
+      "arena": 1408
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Adamant Plate",
+          "rarity": "RARE",
+          "price": 30
+        },
+        {
+          "name": "Rune Stone",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 2,
+      "essence_budget": 60,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
