@@ -187997,5 +187997,331 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-04T02:01:55.061Z",
+    "run": "2026-11-04",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "draw",
+        "xp": 0,
+        "fight_duration_ms": 15746,
+        "max_hp": null,
+        "fight_type": "boss",
+        "monster_name": "VOID TITAN",
+        "boss_hp_left": 1652,
+        "boss_max_hp": 4560
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Brass Ring",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "ATTACK BOSS",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 5,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 18,
+      "vit": 35,
+      "dex": 20,
+      "luk": 15,
+      "int": 18,
+      "foc": 20,
+      "fights": 0
+    },
+    "initial_level": 32,
+    "initial_xp": {
+      "current": 29960,
+      "max": 36532
+    },
+    "progression_curve": {
+      "level": 32,
+      "total_xp": 452979,
+      "xp_for_next": 36532,
+      "percent": 82
+    },
+    "initial_max_hp": 765,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Heaven's Edge",
+        "rarity": "LEGENDARY"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Iron Cuirass",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Tin Charm",
+        "rarity": "COMMON"
+      }
+    ],
+    "initial_streak": 2,
+    "final_stats": {
+      "level": 32,
+      "xp": 32101,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 18,
+      "vit": 35,
+      "dex": 20,
+      "luk": 15,
+      "int": 18,
+      "foc": 20,
+      "last xp": 44,
+      "fights": 5
+    },
+    "final_max_hp": 765,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Heaven's Edge",
+        "rarity": "LEGENDARY"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Iron Cuirass",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Tin Charm",
+        "rarity": "COMMON"
+      }
+    ],
+    "final_streak": 2,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Heaven's Edge",
+        "rarity": "LEGENDARY"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Iron Cuirass",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Brass Ring",
+        "rarity": "COMMON"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_fights": 1,
+      "boss_wins": 0
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 33067,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "wraith"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 43,
+      "xp_events": [
+        {
+          "time_ms": 33067,
+          "xp": 43,
+          "monster": "wraith",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        509,
+        1530,
+        33067
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 43,
+        "essence": 0.49,
+        "monster": "wraith"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.43,
+      "next_level_eta": "⬆ 5m 21s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.18x",
+      "interval": "10.4s",
+      "streak_bonus": null
+    },
+    "initial_essence": 23.89,
+    "final_essence": 11.27,
+    "essence": {
+      "before_idle": 23.89,
+      "after_idle": 24.38,
+      "per_fight": [],
+      "forge_before": 39,
+      "forge_after_salvage": 89,
+      "forge_after_fusion": 89,
+      "forge_after_upgrade": 39,
+      "forge_after": 39,
+      "shop_before": 40,
+      "shop_after": 11,
+      "final": 11.27,
+      "flow": {
+        "idle_gained": 0.49,
+        "fights_change": null,
+        "salvage_gained": 50,
+        "fusion_cost": 0,
+        "upgrade_cost": 50,
+        "forge_net": 0,
+        "shop_cost": 29,
+        "net_change": -12.62
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 39,
+      "essence_after_salvage": 89,
+      "essence_after_fusion": 89,
+      "essence_after_upgrade": 39,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 39,
+      "items_after": 0,
+      "salvage_essence_gained": 50,
+      "fusion_cost": null,
+      "upgrade_cost": 50,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "COMMON",
+      "cost": 29,
+      "essence_before": 40,
+      "essence_after": 11,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Spiked Gauntlets",
+            "rarity": "RARE",
+            "price": 30
+          },
+          {
+            "name": "Pyrite Orb",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 11,
+        "essence_budget": 60,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-END",
+      "essence_budget": 60
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 0,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 22125,
+      "arena": 1673
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Spiked Gauntlets",
+          "rarity": "RARE",
+          "price": 30
+        },
+        {
+          "name": "Pyrite Orb",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 11,
+      "essence_budget": 60,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
