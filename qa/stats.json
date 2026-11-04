@@ -188323,5 +188323,344 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-04T05:01:47.665Z",
+    "run": "2026-11-04",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 88,
+        "fight_duration_ms": 12398,
+        "max_hp": 765,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 28.93
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 5,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 19,
+      "vit": 35,
+      "dex": 21,
+      "luk": 15,
+      "int": 18,
+      "foc": 21,
+      "fights": 0
+    },
+    "initial_level": 32,
+    "initial_xp": {
+      "current": 32657,
+      "max": 36532
+    },
+    "progression_curve": {
+      "level": 32,
+      "total_xp": 455676,
+      "xp_for_next": 36532,
+      "percent": 89.4
+    },
+    "initial_max_hp": 765,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Heaven's Edge",
+        "rarity": "LEGENDARY"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Iron Cuirass",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Brass Ring",
+        "rarity": "COMMON"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 32,
+      "xp": 35236,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 19,
+      "vit": 35,
+      "dex": 21,
+      "luk": 15,
+      "int": 18,
+      "foc": 21,
+      "last xp": 133,
+      "fights": 4
+    },
+    "final_max_hp": 765,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Heaven's Edge",
+        "rarity": "LEGENDARY"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Iron Cuirass",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Brass Ring",
+        "rarity": "COMMON"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Heaven's Edge",
+        "rarity": "LEGENDARY"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Iron Cuirass",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Brass Ring",
+        "rarity": "COMMON"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 24016,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "wraith",
+        "chimera"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 167,
+      "xp_events": [
+        {
+          "time_ms": 3062,
+          "xp": 120,
+          "monster": "wraith",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 24016,
+          "xp": 47,
+          "monster": "chimera",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        510,
+        1528,
+        3062,
+        10627,
+        12163,
+        24016
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 120,
+        "essence": 0.48,
+        "monster": "wraith"
+      },
+      {
+        "result": "victory",
+        "xp": 47,
+        "essence": 0.47,
+        "monster": "chimera"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.49,
+      "next_level_eta": "⬆ 1m 46s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.19x",
+      "interval": "10.3s",
+      "streak_bonus": "🔥 1-win streak (+1%)"
+    },
+    "initial_essence": 12.9,
+    "final_essence": 5.37,
+    "essence": {
+      "before_idle": 12.9,
+      "after_idle": 13.85,
+      "per_fight": [
+        28.93
+      ],
+      "forge_before": 28,
+      "forge_after_salvage": 33,
+      "forge_after_fusion": 33,
+      "forge_after_upgrade": 33,
+      "forge_after": 33,
+      "shop_before": 34,
+      "shop_after": 5,
+      "final": 5.37,
+      "flow": {
+        "idle_gained": 0.95,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 5,
+        "shop_cost": 29,
+        "net_change": -7.53
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 28,
+      "essence_after_salvage": 33,
+      "essence_after_fusion": 33,
+      "essence_after_upgrade": 33,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": false,
+      "essence_after": 33,
+      "items_after": 0,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 29,
+      "essence_before": 34,
+      "essence_after": 5,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Vitality Ring",
+            "rarity": "COMMON",
+            "price": 30
+          },
+          {
+            "name": "Pyrite Orb",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 5,
+        "essence_budget": 60,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-END",
+      "essence_budget": 60
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 1,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1400,
+      "arena": 810
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Vitality Ring",
+          "rarity": "COMMON",
+          "price": 30
+        },
+        {
+          "name": "Pyrite Orb",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 5,
+      "essence_budget": 60,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
