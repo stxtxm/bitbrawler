@@ -17,7 +17,7 @@
 └──────────────────────────────┬───────────────────────────────────┘
                                ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│ 2. DEV AGENT (opencode.yml, modèle muse-spark-1.2)              │
+│ 2. DEV AGENT (opencode.yml, deepseek → … → gemini)              │
 │    • Charge mémoires: dev.json + shared.json                     │
 │      ↳ AUTO-COMPACTÉES avant injection (scripts/                 │
 │        compact-memories.mjs, budgets shared 6KB / agent 4.5KB)   │
@@ -32,7 +32,7 @@
 └──────────────────────────────┬───────────────────────────────────┘
                                ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│ 4. REVIEWER (reviewer.yml, même modèle)                          │
+│ 4. REVIEWER (reviewer.yml, même chaîne de modèles)                │
 │    • Verify branch integrity: checkout -f (le compactor peut     │
 │      avoir dirty le tree mémoire), conflict markers, puis si     │
 │      aucun check CI → gate complète locale avant merge           │
@@ -63,14 +63,29 @@
 
 ## Modèles
 
-- Modèle par défaut : `opencode/muse-spark-1.3-contributor-free` (= `muse`)
-  (opencode.json + frontmatter `.opencode/agents/*.md` + tableaux de fallback dans
-  les workflows, repli `opencode/nemotron-3.5-lightning-free`).
+- Chaîne prioritaire (opencode.json + frontmatter `.opencode/agents/*.md` +
+  tableaux `MODELS=(...)` des workflows) :
+  `opencode/deepseek-v4.1-flash-free` → `opencode/glm-5.3-flash-free` →
+  `opencode/nemotron-3.5-lightning-free`.
+- Dernier recours : `google/gemini-2.5-flash`, ajouté au tableau **uniquement si**
+  `GOOGLE_GENERATIVE_AI_API_KEY` est présent. Secret repo à scoper sur l'API
+  Generative Language et à faire tourner (`gh secret set …`) ; absent, les
+  workflows loguent un warning et sautent simplement le repli.
+- **Toute tentative passe par `scripts/run-agent-model.sh`** (jamais
+  `timeout … opencode run`). Le watchdog lit le log en continu et coupe dès
+  l'erreur fatale au lieu de laisser le CLI retenter ~2 min :
+  `0` succès, `42` quota gratuit épuisé, `43` credential refusé, `44` slug
+  retiré, `124` budget dépassé. Un test (`run-agent-model.test.ts`) verrouille
+  ces codes ; `workflow-integrity.test.ts` interdit l'appel direct.
 - Si un modèle disparaît : vérifier `opencode models | grep '^opencode/'`,
   puis `sed` global du slug, push, relancer
   `gh workflow run reviewer.yml -f pr_number=N`.
   ⚠ Symptôme d'un slug retiré : `UnknownError: Unexpected server error` en <5s
   sur TOUS les modèles du tableau de fallback (≠ timeout, ≠ 401/429).
+- ⚠ **Quota gratuit par IP et par jour UTC** (incident 2026-11-01 → 04) : les
+  slugs `*-free` partagent un même bucket, et les runners GitHub partagent leurs
+  IP. Le bucket est donc vide avant la première requête : changer de slug ne
+  sert à rien, d'où le watchdog (~3 s par slug) et le repli Gemini.
 
 ## Incidents connus & procédures (2026-08-23)
 
@@ -83,6 +98,7 @@
 | SQL migration détectée → blocage | Guard volontaire reviewer | Issue dédiée SANS /oc, exécuter dans Supabase SQL Editor |
 | idle-processor « Character not found » | Secrets serveur périmés (erreur DB avalée) | Réponse inclut `db_target`+`detail`; tester avec un ID existant |
 | PR bot sans run CI | Event GITHUB_TOKEN / skip-ci | `gh workflow run ci.yml -f pr_number=N` ; runs bot = `action_required` → `POST /actions/runs/{id}/approve` |
+| Agents muets, 8 min/modèle puis échec | Quota `*-free` épuisé par IP (runners partagés) | watchdog `scripts/run-agent-model.sh` + repli `google/gemini-2.5-flash` (secret `GOOGLE_GENERATIVE_AI_API_KEY`) |
 
 ## Checklist « une PR est bloquée »
 

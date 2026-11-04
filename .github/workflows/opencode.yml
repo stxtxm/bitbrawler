@@ -46,7 +46,10 @@ jobs:
         contains(github.event.pull_request.head.ref, 'feat/auto-')
       )
     runs-on: ubuntu-latest
-    timeout-minutes: 100
+    # Le repli Gemini peut ajouter 20 min au dev et 10 min par rappel : la marge
+    # de 100 min ne couvrait plus le pire cas, sans risque de blocage (chaque
+    # tentative est bornee par le watchdog).
+    timeout-minutes: 150
     permissions:
       actions: write
       contents: write
@@ -277,6 +280,11 @@ jobs:
           # EXPIREE fait au contraire repondre au provider "This API key has expired" et tue
           # les 3 modeles de la chaine en 3 secondes chacun.
           GH_TOKEN: ${{ github.token }}
+          # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
+          # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
+          # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
+          # La cle Google est utilisee uniquement en dernier recours (voir MODELS plus bas).
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
         run: |
           echo "🔍 Supervisor mode — validating campaign for issue #$ISSUE_NUMBER..."
           PROMPT="Tu es le superviseur de campagne. Valide la campagne #$ISSUE_NUMBER et mets à jour la documentation.
@@ -317,10 +325,21 @@ jobs:
              "opencode/glm-5.3-flash-free"
              "opencode/nemotron-3.5-lightning-free"
            )
+           # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
+           # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
+           if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]; then
+             MODELS+=("google/gemini-2.5-flash")
+           else
+             echo "::warning::GOOGLE_GENERATIVE_AI_API_KEY absent — aucun repli hors quota gratuit."
+           fi
+           MODEL_BUDGETS=("6m" "4m" "3m" "10m")
            SUCCESS=0
+           MODEL_IDX=0
            for MODEL in "${MODELS[@]}"; do
-             echo "Trying model: $MODEL"
-             if timeout -k 30s 6m opencode run --dangerously-skip-permissions --agent supervisor --model "$MODEL" "$PROMPT"; then
+             MODEL_BUDGET="${MODEL_BUDGETS[$MODEL_IDX]}"
+             MODEL_IDX=$((MODEL_IDX + 1))
+             echo "Trying model: $MODEL (budget $MODEL_BUDGET)"
+             if bash scripts/run-agent-model.sh --budget "$MODEL_BUDGET" --agent supervisor --model "$MODEL" --prompt "$PROMPT"; then
                echo "Model selected: $MODEL"
                SUCCESS=1
                break
@@ -341,6 +360,11 @@ jobs:
           # EXPIREE fait au contraire repondre au provider "This API key has expired" et tue
           # les 3 modeles de la chaine en 3 secondes chacun.
           GH_TOKEN: ${{ github.token }}
+          # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
+          # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
+          # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
+          # La cle Google est utilisee uniquement en dernier recours (voir MODELS plus bas).
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
           ISSUE_NUMBER: ${{ env.ISSUE_NUMBER }}
         run: |
           ISSUE_BODY=$(cat /tmp/prompt.txt)
@@ -424,10 +448,21 @@ jobs:
               "opencode/glm-5.3-flash-free"
               "opencode/nemotron-3.5-lightning-free"
             )
+            # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
+            # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
+            if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]; then
+              MODELS+=("google/gemini-2.5-flash")
+            else
+              echo "::warning::GOOGLE_GENERATIVE_AI_API_KEY absent — aucun repli hors quota gratuit."
+            fi
+            MODEL_BUDGETS=("6m" "4m" "3m" "10m")
             SUCCESS=0
+            MODEL_IDX=0
             for MODEL in "${MODELS[@]}"; do
-              echo "Trying model: $MODEL"
-              if timeout -k 30s 6m opencode run --dangerously-skip-permissions --agent orchestrator --model "$MODEL" "$PROMPT"; then
+              MODEL_BUDGET="${MODEL_BUDGETS[$MODEL_IDX]}"
+              MODEL_IDX=$((MODEL_IDX + 1))
+              echo "Trying model: $MODEL (budget $MODEL_BUDGET)"
+              if bash scripts/run-agent-model.sh --budget "$MODEL_BUDGET" --agent orchestrator --model "$MODEL" --prompt "$PROMPT"; then
                 echo "Model selected: $MODEL"
                 SUCCESS=1
                 break
@@ -471,6 +506,11 @@ jobs:
           # EXPIREE fait au contraire repondre au provider "This API key has expired" et tue
           # les 3 modeles de la chaine en 3 secondes chacun.
           GH_TOKEN: ${{ github.token }}
+          # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
+          # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
+          # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
+          # La cle Google est utilisee uniquement en dernier recours (voir MODELS plus bas).
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
           ISSUE_NUMBER: ${{ env.ISSUE_NUMBER }}
         run: |
           ISSUE_BODY=$(cat /tmp/prompt.txt)
@@ -516,18 +556,26 @@ jobs:
             "opencode/glm-5.3-flash-free"
             "opencode/nemotron-3.5-lightning-free"
           )
+          # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
+          # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
+          if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]; then
+            MODELS+=("google/gemini-2.5-flash")
+          else
+            echo "::warning::GOOGLE_GENERATIVE_AI_API_KEY absent — aucun repli hors quota gratuit."
+          fi
           # Budget par modèle : le primaire écrit ET teste le code (18 min — il a besoin
           # de lire les fichiers, d'implémenter, de lancer la suite et de l'ajuster).
           # Les replis repartent de ZÉRO (aucune mémoire du travail du primaire) : une
           # sonde courte suffit, inutile de patienter pendant qu'ils refont tout le tour.
-          MODEL_BUDGETS=("25m" "12m" "8m")
+          # Gemini (dernier) écrit aussi : il garde un budget de primaire.
+          MODEL_BUDGETS=("25m" "12m" "8m" "20m")
           SUCCESS=0
           MODEL_IDX=0
           for MODEL in "${MODELS[@]}"; do
             MODEL_BUDGET="${MODEL_BUDGETS[$MODEL_IDX]}"
             MODEL_IDX=$((MODEL_IDX + 1))
             echo "Trying model: $MODEL (budget $MODEL_BUDGET)"
-            if timeout -k 30s "$MODEL_BUDGET" opencode run --dangerously-skip-permissions --model "$MODEL" "$PROMPT"; then
+            if bash scripts/run-agent-model.sh --budget "$MODEL_BUDGET" --model "$MODEL" --prompt "$PROMPT"; then
               echo "Model selected: $MODEL"
               SUCCESS=1
               break
@@ -675,6 +723,11 @@ jobs:
           # EXPIREE fait au contraire repondre au provider "This API key has expired" et tue
           # les 3 modeles de la chaine en 3 secondes chacun.
           GH_TOKEN: ${{ github.token }}
+          # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
+          # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
+          # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
+          # La cle Google est utilisee uniquement en dernier recours (voir MODELS plus bas).
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
         run: |
           PR_NUMBER="${{ steps.check_pr.outputs.existing_pr }}"
           echo "Existing PR #$PR_NUMBER — fetching CI/review feedback..."
@@ -742,18 +795,26 @@ jobs:
             "opencode/glm-5.3-flash-free"
             "opencode/nemotron-3.5-lightning-free"
           )
+          # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
+          # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
+          if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]; then
+            MODELS+=("google/gemini-2.5-flash")
+          else
+            echo "::warning::GOOGLE_GENERATIVE_AI_API_KEY absent — aucun repli hors quota gratuit."
+          fi
           # Budget par modèle : le primaire écrit ET teste le code (18 min — il a besoin
           # de lire les fichiers, d'implémenter, de lancer la suite et de l'ajuster).
           # Les replis repartent de ZÉRO (aucune mémoire du travail du primaire) : une
           # sonde courte suffit, inutile de patienter pendant qu'ils refont tout le tour.
-          MODEL_BUDGETS=("25m" "12m" "8m")
+          # Gemini (dernier) écrit aussi : il garde un budget de primaire.
+          MODEL_BUDGETS=("25m" "12m" "8m" "20m")
           SUCCESS=0
           MODEL_IDX=0
           for MODEL in "${MODELS[@]}"; do
             MODEL_BUDGET="${MODEL_BUDGETS[$MODEL_IDX]}"
             MODEL_IDX=$((MODEL_IDX + 1))
             echo "Trying model: $MODEL (budget $MODEL_BUDGET)"
-            if timeout -k 30s "$MODEL_BUDGET" opencode run --dangerously-skip-permissions --model "$MODEL" "$PROMPT"; then
+            if bash scripts/run-agent-model.sh --budget "$MODEL_BUDGET" --model "$MODEL" --prompt "$PROMPT"; then
               echo "Model selected: $MODEL"
               SUCCESS=1
               break
@@ -774,6 +835,11 @@ jobs:
           # EXPIREE fait au contraire repondre au provider "This API key has expired" et tue
           # les 3 modeles de la chaine en 3 secondes chacun.
           GH_TOKEN: ${{ github.token }}
+          # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
+          # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
+          # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
+          # La cle Google est utilisee uniquement en dernier recours (voir MODELS plus bas).
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
         run: |
           MAX_RETRIES=3
           ISSUE_TITLE=$(cat /tmp/issue-title.txt 2>/dev/null || echo "Auto-implement issue #$ISSUE_NUMBER")
@@ -874,16 +940,24 @@ jobs:
               "opencode/glm-5.3-flash-free"
               "opencode/nemotron-3.5-lightning-free"
             )
+            # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
+            # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
+            if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]; then
+              MODELS+=("google/gemini-2.5-flash")
+            else
+              echo "::warning::GOOGLE_GENERATIVE_AI_API_KEY absent — aucun repli hors quota gratuit."
+            fi
             # Rappel après gate rouge : le primaire relit les sorties de gate et corrige
-            # (10 min) ; replis = sonde courte (ils repartent de zéro).
-            MODEL_BUDGETS=("12m" "6m" "5m")
+            # (10 min) ; replis = sonde courte (ils repartent de zéro). Gemini corrige
+            # aussi : budget de primaire.
+            MODEL_BUDGETS=("12m" "5m" "4m" "10m")
             SUCCESS=0
             MODEL_IDX=0
             for MODEL in "${MODELS[@]}"; do
               MODEL_BUDGET="${MODEL_BUDGETS[$MODEL_IDX]}"
               MODEL_IDX=$((MODEL_IDX + 1))
               echo "Trying model: $MODEL (budget $MODEL_BUDGET)"
-              if timeout -k 30s "$MODEL_BUDGET" opencode run --dangerously-skip-permissions --model "$MODEL" "$FIX_PROMPT"; then
+              if bash scripts/run-agent-model.sh --budget "$MODEL_BUDGET" --model "$MODEL" --prompt "$FIX_PROMPT"; then
                 echo "Model selected: $MODEL"
                 SUCCESS=1
                 break

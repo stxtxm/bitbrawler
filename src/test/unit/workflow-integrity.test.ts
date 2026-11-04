@@ -12,7 +12,7 @@
  * qa-analysis.test.ts) so a regression in the merge reliability fix is caught.
  */
 import { describe, it, expect } from 'vitest'
-import { readFileSync, readdirSync } from 'fs'
+import { readFileSync, readdirSync, statSync } from 'fs'
 import { join, resolve, relative } from 'path'
 import qaBotConfig from '../../../qa/qa-bot.config.js'
 
@@ -450,6 +450,57 @@ describe('Watchdog — filets de sécurité (PR orphelines & fin de campagne)', 
     // Le scan part des issues récemment actives : parcourir les ~160 labels campaign-*
     // historiques coûterait ~2-3 appels API chacun, à chaque passage horaire.
     expect(wd).toContain('sort:updated-desc')
+  })
+})
+
+describe('Chaîne de modèles : watchdog + repli hors quota partagé (#tech-lead mort)', () => {
+  // Incident 2026-11-01 → 2026-11-04 : les slugs `opencode/*-free` partagent un
+  // quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
+  // bucket est vide avant la première requête et les 3 modèles répondent
+  // « Free usage limit reached ». Le CLI retente ~2 min par modèle, si bien que
+  // tech-lead brûlait 24 min pour finir en échec, sans issue ni PR.
+  //
+  // Contrat désormais : chaque tentative passe par le watchdog (coupe en ~3 s sur
+  // erreur fatale) et un dernier recours Gemini n'est ajouté QUE si le secret est
+  // présent — les slugs opencode restent prioritaires.
+  const agentWorkflows = ['opencode.yml', 'reviewer.yml', 'tech-lead.yml']
+
+  it.each(agentWorkflows)('%s invoque chaque modèle via le watchdog', file => {
+    const source = readWorkflow(file)
+    expect(source).toContain('scripts/run-agent-model.sh')
+    // Aucun appel direct : sans watchdog, un quota épuisé coûte 2 min de retries
+    // par modèle avant de rendre la main.
+    expect(source).not.toMatch(/\bopencode run\b/)
+  })
+
+  it.each(agentWorkflows)('%s ne tente Gemini que si le secret existe', file => {
+    const source = readWorkflow(file)
+    expect(source).toContain('if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]')
+    expect(source).toContain('MODELS+=("google/gemini-2.5-flash")')
+    expect(source).toContain(
+      'GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}'
+    )
+    // Gemini vient en DERNIER recours : un `MODELS=(` qui le contient en tête
+    // ferait sortir les slugs opencode du chemin nominal.
+    expect(source).not.toMatch(/MODELS=\(\s*"google\//)
+  })
+
+  it('les slugs opencode restent prioritaires dans les trois workflows', () => {
+    for (const file of agentWorkflows) {
+      const source = readWorkflow(file)
+      const free = source.indexOf('"opencode/deepseek-v4.1-flash-free"')
+      expect(free).toBeGreaterThanOrEqual(0)
+      // Le repli est ajouté après le tableau des slugs gratuits.
+      expect(source.indexOf('MODELS+=("google/gemini-2.5-flash")')).toBeGreaterThan(free)
+    }
+  })
+
+  it('le watchdog est un script versionné et exécutable', () => {
+    const script = join(process.cwd(), 'scripts', 'run-agent-model.sh')
+    const source = readFileSync(script, 'utf8')
+    expect(source).toContain('Free usage limit reached')
+    expect(source).toContain('exit 42')
+    expect(statSync(script).mode & 0o111).not.toBe(0)
   })
 })
 
