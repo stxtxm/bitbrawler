@@ -193182,5 +193182,325 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-05T23:01:38.736Z",
+    "run": "2026-11-06",
+    "character": "QA-PERSI-2",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 120,
+        "fight_duration_ms": 10548,
+        "max_hp": 330,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 6.89
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Iron Helm",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 3,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 23,
+      "vit": 15,
+      "dex": 10,
+      "luk": 8,
+      "int": 8,
+      "foc": 8,
+      "fights": 0
+    },
+    "initial_level": 5,
+    "initial_xp": {
+      "current": 1129,
+      "max": 1707
+    },
+    "progression_curve": {
+      "level": 5,
+      "total_xp": 3541,
+      "xp_for_next": 1707,
+      "percent": 66.1
+    },
+    "initial_max_hp": 304,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 6,
+      "xp": 2259,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 24,
+      "vit": 15,
+      "dex": 10,
+      "luk": 8,
+      "int": 8,
+      "foc": 8,
+      "last xp": 57,
+      "fights": 5
+    },
+    "final_max_hp": 330,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      },
+      {
+        "slot": "🛡",
+        "name": "Iron Helm"
+      }
+    ],
+    "lootbox_streak": 2,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 5,
+        "new_level": 6
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 20242,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "goblin",
+        "slime"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 111,
+      "xp_events": [
+        {
+          "time_ms": 3062,
+          "xp": 54,
+          "monster": "goblin",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15203,
+          "xp": 57,
+          "monster": "slime",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        510,
+        1529,
+        3062,
+        12139,
+        13670,
+        15203
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 54,
+        "essence": 0.2,
+        "monster": "goblin"
+      },
+      {
+        "result": "victory",
+        "xp": 57,
+        "essence": 0.2,
+        "monster": "slime"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 0.99,
+      "next_level_eta": "⬆ 1m 9s",
+      "power_ratio": "⚔ 0.57x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 0.96x",
+      "interval": "12.0s",
+      "streak_bonus": "🔥 2-win streak (+25%)"
+    },
+    "initial_essence": 6.38,
+    "final_essence": 8.22,
+    "essence": {
+      "before_idle": 6.38,
+      "after_idle": 6.78,
+      "per_fight": [
+        6.89
+      ],
+      "forge_before": 7,
+      "forge_after_salvage": 7,
+      "forge_after_fusion": 7,
+      "forge_after_upgrade": 7,
+      "forge_after": 7,
+      "shop_before": 8,
+      "shop_after": 8,
+      "final": 8.22,
+      "flow": {
+        "idle_gained": 0.4,
+        "fights_change": null,
+        "salvage_gained": 0,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 0,
+        "shop_cost": 0,
+        "net_change": 1.84
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 7,
+      "essence_after_salvage": 7,
+      "essence_after_fusion": 7,
+      "essence_after_upgrade": 7,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": 7,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 8,
+      "essence_after": 8,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Spiked Gauntlets",
+            "rarity": "RARE",
+            "price": 30
+          },
+          {
+            "name": "Spiked Gauntlets",
+            "rarity": "RARE",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 8,
+        "essence_budget": 50,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-FRESH",
+      "essence_budget": 50
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 1,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1266,
+      "arena": 787
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Spiked Gauntlets",
+          "rarity": "RARE",
+          "price": 30
+        },
+        {
+          "name": "Spiked Gauntlets",
+          "rarity": "RARE",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 8,
+      "essence_budget": 50,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
