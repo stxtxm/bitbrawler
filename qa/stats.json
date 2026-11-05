@@ -191571,5 +191571,343 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-05T11:01:40.030Z",
+    "run": "2026-11-05",
+    "character": "QA-PERSIST",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "draw",
+        "xp": 0,
+        "fight_duration_ms": 15731,
+        "max_hp": null,
+        "fight_type": "boss",
+        "monster_name": "VOID TITAN",
+        "boss_hp_left": 6512,
+        "boss_max_hp": 7100
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "ATTACK BOSS",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 4,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 21,
+      "vit": 36,
+      "dex": 23,
+      "luk": 12,
+      "int": 20,
+      "foc": 23,
+      "fights": 0
+    },
+    "initial_level": 33,
+    "initial_xp": {
+      "current": 33347,
+      "max": 38435
+    },
+    "progression_curve": {
+      "level": 33,
+      "total_xp": 492898,
+      "xp_for_next": 38435,
+      "percent": 86.8
+    },
+    "initial_max_hp": 767,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Heaven's Edge",
+        "rarity": "LEGENDARY"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Guardian Shield",
+        "rarity": "UNCOMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Opal Pendant",
+        "rarity": "UNCOMMON"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 33,
+      "xp": 35784,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 21,
+      "vit": 36,
+      "dex": 23,
+      "luk": 12,
+      "int": 20,
+      "foc": 23,
+      "last xp": 49,
+      "fights": 4
+    },
+    "final_max_hp": 767,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Heaven's Edge",
+        "rarity": "LEGENDARY"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Guardian Shield",
+        "rarity": "UNCOMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Opal Pendant",
+        "rarity": "UNCOMMON"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Heaven's Edge",
+        "rarity": "LEGENDARY"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Guardian Shield",
+        "rarity": "UNCOMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Opal Pendant",
+        "rarity": "UNCOMMON"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_fights": 1,
+      "boss_wins": 0
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20451,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "lava_hound",
+        "magma_golem"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 167,
+      "xp_events": [
+        {
+          "time_ms": 13387,
+          "xp": 43,
+          "monster": "lava_hound",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 13901,
+          "xp": 124,
+          "monster": "lava_hound",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        512,
+        1535,
+        13387,
+        20451
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 43,
+        "essence": 0.34,
+        "monster": "lava_hound"
+      },
+      {
+        "result": "victory",
+        "xp": 124,
+        "essence": 0.34,
+        "monster": "lava_hound"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.69,
+      "next_level_eta": "⬆ 2m 58s",
+      "power_ratio": "⚔ 0.52x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.23x",
+      "interval": "10.0s",
+      "streak_bonus": null
+    },
+    "initial_essence": 7.59,
+    "final_essence": 14.31,
+    "essence": {
+      "before_idle": 7.59,
+      "after_idle": 8.27,
+      "per_fight": [],
+      "forge_before": 23,
+      "forge_after_salvage": 43,
+      "forge_after_fusion": 43,
+      "forge_after_upgrade": 43,
+      "forge_after": 43,
+      "shop_before": 44,
+      "shop_after": 14,
+      "final": 14.31,
+      "flow": {
+        "idle_gained": 0.68,
+        "fights_change": null,
+        "salvage_gained": 20,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 20,
+        "shop_cost": 30,
+        "net_change": 6.72
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 23,
+      "essence_after_salvage": 43,
+      "essence_after_fusion": 43,
+      "essence_after_upgrade": 43,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": false,
+      "essence_after": 43,
+      "items_after": 0,
+      "salvage_essence_gained": 20,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "COMMON",
+      "cost": 30,
+      "essence_before": 44,
+      "essence_after": 14,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Broad Axe",
+            "rarity": "UNCOMMON",
+            "price": 30
+          },
+          {
+            "name": "Bloodfang",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 14,
+        "essence_budget": 60,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-END",
+      "essence_budget": 60
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 0,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1918,
+      "arena": 781
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Broad Axe",
+          "rarity": "UNCOMMON",
+          "price": 30
+        },
+        {
+          "name": "Bloodfang",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 14,
+      "essence_budget": 60,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
