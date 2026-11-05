@@ -64,7 +64,14 @@ fi
 LOG="$(mktemp -t opencode-model.XXXXXX.log)"
 trap 'rm -f "$LOG"' EXIT
 
-ARGS=(run --print-logs --log-level INFO --dangerously-skip-permissions --model "$MODEL")
+# The flag value is case-sensitive and changed between CLI majors:
+#   1.x expects --log-level INFO, 2.x expects --log-level info (1.x rejects
+#   "info" with a CliError/InvalidValue and prints help).
+OC_MAJOR="$(opencode --version 2>/dev/null | grep -oE '[0-9]+' | head -1 || true)"
+LOG_LEVEL=INFO
+[[ "${OC_MAJOR:-1}" -ge 2 ]] && LOG_LEVEL=info
+
+ARGS=(run --print-logs --log-level "$LOG_LEVEL" --dangerously-skip-permissions --model "$MODEL")
 [[ -n "$AGENT" ]] && ARGS+=(--agent "$AGENT")
 ARGS+=("$PROMPT")
 

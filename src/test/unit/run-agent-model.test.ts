@@ -17,15 +17,28 @@ import { tmpdir } from 'os'
 import { join, resolve } from 'path'
 import { spawnSync } from 'child_process'
 
-const script = resolve(process.cwd(), 'scripts/run-agent-model.sh')
+const script = resolve(process.cwd(), 'scripts', 'run-agent-model.sh')
 let workdir: string
 
 beforeAll(() => {
   workdir = mkdtempSync(join(tmpdir(), 'run-agent-model-'))
   const fake = join(workdir, 'opencode')
+  // `--log-level` is case-sensitive and changed between CLI majors: 1.x wants
+  // INFO, 2.x wants info. The fake rejects the wrong one exactly like the CLI.
   writeFileSync(
     fake,
     `#!/usr/bin/env bash
+if [[ "$1" == "--version" ]]; then echo "opencode v\${FAKE_VERSION:-1.19.5}"; exit 0; fi
+LEVEL=""
+PREV=""
+for ARG in "$@"; do
+  [[ "$PREV" == "--log-level" ]] && LEVEL="$ARG"
+  PREV="$ARG"
+done
+case "\${FAKE_VERSION:-1.19.5}" in
+  2.*) [[ "$LEVEL" == "info" ]] || { echo "InvalidValue --log-level $LEVEL"; exit 1; } ;;
+  *)   [[ "$LEVEL" == "INFO" ]] || { echo "InvalidValue --log-level $LEVEL"; exit 1; } ;;
+esac
 case "$FAKE_MODE" in
   ok) echo "OK"; exit 0 ;;
   quota) echo 'timestamp=2026-11-04T19:59:17.004Z level=ERROR run=x message="stream error" error.error="AI_APICallError: Free usage limit reached."'; sleep 60 ;;
@@ -43,13 +56,18 @@ afterAll(() => {
   rmSync(workdir, { recursive: true, force: true })
 })
 
-function run(mode: string, budget = '20s') {
+function run(mode: string, budget = '20s', version = '1.19.5') {
   const started = Date.now()
   const result = spawnSync(
     'bash',
     [script, '--model', 'test/model', '--budget', budget, '--prompt', 'hi'],
     {
-      env: { ...process.env, PATH: `${workdir}:${process.env.PATH}`, FAKE_MODE: mode },
+      env: {
+        ...process.env,
+        PATH: `${workdir}:${process.env.PATH}`,
+        FAKE_MODE: mode,
+        FAKE_VERSION: version,
+      },
       encoding: 'utf8',
       timeout: 30_000,
     }
@@ -101,5 +119,11 @@ describe('run-agent-model watchdog', () => {
       encoding: 'utf8',
     })
     expect(missing.status).toBe(2)
+  })
+
+  it('picks the log-level spelling of the installed CLI major', () => {
+    // npm installs 1.19.5 today, but a future 2.x rejects "--log-level INFO".
+    expect(run('ok', '20s', '1.19.5').code).toBe(0)
+    expect(run('ok', '20s', '2.2.5').code).toBe(0)
   })
 })
