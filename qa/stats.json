@@ -192868,5 +192868,319 @@
       "purchased_offer": null,
       "essence_after_purchase": null
     }
+  },
+  {
+    "date": "2026-11-05T20:01:47.608Z",
+    "run": "2026-11-05",
+    "character": "QA-PERSI-2",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 128,
+        "fight_duration_ms": 6722,
+        "max_hp": 310,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 3.39
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 4,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 21,
+      "vit": 15,
+      "dex": 9,
+      "luk": 8,
+      "int": 8,
+      "foc": 8,
+      "fights": 0
+    },
+    "initial_level": 2,
+    "initial_xp": {
+      "current": 332,
+      "max": 376
+    },
+    "progression_curve": {
+      "level": 2,
+      "total_xp": 452,
+      "xp_for_next": 376,
+      "percent": 88.3
+    },
+    "initial_max_hp": 244,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 5,
+      "xp": 376,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 23,
+      "vit": 15,
+      "dex": 10,
+      "luk": 8,
+      "int": 8,
+      "foc": 8,
+      "last xp": 17,
+      "fights": 7
+    },
+    "final_max_hp": 310,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 3,
+        "previous_level": 2,
+        "new_level": 5
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 45242,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "goblin",
+        "ogre"
+      ],
+      "victories": 1,
+      "defeats": 1,
+      "xp_total": 69,
+      "xp_events": [
+        {
+          "time_ms": 3079,
+          "xp": 50,
+          "monster": "goblin",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 45242,
+          "xp": 19,
+          "monster": "ogre",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": true,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        513,
+        1540,
+        3079,
+        12168,
+        13704,
+        45242
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 50,
+        "essence": 0.28,
+        "monster": "goblin"
+      },
+      {
+        "result": "defeat",
+        "xp": 19,
+        "essence": 0.08,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 0.97,
+      "next_level_eta": "⬆ 5m 31s",
+      "power_ratio": "⚔ 0.57x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 0.96x",
+      "interval": "12.0s",
+      "streak_bonus": null
+    },
+    "initial_essence": 3.03,
+    "final_essence": 3.39,
+    "essence": {
+      "before_idle": 3.03,
+      "after_idle": 3.39,
+      "per_fight": [
+        3.39
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": 3,
+      "shop_after": 3,
+      "final": 3.39,
+      "flow": {
+        "idle_gained": 0.36,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": 0,
+        "net_change": 0.36
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": true,
+      "offline_time": "⏰ NaNh NaNm",
+      "fights": 17,
+      "xp_gained": 753,
+      "essence_gained": 0.63,
+      "levels_gained": null,
+      "claimed": true
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": true,
+      "skip_reason": "forge requires LVL 6"
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 3,
+      "essence_after": 3,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Flint Knife",
+            "rarity": "RARE",
+            "price": 30
+          },
+          {
+            "name": "Stone Cleaver",
+            "rarity": "RARE",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 3,
+        "essence_budget": 50,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-FRESH",
+      "essence_budget": 50
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1134,
+      "arena": 1127
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Flint Knife",
+          "rarity": "RARE",
+          "price": 30
+        },
+        {
+          "name": "Stone Cleaver",
+          "rarity": "RARE",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 3,
+      "essence_budget": 50,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
