@@ -196190,5 +196190,357 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-07T02:01:30.960Z",
+    "run": "2026-11-07",
+    "character": "QA-PERSI-2",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 135,
+        "fight_duration_ms": 11420,
+        "max_hp": 438,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 35.41
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Moonstone Ring",
+      "rarity": "RARE",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 6,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 27,
+      "vit": 20,
+      "dex": 11,
+      "luk": 10,
+      "int": 9,
+      "foc": 8,
+      "fights": 0
+    },
+    "initial_level": 14,
+    "initial_xp": {
+      "current": 6792,
+      "max": 9338
+    },
+    "progression_curve": {
+      "level": 14,
+      "total_xp": 51543,
+      "xp_for_next": 9338,
+      "percent": 72.7
+    },
+    "initial_max_hp": 418,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      },
+      {
+        "slot": "🛡",
+        "name": "Iron Helm"
+      },
+      {
+        "slot": "💍",
+        "name": "Lucky Charm"
+      }
+    ],
+    "initial_streak": 766,
+    "final_stats": {
+      "level": 15,
+      "xp": 1589,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 28,
+      "vit": 20,
+      "dex": 11,
+      "luk": 10,
+      "int": 9,
+      "foc": 8,
+      "last xp": 84,
+      "fights": 6
+    },
+    "final_max_hp": 438,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      },
+      {
+        "slot": "🛡",
+        "name": "Iron Helm"
+      },
+      {
+        "slot": "💍",
+        "name": "Lucky Charm"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      },
+      {
+        "slot": "🛡",
+        "name": "Iron Helm"
+      },
+      {
+        "slot": "💍",
+        "name": "Moonstone Ring"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 14,
+        "new_level": 15
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 20028,
+      "cycles_observed": 2,
+      "monsters_faced": [
+        "wraith",
+        "wolf"
+      ],
+      "victories": 3,
+      "defeats": 0,
+      "xp_total": 223,
+      "xp_events": [
+        {
+          "time_ms": 3066,
+          "xp": 104,
+          "monster": "wraith",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 14978,
+          "xp": 35,
+          "monster": "wolf",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15491,
+          "xp": 84,
+          "monster": "wraith",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        510,
+        1531,
+        3066,
+        4606,
+        6138,
+        14978
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 104,
+        "essence": 0.34,
+        "monster": "wraith"
+      },
+      {
+        "result": "victory",
+        "xp": 35,
+        "essence": 0.34,
+        "monster": "wolf"
+      },
+      {
+        "result": "victory",
+        "xp": 84,
+        "essence": 0.34,
+        "monster": "wraith"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.89,
+      "next_level_eta": "⬆ 23m 28s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 0.97x",
+      "interval": "11.8s",
+      "streak_bonus": "🔥 1-win streak (+25%)"
+    },
+    "initial_essence": 34.25,
+    "final_essence": 7.61,
+    "essence": {
+      "before_idle": 34.25,
+      "after_idle": 35.27,
+      "per_fight": [
+        35.41
+      ],
+      "forge_before": 35,
+      "forge_after_salvage": 35,
+      "forge_after_fusion": 35,
+      "forge_after_upgrade": 35,
+      "forge_after": 35,
+      "shop_before": 37,
+      "shop_after": 7,
+      "final": 7.61,
+      "flow": {
+        "idle_gained": 1.02,
+        "fights_change": null,
+        "salvage_gained": 0,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 0,
+        "shop_cost": 30,
+        "net_change": -26.64
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 35,
+      "essence_after_salvage": 35,
+      "essence_after_fusion": 35,
+      "essence_after_upgrade": 35,
+      "items_before": 1,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": false,
+      "essence_after": 35,
+      "items_after": 0,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "COMMON",
+      "cost": 30,
+      "essence_before": 37,
+      "essence_after": 7,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Storm Amulet",
+            "rarity": "RARE",
+            "price": 30
+          },
+          {
+            "name": "Phoenix Talisman",
+            "rarity": "EPIC",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 7,
+        "essence_budget": 40,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 40
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 1,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1371,
+      "arena": 1347
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Storm Amulet",
+          "rarity": "RARE",
+          "price": 30
+        },
+        {
+          "name": "Phoenix Talisman",
+          "rarity": "EPIC",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 7,
+      "essence_budget": 40,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
