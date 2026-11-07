@@ -196888,5 +196888,361 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-07T08:01:34.386Z",
+    "run": "2026-11-07",
+    "character": "QA-PERSI-2",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 194,
+        "fight_duration_ms": 10234,
+        "max_hp": 442,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 24.3
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 4,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 28,
+      "vit": 20,
+      "dex": 11,
+      "luk": 9,
+      "int": 10,
+      "foc": 10,
+      "fights": 0
+    },
+    "initial_level": 15,
+    "initial_xp": {
+      "current": 8069,
+      "max": 10464
+    },
+    "progression_curve": {
+      "level": 15,
+      "total_xp": 62158,
+      "xp_for_next": 10464,
+      "percent": 77.1
+    },
+    "initial_max_hp": 438,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      },
+      {
+        "slot": "🛡",
+        "name": "Iron Helm"
+      },
+      {
+        "slot": "💍",
+        "name": "Moonstone Ring"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 16,
+      "xp": 1706,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 28,
+      "vit": 21,
+      "dex": 11,
+      "luk": 9,
+      "int": 10,
+      "foc": 10,
+      "last xp": 78,
+      "fights": 6
+    },
+    "final_max_hp": 442,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      },
+      {
+        "slot": "🛡",
+        "name": "Iron Helm"
+      },
+      {
+        "slot": "💍",
+        "name": "Moonstone Ring"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      },
+      {
+        "slot": "🛡",
+        "name": "Iron Helm"
+      },
+      {
+        "slot": "💍",
+        "name": "Moonstone Ring"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_locked_level": 30,
+      "boss_name": "VOID TITAN",
+      "boss_level": null,
+      "boss_hp": null,
+      "boss_max_hp": null
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 15,
+        "new_level": 16
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 20045,
+      "cycles_observed": 2,
+      "monsters_faced": [
+        "goblin",
+        "ogre",
+        "wolf"
+      ],
+      "victories": 3,
+      "defeats": 0,
+      "xp_total": 197,
+      "xp_events": [
+        {
+          "time_ms": 3069,
+          "xp": 93,
+          "monster": "goblin",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 14993,
+          "xp": 26,
+          "monster": "ogre",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15508,
+          "xp": 78,
+          "monster": "wolf",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        511,
+        1534,
+        3069,
+        4605,
+        6140,
+        14993
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 93,
+        "essence": 0.29,
+        "monster": "goblin"
+      },
+      {
+        "result": "victory",
+        "xp": 26,
+        "essence": 0.29,
+        "monster": "ogre"
+      },
+      {
+        "result": "victory",
+        "xp": 78,
+        "essence": 0.28,
+        "monster": "wolf"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.99,
+      "next_level_eta": "⬆ 23m 21s",
+      "power_ratio": "⚔ 0.51x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.00x",
+      "interval": "11.8s",
+      "streak_bonus": "🔥 1-win streak (+25%)"
+    },
+    "initial_essence": 23.29,
+    "final_essence": 26.02,
+    "essence": {
+      "before_idle": 23.29,
+      "after_idle": 24.15,
+      "per_fight": [
+        24.3
+      ],
+      "forge_before": 24,
+      "forge_after_salvage": 74,
+      "forge_after_fusion": 74,
+      "forge_after_upgrade": 24,
+      "forge_after": 24,
+      "shop_before": 26,
+      "shop_after": 26,
+      "final": 26.02,
+      "flow": {
+        "idle_gained": 0.86,
+        "fights_change": null,
+        "salvage_gained": 50,
+        "fusion_cost": 0,
+        "upgrade_cost": 50,
+        "forge_net": 0,
+        "shop_cost": 0,
+        "net_change": 2.73
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 24,
+      "essence_after_salvage": 74,
+      "essence_after_fusion": 74,
+      "essence_after_upgrade": 24,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 24,
+      "items_after": 0,
+      "salvage_essence_gained": 50,
+      "fusion_cost": null,
+      "upgrade_cost": 50,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 26,
+      "essence_after": 26,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Battle Axe",
+            "rarity": "COMMON",
+            "price": 30
+          },
+          {
+            "name": "Tempest Blade",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 26,
+        "essence_budget": 40,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 40
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 1,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1392,
+      "arena": 1154
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Battle Axe",
+          "rarity": "COMMON",
+          "price": 30
+        },
+        {
+          "name": "Tempest Blade",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 26,
+      "essence_budget": 40,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
