@@ -284,7 +284,7 @@ jobs:
           # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
           # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
           # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
-          # Le repli Google/Gemini est fourni par le broker OIDC Cloudflare (voir MODELS plus bas), aucun secret GitHub.
+          # Le repli Z.AI GLM-4.5-Flash est fourni par le broker OIDC Cloudflare (voir MODELS plus bas), aucun secret GitHub.
         run: |
           echo "🔍 Supervisor mode — validating campaign for issue #$ISSUE_NUMBER..."
           PROMPT="Tu es le superviseur de campagne. Valide la campagne #$ISSUE_NUMBER et mets à jour la documentation.
@@ -328,21 +328,21 @@ jobs:
            # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
            # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
            # OIDC broker (Cloudflare /api/agent-key) — pas de secret GitHub.
-           # Repli Gemini via Google AI Studio : quota distinct du bucket
-           # opencode/*-free partagé par IP/jour UTC.
+           # Repli Z.AI GLM-4.5-Flash (gratuit, tool-calling) : quota distinct
+           # du bucket opencode/*-free partagé par IP/jour UTC.
            if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
              OIDC_TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
                "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bitbrawler-agents" 2>/dev/null | jq -r '.value // empty' 2>/dev/null || true)
              if [ -n "$OIDC_TOKEN" ]; then
-               GOOGLE_GENERATIVE_AI_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
-                 "https://bitbrawler.pages.dev/api/agent-key?provider=google" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
+               ZAI_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
+                 "https://bitbrawler.pages.dev/api/agent-key?provider=zai" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
              fi
            fi
-           if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]; then
-             export GOOGLE_GENERATIVE_AI_API_KEY
-             MODELS+=("google/gemini-2.5-flash")
+           if [ -n "${ZAI_API_KEY:-}" ]; then
+             export ZAI_API_KEY
+             MODELS+=("zai/glm-4.5-flash")
            else
-             echo "::warning::Broker Google/Gemini indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
+             echo "::warning::Broker Z.AI/GLM indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
            fi
            MODEL_BUDGETS=("6m" "4m" "3m" "10m")
            SUCCESS=0
@@ -375,7 +375,7 @@ jobs:
           # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
           # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
           # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
-          # Le repli Google/Gemini est fourni par le broker OIDC Cloudflare (voir MODELS plus bas), aucun secret GitHub.
+          # Le repli Z.AI GLM-4.5-Flash est fourni par le broker OIDC Cloudflare (voir MODELS plus bas), aucun secret GitHub.
           ISSUE_NUMBER: ${{ env.ISSUE_NUMBER }}
         run: |
           ISSUE_BODY=$(cat /tmp/prompt.txt)
@@ -462,21 +462,21 @@ jobs:
             # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
             # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
             # OIDC broker (Cloudflare /api/agent-key) — pas de secret GitHub.
-            # Repli Gemini via Google AI Studio : quota distinct du bucket
-            # opencode/*-free partagé par IP/jour UTC.
+            # Repli Z.AI GLM-4.5-Flash (gratuit, tool-calling) : quota distinct
+            # du bucket opencode/*-free partagé par IP/jour UTC.
             if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
               OIDC_TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
                 "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bitbrawler-agents" 2>/dev/null | jq -r '.value // empty' 2>/dev/null || true)
               if [ -n "$OIDC_TOKEN" ]; then
-                GOOGLE_GENERATIVE_AI_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
-                  "https://bitbrawler.pages.dev/api/agent-key?provider=google" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
+                ZAI_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
+                  "https://bitbrawler.pages.dev/api/agent-key?provider=zai" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
               fi
             fi
-            if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]; then
-              export GOOGLE_GENERATIVE_AI_API_KEY
-              MODELS+=("google/gemini-2.5-flash")
+            if [ -n "${ZAI_API_KEY:-}" ]; then
+              export ZAI_API_KEY
+              MODELS+=("zai/glm-4.5-flash")
             else
-              echo "::warning::Broker Google/Gemini indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
+              echo "::warning::Broker Z.AI/GLM indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
             fi
             MODEL_BUDGETS=("6m" "4m" "3m" "10m")
             SUCCESS=0
@@ -532,7 +532,7 @@ jobs:
           # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
           # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
           # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
-          # Le repli Google/Gemini est fourni par le broker OIDC Cloudflare (voir MODELS plus bas), aucun secret GitHub.
+          # Le repli Z.AI GLM-4.5-Flash est fourni par le broker OIDC Cloudflare (voir MODELS plus bas), aucun secret GitHub.
           ISSUE_NUMBER: ${{ env.ISSUE_NUMBER }}
         run: |
           ISSUE_BODY=$(cat /tmp/prompt.txt)
@@ -581,21 +581,21 @@ jobs:
           # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
           # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
           # OIDC broker (Cloudflare /api/agent-key) — pas de secret GitHub.
-          # Repli Gemini via Google AI Studio : quota distinct du bucket
-          # opencode/*-free partagé par IP/jour UTC.
+          # Repli Z.AI GLM-4.5-Flash (gratuit, tool-calling) : quota distinct
+          # du bucket opencode/*-free partagé par IP/jour UTC.
           if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
             OIDC_TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
               "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bitbrawler-agents" 2>/dev/null | jq -r '.value // empty' 2>/dev/null || true)
             if [ -n "$OIDC_TOKEN" ]; then
-              GOOGLE_GENERATIVE_AI_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
-                "https://bitbrawler.pages.dev/api/agent-key?provider=google" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
+              ZAI_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
+                "https://bitbrawler.pages.dev/api/agent-key?provider=zai" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
             fi
           fi
-          if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]; then
-            export GOOGLE_GENERATIVE_AI_API_KEY
-            MODELS+=("google/gemini-2.5-flash")
+          if [ -n "${ZAI_API_KEY:-}" ]; then
+            export ZAI_API_KEY
+            MODELS+=("zai/glm-4.5-flash")
           else
-            echo "::warning::Broker Google/Gemini indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
+            echo "::warning::Broker Z.AI/GLM indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
           fi
           # Budget par modèle : le primaire écrit ET teste le code (18 min — il a besoin
           # de lire les fichiers, d'implémenter, de lancer la suite et de l'ajuster).
@@ -760,7 +760,7 @@ jobs:
           # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
           # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
           # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
-          # Le repli Google/Gemini est fourni par le broker OIDC Cloudflare (voir MODELS plus bas), aucun secret GitHub.
+          # Le repli Z.AI GLM-4.5-Flash est fourni par le broker OIDC Cloudflare (voir MODELS plus bas), aucun secret GitHub.
         run: |
           PR_NUMBER="${{ steps.check_pr.outputs.existing_pr }}"
           echo "Existing PR #$PR_NUMBER — fetching CI/review feedback..."
@@ -831,21 +831,21 @@ jobs:
           # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
           # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
           # OIDC broker (Cloudflare /api/agent-key) — pas de secret GitHub.
-          # Repli Gemini via Google AI Studio : quota distinct du bucket
-          # opencode/*-free partagé par IP/jour UTC.
+          # Repli Z.AI GLM-4.5-Flash (gratuit, tool-calling) : quota distinct
+          # du bucket opencode/*-free partagé par IP/jour UTC.
           if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
             OIDC_TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
               "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bitbrawler-agents" 2>/dev/null | jq -r '.value // empty' 2>/dev/null || true)
             if [ -n "$OIDC_TOKEN" ]; then
-              GOOGLE_GENERATIVE_AI_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
-                "https://bitbrawler.pages.dev/api/agent-key?provider=google" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
+              ZAI_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
+                "https://bitbrawler.pages.dev/api/agent-key?provider=zai" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
             fi
           fi
-          if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]; then
-            export GOOGLE_GENERATIVE_AI_API_KEY
-            MODELS+=("google/gemini-2.5-flash")
+          if [ -n "${ZAI_API_KEY:-}" ]; then
+            export ZAI_API_KEY
+            MODELS+=("zai/glm-4.5-flash")
           else
-            echo "::warning::Broker Google/Gemini indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
+            echo "::warning::Broker Z.AI/GLM indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
           fi
           # Budget par modèle : le primaire écrit ET teste le code (18 min — il a besoin
           # de lire les fichiers, d'implémenter, de lancer la suite et de l'ajuster).
@@ -883,7 +883,7 @@ jobs:
           # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
           # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
           # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
-          # Le repli Google/Gemini est fourni par le broker OIDC Cloudflare (voir MODELS plus bas), aucun secret GitHub.
+          # Le repli Z.AI GLM-4.5-Flash est fourni par le broker OIDC Cloudflare (voir MODELS plus bas), aucun secret GitHub.
         run: |
           MAX_RETRIES=3
           ISSUE_TITLE=$(cat /tmp/issue-title.txt 2>/dev/null || echo "Auto-implement issue #$ISSUE_NUMBER")
@@ -987,21 +987,21 @@ jobs:
             # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
             # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
             # OIDC broker (Cloudflare /api/agent-key) — pas de secret GitHub.
-            # Repli Gemini via Google AI Studio : quota distinct du bucket
-            # opencode/*-free partagé par IP/jour UTC.
+            # Repli Z.AI GLM-4.5-Flash (gratuit, tool-calling) : quota distinct
+            # du bucket opencode/*-free partagé par IP/jour UTC.
             if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
               OIDC_TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
                 "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bitbrawler-agents" 2>/dev/null | jq -r '.value // empty' 2>/dev/null || true)
               if [ -n "$OIDC_TOKEN" ]; then
-                GOOGLE_GENERATIVE_AI_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
-                  "https://bitbrawler.pages.dev/api/agent-key?provider=google" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
+                ZAI_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
+                  "https://bitbrawler.pages.dev/api/agent-key?provider=zai" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
               fi
             fi
-            if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]; then
-              export GOOGLE_GENERATIVE_AI_API_KEY
-              MODELS+=("google/gemini-2.5-flash")
+            if [ -n "${ZAI_API_KEY:-}" ]; then
+              export ZAI_API_KEY
+              MODELS+=("zai/glm-4.5-flash")
             else
-              echo "::warning::Broker Google/Gemini indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
+              echo "::warning::Broker Z.AI/GLM indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
             fi
             # Rappel après gate rouge : le primaire relit les sorties de gate et corrige
             # (10 min) ; replis = sonde courte (ils repartent de zéro). Z.AI corrige
