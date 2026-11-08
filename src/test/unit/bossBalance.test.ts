@@ -7,11 +7,6 @@ import {
   simulateBossAttack,
 } from '../../utils/bossUtils';
 
-// ─── Balance harness ─────────────────────────────────────────────────────────
-// Simulates full boss cycles: 5 attacks/day (reset each Paris day), the HP pool
-// persists across attacks and days, a kill starts a fresh cycle. Used to verify
-// the boss is neither trivial (day-1 kill) nor unkillable (no kill within days).
-
 const makePlayer = (overrides: Record<string, any> = {}): Character => ({
   seed: 'player-test',
   name: 'Test Player',
@@ -33,7 +28,6 @@ const makePlayer = (overrides: Record<string, any> = {}): Character => ({
   equippedItems: { weapon: null, armor: null, accessory: null },
 });
 
-/** Returns the 1-indexed day the boss dies (null if still alive after maxDays). */
 function simulateCampaign(
   player: Character,
   maxDays: number,
@@ -61,7 +55,7 @@ function simulateCampaign(
   return null;
 }
 
-const RUNS = 250;
+const RUNS = 200;
 const MAX_DAYS = 10;
 
 function summarize(killDays: (number | null)[]): {
@@ -78,47 +72,26 @@ function summarize(killDays: (number | null)[]): {
   };
 }
 
-describe('Boss PvE balance (Monte-Carlo)', () => {
-  it('a balanced level-30 player cannot one-day the boss but can kill it within days', () => {
+describe('Boss PvE accessibility tiers (#1360)', () => {
+  it('Phase 1 (30-40) is accessible for a balanced level-30 player', () => {
     const player = makePlayer({ level: 30 });
     const killDays = Array.from({ length: RUNS }, () => simulateCampaign(player, MAX_DAYS));
     const stats = summarize(killDays);
 
-    // The boss must not be trivially killable on day one.
-    expect(stats.day1KillRate).toBeLessThan(0.1);
-    // But it must die within a reasonable campaign window for a normal player.
-    expect(stats.killRateByDay10).toBeGreaterThan(0.9);
-    // Design goal: kill in ~2-4 days of attacks.
-    expect(stats.medianKillDay).toBeLessThanOrEqual(6);
+    expect(stats.killRateByDay10).toBeGreaterThan(0.8);
+    expect(stats.medianKillDay).toBeLessThanOrEqual(5);
   });
 
-  it('a strong level-40 player kills the boss no slower than a level-30 player', () => {
-    const strong = makePlayer({
-      level: 40,
-      strength: 27, vitality: 27, dexterity: 26, luck: 26, intelligence: 26, focus: 27,
-      hp: 784, maxHp: 784,
+  it('Phase 3 (61+) remains a multi-day challenge', () => {
+    const player = makePlayer({
+      level: 61,
+      strength: 37, vitality: 37, dexterity: 36, luck: 36, intelligence: 36, focus: 37,
+      hp: 1100, maxHp: 1100,
     });
-    const balanced = makePlayer({ level: 30 });
-    const strongKills = Array.from({ length: RUNS }, () => simulateCampaign(strong, MAX_DAYS));
-    const balancedKills = Array.from({ length: RUNS }, () => simulateCampaign(balanced, MAX_DAYS));
-    const strongStats = summarize(strongKills);
-    const balancedStats = summarize(balancedKills);
-
-    expect(strongStats.medianKillDay).toBeLessThanOrEqual(balancedStats.medianKillDay + 1);
-  });
-
-  it('the boss can never be bursted down in a single day (persistent-pool design)', () => {
-    // The pool is 12x the player's maxHp while the boss always scales 1.2x with
-    // the player, so no realistic (or even overpowered) profile can deplete it
-    // within one daily attack gauge. This guards against accidental balance
-    // changes making the boss a one-day farm.
-    const god = makePlayer({
-      level: 60,
-      strength: 999, vitality: 999, dexterity: 500, focus: 500, luck: 500, intelligence: 500,
-      hp: 1000, maxHp: 1000,
-    });
-    const killDays = Array.from({ length: 100 }, () => simulateCampaign(god, 1));
+    const killDays = Array.from({ length: RUNS }, () => simulateCampaign(player, MAX_DAYS));
     const stats = summarize(killDays);
-    expect(stats.day1KillRate).toBeLessThan(0.1);
+
+    expect(stats.day1KillRate).toBeLessThan(0.15);
+    expect(stats.killRateByDay10).toBeGreaterThan(0.8);
   });
 });

@@ -227,7 +227,6 @@ export function calculateOfflineIdleXp(won: boolean, level: number): number {
 // ─────────────────────────────────────────────────────────────
 
 const IDLE_WINDOW_MS = 65_000
-const DB_BATCH_SIZE = 10
 
 const SELECT_COLUMNS = [
   'id', 'name', 'level', 'hp', 'max_hp',
@@ -528,13 +527,19 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   }
 
   // ── Cron mode ──
+  // Small batches: each candidate does an anti-conflict read + simulate + write.
+  // Cloudflare Pages Functions have a tight wall-clock budget; processing 500 at
+  // once made the endpoint hang (0-byte timeout) so cron never granted offline XP.
+  // Cron-job.org runs every minute — 25/run catches up without exceeding the limit.
+  const cronLimit = 25
+  const cronBatchSize = 5
   const cutoff = new Date(Date.now() - IDLE_WINDOW_MS).toISOString()
   const { data, error } = await supabase
     .from('characters')
     .select(SELECT_COLUMNS)
     .lt('last_idle_check', cutoff)
     .is('pending_fight', null)
-    .limit(500)
+    .limit(cronLimit)
 
   if (error) {
     res.writeHead(500, { 'Content-Type': 'application/json' })
@@ -578,12 +583,12 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   }))
 
   let processed = 0
-  for (let i = 0; i < candidates.length; i += DB_BATCH_SIZE) {
-    const batch = candidates.slice(i, i + DB_BATCH_SIZE)
+  for (let i = 0; i < candidates.length; i += cronBatchSize) {
+    const batch = candidates.slice(i, i + cronBatchSize)
     await Promise.all(batch.map(c => processCharacter(c, supabase)))
     processed += batch.length
   }
 
   res.writeHead(200, { 'Content-Type': 'application/json' })
-  res.end(JSON.stringify({ processed }))
+  res.end(JSON.stringify({ processed, batch_limit: cronLimit }))
 }

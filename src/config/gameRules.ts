@@ -26,14 +26,22 @@ export const GAME_RULES = {
         MAX_DAILY_ATTACKS: 5, // Daily attacks against the raid boss (independent from PvP/PvE gauge)
         LEVEL_BOOST: 2, // Boss fights at playerLevel + this offset
         STAT_MULTIPLIER: 1.2, // Boss raw stats scale off the player's raw stats
-        HP_MULTIPLIER: 12.0, // Boss persistent HP pool = player maxHp * this
+        HP_MULTIPLIER: 12.0, // Boss persistent HP pool = player maxHp * this (before phase/pity)
         XP_MODIFIER: 4.0, // Boss kill XP payout multiplier (vs a regular fight win)
-        ESSENCE_REWARD: 60, // Essence rewarded on boss kill
-        PITY_HP_REDUCTION: 0.12, // Per-stack multiplicative HP reduction (0.88×) on consecutive defeats
-        PITY_FLOOR: 6.0, // Minimum HP multiplier even at max pity (half the baseline)
-        CONSOLATION_ESSENCE: 15, // Essence on defeat (ESSENCE_REWARD × 0.25)
+        ESSENCE_REWARD: 60, // Essence rewarded on boss kill (Phase 3 baseline)
+        PITY_STEP_DEFEATS: 3, // Every N defeats increases pity reduction
+        PITY_STEP_REDUCTION: 0.2, // Reduction per pity step (20%)
+        PITY_CAP: 0.6, // Max pity HP reduction (60%)
+        CONSOLATION_ESSENCE: 15, // Essence on defeat (baseline)
         CONSOLATION_CAP: 3, // Max consolation payouts per Paris day
     },
+    BOSS_ACCESSIBILITY: {
+        void_titan: {
+            PHASE_1: { MAX_LEVEL: 40, HP_FACTOR: 0.25, STAT_FACTOR: 0.5, ESSENCE_REWARD: 30 },
+            PHASE_2: { MAX_LEVEL: 60, HP_FACTOR: 0.5, STAT_FACTOR: 1.0, ESSENCE_REWARD: 45 },
+            PHASE_3: { HP_FACTOR: 1.0, STAT_FACTOR: 1.0, ESSENCE_REWARD: 60 },
+        },
+    } as const,
     BOSS_TIERS: {
         void_titan: {
             UNLOCK_LEVEL: 30,
@@ -44,8 +52,9 @@ export const GAME_RULES = {
             XP_MODIFIER: 4.0,
             ESSENCE_REWARD: 60,
             REQUIRES_KILLS: 0,
-            PITY_HP_REDUCTION: 0.12,
-            PITY_FLOOR: 6.0,
+            PITY_STEP_DEFEATS: 3,
+            PITY_STEP_REDUCTION: 0.2,
+            PITY_CAP: 0.6,
             CONSOLATION_ESSENCE: 15,
             CONSOLATION_CAP: 3,
         },
@@ -58,8 +67,9 @@ export const GAME_RULES = {
             XP_MODIFIER: 9.0,
             ESSENCE_REWARD: 180,
             REQUIRES_KILLS: 1,
-            PITY_HP_REDUCTION: 0.12,
-            PITY_FLOOR: 12.0,
+            PITY_STEP_DEFEATS: 3,
+            PITY_STEP_REDUCTION: 0.2,
+            PITY_CAP: 0.6,
             CONSOLATION_ESSENCE: 45,
             CONSOLATION_CAP: 3,
         },

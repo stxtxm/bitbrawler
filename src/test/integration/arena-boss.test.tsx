@@ -121,21 +121,17 @@ describe('Arena Boss (useBossFight)', () => {
     expect(result.current.activeCharacter?.bossProgress).toBeUndefined();
 
     await act(async () => {
-      await result.current.useBossFight(false, 0, 'VOID TITAN', { bossHpLeft: 4100 });
+      await result.current.useBossFight(false, 0, 'VOID TITAN', { bossHpLeft: 900 });
     });
 
     const progress = result.current.activeCharacter?.bossProgress;
     expect(progress?.bossId).toBe(BOSS_ID);
-    // Fresh cycle created, then one attack consumed — pity reduces maxHp by 12%.
     expect(progress?.attacksLeft).toBe(GAME_RULES.BOSS.MAX_DAILY_ATTACKS - 1);
-    expect(progress?.bossMaxHp).toBe(Math.round(mockCharacter.maxHp * GAME_RULES.BOSS.HP_MULTIPLIER * 0.88));
-    // Boss keeps the persistent HP pool on a loss (clamped to new pity max).
-    expect(progress?.bossHp).toBe(4100);
-    // Raid attempts must not inflate the loss record.
+    expect(progress?.bossMaxHp).toBe(Math.round(mockCharacter.maxHp * GAME_RULES.BOSS.HP_MULTIPLIER * 0.25));
+    expect(progress?.bossHp).toBe(900);
     expect(result.current.activeCharacter?.losses).toBe(2);
     expect(result.current.activeCharacter?.wins).toBe(5);
-    // Consolation essence on defeat (capped 3/day).
-    expect(result.current.activeCharacter?.essence).toBe(100 + GAME_RULES.BOSS.CONSOLATION_ESSENCE);
+    expect(result.current.activeCharacter?.essence).toBe(100 + 8);
   });
 
   it('on a kill: new full-HP cycle, kill counter, rewards, and boss_progress synced to Supabase', async () => {
@@ -175,12 +171,10 @@ describe('Arena Boss (useBossFight)', () => {
     const progress = result.current.activeCharacter?.bossProgress;
     expect(progress?.totalKills).toBe(1);
     expect(progress?.attacksLeft).toBe(2);
-    // Fresh cycle: full HP pool, not the depleted one.
     expect(progress?.bossHp).toBe(progress?.bossMaxHp);
-    expect(progress?.bossMaxHp).toBe(Math.round(mockCharacter.maxHp * GAME_RULES.BOSS.HP_MULTIPLIER));
+    expect(progress?.bossMaxHp).toBe(Math.round(mockCharacter.maxHp * GAME_RULES.BOSS.HP_MULTIPLIER * 0.25));
     expect(progress?.lastKillAt).toBeDefined();
-    // Kill rewards: essence + wins, losses untouched.
-    expect(result.current.activeCharacter?.essence).toBe(100 + GAME_RULES.BOSS.ESSENCE_REWARD);
+    expect(result.current.activeCharacter?.essence).toBe(100 + 30);
     expect(result.current.activeCharacter?.wins).toBe(6);
     expect(result.current.activeCharacter?.losses).toBe(2);
     // Kill XP applied.
@@ -200,45 +194,32 @@ describe('Arena Boss (useBossFight)', () => {
     });
 
     await act(async () => {
-      await result.current.useBossFight(false, 0, 'VOID TITAN', { bossHpLeft: 3000 });
+      await result.current.useBossFight(false, 0, 'VOID TITAN', { bossHpLeft: 900 });
     });
 
     const payload = mocks.getLastUpdatePayload();
     expect(payload).not.toBeNull();
     expect(payload.boss_progress).toBeDefined();
     expect(payload.boss_progress.bossId).toBe(BOSS_ID);
-    expect(payload.boss_progress.bossHp).toBe(3000);
+    expect(payload.boss_progress.bossHp).toBe(900);
     expect(payload.boss_progress.attacksLeft).toBe(GAME_RULES.BOSS.MAX_DAILY_ATTACKS - 1);
   });
 
   it('refills the attack gauge when the Paris day rolls over', async () => {
     const yesterday = Date.now() - 24 * 60 * 60 * 1000;
-    setupMocks({
-      ...mockCharacter,
-      bossProgress: {
-        bossId: BOSS_ID,
-        attacksLeft: 0,
-        lastAttackReset: yesterday,
-        bossHp: 5000,
-        bossMaxHp: 7008,
-        bossLevel: 32,
-        totalKills: 1,
-        firstEncounterAt: yesterday,
-      },
-    });
-    (localStorage.getItem as any).mockReturnValue(JSON.stringify({
-      ...mockCharacter,
-      bossProgress: {
-        bossId: BOSS_ID,
-        attacksLeft: 0,
-        lastAttackReset: yesterday,
-        bossHp: 5000,
-        bossMaxHp: 7008,
-        bossLevel: 32,
-        totalKills: 1,
-        firstEncounterAt: yesterday,
-      },
-    }));
+    const phase1Max = Math.round(mockCharacter.maxHp * GAME_RULES.BOSS.HP_MULTIPLIER * 0.25);
+    const prog = {
+      bossId: BOSS_ID,
+      attacksLeft: 0,
+      lastAttackReset: yesterday,
+      bossHp: phase1Max,
+      bossMaxHp: phase1Max,
+      bossLevel: 32,
+      totalKills: 1,
+      firstEncounterAt: yesterday,
+    };
+    setupMocks({ ...mockCharacter, bossProgress: prog });
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify({ ...mockCharacter, bossProgress: prog }));
 
     const { result } = renderHook(() => useGame(), {
       wrapper: createWrapper(),
@@ -249,13 +230,12 @@ describe('Arena Boss (useBossFight)', () => {
     });
 
     await act(async () => {
-      await result.current.useBossFight(false, 0, 'VOID TITAN', { bossHpLeft: 4600 });
+      await result.current.useBossFight(false, 0, 'VOID TITAN', { bossHpLeft: 900 });
     });
 
     const progress = result.current.activeCharacter?.bossProgress;
-    // Refilled to max then consumed one.
     expect(progress?.attacksLeft).toBe(GAME_RULES.BOSS.MAX_DAILY_ATTACKS - 1);
     expect(progress?.totalKills).toBe(1);
-    expect(progress?.bossHp).toBe(4600);
+    expect(progress?.bossHp).toBe(900);
   });
 });

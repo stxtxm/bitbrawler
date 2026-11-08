@@ -4,10 +4,6 @@ import { ABYSSAL_BOSS_ID, BOSS_ID, BossId, getBossDef } from '../data/bossAssets
 import { shouldResetDaily } from './dailyReset';
 import { simulateCombat } from './combatUtils';
 
-export function getBossTier(bossId: BossId = BOSS_ID) {
-  return (GAME_RULES.BOSS_TIERS as any)[bossId] ?? GAME_RULES.BOSS;
-}
-
 export interface BossProgress {
   bossId: string;
   attacksLeft: number;
@@ -20,6 +16,42 @@ export interface BossProgress {
   firstEncounterAt: number;
   pityStacks?: number;
   consolationCount?: number;
+}
+export function getBossTier(bossId: BossId = BOSS_ID) {
+  return (GAME_RULES.BOSS_TIERS as any)[bossId] ?? GAME_RULES.BOSS;
+}
+
+export function getBossPhase(playerLevel: number, bossId: BossId = BOSS_ID): 1 | 2 | 3 {
+  if (bossId !== BOSS_ID) return 3;
+  const phases = (GAME_RULES as any).BOSS_ACCESSIBILITY?.void_titan;
+  if (!phases) return 3;
+  if (playerLevel <= phases.PHASE_1.MAX_LEVEL) return 1;
+  if (playerLevel <= phases.PHASE_2.MAX_LEVEL) return 2;
+  return 3;
+}
+
+export function getBossPhaseConfig(playerLevel: number, bossId: BossId = BOSS_ID) {
+  if (bossId !== BOSS_ID) {
+    return { hpFactor: 1, statFactor: 1, essenceReward: getBossTier(bossId).ESSENCE_REWARD };
+  }
+  const phases = (GAME_RULES as any).BOSS_ACCESSIBILITY?.void_titan;
+  if (!phases) {
+    return { hpFactor: 1, statFactor: 1, essenceReward: GAME_RULES.BOSS.ESSENCE_REWARD };
+  }
+  const phase = getBossPhase(playerLevel, bossId);
+  if (phase === 1) return { hpFactor: phases.PHASE_1.HP_FACTOR, statFactor: phases.PHASE_1.STAT_FACTOR, essenceReward: phases.PHASE_1.ESSENCE_REWARD };
+  if (phase === 2) return { hpFactor: phases.PHASE_2.HP_FACTOR, statFactor: phases.PHASE_2.STAT_FACTOR, essenceReward: phases.PHASE_2.ESSENCE_REWARD };
+  return { hpFactor: phases.PHASE_3.HP_FACTOR, statFactor: phases.PHASE_3.STAT_FACTOR, essenceReward: phases.PHASE_3.ESSENCE_REWARD };
+}
+
+export function getBossPityReduction(stacks: number, bossId: BossId = BOSS_ID): number {
+  const tier: any = getBossTier(bossId);
+  const stepDefeats = tier.PITY_STEP_DEFEATS ?? GAME_RULES.BOSS.PITY_STEP_DEFEATS ?? 3;
+  const stepReduction = tier.PITY_STEP_REDUCTION ?? GAME_RULES.BOSS.PITY_STEP_REDUCTION ?? 0.2;
+  const cap = tier.PITY_CAP ?? GAME_RULES.BOSS.PITY_CAP ?? 0.6;
+  const safeStacks = Math.max(0, stacks);
+  const steps = Math.floor(safeStacks / stepDefeats);
+  return Math.min(cap, steps * stepReduction);
 }
 
 export function isBossUnlocked(level: number, bossId: BossId = BOSS_ID): boolean {
@@ -61,27 +93,23 @@ export function getBossPityStacks(progress?: BossProgress): number {
   return progress?.pityStacks ?? 0;
 }
 
-export function getBossEffectiveMultiplier(stacks: number, bossId: BossId = BOSS_ID): number {
+export function getBossEffectiveMultiplier(stacks: number, bossId: BossId = BOSS_ID, playerLevel?: number): number {
   const tier: any = getBossTier(bossId);
-  const base = tier.HP_MULTIPLIER;
-  const reduction = tier.PITY_HP_REDUCTION ?? GAME_RULES.BOSS.PITY_HP_REDUCTION;
-  const floor = tier.PITY_FLOOR ?? GAME_RULES.BOSS.PITY_FLOOR;
-  const raw = base * Math.pow(1 - reduction, Math.max(0, stacks));
-  return Math.max(floor, raw);
+  const phase = playerLevel != null ? getBossPhaseConfig(playerLevel, bossId) : { hpFactor: 1 };
+  const base = tier.HP_MULTIPLIER * (phase.hpFactor ?? 1);
+  const reduction = getBossPityReduction(stacks, bossId);
+  return Math.max(0.01, base * (1 - reduction));
 }
 
 export function getBossEffectiveMaxHp(player: Character, pityStacks: number, bossId: BossId = BOSS_ID): number {
-  const mult = getBossEffectiveMultiplier(pityStacks, bossId);
+  const mult = getBossEffectiveMultiplier(pityStacks, bossId, player.level);
   return Math.max(1, Math.round(player.maxHp * mult));
 }
 
 export function getBossPityReductionPct(progress?: BossProgress, bossId: BossId = BOSS_ID): number {
   const stacks = getBossPityStacks(progress);
   if (stacks <= 0) return 0;
-  const tier: any = getBossTier(progress?.bossId as BossId ?? bossId);
-  const base = tier.HP_MULTIPLIER;
-  const effective = getBossEffectiveMultiplier(stacks, progress?.bossId as BossId ?? bossId);
-  return Math.round((1 - effective / base) * 100);
+  return Math.round(getBossPityReduction(stacks, progress?.bossId as BossId ?? bossId) * 100);
 }
 
 export function canGrantConsolation(progress: BossProgress | undefined, now = Date.now()): boolean {
@@ -103,8 +131,9 @@ export function buildBossCharacter(player: Character, bossHp?: number, bossIdOrP
   }
   const def = getBossDef(bossId)!;
   const tier: any = getBossTier(bossId);
+  const phase = getBossPhaseConfig(player.level, bossId);
   const level = player.level + tier.LEVEL_BOOST;
-  const mult = tier.STAT_MULTIPLIER;
+  const mult = tier.STAT_MULTIPLIER * (phase.statFactor ?? 1);
   const maxHp = getBossEffectiveMaxHp(player, pityStacks, bossId);
 
   return {
@@ -256,6 +285,14 @@ export function getBossKillXp(player: Character, bossId: BossId = BOSS_ID): numb
   );
 }
 
+export function getBossKillEssence(player: Character, bossId: BossId = BOSS_ID): number {
+  if (bossId === BOSS_ID) {
+    return getBossPhaseConfig(player.level, bossId).essenceReward;
+  }
+  const tier: any = getBossTier(bossId);
+  return tier.ESSENCE_REWARD;
+}
+
 export function getBossRewards(
   player: Character,
   killed: boolean,
@@ -271,20 +308,31 @@ export function getBossRewards(
     bossId = progress.bossId as BossId;
   }
   if (killed) {
-    const tier: any = getBossTier(bossId);
-    return { xpGained: getBossKillXp(player, bossId), essenceGained: tier.ESSENCE_REWARD };
+    return { xpGained: getBossKillXp(player, bossId), essenceGained: getBossKillEssence(player, bossId) };
   }
   const tier: any = getBossTier(bossId);
   const canGrant = progress ? canGrantConsolation(progress, now) : true;
-  const consolation = tier.CONSOLATION_ESSENCE ?? GAME_RULES.BOSS.CONSOLATION_ESSENCE;
+  const baseConsolation = tier.CONSOLATION_ESSENCE ?? GAME_RULES.BOSS.CONSOLATION_ESSENCE;
+  const killEssence = getBossKillEssence(player, bossId);
+  const tierEssence = tier.ESSENCE_REWARD ?? GAME_RULES.BOSS.ESSENCE_REWARD;
+  const consolation = bossId === BOSS_ID && tierEssence > 0
+    ? Math.round(baseConsolation * (killEssence / tierEssence))
+    : baseConsolation;
   return { xpGained: 0, essenceGained: canGrant ? consolation : 0 };
 }
 
-export function getBossConsolationEssence(progress: BossProgress | undefined, now = Date.now()): number {
+export function getBossConsolationEssence(progress: BossProgress | undefined, now = Date.now(), player?: Character): number {
   if (!progress) return GAME_RULES.BOSS.CONSOLATION_ESSENCE;
-  const tier: any = getBossTier(progress.bossId as BossId);
-  const consolation = tier.CONSOLATION_ESSENCE ?? GAME_RULES.BOSS.CONSOLATION_ESSENCE;
-  return canGrantConsolation(progress, now) ? consolation : 0;
+  const bossId = progress.bossId as BossId;
+  const tier: any = getBossTier(bossId);
+  const baseConsolation = tier.CONSOLATION_ESSENCE ?? GAME_RULES.BOSS.CONSOLATION_ESSENCE;
+  if (!canGrantConsolation(progress, now)) return 0;
+  if (player && bossId === BOSS_ID) {
+    const killEssence = getBossKillEssence(player, bossId);
+    const tierEssence = tier.ESSENCE_REWARD ?? GAME_RULES.BOSS.ESSENCE_REWARD;
+    return tierEssence > 0 ? Math.round(baseConsolation * (killEssence / tierEssence)) : baseConsolation;
+  }
+  return baseConsolation;
 }
 
 export function simulateBossAttack(
