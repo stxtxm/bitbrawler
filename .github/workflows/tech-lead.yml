@@ -144,26 +144,32 @@ jobs:
             - **Trends**: win rate last_3 vs last_5 vs all_time. Baisse +15% = problème
             - **Stats personnages**: équilibrées ~10, aucune < 7 ou > 13
 
-            ## 2. Recherche web (optionnelle, économe)
+            ## 2. Recherche web (rapide et ciblée)
 
-            Ne fais une recherche web que si les stats QA révèlent un signal concret (chute win rate, loot déséquilibré, stagnation). **Maximum 1 recherche ciblée**. Pas de veille générique, ne lance pas de sous-agent explore pour de la recherche large : ça consomme du quota pour peu de valeur. Base-toi d'abord sur les stats QA et les commits.
+            Fais des recherches **utiles mais efficaces** (pas de veille large) :
+            - **2 à 3 recherches max**, requêtes précises et ciblées (ex. un mécanisme précis lié à un signal QA : "idle RPG win rate drop streak protection", "pixel auto-battler loot pity timer").
+            - Utilise `websearch` avec des requêtes courtes/spécifiques, puis exploite directement les meilleurs résultats (`webfetch` ciblé si besoin). **Ne délègue pas** à un sous-agent `explore` pour de la recherche générique.
+            - But : valider/éclairer une piste issue concrète, pas produire un rapport de tendance. Si les stats QA suffisent, 0-1 recherche.
 
             ## 3. Analyser les commits récents
             - git log --oneline -30
             - Regarde les tendances : bugs fréquents, features ajoutées, domaines négligés
 
-            ## 4. Actions à réaliser
+            ## 4. Actions à réaliser (moins d'issues, plus pertinentes)
 
-            Pour chaque problème/amélioration :
-            1. Vérifie si une issue similaire existe déjà (parcours la liste ci-dessus)
-            2. **Si oui** → commente l'issue existante avec les nouvelles données
-            3. **Si non** → crée une nouvelle issue
+            **Qualité > quantité. Maximum 2 nouvelles issues par run** (idéalement 0 ou 1). Crée une issue **seulement** si elle est actionnable et étayée par un signal QA concret, un bug avéré dans les commits/logs, ou une conclusion claire d'une recherche ciblée. Si rien n'est clairement actionnable, **ne crée rien** : un run sans nouvelle issue est un bon run.
 
-            Types d'issues:
-            - **Mineures** avec /oc (ajustements constants, bugs, small features)
+            Pour chaque piste :
+            1. Vérifie si une issue similaire existe déjà (liste ci-dessus)
+            2. **Si oui** → commente l'issue existante avec les données nouvelles (préféré à une nouvelle issue)
+            3. **Si non et vraiment pertinent** → crée 1 issue (regroupe les points liés en une seule issue plutôt que d'en ouvrir plusieurs)
+            4. **Spéculatif / nice-to-have / non étayé** → n'ouvre pas d'issue
+
+            Types d'issues (uniquement si le seuil de pertinence est atteint) :
+            - **Mineures** avec /oc (ajustement de constante chiffré, bug reproductible, petite feature claire)
             - **Majeures** SANS /oc avec analyse détaillée
 
-            Tu dois fermer les issues qui sont résolues par les commits récents.
+            Ferme les issues résolues par les commits récents (avec preuve).
 
             Format pour commenter une issue existante:
             gh issue comment #NUM --body '📊 Mise à jour: [date]
@@ -181,8 +187,8 @@ jobs:
 
           # Les slugs *-free tombent en ~3 s sur le quota partage ; Z.AI doit
           # avoir le temps de lire les stats et créer les issues (budget primaire).
-          # Websearch limitée (max 1) pour économiser le quota.
-          MODEL_BUDGETS=("8m" "5m" "4m" "10m")
+          # Recherches ciblées (2-3 max) + peu d'issues (<=2) : efficace, peu de quota.
+          MODEL_BUDGETS=("8m" "5m" "4m" "12m")
           SUCCESS=0
           MODEL_IDX=0
           for MODEL in "${MODELS[@]}"; do

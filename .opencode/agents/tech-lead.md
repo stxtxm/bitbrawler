@@ -90,15 +90,18 @@ Lis le rapport QA complet. Les sections importantes:
 - **Character Stats**: équilibre des stats (aucune < 7 ou > 13)
 - **Error Rate**: crashes, timeouts
 
+### 2b. Recherche web (rapide et ciblée)
+- 2-3 recherches max, requêtes précises liées à un signal QA. Exploite les meilleurs résultats directement ; pas de sous-agent `explore` pour de la veille générique.
+
 ### 3. Chercher les bugs critiques
 - Erreurs CI (tests échouent, build échoue)
 - Issues ouvertes non résolues (vérifier si encore pertinentes)
 - Rapports QA anormaux (win rate PvE = 0%, crash rate élevé)
 - Branches de feature pas mergées
 
-### 4. Créer / Mettre à jour des issues GitHub
+### 4. Créer / Mettre à jour des issues GitHub (max 2 nouvelles, très pertinentes)
 
-Pour chaque problème ou amélioration:
+Qualité > quantité : **maximum 2 nouvelles issues par run** (0 ou 1 idéal). N'en crée une que si actionnable et étayée (signal QA concret, bug avéré, ou conclusion claire d'une recherche ciblée). Sinon commente/ferme l'existant ou ne fais rien. Pour chaque piste :
 
 #### Si une issue similaire EXISTE DÉJÀ:
 ```
@@ -108,7 +111,7 @@ Pour chaque problème ou amélioration:
    - Suggestion d'ajustement: [valeur concrète]"
 ```
 
-#### Si c'est un NOUVEAU problème (mineure, avec `/oc`):
+#### Si c'est un NOUVEAU problème vraiment pertinent (mineure, avec `/oc`):
 ```
 # Titre clair et concis
 
@@ -121,7 +124,7 @@ Comment le corriger/améliorer
 /oc
 ```
 
-#### Si c'est une NOUVELLE proposition majeure (sans `/oc`):
+#### Si c'est une NOUVELLE proposition majeure vraiment pertinente (sans `/oc`):
 ```
 # Proposition: [Titre]
 
