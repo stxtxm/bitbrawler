@@ -200334,5 +200334,343 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-08T08:01:35.137Z",
+    "run": "2026-11-08",
+    "character": "QA-PERSI-2",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 173,
+        "fight_duration_ms": 8349,
+        "max_hp": 501,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 17.08
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 4,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 29,
+      "vit": 21,
+      "dex": 12,
+      "luk": 9,
+      "int": 13,
+      "foc": 11,
+      "fights": 0
+    },
+    "initial_level": 19,
+    "initial_xp": {
+      "current": 12908,
+      "max": 15456
+    },
+    "progression_curve": {
+      "level": 19,
+      "total_xp": 116103,
+      "xp_for_next": 15456,
+      "percent": 83.5
+    },
+    "initial_max_hp": 505,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      },
+      {
+        "slot": "🛡",
+        "name": "Studded Vest"
+      },
+      {
+        "slot": "💍",
+        "name": "Jade Amulet"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 20,
+      "xp": 1774,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 29,
+      "vit": 22,
+      "dex": 12,
+      "luk": 9,
+      "int": 13,
+      "foc": 11,
+      "last xp": 34,
+      "fights": 8
+    },
+    "final_max_hp": 501,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      },
+      {
+        "slot": "🛡",
+        "name": "Studded Vest"
+      },
+      {
+        "slot": "💍",
+        "name": "Jade Amulet"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      },
+      {
+        "slot": "🛡",
+        "name": "Studded Vest"
+      },
+      {
+        "slot": "💍",
+        "name": "Jade Amulet"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 19,
+        "new_level": 20
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 37677,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "goblin",
+        "chimera"
+      ],
+      "victories": 1,
+      "defeats": 1,
+      "xp_total": 126,
+      "xp_events": [
+        {
+          "time_ms": 3072,
+          "xp": 92,
+          "monster": "goblin",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 37677,
+          "xp": 34,
+          "monster": "chimera",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        512,
+        1537,
+        3072,
+        4609,
+        6141,
+        37677
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 92,
+        "essence": 0.73,
+        "monster": "goblin"
+      },
+      {
+        "result": "defeat",
+        "xp": 34,
+        "essence": 0.22,
+        "monster": "chimera"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.28,
+      "next_level_eta": "⬆ 33m 2s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.04x",
+      "interval": "11.7s",
+      "streak_bonus": null
+    },
+    "initial_essence": 16.13,
+    "final_essence": 40.43,
+    "essence": {
+      "before_idle": 16.13,
+      "after_idle": 17.08,
+      "per_fight": [
+        17.08
+      ],
+      "forge_before": 17,
+      "forge_after_salvage": 67,
+      "forge_after_fusion": 67,
+      "forge_after_upgrade": 67,
+      "forge_after": 67,
+      "shop_before": 70,
+      "shop_after": 40,
+      "final": 40.43,
+      "flow": {
+        "idle_gained": 0.95,
+        "fights_change": null,
+        "salvage_gained": 50,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 50,
+        "shop_cost": 30,
+        "net_change": 24.3
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 17,
+      "essence_after_salvage": 67,
+      "essence_after_fusion": 67,
+      "essence_after_upgrade": 67,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": false,
+      "essence_after": 67,
+      "items_after": 0,
+      "salvage_essence_gained": 50,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "RARE",
+      "cost": 30,
+      "essence_before": 70,
+      "essence_after": 40,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Shadow Cloak",
+            "rarity": "RARE",
+            "price": 30
+          },
+          {
+            "name": "Sapphire Orb",
+            "rarity": "EPIC",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 40,
+        "essence_budget": 40,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 40
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1089,
+      "arena": 1297
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Shadow Cloak",
+          "rarity": "RARE",
+          "price": 30
+        },
+        {
+          "name": "Sapphire Orb",
+          "rarity": "EPIC",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 40,
+      "essence_budget": 40,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
