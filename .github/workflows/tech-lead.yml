@@ -88,21 +88,21 @@ jobs:
           # CLI retente pendant 2 min, le watchdog coupe et on passe au bearer
           # d'un vrai quota.
           # OIDC broker (Cloudflare /api/agent-key) — pas de secret GitHub.
-          # Repli Nemotron via OpenRouter (:free, tool-calling) : quota distinct
-          # du bucket opencode/*-free partagé par IP/jour UTC.
+          # Repli Gemini via Google AI Studio : quota distinct du bucket
+          # opencode/*-free partagé par IP/jour UTC.
           if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
             OIDC_TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
               "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bitbrawler-agents" 2>/dev/null | jq -r '.value // empty' 2>/dev/null || true)
             if [ -n "$OIDC_TOKEN" ]; then
-              OPENROUTER_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
-                "https://bitbrawler.pages.dev/api/agent-key?provider=openrouter" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
+              GOOGLE_GENERATIVE_AI_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
+                "https://bitbrawler.pages.dev/api/agent-key?provider=google" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
             fi
           fi
-          if [ -n "${OPENROUTER_API_KEY:-}" ]; then
-            export OPENROUTER_API_KEY
-            MODELS+=("openrouter/nvidia/nemotron-3.5-lightning:free")
+          if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]; then
+            export GOOGLE_GENERATIVE_AI_API_KEY
+            MODELS+=("google/gemini-2.5-flash")
           else
-            echo "::warning::Broker OpenRouter/Nemotron indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
+            echo "::warning::Broker Google/Gemini indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
           fi
 
           # Read latest QA analysis if available

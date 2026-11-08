@@ -403,7 +403,7 @@ jobs:
           # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
           # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
           # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
-          # Z.AI GLM-4.5-Flash (gratuit, pas de Google) via broker OIDC Cloudflare /api/agent-key (Nemotron/OpenRouter, pas de secret GitHub).
+          # Z.AI GLM-4.5-Flash (gratuit, pas de Google) via broker OIDC Cloudflare /api/agent-key (Google/Gemini, pas de secret GitHub).
           SKIP_APPROVAL: ${{ env.SKIP_APPROVAL }}
           DEPS_LIST: ${{ env.DEPS_LIST }}
         run: |
@@ -445,21 +445,21 @@ jobs:
           # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
           # retries du CLI (~2 min), le watchdog coupe et on passe au bearer de quota.
           # OIDC broker (Cloudflare /api/agent-key) — pas de secret GitHub.
-          # Repli Nemotron via OpenRouter (:free, tool-calling) : quota distinct
-          # du bucket opencode/*-free partagé par IP/jour UTC.
+          # Repli Gemini via Google AI Studio : quota distinct du bucket
+          # opencode/*-free partagé par IP/jour UTC.
           if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
             OIDC_TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
               "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bitbrawler-agents" 2>/dev/null | jq -r '.value // empty' 2>/dev/null || true)
             if [ -n "$OIDC_TOKEN" ]; then
-              OPENROUTER_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
-                "https://bitbrawler.pages.dev/api/agent-key?provider=openrouter" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
+              GOOGLE_GENERATIVE_AI_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
+                "https://bitbrawler.pages.dev/api/agent-key?provider=google" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
             fi
           fi
-          if [ -n "${OPENROUTER_API_KEY:-}" ]; then
-            export OPENROUTER_API_KEY
-            MODELS+=("openrouter/nvidia/nemotron-3.5-lightning:free")
+          if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]; then
+            export GOOGLE_GENERATIVE_AI_API_KEY
+            MODELS+=("google/gemini-2.5-flash")
           else
-            echo "::warning::Broker OpenRouter/Nemotron indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
+            echo "::warning::Broker Google/Gemini indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
           fi
           MODEL_BUDGETS=("8m" "5m" "4m" "12m")
 

@@ -474,17 +474,17 @@ describe('Chaîne de modèles : watchdog + repli hors quota partagé (#tech-lead
     expect(source).not.toMatch(/\bopencode run\b/)
   })
 
-  it.each(agentWorkflows)('%s récupère la clé via le broker OIDC (Nemotron, pas de secret GitHub)', file => {
+  it.each(agentWorkflows)('%s récupère la clé via le broker OIDC (Gemini, pas de secret GitHub)', file => {
     const source = readWorkflow(file)
     expect(source).toContain('id-token: write')
-    expect(source).toContain('/api/agent-key?provider=openrouter')
+    expect(source).toContain('/api/agent-key?provider=google')
     expect(source).toContain('ACTIONS_ID_TOKEN_REQUEST_TOKEN')
-    expect(source).toContain('MODELS+=("openrouter/nvidia/nemotron-3.5-lightning:free")')
-    expect(source).not.toContain('secrets.OPENROUTER_API_KEY')
+    expect(source).toContain('MODELS+=("google/gemini-2.5-flash")')
+    expect(source).not.toContain('secrets.GOOGLE_GENERATIVE_AI_API_KEY')
     expect(source).not.toContain('secrets.ZAI_API_KEY')
     // Z.AI vient en DERNIER recours : un `MODELS=(` qui le contient en tête
     // ferait sortir les slugs opencode du chemin nominal.
-    expect(source).not.toMatch(/MODELS=\(\s*"openrouter\//)
+    expect(source).not.toMatch(/MODELS=\(\s*"google\//)
   })
 
   it('les slugs opencode restent prioritaires dans les trois workflows', () => {
@@ -493,7 +493,7 @@ describe('Chaîne de modèles : watchdog + repli hors quota partagé (#tech-lead
       const free = source.indexOf('"opencode/deepseek-v4.1-flash-free"')
       expect(free).toBeGreaterThanOrEqual(0)
       // Le repli est ajouté après le tableau des slugs gratuits.
-      expect(source.indexOf('MODELS+=("openrouter/nvidia/nemotron-3.5-lightning:free")')).toBeGreaterThan(free)
+      expect(source.indexOf('MODELS+=("google/gemini-2.5-flash")')).toBeGreaterThan(free)
     }
   })
 
@@ -511,7 +511,7 @@ describe('Chaîne de modèles : watchdog + repli hors quota partagé (#tech-lead
     expect(broker).toContain("EXPECTED_REPO = 'stxtxm/bitbrawler'")
     expect(broker).toContain("EXPECTED_AUD = 'bitbrawler-agents'")
     expect(broker).toContain('crypto.subtle.verify')
-    expect(broker).toContain('OPENROUTER_API_KEY')
+    expect(broker).toContain('GOOGLE_GENERATIVE_AI_API_KEY')
   })
 })
 

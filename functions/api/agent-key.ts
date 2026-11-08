@@ -1,4 +1,4 @@
-// Cloudflare Pages Function: /api/agent-key?provider=<openrouter|zai>
+// Cloudflare Pages Function: /api/agent-key?provider=<google|openrouter|zai>
 //
 // OIDC broker for agent model credentials. GitHub Actions workflows
 // authenticate with a GitHub-issued OIDC ID token (audience: bitbrawler-agents).
@@ -6,14 +6,15 @@
 // requested provider API key stored as a Cloudflare Pages secret.
 //
 // Supported providers (env secret name):
-//   openrouter -> OPENROUTER_API_KEY  (e.g. Nemotron via OpenRouter)
-//   zai        -> ZAI_API_KEY         (GLM via Z.AI)
+//   google     -> GOOGLE_GENERATIVE_AI_API_KEY  (Gemini via Google AI Studio)
+//   openrouter -> OPENROUTER_API_KEY            (e.g. Nemotron via OpenRouter)
+//   zai        -> ZAI_API_KEY                   (GLM via Z.AI)
 //
 // No GitHub secrets required: keys live only in Cloudflare environment vars.
 
 interface PagesContext {
   request: Request
-  env: { ZAI_API_KEY?: string; OPENROUTER_API_KEY?: string }
+  env: { ZAI_API_KEY?: string; OPENROUTER_API_KEY?: string; GOOGLE_GENERATIVE_AI_API_KEY?: string }
 }
 
 interface JWK {
@@ -33,6 +34,7 @@ const EXPECTED_REPO = 'stxtxm/bitbrawler'
 const OIDC_CONFIG_URL = `${GH_ISSUER}/.well-known/openid-configuration`
 
 const PROVIDERS: Record<string, keyof PagesContext['env']> = {
+  google: 'GOOGLE_GENERATIVE_AI_API_KEY',
   openrouter: 'OPENROUTER_API_KEY',
   zai: 'ZAI_API_KEY',
 }

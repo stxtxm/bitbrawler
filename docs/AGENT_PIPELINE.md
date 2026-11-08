@@ -17,7 +17,7 @@
 └──────────────────────────────┬───────────────────────────────────┘
                                ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│ 2. DEV AGENT (opencode.yml, deepseek → … → Nemotron/OR)         │
+│ 2. DEV AGENT (opencode.yml, deepseek → … → Gemini)             │
 │    • Charge mémoires: dev.json + shared.json                     │
 │      ↳ AUTO-COMPACTÉES avant injection (scripts/                 │
 │        compact-memories.mjs, budgets shared 6KB / agent 4.5KB)   │
@@ -67,17 +67,16 @@
   tableaux `MODELS=(...)` des workflows) :
   `opencode/deepseek-v4.1-flash-free` → `opencode/glm-5.3-flash-free` →
   `opencode/nemotron-3.5-lightning-free`.
-- Dernier recours : `openrouter/nvidia/nemotron-3.5-lightning:free` (Nemotron
-  3.5 Lightning via OpenRouter, tool-calling, pas de Google), obtenu via le
-  **broker OIDC Cloudflare** `functions/api/agent-key.ts`
-  (`/api/agent-key?provider=openrouter`). Les workflows demandent un jeton
-  OIDC GitHub (`id-token: write`, audience `bitbrawler-agents`) ; la fonction
-  vérifie la signature (JWKS GitHub) et le dépôt (`stxtxm/bitbrawler`), puis
-  renvoie la clé du secret Cloudflare `OPENROUTER_API_KEY`. Aucun secret
-  GitHub. Le quota OpenRouter (`:free`, sur le compte de la clé) est distinct
-  du bucket `opencode/*-free` partagé par IP/jour UTC — c’est ce qui rend le
-  repli viable sur les runners GitHub même quand le bucket `*-free` est épuisé.
-  Si le broker/clé est indisponible, le repli est sauté avec un warning.
+- Dernier recours : `google/gemini-2.5-flash` (Gemini, tool-calling), obtenu
+  via le **broker OIDC Cloudflare** `functions/api/agent-key.ts`
+  (`/api/agent-key?provider=google`). Les workflows demandent un jeton OIDC
+  GitHub (`id-token: write`, audience `bitbrawler-agents`) ; la fonction vérifie
+  la signature (JWKS GitHub) et le dépôt (`stxtxm/bitbrawler`), puis renvoie la
+  clé du secret Cloudflare `GOOGLE_GENERATIVE_AI_API_KEY`. Aucun secret GitHub.
+  Le quota Google est distinct du bucket `opencode/*-free` partagé par IP/jour
+  UTC. Si le broker/clé est indisponible, le repli est sauté avec un warning.
+  (Le broker supporte aussi `provider=openrouter` → `OPENROUTER_API_KEY` et
+  `provider=zai` → `ZAI_API_KEY`.)
 - **Toute tentative passe par `scripts/run-agent-model.sh`** (jamais
   `timeout … opencode run`). Le watchdog lit le log en continu et coupe dès
   l'erreur fatale au lieu de laisser le CLI retenter ~2 min :
@@ -105,7 +104,7 @@
 | SQL migration détectée → blocage | Guard volontaire reviewer | Issue dédiée SANS /oc, exécuter dans Supabase SQL Editor |
 | idle-processor « Character not found » | Secrets serveur périmés (erreur DB avalée) | Réponse inclut `db_target`+`detail`; tester avec un ID existant |
 | PR bot sans run CI | Event GITHUB_TOKEN / skip-ci | `gh workflow run ci.yml -f pr_number=N` ; runs bot = `action_required` → `POST /actions/runs/{id}/approve` |
-| Agents muets, 8 min/modèle puis échec | Quota `*-free` épuisé par IP (runners partagés) | watchdog `scripts/run-agent-model.sh` + repli Nemotron via OpenRouter (broker OIDC `/api/agent-key`) |
+| Agents muets, 8 min/modèle puis échec | Quota `*-free` épuisé par IP (runners partagés) | watchdog `scripts/run-agent-model.sh` + repli Gemini via broker OIDC `/api/agent-key?provider=google` |
 
 ## Checklist « une PR est bloquée »
 
