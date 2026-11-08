@@ -284,7 +284,7 @@ jobs:
           # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
           # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
           # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
-          # La cle Z.AI est fournie par le broker OIDC Cloudflare (voir MODELS plus bas), aucun secret GitHub.
+          # Le repli Nemotron/OpenRouter est fourni par le broker OIDC Cloudflare (voir MODELS plus bas), aucun secret GitHub.
         run: |
           echo "🔍 Supervisor mode — validating campaign for issue #$ISSUE_NUMBER..."
           PROMPT="Tu es le superviseur de campagne. Valide la campagne #$ISSUE_NUMBER et mets à jour la documentation.
@@ -327,22 +327,23 @@ jobs:
            )
            # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
            # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
-           # OIDC broker (Cloudflare /api/zai-key) — pas de secret GitHub.
-                     ZAI_API_KEY=""
-                     if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
-                       OIDC_TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-                         "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bitbrawler-zai" 2>/dev/null | jq -r '.value // empty' 2>/dev/null || true)
-                       if [ -n "$OIDC_TOKEN" ]; then
-                         ZAI_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
-                           "https://bitbrawler.pages.dev/api/zai-key" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
-                       fi
-                     fi
-                     if [ -n "$ZAI_API_KEY" ]; then
-                       export ZAI_API_KEY
-                       MODELS+=("zai/glm-4.5-flash")
-                     else
-                       echo "::warning::Broker Z.AI indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
-                     fi
+           # OIDC broker (Cloudflare /api/agent-key) — pas de secret GitHub.
+           # Repli Nemotron via OpenRouter (:free, tool-calling) : quota distinct
+           # du bucket opencode/*-free partagé par IP/jour UTC.
+           if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
+             OIDC_TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+               "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bitbrawler-agents" 2>/dev/null | jq -r '.value // empty' 2>/dev/null || true)
+             if [ -n "$OIDC_TOKEN" ]; then
+               OPENROUTER_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
+                 "https://bitbrawler.pages.dev/api/agent-key?provider=openrouter" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
+             fi
+           fi
+           if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+             export OPENROUTER_API_KEY
+             MODELS+=("openrouter/nvidia/nemotron-3.5-lightning:free")
+           else
+             echo "::warning::Broker OpenRouter/Nemotron indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
+           fi
            MODEL_BUDGETS=("6m" "4m" "3m" "10m")
            SUCCESS=0
            MODEL_IDX=0
@@ -374,7 +375,7 @@ jobs:
           # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
           # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
           # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
-          # La cle Z.AI est fournie par le broker OIDC Cloudflare (voir MODELS plus bas), aucun secret GitHub.
+          # Le repli Nemotron/OpenRouter est fourni par le broker OIDC Cloudflare (voir MODELS plus bas), aucun secret GitHub.
           ISSUE_NUMBER: ${{ env.ISSUE_NUMBER }}
         run: |
           ISSUE_BODY=$(cat /tmp/prompt.txt)
@@ -460,22 +461,23 @@ jobs:
             )
             # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
             # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
-            # OIDC broker (Cloudflare /api/zai-key) — pas de secret GitHub.
-                      ZAI_API_KEY=""
-                      if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
-                        OIDC_TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-                          "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bitbrawler-zai" 2>/dev/null | jq -r '.value // empty' 2>/dev/null || true)
-                        if [ -n "$OIDC_TOKEN" ]; then
-                          ZAI_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
-                            "https://bitbrawler.pages.dev/api/zai-key" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
-                        fi
-                      fi
-                      if [ -n "$ZAI_API_KEY" ]; then
-                        export ZAI_API_KEY
-                        MODELS+=("zai/glm-4.5-flash")
-                      else
-                        echo "::warning::Broker Z.AI indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
-                      fi
+            # OIDC broker (Cloudflare /api/agent-key) — pas de secret GitHub.
+            # Repli Nemotron via OpenRouter (:free, tool-calling) : quota distinct
+            # du bucket opencode/*-free partagé par IP/jour UTC.
+            if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
+              OIDC_TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+                "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bitbrawler-agents" 2>/dev/null | jq -r '.value // empty' 2>/dev/null || true)
+              if [ -n "$OIDC_TOKEN" ]; then
+                OPENROUTER_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
+                  "https://bitbrawler.pages.dev/api/agent-key?provider=openrouter" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
+              fi
+            fi
+            if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+              export OPENROUTER_API_KEY
+              MODELS+=("openrouter/nvidia/nemotron-3.5-lightning:free")
+            else
+              echo "::warning::Broker OpenRouter/Nemotron indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
+            fi
             MODEL_BUDGETS=("6m" "4m" "3m" "10m")
             SUCCESS=0
             MODEL_IDX=0
@@ -530,7 +532,7 @@ jobs:
           # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
           # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
           # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
-          # La cle Z.AI est fournie par le broker OIDC Cloudflare (voir MODELS plus bas), aucun secret GitHub.
+          # Le repli Nemotron/OpenRouter est fourni par le broker OIDC Cloudflare (voir MODELS plus bas), aucun secret GitHub.
           ISSUE_NUMBER: ${{ env.ISSUE_NUMBER }}
         run: |
           ISSUE_BODY=$(cat /tmp/prompt.txt)
@@ -578,22 +580,23 @@ jobs:
           )
           # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
           # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
-          # OIDC broker (Cloudflare /api/zai-key) — pas de secret GitHub.
-                    ZAI_API_KEY=""
-                    if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
-                      OIDC_TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-                        "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bitbrawler-zai" 2>/dev/null | jq -r '.value // empty' 2>/dev/null || true)
-                      if [ -n "$OIDC_TOKEN" ]; then
-                        ZAI_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
-                          "https://bitbrawler.pages.dev/api/zai-key" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
-                      fi
-                    fi
-                    if [ -n "$ZAI_API_KEY" ]; then
-                      export ZAI_API_KEY
-                      MODELS+=("zai/glm-4.5-flash")
-                    else
-                      echo "::warning::Broker Z.AI indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
-                    fi
+          # OIDC broker (Cloudflare /api/agent-key) — pas de secret GitHub.
+          # Repli Nemotron via OpenRouter (:free, tool-calling) : quota distinct
+          # du bucket opencode/*-free partagé par IP/jour UTC.
+          if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
+            OIDC_TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+              "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bitbrawler-agents" 2>/dev/null | jq -r '.value // empty' 2>/dev/null || true)
+            if [ -n "$OIDC_TOKEN" ]; then
+              OPENROUTER_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
+                "https://bitbrawler.pages.dev/api/agent-key?provider=openrouter" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
+            fi
+          fi
+          if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+            export OPENROUTER_API_KEY
+            MODELS+=("openrouter/nvidia/nemotron-3.5-lightning:free")
+          else
+            echo "::warning::Broker OpenRouter/Nemotron indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
+          fi
           # Budget par modèle : le primaire écrit ET teste le code (18 min — il a besoin
           # de lire les fichiers, d'implémenter, de lancer la suite et de l'ajuster).
           # Les replis repartent de ZÉRO (aucune mémoire du travail du primaire) : une
@@ -757,7 +760,7 @@ jobs:
           # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
           # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
           # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
-          # La cle Z.AI est fournie par le broker OIDC Cloudflare (voir MODELS plus bas), aucun secret GitHub.
+          # Le repli Nemotron/OpenRouter est fourni par le broker OIDC Cloudflare (voir MODELS plus bas), aucun secret GitHub.
         run: |
           PR_NUMBER="${{ steps.check_pr.outputs.existing_pr }}"
           echo "Existing PR #$PR_NUMBER — fetching CI/review feedback..."
@@ -827,22 +830,23 @@ jobs:
           )
           # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
           # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
-          # OIDC broker (Cloudflare /api/zai-key) — pas de secret GitHub.
-                    ZAI_API_KEY=""
-                    if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
-                      OIDC_TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-                        "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bitbrawler-zai" 2>/dev/null | jq -r '.value // empty' 2>/dev/null || true)
-                      if [ -n "$OIDC_TOKEN" ]; then
-                        ZAI_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
-                          "https://bitbrawler.pages.dev/api/zai-key" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
-                      fi
-                    fi
-                    if [ -n "$ZAI_API_KEY" ]; then
-                      export ZAI_API_KEY
-                      MODELS+=("zai/glm-4.5-flash")
-                    else
-                      echo "::warning::Broker Z.AI indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
-                    fi
+          # OIDC broker (Cloudflare /api/agent-key) — pas de secret GitHub.
+          # Repli Nemotron via OpenRouter (:free, tool-calling) : quota distinct
+          # du bucket opencode/*-free partagé par IP/jour UTC.
+          if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
+            OIDC_TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+              "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bitbrawler-agents" 2>/dev/null | jq -r '.value // empty' 2>/dev/null || true)
+            if [ -n "$OIDC_TOKEN" ]; then
+              OPENROUTER_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
+                "https://bitbrawler.pages.dev/api/agent-key?provider=openrouter" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
+            fi
+          fi
+          if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+            export OPENROUTER_API_KEY
+            MODELS+=("openrouter/nvidia/nemotron-3.5-lightning:free")
+          else
+            echo "::warning::Broker OpenRouter/Nemotron indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
+          fi
           # Budget par modèle : le primaire écrit ET teste le code (18 min — il a besoin
           # de lire les fichiers, d'implémenter, de lancer la suite et de l'ajuster).
           # Les replis repartent de ZÉRO (aucune mémoire du travail du primaire) : une
@@ -879,7 +883,7 @@ jobs:
           # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
           # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
           # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
-          # La cle Z.AI est fournie par le broker OIDC Cloudflare (voir MODELS plus bas), aucun secret GitHub.
+          # Le repli Nemotron/OpenRouter est fourni par le broker OIDC Cloudflare (voir MODELS plus bas), aucun secret GitHub.
         run: |
           MAX_RETRIES=3
           ISSUE_TITLE=$(cat /tmp/issue-title.txt 2>/dev/null || echo "Auto-implement issue #$ISSUE_NUMBER")
@@ -982,22 +986,23 @@ jobs:
             )
             # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
             # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
-            # OIDC broker (Cloudflare /api/zai-key) — pas de secret GitHub.
-                      ZAI_API_KEY=""
-                      if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
-                        OIDC_TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-                          "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bitbrawler-zai" 2>/dev/null | jq -r '.value // empty' 2>/dev/null || true)
-                        if [ -n "$OIDC_TOKEN" ]; then
-                          ZAI_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
-                            "https://bitbrawler.pages.dev/api/zai-key" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
-                        fi
-                      fi
-                      if [ -n "$ZAI_API_KEY" ]; then
-                        export ZAI_API_KEY
-                        MODELS+=("zai/glm-4.5-flash")
-                      else
-                        echo "::warning::Broker Z.AI indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
-                      fi
+            # OIDC broker (Cloudflare /api/agent-key) — pas de secret GitHub.
+            # Repli Nemotron via OpenRouter (:free, tool-calling) : quota distinct
+            # du bucket opencode/*-free partagé par IP/jour UTC.
+            if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
+              OIDC_TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+                "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bitbrawler-agents" 2>/dev/null | jq -r '.value // empty' 2>/dev/null || true)
+              if [ -n "$OIDC_TOKEN" ]; then
+                OPENROUTER_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
+                  "https://bitbrawler.pages.dev/api/agent-key?provider=openrouter" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
+              fi
+            fi
+            if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+              export OPENROUTER_API_KEY
+              MODELS+=("openrouter/nvidia/nemotron-3.5-lightning:free")
+            else
+              echo "::warning::Broker OpenRouter/Nemotron indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
+            fi
             # Rappel après gate rouge : le primaire relit les sorties de gate et corrige
             # (10 min) ; replis = sonde courte (ils repartent de zéro). Z.AI corrige
             # aussi : budget de primaire.

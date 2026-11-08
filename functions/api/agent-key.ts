@@ -1,17 +1,19 @@
-// Cloudflare Pages Function: /api/zai-key
+// Cloudflare Pages Function: /api/agent-key?provider=<openrouter|zai>
 //
-// OIDC broker for Z.AI credentials. GitHub Actions workflows authenticate with
-// a GitHub-issued OIDC ID token (audience: bitbrawler-zai). After verifying the
-// token and the repository claim, the function returns the Z.AI API key stored
-// as a Cloudflare Pages secret (ZAI_API_KEY).
+// OIDC broker for agent model credentials. GitHub Actions workflows
+// authenticate with a GitHub-issued OIDC ID token (audience: bitbrawler-agents).
+// After verifying the token and the repository claim, the function returns the
+// requested provider API key stored as a Cloudflare Pages secret.
 //
-// This avoids storing ZAI_API_KEY as a GitHub secret (the repo PAT lacks
-// Secrets:write). The key never appears in workflow YAML — only in the
-// Cloudflare environment.
+// Supported providers (env secret name):
+//   openrouter -> OPENROUTER_API_KEY  (e.g. Nemotron via OpenRouter)
+//   zai        -> ZAI_API_KEY         (GLM via Z.AI)
+//
+// No GitHub secrets required: keys live only in Cloudflare environment vars.
 
 interface PagesContext {
   request: Request
-  env: { ZAI_API_KEY?: string }
+  env: { ZAI_API_KEY?: string; OPENROUTER_API_KEY?: string }
 }
 
 interface JWK {
@@ -22,20 +24,18 @@ interface JWK {
   alg?: string
   use?: string
 }
-
-interface JWKS {
-  keys: JWK[]
-}
-
-interface OIDCConfig {
-  jwks_uri: string
-  issuer: string
-}
+interface JWKS { keys: JWK[] }
+interface OIDCConfig { jwks_uri: string; issuer: string }
 
 const GH_ISSUER = 'https://token.actions.githubusercontent.com'
-const EXPECTED_AUD = 'bitbrawler-zai'
+const EXPECTED_AUD = 'bitbrawler-agents'
 const EXPECTED_REPO = 'stxtxm/bitbrawler'
 const OIDC_CONFIG_URL = `${GH_ISSUER}/.well-known/openid-configuration`
+
+const PROVIDERS: Record<string, keyof PagesContext['env']> = {
+  openrouter: 'OPENROUTER_API_KEY',
+  zai: 'ZAI_API_KEY',
+}
 
 function b64urlToBytes(s: string): Uint8Array {
   const pad = '='.repeat((4 - (s.length % 4)) % 4)
@@ -55,13 +55,7 @@ async function verify(token: string): Promise<{ ok: true } | { ok: false; reason
   if (parts.length !== 3) return { ok: false, reason: 'malformed JWT' }
 
   let header: { alg?: string; kid?: string }
-  let payload: {
-    iss?: string
-    aud?: string | string[]
-    exp?: number
-    repository?: string
-    sub?: string
-  }
+  let payload: { iss?: string; aud?: string | string[]; exp?: number; repository?: string }
   try {
     header = jsonPart(parts[0])
     payload = jsonPart(parts[1])
@@ -71,26 +65,17 @@ async function verify(token: string): Promise<{ ok: true } | { ok: false; reason
 
   if (header.alg !== 'RS256') return { ok: false, reason: `unsupported alg ${header.alg}` }
   if (payload.iss !== GH_ISSUER) return { ok: false, reason: 'bad issuer' }
-
   const aud = payload.aud
   const audOk = aud === EXPECTED_AUD || (Array.isArray(aud) && aud.includes(EXPECTED_AUD))
   if (!audOk) return { ok: false, reason: 'bad audience' }
-
-  if (payload.repository !== EXPECTED_REPO) {
-    return { ok: false, reason: `bad repository ${payload.repository ?? ''}` }
-  }
-
+  if (payload.repository !== EXPECTED_REPO) return { ok: false, reason: `bad repository ${payload.repository ?? ''}` }
   const now = Math.floor(Date.now() / 1000)
-  if (typeof payload.exp !== 'number' || payload.exp < now - 60) {
-    return { ok: false, reason: 'token expired' }
-  }
+  if (typeof payload.exp !== 'number' || payload.exp < now - 60) return { ok: false, reason: 'token expired' }
 
   const cfgRes = await fetch(OIDC_CONFIG_URL)
   if (!cfgRes.ok) return { ok: false, reason: 'cannot fetch OIDC config' }
   const cfg = (await cfgRes.json()) as OIDCConfig
-  if (!cfg.jwks_uri || !cfg.jwks_uri.startsWith(GH_ISSUER)) {
-    return { ok: false, reason: 'invalid jwks_uri' }
-  }
+  if (!cfg.jwks_uri || !cfg.jwks_uri.startsWith(GH_ISSUER)) return { ok: false, reason: 'invalid jwks_uri' }
 
   const jwksRes = await fetch(cfg.jwks_uri)
   if (!jwksRes.ok) return { ok: false, reason: 'cannot fetch JWKS' }
@@ -105,12 +90,10 @@ async function verify(token: string): Promise<{ ok: true } | { ok: false; reason
     false,
     ['verify']
   )
-
   const data = new TextEncoder().encode(`${parts[0]}.${parts[1]}`)
   const sig = b64urlToBytes(parts[2])
   const valid = await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, sig, data)
   if (!valid) return { ok: false, reason: 'bad signature' }
-
   return { ok: true }
 }
 
@@ -122,31 +105,25 @@ function json(body: unknown, status = 200): Response {
 }
 
 const handle = async ({ request, env }: PagesContext): Promise<Response> => {
-  if (request.method !== 'GET' && request.method !== 'POST') {
-    return json({ error: 'method not allowed' }, 405)
-  }
+  if (request.method !== 'GET' && request.method !== 'POST') return json({ error: 'method not allowed' }, 405)
 
-  if (!env.ZAI_API_KEY) {
-    return json({ error: 'ZAI_API_KEY not configured on Cloudflare' }, 503)
-  }
+  const url = new URL(request.url)
+  const provider = (url.searchParams.get('provider') || '').toLowerCase()
+  const envName = PROVIDERS[provider]
+  if (!envName) return json({ error: 'unsupported provider', supported: Object.keys(PROVIDERS) }, 400)
+
+  const key = env[envName]
+  if (!key) return json({ error: `${envName} not configured on Cloudflare` }, 503)
 
   const auth = request.headers.get('authorization') || ''
-  if (!auth.startsWith('Bearer ')) {
-    return json({ error: 'missing bearer token' }, 401)
-  }
+  if (!auth.startsWith('Bearer ')) return json({ error: 'missing bearer token' }, 401)
   const token = auth.slice(7).trim()
 
   let result: { ok: true } | { ok: false; reason: string }
-  try {
-    result = await verify(token)
-  } catch (e) {
-    return json({ error: 'verification failed', detail: String(e) }, 401)
-  }
-  if (!result.ok) {
-    return json({ error: 'unauthorized', reason: result.reason }, 403)
-  }
+  try { result = await verify(token) } catch (e) { return json({ error: 'verification failed', detail: String(e) }, 401) }
+  if (!result.ok) return json({ error: 'unauthorized', reason: result.reason }, 403)
 
-  return json({ key: env.ZAI_API_KEY })
+  return json({ key })
 }
 
 export const onRequest = handle

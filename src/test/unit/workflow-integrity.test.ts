@@ -474,16 +474,17 @@ describe('Chaîne de modèles : watchdog + repli hors quota partagé (#tech-lead
     expect(source).not.toMatch(/\bopencode run\b/)
   })
 
-  it.each(agentWorkflows)('%s récupère la clé Z.AI via le broker OIDC (pas de secret GitHub)', file => {
+  it.each(agentWorkflows)('%s récupère la clé via le broker OIDC (Nemotron, pas de secret GitHub)', file => {
     const source = readWorkflow(file)
     expect(source).toContain('id-token: write')
-    expect(source).toContain('/api/zai-key')
+    expect(source).toContain('/api/agent-key?provider=openrouter')
     expect(source).toContain('ACTIONS_ID_TOKEN_REQUEST_TOKEN')
-    expect(source).toContain('MODELS+=("zai/glm-4.5-flash")')
+    expect(source).toContain('MODELS+=("openrouter/nvidia/nemotron-3.5-lightning:free")')
+    expect(source).not.toContain('secrets.OPENROUTER_API_KEY')
     expect(source).not.toContain('secrets.ZAI_API_KEY')
     // Z.AI vient en DERNIER recours : un `MODELS=(` qui le contient en tête
     // ferait sortir les slugs opencode du chemin nominal.
-    expect(source).not.toMatch(/MODELS=\(\s*"zai\//)
+    expect(source).not.toMatch(/MODELS=\(\s*"openrouter\//)
   })
 
   it('les slugs opencode restent prioritaires dans les trois workflows', () => {
@@ -492,7 +493,7 @@ describe('Chaîne de modèles : watchdog + repli hors quota partagé (#tech-lead
       const free = source.indexOf('"opencode/deepseek-v4.1-flash-free"')
       expect(free).toBeGreaterThanOrEqual(0)
       // Le repli est ajouté après le tableau des slugs gratuits.
-      expect(source.indexOf('MODELS+=("zai/glm-4.5-flash")')).toBeGreaterThan(free)
+      expect(source.indexOf('MODELS+=("openrouter/nvidia/nemotron-3.5-lightning:free")')).toBeGreaterThan(free)
     }
   })
 
@@ -506,11 +507,11 @@ describe('Chaîne de modèles : watchdog + repli hors quota partagé (#tech-lead
   })
 
   it('le broker OIDC vérifie le dépôt et ne fuit pas la clé sans jeton', () => {
-    const broker = readFileSync(join(process.cwd(), 'functions', 'api', 'zai-key.ts'), 'utf8')
+    const broker = readFileSync(join(process.cwd(), 'functions', 'api', 'agent-key.ts'), 'utf8')
     expect(broker).toContain("EXPECTED_REPO = 'stxtxm/bitbrawler'")
-    expect(broker).toContain("EXPECTED_AUD = 'bitbrawler-zai'")
+    expect(broker).toContain("EXPECTED_AUD = 'bitbrawler-agents'")
     expect(broker).toContain('crypto.subtle.verify')
-    expect(broker).toContain('env.ZAI_API_KEY')
+    expect(broker).toContain('OPENROUTER_API_KEY')
   })
 })
 

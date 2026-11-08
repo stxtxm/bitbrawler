@@ -87,22 +87,23 @@ jobs:
           # Le quota est partage par les trois slugs : inutile d'attendre que le
           # CLI retente pendant 2 min, le watchdog coupe et on passe au bearer
           # d'un vrai quota.
-          # OIDC broker (Cloudflare /api/zai-key) — pas de secret GitHub.
-                    ZAI_API_KEY=""
-                    if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
-                      OIDC_TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-                        "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bitbrawler-zai" 2>/dev/null | jq -r '.value // empty' 2>/dev/null || true)
-                      if [ -n "$OIDC_TOKEN" ]; then
-                        ZAI_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
-                          "https://bitbrawler.pages.dev/api/zai-key" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
-                      fi
-                    fi
-                    if [ -n "$ZAI_API_KEY" ]; then
-                      export ZAI_API_KEY
-                      MODELS+=("zai/glm-4.5-flash")
-                    else
-                      echo "::warning::Broker Z.AI indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
-                    fi
+          # OIDC broker (Cloudflare /api/agent-key) — pas de secret GitHub.
+          # Repli Nemotron via OpenRouter (:free, tool-calling) : quota distinct
+          # du bucket opencode/*-free partagé par IP/jour UTC.
+          if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
+            OIDC_TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+              "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bitbrawler-agents" 2>/dev/null | jq -r '.value // empty' 2>/dev/null || true)
+            if [ -n "$OIDC_TOKEN" ]; then
+              OPENROUTER_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
+                "https://bitbrawler.pages.dev/api/agent-key?provider=openrouter" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
+            fi
+          fi
+          if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+            export OPENROUTER_API_KEY
+            MODELS+=("openrouter/nvidia/nemotron-3.5-lightning:free")
+          else
+            echo "::warning::Broker OpenRouter/Nemotron indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
+          fi
 
           # Read latest QA analysis if available
           QA_REPORT=""
