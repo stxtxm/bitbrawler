@@ -9,6 +9,7 @@ import {
   getStreakBonus,
   loadEpicPityState,
   LOOTBOX_PITY,
+  LOOTBOX_RARITY_WEIGHTS,
   rollLootbox,
   PITY_THRESHOLD,
 } from '../../utils/lootboxUtils';
@@ -223,18 +224,18 @@ describe('lootboxUtils', () => {
     expect(w3.common).toBeLessThan(w1.common);
   });
 
-  it('has legendary weight 0.04 at level 3-6 (midgame)', () => {
+  it('has legendary weight 0.06 at level 3-6 (midgame) after #1358', () => {
     const w3 = getLootboxRarityWeights(3);
     const w6 = getLootboxRarityWeights(6);
-    expect(w3.legendary).toBeCloseTo(0.05, 3);
-    expect(w6.legendary).toBeCloseTo(0.05, 3);
+    expect(w3.legendary).toBeCloseTo(0.06, 3);
+    expect(w6.legendary).toBeCloseTo(0.06, 3);
   });
 
-  it('has legendary weight 0.04 at level 7-9 (late-midgame)', () => {
+  it('has legendary weight 0.06 at level 7-9 (late-midgame) after #1358', () => {
     const w7 = getLootboxRarityWeights(7);
     const w9 = getLootboxRarityWeights(9);
-    expect(w7.legendary).toBeCloseTo(0.05, 3);
-    expect(w9.legendary).toBeCloseTo(0.05, 3);
+    expect(w7.legendary).toBeCloseTo(0.06, 3);
+    expect(w9.legendary).toBeCloseTo(0.06, 3);
   });
 
   it('has legendary weight 0.07 at level 10+ (endgame)', () => {
@@ -384,5 +385,41 @@ describe('lootboxUtils', () => {
     const state = loadEpicPityState('test-char-1140');
     expect(state.epicPityCount).toBeGreaterThanOrEqual(0);
     expect(state.commonStreak).toBeGreaterThanOrEqual(0);
+  });
+
+  // ─── Rarity Weight Tests for Issue #1358 ──────────────────────────────────
+
+  it('LOOTBOX_RARITY_WEIGHTS has updated legendary weight (0.06) after #1358', () => {
+    expect(LOOTBOX_RARITY_WEIGHTS.legendary).toBe(0.06);
+  });
+
+  it('LOOTBOX_RARITY_WEIGHTS has updated epic weight (0.13) after #1358', () => {
+    expect(LOOTBOX_RARITY_WEIGHTS.epic).toBe(0.13);
+  });
+
+  it('getLootboxRarityWeights at level 1 uses updated base weights', () => {
+    const weights = getLootboxRarityWeights(1);
+    expect(weights.legendary).toBe(0.06); // Uses updated base weight
+    expect(weights.epic).toBe(0.13); // Uses updated base weight
+  });
+
+  it('getLootboxRarityWeights maintains updated legendary weight at level 3', () => {
+    const weights = getLootboxRarityWeights(3);
+    expect(weights.legendary).toBe(0.06); // Should maintain updated base weight
+  });
+
+  it('getLootboxRarityWeights maintains updated epic weight at level 3', () => {
+    const weights = getLootboxRarityWeights(3);
+    expect(weights.epic).toBe(0.14); // Base 0.13 + 0.01 level adjustment
+  });
+
+  it('getLootboxRarityWeights maintains updated legendary weight at level 7', () => {
+    const weights = getLootboxRarityWeights(7);
+    expect(weights.legendary).toBe(0.06); // Updated to match new base weight
+  });
+
+  it('getLootboxRarityWeights maintains updated epic weight at level 7', () => {
+    const weights = getLootboxRarityWeights(7);
+    expect(weights.epic).toBe(0.12); // Base 0.13 + level adjustment (-0.01)
   });
 });
