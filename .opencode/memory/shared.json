@@ -45,11 +45,6 @@
   ],
   "known_issues": [
     {
-      "id": "stale-closure-after-idle-sync",
-      "title": "Closure périmée après syncIdleBeforeAction() dans les actions GameContext",
-      "status": "fixed"
-    },
-    {
       "id": "flush-downgrade-cron-gains",
       "title": "Flush debounced/logout réécrivait le snapshot local et écrasait les gains cron serveur",
       "status": "fixed"
@@ -76,7 +71,7 @@
     },
     {
       "id": "free-model-quota-per-ip-2026-11-04",
-      "title": "2026-11-01→04 : quota *-free épuisé PAR IP et par jour UTC (runners GitHub partagés) → 8 min/modèle puis échec, aucune issue/PR ; fix = watchdog scripts/run-agent-model.sh + repli zai/glm-4.5-flash via broker OIDC Cloudflare /api/agent-key?provider=zai (secret Cloudflare ZAI_API_KEY, pas de secret GitHub) — quota distinct du bucket opencode/*-free partagé par IP",
+      "title": "2026-11-01→04 : quota *-free épuisé PAR IP et par jour UTC (runners GitHub partagés) → 8 min/modèle puis échec, aucune issue/PR ; fix = watchdog scripts/run-agent-model.sh + repli zai/glm-4.5-flash via broker OIDC Cloudflare /api/agent-key?provider=zai (secret Cloudflare ZAI_API_KEY, pas de secret …",
       "status": "fixed"
     },
     {
@@ -111,7 +106,6 @@
     }
   ],
   "cross_agent_constraints": [
-    "Modèles: toujours passer par scripts/run-agent-model.sh (jamais `opencode run` direct) — le watchdog coupe le quota gratuit en ~3 s (42) au lieu de 2 min de retries",
     "Dev agent: ne JAMAIS créer d'issues/campagnes — seul l'orchestrator planifie",
     "Orchestrator: ne JAMAIS re-planifier si campaign-N a déjà des sous-issues (sauf label force-replan)",
     "Dispatch: toujours claimer le label `dispatched` AVANT gh workflow run (anti fan-out N²)",
