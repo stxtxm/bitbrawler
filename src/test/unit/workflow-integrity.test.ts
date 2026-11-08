@@ -460,10 +460,10 @@ describe('Chaîne de modèles : watchdog + repli hors quota partagé (#tech-lead
   // « Free usage limit reached ». Le CLI retente ~2 min par modèle, si bien que
   // tech-lead brûlait 24 min pour finir en échec, sans issue ni PR.
   //
-  // Contrat désormais : chaque tentative passe par le watchdog (coupe en ~3 s sur
-  // erreur fatale) et un dernier recours Z.AI (GLM-4.5-Flash, gratuit, pas de
-  // Google) n'est ajouté QUE si le secret est présent — les slugs opencode
-  // restent prioritaires.
+  // Contrat : chaque tentative passe par le watchdog (coupe en ~3 s sur erreur
+  // fatale) et un dernier recours Z.AI (GLM-4.5-Flash, gratuit, pas de Google)
+  // est ajouté via le broker OIDC Cloudflare /api/zai-key (aucun secret GitHub)
+  // — les slugs opencode restent prioritaires.
   const agentWorkflows = ['opencode.yml', 'reviewer.yml', 'tech-lead.yml']
 
   it.each(agentWorkflows)('%s invoque chaque modèle via le watchdog', file => {
@@ -474,11 +474,13 @@ describe('Chaîne de modèles : watchdog + repli hors quota partagé (#tech-lead
     expect(source).not.toMatch(/\bopencode run\b/)
   })
 
-  it.each(agentWorkflows)('%s ne tente Z.AI que si le secret existe', file => {
+  it.each(agentWorkflows)('%s récupère la clé Z.AI via le broker OIDC (pas de secret GitHub)', file => {
     const source = readWorkflow(file)
-    expect(source).toContain('if [ -n "${ZAI_API_KEY:-}" ]')
+    expect(source).toContain('id-token: write')
+    expect(source).toContain('/api/zai-key')
+    expect(source).toContain('ACTIONS_ID_TOKEN_REQUEST_TOKEN')
     expect(source).toContain('MODELS+=("zai/glm-4.5-flash")')
-    expect(source).toContain('ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}')
+    expect(source).not.toContain('secrets.ZAI_API_KEY')
     // Z.AI vient en DERNIER recours : un `MODELS=(` qui le contient en tête
     // ferait sortir les slugs opencode du chemin nominal.
     expect(source).not.toMatch(/MODELS=\(\s*"zai\//)
@@ -501,6 +503,14 @@ describe('Chaîne de modèles : watchdog + repli hors quota partagé (#tech-lead
     expect(source).toContain('Insufficient balance or no resource package')
     expect(source).toContain('exit 42')
     expect(statSync(script).mode & 0o111).not.toBe(0)
+  })
+
+  it('le broker OIDC vérifie le dépôt et ne fuit pas la clé sans jeton', () => {
+    const broker = readFileSync(join(process.cwd(), 'functions', 'api', 'zai-key.ts'), 'utf8')
+    expect(broker).toContain("EXPECTED_REPO = 'stxtxm/bitbrawler'")
+    expect(broker).toContain("EXPECTED_AUD = 'bitbrawler-zai'")
+    expect(broker).toContain('crypto.subtle.verify')
+    expect(broker).toContain('env.ZAI_API_KEY')
   })
 })
 

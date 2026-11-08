@@ -94,6 +94,7 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
+      id-token: write
 
     steps:
       - name: Resolve PR number from event
@@ -402,8 +403,7 @@ jobs:
           # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
           # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
           # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
-          # Z.AI GLM-4.5-Flash est gratuit et hors de ce bucket (pas de Google).
-          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
+          # Z.AI GLM-4.5-Flash (gratuit, pas de Google) via broker OIDC Cloudflare /api/zai-key (pas de secret GitHub).
           SKIP_APPROVAL: ${{ env.SKIP_APPROVAL }}
           DEPS_LIST: ${{ env.DEPS_LIST }}
         run: |
@@ -444,14 +444,22 @@ jobs:
           )
           # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
           # retries du CLI (~2 min), le watchdog coupe et on passe au bearer de quota.
-          if [ -n "${ZAI_API_KEY:-}" ]; then
-            # Use Z.AI proxy instead of direct API call
-            MODELS+=("zai/glm-4.5-flash")
-            # Add environment variable for proxy URL
-            PROXY_URL="https://bitbrawler.pages.dev/api/zai-proxy"
-          else
-            echo "::warning::ZAI_API_KEY absent — aucun repli hors quota gratuit."
-          fi
+          # OIDC broker (Cloudflare /api/zai-key) — pas de secret GitHub.
+                    ZAI_API_KEY=""
+                    if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ] && [ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]; then
+                      OIDC_TOKEN=$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+                        "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=bitbrawler-zai" 2>/dev/null | jq -r '.value // empty' 2>/dev/null || true)
+                      if [ -n "$OIDC_TOKEN" ]; then
+                        ZAI_API_KEY=$(curl -fsS -H "Authorization: Bearer $OIDC_TOKEN" \
+                          "https://bitbrawler.pages.dev/api/zai-key" 2>/dev/null | jq -r '.key // empty' 2>/dev/null || true)
+                      fi
+                    fi
+                    if [ -n "$ZAI_API_KEY" ]; then
+                      export ZAI_API_KEY
+                      MODELS+=("zai/glm-4.5-flash")
+                    else
+                      echo "::warning::Broker Z.AI indisponible (clé Cloudflare absente ou OIDC refusé) — aucun repli hors quota gratuit."
+                    fi
           MODEL_BUDGETS=("8m" "5m" "4m" "12m")
 
           PROMPT="Tu es le reviewer de Bitbrawler. Tu réponds et agis UNIQUEMENT EN FRANÇAIS. Review la PR #${PR_NUMBER}.

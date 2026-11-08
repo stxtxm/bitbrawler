@@ -76,7 +76,7 @@
     },
     {
       "id": "free-model-quota-per-ip-2026-11-04",
-      "title": "2026-11-01→04 : quota *-free épuisé PAR IP et par jour UTC (runners GitHub partagés) → 8 min/modèle puis échec, aucune issue/PR ; fix = watchdog scripts/run-agent-model.sh + repli zai/glm-4.5-flash (Z.AI gratuit, pas de Google)",
+      "title": "2026-11-01→04 : quota *-free épuisé PAR IP et par jour UTC (runners GitHub partagés) → 8 min/modèle puis échec, aucune issue/PR ; fix = watchdog scripts/run-agent-model.sh + repli zai/glm-4.5-flash via broker OIDC Cloudflare /api/zai-key (clé Cloudflare, pas de secret GitHub, pas de Google)",
       "status": "fixed"
     },
     {
