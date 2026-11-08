@@ -80,7 +80,7 @@ ARGS+=("$PROMPT")
 # echo the quota message. Only opencode's error lines may abort the attempt.
 # `AI_RetryError: Failed after 3 attempts. Last error: ...` matches too, which
 # is what the CLI prints once it gives up.
-QUOTA_RE='level=ERROR.*(Free usage limit reached|FreeUsageLimitError|FreeTierError|free starter model is busy)'
+QUOTA_RE='level=ERROR.*(Free usage limit reached|FreeUsageLimitError|FreeTierError|free starter model is busy|Insufficient balance or no resource package)'
 AUTH_RE='level=ERROR.*(This API key has expired|Incorrect API key|invalid_api_key|authentication_error|AI_APICallError: 401)'
 MODEL_RE='level=ERROR.*(UnknownError: Unexpected server error|model_not_found|Model not found|does not exist or you do not have access)'
 

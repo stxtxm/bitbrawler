@@ -17,7 +17,7 @@
 └──────────────────────────────┬───────────────────────────────────┘
                                ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│ 2. DEV AGENT (opencode.yml, deepseek → … → gemini)              │
+│ 2. DEV AGENT (opencode.yml, deepseek → … → Z.AI)                │
 │    • Charge mémoires: dev.json + shared.json                     │
 │      ↳ AUTO-COMPACTÉES avant injection (scripts/                 │
 │        compact-memories.mjs, budgets shared 6KB / agent 4.5KB)   │
@@ -67,10 +67,12 @@
   tableaux `MODELS=(...)` des workflows) :
   `opencode/deepseek-v4.1-flash-free` → `opencode/glm-5.3-flash-free` →
   `opencode/nemotron-3.5-lightning-free`.
-- Dernier recours : `google/gemini-2.5-flash`, ajouté au tableau **uniquement si**
-  `GOOGLE_GENERATIVE_AI_API_KEY` est présent. Secret repo à scoper sur l'API
-  Generative Language et à faire tourner (`gh secret set …`) ; absent, les
-  workflows loguent un warning et sautent simplement le repli.
+- Dernier recours : `zai/glm-4.5-flash` (Z.AI, gratuit, tool-calling, pas de
+  Google), ajouté au tableau **uniquement si** `ZAI_API_KEY` est présent. Le
+  provider est déclaré dans `opencode.json` (`@ai-sdk/openai-compatible` vers
+  `https://api.z.ai/api/paas/v4`). Secret repo à faire tourner
+  (`gh secret set ZAI_API_KEY`) ; absent, les workflows loguent un warning et
+  sautent simplement le repli.
 - **Toute tentative passe par `scripts/run-agent-model.sh`** (jamais
   `timeout … opencode run`). Le watchdog lit le log en continu et coupe dès
   l'erreur fatale au lieu de laisser le CLI retenter ~2 min :
@@ -85,7 +87,7 @@
 - ⚠ **Quota gratuit par IP et par jour UTC** (incident 2026-11-01 → 04) : les
   slugs `*-free` partagent un même bucket, et les runners GitHub partagent leurs
   IP. Le bucket est donc vide avant la première requête : changer de slug ne
-  sert à rien, d'où le watchdog (~3 s par slug) et le repli Gemini.
+  sert à rien, d'où le watchdog (~3 s par slug) et le repli Z.AI.
 
 ## Incidents connus & procédures (2026-08-23)
 
@@ -98,7 +100,7 @@
 | SQL migration détectée → blocage | Guard volontaire reviewer | Issue dédiée SANS /oc, exécuter dans Supabase SQL Editor |
 | idle-processor « Character not found » | Secrets serveur périmés (erreur DB avalée) | Réponse inclut `db_target`+`detail`; tester avec un ID existant |
 | PR bot sans run CI | Event GITHUB_TOKEN / skip-ci | `gh workflow run ci.yml -f pr_number=N` ; runs bot = `action_required` → `POST /actions/runs/{id}/approve` |
-| Agents muets, 8 min/modèle puis échec | Quota `*-free` épuisé par IP (runners partagés) | watchdog `scripts/run-agent-model.sh` + repli `google/gemini-2.5-flash` (secret `GOOGLE_GENERATIVE_AI_API_KEY`) |
+| Agents muets, 8 min/modèle puis échec | Quota `*-free` épuisé par IP (runners partagés) | watchdog `scripts/run-agent-model.sh` + repli `zai/glm-4.5-flash` (secret `ZAI_API_KEY`) |
 
 ## Checklist « une PR est bloquée »
 

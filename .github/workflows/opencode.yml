@@ -46,7 +46,7 @@ jobs:
         contains(github.event.pull_request.head.ref, 'feat/auto-')
       )
     runs-on: ubuntu-latest
-    # Le repli Gemini peut ajouter 20 min au dev et 10 min par rappel : la marge
+    # Le repli Z.AI peut ajouter 20 min au dev et 10 min par rappel : la marge
     # de 100 min ne couvrait plus le pire cas, sans risque de blocage (chaque
     # tentative est bornee par le watchdog).
     timeout-minutes: 150
@@ -283,8 +283,8 @@ jobs:
           # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
           # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
           # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
-          # La cle Google est utilisee uniquement en dernier recours (voir MODELS plus bas).
-          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          # La cle Z.AI (GLM-4.5-Flash, gratuit, hors quota des slugs *-free) sert de dernier recours (voir MODELS plus bas).
+          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
         run: |
           echo "🔍 Supervisor mode — validating campaign for issue #$ISSUE_NUMBER..."
           PROMPT="Tu es le superviseur de campagne. Valide la campagne #$ISSUE_NUMBER et mets à jour la documentation.
@@ -327,10 +327,10 @@ jobs:
            )
            # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
            # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
-           if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]; then
-             MODELS+=("google/gemini-2.5-flash")
+           if [ -n "${ZAI_API_KEY:-}" ]; then
+             MODELS+=("zai/glm-4.5-flash")
            else
-             echo "::warning::GOOGLE_GENERATIVE_AI_API_KEY absent — aucun repli hors quota gratuit."
+             echo "::warning::ZAI_API_KEY absent — aucun repli hors quota gratuit."
            fi
            MODEL_BUDGETS=("6m" "4m" "3m" "10m")
            SUCCESS=0
@@ -363,8 +363,8 @@ jobs:
           # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
           # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
           # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
-          # La cle Google est utilisee uniquement en dernier recours (voir MODELS plus bas).
-          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          # La cle Z.AI (GLM-4.5-Flash, gratuit, hors quota des slugs *-free) sert de dernier recours (voir MODELS plus bas).
+          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
           ISSUE_NUMBER: ${{ env.ISSUE_NUMBER }}
         run: |
           ISSUE_BODY=$(cat /tmp/prompt.txt)
@@ -450,10 +450,10 @@ jobs:
             )
             # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
             # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
-            if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]; then
-              MODELS+=("google/gemini-2.5-flash")
+            if [ -n "${ZAI_API_KEY:-}" ]; then
+              MODELS+=("zai/glm-4.5-flash")
             else
-              echo "::warning::GOOGLE_GENERATIVE_AI_API_KEY absent — aucun repli hors quota gratuit."
+              echo "::warning::ZAI_API_KEY absent — aucun repli hors quota gratuit."
             fi
             MODEL_BUDGETS=("6m" "4m" "3m" "10m")
             SUCCESS=0
@@ -509,8 +509,8 @@ jobs:
           # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
           # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
           # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
-          # La cle Google est utilisee uniquement en dernier recours (voir MODELS plus bas).
-          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          # La cle Z.AI (GLM-4.5-Flash, gratuit, hors quota des slugs *-free) sert de dernier recours (voir MODELS plus bas).
+          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
           ISSUE_NUMBER: ${{ env.ISSUE_NUMBER }}
         run: |
           ISSUE_BODY=$(cat /tmp/prompt.txt)
@@ -558,16 +558,16 @@ jobs:
           )
           # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
           # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
-          if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]; then
-            MODELS+=("google/gemini-2.5-flash")
+          if [ -n "${ZAI_API_KEY:-}" ]; then
+            MODELS+=("zai/glm-4.5-flash")
           else
-            echo "::warning::GOOGLE_GENERATIVE_AI_API_KEY absent — aucun repli hors quota gratuit."
+            echo "::warning::ZAI_API_KEY absent — aucun repli hors quota gratuit."
           fi
           # Budget par modèle : le primaire écrit ET teste le code (18 min — il a besoin
           # de lire les fichiers, d'implémenter, de lancer la suite et de l'ajuster).
           # Les replis repartent de ZÉRO (aucune mémoire du travail du primaire) : une
           # sonde courte suffit, inutile de patienter pendant qu'ils refont tout le tour.
-          # Gemini (dernier) écrit aussi : il garde un budget de primaire.
+          # Z.AI (dernier) écrit aussi : il garde un budget de primaire.
           MODEL_BUDGETS=("25m" "12m" "8m" "20m")
           SUCCESS=0
           MODEL_IDX=0
@@ -726,8 +726,8 @@ jobs:
           # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
           # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
           # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
-          # La cle Google est utilisee uniquement en dernier recours (voir MODELS plus bas).
-          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          # La cle Z.AI (GLM-4.5-Flash, gratuit, hors quota des slugs *-free) sert de dernier recours (voir MODELS plus bas).
+          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
         run: |
           PR_NUMBER="${{ steps.check_pr.outputs.existing_pr }}"
           echo "Existing PR #$PR_NUMBER — fetching CI/review feedback..."
@@ -797,16 +797,16 @@ jobs:
           )
           # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
           # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
-          if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]; then
-            MODELS+=("google/gemini-2.5-flash")
+          if [ -n "${ZAI_API_KEY:-}" ]; then
+            MODELS+=("zai/glm-4.5-flash")
           else
-            echo "::warning::GOOGLE_GENERATIVE_AI_API_KEY absent — aucun repli hors quota gratuit."
+            echo "::warning::ZAI_API_KEY absent — aucun repli hors quota gratuit."
           fi
           # Budget par modèle : le primaire écrit ET teste le code (18 min — il a besoin
           # de lire les fichiers, d'implémenter, de lancer la suite et de l'ajuster).
           # Les replis repartent de ZÉRO (aucune mémoire du travail du primaire) : une
           # sonde courte suffit, inutile de patienter pendant qu'ils refont tout le tour.
-          # Gemini (dernier) écrit aussi : il garde un budget de primaire.
+          # Z.AI (dernier) écrit aussi : il garde un budget de primaire.
           MODEL_BUDGETS=("25m" "12m" "8m" "20m")
           SUCCESS=0
           MODEL_IDX=0
@@ -838,8 +838,8 @@ jobs:
           # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
           # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
           # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
-          # La cle Google est utilisee uniquement en dernier recours (voir MODELS plus bas).
-          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          # La cle Z.AI (GLM-4.5-Flash, gratuit, hors quota des slugs *-free) sert de dernier recours (voir MODELS plus bas).
+          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
         run: |
           MAX_RETRIES=3
           ISSUE_TITLE=$(cat /tmp/issue-title.txt 2>/dev/null || echo "Auto-implement issue #$ISSUE_NUMBER")
@@ -942,13 +942,13 @@ jobs:
             )
             # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
             # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
-            if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]; then
-              MODELS+=("google/gemini-2.5-flash")
+            if [ -n "${ZAI_API_KEY:-}" ]; then
+              MODELS+=("zai/glm-4.5-flash")
             else
-              echo "::warning::GOOGLE_GENERATIVE_AI_API_KEY absent — aucun repli hors quota gratuit."
+              echo "::warning::ZAI_API_KEY absent — aucun repli hors quota gratuit."
             fi
             # Rappel après gate rouge : le primaire relit les sorties de gate et corrige
-            # (10 min) ; replis = sonde courte (ils repartent de zéro). Gemini corrige
+            # (10 min) ; replis = sonde courte (ils repartent de zéro). Z.AI corrige
             # aussi : budget de primaire.
             MODEL_BUDGETS=("12m" "5m" "4m" "10m")
             SUCCESS=0

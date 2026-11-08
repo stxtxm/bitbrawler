@@ -85,7 +85,7 @@ jobs:
     needs: preflight
     if: (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success') && needs.preflight.outputs.should_review == 'true'
     runs-on: ubuntu-latest
-    # Free models abort in ~3 s under the shared quota; the Gemini fallback gets
+    # Free models abort in ~3 s under the shared quota; the Z.AI fallback gets
     # 12 min. Worst case ~29 min of model time + ~4 min of gates.
     timeout-minutes: 45
 
@@ -402,7 +402,8 @@ jobs:
           # Repli hors quota (incident 2026-11-01 -> 04) : les slugs *-free partagent un
           # quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP, donc le
           # bucket est deja vide et les 3 modeles repondent "Free usage limit reached".
-          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          # Z.AI GLM-4.5-Flash est gratuit et hors de ce bucket (pas de Google).
+          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
           SKIP_APPROVAL: ${{ env.SKIP_APPROVAL }}
           DEPS_LIST: ${{ env.DEPS_LIST }}
         run: |
@@ -443,10 +444,10 @@ jobs:
           )
           # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
           # retries du CLI (~2 min), le watchdog coupe et on passe au bearer de quota.
-          if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]; then
-            MODELS+=("google/gemini-2.5-flash")
+          if [ -n "${ZAI_API_KEY:-}" ]; then
+            MODELS+=("zai/glm-4.5-flash")
           else
-            echo "::warning::GOOGLE_GENERATIVE_AI_API_KEY absent — aucun repli hors quota gratuit."
+            echo "::warning::ZAI_API_KEY absent — aucun repli hors quota gratuit."
           fi
           MODEL_BUDGETS=("8m" "5m" "4m" "12m")
 

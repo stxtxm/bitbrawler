@@ -2,6 +2,23 @@
   "$schema": "https://opencode.ai/config.json",
   "model": "opencode/deepseek-v4.1-flash-free",
   "default_agent": "dev-agent",
+  "provider": {
+    "zai": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Z.AI",
+      "options": {
+        "baseURL": "https://api.z.ai/api/paas/v4",
+        "apiKey": "{env:ZAI_API_KEY}"
+      },
+      "models": {
+        "glm-4.5-flash": {
+          "name": "GLM-4.5-Flash",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        }
+      }
+    }
+  },
   "agent": {
     "dev-agent": {
       "description": "Agent de dev autonome. Implemente, review, merge.",

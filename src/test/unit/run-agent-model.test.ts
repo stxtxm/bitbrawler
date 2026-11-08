@@ -5,7 +5,7 @@
  * `AI_APICallError: Free usage limit reached` and the CLI retries the call for
  * ~2 minutes before exiting. A 3-model chain burned ~24 minutes and the job
  * died without a usable diagnostic. The wrapper kills the attempt as soon as
- * that fatal line appears, then the workflow moves to the Gemini fallback.
+ * that fatal line appears, then the workflow moves to the Z.AI fallback.
  *
  * These tests drive the real shell script with a fake `opencode` on PATH, so
  * the exit-code contract stays honest: 0 success, 42 quota, 43 auth, 44
@@ -45,6 +45,7 @@ case "$FAKE_MODE" in
   quota_echo) echo "Le message est: Free usage limit reached. Free models work in OpenCode"; echo "48.0"; exit 0 ;;
   auth) echo 'timestamp=x level=ERROR error.error="AI_APICallError: This API key has expired"'; sleep 60 ;;
   model) echo 'timestamp=x level=ERROR error.error="UnknownError: Unexpected server error"'; sleep 60 ;;
+  zai_quota) echo 'timestamp=x level=ERROR error.error="AI_APICallError: Insufficient balance or no resource package."'; sleep 60 ;;
   slow) sleep 60 ;;
 esac
 `
@@ -87,6 +88,12 @@ describe('run-agent-model watchdog', () => {
     expect(code).toBe(42)
     expect(elapsed).toBeLessThan(20_000)
     expect(output).toContain('quota gratuit épuisé')
+  })
+
+  it('aborts a Z.AI billing error like a quota (42)', () => {
+    const { code, elapsed } = run('zai_quota', '60s')
+    expect(code).toBe(42)
+    expect(elapsed).toBeLessThan(20_000)
   })
 
   it('aborts an expired credential (43)', () => {
