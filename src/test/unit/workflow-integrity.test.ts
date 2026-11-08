@@ -461,8 +461,9 @@ describe('Chaîne de modèles : watchdog + repli hors quota partagé (#tech-lead
   // tech-lead brûlait 24 min pour finir en échec, sans issue ni PR.
   //
   // Contrat désormais : chaque tentative passe par le watchdog (coupe en ~3 s sur
-  // erreur fatale) et un dernier recours Gemini n'est ajouté QUE si le secret est
-  // présent — les slugs opencode restent prioritaires.
+  // erreur fatale) et un dernier recours Z.AI (GLM-4.5-Flash, gratuit, pas de
+  // Google) n'est ajouté QUE si le secret est présent — les slugs opencode
+  // restent prioritaires.
   const agentWorkflows = ['opencode.yml', 'reviewer.yml', 'tech-lead.yml']
 
   it.each(agentWorkflows)('%s invoque chaque modèle via le watchdog', file => {
@@ -473,16 +474,14 @@ describe('Chaîne de modèles : watchdog + repli hors quota partagé (#tech-lead
     expect(source).not.toMatch(/\bopencode run\b/)
   })
 
-  it.each(agentWorkflows)('%s ne tente Gemini que si le secret existe', file => {
+  it.each(agentWorkflows)('%s ne tente Z.AI que si le secret existe', file => {
     const source = readWorkflow(file)
-    expect(source).toContain('if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]')
-    expect(source).toContain('MODELS+=("google/gemini-2.5-flash")')
-    expect(source).toContain(
-      'GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}'
-    )
-    // Gemini vient en DERNIER recours : un `MODELS=(` qui le contient en tête
+    expect(source).toContain('if [ -n "${ZAI_API_KEY:-}" ]')
+    expect(source).toContain('MODELS+=("zai/glm-4.5-flash")')
+    expect(source).toContain('ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}')
+    // Z.AI vient en DERNIER recours : un `MODELS=(` qui le contient en tête
     // ferait sortir les slugs opencode du chemin nominal.
-    expect(source).not.toMatch(/MODELS=\(\s*"google\//)
+    expect(source).not.toMatch(/MODELS=\(\s*"zai\//)
   })
 
   it('les slugs opencode restent prioritaires dans les trois workflows', () => {
@@ -491,7 +490,7 @@ describe('Chaîne de modèles : watchdog + repli hors quota partagé (#tech-lead
       const free = source.indexOf('"opencode/deepseek-v4.1-flash-free"')
       expect(free).toBeGreaterThanOrEqual(0)
       // Le repli est ajouté après le tableau des slugs gratuits.
-      expect(source.indexOf('MODELS+=("google/gemini-2.5-flash")')).toBeGreaterThan(free)
+      expect(source.indexOf('MODELS+=("zai/glm-4.5-flash")')).toBeGreaterThan(free)
     }
   })
 
@@ -499,6 +498,7 @@ describe('Chaîne de modèles : watchdog + repli hors quota partagé (#tech-lead
     const script = join(process.cwd(), 'scripts', 'run-agent-model.sh')
     const source = readFileSync(script, 'utf8')
     expect(source).toContain('Free usage limit reached')
+    expect(source).toContain('Insufficient balance or no resource package')
     expect(source).toContain('exit 42')
     expect(statSync(script).mode & 0o111).not.toBe(0)
   })

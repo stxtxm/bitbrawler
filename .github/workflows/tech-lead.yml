@@ -75,9 +75,9 @@ jobs:
           # Repli hors quota (incident 2026-11-01 → 04) : les slugs *-free partagent
           # un quota PAR IP ET PAR JOUR UTC. Les runners GitHub partagent leurs IP,
           # donc le bucket est deja vide : les 3 modeles repondent
-          # "Free usage limit reached". Cle a scoper sur l'API Generative Language
-          # uniquement, et a faire tourner. Absente => le repli est simplement saute.
-          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_GENERATIVE_AI_API_KEY }}
+          # "Free usage limit reached". Z.AI GLM-4.5-Flash est gratuit et hors de ce
+          # bucket (pas de Google). Absente => le repli est simplement saute.
+          ZAI_API_KEY: ${{ secrets.ZAI_API_KEY }}
         run: |
           MODELS=(
             "opencode/deepseek-v4.1-flash-free"
@@ -87,10 +87,10 @@ jobs:
           # Le quota est partage par les trois slugs : inutile d'attendre que le
           # CLI retente pendant 2 min, le watchdog coupe et on passe au bearer
           # d'un vrai quota.
-          if [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ]; then
-            MODELS+=("google/gemini-2.5-flash")
+          if [ -n "${ZAI_API_KEY:-}" ]; then
+            MODELS+=("zai/glm-4.5-flash")
           else
-            echo "::warning::GOOGLE_GENERATIVE_AI_API_KEY absent — aucun repli hors quota gratuit."
+            echo "::warning::ZAI_API_KEY absent — aucun repli hors quota gratuit."
           fi
 
           # Read latest QA analysis if available
@@ -176,7 +176,7 @@ jobs:
             - Effort estimé (1-5)
             - Inspiré de quels jeux/recherches"
 
-          # Les slugs *-free tombent en ~3 s sur le quota partage ; Gemini doit
+          # Les slugs *-free tombent en ~3 s sur le quota partage ; Z.AI doit
           # avoir le temps de lire les stats, chercher sur le web et créer les
           # issues (budget de primaire).
           MODEL_BUDGETS=("8m" "5m" "4m" "15m")
