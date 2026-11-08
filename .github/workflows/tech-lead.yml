@@ -144,18 +144,9 @@ jobs:
             - **Trends**: win rate last_3 vs last_5 vs all_time. Baisse +15% = problème
             - **Stats personnages**: équilibrées ~10, aucune < 7 ou > 13
 
-            ## 2. Recherche web OBLIGATOIRE
+            ## 2. Recherche web (optionnelle, économe)
 
-            Tu dois faire AU MOINS 3 recherches web avec l'outil websearch. Cherche des idées concrètes pour améliorer Bitbrawler.
-
-            ### Idées de recherches :
-            1. **Engagement mécaniques** : cherche 'idle mobile game engagement mechanics 2026' ou 'best idle RPG retention systems'
-            2. **Prestige systems** : cherche 'idle game prestige system design' ou 'reset mechanics that work'
-            3. **Weekly events** : cherche 'mobile game weekly event ideas' ou 'limited time events idle games'
-            4. **Collection systems** : cherche 'bestiary collection system mobile game' ou 'item compendium engagement'
-            5. **Combat depth** : cherche 'mobile auto battler depth strategy' ou 'elemental weakness system pixel game'
-            6. **UI/UX trends** : cherche 'pixel art mobile UI trends 2026' ou 'satisfying game juice animations'
-            7. **Monetization** : cherche 'rewarded ads integration indie game' ou 'non-invasive mobile monetization 2026'
+            Ne fais une recherche web que si les stats QA révèlent un signal concret (chute win rate, loot déséquilibré, stagnation). **Maximum 1 recherche ciblée**. Pas de veille générique, ne lance pas de sous-agent explore pour de la recherche large : ça consomme du quota pour peu de valeur. Base-toi d'abord sur les stats QA et les commits.
 
             ## 3. Analyser les commits récents
             - git log --oneline -30
@@ -189,9 +180,9 @@ jobs:
             - Inspiré de quels jeux/recherches"
 
           # Les slugs *-free tombent en ~3 s sur le quota partage ; Z.AI doit
-          # avoir le temps de lire les stats, chercher sur le web et créer les
-          # issues (budget de primaire).
-          MODEL_BUDGETS=("8m" "5m" "4m" "15m")
+          # avoir le temps de lire les stats et créer les issues (budget primaire).
+          # Websearch limitée (max 1) pour économiser le quota.
+          MODEL_BUDGETS=("8m" "5m" "4m" "10m")
           SUCCESS=0
           MODEL_IDX=0
           for MODEL in "${MODELS[@]}"; do
