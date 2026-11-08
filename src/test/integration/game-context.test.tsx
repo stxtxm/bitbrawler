@@ -22,6 +22,9 @@ vi.mock('../../utils/matchmakingUtils', () => ({
 vi.mock('../../utils/lootboxUtils', () => ({
   canRollLootbox: vi.fn(),
   computeNextStreak: vi.fn(() => 1),
+  getNewlyReachedMilestones: vi.fn(() => []),
+  loadClaimedStreakMilestones: vi.fn(() => []),
+  saveClaimedStreakMilestones: vi.fn(),
   rollLootbox: vi.fn(),
   loadEpicPityState: vi.fn(() => ({ epicPityCount: 0, commonStreak: 0 })),
   saveEpicPityState: vi.fn(),

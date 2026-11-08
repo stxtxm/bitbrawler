@@ -7,7 +7,8 @@ import { GAME_RULES } from '../config/gameRules';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { findOpponent, MatchmakingResult } from '../utils/matchmakingUtils';
 import { ITEM_ASSETS } from '../data/itemAssets';
-import { canRollLootbox, computeNextStreak, loadEpicPityState, rollLootbox, saveEpicPityState } from '../utils/lootboxUtils';
+import { canRollLootbox, computeNextStreak, getNewlyReachedMilestones, loadClaimedStreakMilestones, loadEpicPityState, rollLootbox, saveClaimedStreakMilestones, saveEpicPityState } from '../utils/lootboxUtils';
+import { consumeAllChallengesBonus, recordArtisanChallenge, recordCombatChallenge } from '../utils/dailyChallengeUtils';
 import { ItemSlot, PixelItemAsset } from '../types/Item';
 import { getItemById } from '../utils/equipmentUtils';
 import { simulateCombat } from '../utils/combatUtils';
@@ -745,6 +746,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         });
       }
 
+      if (baseCharacter.id) recordCombatChallenge(baseCharacter.id);
+
       return {
         xpGained,
         leveledUp: xpResult.leveledUp,
@@ -886,6 +889,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         hpGained: xpResult.levelsGained * HP_PER_LEVEL,
       });
     }
+
+    if (baseCharacter.id) recordCombatChallenge(baseCharacter.id);
 
     return {
       xpGained: won ? rewards.xpGained : 0,
@@ -1242,6 +1247,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
     const currentStreak = char.lootboxStreak ?? 0;
     const newStreak = computeNextStreak(effectiveLastRoll, currentStreak, now);
+    const claimedMilestones = loadClaimedStreakMilestones(char.id);
+    const newMilestones = getNewlyReachedMilestones(newStreak, claimedMilestones);
+    const milestoneMinRarity = newMilestones.includes(30) ? 'rare' as const : null;
 
     const result = rollLootbox(ITEM_ASSETS, {
       excludeIds: inventory,
@@ -1250,6 +1258,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       pityCount: lootboxPityCount,
       epicPityCount: lootboxEpicPityCount,
       commonStreak: lootboxCommonStreak,
+      minRarityOverride: milestoneMinRarity,
     });
     if (!result.item) {
       throw new Error('No new loot available.');
@@ -1264,14 +1273,33 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       saveEpicPityState(char.id, { epicPityCount: nextEpicPity, commonStreak: nextCommonStreak });
     }
 
+    let milestoneEssence = 0;
+    if (newMilestones.includes(3)) milestoneEssence += 12;
+    if (newMilestones.includes(14)) milestoneEssence += 50;
+    if (milestoneEssence > 0 && consumeAllChallengesBonus(char.id)) milestoneEssence *= 2;
+    let nextInventory = [...inventory, result.item.id];
+    if (newMilestones.includes(7) && nextInventory.length < INVENTORY_CAPACITY) {
+      const bonus = rollLootbox(ITEM_ASSETS, {
+        excludeIds: nextInventory,
+        level: char.level,
+        streak: newStreak,
+        pityCount: 0,
+      });
+      if (bonus.item) nextInventory = [...nextInventory, bonus.item.id];
+    }
+    if (newMilestones.length > 0) {
+      saveClaimedStreakMilestones(char.id, [...new Set([...claimedMilestones, ...newMilestones])]);
+    }
+
     const updatedChar = normalizeCharacter({
       ...char,
-      inventory: [...inventory, result.item.id],
+      inventory: nextInventory,
       lastLootRoll: now,
       lootboxStreak: newStreak,
       lootboxPityCount: result.pityCount,
       lootboxEpicPityCount: nextEpicPity,
       lootboxCommonStreak: nextCommonStreak,
+      essence: (char.essence ?? 0) + milestoneEssence,
     });
 
     try {
@@ -1283,6 +1311,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           last_loot_roll: updatedChar.lastLootRoll,
           lootbox_streak: updatedChar.lootboxStreak,
           focus: updatedChar.focus,
+          essence: updatedChar.essence,
         })
         .eq('id', char.id)
         .eq('last_loot_roll', effectiveLastRoll ?? 0)
@@ -1482,6 +1511,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         })
         .eq('id', activeCharacter.id!);
       persistCharacter(normalized);
+      if (activeCharacter?.id) if (activeCharacter?.id) recordArtisanChallenge(activeCharacter.id);
 
       // Non-blocking medal/achievement check after salvage
       checkAndApplyMedals(normalized, {}).then(charWithMedals => {
@@ -1524,6 +1554,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         })
         .eq('id', baseChar.id!);
       persistCharacter(normalized);
+      if (baseChar.id) recordArtisanChallenge(baseChar.id);
 
       // Non-blocking medal/achievement check after fusion
       checkAndApplyMedals(normalized, {}).then(charWithMedals => {
@@ -1562,6 +1593,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         })
         .eq('id', baseChar.id!);
       persistCharacter(normalized);
+      if (baseChar.id) recordArtisanChallenge(baseChar.id);
 
       // Non-blocking medal/achievement check after upgrade
       checkAndApplyMedals(normalized, {}).then(charWithMedals => {
@@ -1615,6 +1647,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         clearTimeout(syncToBackendTimeoutRef.current);
         syncToBackendTimeoutRef.current = null;
       }
+
+      if (baseChar.id) recordArtisanChallenge(baseChar.id);
 
       // Non-blocking medal/achievement check
       checkAndApplyMedals(normalized, {}).then(charWithMedals => {

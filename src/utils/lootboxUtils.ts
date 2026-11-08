@@ -234,6 +234,7 @@ export interface RollLootboxOptions {
   epicPityCount?: number; // Consecutive rolls without epic or better
   commonStreak?: number; // Consecutive common rolls (progressive epic boost)
   consecutiveLosses?: number;
+  minRarityOverride?: ItemRarity | null; // Force minimum rarity (e.g. streak milestone)
 }
 
 export interface RollLootboxResult {
@@ -512,7 +513,10 @@ export function rollLootbox(
   const lossFloorActive = (options.consecutiveLosses ?? 0) >= 3;
   const lossFloor: ItemRarity | null = lossFloorActive ? 'uncommon' : null;
   const rankOf = (r: ItemRarity | null): number => (r === null ? -1 : RARITY_RANK[r]);
-  const effectiveMinRarity = rankOf(bonus.minRarity) >= rankOf(lossFloor) ? bonus.minRarity : lossFloor;
+  const streakMin = rankOf(bonus.minRarity) >= rankOf(lossFloor) ? bonus.minRarity : lossFloor;
+  const effectiveMinRarity = rankOf(options.minRarityOverride ?? null) >= rankOf(streakMin)
+    ? (options.minRarityOverride ?? streakMin)
+    : streakMin;
 
   let item: PixelItemAsset | null;
 
@@ -548,4 +552,34 @@ export function rollLootbox(
     commonStreak,
     epicBoost,
   };
+}
+
+export const STREAK_MILESTONES = [3, 7, 14, 30] as const;
+
+function streakMilestoneKey(characterId: string): string {
+  return `bitbrawler_streak_milestones_${characterId}`;
+}
+
+export function loadClaimedStreakMilestones(characterId: string): number[] {
+  try {
+    const raw = localStorage.getItem(streakMilestoneKey(characterId));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((n): n is number => typeof n === 'number');
+  } catch {
+    return [];
+  }
+}
+
+export function saveClaimedStreakMilestones(characterId: string, milestones: number[]): void {
+  try {
+    localStorage.setItem(streakMilestoneKey(characterId), JSON.stringify(milestones));
+  } catch {
+    return;
+  }
+}
+
+export function getNewlyReachedMilestones(streak: number, claimed: number[]): number[] {
+  return STREAK_MILESTONES.filter((m) => streak >= m && !claimed.includes(m));
 }
