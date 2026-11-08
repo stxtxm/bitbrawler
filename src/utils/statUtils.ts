@@ -41,12 +41,12 @@ export function allocateStatsByArchetype(character: Character, points: number, r
 }
 
 export const STAT_TOOLTIPS: Record<StatKey, string> = {
-    strength: 'Boosts physical damage dealt in combat. Each point increases your offense power for harder-hitting attacks.',
-    vitality: `Increases max HP (+8 HP per point) and improves physical defense, making you tougher to take down.`,
-    dexterity: 'Improves turn order initiative and hit chance for more consistent and faster attacks.',
-    luck: 'Increases critical hit chance and improves loot quality from battles and lootboxes.',
-    intelligence: 'Boosts magic power for stronger magical attacks and special abilities.',
-    focus: 'Reduces damage variance for stable performance and increases surge chance for bonus damage.',
+    strength: 'Boosts physical damage dealt in combat. Each point increases your offense power for harder-hitting attacks. (No maximum limit)',
+    vitality: `Increases max HP (+8 HP per point) and improves physical defense, making you tougher to take down. (No maximum limit)`,
+    dexterity: 'Improves turn order initiative and hit chance for more consistent and faster attacks. (No maximum limit)',
+    luck: 'Increases critical hit chance and improves loot quality from battles and lootboxes. (No maximum limit)',
+    intelligence: 'Boosts magic power for stronger magical attacks and special abilities. (No maximum limit)',
+    focus: 'Reduces damage variance for stable performance and increases surge chance for bonus damage. (No maximum limit)',
 };
 
 const BASE_HP = 100;
