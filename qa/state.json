@@ -1,12 +1,9 @@
 {
-  "run": "2026-11-08",
-  "character": "QA-PERSI-2",
-  "exhausted": true,
-  "updated_at": "2026-11-08T21:32:36.388Z",
-  "source": "reused",
-  "character_type": "persistent",
-  "persistent_generation": 1,
-  "persistent_created_at": "2026-11-05T17:01:31.425Z",
-  "persistent_reset_ready": false,
+  "run": "2026-11-09",
+  "character": "GROVEBARD",
+  "exhausted": false,
+  "updated_at": "2026-11-08T23:04:07.325Z",
+  "source": "created",
+  "character_type": "fresh",
   "pvp_since_last_pve": 1
 }
