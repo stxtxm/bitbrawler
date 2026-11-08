@@ -445,7 +445,10 @@ jobs:
           # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
           # retries du CLI (~2 min), le watchdog coupe et on passe au bearer de quota.
           if [ -n "${ZAI_API_KEY:-}" ]; then
+            # Use Z.AI proxy instead of direct API call
             MODELS+=("zai/glm-4.5-flash")
+            # Add environment variable for proxy URL
+            PROXY_URL="https://bitbrawler.pages.dev/api/zai-proxy"
           else
             echo "::warning::ZAI_API_KEY absent — aucun repli hors quota gratuit."
           fi

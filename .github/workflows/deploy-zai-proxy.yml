@@ -1,0 +1,47 @@
+name: Deploy Z.AI Proxy
+
+on:
+  schedule:
+    # Run daily at 00:00 UTC to check for updates
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force redeploy'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  deploy-proxy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy Z.AI proxy to Cloudflare Pages
+        if: github.ref == 'refs/heads/master' || github.event.inputs.force == 'true'
+        run: |
+          # Deploy the proxy function
+          npx wrangler pages deploy functions/zai-proxy --project-name bitbrawler
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Set proxy URL in environment
+        if: github.ref == 'refs/heads/master' || github.event.inputs.force == 'true'
+        run: |
+          # Update the workflows with the correct proxy URL
+          # This would typically be done by updating a config file or secret
+          echo "Proxy URL: https://bitbrawler.pages.dev/api/zai-proxy"

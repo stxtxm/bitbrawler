@@ -71,7 +71,7 @@ OC_MAJOR="$(opencode --version 2>/dev/null | grep -oE '[0-9]+' | head -1 || true
 LOG_LEVEL=INFO
 [[ "${OC_MAJOR:-1}" -ge 2 ]] && LOG_LEVEL=info
 
-ARGS=(run --print-logs --log-level "$LOG_LEVEL" --dangerously-skip-permissions --model "$MODEL")
+ARGS=(run --print-logs --log-level "$LOG_LEVEL" --dangerously-skip-permissions --model "$MODEL") [[ -n "${PROXY_URL:-}" ]] && ARGS+=(--base-url "$PROXY_URL")
 [[ -n "$AGENT" ]] && ARGS+=(--agent "$AGENT")
 ARGS+=("$PROMPT")
 

@@ -26,6 +26,33 @@ on:
         type: string
 
 jobs:
+  deploy-zai-proxy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy Z.AI proxy to Cloudflare Pages
+        run: |
+          # Deploy the proxy function
+          npx wrangler pages deploy functions/zai-proxy --project-name bitbrawler
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+
   implement:
     if: |
       github.event_name == 'workflow_dispatch' ||
@@ -559,7 +586,10 @@ jobs:
           # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
           # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
           if [ -n "${ZAI_API_KEY:-}" ]; then
+            # Use Z.AI proxy instead of direct API call
             MODELS+=("zai/glm-4.5-flash")
+            # Add environment variable for proxy URL
+            PROXY_URL="https://bitbrawler.pages.dev/api/zai-proxy"
           else
             echo "::warning::ZAI_API_KEY absent — aucun repli hors quota gratuit."
           fi
@@ -575,7 +605,7 @@ jobs:
             MODEL_BUDGET="${MODEL_BUDGETS[$MODEL_IDX]}"
             MODEL_IDX=$((MODEL_IDX + 1))
             echo "Trying model: $MODEL (budget $MODEL_BUDGET)"
-            if bash scripts/run-agent-model.sh --budget "$MODEL_BUDGET" --model "$MODEL" --prompt "$PROMPT"; then
+            if bash scripts/run-agent-model.sh --budget "$MODEL_BUDGET" --model "$MODEL" --prompt "$PROMPT" --proxy-url "$PROXY_URL"; then
               echo "Model selected: $MODEL"
               SUCCESS=1
               break
@@ -798,7 +828,10 @@ jobs:
           # Le quota gratuit est partage par les trois slugs : inutile d'attendre les
           # retries du CLI (~2 min), le watchdog coupe et on passe a un bearer de quota.
           if [ -n "${ZAI_API_KEY:-}" ]; then
+            # Use Z.AI proxy instead of direct API call
             MODELS+=("zai/glm-4.5-flash")
+            # Add environment variable for proxy URL
+            PROXY_URL="https://bitbrawler.pages.dev/api/zai-proxy"
           else
             echo "::warning::ZAI_API_KEY absent — aucun repli hors quota gratuit."
           fi
@@ -814,7 +847,7 @@ jobs:
             MODEL_BUDGET="${MODEL_BUDGETS[$MODEL_IDX]}"
             MODEL_IDX=$((MODEL_IDX + 1))
             echo "Trying model: $MODEL (budget $MODEL_BUDGET)"
-            if bash scripts/run-agent-model.sh --budget "$MODEL_BUDGET" --model "$MODEL" --prompt "$PROMPT"; then
+            if bash scripts/run-agent-model.sh --budget "$MODEL_BUDGET" --model "$MODEL" --prompt "$PROMPT" --proxy-url "$PROXY_URL"; then
               echo "Model selected: $MODEL"
               SUCCESS=1
               break
