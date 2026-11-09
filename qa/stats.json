@@ -203578,5 +203578,315 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-09T08:02:33.508Z",
+    "run": "2026-11-09",
+    "character": "GROVEBARD",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "fresh",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 31,
+        "fight_duration_ms": 8827,
+        "max_hp": 256,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 31.14
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 3,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 11,
+      "vit": 10,
+      "dex": 15,
+      "luk": 21,
+      "int": 9,
+      "foc": 7,
+      "fights": 0
+    },
+    "initial_level": 7,
+    "initial_xp": {
+      "current": 583,
+      "max": 2975
+    },
+    "progression_curve": {
+      "level": 7,
+      "total_xp": 7009,
+      "xp_for_next": 2975,
+      "percent": 19.6
+    },
+    "initial_max_hp": 260,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      },
+      {
+        "slot": "🛡",
+        "name": "Leather Vest"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 8,
+      "xp": 302,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 11,
+      "vit": 10,
+      "dex": 16,
+      "luk": 21,
+      "int": 9,
+      "foc": 7,
+      "last xp": 64,
+      "fights": 6
+    },
+    "final_max_hp": 256,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      },
+      {
+        "slot": "🛡",
+        "name": "Leather Vest"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      },
+      {
+        "slot": "🛡",
+        "name": "Leather Vest"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 7,
+        "new_level": 8
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 24393,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "ogre"
+      ],
+      "victories": 1,
+      "defeats": 0,
+      "xp_total": 22,
+      "xp_events": [
+        {
+          "time_ms": 24393,
+          "xp": 22,
+          "monster": "ogre",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        507,
+        1015,
+        24393
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 22,
+        "essence": 0.34,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.16,
+      "next_level_eta": "⬆ 10m 29s",
+      "power_ratio": "⚔ 0.52x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 0.96x",
+      "interval": "11.0s",
+      "streak_bonus": "🔥 1-win streak (+0%)"
+    },
+    "initial_essence": 20.72,
+    "final_essence": 2.37,
+    "essence": {
+      "before_idle": 20.72,
+      "after_idle": 21.06,
+      "per_fight": [
+        31.14
+      ],
+      "forge_before": 31,
+      "forge_after_salvage": 31,
+      "forge_after_fusion": 31,
+      "forge_after_upgrade": 1,
+      "forge_after": 1,
+      "shop_before": 2,
+      "shop_after": 2,
+      "final": 2.37,
+      "flow": {
+        "idle_gained": 0.34,
+        "fights_change": null,
+        "salvage_gained": 0,
+        "fusion_cost": 0,
+        "upgrade_cost": 30,
+        "forge_net": -30,
+        "shop_cost": 0,
+        "net_change": -18.35
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 31,
+      "essence_after_salvage": 31,
+      "essence_after_fusion": 31,
+      "essence_after_upgrade": 1,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 1,
+      "items_after": 0,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": 30,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 2,
+      "essence_after": 2,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Bronze Axe",
+            "rarity": "UNCOMMON",
+            "price": 30
+          },
+          {
+            "name": "Stone Cleaver",
+            "rarity": "RARE",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 2,
+        "essence_budget": 40,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 40
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1181,
+      "arena": 1237
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Bronze Axe",
+          "rarity": "UNCOMMON",
+          "price": 30
+        },
+        {
+          "name": "Stone Cleaver",
+          "rarity": "RARE",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 2,
+      "essence_budget": 40,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
