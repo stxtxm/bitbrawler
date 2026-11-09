@@ -205123,5 +205123,318 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-09T20:01:35.033Z",
+    "run": "2026-11-09",
+    "character": "GROVEBARD",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "fresh",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "REST NOW",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 0,
+      "isResting": true,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 13,
+      "vit": 11,
+      "dex": 17,
+      "luk": 24,
+      "int": 11,
+      "foc": 8,
+      "fights": 0
+    },
+    "initial_level": 11,
+    "initial_xp": {
+      "current": 1280,
+      "max": 6273
+    },
+    "progression_curve": {
+      "level": 11,
+      "total_xp": 24254,
+      "xp_for_next": 6273,
+      "percent": 20.4
+    },
+    "initial_max_hp": 316,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      },
+      {
+        "slot": "🛡",
+        "name": "Leather Vest"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 11,
+      "xp": 4198,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 13,
+      "vit": 11,
+      "dex": 17,
+      "luk": 24,
+      "int": 11,
+      "foc": 8,
+      "last xp": 78,
+      "fights": 5
+    },
+    "final_max_hp": 316,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      },
+      {
+        "slot": "🛡",
+        "name": "Leather Vest"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Chipped Wand"
+      },
+      {
+        "slot": "🛡",
+        "name": "Leather Vest"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_locked_level": 30,
+      "boss_name": "VOID TITAN",
+      "boss_level": null,
+      "boss_hp": null,
+      "boss_max_hp": null
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20407,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "skeleton"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 100,
+      "xp_events": [
+        {
+          "time_ms": 12852,
+          "xp": 22,
+          "monster": "skeleton",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 13363,
+          "xp": 78,
+          "monster": "skeleton",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        510,
+        12852
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 22,
+        "essence": 0.16,
+        "monster": "skeleton"
+      },
+      {
+        "result": "victory",
+        "xp": 78,
+        "essence": 0.15,
+        "monster": "skeleton"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.31,
+      "next_level_eta": "⬆ 4m 58s",
+      "power_ratio": "⚔ 0.52x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 0.99x",
+      "interval": "10.9s",
+      "streak_bonus": "🔥 1-win streak (+25%)"
+    },
+    "initial_essence": 4.5,
+    "final_essence": 26.06,
+    "essence": {
+      "before_idle": 4.5,
+      "after_idle": 4.81,
+      "per_fight": [],
+      "forge_before": 4,
+      "forge_after_salvage": 25,
+      "forge_after_fusion": 25,
+      "forge_after_upgrade": 25,
+      "forge_after": 25,
+      "shop_before": 26,
+      "shop_after": 26,
+      "final": 26.06,
+      "flow": {
+        "idle_gained": 0.31,
+        "fights_change": null,
+        "salvage_gained": 21,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 21,
+        "shop_cost": 0,
+        "net_change": 21.56
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 4,
+      "essence_after_salvage": 25,
+      "essence_after_fusion": 25,
+      "essence_after_upgrade": 25,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": false,
+      "essence_after": 25,
+      "items_after": 0,
+      "salvage_essence_gained": 21,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 26,
+      "essence_after": 26,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Hunter Bow",
+            "rarity": "UNCOMMON",
+            "price": 30
+          },
+          {
+            "name": "Flame Dagger",
+            "rarity": "EPIC",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 26,
+        "essence_budget": 40,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 40
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "no_energy"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1243,
+      "arena": 1419
+    },
+    "skipped_summary": {
+      "no_energy": 1
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Hunter Bow",
+          "rarity": "UNCOMMON",
+          "price": 30
+        },
+        {
+          "name": "Flame Dagger",
+          "rarity": "EPIC",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 26,
+      "essence_budget": 40,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
