@@ -26,6 +26,7 @@ import {
   buildBossDataStaleIssue,
   BOSS_DATA_STALE_DAYS,
 } from '../../utils/qa-bot-helpers'
+import { IDLE_CONFIG } from '../../config/idleConfig'
 
 // ── Types matching RunRecord from analyze-qa-stats.ts ──
 
@@ -5490,5 +5491,147 @@ describe('QA Bot Loadout Backfill Before Early Exit Contract (#1347)', () => {
     const fillIdx = fn.indexOf('fillEmptyLoadoutSlots(page)')
     expect(openIdx).toBeGreaterThan(-1)
     expect(fillIdx).toBeGreaterThan(openIdx)
+  })
+})
+
+const IDLE_ESSENCE_HIGH_PER_RUN = 15
+
+interface EssenceSuggestionInput {
+  runs_with_essence_data: number
+  runs_with_flow_data: number
+  avg_essence_gained_per_run: number
+  avg_initial_essence: number
+  avg_idle_essence_gained: number | null
+  avg_shop_spent: number | null
+  avg_salvage_gained: number | null
+  avg_fusion_cost: number | null
+  avg_upgrade_cost: number | null
+}
+
+function formatEssenceDelta(value: number): string {
+  const fixed = value.toFixed(2)
+  return value > 0 ? `+${fixed}` : fixed
+}
+
+function essenceSuggestions(a: EssenceSuggestionInput): string[] {
+  const out: string[] = []
+  if (a.runs_with_essence_data < 3) return out
+  if (a.avg_essence_gained_per_run > 20) {
+    out.push(`High essence gain (avg ${formatEssenceDelta(a.avg_essence_gained_per_run)}/run). Consider adjusting salvage yields.`)
+  }
+  if (a.avg_essence_gained_per_run < 1 && a.avg_initial_essence > 50) {
+    const shop = a.avg_shop_spent ?? 0
+    const upgrade = a.avg_upgrade_cost ?? 0
+    const fusion = a.avg_fusion_cost ?? 0
+    const negligibleSpending = shop < 1 && upgrade < 1 && fusion < 1
+    if (negligibleSpending) {
+      out.push(`Low essence gain (avg ${formatEssenceDelta(a.avg_essence_gained_per_run)}/run). Players may be hoarding essence.`)
+    } else {
+      out.push(`Essence net change is ${formatEssenceDelta(a.avg_essence_gained_per_run)}/run with observed spending (shop ${shop.toFixed(2)}, upgrade ${upgrade.toFixed(2)}, fusion ${fusion.toFixed(2)}).`)
+    }
+  }
+  if (a.runs_with_flow_data >= 3) {
+    if (a.avg_idle_essence_gained !== null && a.avg_idle_essence_gained > IDLE_ESSENCE_HIGH_PER_RUN) {
+      out.push(`High idle essence gain (avg ${a.avg_idle_essence_gained.toFixed(2)}/run). Consider reducing IDLE_CONFIG.ESSENCE.BASE_RATE (${IDLE_CONFIG.ESSENCE.BASE_RATE}) or LEVEL_SCALE (${IDLE_CONFIG.ESSENCE.LEVEL_SCALE}).`)
+    }
+    if (a.avg_salvage_gained !== null && a.avg_salvage_gained > 30) {
+      out.push(`High salvage essence gain (avg ${formatEssenceDelta(a.avg_salvage_gained)}/run). Salvage yields may need reduction.`)
+    }
+  }
+  return out
+}
+
+function statBalanceSuggestions(avgInitialStats: Record<string, number>): string[] {
+  const out: string[] = []
+  const statVals = Object.entries(avgInitialStats)
+    .filter(([key]) => isStatKey(key))
+    .map(([, v]) => v)
+  const spread = statVals.length > 0 ? Math.max(...statVals) - Math.min(...statVals) : 0
+  if (spread < 1 && statVals.length >= 6) {
+    out.push(`All initial stats are nearly identical (spread=${spread.toFixed(1)}). Random stat generation may need more variance.`)
+  }
+  return out
+}
+
+describe('QA balance suggestions — no false positives (#1364)', () => {
+  function payload20261110(): EssenceSuggestionInput {
+    return {
+      runs_with_essence_data: 10,
+      runs_with_flow_data: 10,
+      avg_essence_gained_per_run: -4.25,
+      avg_initial_essence: 147,
+      avg_idle_essence_gained: 0.51,
+      avg_shop_spent: 14.95,
+      avg_salvage_gained: 15.46,
+      avg_fusion_cost: 0,
+      avg_upgrade_cost: 18.25,
+    }
+  }
+
+  it("n'émet aucune des trois suggestions fautives du rapport 2026-11-10", () => {
+    const suggestions = essenceSuggestions(payload20261110())
+    expect(suggestions.some(s => s.includes('High idle essence gain'))).toBe(false)
+    expect(suggestions.some(s => s.includes('hoarding'))).toBe(false)
+    expect(suggestions.some(s => s.includes('+-'))).toBe(false)
+  })
+
+  it('formate le gain net signé sans le préfixe +', () => {
+    const suggestions = essenceSuggestions(payload20261110())
+    expect(suggestions.some(s => s.includes('-4.25/run'))).toBe(true)
+    expect(suggestions.some(s => s.includes('+4.25'))).toBe(false)
+  })
+
+  it("conserve l'alerte thésaurisation quand aucune dépense n'est observée", () => {
+    const suggestions = essenceSuggestions({
+      ...payload20261110(),
+      avg_shop_spent: 0,
+      avg_upgrade_cost: 0,
+      avg_fusion_cost: 0,
+    })
+    expect(suggestions.some(s => s.includes('hoarding'))).toBe(true)
+    expect(suggestions.some(s => s.includes('-4.25/run'))).toBe(true)
+  })
+
+  it("déclenche l'alerte idle au-delà de 15 💎/run", () => {
+    const suggestions = essenceSuggestions({
+      ...payload20261110(),
+      avg_idle_essence_gained: 20,
+    })
+    expect(suggestions.some(s => s.includes('High idle essence gain (avg 20.00/run)'))).toBe(true)
+    expect(suggestions.some(s => s.includes('0.18'))).toBe(true)
+  })
+
+  it('ne compare plus la moyenne des stats à un plafond inexistant', () => {
+    const suggestions = statBalanceSuggestions({ str: 20, vit: 16.4, dex: 17, luk: 15, int: 18, foc: 16 })
+    expect(suggestions.some(s => s.includes('STATS.MAX_VALUE'))).toBe(false)
+    expect(suggestions.some(s => s.includes('STATS.MIN_VALUE'))).toBe(false)
+    expect(suggestions.some(s => s.includes('Average initial'))).toBe(false)
+  })
+
+  describe('analyze-qa-stats.ts source contract (#1364)', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+
+    it('aligne le seuil idle sur la règle documentée de 15 💎/run', () => {
+      expect(source).toContain('IDLE_ESSENCE_HIGH_PER_RUN')
+      expect(source).not.toContain('avg_idle_essence_per_fight > 0.5')
+      expect(source).not.toContain('BASE_RATE (0.12)')
+      expect(source).not.toContain('LEVEL_SCALE (0.05)')
+    })
+
+    it('lit les constantes idle depuis IDLE_CONFIG', () => {
+      expect(source).toContain("from '../src/config/idleConfig'")
+      expect(source).toContain('IDLE_CONFIG.ESSENCE.BASE_RATE')
+      expect(source).toContain('IDLE_CONFIG.ESSENCE.LEVEL_SCALE')
+    })
+
+    it('ne référence plus STATS.MIN_VALUE / STATS.MAX_VALUE', () => {
+      expect(source).not.toContain('STATS.MAX_VALUE')
+      expect(source).not.toContain('STATS.MIN_VALUE')
+    })
+
+    it('ne conclut à la thésaurisation que sans dépense observée', () => {
+      expect(source).toContain('negligibleSpending')
+      expect(source).toContain('formatEssenceDelta')
+    })
   })
 })

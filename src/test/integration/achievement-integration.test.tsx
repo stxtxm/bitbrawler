@@ -29,6 +29,9 @@ vi.mock('../../utils/lootboxUtils', () => ({
   rollLootbox: vi.fn(),
   loadEpicPityState: vi.fn(() => ({ epicPityCount: 0, commonStreak: 0 })),
   saveEpicPityState: vi.fn(),
+  loadClaimedStreakMilestones: vi.fn(() => []),
+  saveClaimedStreakMilestones: vi.fn(),
+  getNewlyReachedMilestones: vi.fn(() => []),
 }));
 
 // ─── Test Data ──────────────────────────────────────────────────────────────

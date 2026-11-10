@@ -17,6 +17,7 @@ import {
   computeBossDataFreshness,
   buildBossDataStaleIssue,
 } from '../src/utils/qa-bot-helpers.js'
+import { IDLE_CONFIG } from '../src/config/idleConfig'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const ROOT = join(__dirname, '..')
@@ -519,8 +520,15 @@ const RECENT_IDLE_RUNS = 15
 
 // Real character stat keys (short labels parsed from the arena panel). The
 // structured parse can also capture non-stat counters (e.g. 'fights' from the
-// PvE panel) which must not be compared against STATS.MIN_VALUE/MAX_VALUE (#730).
+// PvE panel) which must not be read as character stats (#730).
 const STAT_KEYS = new Set(['str', 'vit', 'dex', 'luk', 'int', 'foc'])
+
+const IDLE_ESSENCE_HIGH_PER_RUN = 15
+
+function formatEssenceDelta(value: number): string {
+  const fixed = value.toFixed(2)
+  return value > 0 ? `+${fixed}` : fixed
+}
 
 // A run "failed completely" when it recorded errors but no fights. Partial runs
 // (halfway) have fights but also recorded errors. Shared by the all-time report
@@ -1261,17 +1269,9 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     suggestions.push(`Characters gain ${avgLevelGained.toFixed(1)} levels/run — very fast progression. Consider increasing XP thresholds.`)
   }
 
-  // Stats balance — only real character stats are compared against
-  // STATS.MIN_VALUE/MAX_VALUE; the QA bot's structured parse can also capture
-  // non-stat counters (e.g. 'fights' from the PvE panel) which must not trigger
-  // stat-balance suggestions (#730).
+  // Stats balance — only real character stats are read here; the structured
+  // parse also captures non-stat counters (e.g. 'fights' from the PvE panel).
   if (Object.keys(avgInitialStats).length > 0) {
-    for (const [key, val] of Object.entries(avgInitialStats)) {
-      if (!isStatKey(key)) continue
-      if (val < 5) suggestions.push(`Average initial ${key.toUpperCase()} is ${val.toFixed(1)} (min=${Math.round(val)}). Consider raising STATS.MIN_VALUE (currently 5).`)
-      if (val > 15) suggestions.push(`Average initial ${key.toUpperCase()} is ${val.toFixed(1)} (max=${Math.round(val)}). Consider lowering STATS.MAX_VALUE (currently 15).`)
-    }
-    // Check stat variance (are all stats roughly equal?)
     const statVals = Object.entries(avgInitialStats)
       .filter(([key]) => isStatKey(key))
       .map(([, v]) => v)
@@ -1748,18 +1748,26 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   // Essence suggestions
   if (essenceAnalysis && essenceAnalysis.runs_with_essence_data >= 3) {
     if (essenceAnalysis.avg_essence_gained_per_run > 20) {
-      suggestions.push(`High essence gain (avg +${essenceAnalysis.avg_essence_gained_per_run.toFixed(1)}/run). Consider adjusting salvage yields.`)
+      suggestions.push(`High essence gain (avg ${formatEssenceDelta(essenceAnalysis.avg_essence_gained_per_run)}/run). Consider adjusting salvage yields.`)
     }
     if (essenceAnalysis.avg_essence_gained_per_run < 1 && essenceAnalysis.avg_initial_essence > 50) {
-      suggestions.push(`Low essence gain (avg +${essenceAnalysis.avg_essence_gained_per_run.toFixed(1)}/run). Players may be hoarding essence.`)
+      const shop = essenceAnalysis.avg_shop_spent ?? 0
+      const upgrade = essenceAnalysis.avg_upgrade_cost ?? 0
+      const fusion = essenceAnalysis.avg_fusion_cost ?? 0
+      const negligibleSpending = shop < 1 && upgrade < 1 && fusion < 1
+      if (negligibleSpending) {
+        suggestions.push(`Low essence gain (avg ${formatEssenceDelta(essenceAnalysis.avg_essence_gained_per_run)}/run). Players may be hoarding essence.`)
+      } else {
+        suggestions.push(`Essence net change is ${formatEssenceDelta(essenceAnalysis.avg_essence_gained_per_run)}/run with observed spending (shop ${shop.toFixed(2)}, upgrade ${upgrade.toFixed(2)}, fusion ${fusion.toFixed(2)}).`)
+      }
     }
     // Detailed flow suggestions
     if (essenceAnalysis.runs_with_flow_data >= 3) {
-      if (essenceAnalysis.avg_idle_essence_gained !== null && essenceAnalysis.avg_idle_essence_gained > 0.5) {
-        suggestions.push(`High idle essence gain (avg ${essenceAnalysis.avg_idle_essence_gained.toFixed(2)}/run). Consider reducing IDLE_CONFIG.ESSENCE.BASE_RATE (0.12) or LEVEL_SCALE (0.05).`)
+      if (essenceAnalysis.avg_idle_essence_gained !== null && essenceAnalysis.avg_idle_essence_gained > IDLE_ESSENCE_HIGH_PER_RUN) {
+        suggestions.push(`High idle essence gain (avg ${essenceAnalysis.avg_idle_essence_gained.toFixed(2)}/run). Consider reducing IDLE_CONFIG.ESSENCE.BASE_RATE (${IDLE_CONFIG.ESSENCE.BASE_RATE}) or LEVEL_SCALE (${IDLE_CONFIG.ESSENCE.LEVEL_SCALE}).`)
       }
       if (essenceAnalysis.avg_salvage_gained !== null && essenceAnalysis.avg_salvage_gained > 30) {
-        suggestions.push(`High salvage essence gain (avg +${essenceAnalysis.avg_salvage_gained.toFixed(1)}/run). Salvage yields may need reduction.`)
+        suggestions.push(`High salvage essence gain (avg ${formatEssenceDelta(essenceAnalysis.avg_salvage_gained)}/run). Salvage yields may need reduction.`)
       }
       if (essenceAnalysis.avg_fusion_cost !== null && essenceAnalysis.avg_fusion_cost > 100) {
         suggestions.push(`High fusion cost (avg ${essenceAnalysis.avg_fusion_cost.toFixed(1)}/run). Fusion may be too expensive.`)
@@ -1843,9 +1851,6 @@ function analyze(stats: RunRecord[]): AnalysisReport {
 
   // Idle suggestions
   if (idleAnalysis && idleAnalysis.runs_with_idle_data >= 3) {
-    if (idleAnalysis.avg_idle_essence_per_fight > 0.5) {
-      suggestions.push(`High idle essence (${idleAnalysis.avg_idle_essence_per_fight.toFixed(2)}/fight). Consider reducing IDLE_CONFIG.ESSENCE.BASE_RATE or LEVEL_SCALE.`)
-    }
     // Idle win-rate alerts use the recent idle-data window (#730): the all-time
     // cumulative rate includes the pre-#727 era (STAT_MULTIPLIER 20.0) and would
     // keep flagging "too strong" forever even after the fix.
@@ -2092,7 +2097,7 @@ function printReport(report: AnalysisReport): void {
     console.log(`  ── ${bold}Essence${reset} ──`)
     console.log(`  Avg initial:    ${report.essence_analysis.avg_initial_essence.toFixed(1)}`)
     console.log(`  Avg final:      ${report.essence_analysis.avg_final_essence.toFixed(1)}`)
-    console.log(`  Gained/run:     +${report.essence_analysis.avg_essence_gained_per_run.toFixed(2)}`)
+    console.log(`  Gained/run:     ${formatEssenceDelta(report.essence_analysis.avg_essence_gained_per_run)}`)
     if (report.essence_analysis.runs_with_flow_data > 0) {
       const idle = report.essence_analysis.avg_idle_essence_gained
       const forge = report.essence_analysis.avg_forge_net
