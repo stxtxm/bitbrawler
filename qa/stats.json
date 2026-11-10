@@ -207204,7 +207204,7 @@
     }
   },
   {
-    "date": "2026-11-10T13:59:24.497Z",
+    "date": "2026-11-10T14:03:54.834Z",
     "run": "2026-11-10",
     "character": "QA-PERSI-2",
     "character_action": "reused",
@@ -207213,12 +207213,12 @@
     "fights": [
       {
         "result": "victory",
-        "xp": 191,
-        "fight_duration_ms": 10139,
+        "xp": 212,
+        "fight_duration_ms": 7957,
         "max_hp": 561,
         "fight_type": "pvp",
         "monster_name": null,
-        "essence_after": 10.78
+        "essence_after": 32.71
       }
     ],
     "lootbox": {
@@ -207232,7 +207232,7 @@
       "fightButtonLabel": "FIGHT!",
       "fightButtonVisible": true,
       "fightButtonEnabled": true,
-      "fightsAvailable": 2,
+      "fightsAvailable": 1,
       "isResting": false,
       "hasFightCta": true,
       "isSearching": false,
@@ -207250,14 +207250,14 @@
     },
     "initial_level": 23,
     "initial_xp": {
-      "current": 13729,
+      "current": 18632,
       "max": 21185
     },
     "progression_curve": {
       "level": 23,
-      "total_xp": 187120,
+      "total_xp": 192023,
       "xp_for_next": 21185,
-      "percent": 64.8
+      "percent": 87.9
     },
     "initial_max_hp": 561,
     "initial_equipment": [
@@ -207280,7 +207280,7 @@
     "initial_streak": 1,
     "final_stats": {
       "level": 23,
-      "xp": 17979,
+      "xp": 19556,
       "wins": null,
       "losses": null
     },
@@ -207291,7 +207291,7 @@
       "luk": 10,
       "int": 7,
       "foc": 9,
-      "last xp": 35,
+      "last xp": 31,
       "fights": 4
     },
     "final_max_hp": 561,
@@ -207340,18 +207340,18 @@
     },
     "level_up_events": [],
     "idle_runner": {
-      "observation_duration_ms": 33093,
+      "observation_duration_ms": 33088,
       "cycles_observed": 0,
       "monsters_faced": [
         "ogre"
       ],
       "victories": 0,
       "defeats": 1,
-      "xp_total": 36,
+      "xp_total": 37,
       "xp_events": [
         {
-          "time_ms": 33093,
-          "xp": 36,
+          "time_ms": 33088,
+          "xp": 37,
           "monster": "ogre",
           "result": "unknown"
         }
@@ -207360,15 +207360,15 @@
       "level_up_fx_detected": false,
       "level_up_events": [],
       "phase_transition_times_ms": [
-        526,
-        1553,
-        33093
+        524,
+        1550,
+        33088
       ]
     },
     "idle_fights": [
       {
         "result": "defeat",
-        "xp": 36,
+        "xp": 37,
         "essence": 0.26,
         "monster": "ogre"
       }
@@ -207376,29 +207376,29 @@
     "efficiency_panel": {
       "visible": true,
       "essence_per_min": 1.56,
-      "next_level_eta": "⬆ 5m 28s",
+      "next_level_eta": "⬆ 3m 11s",
       "power_ratio": "⚔ 0.50x",
       "speed_ratio": "⚡ 0.50x",
       "magic_mult": "🧠 0.96x",
       "interval": "11.2s",
       "streak_bonus": null
     },
-    "initial_essence": 10.52,
-    "final_essence": 32,
+    "initial_essence": 32.45,
+    "final_essence": 53.76,
     "essence": {
-      "before_idle": 10.52,
-      "after_idle": 10.78,
+      "before_idle": 32.45,
+      "after_idle": 32.71,
       "per_fight": [
-        10.78
+        32.71
       ],
-      "forge_before": 10,
-      "forge_after_salvage": 60,
-      "forge_after_fusion": 60,
-      "forge_after_upgrade": 60,
-      "forge_after": 60,
-      "shop_before": 62,
-      "shop_after": 32,
-      "final": 32,
+      "forge_before": 32,
+      "forge_after_salvage": 82,
+      "forge_after_fusion": 82,
+      "forge_after_upgrade": 82,
+      "forge_after": 82,
+      "shop_before": 83,
+      "shop_after": 53,
+      "final": 53.76,
       "flow": {
         "idle_gained": 0.26,
         "fights_change": null,
@@ -207407,7 +207407,7 @@
         "upgrade_cost": 0,
         "forge_net": 50,
         "shop_cost": 30,
-        "net_change": 21.48
+        "net_change": 21.31
       }
     },
     "level_up_fx": {
@@ -207432,10 +207432,10 @@
     },
     "forge": {
       "visited": true,
-      "essence_before": 10,
-      "essence_after_salvage": 60,
-      "essence_after_fusion": 60,
-      "essence_after_upgrade": 60,
+      "essence_before": 32,
+      "essence_after_salvage": 82,
+      "essence_after_fusion": 82,
+      "essence_after_upgrade": 82,
       "items_before": 2,
       "salvage_attempted": true,
       "salvage_succeeded": true,
@@ -207443,7 +207443,7 @@
       "fusion_succeeded": false,
       "upgrade_attempted": true,
       "upgrade_succeeded": false,
-      "essence_after": 60,
+      "essence_after": 82,
       "items_after": 0,
       "salvage_essence_gained": 50,
       "fusion_cost": null,
@@ -207458,14 +207458,14 @@
       "offer_type": "item",
       "item_rarity": "RARE",
       "cost": 30,
-      "essence_before": 62,
-      "essence_after": 32,
+      "essence_before": 83,
+      "essence_after": 53,
       "skipped": false,
       "skip_reason": null,
       "shop_data": {
         "offers": [
           {
-            "name": "Celestial Robe",
+            "name": "Sun Spear",
             "rarity": "RARE",
             "price": 30
           },
@@ -207481,7 +207481,7 @@
           }
         ],
         "purchased_offer": 0,
-        "essence_after_purchase": 32,
+        "essence_after_purchase": 53,
         "essence_budget": 60,
         "budget_limited": false,
         "budget_blocked_price": null
@@ -207497,14 +207497,14 @@
     "skipped_fights": [],
     "errors": [],
     "load_times_ms": {
-      "home": 1174,
-      "arena": 1171
+      "home": 1325,
+      "arena": 1149
     },
     "skipped_summary": {},
     "shop_data": {
       "offers": [
         {
-          "name": "Celestial Robe",
+          "name": "Sun Spear",
           "rarity": "RARE",
           "price": 30
         },
@@ -207520,7 +207520,7 @@
         }
       ],
       "purchased_offer": 0,
-      "essence_after_purchase": 32,
+      "essence_after_purchase": 53,
       "essence_budget": 60,
       "budget_limited": false,
       "budget_blocked_price": null
