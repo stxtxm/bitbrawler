@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-10-30T23:05:36Z",
+  "last_session": "2026-11-10T07:25:17Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "PRs QA bot (#1346/#1348) : les contrats de test lisent qa-bot.mjs en source (indexOf/ordre des blocs). Aucune CI n'est rattachée aux PR de bot (seul Cloudflare Pages) -> la gate locale lint+tsc+vitest+build du reviewer est le seul verrou réel, la lancer avant merge.",
-      "issue": "#1348"
+      "lesson": "PR de bot avec seulement le check Cloudflare Pages (aucun check lint/test/build rattaché) : exécuter soi-même la gate complète (npm run lint, npx tsc --noEmit, npx vitest run, npm run build) avant merge. Vérifier aussi l'exécution réelle du script modifié.",
+      "issue": "#1365"
     }
   ]
 }
