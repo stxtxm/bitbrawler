@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-11-10T07:18:13Z",
+  "last_session": "2026-11-10T07:31:08Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "QA report fields must be emitted by qa-bot.mjs: progression_curve was only declared in analyzer types, so aggregation stayed null. Equipment group labels list is duplicated in qa-bot.mjs, analyze-qa-stats.ts and the mirror test - update all three (singular slot labels WEAPON/ACCESSORY were leaking).",
-      "issue": "#1283",
-      "date": "2026-10-21"
-    },
     {
       "lesson": "Issue #1144 Pixel Season Pass: implémentation localStorage-first (aucune migration DB requise) pour ne pas bloquer sur Supabase. Les compteurs de missions sont branchés au choke point persistCharacter (delta wins/idleTotalKills/idleStreak) + appel explicite après salvage, ce qui évite de modifier chaque hook de combat/idle. Attention aux requêtes Testing Library par regex /claim tier 1/ qui matchent aussi tier 10/11... : utiliser le name exact.",
       "issue": "#1144",
@@ -171,6 +166,11 @@
     {
       "lesson": "Issue #1364 analyze-qa-stats: les suggestions doivent etre validees contre la regle documentee (AGENTS.md) et le code courant, pas des seuils ad hoc (idle essence 0.5/run vs 15/run documente). Un gain net negatif = depense, pas thesaurisation. Pas de STATS.MAX_VALUE (aucun plafond dans GAME_RULES). Test pre-existant rouge achievement-integration (mock lootboxUtils sans loadClaimedStreakMilestones depuis #1359) corrige dans la PR pour debloquer la CI.",
       "issue": "#1364",
+      "date": "2026-11-10"
+    },
+    {
+      "lesson": "Issue #1366: la doc AGENTS.md d un seuil de code est testable via lecture du fichier et slice de la section (## Tech Lead Agent → ## QA Tester Agent). IDLE_ESSENCE_HIGH_PER_RUN=15 vit dans scripts/analyze-qa-stats.ts, ne pas figer BASE_RATE/LEVEL_SCALE dans la doc (ils driftent, le code les imprime dynamiquement).",
+      "issue": "#1366",
       "date": "2026-11-10"
     }
   ]
