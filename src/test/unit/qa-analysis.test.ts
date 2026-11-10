@@ -5635,3 +5635,30 @@ describe('QA balance suggestions — no false positives (#1364)', () => {
     })
   })
 })
+
+describe('AGENTS.md — seuil idle documenté (#1366)', () => {
+  const agentsMd = readFileSync(join(process.cwd(), 'AGENTS.md'), 'utf-8')
+  const techLeadSection = agentsMd.slice(
+    agentsMd.indexOf('## Tech Lead Agent'),
+    agentsMd.indexOf('## QA Tester Agent'),
+  )
+
+  it('documente la constante et le seuil de 15 💎/run', () => {
+    expect(techLeadSection).toContain('IDLE_ESSENCE_HIGH_PER_RUN')
+    expect(techLeadSection).toContain('15 💎/run')
+    expect(techLeadSection).toContain('scripts/analyze-qa-stats.ts')
+  })
+
+  it('exige 3 runs avec données de flux avant tout verdict idle', () => {
+    expect(techLeadSection).toContain('runs_with_flow_data >= 3')
+  })
+
+  it('décrit le protocole de décision balance associé', () => {
+    expect(techLeadSection).toContain('BASE_RATE')
+    expect(techLeadSection).toContain('LEVEL_SCALE')
+    expect(techLeadSection).toContain('src/config/idleConfig.ts')
+    expect(techLeadSection).toContain('api/idle-processor')
+    expect(techLeadSection).toContain('salvage')
+    expect(techLeadSection).toContain('Fenêtre récente')
+  })
+})
