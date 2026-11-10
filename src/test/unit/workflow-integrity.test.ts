@@ -538,3 +538,73 @@ describe('Fraîcheur du déploiement — le watchdog doit voir la prod gelée (#
     expect(offersSource).toMatch(/price:\s*\d+/)
   })
 })
+
+describe('Prompts des workflows : sûrs pour le shell (tech-lead mort 2026-11-08)', () => {
+  // Incident : le PROMPT du tech-lead est une chaîne bash entre guillemets
+  // doubles. La consigne ajoutée par db838b2d contenait des backticks
+  // (`websearch`, `webfetch`, `explore`) ET des guillemets doubles internes
+  // ("idle RPG ..."). Bash a donc exécuté `websearch`, `webfetch`, `explore`
+  // et `RPG` comme des commandes (exit 127) avant même de lancer l'agent :
+  // deux runs tech-lead morts en 1 s, sans issue ni PR.
+  const workflowDir = join(process.cwd(), '.github', 'workflows')
+  const workflowFiles = readdirSync(workflowDir).filter(f => f.endsWith('.yml'))
+
+  /** Lignes réellement interprétées par bash (`run:` inline ou bloc `|`). */
+  const runBlockLines = (source: string): Array<{ line: string; number: number }> => {
+    const lines = source.split('\n')
+    const collected: Array<{ line: string; number: number }> = []
+
+    for (let i = 0; i < lines.length; i += 1) {
+      const match = /^(\s*)run:\s*(\|.*)$/.exec(lines[i])
+      if (!match) {
+        const inline = /^(\s*)run:\s+(.+)$/.exec(lines[i])
+        if (inline) collected.push({ line: inline[2], number: i + 1 })
+        continue
+      }
+
+      const baseIndent = match[1].length
+      for (let j = i + 1; j < lines.length; j += 1) {
+        const line = lines[j]
+        if (line.trim() === '') continue
+        const indent = line.length - line.trimStart().length
+        if (indent <= baseIndent) break
+        // Les commentaires du script ne sont pas interprétés par bash.
+        if (!line.trimStart().startsWith('#')) {
+          collected.push({ line, number: j + 1 })
+        }
+      }
+    }
+
+    return collected
+  }
+
+  it.each(workflowFiles)('%s ne contient aucun backtick non échappé dans ses scripts bash', file => {
+    // Un backtick est sûr uniquement s'il est échappé (\`) — jamais nu.
+    const offending = runBlockLines(readWorkflow(file)).filter(({ line }) => /(^|[^\\])`/.test(line))
+
+    expect(offending).toEqual([])
+  })
+
+  it('le prompt tech-lead ne ferme pas sa chaîne sur un guillemet interne', () => {
+    const source = readWorkflow('tech-lead.yml')
+    const start = source.indexOf('PROMPT="Tu es le tech-lead')
+    expect(start).toBeGreaterThanOrEqual(0)
+
+    // Le bloc se termine à la première ligne suivante qui se termine par un
+    // guillemet double (la fermeture réelle de la chaîne bash).
+    const afterStart = source.slice(start)
+    const lines = afterStart.split('\n')
+    const closingIndex = lines.findIndex((line, index) => index > 0 && /"\s*$/.test(line))
+    expect(closingIndex).toBeGreaterThan(0)
+
+    const body = lines.slice(1, closingIndex).join('\n')
+    // Hors ${VAR:-"défaut"}, un guillemet double nu terminerait la chaîne et
+    // ferait exécuter la suite du texte comme une commande.
+    const unescaped = body
+      .replace(/\$\{[^}]*\}/g, '')
+      .split('\n')
+      .filter(line => /(^|[^\\])"/.test(line))
+
+    expect(unescaped).toEqual([])
+  })
+})

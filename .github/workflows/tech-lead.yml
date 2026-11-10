@@ -147,8 +147,8 @@ jobs:
             ## 2. Recherche web (rapide et ciblée)
 
             Fais des recherches **utiles mais efficaces** (pas de veille large) :
-            - **2 à 3 recherches max**, requêtes précises et ciblées (ex. un mécanisme précis lié à un signal QA : "idle RPG win rate drop streak protection", "pixel auto-battler loot pity timer").
-            - Utilise `websearch` avec des requêtes courtes/spécifiques, puis exploite directement les meilleurs résultats (`webfetch` ciblé si besoin). **Ne délègue pas** à un sous-agent `explore` pour de la recherche générique.
+            - **2 à 3 recherches max**, requêtes précises et ciblées (ex. un mécanisme précis lié à un signal QA : 'idle RPG win rate drop streak protection', 'pixel auto-battler loot pity timer').
+            - Utilise websearch avec des requêtes courtes/spécifiques, puis exploite directement les meilleurs résultats (webfetch ciblé si besoin). **Ne délègue pas** à un sous-agent explore pour de la recherche générique.
             - But : valider/éclairer une piste issue concrète, pas produire un rapport de tendance. Si les stats QA suffisent, 0-1 recherche.
 
             ## 3. Analyser les commits récents
