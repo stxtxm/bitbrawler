@@ -646,6 +646,19 @@ The tech-lead analyzes:
 }
 ```
 
+### Essence idle Analysis
+
+Source de vérité : `scripts/analyze-qa-stats.ts` → constante `IDLE_ESSENCE_HIGH_PER_RUN = 15`. Une moyenne `avg_idle_essence_gained` **strictement supérieure à 15 💎/run** déclenche la suggestion `High idle essence gain`. Le seuil n'est évalué que si `runs_with_flow_data >= 3` : en dessous, aucune conclusion idle n'est possible.
+
+**Protocole de décision balance** (dans cet ordre) :
+
+1. **Fenêtre récente uniquement** : lire `avg_idle_essence_gained` de la fenêtre QA récente, jamais d'un cumul historique — les ères pré-fix faussent la moyenne (#730).
+2. **Isoler la source** : si `avg_salvage_gained > 30`, l'excès vient du salvage → ne pas toucher à l'idle. Le signal idle ne vaut que si `avg_idle_essence_gained > IDLE_ESSENCE_HIGH_PER_RUN` et que le flux salvage reste sous son propre seuil.
+3. **Vérifier l'existant** : chercher une issue idle/essence ouverte avant d'en créer une (pas de doublons).
+4. **Un seul levier par issue** : créer une issue balance avec `/oc` ciblant `src/config/idleConfig.ts`. Ajuster d'abord `IDLE_CONFIG.ESSENCE.BASE_RATE` (gain linéaire par run), puis `LEVEL_SCALE` (effet croissant avec le niveau) seulement si l'excès augmente avec le niveau. Lire les valeurs courantes dans `src/config/idleConfig.ts` — ne pas les figer ici, le message de suggestion imprime déjà `BASE_RATE` et `LEVEL_SCALE` en vigueur.
+5. **Re-mesurer avant de re-toucher** : attendre les runs QA suivants (signal `runs_with_flow_data >= 3`) avant un second ajustement ; ne jamais modifier `BASE_RATE` et `LEVEL_SCALE` dans la même issue.
+6. **Miroir serveur** : toute modification de `IDLE_CONFIG.ESSENCE` doit être répercutée dans `api/idle-processor` (`SELECT_COLUMNS` + `calculateIdleEssence`), sinon le gain client et le gain serveur divergent.
+
 ### Shop Analysis
 
 Source de vérité : `qa/analysis-latest.json` (`shop.real` = achats OBSERVÉS, `shop.simulated` = affordabilité en repli). Les budgets de cohorte vivent dans `qa/qa-bot.config.js`.
