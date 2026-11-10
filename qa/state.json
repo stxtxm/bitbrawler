@@ -1,12 +1,12 @@
 {
   "run": "2026-11-10",
-  "character": "QA-PERSIST",
+  "character": "QA-PERSI-2",
   "exhausted": false,
-  "updated_at": "2026-11-09T23:01:38.519Z",
-  "source": "overlevel-detected",
+  "updated_at": "2026-11-10T01:02:59.011Z",
+  "source": "reused",
   "character_type": "persistent",
-  "persistent_generation": 0,
-  "persistent_created_at": "2026-11-09T23:01:34.986Z",
-  "persistent_reset_ready": true,
-  "pvp_since_last_pve": 0
+  "persistent_generation": 1,
+  "persistent_created_at": "2026-11-10T00:59:26.988Z",
+  "persistent_reset_ready": false,
+  "pvp_since_last_pve": 1
 }
