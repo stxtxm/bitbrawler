@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-10-31T22:25:09Z",
+  "last_session": "2026-11-10T07:18:13Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "QA stats: la pollution équipement WEAPON/ACCESSORY vient du fallback body-text (labels SLOT_SHORT_LABELS sur lignes séparées, flex-column) — filtrer via un set singulier distinct de EQUIPMENT_GROUP_LABELS (le set pluriel sert de break de section). progression_curve dérivable du .xp-text 'cur / next XP' + getTotalXpForLevel miroir de xpUtils.",
-      "issue": "#1283",
-      "date": "2026-10-21"
-    },
     {
       "lesson": "QA report fields must be emitted by qa-bot.mjs: progression_curve was only declared in analyzer types, so aggregation stayed null. Equipment group labels list is duplicated in qa-bot.mjs, analyze-qa-stats.ts and the mirror test - update all three (singular slot labels WEAPON/ACCESSORY were leaking).",
       "issue": "#1283",
@@ -172,6 +167,11 @@
       "lesson": "Issue #1352: après captureBossFight dans runFightSequence, le mode PvE restait actif → l'itération suivante pouvait cliquer ATTACK BOSS en croyant faire du PvP (ou finir en not_attackable). Fix: togglePveMode(page,false) juste après captureBossFight, dans les DEUX branches (gate isPveLocked + label ATTACK BOSS), avant le if (bossFight) pour couvrir aussi le timeout/null. Test de contrat source: pour chaque captureBossFight(page, runKey, slice jusqu'au premier continue doit contenir togglePveMode(page,false).",
       "issue": "#1352",
       "date": "2026-10-31"
+    },
+    {
+      "lesson": "Issue #1364 analyze-qa-stats: les suggestions doivent etre validees contre la regle documentee (AGENTS.md) et le code courant, pas des seuils ad hoc (idle essence 0.5/run vs 15/run documente). Un gain net negatif = depense, pas thesaurisation. Pas de STATS.MAX_VALUE (aucun plafond dans GAME_RULES). Test pre-existant rouge achievement-integration (mock lootboxUtils sans loadClaimedStreakMilestones depuis #1359) corrige dans la PR pour debloquer la CI.",
+      "issue": "#1364",
+      "date": "2026-11-10"
     }
   ]
 }
