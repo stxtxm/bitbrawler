@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "last_updated": "2026-08-23T21:00:00Z",
+  "last_updated": "2026-11-10T07:20:00Z",
   "active_campaigns": [
     {
       "parent_issue": 605,
@@ -96,8 +96,8 @@
     },
     {
       "id": "dev-prompt-shell-quote-2026-09-12",
-      "title": "PROMPT=\"...\" avec backticks/guils bruts → exit 127 : prompts via printf '%s' uniquement, variables en args",
-      "status": "fixed"
+      "title": "PROMPT=\"...\" avec backticks/guillemets bruts → exit 127 (récidive tech-lead 2026-11-08, db838b2d) : prompts via printf '%s' ou échappement, garde-fou workflow-integrity.test",
+      "status": "known_pattern"
     },
     {
       "id": "reviewer-fanout-timeout-2026-09-19",
