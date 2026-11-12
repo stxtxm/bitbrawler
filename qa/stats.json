@@ -213198,5 +213198,328 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-12T14:01:45.267Z",
+    "run": "2026-11-12",
+    "character": "QA-PERSI-2",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 250,
+        "fight_duration_ms": 8903,
+        "max_hp": 606,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 10.39
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 2,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 44,
+      "vit": 24,
+      "dex": 14,
+      "luk": 16,
+      "int": 11,
+      "foc": 14,
+      "fights": 0
+    },
+    "initial_level": 27,
+    "initial_xp": {
+      "current": 21392,
+      "max": 27601
+    },
+    "progression_curve": {
+      "level": 27,
+      "total_xp": 288938,
+      "xp_for_next": 27601,
+      "percent": 77.5
+    },
+    "initial_max_hp": 606,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Iron Rapier",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Spiked Gauntlets",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "💍",
+        "name": "Sovereign Crown",
+        "rarity": "LEGENDARY"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 27,
+      "xp": 25660,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 44,
+      "vit": 24,
+      "dex": 14,
+      "luk": 16,
+      "int": 11,
+      "foc": 14,
+      "last xp": 41,
+      "fights": 4
+    },
+    "final_max_hp": 606,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Iron Rapier",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Spiked Gauntlets",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "💍",
+        "name": "Sovereign Crown",
+        "rarity": "LEGENDARY"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Iron Rapier",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Spiked Gauntlets",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "💍",
+        "name": "Sovereign Crown",
+        "rarity": "LEGENDARY"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 33081,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "ogre"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 40,
+      "xp_events": [
+        {
+          "time_ms": 33081,
+          "xp": 40,
+          "monster": "ogre",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        515,
+        1541,
+        33081
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 40,
+        "essence": 0.36,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.8,
+      "next_level_eta": "⬆ 3m 20s",
+      "power_ratio": "⚔ 0.55x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.05x",
+      "interval": "11.3s",
+      "streak_bonus": null
+    },
+    "initial_essence": 10.03,
+    "final_essence": 2.14,
+    "essence": {
+      "before_idle": 10.03,
+      "after_idle": 10.39,
+      "per_fight": [
+        10.39
+      ],
+      "forge_before": 10,
+      "forge_after_salvage": 30,
+      "forge_after_fusion": 30,
+      "forge_after_upgrade": 30,
+      "forge_after": 30,
+      "shop_before": 32,
+      "shop_after": 2,
+      "final": 2.14,
+      "flow": {
+        "idle_gained": 0.36,
+        "fights_change": null,
+        "salvage_gained": 20,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 20,
+        "shop_cost": 30,
+        "net_change": -7.89
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 10,
+      "essence_after_salvage": 30,
+      "essence_after_fusion": 30,
+      "essence_after_upgrade": 30,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": false,
+      "essence_after": 30,
+      "items_after": 0,
+      "salvage_essence_gained": 20,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "COMMON",
+      "cost": 30,
+      "essence_before": 32,
+      "essence_after": 2,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Warpick",
+            "rarity": "UNCOMMON",
+            "price": 30
+          },
+          {
+            "name": "Spirit Orb",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 2,
+        "essence_budget": 60,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-END",
+      "essence_budget": 60
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1336,
+      "arena": 1323
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Warpick",
+          "rarity": "UNCOMMON",
+          "price": 30
+        },
+        {
+          "name": "Spirit Orb",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 2,
+      "essence_budget": 60,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
