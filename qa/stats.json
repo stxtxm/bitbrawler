@@ -212177,5 +212177,343 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-12T05:01:32.877Z",
+    "run": "2026-11-12",
+    "character": "QA-PERSI-2",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 267,
+        "fight_duration_ms": 8213,
+        "max_hp": 606,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 24.84
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Sovereign Crown",
+      "rarity": "LEGENDARY",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 5,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 43,
+      "vit": 27,
+      "dex": 17,
+      "luk": 14,
+      "int": 10,
+      "foc": 12,
+      "fights": 0
+    },
+    "initial_level": 27,
+    "initial_xp": {
+      "current": 4703,
+      "max": 27601
+    },
+    "progression_curve": {
+      "level": 27,
+      "total_xp": 272249,
+      "xp_for_next": 27601,
+      "percent": 17
+    },
+    "initial_max_hp": 606,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Iron Rapier"
+      },
+      {
+        "slot": "🛡",
+        "name": "Spiked Gauntlets"
+      },
+      {
+        "slot": "💍",
+        "name": "Phoenix Amulet"
+      }
+    ],
+    "initial_streak": 2,
+    "final_stats": {
+      "level": 27,
+      "xp": 9496,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 43,
+      "vit": 27,
+      "dex": 17,
+      "luk": 14,
+      "int": 10,
+      "foc": 12,
+      "last xp": 42,
+      "fights": 6
+    },
+    "final_max_hp": 606,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Iron Rapier"
+      },
+      {
+        "slot": "🛡",
+        "name": "Spiked Gauntlets"
+      },
+      {
+        "slot": "💍",
+        "name": "Phoenix Amulet"
+      }
+    ],
+    "final_streak": 2,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Iron Rapier",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Spiked Gauntlets",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "💍",
+        "name": "Sovereign Crown",
+        "rarity": "LEGENDARY"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_locked_level": 30,
+      "boss_name": "VOID TITAN",
+      "boss_level": null,
+      "boss_hp": null,
+      "boss_max_hp": null
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20446,
+      "cycles_observed": 2,
+      "monsters_faced": [
+        "chimera",
+        "wraith",
+        "ogre"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 153,
+      "xp_events": [
+        {
+          "time_ms": 11856,
+          "xp": 42,
+          "monster": "chimera",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 12369,
+          "xp": 111,
+          "monster": "wraith",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        514,
+        11856,
+        19932
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 42,
+        "essence": 0.32,
+        "monster": "chimera"
+      },
+      {
+        "result": "victory",
+        "xp": 111,
+        "essence": 0.31,
+        "monster": "wraith"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.84,
+      "next_level_eta": "⬆ 29m 21s",
+      "power_ratio": "⚔ 0.57x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.02x",
+      "interval": "10.9s",
+      "streak_bonus": null
+    },
+    "initial_essence": 24.21,
+    "final_essence": 16.7,
+    "essence": {
+      "before_idle": 24.21,
+      "after_idle": 24.84,
+      "per_fight": [
+        24.84
+      ],
+      "forge_before": 25,
+      "forge_after_salvage": 45,
+      "forge_after_fusion": 45,
+      "forge_after_upgrade": 45,
+      "forge_after": 45,
+      "shop_before": 46,
+      "shop_after": 16,
+      "final": 16.7,
+      "flow": {
+        "idle_gained": 0.63,
+        "fights_change": null,
+        "salvage_gained": 20,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 20,
+        "shop_cost": 30,
+        "net_change": -7.51
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 25,
+      "essence_after_salvage": 45,
+      "essence_after_fusion": 45,
+      "essence_after_upgrade": 45,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": false,
+      "essence_after": 45,
+      "items_after": 0,
+      "salvage_essence_gained": 20,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "COMMON",
+      "cost": 30,
+      "essence_before": 46,
+      "essence_after": 16,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Warpick",
+            "rarity": "UNCOMMON",
+            "price": 30
+          },
+          {
+            "name": "Spirit Orb",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 16,
+        "essence_budget": 60,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-END",
+      "essence_budget": 60
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 1,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1084,
+      "arena": 789
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Warpick",
+          "rarity": "UNCOMMON",
+          "price": 30
+        },
+        {
+          "name": "Spirit Orb",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 16,
+      "essence_budget": 60,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
