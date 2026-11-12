@@ -214546,19 +214546,17 @@
     }
   },
   {
-    "date": "2026-11-12T22:59:06.546Z",
-    "run": "2026-11-12",
+    "date": "2026-11-12T23:05:52.179Z",
+    "run": "2026-11-13",
     "character": "QA-PERSI-2",
     "character_action": "reused",
     "replaced_character": null,
     "character_type": "persistent",
     "fights": [],
     "lootbox": {
-      "available": true,
-      "opened": true,
-      "item": "Obsidian Idol",
-      "rarity": "EPIC",
-      "raw_text": "NEW ITEM"
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
     },
     "auto_mode_enabled": false,
     "auto_mode_sync_ok": true,
@@ -214574,73 +214572,79 @@
       "bossLockedLevel": null
     },
     "initial_stats": {
-      "str": 45,
-      "vit": 25,
+      "str": 42,
+      "vit": 26,
       "dex": 15,
-      "luk": 16,
-      "int": 11,
-      "foc": 14,
+      "luk": 15,
+      "int": 7,
+      "foc": 13,
       "fights": 0
     },
     "initial_level": 28,
     "initial_xp": {
-      "current": 13644,
+      "current": 19807,
       "max": 29308
     },
     "progression_curve": {
       "level": 28,
-      "total_xp": 308791,
+      "total_xp": 314954,
       "xp_for_next": 29308,
-      "percent": 46.6
+      "percent": 67.6
     },
-    "initial_max_hp": 626,
+    "initial_max_hp": 631,
     "initial_equipment": [
       {
         "slot": "⚔️",
-        "name": "Iron Rapier"
+        "name": "Iron Rapier",
+        "rarity": "COMMON"
       },
       {
-        "slot": "🛡",
-        "name": "Spiked Gauntlets"
+        "slot": "🛡️",
+        "name": "Spiked Gauntlets",
+        "rarity": "RARE"
       },
       {
         "slot": "💍",
-        "name": "Sovereign Crown"
+        "name": "Obsidian Idol",
+        "rarity": "EPIC"
       }
     ],
-    "initial_streak": 1,
+    "initial_streak": 2,
     "final_stats": {
       "level": 28,
-      "xp": 18390,
+      "xp": 20625,
       "wins": null,
       "losses": null
     },
     "final_character_stats": {
-      "str": 45,
-      "vit": 25,
+      "str": 42,
+      "vit": 26,
       "dex": 15,
-      "luk": 16,
-      "int": 11,
-      "foc": 14,
-      "last xp": 36,
-      "fights": 9
+      "luk": 15,
+      "int": 7,
+      "foc": 13,
+      "last xp": 43,
+      "fights": 5
     },
-    "final_max_hp": 626,
+    "final_max_hp": 631,
     "final_equipment": [
       {
         "slot": "⚔️",
-        "name": "Iron Rapier"
+        "name": "Iron Rapier",
+        "rarity": "COMMON"
       },
       {
-        "slot": "🛡",
-        "name": "Spiked Gauntlets"
+        "slot": "🛡️",
+        "name": "Spiked Gauntlets",
+        "rarity": "RARE"
       },
       {
         "slot": "💍",
-        "name": "Sovereign Crown"
+        "name": "Obsidian Idol",
+        "rarity": "EPIC"
       }
     ],
-    "final_streak": 1,
+    "final_streak": 2,
     "lootbox_equipment": [
       {
         "slot": "⚔️",
@@ -214664,27 +214668,28 @@
       "wins": 0,
       "xp_total": 0,
       "monsters_faced": [],
-      "pve_shifted": true,
-      "boss_locked_level": 30,
-      "boss_name": "VOID TITAN",
-      "boss_level": null,
-      "boss_hp": null,
-      "boss_max_hp": null
+      "pve_shifted": false
     },
     "level_up_events": [],
     "idle_runner": {
-      "observation_duration_ms": 33042,
+      "observation_duration_ms": 44178,
       "cycles_observed": 0,
       "monsters_faced": [
         "skeleton"
       ],
-      "victories": 0,
+      "victories": 1,
       "defeats": 1,
-      "xp_total": 38,
+      "xp_total": 160,
       "xp_events": [
         {
-          "time_ms": 33042,
-          "xp": 38,
+          "time_ms": 3060,
+          "xp": 119,
+          "monster": "skeleton",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 44178,
+          "xp": 41,
           "monster": "skeleton",
           "result": "unknown"
         }
@@ -214694,51 +214699,60 @@
       "level_up_events": [],
       "phase_transition_times_ms": [
         507,
-        1520,
-        33042
+        1528,
+        3060,
+        11627,
+        13157,
+        44178
       ]
     },
     "idle_fights": [
       {
+        "result": "victory",
+        "xp": 119,
+        "essence": 0.59,
+        "monster": "skeleton"
+      },
+      {
         "result": "defeat",
-        "xp": 38,
-        "essence": 0.36,
+        "xp": 41,
+        "essence": 0.18,
         "monster": "skeleton"
       }
     ],
     "efficiency_panel": {
       "visible": true,
-      "essence_per_min": 1.87,
-      "next_level_eta": "⬆ 17m 53s",
-      "power_ratio": "⚔ 0.56x",
+      "essence_per_min": 1.78,
+      "next_level_eta": "⬆ 12m 44s",
+      "power_ratio": "⚔ 0.51x",
       "speed_ratio": "⚡ 0.50x",
-      "magic_mult": "🧠 1.05x",
+      "magic_mult": "🧠 1.00x",
       "interval": "11.2s",
       "streak_bonus": null
     },
-    "initial_essence": 356.34,
-    "final_essence": 278.89,
+    "initial_essence": 279.35,
+    "final_essence": 182.15,
     "essence": {
-      "before_idle": 356.34,
-      "after_idle": 356.7,
+      "before_idle": 279.35,
+      "after_idle": 280.12,
       "per_fight": [],
-      "forge_before": 357,
-      "forge_after_salvage": 377,
-      "forge_after_fusion": 377,
-      "forge_after_upgrade": 307,
-      "forge_after": 307,
-      "shop_before": 308,
-      "shop_after": 278,
-      "final": 278.89,
+      "forge_before": 280,
+      "forge_after_salvage": 300,
+      "forge_after_fusion": 300,
+      "forge_after_upgrade": 210,
+      "forge_after": 210,
+      "shop_before": 212,
+      "shop_after": 182,
+      "final": 182.15,
       "flow": {
-        "idle_gained": 0.36,
+        "idle_gained": 0.77,
         "fights_change": null,
         "salvage_gained": 20,
         "fusion_cost": 0,
-        "upgrade_cost": 70,
-        "forge_net": -50,
+        "upgrade_cost": 90,
+        "forge_net": -70,
         "shop_cost": 30,
-        "net_change": -77.45
+        "net_change": -97.2
       }
     },
     "level_up_fx": {
@@ -214763,10 +214777,10 @@
     },
     "forge": {
       "visited": true,
-      "essence_before": 357,
-      "essence_after_salvage": 377,
-      "essence_after_fusion": 377,
-      "essence_after_upgrade": 307,
+      "essence_before": 280,
+      "essence_after_salvage": 300,
+      "essence_after_fusion": 300,
+      "essence_after_upgrade": 210,
       "items_before": 1,
       "salvage_attempted": true,
       "salvage_succeeded": true,
@@ -214774,11 +214788,11 @@
       "fusion_succeeded": false,
       "upgrade_attempted": true,
       "upgrade_succeeded": true,
-      "essence_after": 307,
+      "essence_after": 210,
       "items_after": 0,
       "salvage_essence_gained": 20,
       "fusion_cost": null,
-      "upgrade_cost": 70,
+      "upgrade_cost": 90,
       "skipped": false,
       "skip_reason": null
     },
@@ -214789,8 +214803,8 @@
       "offer_type": "item",
       "item_rarity": "COMMON",
       "cost": 30,
-      "essence_before": 308,
-      "essence_after": 278,
+      "essence_before": 212,
+      "essence_after": 182,
       "skipped": false,
       "skip_reason": null,
       "shop_data": {
@@ -214812,7 +214826,7 @@
           }
         ],
         "purchased_offer": 0,
-        "essence_after_purchase": 278,
+        "essence_after_purchase": 182,
         "essence_budget": 60,
         "budget_limited": false,
         "budget_blocked_price": null
@@ -214823,7 +214837,7 @@
       "essence_budget": 60
     },
     "combat_speed": 2,
-    "pvp_since_last_pve": 1,
+    "pvp_since_last_pve": 2,
     "skipped_inventory": null,
     "skipped_fights": [
       {
@@ -214833,8 +214847,8 @@
     ],
     "errors": [],
     "load_times_ms": {
-      "home": 1242,
-      "arena": 1247
+      "home": 1174,
+      "arena": 399
     },
     "skipped_summary": {
       "no_energy": 1
@@ -214858,7 +214872,7 @@
         }
       ],
       "purchased_offer": 0,
-      "essence_after_purchase": 278,
+      "essence_after_purchase": 182,
       "essence_budget": 60,
       "budget_limited": false,
       "budget_blocked_price": null
