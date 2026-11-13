@@ -1811,6 +1811,17 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     const cheapestOnly = globalCheapestOnly && segmentedCheapestOnly
     const cheapestPending = globalCheapestOnly && !segmentedCheapestOnly
     const ratePct = (shopReal.real_purchase_rate * 100).toFixed(0)
+    const measurementPendingReasons: string[] = []
+    if (unsegmentedRuns > shopReal.runs_with_shop_data / 2) {
+      measurementPendingReasons.push(`${unsegmentedRuns} unsegmented run(s) out of ${shopReal.runs_with_shop_data}`)
+    }
+    if (segmentedRuns < REAL_SHOP_MIN_RUNS) {
+      measurementPendingReasons.push(`${segmentedRuns} segmented run(s) below REAL_SHOP_MIN_RUNS=${REAL_SHOP_MIN_RUNS}`)
+    }
+    const pendingReasons = [...measurementPendingReasons]
+    if (cheapestPending) {
+      pendingReasons.push(`the global cheapest-offer share (${(shopReal.cheapest_offer_share! * 100).toFixed(0)}%) is not yet confirmed by segmented cohorts`)
+    }
     const cohortEssence = segmentedCohorts.filter(
       (c): c is ShopCohortAnalysis & { avg_essence_before: number } => c.avg_essence_before !== null
     )
@@ -1841,7 +1852,10 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     } else if (shopReal.real_purchase_rate < 0.1) {
       suggestions.push(`Real shop purchase rate is ${ratePct}% (${shopReal.runs_with_purchase}/${shopReal.runs_with_shop_data} runs) — players are not buying. Consider lowering SHOP_OFFERS prices.`)
     } else if (shopReal.real_purchase_rate > 0.6 && (measurementPending || cheapestPending)) {
-      suggestions.push(`Real shop purchase rate is ${ratePct}% (${shopReal.runs_with_purchase}/${shopReal.runs_with_shop_data} runs) — measurement pending: ${unsegmentedRuns} unsegmented run(s) vs ${segmentedRuns} segmented (below REAL_SHOP_MIN_RUNS=${REAL_SHOP_MIN_RUNS}). The rate is carried by the legacy hoarding character; no price action until fresh segmented runs exist.`)
+      const pendingClosing = measurementPending
+        ? 'The rate is carried by the legacy hoarding character; no price action until fresh segmented runs exist.'
+        : 'The cheapest-offer concentration is carried by unsegmented runs; no price action until segmented runs confirm it.'
+      suggestions.push(`Real shop purchase rate is ${ratePct}% (${shopReal.runs_with_purchase}/${shopReal.runs_with_shop_data} runs) — measurement pending: ${pendingReasons.join('; ')}. ${pendingClosing}`)
     } else if (shopReal.real_purchase_rate > 0.6 && !cheapestOnly) {
       suggestions.push(`Real shop purchase rate is ${ratePct}% (${shopReal.runs_with_purchase}/${shopReal.runs_with_shop_data} runs, avg cost ${shopReal.avg_purchase_cost?.toFixed(0) ?? 'n/a'} 💎) — offers are trivially affordable for players. Consider raising SHOP_OFFERS prices.`)
     }
