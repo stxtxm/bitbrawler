@@ -360,6 +360,7 @@ interface ShopCohortAnalysis extends ShopFunnel {
   budget_limited_runs: number
   avg_essence_before: number | null
   min_offer_price: number | null
+  cheapest_offer_share: number | null
   /** #1300 : funnel imbriqué, en plus des champs aplatis ci-dessus. */
   funnel: ShopFunnel
 }
@@ -911,6 +912,12 @@ function computeShopRealAnalysis(runs: RunRecord[]): ShopRealAnalysis | null {
       const budget_generations: ShopBudgetGeneration[] = [...budgetGenerations.entries()]
         .map(([essence_budget, runs]) => ({ essence_budget, runs }))
       const lastRun = group[group.length - 1]
+      const cheapestPurchases = groupWithOffers.filter(
+        r => r.shop?.purchased === true && r.shop_data?.purchased_offer === 0
+      ).length
+      const indexedPurchases = groupWithOffers.filter(
+        r => r.shop?.purchased === true && typeof r.shop_data?.purchased_offer === 'number'
+      ).length
       return {
         cohort: name,
         essence_budget: lastRun?.cohort?.essence_budget ?? null,
@@ -925,6 +932,9 @@ function computeShopRealAnalysis(runs: RunRecord[]): ShopRealAnalysis | null {
           ? Math.round((essences.reduce((s, e) => s + e, 0) / essences.length) * 100) / 100
           : null,
         min_offer_price: prices.length > 0 ? Math.min(...prices) : null,
+        cheapest_offer_share: indexedPurchases > 0
+          ? Math.round((cheapestPurchases / indexedPurchases) * 1000) / 1000
+          : null,
         ...funnel,
         funnel,
       }
@@ -1791,9 +1801,17 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     const unsegmentedRuns = shopReal.cohorts.find(c => c.cohort === 'unsegmented')?.runs_with_shop_data ?? 0
     const segmentedRuns = shopReal.runs_with_shop_data - unsegmentedRuns
     const measurementPending = unsegmentedRuns > shopReal.runs_with_shop_data / 2 || segmentedRuns < REAL_SHOP_MIN_RUNS
-    const cheapestOnly = shopReal.cheapest_offer_share !== null && shopReal.cheapest_offer_share >= 0.95
+    const segmentedCohorts = shopReal.cohorts.filter(c => c.cohort !== 'unsegmented')
+    const segmentedCheapestShares = segmentedCohorts
+      .map(c => c.cheapest_offer_share)
+      .filter((share): share is number => share !== null)
+    const segmentedCheapestOnly = segmentedCheapestShares.length > 0
+      && segmentedCheapestShares.every(share => share >= 0.95)
+    const globalCheapestOnly = shopReal.cheapest_offer_share !== null && shopReal.cheapest_offer_share >= 0.95
+    const cheapestOnly = globalCheapestOnly && segmentedCheapestOnly
+    const cheapestPending = globalCheapestOnly && !segmentedCheapestOnly
     const ratePct = (shopReal.real_purchase_rate * 100).toFixed(0)
-    const cohortEssence = shopReal.cohorts.filter(
+    const cohortEssence = segmentedCohorts.filter(
       (c): c is ShopCohortAnalysis & { avg_essence_before: number } => c.avg_essence_before !== null
     )
     const cohortEssenceRuns = cohortEssence.reduce((s, c) => s + c.runs_with_shop_data, 0)
@@ -1802,7 +1820,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
       : null
     const avgPurchaseCost = shopReal.avg_purchase_cost
     const essenceCostRatio = avgEssenceBefore !== null && avgPurchaseCost !== null && avgPurchaseCost > 0
-      ? Math.round(avgEssenceBefore / avgPurchaseCost)
+      ? Math.round((avgEssenceBefore / avgPurchaseCost) * 10) / 10
       : null
 
     // #1300 : le taux agrégé ne dit rien de la cohorte FRESH quand son funnel est
@@ -1822,13 +1840,13 @@ function analyze(stats: RunRecord[]): AnalysisReport {
       }
     } else if (shopReal.real_purchase_rate < 0.1) {
       suggestions.push(`Real shop purchase rate is ${ratePct}% (${shopReal.runs_with_purchase}/${shopReal.runs_with_shop_data} runs) — players are not buying. Consider lowering SHOP_OFFERS prices.`)
-    } else if (shopReal.real_purchase_rate > 0.6 && measurementPending) {
+    } else if (shopReal.real_purchase_rate > 0.6 && (measurementPending || cheapestPending)) {
       suggestions.push(`Real shop purchase rate is ${ratePct}% (${shopReal.runs_with_purchase}/${shopReal.runs_with_shop_data} runs) — measurement pending: ${unsegmentedRuns} unsegmented run(s) vs ${segmentedRuns} segmented (below REAL_SHOP_MIN_RUNS=${REAL_SHOP_MIN_RUNS}). The rate is carried by the legacy hoarding character; no price action until fresh segmented runs exist.`)
     } else if (shopReal.real_purchase_rate > 0.6 && !cheapestOnly) {
       suggestions.push(`Real shop purchase rate is ${ratePct}% (${shopReal.runs_with_purchase}/${shopReal.runs_with_shop_data} runs, avg cost ${shopReal.avg_purchase_cost?.toFixed(0) ?? 'n/a'} 💎) — offers are trivially affordable for players. Consider raising SHOP_OFFERS prices.`)
     }
-    if (cheapestOnly) {
-      suggestions.push(`Real shop purchases target the cheapest offer (share ${(shopReal.cheapest_offer_share! * 100).toFixed(0)}%) — available essence${avgEssenceBefore !== null ? ` (avg ${avgEssenceBefore.toFixed(0)} 💎)` : ''} is ${essenceCostRatio !== null ? `~${essenceCostRatio}× ` : ''}the purchased offer cost (avg ${avgPurchaseCost?.toFixed(0) ?? 'n/a'} 💎): hoarding / offer-structure, not a price signal. A uniform price increase will not change the behaviour; calibrate on cost relative to essence, not the raw purchase rate.`)
+    if (cheapestOnly && !freshOutOfReach && avgEssenceBefore !== null) {
+      suggestions.push(`Real shop purchases target the cheapest offer (share ${(shopReal.cheapest_offer_share! * 100).toFixed(0)}%) — available essence${avgEssenceBefore !== null ? ` (avg ${avgEssenceBefore.toFixed(0)} 💎)` : ''} is ${essenceCostRatio !== null ? `~${essenceCostRatio.toFixed(1)}× ` : ''}the purchased offer cost (avg ${avgPurchaseCost?.toFixed(0) ?? 'n/a'} 💎): hoarding / offer-structure, not a price signal. A uniform price increase will not change the behaviour; calibrate on cost relative to essence, not the raw purchase rate.`)
     }
     // Cohortes QA (#1230) : le signal prix. Une offre abordable mais au-dessus du
     // budget d'un profil est un run « budget limited » — la métrique bouge avec
