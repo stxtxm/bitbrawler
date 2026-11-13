@@ -752,6 +752,17 @@ function shopRealSuggestions(real: ShopRealAnalysis | null): string[] {
   const cheapestOnly = globalCheapestOnly && segmentedCheapestOnly
   const cheapestPending = globalCheapestOnly && !segmentedCheapestOnly
   const ratePct = (real.real_purchase_rate * 100).toFixed(0)
+  const measurementPendingReasons: string[] = []
+  if (unsegmentedRuns > real.runs_with_shop_data / 2) {
+    measurementPendingReasons.push(`${unsegmentedRuns} unsegmented run(s) out of ${real.runs_with_shop_data}`)
+  }
+  if (segmentedRuns < REAL_SHOP_MIN_RUNS) {
+    measurementPendingReasons.push(`${segmentedRuns} segmented run(s) below REAL_SHOP_MIN_RUNS=${REAL_SHOP_MIN_RUNS}`)
+  }
+  const pendingReasons = [...measurementPendingReasons]
+  if (cheapestPending) {
+    pendingReasons.push(`the global cheapest-offer share (${(real.cheapest_offer_share! * 100).toFixed(0)}%) is not yet confirmed by segmented cohorts`)
+  }
   const cohortEssence = segmentedCohorts.filter(
     (c): c is ShopCohortAnalysis & { avg_essence_before: number } => c.avg_essence_before !== null
   )
@@ -780,7 +791,10 @@ function shopRealSuggestions(real: ShopRealAnalysis | null): string[] {
   } else if (real.real_purchase_rate < 0.1) {
     out.push(`Real shop purchase rate is ${ratePct}% (${real.runs_with_purchase}/${real.runs_with_shop_data} runs). Consider lowering SHOP_OFFERS prices.`)
   } else if (real.real_purchase_rate > 0.6 && (measurementPending || cheapestPending)) {
-    out.push(`Real shop purchase rate is ${ratePct}% (${real.runs_with_purchase}/${real.runs_with_shop_data} runs) — measurement pending: ${unsegmentedRuns} unsegmented run(s) vs ${segmentedRuns} segmented (below REAL_SHOP_MIN_RUNS=${REAL_SHOP_MIN_RUNS}). The rate is carried by the legacy hoarding character; no price action until fresh segmented runs exist.`)
+    const pendingClosing = measurementPending
+      ? 'The rate is carried by the legacy hoarding character; no price action until fresh segmented runs exist.'
+      : 'The cheapest-offer concentration is carried by unsegmented runs; no price action until segmented runs confirm it.'
+    out.push(`Real shop purchase rate is ${ratePct}% (${real.runs_with_purchase}/${real.runs_with_shop_data} runs) — measurement pending: ${pendingReasons.join('; ')}. ${pendingClosing}`)
   } else if (real.real_purchase_rate > 0.6 && !cheapestOnly) {
     out.push(`Real shop purchase rate is ${ratePct}% (${real.runs_with_purchase}/${real.runs_with_shop_data} runs) — offers are trivially affordable. Consider raising SHOP_OFFERS prices.`)
   }
@@ -2417,6 +2431,32 @@ describe('QA Shop Real Purchase Analysis (#1229)', () => {
       expect(suggestions.some(s => s.includes('target the cheapest offer'))).toBe(false)
       expect(suggestions.some(s => s.includes('measurement pending'))).toBe(true)
     })
+
+    it('fixture #1370 : cheapestPending avec assez de runs segmentés ne prétend pas un déficit de runs', () => {
+      const mid = { name: 'QA-MID', essence_budget: 40 }
+      const runs: RunRecord[] = [
+        ...Array.from({ length: 100 }, (_, i) => shopRun(true, 26, 'UNCOMMON', i < 94 ? 0 : 1, mid, 40)),
+        ...Array.from({ length: 90 }, () => shopRun(true, 26, 'UNCOMMON', 0, null, 319)),
+      ]
+      const analysis = computeShopRealAnalysis(runs)
+      expect(analysis?.runs_with_shop_data).toBe(190)
+      const pending = shopRealSuggestions(analysis).find(s => s.includes('measurement pending'))
+      expect(pending).toBeDefined()
+      expect(pending).not.toContain('below REAL_SHOP_MIN_RUNS')
+      expect(pending).toContain('not yet confirmed by segmented cohorts')
+    })
+
+    it('fixture #1370 : measurement pending par déficit de runs segmentés nomme le seuil', () => {
+      const runs: RunRecord[] = [
+        ...Array.from({ length: 58 }, () => shopRun(true, 24, 'UNCOMMON', 0)),
+        shopRun(false, null, null, null, { name: 'QA-FRESH', essence_budget: 50 }),
+        shopRun(false, null, null, null, { name: 'QA-MID', essence_budget: 40 }),
+        shopRun(false, null, null, null, { name: 'QA-END', essence_budget: 60 }),
+      ]
+      const pending = shopRealSuggestions(computeShopRealAnalysis(runs)).find(s => s.includes('measurement pending'))
+      expect(pending).toBeDefined()
+      expect(pending).toContain(`below REAL_SHOP_MIN_RUNS=${REAL_SHOP_MIN_RUNS}`)
+    })
   })
 
   describe('analyze-qa-stats.ts source contract (#1229)', () => {
@@ -2437,6 +2477,11 @@ describe('QA Shop Real Purchase Analysis (#1229)', () => {
       expect(source).toContain('Real shop purchase rate')
       expect(source).toContain('Simulated shop purchase rate')
       expect(source).toContain('calibrate on cost relative to essence')
+    })
+
+    it('distingue les causes measurement pending et cheapest pending (#1370)', () => {
+      expect(source).toContain('not yet confirmed by segmented cohorts')
+      expect(source).toContain('below REAL_SHOP_MIN_RUNS=')
     })
   })
 })
