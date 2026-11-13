@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-11-10T07:31:08Z",
+  "last_session": "2026-11-13T00:08:15Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1144 Pixel Season Pass: implémentation localStorage-first (aucune migration DB requise) pour ne pas bloquer sur Supabase. Les compteurs de missions sont branchés au choke point persistCharacter (delta wins/idleTotalKills/idleStreak) + appel explicite après salvage, ce qui évite de modifier chaque hook de combat/idle. Attention aux requêtes Testing Library par regex /claim tier 1/ qui matchent aussi tier 10/11... : utiliser le name exact.",
-      "issue": "#1144",
-      "date": "2026-10-21"
-    },
     {
       "lesson": "#1289: ARCHITECTURE.md peut documenter une colonne (monster_kills) ABSENTE de la base de reference. Verifier avant de coder: GET /rest/v1/characters?select=col&limit=0 avec l anon key -> 42703 si absente. Les deux colonnes monster_kills et monster_encounters manquaient. Pattern fallback: SELECT projection legacy sur 42703, et sur PGRST204/42703 lors de l update, retirer les champs et rejouer une fois (sinon tous les saves cassent avant migration). Migration issue #1293 creee sans /oc.",
       "issue": "#1289",
@@ -172,6 +167,11 @@
       "lesson": "Issue #1366: la doc AGENTS.md d un seuil de code est testable via lecture du fichier et slice de la section (## Tech Lead Agent → ## QA Tester Agent). IDLE_ESSENCE_HIGH_PER_RUN=15 vit dans scripts/analyze-qa-stats.ts, ne pas figer BASE_RATE/LEVEL_SCALE dans la doc (ils driftent, le code les imprime dynamiquement).",
       "issue": "#1366",
       "date": "2026-11-10"
+    },
+    {
+      "lesson": "Issue #1368: les suggestions shop de analyze-qa-stats.ts doivent toujours exclure la cohorte legacy 'unsegmented' des agrégats de raisonnement par profil (essence ET cheapest share par cohorte). Un seul constat shop par rapport : si le funnel QA-FRESH hors de portée est émis, ne jamais ajouter le constat hoarding. Le miroir de test src/test/unit/qa-analysis.test.ts duplique la logique: toute correction doit y être répliquée.",
+      "issue": "#1368",
+      "date": "2026-11-13"
     }
   ]
 }
