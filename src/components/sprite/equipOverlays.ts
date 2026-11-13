@@ -798,6 +798,12 @@ function isShirt(base: number): boolean {
   return SHIRT_SET.has(base) || shadeIndexOf(5) === base;
 }
 
+// Tissu de chemise remplacé par le plastron : on exclut le col/logo (11), qui
+// doit rester lisible au-dessus de l'armure comme une encolure.
+function isShirtFabric(base: number): boolean {
+  return base === 5 || base === 9 || base === shadeIndexOf(5);
+}
+
 function paintHelm(grid: SpriteGrid, head: Box, faceCx: number, eyeY: number, rim: number): void {
   // Stop at the brow line. Repainting hair all the way down to the chin left
   // the whole head in field colour, and the rarity trim sat on the TOP rows —
@@ -820,19 +826,22 @@ function paintHelm(grid: SpriteGrid, head: Box, faceCx: number, eyeY: number, ri
   paint(grid, clamp(faceCx, head.x0, head.x1), brimY, ACCENT_INDEX);
 }
 
-const ARMOR_TOP = 19 + PAD;
-const ARMOR_WAIST = 29 + PAD;
-const ARMOR_BAND_TOP = ARMOR_WAIST - 2;
-
 function paintChest(grid: SpriteGrid, torso: Box, cx: number): void {
   const ccx = clamp(cx, torso.x0 + 4, torso.x1 - 4);
-  // Layer 1 — plastron: the armour field replaces the player's shirt from the
-  // chest down to the waist; skin, hair and legs are never touched.
-  for (let y = ARMOR_TOP; y <= ARMOR_WAIST; y++) {
+  // Plastron dynamique : borné à la boîte du torse pour suivre le buste pendant
+  // le hop de victoire (les anciennes constantes absolues rataient le corps
+  // décalé). On ne repeint que les cellules de chemise : peau, cheveux et
+  // jambes restent intacts.
+  const armorTop = torso.y0;
+  // Limité à la taille/hanche : la boîte du torse peut descendre jusqu'aux
+  // jambes selon la pose, mais le plastron ne doit pas recouvrir le pantalon.
+  // 29+PAD (35) correspond à la ligne de taille historique.
+  const armorBottom = Math.min(torso.y1, 29 + PAD);
+  for (let y = armorTop; y <= armorBottom; y++) {
     const row = grid[y];
     if (!row) continue;
     for (let x = torso.x0; x <= torso.x1; x++) {
-      if (!isShirt(row[x])) continue;
+      if (!isShirtFabric(row[x])) continue;
       row[x] = FIELD_INDEX;
     }
   }
@@ -866,22 +875,25 @@ function paintChest(grid: SpriteGrid, torso: Box, cx: number): void {
   // Ridge/clasp are armour details, so they only overwrite the plastron.
   // Painting them unconditionally punched a steel line through the skin of
   // open-chest bodies (monk/sleeveless).
-  for (let y = torso.y0 + 3; y <= torso.y0 + 8; y++) {
+  for (let y = torso.y0 + 3; y <= Math.min(torso.y0 + 8, armorBottom); y++) {
     const row = grid[y];
     if (!row) continue;
     for (const x of [ccx - 1, ccx]) {
-      if (row[x] === FIELD_INDEX) row[x] = FIELD_LIGHT;
+      // L'arête/clasp se dessinent sur le plastron ; un logo de chemise (11)
+      // sous l'armure peut subsister si non remplacé en masse, on le couvre.
+      if (row[x] === FIELD_INDEX || row[x] === 11) row[x] = FIELD_LIGHT;
     }
   }
   const cy = clamp(torso.y0 + 5, torso.y0, torso.y1);
   for (const x of [ccx - 1, ccx]) {
     const cell = grid[cy]?.[x];
-    if (cell === FIELD_INDEX || cell === FIELD_LIGHT) grid[cy][x] = ACCENT_INDEX;
+    if (cell === FIELD_INDEX || cell === FIELD_LIGHT || cell === 11) grid[cy][x] = ACCENT_INDEX;
   }
   // Layer 3 — waist band: a tinted cloth layer over the lower plastron, using
   // the item's tint ramp. It stops at the hip line so the pants and shoes of
   // the player survive untouched.
-  for (let y = ARMOR_BAND_TOP; y <= ARMOR_WAIST; y++) {
+  const bandTop = Math.max(armorTop, armorBottom - 2);
+  for (let y = bandTop; y <= armorBottom; y++) {
     const row = grid[y];
     if (!row) continue;
     for (let x = torso.x0; x <= torso.x1; x++) {
@@ -908,24 +920,48 @@ function stampHeadgear(grid: SpriteGrid, item: PixelItemAsset, head: Box, faceCx
 }
 
 function paintBoots(grid: SpriteGrid): void {
-  for (const y of [34 + PAD, 35 + PAD]) {
-    for (let x = 0; x < GRID_W; x++) {
-      const cell = grid[y]?.[x] ?? 0;
-      if (cell === 7 || cell === shadeIndexOf(7)) grid[y][x] = TINT_INDEX;
+  // Teinte la famille chaussure (base/ombre/lumière) partout où elle apparaît :
+  // les rangées fixes rataient les pieds pendant le hop de victoire et les
+  // foulées de course, alors que les pixels de chaussures suivent le corps.
+  for (let y = 0; y < grid.length; y++) {
+    const row = grid[y];
+    if (!row) continue;
+    for (let x = 0; x < row.length; x++) {
+      const cell = row[x];
+      if (cell === 7) row[x] = TINT_INDEX;
+      else if (cell === shadeIndexOf(7)) row[x] = TINT_DARK;
+      else if (cell === highlightIndexOf(7)) row[x] = TINT_LIGHT;
     }
   }
 }
 
-function paintBracers(grid: SpriteGrid): void {
-  for (let y = 24 + PAD; y <= 29 + PAD; y++) {
-    const row = grid[y];
-    if (!row) continue;
-    const left = row.findIndex((c) => c !== 0);
-    if (left >= 0) row[left] = TINT2_INDEX;
-    for (let x = row.length - 1; x >= 0; x--) {
-      if (row[x] !== 0) {
-        row[x] = TINT2_INDEX;
-        break;
+function isSkinCell(v: number): boolean {
+  return v === 1 || v === shadeIndexOf(1) || v === highlightIndexOf(1);
+}
+
+function paintBracers(grid: SpriteGrid, marks: BodyLandmarks): void {
+  // Brassards/gantelets sur l'avant-bras (cellules de peau) juste au-dessus du
+  // poing, et non sur le bord extérieur du buste : l'ancien tracé peignait la
+  // hanche/le flanc car il prenait le premier pixel non vide de la rangée.
+  for (const hand of [marks.handL, marks.handR]) {
+    const side: 'left' | 'right' = hand.x < GRID_W / 2 ? 'left' : 'right';
+    for (let y = hand.y - 4; y <= hand.y - 1; y++) {
+      const row = grid[y];
+      if (!row) continue;
+      const candidates: number[] = [];
+      for (let x = 0; x < row.length; x++) {
+        if (!isSkinCell(row[x])) continue;
+        // Peau du bras du bon côté, à proximité de la main (évite visage/torse).
+        if (side === 'left' && x <= hand.x + 2) candidates.push(x);
+        if (side === 'right' && x >= hand.x - 2) candidates.push(x);
+      }
+      if (candidates.length === 0) continue;
+      const target = side === 'left' ? Math.min(...candidates) : Math.max(...candidates);
+      row[target] = TINT2_INDEX;
+      // Un second pixel vers l'intérieur si c'est aussi de la peau (brassard).
+      const inner = side === 'left' ? target + 1 : target - 1;
+      if (inner >= 0 && inner < row.length && isSkinCell(row[inner])) {
+        row[inner] = TINT2_DARK;
       }
     }
   }
@@ -1292,7 +1328,7 @@ export function applyEquipmentOverlays(
     (loadout.accessory && accessoryKind === 'boots' ? loadout.accessory : null) ??
     (loadout.armor && armorKind === 'boots' ? loadout.armor : null);
   if (bootsItem) paintBoots(out);
-  if (loadout.armor && armorKind === 'bracers') paintBracers(out);
+  if (loadout.armor && armorKind === 'bracers') paintBracers(out, marks);
   if (loadout.armor && (armorKind === 'chest' || armorKind === 'robe')) {
     paintChest(out, marks.torso, marks.faceCx);
   }

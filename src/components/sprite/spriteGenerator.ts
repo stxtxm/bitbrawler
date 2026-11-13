@@ -86,7 +86,10 @@ export function resolveSpriteFeatures(
     hairColor: appearance?.hairColor ?? pick(HAIR_TONES_16),
     shirtColor,
     pantsColor: appearance?.pantsColor ?? outfit.pants,
-    shoesColor: '#333333',
+    // Chaussures dérivées du pantalon : le noir quasi fixe (#333) disparaissait
+    // sur fond sombre. Un ton assombri du pantalon reste cohérent avec la tenue
+    // tout en gardant les pieds lisibles.
+    shoesColor: shiftHex(appearance?.pantsColor ?? outfit.pants, 0.55),
     eyeColor: appearance?.eyeColor ?? pick(EYE_TONES_16),
     // Tonal, not a random hue: a clashing random colour turned the collar and
     // the chest emblem into two bright bars that read as a sandwich board.
@@ -236,10 +239,17 @@ function applyAnatomy(base: SpriteGrid): void {
     if (base[NECK_Y][x] !== 0) continue;
     const below = base[NECK_Y + 1]?.[x] ?? 0;
     if (below === 0 || below === 1) continue;
+    const above = base[NECK_Y - 1]?.[x] ?? 0;
     const upLeft = base[NECK_Y - 1]?.[x - 1] ?? 0;
     const upRight = base[NECK_Y - 1]?.[x + 1] ?? 0;
-    if (upLeft === 0 && upRight === 0) continue;
-    base[NECK_Y][x] = below;
+    // Le menton peut n'être plus qu'un pixel après le retrait du visage : la
+    // garde ne regardait que les diagonales et laissait alors un vide vertical
+    // sous le menton, ce qui déconnectait la tête du corps (menton flottant).
+    if (above === 0 && upLeft === 0 && upRight === 0) continue;
+    // Sous une peau, la gorge reste de la peau : la remplir de la couleur des
+    // épaules posait le menton sur un col décalé. Ailleurs c'est la pente de
+    // trapeze, couleur épaules, comme avant.
+    base[NECK_Y][x] = above === 1 ? 1 : below;
   }
 }
 
@@ -250,6 +260,230 @@ function upscale(grid: SpriteGrid): SpriteGrid {
     out.push([...doubled], [...doubled]);
   }
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// Intégrité de silhouette — trous encadrés et morceaux détachés.
+// ---------------------------------------------------------------------------
+
+const NEIGHBOURS: ReadonlyArray<readonly [number, number]> = [
+  [1, 0], [-1, 0], [0, 1], [0, -1],
+];
+
+// Sous cette ligne (hanches/jambes) un vide n'est pas un trou : pendant la
+// foulée, l'écart entre les jambes croisées est un fond de scène comme un
+// autre et le remplir fusionnerait les jambes en un bloc. Au-dessus (tête,
+// torse, bras), un vide entièrement encadré se lit comme un trou dans le corps.
+// On tolère un débordement d'1-2 px dans la bande haute des jambes (ex. fente
+// de veste en pose victoire, maxY 35) tant que le creux reste au-dessus du
+// vrai entrejambe de course (y36-37).
+const LEG_ROW = 36;
+
+/** Cellules vides atteignables depuis le bord de la grille (fond de scène). */
+function backgroundFromBorder(grid: SpriteGrid): boolean[][] {
+  const h = grid.length;
+  const w = grid[0].length;
+  const seen = Array.from({ length: h }, () => Array<boolean>(w).fill(false));
+  const stack: Array<[number, number]> = [];
+  for (let x = 0; x < w; x++) stack.push([x, 0], [x, h - 1]);
+  for (let y = 0; y < h; y++) stack.push([0, y], [w - 1, y]);
+  while (stack.length) {
+    const [cx, cy] = stack.pop()!;
+    if (cx < 0 || cy < 0 || cx >= w || cy >= h) continue;
+    if (seen[cy][cx] || grid[cy][cx] !== 0) continue;
+    seen[cy][cx] = true;
+    stack.push([cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]);
+  }
+  return seen;
+}
+
+/**
+ * Remplit les vides entièrement encadrés au-dessus des jambes : veste ouverte
+ * laissant voir le fond à travers le torse, gorge non raccordée sous un menton
+ * érodé, mèche décollée du visage. La valeur est le voisin majoritaire, avec
+ * priorité au voisin du dessus pour que la peau du cou continue sous le menton.
+ */
+export function fillEnclosedHoles(grid: SpriteGrid): void {
+  const h = grid.length;
+  const w = grid[0].length;
+  const seen = backgroundFromBorder(grid);
+  const toFill: Array<[number, number]> = [];
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (grid[y][x] !== 0 || seen[y][x]) continue;
+      // Région vide non atteinte du bord : on la marque au passage.
+      const region: Array<[number, number]> = [];
+      let maxY = -1;
+      const stack: Array<[number, number]> = [[x, y]];
+      seen[y][x] = true;
+      while (stack.length) {
+        const [cx, cy] = stack.pop()!;
+        region.push([cx, cy]);
+        if (cy > maxY) maxY = cy;
+        for (const [dx, dy] of NEIGHBOURS) {
+          const nx = cx + dx;
+          const ny = cy + dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          if (seen[ny][nx] || grid[ny][nx] !== 0) continue;
+          seen[ny][nx] = true;
+          stack.push([nx, ny]);
+        }
+      }
+      if (maxY < LEG_ROW) toFill.push(...region);
+    }
+  }
+  toFill.sort((a, b) => a[1] - b[1] || a[0] - b[0]);
+  for (const [x, y] of toFill) {
+    if (grid[y][x] !== 0) continue;
+    const above = y > 0 ? grid[y - 1][x] : 0;
+    const left = x > 0 ? grid[y][x - 1] : 0;
+    const right = x + 1 < w ? grid[y][x + 1] : 0;
+    const below = y + 1 < h ? grid[y + 1][x] : 0;
+    const votes = new Map<number, number>();
+    for (const v of [above, left, right, below]) {
+      if (v !== 0) votes.set(v, (votes.get(v) ?? 0) + 1);
+    }
+    let best = 0;
+    let bestCount = 0;
+    // Ordre de départage : dessus, gauche, droite, dessus — le dessus gagne
+    // les égalités, c'est lui qui donne la matière « qui continue ».
+    for (const v of [above, left, right, below]) {
+      if (v === 0) continue;
+      const count = votes.get(v) ?? 0;
+      if (count > bestCount) {
+        best = v;
+        bestCount = count;
+      }
+    }
+    if (best !== 0) grid[y][x] = best;
+  }
+}
+
+function labelComponents(grid: SpriteGrid): number[][] {
+  const h = grid.length;
+  const w = grid[0].length;
+  const label = Array.from({ length: h }, () => Array<number>(w).fill(-1));
+  let id = 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (grid[y][x] === 0 || label[y][x] >= 0) continue;
+      const stack: Array<[number, number]> = [[x, y]];
+      label[y][x] = id;
+      while (stack.length) {
+        const [cx, cy] = stack.pop()!;
+        for (const [dx, dy] of NEIGHBOURS) {
+          const nx = cx + dx;
+          const ny = cy + dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          if (label[ny][nx] >= 0 || grid[ny][nx] === 0) continue;
+          label[ny][nx] = id;
+          stack.push([nx, ny]);
+        }
+      }
+      id += 1;
+    }
+  }
+  return label;
+}
+
+/** Pont d'une cellule entre une composante et la plus grande, couleur de l'île. */
+function bridgeToMain(
+  grid: SpriteGrid,
+  label: number[][],
+  islandId: number,
+  mainId: number,
+): boolean {
+  const h = grid.length;
+  const w = grid[0].length;
+  const keyOf = (x: number, y: number): number => y * w + x;
+  const parent = new Map<number, number>();
+  const seen = new Set<number>();
+  const queue: number[] = [];
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      if (label[y][x] !== islandId) continue;
+      const k = keyOf(x, y);
+      seen.add(k);
+      queue.push(k);
+    }
+  }
+  let end = -1;
+  while (queue.length && end < 0) {
+    const k = queue.shift()!;
+    const x = k % w;
+    const y = (k / w) | 0;
+    for (const [dx, dy] of NEIGHBOURS) {
+      const nx = x + dx;
+      const ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+      const nk = keyOf(nx, ny);
+      if (seen.has(nk)) continue;
+      const cell = grid[ny][nx];
+      if (cell !== 0 && label[ny][nx] === islandId) continue;
+      seen.add(nk);
+      parent.set(nk, k);
+      if (cell !== 0) {
+        // Toute autre composante atteinte : on y accoste (la cible principale
+        // est de loin la plus proche, mais raccorder une île à une autre île
+        // déjà raccordée revient au même).
+        if (label[ny][nx] === mainId || label[ny][nx] >= 0) {
+          end = nk;
+          break;
+        }
+      }
+      queue.push(nk);
+    }
+  }
+  if (end < 0) return false;
+  const path: Array<[number, number]> = [];
+  let anchor = 0;
+  let k = parent.get(end) ?? -1;
+  while (k >= 0) {
+    const x = k % w;
+    const y = (k / w) | 0;
+    if (grid[y][x] !== 0) {
+      anchor = grid[y][x];
+      break;
+    }
+    path.push([x, y]);
+    k = parent.get(k) ?? -1;
+  }
+  if (anchor === 0 || path.length === 0) return false;
+  for (const [x, y] of path) grid[y][x] = anchor;
+  return true;
+}
+
+/**
+ * Raccorde à la silhouette principale les morceaux qui ne la touchent qu'en
+ * diagonale (mèches, bouts de cheveux, poignets) : un pixel flottant à côté
+ * du visage se lit comme un défaut de rendu. Le pont prend la couleur du
+ * morceau raccordé, donc une mèche se prolonge en mèche.
+ */
+export function connectIslands(grid: SpriteGrid): void {
+  for (let pass = 0; pass < 8; pass++) {
+    const label = labelComponents(grid);
+    const sizes = new Map<number, number>();
+    for (const row of label) {
+      for (const id of row) {
+        if (id >= 0) sizes.set(id, (sizes.get(id) ?? 0) + 1);
+      }
+    }
+    if (sizes.size <= 1) return;
+    let mainId = -1;
+    let mainSize = -1;
+    for (const [id, size] of sizes) {
+      if (size > mainSize) {
+        mainId = id;
+        mainSize = size;
+      }
+    }
+    let bridged = false;
+    for (const id of sizes.keys()) {
+      if (id === mainId) continue;
+      if (bridgeToMain(grid, label, id, mainId)) bridged = true;
+    }
+    if (!bridged) return;
+  }
 }
 
 // Normalises a cell to its material family so a shaded or highlighted cell
@@ -1224,6 +1458,13 @@ function finishGrid(base: SpriteGrid, features: SpriteFeatures, pose?: (grid: Sp
   applyDetails(grid);
   applyFeatures(grid, features.headType);
   for (let i = 0; i < SPRITE_PAD_TOP; i++) grid.unshift(Array(SPRITE_WIDTH).fill(0));
+  // Intégrité de silhouette : boucher les trous encadrés du torse/visage,
+  // raccorder les îlots diagonaux (mèches flottantes), puis reboucher les
+  // poches qu'un pont a pu refermer. Au-dessus des jambes uniquement, pour ne
+  // pas fusionner les jambes pendant la foulée.
+  fillEnclosedHoles(grid);
+  connectIslands(grid);
+  fillEnclosedHoles(grid);
   return grid;
 }
 
@@ -1366,6 +1607,10 @@ export function generateSpriteFrames(
         grid[y] = y + hop < SPRITE_HEIGHT ? grid[y + hop].slice() : Array(SPRITE_WIDTH).fill(0);
       }
     }
+    // Intégrité finale après pad/hop : mêmes passes qu'en statique.
+    fillEnclosedHoles(grid);
+    connectIslands(grid);
+    fillEnclosedHoles(grid);
     return { grid, palette, width: SPRITE_WIDTH, height: SPRITE_HEIGHT, ms };
   });
 }
