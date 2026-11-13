@@ -217595,7 +217595,7 @@
     }
   },
   {
-    "date": "2026-11-13T23:01:51.222Z",
+    "date": "2026-11-13T23:06:50.233Z",
     "run": "2026-11-14",
     "character": "QA-PERSI-2",
     "character_action": "reused",
@@ -217604,20 +217604,18 @@
     "fights": [
       {
         "result": "victory",
-        "xp": 226,
-        "fight_duration_ms": 8218,
-        "max_hp": 685,
+        "xp": 285,
+        "fight_duration_ms": 10074,
+        "max_hp": 691,
         "fight_type": "pvp",
         "monster_name": null,
-        "essence_after": 184.71
+        "essence_after": 132.72
       }
     ],
     "lootbox": {
-      "available": true,
-      "opened": true,
-      "item": "Iron Cuirass",
-      "rarity": "COMMON",
-      "raw_text": "NEW ITEM"
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
     },
     "auto_mode_enabled": false,
     "auto_mode_sync_ok": true,
@@ -217634,7 +217632,7 @@
     },
     "initial_stats": {
       "str": 40,
-      "vit": 31,
+      "vit": 27,
       "dex": 15,
       "luk": 15,
       "int": 9,
@@ -217643,16 +217641,16 @@
     },
     "initial_level": 32,
     "initial_xp": {
-      "current": 20363,
+      "current": 25898,
       "max": 36532
     },
     "progression_curve": {
       "level": 32,
-      "total_xp": 443382,
+      "total_xp": 448917,
       "xp_for_next": 36532,
-      "percent": 55.7
+      "percent": 70.9
     },
-    "initial_max_hp": 685,
+    "initial_max_hp": 691,
     "initial_equipment": [
       {
         "slot": "⚔️",
@@ -217661,7 +217659,7 @@
       },
       {
         "slot": "🛡️",
-        "name": "Leather Vest",
+        "name": "Iron Cuirass",
         "rarity": "COMMON"
       },
       {
@@ -217670,24 +217668,24 @@
         "rarity": "EPIC"
       }
     ],
-    "initial_streak": 1,
+    "initial_streak": 2,
     "final_stats": {
       "level": 32,
-      "xp": 25322,
+      "xp": 27391,
       "wins": null,
       "losses": null
     },
     "final_character_stats": {
       "str": 40,
-      "vit": 31,
+      "vit": 28,
       "dex": 15,
       "luk": 15,
       "int": 9,
       "foc": 13,
-      "last xp": 42,
-      "fights": 5
+      "last xp": 117,
+      "fights": 3
     },
-    "final_max_hp": 685,
+    "final_max_hp": 691,
     "final_equipment": [
       {
         "slot": "⚔️",
@@ -217696,7 +217694,7 @@
       },
       {
         "slot": "🛡️",
-        "name": "Leather Vest",
+        "name": "Iron Cuirass",
         "rarity": "COMMON"
       },
       {
@@ -217705,7 +217703,7 @@
         "rarity": "EPIC"
       }
     ],
-    "final_streak": 1,
+    "final_streak": 2,
     "lootbox_equipment": [
       {
         "slot": "⚔️",
@@ -217733,90 +217731,87 @@
     },
     "level_up_events": [],
     "idle_runner": {
-      "observation_duration_ms": 44183,
+      "observation_duration_ms": 20440,
       "cycles_observed": 1,
       "monsters_faced": [
-        "lava_hound",
-        "magma_golem"
+        "magma_golem",
+        "lava_hound"
       ],
-      "victories": 1,
-      "defeats": 1,
-      "xp_total": 222,
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 156,
       "xp_events": [
         {
-          "time_ms": 3064,
-          "xp": 173,
-          "monster": "lava_hound",
+          "time_ms": 14390,
+          "xp": 39,
+          "monster": "magma_golem",
           "result": "VICTORY"
         },
         {
-          "time_ms": 44183,
-          "xp": 49,
-          "monster": "magma_golem",
-          "result": "unknown"
+          "time_ms": 14903,
+          "xp": 117,
+          "monster": "lava_hound",
+          "result": "VICTORY"
         }
       ],
       "streak_banner_shown": false,
       "level_up_fx_detected": false,
       "level_up_events": [],
       "phase_transition_times_ms": [
-        512,
-        1531,
-        3064,
-        11633,
-        13160,
-        44183
+        511,
+        1530,
+        14390
       ]
     },
     "idle_fights": [
       {
         "result": "victory",
-        "xp": 173,
-        "essence": 0.78,
-        "monster": "lava_hound"
+        "xp": 39,
+        "essence": 0.35,
+        "monster": "magma_golem"
       },
       {
-        "result": "defeat",
-        "xp": 49,
-        "essence": 0.23,
-        "monster": "magma_golem"
+        "result": "victory",
+        "xp": 117,
+        "essence": 0.34,
+        "monster": "lava_hound"
       }
     ],
     "efficiency_panel": {
       "visible": true,
       "essence_per_min": 2.9,
-      "next_level_eta": "⬆ 16m 8s",
+      "next_level_eta": "⬆ 13m 22s",
       "power_ratio": "⚔ 0.50x",
       "speed_ratio": "⚡ 0.50x",
       "magic_mult": "🧠 1.02x",
       "interval": "11.2s",
-      "streak_bonus": null
+      "streak_bonus": "🔥 1-win streak (+23%)"
     },
-    "initial_essence": 183.7,
-    "final_essence": 131.21,
+    "initial_essence": 131.85,
+    "final_essence": 59.57,
     "essence": {
-      "before_idle": 183.7,
-      "after_idle": 184.71,
+      "before_idle": 131.85,
+      "after_idle": 132.54,
       "per_fight": [
-        184.71
+        132.72
       ],
-      "forge_before": 184,
-      "forge_after_salvage": 189,
-      "forge_after_fusion": 189,
-      "forge_after_upgrade": 159,
-      "forge_after": 159,
-      "shop_before": 161,
-      "shop_after": 131,
-      "final": 131.21,
+      "forge_before": 132,
+      "forge_after_salvage": 137,
+      "forge_after_fusion": 137,
+      "forge_after_upgrade": 87,
+      "forge_after": 87,
+      "shop_before": 89,
+      "shop_after": 59,
+      "final": 59.57,
       "flow": {
-        "idle_gained": 1.01,
+        "idle_gained": 0.69,
         "fights_change": null,
         "salvage_gained": 5,
         "fusion_cost": 0,
-        "upgrade_cost": 30,
-        "forge_net": -25,
+        "upgrade_cost": 50,
+        "forge_net": -45,
         "shop_cost": 30,
-        "net_change": -52.49
+        "net_change": -72.28
       }
     },
     "level_up_fx": {
@@ -217841,10 +217836,10 @@
     },
     "forge": {
       "visited": true,
-      "essence_before": 184,
-      "essence_after_salvage": 189,
-      "essence_after_fusion": 189,
-      "essence_after_upgrade": 159,
+      "essence_before": 132,
+      "essence_after_salvage": 137,
+      "essence_after_fusion": 137,
+      "essence_after_upgrade": 87,
       "items_before": 3,
       "salvage_attempted": true,
       "salvage_succeeded": true,
@@ -217852,11 +217847,11 @@
       "fusion_succeeded": false,
       "upgrade_attempted": true,
       "upgrade_succeeded": true,
-      "essence_after": 159,
-      "items_after": null,
+      "essence_after": 87,
+      "items_after": 0,
       "salvage_essence_gained": 5,
       "fusion_cost": null,
-      "upgrade_cost": 30,
+      "upgrade_cost": 50,
       "skipped": false,
       "skip_reason": null
     },
@@ -217867,15 +217862,15 @@
       "offer_type": "item",
       "item_rarity": "UNCOMMON",
       "cost": 30,
-      "essence_before": 161,
-      "essence_after": 131,
+      "essence_before": 89,
+      "essence_after": 59,
       "skipped": false,
       "skip_reason": null,
       "shop_data": {
         "offers": [
           {
-            "name": "Worn Bracers",
-            "rarity": "COMMON",
+            "name": "Novice Wrap",
+            "rarity": "UNCOMMON",
             "price": 30
           },
           {
@@ -217890,7 +217885,7 @@
           }
         ],
         "purchased_offer": 0,
-        "essence_after_purchase": 131,
+        "essence_after_purchase": 59,
         "essence_budget": 60,
         "budget_limited": false,
         "budget_blocked_price": null
@@ -217906,15 +217901,15 @@
     "skipped_fights": [],
     "errors": [],
     "load_times_ms": {
-      "home": 1075,
-      "arena": 540
+      "home": 993,
+      "arena": 290
     },
     "skipped_summary": {},
     "shop_data": {
       "offers": [
         {
-          "name": "Worn Bracers",
-          "rarity": "COMMON",
+          "name": "Novice Wrap",
+          "rarity": "UNCOMMON",
           "price": 30
         },
         {
@@ -217929,7 +217924,7 @@
         }
       ],
       "purchased_offer": 0,
-      "essence_after_purchase": 131,
+      "essence_after_purchase": 59,
       "essence_budget": 60,
       "budget_limited": false,
       "budget_blocked_price": null
