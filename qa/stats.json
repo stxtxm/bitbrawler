@@ -216917,5 +216917,344 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-13T17:01:49.369Z",
+    "run": "2026-11-13",
+    "character": "QA-PERSI-2",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 77,
+        "fight_duration_ms": 10836,
+        "max_hp": 645,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 353.63
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 1,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 38,
+      "vit": 27,
+      "dex": 15,
+      "luk": 15,
+      "int": 8,
+      "foc": 13,
+      "fights": 0
+    },
+    "initial_level": 30,
+    "initial_xp": {
+      "current": 20780,
+      "max": 32842
+    },
+    "progression_curve": {
+      "level": 30,
+      "total_xp": 376290,
+      "xp_for_next": 32842,
+      "percent": 63.3
+    },
+    "initial_max_hp": 645,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Iron Rapier",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Leather Vest",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Obsidian Idol",
+        "rarity": "EPIC"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 30,
+      "xp": 25232,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 38,
+      "vit": 28,
+      "dex": 15,
+      "luk": 15,
+      "int": 8,
+      "foc": 13,
+      "last xp": 37,
+      "fights": 5
+    },
+    "final_max_hp": 645,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Iron Rapier",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Leather Vest",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Obsidian Idol",
+        "rarity": "EPIC"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Iron Rapier",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Leather Vest",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Obsidian Idol",
+        "rarity": "EPIC"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 44189,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "goblin",
+        "ogre"
+      ],
+      "victories": 1,
+      "defeats": 1,
+      "xp_total": 156,
+      "xp_events": [
+        {
+          "time_ms": 3067,
+          "xp": 117,
+          "monster": "goblin",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 44189,
+          "xp": 39,
+          "monster": "ogre",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        511,
+        1530,
+        3067,
+        11637,
+        13166,
+        44189
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 117,
+        "essence": 0.93,
+        "monster": "goblin"
+      },
+      {
+        "result": "defeat",
+        "xp": 39,
+        "essence": 0.28,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.78,
+      "next_level_eta": "⬆ 10m 57s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.01x",
+      "interval": "11.2s",
+      "streak_bonus": null
+    },
+    "initial_essence": 347.42,
+    "final_essence": 242.41,
+    "essence": {
+      "before_idle": 347.42,
+      "after_idle": 348.63,
+      "per_fight": [
+        353.63
+      ],
+      "forge_before": 353,
+      "forge_after_salvage": 358,
+      "forge_after_fusion": 358,
+      "forge_after_upgrade": 268,
+      "forge_after": 268,
+      "shop_before": 272,
+      "shop_after": 242,
+      "final": 242.41,
+      "flow": {
+        "idle_gained": 1.21,
+        "fights_change": null,
+        "salvage_gained": 5,
+        "fusion_cost": 0,
+        "upgrade_cost": 90,
+        "forge_net": -85,
+        "shop_cost": 30,
+        "net_change": -105.01
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 353,
+      "essence_after_salvage": 358,
+      "essence_after_fusion": 358,
+      "essence_after_upgrade": 268,
+      "items_before": 2,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 268,
+      "items_after": 0,
+      "salvage_essence_gained": 5,
+      "fusion_cost": null,
+      "upgrade_cost": 90,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 30,
+      "essence_before": 272,
+      "essence_after": 242,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Worn Bracers",
+            "rarity": "COMMON",
+            "price": 30
+          },
+          {
+            "name": "Obsidian Idol",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 242,
+        "essence_budget": 60,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-END",
+      "essence_budget": 60
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1352,
+      "arena": 543
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Worn Bracers",
+          "rarity": "COMMON",
+          "price": 30
+        },
+        {
+          "name": "Obsidian Idol",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 242,
+      "essence_budget": 60,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
