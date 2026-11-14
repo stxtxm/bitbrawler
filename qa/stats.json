@@ -220424,5 +220424,299 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-14T21:49:20.925Z",
+    "run": "2026-11-14",
+    "character": "QA-PERSI-3",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 51,
+        "fight_duration_ms": 9698,
+        "max_hp": 360,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 45.51
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 2,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 7,
+      "vit": 9,
+      "dex": 17,
+      "luk": 33,
+      "int": 9,
+      "foc": 16,
+      "fights": 0
+    },
+    "initial_level": 16,
+    "initial_xp": {
+      "current": 5573,
+      "max": 11640
+    },
+    "progression_curve": {
+      "level": 16,
+      "total_xp": 70126,
+      "xp_for_next": 11640,
+      "percent": 47.9
+    },
+    "initial_max_hp": 352,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 16,
+      "xp": 5936,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 8,
+      "vit": 8,
+      "dex": 17,
+      "luk": 33,
+      "int": 9,
+      "foc": 16,
+      "last xp": 26,
+      "fights": 7
+    },
+    "final_max_hp": 360,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_locked_level": 30,
+      "boss_name": "VOID TITAN",
+      "boss_level": null,
+      "boss_hp": null,
+      "boss_max_hp": null
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 32053,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "wolf"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 29,
+      "xp_events": [
+        {
+          "time_ms": 32053,
+          "xp": 29,
+          "monster": "wolf",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        512,
+        32053
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 29,
+        "essence": 0.63,
+        "monster": "wolf"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.32,
+      "next_level_eta": "⬆ 13m 5s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.05x",
+      "interval": "10.9s",
+      "streak_bonus": null
+    },
+    "initial_essence": 19.88,
+    "final_essence": 16.77,
+    "essence": {
+      "before_idle": 19.88,
+      "after_idle": 20.51,
+      "per_fight": [
+        45.51
+      ],
+      "forge_before": 45,
+      "forge_after_salvage": 45,
+      "forge_after_fusion": 45,
+      "forge_after_upgrade": 45,
+      "forge_after": 45,
+      "shop_before": 46,
+      "shop_after": 16,
+      "final": 16.77,
+      "flow": {
+        "idle_gained": 0.63,
+        "fights_change": null,
+        "salvage_gained": 0,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 0,
+        "shop_cost": 30,
+        "net_change": -3.11
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 45,
+      "essence_after_salvage": 45,
+      "essence_after_fusion": 45,
+      "essence_after_upgrade": 45,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": false,
+      "essence_after": 45,
+      "items_after": 2,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 30,
+      "essence_before": 46,
+      "essence_after": 16,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Hunter Bow",
+            "rarity": "UNCOMMON",
+            "price": 30
+          },
+          {
+            "name": "Spirit Orb",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 16,
+        "essence_budget": 40,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 40
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 1,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1184,
+      "arena": 574
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Hunter Bow",
+          "rarity": "UNCOMMON",
+          "price": 30
+        },
+        {
+          "name": "Spirit Orb",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 16,
+      "essence_budget": 40,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
