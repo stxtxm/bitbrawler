@@ -219268,5 +219268,278 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-14T12:44:14.558Z",
+    "run": "2026-11-14",
+    "character": "QA-PERSI-3",
+    "character_action": "reset-overlevel",
+    "replaced_character": "QA-PERSI-2",
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 32,
+        "fight_duration_ms": 12154,
+        "max_hp": 168,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 6.25
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Flint Knife",
+      "rarity": "RARE",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 6,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 6,
+      "vit": 7,
+      "dex": 7,
+      "luk": 23,
+      "int": 8,
+      "foc": 15,
+      "fights": 0
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 120
+    },
+    "progression_curve": {
+      "level": 1,
+      "total_xp": 0,
+      "xp_for_next": 120,
+      "percent": 0
+    },
+    "initial_max_hp": 156,
+    "initial_equipment": [],
+    "initial_streak": 0,
+    "final_stats": {
+      "level": 2,
+      "xp": 134,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 6,
+      "vit": 7,
+      "dex": 8,
+      "luk": 23,
+      "int": 8,
+      "foc": 15,
+      "last xp": 46,
+      "fights": 4
+    },
+    "final_max_hp": 168,
+    "final_equipment": [],
+    "final_streak": 0,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_locked_level": 30,
+      "boss_name": "VOID TITAN",
+      "boss_level": null,
+      "boss_hp": null,
+      "boss_max_hp": null
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 27501,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "goblin",
+        "ogre"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 54,
+      "xp_events": [
+        {
+          "time_ms": 3063,
+          "xp": 40,
+          "monster": "goblin",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 27501,
+          "xp": 14,
+          "monster": "ogre",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        510,
+        1529,
+        3063,
+        12130,
+        13656,
+        27501
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 40,
+        "essence": 0.4,
+        "monster": "goblin"
+      },
+      {
+        "result": "victory",
+        "xp": 14,
+        "essence": 0.4,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.43,
+      "next_level_eta": "⬆ 1m 31s",
+      "power_ratio": "⚔ 0.53x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.03x",
+      "interval": "12.0s",
+      "streak_bonus": "🔥 1-win streak (+1%)"
+    },
+    "initial_essence": 0.35,
+    "final_essence": 6.25,
+    "essence": {
+      "before_idle": 0.35,
+      "after_idle": 1.15,
+      "per_fight": [
+        6.25
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": 6.25,
+      "flow": {
+        "idle_gained": 0.8,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": 5.9
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": true,
+      "offline_time": "⏰ NaNh NaNm",
+      "fights": 4,
+      "xp_gained": 122,
+      "essence_gained": 0.14,
+      "levels_gained": null,
+      "claimed": true
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": true,
+      "skip_reason": "forge requires LVL 6"
+    },
+    "shop": {
+      "visited": false,
+      "offers_count": 0,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": null,
+      "essence_after": null,
+      "skipped": true,
+      "skip_reason": "shop requires LVL 5",
+      "shop_data": {
+        "offers": [],
+        "purchased_offer": null,
+        "essence_after_purchase": null
+      }
+    },
+    "cohort": {
+      "name": "QA-FRESH",
+      "essence_budget": 50
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 1,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1647,
+      "arena": 833
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [],
+      "purchased_offer": null,
+      "essence_after_purchase": null
+    }
   }
 ]
