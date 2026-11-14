@@ -194,8 +194,19 @@ export function resetDailyPurchases(
 }
 
 /**
+ * Result of a successful shop purchase: the updated character plus the item
+ * that was granted (the lootbox roll for a Coffre mystère, the offer item for
+ * a direct item offer). The UI needs `grantedItem` to reveal what the player
+ * actually received.
+ */
+export interface ShopPurchase {
+  character: Character;
+  grantedItem: PixelItemAsset | null;
+}
+
+/**
  * Purchase a shop offer.
- * Returns updated character or null if purchase is not possible.
+ * Returns the updated character + granted item, or null if not possible.
  */
 export function buyShopOffer(
   index: number,
@@ -203,7 +214,7 @@ export function buyShopOffer(
   items: PixelItemAsset[],
   dateStr?: string,
   rng?: () => number,
-): Character | null {
+): ShopPurchase | null {
   if (!canBuyOffer(index, character)) return null;
   if (isOfferSoldOut(index, character, dateStr)) return null;
 
@@ -215,14 +226,17 @@ export function buyShopOffer(
   const newEssence = (character.essence ?? 0) - cost;
 
   let newInventory: string[];
+  let grantedItem: PixelItemAsset | null;
   if (offer.type === 'lootbox') {
     const rolled = rollSimpleLootbox(items, character.level, rng);
     if (!rolled) return null;
+    grantedItem = rolled;
     newInventory = [...(character.inventory ?? []), rolled.id];
   } else {
     const offers = getShopOffers(character, items, today, rng);
     const shopItem = offers.find(o => o.index === index)?.item;
     if (!shopItem) return null;
+    grantedItem = items.find(a => a.id === shopItem.id) ?? null;
     newInventory = [...(character.inventory ?? []), shopItem.id];
   }
 
@@ -231,10 +245,13 @@ export function buyShopOffer(
   // were never persisted on transient failures.
 
   return {
-    ...character,
-    essence: newEssence,
-    inventory: newInventory,
-  } as Character;
+    character: {
+      ...character,
+      essence: newEssence,
+      inventory: newInventory,
+    } as Character,
+    grantedItem,
+  };
 }
 
 /**

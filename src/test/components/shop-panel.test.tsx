@@ -195,7 +195,7 @@ describe('ShopPanel', () => {
   });
 
   it('calls buyShopOffer when confirming purchase', async () => {
-    const buyShopOffer = vi.fn().mockResolvedValue(makeCharacter({ essence: 300 }));
+    const buyShopOffer = vi.fn().mockResolvedValue({ character: makeCharacter({ essence: 300 }), grantedItem: null });
     setupGame({ buyShopOffer, activeCharacter: makeCharacter({ essence: 500 }), essence: 500 });
     render(<ShopPanel onClose={vi.fn()} />);
     const buyBtns = screen.getAllByRole('button', { name: /buy/i });
@@ -208,7 +208,7 @@ describe('ShopPanel', () => {
   });
 
   it('shows success toast after purchase', async () => {
-    const buyShopOffer = vi.fn().mockResolvedValue(makeCharacter({ essence: 300 }));
+    const buyShopOffer = vi.fn().mockResolvedValue({ character: makeCharacter({ essence: 300 }), grantedItem: null });
     setupGame({ buyShopOffer, activeCharacter: makeCharacter({ essence: 500 }), essence: 500 });
     render(<ShopPanel onClose={vi.fn()} />);
     const buyBtns = screen.getAllByRole('button', { name: /buy/i });
@@ -238,6 +238,65 @@ describe('ShopPanel', () => {
         'error',
         expect.any(Number),
       );
+    });
+  });
+
+  // ─── Lootbox reveal ────────────────────────────────────────────────────────
+
+  describe('lootbox reveal', () => {
+    const grantedItem = ITEM_ASSETS[0];
+
+    it('shows the rolled item card after buying the lootbox offer', async () => {
+      const buyShopOffer = vi.fn().mockResolvedValue({
+        character: makeCharacter({ essence: 450 }),
+        grantedItem,
+      });
+      setupGame({ buyShopOffer, activeCharacter: makeCharacter({ essence: 500 }), essence: 500 });
+      render(<ShopPanel onClose={vi.fn()} />);
+
+      const buyBtns = screen.getAllByRole('button', { name: /buy/i });
+      fireEvent.click(buyBtns[2]); // Coffre mystère (lootbox offer)
+      fireEvent.click(screen.getByRole('button', { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(document.querySelector('.lootbox-result-overlay')).toBeTruthy();
+      });
+
+      const card = document.querySelector('.lootbox-result-card');
+      expect(card).toBeTruthy();
+      expect(card!.textContent).toContain(grantedItem.name);
+      expect(card!.textContent).toContain(grantedItem.rarity.toUpperCase());
+      expect(card!.textContent).toContain('TAP TO CONTINUE');
+
+      // Clicking the card closes the reveal
+      fireEvent.click(card!);
+      expect(document.querySelector('.lootbox-result-overlay')).toBeNull();
+    });
+
+    it('does not show the reveal card for direct item offers', async () => {
+      const buyShopOffer = vi.fn().mockResolvedValue({
+        character: makeCharacter({ essence: 470 }),
+        grantedItem,
+      });
+      setupGame({ buyShopOffer, activeCharacter: makeCharacter({ essence: 500 }), essence: 500 });
+      render(<ShopPanel onClose={vi.fn()} />);
+
+      const buyBtns = screen.getAllByRole('button', { name: /buy/i });
+      fireEvent.click(buyBtns[0]);
+      fireEvent.click(screen.getByRole('button', { name: /confirm/i }));
+
+      await waitFor(() => {
+        expect(buyShopOffer).toHaveBeenCalledWith(0);
+      });
+      expect(document.querySelector('.lootbox-result-overlay')).toBeNull();
+      // Toast names the granted item
+      await waitFor(() => {
+        expect(defaultNotify).toHaveBeenCalledWith(
+          expect.stringContaining(grantedItem.name),
+          'success',
+          expect.any(Number),
+        );
+      });
     });
   });
 
@@ -448,7 +507,7 @@ describe('ShopPanel', () => {
   describe('config-index regression (epic-replacement, #759)', () => {
     it('passes the card offer.index — not the array position — to buyShopOffer', async () => {
       const char = makeCharacter({ level: 14, essence: 500 });
-      const buyShopOffer = vi.fn().mockResolvedValue(makeCharacter({ essence: 400 }));
+      const buyShopOffer = vi.fn().mockResolvedValue({ character: makeCharacter({ essence: 400 }), grantedItem: null });
       setupGame({ buyShopOffer, activeCharacter: char, essence: 500 });
       render(<ShopPanel onClose={vi.fn()} />);
 

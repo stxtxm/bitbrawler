@@ -2,11 +2,14 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
 import { useSound } from '../../hooks/useSound';
+import { getItemStatEntries, ITEM_STAT_META } from '../../hooks/useInventory';
 import { SHOP_OFFERS, REROLL_COST } from '../../data/shopConstants';
 import { ITEM_ASSETS } from '../../data/itemAssets';
 import { getShopOffers, canBuyOffer, isOfferSoldOut, type ShopOffer } from '../../utils/shopUtils';
 import { isRerollUsed } from '../../utils/shopStorage';
+import { PixelIcon } from '../PixelIcon';
 import { PixelItemIcon } from '../PixelItemIcon';
+import type { PixelItemAsset } from '../../types/Item';
 import '../../styles/components/_forge.scss';
 
 interface ShopPanelProps {
@@ -27,6 +30,7 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
   const [rerolling, setRerolling] = useState(false);
   const [rerolledOffers, setRerolledOffers] = useState<ShopOffer[] | null>(null);
   const [rerollUsed, setRerollUsed] = useState(false);
+  const [revealItem, setRevealItem] = useState<PixelItemAsset | null>(null);
 
   const offers = useMemo<ShopOffer[]>(() => {
     if (!activeCharacter) return [];
@@ -53,15 +57,24 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
     if (confirmIndex === null || buying) return;
     setBuying(true);
     try {
-      const result = await buyShopOffer(confirmIndex);
-      if (result) {
+      const purchase = await buyShopOffer(confirmIndex);
+      if (purchase) {
         const updatedSoldOut = [...soldOut];
         updatedSoldOut[confirmIndex] = true;
         setSoldOut(updatedSoldOut);
         setPurchasedIndex(confirmIndex);
         setShowItemGlow(true);
         play('purchase');
-        notify(`${SHOP_OFFERS[confirmIndex].label} purchased!`, 'success', 3000);
+        const offerConfig = SHOP_OFFERS[confirmIndex];
+        if (offerConfig.type === 'lootbox' && purchase.grantedItem) {
+          // Reveal the rolled item — the card shows what the Coffre mystère contained
+          notify(`${offerConfig.label} purchased!`, 'success', 3000);
+          setRevealItem(purchase.grantedItem);
+        } else if (purchase.grantedItem) {
+          notify(`${offerConfig.label} purchased! → ${purchase.grantedItem.name}`, 'success', 3000);
+        } else {
+          notify(`${offerConfig.label} purchased!`, 'success', 3000);
+        }
         setTimeout(() => {
           setShowItemGlow(false);
           setPurchasedIndex(null);
@@ -78,6 +91,10 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
       setConfirmIndex(null);
     }
   }, [confirmIndex, buying, buyShopOffer, notify, play, soldOut]);
+
+  const handleCloseReveal = useCallback(() => {
+    setRevealItem(null);
+  }, []);
 
   const handleCancel = useCallback(() => {
     setConfirmIndex(null);
@@ -325,6 +342,46 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
           </div>
         );
       })()}
+
+      {/* Lootbox reveal — shows the item the Coffre mystère contained */}
+      {revealItem && (
+        <div
+          className={`lootbox-result-overlay ${revealItem.rarity === 'legendary' ? 'lootbox-result-overlay-legendary' : ''}`}
+          role="dialog"
+          aria-label="Lootbox reward"
+          onClick={handleCloseReveal}
+        >
+          <div
+            className={`lootbox-result-card rarity-${revealItem.rarity} ${revealItem.rarity === 'epic' ? 'rare-reveal-epic' : ''} ${revealItem.rarity === 'legendary' ? 'rare-reveal-legendary' : ''}`}
+            onClick={handleCloseReveal}
+          >
+            <div className="lootbox-result-glow" />
+            <div className="lootbox-result-title">NEW ITEM</div>
+            <div className="lootbox-result-item">
+              <div className="lootbox-result-icon">
+                <PixelItemIcon pixels={revealItem.pixels} size={64} />
+              </div>
+              <div className="lootbox-result-meta">
+                <div className="lootbox-result-name">{revealItem.name}</div>
+                <div className="lootbox-result-rarity">{revealItem.rarity.toUpperCase()}</div>
+              </div>
+            </div>
+            <div className="lootbox-result-stats">
+              {getItemStatEntries(revealItem).map(({ key, value }) => {
+                const meta = ITEM_STAT_META[key];
+                return (
+                  <div key={key} className="lootbox-result-stat">
+                    <PixelIcon type={meta.icon} size={12} />
+                    <span className="lootbox-stat-label">{meta.label}</span>
+                    <span className="lootbox-stat-value">+{value}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="lootbox-result-hint">TAP TO CONTINUE</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

@@ -2,11 +2,11 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { Character } from '../../types/Character';
 import { ITEM_ASSETS } from '../../data/itemAssets';
 import { SHOP_OFFERS, getShopPrice } from '../../data/shopConstants';
-import { getShopOfferPurchaseInfo } from '../../utils/shopUtils';
+import { getShopOfferPurchaseInfo, type ShopPurchase } from '../../utils/shopUtils';
 
 // ─── Pure Functions Under Test ───────────────────────────────────────────
 
-let buyShopOffer: (index: number, character: Character, items: typeof ITEM_ASSETS, dateStr?: string, rng?: () => number) => Character | null;
+let buyShopOffer: (index: number, character: Character, items: typeof ITEM_ASSETS, dateStr?: string, rng?: () => number) => ShopPurchase | null;
 let getShopOffers: (character: Character, items: typeof ITEM_ASSETS, dateStr?: string, rng?: () => number) => ShopOffer[];
 let canBuyOffer: (index: number, character: Character) => boolean;
 let isOfferSoldOut: (index: number, character: Character, dateStr?: string) => boolean;
@@ -274,8 +274,8 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
       const result = buyShopOffer(0, char, ITEM_ASSETS, getTodayStr(), () => 0);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(470); // 500 - 30 (issue #1265 rebalance +10%)
-      expect(result!.inventory).toHaveLength(1);
+      expect(result!.character.essence).toBe(470); // 500 - 30 (issue #1265 rebalance +10%)
+      expect(result!.character.inventory).toHaveLength(1);
     });
 
     it('deducts essence and adds item to inventory (offer 1)', () => {
@@ -286,16 +286,16 @@ describe('shop-utils (TDD)', () => {
       if (!offer1) return; // Skip if epic guarantee replaced it
       const result = buyShopOffer(1, char, ITEM_ASSETS, getTodayStr(), () => 0.1);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(500 - SHOP_OFFERS[1].price);
-      expect(result!.inventory).toHaveLength(1);
+      expect(result!.character.essence).toBe(500 - SHOP_OFFERS[1].price);
+      expect(result!.character.inventory).toHaveLength(1);
     });
 
     it('returns the purchase payload without marking — caller marks after persist', async () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
       const result = buyShopOffer(0, char, ITEM_ASSETS, getTodayStr(), () => 0);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(470);
-      expect(result!.inventory!.length).toBe(1);
+      expect(result!.character.essence).toBe(470);
+      expect(result!.character.inventory!.length).toBe(1);
       // Marking moved to GameContext AFTER the DB write succeeds (#768 follow-up):
       // an early mark showed SOLD while a transient failure left the purchase unpersisted.
       const storage = await import('../../utils/shopStorage');
@@ -326,7 +326,7 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 500, inventory: ['rusty_sword'] });
       const result = buyShopOffer(0, char, ITEM_ASSETS, getTodayStr(), () => 0);
       expect(result).not.toBeNull();
-      expect(result!.inventory).toHaveLength(2);
+      expect(result!.character.inventory).toHaveLength(2);
     });
 
     it('does not modify original character (immutable)', () => {
@@ -340,17 +340,28 @@ describe('shop-utils (TDD)', () => {
       const char = makeCharacter({ essence: 500, inventory: [] });
       const result = buyShopOffer(2, char, ITEM_ASSETS, getTodayStr(), () => 0);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(450); // 500 - 50 (issue #1265 rebalance +10%)
-      expect(result!.inventory).toHaveLength(1);
-      const itemData = ITEM_ASSETS.find(a => a.id === result!.inventory![0]);
+      expect(result!.character.essence).toBe(450); // 500 - 50 (issue #1265 rebalance +10%)
+      expect(result!.character.inventory).toHaveLength(1);
+      const itemData = ITEM_ASSETS.find(a => a.id === result!.character.inventory![0]);
       expect(itemData).toBeDefined();
+      // The rolled item is returned so the shop UI can reveal what dropped
+      expect(result!.grantedItem).not.toBeNull();
+      expect(result!.grantedItem!.id).toBe(result!.character.inventory![0]);
+    });
+
+    it('returns the offer item as grantedItem for direct item offers', () => {
+      const char = makeCharacter({ essence: 500, inventory: [] });
+      const result = buyShopOffer(0, char, ITEM_ASSETS, getTodayStr(), () => 0);
+      expect(result).not.toBeNull();
+      expect(result!.grantedItem).not.toBeNull();
+      expect(result!.grantedItem!.id).toBe(result!.character.inventory![0]);
     });
 
     it('lootbox offer charges full 350 essence', () => {
       const char = makeCharacter({ essence: 600, inventory: [] });
       const result = buyShopOffer(2, char, ITEM_ASSETS, getTodayStr(), () => 0.5);
       expect(result).not.toBeNull();
-      expect(result!.essence).toBe(550); // 600 - 50 (issue #1265 rebalance +10%)
+      expect(result!.character.essence).toBe(550); // 600 - 50 (issue #1265 rebalance +10%)
     });
   });
 

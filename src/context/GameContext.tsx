@@ -42,7 +42,7 @@ import {
   performFusion,
   performUpgrade,
 } from '../utils/forgeUtils';
-import { buyShopOffer as buyShopOfferUtil, getShopOfferPurchaseInfo, rerollShopOffers as rerollShopOffersUtil, type ShopOffer } from '../utils/shopUtils';
+import { buyShopOffer as buyShopOfferUtil, getShopOfferPurchaseInfo, rerollShopOffers as rerollShopOffersUtil, type ShopOffer, type ShopPurchase } from '../utils/shopUtils';
 import { completeRecoveryQuest, getConsecutiveLosses, getSecondWindEssence, recordRecovery, startRecoveryQuest } from '../utils/comebackUtils';
 import { markOfferPurchased, markRerollUsed } from '../utils/shopStorage';
 import {
@@ -95,7 +95,7 @@ interface GameContextType {
   salvageItems: (itemId: string) => Promise<Character | null>;
   fuseItems: (items: PixelItemAsset[]) => Promise<{ result: PixelItemAsset | null; updatedChar: Character | null }>;
   upgradeItem: (itemId: string) => Promise<Character | null>;
-  buyShopOffer: (index: number) => Promise<Character | null>;
+  buyShopOffer: (index: number) => Promise<ShopPurchase | null>;
   rerollShopOffers: () => Promise<ShopOffer[] | null>;
   lastUnlockedMedal: MedalDef | null;
   clearMedalNotification: () => void;
@@ -1610,7 +1610,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [activeCharacter, handleDbError, persistCharacter]);
 
-  const buyShopOfferAction = useCallback(async (index: number): Promise<Character | null> => {
+  const buyShopOfferAction = useCallback(async (index: number): Promise<ShopPurchase | null> => {
     if (!activeCharacter?.id) return null;
 
     // Process idle gains before purchase
@@ -1619,10 +1619,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     // Re-read freshest character: idle sync may have granted essence since render
     const baseChar = charRef.current ?? activeCharacter;
 
-    const updatedChar = buyShopOfferUtil(index, baseChar, ITEM_ASSETS);
-    if (!updatedChar) return null;
+    const purchase = buyShopOfferUtil(index, baseChar, ITEM_ASSETS);
+    if (!purchase) return null;
 
-    const normalized = normalizeCharacter(updatedChar);
+    const normalized = normalizeCharacter(purchase.character);
 
     try {
       await supabase
@@ -1658,7 +1658,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         }
       }).catch(() => {});
 
-      return normalized;
+      return { character: normalized, grantedItem: purchase.grantedItem };
     } catch (error: any) {
       handleDbError(error, 'shop-purchase');
       throw new Error('Connection error - purchase not saved.');

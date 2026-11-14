@@ -140,10 +140,22 @@ describe('SalvagePanel', () => {
     await waitFor(() => {
       expect(salvageItems).toHaveBeenCalledWith(RUSTY_SWORD.id);
     });
-    expect(defaultNotify).toHaveBeenCalledWith(
-      expect.stringContaining('Salvaged'),
-      'success',
-      expect.any(Number),
+    // Enriched toast: item name, rarity and exact yield
+    await waitFor(() => {
+      expect(defaultNotify).toHaveBeenCalledWith(
+        expect.stringContaining(
+          `Salvaged ${RUSTY_SWORD.name} (COMMON) → +${ESSENCE_YIELD.common} Essence`,
+        ),
+        'success',
+        expect.any(Number),
+      );
+    });
+    // Floating "+X Essence" gain popup above the essence bar
+    await waitFor(() => {
+      expect(document.querySelector('.forge-essence-popup')).not.toBeNull();
+    });
+    expect(document.querySelector('.forge-essence-popup')!.textContent).toContain(
+      `+${ESSENCE_YIELD.common}`,
     );
   });
 

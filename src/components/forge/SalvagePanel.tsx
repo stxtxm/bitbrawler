@@ -44,10 +44,25 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
   const [salvaging, setSalvaging] = useState<Set<string>>(new Set());
   const [salvagedIds, setSalvagedIds] = useState<Set<string>>(new Set());
   const [essenceBump, setEssenceBump] = useState(false);
+  const [essencePopup, setEssencePopup] = useState<{ id: number; amount: number } | null>(null);
+  const essencePopupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevEssenceRef = useRef(essence);
   const [confirmItem, setConfirmItem] = useState<PixelItemAsset | null>(null);
   const [confirmBulk, setConfirmBulk] = useState<{ rarity: ItemRarity; items: PixelItemAsset[] } | null>(null);
   const confirmRef = useRef<HTMLDivElement>(null);
+
+  // Floating "+X Essence" popup above the essence bar after a salvage
+  const showEssencePopup = useCallback((amount: number) => {
+    setEssencePopup({ id: Date.now(), amount });
+    if (essencePopupTimerRef.current) clearTimeout(essencePopupTimerRef.current);
+    essencePopupTimerRef.current = setTimeout(() => setEssencePopup(null), 1200);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (essencePopupTimerRef.current) clearTimeout(essencePopupTimerRef.current);
+    };
+  }, []);
 
   const inventoryItems = useMemo(() => {
     if (!activeCharacter) return [];
@@ -98,8 +113,15 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
         if (result) {
           const item = inventoryItems.find((i) => i.id === itemId);
           const yieldAmount = item ? getEssenceYield(item) : 0;
-          notify(`Salvaged 1 item → ${yieldAmount} Essence`, 'success', 3000);
+          notify(
+            item
+              ? `Salvaged ${item.name} (${RARITY_LABELS[item.rarity]}) → +${yieldAmount} Essence`
+              : `Salvaged 1 item → +${yieldAmount} Essence`,
+            'success',
+            3000,
+          );
           setSalvagedIds((prev) => new Set(prev).add(itemId));
+          showEssencePopup(yieldAmount);
           play('salvage');
         }
       } catch {
@@ -113,7 +135,7 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
         });
       }
     },
-    [activeCharacter, inventoryItems, notify, play, salvageItems, salvaging],
+    [activeCharacter, inventoryItems, notify, play, salvageItems, salvaging, showEssencePopup],
   );
 
   const handleSalvageBulk = useCallback(
@@ -122,11 +144,12 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
       if (items.length === 0 || !activeCharacter) return;
 
       const itemIds = items.map((i) => i.id);
-      const totalYield = items.reduce((sum, item) => sum + getEssenceYield(item), 0);
 
-      // Salvage each item sequentially
+      // Salvage each item sequentially — track the ACTUAL yield: items can
+      // fail mid-loop, so reporting the pre-computed total over-counted.
       setConfirmBulk(null);
       let salvagedCount = 0;
+      let actualYield = 0;
       for (const itemId of itemIds) {
         if (salvaging.has(itemId)) continue;
         setSalvaging((prev) => new Set(prev).add(itemId));
@@ -134,8 +157,10 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
         try {
           const result = await salvageItems(itemId);
           if (result) {
+            const salvagedItem = items.find((i) => i.id === itemId);
             setSalvagedIds((prev) => new Set(prev).add(itemId));
             salvagedCount++;
+            actualYield += salvagedItem ? getEssenceYield(salvagedItem) : 0;
           }
         } catch {
           notify(`Failed to salvage ${items.find((i) => i.id === itemId)?.name}.`, 'error', 3000);
@@ -149,10 +174,19 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
         }
       }
 
-      if (salvagedCount > 0) play('salvage');
-      notify(`Salvaged ${items.length} items → ${totalYield} Essence`, 'success', 3000);
+      if (salvagedCount > 0) {
+        play('salvage');
+        notify(
+          `Salvaged ${salvagedCount} ${RARITY_LABELS[rarity]} item(s) → +${actualYield} Essence`,
+          'success',
+          3000,
+        );
+        showEssencePopup(actualYield);
+      } else {
+        notify('Failed to salvage items. Try again.', 'error', 3000);
+      }
     },
-    [activeCharacter, grouped, notify, play, salvageItems, salvaging, salvagedIds],
+    [activeCharacter, grouped, notify, play, salvageItems, salvaging, salvagedIds, showEssencePopup],
   );
 
   const handleRequestSalvage = useCallback((item: PixelItemAsset) => {
@@ -194,6 +228,11 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
         </div>
         <div className="forge-essence-bar">
           <span className="forge-essence-label">ESSENCE</span>
+          {essencePopup && (
+            <span key={essencePopup.id} className="forge-essence-popup" aria-hidden="true">
+              +{essencePopup.amount} Essence
+            </span>
+          )}
           <span className={`forge-essence-value ${essenceBump ? 'forge-essence-count-up' : ''}`}>{essence.toFixed(2)}</span>
         </div>
         <div className="forge-empty-state">
@@ -220,6 +259,11 @@ export const SalvagePanel = memo(function SalvagePanel({ onClose }: SalvagePanel
 
       <div className="forge-essence-bar">
         <span className="forge-essence-label">CURRENT ESSENCE</span>
+        {essencePopup && (
+          <span key={essencePopup.id} className="forge-essence-popup" aria-hidden="true">
+            +{essencePopup.amount} Essence
+          </span>
+        )}
         <span className={`forge-essence-value ${essenceBump ? 'forge-essence-count-up' : ''}`}>{essence.toFixed(2)}</span>
       </div>
 
