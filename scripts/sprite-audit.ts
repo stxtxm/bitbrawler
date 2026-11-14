@@ -85,7 +85,7 @@ if (mode === 'holes') {
   const byHead = new Map<string, number>();
   let total = 0;
   let worst: Array<{ head: string; body: string; build: SpriteBuild; n: number; holes: Hole[] }> = [];
-  let compWorst: Array<{ head: string; body: string; build: SpriteBuild; n: number }> = [];
+  const compWorst: Array<{ head: string; body: string; build: SpriteBuild; n: number }> = [];
   for (const head of headTypes) {
     for (const body of bodyTypes) {
       for (const build of SPRITE_BUILDS) {

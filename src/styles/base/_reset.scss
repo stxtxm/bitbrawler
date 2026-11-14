@@ -21,3 +21,23 @@ textarea,
     user-select: text !important;
     -webkit-touch-callout: default !important;
 }
+
+// Scrollbars discrètes et cohérentes avec le thème (Firefox + WebKit).
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #2c2c34 transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: #2c2c34;
+    border: 2px solid #000;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}

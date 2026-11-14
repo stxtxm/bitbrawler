@@ -21,3 +21,42 @@
         transform: scale(1.1);
     }
 }
+
+// Halo pulsant du bouton d'action principal (FIGHT / ATTACK BOSS) : la cible
+// principale respire doucement pour guider le pouce.
+@keyframes fightGlow {
+
+    0%,
+    100% {
+        box-shadow:
+            0 5px 0 #6b4e00,
+            0 0 16px rgba(255, 204, 0, 0.22);
+    }
+
+    50% {
+        box-shadow:
+            0 5px 0 #6b4e00,
+            0 0 30px rgba(255, 204, 0, 0.45);
+    }
+}
+
+// Reflet qui traverse une barre de progression (XP, HP) de temps en temps.
+@keyframes barShine {
+    0% {
+        transform: translateX(-120%);
+    }
+
+    60%,
+    100% {
+        transform: translateX(120%);
+    }
+}
+
+// Respect des préférences système : tout halo/reflet animé s'arrête net.
+@media (prefers-reduced-motion: reduce) {
+
+    .blink,
+    .subtitle {
+        animation: none;
+    }
+}

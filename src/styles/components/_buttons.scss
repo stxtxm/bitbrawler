@@ -1,7 +1,7 @@
 @use '../variables' as *;
 
 .button {
-    background: #000;
+    background: linear-gradient(180deg, #17171c 0%, #000 100%);
     color: #fff;
     border: 2px solid #fff;
     padding: 15px 20px;
@@ -13,27 +13,42 @@
     cursor: pointer;
     margin: 10px;
     text-transform: uppercase;
-    transition: all 0.1s;
+    touch-action: manipulation;
+    transition:
+        transform 0.08s ease,
+        box-shadow 0.12s ease,
+        color 0.12s ease,
+        border-color 0.12s ease,
+        background 0.2s ease;
     @include pixel-shadow(#fff, 4px, 4px);
     min-width: 150px;
 
-    &:hover {
-        background: #333;
+    &:hover:not(:disabled) {
+        background: #2a2a30;
         transform: translate(-2px, -2px);
         @include pixel-shadow($accent-gold, 6px, 6px);
         color: $accent-gold;
         border-color: $accent-gold;
     }
 
-    &:active {
+    // Retour tactile : le bouton s'enfonce au lieu de flotter.
+    &:active:not(:disabled) {
         transform: translate(2px, 2px);
         box-shadow: none;
+        background: #000;
+    }
+
+    // Navigation clavier lisible sur fond noir comme sur les panneaux.
+    &:focus-visible {
+        outline: 3px solid $accent-blue;
+        outline-offset: 2px;
     }
 
     &:disabled {
         opacity: 0.5;
         cursor: not-allowed;
         box-shadow: none;
+        transform: none;
     }
 
     &.secondary {
@@ -41,9 +56,32 @@
         color: #aaa;
         @include pixel-shadow(#666, 4px, 4px);
 
-        &:hover {
+        &:hover:not(:disabled) {
             border-color: #fff;
             color: #fff;
+            @include pixel-shadow(#fff, 6px, 6px);
+        }
+    }
+
+    // Bouton d'action « positive » (confirmer, démarrer) : or plein, texte
+    // sombre. Les gros CTA d'écran (fight-btn) reprendront ce langage.
+    &.primary-btn {
+        background: linear-gradient(180deg, #ffd94d 0%, #f0b400 55%, #b98a00 100%);
+        border-color: #fff2b8;
+        color: #1a1200;
+        text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.35);
+        @include pixel-shadow(#6b4e00, 4px, 4px);
+
+        &:hover:not(:disabled) {
+            background: linear-gradient(180deg, #ffe27a 0%, #ffc91f 55%, #d9a100 100%);
+            color: #000;
+            border-color: #fff;
+            @include pixel-shadow(#8f6800, 6px, 6px);
+        }
+
+        &:active:not(:disabled) {
+            transform: translate(2px, 2px);
+            @include pixel-shadow(#6b4e00, 1px, 1px);
         }
     }
 

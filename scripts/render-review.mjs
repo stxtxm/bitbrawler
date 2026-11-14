@@ -6,7 +6,7 @@
 import { deflateSync } from 'node:zlib';
 import { writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { generateSpriteFrames } from '../src/components/sprite/spriteGenerator';
 import { applyEquipmentOverlays, resolveLoadout } from '../src/components/sprite/equipOverlays';
 import { SPRITE_HEIGHT, SPRITE_WIDTH } from '../src/components/sprite/spriteTypes';

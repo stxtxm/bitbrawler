@@ -2,6 +2,9 @@
 $accent-gold: #ffcc00;
 $accent-red: #ff3333;
 $accent-green: #00ff66;
+$accent-blue: #4cc9f0;
+$accent-purple: #b678ff;
+$accent-orange: #ff9f1c;
 $bg-dark: #0a0a0a;
 $border-color: #fff;
 $font-pixel: 'Press Start 2P', monospace;
@@ -19,6 +22,25 @@ $font-pixel: 'Press Start 2P', monospace;
 
 @mixin pixel-shadow($color: rgba(255, 255, 255, 0.2), $x: 10px, $y: 10px) {
     box-shadow: $x $y 0px $color;
+}
+
+// Panneau rétro normalisé : bordure nette, lumière interne en haut, ombre
+// portée sobre. Remplace avantageusement border + pixel-shadow en double
+// déclaration quand on veut du relief sans écran plat.
+@mixin pixel-panel($border: 2px, $color: #fff) {
+    border: $border solid $color;
+    box-shadow:
+        inset 0 0 0 1px rgba(0, 0, 0, 0.65),
+        inset 0 2px 0 rgba(255, 255, 255, 0.06),
+        4px 4px 0 rgba(0, 0, 0, 0.55);
+}
+
+// Délimiteurs mobile-first : le mobile est la base, `desktop` opte vers les
+// grands écrans (miroir du mixin `mobile` existant).
+@mixin desktop {
+    @media (min-width: 601px) {
+        @content;
+    }
 }
 
 @mixin mobile {

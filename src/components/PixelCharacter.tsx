@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 import { PIXEL_HEADS, PIXEL_BODIES, PIXEL_PALETTES } from './PixelAssets';
 import { mulberry32, getSeedFromText } from '../utils/randomUtils';
-import { OUTFIT_SCHEMES, OUTLINE_HEX, mixHex } from './sprite/spritePalettes';
+import { OUTFIT_SCHEMES, OUTLINE_HEX, mixHex, shiftHex } from './sprite/spritePalettes';
 import { pickBodyType, pickHeadType } from './sprite/headSelection';
 import type { CharacterAppearance } from '../types/Character';
 
@@ -45,7 +45,9 @@ export const PixelCharacter: React.FC<PixelCharacterProps> = ({ seed, gender, sc
             hairColor: appearance?.hairColor ?? (pick(PIXEL_PALETTES.hair) as string),
             shirtColor: appearance?.shirtColor ?? outfit.shirt,
             pantsColor: appearance?.pantsColor ?? outfit.pants,
-            shoesColor: '#333',
+            // Même règle que le générateur v2 : chaussures dérivées du pantalon
+            // (le #333 fixe disparaissait sur fond sombre).
+            shoesColor: shiftHex(appearance?.pantsColor ?? outfit.pants, 0.55),
             eyeColor: appearance?.eyeColor ?? (pick(PIXEL_PALETTES.eyes) as string),
             logoColor: mixHex(appearance?.shirtColor ?? outfit.shirt, OUTLINE_HEX, 0.25),
             headType,
