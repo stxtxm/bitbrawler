@@ -218932,5 +218932,341 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-14T11:01:35.053Z",
+    "run": "2026-11-14",
+    "character": "QA-PERSI-2",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 296,
+        "fight_duration_ms": 10868,
+        "max_hp": 708,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 59.38
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 4,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 40,
+      "vit": 30,
+      "dex": 16,
+      "luk": 13,
+      "int": 9,
+      "foc": 12,
+      "fights": 0
+    },
+    "initial_level": 33,
+    "initial_xp": {
+      "current": 11692,
+      "max": 38435
+    },
+    "progression_curve": {
+      "level": 33,
+      "total_xp": 471243,
+      "xp_for_next": 38435,
+      "percent": 30.4
+    },
+    "initial_max_hp": 708,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Iron Rapier",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Iron Cuirass",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Lucky Charm",
+        "rarity": "COMMON"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 33,
+      "xp": 16782,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 40,
+      "vit": 30,
+      "dex": 16,
+      "luk": 13,
+      "int": 9,
+      "foc": 12,
+      "last xp": 134,
+      "fights": 3
+    },
+    "final_max_hp": 708,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Iron Rapier",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Iron Cuirass",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Lucky Charm",
+        "rarity": "COMMON"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Iron Rapier",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Iron Cuirass",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Lucky Charm",
+        "rarity": "COMMON"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20219,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "magma_golem",
+        "lava_hound"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 179,
+      "xp_events": [
+        {
+          "time_ms": 14171,
+          "xp": 45,
+          "monster": "magma_golem",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 14685,
+          "xp": 134,
+          "monster": "lava_hound",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        510,
+        1529,
+        14171
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 45,
+        "essence": 0.36,
+        "monster": "magma_golem"
+      },
+      {
+        "result": "victory",
+        "xp": 134,
+        "essence": 0.35,
+        "monster": "lava_hound"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.97,
+      "next_level_eta": "⬆ 29m 12s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.01x",
+      "interval": "11.0s",
+      "streak_bonus": "🔥 1-win streak (+25%)"
+    },
+    "initial_essence": 58.49,
+    "final_essence": 20.36,
+    "essence": {
+      "before_idle": 58.49,
+      "after_idle": 59.2,
+      "per_fight": [
+        59.38
+      ],
+      "forge_before": 59,
+      "forge_after_salvage": 109,
+      "forge_after_fusion": 109,
+      "forge_after_upgrade": 19,
+      "forge_after": 19,
+      "shop_before": 20,
+      "shop_after": 20,
+      "final": 20.36,
+      "flow": {
+        "idle_gained": 0.71,
+        "fights_change": null,
+        "salvage_gained": 50,
+        "fusion_cost": 0,
+        "upgrade_cost": 90,
+        "forge_net": -40,
+        "shop_cost": 0,
+        "net_change": -38.13
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 59,
+      "essence_after_salvage": 109,
+      "essence_after_fusion": 109,
+      "essence_after_upgrade": 19,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": true,
+      "essence_after": 19,
+      "items_after": 0,
+      "salvage_essence_gained": 50,
+      "fusion_cost": null,
+      "upgrade_cost": 90,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 20,
+      "essence_after": 20,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Titan Helm",
+            "rarity": "RARE",
+            "price": 30
+          },
+          {
+            "name": "Sage Robe",
+            "rarity": "EPIC",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 20,
+        "essence_budget": 60,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-END",
+      "essence_budget": 60
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1136,
+      "arena": 634
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Titan Helm",
+          "rarity": "RARE",
+          "price": 30
+        },
+        {
+          "name": "Sage Robe",
+          "rarity": "EPIC",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 20,
+      "essence_budget": 60,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
