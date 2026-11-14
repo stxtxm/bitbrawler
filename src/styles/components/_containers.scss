@@ -1,5 +1,41 @@
 @use '../variables' as *;
 
+// ============================================
+// Modals (base)
+// ============================================
+// Déplacé depuis pages/_character-creation.scss : ce fichier étant importé en
+// DERNIER par main.scss, sa définition `.retro-modal` (spécificité 0,1,0)
+// écrasait silencieusement les règles spécifiques `.inventory-modal` /
+// `.settings-modal` (padding 12px ignoré au profit de 20px, bordure dorée
+// remplacée par le blanc, max-width du settings ramené à 400px…). La base vit
+// donc ici, importée avant toutes les pages : chaque modal spécifique l'emporte.
+.retro-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    @include flex-center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease;
+}
+
+.retro-modal {
+    background: #000;
+    @include retro-border(4px, #fff);
+    padding: 30px;
+    text-align: center;
+    @include pixel-shadow($accent-gold, 10px, 10px);
+    max-width: 400px;
+    width: 90%;
+    animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    @include mobile {
+        padding: 20px;
+        border-width: 2px;
+        @include pixel-shadow($accent-gold, 4px, 4px);
+    }
+}
+
 .container {
     width: 90%;
     max-width: 1200px;
@@ -52,29 +88,6 @@ body.pwa .container {
     position: relative;
     display: flex;
     flex-direction: column;
-
-    // Vis d'angle dorées : deux crochets suffisent à marquer le cadre sans
-    // surcharger les petits écrans.
-    &::before,
-    &::after {
-        content: '';
-        position: absolute;
-        width: 10px;
-        height: 10px;
-        background: $accent-gold;
-        box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55);
-        pointer-events: none;
-    }
-
-    &::before {
-        top: -2px;
-        left: -2px;
-    }
-
-    &::after {
-        bottom: -2px;
-        right: -2px;
-    }
 
     @include tablet {
         padding: 15px;

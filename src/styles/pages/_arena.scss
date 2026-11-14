@@ -1145,7 +1145,7 @@
     }
 
     @include mobile {
-        gap: 6px;
+        gap: 4px;
     }
 }
 
@@ -1186,11 +1186,11 @@
     }
 
     @include mobile {
-        --icon-btn-size: clamp(32px, 9vw, 40px);
-        --icon-size: calc(var(--icon-btn-size) * 0.5);
+        --icon-btn-size: clamp(30px, 8vw, 36px);
+        --icon-size: calc(var(--icon-btn-size) * 0.52);
         border-width: 1px;
-        // Neutralise le min-height 42px du .button mobile : l'icône reste
-        // carrée à sa taille clamp (sinon elle s'étire verticalement).
+        // Neutralise le min-height du .button mobile : l'icône reste carrée
+        // à sa taille clamp (sinon elle s'étire verticalement).
         min-height: var(--icon-btn-size);
         margin: 0;
 
@@ -1206,12 +1206,12 @@
     }
 
     .header-actions {
-        gap: 6px;
+        gap: 4px;
     }
 
     .icon-btn {
-        --icon-btn-size: clamp(32px, 11vw, 40px);
-        --icon-size: calc(var(--icon-btn-size) * 0.5);
+        --icon-btn-size: clamp(28px, 9vw, 34px);
+        --icon-size: calc(var(--icon-btn-size) * 0.52);
     }
 }
 
@@ -1243,6 +1243,9 @@
         // Zone de défilement interne : indispensable en PWA (le conteneur est
         // verrouillé), sans effet dans le navigateur où le body défile.
         overflow-y: auto;
+        // overflow-y: auto calcule overflow-x à auto : le moindre enfant plus
+        // large ouvre une barre de scroll horizontal (incident Pixel 9a).
+        overflow-x: hidden;
         overscroll-behavior: contain;
         -webkit-overflow-scrolling: touch;
         padding-bottom: 4px;
@@ -1686,8 +1689,13 @@
         position: sticky;
         bottom: 0;
         z-index: 30;
-        // Déborde sur le padding du conteneur (8px) pour aller bord à bord.
-        margin: 4px -8px -8px;
+        // Aucune marge négative latérale : elle rendait le bloc plus large que
+        // .arena-content et ouvrait un scroll horizontal sur mobile.
+        // margin-top: auto : la scène a une hauteur naturelle (flex: none), ce
+        // qui laissait ~160px de vide SOUS la barre. L'espace libre est absorbé
+        // AU-DESSUS, la barre reste collée en bas — sticky n'agit que pendant
+        // le défilement, pas au repos.
+        margin: auto 0 0;
         padding: 6px 8px;
         background: linear-gradient(
             180deg,
@@ -1702,7 +1710,7 @@
     }
 
     @include small-mobile {
-        margin: 4px -8px -8px;
+        margin: 4px 0 0;
         padding: 5px 8px;
     }
 }
@@ -1888,11 +1896,11 @@
     @include mobile {
         flex: none;
         width: 100%;
-        height: 48px;
-        min-height: 48px;
-        font-size: 0.95rem !important;
+        height: 42px;
+        min-height: 42px;
+        font-size: 0.85rem !important;
         letter-spacing: 1px;
-        padding: 8px !important;
+        padding: 6px !important;
         border-width: 2px;
         box-shadow:
             0 4px 0 #6b4e00,
@@ -1928,7 +1936,8 @@
         }
 
         @include mobile {
-            font-size: 0.9rem !important;
+            font-size: 0.75rem !important;
+            letter-spacing: 0;
         }
     }
 
@@ -2332,8 +2341,10 @@
     }
 
     @include mobile {
-        height: 30px;
-        font-size: 0.5rem;
+        height: 27px;
+        font-size: 0.45rem;
+        gap: 6px;
+        padding: 3px 8px;
     }
 }
 
@@ -2346,8 +2357,8 @@
     transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
 
     @include mobile {
-        width: 16px;
-        height: 16px;
+        width: 14px;
+        height: 14px;
     }
 }
 
@@ -2450,12 +2461,12 @@
         margin-bottom: 5px;
 
         .pve-switch {
-            min-height: 34px;
+            min-height: 30px;
             flex: 1;
-            max-width: 120px;
+            max-width: 110px;
 
             .switch-text {
-                font-size: 0.45rem;
+                font-size: 0.42rem;
             }
         }
     }

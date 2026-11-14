@@ -886,6 +886,13 @@
     min-width: 72px;
     text-align: center;
 
+    @include mobile {
+      padding: 4px 6px;
+      font-size: 0.42rem;
+      min-width: 56px;
+      letter-spacing: 0;
+    }
+
     &.danger {
       border-color: $accent-red;
       color: $accent-red;

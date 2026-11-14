@@ -86,18 +86,18 @@
     }
 
     @include mobile {
-        font-size: 10px;
-        padding: 12px 10px;
+        font-size: 9px;
+        padding: 7px 8px;
         min-width: 0;
         width: 100%;
-        margin: 8px 0;
-        min-height: 42px;
+        margin: 6px 0;
+        min-height: 36px;
         display: flex;
         align-items: center;
         justify-content: center;
     }
 
     @include small-mobile {
-        font-size: 10px;
+        font-size: 8px;
     }
 }

@@ -592,32 +592,9 @@ input[type="text"] {
 }
 
 // Modals (Success/Error Popups)
-.retro-modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.9);
-    @include flex-center;
-    z-index: 1000;
-    backdrop-filter: blur(4px);
-    animation: fadeIn 0.3s ease;
-}
-
-.retro-modal {
-    background: #000;
-    @include retro-border(4px, #fff);
-    padding: 30px;
-    text-align: center;
-    @include pixel-shadow($accent-gold, 10px, 10px);
-    max-width: 400px;
-    width: 90%;
-    animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-
-    @include mobile {
-        padding: 20px;
-        border-width: 2px;
-        @include pixel-shadow($accent-gold, 4px, 4px);
-    }
-}
+// `.retro-modal-overlay` et `.retro-modal` (base générique des modals) vivent
+// dans components/_containers.scss — importé avant toutes les pages pour que
+// chaque modal spécifique (inventory, settings…) puisse les surcharger.
 
 .modal-header {
     color: $accent-green;

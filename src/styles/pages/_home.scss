@@ -220,6 +220,9 @@ body.pwa .home-page main {
 
 .home-notes-modal {
     width: min(680px, 94vw);
+    // La base `.retro-modal` porte max-width: 400px : sans ce reset, la modale
+    // patch notes restait coincée à 400px malgré les media queries plus bas.
+    max-width: none;
     max-height: 84vh;
     overflow: hidden;
     display: flex;
