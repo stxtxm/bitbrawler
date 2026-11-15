@@ -569,11 +569,15 @@ const MIN_PVP_XP_FIGHTS = 20
 // the price suggestion; below it, the simulated affordability proxy is used (#1229).
 const REAL_SHOP_MIN_RUNS = 10
 
-// Level-progression suggestion gating (#1372): "levels/run" only means
-// something on session-sized runs. A 1-fight run and a 5-fight run cannot be
-// averaged together, and a replaced character yields a negative delta.
+// Level-progression suggestion gating (#1374): the QA bot runs every 3 h but
+// the game grants MAX_DAILY_FIGHTS (5) per day, so a run carries a single fight
+// by construction. Requiring 3 fights inside ONE run made the verdict
+// unmeasurable (0 sample since #1373). Consecutive runs of the same character
+// are aggregated into sessions of >=MIN_SESSION_FIGHTS fights; the gain spans
+// the first initial level to the last final level, capturing idle level-ups
+// between two runs.
 const MIN_SESSION_FIGHTS = 3
-const MIN_LEVEL_PROGRESSION_RUNS = 5
+const MIN_LEVEL_PROGRESSION_SESSIONS = 5
 
 function computeDataFreshness(stats: RunRecord[]): DataFreshness {
   let trailing_error_runs = 0
@@ -650,32 +654,71 @@ function isCharacterReplacedRun(r: RunRecord): boolean {
 }
 
 interface SessionProgressionSample {
-  runs: number
+  sessions: number
   avg_level_gained: number | null
+}
+
+interface ProgressionSession {
+  fights: number
+  gain: number
+}
+
+function buildProgressionSessions(runs: RunRecord[]): ProgressionSession[] {
+  const sessions: ProgressionSession[] = []
+  interface CurrentSession {
+    character: string | null
+    characterType: RunRecord['character_type']
+    initial: number
+    final: number
+    fights: number
+  }
+  let current: CurrentSession | null = null
+  const flush = () => {
+    if (current !== null && current.fights >= MIN_SESSION_FIGHTS) {
+      sessions.push({ fights: current.fights, gain: current.final - current.initial })
+    }
+    current = null
+  }
+  for (const r of runs) {
+    if (isCharacterReplacedRun(r)) {
+      flush()
+      continue
+    }
+    const initialLevel = r.initial_level
+    const finalLevel = r.final_stats?.level
+    if (typeof initialLevel !== 'number' || typeof finalLevel !== 'number') {
+      flush()
+      continue
+    }
+    const character = r.character ?? null
+    const characterType = r.character_type
+    if (
+      current === null ||
+      current.character !== character ||
+      current.characterType !== characterType ||
+      initialLevel < current.final
+    ) {
+      flush()
+      current = { character, characterType, initial: initialLevel, final: initialLevel, fights: 0 }
+    }
+    current.fights += r.fights?.length ?? 0
+    current.final = finalLevel
+    if (current.fights >= MIN_SESSION_FIGHTS) flush()
+  }
+  flush()
+  return sessions
 }
 
 function computeSessionProgressionSample(
   runs: RunRecord[],
   windowSize = RECENT_WINDOW_RUNS,
 ): SessionProgressionSample {
-  const recent = runs.slice(-windowSize)
-  const sessionRuns = recent.filter(
-    (r) =>
-      !isCharacterReplacedRun(r) &&
-      (r.fights?.length ?? 0) >= MIN_SESSION_FIGHTS &&
-      typeof r.initial_level === 'number' &&
-      r.final_stats !== null &&
-      r.final_stats !== undefined &&
-      typeof r.final_stats.level === 'number'
-  )
-  if (sessionRuns.length === 0) return { runs: 0, avg_level_gained: null }
-  const total = sessionRuns.reduce(
-    (s, r) => s + ((r.final_stats!.level as number) - (r.initial_level as number)),
-    0
-  )
+  const sessions = buildProgressionSessions(runs.slice(-windowSize))
+  if (sessions.length === 0) return { sessions: 0, avg_level_gained: null }
+  const total = sessions.reduce((sum, session) => sum + session.gain, 0)
   return {
-    runs: sessionRuns.length,
-    avg_level_gained: Math.round((total / sessionRuns.length) * 100) / 100,
+    sessions: sessions.length,
+    avg_level_gained: Math.round((total / sessions.length) * 100) / 100,
   }
 }
 
@@ -683,20 +726,20 @@ function levelProgressionSuggestions(
   sample: SessionProgressionSample,
   windowSize = RECENT_WINDOW_RUNS,
 ): string[] {
-  if (sample.runs < MIN_LEVEL_PROGRESSION_RUNS || sample.avg_level_gained === null) {
+  if (sample.sessions < MIN_LEVEL_PROGRESSION_SESSIONS || sample.avg_level_gained === null) {
     return [
-      `Progression measurement pending — ${sample.runs}/${MIN_LEVEL_PROGRESSION_RUNS} session-sized run(s) (≥${MIN_SESSION_FIGHTS} fights) in the last ${windowSize}.`,
+      `Progression measurement pending — ${sample.sessions}/${MIN_LEVEL_PROGRESSION_SESSIONS} session(s) of ≥${MIN_SESSION_FIGHTS} fights in the last ${windowSize} runs.`,
     ]
   }
   const out: string[] = []
   if (sample.avg_level_gained < 1) {
     out.push(
-      `Characters gain only ${sample.avg_level_gained.toFixed(2)} levels/run. Consider increasing XP gains or reducing XP thresholds.`
+      `Characters gain only ${sample.avg_level_gained.toFixed(2)} levels/session. Consider increasing XP gains or reducing XP thresholds.`
     )
   }
   if (sample.avg_level_gained > 5) {
     out.push(
-      `Characters gain ${sample.avg_level_gained.toFixed(1)} levels/run — very fast progression. Consider increasing XP thresholds.`
+      `Characters gain ${sample.avg_level_gained.toFixed(1)} levels/session — very fast progression. Consider increasing XP thresholds.`
     )
   }
   return out
@@ -1330,10 +1373,10 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     if (groupMax > group.minMs && groupMax > groupMedian * STALL_RATIO) suggestions.push(`Max ${group.label} fight duration ${(groupMax / 1000).toFixed(0)}s is ${(groupMax / groupMedian).toFixed(1)}x its median over the last ${recentRuns.length} runs — possible timeout issue`)
   }
 
-  // Level progression — suggestion gated on a session-sized recent sample so
-  // 1-fight runs, 5-fight runs and character resets cannot average into a
-  // false "increase XP gains" signal (#1372). The all-time metric above stays
-  // informative only.
+  // Level progression — suggestion gated on aggregated sessions of consecutive
+  // runs so 1-fight runs, 5-fight runs and character resets cannot average into
+  // a false "increase XP gains" signal (#1372/#1374). The all-time metric above
+  // stays informative only.
   const sessionProgression = computeSessionProgressionSample(recentRuns)
   suggestions.push(...levelProgressionSuggestions(sessionProgression, recentRuns.length))
 
