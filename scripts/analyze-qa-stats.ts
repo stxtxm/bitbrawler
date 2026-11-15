@@ -16,6 +16,9 @@ import {
   isPurchaseWithinBudget,
   computeBossDataFreshness,
   buildBossDataStaleIssue,
+  isCharacterReplacedRun,
+  computeSessionLevelProgression,
+  buildSessionLevelProgressionSuggestions,
 } from '../src/utils/qa-bot-helpers.js'
 import { IDLE_CONFIG } from '../src/config/idleConfig'
 
@@ -625,22 +628,6 @@ function collectIdleFights(runs: RunRecord[]): IdleFightRecord[] {
     }
   }
   return fights
-}
-
-// A run that replaces the character mid-run (QA bot `created-after-*` actions)
-// reads initial_max_hp on the OLD character and final_max_hp on the NEW one, so
-// final drops sharply. Such runs must be excluded from HP/essence growth metrics
-// because they mix two different characters (#696).
-function isCharacterReplacedRun(r: RunRecord): boolean {
-  if (typeof r.initial_max_hp === 'number' && typeof r.final_max_hp === 'number') {
-    if (r.final_max_hp < r.initial_max_hp - 10) return true
-  }
-  if (typeof r.character_action === 'string' && r.character_action.startsWith('created-after-')) {
-    if (r.replaced_character !== null && r.replaced_character !== undefined) {
-      return true
-    }
-  }
-  return false
 }
 
 function resolveStreakCohort(r: RunRecord): StreakCohort {
@@ -1271,13 +1258,10 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     if (groupMax > group.minMs && groupMax > groupMedian * STALL_RATIO) suggestions.push(`Max ${group.label} fight duration ${(groupMax / 1000).toFixed(0)}s is ${(groupMax / groupMedian).toFixed(1)}x its median over the last ${recentRuns.length} runs — possible timeout issue`)
   }
 
-  // Level progression
-  if (avgLevelGained < 1 && validRuns.length >= 3) {
-    suggestions.push(`Characters gain only ${avgLevelGained.toFixed(2)} levels/run. Consider increasing XP gains or reducing XP thresholds.`)
-  }
-  if (avgLevelGained > 5) {
-    suggestions.push(`Characters gain ${avgLevelGained.toFixed(1)} levels/run — very fast progression. Consider increasing XP thresholds.`)
-  }
+  suggestions.push(...buildSessionLevelProgressionSuggestions(
+    computeSessionLevelProgression(recentRuns),
+    RECENT_WINDOW_RUNS,
+  ))
 
   // Stats balance — only real character stats are read here; the structured
   // parse also captures non-stat counters (e.g. 'fights' from the PvE panel).

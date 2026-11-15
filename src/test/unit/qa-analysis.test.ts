@@ -25,6 +25,11 @@ import {
   computeBossDataFreshness,
   buildBossDataStaleIssue,
   BOSS_DATA_STALE_DAYS,
+  computeSessionLevelProgression,
+  buildSessionLevelProgressionSuggestions,
+  SESSION_PROGRESSION_MIN_RUNS,
+  SESSION_PROGRESSION_MIN_FIGHTS,
+  SESSION_PROGRESSION_WINDOW_RUNS,
 } from '../../utils/qa-bot-helpers'
 import { IDLE_CONFIG } from '../../config/idleConfig'
 
@@ -74,6 +79,7 @@ interface RunRecord {
   initial_streak?: number | null
   final_streak?: number | null
   lootbox_streak?: number | null
+  initial_level?: number | null
   initial_max_hp?: number | null
   final_max_hp?: number | null
   character_action?: string | null
@@ -2020,9 +2026,10 @@ describe('QA Character Replacement Exclusion', () => {
   describe('analyze-qa-stats.ts source contract', () => {
     it('applies the character-replacement filter to HP/essence analysis and reports excluded runs (#696)', () => {
       const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+      const helpers = readFileSync(join(process.cwd(), 'src', 'utils', 'qa-bot-helpers.js'), 'utf-8')
       expect(source).toContain('runs_excluded_by_character_replacement')
-      expect(source).toContain('r.final_max_hp < r.initial_max_hp - 10')
-      expect(source).toContain("startsWith('created-after-')")
+      expect(helpers).toContain('run.final_max_hp < run.initial_max_hp - 10')
+      expect(helpers).toContain("startsWith('created-after-')")
       expect(source).toContain('allRunsWithEssenceData.filter(r => !isCharacterReplacedRun(r))')
     })
   })
@@ -5769,5 +5776,102 @@ describe('AGENTS.md — seuil idle documenté (#1366)', () => {
     expect(techLeadSection).toContain('api/idle-processor')
     expect(techLeadSection).toContain('salvage')
     expect(techLeadSection).toContain('Fenêtre récente')
+  })
+})
+
+describe('QA Session Level Progression (#1372)', () => {
+  function fight(): FightRecord {
+    return { result: 'victory', xp: 100, fight_duration_ms: 20000, fight_type: 'pvp' }
+  }
+
+  function sessionRun(
+    index: number,
+    fights: number,
+    initialLevel: number,
+    finalLevel: number,
+    overrides: Partial<RunRecord> = {},
+  ): RunRecord {
+    return {
+      date: `2026-11-15T${String(index % 24).padStart(2, '0')}:00:00.000Z`,
+      run: `run-${index}`,
+      character: 'QA',
+      fights: Array.from({ length: fights }, fight),
+      initial_level: initialLevel,
+      final_stats: { level: finalLevel, xp: 0, wins: 0, losses: 0 },
+      errors: [],
+      ...overrides,
+    }
+  }
+
+  it('n’émet aucune suggestion quand les 30 derniers runs font un seul combat', () => {
+    const runs = Array.from({ length: SESSION_PROGRESSION_WINDOW_RUNS }, (_, i) =>
+      sessionRun(i, 1, 10, 11)
+    )
+    const progression = computeSessionLevelProgression(runs)
+    expect(progression.sample_size).toBe(0)
+    expect(progression.sufficient).toBe(false)
+    expect(buildSessionLevelProgressionSuggestions(progression)).toEqual([])
+  })
+
+  it('déclenche la suggestion sous 1 niveau/run avec 5 runs session', () => {
+    const gains = [0, 0, 0, 1, 1]
+    const runs = gains.map((gain, i) =>
+      sessionRun(i, SESSION_PROGRESSION_MIN_FIGHTS, 10, 10 + gain)
+    )
+    const progression = computeSessionLevelProgression(runs)
+    expect(progression.sample_size).toBe(SESSION_PROGRESSION_MIN_RUNS)
+    expect(progression.avg_level_gained).toBe(0.4)
+    expect(progression.sufficient).toBe(true)
+    const suggestions = buildSessionLevelProgressionSuggestions(progression)
+    expect(suggestions).toHaveLength(1)
+    expect(suggestions[0]).toContain('0.40 levels/run')
+    expect(suggestions[0]).toContain('increasing XP gains')
+  })
+
+  it('exclut un run de remplacement de personnage même avec 6 combats', () => {
+    const normal = Array.from({ length: 4 }, (_, i) => sessionRun(i, 5, 10, 12))
+    const replaced = sessionRun(4, 6, 20, 2, {
+      character_action: 'created-after-exhausted-energy',
+      replaced_character: 'QA-PERSIST',
+    })
+    const progression = computeSessionLevelProgression([...normal, replaced])
+    expect(progression.sample_size).toBe(4)
+    expect(progression.sufficient).toBe(false)
+    expect(progression.avg_level_gained).toBe(2)
+    const suggestions = buildSessionLevelProgressionSuggestions(progression)
+    expect(suggestions.some(s => s.includes('increasing XP gains'))).toBe(false)
+    expect(suggestions[0]).toContain('4/5')
+  })
+
+  it('ignore les 5 runs session situés hors des 30 derniers', () => {
+    const old = Array.from({ length: 5 }, (_, i) => sessionRun(i, 5, 10, 10))
+    const recent = Array.from({ length: SESSION_PROGRESSION_WINDOW_RUNS }, (_, i) =>
+      sessionRun(100 + i, 1, 10, 11)
+    )
+    const progression = computeSessionLevelProgression([...old, ...recent])
+    expect(progression.sample_size).toBe(0)
+    expect(buildSessionLevelProgressionSuggestions(progression)).toEqual([])
+  })
+
+  it('déclenche le signal de progression très rapide au-dessus de 5 niveaux/run', () => {
+    const runs = Array.from({ length: 5 }, (_, i) => sessionRun(i, 5, 10, 16))
+    const suggestions = buildSessionLevelProgressionSuggestions(
+      computeSessionLevelProgression(runs)
+    )
+    expect(suggestions).toHaveLength(1)
+    expect(suggestions[0]).toContain('very fast progression')
+  })
+
+  describe('analyze-qa-stats.ts source contract (#1372)', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+
+    it('garde avg_level_gained_per_run comme métrique informative', () => {
+      expect(source).toContain('avg_level_gained_per_run')
+    })
+
+    it('gate la suggestion de progression sur computeSessionLevelProgression', () => {
+      expect(source).toContain('computeSessionLevelProgression')
+      expect(source).toContain('buildSessionLevelProgressionSuggestions')
+    })
   })
 })

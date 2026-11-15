@@ -193,3 +193,36 @@ export declare function resolveShopCohort(
 ): QaCohort | null
 
 export declare function isPurchaseWithinBudget(price: number | null | undefined, budget: number | null | undefined): boolean
+
+export declare const SESSION_PROGRESSION_WINDOW_RUNS: number
+export declare const SESSION_PROGRESSION_MIN_FIGHTS: number
+export declare const SESSION_PROGRESSION_MIN_RUNS: number
+
+export declare interface SessionLevelRunLike {
+  fights?: Array<unknown> | null
+  initial_level?: number | null
+  final_stats?: { level?: number | null } | null
+  character_action?: string | null
+  replaced_character?: string | null
+  initial_max_hp?: number | null
+  final_max_hp?: number | null
+}
+
+export declare interface SessionLevelProgression {
+  sample_size: number
+  runs_in_window: number
+  avg_level_gained: number | null
+  sufficient: boolean
+}
+
+export declare function isCharacterReplacedRun(run: SessionLevelRunLike | null | undefined): boolean
+
+export declare function computeSessionLevelProgression(
+  runs: SessionLevelRunLike[] | null | undefined,
+  windowSize?: number,
+): SessionLevelProgression
+
+export declare function buildSessionLevelProgressionSuggestions(
+  progression: SessionLevelProgression | null | undefined,
+  windowSize?: number,
+): string[]

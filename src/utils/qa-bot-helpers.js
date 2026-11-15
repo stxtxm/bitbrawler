@@ -370,3 +370,63 @@ export function isPurchaseWithinBudget(price, budget) {
   if (typeof budget !== 'number' || !Number.isFinite(budget) || budget <= 0) return true
   return price <= budget
 }
+
+export const SESSION_PROGRESSION_WINDOW_RUNS = 30
+export const SESSION_PROGRESSION_MIN_FIGHTS = 3
+export const SESSION_PROGRESSION_MIN_RUNS = 5
+
+export function isCharacterReplacedRun(run) {
+  if (!run || typeof run !== 'object') return false
+  if (typeof run.initial_max_hp === 'number' && typeof run.final_max_hp === 'number') {
+    if (run.final_max_hp < run.initial_max_hp - 10) return true
+  }
+  if (typeof run.character_action === 'string' && run.character_action.startsWith('created-after-')) {
+    if (run.replaced_character !== null && run.replaced_character !== undefined) {
+      return true
+    }
+  }
+  return false
+}
+
+export function computeSessionLevelProgression(runs, windowSize = SESSION_PROGRESSION_WINDOW_RUNS) {
+  const allRuns = Array.isArray(runs) ? runs : []
+  const recent = allRuns.slice(-windowSize)
+  const sample = recent.filter((run) => {
+    if (!run || !Array.isArray(run.fights) || run.fights.length < SESSION_PROGRESSION_MIN_FIGHTS) return false
+    if (typeof run.initial_level !== 'number' || !Number.isFinite(run.initial_level)) return false
+    const finalLevel = run.final_stats && typeof run.final_stats.level === 'number' ? run.final_stats.level : null
+    if (finalLevel === null) return false
+    return !isCharacterReplacedRun(run)
+  })
+  const sampleSize = sample.length
+  const avg = sampleSize > 0
+    ? sample.reduce((sum, run) => sum + ((run.final_stats?.level ?? 0) - run.initial_level), 0) / sampleSize
+    : null
+  return {
+    sample_size: sampleSize,
+    runs_in_window: recent.length,
+    avg_level_gained: avg === null ? null : Math.round(avg * 100) / 100,
+    sufficient: sampleSize >= SESSION_PROGRESSION_MIN_RUNS,
+  }
+}
+
+export function buildSessionLevelProgressionSuggestions(
+  progression,
+  windowSize = SESSION_PROGRESSION_WINDOW_RUNS,
+) {
+  if (!progression) return []
+  if (progression.sufficient) {
+    const avg = typeof progression.avg_level_gained === 'number' ? progression.avg_level_gained : 0
+    if (avg < 1) {
+      return [`Characters gain only ${avg.toFixed(2)} levels/run over the last ${progression.sample_size} session-sized run(s) (≥3 fights). Consider increasing XP gains or reducing XP thresholds.`]
+    }
+    if (avg > 5) {
+      return [`Characters gain ${avg.toFixed(1)} levels/run over the last ${progression.sample_size} session-sized run(s) (≥3 fights) — very fast progression. Consider increasing XP thresholds.`]
+    }
+    return []
+  }
+  if (progression.sample_size > 0) {
+    return [`Progression measurement pending — ${progression.sample_size}/${SESSION_PROGRESSION_MIN_RUNS} session-sized run(s) (≥3 fights) in the last ${windowSize}.`]
+  }
+  return []
+}
