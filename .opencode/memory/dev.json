@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-11-15T23:29:59Z",
+  "last_session": "2026-11-15T23:37:27Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "#1299 watchdog: statusCheckRollup contient aussi Cloudflare Pages (workflowName vide) -> filtrer select(.workflowName == \"CI\") sinon PR sans CI jamais envoyées au reviewer. Anti-tempête: le reviewer ne peut pas poser de review formelle sur une PR github-actions[bot], compter aussi un commentaire \"## Review PR #\" postérieur au SHA de tête.",
-      "issue": "#1299",
-      "date": "2026-10-22"
-    },
     {
       "lesson": "Issue #1300: qa-analysis.test.ts mirror must be updated in lockstep with scripts/analyze-qa-stats.ts (source contract string tests break when refactoring a literal). Shop funnel needs all runs with a shop result, not only runs with offers, otherwise QA-FRESH locked runs vanish. Cohort groups now include locked/no-offer runs while runs_with_shop_data stays offers-only to preserve REAL_SHOP_MIN_RUNS semantics.",
       "issue": "#1300",
@@ -171,6 +166,11 @@
     {
       "lesson": "#1372: les tests source-contract d'analyze-qa-stats.ts vérifient l'emplacement du garde isCharacterReplacedRun — déplacer une fonction vers qa-bot-helpers impose de mettre à jour le test pour lire le bon fichier, sinon la suite casse.",
       "issue": "#1372",
+      "date": "2026-11-15"
+    },
+    {
+      "lesson": "#1374: QA runs carry 1 fight (5 daily fights over 8 runs/day), so a per-run >=3-fights gate never produced a sample. Fix: aggregate consecutive runs of the same character into sessions of >=3 fights and measure first-initial -> last-final level, which also captures idle level-ups between runs. Keep one unit (session) for the <1 / >5 thresholds to avoid the #1372 false positive.",
+      "issue": "#1374",
       "date": "2026-11-15"
     }
   ]
