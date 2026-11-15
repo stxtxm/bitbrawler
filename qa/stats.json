@@ -222938,5 +222938,328 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-15T17:01:41.201Z",
+    "run": "2026-11-15",
+    "character": "QA-PERSI-3",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "REST NOW",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 0,
+      "isResting": true,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 10,
+      "vit": 8,
+      "dex": 19,
+      "luk": 38,
+      "int": 11,
+      "foc": 21,
+      "fights": 0
+    },
+    "initial_level": 21,
+    "initial_xp": {
+      "current": 1934,
+      "max": 18232
+    },
+    "progression_curve": {
+      "level": 21,
+      "total_xp": 137407,
+      "xp_for_next": 18232,
+      "percent": 10.6
+    },
+    "initial_max_hp": 461,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Linen Robe",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Crystal Pendant",
+        "rarity": "EPIC"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 21,
+      "xp": 4214,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 10,
+      "vit": 8,
+      "dex": 19,
+      "luk": 38,
+      "int": 11,
+      "foc": 21,
+      "last xp": 31,
+      "fights": 5
+    },
+    "final_max_hp": 461,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Linen Robe",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Crystal Pendant",
+        "rarity": "EPIC"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Linen Robe",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Crystal Pendant",
+        "rarity": "EPIC"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_locked_level": 30,
+      "boss_name": "VOID TITAN",
+      "boss_level": null,
+      "boss_hp": null,
+      "boss_max_hp": null
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 33063,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "ogre"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 32,
+      "xp_events": [
+        {
+          "time_ms": 33063,
+          "xp": 32,
+          "monster": "ogre",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        512,
+        1530,
+        33063
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 32,
+        "essence": 0.48,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.88,
+      "next_level_eta": "⬆ 27m 1s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.12x",
+      "interval": "10.6s",
+      "streak_bonus": null
+    },
+    "initial_essence": 13.86,
+    "final_essence": 35.25,
+    "essence": {
+      "before_idle": 13.86,
+      "after_idle": 14.34,
+      "per_fight": [],
+      "forge_before": 14,
+      "forge_after_salvage": 64,
+      "forge_after_fusion": 64,
+      "forge_after_upgrade": 64,
+      "forge_after": 64,
+      "shop_before": 65,
+      "shop_after": 35,
+      "final": 35.25,
+      "flow": {
+        "idle_gained": 0.48,
+        "fights_change": null,
+        "salvage_gained": 50,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 50,
+        "shop_cost": 30,
+        "net_change": 21.39
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 14,
+      "essence_after_salvage": 64,
+      "essence_after_fusion": 64,
+      "essence_after_upgrade": 64,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": false,
+      "essence_after": 64,
+      "items_after": 0,
+      "salvage_essence_gained": 50,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 30,
+      "essence_before": 65,
+      "essence_after": 35,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Ember Blade",
+            "rarity": "RARE",
+            "price": 30
+          },
+          {
+            "name": "Mystic Ring",
+            "rarity": "EPIC",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 35,
+        "essence_budget": 40,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 40
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 1,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "no_energy"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1305,
+      "arena": 518
+    },
+    "skipped_summary": {
+      "no_energy": 1
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Ember Blade",
+          "rarity": "RARE",
+          "price": 30
+        },
+        {
+          "name": "Mystic Ring",
+          "rarity": "EPIC",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 35,
+      "essence_budget": 40,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
