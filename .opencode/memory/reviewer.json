@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-11-10T07:25:17Z",
+  "last_session": "2026-11-15T23:36:06Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -20,9 +20,15 @@
     "Pas de commentaires superflus"
   ],
   "session_notes": [
-    {
-      "lesson": "PR de bot avec seulement le check Cloudflare Pages (aucun check lint/test/build rattaché) : exécuter soi-même la gate complète (npm run lint, npx tsc --noEmit, npx vitest run, npm run build) avant merge. Vérifier aussi l'exécution réelle du script modifié.",
-      "issue": "#1365"
-    }
+    [
+      {
+        "lesson": "PR #1375 : branche feat/auto-1372 deja squash-mergee via #1373 -> PR rejouee CONFLICTING. Comparer git diff origin/master HEAD (pas origin/master...HEAD, qui part de la merge-base) avant de conclure.",
+        "issue": "#1375"
+      },
+      {
+        "lesson": "Impossible de poster REQUEST_CHANGES sur une PR creee par le meme GitHub App (own pull request) -> fallback : gh pr comment detaille + gh pr close si la PR est un doublon en conflit.",
+        "issue": "#1375"
+      }
+    ]
   ]
 }
