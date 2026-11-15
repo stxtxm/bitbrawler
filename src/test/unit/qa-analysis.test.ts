@@ -5773,44 +5773,79 @@ describe('AGENTS.md — seuil idle documenté (#1366)', () => {
   })
 })
 
-// ── Level progression session sample (#1372) ──
-// `avg_level_gained_per_run` reste une métrique informative all-time, mais la
-// suggestion de progression ne doit lire qu'un échantillon "session" : fenêtre
-// récente, runs d'au moins 3 combats, sans remplacement de personnage. Sans
-// cela, mélanger runs à 1 combat, runs à 5 combats et resets produit un faux
-// positif structurel (ex. 0.99 levels/run) qui invite à tort à toucher à la
-// courbe XP.
+// ── Level progression session sample (#1374) ──
+// Le bot QA tourne toutes les 3 h mais la partie ne donne que 5 combats par
+// jour : chaque run porte un seul combat par construction. Exiger 3 combats
+// dans UN run rend donc la mesure impossible (0 échantillon depuis #1373).
+// Les runs consécutifs d'un même personnage sont agrégés en sessions de
+// ≥MIN_SESSION_FIGHTS combats ; le gain va du niveau initial du premier run au
+// niveau final du dernier, ce qui capture aussi les niveaux gagnés en idle
+// entre deux runs.
 
 const MIN_SESSION_FIGHTS = 3
-const MIN_LEVEL_PROGRESSION_RUNS = 5
+const MIN_LEVEL_PROGRESSION_SESSIONS = 5
 
 interface SessionProgressionSample {
-  runs: number
+  sessions: number
   avg_level_gained: number | null
+}
+
+interface ProgressionSession {
+  fights: number
+  gain: number
+}
+
+function buildProgressionSessions(runs: RunRecord[]): ProgressionSession[] {
+  const sessions: ProgressionSession[] = []
+  let current: {
+    character: string | null
+    characterType: 'fresh' | 'persistent' | null
+    initial: number
+    final: number
+    fights: number
+  } | null = null
+  const flush = () => {
+    if (current !== null && current.fights >= MIN_SESSION_FIGHTS) {
+      sessions.push({ fights: current.fights, gain: current.final - current.initial })
+    }
+    current = null
+  }
+  for (const r of runs) {
+    const initialLevel = r.initial_level
+    const finalLevel = r.final_stats?.level
+    if (isCharacterReplacedRun(r) || typeof initialLevel !== 'number' || typeof finalLevel !== 'number') {
+      flush()
+      continue
+    }
+    const character = r.character ?? null
+    const characterType = r.character_type ?? null
+    if (
+      current === null ||
+      current.character !== character ||
+      current.characterType !== characterType ||
+      initialLevel < current.final
+    ) {
+      flush()
+      current = { character, characterType, initial: initialLevel, final: initialLevel, fights: 0 }
+    }
+    current.fights += r.fights?.length ?? 0
+    current.final = finalLevel
+    if (current.fights >= MIN_SESSION_FIGHTS) flush()
+  }
+  flush()
+  return sessions
 }
 
 function computeSessionProgressionSample(
   runs: RunRecord[],
   windowSize = RECENT_WINDOW_RUNS,
 ): SessionProgressionSample {
-  const recent = runs.slice(-windowSize)
-  const sessionRuns = recent.filter(
-    (r) =>
-      !isCharacterReplacedRun(r) &&
-      (r.fights?.length ?? 0) >= MIN_SESSION_FIGHTS &&
-      typeof r.initial_level === 'number' &&
-      r.final_stats !== null &&
-      r.final_stats !== undefined &&
-      typeof r.final_stats.level === 'number'
-  )
-  if (sessionRuns.length === 0) return { runs: 0, avg_level_gained: null }
-  const total = sessionRuns.reduce(
-    (s, r) => s + ((r.final_stats!.level as number) - (r.initial_level as number)),
-    0
-  )
+  const sessions = buildProgressionSessions(runs.slice(-windowSize))
+  if (sessions.length === 0) return { sessions: 0, avg_level_gained: null }
+  const total = sessions.reduce((s, session) => s + session.gain, 0)
   return {
-    runs: sessionRuns.length,
-    avg_level_gained: Math.round((total / sessionRuns.length) * 100) / 100,
+    sessions: sessions.length,
+    avg_level_gained: Math.round((total / sessions.length) * 100) / 100,
   }
 }
 
@@ -5818,26 +5853,26 @@ function levelProgressionSuggestions(
   sample: SessionProgressionSample,
   windowSize = RECENT_WINDOW_RUNS,
 ): string[] {
-  if (sample.runs < MIN_LEVEL_PROGRESSION_RUNS || sample.avg_level_gained === null) {
+  if (sample.sessions < MIN_LEVEL_PROGRESSION_SESSIONS || sample.avg_level_gained === null) {
     return [
-      `Progression measurement pending — ${sample.runs}/${MIN_LEVEL_PROGRESSION_RUNS} session-sized run(s) (≥${MIN_SESSION_FIGHTS} fights) in the last ${windowSize}.`,
+      `Progression measurement pending — ${sample.sessions}/${MIN_LEVEL_PROGRESSION_SESSIONS} session(s) of ≥${MIN_SESSION_FIGHTS} fights in the last ${windowSize} runs.`,
     ]
   }
   const out: string[] = []
   if (sample.avg_level_gained < 1) {
     out.push(
-      `Characters gain only ${sample.avg_level_gained.toFixed(2)} levels/run. Consider increasing XP gains or reducing XP thresholds.`
+      `Characters gain only ${sample.avg_level_gained.toFixed(2)} levels/session. Consider increasing XP gains or reducing XP thresholds.`
     )
   }
   if (sample.avg_level_gained > 5) {
     out.push(
-      `Characters gain ${sample.avg_level_gained.toFixed(1)} levels/run — very fast progression. Consider increasing XP thresholds.`
+      `Characters gain ${sample.avg_level_gained.toFixed(1)} levels/session — very fast progression. Consider increasing XP thresholds.`
     )
   }
   return out
 }
 
-describe('QA Level Progression Session Sample (#1372)', () => {
+describe('QA Level Progression Session Sample (#1374)', () => {
   function progressionRun(opts: {
     run: string
     fights?: number
@@ -5845,7 +5880,10 @@ describe('QA Level Progression Session Sample (#1372)', () => {
     finalLevel?: number
     replaced?: string | null
     characterAction?: string | null
+    character?: string
+    characterType?: 'fresh' | 'persistent' | null
   }): RunRecord {
+    const initialLevel = opts.initialLevel ?? 10
     const fights = Array.from({ length: opts.fights ?? 1 }, () => ({
       result: 'victory' as const,
       xp: 100,
@@ -5854,37 +5892,101 @@ describe('QA Level Progression Session Sample (#1372)', () => {
     return {
       date: '2026-11-15',
       run: opts.run,
-      character: 'QA-PERSIST',
+      character: opts.character ?? 'QA-PERSIST',
       fights,
       errors: [],
-      initial_level: opts.initialLevel ?? 10,
+      initial_level: initialLevel,
       final_stats: {
-        level: opts.finalLevel ?? 11,
+        level: opts.finalLevel ?? initialLevel,
         xp: 0,
         wins: 0,
         losses: 0,
       },
       character_action: opts.characterAction ?? null,
       replaced_character: opts.replaced ?? null,
+      character_type: opts.characterType ?? 'persistent',
     }
   }
 
-  it('n’émet aucune suggestion levels/run pour 30 runs récents à 1 combat', () => {
-    const runs = Array.from({ length: 30 }, (_, i) =>
-      progressionRun({ run: `single-${i}`, fights: 1, initialLevel: 5, finalLevel: 6 })
+  it('agrège 30 runs récents à 1 combat en sessions mesurables', () => {
+    const runs = Array.from({ length: 30 }, (_, i) => {
+      const session = Math.floor(i / 3)
+      const isSessionEnd = i % 3 === 2
+      return progressionRun({
+        run: `single-${i}`,
+        fights: 1,
+        initialLevel: 10 + session * 2,
+        finalLevel: 10 + session * 2 + (isSessionEnd ? 2 : 0),
+      })
+    })
+
+    const sample = computeSessionProgressionSample(runs)
+    const suggestions = levelProgressionSuggestions(sample, runs.length)
+
+    expect(sample.sessions).toBe(10)
+    expect(sample.avg_level_gained).toBe(2)
+    expect(suggestions.some(s => s.includes('Progression measurement pending'))).toBe(false)
+    expect(suggestions.some(s => s.includes('increase XP gains'))).toBe(false)
+  })
+
+  it('mesure le gain entre deux runs, pas seulement la somme des deltas par run', () => {
+    const runs = [
+      progressionRun({ run: 'r1', initialLevel: 10, finalLevel: 10 }),
+      progressionRun({ run: 'r2', initialLevel: 10, finalLevel: 11 }),
+      progressionRun({ run: 'r3', initialLevel: 12, finalLevel: 13 }),
+    ]
+
+    const sample = computeSessionProgressionSample(runs)
+
+    expect(sample.sessions).toBe(1)
+    expect(sample.avg_level_gained).toBe(3)
+  })
+
+  it('coupe les sessions à chaque remplacement de personnage', () => {
+    const oldRuns = Array.from({ length: 3 }, (_, i) =>
+      progressionRun({ run: `old-${i}`, initialLevel: 20, finalLevel: 20 })
+    )
+    const replacement = progressionRun({
+      run: 'replacement',
+      initialLevel: 1,
+      finalLevel: 2,
+      character: 'QA-PERSI-2',
+      characterAction: 'created-after-exhausted-energy',
+      replaced: 'old-character-id',
+    })
+    const newRuns = Array.from({ length: 3 }, (_, i) =>
+      progressionRun({
+        run: `new-${i}`,
+        initialLevel: 1,
+        finalLevel: i === 2 ? 4 : 1,
+        character: 'QA-PERSI-2',
+      })
+    )
+    const runs = [...oldRuns, replacement, ...newRuns]
+
+    const sample = computeSessionProgressionSample(runs)
+
+    expect(sample.sessions).toBe(2)
+    expect(sample.avg_level_gained).toBe(1.5)
+  })
+
+  it('retombe en pending sous le minimum de sessions', () => {
+    const runs = Array.from({ length: 6 }, (_, i) =>
+      progressionRun({
+        run: `few-${i}`,
+        initialLevel: 10,
+        finalLevel: i % 3 === 2 ? 12 : 10,
+      })
     )
 
     const sample = computeSessionProgressionSample(runs)
     const suggestions = levelProgressionSuggestions(sample, runs.length)
 
-    expect(sample.runs).toBe(0)
-    expect(suggestions.some(s => s.includes('increase XP gains'))).toBe(false)
-    expect(suggestions.some(s => s.includes('very fast progression'))).toBe(false)
-    expect(suggestions.some(s => s.includes('levels/run'))).toBe(false)
-    expect(suggestions.some(s => s.includes('Progression measurement pending'))).toBe(true)
+    expect(sample.sessions).toBe(2)
+    expect(suggestions.some(s => s.includes('2/5 session(s)'))).toBe(true)
   })
 
-  it('déclenche l’alerte sur 5 runs récents à ≥3 combats avec un gain moyen < 1', () => {
+  it('déclenche l’alerte sur 5 runs à ≥3 combats avec un gain moyen < 1', () => {
     const gains = [0, 1, 0, 1, 0]
     const runs = gains.map((gain, i) =>
       progressionRun({ run: `session-${i}`, fights: 5, initialLevel: 10, finalLevel: 10 + gain })
@@ -5893,63 +5995,41 @@ describe('QA Level Progression Session Sample (#1372)', () => {
     const sample = computeSessionProgressionSample(runs)
     const suggestions = levelProgressionSuggestions(sample, runs.length)
 
-    expect(sample.runs).toBe(5)
+    expect(sample.sessions).toBe(5)
     expect(sample.avg_level_gained).toBe(0.4)
     expect(
       suggestions.some(s =>
-        s.includes('Characters gain only 0.40 levels/run. Consider increasing XP gains')
+        s.includes('Characters gain only 0.40 levels/session. Consider increasing XP gains')
       )
     ).toBe(true)
   })
 
-  it('exclut un run avec replaced_character même s’il a ≥3 combats', () => {
-    const runs = Array.from({ length: 4 }, (_, i) =>
-      progressionRun({ run: `kept-${i}`, fights: 4, initialLevel: 10, finalLevel: 12 })
-    )
-    runs.push(
-      progressionRun({
-        run: 'replaced',
-        fights: 6,
-        initialLevel: 30,
-        finalLevel: 18,
-        characterAction: 'created-after-exhausted-energy',
-        replaced: 'old-character-id',
-      })
-    )
-
-    const sample = computeSessionProgressionSample(runs)
-    const suggestions = levelProgressionSuggestions(sample, runs.length)
-
-    expect(sample.runs).toBe(4)
-    expect(sample.avg_level_gained).toBe(2)
-    expect(suggestions.some(s => s.includes('increase XP gains'))).toBe(false)
-  })
-
-  it('ignore les runs all-time hors des 30 derniers', () => {
-    const oldRuns = Array.from({ length: 5 }, (_, i) =>
-      progressionRun({ run: `old-${i}`, fights: 5, initialLevel: 10, finalLevel: 10 })
+  it('ignore les runs hors des 30 derniers', () => {
+    const oldRuns = Array.from({ length: 9 }, (_, i) =>
+      progressionRun({ run: `old-${i}`, fights: 5, initialLevel: 10, finalLevel: 20 })
     )
     const recentRuns = Array.from({ length: 30 }, (_, i) =>
-      progressionRun({ run: `recent-${i}`, fights: 1, initialLevel: 10, finalLevel: 11 })
+      progressionRun({ run: `recent-${i}`, fights: 0, initialLevel: 5, finalLevel: 5 })
     )
     const runs = [...oldRuns, ...recentRuns]
 
     const sample = computeSessionProgressionSample(runs)
     const suggestions = levelProgressionSuggestions(sample, 30)
 
-    expect(sample.runs).toBe(0)
+    expect(sample.sessions).toBe(0)
     expect(suggestions.some(s => s.includes('increase XP gains'))).toBe(false)
     expect(suggestions.some(s => s.includes('very fast progression'))).toBe(false)
   })
 
-  it('analyse-qa-stats.ts gate la suggestion sur l’échantillon session récent (#1372)', () => {
+  it('analyse-qa-stats.ts agrège les runs en sessions (#1374)', () => {
     const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
 
-    expect(source).toContain('computeSessionProgressionSample')
+    expect(source).toContain('buildProgressionSessions')
     expect(source).toContain('levelProgressionSuggestions')
     expect(source).toContain('MIN_SESSION_FIGHTS')
-    expect(source).toContain('MIN_LEVEL_PROGRESSION_RUNS')
+    expect(source).toContain('MIN_LEVEL_PROGRESSION_SESSIONS')
     expect(source).toContain('computeSessionProgressionSample(recentRuns)')
     expect(source).not.toContain('if (avgLevelGained < 1 && validRuns.length >= 3)')
+    expect(source).not.toContain('(r.fights?.length ?? 0) >= MIN_SESSION_FIGHTS')
   })
 })
