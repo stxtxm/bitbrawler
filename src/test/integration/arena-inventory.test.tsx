@@ -20,6 +20,14 @@ vi.mock('../../hooks/useOnlineStatus', () => ({
   useOnlineStatus: vi.fn(),
 }))
 
+vi.mock('../../hooks/useNotification', () => ({
+  useNotification: () => ({
+    notify: vi.fn(),
+    dismiss: vi.fn(),
+    clear: vi.fn(),
+  }),
+}))
+
 const mockUseGame = useGame as unknown as ReturnType<typeof vi.fn>
 const mockUseConnectionGate = useConnectionGate as unknown as ReturnType<typeof vi.fn>
 const mockUseOnlineStatus = useOnlineStatus as unknown as ReturnType<typeof vi.fn>
@@ -204,6 +212,37 @@ describe('Arena inventory modal', () => {
     expect(getByText('SALVAGE YIELD')).toBeInTheDocument()
     expect(getByText(new RegExp(`${ESSENCE_YIELD.common} Essence`))).toBeInTheDocument()
     expect(getByText('SALVAGE')).toBeInTheDocument()
+  })
+
+  it('keeps the detail view after the pointer leaves the item (sticky preview)', () => {
+    const charWithItem: Character = {
+      ...mockCharacter,
+      inventory: ['rusty_sword'],
+      essence: 42,
+    }
+    mockUseGame.mockReturnValue(makeDefaultGameMock({
+      activeCharacter: charWithItem,
+      essence: 42,
+    }))
+
+    const { getByLabelText, queryByText } = render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Arena />
+      </MemoryRouter>
+    )
+
+    fireEvent.click(getByLabelText('Inventory'))
+
+    // Hover-only interaction (the item is never clicked → selectedId stays
+    // null). Leaving the item must NOT unmount the detail: otherwise its
+    // SALVAGE/EQUIP buttons vanish between mousedown and mouseup and the
+    // click is silently lost (no action, no feedback).
+    const itemBtn = getByLabelText('View Rusty Sword')
+    fireEvent.mouseOver(itemBtn)
+    fireEvent.mouseOut(itemBtn)
+
+    expect(queryByText('TAP AN ITEM TO VIEW BONUSES')).toBeNull()
+    expect(getByLabelText(new RegExp('Salvage Rusty Sword'))).toBeInTheDocument()
   })
 
   it('shows essence total display when essence > 0', () => {

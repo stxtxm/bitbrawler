@@ -999,6 +999,7 @@
   margin-top: 4px;
   border: 1px solid #333;
   background: rgba(0, 0, 0, 0.3);
+  position: relative; // anchors the floating "+X Essence" gain popup
 }
 
 .essence-total-label {

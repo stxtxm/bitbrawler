@@ -1,7 +1,10 @@
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ItemSlot, PixelItemAsset } from '../../types/Item';
+import type { Character } from '../../types/Character';
 import { getItemStatEntries } from '../../hooks/useInventory';
 import { useInventoryPanel } from '../../hooks/useInventoryPanel';
+import { useNotification } from '../../hooks/useNotification';
+import { useSound } from '../../hooks/useSound';
 import { ESSENCE_YIELD } from '../../data/forgeConstants';
 import { AffinityBadge } from '../AffinityBadge';
 import { PixelIcon } from '../PixelIcon';
@@ -46,7 +49,7 @@ interface InventoryPanelProps {
   inventoryFilterElement?: string | null;
   // Forge integration
   itemUpgradeLevels?: Record<string, number>;
-  onSalvage?: (itemId: string) => void;
+  onSalvage?: (itemId: string) => Promise<Character | null>;
   essence?: number;
 }
 
@@ -114,6 +117,55 @@ export const InventoryPanel = memo(function InventoryPanel({
     () => previewItem ? equippedItems.some((item) => item.id === previewItem.id) : false,
     [equippedItems, previewItem],
   );
+
+  // ─── Salvage feedback (detail view) ────────────────────────────────────────
+  const { notify } = useNotification();
+  const { play } = useSound();
+  const [salvaging, setSalvaging] = useState(false);
+  const [salvagedGone, setSalvagedGone] = useState(false);
+  const [essencePopup, setEssencePopup] = useState<{ id: number; amount: number } | null>(null);
+  const essencePopupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Reset the SALVAGED flag when switching to another item's detail
+  useEffect(() => {
+    setSalvagedGone(false);
+  }, [previewItem?.id]);
+
+  useEffect(() => {
+    return () => {
+      if (essencePopupTimerRef.current) clearTimeout(essencePopupTimerRef.current);
+    };
+  }, []);
+
+  const handleSalvage = useCallback(async () => {
+    if (!previewItem || salvaging || !onSalvage) return;
+    const item = previewItem;
+    setSalvaging(true);
+    try {
+      const result = await onSalvage(item.id);
+      if (!result) {
+        play('error');
+        notify('Unable to salvage this item. Try again.', 'error', 3000);
+        return;
+      }
+      const yieldAmount = ESSENCE_YIELD[item.rarity];
+      notify(
+        `Salvaged ${item.name} (${item.rarity.toUpperCase()}) → +${yieldAmount} Essence`,
+        'success',
+        3000,
+      );
+      // The action returns the POST-salvage character: if the id is gone from
+      // the bag (last copy), flag the detail so the button flips to SALVAGED.
+      setSalvagedGone(!(result.inventory ?? []).includes(item.id));
+      setEssencePopup({ id: Date.now(), amount: yieldAmount });
+      play('salvage');
+    } catch {
+      play('error');
+      notify('Failed to salvage item. Try again.', 'error', 3000);
+    } finally {
+      setSalvaging(false);
+    }
+  }, [previewItem, salvaging, onSalvage, notify, play]);
 
   const epicRemaining = getEpicPityRemaining(epicPityCount);
   const epicBoost = getEpicBoostBonus(commonStreak);
@@ -372,16 +424,26 @@ export const InventoryPanel = memo(function InventoryPanel({
                         {onSalvage && (
                           <button
                             className="forge-action-btn danger"
-                            onClick={() => onSalvage(previewItem.id)}
-                            aria-label={`Salvage ${previewItem.name} for ${ESSENCE_YIELD[previewItem.rarity]} essence`}
+                            onClick={handleSalvage}
+                            disabled={salvaging || salvagedGone}
+                            aria-label={
+                              salvagedGone
+                                ? `${previewItem.name} salvaged`
+                                : `Salvage ${previewItem.name} for ${ESSENCE_YIELD[previewItem.rarity]} essence`
+                            }
                           >
-                            SALVAGE
+                            {salvagedGone ? 'SALVAGED ✓' : 'SALVAGE'}
                           </button>
                         )}
                       </div>
                     </div>
                     {essence > 0 && (
                       <div className="inventory-essence-total">
+                        {essencePopup && (
+                          <span key={essencePopup.id} className="forge-essence-popup" aria-hidden="true">
+                            +{essencePopup.amount} Essence
+                          </span>
+                        )}
                         <span className="essence-total-label">ESSENCE</span>
                         <span className="essence-total-value">{essence.toFixed(2)}</span>
                       </div>

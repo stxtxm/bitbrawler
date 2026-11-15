@@ -1,5 +1,5 @@
 import type { ComponentProps } from 'react';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ArenaHeader } from '../../components/arena/ArenaHeader';
 import { CharacterDisplay } from '../../components/arena/CharacterDisplay';
@@ -13,6 +13,7 @@ import { getSurgeBiome } from '../../data/liveOps';
 import { Character } from '../../types/Character';
 import { PixelItemAsset } from '../../types/Item';
 import { ITEM_STAT_META, getItemStatEntries } from '../../hooks/useInventory';
+import { ESSENCE_YIELD } from '../../data/forgeConstants';
 
 vi.mock('../../components/IdleRunnerScene', () => ({
   IdleRunnerScene: () => <div data-testid="idle-runner-scene">IDLE SCENE</div>,
@@ -22,6 +23,16 @@ vi.mock('../../context/GameContext', () => ({
   useGame: () => ({
     activeCharacter: { level: 10 },
     essence: 100,
+  }),
+}));
+
+const { notifySpy } = vi.hoisted(() => ({ notifySpy: vi.fn() }));
+
+vi.mock('../../hooks/useNotification', () => ({
+  useNotification: () => ({
+    notify: notifySpy,
+    dismiss: vi.fn(),
+    clear: vi.fn(),
   }),
 }));
 
@@ -536,9 +547,9 @@ describe('arena extracted components', () => {
       expect(itemCard.className).toContain('upgraded');
     });
 
-    it('renders salvage button in detail view when item is selected', () => {
+    it('renders salvage button in detail view when item is selected', async () => {
       const rustySword = getItem('rusty_sword');
-      const onSalvage = vi.fn();
+      const onSalvage = vi.fn().mockResolvedValue(null);
 
       render(
         <InventoryPanel
@@ -574,6 +585,152 @@ describe('arena extracted components', () => {
       expect(salvageBtn).toBeInTheDocument();
       fireEvent.click(salvageBtn);
       expect(onSalvage).toHaveBeenCalledWith(rustySword.id);
+      // Flush the async handler (avoids act warnings on trailing setState)
+      await waitFor(() => expect(notifySpy).toHaveBeenCalled());
+    });
+
+    it('shows enriched toast and floating essence popup when salvaging from the detail view', async () => {
+      const rustySword = getItem('rusty_sword');
+      const onSalvage = vi.fn().mockResolvedValue({ ...character, inventory: [], essence: 55 });
+      notifySpy.mockClear();
+
+      render(
+        <InventoryPanel
+          inventory={[rustySword.id]}
+          inventoryCapacity={20}
+          equippedItems={[]}
+          previewItem={rustySword}
+          previewSlotLabel="WEAPON"
+          previewStats={getItemStatEntries(rustySword)}
+          totalBonusEntries={[]}
+          lootboxResult={null}
+          lootboxRolling={false}
+          canRollDailyLoot
+          inventoryFull={false}
+          streak={0}
+          itemStatMeta={ITEM_STAT_META}
+          isOfflineMode={false}
+          onClose={vi.fn()}
+          onEquip={vi.fn()}
+          onUnequip={vi.fn()}
+          onLootboxRoll={vi.fn()}
+          onCloseLootboxResult={vi.fn()}
+          onSelectItem={vi.fn()}
+          onHoverItem={vi.fn()}
+          previewItemId={rustySword.id}
+          onSalvage={onSalvage}
+          essence={50}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /salvage rusty sword/i }));
+
+      // Toast names the item, its rarity and the exact yield
+      await waitFor(() => {
+        expect(notifySpy).toHaveBeenCalledWith(
+          `Salvaged ${rustySword.name} (${rustySword.rarity.toUpperCase()}) → +${ESSENCE_YIELD[rustySword.rarity]} Essence`,
+          'success',
+          3000,
+        );
+      });
+      // Floating "+X Essence" popup above the essence total
+      await waitFor(() => {
+        expect(document.querySelector('.forge-essence-popup')).not.toBeNull();
+      });
+      expect(document.querySelector('.forge-essence-popup')!.textContent).toContain(
+        `+${ESSENCE_YIELD[rustySword.rarity]}`,
+      );
+    });
+
+    it('flips the button to SALVAGED and disables it after the last copy is salvaged', async () => {
+      const rustySword = getItem('rusty_sword');
+      const onSalvage = vi.fn().mockResolvedValue({ ...character, inventory: [], essence: 55 });
+      notifySpy.mockClear();
+
+      render(
+        <InventoryPanel
+          inventory={[rustySword.id]}
+          inventoryCapacity={20}
+          equippedItems={[]}
+          previewItem={rustySword}
+          previewSlotLabel="WEAPON"
+          previewStats={getItemStatEntries(rustySword)}
+          totalBonusEntries={[]}
+          lootboxResult={null}
+          lootboxRolling={false}
+          canRollDailyLoot
+          inventoryFull={false}
+          streak={0}
+          itemStatMeta={ITEM_STAT_META}
+          isOfflineMode={false}
+          onClose={vi.fn()}
+          onEquip={vi.fn()}
+          onUnequip={vi.fn()}
+          onLootboxRoll={vi.fn()}
+          onCloseLootboxResult={vi.fn()}
+          onSelectItem={vi.fn()}
+          onHoverItem={vi.fn()}
+          previewItemId={rustySword.id}
+          onSalvage={onSalvage}
+          essence={50}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /salvage rusty sword/i }));
+
+      const doneBtn = await screen.findByRole('button', { name: /rusty sword salvaged/i });
+      expect(doneBtn).toBeDisabled();
+      expect(doneBtn.textContent).toContain('SALVAGED');
+      // No further salvage attempt possible
+      expect(onSalvage).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows an error toast when the salvage action fails', async () => {
+      const rustySword = getItem('rusty_sword');
+      const onSalvage = vi.fn().mockResolvedValue(null);
+      notifySpy.mockClear();
+
+      render(
+        <InventoryPanel
+          inventory={[rustySword.id]}
+          inventoryCapacity={20}
+          equippedItems={[]}
+          previewItem={rustySword}
+          previewSlotLabel="WEAPON"
+          previewStats={getItemStatEntries(rustySword)}
+          totalBonusEntries={[]}
+          lootboxResult={null}
+          lootboxRolling={false}
+          canRollDailyLoot
+          inventoryFull={false}
+          streak={0}
+          itemStatMeta={ITEM_STAT_META}
+          isOfflineMode={false}
+          onClose={vi.fn()}
+          onEquip={vi.fn()}
+          onUnequip={vi.fn()}
+          onLootboxRoll={vi.fn()}
+          onCloseLootboxResult={vi.fn()}
+          onSelectItem={vi.fn()}
+          onHoverItem={vi.fn()}
+          previewItemId={rustySword.id}
+          onSalvage={onSalvage}
+          essence={50}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /salvage rusty sword/i }));
+
+      await waitFor(() => {
+        expect(notifySpy).toHaveBeenCalledWith(
+          expect.stringContaining('Unable to salvage'),
+          'error',
+          3000,
+        );
+      });
+      expect(document.querySelector('.forge-essence-popup')).toBeNull();
+      // Button stays usable — the item was never destroyed
+      expect(screen.getByRole('button', { name: /salvage rusty sword/i })).not.toBeDisabled();
     });
 
     it('shows essence yield on item hover in detail view', () => {

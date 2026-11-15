@@ -77,6 +77,7 @@ export const useInventory = ({
   const [inventoryOpen, setInventoryOpen] = useState(false);
   const [inventoryHoveredId, setInventoryHoveredId] = useState<string | null>(null);
   const [inventorySelectedId, setInventorySelectedId] = useState<string | null>(null);
+  const [inventoryLastPreviewId, setInventoryLastPreviewId] = useState<string | null>(null);
   const [inventoryFilterElement, setInventoryFilterElement] = useState<Element | null>(null);
   const [lootboxRolling, setLootboxRolling] = useState(false);
   const [lootboxResult, setLootboxResult] = useState<PixelItemAsset | null>(null);
@@ -116,8 +117,16 @@ export const useInventory = ({
   const inventoryFull = inventory.length >= inventoryCapacity;
   const canRollDailyLoot = canRollLootbox(character?.lastLootRoll, Date.now());
   const streak = character?.lootboxStreak ?? 0;
-  const previewItemId = inventoryHoveredId ?? inventorySelectedId;
+  // Sticky preview: the last item shown in the detail view stays visible until
+  // another item is hovered/selected or the panel closes. Without it, moving
+  // the pointer off the item (or the focus/blur churn of pressing a detail
+  // action) flips previewItemId to null, unmounting the detail — and its
+  // SALVAGE/EQUIP buttons — between mousedown and mouseup, eating the click.
+  const previewItemId = inventoryHoveredId ?? inventorySelectedId ?? inventoryLastPreviewId;
   const previewItem = getItemById(previewItemId) ?? null;
+  useEffect(() => {
+    if (previewItemId) setInventoryLastPreviewId(previewItemId);
+  }, [previewItemId]);
   const previewStats = useMemo(() => getItemStatEntries(previewItem), [previewItem]);
   const previewSlotLabel = previewItem ? previewItem.slot.toUpperCase() : '';
   const equippedItems = useMemo(() => character ? getEquippedItems(character) : [], [character]);
@@ -222,6 +231,7 @@ export const useInventory = ({
       setLootboxRolling(false);
       setInventoryHoveredId(null);
       setInventorySelectedId(null);
+      setInventoryLastPreviewId(null);
       setInventoryFilterElement(null);
     }
   }, [clearRollTimers, inventoryOpen]);
