@@ -245,6 +245,39 @@ describe('Arena inventory modal', () => {
     expect(getByLabelText(new RegExp('Salvage Rusty Sword'))).toBeInTheDocument()
   })
 
+  it('clears the detail view after a successful salvage (no lingering selection)', async () => {
+    const salvageItems = vi.fn().mockResolvedValue({
+      ...mockCharacter,
+      inventory: [],
+      essence: ESSENCE_YIELD.common,
+    })
+    const charWithItem: Character = {
+      ...mockCharacter,
+      inventory: ['rusty_sword'],
+      essence: ESSENCE_YIELD.common + 5,
+    }
+    mockUseGame.mockReturnValue(makeDefaultGameMock({
+      activeCharacter: charWithItem,
+      essence: ESSENCE_YIELD.common + 5,
+      salvageItems,
+    }))
+
+    const { getByLabelText, getByText, findByText } = render(
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Arena />
+      </MemoryRouter>,
+    )
+
+    fireEvent.click(getByLabelText('Inventory'))
+    fireEvent.click(getByLabelText('View Rusty Sword'))
+    fireEvent.click(getByText('SALVAGE'))
+
+    // Toast + popup play first, then the selection is dropped: the salvaged
+    // item must not stay displayed as the selected one.
+    await findByText('TAP AN ITEM TO VIEW BONUSES', {}, { timeout: 4000 })
+    expect(salvageItems).toHaveBeenCalledTimes(1)
+  })
+
   it('shows essence total display when essence > 0', () => {
     const charWithEssence: Character = {
       ...mockCharacter,

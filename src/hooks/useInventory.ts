@@ -224,6 +224,14 @@ export const useInventory = ({
     setInventoryHoveredId(itemId);
   }, []);
 
+  // Drop the current preview/selection entirely (hovered + selected + sticky
+  // fallback) so the detail view returns to its empty state.
+  const handleDeselect = useCallback(() => {
+    setInventoryHoveredId(null);
+    setInventorySelectedId(null);
+    setInventoryLastPreviewId(null);
+  }, []);
+
   useEffect(() => {
     if (!inventoryOpen) {
       clearRollTimers();
@@ -265,6 +273,7 @@ export const useInventory = ({
     handleCloseLootboxResult,
     handleSelectItem,
     handleHoverItem,
+    handleDeselect,
     onClose: closeInventory,
     onEquip: handleEquipItem,
     onUnequip: handleUnequipItem,
@@ -272,5 +281,6 @@ export const useInventory = ({
     onCloseLootboxResult: handleCloseLootboxResult,
     onSelectItem: handleSelectItem,
     onHoverItem: handleHoverItem,
+    onDeselect: handleDeselect,
   };
 };

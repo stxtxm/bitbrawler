@@ -733,6 +733,51 @@ describe('arena extracted components', () => {
       expect(screen.getByRole('button', { name: /salvage rusty sword/i })).not.toBeDisabled();
     });
 
+    it('auto-deselects after a successful salvage so the item does not stay selected', async () => {
+      const rustySword = getItem('rusty_sword');
+      const onSalvage = vi.fn().mockResolvedValue({ ...character, inventory: [], essence: 55 });
+      const onDeselect = vi.fn();
+      notifySpy.mockClear();
+
+      render(
+        <InventoryPanel
+          inventory={[rustySword.id]}
+          inventoryCapacity={20}
+          equippedItems={[]}
+          previewItem={rustySword}
+          previewSlotLabel="WEAPON"
+          previewStats={getItemStatEntries(rustySword)}
+          totalBonusEntries={[]}
+          lootboxResult={null}
+          lootboxRolling={false}
+          canRollDailyLoot
+          inventoryFull={false}
+          streak={0}
+          itemStatMeta={ITEM_STAT_META}
+          isOfflineMode={false}
+          onClose={vi.fn()}
+          onEquip={vi.fn()}
+          onUnequip={vi.fn()}
+          onLootboxRoll={vi.fn()}
+          onCloseLootboxResult={vi.fn()}
+          onSelectItem={vi.fn()}
+          onHoverItem={vi.fn()}
+          previewItemId={rustySword.id}
+          onSalvage={onSalvage}
+          onDeselect={onDeselect}
+          essence={50}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /salvage rusty sword/i }));
+
+      // Feedback first (toast + floating popup + SALVAGED state)…
+      await waitFor(() => expect(document.querySelector('.forge-essence-popup')).not.toBeNull());
+      // …then the selection is dropped so the detail does not keep the
+      // salvaged item displayed as selected.
+      await waitFor(() => expect(onDeselect).toHaveBeenCalledTimes(1), { timeout: 3000 });
+    });
+
     it('shows essence yield on item hover in detail view', () => {
       const rustySword = getItem('rusty_sword');
 

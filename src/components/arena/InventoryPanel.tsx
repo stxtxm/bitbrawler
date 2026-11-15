@@ -41,6 +41,7 @@ interface InventoryPanelProps {
   onCloseLootboxResult: () => void;
   onSelectItem: (itemId: string) => void;
   onHoverItem: (id: string | null) => void;
+  onDeselect?: () => void;
   previewItemId: string | null;
   pityCount?: number;
   epicPityCount?: number;
@@ -93,6 +94,7 @@ export const InventoryPanel = memo(function InventoryPanel({
   onCloseLootboxResult,
   onSelectItem,
   onHoverItem,
+  onDeselect,
   previewItemId,
   pityCount = 0,
   epicPityCount = 0,
@@ -125,15 +127,23 @@ export const InventoryPanel = memo(function InventoryPanel({
   const [salvagedGone, setSalvagedGone] = useState(false);
   const [essencePopup, setEssencePopup] = useState<{ id: number; amount: number } | null>(null);
   const essencePopupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const deselectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Reset the SALVAGED flag when switching to another item's detail
+  // Reset the SALVAGED flag when switching to another item's detail; also
+  // cancel the pending auto-deselect so navigating away (and back) during the
+  // feedback window can't wipe the user's fresh selection.
   useEffect(() => {
     setSalvagedGone(false);
+    if (deselectTimerRef.current) {
+      clearTimeout(deselectTimerRef.current);
+      deselectTimerRef.current = null;
+    }
   }, [previewItem?.id]);
 
   useEffect(() => {
     return () => {
       if (essencePopupTimerRef.current) clearTimeout(essencePopupTimerRef.current);
+      if (deselectTimerRef.current) clearTimeout(deselectTimerRef.current);
     };
   }, []);
 
@@ -159,13 +169,20 @@ export const InventoryPanel = memo(function InventoryPanel({
       setSalvagedGone(!(result.inventory ?? []).includes(item.id));
       setEssencePopup({ id: Date.now(), amount: yieldAmount });
       play('salvage');
+      // Retire the popup once its float animation is over, then drop the
+      // selection: the item has been salvaged, so the detail must not keep
+      // showing it as the selected one (ghost item + lingering highlight).
+      if (essencePopupTimerRef.current) clearTimeout(essencePopupTimerRef.current);
+      essencePopupTimerRef.current = setTimeout(() => setEssencePopup(null), 1200);
+      if (deselectTimerRef.current) clearTimeout(deselectTimerRef.current);
+      deselectTimerRef.current = setTimeout(() => onDeselect?.(), 1800);
     } catch {
       play('error');
       notify('Failed to salvage item. Try again.', 'error', 3000);
     } finally {
       setSalvaging(false);
     }
-  }, [previewItem, salvaging, onSalvage, notify, play]);
+  }, [previewItem, salvaging, onSalvage, onDeselect, notify, play]);
 
   const epicRemaining = getEpicPityRemaining(epicPityCount);
   const epicBoost = getEpicBoostBonus(commonStreak);
