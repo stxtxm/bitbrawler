@@ -569,6 +569,12 @@ const MIN_PVP_XP_FIGHTS = 20
 // the price suggestion; below it, the simulated affordability proxy is used (#1229).
 const REAL_SHOP_MIN_RUNS = 10
 
+// Level-progression suggestion gating (#1372): "levels/run" only means
+// something on session-sized runs. A 1-fight run and a 5-fight run cannot be
+// averaged together, and a replaced character yields a negative delta.
+const MIN_SESSION_FIGHTS = 3
+const MIN_LEVEL_PROGRESSION_RUNS = 5
+
 function computeDataFreshness(stats: RunRecord[]): DataFreshness {
   let trailing_error_runs = 0
   let trailing_empty_runs = 0
@@ -641,6 +647,59 @@ function isCharacterReplacedRun(r: RunRecord): boolean {
     }
   }
   return false
+}
+
+interface SessionProgressionSample {
+  runs: number
+  avg_level_gained: number | null
+}
+
+function computeSessionProgressionSample(
+  runs: RunRecord[],
+  windowSize = RECENT_WINDOW_RUNS,
+): SessionProgressionSample {
+  const recent = runs.slice(-windowSize)
+  const sessionRuns = recent.filter(
+    (r) =>
+      !isCharacterReplacedRun(r) &&
+      (r.fights?.length ?? 0) >= MIN_SESSION_FIGHTS &&
+      typeof r.initial_level === 'number' &&
+      r.final_stats !== null &&
+      r.final_stats !== undefined &&
+      typeof r.final_stats.level === 'number'
+  )
+  if (sessionRuns.length === 0) return { runs: 0, avg_level_gained: null }
+  const total = sessionRuns.reduce(
+    (s, r) => s + ((r.final_stats!.level as number) - (r.initial_level as number)),
+    0
+  )
+  return {
+    runs: sessionRuns.length,
+    avg_level_gained: Math.round((total / sessionRuns.length) * 100) / 100,
+  }
+}
+
+function levelProgressionSuggestions(
+  sample: SessionProgressionSample,
+  windowSize = RECENT_WINDOW_RUNS,
+): string[] {
+  if (sample.runs < MIN_LEVEL_PROGRESSION_RUNS || sample.avg_level_gained === null) {
+    return [
+      `Progression measurement pending — ${sample.runs}/${MIN_LEVEL_PROGRESSION_RUNS} session-sized run(s) (≥${MIN_SESSION_FIGHTS} fights) in the last ${windowSize}.`,
+    ]
+  }
+  const out: string[] = []
+  if (sample.avg_level_gained < 1) {
+    out.push(
+      `Characters gain only ${sample.avg_level_gained.toFixed(2)} levels/run. Consider increasing XP gains or reducing XP thresholds.`
+    )
+  }
+  if (sample.avg_level_gained > 5) {
+    out.push(
+      `Characters gain ${sample.avg_level_gained.toFixed(1)} levels/run — very fast progression. Consider increasing XP thresholds.`
+    )
+  }
+  return out
 }
 
 function resolveStreakCohort(r: RunRecord): StreakCohort {
@@ -1271,13 +1330,12 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     if (groupMax > group.minMs && groupMax > groupMedian * STALL_RATIO) suggestions.push(`Max ${group.label} fight duration ${(groupMax / 1000).toFixed(0)}s is ${(groupMax / groupMedian).toFixed(1)}x its median over the last ${recentRuns.length} runs — possible timeout issue`)
   }
 
-  // Level progression
-  if (avgLevelGained < 1 && validRuns.length >= 3) {
-    suggestions.push(`Characters gain only ${avgLevelGained.toFixed(2)} levels/run. Consider increasing XP gains or reducing XP thresholds.`)
-  }
-  if (avgLevelGained > 5) {
-    suggestions.push(`Characters gain ${avgLevelGained.toFixed(1)} levels/run — very fast progression. Consider increasing XP thresholds.`)
-  }
+  // Level progression — suggestion gated on a session-sized recent sample so
+  // 1-fight runs, 5-fight runs and character resets cannot average into a
+  // false "increase XP gains" signal (#1372). The all-time metric above stays
+  // informative only.
+  const sessionProgression = computeSessionProgressionSample(recentRuns)
+  suggestions.push(...levelProgressionSuggestions(sessionProgression, recentRuns.length))
 
   // Stats balance — only real character stats are read here; the structured
   // parse also captures non-stat counters (e.g. 'fights' from the PvE panel).
