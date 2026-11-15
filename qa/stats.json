@@ -221320,5 +221320,323 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-15T05:01:29.526Z",
+    "run": "2026-11-15",
+    "character": "QA-PERSI-3",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 178,
+        "fight_duration_ms": 14885,
+        "max_hp": 401,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 19.68
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 5,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 9,
+      "vit": 8,
+      "dex": 18,
+      "luk": 35,
+      "int": 10,
+      "foc": 20,
+      "fights": 0
+    },
+    "initial_level": 18,
+    "initial_xp": {
+      "current": 9831,
+      "max": 14137
+    },
+    "progression_curve": {
+      "level": 18,
+      "total_xp": 98889,
+      "xp_for_next": 14137,
+      "percent": 69.5
+    },
+    "initial_max_hp": 400,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife"
+      },
+      {
+        "slot": "🛡",
+        "name": "Linen Robe"
+      },
+      {
+        "slot": "💍",
+        "name": "Crystal Pendant"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 18,
+      "xp": 11918,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 10,
+      "vit": 8,
+      "dex": 18,
+      "luk": 35,
+      "int": 10,
+      "foc": 20,
+      "last xp": 29,
+      "fights": 7
+    },
+    "final_max_hp": 401,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife"
+      },
+      {
+        "slot": "🛡",
+        "name": "Linen Robe"
+      },
+      {
+        "slot": "💍",
+        "name": "Crystal Pendant"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife"
+      },
+      {
+        "slot": "🛡",
+        "name": "Linen Robe"
+      },
+      {
+        "slot": "💍",
+        "name": "Crystal Pendant"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_locked_level": 30,
+      "boss_name": "VOID TITAN",
+      "boss_level": null,
+      "boss_hp": null,
+      "boss_max_hp": null
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 31532,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "wolf"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 30,
+      "xp_events": [
+        {
+          "time_ms": 31532,
+          "xp": 30,
+          "monster": "wolf",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        511,
+        31532
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 30,
+        "essence": 0.67,
+        "monster": "wolf"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.57,
+      "next_level_eta": "⬆ 4m 49s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.10x",
+      "interval": "10.7s",
+      "streak_bonus": null
+    },
+    "initial_essence": 19.01,
+    "final_essence": 12.15,
+    "essence": {
+      "before_idle": 19.01,
+      "after_idle": 19.68,
+      "per_fight": [
+        19.68
+      ],
+      "forge_before": 19,
+      "forge_after_salvage": 40,
+      "forge_after_fusion": 40,
+      "forge_after_upgrade": 40,
+      "forge_after": 40,
+      "shop_before": 42,
+      "shop_after": 12,
+      "final": 12.15,
+      "flow": {
+        "idle_gained": 0.67,
+        "fights_change": null,
+        "salvage_gained": 21,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 21,
+        "shop_cost": 30,
+        "net_change": -6.86
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 19,
+      "essence_after_salvage": 40,
+      "essence_after_fusion": 40,
+      "essence_after_upgrade": 40,
+      "items_before": 1,
+      "salvage_attempted": true,
+      "salvage_succeeded": true,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": false,
+      "essence_after": 40,
+      "items_after": 0,
+      "salvage_essence_gained": 21,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 30,
+      "essence_before": 42,
+      "essence_after": 12,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Arcane Robe",
+            "rarity": "UNCOMMON",
+            "price": 30
+          },
+          {
+            "name": "Mystic Ring",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 12,
+        "essence_budget": 40,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 40
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 1,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1092,
+      "arena": 624
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Arcane Robe",
+          "rarity": "UNCOMMON",
+          "price": 30
+        },
+        {
+          "name": "Mystic Ring",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 12,
+      "essence_budget": 40,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
