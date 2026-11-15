@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-11-13T00:08:15Z",
+  "last_session": "2026-11-15T23:24:21Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "#1289: ARCHITECTURE.md peut documenter une colonne (monster_kills) ABSENTE de la base de reference. Verifier avant de coder: GET /rest/v1/characters?select=col&limit=0 avec l anon key -> 42703 si absente. Les deux colonnes monster_kills et monster_encounters manquaient. Pattern fallback: SELECT projection legacy sur 42703, et sur PGRST204/42703 lors de l update, retirer les champs et rejouer une fois (sinon tous les saves cassent avant migration). Migration issue #1293 creee sans /oc.",
-      "issue": "#1289",
-      "date": "2026-10-21"
-    },
     {
       "lesson": "Issue #1298 (QA aveugle): le label ubuntu-latest a basculé sur ubuntu-26.04 que Playwright 1.60 ne supporte pas -> le job mourait à playwright install AVANT le bot, et le step commit sortait vert car rien à pousser. Fix: runs-on ubuntu-24.04 épinglé + guard git diff --cached --quiet -> ::error + exit 1. Contrat dans workflow-integrity.test.ts pour empêcher un retour à ubuntu-latest.",
       "issue": "#1298",
@@ -172,6 +167,11 @@
       "lesson": "Issue #1368: les suggestions shop de analyze-qa-stats.ts doivent toujours exclure la cohorte legacy 'unsegmented' des agrégats de raisonnement par profil (essence ET cheapest share par cohorte). Un seul constat shop par rapport : si le funnel QA-FRESH hors de portée est émis, ne jamais ajouter le constat hoarding. Le miroir de test src/test/unit/qa-analysis.test.ts duplique la logique: toute correction doit y être répliquée.",
       "issue": "#1368",
       "date": "2026-11-13"
+    },
+    {
+      "lesson": "Issue #1372: les suggestions de progression doivent être calculées sur un échantillon session (30 derniers runs, ≥3 combats, sans replaced_character), jamais sur avgLevelGained all-time — un run à 1 combat et un à 5 combats ne s'additionnent pas. Le test local RunRecord (qa-analysis.test.ts) doit exposer initial_level pour compiler via tsc.",
+      "issue": "#1372",
+      "date": "2026-11-15"
     }
   ]
 }
