@@ -224172,5 +224172,329 @@
       "purchased_offer": null,
       "essence_after_purchase": null
     }
+  },
+  {
+    "date": "2026-11-16T02:01:47.276Z",
+    "run": "2026-11-16",
+    "character": "GOLDRUNE",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "fresh",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 84,
+        "fight_duration_ms": 11907,
+        "max_hp": 222,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 3.12
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Flint Knife",
+      "rarity": "RARE",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 5,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 23,
+      "vit": 7,
+      "dex": 5,
+      "luk": 17,
+      "int": 8,
+      "foc": 9,
+      "fights": 0
+    },
+    "initial_level": 2,
+    "initial_xp": {
+      "current": 173,
+      "max": 376
+    },
+    "progression_curve": {
+      "level": 2,
+      "total_xp": 293,
+      "xp_for_next": 376,
+      "percent": 46
+    },
+    "initial_max_hp": 176,
+    "initial_equipment": [
+      {
+        "slot": "💍",
+        "name": "Mystic Ring",
+        "rarity": "EPIC"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 5,
+      "xp": 128,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 23,
+      "vit": 8,
+      "dex": 5,
+      "luk": 17,
+      "int": 8,
+      "foc": 9,
+      "last xp": 57,
+      "fights": 5
+    },
+    "final_max_hp": 222,
+    "final_equipment": [
+      {
+        "slot": "💍",
+        "name": "Mystic Ring",
+        "rarity": "EPIC"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "💍",
+        "name": "Mystic Ring",
+        "rarity": "EPIC"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 3,
+        "previous_level": 2,
+        "new_level": 5
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 39056,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "slime",
+        "ogre"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 71,
+      "xp_events": [
+        {
+          "time_ms": 3059,
+          "xp": 52,
+          "monster": "slime",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 39056,
+          "xp": 19,
+          "monster": "ogre",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        510,
+        1528,
+        3059,
+        12124,
+        13654,
+        39056
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 52,
+        "essence": 0.31,
+        "monster": "slime"
+      },
+      {
+        "result": "victory",
+        "xp": 19,
+        "essence": 0.3,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 0.95,
+      "next_level_eta": "⬆ 11s",
+      "power_ratio": "⚔ 0.55x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 0.97x",
+      "interval": "12.0s",
+      "streak_bonus": "🔥 1-win streak (+0%)"
+    },
+    "initial_essence": 2.44,
+    "final_essence": 3.12,
+    "essence": {
+      "before_idle": 2.44,
+      "after_idle": 3.05,
+      "per_fight": [
+        3.12
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": 3,
+      "shop_after": 3,
+      "final": 3.12,
+      "flow": {
+        "idle_gained": 0.61,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": 0,
+        "net_change": 0.68
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": true,
+      "offline_time": "⏰ NaNh NaNm",
+      "fights": 7,
+      "xp_gained": 317,
+      "essence_gained": 0.26,
+      "levels_gained": null,
+      "claimed": true
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": true,
+      "skip_reason": "forge requires LVL 6"
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 3,
+      "essence_after": 3,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Rusty Sword",
+            "rarity": "COMMON",
+            "price": 30
+          },
+          {
+            "name": "Wooden Talisman",
+            "rarity": "RARE",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 3,
+        "essence_budget": 50,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-FRESH",
+      "essence_budget": 50
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1143,
+      "arena": 1253
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Rusty Sword",
+          "rarity": "COMMON",
+          "price": 30
+        },
+        {
+          "name": "Wooden Talisman",
+          "rarity": "RARE",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 3,
+      "essence_budget": 50,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
