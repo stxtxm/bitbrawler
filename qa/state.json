@@ -1,9 +1,12 @@
 {
-  "run": "2026-11-16",
-  "character": "GOLDRUNE",
-  "exhausted": true,
-  "updated_at": "2026-11-16T20:03:56.284Z",
-  "source": "reused",
-  "character_type": "fresh",
-  "pvp_since_last_pve": 2
+  "run": "2026-11-17",
+  "character": "QA-PERSIST",
+  "exhausted": false,
+  "updated_at": "2026-11-16T23:02:07.079Z",
+  "source": "overlevel-detected",
+  "character_type": "persistent",
+  "persistent_generation": 0,
+  "persistent_created_at": "2026-11-16T23:02:00.315Z",
+  "persistent_reset_ready": true,
+  "pvp_since_last_pve": 0
 }
