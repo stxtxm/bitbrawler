@@ -1,9 +1,9 @@
 {
   "run": "2026-11-16",
   "character": "GOLDRUNE",
-  "exhausted": false,
-  "updated_at": "2026-11-16T11:03:22.018Z",
+  "exhausted": true,
+  "updated_at": "2026-11-16T14:03:14.299Z",
   "source": "reused",
   "character_type": "fresh",
-  "pvp_since_last_pve": 1
+  "pvp_since_last_pve": 2
 }
