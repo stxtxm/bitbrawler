@@ -272,8 +272,8 @@ describe('Arena inventory modal', () => {
     fireEvent.click(getByLabelText('View Rusty Sword'))
     fireEvent.click(getByText('SALVAGE'))
 
-    // Toast + popup play first, then the selection is dropped: the salvaged
-    // item must not stay displayed as the selected one.
+    // The selection is dropped immediately: the salvaged item must not stay
+    // displayed as the selected one (toast + popup carry the feedback).
     await findByText('TAP AN ITEM TO VIEW BONUSES', {}, { timeout: 4000 })
     expect(salvageItems).toHaveBeenCalledTimes(1)
   })

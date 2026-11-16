@@ -771,11 +771,11 @@ describe('arena extracted components', () => {
 
       fireEvent.click(screen.getByRole('button', { name: /salvage rusty sword/i }));
 
-      // Feedback first (toast + floating popup + SALVAGED state)…
+      // Feedback appears (toast + floating popup, now anchored to the modal)…
       await waitFor(() => expect(document.querySelector('.forge-essence-popup')).not.toBeNull());
-      // …then the selection is dropped so the detail does not keep the
-      // salvaged item displayed as selected.
-      await waitFor(() => expect(onDeselect).toHaveBeenCalledTimes(1), { timeout: 3000 });
+      // …and the selection is dropped immediately so the detail does not keep
+      // the salvaged item displayed as selected.
+      await waitFor(() => expect(onDeselect).toHaveBeenCalledTimes(1));
     });
 
     it('shows essence yield on item hover in detail view', () => {

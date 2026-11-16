@@ -127,23 +127,15 @@ export const InventoryPanel = memo(function InventoryPanel({
   const [salvagedGone, setSalvagedGone] = useState(false);
   const [essencePopup, setEssencePopup] = useState<{ id: number; amount: number } | null>(null);
   const essencePopupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const deselectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Reset the SALVAGED flag when switching to another item's detail; also
-  // cancel the pending auto-deselect so navigating away (and back) during the
-  // feedback window can't wipe the user's fresh selection.
+  // Reset the SALVAGED flag when switching to another item's detail
   useEffect(() => {
     setSalvagedGone(false);
-    if (deselectTimerRef.current) {
-      clearTimeout(deselectTimerRef.current);
-      deselectTimerRef.current = null;
-    }
   }, [previewItem?.id]);
 
   useEffect(() => {
     return () => {
       if (essencePopupTimerRef.current) clearTimeout(essencePopupTimerRef.current);
-      if (deselectTimerRef.current) clearTimeout(deselectTimerRef.current);
     };
   }, []);
 
@@ -169,13 +161,12 @@ export const InventoryPanel = memo(function InventoryPanel({
       setSalvagedGone(!(result.inventory ?? []).includes(item.id));
       setEssencePopup({ id: Date.now(), amount: yieldAmount });
       play('salvage');
-      // Retire the popup once its float animation is over, then drop the
-      // selection: the item has been salvaged, so the detail must not keep
-      // showing it as the selected one (ghost item + lingering highlight).
+      // Retire the popup once its float animation is over…
       if (essencePopupTimerRef.current) clearTimeout(essencePopupTimerRef.current);
       essencePopupTimerRef.current = setTimeout(() => setEssencePopup(null), 1200);
-      if (deselectTimerRef.current) clearTimeout(deselectTimerRef.current);
-      deselectTimerRef.current = setTimeout(() => onDeselect?.(), 1800);
+      // …and drop the selection immediately: the item has been salvaged, the
+      // detail view must not keep showing it as the selected one.
+      onDeselect?.();
     } catch {
       play('error');
       notify('Failed to salvage item. Try again.', 'error', 3000);
@@ -456,11 +447,6 @@ export const InventoryPanel = memo(function InventoryPanel({
                     </div>
                     {essence > 0 && (
                       <div className="inventory-essence-total">
-                        {essencePopup && (
-                          <span key={essencePopup.id} className="forge-essence-popup" aria-hidden="true">
-                            +{essencePopup.amount} Essence
-                          </span>
-                        )}
                         <span className="essence-total-label">ESSENCE</span>
                         <span className="essence-total-value">{essence.toFixed(2)}</span>
                       </div>
@@ -502,6 +488,19 @@ export const InventoryPanel = memo(function InventoryPanel({
               <p className="shop-locked-hint">Fight battles and level up to access the 8-Bit Emporium!</p>
             </div>
           </div>
+        )}
+
+        {/* Floating "+X Essence" gain popup — anchored to the modal instead of
+            the detail view, which unmounts immediately after a successful
+            salvage (instant deselect). */}
+        {essencePopup && (
+          <span
+            key={essencePopup.id}
+            className="forge-essence-popup forge-essence-popup--modal"
+            aria-hidden="true"
+          >
+            +{essencePopup.amount} Essence
+          </span>
         )}
 
         {lootboxResult && (

@@ -83,6 +83,14 @@
   }
 }
 
+// Viewport-anchored variant: the inventory detail view unmounts immediately
+// after a successful salvage (instant deselect), so the gain popup is rendered
+// on the modal itself instead of above the essence total.
+.forge-essence-popup.forge-essence-popup--modal {
+  position: fixed;
+  bottom: 16%;
+}
+
 @keyframes forgeEssenceFloat {
   0% {
     opacity: 0;
