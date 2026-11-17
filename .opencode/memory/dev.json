@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-11-15T23:37:49Z",
+  "last_session": "2026-11-17T02:24:27Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "QA analysis: un ratio XP global mélange PvP/idle/boss/PvE — toujours ventiler par fight_type et gater les suggestions PvP sur une couverture récente (>=20) avant de toucher COMBAT.XP_WIN/XP_LOSS.",
-      "issue": "#1303",
-      "date": "2026-10-22"
-    },
     {
       "lesson": "Issue #1298: le fix runner Playwright (ubuntu-24.04) et son contrat workflow-integrity etaient deja merges via #1302; reste le bonus diagnostic. Garde-fou ajoute dans Commit QA stats: git diff --quiet qa/stats.json AVANT git add, sinon un run sans stats affichait Everything up-to-date + OK. Toujours placer le diff avant l add car apres indexation le fichier parait inchange.",
       "issue": "#1298",
@@ -172,6 +167,11 @@
       "lesson": "QA progression (#1374): le bot joue 1 combat/run car MAX_DAILY_FIGHTS=5 est réparti sur la journée — passer fightsPerRun à 5 assèche les runs suivants (no_start/exhausted) et casse freshness/win-rate. Solution retenue: normaliser la progression par combat puis l'exprimer par session de 5 combats (levels/fight * SESSION_FIGHTS), ce qui rend 1-fight et 5-fight runs comparables sans retirer le gate #1372.",
       "issue": "#1374",
       "date": "2026-11-15"
+    },
+    {
+      "lesson": "Issue #1378 xp_accounting: dans qa-analysis.test.ts les pure functions sont MIRRORÉES localement (pas d'import du script) ; ajouter progression_curve au RunRecord du test puis tester computeXpAccounting + source assertions. Vérifier le pourcentage attendu manuellement (gained/unaccounted) avant d'écrire l'assertion.",
+      "issue": "#1378",
+      "date": "2026-11-17"
     }
   ]
 }
