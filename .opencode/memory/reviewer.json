@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-11-15T23:43:25Z",
+  "last_session": "2026-11-17T02:31:47Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,7 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "Un verdict QA qui mesure par run alors que le bot QA ne fait qu'1 combat/run (#1372 puis #1374) reste bloqué en pending : toujours vérifier l'unité réelle (qa/stats.json : distribution des fights) avant de valider un seuil d'échantillon. Fenêtre de 30 runs ≈ 6 sessions de 3 combats."
+      "lesson": "PR de bot : le squash merge via gh n'auto-ferme pas toujours l'issue malgré 'Closes #N' → vérifier et fermer manuellement. Et seul le check Cloudflare Pages est rattaché : exécuter lint/tsc/test/build localement.",
+      "issue": "#1379"
     }
   ]
 }
