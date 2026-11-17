@@ -417,6 +417,26 @@ interface XpByFightType {
   pve: XpTypeBreakdown
 }
 
+interface XpAccountingCharacter {
+  character: string
+  runs: number
+  xp_gained: number
+  xp_fights: number
+  xp_idle_observed: number
+  xp_unaccounted: number
+  unaccounted_pct: number
+}
+
+interface XpAccounting {
+  runs_with_data: number
+  characters: XpAccountingCharacter[]
+  xp_gained: number
+  xp_fights: number
+  xp_idle_observed: number
+  xp_unaccounted: number
+  unaccounted_pct: number
+}
+
 interface AnalysisReport {
   generated_at: string
   total_runs: number
@@ -452,6 +472,7 @@ interface AnalysisReport {
   essence_analysis: EssenceAnalysis | null
   idle_analysis: IdleAnalysis | null
   progression_curve: ProgressionCurveSummary | null
+  xp_accounting: XpAccounting
   shop: {
     simulated: ShopSimulatedAnalysis | null
     real: ShopRealAnalysis | null
@@ -578,6 +599,14 @@ const REAL_SHOP_MIN_RUNS = 10
 // between two runs.
 const MIN_SESSION_FIGHTS = 3
 const MIN_LEVEL_PROGRESSION_SESSIONS = 5
+
+// XP accounting (#1378): idle_analysis only sees the 1-2 fights observed during
+// each run, while progression_curve.total_xp is cumulative. Comparing two
+// consecutive runs of the same character exposes the idle/offline XP the
+// harness never captures. The suggestion needs enough measured runs and a
+// dominant invisible share to be actionable.
+const MIN_XP_ACCOUNTING_RUNS = 5
+const XP_UNACCOUNTED_MIN_PCT = 60
 
 function computeDataFreshness(stats: RunRecord[]): DataFreshness {
   let trailing_error_runs = 0
@@ -743,6 +772,103 @@ function levelProgressionSuggestions(
     )
   }
   return out
+}
+
+// #1378: le XP du run courant est attribué au run courant, jamais au précédent.
+// Les runs sans progression_curve ne coupent pas la paire (le delta couvre alors
+// une fenêtre plus longue, ce qui est précisément le XP invisible à mesurer).
+// Un run de remplacement de personnage ou un reset (delta < 0) coupe la paire.
+function computeXpAccounting(runs: RunRecord[]): XpAccounting {
+  const byCharacter = new Map<string, RunRecord[]>()
+  for (const r of runs) {
+    if (typeof r.progression_curve?.total_xp !== 'number') continue
+    const character = r.character ?? 'unknown'
+    const group = byCharacter.get(character)
+    if (group) group.push(r)
+    else byCharacter.set(character, [r])
+  }
+
+  const roundPct = (unaccounted: number, gained: number): number =>
+    gained > 0 ? Math.round((unaccounted / gained) * 1000) / 10 : 0
+
+  const characters: XpAccountingCharacter[] = []
+  for (const [character, group] of byCharacter) {
+    let previous: RunRecord | null = null
+    let xpGained = 0
+    let xpFights = 0
+    let xpIdle = 0
+    let xpUnaccounted = 0
+    for (const current of group) {
+      if (isCharacterReplacedRun(current)) {
+        previous = null
+        continue
+      }
+      if (previous === null) {
+        previous = current
+        continue
+      }
+      const currentTotalXp = current.progression_curve?.total_xp
+      const previousTotalXp = previous.progression_curve?.total_xp
+      if (typeof currentTotalXp !== 'number' || typeof previousTotalXp !== 'number') {
+        previous = current
+        continue
+      }
+      const delta = currentTotalXp - previousTotalXp
+      if (delta < 0) {
+        previous = current
+        continue
+      }
+      const fightsXp = (current.fights ?? []).reduce(
+        (s, f) => s + (typeof f.xp === 'number' ? f.xp : 0),
+        0,
+      )
+      const idleXp = collectIdleFights([current]).reduce(
+        (s, f) => s + (typeof f.xp === 'number' ? f.xp : 0),
+        0,
+      )
+      const explained = fightsXp + idleXp
+      xpGained += delta
+      xpFights += fightsXp
+      xpIdle += idleXp
+      xpUnaccounted += Math.max(0, delta - explained)
+      previous = current
+    }
+    characters.push({
+      character,
+      runs: group.length,
+      xp_gained: xpGained,
+      xp_fights: xpFights,
+      xp_idle_observed: xpIdle,
+      xp_unaccounted: xpUnaccounted,
+      unaccounted_pct: roundPct(xpUnaccounted, xpGained),
+    })
+  }
+  characters.sort((a, b) => a.character.localeCompare(b.character))
+
+  const totals = characters.reduce(
+    (acc, c) => ({
+      runs_with_data: acc.runs_with_data + c.runs,
+      xp_gained: acc.xp_gained + c.xp_gained,
+      xp_fights: acc.xp_fights + c.xp_fights,
+      xp_idle_observed: acc.xp_idle_observed + c.xp_idle_observed,
+      xp_unaccounted: acc.xp_unaccounted + c.xp_unaccounted,
+    }),
+    { runs_with_data: 0, xp_gained: 0, xp_fights: 0, xp_idle_observed: 0, xp_unaccounted: 0 },
+  )
+
+  return {
+    ...totals,
+    characters,
+    unaccounted_pct: roundPct(totals.xp_unaccounted, totals.xp_gained),
+  }
+}
+
+function xpAccountingSuggestions(accounting: XpAccounting): string[] {
+  if (accounting.runs_with_data < MIN_XP_ACCOUNTING_RUNS) return []
+  if (accounting.unaccounted_pct < XP_UNACCOUNTED_MIN_PCT) return []
+  return [
+    `${accounting.unaccounted_pct.toFixed(1)} % of observed XP comes from idle/offline processing not captured by the harness (${accounting.xp_unaccounted} XP on ${accounting.runs_with_data} runs) — the active loop is marginal; see #1377.`,
+  ]
 }
 
 function resolveStreakCohort(r: RunRecord): StreakCohort {
@@ -1379,6 +1505,12 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   // stays informative only.
   const sessionProgression = computeSessionProgressionSample(recentRuns)
   suggestions.push(...levelProgressionSuggestions(sessionProgression, recentRuns.length))
+
+  // XP accounting (#1378): the all-time report exposes the invisible XP share;
+  // the suggestion only reads the recent window so stale eras cannot fire it.
+  const xpAccounting = computeXpAccounting(stats)
+  const recentXpAccounting = computeXpAccounting(recentRuns)
+  suggestions.push(...xpAccountingSuggestions(recentXpAccounting))
 
   // Stats balance — only real character stats are read here; the structured
   // parse also captures non-stat counters (e.g. 'fights' from the PvE panel).
@@ -2053,6 +2185,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     essence_analysis: essenceAnalysis,
     idle_analysis: idleAnalysis,
     progression_curve: progressionCurve,
+    xp_accounting: xpAccounting,
     shop: {
       simulated: shopSimulated,
       real: shopReal,
@@ -2121,6 +2254,9 @@ function printReport(report: AnalysisReport): void {
   console.log(`  ── ${bold}Level Progression${reset} ──`)
   console.log(`  Avg levels/run: ${report.avg_level_gained_per_run.toFixed(2)}`)
   console.log(`  Level dist:     ${Object.entries(report.level_distribution).map(([k, v]) => `${k}=${v}`).join(', ')}`)
+  if (report.xp_accounting.runs_with_data > 0) {
+    console.log(`  XP hors combats : ${report.xp_accounting.xp_unaccounted} (${report.xp_accounting.unaccounted_pct.toFixed(1)} %)`)
+  }
   console.log('')
   console.log(`  ── ${bold}Character Stats${reset} ──`)
   if (report.avg_initial_stats) {

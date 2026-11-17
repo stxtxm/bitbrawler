@@ -82,6 +82,7 @@ interface RunRecord {
   cohort?: { name: string; essence_budget: number | null } | null
   initial_level?: number | null
   final_stats?: { level: number | null; xp: number | null; wins: number | null; losses: number | null } | null
+  progression_curve?: { level: number; total_xp: number; xp_for_next: number; percent: number } | null
   pve_data?: {
     fights: number
     wins: number
@@ -6031,5 +6032,316 @@ describe('QA Level Progression Session Sample (#1374)', () => {
     expect(source).toContain('computeSessionProgressionSample(recentRuns)')
     expect(source).not.toContain('if (avgLevelGained < 1 && validRuns.length >= 3)')
     expect(source).not.toContain('(r.fights?.length ?? 0) >= MIN_SESSION_FIGHTS')
+  })
+})
+
+// ── XP Accounting (#1378) ──
+// idle_analysis ne compte que les combats observés pendant la fenêtre du run ;
+// progression_curve.total_xp est cumulatif. La différence entre deux runs d'un
+// même personnage révèle tout le XP gagné hors combats enregistrés (idle/offline).
+// Chaque gain est attribué au run courant, jamais au précédent.
+
+const MIN_XP_ACCOUNTING_RUNS = 5
+const XP_UNACCOUNTED_MIN_PCT = 60
+
+interface XpAccountingCharacter {
+  character: string
+  runs: number
+  xp_gained: number
+  xp_fights: number
+  xp_idle_observed: number
+  xp_unaccounted: number
+  unaccounted_pct: number
+}
+
+interface XpAccounting {
+  runs_with_data: number
+  characters: XpAccountingCharacter[]
+  xp_gained: number
+  xp_fights: number
+  xp_idle_observed: number
+  xp_unaccounted: number
+  unaccounted_pct: number
+}
+
+function computeXpAccounting(runs: RunRecord[]): XpAccounting {
+  const byCharacter = new Map<string, RunRecord[]>()
+  for (const r of runs) {
+    if (typeof r.progression_curve?.total_xp !== 'number') continue
+    const character = r.character ?? 'unknown'
+    const group = byCharacter.get(character)
+    if (group) group.push(r)
+    else byCharacter.set(character, [r])
+  }
+
+  const roundPct = (unaccounted: number, gained: number): number =>
+    gained > 0 ? Math.round((unaccounted / gained) * 1000) / 10 : 0
+
+  const characters: XpAccountingCharacter[] = []
+  for (const [character, group] of byCharacter) {
+    let previous: RunRecord | null = null
+    let xpGained = 0
+    let xpFights = 0
+    let xpIdle = 0
+    let xpUnaccounted = 0
+    for (const current of group) {
+      if (isCharacterReplacedRun(current)) {
+        previous = null
+        continue
+      }
+      if (previous === null) {
+        previous = current
+        continue
+      }
+      const delta = (current.progression_curve?.total_xp ?? 0) - (previous.progression_curve?.total_xp ?? 0)
+      if (delta < 0) {
+        previous = current
+        continue
+      }
+      const fightsXp = (current.fights ?? []).reduce((s, f) => s + (typeof f.xp === 'number' ? f.xp : 0), 0)
+      const idleXp = collectIdleFights([current]).reduce((s, f) => s + (typeof f.xp === 'number' ? f.xp : 0), 0)
+      const explained = fightsXp + idleXp
+      xpGained += delta
+      xpFights += fightsXp
+      xpIdle += idleXp
+      xpUnaccounted += Math.max(0, delta - explained)
+      previous = current
+    }
+    characters.push({
+      character,
+      runs: group.length,
+      xp_gained: xpGained,
+      xp_fights: xpFights,
+      xp_idle_observed: xpIdle,
+      xp_unaccounted: xpUnaccounted,
+      unaccounted_pct: roundPct(xpUnaccounted, xpGained),
+    })
+  }
+  characters.sort((a, b) => a.character.localeCompare(b.character))
+
+  const totals = characters.reduce(
+    (acc, c) => ({
+      runs_with_data: acc.runs_with_data + c.runs,
+      xp_gained: acc.xp_gained + c.xp_gained,
+      xp_fights: acc.xp_fights + c.xp_fights,
+      xp_idle_observed: acc.xp_idle_observed + c.xp_idle_observed,
+      xp_unaccounted: acc.xp_unaccounted + c.xp_unaccounted,
+    }),
+    { runs_with_data: 0, xp_gained: 0, xp_fights: 0, xp_idle_observed: 0, xp_unaccounted: 0 },
+  )
+
+  return {
+    ...totals,
+    characters,
+    unaccounted_pct: roundPct(totals.xp_unaccounted, totals.xp_gained),
+  }
+}
+
+function xpAccountingSuggestions(accounting: XpAccounting): string[] {
+  if (accounting.runs_with_data < MIN_XP_ACCOUNTING_RUNS) return []
+  if (accounting.unaccounted_pct < XP_UNACCOUNTED_MIN_PCT) return []
+  return [
+    `${accounting.unaccounted_pct.toFixed(1)} % of observed XP comes from idle/offline processing not captured by the harness (${accounting.xp_unaccounted} XP on ${accounting.runs_with_data} runs) — the active loop is marginal; see #1377.`,
+  ]
+}
+
+describe('QA XP Accounting (#1378)', () => {
+  function xpRun(opts: {
+    run: string
+    character?: string
+    totalXp?: number | null
+    fights?: Array<{ xp: number | null; fight_type?: 'pvp' | 'pve' | 'boss' | 'idle' }>
+    idleXp?: number[]
+    replaced?: string | null
+    characterAction?: string | null
+  }): RunRecord {
+    const fights = (opts.fights ?? []).map(f => ({
+      result: 'victory' as const,
+      xp: f.xp,
+      fight_duration_ms: 5000,
+      fight_type: f.fight_type,
+    }))
+    const idle_fights = (opts.idleXp ?? []).map(xp => ({
+      result: 'victory' as const,
+      xp,
+      essence: 0,
+      monster: 'GOBLIN',
+    }))
+    return {
+      date: '2026-11-17',
+      run: opts.run,
+      character: opts.character ?? 'QA-PERSI-2',
+      fights,
+      idle_fights,
+      errors: [],
+      progression_curve:
+        opts.totalXp === undefined || opts.totalXp === null
+          ? null
+          : { level: 1, total_xp: opts.totalXp, xp_for_next: 1000, percent: 10 },
+      character_action: opts.characterAction ?? null,
+      replaced_character: opts.replaced ?? null,
+    }
+  }
+
+  it('comptabilise un delta normal : expliqué par les combats + idle observés', () => {
+    const runs = [
+      xpRun({ run: 'r1', totalXp: 1000 }),
+      xpRun({
+        run: 'r2',
+        totalXp: 1300,
+        fights: [{ xp: 100 }],
+        idleXp: [50],
+      }),
+    ]
+
+    const accounting = computeXpAccounting(runs)
+
+    expect(accounting.runs_with_data).toBe(2)
+    expect(accounting.xp_gained).toBe(300)
+    expect(accounting.xp_fights).toBe(100)
+    expect(accounting.xp_idle_observed).toBe(50)
+    expect(accounting.xp_unaccounted).toBe(150)
+    expect(accounting.unaccounted_pct).toBe(50)
+    expect(accounting.characters).toEqual([
+      {
+        character: 'QA-PERSI-2',
+        runs: 2,
+        xp_gained: 300,
+        xp_fights: 100,
+        xp_idle_observed: 50,
+        xp_unaccounted: 150,
+        unaccounted_pct: 50,
+      },
+    ])
+  })
+
+  it('ignore un reset (delta < 0) et repart du run courant', () => {
+    const runs = [
+      xpRun({ run: 'r1', totalXp: 1000 }),
+      xpRun({ run: 'r2', totalXp: 500, fights: [{ xp: 100 }] }),
+      xpRun({ run: 'r3', totalXp: 900, fights: [{ xp: 100 }] }),
+    ]
+
+    const accounting = computeXpAccounting(runs)
+
+    expect(accounting.xp_gained).toBe(400)
+    expect(accounting.xp_fights).toBe(100)
+    expect(accounting.xp_unaccounted).toBe(300)
+    expect(accounting.unaccounted_pct).toBe(75)
+  })
+
+  it('ignore un run de remplacement de personnage et coupe la paire', () => {
+    const runs = [
+      xpRun({ run: 'old-1', character: 'QA-OLD', totalXp: 1000 }),
+      xpRun({ run: 'old-2', character: 'QA-OLD', totalXp: 1500, fights: [{ xp: 100 }] }),
+      xpRun({
+        run: 'replacement',
+        character: 'QA-OLD',
+        totalXp: 50,
+        replaced: 'old-character-id',
+        characterAction: 'created-after-exhausted-energy',
+      }),
+      xpRun({ run: 'new-1', character: 'QA-OLD', totalXp: 300, fights: [{ xp: 100 }] }),
+    ]
+
+    const accounting = computeXpAccounting(runs)
+
+    expect(accounting.xp_gained).toBe(500)
+    expect(accounting.xp_fights).toBe(100)
+    expect(accounting.xp_unaccounted).toBe(400)
+  })
+
+  it('ignore les runs sans progression_curve sans couper la paire', () => {
+    const runs = [
+      xpRun({ run: 'r1', totalXp: 1000 }),
+      xpRun({ run: 'no-curve', totalXp: null, fights: [{ xp: 999 }] }),
+      xpRun({ run: 'r3', totalXp: 1500, fights: [{ xp: 100 }] }),
+    ]
+
+    const accounting = computeXpAccounting(runs)
+
+    expect(accounting.runs_with_data).toBe(2)
+    expect(accounting.xp_gained).toBe(500)
+    expect(accounting.xp_fights).toBe(100)
+    expect(accounting.xp_unaccounted).toBe(400)
+    expect(accounting.unaccounted_pct).toBe(80)
+  })
+
+  it('arrondit unaccounted_pct à 0,1', () => {
+    const runs = [
+      xpRun({ run: 'r1', totalXp: 1000 }),
+      xpRun({ run: 'r2', totalXp: 1700, fights: [{ xp: 100 }] }),
+    ]
+
+    const accounting = computeXpAccounting(runs)
+
+    expect(accounting.xp_unaccounted).toBe(600)
+    expect(accounting.unaccounted_pct).toBe(85.7)
+  })
+
+  it('agrège par personnage sans mélanger les deltas', () => {
+    const runs = [
+      xpRun({ run: 'a1', character: 'QA-A', totalXp: 1000 }),
+      xpRun({ run: 'b1', character: 'QA-B', totalXp: 2000 }),
+      xpRun({ run: 'a2', character: 'QA-A', totalXp: 1200, fights: [{ xp: 200 }] }),
+      xpRun({ run: 'b2', character: 'QA-B', totalXp: 2200, fights: [{ xp: 50 }] }),
+    ]
+
+    const accounting = computeXpAccounting(runs)
+
+    expect(accounting.characters.map(c => c.character)).toEqual(['QA-A', 'QA-B'])
+    expect(accounting.characters[0].xp_gained).toBe(200)
+    expect(accounting.characters[0].xp_unaccounted).toBe(0)
+    expect(accounting.characters[1].xp_unaccounted).toBe(150)
+    expect(accounting.xp_gained).toBe(400)
+    expect(accounting.xp_unaccounted).toBe(150)
+  })
+
+  it('suggère seulement au-dessus des seuils de runs et de pourcentage', () => {
+    const belowRuns = computeXpAccounting([
+      xpRun({ run: 'r1', totalXp: 1000 }),
+      xpRun({ run: 'r2', totalXp: 5000 }),
+      xpRun({ run: 'r3', totalXp: 9000 }),
+      xpRun({ run: 'r4', totalXp: 13000 }),
+    ])
+    expect(xpAccountingSuggestions(belowRuns)).toEqual([])
+
+    const belowPct = computeXpAccounting([
+      xpRun({ run: 'r1', totalXp: 1000 }),
+      xpRun({ run: 'r2', totalXp: 2000, fights: [{ xp: 500 }] }),
+      xpRun({ run: 'r3', totalXp: 3000, fights: [{ xp: 500 }] }),
+      xpRun({ run: 'r4', totalXp: 4000, fights: [{ xp: 500 }] }),
+      xpRun({ run: 'r5', totalXp: 5000, fights: [{ xp: 500 }] }),
+      xpRun({ run: 'r6', totalXp: 6000, fights: [{ xp: 500 }] }),
+    ])
+    expect(belowPct.unaccounted_pct).toBe(50)
+    expect(xpAccountingSuggestions(belowPct)).toEqual([])
+
+    const above = computeXpAccounting([
+      xpRun({ run: 'r1', totalXp: 1000 }),
+      xpRun({ run: 'r2', totalXp: 3000, fights: [{ xp: 100 }] }),
+      xpRun({ run: 'r3', totalXp: 5000, fights: [{ xp: 100 }] }),
+      xpRun({ run: 'r4', totalXp: 7000, fights: [{ xp: 100 }] }),
+      xpRun({ run: 'r5', totalXp: 9000, fights: [{ xp: 100 }] }),
+      xpRun({ run: 'r6', totalXp: 11000, fights: [{ xp: 100 }] }),
+    ])
+    const suggestions = xpAccountingSuggestions(above)
+    expect(suggestions).toHaveLength(1)
+    expect(suggestions[0]).toContain('95.0 % of observed XP comes from idle/offline processing')
+    expect(suggestions[0]).toContain('(9500 XP on 6 runs)')
+    expect(suggestions[0]).toContain('see #1377')
+  })
+
+  it('analyze-qa-stats.ts expose xp_accounting sans toucher aux métriques existantes', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+
+    expect(source).toContain('computeXpAccounting')
+    expect(source).toContain('xpAccountingSuggestions')
+    expect(source).toContain('xp_accounting')
+    expect(source).toContain('MIN_XP_ACCOUNTING_RUNS')
+    expect(source).toContain('XP_UNACCOUNTED_MIN_PCT')
+    expect(source).toContain('XP hors combats')
+    expect(source).toContain('idle_analysis: idleAnalysis')
+    expect(source).toContain('progression_curve: progressionCurve')
   })
 })
