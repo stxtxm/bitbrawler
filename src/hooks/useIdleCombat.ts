@@ -23,6 +23,7 @@ import { MonsterId } from '../data/monsterAssets'
 import { getBiomeForCharacter } from '../data/biomes'
 import { getSurgeEssenceMultiplier, incrementBountyProgress } from '../utils/biomeSurge'
 import { incrementMonsterCounter, mergeMonsterCounters } from '../utils/bestiaryUtils'
+import { toFiniteTimestamp } from '../utils/timestampUtils'
 
 interface UseIdleCombatOptions {
   character: Character | null
@@ -327,7 +328,7 @@ export function useIdleCombat({
   // On mount: process idle time > 30s and show popup.
   useEffect(() => {
     if (!character) return
-    const lastActive = character.lastActive ?? 0
+    const lastActive = toFiniteTimestamp(character.lastActive)
     if (lastActive <= 0) return
     const idleMs = Date.now() - lastActive
     if (idleMs <= 30_000) return

@@ -1,6 +1,7 @@
 import { Character } from '../types/Character';
 import { getDailyResetKey } from './dailyReset';
 import { canRollLootbox } from './lootboxUtils';
+import { toFiniteTimestamp } from './timestampUtils';
 
 export const REMINDER_WINDOW_MS = 24 * 60 * 60 * 1000;
 
@@ -48,8 +49,9 @@ export const createReminderMessage = (type: ReminderType, streak: number): Remin
 };
 
 export const isStreakInDanger = (char: Character, now: number): boolean => {
-  if (!char.lastActive || char.lastActive <= 0) return false;
-  return now - char.lastActive > REMINDER_WINDOW_MS;
+  const lastActive = toFiniteTimestamp(char.lastActive);
+  if (lastActive <= 0) return false;
+  return now - lastActive > REMINDER_WINDOW_MS;
 };
 
 export const isLootReminderAvailable = (char: Character, now: number): boolean =>

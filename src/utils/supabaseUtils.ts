@@ -1,5 +1,6 @@
 import { CharacterRow } from '../config/supabase';
 import { Character } from '../types/Character';
+import { toFiniteTimestamp } from './timestampUtils';
 
 /**
  * Column projections that drastically reduce egress on Supabase free tier
@@ -125,8 +126,8 @@ export function convertFromSupabase(row: CharacterRow): Character {
     autoMode: row.auto_mode,
     equippedItems: row.equipped_items ?? { weapon: null, armor: null, accessory: null },
     id: row.id,
-    lastIdleCheck: row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0,
-    lastActive: row.last_active ? new Date(row.last_active).toISOString() : 0,
+    lastIdleCheck: toFiniteTimestamp(row.last_idle_check),
+    lastActive: toFiniteTimestamp(row.last_active),
     monsterKills: row.monster_kills ?? undefined,
     monsterEncounters: row.monster_encounters ?? undefined,
     idleStreak: row.idle_streak ?? 0,

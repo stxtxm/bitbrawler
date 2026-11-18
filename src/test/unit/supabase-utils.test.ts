@@ -208,6 +208,16 @@ describe('convertFromSupabase', () => {
     expect(char.fightHistory).toEqual(hist)
     expect(char.incomingFightHistory).toEqual(incomingHist)
   })
+
+  it('converts last_active ISO timestamps to a finite number', () => {
+    const iso = '2026-11-16T05:00:00.000Z'
+    const char = convertFromSupabase({ ...row, last_active: iso, last_idle_check: iso })
+
+    expect(typeof char.lastActive).toBe('number')
+    expect(char.lastActive).toBe(Date.parse(iso))
+    expect(Number.isFinite(Date.now() - (char.lastActive as number))).toBe(true)
+    expect(char.lastIdleCheck).toBe(Date.parse(iso))
+  })
 })
 
 describe('convertToSupabase', () => {

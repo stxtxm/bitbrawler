@@ -166,4 +166,30 @@ describe('useIdleCombat — offline server merge keeps a coherent level/XP pair'
     expect(merged.level).toBe(9);
     expect(merged.essence).toBe(20);
   });
+
+  it.each([
+    ['NaN', Number.NaN],
+    ['an unparsable string', 'not-a-date' as unknown as number],
+  ])('never calls the idle processor when lastActive is %s', async (_label, lastActive) => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({}),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderHook(() =>
+      useIdleCombat({
+        character: makeCharacter({ lastActive }),
+        isPaused: true,
+        onCharacterUpdate: vi.fn(),
+        onSyncCharacter: vi.fn(),
+        onLevelUp: vi.fn(),
+      }),
+    );
+
+    await act(async () => {});
+    await act(async () => {});
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 });
