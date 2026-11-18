@@ -86,6 +86,11 @@ describe('isStreakInDanger', () => {
   it('is true when inactive for more than 24h', () => {
     expect(isStreakInDanger(makeChar({ lastActive: NOW - 25 * 60 * 60 * 1000 }), NOW)).toBe(true);
   });
+
+  it('is true when lastActive is a legacy ISO string older than 24h', () => {
+    const legacyIso = new Date(NOW - 25 * 60 * 60 * 1000).toISOString() as unknown as number;
+    expect(isStreakInDanger(makeChar({ lastActive: legacyIso }), NOW)).toBe(true);
+  });
 });
 
 describe('isLootReminderAvailable', () => {

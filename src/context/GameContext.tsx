@@ -22,6 +22,7 @@ import {
 } from '../utils/bossUtils';
 import { ABYSSAL_BOSS_ID, BOSS_ID, BossId } from '../data/bossAssets';
 import { getEffectiveFightsLeft } from '../data/liveOps';
+import { toFiniteTimestamp } from '../utils/timestampUtils';
 import {
   convertFromSupabase,
   convertToSupabase,
@@ -995,7 +996,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   // Ensures offline time is processed even if the user hasn't reloaded the page.
   const syncIdleBeforeAction = useCallback(async (): Promise<void> => {
     if (!activeCharacter?.id) return
-    const lastActive = activeCharacter.lastActive ?? 0
+    const lastActive = toFiniteTimestamp(activeCharacter.lastActive)
     if (lastActive <= 0) return
     if (Date.now() - lastActive <= 30_000) return
 
