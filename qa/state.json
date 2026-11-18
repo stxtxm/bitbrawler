@@ -2,11 +2,11 @@
   "run": "2026-11-18",
   "character": "QA-PERSI-3",
   "exhausted": false,
-  "updated_at": "2026-11-18T05:10:18.562Z",
+  "updated_at": "2026-11-18T08:03:59.441Z",
   "source": "reused",
   "character_type": "persistent",
   "persistent_generation": 2,
   "persistent_created_at": "2026-11-17T08:01:56.023Z",
   "persistent_reset_ready": false,
-  "pvp_since_last_pve": 1
+  "pvp_since_last_pve": 2
 }
