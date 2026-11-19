@@ -233413,5 +233413,319 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-19T14:56:11.062Z",
+    "run": "2026-11-19",
+    "character": "QA-PERSI-3",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 69,
+        "fight_duration_ms": 10433,
+        "max_hp": 562,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 36.44
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 2,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 10,
+      "vit": 13,
+      "dex": 23,
+      "luk": 51,
+      "int": 13,
+      "foc": 19,
+      "fights": 0
+    },
+    "initial_level": 31,
+    "initial_xp": {
+      "current": 13921,
+      "max": 34667
+    },
+    "progression_curve": {
+      "level": 31,
+      "total_xp": 402273,
+      "xp_for_next": 34667,
+      "percent": 40.2
+    },
+    "initial_max_hp": 562,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife"
+      },
+      {
+        "slot": "🛡",
+        "name": "Studded Vest"
+      },
+      {
+        "slot": "💍",
+        "name": "Spirit Orb"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 31,
+      "xp": 14400,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 10,
+      "vit": 13,
+      "dex": 23,
+      "luk": 51,
+      "int": 13,
+      "foc": 19,
+      "last xp": 45,
+      "fights": 8
+    },
+    "final_max_hp": 562,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife"
+      },
+      {
+        "slot": "🛡",
+        "name": "Studded Vest"
+      },
+      {
+        "slot": "💍",
+        "name": "Spirit Orb"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife"
+      },
+      {
+        "slot": "🛡",
+        "name": "Studded Vest"
+      },
+      {
+        "slot": "💍",
+        "name": "Spirit Orb"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 33065,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "lava_hound"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 41,
+      "xp_events": [
+        {
+          "time_ms": 33065,
+          "xp": 41,
+          "monster": "lava_hound",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        509,
+        1530,
+        33065
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 41,
+        "essence": 0.58,
+        "monster": "lava_hound"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.38,
+      "next_level_eta": "⬆ 27m 47s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.12x",
+      "interval": "10.0s",
+      "streak_bonus": null
+    },
+    "initial_essence": 25.86,
+    "final_essence": 7.75,
+    "essence": {
+      "before_idle": 25.86,
+      "after_idle": 26.44,
+      "per_fight": [
+        36.44
+      ],
+      "forge_before": 36,
+      "forge_after_salvage": 36,
+      "forge_after_fusion": 36,
+      "forge_after_upgrade": 36,
+      "forge_after": 36,
+      "shop_before": 37,
+      "shop_after": 7,
+      "final": 7.75,
+      "flow": {
+        "idle_gained": 0.58,
+        "fights_change": null,
+        "salvage_gained": 0,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 0,
+        "shop_cost": 30,
+        "net_change": -18.11
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 36,
+      "essence_after_salvage": 36,
+      "essence_after_fusion": 36,
+      "essence_after_upgrade": 36,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": true,
+      "upgrade_succeeded": false,
+      "essence_after": 36,
+      "items_after": 0,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 30,
+      "essence_before": 37,
+      "essence_after": 7,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Swift Boots",
+            "rarity": "UNCOMMON",
+            "price": 30
+          },
+          {
+            "name": "Pyrite Orb",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 7,
+        "essence_budget": 60,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-END",
+      "essence_budget": 60
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1497,
+      "arena": 957
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Swift Boots",
+          "rarity": "UNCOMMON",
+          "price": 30
+        },
+        {
+          "name": "Pyrite Orb",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 7,
+      "essence_budget": 60,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
