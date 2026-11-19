@@ -12,8 +12,10 @@
  * qa-analysis.test.ts) so a regression in the merge reliability fix is caught.
  */
 import { describe, it, expect } from 'vitest'
-import { readFileSync, readdirSync, statSync } from 'fs'
+import { readFileSync, readdirSync, statSync, mkdtempSync, writeFileSync, chmodSync, rmSync } from 'fs'
 import { join, resolve, relative } from 'path'
+import { tmpdir } from 'os'
+import { spawnSync } from 'child_process'
 import qaBotConfig from '../../../qa/qa-bot.config.js'
 
 const readWorkflow = (name: string): string =>
@@ -606,5 +608,255 @@ describe('Prompts des workflows : sûrs pour le shell (tech-lead mort 2026-11-08
       .filter(line => /(^|[^\\])"/.test(line))
 
     expect(unescaped).toEqual([])
+  })
+})
+
+describe('Tech-lead — le filtre de dispatch /oc est vérifié en l’exécutant', () => {
+  // Le 19/11/2026, le filtre a été corrigé à la main : fenêtre glissante de 48 h au
+  // lieu de « depuis le début du run », parce que GitHub n'émet jamais
+  // `issues:opened` pour une issue créée par GITHUB_TOKEN. Une simulation à 8 cas
+  // avait validé le correctif… une seule fois, hors du dépôt. Réimplémenter le
+  // filtre en TypeScript ne testerait que la copie : le script bash de
+  // tech-lead.yml pourrait dériver sans qu'aucun test ne s'en aperçoive.
+  //
+  // Ces tests extraient donc le vrai bloc `run:` de l'étape de dispatch, le font
+  // tourner sous bash avec un faux `gh` sur le PATH, et lisent ce qu'il a réclamé
+  // et dispatché. Le faux `gh api` sert les lignes qu'on lui donne : la requête
+  // elle-même (since, tri, exclusion des PRs) est vérifiée par assertions de source
+  // plus bas, puisque le bouchon la court-circuite.
+  const source = readWorkflow('tech-lead.yml')
+
+  /** Bloc `run:` d'une étape nommée, désindenté (GitHub le passe tel quel à bash). */
+  const stepRunScript = (workflow: string, stepName: string): string => {
+    const lines = workflow.split('\n')
+    const stepStart = lines.findIndex(line => line.trim() === `- name: ${stepName}`)
+    if (stepStart === -1) throw new Error(`étape « ${stepName} » introuvable`)
+
+    let runStart = -1
+    for (let i = stepStart + 1; i < lines.length; i += 1) {
+      // Une nouvelle étape commence : le `run:` de celle-ci n'existe pas.
+      if (/^\s*- name:/.test(lines[i])) break
+      if (/^\s*run:\s*\|\s*$/.test(lines[i])) {
+        runStart = i
+        break
+      }
+    }
+    if (runStart === -1) throw new Error(`étape « ${stepName} » sans bloc run: |`)
+
+    const runIndent = lines[runStart].length - lines[runStart].trimStart().length
+    const body: string[] = []
+    for (let i = runStart + 1; i < lines.length; i += 1) {
+      const line = lines[i]
+      if (line.trim() === '') {
+        body.push('')
+        continue
+      }
+      if (line.length - line.trimStart().length <= runIndent) break
+      body.push(line)
+    }
+
+    const indents = body.filter(line => line.trim() !== '').map(line => line.length - line.trimStart().length)
+    const dedent = Math.min(...indents)
+    return `${body.map(line => (line.trim() === '' ? '' : line.slice(dedent))).join('\n')}\n`
+  }
+
+  const hasShellTools = (): boolean =>
+    spawnSync('bash', ['-c', 'command -v jq >/dev/null 2>&1 && command -v base64 >/dev/null 2>&1 && command -v mktemp >/dev/null 2>&1'], {
+      encoding: 'utf8',
+    }).status === 0
+
+  const hasGnuDate = (): boolean =>
+    spawnSync('bash', ['-c', "date -u -d '1 hour ago' +%s"], { encoding: 'utf8' }).status === 0
+
+  it('extrait bien le script de dispatch (garde du helper)', () => {
+    const script = stepRunScript(source, 'Dispatch OpenCode for bot issues created in the last 48h')
+    expect(script).toContain('gh api')
+    expect(script).toContain('TECH_LEAD_SCAN_START')
+  })
+
+  describe.skipIf(!hasShellTools())('exécution du filtre réel avec un faux gh', () => {
+    // Bornes fixes : `TECH_LEAD_SCAN_START` est le DÉBUT de la fenêtre, soit 48 h
+    // avant le passage du 2026-11-19T00:00:00Z. Les dates des cas sont exprimées
+    // par rapport à ce passage, donc les bornes 47 h 30 (dedans) et 48 h 30
+    // (dehors) sont exactes, pas approximatives.
+    const SCAN_START = '2026-11-17T00:00:00Z'
+
+    // GitHub Actions crée les issues avec `github-actions[bot]`, mais l'API renvoie
+    // aussi `app/github-actions` et `opencode-agent` selon la voie de création.
+    const BOT = 'github-actions[bot]'
+    const creation = (n: number, author: string, createdAt: string, body: string, labels: string[] = []) =>
+      Buffer.from(
+        JSON.stringify({
+          number: n,
+          user: { login: author },
+          created_at: createdAt,
+          body,
+          labels: labels.map(name => ({ name })),
+        })
+      ).toString('base64')
+
+    const rows = [
+      // 30 h, bot, /oc, aucun label → dispatch
+      creation(9001, BOT, '2026-11-17T18:00:00Z', 'Corrige le calcul des dégâts.\n\n/oc'),
+      // déjà réclamée par un run concurrent → skip (anti fan-out N²)
+      creation(9002, BOT, '2026-11-17T18:00:00Z', '/oc', ['dispatched']),
+      // 72 h : hors fenêtre → skip
+      creation(9003, BOT, '2026-11-16T00:00:00Z', '/oc'),
+      // auteur humain → skip : ce n'est pas au tech-lead de le lancer
+      creation(9004, 'stxtxm', '2026-11-18T23:00:00Z', '/oc'),
+      // aucun déclencheur → skip
+      creation(9005, BOT, '2026-11-18T23:00:00Z', 'Proposition majeure, sans déclencheur.'),
+      // app/github-actions, hors label dispatched → dispatch
+      creation(9006, 'app/github-actions', '2026-11-18T23:00:00Z', '/oc', ['auto-generated']),
+      // 47 h 30 : juste DANS la fenêtre → dispatch
+      creation(9007, 'opencode-agent', '2026-11-17T00:30:00Z', '/oc'),
+      // 48 h 30 : juste HORS fenêtre → skip. Le `since=` de l'API aurait aussi
+      // écarté cette ligne ; on la sert exprès pour éprouver la borne du script.
+      creation(9008, BOT, '2026-11-16T23:30:00Z', '/oc'),
+      // `/oc` entre backticks (cas réel #1382 / #1377) → skip : les délimiteurs
+      // exigés par le trigger ne sont pas là.
+      creation(9009, BOT, '2026-11-18T23:00:00Z', 'Pas de `/oc` volontairement, voir la proposition.'),
+      // casse indifférente (grep -i) → dispatch
+      creation(9010, BOT, '2026-11-18T22:00:00Z', '/OC'),
+    ]
+
+    type DispatchRun = {
+      status: number | null
+      stdout: string
+      stderr: string
+      /** Appels du faux `gh`, dans l'ordre où le script les a faits. */
+      calls: string[]
+    }
+
+    // Chaque test rejoue le filtre dans SON propre répertoire temporaire (script,
+    // faux `gh`, liste d'issues, journal d'appels) et le supprime en sortant : rien
+    // n'est partagé entre deux tests, donc chacun passe seul (`-t`, `.only`, ordre
+    // aléatoire) sans dépendre d'un fichier /tmp écrit par un autre.
+    const runFilterOnce = (): DispatchRun => {
+      const workdir = mkdtempSync(join(tmpdir(), 'tech-lead-dispatch-'))
+      try {
+        const scriptPath = join(workdir, 'dispatch.sh')
+        writeFileSync(scriptPath, stepRunScript(source, 'Dispatch OpenCode for bot issues created in the last 48h'))
+        writeFileSync(join(workdir, 'issues.txt'), `${rows.join('\n')}\n`)
+        const logPath = join(workdir, 'gh-calls.log')
+        writeFileSync(logPath, '')
+
+        // Faux `gh` : journalise chaque appel (l'ordre compte pour le claim), et
+        // sert les lignes d'issues à `gh api`. Aucun accès réseau.
+        const fakeGh = join(workdir, 'gh')
+        writeFileSync(
+          fakeGh,
+          `#!/usr/bin/env bash
+printf '%s\\n' "$*" >> "$GH_STUB_LOG"
+if [ "$1" = "api" ]; then cat "$GH_STUB_ISSUES"; fi
+exit 0
+`
+        )
+        chmodSync(fakeGh, 0o755)
+
+        const result = spawnSync('bash', ['-eo', 'pipefail', scriptPath], {
+          cwd: workdir,
+          encoding: 'utf8',
+          timeout: 30_000,
+          env: {
+            ...process.env,
+            PATH: `${workdir}:${process.env.PATH}`,
+            GITHUB_REPOSITORY: 'stxtxm/bitbrawler',
+            TECH_LEAD_SCAN_START: SCAN_START,
+            GH_STUB_ISSUES: join(workdir, 'issues.txt'),
+            GH_STUB_LOG: logPath,
+          },
+        })
+
+        return {
+          status: result.status,
+          stdout: result.stdout ?? '',
+          stderr: result.stderr ?? '',
+          calls: readFileSync(logPath, 'utf8').split('\n').filter(Boolean),
+        }
+      } finally {
+        rmSync(workdir, { recursive: true, force: true })
+      }
+    }
+
+    it('ne dispatch que les issues bot, /oc, hors claim et dans la fenêtre', () => {
+      const run = runFilterOnce()
+      expect(run.stderr).toBe('')
+      expect(run.status, `sortie : ${run.stdout}${run.stderr}`).toBe(0)
+
+      const dispatched = run.calls
+        .map(call => /^workflow run opencode\.yml -f issue_number=(\d+)$/.exec(call))
+        .filter((match): match is RegExpExecArray => match !== null)
+        .map(match => match[1])
+
+      // Ordre du fichier : 9001 (30 h) puis 9006 (1 h) puis 9007 (47 h 30) puis 9010.
+      expect(dispatched).toEqual(['9001', '9006', '9007', '9010'])
+      expect(run.stdout).toContain('Dispatching OpenCode workflow for issue #9001...')
+    })
+
+    it('réclame chaque issue (label dispatched) AVANT de la dispatcher', () => {
+      // Claim avant dispatch = la garantie anti fan-out : deux scans concurrents
+      // doivent voir le label posé par le premier. L'inverse a produit ~200 runs
+      // et des doublons d'issues (#940/#950, 2026-09-11).
+      const run = runFilterOnce()
+      expect(run.status, `sortie : ${run.stdout}${run.stderr}`).toBe(0)
+      const calls = run.calls
+      for (const number of ['9001', '9006', '9007', '9010']) {
+        const claim = calls.indexOf(`issue edit ${number} --add-label dispatched`)
+        const dispatch = calls.indexOf(`workflow run opencode.yml -f issue_number=${number}`)
+        expect(claim, `#${number} jamais réclamée`).toBeGreaterThan(-1)
+        expect(dispatch).toBeGreaterThan(claim)
+      }
+      expect(calls.some(call => /issue edit (9002|9003|9004|9005|9008|9009) /.test(call))).toBe(false)
+    })
+
+    it('la liste d’issues passe par un fichier temporaire unique, pas un /tmp partagé', () => {
+      // Deux exécutions simultanées (tests en parallèle, rerun local) écriraient
+      // dans le même /tmp/tech-lead-issues.txt : l'une lirait les lignes de
+      // l'autre, et le journal du faux gh ne correspondrait plus.
+      const script = stepRunScript(source, 'Dispatch OpenCode for bot issues created in the last 48h')
+      expect(script).not.toContain('/tmp/tech-lead-issues.txt')
+      expect(script).toContain('mktemp')
+    })
+
+    it('la requête API est bornée par la fenêtre et exclut les PRs', () => {
+      // Le bouchon sert des lignes déjà filtrées : ce que le script DEMANDE à
+      // GitHub doit donc être vérifié sur la source.
+      const script = stepRunScript(source, 'Dispatch OpenCode for bot issues created in the last 48h')
+      expect(script).toMatch(/issues\?state=open&sort=created&direction=desc&per_page=100&since=\$\{TECH_LEAD_SCAN_START\}/)
+      expect(script).toContain('select(.pull_request | not)')
+    })
+  })
+
+  describe.skipIf(!hasShellTools() || !hasGnuDate())('fenêtre glissante de 48 h', () => {
+    // `date -d '48 hours ago'` est une extension GNU : le workflow ne tourne que sur
+    // ubuntu, mais un poste de dev macOS saute ce test au lieu d'échouer à tort.
+    it('calcule la borne 48 h avant l’exécution, pas au début du run ni par défaut', () => {
+      const workdir = mkdtempSync(join(tmpdir(), 'tech-lead-window-'))
+      try {
+        const envFile = join(workdir, 'github-env')
+        writeFileSync(envFile, '')
+        const scriptPath = join(workdir, 'scan-start.sh')
+        writeFileSync(scriptPath, stepRunScript(source, 'Mark issue scan start'))
+
+        const result = spawnSync('bash', ['-eo', 'pipefail', scriptPath], {
+          encoding: 'utf8',
+          timeout: 30_000,
+          env: { ...process.env, GITHUB_ENV: envFile },
+        })
+        expect(result.status, result.stderr).toBe(0)
+
+        const match = /^TECH_LEAD_SCAN_START=(.+)$/m.exec(readFileSync(envFile, 'utf8'))
+        expect(match, 'TECH_LEAD_SCAN_START absent de $GITHUB_ENV').not.toBeNull()
+        const bound = Date.parse(match![1])
+
+        // Tolérance de 5 min : largement au-dessus de la dérive d'horloge, très
+        // en dessous des 24 h d'un « début de run » ou d'une fenêtre d'un jour.
+        const expected = Date.now() - 48 * 3600_000
+        expect(Math.abs(bound - expected)).toBeLessThan(5 * 60_000)
+      } finally {
+        rmSync(workdir, { recursive: true, force: true })
+      }
+    })
   })
 })

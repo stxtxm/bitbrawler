@@ -220,7 +220,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          ISSUES_FILE=/tmp/tech-lead-issues.txt
+          # Fichier propre à ce run : deux scans simultanés (rerun, test local)
+          # ne doivent jamais se partager la même liste d'issues.
+          ISSUES_FILE="$(mktemp "${RUNNER_TEMP:-/tmp}/tech-lead-issues.XXXXXX")"
+          trap 'rm -f "$ISSUES_FILE"' EXIT
 
           gh api "repos/${GITHUB_REPOSITORY}/issues?state=open&sort=created&direction=desc&per_page=100&since=${TECH_LEAD_SCAN_START}" \
             --jq '.[] | select(.pull_request | not) | @base64' > "$ISSUES_FILE"
