@@ -27,7 +27,10 @@ jobs:
     # C'est Playwright qui doit monter de version pour suivre un nouvel OS ;
     # en attendant, la QA reste sur l'image LTS 24.04 qui est supportée.
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    # Marge de timeout (#1382) : le bot self-caps à 8 min (timeBudgetMs =
+    # 480 000) + setup variable — 10 min pile a causé les 5 runs annulés le
+    # 18/11. Le job tourne donc à ~8 min + marge.
+    timeout-minutes: 20
 
     steps:
       - name: Checkout Code
@@ -42,13 +45,38 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright
+      # La version est loguée : « Playwright does not support chromium on
+      # ubuntuXX.YY-x64 » ne se diagnostique qu'en connaissant les deux
+      # côtés du couple (version du paquet × image du runner).
+      - name: Read Playwright version
+        id: pw
         run: |
-          # La version est loguée : « Playwright does not support chromium on
-          # ubuntuXX.YY-x64 » ne se diagnostique qu'en connaissant les deux
-          # côtés du couple (version du paquet × image du runner).
+          version=$(node -p "require('playwright/package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      # Cache des binaires (#1382) : ~/.cache/ms-playwright ne change que
+      # quand la version de Playwright change — la majorité des runs a des
+      # hit. Les libs OS ne sont pas dans le cache → install-deps sur hit.
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.pw.outputs.version }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Install Playwright (cache miss)
+        if: steps.pw-cache.outputs.cache-hit != "true"
+        run: |
           npx playwright --version
           npx playwright install chromium --with-deps
+
+      - name: Install Playwright OS deps (cache hit)
+        if: steps.pw-cache.outputs.cache-hit == "true"
+        run: |
+          npx playwright --version
+          npx playwright install-deps chromium
 
       - name: Run QA Tests
         id: qa-tests
