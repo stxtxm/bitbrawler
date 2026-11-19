@@ -53,7 +53,14 @@ jobs:
           echo "issue_count=$(cat /tmp/existing-issues.json | wc -l)" >> "$GITHUB_OUTPUT"
 
       - name: Mark issue scan start
-        run: echo "TECH_LEAD_SCAN_START=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+        run: |
+          # Fenêtre glissante de 48 h, et non « depuis le début du run » : une issue bot
+          # portant `/oc` créée hors du créneau quotidien (cron retardé ou sauté, édition
+          # tardive) doit être ramassée au passage suivant. Sans ça elle ne l'est jamais :
+          # GitHub n'émet aucun `issues:opened` pour une issue créée par GITHUB_TOKEN.
+          # Anti fan-out : le label `dispatched` est posé AVANT le dispatch, et le watchdog
+          # relâche le claim (>2 h, sans PR ouverte ni run en cours) avant tout retry.
+          echo "TECH_LEAD_SCAN_START=$(date -u -d '48 hours ago' +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
 
       - name: Analyze QA Stats
         run: |
@@ -209,7 +216,7 @@ jobs:
             exit 1
           fi
 
-      - name: Dispatch OpenCode for freshly created bot issues
+      - name: Dispatch OpenCode for bot issues created in the last 48h
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -253,5 +260,5 @@ jobs:
           done < "$ISSUES_FILE"
 
           if [ "$FOUND" -eq 0 ]; then
-            echo "No fresh bot-created /oc issues found."
+            echo "No bot-created /oc issue left to dispatch in the last 48h."
           fi
