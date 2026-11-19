@@ -231815,5 +231815,329 @@
       "budget_limited": false,
       "budget_blocked_price": null
     }
+  },
+  {
+    "date": "2026-11-19T02:01:31.341Z",
+    "run": "2026-11-19",
+    "character": "QA-PERSI-3",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "draw",
+        "xp": 0,
+        "fight_duration_ms": 15733,
+        "max_hp": null,
+        "fight_type": "boss",
+        "monster_name": "VOID TITAN",
+        "boss_hp_left": 423,
+        "boss_max_hp": 1923
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "ATTACK BOSS",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 4,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 10,
+      "vit": 12,
+      "dex": 23,
+      "luk": 51,
+      "int": 11,
+      "foc": 18,
+      "fights": 0
+    },
+    "initial_level": 30,
+    "initial_xp": {
+      "current": 16599,
+      "max": 32842
+    },
+    "progression_curve": {
+      "level": 30,
+      "total_xp": 372109,
+      "xp_for_next": 32842,
+      "percent": 50.5
+    },
+    "initial_max_hp": 648,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Studded Vest",
+        "rarity": "UNCOMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Brass Ring",
+        "rarity": "COMMON"
+      }
+    ],
+    "initial_streak": 2,
+    "final_stats": {
+      "level": 30,
+      "xp": 18180,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 10,
+      "vit": 12,
+      "dex": 23,
+      "luk": 51,
+      "int": 11,
+      "foc": 18,
+      "last xp": 40,
+      "fights": 5
+    },
+    "final_max_hp": 648,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Studded Vest",
+        "rarity": "UNCOMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Brass Ring",
+        "rarity": "COMMON"
+      }
+    ],
+    "final_streak": 2,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Studded Vest",
+        "rarity": "UNCOMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Brass Ring",
+        "rarity": "COMMON"
+      }
+    ],
+    "lootbox_streak": 2,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": true,
+      "boss_fights": 1,
+      "boss_wins": 0
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 33057,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "ogre"
+      ],
+      "victories": 0,
+      "defeats": 1,
+      "xp_total": 45,
+      "xp_events": [
+        {
+          "time_ms": 33057,
+          "xp": 45,
+          "monster": "ogre",
+          "result": "unknown"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        508,
+        1525,
+        33057
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "defeat",
+        "xp": 45,
+        "essence": 0.45,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.28,
+      "next_level_eta": "⬆ 18m 54s",
+      "power_ratio": "⚔ 0.50x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.09x",
+      "interval": "10.0s",
+      "streak_bonus": null
+    },
+    "initial_essence": 13.23,
+    "final_essence": 22.55,
+    "essence": {
+      "before_idle": 13.23,
+      "after_idle": 13.68,
+      "per_fight": [],
+      "forge_before": 21,
+      "forge_after_salvage": 21,
+      "forge_after_fusion": 21,
+      "forge_after_upgrade": 21,
+      "forge_after": 21,
+      "shop_before": 22,
+      "shop_after": 22,
+      "final": 22.55,
+      "flow": {
+        "idle_gained": 0.45,
+        "fights_change": null,
+        "salvage_gained": 0,
+        "fusion_cost": 0,
+        "upgrade_cost": 0,
+        "forge_net": 0,
+        "shop_cost": 0,
+        "net_change": 9.32
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": true,
+      "essence_before": 21,
+      "essence_after_salvage": 21,
+      "essence_after_fusion": 21,
+      "essence_after_upgrade": 21,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": 21,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": 22,
+      "essence_after": 22,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Swift Boots",
+            "rarity": "UNCOMMON",
+            "price": 30
+          },
+          {
+            "name": "Pyrite Orb",
+            "rarity": "EPIC",
+            "price": 88
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": null,
+        "essence_after_purchase": 22,
+        "essence_budget": 60,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-END",
+      "essence_budget": 60
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 0,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1057,
+      "arena": 1051
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Swift Boots",
+          "rarity": "UNCOMMON",
+          "price": 30
+        },
+        {
+          "name": "Pyrite Orb",
+          "rarity": "EPIC",
+          "price": 88
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": null,
+      "essence_after_purchase": 22,
+      "essence_budget": 60,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    }
   }
 ]
