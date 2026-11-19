@@ -718,6 +718,15 @@ describe('Tech-lead — le filtre de dispatch /oc est vérifié en l’exécutan
       creation(9009, BOT, '2026-11-18T23:00:00Z', 'Pas de `/oc` volontairement, voir la proposition.'),
       // casse indifférente (grep -i) → dispatch
       creation(9010, BOT, '2026-11-18T22:00:00Z', '/OC'),
+      // forme longue du déclencheur → dispatch. Le motif essaie `oc` d'abord ;
+      // sans retour arrière sur l'alternative, « /opencode » serait ignoré.
+      creation(9011, BOT, '2026-11-18T21:00:00Z', 'Implémente la proposition.\n\n/opencode'),
+      // claim au MILIEU d'une liste de labels → skip : `(^|,)dispatched(,|$)`
+      // ne doit pas dépendre de la position du label dans la liste.
+      creation(9012, BOT, '2026-11-18T20:00:00Z', '/oc', ['bug', 'dispatched', 'campaign-42']),
+      // label plus long COMMENÇANT par « dispatched » → dispatch : ce n'est pas
+      // un claim, et un `grep -q dispatched` non ancré l'aurait pris pour tel.
+      creation(9013, BOT, '2026-11-18T19:00:00Z', '/oc', ['dispatched-by-watchdog']),
     ]
 
     type DispatchRun = {
@@ -789,8 +798,9 @@ exit 0
         .filter((match): match is RegExpExecArray => match !== null)
         .map(match => match[1])
 
-      // Ordre du fichier : 9001 (30 h) puis 9006 (1 h) puis 9007 (47 h 30) puis 9010.
-      expect(dispatched).toEqual(['9001', '9006', '9007', '9010'])
+      // Ordre du fichier : 9001 (30 h) puis 9006 (1 h) puis 9007 (47 h 30) puis
+      // 9010, 9011 (/opencode) et 9013 (label `dispatched-by-watchdog`).
+      expect(dispatched).toEqual(['9001', '9006', '9007', '9010', '9011', '9013'])
       expect(run.stdout).toContain('Dispatching OpenCode workflow for issue #9001...')
     })
 
@@ -801,13 +811,13 @@ exit 0
       const run = runFilterOnce()
       expect(run.status, `sortie : ${run.stdout}${run.stderr}`).toBe(0)
       const calls = run.calls
-      for (const number of ['9001', '9006', '9007', '9010']) {
+      for (const number of ['9001', '9006', '9007', '9010', '9011', '9013']) {
         const claim = calls.indexOf(`issue edit ${number} --add-label dispatched`)
         const dispatch = calls.indexOf(`workflow run opencode.yml -f issue_number=${number}`)
         expect(claim, `#${number} jamais réclamée`).toBeGreaterThan(-1)
         expect(dispatch).toBeGreaterThan(claim)
       }
-      expect(calls.some(call => /issue edit (9002|9003|9004|9005|9008|9009) /.test(call))).toBe(false)
+      expect(calls.some(call => /issue edit (9002|9003|9004|9005|9008|9009|9012) /.test(call))).toBe(false)
     })
 
     it('la liste d’issues passe par un fichier temporaire unique, pas un /tmp partagé', () => {
