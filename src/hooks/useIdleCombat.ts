@@ -18,6 +18,7 @@ import {
   calculateNextLevelTime,
   calculateStatEssenceMultiplier,
   calculateSpeedEfficiency,
+  calculateOfflineFights,
 } from '../utils/idleEfficiencyUtils'
 import { MonsterId } from '../data/monsterAssets'
 import { getBiomeForCharacter } from '../data/biomes'
@@ -147,10 +148,7 @@ export function useIdleCombat({
     fights: number; xp: number; levels: number; essence: number; updatedChar: Character
   } | null => {
     const effectiveInterval = effIntervalRef.current
-    const numFights = Math.min(
-      Math.floor(idleMs / effectiveInterval),
-      IDLE_CONFIG.MAX_IDLE_FIGHTS,
-    )
+    const numFights = calculateOfflineFights(idleMs, effectiveInterval)
     if (numFights <= 0) return null
 
     let char = { ...currentChar }

@@ -39,6 +39,11 @@ describe('CombatView Interface', () => {
         hp: 100, maxHp: 100,
         strength: 10, vitality: 10, dexterity: 10, luck: 10, intelligence: 10, focus: 10,
         experience: 0, wins: 0, losses: 0, fightsLeft: 5, lastFightReset: 0,
+        fightHistory: [
+            { date: Date.now(), opponentName: 'Foe', won: true },
+            { date: Date.now(), opponentName: 'Foe', won: true },
+            { date: Date.now(), opponentName: 'Foe', won: true },
+        ],
         gender: 'male', seed: 'abc'
     };
 
@@ -316,6 +321,46 @@ describe('CombatView Interface', () => {
         act(() => { vi.advanceTimersByTime(3000); });
 
         expect(screen.getByText('+132 XP')).toBeInTheDocument();
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('doubles the XP of the first three daily victories and reports it on complete', async () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'attacker',
+            rounds: 1,
+            details: ['Hero hits Villain'],
+            timeline: [{ attackerHp: 100, defenderHp: 90 }]
+        });
+
+        vi.spyOn(xpUtils, 'calculateFightXp').mockReturnValue(50);
+
+        const onComplete = vi.fn();
+
+        render(
+            <CombatView
+                player={{ ...player, fightHistory: [] }}
+                opponent={opponent}
+                matchType="balanced"
+                onComplete={onComplete}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2500); });
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(3000); });
+
+        expect(screen.getByText('+100 XP')).toBeInTheDocument();
+
+        await act(async () => {
+            fireEvent.click(screen.getByText('CONTINUE'));
+        });
+
+        expect(onComplete).toHaveBeenCalledWith(true, 100, undefined);
 
         vi.useRealTimers();
         vi.restoreAllMocks();

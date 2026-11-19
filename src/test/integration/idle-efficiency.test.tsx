@@ -100,7 +100,7 @@ describe('Idle Efficiency Integration', () => {
     });
 
     describe('Offline gains with efficiency', () => {
-        it('should calculate offline fights using effective interval', () => {
+        it('should credit offline fights once the absence crosses the sweep window', () => {
             const char = baseCharacter({ level: 10, dexterity: 20, strength: 20 });
             const monster = generateMonsterForPlayer(char.level);
             const playerStats = calculateCombatStats(char);
@@ -108,7 +108,7 @@ describe('Idle Efficiency Integration', () => {
             const eff = computeEfficiency(playerStats, monsterStats, char.dexterity);
 
             const now = Date.now();
-            const elapsed = 120000; // 2 min
+            const elapsed = 2 * 60 * 60 * 1000; // 2 h
             const fights = calculateOfflineFightsWithEfficiency(now - elapsed, now, eff.effectiveInterval);
             expect(fights).toBeGreaterThan(0);
         });

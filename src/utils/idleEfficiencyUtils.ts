@@ -44,17 +44,24 @@ function getStreakMilestone(streak: number): number | null {
   return null;
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function calculateOfflineFights(elapsedMs: number, effectiveInterval: number): number {
+  if (elapsedMs <= 0 || effectiveInterval <= 0) return 0;
+  const maxOffline = IDLE_CONFIG.MAX_OFFLINE_HOURS * 60 * 60 * 1000;
+  const cappedElapsed = Math.min(elapsedMs, maxOffline);
+  const timeFights = Math.floor(cappedElapsed / effectiveInterval);
+  const budgetFights = Math.floor((cappedElapsed / DAY_MS) * IDLE_CONFIG.OFFLINE_FIGHTS_PER_DAY);
+  return Math.min(timeFights, budgetFights, IDLE_CONFIG.MAX_IDLE_FIGHTS);
+}
+
 function calculateOfflineFightsWithEfficiency(
   lastTimestamp: number,
   now: number,
   effectiveInterval: number,
 ): number {
   if (lastTimestamp <= 0 || now <= lastTimestamp) return 0;
-  const elapsed = now - lastTimestamp;
-  const maxOffline = IDLE_CONFIG.MAX_OFFLINE_HOURS * 60 * 60 * 1000;
-  const cappedElapsed = Math.min(elapsed, maxOffline);
-  const fights = Math.floor(cappedElapsed / effectiveInterval);
-  return Math.min(fights, IDLE_CONFIG.MAX_IDLE_FIGHTS);
+  return calculateOfflineFights(now - lastTimestamp, effectiveInterval);
 }
 
 export function isIdlePaused(_date: Date = new Date()): boolean {
@@ -128,6 +135,7 @@ export {
   calculatePowerRatio,
   calculateEfficiency,
   calculateEffectiveInterval,
+  calculateOfflineFights,
   calculateXpBonusMultiplier,
   calculateXpPerMinute,
   calculateStreakBonus,
