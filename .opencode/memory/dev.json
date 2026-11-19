@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-11-17T02:24:27Z",
+  "last_session": "2026-11-19T22:58:27Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1298: le fix runner Playwright (ubuntu-24.04) et son contrat workflow-integrity etaient deja merges via #1302; reste le bonus diagnostic. Garde-fou ajoute dans Commit QA stats: git diff --quiet qa/stats.json AVANT git add, sinon un run sans stats affichait Everything up-to-date + OK. Toujours placer le diff avant l add car apres indexation le fichier parait inchange.",
-      "issue": "#1298",
-      "date": "2026-10-22"
-    },
     {
       "lesson": "Watchdog: gh pr list statusCheckRollup inclut Cloudflare Pages (workflowName vide) → compter tous les checks rendait CHECK_COUNT>=1 sur les PR sans CI et le filet « PR orpheline » ne partait jamais. Filtrer select(.workflowName == \"CI\"). Anti-tempête: le reviewer ne peut pas poster de review formelle sur une PR de github-actions[bot], il laisse un commentaire « ## Review PR #N » ; le vérifier avec created_at > date du commit de tête.",
       "issue": "#1299",
@@ -172,6 +167,11 @@
       "lesson": "Issue #1378 xp_accounting: dans qa-analysis.test.ts les pure functions sont MIRRORÉES localement (pas d'import du script) ; ajouter progression_curve au RunRecord du test puis tester computeXpAccounting + source assertions. Vérifier le pourcentage attendu manuellement (gained/unaccounted) avant d'écrire l'assertion.",
       "issue": "#1378",
       "date": "2026-11-17"
+    },
+    {
+      "issue": "#1377",
+      "date": "2026-11-19",
+      "lesson": "Idle XP budget sans migration: plafonner par un debit (OFFLINE_FIGHTS_PER_DAY=120/24h) et non par invocation, sinon un cron toutes les 60s re-credite MAX_IDLE_FIGHTS en continu. IDLE_SWEEP_WINDOW_MS=12min cote serveur = 1 fight/sweep = 120/jour. Le client (idleEfficiencyUtils.calculateOfflineFights + useIdleCombat.runLocalCatchUp) et api/idle-processor doivent rester miroir (test idleVolumeBudget.test.ts). Bonus actif = derive de fightHistory (persiste, pas de migration), applique au point de calcul du XP (CombatView + resolution pending fight), PAS dans useFight sinon double application. Fixtures CombatView: 3 wins du jour pour garder les assertions XP de base."
     }
   ]
 }
