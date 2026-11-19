@@ -75,6 +75,12 @@ jobs:
       - name: Commit QA stats
         if: always()
         run: |
+          # 1382 — pkill du bot AVANT le commit : entre le `git add` et le
+          # `git pull --rebase`, le bot peut encore réécrire qa/stats.json /
+          # qa/state.json → rebase refuse (tree sale) → les stats restent
+          # locales au runner, jamais poussées (perdues).
+          pkill -f "qa/qa-bot.mjs" 2>/dev/null || true
+          sleep 1
           git config user.name "opencode-agent"
           git config user.email "agent@opencode.ai"
           git add qa/stats.json qa/state.json
@@ -101,9 +107,11 @@ jobs:
           # `-X theirs` pendant le rebase garde la version du commit rejoué, donc
           # les stats fraîches de CE run — seules dans le commit — et ne peut rien
           # écraser d'autre : le commit ne porte que qa/stats.json et qa/state.json.
+          # `rebase.autoStash=true` : nettoie un tree sale sans bloquer le rebase
+          # (filet supplémentaire au pkill + sleep 1 ci-dessus).
           for tentative in 1 2 3; do
             git rebase --abort 2>/dev/null || true
-            if git pull --rebase -X theirs \
+            if git -c rebase.autoStash=true pull --rebase -X theirs \
               && git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}; then
               echo "✅ QA stats poussées (tentative $tentative)"
               exit 0
