@@ -160,7 +160,7 @@ describe('useIdleCombat — biome propagation', () => {
   it('uses the volcanic biome for offline catch-up once the first boss is slain', async () => {
     const character = makeCharacter({
       bossProgress: makeBossProgress(1),
-      lastActive: Date.now() - 60_000,
+      lastActive: Date.now() - 15 * 60_000,
     });
     mountHook(character);
 

@@ -160,9 +160,10 @@ describe('idleEfficiencyUtils', () => {
             expect(calculateOfflineFightsWithEfficiency(1000, 500, 10000)).toBe(0);
         });
 
-        it('should calculate fights for elapsed time', () => {
-            const fights = calculateOfflineFightsWithEfficiency(1, 20001, 10000);
-            expect(fights).toBe(2);
+        it('should credit one fight per idle sweep window', () => {
+            const sweep = IDLE_CONFIG.IDLE_SWEEP_WINDOW_MS;
+            expect(calculateOfflineFightsWithEfficiency(1, 1 + sweep, 10000)).toBe(1);
+            expect(calculateOfflineFightsWithEfficiency(1, 1 + sweep * 3, 10000)).toBe(3);
         });
 
         it('should cap at MAX_IDLE_FIGHTS', () => {

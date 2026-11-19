@@ -2,6 +2,7 @@ import { createContext, useState, useContext, ReactNode, useEffect, useCallback,
 import { supabase, type CharacterRow } from '../config/supabase';
 import { Character, IncomingFightHistory, PendingFight } from '../types/Character';
 import { gainXp, calculateFightXp } from '../utils/xpUtils';
+import { getActiveWinXpMultiplier } from '../utils/activeBonusUtils';
 import { applyStatPoint, autoAllocateStatPoints, HP_PER_LEVEL, StatKey } from '../utils/statUtils';
 import { GAME_RULES } from '../config/gameRules';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
@@ -1179,7 +1180,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         const opponent = hydratePendingOpponent(matchedPending.opponent!);
         const combatResult = simulateCombat(matchedChar, opponent);
         const won = combatResult.winner === 'attacker';
-        const xpGained = calculateFightXp(won, matchedChar.level, opponent.level);
+        const xpGained = Math.floor(calculateFightXp(won, matchedChar.level, opponent.level) * getActiveWinXpMultiplier(matchedChar, won));
         await useFight(won, xpGained, opponent.name, opponent.id || '', {
           consumeEnergy: false,
           characterOverride: matchedChar
@@ -1191,7 +1192,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         const opponent = hydratePendingOpponent(pending.opponent);
         const combatResult = simulateCombat(character, opponent);
         const won = combatResult.winner === 'attacker';
-        const xpGained = calculateFightXp(won, character.level, opponent.level);
+        const xpGained = Math.floor(calculateFightXp(won, character.level, opponent.level) * getActiveWinXpMultiplier(character, won));
         await useFight(won, xpGained, opponent.name, opponent.id || '', {
           consumeEnergy: false,
           characterOverride: character

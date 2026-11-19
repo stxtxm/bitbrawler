@@ -7,6 +7,7 @@ import { simulateCombat } from '../utils/combatUtils';
 import { getMatchDifficultyLabel, MatchType } from '../utils/matchmakingUtils';
 import { parseCombatDetail, CombatAction, CombatActionType } from '../utils/combatLogUtils';
 import { calculateFightXp } from '../utils/xpUtils';
+import { getActiveWinXpMultiplier } from '../utils/activeBonusUtils';
 import { useSound } from '../hooks/useSound';
 import { MonsterId, MONSTER_ASSETS } from '../data/monsterAssets';
 import { BossId, BOSS_ASSETS, getBossDef } from '../data/bossAssets';
@@ -683,7 +684,9 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
         if (matchType === 'boss') {
             return combatResult.winner === 'attacker' ? getBossKillXp(player) : 0;
         }
-        return calculateFightXp(combatResult.winner === 'attacker', player.level, opponent.level);
+        const won = combatResult.winner === 'attacker';
+        const baseXp = calculateFightXp(won, player.level, opponent.level);
+        return Math.floor(baseXp * getActiveWinXpMultiplier(player, won));
     }, [player, combatResult, matchType]);
 
     const playerMaxHp = player.maxHp || player.hp;

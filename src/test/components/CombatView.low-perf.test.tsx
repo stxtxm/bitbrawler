@@ -41,6 +41,11 @@ describe('CombatView low performance mode', () => {
         hp: 100, maxHp: 100,
         strength: 10, vitality: 10, dexterity: 10, luck: 10, intelligence: 10, focus: 10,
         experience: 0, wins: 0, losses: 0, fightsLeft: 5, lastFightReset: 0,
+        fightHistory: [
+            { date: Date.now(), opponentName: 'Foe', won: true },
+            { date: Date.now(), opponentName: 'Foe', won: true },
+            { date: Date.now(), opponentName: 'Foe', won: true },
+        ],
         gender: 'male', seed: 'abc'
     };
 

@@ -60,7 +60,11 @@ const OFFLINE_ESSENCE_MODIFIER = 0.15
 export const EARLY_SHIFT = 0
 export const IDLE_MODIFIER = 0.5
 export const OFFLINE_XP_MODIFIER = 0.5
+export const MAX_OFFLINE_HOURS = 24
+export const OFFLINE_FIGHTS_PER_DAY = 120
+export const IDLE_SWEEP_WINDOW_MS = 12 * 60 * 1000
 const MAX_IDLE_FIGHTS = 50
+const DAY_MS = 24 * 60 * 60 * 1000
 const MONSTER_IDS = ['GOBLIN', 'OGRE', 'WRAITH', 'SLIME', 'SKELETON', 'BAT', 'SPIDER']
 
 interface MonsterDef {
@@ -204,11 +208,13 @@ function computeEfficiency(playerStats: ReturnType<typeof calculateCombatStats>,
   return { powerRatio, efficiency, effectiveInterval, xpBonusMultiplier }
 }
 
-function calculateOfflineFightsWithEfficiency(start: number, end: number, interval: number): number {
+export function calculateOfflineFightsWithEfficiency(start: number, end: number, interval: number): number {
   const elapsed = end - start
-  if (elapsed <= 0) return 0
-  const fights = Math.floor(elapsed / interval)
-  return Math.min(fights, MAX_IDLE_FIGHTS)
+  if (elapsed <= 0 || interval <= 0) return 0
+  const cappedElapsed = Math.min(elapsed, MAX_OFFLINE_HOURS * 60 * 60 * 1000)
+  const timeFights = Math.floor(cappedElapsed / interval)
+  const budgetFights = Math.floor((cappedElapsed / DAY_MS) * OFFLINE_FIGHTS_PER_DAY)
+  return Math.min(timeFights, budgetFights, MAX_IDLE_FIGHTS)
 }
 
 export function calculateIdleXp(won: boolean, level: number): number {
@@ -226,7 +232,7 @@ export function calculateOfflineIdleXp(won: boolean, level: number): number {
 // Idle processor logic
 // ─────────────────────────────────────────────────────────────
 
-const IDLE_WINDOW_MS = 65_000
+const IDLE_WINDOW_MS = IDLE_SWEEP_WINDOW_MS
 
 const SELECT_COLUMNS = [
   'id', 'name', 'level', 'hp', 'max_hp',

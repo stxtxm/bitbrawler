@@ -495,7 +495,29 @@ The idle system uses an external free cron service to process inactive character
 
 - Reconfigure cron-job.org after each hosting URL change
 - The cron is a fallback — idle gains are processed instantly when the player reconnects
-- The `/api/idle-processor` cron mode only picks up characters with `last_idle_check` older than 60s, preventing double-processing
+- The `/api/idle-processor` cron mode only picks up characters with `last_idle_check` older than 12 minutes (`IDLE_SWEEP_WINDOW_MS`), preventing double-processing
+
+### Offline XP budget
+
+Offline idle is capped by a throughput budget, not by the cron frequency:
+
+| Constant | Value | Effect |
+|---|---|---|
+| `IDLE_CONFIG.OFFLINE_FIGHTS_PER_DAY` | `120` | Offline credits at most 120 fights per 24h away (~5/h) |
+| `IDLE_CONFIG.IDLE_SWEEP_WINDOW_MS` | `720000` | Cron credits at most one budget slice per 12 min |
+| `IDLE_CONFIG.MAX_IDLE_FIGHTS` | `50` | Welcome-back catch-up never exceeds 50 fights per absence |
+| `IDLE_CONFIG.MAX_OFFLINE_HOURS` | `24` | Absence older than 24h is clamped |
+
+The client (`src/utils/idleEfficiencyUtils.ts`, `useIdleCombat`) and the server
+(`api/idle-processor.ts`) share the same formula; `idleVolumeBudget.test.ts` fails
+on any drift. Watching the Idle Runner still pays the full rate — only time away
+is budgeted.
+
+### Active win bonus
+
+The first 3 active victories of the day (Europe/Paris reset) pay ×2 XP
+(`ACTIVE_WIN_BONUS` in `src/utils/activeBonusUtils.ts`). Boss fights are not
+boosted. The bonus is derived from `fightHistory`, so it needs no migration.
 
 ---
 
