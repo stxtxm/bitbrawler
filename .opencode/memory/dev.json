@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-11-19T22:58:27Z",
+  "last_session": "2026-11-20T01:23:49Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Watchdog: gh pr list statusCheckRollup inclut Cloudflare Pages (workflowName vide) → compter tous les checks rendait CHECK_COUNT>=1 sur les PR sans CI et le filet « PR orpheline » ne partait jamais. Filtrer select(.workflowName == \"CI\"). Anti-tempête: le reviewer ne peut pas poster de review formelle sur une PR de github-actions[bot], il laisse un commentaire « ## Review PR #N » ; le vérifier avec created_at > date du commit de tête.",
-      "issue": "#1299",
-      "date": "2026-10-22"
-    },
     {
       "lesson": "Issue #1299 watchdog: statusCheckRollup inclut les checks de deploiement externes (Cloudflare Pages, workflowName vide) -> toujours filtrer select(.workflowName == \"CI\") avant de compter, sinon le filet PR orpheline ne part jamais. Le reviewer ne peut pas poster de review formelle sur une PR dont l auteur est github-actions[bot] : le verdict doit aussi accepter un commentaire ## Review PR #N posterieur au dernier commit (gh api .../commits/SHA pour la date).",
       "issue": "#1299",
@@ -172,6 +167,11 @@
       "issue": "#1377",
       "date": "2026-11-19",
       "lesson": "Idle XP budget sans migration: plafonner par un debit (OFFLINE_FIGHTS_PER_DAY=120/24h) et non par invocation, sinon un cron toutes les 60s re-credite MAX_IDLE_FIGHTS en continu. IDLE_SWEEP_WINDOW_MS=12min cote serveur = 1 fight/sweep = 120/jour. Le client (idleEfficiencyUtils.calculateOfflineFights + useIdleCombat.runLocalCatchUp) et api/idle-processor doivent rester miroir (test idleVolumeBudget.test.ts). Bonus actif = derive de fightHistory (persiste, pas de migration), applique au point de calcul du XP (CombatView + resolution pending fight), PAS dans useFight sinon double application. Fixtures CombatView: 3 wins du jour pour garder les assertions XP de base."
+    },
+    {
+      "lesson": "Issue #1384 lucky archetype: getLuckAllocationCap() doit être dérivé de COMBAT_BALANCE (critCap/critChance puis inverse de scaleStat) et arrondi au floor pour que la LUK entière ne dépasse pas le cap. Le cap doit être appliqué à TOUS les archétypes dans allocateStatByArchetype (pas seulement lucky), avec redistribution du poids libéré sur la plus basse de STR/VIT. Test d'allocation = rng seedé (LCG) sinon flaky sur 31 points.",
+      "issue": "#1384",
+      "date": "2026-11-20"
     }
   ]
 }
