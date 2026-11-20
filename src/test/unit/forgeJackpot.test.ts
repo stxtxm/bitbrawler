@@ -63,8 +63,8 @@ describe('forgeConstants jackpot rates', () => {
     expect(SALVAGE_SURGE_MEGA_RATE).toBe(0.02);
   });
   it('does not break ESSENCE_YIELD', () => {
-    expect(ESSENCE_YIELD.common).toBe(5);
-    expect(ESSENCE_YIELD.epic).toBe(80);
+    expect(ESSENCE_YIELD.common).toBe(6);
+    expect(ESSENCE_YIELD.epic).toBe(92);
   });
 });
 
@@ -109,41 +109,41 @@ describe('rollSalvageJackpot', () => {
 });
 
 describe('salvage jackpot yield', () => {
-  it('common 5 → 10 with x2, 50 with x10', () => {
+  it('common 6 → 12 with x2, 60 with x10', () => {
     const common = makeItem('c', 'common');
     const charBase = makeCharacter({ inventory: ['c'], essence: 0 });
     const withX2 = salvageItem('c', charBase, [common], () => 0.03, false);
-    expect(withX2.essence).toBe(10);
+    expect(withX2.essence).toBe(12);
     const charBase2 = makeCharacter({ inventory: ['c'], essence: 0 });
     const withX10 = salvageItem('c', charBase2, [common], () => 0.005, false);
-    expect(withX10.essence).toBe(50);
+    expect(withX10.essence).toBe(60);
   });
-  it('epic 80 → 160 with x2, 800 with x10', () => {
+  it('epic 92 → 184 with x2, 920 with x10', () => {
     const epic = makeItem('e', 'epic');
     const charBase = makeCharacter({ inventory: ['e'], essence: 0 });
     const withX2 = salvageItem('e', charBase, [epic], () => 0.03, false);
-    expect(withX2.essence).toBe(160);
+    expect(withX2.essence).toBe(184);
     const charBase2 = makeCharacter({ inventory: ['e'], essence: 0 });
     const withX10 = salvageItem('e', charBase2, [epic], () => 0.005, false);
-    expect(withX10.essence).toBe(800);
+    expect(withX10.essence).toBe(920);
   });
   it('surge double taux affects salvageItem yield', () => {
     const common = makeItem('c', 'common');
     const charNormal = makeCharacter({ inventory: ['c'], essence: 0 });
     const normal = salvageItem('c', charNormal, [common], () => 0.08, false);
-    expect(normal.essence).toBe(5);
+    expect(normal.essence).toBe(6);
     const charSurge = makeCharacter({ inventory: ['c'], essence: 0 });
     const surge = salvageItem('c', charSurge, [common], () => 0.08, true);
-    expect(surge.essence).toBe(10);
+    expect(surge.essence).toBe(12);
   });
   it('salvageItems with jackpot multiplier', () => {
     const items = [makeItem('a', 'common'), makeItem('b', 'common')];
     const totalX2 = salvageItems(items, () => 0.03, false);
-    expect(totalX2).toBe(20);
+    expect(totalX2).toBe(24);
     const totalX10 = salvageItems(items, () => 0.005, false);
-    expect(totalX10).toBe(100);
+    expect(totalX10).toBe(120);
     const totalX1 = salvageItems(items, () => 0.5, false);
-    expect(totalX1).toBe(10);
+    expect(totalX1).toBe(12);
   });
   it('salvageItem conserve inventaire/equipped guard', () => {
     const item = makeItem('rusty_sword', 'common');
@@ -181,7 +181,7 @@ describe('salvage jackpot yield', () => {
     const item = makeItem('c', 'common');
     const char = makeCharacter({ inventory: ['c'], essence: 0 });
     const result = salvageItem('c', char, [item]);
-    expect(result.essence).toBe(5);
+    expect(result.essence).toBe(6);
     expect(result.inventory).not.toContain('c');
   });
 });

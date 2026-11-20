@@ -70,11 +70,11 @@ const makeCharacter = (overrides?: Partial<Character>): Character => ({
 describe('forgeConstants', () => {
   describe('ESSENCE_YIELD', () => {
     it('defines correct salvage values per rarity', () => {
-      expect(ESSENCE_YIELD.common).toBe(5);
-      expect(ESSENCE_YIELD.uncommon).toBe(20);
-      expect(ESSENCE_YIELD.rare).toBe(50);
-      expect(ESSENCE_YIELD.epic).toBe(80);
-      expect(ESSENCE_YIELD.legendary).toBe(400);
+      expect(ESSENCE_YIELD.common).toBe(6);
+      expect(ESSENCE_YIELD.uncommon).toBe(23);
+      expect(ESSENCE_YIELD.rare).toBe(58);
+      expect(ESSENCE_YIELD.epic).toBe(92);
+      expect(ESSENCE_YIELD.legendary).toBe(460);
     });
 
   });
@@ -98,8 +98,8 @@ describe('forgeConstants', () => {
   });
 
   describe('UPGRADE_COST / UPGRADE_BASE_COST', () => {
-    it('defines UPGRADE_COST as 30', () => {
-      expect(UPGRADE_COST).toBe(30);
+    it('defines UPGRADE_COST as 25', () => {
+      expect(UPGRADE_COST).toBe(25);
     });
 
     it('UPGRADE_BASE_COST is an alias for UPGRADE_COST', () => {
@@ -107,8 +107,8 @@ describe('forgeConstants', () => {
     });
   });
 
-  it('defines UPGRADE_COST_SCALING as 20', () => {
-    expect(UPGRADE_COST_SCALING).toBe(20);
+  it('defines UPGRADE_COST_SCALING as 15', () => {
+    expect(UPGRADE_COST_SCALING).toBe(15);
   });
 
   it('defines MAX_UPGRADE_LEVEL as 5', () => {
@@ -583,11 +583,11 @@ describe('canUpgrade', () => {
   it('returns false when enough essence for base cost but not for scaled cost at higher level', () => {
     const char = makeCharacter({
       inventory: ['rusty_sword'],
-      essence: UPGRADE_BASE_COST, // 30, enough for level 0 (30) but not level 1 (50)
+      essence: UPGRADE_BASE_COST, // 25, enough for level 0 (25) but not level 1 (40)
       itemUpgrades: { rusty_sword: 1 },
     });
 
-    // cost at level 1 = 30 + 1*20 = 50, essence is 30, not enough
+    // cost at level 1 = 25 + 1*15 = 40, essence is 25, not enough
     expect(canUpgrade('rusty_sword', char)).toBe(false);
   });
 });
