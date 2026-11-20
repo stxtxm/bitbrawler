@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-11-20T01:29:04Z",
+  "last_session": "2026-11-20T01:38:17Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR bot avec un seul check Cloudflare Pages et mergeStateStatus UNSTABLE : 'UNSTABLE' ne signifie pas rouge, c'est l'absence de checks requis. Vérifier statusCheckRollup puis exécuter la gate complète localement (tsc, lint, vitest, build) avant merge.",
-      "issue": "#1389"
+      "lesson": "PR bot en conflit avec master : gh pr review --request-changes echoue (403 'own pull request', meme app github-actions). Voie viable : rebaser la branche sur origin/master en retirant le changement hors perimetre (workflow-integrity.test.ts, doublon de #1389/#1393), rejouer la gate complete, force-with-lease push, puis merge squash.",
+      "issue": "#1391"
     }
   ]
 }
