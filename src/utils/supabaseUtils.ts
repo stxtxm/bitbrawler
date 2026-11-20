@@ -12,11 +12,12 @@ export const MATCHMAKING_SELECT_COLUMNS =
   'id,name,gender,seed,appearance,level,hp,max_hp,is_bot,strength,vitality,dexterity,luck,intelligence,focus,equipped_items,item_upgrades';
 
 export const SERVER_MERGE_SELECT_COLUMNS =
-  'experience,level,hp,max_hp,idle_streak,idle_max_streak,idle_total_kills,idle_total_xp,essence,stat_points,monster_kills,monster_encounters';
+  'experience,level,hp,max_hp,idle_streak,idle_max_streak,idle_total_kills,idle_total_xp,essence,stat_points,monster_kills,monster_encounters,last_daily_essence_claim';
 export const LEGACY_SERVER_MERGE_SELECT_COLUMNS =
   'experience,level,hp,max_hp,idle_streak,idle_max_streak,idle_total_kills,idle_total_xp,essence,stat_points';
 
 const MONSTER_COUNTER_COLUMN_PATTERN = /monster_(kills|encounters)/;
+const DAILY_ESSENCE_COLUMN_PATTERN = /last_daily_essence_claim/;
 
 export function isMissingMonsterCounterColumn(
   error: { code?: string; message?: string } | null | undefined,
@@ -30,6 +31,20 @@ export function omitMonsterCounters<T extends Partial<CharacterRow>>(payload: T)
   const clone: Record<string, unknown> = { ...payload };
   delete clone.monster_kills;
   delete clone.monster_encounters;
+  return clone as T;
+}
+
+export function isMissingDailyEssenceClaimColumn(
+  error: { code?: string; message?: string } | null | undefined,
+): boolean {
+  if (!error) return false;
+  if (error.code !== 'PGRST204' && error.code !== '42703') return false;
+  return DAILY_ESSENCE_COLUMN_PATTERN.test(error.message ?? '');
+}
+
+export function omitDailyEssenceClaim<T extends Partial<CharacterRow>>(payload: T): T {
+  const clone: Record<string, unknown> = { ...payload };
+  delete clone.last_daily_essence_claim;
   return clone as T;
 }
 
@@ -128,6 +143,8 @@ export function convertFromSupabase(row: CharacterRow): Character {
     id: row.id,
     lastIdleCheck: toFiniteTimestamp(row.last_idle_check),
     lastActive: toFiniteTimestamp(row.last_active),
+    lastDailyEssenceClaim:
+      'last_daily_essence_claim' in row ? (row.last_daily_essence_claim ?? null) : undefined,
     monsterKills: row.monster_kills ?? undefined,
     monsterEncounters: row.monster_encounters ?? undefined,
     idleStreak: row.idle_streak ?? 0,
@@ -183,6 +200,9 @@ export function convertToSupabase(character: Character, fields?: string[]): Part
     equipped_items: character.equippedItems ?? { weapon: null, armor: null, accessory: null },
     last_idle_check: character.lastIdleCheck ? new Date(character.lastIdleCheck).toISOString() : null,
     last_active: character.lastActive ? new Date(character.lastActive).toISOString() : null,
+    ...(character.lastDailyEssenceClaim !== undefined
+      ? { last_daily_essence_claim: character.lastDailyEssenceClaim }
+      : {}),
     idle_streak: character.idleStreak ?? 0,
     idle_max_streak: character.idleMaxStreak ?? 0,
     idle_total_kills: character.idleTotalKills ?? 0,

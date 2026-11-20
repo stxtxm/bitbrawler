@@ -38,13 +38,18 @@ export const claimDailyLoginEssence = (
   characterId: string,
   now: number = Date.now(),
   amount: number = GAME_RULES.ECONOMY.DAILY_LOGIN_ESSENCE,
+  serverClaimDay?: string | null,
 ): number => {
   if (!characterId || amount <= 0) return 0;
-  if (hasClaimedDailyLoginEssence(characterId, now)) return 0;
+  const today = getDailyResetKey(now);
+  const alreadyClaimed =
+    hasClaimedDailyLoginEssence(characterId, now)
+    || (serverClaimDay !== undefined && serverClaimDay === today);
+  if (alreadyClaimed) return 0;
   try {
     localStorage.setItem(
       getDailyLoginEssenceKey(characterId),
-      JSON.stringify({ characterId, dayKey: getDailyResetKey(now) }),
+      JSON.stringify({ characterId, dayKey: today }),
     );
   } catch {
     return 0;

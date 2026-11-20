@@ -1,24 +1,23 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ESSENCE_YIELD, UPGRADE_BASE_COST, UPGRADE_COST_SCALING } from '../../data/forgeConstants';
 import { getUpgradeCost } from '../../utils/forgeUtils';
 import { GAME_RULES } from '../../config/gameRules';
 import { ITEM_ASSETS } from '../../data/itemAssets';
 import { PixelItemAsset } from '../../types/Item';
+import { calculateIdleEssence } from '../../utils/idleXpUtils';
+import {
+  claimDailyLoginEssence,
+  getDailyLoginEssenceKey,
+} from '../../utils/dailyEssenceUtils';
+import { getDailyResetKey } from '../../utils/dailyReset';
 
 const ITEM = ITEM_ASSETS[0] as PixelItemAsset;
 
 const rarities = ['common', 'uncommon', 'rare', 'epic', 'legendary'] as const;
 const oldUpgradeCosts = [30, 50, 70, 90, 110];
 const oldYields = [5, 20, 50, 80, 400];
-const baseline = {
-  upgradeSpendPerRun: 19.64,
-  salvageIncomePerRun: 17.23,
-  netEssencePerRun: -5.01,
-  runsPerDay: 5,
-};
-
-const average = (values: number[]): number =>
-  values.reduce((total, value) => total + value, 0) / values.length;
+const DAY_ONE = new Date('2026-09-14T10:00:00Z').getTime();
+const DAY_TWO = new Date('2026-09-15T10:00:00Z').getTime();
 
 describe('Economy balance — upgrade costs', () => {
   it('lowers the entry cost below the previous 30 essence', () => {
@@ -44,29 +43,60 @@ describe('Economy balance — upgrade costs', () => {
   });
 });
 
-describe('Economy balance — essence generation', () => {
-  it('raises salvage yields for every rarity', () => {
+describe('Economy balance — real essence outputs', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(DAY_ONE));
+    const store = new Map<string, string>();
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => store.set(key, value),
+      removeItem: (key: string) => store.delete(key),
+      clear: () => store.clear(),
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it('pays the exact upgrade cost for each level', () => {
+    expect(Array.from({ length: 5 }, (_, level) => getUpgradeCost(ITEM, level))).toEqual([
+      25, 40, 55, 70, 85,
+    ]);
+  });
+
+  it('pays the exact salvage yield for every rarity', () => {
+    expect(rarities.map((rarity) => ESSENCE_YIELD[rarity])).toEqual([
+      6, 23, 58, 92, 460,
+    ]);
+  });
+
+  it('raises salvage yields above the previous values', () => {
     rarities.forEach((rarity, index) => {
       expect(ESSENCE_YIELD[rarity]).toBeGreaterThan(oldYields[index]);
     });
   });
 
-  it('grants a positive daily login essence reward', () => {
-    expect(GAME_RULES.ECONOMY.DAILY_LOGIN_ESSENCE).toBeGreaterThan(0);
+  it('grants the daily login essence once per reset day', () => {
+    const amount = GAME_RULES.ECONOMY.DAILY_LOGIN_ESSENCE;
+    expect(claimDailyLoginEssence('hero', DAY_ONE)).toBe(amount);
+    expect(claimDailyLoginEssence('hero', DAY_ONE)).toBe(0);
+    expect(claimDailyLoginEssence('hero', DAY_TWO)).toBe(amount);
+    expect(localStorage.getItem(getDailyLoginEssenceKey('hero'))).not.toBeNull();
+    expect(JSON.parse(localStorage.getItem(getDailyLoginEssenceKey('hero')) as string).dayKey).toBe(
+      getDailyResetKey(DAY_TWO),
+    );
   });
 
-  it('projects a net positive essence balance between +1 and +3 per run', () => {
-    const newUpgradeCosts = Array.from({ length: 5 }, (_, level) => getUpgradeCost(ITEM, level));
-    const newYields = rarities.map((rarity) => ESSENCE_YIELD[rarity]);
-    const upgradeRatio = average(newUpgradeCosts) / average(oldUpgradeCosts);
-    const salvageRatio = average(newYields) / average(oldYields);
+  it('covers one first upgrade with a full offline day of idle essence plus the daily bonus', () => {
+    const perWin = calculateIdleEssence(true, 10, 10, 10);
+    const offlineFights = 120;
+    const dailyBonus = GAME_RULES.ECONOMY.DAILY_LOGIN_ESSENCE;
+    const firstUpgrade = getUpgradeCost(ITEM, 0);
 
-    const upgradeSaving = baseline.upgradeSpendPerRun * (1 - upgradeRatio);
-    const salvageGain = baseline.salvageIncomePerRun * (salvageRatio - 1);
-    const dailyBonusPerRun = GAME_RULES.ECONOMY.DAILY_LOGIN_ESSENCE / baseline.runsPerDay;
-    const projectedNet = baseline.netEssencePerRun + upgradeSaving + salvageGain + dailyBonusPerRun;
-
-    expect(projectedNet).toBeGreaterThanOrEqual(1);
-    expect(projectedNet).toBeLessThanOrEqual(3);
+    expect(perWin).toBeCloseTo(0.2286, 4);
+    expect(perWin * offlineFights + dailyBonus).toBeGreaterThan(firstUpgrade);
   });
 });

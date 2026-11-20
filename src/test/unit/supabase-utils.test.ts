@@ -3,7 +3,9 @@ import {
   convertFromSupabase,
   convertToSupabase,
   isMissingMonsterCounterColumn,
+  isMissingDailyEssenceClaimColumn,
   omitMonsterCounters,
+  omitDailyEssenceClaim,
   RANKINGS_SELECT_COLUMNS,
   MATCHMAKING_SELECT_COLUMNS,
   SERVER_MERGE_SELECT_COLUMNS,
@@ -510,5 +512,65 @@ describe('monster counter persistence fallback', () => {
       monster_kills: { GOBLIN: 1 },
       monster_encounters: { GOBLIN: 2 },
     })
+  })
+})
+
+describe('daily essence claim persistence fallback', () => {
+  it('requests the daily claim in the server merge projection', () => {
+    expect(SERVER_MERGE_SELECT_COLUMNS.split(',')).toContain('last_daily_essence_claim')
+  })
+
+  it('detects a missing daily claim column from PostgREST errors', () => {
+    expect(
+      isMissingDailyEssenceClaimColumn({
+        code: 'PGRST204',
+        message: "Could not find the 'last_daily_essence_claim' column of 'characters' in the schema cache",
+      }),
+    ).toBe(true)
+    expect(
+      isMissingDailyEssenceClaimColumn({
+        code: '42703',
+        message: 'column characters.last_daily_essence_claim does not exist',
+      }),
+    ).toBe(true)
+    expect(
+      isMissingDailyEssenceClaimColumn({
+        code: '42703',
+        message: 'column characters.monster_kills does not exist',
+      }),
+    ).toBe(false)
+    expect(isMissingDailyEssenceClaimColumn(null)).toBe(false)
+  })
+
+  it('strips the daily claim from a payload without mutating the source', () => {
+    const payload = { id: 'abc-123', last_daily_essence_claim: '2026-11-20' }
+    const stripped = omitDailyEssenceClaim(payload)
+
+    expect(stripped).toEqual({ id: 'abc-123' })
+    expect(payload).toEqual({ id: 'abc-123', last_daily_essence_claim: '2026-11-20' })
+  })
+})
+
+describe('daily claim conversion', () => {
+  const baseRow = { id: 'x', name: 'Hero', gender: 'male', seed: 's' } as unknown as CharacterRow
+
+  it('distinguishes a missing column from an explicit null claim', () => {
+    expect(convertFromSupabase(baseRow).lastDailyEssenceClaim).toBeUndefined()
+    expect(
+      convertFromSupabase({ ...baseRow, last_daily_essence_claim: null }).lastDailyEssenceClaim,
+    ).toBeNull()
+    expect(
+      convertFromSupabase({ ...baseRow, last_daily_essence_claim: '2026-11-20' }).lastDailyEssenceClaim,
+    ).toBe('2026-11-20')
+  })
+
+  it('omits the claim when the local character never saw the column', () => {
+    const payload = convertToSupabase({ lastDailyEssenceClaim: undefined } as Character)
+    expect(payload).not.toHaveProperty('last_daily_essence_claim')
+  })
+
+  it('persists an explicit claim day', () => {
+    const payload = convertToSupabase({ lastDailyEssenceClaim: '2026-11-20' } as Character)
+    expect(payload.last_daily_essence_claim).toBe('2026-11-20')
   })
 })
