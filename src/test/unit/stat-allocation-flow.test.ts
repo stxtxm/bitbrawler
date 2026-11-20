@@ -1,6 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { Character } from '../../types/Character';
-import { applyStatPoint, grantStatPoints, autoAllocateStatPoints, allocateStatByArchetype, allocateStatsByArchetype, StatKey } from '../../utils/statUtils';
+import { applyStatPoint, grantStatPoints, autoAllocateStatPoints, allocateStatByArchetype, allocateStatsByArchetype, getLuckAllocationCap, StatKey } from '../../utils/statUtils';
+
+function seededRng(seed: number): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
 
 function makeCharacter(overrides: Partial<Character> = {}): Character {
   return {
@@ -208,6 +216,84 @@ describe('Stat allocation flow (level-up simulation)', () => {
         if (updated.intelligence > 10) intAllocs++;
       }
       expect(intAllocs).toBeGreaterThan(0);
+    });
+  });
+
+  describe('getLuckAllocationCap', () => {
+    it('derives the luck cap from the crit formula (about 29)', () => {
+      expect(getLuckAllocationCap()).toBe(29);
+    });
+  });
+
+  describe('luck cap enforcement', () => {
+    it('lucky archetype stays under the cap and remains combat-capable', () => {
+      const cap = getLuckAllocationCap();
+      for (let seed = 1; seed <= 25; seed++) {
+        const char = makeCharacter({
+          level: 32,
+          statPoints: 31,
+          strength: 10,
+          vitality: 10,
+          dexterity: 10,
+          luck: 23,
+          intelligence: 10,
+          focus: 10,
+          maxHp: 180,
+          hp: 180,
+        });
+        const updated = allocateStatsByArchetype(char, 31, seededRng(seed));
+        expect(updated.statPoints).toBe(0);
+        expect(updated.luck).toBeLessThanOrEqual(cap);
+        expect(updated.strength).toBeGreaterThanOrEqual(15);
+      }
+    });
+
+    it('never allocates a point into luck once the cap is reached', () => {
+      const cap = getLuckAllocationCap();
+      const char = makeCharacter({
+        statPoints: 1,
+        strength: 10,
+        vitality: 10,
+        dexterity: 10,
+        luck: cap,
+        intelligence: 10,
+        focus: 10,
+      });
+      const updated = allocateStatByArchetype(char, () => 0.999);
+      expect(updated.luck).toBe(cap);
+      expect(updated.statPoints).toBe(0);
+    });
+
+    it('keeps bruiser strength-dominant and mage intelligence-dominant', () => {
+      for (let seed = 1; seed <= 25; seed++) {
+        const bruiser = makeCharacter({
+          level: 20,
+          statPoints: 20,
+          strength: 20,
+          vitality: 10,
+          dexterity: 10,
+          luck: 10,
+          intelligence: 10,
+          focus: 10,
+        });
+        const trainedBruiser = allocateStatsByArchetype(bruiser, 20, seededRng(seed));
+        expect(trainedBruiser.strength).toBeGreaterThan(trainedBruiser.vitality);
+        expect(trainedBruiser.strength).toBeGreaterThan(trainedBruiser.luck);
+
+        const mage = makeCharacter({
+          level: 20,
+          statPoints: 20,
+          strength: 10,
+          vitality: 10,
+          dexterity: 10,
+          luck: 10,
+          intelligence: 20,
+          focus: 10,
+        });
+        const trainedMage = allocateStatsByArchetype(mage, 20, seededRng(seed));
+        expect(trainedMage.intelligence).toBeGreaterThan(trainedMage.strength);
+        expect(trainedMage.intelligence).toBeGreaterThan(trainedMage.focus);
+      }
     });
   });
 
