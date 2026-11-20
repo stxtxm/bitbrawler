@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-11-20T01:47:37Z",
+  "last_session": "2026-11-20T01:51:44Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,13 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "version": 1,
-      "agent": "dev",
-      "issue": "#1310",
-      "date": "2026-10-23",
-      "lesson": "QA cohort budgets must stay below the priciest SHOP_OFFERS entry (88 💎) or budget_limited can never trigger. Test now asserts every cohort budget < max(SHOP_OFFERS.price) so a future price change forces a budget review. QA-END=60, QA-MID=40, QA-FRESH=50."
-    },
     {
       "lesson": "Watchdog (#1299): statusCheckRollup contient aussi Cloudflare Pages (workflowName vide) → compter tout le rollup empêchait le filet 'PR orpheline' (CHECK_COUNT jamais 0). Filtrer select(.workflowName == \"CI\") pour CHECK_COUNT ET FAILED_COUNT. Le reviewer ne peut pas poster de review formelle sur une PR github-actions[bot] → détecter aussi un commentaire 'Review PR #' postérieur au dernier commit (gh api issues/N/comments + pulls/N/commits), sinon re-dispatch horaire.",
       "issue": "#1299",
@@ -171,6 +164,11 @@
     {
       "lesson": "Issue #1396 : quand un affichage de récompense doit refléter le gain réel, réutiliser la même fonction que le contexte (ici getBossRewards + getBossProgressForId) plutôt qu un helper brut (getBossConsolationXp) qui ignore les plafonds journaliers.",
       "issue": "#1396",
+      "date": "2026-11-20"
+    },
+    {
+      "lesson": "Issue #1395 prime quotidienne autoritative serveur: (1) la migration SQL va dans supabase/migrations/*.md (les .sql déclenchent le gate reviewer), jamais exécutée par l'agent. (2) Pour qu'un nouveau champ serveur soit rétro-compatible, le SELECT serveur inclut la colonne puis retente sans elle sur 42703/PGRST204; côté client on distingue colonne absente (undefined) de null via `'col' in row`. (3) Ne stamper le claim dans le personnage client que si la colonne existe (sinon convertToSupabase enverrait un champ absent et casserait le flush).",
+      "issue": "#1395",
       "date": "2026-11-20"
     }
   ]
