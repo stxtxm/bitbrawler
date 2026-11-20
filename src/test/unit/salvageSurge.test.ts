@@ -129,26 +129,26 @@ describe('Salvage Surge LiveOps', () => {
   });
 
   describe('getSalvageYieldWithSurge', () => {
-    it('common 5 ->10 with x2', () => {
+    it('common 6 ->12 with x2', () => {
       const item = { id: 'c', name: 'c', rarity: 'common', slot: 'weapon', stats: {}, pixels: [[1]], requiredLevel: 1 } as any;
       const res = getSalvageYieldWithSurge(item, () => 0.03, false);
-      expect(res.essenceYield).toBe(10);
+      expect(res.essenceYield).toBe(12);
       expect(res.multiplier).toBe(2);
     });
-    it('common 5 ->50 with x10', () => {
+    it('common 6 ->60 with x10', () => {
       const item = { id: 'c', name: 'c', rarity: 'common', slot: 'weapon', stats: {}, pixels: [[1]], requiredLevel: 1 } as any;
       const res = getSalvageYieldWithSurge(item, () => 0.005, false);
-      expect(res.essenceYield).toBe(50);
+      expect(res.essenceYield).toBe(60);
     });
-    it('epic 80 ->160 with x2', () => {
+    it('epic 92 ->184 with x2', () => {
       const item = { id: 'e', name: 'e', rarity: 'epic', slot: 'weapon', stats: {}, pixels: [[1]], requiredLevel: 1 } as any;
       const res = getSalvageYieldWithSurge(item, () => 0.03, false);
-      expect(res.essenceYield).toBe(160);
+      expect(res.essenceYield).toBe(184);
     });
-    it('epic 80 ->800 with x10', () => {
+    it('epic 92 ->920 with x10', () => {
       const item = { id: 'e', name: 'e', rarity: 'epic', slot: 'weapon', stats: {}, pixels: [[1]], requiredLevel: 1 } as any;
       const res = getSalvageYieldWithSurge(item, () => 0.005, false);
-      expect(res.essenceYield).toBe(800);
+      expect(res.essenceYield).toBe(920);
     });
   });
 

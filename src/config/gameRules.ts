@@ -91,6 +91,9 @@ export const GAME_RULES = {
         BURST_EXTRA_FIGHTS: 1,
         DEPTH_IDLE_RATIO_SAMPLE: true,
     },
+    ECONOMY: {
+        DAILY_LOGIN_ESSENCE: 5,
+    },
     COMEBACK: {
         SECOND_WIND_PER_LOSS: 5,
         SECOND_WIND_CAP: 25,

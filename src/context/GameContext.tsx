@@ -46,6 +46,7 @@ import {
 } from '../utils/forgeUtils';
 import { buyShopOffer as buyShopOfferUtil, getShopOfferPurchaseInfo, rerollShopOffers as rerollShopOffersUtil, type ShopOffer, type ShopPurchase } from '../utils/shopUtils';
 import { completeRecoveryQuest, getConsecutiveLosses, getSecondWindEssence, recordRecovery, startRecoveryQuest } from '../utils/comebackUtils';
+import { claimDailyLoginEssence } from '../utils/dailyEssenceUtils';
 import { markOfferPurchased, markRerollUsed } from '../utils/shopStorage';
 import {
   checkMedals,
@@ -354,6 +355,16 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [flushSyncToBackend])
 
+  const applyDailyLoginBonus = useCallback((char: Character): Character => {
+    if (toFiniteTimestamp(char.lastActive) <= 0) return char;
+    const amount = claimDailyLoginEssence(char.id ?? char.seed);
+    if (amount <= 0) return char;
+    return normalizeCharacter({
+      ...char,
+      essence: (char.essence ?? 0) + amount,
+    });
+  }, []);
+
   // Load character on mount
   useEffect(() => {
   const loadCharacter = async () => {
@@ -405,11 +416,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           monsterEncounters: mergeMonsterCounters(anyLocal.monsterEncounters, anyServer.monsterEncounters),
         } as any;
         const normalized = normalizeCharacter(mergedChar);
-        persistCharacter(normalized);
+        const withDailyBonus = applyDailyLoginBonus(normalized);
+        persistCharacter(withDailyBonus);
         setDbAvailable(true);
         // If local had more XP, sync it back to Supabase
-        if (hasMoreXp) {
-          syncCharacterToBackend(normalized);
+        if (hasMoreXp || withDailyBonus !== normalized) {
+          syncCharacterToBackend(withDailyBonus);
         }
       } else if (syncResult.status === 'error') {
         setActiveCharacter(normalizeCharacter(localChar));
@@ -425,7 +437,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     };
 
     loadCharacter();
-  }, [isOnline, persistCharacter, syncCharacterWithSupabase, syncCharacterToBackend]);
+  }, [isOnline, persistCharacter, syncCharacterWithSupabase, syncCharacterToBackend, applyDailyLoginBonus]);
 
 
   // Characters are now reset centrally via GitHub Actions every 24h.
@@ -455,15 +467,23 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         ...convertFromSupabase(data),
         id: data.id
       });
+      const dailyEssence = claimDailyLoginEssence(fullChar.id ?? fullChar.seed);
+      const loadedChar = dailyEssence > 0
+        ? normalizeCharacter({
+            ...fullChar,
+            essence: (fullChar.essence ?? 0) + dailyEssence,
+          })
+        : fullChar;
 
-      persistCharacter(fullChar);
+      persistCharacter(loadedChar);
+      if (dailyEssence > 0) syncCharacterToBackend(loadedChar);
       setDbAvailable(true);
       return null;
     } catch (error) {
       handleDbError(error, 'login');
       return "Connection error - please check your internet connection and try again";
     }
-  }, [handleDbError, persistCharacter]);
+  }, [handleDbError, persistCharacter, syncCharacterToBackend]);
 
   // Logout function — flush le sync debounced (médailles/idle) avant de clear, sinon l'XP reste à 0 au prochain login
   const logout = useCallback(async () => {
