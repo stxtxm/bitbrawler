@@ -30,6 +30,9 @@ export interface QaBotConfig {
   }>
   /** Cohorte forcée pour ce run (QA_COHORT), sinon résolution par niveau. */
   cohort: string | null
+  /** QA Combat Fleet (#1387 Phase 1): 3 personnages persistants — un par
+   *  tranche de niveau. */
+  fleet: Array<{ name: string; minLevel?: number; maxLevel?: number }>
 }
 
 declare const config: QaBotConfig

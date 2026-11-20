@@ -74,4 +74,14 @@ export default {
   ],
   /** Cohorte forcée (QA-FRESH | QA-MID | QA-END) — QA_COHORT env. */
   cohort: process.env.QA_COHORT || null,
+  /** QA Combat Fleet (#1387 Phase 1): 3 persistent QA characters — one per
+   *  level bracket (early game / mid game / end game). The bot rotates between
+   *  them (oldest `last_run` first) so each bracket yields reliable signals and
+   *  the daily fight quota (COMBAT.MAX_DAILY_FIGHTS) is spent per character
+   *  instead of by the single active fighter. Set QA_FLEET=false to disable. */
+  fleet: process.env.QA_FLEET === 'false' ? [] : [
+    { name: 'QA-FRESH', minLevel: 1, maxLevel: 5 },
+    { name: 'QA-MID', minLevel: 15, maxLevel: 25 },
+    { name: 'QA-END', minLevel: 30, maxLevel: 99 },
+  ],
 }

@@ -41,6 +41,9 @@ const QA_TIME_ZONE = config.timeZone || 'Europe/Paris'
 
 let runStartTime = Date.now()
 let suppressInventoryHandler = false
+/** QA Combat Fleet (#1387 Phase 1): fleet member selected for the current run
+ *  — shared with persistQaState so the per-member bookkeeping lands in state. */
+let activeFleetMember = null
 
 // Raid boss constants (mirror src/config/gameRules.ts BOSS.* and src/data/bossAssets.ts)
 const BOSS_UNLOCK_LEVEL = 30
@@ -157,7 +160,7 @@ function getAppUrl(path) {
 // Pure helpers (persistentNameForGeneration, shouldForcePersistentReset,
 // parseLevelFromText) live in qa-bot-helpers.js and are unit-tested (#830).
 
-function resolvePersistentCharacter(state, now) {
+function resolvePersistentCharacter(state, now, baseName = config.persistentCharacterName) {
   const generation = state.persistent_generation || 0
   const createdAt = state.persistent_created_at ? new Date(state.persistent_created_at) : null
   const ageMs = createdAt !== null ? now.getTime() - createdAt.getTime() : null
@@ -168,7 +171,7 @@ function resolvePersistentCharacter(state, now) {
   const shouldReset = state.persistent_reset_ready === true || ageExceeded
   if (!shouldReset) {
     return {
-      name: persistentNameForGeneration(config.persistentCharacterName, generation),
+      name: persistentNameForGeneration(baseName, generation),
       generation,
       createdAt: state.persistent_created_at || null,
       reset: false,
@@ -176,11 +179,29 @@ function resolvePersistentCharacter(state, now) {
   }
   const nextGeneration = generation + 1
   return {
-    name: persistentNameForGeneration(config.persistentCharacterName, nextGeneration),
+    name: persistentNameForGeneration(baseName, nextGeneration),
     generation: nextGeneration,
     createdAt: null,
     reset: true,
   }
+}
+
+/**
+ * QA Combat Fleet (#1387 Phase 1): pick the fleet member to run this time.
+ * Members with no recorded run come first; among them the oldest `last_run`
+ * wins — over several bot runs every member gets its turn (rotation by
+ * oldest-last-run). Returns null when the fleet is disabled/empty.
+ */
+function selectFleetMember(state, fleet) {
+  if (!Array.isArray(fleet) || fleet.length === 0) return null
+  const members = fleet.slice().sort((a, b) => {
+    const lastA = state?.fleet?.[a.name]?.last_run ?? ''
+    const lastB = state?.fleet?.[b.name]?.last_run ?? ''
+    if (lastA !== lastB) return lastA < lastB ? -1 : 1
+    return String(a.name).localeCompare(String(b.name))
+  })
+  const member = members[0]
+  return member && typeof member.name === 'string' && member.name ? member : null
 }
 
 function loadStats() {
@@ -222,6 +243,16 @@ function saveState(state) {
   } catch (err) {
     console.error(`   ❌ Failed to write state to ${STATE_FILE}: ${err.message}`)
     throw err
+  }
+}
+
+/** Quiet re-read of the state file (no log) — used by persistQaState when the
+ *  QA Combat Fleet is active to merge the fleet map of the other members. */
+function readStateQuiet() {
+  try {
+    return JSON.parse(readFileSync(STATE_FILE, 'utf-8'))
+  } catch {
+    return null
   }
 }
 
@@ -1426,14 +1457,31 @@ async function handleDailyLootbox(page, runKey) {
 }
 
 function persistQaState(runKey, character, source, exhausted, extra = {}) {
-  saveState({
+  const nextState = {
     run: runKey,
     character,
     exhausted,
     updated_at: new Date().toISOString(),
     source,
     ...extra,
-  })
+  }
+  // QA Combat Fleet (#1387 Phase 1): keep the fleet map of the other members
+  // so each member's bookkeeping survives the wholesale state rewrites.
+  if (activeFleetMember) {
+    const persisted = readStateQuiet()
+    nextState.fleet = {
+      ...(persisted?.fleet ?? {}),
+      [activeFleetMember.name]: {
+        character,
+        generation: nextState.persistent_generation ?? null,
+        created_at: nextState.persistent_created_at ?? null,
+        level: null,
+        last_run: runKey,
+        exhausted: exhausted === true,
+      },
+    }
+  }
+  saveState(nextState)
 }
 
 async function maybeReplaceExhaustedCharacter(page, runKey, runRecord, reason) {
@@ -3119,13 +3167,22 @@ async function run() {
   const state = loadState()
   const isCurrentRun = state.run === runKey
   const zonedWeekday = getZonedWeekday(now, QA_TIME_ZONE)
-  const usePersistent = config.persistentCharacter && zonedWeekday !== config.freshCharacterDay
+  // QA Combat Fleet (#1387 Phase 1): when enabled, the run targets one of the
+  // fleet members instead of the single persistent character.
+  const fleetMember = selectFleetMember(state, config.fleet)
+  activeFleetMember = fleetMember
+  const useFleet = fleetMember !== null
+  const usePersistent = !useFleet && config.persistentCharacter && zonedWeekday !== config.freshCharacterDay
   const isFreshDay = config.persistentCharacter && zonedWeekday === config.freshCharacterDay
   const savedCharacterName = state.character && (!isCurrentRun || state.exhausted !== true) ? state.character : null
   const savedDailyCharacterName = isFreshDay
     ? resolveReusableDailyCharacter(state, runKey)
     : savedCharacterName
-  const persistentInfo = usePersistent ? resolvePersistentCharacter(state, now) : null
+  const persistentInfo = usePersistent
+    ? resolvePersistentCharacter(state, now)
+    : useFleet
+      ? resolvePersistentCharacter(state?.fleet?.[fleetMember.name] ?? {}, now, fleetMember.name)
+      : null
   runStartTime = Date.now()
 
   console.log('═══════════════════════════════════════════')
@@ -3140,6 +3197,7 @@ async function run() {
   console.log(`    idleObserveMs:  ${config.idleObservationMs} (PvE idle observation)`)
   console.log(`    timeBudgetMs:   ${config.timeBudgetMs} (global run time budget)`)
   console.log(`    persistent:     ${config.persistentCharacter ? 'yes' : 'no'} (${config.persistentCharacterName}, fresh day=${config.freshCharacterDay}, max lvl=${config.persistentCharacterMaxLevel}, max age=${config.persistentCharacterMaxAgeDays}d)`)
+  console.log(`    fleet:          ${useFleet ? `${fleetMember.name} (${config.fleet.length} members)` : 'off'}`)
   console.log(`    statsFile:      ${STATS_FILE}`)
   console.log(`    stateFile:      ${STATE_FILE}`)
   console.log(`    screenshotsDir: ${SCREENSHOTS_DIR}`)
@@ -3349,7 +3407,7 @@ async function run() {
         const nextGeneration = activeGeneration + 1
         const forcedReset = await createCharacterWithName(
           page,
-          persistentNameForGeneration(config.persistentCharacterName, nextGeneration),
+          persistentNameForGeneration(activeFleetMember?.name ?? config.persistentCharacterName, nextGeneration),
         )
         runRecord.replaced_character = runRecord.character
         authResult = forcedReset
@@ -3763,6 +3821,21 @@ async function run() {
     const stats = loadStats()
     stats.push(runRecord)
     saveStats(stats)
+
+    // Fleet Phase 1 (#1387): record the member's final level for the rotation.
+    if (useFleet && fleetMember) {
+      const memberState = loadState()
+      const currentMember = memberState?.fleet?.[fleetMember.name] ?? {}
+      memberState.fleet = { ...(memberState?.fleet ?? {}) }
+      memberState.fleet[fleetMember.name] = {
+        ...currentMember,
+        character: runRecord.character,
+        level: runRecord.final_stats?.level ?? runRecord.initial_level ?? null,
+        last_run: runKey,
+      }
+      saveState(memberState)
+      console.log(`   📊 Fleet member ${fleetMember.name}: level=${memberState.fleet[fleetMember.name].level ?? '?'}, last_run=${runKey}`)
+    }
     console.log(`✅ Stats saved (run #${stats.length})`)
 
   } catch (err) {
