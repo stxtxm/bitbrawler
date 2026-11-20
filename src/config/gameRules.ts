@@ -96,6 +96,7 @@ export const GAME_RULES = {
     },
     ECONOMY: {
         DAILY_LOGIN_ESSENCE: 5,
+        WELCOME_ESSENCE: 20,
     },
     COMEBACK: {
         SECOND_WIND_PER_LOSS: 5,

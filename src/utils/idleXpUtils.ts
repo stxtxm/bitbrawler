@@ -20,7 +20,10 @@ export function calculateIdleEssence(
   const baseRate = won ? IDLE_CONFIG.ESSENCE.BASE_RATE : IDLE_CONFIG.ESSENCE.BASE_RATE * IDLE_CONFIG.ESSENCE.LOSS_RATIO
   const levelScaling = 1 + (playerLevel - 1) * IDLE_CONFIG.ESSENCE.LEVEL_SCALE
   const statMultiplier = Math.max(0.5, 1 + ((intelligence ?? 10) + (focus ?? 10) - 20) * 0.01)
-  return baseRate * levelScaling * statMultiplier * burstMult
+  const earlyGameMult = playerLevel <= IDLE_CONFIG.ESSENCE.EARLY_GAME_MAX_LEVEL
+    ? IDLE_CONFIG.ESSENCE.EARLY_GAME_MULT
+    : 1
+  return baseRate * levelScaling * statMultiplier * burstMult * earlyGameMult
 }
 
 

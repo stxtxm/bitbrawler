@@ -1,3 +1,5 @@
+import { SHOP_OFFER_COUNT } from '../data/shopConstants';
+
 const STORAGE_KEY = 'bitbrawler_shop_purchases';
 
 interface ShopPurchases {
@@ -126,7 +128,7 @@ export function markOfferPurchased(characterId: string, index: number, dateStr?:
   const today = dateStr ?? new Date().toISOString().slice(0, 10);
   const purchases = loadShopPurchases(characterId);
   if (!purchases[today] || typeof purchases[today] === 'boolean') {
-    purchases[today] = [false, false, false];
+    purchases[today] = Array.from({ length: SHOP_OFFER_COUNT }, () => false);
   }
   (purchases[today] as boolean[])[index] = true;
   saveShopPurchases(characterId, purchases);

@@ -28,7 +28,9 @@ describe('Fraîcheur du déploiement — sonde de production (#1228)', () => {
     // La rev est bumpée à chaque changement de rendu : on vérifie la forme,
     // pas la valeur, pour ne pas casser le test à chaque bump.
     expect(markers.rev).toMatch(/^r[0-9]+[a-z0-9-]*$/i);
-    expect(markers.prices).toHaveLength(4);
+    // 4 standard offers + the welcome shelf (#1388)
+    expect(markers.prices).toHaveLength(5);
+    expect(markers.prices).toContain('price:15');
     for (const price of markers.prices) {
       expect(price).toMatch(/^price:[0-9]+$/);
     }

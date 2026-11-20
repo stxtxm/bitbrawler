@@ -89,6 +89,8 @@ describe('ShopPanel', () => {
     for (const offer of SHOP_OFFERS) {
       // Objet épique is a replacement for Pièce rare, not a standalone 4th offer
       if (offer.label === 'Objet épique') continue;
+      // Welcome shelf only appears for low-level, broke characters (#1388)
+      if (offer.label === 'Offre de bienvenue') continue;
       const el = screen.queryByText(offer.label);
       if (offer.label === 'Pièce rare' && !el) {
         expect(screen.getByText('Objet épique')).toBeTruthy();
@@ -111,17 +113,28 @@ describe('ShopPanel', () => {
       // Objet épique (index 3) only appears as a replacement at LVL >= 10;
       // the LVL 5 test character never sees it (issue #726 epic unlock gate).
       if (offer.label === 'Objet épique') continue;
+      // Welcome shelf only appears for low-level, broke characters (#1388)
+      if (offer.label === 'Offre de bienvenue') continue;
       expect(screen.getByText(`${offer.price} 💎`)).toBeTruthy();
     }
+  });
+
+  it('shows the welcome shelf for a broke low-level character (#1388)', () => {
+    setupGame({ essence: 8, activeCharacter: makeCharacter({ level: 5, essence: 8 }) });
+    render(<ShopPanel onClose={vi.fn()} />);
+    expect(screen.getByText('Offre de bienvenue')).toBeTruthy();
+    expect(screen.getByText('15 💎')).toBeTruthy();
   });
 
   it('shows item name for item type offers', () => {
     setupGame();
     render(<ShopPanel onClose={vi.fn()} />);
-    // At least the item offers should show item names
-    const shopItems = SHOP_OFFERS.filter(o => o.type === 'item');
+    // Standard item offers (epic replacement and welcome shelf excluded)
+    const shopItems = SHOP_OFFERS.filter(
+      o => o.type === 'item' && o.label !== 'Objet épique' && o.label !== 'Offre de bienvenue',
+    );
     // Each item offer should have a name displayed somewhere
-    expect(shopItems.length).toBe(3);
+    expect(shopItems.length).toBe(2);
   });
 
   it('shows lootbox label for offer 2', () => {

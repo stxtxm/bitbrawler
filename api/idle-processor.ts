@@ -51,11 +51,13 @@ const STREAK_BONUS_CAP = 0.25
 const ESSENCE_BASE_RATE = 0.18
 const ESSENCE_LOSS_RATIO = 0.3
 const ESSENCE_LEVEL_SCALE = 0.03
+export const ESSENCE_EARLY_GAME_MAX_LEVEL = 5
+export const ESSENCE_EARLY_GAME_MULT = 2
 export const DAILY_LOGIN_ESSENCE = 5
 const DAILY_RESET_TIMEZONE = 'Europe/Paris'
 // Offline (cron-processed) essence earns a fraction of the watching rate —
 // watching the Idle Runner stays the best income, AFK nights stay modest.
-const OFFLINE_ESSENCE_MODIFIER = 0.15
+export const OFFLINE_ESSENCE_MODIFIER = 0.15
 
 // Aligned with src/config idleConfig.ts (XP_MODIFIER) and src/utils/xpUtils.ts (EARLY_SHIFT)
 // NOTE: these MUST stay in sync with the client — when the client curve changes,
@@ -302,11 +304,12 @@ const SELECT_COLUMNS = [
 
 const SELECT_COLUMNS_WITH_DAILY = `${SELECT_COLUMNS},last_daily_essence_claim`
 
-function calculateIdleEssence(won: boolean, level: number, intelligence?: number, focus?: number): number {
+export function calculateIdleEssence(won: boolean, level: number, intelligence?: number, focus?: number): number {
   const baseRate = won ? ESSENCE_BASE_RATE : ESSENCE_BASE_RATE * ESSENCE_LOSS_RATIO
   const levelScaling = 1 + (level - 1) * ESSENCE_LEVEL_SCALE
   const statMultiplier = Math.max(0.5, 1 + ((intelligence ?? 10) + (focus ?? 10) - 20) * 0.01)
-  return baseRate * levelScaling * statMultiplier * OFFLINE_ESSENCE_MODIFIER
+  const earlyGameMult = level <= ESSENCE_EARLY_GAME_MAX_LEVEL ? ESSENCE_EARLY_GAME_MULT : 1
+  return baseRate * levelScaling * statMultiplier * OFFLINE_ESSENCE_MODIFIER * earlyGameMult
 }
 
 function simulateIdleGains(char: Character, idleMs: number): { updated: Character; fights: number } | null {

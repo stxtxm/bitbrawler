@@ -34,7 +34,12 @@ export const SHOP_OFFERS: ShopOfferConfig[] = [
   { type: 'item', price: 58, label: 'Pièce rare', rarityPool: ['rare', 'epic'] },
   { type: 'lootbox', price: 50, label: 'Coffre mystère', rarityPool: null },
   { type: 'item', price: 88, label: 'Objet épique', rarityPool: ['epic'] },
+  { type: 'item', price: 15, label: 'Offre de bienvenue', rarityPool: ['common', 'uncommon'] },
 ];
+
+export const WELCOME_OFFER_INDEX = 4;
+
+export const WELCOME_OFFER_MAX_LEVEL = 5;
 
 /** Cost to reroll today's shop offers (≈2 days of essence income). */
 export const REROLL_COST = 10;

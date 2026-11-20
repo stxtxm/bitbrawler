@@ -1,6 +1,13 @@
 import { Character } from '../types/Character';
 import { PixelItemAsset } from '../types/Item';
-import { SHOP_OFFERS, REROLL_COST, EPIC_UNLOCK_LEVEL } from '../data/shopConstants';
+import {
+  SHOP_OFFERS,
+  REROLL_COST,
+  EPIC_UNLOCK_LEVEL,
+  WELCOME_OFFER_INDEX,
+  WELCOME_OFFER_MAX_LEVEL,
+  SHOP_OFFER_COUNT,
+} from '../data/shopConstants';
 import { rollSimpleLootbox } from './lootboxUtils';
 import { isOfferPurchased, isRerollUsed, loadShopPurchases, saveShopPurchases } from './shopStorage';
 
@@ -134,6 +141,12 @@ export function getShopOffers(
   // Build the first 3 standard offers (config indices 0, 1, 2)
   const standardOffers: ShopOffer[] = [0, 1, 2].map((i) => buildOffer(i, character, items, rand));
 
+  const welcomeEligible = (character.level ?? 1) <= WELCOME_OFFER_MAX_LEVEL
+    && (character.essence ?? 0) < SHOP_OFFERS[0].price;
+  if (welcomeEligible) {
+    standardOffers[0] = buildOffer(WELCOME_OFFER_INDEX, character, items, rand);
+  }
+
   // Check if any item offer among the standard 3 is epic
   const hasNaturalEpic = standardOffers.some(
     (o) => o.type === 'item' && o.item?.rarity === 'epic',
@@ -187,7 +200,7 @@ export function resetDailyPurchases(
   const charId = character.id ?? character.seed;
   const purchases = loadShopPurchases(charId);
   if (!purchases[today]) {
-    purchases[today] = [false, false, false];
+    purchases[today] = Array.from({ length: SHOP_OFFER_COUNT }, () => false);
     saveShopPurchases(charId, purchases);
   }
   return character;

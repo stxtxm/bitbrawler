@@ -56,8 +56,9 @@ describe('idleXpUtils', () => {
       expect(calculateIdleEssence(true, 5)).toBeGreaterThan(calculateIdleEssence(false, 5))
     })
 
-    it('should scale with level', () => {
-      expect(calculateIdleEssence(true, 20)).toBeGreaterThan(calculateIdleEssence(true, 1))
+    it('should scale with level above the early-game boost', () => {
+      // Levels 1-5 get a x2 accessibility boost (#1388), so compare post-boost levels.
+      expect(calculateIdleEssence(true, 20)).toBeGreaterThan(calculateIdleEssence(true, 6))
     })
   })
 
