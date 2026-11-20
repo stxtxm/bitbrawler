@@ -58,17 +58,24 @@ function simulateCampaign(
 const RUNS = 200;
 const MAX_DAYS = 10;
 
-function summarize(killDays: (number | null)[]): {
+function summarize(
+  killDays: (number | null)[],
+  runs = RUNS,
+  maxDays = MAX_DAYS,
+): {
   day1KillRate: number;
   medianKillDay: number;
   killRateByDay10: number;
+  dailyKillRate: number;
 } {
   const kills = killDays.filter((d): d is number => d !== null).sort((a, b) => a - b);
   const day1 = kills.filter((d) => d <= 1).length;
+  const daysPlayed = killDays.reduce<number>((sum, day) => sum + (day ?? maxDays), 0);
   return {
-    day1KillRate: day1 / RUNS,
+    day1KillRate: day1 / runs,
     medianKillDay: kills.length ? kills[Math.floor(kills.length / 2)] : Infinity,
-    killRateByDay10: kills.length / RUNS,
+    killRateByDay10: kills.length / runs,
+    dailyKillRate: daysPlayed > 0 ? kills.length / daysPlayed : 0,
   };
 }
 
@@ -93,5 +100,21 @@ describe('Boss PvE accessibility tiers (#1360)', () => {
 
     expect(stats.day1KillRate).toBeLessThan(0.15);
     expect(stats.killRateByDay10).toBeGreaterThan(0.8);
+  });
+
+  it('Phase 3 daily win rate lands in the 25-35% target and finishes within 7 days', () => {
+    const player = makePlayer({
+      level: 61,
+      strength: 37, vitality: 37, dexterity: 36, luck: 36, intelligence: 36, focus: 37,
+      hp: 1100, maxHp: 1100,
+    });
+    const killDays = Array.from({ length: RUNS }, () => simulateCampaign(player, 7));
+    const stats = summarize(killDays, RUNS, 7);
+
+    expect(stats.dailyKillRate).toBeGreaterThanOrEqual(0.25);
+    expect(stats.dailyKillRate).toBeLessThanOrEqual(0.35);
+    expect(stats.medianKillDay).toBeGreaterThanOrEqual(2);
+    expect(stats.medianKillDay).toBeLessThanOrEqual(4);
+    expect(stats.killRateByDay10).toBe(1);
   });
 });

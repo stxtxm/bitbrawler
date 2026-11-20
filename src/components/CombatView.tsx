@@ -11,7 +11,7 @@ import { getActiveWinXpMultiplier } from '../utils/activeBonusUtils';
 import { useSound } from '../hooks/useSound';
 import { MonsterId, MONSTER_ASSETS } from '../data/monsterAssets';
 import { BossId, BOSS_ASSETS, getBossDef } from '../data/bossAssets';
-import { getBossKillXp } from '../utils/bossUtils';
+import { getBossConsolationXp, getBossKillXp } from '../utils/bossUtils';
 import { ParticleSystem, type ParticleType } from '../utils/particleSystem';
 import { COMBAT_BALANCE } from '../config/combatBalance';
 import type { CombatSpeed } from '../config/gameRules';
@@ -682,12 +682,17 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
     const xpGained = useMemo(() => {
         if (!combatResult) return 0;
         if (matchType === 'boss') {
-            return combatResult.winner === 'attacker' ? getBossKillXp(player) : 0;
+            const bossId = monsterId && BOSS_ASSETS.some((boss) => boss.id === monsterId)
+                ? monsterId as BossId
+                : undefined;
+            return combatResult.winner === 'attacker'
+                ? getBossKillXp(player, bossId)
+                : getBossConsolationXp(bossId);
         }
         const won = combatResult.winner === 'attacker';
         const baseXp = calculateFightXp(won, player.level, opponent.level);
         return Math.floor(baseXp * getActiveWinXpMultiplier(player, won));
-    }, [player, combatResult, matchType]);
+    }, [player, combatResult, matchType, monsterId]);
 
     const playerMaxHp = player.maxHp || player.hp;
     const opponentMaxHp = opponent.maxHp || opponent.hp;
@@ -978,7 +983,7 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
                 {phase === 'result' && combatResult && (
                     <div key={`combat-result-${visibilityKey}`} className={`combat-result${won ? ' victory' : draw ? ' draw' : ' defeat'}${!won ? ' combat-result-shake' : ''}`}>
                         {won && <><div className="result-badge victory">VICTORY!</div><div className="result-icon pixel victory"><PixelIcon type="trophy" size={80}/></div><div className="result-message"><div className="result-xp victory result-xp-popup">+{xpGained} XP</div><div className="result-sub">{matchType === 'boss' ? `You slew ${opponent.name}!` : `Victory over ${opponent.name}`}</div></div></>}
-                        {!won && !draw && <><div className="result-badge defeat">DEFEAT</div><div className="result-icon pixel defeat"><PixelIcon type="skull" size={72}/></div><div className="result-message">{matchType === 'boss' ? <><div className="result-xp defeat result-xp-popup">BOSS REMAINS</div><div className="result-sub">{opponent.name} survives — its HP persists for your next attack.</div></> : <><div className="result-xp defeat result-xp-popup">+{xpGained} XP</div><div className="result-sub">Defeated by {opponent.name}</div></>}</div></>}
+                        {!won && !draw && <><div className="result-badge defeat">DEFEAT</div><div className="result-icon pixel defeat"><PixelIcon type="skull" size={72}/></div><div className="result-message">{matchType === 'boss' ? <><div className="result-xp defeat result-xp-popup">{xpGained > 0 ? `+${xpGained} XP` : 'BOSS REMAINS'}</div><div className="result-sub">{opponent.name} survives — its HP persists for your next attack.</div></> : <><div className="result-xp defeat result-xp-popup">+{xpGained} XP</div><div className="result-sub">Defeated by {opponent.name}</div></>}</div></>}
                         {draw && <><div className="result-badge draw">DRAW</div><div className="result-icon pixel draw"><PixelIcon type="swords" size={72}/></div><div className="result-message"><div className="result-xp draw result-xp-popup">+{xpGained} XP</div><div className="result-sub">Stalemate vs {opponent.name}</div></div></>}
                         <button className="button primary-btn result-btn" onClick={handleFinish}>CONTINUE</button>
                     </div>

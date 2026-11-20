@@ -22,6 +22,8 @@ interface ActionPanelProps {
   bossLevel: number;
   bossPityStacks?: number;
   bossPityReduction?: number;
+  bossDamagePct?: number;
+  bossEstimatedDays?: number | null;
   onTogglePve: () => void;
   onTogglePvp: () => void;
   onFight: () => void;
@@ -35,7 +37,7 @@ interface ActionPanelProps {
 export const ActionPanel = memo(function ActionPanel({
   pveMode, canFight, matchmaking, hasPendingFight, autoMode,
   isOfflineMode, fightsLeft, bossAttacksLeft, bossUnlocked,
-  bossHp, bossMaxHp, bossLevel, bossPityStacks = 0, bossPityReduction = 0, onTogglePve, onTogglePvp, onFight,
+  bossHp, bossMaxHp, bossLevel, bossPityStacks = 0, bossPityReduction = 0, bossDamagePct = 0, bossEstimatedDays = null, onTogglePve, onTogglePvp, onFight,
   tacticalOpponent, tacticalHint, onOpenInventory,
   bossId, abyssalUnlocked,
 }: ActionPanelProps) {
@@ -116,6 +118,12 @@ export const ActionPanel = memo(function ActionPanel({
             </div>
             {bossPityStacks > 0 && (
               <div className="boss-pity-badge" style={{ fontSize: 10, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{isAbyssal ? 'Abyss affaibli' : 'Titan affaibli'} -{bossPityReduction}% ({bossPityStacks})</div>
+            )}
+            {bossDamagePct > 0 && (
+              <div className="boss-progress-hint" style={{ fontSize: 10, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {Math.round(bossDamagePct)}% DAMAGE DEALT
+                {bossEstimatedDays != null ? ` · ~${bossEstimatedDays}D TO KILL` : ''}
+              </div>
             )}
           </div>
         )}

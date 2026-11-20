@@ -25,14 +25,15 @@ export const GAME_RULES = {
         UNLOCK_LEVEL: 30, // Boss PvE unlocks at this level (void_titan)
         MAX_DAILY_ATTACKS: 5, // Daily attacks against the raid boss (independent from PvP/PvE gauge)
         LEVEL_BOOST: 2, // Boss fights at playerLevel + this offset
-        STAT_MULTIPLIER: 1.2, // Boss raw stats scale off the player's raw stats
-        HP_MULTIPLIER: 12.0, // Boss persistent HP pool = player maxHp * this (before phase/pity)
+        STAT_MULTIPLIER: 1.1, // Boss raw stats scale off the player's raw stats
+        HP_MULTIPLIER: 10.0, // Boss persistent HP pool = player maxHp * this (before phase/pity)
         XP_MODIFIER: 4.0, // Boss kill XP payout multiplier (vs a regular fight win)
         ESSENCE_REWARD: 60, // Essence rewarded on boss kill (Phase 3 baseline)
         PITY_STEP_DEFEATS: 3, // Every N defeats increases pity reduction
         PITY_STEP_REDUCTION: 0.2, // Reduction per pity step (20%)
         PITY_CAP: 0.6, // Max pity HP reduction (60%)
         CONSOLATION_ESSENCE: 15, // Essence on defeat (baseline)
+        CONSOLATION_XP: 20, // XP on defeat (baseline)
         CONSOLATION_CAP: 3, // Max consolation payouts per Paris day
     },
     BOSS_ACCESSIBILITY: {
@@ -47,8 +48,8 @@ export const GAME_RULES = {
             UNLOCK_LEVEL: 30,
             MAX_DAILY_ATTACKS: 5,
             LEVEL_BOOST: 2,
-            STAT_MULTIPLIER: 1.2,
-            HP_MULTIPLIER: 12.0,
+            STAT_MULTIPLIER: 1.1,
+            HP_MULTIPLIER: 10.0,
             XP_MODIFIER: 4.0,
             ESSENCE_REWARD: 60,
             REQUIRES_KILLS: 0,
@@ -56,6 +57,7 @@ export const GAME_RULES = {
             PITY_STEP_REDUCTION: 0.2,
             PITY_CAP: 0.6,
             CONSOLATION_ESSENCE: 15,
+            CONSOLATION_XP: 20,
             CONSOLATION_CAP: 3,
         },
         abyssal_monarch: {
@@ -71,6 +73,7 @@ export const GAME_RULES = {
             PITY_STEP_REDUCTION: 0.2,
             PITY_CAP: 0.6,
             CONSOLATION_ESSENCE: 45,
+            CONSOLATION_XP: 45,
             CONSOLATION_CAP: 3,
         },
     } as const,

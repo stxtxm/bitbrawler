@@ -16,6 +16,7 @@ export interface BossProgress {
   firstEncounterAt: number;
   pityStacks?: number;
   consolationCount?: number;
+  totalDamageDealt?: number;
 }
 export function getBossTier(bossId: BossId = BOSS_ID) {
   return (GAME_RULES.BOSS_TIERS as any)[bossId] ?? GAME_RULES.BOSS;
@@ -191,6 +192,7 @@ export function createBossProgress(player: Character, now: any = Date.now(), bos
     firstEncounterAt: effectiveNow,
     pityStacks: effectiveStacks,
     consolationCount: 0,
+    totalDamageDealt: 0,
   };
 }
 
@@ -262,6 +264,7 @@ export function resolveBossAttack(
   const tier: any = getBossTier(bossId);
   const canGrant = alreadyRewarded < (tier.CONSOLATION_CAP ?? GAME_RULES.BOSS.CONSOLATION_CAP);
   const newConsolationCount = canGrant ? alreadyRewarded + 1 : alreadyRewarded;
+  const previousDamage = reset.totalDamageDealt ?? Math.max(0, reset.bossMaxHp - reset.bossHp);
 
   return {
     progress: {
@@ -271,6 +274,7 @@ export function resolveBossAttack(
       bossMaxHp: newMaxHp,
       pityStacks: newStacks,
       consolationCount: newConsolationCount,
+      totalDamageDealt: previousDamage + damageDealt,
     },
     killed: false,
     damageDealt,
@@ -318,7 +322,15 @@ export function getBossRewards(
   const consolation = bossId === BOSS_ID && tierEssence > 0
     ? Math.round(baseConsolation * (killEssence / tierEssence))
     : baseConsolation;
-  return { xpGained: 0, essenceGained: canGrant ? consolation : 0 };
+  return {
+    xpGained: canGrant ? getBossConsolationXp(bossId) : 0,
+    essenceGained: canGrant ? consolation : 0,
+  };
+}
+
+export function getBossConsolationXp(bossId: BossId = BOSS_ID): number {
+  const tier: any = getBossTier(bossId);
+  return tier.CONSOLATION_XP ?? GAME_RULES.BOSS.CONSOLATION_XP;
 }
 
 export function getBossConsolationEssence(progress: BossProgress | undefined, now = Date.now(), player?: Character): number {
@@ -333,6 +345,23 @@ export function getBossConsolationEssence(progress: BossProgress | undefined, no
     return tierEssence > 0 ? Math.round(baseConsolation * (killEssence / tierEssence)) : baseConsolation;
   }
   return baseConsolation;
+}
+
+export function getBossProgressEstimate(
+  progress: BossProgress | undefined,
+  attacksPerDay = GAME_RULES.BOSS.MAX_DAILY_ATTACKS,
+): { damagePct: number; averageDamage: number; estimatedDays: number | null } {
+  if (!progress || progress.bossMaxHp <= 0) {
+    return { damagePct: 0, averageDamage: 0, estimatedDays: null };
+  }
+  const attempts = Math.max(0, progress.pityStacks ?? 0);
+  const damageDealt = progress.totalDamageDealt ?? Math.max(0, progress.bossMaxHp - progress.bossHp);
+  const averageDamage = attempts > 0 ? damageDealt / attempts : 0;
+  const damagePct = Math.max(0, Math.min(100, ((progress.bossMaxHp - progress.bossHp) / progress.bossMaxHp) * 100));
+  const estimatedDays = averageDamage > 0 && progress.bossHp > 0
+    ? Math.max(1, Math.ceil(progress.bossHp / (averageDamage * Math.max(1, attacksPerDay))))
+    : null;
+  return { damagePct, averageDamage, estimatedDays };
 }
 
 export function simulateBossAttack(
