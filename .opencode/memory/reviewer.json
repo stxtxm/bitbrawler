@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-11-17T02:31:47Z",
+  "last_session": "2026-11-20T01:29:04Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR de bot : le squash merge via gh n'auto-ferme pas toujours l'issue malgré 'Closes #N' → vérifier et fermer manuellement. Et seul le check Cloudflare Pages est rattaché : exécuter lint/tsc/test/build localement.",
-      "issue": "#1379"
+      "lesson": "PR bot avec un seul check Cloudflare Pages et mergeStateStatus UNSTABLE : 'UNSTABLE' ne signifie pas rouge, c'est l'absence de checks requis. Vérifier statusCheckRollup puis exécuter la gate complète localement (tsc, lint, vitest, build) avant merge.",
+      "issue": "#1389"
     }
   ]
 }
