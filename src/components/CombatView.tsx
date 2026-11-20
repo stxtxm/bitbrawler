@@ -10,8 +10,8 @@ import { calculateFightXp } from '../utils/xpUtils';
 import { getActiveWinXpMultiplier } from '../utils/activeBonusUtils';
 import { useSound } from '../hooks/useSound';
 import { MonsterId, MONSTER_ASSETS } from '../data/monsterAssets';
-import { BossId, BOSS_ASSETS, getBossDef } from '../data/bossAssets';
-import { getBossConsolationXp, getBossKillXp } from '../utils/bossUtils';
+import { BOSS_ID, BossId, BOSS_ASSETS, getBossDef } from '../data/bossAssets';
+import { getBossKillXp, getBossProgressForId, getBossRewards } from '../utils/bossUtils';
 import { ParticleSystem, type ParticleType } from '../utils/particleSystem';
 import { COMBAT_BALANCE } from '../config/combatBalance';
 import type { CombatSpeed } from '../config/gameRules';
@@ -685,9 +685,12 @@ export const CombatView = ({ player, opponent, matchType, monsterId, onComplete,
             const bossId = monsterId && BOSS_ASSETS.some((boss) => boss.id === monsterId)
                 ? monsterId as BossId
                 : undefined;
-            return combatResult.winner === 'attacker'
-                ? getBossKillXp(player, bossId)
-                : getBossConsolationXp(bossId);
+            if (combatResult.winner === 'attacker') {
+                return getBossKillXp(player, bossId);
+            }
+            const effectiveBossId = bossId ?? BOSS_ID;
+            const progress = getBossProgressForId(player, effectiveBossId);
+            return getBossRewards(player, false, progress ?? effectiveBossId).xpGained;
         }
         const won = combatResult.winner === 'attacker';
         const baseXp = calculateFightXp(won, player.level, opponent.level);
