@@ -159,6 +159,8 @@ export interface Character {
   lastIdleCheck?: number;
   // Last user activity (for offline popup, timestamp)
   lastActive?: number;
+  // Server-authoritative Paris reset day of the last daily login essence claim
+  lastDailyEssenceClaim?: string | null;
 
   // Medal / Achievement system
   medalProgress?: Record<string, { completed: boolean; progress: number; unlockedAt?: number }>;

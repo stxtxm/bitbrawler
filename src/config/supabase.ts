@@ -65,6 +65,7 @@ export type CharacterRow = {
   } | null;
   last_idle_check: string | null;
   last_active: string | null;
+  last_daily_essence_claim?: string | null;
   idle_streak: number;
   idle_max_streak: number;
   idle_total_kills: number;

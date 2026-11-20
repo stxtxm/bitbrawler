@@ -54,4 +54,34 @@ describe('dailyEssenceUtils', () => {
     expect(raw).not.toBeNull();
     expect(JSON.parse(raw as string).dayKey).toBe(getDailyResetKey(DAY_ONE));
   });
+
+  it('refuses a claim the server already recorded today, even after a localStorage purge', () => {
+    const today = getDailyResetKey(DAY_ONE);
+    const amount = GAME_RULES.ECONOMY.DAILY_LOGIN_ESSENCE;
+
+    expect(localStorage.getItem(getDailyLoginEssenceKey('hero'))).toBeNull();
+    expect(claimDailyLoginEssence('hero', DAY_ONE, amount, today)).toBe(0);
+    expect(localStorage.getItem(getDailyLoginEssenceKey('hero'))).toBeNull();
+  });
+
+  it('grants the claim when the server only recorded an earlier day', () => {
+    const yesterday = getDailyResetKey(DAY_ONE - 24 * 60 * 60 * 1000);
+    const amount = GAME_RULES.ECONOMY.DAILY_LOGIN_ESSENCE;
+
+    expect(claimDailyLoginEssence('hero', DAY_ONE, amount, yesterday)).toBe(amount);
+    expect(localStorage.getItem(getDailyLoginEssenceKey('hero'))).not.toBeNull();
+  });
+
+  it('grants the claim when the server has never recorded one', () => {
+    expect(claimDailyLoginEssence('hero', DAY_ONE, GAME_RULES.ECONOMY.DAILY_LOGIN_ESSENCE, null)).toBe(
+      GAME_RULES.ECONOMY.DAILY_LOGIN_ESSENCE,
+    );
+  });
+
+  it('falls back to localStorage when the server claim is not exposed', () => {
+    expect(claimDailyLoginEssence('hero', DAY_ONE, GAME_RULES.ECONOMY.DAILY_LOGIN_ESSENCE, undefined)).toBe(
+      GAME_RULES.ECONOMY.DAILY_LOGIN_ESSENCE,
+    );
+    expect(claimDailyLoginEssence('hero', DAY_ONE, GAME_RULES.ECONOMY.DAILY_LOGIN_ESSENCE, undefined)).toBe(0);
+  });
 });
