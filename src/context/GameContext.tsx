@@ -28,7 +28,9 @@ import {
   convertFromSupabase,
   convertToSupabase,
   isMissingMonsterCounterColumn,
+  isMissingDailyEssenceClaimColumn,
   omitMonsterCounters,
+  omitDailyEssenceClaim,
   SERVER_MERGE_SELECT_COLUMNS,
   LEGACY_SERVER_MERGE_SELECT_COLUMNS,
 } from '../utils/supabaseUtils';
@@ -46,6 +48,8 @@ import {
 } from '../utils/forgeUtils';
 import { buyShopOffer as buyShopOfferUtil, getShopOfferPurchaseInfo, rerollShopOffers as rerollShopOffersUtil, type ShopOffer, type ShopPurchase } from '../utils/shopUtils';
 import { completeRecoveryQuest, getConsecutiveLosses, getSecondWindEssence, recordRecovery, startRecoveryQuest } from '../utils/comebackUtils';
+import { claimDailyLoginEssence } from '../utils/dailyEssenceUtils';
+import { getDailyResetKey } from '../utils/dailyReset';
 import { markOfferPurchased, markRerollUsed } from '../utils/shopStorage';
 import {
   checkMedals,
@@ -259,6 +263,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       idleTotalKills: Math.max(local.idleTotalKills ?? 0, freshRow?.idle_total_kills ?? 0),
       idleTotalXp: Math.max(local.idleTotalXp ?? 0, freshRow?.idle_total_xp ?? 0),
       essence: Math.max(local.essence ?? 0, freshRow?.essence ?? 0),
+      lastDailyEssenceClaim:
+        freshRow?.last_daily_essence_claim ?? local.lastDailyEssenceClaim,
       statPoints: Math.max(local.statPoints ?? 0, freshRow?.stat_points ?? 0),
       monsterKills: mergeMonsterCounters(local.monsterKills, freshRow?.monster_kills),
       monsterEncounters: mergeMonsterCounters(local.monsterEncounters, freshRow?.monster_encounters),
@@ -292,7 +298,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       .eq('id', characterId)
     const first = await write(payload)
     if (isMissingMonsterCounterColumn(first.error)) {
-      return write(omitMonsterCounters(payload))
+      const retry = await write(omitMonsterCounters(payload))
+      if (isMissingDailyEssenceClaimColumn(retry.error)) {
+        return write(omitDailyEssenceClaim(omitMonsterCounters(payload)))
+      }
+      return retry
+    }
+    if (isMissingDailyEssenceClaimColumn(first.error)) {
+      return write(omitDailyEssenceClaim(payload))
     }
     return first
   }, [])
@@ -354,6 +367,25 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [flushSyncToBackend])
 
+  const applyDailyLoginBonus = useCallback((char: Character): Character => {
+    if (toFiniteTimestamp(char.lastActive) <= 0) return char;
+    const now = Date.now();
+    const amount = claimDailyLoginEssence(
+      char.id ?? char.seed,
+      now,
+      GAME_RULES.ECONOMY.DAILY_LOGIN_ESSENCE,
+      char.lastDailyEssenceClaim,
+    );
+    if (amount <= 0) return char;
+    return normalizeCharacter({
+      ...char,
+      essence: (char.essence ?? 0) + amount,
+      ...(char.lastDailyEssenceClaim !== undefined
+        ? { lastDailyEssenceClaim: getDailyResetKey(now) }
+        : {}),
+    });
+  }, []);
+
   // Load character on mount
   useEffect(() => {
   const loadCharacter = async () => {
@@ -405,11 +437,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           monsterEncounters: mergeMonsterCounters(anyLocal.monsterEncounters, anyServer.monsterEncounters),
         } as any;
         const normalized = normalizeCharacter(mergedChar);
-        persistCharacter(normalized);
+        const withDailyBonus = applyDailyLoginBonus(normalized);
+        persistCharacter(withDailyBonus);
         setDbAvailable(true);
         // If local had more XP, sync it back to Supabase
-        if (hasMoreXp) {
-          syncCharacterToBackend(normalized);
+        if (hasMoreXp || withDailyBonus !== normalized) {
+          syncCharacterToBackend(withDailyBonus);
         }
       } else if (syncResult.status === 'error') {
         setActiveCharacter(normalizeCharacter(localChar));
@@ -425,7 +458,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     };
 
     loadCharacter();
-  }, [isOnline, persistCharacter, syncCharacterWithSupabase, syncCharacterToBackend]);
+  }, [isOnline, persistCharacter, syncCharacterWithSupabase, syncCharacterToBackend, applyDailyLoginBonus]);
 
 
   // Characters are now reset centrally via GitHub Actions every 24h.
@@ -455,15 +488,31 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         ...convertFromSupabase(data),
         id: data.id
       });
+      const dailyEssence = claimDailyLoginEssence(
+        fullChar.id ?? fullChar.seed,
+        Date.now(),
+        GAME_RULES.ECONOMY.DAILY_LOGIN_ESSENCE,
+        fullChar.lastDailyEssenceClaim,
+      );
+      const loadedChar = dailyEssence > 0
+        ? normalizeCharacter({
+            ...fullChar,
+            essence: (fullChar.essence ?? 0) + dailyEssence,
+            ...(fullChar.lastDailyEssenceClaim !== undefined
+              ? { lastDailyEssenceClaim: getDailyResetKey(Date.now()) }
+              : {}),
+          })
+        : fullChar;
 
-      persistCharacter(fullChar);
+      persistCharacter(loadedChar);
+      if (dailyEssence > 0) syncCharacterToBackend(loadedChar);
       setDbAvailable(true);
       return null;
     } catch (error) {
       handleDbError(error, 'login');
       return "Connection error - please check your internet connection and try again";
     }
-  }, [handleDbError, persistCharacter]);
+  }, [handleDbError, persistCharacter, syncCharacterToBackend]);
 
   // Logout function — flush le sync debounced (médailles/idle) avant de clear, sinon l'XP reste à 0 au prochain login
   const logout = useCallback(async () => {
@@ -791,7 +840,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       : createBossProgress(baseCharacter, now, bossId);
 
     const rewards = getBossRewards(baseCharacter, won, baseProgress, now);
-    const xpResult = gainXp(baseCharacter, won ? rewards.xpGained : 0);
+    const xpResult = gainXp(baseCharacter, rewards.xpGained);
 
     const historyEntry = { date: now, won, opponentName: bossName };
     const newHistory = [historyEntry, ...(baseCharacter.fightHistory || [])].slice(0, 20);
@@ -883,7 +932,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       syncToBackendTimeoutRef.current = null;
     }
 
-    setLastXpGain(won ? rewards.xpGained : 0);
+    setLastXpGain(rewards.xpGained);
     if (xpResult.leveledUp && !updatedChar.autoMode) {
       setLastLevelUp({
         levelsGained: xpResult.levelsGained,
@@ -895,7 +944,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     if (baseCharacter.id) recordCombatChallenge(baseCharacter.id);
 
     return {
-      xpGained: won ? rewards.xpGained : 0,
+      xpGained: rewards.xpGained,
       leveledUp: xpResult.leveledUp,
       levelsGained: xpResult.levelsGained,
       newLevel: xpResult.newLevel,
@@ -1009,7 +1058,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       })
       if (!res.ok) return
       const data = await res.json()
-      if (data.fights > 0 && data.updated) {
+      if ((data.fights > 0 || (data.daily_essence ?? 0) > 0) && data.updated) {
         const essenceDelta = Math.max(0, data.essence ?? 0)
         const updatedChar = normalizeCharacter({
           ...activeCharacter,

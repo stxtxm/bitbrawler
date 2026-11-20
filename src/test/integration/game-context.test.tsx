@@ -34,6 +34,8 @@ import { findOpponent } from '../../utils/matchmakingUtils';
 import { canRollLootbox, rollLootbox } from '../../utils/lootboxUtils';
 import { ESSENCE_YIELD } from '../../data/forgeConstants';
 import { getBurstBonusKey } from '../../data/liveOps';
+import { GAME_RULES } from '../../config/gameRules';
+import { getDailyResetKey } from '../../utils/dailyReset';
 
 function setupMockCharacter(char: any, options?: { error?: any }) {
   const row = characterToSupabaseRow(char);
@@ -147,6 +149,63 @@ describe('GameContext Integration', () => {
     expect(loginResult).toBe(null);
     expect(result.current.activeCharacter?.name).toBe('Test Hero');
     expect(result.current.activeCharacter?.id).toBe('test-firestore-id');
+  });
+
+  it('grants the daily login essence when loading a returning character', async () => {
+    const returning = { ...mockCharacter, essence: 10, lastActive: Date.now() - 86400000 };
+    (localStorage.getItem as any).mockImplementation((key: string) =>
+      key.startsWith('bitbrawler_daily_essence_') ? null : JSON.stringify(returning)
+    );
+    const row = {
+      ...characterToSupabaseRow(returning),
+      essence: returning.essence,
+      last_active: new Date(returning.lastActive).toISOString(),
+    };
+    const builder = createQueryBuilder({ data: row, error: null });
+    mockSupabaseFrom.mockReturnValue(builder);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.activeCharacter?.essence).toBe(
+      10 + GAME_RULES.ECONOMY.DAILY_LOGIN_ESSENCE
+    );
+  });
+
+  it('does not grant the daily login essence when the server already recorded it today', async () => {
+    const today = getDailyResetKey(Date.now());
+    const returning = {
+      ...mockCharacter,
+      essence: 10,
+      lastActive: Date.now() - 86400000,
+      lastDailyEssenceClaim: today,
+    };
+    (localStorage.getItem as any).mockImplementation((key: string) =>
+      key.startsWith('bitbrawler_daily_essence_') ? null : JSON.stringify(returning)
+    );
+    const row = {
+      ...characterToSupabaseRow(returning),
+      essence: returning.essence,
+      last_active: new Date(returning.lastActive).toISOString(),
+      last_daily_essence_claim: today,
+    };
+    const builder = createQueryBuilder({ data: row, error: null });
+    mockSupabaseFrom.mockReturnValue(builder);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.activeCharacter?.essence).toBe(10);
   });
 
   it('should update fights and XP when useFight is called', async () => {

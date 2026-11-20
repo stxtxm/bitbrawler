@@ -4,11 +4,11 @@ import { ItemRarity } from '../types/Item';
  * Essence yield when salvaging an item, based on its rarity.
  */
 export const ESSENCE_YIELD: Record<ItemRarity, number> = {
-  common: 5,
-  uncommon: 20,
-  rare: 50,
-  epic: 80,
-  legendary: 400,
+  common: 6,
+  uncommon: 23,
+  rare: 58,
+  epic: 92,
+  legendary: 460,
 };
 
 /**
@@ -36,7 +36,7 @@ export const FUSION_INPUT_COUNT = 3;
 /**
  * Base essence cost to upgrade an item by one level (level 0→1).
  */
-export const UPGRADE_COST = 30;
+export const UPGRADE_COST = 25;
 
 /**
  * Alias for UPGRADE_COST.
@@ -46,10 +46,10 @@ export const UPGRADE_BASE_COST = UPGRADE_COST;
 /**
  * Essence cost scaling per upgrade level (linear).
  * Final cost = UPGRADE_BASE_COST + level × UPGRADE_COST_SCALING
- *    0→1:  30      1→2:  50      2→3:  70
- *    3→4:  90      4→5: 110
+ *    0→1:  25      1→2:  40      2→3:  55
+ *    3→4:  70      4→5:  85
  */
-export const UPGRADE_COST_SCALING = 20;
+export const UPGRADE_COST_SCALING = 15;
 
 /**
  * Maximum upgrade level for an item (0-5).

@@ -13,6 +13,7 @@ import {
   ensureBossDailyReset,
   getBossAttacksLeft,
   getBossPityReductionPct,
+  getBossProgressEstimate,
   getBossProgressForId,
   isBossUnlocked,
   isBossUnlockedForCharacter,
@@ -106,6 +107,7 @@ export const useArenaCombat = ({
   const effectiveUnlocked = effectiveBossId === ABYSSAL_BOSS_ID ? abyssalUnlocked : bossUnlocked;
   const effectivePityReduction = getBossPityReductionPct(effectiveBossProgress ?? undefined, effectiveBossId);
   const effectivePityStacks = effectiveBossProgress?.pityStacks ?? 0;
+  const effectiveEstimate = getBossProgressEstimate(effectiveBossProgress ?? undefined);
 
   const canFight = !!character
     && !isOfflineMode
@@ -292,6 +294,8 @@ export const useArenaCombat = ({
     bossLevel: effectiveBossProgress?.bossLevel ?? 0,
     bossPityStacks: effectivePityStacks,
     bossPityReduction: effectivePityReduction,
+    bossDamagePct: effectiveEstimate.damagePct,
+    bossEstimatedDays: effectiveEstimate.estimatedDays,
     bossId: effectiveBossId,
     abyssalUnlocked,
     onTogglePve,
@@ -310,6 +314,8 @@ export const useArenaCombat = ({
     effectiveBossProgress?.bossLevel,
     effectivePityStacks,
     effectivePityReduction,
+    effectiveEstimate.damagePct,
+    effectiveEstimate.estimatedDays,
     effectiveUnlocked,
     canFight,
     fightsLeft,

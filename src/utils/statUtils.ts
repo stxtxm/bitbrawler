@@ -1,4 +1,5 @@
 import { Character } from '../types/Character';
+import { COMBAT_BALANCE } from '../config/combatBalance';
 import { getBotArchetype, type BotArchetype } from './affinityUtils';
 
 export const STAT_KEYS = ['strength', 'vitality', 'dexterity', 'luck', 'intelligence', 'focus'] as const;
@@ -11,17 +12,42 @@ const ARCHETYPE_WEIGHTS: Record<BotArchetype, Record<StatKey, number>> = {
   tank:    { strength: 1.5, vitality: 3, dexterity: 1, luck: 0.5, intelligence: 0.5, focus: 0.5 },
   rogue:   { strength: 1, vitality: 0.5, dexterity: 3, luck: 1.5, intelligence: 0.5, focus: 0.5 },
   mage:    { strength: 0.5, vitality: 0.5, dexterity: 0.5, luck: 0.5, intelligence: 3, focus: 1.5 },
-  lucky:   { strength: 0.5, vitality: 0.5, dexterity: 1.5, luck: 3, intelligence: 0.5, focus: 0.5 },
+  lucky:   { strength: 1.5, vitality: 1.5, dexterity: 1.5, luck: 3, intelligence: 0.5, focus: 0.5 },
   zen:     { strength: 0.5, vitality: 0.5, dexterity: 0.5, luck: 0.5, intelligence: 1.5, focus: 3 },
 };
+
+export function getLuckAllocationCap(): number {
+  const { critCap, critChance } = COMBAT_BALANCE.statWeights;
+  const { statBaseline, diminishingExponent } = COMBAT_BALANCE;
+  const targetEffectiveLuck = critCap / critChance;
+  if (targetEffectiveLuck <= statBaseline) return Math.floor(statBaseline);
+  const cap = statBaseline + Math.pow(targetEffectiveLuck - statBaseline, 1 / diminishingExponent);
+  return Math.floor(cap);
+}
+
+function resolveArchetypeWeights(character: Character, archetype: BotArchetype): Record<StatKey, number> {
+  const weights = { ...ARCHETYPE_WEIGHTS[archetype] };
+  const cap = getLuckAllocationCap();
+  if ((character.luck ?? 0) < cap) return weights;
+
+  const freedWeight = weights.luck;
+  weights.luck = 0;
+  if (freedWeight > 0) {
+    const combatFloor = (character.strength ?? 0) <= (character.vitality ?? 0) ? 'strength' : 'vitality';
+    weights[combatFloor] += freedWeight;
+  }
+  return weights;
+}
 
 export function allocateStatByArchetype(character: Character, rng: () => number = Math.random): Character {
   const available = character.statPoints ?? 0
   if (available <= 0) return character
 
   const archetype = getBotArchetype(character)
-  const weights = ARCHETYPE_WEIGHTS[archetype]
+  const weights = resolveArchetypeWeights(character, archetype)
   const totalWeight = STAT_KEYS.reduce((s, k) => s + weights[k], 0)
+
+  if (totalWeight <= 0) return applyStatPoint(character, STAT_KEYS[0])
 
   let roll = rng() * totalWeight
   for (const key of STAT_KEYS) {

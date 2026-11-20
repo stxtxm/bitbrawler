@@ -29,6 +29,7 @@ interface Character {
   essence?: number
   lastIdleCheck?: number
   lastActive?: number
+  lastDailyEssenceClaim?: string | null
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -52,6 +53,8 @@ const ESSENCE_LOSS_RATIO = 0.3
 const ESSENCE_LEVEL_SCALE = 0.03
 export const ESSENCE_EARLY_GAME_MAX_LEVEL = 5
 export const ESSENCE_EARLY_GAME_MULT = 2
+export const DAILY_LOGIN_ESSENCE = 5
+const DAILY_RESET_TIMEZONE = 'Europe/Paris'
 // Offline (cron-processed) essence earns a fraction of the watching rate —
 // watching the Idle Runner stays the best income, AFK nights stay modest.
 export const OFFLINE_ESSENCE_MODIFIER = 0.15
@@ -230,6 +233,60 @@ export function calculateOfflineIdleXp(won: boolean, level: number): number {
   return Math.floor(calculateIdleXp(won, level) * OFFLINE_XP_MODIFIER)
 }
 
+export function getServerDailyResetKey(
+  timestamp: number,
+  timeZone: string = DAILY_RESET_TIMEZONE,
+): string {
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+  const values: Record<string, string> = {}
+  for (const part of formatter.formatToParts(new Date(timestamp))) {
+    if (part.type !== 'literal') values[part.type] = part.value
+  }
+  return `${values.year}-${values.month}-${values.day}`
+}
+
+export function calculateDailyLoginEssence(
+  lastClaimDay: string | null | undefined,
+  now: number = Date.now(),
+  amount: number = DAILY_LOGIN_ESSENCE,
+): number {
+  if (amount <= 0) return 0
+  if (lastClaimDay === getServerDailyResetKey(now)) return 0
+  return amount
+}
+
+export function applyDailyLoginClaim(
+  character: Character,
+  dailyTrackingAvailable: boolean,
+  now: number = Date.now(),
+  amount: number = DAILY_LOGIN_ESSENCE,
+): { character: Character; claimed: number } {
+  if (!dailyTrackingAvailable) return { character, claimed: 0 }
+  const claimed = calculateDailyLoginEssence(character.lastDailyEssenceClaim, now, amount)
+  if (claimed <= 0) return { character, claimed: 0 }
+  return {
+    character: {
+      ...character,
+      essence: (character.essence ?? 0) + claimed,
+      lastDailyEssenceClaim: getServerDailyResetKey(now),
+    },
+    claimed,
+  }
+}
+
+export function isMissingDailyEssenceColumn(
+  error: { code?: string; message?: string } | null | undefined,
+): boolean {
+  if (!error) return false
+  if (error.code !== 'PGRST204' && error.code !== '42703') return false
+  return /last_daily_essence_claim/.test(error.message ?? '')
+}
+
 // ─────────────────────────────────────────────────────────────
 // Idle processor logic
 // ─────────────────────────────────────────────────────────────
@@ -244,6 +301,8 @@ const SELECT_COLUMNS = [
   'idle_streak', 'idle_max_streak', 'idle_total_kills', 'idle_total_xp',
   'essence', 'last_active',
 ].join(',')
+
+const SELECT_COLUMNS_WITH_DAILY = `${SELECT_COLUMNS},last_daily_essence_claim`
 
 export function calculateIdleEssence(won: boolean, level: number, intelligence?: number, focus?: number): number {
   const baseRate = won ? ESSENCE_BASE_RATE : ESSENCE_BASE_RATE * ESSENCE_LOSS_RATIO
@@ -332,6 +391,9 @@ function toSupabaseUpdates(c: Character, now: string): Record<string, any> {
     idle_total_kills: c.idleTotalKills,
     idle_total_xp: c.idleTotalXp,
     essence: c.essence,
+    ...(c.lastDailyEssenceClaim !== undefined
+      ? { last_daily_essence_claim: c.lastDailyEssenceClaim }
+      : {}),
   }
 }
 
@@ -354,6 +416,7 @@ function toClientResponse(c: Character, now: string): Record<string, any> {
     idleTotalKills: c.idleTotalKills,
     idleTotalXp: c.idleTotalXp,
     essence: c.essence,
+    lastDailyEssenceClaim: c.lastDailyEssenceClaim,
   }
 }
 
@@ -364,19 +427,49 @@ interface ProcessResult {
   xp: number
   levels: number
   essence: number
+  dailyEssence: number
   writeError?: string
 }
 
 async function processCharacter(
-  candidate: { id: string; char: Character; lastCheck: number },
+  candidate: { id: string; char: Character; lastCheck: number; dailyTrackingAvailable: boolean },
   supabase: any,
 ): Promise<ProcessResult> {
-  const idleMs = Date.now() - candidate.lastCheck
-  const now = new Date().toISOString()
+  const nowMs = Date.now()
+  const now = new Date(nowMs).toISOString()
+  const idleMs = nowMs - candidate.lastCheck
+
+  const writeDailyOnly = async (): Promise<ProcessResult> => {
+    const { character: claimedChar, claimed } = applyDailyLoginClaim(
+      candidate.char,
+      candidate.dailyTrackingAvailable,
+      nowMs,
+    )
+    if (claimed <= 0) {
+      await supabase.from('characters').update({ last_idle_check: now }).eq('id', candidate.id)
+      return { updated: null, fights: 0, xp: 0, levels: 0, essence: 0, dailyEssence: 0 }
+    }
+    const updates = {
+      last_idle_check: now,
+      essence: claimedChar.essence,
+      last_daily_essence_claim: claimedChar.lastDailyEssenceClaim,
+    }
+    const { error } = await supabase.from('characters').update(updates).eq('id', candidate.id)
+    if (error) {
+      console.error('[IdleProcessor] Daily claim write failed for', candidate.id, error.message)
+      return {
+        updated: null, fights: 0, xp: 0, levels: 0, essence: 0, dailyEssence: 0,
+        writeError: error.message,
+      }
+    }
+    return {
+      updated: claimedChar, fights: 0, xp: 0, levels: 0,
+      essence: claimed, dailyEssence: claimed,
+    }
+  }
 
   if (idleMs <= 30_000) {
-    await supabase.from('characters').update({ last_idle_check: now }).eq('id', candidate.id)
-    return { updated: null, fights: 0, xp: 0, levels: 0, essence: 0 }
+    return writeDailyOnly()
   }
 
   // ── Anti-conflit: vérifie que last_idle_check n'a pas changé ──
@@ -392,28 +485,78 @@ async function processCharacter(
     // Si last_idle_check a été mis à jour entre la lecture et maintenant
     // (par un appel on-demand), on skip pour éviter la race condition
     if (candidate.lastCheck > 0 && freshCheck !== candidate.lastCheck) {
-      return { updated: null, conflict: true, fights: 0, xp: 0, levels: 0, essence: 0 }
+      return { updated: null, conflict: true, fights: 0, xp: 0, levels: 0, essence: 0, dailyEssence: 0 }
     }
   }
 
   const result = simulateIdleGains(candidate.char, idleMs)
   if (!result) {
-    await supabase.from('characters').update({ last_idle_check: now }).eq('id', candidate.id)
-    return { updated: null, fights: 0, xp: 0, levels: 0, essence: 0 }
+    return writeDailyOnly()
   }
 
-  const { updated: updatedChar, fights: simulatedFights } = result
-  const levelDiff = updatedChar.level - candidate.char.level
-  const xpDiff = (updatedChar.experience ?? 0) - (candidate.char.experience ?? 0)
-  const essenceDiff = (updatedChar.essence ?? 0) - (candidate.char.essence ?? 0)
-  const updates = toSupabaseUpdates(updatedChar, now)
+  const { character: claimedChar, claimed } = applyDailyLoginClaim(
+    result.updated,
+    candidate.dailyTrackingAvailable,
+    nowMs,
+  )
+  const levelDiff = claimedChar.level - candidate.char.level
+  const xpDiff = (claimedChar.experience ?? 0) - (candidate.char.experience ?? 0)
+  const essenceDiff = (claimedChar.essence ?? 0) - (candidate.char.essence ?? 0)
+  const updates = toSupabaseUpdates(claimedChar, now)
   const { error: updErr } = await supabase.from('characters').update(updates).eq('id', candidate.id)
   if (updErr) {
     console.error('[IdleProcessor] Write failed for', candidate.id, updErr.message)
-    return { updated: null, conflict: false, fights: 0, xp: 0, levels: 0, essence: 0, writeError: updErr.message }
+    return {
+      updated: null, conflict: false, fights: 0, xp: 0, levels: 0, essence: 0, dailyEssence: 0,
+      writeError: updErr.message,
+    }
   }
 
-  return { updated: updatedChar, fights: simulatedFights, xp: xpDiff, levels: levelDiff, essence: essenceDiff }
+  return {
+    updated: claimedChar,
+    fights: result.fights,
+    xp: xpDiff,
+    levels: levelDiff,
+    essence: essenceDiff,
+    dailyEssence: claimed,
+  }
+}
+
+function buildCandidate(
+  row: Record<string, any>,
+  dailyTrackingAvailable: boolean,
+): { id: string; char: Character; lastCheck: number; dailyTrackingAvailable: boolean } {
+  const lastCheck = row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0
+  return {
+    id: row.id as string,
+    char: {
+      id: row.id,
+      name: row.name,
+      level: row.level ?? 1,
+      hp: row.hp ?? 100,
+      maxHp: row.max_hp ?? 100,
+      strength: row.strength ?? 10,
+      vitality: row.vitality ?? 10,
+      dexterity: row.dexterity ?? 10,
+      luck: row.luck ?? 10,
+      intelligence: row.intelligence ?? 10,
+      focus: row.focus ?? BASE_VALUE,
+      experience: row.experience ?? 0,
+      statPoints: row.stat_points ?? 0,
+      isBot: row.is_bot ?? false,
+      autoMode: row.auto_mode ?? false,
+      equippedItems: row.equipped_items ?? { weapon: null, armor: null, accessory: null },
+      idleStreak: row.idle_streak ?? 0,
+      idleMaxStreak: row.idle_max_streak ?? 0,
+      idleTotalKills: row.idle_total_kills ?? 0,
+      idleTotalXp: row.idle_total_xp ?? 0,
+      essence: row.essence ?? 0,
+      lastIdleCheck: lastCheck,
+      lastDailyEssenceClaim: dailyTrackingAvailable ? (row.last_daily_essence_claim ?? null) : undefined,
+    } as Character,
+    lastCheck,
+    dailyTrackingAvailable,
+  }
 }
 
 function readBody(req: IncomingMessage): Promise<any> {
@@ -464,11 +607,18 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
 
   // ── On-demand: single character ──
   if (body?.character_id) {
-    const { data, error } = await supabase
+    const queryCharacter = (columns: string) => supabase
       .from('characters')
-      .select(SELECT_COLUMNS)
+      .select(columns)
       .eq('id', body.character_id)
       .single()
+
+    let dailyTrackingAvailable = true
+    let { data, error } = await queryCharacter(SELECT_COLUMNS_WITH_DAILY)
+    if (error && isMissingDailyEssenceColumn(error)) {
+      dailyTrackingAvailable = false
+      ;({ data, error } = await queryCharacter(SELECT_COLUMNS))
+    }
 
     if (error || !data) {
       let dbTarget = 'invalid-url'
@@ -482,36 +632,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       return
     }
 
-    const row = data as any
-    const lastCheckMs = row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0
-    const candidate = {
-      id: row.id as string,
-      char: {
-        id: row.id,
-        name: row.name,
-        level: row.level ?? 1,
-        hp: row.hp ?? 100,
-        maxHp: row.max_hp ?? 100,
-        strength: row.strength ?? 10,
-        vitality: row.vitality ?? 10,
-        dexterity: row.dexterity ?? 10,
-        luck: row.luck ?? 10,
-        intelligence: row.intelligence ?? 10,
-        focus: row.focus ?? BASE_VALUE,
-        experience: row.experience ?? 0,
-        statPoints: row.stat_points ?? 0,
-        isBot: row.is_bot ?? false,
-        autoMode: row.auto_mode ?? false,
-        equippedItems: row.equipped_items ?? { weapon: null, armor: null, accessory: null },
-        idleStreak: row.idle_streak ?? 0,
-        idleMaxStreak: row.idle_max_streak ?? 0,
-        idleTotalKills: row.idle_total_kills ?? 0,
-        idleTotalXp: row.idle_total_xp ?? 0,
-        essence: row.essence ?? 0,
-        lastIdleCheck: lastCheckMs,
-      } as Character,
-      lastCheck: lastCheckMs,
-    }
+    const candidate = buildCandidate(data as Record<string, any>, dailyTrackingAvailable)
 
     const result = await processCharacter(candidate, supabase)
 
@@ -530,6 +651,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
       xp: result.xp,
       levels: result.levels,
       essence: result.essence,
+      daily_essence: result.dailyEssence,
       ...(result.writeError ? { write_error: result.writeError } : {}),
     }))
     return
@@ -543,12 +665,19 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   const cronLimit = 25
   const cronBatchSize = 5
   const cutoff = new Date(Date.now() - IDLE_WINDOW_MS).toISOString()
-  const { data, error } = await supabase
+  const queryIdle = (columns: string) => supabase
     .from('characters')
-    .select(SELECT_COLUMNS)
+    .select(columns)
     .lt('last_idle_check', cutoff)
     .is('pending_fight', null)
     .limit(cronLimit)
+
+  let dailyTrackingAvailable = true
+  let { data, error } = await queryIdle(SELECT_COLUMNS_WITH_DAILY)
+  if (error && isMissingDailyEssenceColumn(error)) {
+    dailyTrackingAvailable = false
+    ;({ data, error } = await queryIdle(SELECT_COLUMNS))
+  }
 
   if (error) {
     res.writeHead(500, { 'Content-Type': 'application/json' })
@@ -562,34 +691,9 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return
   }
 
-  const candidates = (data as any[]).map((row: any) => ({
-    id: row.id as string,
-    char: {
-      id: row.id,
-      name: row.name,
-      level: row.level ?? 1,
-      hp: row.hp ?? 100,
-      maxHp: row.max_hp ?? 100,
-      strength: row.strength ?? 10,
-      vitality: row.vitality ?? 10,
-      dexterity: row.dexterity ?? 10,
-      luck: row.luck ?? 10,
-      intelligence: row.intelligence ?? 10,
-      focus: row.focus ?? BASE_VALUE,
-      experience: row.experience ?? 0,
-      statPoints: row.stat_points ?? 0,
-      isBot: row.is_bot ?? false,
-      autoMode: row.auto_mode ?? false,
-      equippedItems: row.equipped_items ?? { weapon: null, armor: null, accessory: null },
-      idleStreak: row.idle_streak ?? 0,
-      idleMaxStreak: row.idle_max_streak ?? 0,
-      idleTotalKills: row.idle_total_kills ?? 0,
-      idleTotalXp: row.idle_total_xp ?? 0,
-      essence: row.essence ?? 0,
-      lastIdleCheck: row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0,
-    } as Character,
-    lastCheck: row.last_idle_check ? new Date(row.last_idle_check).getTime() : 0,
-  }))
+  const candidates = (data as Record<string, any>[]).map((row) =>
+    buildCandidate(row, dailyTrackingAvailable),
+  )
 
   let processed = 0
   for (let i = 0; i < candidates.length; i += cronBatchSize) {
