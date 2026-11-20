@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-11-20T01:38:17Z",
+  "last_session": "2026-11-20T01:39:32Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR bot en conflit avec master : gh pr review --request-changes echoue (403 'own pull request', meme app github-actions). Voie viable : rebaser la branche sur origin/master en retirant le changement hors perimetre (workflow-integrity.test.ts, doublon de #1389/#1393), rejouer la gate complete, force-with-lease push, puis merge squash.",
-      "issue": "#1391"
+      "lesson": "PR de bot (app/github-actions) : `gh pr review --request-changes` echoue avec « Can not request changes on your own pull request » (le token du reviewer est l'auteur). Repli : `gh pr comment <N> --body-file` avec le meme contenu, et ne PAS merger. Verifier aussi `mergeable`/`mergeStateStatus` : une PR CONFLICTING/DIRTY ne peut pas etre mergee meme si les checks sont verts.",
+      "issue": "#1392"
     }
   ]
 }
