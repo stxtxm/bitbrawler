@@ -10,7 +10,9 @@ import {
   ensureBossDailyReset,
   getBossAttacksLeft,
   resolveBossAttack,
+  getBossConsolationXp,
   getBossKillXp,
+  getBossProgressEstimate,
   getBossRewards,
   simulateBossAttack,
 } from '../../utils/bossUtils';
@@ -193,6 +195,7 @@ describe('resolveBossAttack', () => {
     expect(result.progress.totalKills).toBe(0);
     expect(result.progress.pityStacks).toBe(1);
     expect(result.progress.bossMaxHp).toBe(fullHp);
+    expect(result.progress.totalDamageDealt).toBe(fullHp - 5120);
   });
 
   it('on a win: starts a new cycle, counts the kill, and keeps remaining attacks', () => {
@@ -251,19 +254,20 @@ describe('getBossKillXp / getBossRewards', () => {
     expect(getBossKillXp(makePlayer({ level: 30 }))).toBeGreaterThan(GAME_RULES.COMBAT.XP_WIN);
   });
 
-  it('grants phase-aware essence on kill and scaled consolation on defeat (capped)', () => {
+  it('grants phase-aware essence and consolation XP on kill and defeat (capped)', () => {
     const phase1 = makePlayer({ level: 30 });
+    const consolationXp = GAME_RULES.BOSS.CONSOLATION_XP;
     expect(getBossRewards(phase1, true)).toEqual({
       xpGained: getBossKillXp(phase1),
       essenceGained: 30,
     });
-    expect(getBossRewards(phase1, false)).toEqual({ xpGained: 0, essenceGained: 8 });
+    expect(getBossRewards(phase1, false)).toEqual({ xpGained: consolationXp, essenceGained: 8 });
     const phase3 = makePlayer({ level: 65 });
     expect(getBossRewards(phase3, true)).toEqual({
       xpGained: getBossKillXp(phase3),
       essenceGained: 60,
     });
-    expect(getBossRewards(phase3, false)).toEqual({ xpGained: 0, essenceGained: 15 });
+    expect(getBossRewards(phase3, false)).toEqual({ xpGained: consolationXp, essenceGained: 15 });
     const cappedProgress: BossProgress = {
       bossId: BOSS_ID,
       attacksLeft: 5,
@@ -277,6 +281,11 @@ describe('getBossKillXp / getBossRewards', () => {
       consolationCount: GAME_RULES.BOSS.CONSOLATION_CAP,
     };
     expect(getBossRewards(makePlayer({ level: 30 }), false, cappedProgress)).toEqual({ xpGained: 0, essenceGained: 0 });
+  });
+
+  it('exposes the consolation XP payout per tier', () => {
+    expect(getBossConsolationXp()).toBe(GAME_RULES.BOSS.CONSOLATION_XP);
+    expect(getBossConsolationXp('abyssal_monarch')).toBeGreaterThan(0);
   });
 });
 
@@ -376,5 +385,59 @@ describe('simulateBossAttack', () => {
     if (!outcome.won) {
       expect(outcome.bossHpLeft).toBeLessThan(progress.bossHp);
     }
+  });
+});
+
+describe('getBossProgressEstimate', () => {
+  const now = Date.UTC(2026, 0, 15, 12, 0, 0);
+
+  it('reports the share of the pool already dealt and the estimated days to kill', () => {
+    const progress: BossProgress = {
+      bossId: BOSS_ID,
+      attacksLeft: 4,
+      lastAttackReset: now,
+      bossHp: 6000,
+      bossMaxHp: 10000,
+      bossLevel: 32,
+      totalKills: 0,
+      firstEncounterAt: now,
+      pityStacks: 2,
+      totalDamageDealt: 4000,
+    };
+
+    const estimate = getBossProgressEstimate(progress);
+
+    expect(estimate.damagePct).toBe(40);
+    expect(estimate.averageDamage).toBe(2000);
+    expect(estimate.estimatedDays).toBe(1);
+  });
+
+  it('returns a neutral estimate when no attack has landed yet', () => {
+    const progress = createBossProgress(makePlayer({ level: 30 }), now);
+    const estimate = getBossProgressEstimate(progress);
+
+    expect(estimate.damagePct).toBe(0);
+    expect(estimate.averageDamage).toBe(0);
+    expect(estimate.estimatedDays).toBeNull();
+  });
+
+  it('falls back to the visible pool damage for legacy progress without counters', () => {
+    const progress: BossProgress = {
+      bossId: BOSS_ID,
+      attacksLeft: 3,
+      lastAttackReset: now,
+      bossHp: 5000,
+      bossMaxHp: 10000,
+      bossLevel: 32,
+      totalKills: 0,
+      firstEncounterAt: now,
+      pityStacks: 1,
+    };
+
+    const estimate = getBossProgressEstimate(progress);
+
+    expect(estimate.damagePct).toBe(50);
+    expect(estimate.averageDamage).toBe(5000);
+    expect(estimate.estimatedDays).toBe(1);
   });
 });

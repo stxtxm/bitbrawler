@@ -811,7 +811,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       : createBossProgress(baseCharacter, now, bossId);
 
     const rewards = getBossRewards(baseCharacter, won, baseProgress, now);
-    const xpResult = gainXp(baseCharacter, won ? rewards.xpGained : 0);
+    const xpResult = gainXp(baseCharacter, rewards.xpGained);
 
     const historyEntry = { date: now, won, opponentName: bossName };
     const newHistory = [historyEntry, ...(baseCharacter.fightHistory || [])].slice(0, 20);
@@ -903,7 +903,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       syncToBackendTimeoutRef.current = null;
     }
 
-    setLastXpGain(won ? rewards.xpGained : 0);
+    setLastXpGain(rewards.xpGained);
     if (xpResult.leveledUp && !updatedChar.autoMode) {
       setLastLevelUp({
         levelsGained: xpResult.levelsGained,
@@ -915,7 +915,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     if (baseCharacter.id) recordCombatChallenge(baseCharacter.id);
 
     return {
-      xpGained: won ? rewards.xpGained : 0,
+      xpGained: rewards.xpGained,
       leveledUp: xpResult.leveledUp,
       levelsGained: xpResult.levelsGained,
       newLevel: xpResult.newLevel,

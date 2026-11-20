@@ -9,7 +9,8 @@ Documentation de référence du système de boss PvE. À lire **avant toute modi
 - Le joueur dispose de **5 attaques/jour** contre le boss (jauges indépendantes du PvP et du PvE). La jauge se recharge au reset quotidien Paris (même logique que `dailyReset.shouldResetDaily`).
 - Le boss a un **pool de HP persistant** : chaque attaque joue un combat complet. En cas de défaite, le boss **garde le HP restant** du combat — le pool ne se régénère pas entre les attaques ni entre les jours.
 - Un **kill** = le pool tombe à 0 pendant un combat. Il relance immédiatement un nouveau cycle (pool plein, niveau recalculé), en conservant les attaques restantes du jour.
-- Récompenses **uniquement au kill** : XP `getBossKillXp` + `ESSENCE_REWARD` (60). Une défaite ne rapporte rien.
+- Récompenses : au kill, XP `getBossKillXp` + `ESSENCE_REWARD` (60) ; en cas de défaite, XP de consolation (`CONSOLATION_XP`) + essence de consolation (plafonnées à `CONSOLATION_CAP` par jour).
+- Le panneau PvE affiche la progression du pool : pourcentage de dégâts infligés et estimation des jours restants (dégâts moyens par attaque).
 - Les attaques non-kill **n'incrémentent pas le compteur de défaites** (`losses`), les kills incrémentent `wins`.
 
 ## Constantes d'équilibrage (`src/config/gameRules.ts` → `GAME_RULES.BOSS`)
@@ -19,26 +20,36 @@ Documentation de référence du système de boss PvE. À lire **avant toute modi
 | `UNLOCK_LEVEL` | 30 | Niveau requis pour afficher le mode BOSS |
 | `MAX_DAILY_ATTACKS` | 5 | Attaques/jour, reset à minuit Paris |
 | `LEVEL_BOOST` | 2 | Le boss combat à `playerLevel + 2` |
-| `STAT_MULTIPLIER` | 1.2 | Stats du boss = stats brutes du joueur × 1.2 |
-| `HP_MULTIPLIER` | 12.0 | Pool HP = `player.maxHp × 12` |
+| `STAT_MULTIPLIER` | 1.1 | Stats du boss = stats brutes du joueur × 1.1 (avant facteur de phase) |
+| `HP_MULTIPLIER` | 10.0 | Pool HP = `player.maxHp × 10` (avant facteur de phase/pitié) |
 | `XP_MODIFIER` | 4.0 | XP de kill = `XP_WIN × levelScaling × 4` |
 | `ESSENCE_REWARD` | 60 | Essence au kill |
+| `CONSOLATION_XP` | 20 | XP accordé à chaque défaite (dans la limite de `CONSOLATION_CAP`) |
+| `CONSOLATION_ESSENCE` | 15 | Essence de consolation (adaptée à la phase) |
+| `PITY_STEP_DEFEATS` / `PITY_STEP_REDUCTION` / `PITY_CAP` | 3 / 0.2 / 0.6 | Pitié : -20 % de pool tous les 3 échecs, plafond -60 % |
+
+### Paliers `void_titan` (`GAME_RULES.BOSS_ACCESSIBILITY`)
+
+| Palier | Niveaux | Facteur HP | Facteur stats | Essence kill |
+|---|---|---|---|---|
+| Phase 1 (learning) | 30-40 | 0.25 | 0.5 | 30 |
+| Phase 2 (challenge) | 41-60 | 0.5 | 1.0 | 45 |
+| Phase 3 (mastery) | 61+ | 1.0 | 1.0 | 60 |
 
 ## Invariants de design (NE PAS "corriger")
 
-Mesurés par le test Monte-Carlo `src/test/unit/bossBalance.test.ts` (250 campagnes/profil) :
+Mesurés par le test Monte-Carlo `src/test/unit/bossBalance.test.ts` :
 
-- ⚠️ **Un kill en 1 jour est impossible par construction** : le pool (12× maxHp) ne peut pas être drainé en un seul combat (limite de rounds de `COMBAT_BALANCE.roundLimit`) et le boss scale toujours à 1.2×. Ce n'est pas un bug, c'est le design voulu ("victoire non garantie en 5 coups").
-- Médiane de kill : **~4 jours** de campagnes (5 attaques/jour). Objectif : 2-4 jours.
-- 100 % des campagnes se terminent par un kill avant 10 jours.
-- Un joueur plus fort n'est PAS significativement plus rapide (le boss scale avec lui). La "victoire" finale arrive quand le pool restant est assez bas pour être drainé en un combat.
+- **Phase 3** : taux de kill journalier **25-35 %**, médiane **3 jours**, 100 % des campagnes terminées avant 7 jours (5 attaques/jour).
+- **Phase 1** reste le palier d'apprentissage : le pool réduit peut être drainé dès le premier jour.
+- Le pool persistant et la pitié garantissent qu'une campagne finit toujours par tomber ; un joueur plus fort n'est pas significativement plus rapide car le boss scale avec lui.
 
 Si ces chiffres dérivent (par ex. après une modification de `combatBalance.ts`), ajuster `HP_MULTIPLIER`/`STAT_MULTIPLIER` et relancer `npm test -- src/test/unit/bossBalance.test.ts`.
 
 ## Persistance (`boss_progress`)
 
 - La migration **#625** a été exécutée : `ALTER TABLE characters ADD COLUMN IF NOT EXISTS boss_progress JSONB;`
-- La colonne contient un objet `BossProgress` : `{ bossId, attacksLeft, lastAttackReset, bossHp, bossMaxHp, bossLevel, totalKills, lastKillAt?, firstEncounterAt }`.
+- La colonne contient un objet `BossProgress` : `{ bossId, attacksLeft, lastAttackReset, bossHp, bossMaxHp, bossLevel, totalKills, lastKillAt?, firstEncounterAt, pityStacks?, consolationCount?, totalDamageDealt? }`.
 - Sync de bout en bout :
   - `config/supabase.ts` → `CharacterRow.boss_progress: BossProgress | null`
   - `utils/supabaseUtils.ts` → `convertFromSupabase` (lecture) et `convertToSupabase` (**champ omis si `undefined`** pour ne jamais écraser la donnée serveur avec null).
@@ -52,10 +63,10 @@ Si ces chiffres dérivent (par ex. après une modification de `combatBalance.ts`
 |---|---|
 | `src/config/gameRules.ts` | Bloc `BOSS` (constantes ci-dessus) |
 | `src/data/bossAssets.ts` | `BossId`, `BOSS_ID` (`void_titan`), sprite 16×16 + palette, `getBossDef`, **moteur de fonds** (`BossBackgroundDef`, `BossBgElement`, `VOID_TITAN_BACKGROUND`) |
-| `src/utils/bossUtils.ts` | `BossProgress`, `isBossUnlocked`, `buildBossCharacter`, `createBossProgress`, `ensureBossDailyReset`, `getBossAttacksLeft`, `resolveBossAttack`, `getBossKillXp`, `getBossRewards`, `simulateBossAttack` |
+| `src/utils/bossUtils.ts` | `BossProgress`, `isBossUnlocked`, `buildBossCharacter`, `createBossProgress`, `ensureBossDailyReset`, `getBossAttacksLeft`, `resolveBossAttack`, `getBossKillXp`, `getBossRewards`, `getBossConsolationXp`, `getBossProgressEstimate`, `simulateBossAttack` |
 | `src/hooks/useArenaCombat.ts` | `ArenaMode = 'pvp' \| 'pve'`, flux `onFight`/`onCombatComplete` (passe `bossHpLeft`) ; en mode PvE le bouton FIGHT lance directement le boss |
 | `src/context/GameContext.tsx` | `useBossFight` (récompenses, cycle, sync Supabase) |
-| `src/components/arena/ActionPanel.tsx` | Panneau PvE = statut boss (attaques restantes + barre HP pool) et bouton ATTACK BOSS (plus de toggle BOSS) |
+| `src/components/arena/ActionPanel.tsx` | Panneau PvE = statut boss (attaques restantes, barre HP pool, % de dégâts infligés, estimation des jours avant kill) et bouton ATTACK BOSS |
 | `src/components/CombatView.tsx` | Fenêtre dédiée (`boss-modal` : chrome accentué via `--boss-accent`), intro "A RAID BOSS", rendu boss, écrans de résultat kill/défaite |
 | `src/components/BossBackground.tsx` | Moteur de rendu du fond (`BossBackground`) : gradient + éléments décoratifs + tag de fenêtre |
 | `src/styles/components/_boss-combat.scss` | Thème de la fenêtre boss + animations des éléments du fond |
@@ -86,7 +97,7 @@ Chaque boss déclare un `background: BossBackgroundDef` dans son entrée `BOSS_A
 ## Tests
 
 - `src/test/unit/bossUtils.test.ts` (26) — logique pure : scaling, reset quotidien, résolution win/loss, récompenses, simulation.
-- `src/test/unit/bossBalance.test.ts` (3) — Monte-Carlo : invariants ci-dessus.
+- `src/test/unit/bossBalance.test.ts` (3) — Monte-Carlo : invariants ci-dessus, dont le taux de kill journalier 25-35 % en Phase 3.
 - `src/test/integration/arena-boss.test.tsx` (4) — `useBossFight` réel : création du progress, perte (pool persiste, `losses` intact), kill (nouveau cycle, essence, wins), payload Supabase `boss_progress`, refill quotidien.
 - `src/test/unit/supabase-utils.test.ts` — round-trip `boss_progress` (omis si `undefined`).
 - `src/test/components/BossBackground.test.tsx` (3) — moteur de fonds : complétude du def, rendu (gradient, éléments, tag, vignette), timing/positionnement des éléments.
