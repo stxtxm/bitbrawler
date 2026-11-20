@@ -16,6 +16,7 @@ import {
   isPurchaseWithinBudget,
   computeBossDataFreshness,
   buildBossDataStaleIssue,
+  isRunDataComplete,
 } from '../src/utils/qa-bot-helpers.js'
 import { IDLE_CONFIG } from '../src/config/idleConfig'
 
@@ -111,6 +112,8 @@ interface RunRecord {
   run: string
   character: string
   character_action?: string | null
+  /** #1387 Phase 2.1 : crash patterns classées par le bot QA (timeout, connection_error, ...). */
+  error_patterns?: string[] | null
   replaced_character?: string | null
   character_type?: 'fresh' | 'persistent' | null  // #731: persistent QA character vs fresh first-session runs
   /** Cohorte QA du run (#1230) : profil de dépense résolu au début du run. */
@@ -445,6 +448,8 @@ interface AnalysisReport {
   halfway_runs: number
   error_runs: number
   empty_runs: number
+  incomplete_runs: number  // #1387 Phase 2.3 : runs with data but an incomplete capture (excluded from the analysis)
+  error_patterns_distribution: Record<string, number>  // #1387 Phase 2.1 : crash-pattern counts across runs
   data_freshness: DataFreshness
   recent_fight_coverage: number
   combat_yield: CombatYield
@@ -1253,7 +1258,17 @@ function analyze(stats: RunRecord[]): AnalysisReport {
 
   // Categorize runs. Empty runs (0 fight, 0 error — silent skipped attempts,
   // #1186) are their own category, never folded into successful_runs.
-  const validRuns = stats.filter(r => r.fights && r.fights.length > 0)
+  // Phase 2.3 (#1387): runs with combat data but an incomplete capture (missing
+  // initial level / final stats) are excluded from the analysis windows —
+  // completeness is validated before inclusion.
+  const validRuns = stats.filter(isRunDataComplete)
+  const incompleteRuns = stats.filter(r => (r.fights?.length ?? 0) > 0 && !isRunDataComplete(r))
+  const errorPatternsDist: Record<string, number> = {}
+  for (const r of stats) {
+    for (const p of r.error_patterns ?? []) {
+      errorPatternsDist[p] = (errorPatternsDist[p] ?? 0) + 1
+    }
+  }
   const errorRuns = stats.filter(isErrorRun)
   const emptyRuns = stats.filter(isEmptyRun)
   const halfwayRuns = validRuns.filter(isHalfwayRun)
@@ -1408,8 +1423,11 @@ function analyze(stats: RunRecord[]): AnalysisReport {
 
   // ===================== ISSUES & SUGGESTIONS =====================
   const issues: string[] = []
+  if (incompleteRuns.length > 0) {
+    issues.push(`${incompleteRuns.length} run(s) have combat data but an incomplete capture (missing initial level or final stats) — excluded from the analysis (Phase 2.3 validation #1387)`)
+  }
   const suggestions: string[] = []
-  const recentRuns = stats.slice(-RECENT_WINDOW_RUNS)
+  const recentRuns = stats.filter(isRunDataComplete).slice(-RECENT_WINDOW_RUNS)
 
   // Fight-type classification (#863, #705, #1303). VOID TITAN emitted as
   // 'pve' is a boss fight; idle fights live in idle_fights[] (legacy runs may
@@ -2156,6 +2174,8 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     halfway_runs: halfwayRuns.length,
     error_runs: errorRuns.length,
     empty_runs: emptyRuns.length,
+    incomplete_runs: incompleteRuns.length,
+    error_patterns_distribution: errorPatternsDist,
     data_freshness,
     recent_fight_coverage,
     combat_yield,

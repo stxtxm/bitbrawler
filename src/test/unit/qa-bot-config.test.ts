@@ -503,3 +503,15 @@ describe('QA Bot Fight Type Decision', () => {
     })
   })
 })
+
+describe('qa-bot.config fleet (QA Combat Fleet, Phase 1 of #1387)', () => {
+  it('defines 3 persistent members with level brackets: QA-FRESH, QA-MID, QA-END', () => {
+    expect(qaBotConfig.fleet.map(m => m.name)).toEqual(['QA-FRESH', 'QA-MID', 'QA-END'])
+    expect(qaBotConfig.fleet[0].minLevel).toBe(1)
+    expect(qaBotConfig.fleet[0].maxLevel).toBe(5)
+    expect(qaBotConfig.fleet[1].minLevel).toBe(15)
+    expect(qaBotConfig.fleet[1].maxLevel).toBe(25)
+    expect(qaBotConfig.fleet[2].minLevel).toBe(30)
+    expect(qaBotConfig.fleet[2].maxLevel).toBe(99)
+  })
+})

@@ -26,6 +26,9 @@ import {
   QA_CHARACTER_TYPE_PERSISTENT,
   resolveReusableDailyCharacter,
   shouldReplaceExhaustedCharacter,
+  isQaRunFailed,
+  classifyQaRunErrors,
+  isRunDataComplete,
   getXpRequiredForNextLevel,
   getTotalXpForLevel,
   parseProgressionCurve,
@@ -378,5 +381,88 @@ describe('qa-bot-helpers result XP popup (#1312)', () => {
     expect(parseResultXpPopup('')).toBeNull()
     expect(parseResultXpPopup(null)).toBeNull()
     expect(parseResultXpPopup(undefined)).toBeNull()
+  })
+})
+
+describe('qa-bot-helpers isRunDataComplete (#1387 Phase 2.3)', () => {
+  const complete = {
+    character: 'QA-FRESH',
+    initial_level: 2,
+    final_stats: { level: 3, xp: 150, wins: 3, losses: 0 },
+    fights: [{ result: 'victory' as const, xp: 50 }],
+  }
+
+  it('returns true for a run with fights + initial_level + final_stats.level', () => {
+    expect(isRunDataComplete(complete)).toBe(true)
+  })
+
+  it('returns false when there are no fights', () => {
+    expect(isRunDataComplete({ ...complete, fights: [] })).toBe(false)
+    expect(isRunDataComplete({ ...complete, fights: null })).toBe(false)
+  })
+
+  it('returns false when the character name is missing', () => {
+    expect(isRunDataComplete({ ...complete, character: '' })).toBe(false)
+    expect(isRunDataComplete({ ...complete, character: null })).toBe(false)
+  })
+
+  it('returns false when initial_level is missing or not a finite number', () => {
+    expect(isRunDataComplete({ ...complete, initial_level: null })).toBe(false)
+    expect(isRunDataComplete({ ...complete, initial_level: undefined })).toBe(false)
+  })
+
+  it('returns false when final_stats or final_stats.level is missing', () => {
+    expect(isRunDataComplete({ ...complete, final_stats: null })).toBe(false)
+    expect(isRunDataComplete({ ...complete, final_stats: { level: null } })).toBe(false)
+  })
+
+  it('returns false for null/undefined records', () => {
+    expect(isRunDataComplete(null)).toBe(false)
+    expect(isRunDataComplete(undefined)).toBe(false)
+  })
+})
+
+describe('qa-bot-helpers isQaRunFailed (#1387 Phase 2.2)', () => {
+  it('returns true when the run recorded errors', () => {
+    expect(isQaRunFailed({ errors: ['some error'] })).toBe(true)
+  })
+
+  it('returns true when the run produced no fights', () => {
+    expect(isQaRunFailed({ errors: [], fights: [] })).toBe(true)
+    expect(isQaRunFailed({})).toBe(true)
+  })
+
+  it('returns false when the run has fights and no errors', () => {
+    expect(isQaRunFailed({ errors: [], fights: [{ result: 'victory', xp: 10 }] })).toBe(false)
+  })
+
+  it('returns false for null/undefined records', () => {
+    expect(isQaRunFailed(null)).toBe(false)
+  })
+})
+
+describe('qa-bot-helpers classifyQaRunErrors (#1387 Phase 2.1)', () => {
+  it('returns [] when the record has no errors or is nullish', () => {
+    expect(classifyQaRunErrors({ errors: [] })).toEqual([])
+    expect(classifyQaRunErrors(null)).toEqual([])
+    expect(classifyQaRunErrors({})).toEqual([])
+  })
+
+  it('classifies timeout, connection, login, site-down and browser patterns', () => {
+    const patterns = classifyQaRunErrors({
+      errors: [
+        'waiting for locator("button").first() timed out',
+        'fetch failed',
+        'Login required — please log in again',
+        'SITE_DOWN: HTTP 502 on https://bitbrawler.pages.dev',
+        'waitFor locator selector timeout',
+      ],
+    })
+    expect(patterns).toEqual(['browser_error', 'connection_error', 'login_failure', 'site_down', 'timeout'])
+  })
+
+  it('falls back to ["other"] for unmatched errors', () => {
+    expect(classifyQaRunErrors({ errors: ['something unexpected'] })).toEqual(['other'])
+    expect(classifyQaRunErrors({ errors: [''] })).toEqual(['other'])
   })
 })

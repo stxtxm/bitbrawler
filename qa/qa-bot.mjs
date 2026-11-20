@@ -28,6 +28,8 @@ import {
   isPurchaseWithinBudget,
   resolveReusableDailyCharacter,
   shouldReplaceExhaustedCharacter,
+  isQaRunFailed,
+  classifyQaRunErrors,
   resolveRunPvpSinceLastPve,
   isAutoModeArenaStatus,
   classifyArenaSkipReason,
@@ -3172,6 +3174,9 @@ async function run() {
   const fleetMember = selectFleetMember(state, config.fleet)
   activeFleetMember = fleetMember
   const useFleet = fleetMember !== null
+  // Fleet Phase 2.2 (#1387): a member whose last run failed retries with a
+  // fresh character on the next run.
+  const memberFailed = useFleet && Boolean(state?.fleet?.[fleetMember.name]?.last_run_failed)
   const usePersistent = !useFleet && config.persistentCharacter && zonedWeekday !== config.freshCharacterDay
   const isFreshDay = config.persistentCharacter && zonedWeekday === config.freshCharacterDay
   const savedCharacterName = state.character && (!isCurrentRun || state.exhausted !== true) ? state.character : null
@@ -3374,6 +3379,11 @@ async function run() {
       if (persistentInfo.reset) {
         console.log(`♻️ Persistent QA fighter reset (level cap / max age reached) — creating ${persistentInfo.name}`)
         authResult = await createCharacterWithName(page, persistentInfo.name)
+      } else if (memberFailed) {
+        console.log(`   ♻️ Fleet member ${fleetMember.name} — last run failed, auto-retry with a fresh character (#1387)`)
+        authResult = await loginOrCreateDailyCharacter(page, runKey, null)
+        runRecord.character_action = 'retry-after-failure'
+        runRecord.retry_after_failure = true
       } else {
         authResult = await loginOrCreatePersistentCharacter(page, runKey, persistentInfo.name)
       }
@@ -3818,6 +3828,8 @@ async function run() {
     runRecord.final_essence = e.final
 
     // ── Save ──────────────────────────────────────────────────────
+    // Phase 2.1 (#1387): record the crash patterns of this run on the stats record.
+    runRecord.error_patterns = classifyQaRunErrors(runRecord)
     const stats = loadStats()
     stats.push(runRecord)
     saveStats(stats)
@@ -3832,6 +3844,7 @@ async function run() {
         character: runRecord.character,
         level: runRecord.final_stats?.level ?? runRecord.initial_level ?? null,
         last_run: runKey,
+        last_run_failed: isQaRunFailed(runRecord),
       }
       saveState(memberState)
       console.log(`   📊 Fleet member ${fleetMember.name}: level=${memberState.fleet[fleetMember.name].level ?? '?'}, last_run=${runKey}`)
@@ -3842,6 +3855,7 @@ async function run() {
     console.error('❌ Error:', err.message)
     console.error(`   Stack: ${err.stack}`)
     runRecord.errors.push(err.message)
+    runRecord.error_patterns = classifyQaRunErrors(runRecord)
 
     if (typeof page !== 'undefined' && page) {
       const errorScreenshot = join(SCREENSHOTS_DIR, `${runKey}-error.png`)

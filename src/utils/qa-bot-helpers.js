@@ -48,6 +48,52 @@ export function shouldReplaceExhaustedCharacter(characterType) {
   )
 }
 
+/**
+ * QA Data Quality Phase 2.2 (#1387): a run "fails" when it recorded errors or
+ * produced no combat data — the fleet retry uses this to launch a fresh
+ * character on the next run of the member.
+ */
+export function isQaRunFailed(runRecord) {
+  if (!runRecord || typeof runRecord !== 'object') return false
+  if (Array.isArray(runRecord.errors) && runRecord.errors.length > 0) return true
+  return (runRecord.fights?.length ?? 0) === 0
+}
+
+/**
+ * QA Data Quality Phase 2.1 (#1387): classify the crash patterns recorded on
+ * a run record — pure function, unit-tested.
+ */
+export function classifyQaRunErrors(runRecord) {
+  const errors = Array.isArray(runRecord?.errors) ? runRecord.errors : []
+  const patterns = new Set()
+  for (const err of errors) {
+    const text = String(err ?? '').trim()
+    if (text.length === 0) continue
+    if (/timeout|timed out/i.test(text)) patterns.add('timeout')
+    if (/ECONNREFUSED|fetch failed|net::ERR_|ECONNRESET|socket hang up|connection/i.test(text)) patterns.add('connection_error')
+    if (/login|authentication|logged out|not logged in/i.test(text)) patterns.add('login_failure')
+    if (/playwright|locator|selector|waitFor/i.test(text)) patterns.add('browser_error')
+    if (/SITE_DOWN|site down|deployment protection|error page|HTTP 40[0-9]|HTTP 50[0-9]/i.test(text)) patterns.add('site_down')
+  }
+  if (patterns.size === 0 && errors.length > 0) patterns.add('other')
+  return [...patterns].sort()
+}
+
+/**
+ * QA Data Quality Phase 2.3 (#1387): validate the completeness of a run
+ * before its inclusion in the analysis — a run with combat data but a missing
+ * initial level or final character stats (parse failure, early abort) would
+ * bias balance signals, so it is excluded from the analysis windows.
+ */
+export function isRunDataComplete(r) {
+  if (!r || typeof r !== 'object') return false
+  if (!Array.isArray(r.fights) || r.fights.length === 0) return false
+  if (typeof r.character !== 'string' || r.character.length === 0) return false
+  if (typeof r.initial_level !== 'number' || !Number.isFinite(r.initial_level)) return false
+  if (!r.final_stats || typeof r.final_stats.level !== 'number' || !Number.isFinite(r.final_stats.level)) return false
+  return true
+}
+
 export function persistentNameForGeneration(baseName, generation) {
   if (generation === 0) return baseName
   // Game name limit is 10 chars (CharacterCreation input maxLength=10). The

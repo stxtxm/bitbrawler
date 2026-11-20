@@ -40,6 +40,24 @@ export declare function shouldReplaceExhaustedCharacter(
   characterType: string | null | undefined,
 ): boolean
 
+/** Shape of a run record as needed by the Phase 2 helpers (#1387). */
+export declare interface QaRunRecordShape {
+  errors?: unknown[] | null
+  fights?: Array<{ result?: string; xp?: number | null }> | null
+  character?: string | null
+  initial_level?: number | null
+  final_stats?: { level: number | null } | null
+}
+
+/** QA Data Quality Phase 2.2 (#1387) : a run "fails" when it recorded errors or produced no combat data. */
+export declare function isQaRunFailed(runRecord: QaRunRecordShape | null | undefined): boolean
+
+/** QA Data Quality Phase 2.1 (#1387) : classify the crash patterns recorded on a run record. */
+export declare function classifyQaRunErrors(runRecord: QaRunRecordShape | null | undefined): string[]
+
+/** QA Data Quality Phase 2.3 (#1387) : validate run completeness (fights + character + initial_level + final_stats.level). */
+export declare function isRunDataComplete(runRecord: QaRunRecordShape | null | undefined): boolean
+
 export declare function persistentNameForGeneration(baseName: string, generation: number): string
 
 export declare function shouldForcePersistentReset(

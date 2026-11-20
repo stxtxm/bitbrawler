@@ -3085,7 +3085,8 @@ describe('QA Recent-Window Alert Analysis (#730)', () => {
   describe('analyze-qa-stats.ts source contract (#730)', () => {
     it('alerts on a recent error-rate window instead of the all-time cumulative rate', () => {
       const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
-      expect(source).toContain('stats.slice(-RECENT_WINDOW_RUNS)')
+      // Phase 2.3 (#1387): the recent window only carries COMPLETE runs.
+      expect(source).toContain('stats.filter(isRunDataComplete).slice(-RECENT_WINDOW_RUNS)')
       expect(source).toContain('recentRuns.filter(isErrorRun)')
       expect(source).toContain('recentRuns.filter(isHalfwayRun)')
     })
@@ -6343,5 +6344,15 @@ describe('QA XP Accounting (#1378)', () => {
     expect(source).toContain('XP hors combats')
     expect(source).toContain('idle_analysis: idleAnalysis')
     expect(source).toContain('progression_curve: progressionCurve')
+  })
+})
+
+describe('QA Data Quality Phase 2.3 (#1387) — analyzer validation', () => {
+  it('analyze-qa-stats.ts validates run completeness before inclusion in the analysis', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+    expect(source).toContain('isRunDataComplete')
+    expect(source).toContain('stats.filter(isRunDataComplete)')
+    expect(source).toContain('incomplete_runs')
+    expect(source).toContain('error_patterns_distribution')
   })
 })
