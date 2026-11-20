@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-11-20T01:23:49Z",
+  "last_session": "2026-11-20T01:31:28Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1299 watchdog: statusCheckRollup inclut les checks de deploiement externes (Cloudflare Pages, workflowName vide) -> toujours filtrer select(.workflowName == \"CI\") avant de compter, sinon le filet PR orpheline ne part jamais. Le reviewer ne peut pas poster de review formelle sur une PR dont l auteur est github-actions[bot] : le verdict doit aussi accepter un commentaire ## Review PR #N posterieur au dernier commit (gh api .../commits/SHA pour la date).",
-      "issue": "#1299",
-      "date": "2026-10-23"
-    },
     {
       "lesson": "Issue #1308 budgets cohorte QA: budget_limited ne mord que si TOUTES les offres abordables (par essence) dépassent le budget — l'offre à 30 reste dans QA-MID 40, donc le flag ne sort qu'une fois cette offre sold-out sur un run du même jour (essence >= offre suivante). Vérifier les prix réels de SHOP_OFFERS (max 88) avant d'attendre un signal QA-END à budget 120.",
       "issue": "#1308",
@@ -171,6 +166,11 @@
     {
       "lesson": "Issue #1384 lucky archetype: getLuckAllocationCap() doit être dérivé de COMBAT_BALANCE (critCap/critChance puis inverse de scaleStat) et arrondi au floor pour que la LUK entière ne dépasse pas le cap. Le cap doit être appliqué à TOUS les archétypes dans allocateStatByArchetype (pas seulement lucky), avec redistribution du poids libéré sur la plus basse de STR/VIT. Test d'allocation = rng seedé (LCG) sinon flaky sur 31 points.",
       "issue": "#1384",
+      "date": "2026-11-20"
+    },
+    {
+      "lesson": "Issue #1388 shop QA-FRESH: (1) offer replacement pattern = new SHOP_OFFERS config index injected at array position 0 (like epic index 3 at position 1); condition it on level<=max AND essence<cheapest to avoid breaking existing tests that use rich chars. (2) early idle essence MUST stay mirrored client (idleConfig/idleXpUtils) + api/idle-processor (constants exported for xpCurveSync test). (3) parseExpectedMarkers in deployFreshness scans every `price:` literal -> adding a shop offer changes expected marker count (4->5), update deploy-freshness test. (4) Pre-existing red on branch: workflow-integrity expected 'git pull --rebase' but qa.yml uses 'git -c rebase.autoStash=true pull --rebase' (fixed test regex).",
+      "issue": "#1388",
       "date": "2026-11-20"
     }
   ]
