@@ -38,4 +38,21 @@ describe('idleConfig — essence economy tuning #930', () => {
     for (let i = 0; i < 5; i++) total += calculateIdleEssence(true, 10, 10, 10)
     expect(total).toBeCloseTo(1.14, 1)
   })
+
+  it('doubles idle essence for levels 1-5 (QA-FRESH early game, #1388)', () => {
+    const maxLevel = IDLE_CONFIG.ESSENCE.EARLY_GAME_MAX_LEVEL
+    const mult = IDLE_CONFIG.ESSENCE.EARLY_GAME_MULT
+    expect(mult).toBe(2)
+    for (let level = 1; level <= maxLevel; level++) {
+      const boosted = calculateIdleEssence(true, level, 10, 10)
+      const expected = 0.18 * (1 + (level - 1) * 0.03) * mult
+      expect(boosted).toBeCloseTo(expected, 5)
+    }
+  })
+
+  it('keeps the early-game boost out of level 6 and above (non-regression)', () => {
+    const level = IDLE_CONFIG.ESSENCE.EARLY_GAME_MAX_LEVEL + 1
+    const essence = calculateIdleEssence(true, level, 10, 10)
+    expect(essence).toBeCloseTo(0.18 * (1 + (level - 1) * 0.03), 5)
+  })
 })

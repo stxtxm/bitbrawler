@@ -14,6 +14,8 @@ export const IDLE_CONFIG = {
     BASE_RATE: 0.18,
     LOSS_RATIO: 0.3,
     LEVEL_SCALE: 0.03,
+    EARLY_GAME_MAX_LEVEL: 5,
+    EARLY_GAME_MULT: 2,
   },
   EFFICIENCY: {
     BASE_INTERVAL: 12000,

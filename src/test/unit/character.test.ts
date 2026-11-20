@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { generateInitialStats } from '../../utils/characterUtils';
+import { GAME_RULES } from '../../config/gameRules';
 
 describe('Character Generation', () => {
     it('should generate a character with the correct initial stat pool', () => {
@@ -35,6 +36,12 @@ describe('Character Generation', () => {
         expect(char.seed).toBeDefined();
         expect(typeof char.seed).toBe('string');
         expect(char.seed.length).toBeGreaterThan(0);
+    });
+
+    it('should start with the welcome essence bonus (shop reachable early, #1388)', () => {
+        const char = generateInitialStats('Test', 'male');
+        expect(char.essence).toBe(GAME_RULES.ECONOMY.WELCOME_ESSENCE);
+        expect(char.essence!).toBeGreaterThanOrEqual(20);
     });
 
     it('should initialize basic levels and wins', () => {

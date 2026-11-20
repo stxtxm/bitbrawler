@@ -99,6 +99,9 @@ export const GAME_RULES = {
         RECOVERY_QUEST_WINDOW_MS: 24 * 60 * 60 * 1000,
         RECOVERY_QUEST_ESSENCE: 40,
     },
+    ECONOMY: {
+        WELCOME_ESSENCE: 20,
+    },
     LOOTBOX: {
         EPIC_WITHIN: 16,
         LEGENDARY_WITHIN: 30,

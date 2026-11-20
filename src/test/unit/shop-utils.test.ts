@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Character } from '../../types/Character';
 import { ITEM_ASSETS } from '../../data/itemAssets';
-import { SHOP_OFFERS, getShopPrice } from '../../data/shopConstants';
+import { SHOP_OFFERS, WELCOME_OFFER_INDEX, WELCOME_OFFER_MAX_LEVEL, getShopPrice } from '../../data/shopConstants';
 import { getShopOfferPurchaseInfo, type ShopPurchase } from '../../utils/shopUtils';
 
 // ─── Pure Functions Under Test ───────────────────────────────────────────
@@ -384,6 +384,10 @@ describe('shop-utils (TDD)', () => {
       expect(getShopPrice(3)).toBe(88);
     });
 
+    it('returns 15 for the welcome offer', () => {
+      expect(getShopPrice(WELCOME_OFFER_INDEX)).toBe(15);
+    });
+
     it('throws for invalid index', () => {
       expect(() => getShopPrice(99)).toThrow();
     });
@@ -392,8 +396,16 @@ describe('shop-utils (TDD)', () => {
   // ─── SHOP_OFFERS alignment ───────────────────────────────────────────────
 
   describe('SHOP_OFFERS alignment', () => {
-    it('has exactly 3 offers', () => {
-      expect(SHOP_OFFERS).toHaveLength(4);
+    it('has 4 standard offers plus the welcome shelf', () => {
+      expect(SHOP_OFFERS).toHaveLength(5);
+      expect(WELCOME_OFFER_INDEX).toBe(4);
+    });
+
+    it('welcome offer is a cheap common/uncommon item', () => {
+      const welcome = SHOP_OFFERS[WELCOME_OFFER_INDEX];
+      expect(welcome.type).toBe('item');
+      expect(welcome.price).toBeLessThan(SHOP_OFFERS[0].price);
+      expect(welcome.rarityPool).toEqual(['common', 'uncommon']);
     });
 
     it('first offer is item type with common/uncommon/rare pool', () => {
@@ -409,6 +421,55 @@ describe('shop-utils (TDD)', () => {
     it('third offer is lootbox type with null pool', () => {
       expect(SHOP_OFFERS[2].type).toBe('lootbox');
       expect(SHOP_OFFERS[2].rarityPool).toBeNull();
+    });
+  });
+
+  // ─── Welcome shelf (QA-FRESH accessibility, #1388) ──────────────────────
+
+  describe('welcome shelf', () => {
+    const today = '2026-11-20';
+
+    it('shows the welcome offer to a low-level player below the cheapest price', () => {
+      const char = makeCharacter({ level: 5, essence: 8.9, inventory: [] });
+      const offers = getShopOffers(char, ITEM_ASSETS, today, () => 0);
+      expect(offers).toHaveLength(3);
+      const welcome = offers.find((o) => o.index === WELCOME_OFFER_INDEX);
+      expect(welcome).toBeDefined();
+      expect(welcome!.price).toBe(15);
+      expect(welcome!.type).toBe('item');
+    });
+
+    it('does not replace the standard offer once the player can afford it', () => {
+      const char = makeCharacter({ level: 5, essence: SHOP_OFFERS[0].price, inventory: [] });
+      const offers = getShopOffers(char, ITEM_ASSETS, today, () => 0);
+      expect(offers.some((o) => o.index === WELCOME_OFFER_INDEX)).toBe(false);
+      expect(offers[0].index).toBe(0);
+    });
+
+    it('is restricted to characters at or below WELCOME_OFFER_MAX_LEVEL', () => {
+      const char = makeCharacter({ level: WELCOME_OFFER_MAX_LEVEL + 1, essence: 0, inventory: [] });
+      const offers = getShopOffers(char, ITEM_ASSETS, today, () => 0);
+      expect(offers.some((o) => o.index === WELCOME_OFFER_INDEX)).toBe(false);
+    });
+
+    it('is purchasable and deducts its own price', () => {
+      const char = makeCharacter({ level: 5, essence: 20, inventory: [] });
+      const result = buyShopOffer(WELCOME_OFFER_INDEX, char, ITEM_ASSETS, today, () => 0);
+      expect(result).not.toBeNull();
+      expect(result!.character.essence).toBe(5);
+      expect(result!.character.inventory).toHaveLength(1);
+      expect(canBuyOffer(WELCOME_OFFER_INDEX, char)).toBe(true);
+    });
+
+    it('never offers an epic item through the welcome shelf', () => {
+      const char = makeCharacter({ level: 5, essence: 0, inventory: [] });
+      for (const rng of [() => 0, () => 0.5, () => 0.99]) {
+        const offers = getShopOffers(char, ITEM_ASSETS, today, rng);
+        const welcome = offers.find((o) => o.index === WELCOME_OFFER_INDEX);
+        if (welcome?.item) {
+          expect(welcome.item.rarity).not.toBe('epic');
+        }
+      }
     });
   });
 
