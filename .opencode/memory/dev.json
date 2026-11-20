@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-11-20T01:31:28Z",
+  "last_session": "2026-11-20T01:47:37Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1308 budgets cohorte QA: budget_limited ne mord que si TOUTES les offres abordables (par essence) dépassent le budget — l'offre à 30 reste dans QA-MID 40, donc le flag ne sort qu'une fois cette offre sold-out sur un run du même jour (essence >= offre suivante). Vérifier les prix réels de SHOP_OFFERS (max 88) avant d'attendre un signal QA-END à budget 120.",
-      "issue": "#1308",
-      "date": "2026-10-23"
-    },
     {
       "version": 1,
       "agent": "dev",
@@ -171,6 +166,11 @@
     {
       "lesson": "Issue #1388 shop QA-FRESH: (1) offer replacement pattern = new SHOP_OFFERS config index injected at array position 0 (like epic index 3 at position 1); condition it on level<=max AND essence<cheapest to avoid breaking existing tests that use rich chars. (2) early idle essence MUST stay mirrored client (idleConfig/idleXpUtils) + api/idle-processor (constants exported for xpCurveSync test). (3) parseExpectedMarkers in deployFreshness scans every `price:` literal -> adding a shop offer changes expected marker count (4->5), update deploy-freshness test. (4) Pre-existing red on branch: workflow-integrity expected 'git pull --rebase' but qa.yml uses 'git -c rebase.autoStash=true pull --rebase' (fixed test regex).",
       "issue": "#1388",
+      "date": "2026-11-20"
+    },
+    {
+      "lesson": "Issue #1396 : quand un affichage de récompense doit refléter le gain réel, réutiliser la même fonction que le contexte (ici getBossRewards + getBossProgressForId) plutôt qu un helper brut (getBossConsolationXp) qui ignore les plafonds journaliers.",
+      "issue": "#1396",
       "date": "2026-11-20"
     }
   ]
