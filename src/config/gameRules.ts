@@ -96,6 +96,7 @@ export const GAME_RULES = {
     },
     ECONOMY: {
         DAILY_LOGIN_ESSENCE: 5,
+        WELCOME_ESSENCE: 20,
     },
     COMEBACK: {
         SECOND_WIND_PER_LOSS: 5,
@@ -104,9 +105,6 @@ export const GAME_RULES = {
         RECOVERY_QUEST_TRIGGER_LOSSES: 3,
         RECOVERY_QUEST_WINDOW_MS: 24 * 60 * 60 * 1000,
         RECOVERY_QUEST_ESSENCE: 40,
-    },
-    ECONOMY: {
-        WELCOME_ESSENCE: 20,
     },
     LOOTBOX: {
         EPIC_WITHIN: 16,
