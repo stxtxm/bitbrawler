@@ -7,6 +7,7 @@ import * as combatLogUtils from '../../utils/combatLogUtils';
 import * as xpUtils from '../../utils/xpUtils';
 import { ParticleSystem, type ParticleType } from '../../utils/particleSystem';
 import { SPRITE_ATTACK_IMPACT_MS } from '../../components/sprite/SpriteCanvas';
+import { GAME_RULES } from '../../config/gameRules';
 
 describe('CombatView Interface', () => {
     const mountedContainers = new Map<ParticleSystem, HTMLElement>();
@@ -321,6 +322,114 @@ describe('CombatView Interface', () => {
         act(() => { vi.advanceTimersByTime(3000); });
 
         expect(screen.getByText('+132 XP')).toBeInTheDocument();
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('shows boss consolation XP while under the daily cap', () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'defender',
+            rounds: 1,
+            details: ['Villain hits Hero'],
+            timeline: [{ attackerHp: 0, defenderHp: 90 }]
+        });
+
+        const now = Date.now();
+        const bossPlayer: Character = {
+            ...player,
+            bossProgress: {
+                bossId: 'void_titan',
+                attacksLeft: 3,
+                lastAttackReset: now,
+                bossHp: 100,
+                bossMaxHp: 100,
+                bossLevel: 7,
+                totalKills: 0,
+                firstEncounterAt: now,
+                pityStacks: 0,
+                consolationCount: GAME_RULES.BOSS.CONSOLATION_CAP - 1,
+                totalDamageDealt: 0,
+            },
+        };
+
+        render(
+            <CombatView
+                player={bossPlayer}
+                opponent={opponent}
+                matchType="boss"
+                monsterId="void_titan"
+                onComplete={vi.fn()}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2500); });
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(3000); });
+
+        expect(screen.queryByText('BOSS REMAINS')).toBeNull();
+        expect(screen.getByText(`+${GAME_RULES.BOSS.CONSOLATION_XP} XP`)).toBeInTheDocument();
+
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
+    it('reports no boss consolation XP once the daily cap is reached', async () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(combatUtils, 'simulateCombat').mockReturnValue({
+            winner: 'defender',
+            rounds: 1,
+            details: ['Villain hits Hero'],
+            timeline: [{ attackerHp: 0, defenderHp: 90 }]
+        });
+
+        const now = Date.now();
+        const cappedPlayer: Character = {
+            ...player,
+            bossProgress: {
+                bossId: 'void_titan',
+                attacksLeft: 1,
+                lastAttackReset: now,
+                bossHp: 100,
+                bossMaxHp: 100,
+                bossLevel: 7,
+                totalKills: 0,
+                firstEncounterAt: now,
+                pityStacks: 0,
+                consolationCount: GAME_RULES.BOSS.CONSOLATION_CAP,
+                totalDamageDealt: 0,
+            },
+        };
+
+        const onComplete = vi.fn();
+
+        render(
+            <CombatView
+                player={cappedPlayer}
+                opponent={opponent}
+                matchType="boss"
+                monsterId="void_titan"
+                onComplete={onComplete}
+                onClose={vi.fn()}
+            />
+        );
+
+        act(() => { vi.advanceTimersByTime(2500); });
+        act(() => { vi.advanceTimersByTime(2000); });
+        act(() => { vi.advanceTimersByTime(3000); });
+
+        expect(screen.getByText('BOSS REMAINS')).toBeInTheDocument();
+        expect(screen.queryByText(`+${GAME_RULES.BOSS.CONSOLATION_XP} XP`)).toBeNull();
+
+        await act(async () => {
+            fireEvent.click(screen.getByText('CONTINUE'));
+        });
+
+        expect(onComplete).toHaveBeenCalledWith(false, 0, 90);
 
         vi.useRealTimers();
         vi.restoreAllMocks();
