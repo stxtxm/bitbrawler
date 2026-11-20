@@ -222,7 +222,7 @@ describe('QA stats commits survive a concurrent master (#1132)', () => {
     expect(step).toMatch(/for tentative in/)
     expect(step).toContain('git rebase --abort')
     // During a rebase, `theirs` is the commit being replayed: our fresh stats.
-    expect(step).toContain('git pull --rebase -X theirs')
+    expect(step).toContain('pull --rebase -X theirs')
   })
 
   it('fails loudly instead of losing stats silently', () => {
