@@ -844,6 +844,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const rewards = getBossRewards(baseCharacter, won, baseProgress, now);
     const xpResult = gainXp(baseCharacter, rewards.xpGained);
 
+    // PVNE difficulty (#1387): the player does not always win — when the
+    // boss wins the fight, it damages the player (12% of their HP, min 1 HP).
+    const bossDamage = !won
+      ? Math.max(1, Math.floor((baseCharacter.maxHp ?? 0) * 0.12))
+      : 0;
+
     const historyEntry = { date: now, won, opponentName: bossName };
     const newHistory = [historyEntry, ...(baseCharacter.fightHistory || [])].slice(0, 20);
 
@@ -866,6 +872,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
     let updatedChar: Character = normalizeCharacter({
       ...xpResult.updatedCharacter,
+      hp: Math.max(1, (xpResult.updatedCharacter.hp ?? xpResult.updatedCharacter.maxHp ?? 0) - bossDamage),
       essence: (baseCharacter.essence ?? 0) + rewards.essenceGained,
       wins: won ? (baseCharacter.wins || 0) + 1 : (baseCharacter.wins || 0),
       losses: baseCharacter.losses || 0,

@@ -76,7 +76,7 @@ export const ActionPanel = memo(function ActionPanel({
           <div className="status-label">
             <span className="boss-icon">{isAbyssal ? '🌊' : '👑'}</span>
             <div className="label-text">
-              <span className="label-main">{isAbyssal ? 'ABYSSAL MONARCH' : 'BOSS ATTACKS'}</span>
+              <span className="label-main">{isAbyssal ? 'ABYSSAL MONARCH' : 'MONSTER ATTACKS'}</span>
               <span className="label-sub">
                 {!bossUnlocked
                   ? `UNLOCK AT LVL ${GAME_RULES.BOSS.UNLOCK_LEVEL}`
@@ -149,7 +149,7 @@ export const ActionPanel = memo(function ActionPanel({
                   ? 'OFFLINE'
                   : pveMode
                     ? bossUnlocked
-                      ? bossAttacksLeft > 0 ? 'ATTACK BOSS' : 'NO ATTACKS LEFT'
+                      ? bossAttacksLeft > 0 ? 'ATTACK MONSTERS' : 'NO ATTACKS LEFT'
                       : `LOCKED LVL ${GAME_RULES.BOSS.UNLOCK_LEVEL}`
                     : fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'}
         </button>
