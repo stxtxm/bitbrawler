@@ -16,7 +16,7 @@
     @include flex-center;
     z-index: 1000;
     backdrop-filter: blur(4px);
-    animation: fadeIn 0.3s ease;
+    animation: fadeIn 0.2s ease;
 }
 
 .retro-modal {
@@ -27,12 +27,15 @@
     @include pixel-shadow($accent-gold, 10px, 10px);
     max-width: 400px;
     width: 90%;
-    animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: modalSlideIn 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
 
     @include mobile {
         padding: 20px;
         border-width: 2px;
         @include pixel-shadow($accent-gold, 4px, 4px);
+        // Feel bottom-sheet : la modale monte du bas de l'écran, ouverture
+        // plus rapide pour ne pas retarder le pouce.
+        animation: modalSlideUp 0.24s cubic-bezier(0.22, 1, 0.36, 1);
     }
 }
 

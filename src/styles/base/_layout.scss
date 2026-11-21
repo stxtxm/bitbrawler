@@ -59,6 +59,12 @@ body {
     max-width: 800px;
 }
 
+// Transition d'entrée des pages routées : chaque page monte la première fois
+// qu'elle est montée (fade + rise court, cf. base/_animations).
+.App > .container {
+    animation: pageEnter 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 // PWA: lock global scroll and overscroll while keeping browser refresh intact.
 body.pwa {
     overflow: hidden;

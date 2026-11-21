@@ -878,7 +878,7 @@
     border-bottom: none;
     color: #9aa0a6;
     cursor: pointer;
-    transition: background 0.2s, color 0.2s;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
     position: relative;
     top: 2px;
 
@@ -893,12 +893,26 @@
         border-color: $accent-gold;
     }
 
+    // Retour tactile immédiat au doigt, comme les boutons de l'arène.
+    &:active:not(.locked) {
+        background: #000;
+        transform: translateY(1px);
+    }
+
     @include mobile {
         font-size: 0.42rem;
         padding: 5px 3px;
         letter-spacing: 0;
         border-width: 1px;
     }
+}
+
+// Contenu d'onglet : léger fade-in à chaque switch d'onglet pour que le
+// changement de panneau soit perçu, pas subi.
+.inventory-body,
+.inventory-shop-tab,
+.inventory-fusion-tab {
+    animation: fadeIn 0.18s ease both;
 }
 
 .inventory-shop-tab {

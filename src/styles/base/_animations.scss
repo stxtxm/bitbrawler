@@ -52,11 +52,44 @@
     }
 }
 
+// Entrée d'une page routée : fondu + léger soulèvement, discret et rapide
+// pour ne pas donner l'impression de latence entre deux navigations.
+@keyframes pageEnter {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+// Sur mobile, les modales montent depuis le bas du dock vertical (feel
+// bottom-sheet natif) au lieu de popper du centre de l'écran.
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(48px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 // Respect des préférences système : tout halo/reflet animé s'arrête net.
 @media (prefers-reduced-motion: reduce) {
 
     .blink,
     .subtitle {
+        animation: none;
+    }
+
+    .App > .container,
+    .retro-modal {
         animation: none;
     }
 }
