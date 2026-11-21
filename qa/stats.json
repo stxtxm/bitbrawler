@@ -235457,5 +235457,261 @@
       "essence_after_purchase": null
     },
     "error_patterns": []
+  },
+  {
+    "date": "2026-11-21T18:28:01.289Z",
+    "run": "2026-11-21",
+    "character": "QA-END",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 34,
+        "fight_duration_ms": 9849,
+        "max_hp": 218,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 35.72
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 5,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 8,
+      "vit": 8,
+      "dex": 7,
+      "luk": 15,
+      "int": 9,
+      "foc": 23,
+      "fights": 0
+    },
+    "initial_level": 4,
+    "initial_xp": {
+      "current": 276,
+      "max": 1181
+    },
+    "progression_curve": {
+      "level": 4,
+      "total_xp": 1507,
+      "xp_for_next": 1181,
+      "percent": 23.4
+    },
+    "initial_max_hp": 217,
+    "initial_equipment": [
+      {
+        "slot": "🛡️",
+        "name": "Worn Bracers",
+        "rarity": "COMMON"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 4,
+      "xp": 469,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 8,
+      "vit": 8,
+      "dex": 7,
+      "luk": 15,
+      "int": 9,
+      "foc": 23,
+      "last xp": 52,
+      "fights": 4
+    },
+    "final_max_hp": 218,
+    "final_equipment": [
+      {
+        "slot": "🛡️",
+        "name": "Worn Bracers",
+        "rarity": "COMMON"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "🛡️",
+        "name": "Worn Bracers",
+        "rarity": "COMMON"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 27439,
+      "cycles_observed": 0,
+      "monsters_faced": [
+        "sunfang"
+      ],
+      "victories": 1,
+      "defeats": 0,
+      "xp_total": 20,
+      "xp_events": [
+        {
+          "time_ms": 27439,
+          "xp": 20,
+          "monster": "sunfang",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        511,
+        1530,
+        27439
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 20,
+        "essence": 1.04,
+        "monster": "sunfang"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 3.3,
+      "next_level_eta": "⬆ 3m 0s",
+      "power_ratio": "⚔ 0.51x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.12x",
+      "interval": "12.0s",
+      "streak_bonus": "🔥 1-win streak (+25%)"
+    },
+    "initial_essence": 29.68,
+    "final_essence": 35.72,
+    "essence": {
+      "before_idle": 29.68,
+      "after_idle": 30.72,
+      "per_fight": [
+        35.72
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": 35.72,
+      "flow": {
+        "idle_gained": 1.04,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": 6.04
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": true,
+      "skip_reason": "forge requires LVL 6"
+    },
+    "shop": {
+      "visited": false,
+      "offers_count": 0,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": null,
+      "essence_after": null,
+      "skipped": true,
+      "skip_reason": "shop requires LVL 5",
+      "shop_data": {
+        "offers": [],
+        "purchased_offer": null,
+        "essence_after_purchase": null
+      }
+    },
+    "cohort": {
+      "name": "QA-FRESH",
+      "essence_budget": 50
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1361,
+      "arena": 997
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [],
+      "purchased_offer": null,
+      "essence_after_purchase": null
+    },
+    "error_patterns": []
   }
 ]
