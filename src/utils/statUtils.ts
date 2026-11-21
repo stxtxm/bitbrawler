@@ -66,6 +66,17 @@ export function allocateStatsByArchetype(character: Character, points: number, r
   return updated
 }
 
+export function repairLuckOverflow(character: Character, rng: () => number = Math.random): Character {
+  const cap = getLuckAllocationCap()
+  const luck = character.luck ?? 0
+  if (luck <= cap) return character
+
+  const overflow = luck - cap
+  const clamped: Character = { ...character, luck: cap }
+  const refunded = grantStatPoints(clamped, overflow)
+  return allocateStatsByArchetype(refunded, overflow, rng)
+}
+
 export const STAT_TOOLTIPS: Record<StatKey, string> = {
     strength: 'Boosts physical damage dealt in combat. Each point increases your offense power for harder-hitting attacks. (No maximum limit)',
     vitality: `Increases max HP (+8 HP per point) and improves physical defense, making you tougher to take down. (No maximum limit)`,

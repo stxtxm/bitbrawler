@@ -3,7 +3,7 @@ import { supabase, type CharacterRow } from '../config/supabase';
 import { Character, IncomingFightHistory, PendingFight } from '../types/Character';
 import { gainXp, calculateFightXp } from '../utils/xpUtils';
 import { getActiveWinXpMultiplier } from '../utils/activeBonusUtils';
-import { applyStatPoint, autoAllocateStatPoints, HP_PER_LEVEL, StatKey } from '../utils/statUtils';
+import { applyStatPoint, autoAllocateStatPoints, HP_PER_LEVEL, repairLuckOverflow, StatKey } from '../utils/statUtils';
 import { GAME_RULES } from '../config/gameRules';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { findOpponent, MatchmakingResult } from '../utils/matchmakingUtils';
@@ -402,7 +402,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (!isOnline) {
-        setActiveCharacter(normalizeCharacter(localChar));
+        setActiveCharacter(repairLuckOverflow(normalizeCharacter(localChar)));
         setDbAvailable(false);
         setLoading(false);
         return;
@@ -438,14 +438,15 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         } as any;
         const normalized = normalizeCharacter(mergedChar);
         const withDailyBonus = applyDailyLoginBonus(normalized);
-        persistCharacter(withDailyBonus);
+        const repaired = repairLuckOverflow(withDailyBonus);
+        persistCharacter(repaired);
         setDbAvailable(true);
         // If local had more XP, sync it back to Supabase
-        if (hasMoreXp || withDailyBonus !== normalized) {
-          syncCharacterToBackend(withDailyBonus);
+        if (hasMoreXp || withDailyBonus !== normalized || repaired !== withDailyBonus) {
+          syncCharacterToBackend(repaired);
         }
       } else if (syncResult.status === 'error') {
-        setActiveCharacter(normalizeCharacter(localChar));
+        setActiveCharacter(repairLuckOverflow(normalizeCharacter(localChar)));
         setDbAvailable(false);
       } else {
         // Status is 'missing' - character has been deleted on server
@@ -504,8 +505,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           })
         : fullChar;
 
-      persistCharacter(loadedChar);
-      if (dailyEssence > 0) syncCharacterToBackend(loadedChar);
+      const repairedChar = repairLuckOverflow(loadedChar);
+      persistCharacter(repairedChar);
+      if (dailyEssence > 0 || repairedChar !== loadedChar) syncCharacterToBackend(repairedChar);
       setDbAvailable(true);
       return null;
     } catch (error) {

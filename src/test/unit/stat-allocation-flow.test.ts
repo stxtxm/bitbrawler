@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Character } from '../../types/Character';
-import { applyStatPoint, grantStatPoints, autoAllocateStatPoints, allocateStatByArchetype, allocateStatsByArchetype, getLuckAllocationCap, StatKey } from '../../utils/statUtils';
+import { applyStatPoint, grantStatPoints, autoAllocateStatPoints, allocateStatByArchetype, allocateStatsByArchetype, getLuckAllocationCap, repairLuckOverflow, StatKey } from '../../utils/statUtils';
 
 function seededRng(seed: number): () => number {
   let state = seed >>> 0;
@@ -294,6 +294,65 @@ describe('Stat allocation flow (level-up simulation)', () => {
         expect(trainedMage.intelligence).toBeGreaterThan(trainedMage.strength);
         expect(trainedMage.intelligence).toBeGreaterThan(trainedMage.focus);
       }
+    });
+  });
+
+  describe('repairLuckOverflow', () => {
+    function makeOverflowedLucky(): Character {
+      return makeCharacter({
+        level: 32,
+        statPoints: 0,
+        strength: 10,
+        vitality: 13,
+        dexterity: 23,
+        luck: 52,
+        intelligence: 13,
+        focus: 19,
+        maxHp: 372,
+        hp: 372,
+      });
+    }
+
+    it('clamps luck to the cap and reinvests every overflow point', () => {
+      const cap = getLuckAllocationCap();
+      const char = makeOverflowedLucky();
+      const repaired = repairLuckOverflow(char, seededRng(7));
+
+      expect(repaired.luck).toBe(cap);
+      expect(repaired.statPoints).toBe(0);
+    });
+
+    it('creates no points: total stat sum is unchanged', () => {
+      const char = makeOverflowedLucky();
+      const totalBefore = char.strength + char.vitality + char.dexterity + char.luck + char.intelligence + char.focus;
+      const repaired = repairLuckOverflow(char, seededRng(11));
+      const totalAfter = repaired.strength + repaired.vitality + repaired.dexterity + repaired.luck + repaired.intelligence + repaired.focus;
+
+      expect(totalAfter).toBe(totalBefore);
+    });
+
+    it('is idempotent: a second call is a no-op', () => {
+      const repaired = repairLuckOverflow(makeOverflowedLucky(), seededRng(3));
+      const second = repairLuckOverflow(repaired, seededRng(99));
+
+      expect(second).toBe(repaired);
+      expect(second.luck).toBe(repaired.luck);
+    });
+
+    it('returns the same object when luck is already at or below the cap', () => {
+      const cap = getLuckAllocationCap();
+      const atCap = makeCharacter({ luck: cap });
+      const belowCap = makeCharacter({ luck: cap - 1 });
+
+      expect(repairLuckOverflow(atCap)).toBe(atCap);
+      expect(repairLuckOverflow(belowCap)).toBe(belowCap);
+    });
+
+    it('keeps a level 32 lucky character combat-capable', () => {
+      const repaired = repairLuckOverflow(makeOverflowedLucky(), seededRng(5));
+
+      expect(repaired.strength).toBeGreaterThanOrEqual(15);
+      expect(repaired.dexterity).toBeGreaterThanOrEqual(23);
     });
   });
 
