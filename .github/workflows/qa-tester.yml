@@ -67,13 +67,13 @@ jobs:
             ${{ runner.os }}-playwright-
 
       - name: Install Playwright (cache miss)
-        if: steps.pw-cache.outputs.cache-hit != "true"
+        if: steps.pw-cache.outputs.cache-hit != 'true'
         run: |
           npx playwright --version
           npx playwright install chromium --with-deps
 
       - name: Install Playwright OS deps (cache hit)
-        if: steps.pw-cache.outputs.cache-hit == "true"
+        if: steps.pw-cache.outputs.cache-hit == 'true'
         run: |
           npx playwright --version
           npx playwright install-deps chromium

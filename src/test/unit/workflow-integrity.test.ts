@@ -870,3 +870,28 @@ exit 0
     })
   })
 })
+
+describe('Workflow contracts: double quotes in `if:` conditions (#1400)', () => {
+  it('no workflow `if:` line uses double-quoted string literals', () => {
+    // GitHub Actions rejecte les doubles quotes dans les conditions `if:`
+    // (« You must use single quotes around string literals ») : un `if:`
+    // pareil refusait le workflow lui-même — 0 job, sans log utile (#1400 :
+    // zéro stat QA depuis 2026-11-20). Le YAML valide en parse, mais
+    // l'expression est rejetée au chargement — le garde-fou scanne les
+    // lignes `if:` uniquement (les `${{ }}` dans un `run:` ne sont pas
+    // concernés).
+    const workflowsDir = join(process.cwd(), '.github', 'workflows')
+    const files = readdirSync(workflowsDir).filter((f) => f.endsWith('.yml'))
+    expect(files.length).toBeGreaterThan(0)
+    const offenders: string[] = []
+    for (const file of files) {
+      const lines = readFileSync(join(workflowsDir, file), 'utf8').split('\n')
+      lines.forEach((line, index) => {
+        if (/^\s*if:/.test(line) && line.includes('"')) {
+          offenders.push(`${file}:${index + 1}: ${line.trim()}`)
+        }
+      })
+    }
+    expect(offenders).toEqual([])
+  })
+})
