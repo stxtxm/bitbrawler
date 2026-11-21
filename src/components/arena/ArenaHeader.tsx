@@ -9,7 +9,6 @@ interface ArenaHeaderProps {
   surgeBiome?: BiomeDef | null;
   onOpenSettings: () => void;
   onOpenInventory: () => void;
-  onOpenForge?: () => void;
   onLogout: () => void;
 }
 
@@ -29,7 +28,6 @@ export const ArenaHeader = memo(function ArenaHeader({
   surgeBiome,
   onOpenSettings,
   onOpenInventory,
-  onOpenForge,
   onLogout,
 }: ArenaHeaderProps) {
 
@@ -58,23 +56,18 @@ export const ArenaHeader = memo(function ArenaHeader({
       </div>
       <div className="header-actions">
         <button className="button icon-btn" onClick={onOpenSettings} title="Settings" aria-label="Settings">
-          <PixelIcon type="gear" size={26} />
+          <PixelIcon type="gear" size={28} />
         </button>
-        {onOpenForge && (
-          <button className="button icon-btn forge-btn" onClick={onOpenForge} title="Forge" aria-label="Forge">
-            <PixelIcon type="anvil" size={26} />
-          </button>
-        )}
         <button
           className="button icon-btn inventory-btn"
           onClick={onOpenInventory}
           title="Inventory"
           aria-label="Inventory"
         >
-          <PixelIcon type="backpack" size={26} />
+          <PixelIcon type="backpack" size={28} />
         </button>
         <button className="button icon-btn" onClick={onLogout} title="Logout">
-          <PixelIcon type="power" size={26} />
+          <PixelIcon type="power" size={28} />
         </button>
       </div>
     </header>

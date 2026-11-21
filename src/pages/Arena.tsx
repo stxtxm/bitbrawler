@@ -46,6 +46,7 @@ const Arena = () => {
     pityTriggered,
     essence,
     salvageItems,
+    upgradeItem,
   } = useGame();
   const { ensureConnection, openModal, closeModal, connectionModal } = useConnectionGate();
   const { play, enabled, setEnabled } = useSound();
@@ -176,10 +177,6 @@ const Arena = () => {
     setTimeout(() => navigate('/'), 0);
   }, [logout, navigate]);
 
-  const handleOpenForge = useCallback(() => {
-    navigate('/forge');
-  }, [navigate]);
-
   const handleToggleSound = useCallback(() => {
     setEnabled(!enabled);
   }, [enabled, setEnabled]);
@@ -199,7 +196,6 @@ const Arena = () => {
         surgeBiome={surgeBiome}
         onOpenSettings={settings.openSettings}
         onOpenInventory={inventory.openInventory}
-        onOpenForge={handleOpenForge}
         onLogout={handleLogout}
       />
 
@@ -229,6 +225,7 @@ const Arena = () => {
           itemUpgradeLevels={activeCharacter?.itemUpgrades ?? {}}
           essence={essence}
           onSalvage={salvageItems}
+          onUpgrade={upgradeItem}
           inventoryFilterElement={inventory.inventoryFilterElement}
         />
       )}

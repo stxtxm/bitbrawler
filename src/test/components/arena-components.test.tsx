@@ -547,6 +547,124 @@ describe('arena extracted components', () => {
       expect(itemCard.className).toContain('upgraded');
     });
 
+    it('shows the UPGRADE action in the detail view when onUpgrade is provided', async () => {
+      const rustySword = getItem('rusty_sword');
+      const onUpgrade = vi.fn().mockResolvedValue({ ...character, inventory: [rustySword.id], essence: 100 });
+      notifySpy.mockClear();
+
+      render(
+        <InventoryPanel
+          inventory={[rustySword.id]}
+          inventoryCapacity={20}
+          equippedItems={[]}
+          previewItem={rustySword}
+          previewSlotLabel="WEAPON"
+          previewStats={getItemStatEntries(rustySword)}
+          totalBonusEntries={[]}
+          lootboxResult={null}
+          lootboxRolling={false}
+          canRollDailyLoot
+          inventoryFull={false}
+          streak={0}
+          itemStatMeta={ITEM_STAT_META}
+          isOfflineMode={false}
+          onClose={vi.fn()}
+          onEquip={vi.fn()}
+          onUnequip={vi.fn()}
+          onLootboxRoll={vi.fn()}
+          onCloseLootboxResult={vi.fn()}
+          onSelectItem={vi.fn()}
+          onHoverItem={vi.fn()}
+          previewItemId={rustySword.id}
+          itemUpgradeLevels={{}}
+          essence={100}
+          onUpgrade={onUpgrade}
+        />,
+      );
+
+      const upgradeBtn = screen.getByRole('button', { name: /upgrade rusty sword/i });
+      fireEvent.click(upgradeBtn);
+
+      await waitFor(() => expect(onUpgrade).toHaveBeenCalledWith(rustySword.id));
+      await waitFor(() =>
+        expect(notifySpy).toHaveBeenCalledWith(expect.stringContaining('Upgrade success'), 'success', 3000),
+      );
+    });
+
+    it('hides the UPGRADE action when onUpgrade is not provided', () => {
+      const rustySword = getItem('rusty_sword');
+
+      render(
+        <InventoryPanel
+          inventory={[rustySword.id]}
+          inventoryCapacity={20}
+          equippedItems={[]}
+          previewItem={rustySword}
+          previewSlotLabel="WEAPON"
+          previewStats={getItemStatEntries(rustySword)}
+          totalBonusEntries={[]}
+          lootboxResult={null}
+          lootboxRolling={false}
+          canRollDailyLoot
+          inventoryFull={false}
+          streak={0}
+          itemStatMeta={ITEM_STAT_META}
+          isOfflineMode={false}
+          onClose={vi.fn()}
+          onEquip={vi.fn()}
+          onUnequip={vi.fn()}
+          onLootboxRoll={vi.fn()}
+          onCloseLootboxResult={vi.fn()}
+          onSelectItem={vi.fn()}
+          onHoverItem={vi.fn()}
+          previewItemId={rustySword.id}
+          itemUpgradeLevels={{}}
+          essence={100}
+        />,
+      );
+
+      expect(screen.queryByRole('button', { name: /upgrade rusty sword/i })).toBeNull();
+    });
+
+    it('shows the FUSION tab when the character level unlocks it', () => {
+      const rustySword = getItem('rusty_sword');
+
+      render(
+        <InventoryPanel
+          inventory={[rustySword.id]}
+          inventoryCapacity={20}
+          equippedItems={[]}
+          previewItem={null}
+          previewSlotLabel=""
+          previewStats={[]}
+          totalBonusEntries={[]}
+          lootboxResult={null}
+          lootboxRolling={false}
+          canRollDailyLoot
+          inventoryFull={false}
+          streak={0}
+          itemStatMeta={ITEM_STAT_META}
+          isOfflineMode={false}
+          onClose={vi.fn()}
+          onEquip={vi.fn()}
+          onUnequip={vi.fn()}
+          onLootboxRoll={vi.fn()}
+          onCloseLootboxResult={vi.fn()}
+          onSelectItem={vi.fn()}
+          onHoverItem={vi.fn()}
+          previewItemId={null}
+          itemUpgradeLevels={{}}
+          essence={100}
+        />,
+      );
+
+      const fusionTab = screen.getByRole('tab', { name: /FUSION/ });
+      expect(fusionTab).toBeInTheDocument();
+
+      fireEvent.click(fusionTab);
+      expect(screen.getByText(/Combine 3 items of the same rarity/i)).toBeInTheDocument();
+    });
+
     it('renders salvage button in detail view when item is selected', async () => {
       const rustySword = getItem('rusty_sword');
       const onSalvage = vi.fn().mockResolvedValue(null);

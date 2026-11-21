@@ -10,7 +10,7 @@ import {
   type StatComparisonEntry,
 } from '../utils/equipmentPresentation';
 
-export type InventoryTab = 'inventory' | 'shop';
+export type InventoryTab = 'inventory' | 'shop' | 'fusion';
 
 export type GroupedInventory = Record<ItemSlot, PixelItemAsset[]>;
 
@@ -24,6 +24,7 @@ interface UseInventoryPanelResult {
   activeTab: InventoryTab;
   handleTabChange: (tab: InventoryTab) => void;
   shopUnlocked: boolean;
+  fusionUnlocked: boolean;
   groupedItems: GroupedInventory;
   equippedForPreviewSlot: PixelItemAsset | null;
   comparison: StatComparisonEntry[];
@@ -38,6 +39,7 @@ export function useInventoryPanel({
   const { activeCharacter } = useGame();
   const level = activeCharacter?.level ?? 1;
   const shopUnlocked = isFeatureUnlocked(level, PROGRESSION_GATES.SHOP_UNLOCK_LEVEL);
+  const fusionUnlocked = isFeatureUnlocked(level, PROGRESSION_GATES.FUSION_UNLOCK_LEVEL);
 
   const groupedItems = useMemo<GroupedInventory>(() => {
     const bySlot = Object.fromEntries(
@@ -55,9 +57,10 @@ export function useInventoryPanel({
   const handleTabChange = useCallback(
     (tab: InventoryTab) => {
       if (tab === 'shop' && !shopUnlocked) return;
+      if (tab === 'fusion' && !fusionUnlocked) return;
       setActiveTab(tab);
     },
-    [shopUnlocked],
+    [shopUnlocked, fusionUnlocked],
   );
 
   const equippedForPreviewSlot = useMemo(
@@ -74,6 +77,7 @@ export function useInventoryPanel({
     activeTab,
     handleTabChange,
     shopUnlocked,
+    fusionUnlocked,
     groupedItems,
     equippedForPreviewSlot,
     comparison,

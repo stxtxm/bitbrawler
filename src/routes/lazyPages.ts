@@ -19,10 +19,6 @@ export const Login = lazy(loginImporter)
 export const Arena = lazy(arenaImporter)
 export const NotFound = lazy(notFoundImporter)
 
-const forgeImporter = () => import('../pages/Forge')
-
-export const Forge = lazy(forgeImporter)
-
 const achievementsImporter = () => import('../pages/Achievements')
 
 export const Achievements = lazy(achievementsImporter)

@@ -5,7 +5,9 @@ import { getItemStatEntries } from '../../hooks/useInventory';
 import { useInventoryPanel } from '../../hooks/useInventoryPanel';
 import { useNotification } from '../../hooks/useNotification';
 import { useSound } from '../../hooks/useSound';
-import { ESSENCE_YIELD } from '../../data/forgeConstants';
+import { ESSENCE_YIELD, MAX_UPGRADE_LEVEL } from '../../data/forgeConstants';
+import { FusionPanel } from '../forge/FusionPanel';
+import { getUpgradeCost } from '../../utils/forgeUtils';
 import { AffinityBadge } from '../AffinityBadge';
 import { PixelIcon } from '../PixelIcon';
 import { PixelItemIcon } from '../PixelItemIcon';
@@ -51,6 +53,7 @@ interface InventoryPanelProps {
   // Forge integration
   itemUpgradeLevels?: Record<string, number>;
   onSalvage?: (itemId: string) => Promise<Character | null>;
+  onUpgrade?: (itemId: string) => Promise<Character | null>;
   essence?: number;
 }
 
@@ -102,6 +105,7 @@ export const InventoryPanel = memo(function InventoryPanel({
   pityTriggered = false,
   itemUpgradeLevels = {},
   onSalvage,
+  onUpgrade,
   essence = 0,
   inventoryFilterElement = null,
 }: InventoryPanelProps) {
@@ -109,6 +113,7 @@ export const InventoryPanel = memo(function InventoryPanel({
     activeTab,
     handleTabChange,
     shopUnlocked,
+    fusionUnlocked,
     groupedItems,
     equippedForPreviewSlot,
     comparison,
@@ -175,6 +180,34 @@ export const InventoryPanel = memo(function InventoryPanel({
     }
   }, [previewItem, salvaging, onSalvage, onDeselect, notify, play]);
 
+  // ─── Upgrade in the detail view (mutualisé avec la Forge, #1387) ────────────
+  const [upgrading, setUpgrading] = useState(false);
+  const upgradeLevel = previewItem ? (itemUpgradeLevels[previewItem.id] ?? 0) : 0;
+  const upgradeCost = previewItem ? getUpgradeCost(previewItem, upgradeLevel) : 0;
+  const isUpgradeMaxLevel = upgradeLevel >= MAX_UPGRADE_LEVEL;
+  const insufficientEssence = essence < upgradeCost;
+
+  const handleUpgrade = useCallback(async () => {
+    if (!previewItem || !onUpgrade || upgrading || isUpgradeMaxLevel) return;
+    setUpgrading(true);
+    try {
+      const result = await onUpgrade(previewItem.id);
+      if (!result) {
+        play('error');
+        notify('Upgrade failed. Try again.', 'error', 3000);
+        return;
+      }
+      play('upgrade');
+      const newLevel = result.itemUpgrades?.[previewItem.id] ?? upgradeLevel + 1;
+      notify(`Upgrade success! ${previewItem.name} now +${newLevel}`, 'success', 3000);
+    } catch {
+      play('error');
+      notify('Upgrade failed due to connection error.', 'error', 3000);
+    } finally {
+      setUpgrading(false);
+    }
+  }, [previewItem, onUpgrade, upgrading, isUpgradeMaxLevel, upgradeLevel, notify, play]);
+
   const epicRemaining = getEpicPityRemaining(epicPityCount);
   const epicBoost = getEpicBoostBonus(commonStreak);
   const epicBoostPct = (epicBoost * 100).toFixed(1);
@@ -210,6 +243,16 @@ export const InventoryPanel = memo(function InventoryPanel({
             title={shopUnlocked ? 'Shop' : `Unlocks at LVL ${PROGRESSION_GATES.SHOP_UNLOCK_LEVEL}`}
           >
             {shopUnlocked ? '🏪 SHOP' : `🔒 SHOP LVL ${PROGRESSION_GATES.SHOP_UNLOCK_LEVEL}`}
+          </button>
+          <button
+            className={`inventory-tab ${!fusionUnlocked ? 'locked' : ''} ${activeTab === 'fusion' ? 'active' : ''}`}
+            onClick={() => handleTabChange('fusion')}
+            role="tab"
+            aria-selected={activeTab === 'fusion'}
+            disabled={!fusionUnlocked}
+            title={fusionUnlocked ? 'Fusion' : `Unlocks at LVL ${PROGRESSION_GATES.FUSION_UNLOCK_LEVEL}`}
+          >
+            {fusionUnlocked ? '⚔️ FUSION' : `🔒 FUSION LVL ${PROGRESSION_GATES.FUSION_UNLOCK_LEVEL}`}
           </button>
         </div>
 
@@ -444,6 +487,26 @@ export const InventoryPanel = memo(function InventoryPanel({
                           </button>
                         )}
                       </div>
+                      {onUpgrade && (
+                        <div className="forge-action-bar inventory-upgrade-bar">
+                          <div className="forge-action-info">
+                            {isUpgradeMaxLevel
+                              ? 'Item is already at maximum level'
+                              : insufficientEssence
+                                ? `Not enough essence! Need ${upgradeCost}, have ${essence.toFixed(2)}.`
+                                : `Upgrade cost: ${upgradeCost} Essence`}
+                          </div>
+                          <button
+                            className="forge-action-btn"
+                            onClick={handleUpgrade}
+                            disabled={upgrading || isUpgradeMaxLevel || insufficientEssence}
+                            aria-label={`Upgrade ${previewItem.name}`}
+                            data-click-sound="none"
+                          >
+                            {upgrading ? 'UPGRADING...' : isUpgradeMaxLevel ? 'MAXED' : 'UPGRADE'}
+                          </button>
+                        </div>
+                      )}
                     </div>
                     {essence > 0 && (
                       <div className="inventory-essence-total">
@@ -475,6 +538,10 @@ export const InventoryPanel = memo(function InventoryPanel({
                 )}
               </div>
             </div>
+          </div>
+        ) : activeTab === 'fusion' ? (
+          <div className="inventory-fusion-tab">
+            <FusionPanel onClose={() => handleTabChange('inventory')} />
           </div>
         ) : shopUnlocked ? (
           <div className="inventory-shop-tab">
