@@ -39,11 +39,13 @@
     background: #111;
     transition: all 0.2s;
 
-    &:hover {
-        color: #fff;
-        border-color: $accent-gold;
-        background: #222;
-        transform: translateY(-2px);
+    @include hoverable {
+        &:hover {
+            color: #fff;
+            border-color: $accent-gold;
+            background: #222;
+            transform: translateY(-2px);
+        }
     }
 }
 

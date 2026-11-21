@@ -882,9 +882,12 @@
     position: relative;
     top: 2px;
 
-    &:hover {
-        background: rgba(255, 255, 255, 0.05);
-        color: $accent-gold;
+    // Hover réservé aux pointeurs fins : sur tactile il persiste après le tap.
+    @include hoverable {
+        &:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: $accent-gold;
+        }
     }
 
     &.active {

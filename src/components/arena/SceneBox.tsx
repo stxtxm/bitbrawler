@@ -57,38 +57,43 @@ export const SceneBox = memo(function SceneBox({
         data-low-perf={lowPerf ? 'true' : 'false'}
         aria-hidden="true"
       />
-      {pveMode ? (
-        <IdleRunnerScene
-          character={effectiveCharacter}
-          appearance={effectiveCharacter.appearance}
-          currentMonster={idle.currentMonster}
-          scenePhase={idle.scenePhase}
-          lastCombatResult={idle.lastCombatResult}
-          lastCombatXp={idle.lastCombatXp}
-          offlineGains={idle.offlineGains}
-          onClearOfflineGains={idle.clearOfflineGains}
-          recentLevelUp={idle.recentLevelUp}
-          currentStreak={idle.currentStreak}
-          streakMilestone={idle.streakMilestone}
-          eliteName={idle.eliteName ?? null}
-          eliteElement={idle.eliteElement ?? null}
-        />
-      ) : (
-        <div className="scene-pvp-center">
-          <div className="fighter-character-wrap">
-            <SpriteCanvas
-              seed={character.seed}
-              gender={character.gender}
-              appearance={character.appearance}
-              equippedItems={character.equippedItems}
-              scale={pvpScale}
-              animate="idle"
-              className="pixel-character"
-            />
-            <div className="scene-ground-shadow" aria-hidden="true" />
+      {/* La key force le remontage du wrapper uniquement à la bascule de
+          mode : l'animation sceneSwap (fade CSS) se rejoue à chaque swap,
+          sans jamais interférer avec le screen-shake des combats (fils). */}
+      <div className="scene-swap" key={pveMode ? 'pve' : 'pvp'}>
+        {pveMode ? (
+          <IdleRunnerScene
+            character={effectiveCharacter}
+            appearance={effectiveCharacter.appearance}
+            currentMonster={idle.currentMonster}
+            scenePhase={idle.scenePhase}
+            lastCombatResult={idle.lastCombatResult}
+            lastCombatXp={idle.lastCombatXp}
+            offlineGains={idle.offlineGains}
+            onClearOfflineGains={idle.clearOfflineGains}
+            recentLevelUp={idle.recentLevelUp}
+            currentStreak={idle.currentStreak}
+            streakMilestone={idle.streakMilestone}
+            eliteName={idle.eliteName ?? null}
+            eliteElement={idle.eliteElement ?? null}
+          />
+        ) : (
+          <div className="scene-pvp-center">
+            <div className="fighter-character-wrap">
+              <SpriteCanvas
+                seed={character.seed}
+                gender={character.gender}
+                appearance={character.appearance}
+                equippedItems={character.equippedItems}
+                scale={pvpScale}
+                animate="idle"
+                className="pixel-character"
+              />
+              <div className="scene-ground-shadow" aria-hidden="true" />
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 });

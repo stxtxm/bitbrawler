@@ -23,12 +23,15 @@
     @include pixel-shadow(#fff, 4px, 4px);
     min-width: 150px;
 
-    &:hover:not(:disabled) {
-        background: #2a2a30;
-        transform: translate(-2px, -2px);
-        @include pixel-shadow($accent-gold, 6px, 6px);
-        color: $accent-gold;
-        border-color: $accent-gold;
+    // Hover réservé aux pointeurs fins : sur tactile il persiste après le tap.
+    @include hoverable {
+        &:hover:not(:disabled) {
+            background: #2a2a30;
+            transform: translate(-2px, -2px);
+            @include pixel-shadow($accent-gold, 6px, 6px);
+            color: $accent-gold;
+            border-color: $accent-gold;
+        }
     }
 
     // Retour tactile : le bouton s'enfonce au lieu de flotter.
@@ -56,10 +59,12 @@
         color: #aaa;
         @include pixel-shadow(#666, 4px, 4px);
 
-        &:hover:not(:disabled) {
-            border-color: #fff;
-            color: #fff;
-            @include pixel-shadow(#fff, 6px, 6px);
+        @include hoverable {
+            &:hover:not(:disabled) {
+                border-color: #fff;
+                color: #fff;
+                @include pixel-shadow(#fff, 6px, 6px);
+            }
         }
     }
 
@@ -72,11 +77,13 @@
         text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.35);
         @include pixel-shadow(#6b4e00, 4px, 4px);
 
-        &:hover:not(:disabled) {
-            background: linear-gradient(180deg, #ffe27a 0%, #ffc91f 55%, #d9a100 100%);
-            color: #000;
-            border-color: #fff;
-            @include pixel-shadow(#8f6800, 6px, 6px);
+        @include hoverable {
+            &:hover:not(:disabled) {
+                background: linear-gradient(180deg, #ffe27a 0%, #ffc91f 55%, #d9a100 100%);
+                color: #000;
+                border-color: #fff;
+                @include pixel-shadow(#8f6800, 6px, 6px);
+            }
         }
 
         &:active:not(:disabled) {

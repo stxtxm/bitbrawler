@@ -14,6 +14,11 @@ const ANIMATIONS = 'src/styles/base/_animations.scss';
 const LAYOUT = 'src/styles/base/_layout.scss';
 const CONTAINERS = 'src/styles/components/_containers.scss';
 const INVENTORY = 'src/styles/pages/_arena-inventory.scss';
+const VARIABLES = 'src/styles/_variables.scss';
+const BUTTONS = 'src/styles/components/_buttons.scss';
+const ARENA = 'src/styles/pages/_arena.scss';
+const HOME = 'src/styles/pages/_home.scss';
+const RANKINGS = 'src/styles/pages/_rankings.scss';
 
 function read(file: string): string {
   return readFileSync(file, 'utf8');
@@ -110,5 +115,45 @@ describe('feeling mobile — animations et transitions', () => {
     expect(reducedBlock).not.toBeNull();
     expect(reducedBlock).toContain('.App > .container');
     expect(reducedBlock).toContain('.retro-modal');
+    expect(reducedBlock).toContain('.scene-swap');
+    expect(reducedBlock).toContain('.ranking-row');
+  });
+
+  it('réserve les hovers aux pointeurs fins (pas de sticky-hover au doigt)', () => {
+    // Le mixin doit exister et être utilisé sur tous les éléments
+    // interactifs à effet hover : boutons, icones d'entête, onglets, nav.
+    expect(read(VARIABLES)).toMatch(
+      /@mixin hoverable\s*\{[^@]*@media \(hover: hover\) and \(pointer: fine\)/,
+    );
+    for (const [file, name] of [
+      [BUTTONS, '.button'],
+      [ARENA, '.icon-btn'],
+      [INVENTORY, '.inventory-tab'],
+      [HOME, '.nav-btn'],
+    ] as const) {
+      expect(read(file).includes('@include hoverable'), `${name} : hover non gate`).toBe(true);
+    }
+  });
+
+  it('fonde la scène au swap PvE ⇄ PvP via un wrapper .scene-swap', () => {
+    expect(read(ARENA)).toMatch(/\.scene-swap\s*\{[^}]*animation:\s*sceneSwap/);
+    // Le wrapper est positionné pour remplir .scene-box sans casser le
+    // layout filaire (fils en width/height 100%).
+    const block = blockContaining(read(ARENA), '.scene-swap');
+    expect(block).toContain('position: absolute');
+    expect(block).toContain('inset: 0');
+  });
+
+  it('fait entrer les lignes de classement en cascade', () => {
+    const rankings = read(RANKINGS);
+    expect(rankings).toMatch(/\.ranking-row\s*\{[^}]*animation:\s*rowEnter/);
+    // Décalage rang par rang jusqu'au top 12, puis arrivée groupée.
+    expect(rankings).toContain('@for $i from 1 through 12');
+    expect(rankings).toContain('nth-child(n + 13)');
+  });
+
+  it('contient le scroll des modales (plus de rebond en chaîne)', () => {
+    const modal = blockContaining(read(CONTAINERS), '.retro-modal {');
+    expect(modal).toContain('overscroll-behavior: contain');
   });
 });

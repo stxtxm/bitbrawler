@@ -1,6 +1,23 @@
 @use 'sass:color';
 @use '../variables' as *;
 
+// Entrée en cascade des lignes : chaque rang arrive avec 30ms de décalage
+// (cf. rowEnter dans base/_animations). Au-delà du top 12, tout le monde
+// arrive ensemble pour ne pas retarder les longues listes.
+.ranking-row {
+    animation: rowEnter 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+
+    @for $i from 1 through 12 {
+        &:nth-child(#{$i}) {
+            animation-delay: #{$i * 0.03}s;
+        }
+    }
+
+    &:nth-child(n + 13) {
+        animation-delay: 0.36s;
+    }
+}
+
 // Rankings page specific container styles
 .rankings-page.retro-container {
     width: 100%;

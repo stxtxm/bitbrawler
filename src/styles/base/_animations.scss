@@ -80,6 +80,33 @@
     }
 }
 
+// Bascule PvE ⇄ PvP de la scène d'arène : fondu pur (la scène entrante se
+// remonte via React à chaque changement de mode, l'animation rejoue à chaque
+// swap sans surcoût JS).
+@keyframes sceneSwap {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+// Entrée d'une ligne de classement : fondu + petit glissement vertical,
+// décalée rang par rang (voir _rankings.scss).
+@keyframes rowEnter {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 // Respect des préférences système : tout halo/reflet animé s'arrête net.
 @media (prefers-reduced-motion: reduce) {
 
@@ -89,7 +116,9 @@
     }
 
     .App > .container,
-    .retro-modal {
+    .retro-modal,
+    .scene-swap,
+    .ranking-row {
         animation: none;
     }
 }

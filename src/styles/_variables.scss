@@ -60,3 +60,13 @@ $font-pixel: 'Press Start 2P', monospace;
         @content;
     }
 }
+
+// Hover réservé aux pointeurs fins. Sur écran tactile, un :hover persiste
+// après le tap : l'état « surlevé » reste collé au doigt tant qu'on touche
+// ailleurs. Wrapper tous les effets hover d'éléments interactifs avec ce
+// mixin pour ne les réserver qu'à la souris.
+@mixin hoverable {
+    @media (hover: hover) and (pointer: fine) {
+        @content;
+    }
+}
