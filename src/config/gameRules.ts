@@ -1,4 +1,12 @@
 export const GAME_RULES = {
+    /** Documentés mais non implémentés ([1387]) — paliers de terrain pour les
+     *  nouveaux biomes régionaux. Implémentation à faire plus tard. */
+    BIOME_MILESTONES: {
+        /** Biome de feu — débloqué au lvl 20 (un combat beaucoup plus compliqué). */
+        fire: 20,
+        /** Biome de montagne neige — lvl 40. */
+        snow_mountain: 40,
+    },
     STATS: {
         TOTAL_POINTS: 66,
         BASE_VALUE: 10,

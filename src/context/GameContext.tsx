@@ -846,8 +846,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
     // PVNE difficulty (#1387): the player does not always win — when the
     // boss wins the fight, it damages the player (12% of their HP, min 1 HP).
+    // Difficulty milestone lvl 20 (#1387): at lvl 20 the fight is much harder
+    // — the boss deals 2× the damage (lvl 20 unlocks the fire biome).
     const bossDamage = !won
-      ? Math.max(1, Math.floor((baseCharacter.maxHp ?? 0) * 0.12))
+      ? Math.max(1, Math.floor((baseCharacter.maxHp ?? 0) * 0.12 * (baseCharacter.level >= 20 ? 2 : 1)))
       : 0;
 
     const historyEntry = { date: now, won, opponentName: bossName };

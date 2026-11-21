@@ -1831,6 +1831,33 @@
     }
 }
 
+// Swipe haut/bas sur le bouton de combat — pivotement joli (flip 3D) —
+// animation déclenchée par triggerSpin() dans ActionPanel.
+.giant-btn.fight-btn {
+    perspective: 1000px;
+    transform-style: preserve-3d;
+}
+
+.giant-btn.fight-btn.fight-btn-spin-up {
+    animation: fightBtnFlipUp 0.7s ease both;
+}
+
+.giant-btn.fight-btn.fight-btn-spin-down {
+    animation: fightBtnFlipDown 0.7s ease both;
+}
+
+@keyframes fightBtnFlipUp {
+    0% { transform: rotateX(0deg); }
+    50% { transform: rotateX(-90deg); }
+    100% { transform: rotateX(0deg); }
+}
+
+@keyframes fightBtnFlipDown {
+    0% { transform: rotateX(0deg); }
+    50% { transform: rotateX(90deg); }
+    100% { transform: rotateX(0deg); }
+}
+
 .giant-btn {
     flex: 1;
     @include flex-center;

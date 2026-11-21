@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useRef, useState } from 'react';
 import { PixelIcon } from '../PixelIcon';
 import { GAME_RULES } from '../../config/gameRules';
 import { TacticalLens } from './TacticalLens';
@@ -43,6 +43,19 @@ export const ActionPanel = memo(function ActionPanel({
 }: ActionPanelProps) {
 
   const bossHpPct = bossMaxHp > 0 ? Math.max(0, Math.min(100, (bossHp / bossMaxHp) * 100)) : 100;
+  // Swipe haut/bas sur le bouton de combat — pivotation jolie de la touche
+  // (flip 3D). Le swipe de haut en bas = vers le bas (dy>0) et inversement.
+  const SWIPE_MIN_DY = 80;
+  const [spinDir, setSpinDir] = useState<'up' | 'down' | null>(null);
+  const [spinSeq, setSpinSeq] = useState(0);
+  const touchStartY = useRef<number | null>(null);
+  const mouseStartY = useRef<number | null>(null);
+
+  const triggerSpin = (dir: 'up' | 'down') => {
+    setSpinDir(dir);
+    setSpinSeq((s) => s + 1);
+  };
+
   const isAbyssal = abyssalUnlocked && bossId === 'abyssal_monarch';
 
   return (
@@ -135,9 +148,28 @@ export const ActionPanel = memo(function ActionPanel({
 
       <div className="fight-row">
         <button
-          className="button primary-btn giant-btn fight-btn"
+          key={`fight-btn-${spinSeq}`}
+          className={`button primary-btn giant-btn fight-btn${spinDir ? ` fight-btn-spin-${spinDir}` : ''}`}
           disabled={!canFight || matchmaking}
           onClick={onFight}
+          onTouchStart={(e) => { touchStartY.current = e.touches[0]?.clientY ?? null; }}
+          onTouchEnd={(e) => {
+            const startY = touchStartY.current;
+            touchStartY.current = null;
+            if (startY === null) return;
+            const dy = (e.changedTouches[0]?.clientY ?? 0) - startY;
+            if (Math.abs(dy) < SWIPE_MIN_DY) return;
+            triggerSpin(dy < 0 ? 'up' : 'down');
+          }}
+          onMouseDown={(e) => { mouseStartY.current = e.clientY; }}
+          onMouseUp={(e) => {
+            const startY = mouseStartY.current;
+            mouseStartY.current = null;
+            if (startY === null) return;
+            const dy = e.clientY - startY;
+            if (Math.abs(dy) < SWIPE_MIN_DY) return;
+            triggerSpin(dy < 0 ? 'up' : 'down');
+          }}
         >
           {matchmaking
             ? 'SEARCHING...'
