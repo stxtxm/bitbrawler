@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MonsterId } from '../data/monsterAssets';
 import { ABYSSAL_BOSS_ID, BOSS_ID, BossId } from '../data/bossAssets';
 import { Character } from '../types/Character';
@@ -279,27 +279,28 @@ export const useArenaCombat = ({
     };
   }, [pveMode, isOfflineMode, character, hasPendingFight, autoMode, combatData, previewMatch, previewLoading, fightsLeft, findPreviewOpponent]);
 
-  // Auto mode — salvage l'équipement que le personnage n'utilise plus (#1387) :
-  // permet d'optimiser la base de donnée (l'inventaire reste sur des
-  // équipements utiles). Salvage jusqu'à 2 objets du sac non équipés
-  // toutes les 20 s — best-effort, ignoré en silence en cas d'erreur.
+  // Auto mode — salvage l'équipement que le personnage n'utilise plus (#1387).
+  // GARDE-FOU ANTI-FREEZE : le timer ne redémarre PAS à chaque changement du
+  // personnage (un salvage le modifie → effet rejoué → salvage infini). Le
+  // personnage est lu via une ref, l'effet ne dépend que de l'auto-mode.
+  const salvageCharRef = useRef(character);
+  useEffect(() => { salvageCharRef.current = character; }, [character]);
   useEffect(() => {
-    if (!autoMode || isOfflineMode || !character || character.autoMode !== true || !salvageItems) return;
+    if (!autoMode || isOfflineMode || !salvageItems) return;
     const tick = async () => {
+      const char = salvageCharRef.current;
+      if (!char || char.autoMode !== true) return;
       try {
-        const equippedIds = new Set(getEquippedItems(character).map((item) => item.id));
-        const bag = getInventoryItems(character)
+        const equippedIds = new Set(getEquippedItems(char).map((item) => item.id));
+        const bag = getInventoryItems(char)
           .filter((item) => !equippedIds.has(item.id))
           .slice(0, 2);
-        for (const item of bag) {
-          await salvageItems(item.id);
-        }
+        for (const item of bag) await salvageItems(item.id);
       } catch { /* best-effort — l'auto-salvage ne doit jamais bloquer */ }
     };
-    tick();
     const timer = setInterval(tick, 20000);
     return () => clearInterval(timer);
-  }, [autoMode, isOfflineMode, character, salvageItems]);
+  }, [autoMode, isOfflineMode, salvageItems]);
 
   const actionPanelProps = useMemo(() => ({
     pveMode,

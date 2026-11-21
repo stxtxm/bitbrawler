@@ -50,8 +50,11 @@ export const ActionPanel = memo(function ActionPanel({
   const [spinSeq, setSpinSeq] = useState(0);
   const touchStartY = useRef<number | null>(null);
   const mouseStartY = useRef<number | null>(null);
+  // Le swipe PvE déclenche le combat à la FIN de l'animation de pivotement.
+  const pendingSpinFightRef = useRef(false);
 
   const triggerSpin = (dir: 'up' | 'down') => {
+    pendingSpinFightRef.current = true;
     setSpinDir(dir);
     setSpinSeq((s) => s + 1);
   };
@@ -148,28 +151,34 @@ export const ActionPanel = memo(function ActionPanel({
 
       <div className="fight-row">
         <button
-          key={`fight-btn-${spinSeq}`}
-          className={`button primary-btn giant-btn fight-btn${spinDir ? ` fight-btn-spin-${spinDir}` : ''}`}
+          key={pveMode ? `fight-btn-${spinSeq}` : 'fight-btn'}
+          className={`button primary-btn giant-btn fight-btn${pveMode && spinDir ? ` fight-btn-spin-${spinDir}` : ''}`}
           disabled={!canFight || matchmaking}
           onClick={onFight}
-          onTouchStart={(e) => { touchStartY.current = e.touches[0]?.clientY ?? null; }}
-          onTouchEnd={(e) => {
+          onAnimationEnd={(e) => {
+            if (pveMode && pendingSpinFightRef.current && e.animationName === 'fightBtnSpin') {
+              pendingSpinFightRef.current = false;
+              onFight();
+            }
+          }}
+          onTouchStart={pveMode ? (e) => { touchStartY.current = e.touches[0]?.clientY ?? null; } : undefined}
+          onTouchEnd={pveMode ? (e) => {
             const startY = touchStartY.current;
             touchStartY.current = null;
             if (startY === null) return;
             const dy = (e.changedTouches[0]?.clientY ?? 0) - startY;
             if (Math.abs(dy) < SWIPE_MIN_DY) return;
             triggerSpin(dy < 0 ? 'up' : 'down');
-          }}
-          onMouseDown={(e) => { mouseStartY.current = e.clientY; }}
-          onMouseUp={(e) => {
+          } : undefined}
+          onMouseDown={pveMode ? (e) => { mouseStartY.current = e.clientY; } : undefined}
+          onMouseUp={pveMode ? (e) => {
             const startY = mouseStartY.current;
             mouseStartY.current = null;
             if (startY === null) return;
             const dy = e.clientY - startY;
             if (Math.abs(dy) < SWIPE_MIN_DY) return;
             triggerSpin(dy < 0 ? 'up' : 'down');
-          }}
+          } : undefined}
         >
           {matchmaking
             ? 'SEARCHING...'
