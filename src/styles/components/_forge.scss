@@ -1,3 +1,4 @@
+@use "sass:math";
 @use '../variables' as *;
 
 // ============================================
@@ -696,10 +697,10 @@
 
   @for $i from 1 through 8 {
     &:nth-child(#{$i}) {
-      top: #{random(80) + 10}%;
-      left: #{random(80) + 10}%;
+      top: #{math.random(80) + 10}%;
+      left: #{math.random(80) + 10}%;
       animation-delay: #{$i * 0.08}s;
-      background: if($i % 2 == 0, $accent-green, $accent-gold);
+      @if $i % 2 == 0 { background: $accent-green; } @else { background: $accent-gold; }
     }
   }
 }
@@ -1252,12 +1253,12 @@
 
   @for $i from 1 through 12 {
     &:nth-child(#{$i}) {
-      top: #{40 + random(20)}%;
-      left: #{30 + random(40)}%;
-      --dx: #{(random(60) - 30)}px;
-      --dy: #{(random(60) - 60)}px;
+      top: #{40 + math.random(20)}%;
+      left: #{30 + math.random(40)}%;
+      --dx: #{(math.random(60) - 30)}px;
+      --dy: #{(math.random(60) - 60)}px;
       animation-delay: #{$i * 0.07}s;
-      background: if($i % 3 == 0, #ff0, if($i % 3 == 1, #f0f, #0ff));
+      @if $i % 3 == 0 { background: #ff0; } @else if $i % 3 == 1 { background: #f0f; } @else { background: #0ff; }
     }
   }
 }
