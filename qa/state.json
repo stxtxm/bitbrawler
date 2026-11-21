@@ -1,12 +1,23 @@
 {
-  "run": "2026-11-20",
-  "character": "QA-PERSI-3",
-  "exhausted": true,
-  "updated_at": "2026-11-19T23:06:10.307Z",
-  "source": "reused",
+  "run": "2026-11-21",
+  "character": "QA-END",
+  "exhausted": false,
+  "updated_at": "2026-11-21T11:05:00.676Z",
+  "source": "created",
   "character_type": "persistent",
-  "persistent_generation": 2,
-  "persistent_created_at": "2026-11-17T08:01:56.023Z",
+  "persistent_generation": 0,
+  "persistent_created_at": "2026-11-21T11:02:04.956Z",
   "persistent_reset_ready": false,
-  "pvp_since_last_pve": 2
+  "pvp_since_last_pve": 1,
+  "fleet": {
+    "QA-END": {
+      "character": "QA-END",
+      "generation": 0,
+      "created_at": "2026-11-21T11:02:04.956Z",
+      "level": 2,
+      "last_run": "2026-11-21",
+      "exhausted": false,
+      "last_run_failed": false
+    }
+  }
 }
