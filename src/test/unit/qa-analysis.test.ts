@@ -6356,3 +6356,16 @@ describe('QA Data Quality Phase 2.3 (#1387) — analyzer validation', () => {
     expect(source).toContain('error_patterns_distribution')
   })
 })
+
+describe('QA Data Quality Phase 3 (#1387) — Analytics Engine', () => {
+  it('analyze-qa-stats.ts exposes the balance dashboard (win rates by level, loot rates, rebalance signals)', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+    expect(source).toContain('balance_dashboard')
+    expect(source).toContain('computeLevelWinRateTrend')
+    expect(source).toContain('level_win_rate_delta')
+    expect(source).toContain('computeLootRates')
+    expect(source).toContain('loot_rate_delta')
+    expect(source).toContain('computeRebalanceSignals')
+    expect(source).toContain('rebalance_signals')
+  })
+})

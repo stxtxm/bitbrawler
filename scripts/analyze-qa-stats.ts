@@ -440,6 +440,36 @@ interface XpAccounting {
   unaccounted_pct: number
 }
 
+// #1387 Phase 3 (Analytics Engine): dashboard de balance — win rates par
+// niveau, évolution des loot rates, signaux de rééquilibre (lue par le tech-lead
+// depuis qa/analysis-latest.json).
+interface LevelWinRateTrendEntry {
+  level: number
+  win_rate: number
+  fights: number
+  wins: number
+}
+
+interface LevelWinRateDeltaEntry {
+  level: number
+  delta: number
+  fights: number
+}
+
+interface RebalanceSignal {
+  severity: 'info' | 'warning' | 'alert'
+  type: 'win_rate_drop' | 'win_rate_rise' | 'loot_rate_drop' | 'loot_rate_rise'
+  detail: string
+}
+
+interface BalanceDashboard {
+  level_win_rate_trend: LevelWinRateTrendEntry[]
+  level_win_rate_delta: LevelWinRateDeltaEntry[]
+  loot_rates_recent: Record<string, number>
+  loot_rate_delta: Record<string, number>
+  rebalance_signals: RebalanceSignal[]
+}
+
 interface AnalysisReport {
   generated_at: string
   total_runs: number
@@ -450,6 +480,7 @@ interface AnalysisReport {
   empty_runs: number
   incomplete_runs: number  // #1387 Phase 2.3 : runs with data but an incomplete capture (excluded from the analysis)
   error_patterns_distribution: Record<string, number>  // #1387 Phase 2.1 : crash-pattern counts across runs
+  balance_dashboard: BalanceDashboard  // #1387 Phase 3: win rates by level, loot rates, rebalance signals
   data_freshness: DataFreshness
   recent_fight_coverage: number
   combat_yield: CombatYield
@@ -1194,6 +1225,101 @@ function computeShopRealAnalysis(runs: RunRecord[]): ShopRealAnalysis | null {
   }
 }
 
+// #1387 Phase 3 — win rates par niveau (fenêtre récente : tous les combats
+// par niveau final, avec ≥ 2 combats à destination).
+function computeLevelWinRateTrend(runs: RunRecord[]): LevelWinRateTrendEntry[] {
+  const byLevel = new Map<number, { fights: number; wins: number }>()
+  for (const r of runs) {
+    const level = r.final_stats?.level
+    if (typeof level !== 'number' || !Number.isFinite(level)) continue
+    for (const f of r.fights ?? []) {
+      if (f.result !== 'victory' && f.result !== 'defeat') continue
+      const entry = byLevel.get(level) ?? { fights: 0, wins: 0 }
+      entry.fights += 1
+      if (f.result === 'victory') entry.wins += 1
+      byLevel.set(level, entry)
+    }
+  }
+  return [...byLevel.entries()]
+    .filter(([, e]) => e.fights >= 2)
+    .map(([level, e]) => ({
+      level,
+      win_rate: Math.round((e.wins / e.fights) * 1000) / 1000,
+      fights: e.fights,
+      wins: e.wins,
+    }))
+    .sort((a, b) => a.level - b.level)
+}
+
+// Phase 3 — delta par niveau : fenêtre récente vs la fenêtre précédente de
+// RECENT_WINDOW_RUNS. Sans fenêtre précédente, pas de signaux (delta nul).
+function computeLevelWinRateDelta(runs: RunRecord[]): LevelWinRateDeltaEntry[] {
+  const recent = computeLevelWinRateTrend(runs.slice(-RECENT_WINDOW_RUNS))
+  const previous = computeLevelWinRateTrend(runs.slice(-2 * RECENT_WINDOW_RUNS, -RECENT_WINDOW_RUNS))
+  if (previous.length === 0) return []
+  const previousByLevel = new Map(previous.map((e) => [e.level, e]))
+  return recent
+    .map((e) => ({
+      level: e.level,
+      delta: Math.round((e.win_rate - (previousByLevel.get(e.level)?.win_rate ?? 0)) * 1000) / 1000,
+      fights: e.fights,
+    }))
+    .filter((e) => Math.abs(e.delta) > 0.001)
+    .sort((a, b) => b.delta - a.delta)
+}
+
+// Phase 3 — taux de drop par rareté (évolution des loot rates) : part de
+// chaque rareté parmi les lootbox ouvertes de la fenêtre.
+function computeLootRates(runs: RunRecord[]): Record<string, number> {
+  const counts = new Map<string, number>()
+  for (const r of runs) {
+    if (!r.lootbox?.opened) continue
+    const key = typeof r.lootbox.rarity === 'string' ? r.lootbox.rarity.toLowerCase() : 'unknown'
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+  const total = [...counts.values()].reduce((sum, n) => sum + n, 0)
+  if (total === 0) return {}
+  return Object.fromEntries([...counts.entries()].map(([k, v]) => [k, Math.round((v / total) * 1000) / 1000]))
+}
+
+// Phase 3 — delta des loot rates : fenêtre récente vs précédente.
+function computeLootRateDelta(runs: RunRecord[]): Record<string, number> {
+  const recent = computeLootRates(runs.slice(-RECENT_WINDOW_RUNS))
+  const previous = computeLootRates(runs.slice(-2 * RECENT_WINDOW_RUNS, -RECENT_WINDOW_RUNS))
+  if (Object.keys(previous).length === 0) return {}
+  const out: Record<string, number> = {}
+  for (const key of new Set([...Object.keys(recent), ...Object.keys(previous)])) {
+    const delta = Math.round(((recent[key] ?? 0) - (previous[key] ?? 0)) * 1000) / 1000
+    if (Math.abs(delta) > 0.001) out[key] = delta
+  }
+  return out
+}
+
+// Phase 3 — signaux de rééquilibre : déclinaisons significatives du win rate
+// par niveau et des loot rates (fenêtre récente vs précédente).
+function computeRebalanceSignals(stats: RunRecord[]): RebalanceSignal[] {
+  const signals: RebalanceSignal[] = []
+  for (const e of computeLevelWinRateDelta(stats)) {
+    if (e.delta <= -0.15 && e.fights >= 3) {
+      signals.push({
+        severity: e.delta <= -0.3 ? 'alert' : 'warning',
+        type: 'win_rate_drop',
+        detail: `Win rate at level ${e.level} fell ${(Math.abs(e.delta) * 100).toFixed(0)} pts vs the previous window (${e.fights} fights) — possible rebalance effect?`,
+      })
+    }
+  }
+  for (const [rarity, delta] of Object.entries(computeLootRateDelta(stats))) {
+    if (Math.abs(delta) >= 0.25) {
+      signals.push({
+        severity: Math.abs(delta) >= 0.5 ? 'warning' : 'info',
+        type: delta < 0 ? 'loot_rate_drop' : 'loot_rate_rise',
+        detail: `Loot rate of ${rarity.toUpperCase()} moved ${delta >= 0 ? '+' : ''}${(delta * 100).toFixed(0)} pt(s) vs the previous window — loot curve?`,
+      })
+    }
+  }
+  return signals
+}
+
 function computeTrendWindow(runs: RunRecord[], count: number, label: string): TrendWindow | null {
   const window = runs.slice(-count)
   if (window.length === 0) return null
@@ -1270,6 +1396,21 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     }
   }
   const errorRuns = stats.filter(isErrorRun)
+
+  // #1387 Phase 3 (Analytics Engine): dashboard de balance — win rates par
+  // niveau, évolution des loot rates, signaux de rééquilibre.
+  const levelWinRateTrend = computeLevelWinRateTrend(validRuns)
+  const levelWinRateDelta = computeLevelWinRateDelta(validRuns)
+  const lootRatesRecent = computeLootRates(validRuns.slice(-RECENT_WINDOW_RUNS))
+  const lootRateDelta = computeLootRateDelta(validRuns)
+  const rebalanceSignals = computeRebalanceSignals(validRuns)
+  const balanceDashboard: BalanceDashboard = {
+    level_win_rate_trend: levelWinRateTrend,
+    level_win_rate_delta: levelWinRateDelta,
+    loot_rates_recent: lootRatesRecent,
+    loot_rate_delta: lootRateDelta,
+    rebalance_signals: rebalanceSignals,
+  }
   const emptyRuns = stats.filter(isEmptyRun)
   const halfwayRuns = validRuns.filter(isHalfwayRun)
   const successfulRuns = validRuns.filter(r => !r.errors || r.errors.length === 0)
@@ -1425,6 +1566,11 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   const issues: string[] = []
   if (incompleteRuns.length > 0) {
     issues.push(`${incompleteRuns.length} run(s) have combat data but an incomplete capture (missing initial level or final stats) — excluded from the analysis (Phase 2.3 validation #1387)`)
+  }
+  // Phase 3 (#1387): alertes automatiques — signaux de rééquilibre.
+  for (const signal of rebalanceSignals) {
+    if (signal.severity === 'info') suggestions.push(signal.detail)
+    else issues.push(signal.detail)
   }
   const suggestions: string[] = []
   const recentRuns = stats.filter(isRunDataComplete).slice(-RECENT_WINDOW_RUNS)
@@ -2176,6 +2322,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     empty_runs: emptyRuns.length,
     incomplete_runs: incompleteRuns.length,
     error_patterns_distribution: errorPatternsDist,
+    balance_dashboard: balanceDashboard,
     data_freshness,
     recent_fight_coverage,
     combat_yield,
