@@ -1167,11 +1167,14 @@
         box-shadow 0.15s ease,
         color 0.15s ease;
 
-    &:hover:not(:disabled) {
-        border-color: $accent-gold;
-        color: $accent-gold;
-        transform: translateY(-2px);
-        box-shadow: 0 0 10px rgba(255, 204, 0, 0.3);
+    // Hover réservé aux pointeurs fins : sur tactile il persiste après le tap.
+    @include hoverable {
+        &:hover:not(:disabled) {
+            border-color: $accent-gold;
+            color: $accent-gold;
+            transform: translateY(-2px);
+            box-shadow: 0 0 10px rgba(255, 204, 0, 0.3);
+        }
     }
 
     // Appui tactile : léger enfoncement plutôt qu'un lift.
@@ -1337,6 +1340,16 @@
     align-items: flex-end;
     justify-content: center;
     padding-bottom: clamp(16px, 5cqi, 32px);
+}
+
+// Bascule PvE ⇄ PvP : le wrapper se remonte à chaque changement de mode
+// (key React dans SceneBox), le fade se rejoue à chaque swap sans jamais
+// toucher au screen-shake de combat porté par le fils.
+.scene-swap {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    animation: sceneSwap 0.28s ease;
 }
 
 .scene-lighting {
@@ -2743,4 +2756,35 @@
 .inv-group-item.filter-match {
     box-shadow: 0 0 8px rgba(77,208,255,0.6) !important;
     border-color: #4dd0ff !important;
+}
+
+// Barre d'onglets mobile PVE / PVP / BOSS en bas de l'arène.
+.arena-bottom-tabs {
+  display: flex;
+  gap: 4px;
+  background: #0b0b0b;
+  border: 2px solid #222;
+  border-top: 2px solid $accent-gold;
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+  justify-content: space-around;
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+}
+
+.arena-bottom-tab {
+  flex: 1;
+  background: transparent;
+  border: 2px solid transparent;
+  color: #8b8b8b;
+  font-family: $font-pixel;
+  font-size: 0.55rem;
+  padding: 10px 4px;
+  cursor: pointer;
+
+  &.active {
+    color: $accent-gold;
+    border-color: $accent-gold;
+    background: rgba(255, 204, 0, 0.12);
+  }
 }

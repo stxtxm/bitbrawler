@@ -81,7 +81,7 @@ describe('Arena stat icons', () => {
     );
 
     const user = userEvent.setup()
-    const pvpToggle = screen.getAllByRole('switch', { name: 'PvP mode' })[0];
+    const pvpToggle = screen.getAllByRole('tab', { name: /PVP/ })[0];
     await user.click(pvpToggle);
 
     const statsGrid = container.querySelector('.stats-grid-compact');
@@ -124,7 +124,7 @@ describe('Arena stat icons', () => {
     );
 
     const user = userEvent.setup()
-    const pvpToggle = screen.getAllByRole('switch', { name: 'PvP mode' })[0];
+    const pvpToggle = screen.getAllByRole('tab', { name: /PVP/ })[0];
     await user.click(pvpToggle);
 
     const strengthLabel = getByText('STR');

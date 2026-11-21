@@ -1,4 +1,4 @@
-import { memo, useRef, useState } from 'react';
+import { memo } from 'react';
 import { PixelIcon } from '../PixelIcon';
 import { GAME_RULES } from '../../config/gameRules';
 import { TacticalLens } from './TacticalLens';
@@ -8,6 +8,9 @@ import type { TacticalHint } from '../../utils/tacticalLens';
 import { BossId } from '../../data/bossAssets';
 
 interface ActionPanelProps {
+  mode?: 'pve' | 'pvp' | 'boss';
+  bossMode?: boolean;
+  onModeChange?: (mode: 'pve' | 'pvp' | 'boss') => void;
   pveMode: boolean;
   canFight: boolean;
   matchmaking: boolean;
@@ -35,9 +38,10 @@ interface ActionPanelProps {
 }
 
 export const ActionPanel = memo(function ActionPanel({
+  mode = 'pve', bossMode = false, onModeChange,
   pveMode, canFight, matchmaking, hasPendingFight, autoMode,
   isOfflineMode, fightsLeft, bossAttacksLeft, bossUnlocked,
-  bossHp, bossMaxHp, bossLevel, bossPityStacks = 0, bossPityReduction = 0, bossDamagePct = 0, bossEstimatedDays = null, onTogglePve, onTogglePvp, onFight,
+  bossHp, bossMaxHp, bossLevel, bossPityStacks = 0, bossPityReduction = 0, bossDamagePct = 0, bossEstimatedDays = null, onFight,
   tacticalOpponent, tacticalHint, onOpenInventory,
   bossId, abyssalUnlocked,
 }: ActionPanelProps) {
@@ -45,52 +49,12 @@ export const ActionPanel = memo(function ActionPanel({
   const bossHpPct = bossMaxHp > 0 ? Math.max(0, Math.min(100, (bossHp / bossMaxHp) * 100)) : 100;
   // Swipe haut/bas sur le bouton de combat — pivotation jolie de la touche
   // (flip 3D). Le swipe de haut en bas = vers le bas (dy>0) et inversement.
-  const SWIPE_MIN_DY = 80;
-  const [spinDir, setSpinDir] = useState<'up' | 'down' | null>(null);
-  const [spinSeq, setSpinSeq] = useState(0);
-  const touchStartY = useRef<number | null>(null);
-  const mouseStartY = useRef<number | null>(null);
-  // Le swipe PvE « retourne » le bouton et échange son libellé à la fin de
-  // l'animation (ATTACK MONSTERS ⇄ ATTACK BOSS) — aucun combat ici.
-  const pendingSpinToggleRef = useRef(false);
-  const [bossLabel, setBossLabel] = useState(false);
-
-  const triggerSpin = (dir: 'up' | 'down') => {
-    pendingSpinToggleRef.current = true;
-    setSpinDir(dir);
-    setSpinSeq((s) => s + 1);
-  };
-
   const isAbyssal = abyssalUnlocked && bossId === 'abyssal_monarch';
 
   return (
     <div className="action-panel">
-      <div className="pve-toggle-row">
-        <button
-          className={`pixel-switch pve-switch ${pveMode ? 'on' : 'off'}`}
-          onClick={onTogglePve}
-          role="switch"
-          aria-checked={pveMode}
-          aria-label="PvE mode"
-        >
-          <span className="switch-knob" />
-          <span className="switch-text">👹 PVE</span>
-        </button>
-        <button
-          className={`pixel-switch pve-switch ${!pveMode ? 'on' : 'off'}`}
-          onClick={onTogglePvp}
-          role="switch"
-          aria-checked={!pveMode}
-          aria-label="PvP mode"
-          title="PvP mode"
-        >
-          <span className="switch-knob" />
-          <span className="switch-text">⚔ PVP</span>
-        </button>
-      </div>
-
-      <div className={`daily-status-compact ${pveMode ? 'boss-status-compact' : ''}`}>
-        {pveMode ? (
+      <div className={`daily-status-compact ${bossMode ? 'boss-status-compact' : ''}`}>
+        {bossMode ? (
           <div className="status-label">
             <span className="boss-icon">{isAbyssal ? '🌊' : '👑'}</span>
             <div className="label-text">
@@ -153,34 +117,9 @@ export const ActionPanel = memo(function ActionPanel({
 
       <div className="fight-row">
         <button
-          key={pveMode ? `fight-btn-${spinSeq}` : 'fight-btn'}
-          className={`button primary-btn giant-btn fight-btn${pveMode && spinDir ? ` fight-btn-spin-${spinDir}` : ''}`}
+          className="button primary-btn giant-btn fight-btn"
           disabled={!canFight || matchmaking}
           onClick={onFight}
-          onAnimationEnd={(e) => {
-            if (pveMode && pendingSpinToggleRef.current && e.animationName === 'fightBtnSpin') {
-              pendingSpinToggleRef.current = false;
-              setBossLabel((v) => !v);
-            }
-          }}
-          onTouchStart={pveMode ? (e) => { touchStartY.current = e.touches[0]?.clientY ?? null; } : undefined}
-          onTouchEnd={pveMode ? (e) => {
-            const startY = touchStartY.current;
-            touchStartY.current = null;
-            if (startY === null) return;
-            const dy = (e.changedTouches[0]?.clientY ?? 0) - startY;
-            if (Math.abs(dy) < SWIPE_MIN_DY) return;
-            triggerSpin(dy < 0 ? 'up' : 'down');
-          } : undefined}
-          onMouseDown={pveMode ? (e) => { mouseStartY.current = e.clientY; } : undefined}
-          onMouseUp={pveMode ? (e) => {
-            const startY = mouseStartY.current;
-            mouseStartY.current = null;
-            if (startY === null) return;
-            const dy = e.clientY - startY;
-            if (Math.abs(dy) < SWIPE_MIN_DY) return;
-            triggerSpin(dy < 0 ? 'up' : 'down');
-          } : undefined}
         >
           {matchmaking
             ? 'SEARCHING...'
@@ -190,12 +129,20 @@ export const ActionPanel = memo(function ActionPanel({
                 ? 'AUTO MODE'
                 : isOfflineMode
                   ? 'OFFLINE'
-                  : pveMode
+                  : bossMode
                     ? bossUnlocked
-                      ? bossAttacksLeft > 0 ? (bossLabel ? 'ATTACK BOSS' : 'ATTACK MONSTERS') : 'NO ATTACKS LEFT'
+                      ? bossAttacksLeft > 0 ? 'ATTACK BOSS' : 'NO ATTACKS LEFT'
                       : `LOCKED LVL ${GAME_RULES.BOSS.UNLOCK_LEVEL}`
-                    : fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'}
+                    : pveMode
+                      ? fightsLeft > 0 ? 'ATTACK MONSTERS' : 'REST NOW'
+                      : fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'}
         </button>
+      </div>
+
+      <div className="arena-bottom-tabs" role="tablist" aria-label="Game mode">
+        <button className={`arena-bottom-tab ${mode === 'pve' ? 'active' : ''}`} role="tab" aria-selected={mode === 'pve'} onClick={() => onModeChange?.('pve')}>👹 PVE</button>
+        <button className={`arena-bottom-tab ${mode === 'pvp' ? 'active' : ''}`} role="tab" aria-selected={mode === 'pvp'} onClick={() => onModeChange?.('pvp')}>⚔ PVP</button>
+        <button className={`arena-bottom-tab ${mode === 'boss' ? 'active' : ''}`} role="tab" aria-selected={mode === 'boss'} onClick={() => onModeChange?.('boss')}>👑 BOSS</button>
       </div>
     </div>
   );

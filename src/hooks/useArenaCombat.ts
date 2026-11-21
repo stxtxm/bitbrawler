@@ -41,7 +41,7 @@ type UseBossFight = (
   options?: { consumeEnergy?: boolean; characterOverride?: Character; bossHpLeft?: number; bossId?: BossId },
 ) => Promise<FightResult | null>;
 
-export type ArenaMode = 'pvp' | 'pve';
+export type ArenaMode = 'pvp' | 'pve' | 'boss';
 
 interface UseArenaCombatOptions {
   character: Character | null;
@@ -105,7 +105,8 @@ export const useArenaCombat = ({
   const hasPendingFight = !!character?.pendingFight;
   const autoMode = !!character?.autoMode;
 
-  const pveMode = mode === 'pve';
+  const pveMode = mode === 'pve' || mode === 'boss';
+  const bossMode = mode === 'boss';
   const effectiveBossId: BossId = abyssalUnlocked ? ABYSSAL_BOSS_ID : BOSS_ID;
   const effectiveBossProgress = effectiveBossId === ABYSSAL_BOSS_ID ? abyssalProgress : bossProgress;
   const effectiveAttacksLeft = effectiveBossId === ABYSSAL_BOSS_ID ? abyssalAttacksLeft : bossAttacksLeft;
@@ -121,6 +122,12 @@ export const useArenaCombat = ({
     && (pveMode
       ? effectiveUnlocked && effectiveAttacksLeft > 0
       : fightsLeft > 0);
+
+  const onModeChange = useCallback((next: ArenaMode) => {
+    setMode(next);
+    setPreviewMatch(null);
+    setPreviewLoading(false);
+  }, []);
 
   const onTogglePve = useCallback(() => {
     setMode('pve');
@@ -237,7 +244,7 @@ export const useArenaCombat = ({
       console.error('Fight result save failed:', error);
       openModal(getErrorMessage(error, connectionMessage));
     }
-  }, [burstActive, baseFightsLeft, combatData, connectionMessage, onLevelUp, openModal, useBossFight, useFight, pveMonster, effectiveBossId]);
+  }, [burstActive, baseFightsLeft, combatData, connectionMessage, onLevelUp, openModal, useBossFight, useFight, pveMonster, effectiveBossId, mode, bossMode, onModeChange]);
 
   const onCloseCombat = useCallback(() => {
     setCombatData(null);
@@ -303,6 +310,9 @@ export const useArenaCombat = ({
   }, [autoMode, isOfflineMode, salvageItems]);
 
   const actionPanelProps = useMemo(() => ({
+    mode,
+    bossMode,
+    onModeChange,
     pveMode,
     canFight,
     matchmaking,

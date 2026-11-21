@@ -188,7 +188,7 @@ describe('Arena settings modal', () => {
     const { getByLabelText, getByText, queryByText } = renderWithRouter(<Arena />)
 
     const user = userEvent.setup()
-    const pvpToggle = screen.getAllByRole('switch', { name: 'PvP mode' })[0]
+    const pvpToggle = screen.getAllByRole('tab', { name: /PVP/ })[0]
     await user.click(pvpToggle)
 
     fireEvent.click(getByLabelText('Settings'))
@@ -221,7 +221,7 @@ describe('Arena settings modal', () => {
     const { getByRole } = renderWithRouter(<Arena />)
 
     const user = userEvent.setup()
-    const pvpToggle = screen.getAllByRole('switch', { name: 'PvP mode' })[0]
+    const pvpToggle = screen.getAllByRole('tab', { name: /PVP/ })[0]
     await user.click(pvpToggle)
 
     const fightButton = getByRole('button', { name: 'AUTO MODE' })
@@ -232,7 +232,7 @@ describe('Arena settings modal', () => {
     const { getByRole } = renderWithRouter(<Arena />)
 
     const user = userEvent.setup()
-    const pvpToggle = screen.getAllByRole('switch', { name: 'PvP mode' })[0]
+    const pvpToggle = screen.getAllByRole('tab', { name: /PVP/ })[0]
     await user.click(pvpToggle)
 
     const fightButton = getByRole('button', { name: 'FIGHT!' })
