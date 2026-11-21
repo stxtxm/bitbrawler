@@ -395,7 +395,7 @@ export const InventoryPanel = memo(function InventoryPanel({
                 )}
               </div>
 
-              <div className={`inventory-details ${previewItem ? '' : 'empty'}`}>
+              <div key={previewItem?.id ?? 'empty'} className={`inventory-details ${previewItem ? '' : 'empty'}`}>
                 {previewItem ? (
                   <>
                     <div className={`inventory-item-head ${getRarityFrameClass(previewItem.rarity)}`} data-rarity={previewItem.rarity}>
@@ -411,6 +411,7 @@ export const InventoryPanel = memo(function InventoryPanel({
                         </div>
                       </div>
                     </div>
+                    <span className="inventory-selected-chip">SÉLECTIONNÉ</span>
                     <div className="inventory-item-stats">
                       {previewStats.map(({ key, value }) => {
                         const meta = itemStatMeta[key];

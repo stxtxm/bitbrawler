@@ -129,6 +129,8 @@
   color: inherit;
   font: inherit;
   cursor: pointer;
+  // Sélection de la case équipée — surlignage fort + glow + pulse (fluidité).
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
 
   &:hover .inv-loadout-item-name,
   &:focus-visible .inv-loadout-item-name {
@@ -136,8 +138,16 @@
   }
 
   &.selected {
-    outline: 1px solid rgba(255, 204, 0, 0.7);
+    outline: 2px solid rgba(255, 204, 0, 0.95);
+    box-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+    background: rgba(255, 204, 0, 0.12);
+    animation: invLoadoutSelectedPulse 1.6s ease-in-out infinite;
   }
+}
+
+@keyframes invLoadoutSelectedPulse {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 204, 0, 0.5); }
+  50% { box-shadow: 0 0 18px rgba(255, 204, 0, 0.75); }
 }
 
 .inv-loadout-item-name {
@@ -247,7 +257,9 @@
   border: 2px solid #333;
   box-shadow: inset 0 0 0 2px #000;
   cursor: pointer;
-  transition: border-color 0.15s;
+  // Sélection : surlignage doré fort + pulse — l'item sélectionné est le
+  // "+1" du détail — le feedback doit être visible dès le clic (précision).
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, filter 0.15s ease;
   padding: 0;
 
   @include mobile {
@@ -262,7 +274,9 @@
 
   &.selected {
     border-color: $accent-gold;
-    box-shadow: inset 0 0 0 2px #000, 0 0 6px rgba(255, 204, 0, 0.35);
+    box-shadow: inset 0 0 0 2px #000, 0 0 10px rgba(255, 204, 0, 0.5), 0 0 8px rgba(255, 204, 0, 0.3);
+    transform: scale(1.05);
+    animation: invItemSelectedPulse 1.6s ease-in-out infinite;
   }
 
   &.rarity-common { border-color: #666; }
@@ -273,6 +287,12 @@
     border-color: $accent-gold;
     box-shadow: inset 0 0 0 2px #000, 0 0 8px rgba(255, 204, 0, 0.35);
   }
+}
+
+// Pulse de rétroaction sur l'item sélectionné (voir .inv-group-item.selected).
+@keyframes invItemSelectedPulse {
+  0%, 100% { box-shadow: inset 0 0 0 2px #000, 0 0 10px rgba(255, 204, 0, 0.5), 0 0 8px rgba(255, 204, 0, 0.3); }
+  50% { box-shadow: inset 0 0 0 2px #000, 0 0 16px rgba(255, 204, 0, 0.7), 0 0 12px rgba(255, 204, 0, 0.5); }
 }
 
 .inv-group-item .affinity-badge {

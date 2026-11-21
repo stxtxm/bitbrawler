@@ -354,6 +354,30 @@
     flex-direction: column;
     gap: 10px;
     min-height: 120px;
+    position: relative;
+    // Transition fluide entre les items sélectionnés : la clé du détail est
+    // l'item sélectionné (InventoryPanel) — remount + fade-in à chaque changement.
+    animation: invDetailFadeIn 0.2s ease-out;
+}
+
+@keyframes invDetailFadeIn {
+    from { opacity: 0; transform: translateX(6px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+// Chip de sélection affiché en bas du détail (voir InventoryPanel).
+.inventory-selected-chip {
+    position: absolute;
+    bottom: 4px;
+    right: 6px;
+    font-size: 0.38rem;
+    font-family: $font-pixel;
+    letter-spacing: 1px;
+    color: #000;
+    background: $accent-gold;
+    border: 1px solid #ffcc00;
+    padding: 1px 5px;
+    text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
 }
 
 .inventory-details.empty {
