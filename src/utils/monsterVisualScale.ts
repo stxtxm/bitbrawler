@@ -1,6 +1,8 @@
 import { MonsterId } from '../data/monsterAssets'
 
 export const MONSTER_VISUAL_SCALE: Record<MonsterId, number> = {
+  sunfang: 1,
+  mossling: 1,
   slime: 0.7,
   cinder_imp: 0.7,
   wolf: 0.85,

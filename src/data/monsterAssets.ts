@@ -1,7 +1,7 @@
 import { Element } from '../types/Item';
 import { StatKey } from '../utils/statUtils';
 
-export type MonsterId = 'goblin' | 'ogre' | 'wraith' | 'slime' | 'wolf' | 'skeleton' | 'chimera' | 'dragon_spawn' | 'magma_golem' | 'lava_hound' | 'cinder_imp';
+export type MonsterId = 'goblin' | 'ogre' | 'wraith' | 'slime' | 'wolf' | 'skeleton' | 'chimera' | 'dragon_spawn' | 'magma_golem' | 'lava_hound' | 'cinder_imp' | 'sunfang' | 'mossling';
 
 export type MonsterDef = {
   id: MonsterId;
@@ -16,7 +16,21 @@ export type MonsterDef = {
   maxLevel?: number;
 };
 
+// [1387] Palettes des nouveaux monstres du gradient (gradient — réutilisé).
+const NEW_GRADIENT_PALETTE: Record<number, string> = {
+  0: 'transparent',
+  1: '#2d5a1e',
+  2: '#4a8c3f',
+  3: '#6abf5e',
+  4: '#8b4513',
+  5: '#d4a547',
+  6: '#ff6b6b',
+  7: '#ffffff',
+};
+
 export const MONSTER_PALETTES: Record<MonsterId, Record<number, string>> = {
+  sunfang: NEW_GRADIENT_PALETTE,
+  mossling: NEW_GRADIENT_PALETTE,
   goblin: {
     0: 'transparent',
     1: '#2d5a1e',
@@ -436,6 +450,62 @@ export const MONSTER_ASSETS: MonsterDef[] = [
       [0,0,0,0,1,1,5,5,5,5,1,1,0,0,0,0],
       [0,0,0,0,0,1,5,6,6,5,1,0,0,0,0,0],
       [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    ],
+  },
+  {
+    id: 'sunfang',
+    name: 'Sunfang',
+    element: 'wind',
+    specialty: 'Furtive Strike',
+    baseStats: { strength: 6, vitality: 5, dexterity: 8, luck: 9, intelligence: 4, focus: 6, hp: 55 },
+    growthRates: { strength: 0.5, vitality: 0.4, dexterity: 2.0, luck: 1.5, intelligence: 0.3, focus: 0.6 },
+    palette: MONSTER_PALETTES.sunfang,
+    pixels: [
+      [0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,1,2,2,1,0,0,0,0,0,0,0,0,0],
+      [0,0,0,2,3,3,2,0,0,0,0,0,0,0,0,0],
+      [0,0,0,2,5,5,2,0,0,0,0,1,1,1,0,0],
+      [0,0,0,2,2,2,2,0,0,0,1,2,2,2,1,0],
+      [0,1,1,2,1,1,2,0,0,1,2,3,3,2,2,0],
+      [1,2,2,2,7,7,2,1,1,2,3,3,3,3,2,0],
+      [1,2,2,2,6,6,2,2,2,3,3,2,2,2,0,0],
+      [0,1,2,2,2,2,2,2,3,3,2,2,0,0,0,0],
+      [0,1,2,2,2,2,2,2,2,2,2,0,0,0,0,0],
+      [0,0,1,2,2,2,2,2,2,1,0,0,0,0,0,0],
+      [0,0,1,4,4,2,2,4,4,1,0,0,0,0,0,0],
+      [0,1,4,4,4,2,2,4,4,4,1,0,0,0,0,0],
+      [0,1,4,4,4,1,1,4,4,4,1,0,0,0,0,0],
+      [0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    ],
+  },
+  {
+    id: 'mossling',
+    name: 'Mossling',
+    element: 'water',
+    specialty: 'Corrosive Touch',
+    baseStats: { strength: 3, vitality: 3, dexterity: 4, luck: 5, intelligence: 2, focus: 3, hp: 25 },
+    growthRates: { strength: 0.3, vitality: 0.3, dexterity: 0.5, luck: 0.6, intelligence: 0.2, focus: 0.3 },
+    palette: MONSTER_PALETTES.mossling,
+    minLevel: 1,
+    maxLevel: 8,
+    pixels: [
+      [0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0],
+      [0,0,0,1,1,1,2,2,2,2,1,1,1,0,0,0],
+      [0,0,1,2,2,2,3,3,3,3,2,2,2,1,0,0],
+      [0,1,2,3,3,3,4,4,4,4,3,3,3,2,1,0],
+      [1,2,3,4,4,4,5,5,5,5,4,4,4,3,2,1],
+      [1,2,3,4,5,5,5,5,5,5,5,5,4,3,2,1],
+      [1,2,3,4,5,5,5,5,5,5,5,5,4,3,2,1],
+      [1,2,3,4,4,5,5,7,7,5,5,4,4,3,2,1],
+      [1,2,3,4,4,5,5,7,7,5,5,4,4,3,2,1],
+      [1,2,3,4,5,5,5,5,5,5,5,5,4,3,2,1],
+      [1,2,3,4,4,4,5,5,5,5,4,4,4,3,2,1],
+      [0,1,2,3,4,4,4,4,4,4,4,4,3,2,1,0],
+      [0,1,2,3,3,4,4,4,4,4,4,3,3,2,1,0],
+      [0,0,1,2,3,3,3,3,3,3,3,3,2,1,0,0],
+      [0,0,0,1,2,2,2,2,2,2,2,2,1,0,0,0],
+      [0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0],
     ],
   },
 ];

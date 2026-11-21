@@ -3,8 +3,8 @@ import { MONSTER_ASSETS, MONSTER_PALETTES } from '../../data/monsterAssets';
 import { ELEMENTS } from '../../types/Item';
 
 describe('Monster assets', () => {
-  it('defines exactly 11 monsters', () => {
-    expect(MONSTER_ASSETS.length).toBe(11);
+  it('defines exactly 13 monsters', () => {
+    expect(MONSTER_ASSETS.length).toBe(13);
   });
 
   it('has unique IDs', () => {

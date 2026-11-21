@@ -1838,24 +1838,21 @@
     transform-style: preserve-3d;
 }
 
-.giant-btn.fight-btn.fight-btn-spin-up {
-    animation: fightBtnFlipUp 0.7s ease both;
-}
-
+.giant-btn.fight-btn.fight-btn-spin-up,
 .giant-btn.fight-btn.fight-btn-spin-down {
-    animation: fightBtnFlipDown 0.7s ease both;
+    animation: fightBtnSpin 0.85s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    box-shadow: 0 0 14px rgba(255, 204, 0, 0.5);
 }
 
-@keyframes fightBtnFlipUp {
+// « Springy flip » — précharge (tilt élancé), flip 3D en deux temps,
+// rebond (overshoot) + retour doux — plus sympa qu'un flip plat.
+@keyframes fightBtnSpin {
     0% { transform: rotateX(0deg); }
-    50% { transform: rotateX(-90deg); }
-    100% { transform: rotateX(0deg); }
-}
-
-@keyframes fightBtnFlipDown {
-    0% { transform: rotateX(0deg); }
-    50% { transform: rotateX(90deg); }
-    100% { transform: rotateX(0deg); }
+    18% { transform: rotateX(-15deg); }
+    52% { transform: rotateX(-100deg); }
+    74% { transform: rotateX(-135deg); }
+    90% { transform: rotateX(-110deg); }
+    100% { transform: rotateX(-115deg); }
 }
 
 .giant-btn {
