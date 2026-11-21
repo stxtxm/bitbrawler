@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-11-20T01:39:32Z",
+  "last_session": "2026-11-21T00:44:01Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR de bot (app/github-actions) : `gh pr review --request-changes` echoue avec « Can not request changes on your own pull request » (le token du reviewer est l'auteur). Repli : `gh pr comment <N> --body-file` avec le meme contenu, et ne PAS merger. Verifier aussi `mergeable`/`mergeStateStatus` : une PR CONFLICTING/DIRTY ne peut pas etre mergee meme si les checks sont verts.",
-      "issue": "#1392"
+      "lesson": "PR bot #1402 (fix/stats repairLuckOverflow) : aucun check CI attaché (seul Cloudflare Pages), mergeStateStatus UNSTABLE malgré gate locale verte (lint+tsc+2788 tests+build) → procédure: lancer la gate complète soi-même puis merger, ne PAS confondre absence de check avec CI rouge",
+      "issue": "#1402"
     }
   ]
 }
