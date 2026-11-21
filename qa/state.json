@@ -1,19 +1,28 @@
 {
   "run": "2026-11-21",
-  "character": "QA-END",
+  "character": "QA-FRESH",
   "exhausted": false,
-  "updated_at": "2026-11-21T11:05:00.676Z",
+  "updated_at": "2026-11-21T14:03:44.502Z",
   "source": "created",
   "character_type": "persistent",
   "persistent_generation": 0,
-  "persistent_created_at": "2026-11-21T11:02:04.956Z",
+  "persistent_created_at": "2026-11-21T14:01:29.116Z",
   "persistent_reset_ready": false,
-  "pvp_since_last_pve": 1,
+  "pvp_since_last_pve": 2,
   "fleet": {
     "QA-END": {
       "character": "QA-END",
       "generation": 0,
       "created_at": "2026-11-21T11:02:04.956Z",
+      "level": 2,
+      "last_run": "2026-11-21",
+      "exhausted": false,
+      "last_run_failed": false
+    },
+    "QA-FRESH": {
+      "character": "QA-FRESH",
+      "generation": 0,
+      "created_at": "2026-11-21T14:01:29.116Z",
       "level": 2,
       "last_run": "2026-11-21",
       "exhausted": false,
