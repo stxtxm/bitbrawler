@@ -50,11 +50,13 @@ export const ActionPanel = memo(function ActionPanel({
   const [spinSeq, setSpinSeq] = useState(0);
   const touchStartY = useRef<number | null>(null);
   const mouseStartY = useRef<number | null>(null);
-  // Le swipe PvE déclenche le combat à la FIN de l'animation de pivotement.
-  const pendingSpinFightRef = useRef(false);
+  // Le swipe PvE « retourne » le bouton et échange son libellé à la fin de
+  // l'animation (ATTACK MONSTERS ⇄ ATTACK BOSS) — aucun combat ici.
+  const pendingSpinToggleRef = useRef(false);
+  const [bossLabel, setBossLabel] = useState(false);
 
   const triggerSpin = (dir: 'up' | 'down') => {
-    pendingSpinFightRef.current = true;
+    pendingSpinToggleRef.current = true;
     setSpinDir(dir);
     setSpinSeq((s) => s + 1);
   };
@@ -156,9 +158,9 @@ export const ActionPanel = memo(function ActionPanel({
           disabled={!canFight || matchmaking}
           onClick={onFight}
           onAnimationEnd={(e) => {
-            if (pveMode && pendingSpinFightRef.current && e.animationName === 'fightBtnSpin') {
-              pendingSpinFightRef.current = false;
-              onFight();
+            if (pveMode && pendingSpinToggleRef.current && e.animationName === 'fightBtnSpin') {
+              pendingSpinToggleRef.current = false;
+              setBossLabel((v) => !v);
             }
           }}
           onTouchStart={pveMode ? (e) => { touchStartY.current = e.touches[0]?.clientY ?? null; } : undefined}
@@ -190,7 +192,7 @@ export const ActionPanel = memo(function ActionPanel({
                   ? 'OFFLINE'
                   : pveMode
                     ? bossUnlocked
-                      ? bossAttacksLeft > 0 ? 'ATTACK MONSTERS' : 'NO ATTACKS LEFT'
+                      ? bossAttacksLeft > 0 ? (bossLabel ? 'ATTACK BOSS' : 'ATTACK MONSTERS') : 'NO ATTACKS LEFT'
                       : `LOCKED LVL ${GAME_RULES.BOSS.UNLOCK_LEVEL}`
                     : fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'}
         </button>
