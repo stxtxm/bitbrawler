@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { ITEM_ASSETS, ITEM_PALETTE } from '../../data/itemAssets';
 
 describe('Item assets', () => {
-  it('defines 141 items', () => {
-    expect(ITEM_ASSETS.length).toBe(141);
+  it('defines 148 items', () => {
+    expect(ITEM_ASSETS.length).toBe(148);
   });
 
   it('assigns unlock levels up to 99', () => {

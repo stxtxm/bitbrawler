@@ -3,10 +3,10 @@ import { CODEX_ENTRIES, CODEX_IDS, CODEX_BY_ID, CODEX_GRID_COLS, getCodexEntry }
 import { ITEM_ASSETS } from '../../data/itemAssets';
 
 describe('codex data', () => {
-  it('exports 141 entries', () => {
-    expect(CODEX_ENTRIES.length).toBe(141);
-    expect(CODEX_IDS.length).toBe(141);
-    expect(Object.keys(CODEX_BY_ID).length).toBe(141);
+  it('exports 148 entries', () => {
+    expect(CODEX_ENTRIES.length).toBe(148);
+    expect(CODEX_IDS.length).toBe(148);
+    expect(Object.keys(CODEX_BY_ID).length).toBe(148);
   });
 
   it('all ids exist in itemAssets', () => {
@@ -80,16 +80,16 @@ describe('codex data', () => {
     }
   });
 
-  it('grid is complete: 12x12 covers 141 entries', () => {
+  it('grid is complete: 12 cols cover 148 entries', () => {
     expect(CODEX_GRID_COLS).toBe(12);
     const rows = Math.ceil(CODEX_ENTRIES.length / CODEX_GRID_COLS);
-    expect(rows).toBe(12);
-    expect(CODEX_GRID_COLS * 12).toBeGreaterThanOrEqual(CODEX_ENTRIES.length);
-    expect(CODEX_GRID_COLS * 12).toBe(144);
+    expect(rows).toBe(13);
+    expect(CODEX_GRID_COLS * rows).toBeGreaterThanOrEqual(CODEX_ENTRIES.length);
+    expect(CODEX_GRID_COLS * rows).toBe(156);
   });
 
   it('all items have unique ids', () => {
-    expect(new Set(CODEX_IDS).size).toBe(141);
+    expect(new Set(CODEX_IDS).size).toBe(148);
   });
 
   it('does not duplicate pixels', () => {
