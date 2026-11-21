@@ -21,6 +21,12 @@ export const BIOME_LIGHTING: Record<BiomeId, BiomeLighting> = {
     shadowAlpha: 0.58,
     shadowSpread: '76%',
   },
+  mountain: {
+    tint: 'rgba(180, 205, 245, 0.14)',
+    shadowRgb: '10, 14, 22',
+    shadowAlpha: 0.55,
+    shadowSpread: '70%',
+  },
   abyssal: {
     tint: 'rgba(122, 84, 214, 0.24)',
     shadowRgb: '6, 3, 18',

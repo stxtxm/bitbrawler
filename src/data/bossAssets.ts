@@ -32,6 +32,13 @@ export type BossDef = {
 export const BOSS_ID: BossId = 'void_titan';
 export const ABYSSAL_BOSS_ID: BossId = 'abyssal_monarch';
 
+/** [1387] Design du boss lvl 20 — à développer plus tard.
+ *  - Boss lvl 20 : void_titan après la correction de l'unlock 30 → 20
+ *    ([1387]) — milestone "biome de feu débloqué au lvl 20".
+ *  - Être capable de vaincre le boss lvl 40 = être lvl 40 + void_titan —
+ *    phase 1 du void titan (BOSS_ACCESSIBILITY.void_titan.PHASE_1, MAX_LEVEL 40).
+ */
+
 export const BOSS_ASSETS: BossDef[] = [
   {
     id: BOSS_ID,

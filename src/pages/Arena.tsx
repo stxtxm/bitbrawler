@@ -74,6 +74,7 @@ const Arena = () => {
     useFight,
     useBossFight,
     onLevelUp: levelUp.queueLevelUp,
+    salvageItems,
   });
 
   const idle = useIdleCombat({

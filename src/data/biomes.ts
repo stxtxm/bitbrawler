@@ -1,7 +1,9 @@
 import { Character } from '../types/Character';
 import { MONSTER_ASSETS, MonsterId } from './monsterAssets';
 
-export type BiomeId = 'plains' | 'volcanic' | 'abyssal';
+export type BiomeId = 'plains' | 'volcanic' | 'abyssal' | 'mountain';
+
+const MOUNTAIN_MONSTER_POOL: MonsterId[] = ['goblin', 'ogre', 'skeleton', 'slime', 'wolf'];
 
 export type BiomeDef = {
   id: BiomeId;
@@ -28,6 +30,14 @@ export const BIOMES: BiomeDef[] = [
     label: 'Volcanic',
     unlockAt: (character) => (character.bossProgress?.totalKills ?? 0) > 0,
     monsterPool: VOLCANIC_MONSTER_POOL,
+  },
+  {
+    id: 'mountain',
+    label: 'Mountain',
+    // Biome de montagne neige — lvl 40. Documenté sur le design du boss lvl 40
+    // ([1387], implémentation à venir).
+    unlockAt: (character) => character.level >= 40,
+    monsterPool: MOUNTAIN_MONSTER_POOL,
   },
   {
     id: 'abyssal',

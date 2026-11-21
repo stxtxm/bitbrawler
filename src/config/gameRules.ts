@@ -30,7 +30,7 @@ export const GAME_RULES = {
         LEVEL_BOOST: 4, // Monsters fight at playerLevel + this offset
     },
     BOSS: {
-        UNLOCK_LEVEL: 30, // Boss PvE unlocks at this level (void_titan)
+        UNLOCK_LEVEL: 20, // Boss PvE unlocks at this level (void_titan) — corrigé lvl 20 [1387]
         MAX_DAILY_ATTACKS: 5, // Daily attacks against the raid boss (independent from PvP/PvE gauge)
         LEVEL_BOOST: 2, // Boss fights at playerLevel + this offset
         STAT_MULTIPLIER: 1.1, // Boss raw stats scale off the player's raw stats
@@ -53,7 +53,8 @@ export const GAME_RULES = {
     } as const,
     BOSS_TIERS: {
         void_titan: {
-            UNLOCK_LEVEL: 30,
+            // [1387] Corrigé lvl 20 — le bouton n'est plus bloqué jusqu'à 30
+            UNLOCK_LEVEL: 20,
             MAX_DAILY_ATTACKS: 5,
             LEVEL_BOOST: 2,
             STAT_MULTIPLIER: 1.1,

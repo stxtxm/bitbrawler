@@ -4,6 +4,7 @@ import { ABYSSAL_BOSS_ID, BOSS_ID, BossId } from '../data/bossAssets';
 import { Character } from '../types/Character';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
 import { getTacticalHint } from '../utils/tacticalLens';
+import { getEquippedItems, getInventoryItems } from '../utils/equipmentUtils';
 import { isBurstActive, getMaxDailyFights, isBurstBonusUsed, markBurstBonusUsed, getEffectiveFightsLeft } from '../data/liveOps';
 import { BURST_MUTATORS, getStoredBurstMutator, setStoredBurstMutator } from '../utils/burstMutator';
 import type { BurstMutatorId } from '../utils/burstMutator';
@@ -53,6 +54,9 @@ interface UseArenaCombatOptions {
   useFight: UseFight;
   useBossFight: UseBossFight;
   onLevelUp: (levelsGained: number, newLevel: number) => void;
+  /** Salvage d'un id d'objet — utilisé par le salvage auto des équipements
+   *  inutilisés en mode auto ([1387]). */
+  salvageItems?: (itemId: string) => Promise<Character | null>;
 }
 
 const getErrorMessage = (error: unknown, fallback: string): string => {
@@ -65,6 +69,7 @@ export const useArenaCombat = ({
   connectionMessage,
   ensureConnection,
   openModal,
+  salvageItems,
   startMatchmaking,
   findPreviewOpponent,
   useFight,
@@ -273,6 +278,28 @@ export const useArenaCombat = ({
       cancelled = true;
     };
   }, [pveMode, isOfflineMode, character, hasPendingFight, autoMode, combatData, previewMatch, previewLoading, fightsLeft, findPreviewOpponent]);
+
+  // Auto mode — salvage l'équipement que le personnage n'utilise plus (#1387) :
+  // permet d'optimiser la base de donnée (l'inventaire reste sur des
+  // équipements utiles). Salvage jusqu'à 2 objets du sac non équipés
+  // toutes les 20 s — best-effort, ignoré en silence en cas d'erreur.
+  useEffect(() => {
+    if (!autoMode || isOfflineMode || !character || character.autoMode !== true || !salvageItems) return;
+    const tick = async () => {
+      try {
+        const equippedIds = new Set(getEquippedItems(character).map((item) => item.id));
+        const bag = getInventoryItems(character)
+          .filter((item) => !equippedIds.has(item.id))
+          .slice(0, 2);
+        for (const item of bag) {
+          await salvageItems(item.id);
+        }
+      } catch { /* best-effort — l'auto-salvage ne doit jamais bloquer */ }
+    };
+    tick();
+    const timer = setInterval(tick, 20000);
+    return () => clearInterval(timer);
+  }, [autoMode, isOfflineMode, character, salvageItems]);
 
   const actionPanelProps = useMemo(() => ({
     pveMode,
