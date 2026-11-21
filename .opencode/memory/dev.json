@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-11-21T00:35:29Z",
+  "last_session": "2026-11-21T00:43:34Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1260: modification de workflow explicitement demandée par l'issue (step TELEMETRY_REPORT dans tech-lead.yml) malgré la règle générale 'ne pas toucher aux workflows'. Pattern: step dédié avec secrets SUPABASE_* scopés à son shell, écrit /tmp/telemetry-report.json (fallback '{}' si secrets/table absents), exporte TELEMETRY_REPORT via GITHUB_ENV, l'agent ne reçoit que le JSON. Garde-fou ajouté dans workflow-integrity.test.ts (secret hors step agent + fallback).",
-      "issue": "#1260",
-      "date": "2026-10-24"
-    },
     {
       "lesson": "Issue #1299 watchdog: statusCheckRollup contient aussi les checks de deploiement (Cloudflare Pages, workflowName vide) -> filtrer select(.workflowName == \"CI\") sinon CHECK_COUNT>=1 sur les PR sans CI et le filet orphelines ne part jamais. Anti-tempete: le reviewer ne peut pas poster de review formelle sur une PR auteur github-actions[bot] (meme identite) -> detecter aussi les commentaires contenant 'Review PR #' posterieurs au commit (comparaison ISO created_at > commit.committer.date).",
       "issue": "#1299",
@@ -168,6 +163,11 @@
     },
     {
       "lesson": "GitHub Actions rejette les litteraux entre guillemets doubles dans les conditions if: (YAML valide mais workflow non charge, ZERO job). Fix qa-tester.yml + garde-fou workflow-integrity.test.ts qui scanne les lignes if: (blocs | inclus) de tous les workflows.",
+      "issue": "#1400",
+      "date": "2026-11-21"
+    },
+    {
+      "lesson": "GitHub Actions: une condition if: avec un littéral entre guillemets doubles REJETTE le workflow au chargement (0 job, aucun log) alors que le YAML parse. qa-tester.yml est resté mort 36 h après #1382. Garde-fou ajouté dans workflow-integrity.test.ts (scan de toutes les lignes if: de .github/workflows/*.yml).",
       "issue": "#1400",
       "date": "2026-11-21"
     }
