@@ -36,6 +36,7 @@ import { ESSENCE_YIELD } from '../../data/forgeConstants';
 import { getBurstBonusKey } from '../../data/liveOps';
 import { GAME_RULES } from '../../config/gameRules';
 import { getDailyResetKey } from '../../utils/dailyReset';
+import { getLuckAllocationCap } from '../../utils/statUtils';
 
 function setupMockCharacter(char: any, options?: { error?: any }) {
   const row = characterToSupabaseRow(char);
@@ -108,6 +109,39 @@ describe('GameContext Integration', () => {
 
     expect(result.current.activeCharacter).toBeDefined();
     expect(result.current.activeCharacter?.name).toBe('Test Hero');
+  });
+
+  it('repairs luck overflow on the active character at hydration', async () => {
+    const overflowed: Character = {
+      ...mockCharacter,
+      level: 32,
+      strength: 10,
+      vitality: 13,
+      dexterity: 23,
+      luck: 52,
+      intelligence: 13,
+      focus: 19,
+      statPoints: 0,
+    };
+    const totalBefore = overflowed.strength + overflowed.vitality + overflowed.dexterity + overflowed.luck + overflowed.intelligence + overflowed.focus;
+
+    (localStorage.getItem as any).mockReturnValue(JSON.stringify(overflowed));
+    setupMockCharacter(overflowed);
+
+    const { result } = renderHook(() => useGame(), {
+      wrapper: createWrapper()
+    });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    const repaired = result.current.activeCharacter!;
+    expect(repaired.luck).toBe(getLuckAllocationCap());
+    expect(repaired.statPoints).toBe(0);
+    expect(repaired.strength + repaired.vitality + repaired.dexterity + repaired.luck + repaired.intelligence + repaired.focus)
+      .toBe(totalBefore);
+    expect(repaired.strength).toBeGreaterThanOrEqual(15);
   });
 
   it('should prioritize Supabase data over localStorage', async () => {
