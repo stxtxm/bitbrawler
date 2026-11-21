@@ -1,4 +1,5 @@
 @use '../variables' as *;
+@use "sass:color";
 
 .idle-runner-box {
   position: relative;
@@ -584,7 +585,7 @@
 
   .offline-time {
     font-size: clamp(0.5rem, 1.1cqi, 0.7rem);
-    color: lighten($accent-gold, 20%);
+    color: color.adjust($accent-gold, $lightness: 20%);
     margin-bottom: 14px;
     position: relative;
     z-index: 1;
@@ -641,8 +642,8 @@
     font-family: $font-pixel;
     font-size: clamp(0.5rem, 1.1cqi, 0.75rem);
     color: #1a1408;
-    background: linear-gradient(180deg, lighten($accent-gold, 10%), $accent-gold);
-    border: 2px solid darken($accent-gold, 15%);
+    background: linear-gradient(180deg, color.adjust($accent-gold, $lightness: 10%), $accent-gold);
+    border: 2px solid color.adjust($accent-gold, $lightness: -15%);
     border-radius: 6px;
     cursor: pointer;
     position: relative;
