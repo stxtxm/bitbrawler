@@ -14,14 +14,9 @@ import '../../styles/components/_forge.scss';
 
 interface ShopPanelProps {
   onClose: () => void;
-  /** ID de l'item sélectionné/survolé dans l'inventaire (passé par
-   *  InventoryPanel) — au passage, le shop rééchantillonne ses offres
-   *  (nouveaux items, variés, inédits — Math.random au lieu de la seed
-   *  journalière). */
-  hoverToken?: string | null;
 }
 
-export const ShopPanel = memo(function ShopPanel({ onClose, hoverToken }: ShopPanelProps) {
+export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
   const { activeCharacter, essence, buyShopOffer, rerollShopOffers } = useGame();
   const { notify } = useNotification();
   const { play } = useSound();
@@ -37,27 +32,11 @@ export const ShopPanel = memo(function ShopPanel({ onClose, hoverToken }: ShopPa
   const [rerollUsed, setRerollUsed] = useState(false);
   const [revealItem, setRevealItem] = useState<PixelItemAsset | null>(null);
 
-  const [offerHoverOffers, setOfferHoverOffers] = useState<ShopOffer[] | null>(null);
-
-  // [1387] Au passage sur un item de l'inventaire : hoverToken change →
-  // les offres du shop se rééchantillonnent aléatoirement — nouveaux items,
-  // variés, inédits dans la liste des offres (obtenables). L'offre du reroll
-  // payé de la journée reste inchangée quand l'utilisateur ne passe rien.
-  useEffect(() => {
-    if (!hoverToken) {
-      setOfferHoverOffers(null);
-      return
-    }
-    if (!activeCharacter) return
-    setOfferHoverOffers(getShopOffers(activeCharacter, ITEM_ASSETS, undefined, Math.random))
-  }, [hoverToken, activeCharacter])
-
   const offers = useMemo<ShopOffer[]>(() => {
     if (!activeCharacter) return [];
     if (rerolledOffers) return rerolledOffers;
-    if (offerHoverOffers) return offerHoverOffers;
     return getShopOffers(activeCharacter, ITEM_ASSETS);
-  }, [activeCharacter, rerolledOffers, offerHoverOffers]);
+  }, [activeCharacter, rerolledOffers]);
 
   useEffect(() => {
     if (!activeCharacter) return;

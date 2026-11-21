@@ -546,7 +546,7 @@ export const InventoryPanel = memo(function InventoryPanel({
           </div>
         ) : shopUnlocked ? (
           <div className="inventory-shop-tab">
-            <ShopPanel onClose={onClose} hoverToken={previewItemId} />
+            <ShopPanel onClose={onClose} />
           </div>
         ) : (
           <div className="inventory-shop-tab inventory-shop-locked">
