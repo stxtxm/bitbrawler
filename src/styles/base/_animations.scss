@@ -80,6 +80,30 @@
     }
 }
 
+// Sortie de modale : inverse de l'entrée (le montage est retenu par
+// useModalExitTransition le temps que l'animation se joue).
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes modalSlideDown {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(48px);
+    }
+}
+
 // Bascule PvE ⇄ PvP de la scène d'arène : fondu pur (la scène entrante se
 // remonte via React à chaque changement de mode, l'animation rejoue à chaque
 // swap sans surcoût JS).
@@ -116,6 +140,7 @@
     }
 
     .App > .container,
+    .retro-modal-overlay,
     .retro-modal,
     .scene-swap,
     .ranking-row {

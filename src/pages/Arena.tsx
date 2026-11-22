@@ -14,6 +14,7 @@ import { useArenaLevelUp } from '../hooks/useArenaLevelUp';
 import { useConnectionGate } from '../hooks/useConnectionGate';
 import { useIdleCombat } from '../hooks/useIdleCombat';
 import { useInventory } from '../hooks/useInventory';
+import { useModalExitTransition } from '../hooks/useModalExitTransition';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { useSettings } from '../hooks/useSettings';
 import { useSound } from '../hooks/useSound';
@@ -112,6 +113,11 @@ const Arena = () => {
     deleteCharacter,
     onDeleted: handleDeleted,
   });
+
+  // Transitions de sortie des modales : le panneau reste monté 220ms avec la
+  // classe `closing` le temps que l'animation CSS se joue.
+  const inventoryTransition = useModalExitTransition(inventory.inventoryOpen);
+  const settingsTransition = useModalExitTransition(settings.settingsOpen);
 
   const effectiveCharacter = useMemo(
     () => activeCharacter ? applyEquipmentToCharacter(activeCharacter) : null,
@@ -237,9 +243,10 @@ const Arena = () => {
 
       <ConnectionModal open={connectionModal.open} message={connectionModal.message} onClose={closeModal} />
 
-      {inventory.inventoryOpen && (
+      {inventoryTransition.mounted && (
         <InventoryPanel
           {...inventory}
+          closing={inventoryTransition.closing}
           pityCount={pityCount}
           epicPityCount={epicPityCount}
           commonStreak={commonStreak}
@@ -252,9 +259,10 @@ const Arena = () => {
         />
       )}
 
-      {settings.settingsOpen && (
+      {settingsTransition.mounted && (
         <SettingsPanel
           {...settings}
+          closing={settingsTransition.closing}
           soundEnabled={enabled}
           onToggleSound={handleToggleSound}
           medalProgress={activeCharacter?.medalProgress}

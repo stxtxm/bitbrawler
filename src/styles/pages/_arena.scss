@@ -2434,7 +2434,12 @@
     letter-spacing: 1px;
     font-size: 0.55rem;
     gap: 8px;
-    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease, transform 0.1s ease;
+
+    // Retour tactile d'enfoncement au doigt, à l'image des boutons.
+    &:active:not(:disabled) {
+        transform: translateY(1px);
+    }
 
     &:disabled {
         opacity: 0.5;

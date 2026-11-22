@@ -43,6 +43,8 @@ interface SettingsPanelProps {
   onOpenPass: () => void;
   onReturnToMain: () => void;
   onSetDeleteStep: (step: 'idle' | 'confirm') => void;
+  /** Modale en cours de fermeture : joue l'animation de sortie (voir useModalExitTransition). */
+  closing?: boolean;
 }
 
 const SeasonPassView = ({ onClose }: { onClose: () => void }) => {
@@ -73,6 +75,7 @@ export const SettingsPanel = memo(function SettingsPanel({
   onSelectCombatSpeed,
   onClose, onToggleAutoMode, onToggleSound, onToggleTelemetry, onDeleteCharacter,
   onOpenLogs, onOpenMedals, onOpenCompendium, onOpenPass, onReturnToMain, onSetDeleteStep,
+  closing = false,
 }: SettingsPanelProps) {
   const groupedMedals = useMemo(() => getMedalsByCategory(), []);
   const unlockedCount = useMemo(() => getUnlockedCount(medalProgress ?? {}), [medalProgress]);
@@ -88,7 +91,10 @@ export const SettingsPanel = memo(function SettingsPanel({
   );
 
   return (
-    <div className="retro-modal-overlay settings-overlay" onClick={onClose}>
+    <div
+      className={`retro-modal-overlay settings-overlay${closing ? ' closing' : ''}`}
+      onClick={onClose}
+    >
       <div className="retro-modal settings-modal" onClick={(e) => e.stopPropagation()}>
         <div className="inventory-header settings-header">
           <div className="settings-title-row">

@@ -57,6 +57,22 @@ function scssBlock(source: string, selector: string): string | null {
   return null;
 }
 
+/** Bloc équilibré d'une règle écrite en colonne 0 (niveau racine SCSS). */
+function topLevelBlock(source: string, selector: string): string | null {
+  const start = source.search(new RegExp(`^${selector.replace(/[.{}]/g, '\\$&')} \\{`, 'm'));
+  if (start < 0) return null;
+  const open = source.indexOf('{', start);
+  let depth = 0;
+  for (let i = open; i < source.length; i++) {
+    if (source[i] === '{') depth++;
+    else if (source[i] === '}') {
+      depth--;
+      if (depth === 0) return source.slice(start, i + 1);
+    }
+  }
+  return null;
+}
+
 describe('feeling mobile — animations et transitions', () => {
   it('définit les keyframes partagées pageEnter et modalSlideUp', () => {
     const source = read(ANIMATIONS);
@@ -153,7 +169,29 @@ describe('feeling mobile — animations et transitions', () => {
   });
 
   it('contient le scroll des modales (plus de rebond en chaîne)', () => {
-    const modal = blockContaining(read(CONTAINERS), '.retro-modal {');
-    expect(modal).toContain('overscroll-behavior: contain');
+    const containers = read(CONTAINERS);
+    // Bloc racine .retro-modal uniquement (le &.closing contient un
+    // .retro-modal imbriqué indenté, écarté par topLevelBlock).
+    const rootModal = topLevelBlock(containers, '.retro-modal');
+    expect(rootModal).not.toBeNull();
+    expect(rootModal).toContain('overscroll-behavior: contain');
+    expect(rootModal).toContain('modalSlideIn');
+  });
+
+  it('définit les animations de sortie de modale sur la classe .closing', () => {
+    const containers = read(CONTAINERS);
+    const closingBlock = blockContaining(containers, '&.closing');
+    expect(closingBlock, 'bloc .closing manquant sur .retro-modal-overlay').not.toBeNull();
+    expect(closingBlock).toContain('animation: fadeOut');
+    expect(closingBlock).toContain('animation: modalSlideDown');
+    // Les taps traversants pendant la fermeture sont neutralisés.
+    expect(closingBlock).toContain('pointer-events: none');
+  });
+
+  it('expose fadeOut et modalSlideUp en keyframes partagées', () => {
+    const source = read(ANIMATIONS);
+    for (const name of ['fadeOut', 'modalSlideDown']) {
+      expect(blockContaining(source, `@keyframes ${name}`)).not.toBeNull();
+    }
   });
 });

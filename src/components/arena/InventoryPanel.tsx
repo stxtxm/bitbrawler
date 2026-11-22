@@ -50,6 +50,8 @@ interface InventoryPanelProps {
   commonStreak?: number;
   pityTriggered?: boolean;
   inventoryFilterElement?: string | null;
+  /** Modale en cours de fermeture : joue l'animation de sortie (voir useModalExitTransition). */
+  closing?: boolean;
   // Forge integration
   itemUpgradeLevels?: Record<string, number>;
   onSalvage?: (itemId: string) => Promise<Character | null>;
@@ -108,6 +110,7 @@ export const InventoryPanel = memo(function InventoryPanel({
   onUpgrade,
   essence = 0,
   inventoryFilterElement = null,
+  closing = false,
 }: InventoryPanelProps) {
   const {
     activeTab,
@@ -213,7 +216,10 @@ export const InventoryPanel = memo(function InventoryPanel({
   const epicBoostPct = (epicBoost * 100).toFixed(1);
 
   return (
-    <div className="retro-modal-overlay inventory-overlay" onClick={onClose}>
+    <div
+      className={`retro-modal-overlay inventory-overlay${closing ? ' closing' : ''}`}
+      onClick={onClose}
+    >
       <div
         className={`retro-modal inventory-modal ${lootboxRolling ? 'lootbox-active' : ''}`}
         onClick={(event) => event.stopPropagation()}

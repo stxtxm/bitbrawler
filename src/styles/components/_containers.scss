@@ -17,6 +17,17 @@
     z-index: 1000;
     backdrop-filter: blur(4px);
     animation: fadeIn 0.2s ease;
+
+    // Sortie pilotée par useModalExitTransition : overlay + modale fondent,
+    // pointer-events coupé pour éviter les taps pendant l'animation.
+    &.closing {
+        pointer-events: none;
+        animation: fadeOut 0.18s ease both;
+
+        .retro-modal {
+            animation: modalSlideDown 0.2s ease both;
+        }
+    }
 }
 
 .retro-modal {
