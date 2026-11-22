@@ -263,7 +263,6 @@ export function resolveBossAttack(
 
   const newStacks = currentStacks + 1;
   const newMaxHp = getBossEffectiveMaxHp(player, newStacks, bossId);
-  const clampedHp = Math.min(Math.max(0, finalBossHp), newMaxHp);
   const alreadyRewarded = reset.consolationCount ?? 0;
   const tier: any = getBossTier(bossId);
   const canGrant = alreadyRewarded < (tier.CONSOLATION_CAP ?? GAME_RULES.BOSS.CONSOLATION_CAP);
@@ -274,7 +273,8 @@ export function resolveBossAttack(
     progress: {
       ...reset,
       attacksLeft,
-      bossHp: clampedHp,
+      // Les PV du boss remontent à fond entre chaque tentative (ATTACK BOSS).
+      bossHp: newMaxHp,
       bossMaxHp: newMaxHp,
       pityStacks: newStacks,
       consolationCount: newConsolationCount,

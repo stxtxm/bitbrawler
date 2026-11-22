@@ -128,7 +128,8 @@ describe('Arena Boss (useBossFight)', () => {
     expect(progress?.bossId).toBe(BOSS_ID);
     expect(progress?.attacksLeft).toBe(GAME_RULES.BOSS.MAX_DAILY_ATTACKS - 1);
     expect(progress?.bossMaxHp).toBe(Math.round(mockCharacter.maxHp * GAME_RULES.BOSS.HP_MULTIPLIER * 0.25));
-    expect(progress?.bossHp).toBe(900);
+    // Boss HP resets to full after every ATTACK BOSS attempt (single-attempt fights).
+    expect(progress?.bossHp).toBe(progress?.bossMaxHp);
     expect(result.current.activeCharacter?.losses).toBe(2);
     expect(result.current.activeCharacter?.wins).toBe(5);
     expect(result.current.activeCharacter?.essence).toBe(100 + 8);
@@ -201,7 +202,7 @@ describe('Arena Boss (useBossFight)', () => {
     expect(payload).not.toBeNull();
     expect(payload.boss_progress).toBeDefined();
     expect(payload.boss_progress.bossId).toBe(BOSS_ID);
-    expect(payload.boss_progress.bossHp).toBe(900);
+    expect(payload.boss_progress.bossHp).toBe(payload.boss_progress.bossMaxHp);
     expect(payload.boss_progress.attacksLeft).toBe(GAME_RULES.BOSS.MAX_DAILY_ATTACKS - 1);
   });
 
@@ -236,6 +237,6 @@ describe('Arena Boss (useBossFight)', () => {
     const progress = result.current.activeCharacter?.bossProgress;
     expect(progress?.attacksLeft).toBe(GAME_RULES.BOSS.MAX_DAILY_ATTACKS - 1);
     expect(progress?.totalKills).toBe(1);
-    expect(progress?.bossHp).toBe(900);
+    expect(progress?.bossHp).toBe(progress?.bossMaxHp);
   });
 });

@@ -19,6 +19,7 @@ export const UPDATE_NOTES: UpdateNote[] = [
       '🌒 BIOME ECLIPSE PRÉPARÉ — slot du dernier biome ajouté, verrouillé jusqu’au futur boss endgame.',
       '🌄 TRANSITION BIOME — changer de biome en idle met à jour immédiatement l’ambiance et fait apparaître un monstre du nouveau biome, avec une transition visuelle douce.',
       '❤️ PV RÉTABLIS — les PV du personnage remontent à fond entre chaque combat de boss et chaque combat PvP.',
+      '👑 BOSS SINGLE-ATTEMPT — les PV du boss remontent à fond entre chaque tentative ATTACK BOSS ; la difficulté a été ajustée pour des duels lisibles, avec pity conservé.',
       '🔊 SOUND DESIGN — clics/boutons plus clairs et impacts de combat plus punchy en PvP comme en boss (hit/crit/magie/contre/raté).',
       '🧪 QA & TESTS — bot QA vérifie onglets PVE/PVP/BOSS, sélecteur boss, sélecteur biome verrouillé/débloqué, gains/min Essence/XP ; tests renforcés.',
     ],

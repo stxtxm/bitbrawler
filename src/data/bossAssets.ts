@@ -47,7 +47,7 @@ export const BOSS_ASSETS: BossDef[] = [
     element: 'dark',
     specialty: 'Worldbreaker',
     description:
-      'An ancient colossus forged in the void. It absorbs every blow and refuses to fall in a single day. Whittle down its HP pool across multiple attacks — it persists until you land the final strike.',
+      'An ancient colossus forged in the void. Each assault is a fresh duel — bring your best build, learn its rhythm, and land the killing blow before it crushes you.',
     background: VOLCANIC_BACKGROUND,
     palette: {
       0: 'transparent',
@@ -84,7 +84,7 @@ export const BOSS_ASSETS: BossDef[] = [
     element: 'earth',
     specialty: 'Mountain Guardian',
     description:
-      'A colossal guardian carved from the mountain itself. It blocks the path to the high peaks — only those who shatter its stone core can claim the mountain biome.',
+      'A colossal guardian carved from the mountain itself. Every attack is a full-power showdown — shatter its stone core to claim the mountain biome.',
     background: MOUNTAIN_STRONGHOLD_BACKGROUND,
     palette: {
       0: 'transparent',
@@ -121,7 +121,7 @@ export const BOSS_ASSETS: BossDef[] = [
     element: 'water',
     specialty: 'Glacier Sovereign',
     description:
-      'Sovereign of the frozen summit. After the Void Titan falls, this colossal ice monarch descends from the snow mountain to challenge worthy slayers. Its glacier core reforges itself after every defeat — train against it, break it, and claim ever-richer spoils as you grow.',
+      'Sovereign of the frozen summit. Every attempt is a full-power duel against its glacier core. Break it, claim ever-richer spoils, and prove you own the summit.',
     background: ABYSSAL_RIFT_BACKGROUND,
     palette: {
       0: 'transparent',

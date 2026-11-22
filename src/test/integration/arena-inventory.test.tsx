@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, fireEvent, act, within } from '@testing-library/react'
+import { render, fireEvent, act, within, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Arena from '../../pages/Arena'
 import { useGame } from '../../context/GameContext'
@@ -108,7 +108,7 @@ describe('Arena inventory modal', () => {
     expect(getByText('INVENTORY')).toBeInTheDocument()
   })
 
-  it('closes inventory modal when close button is clicked', () => {
+  it('closes inventory modal when close button is clicked', async () => {
     const { getByLabelText, queryByText } = render(
       <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Arena />
@@ -117,7 +117,9 @@ describe('Arena inventory modal', () => {
 
     fireEvent.click(getByLabelText('Inventory'))
     fireEvent.click(getByLabelText('Close inventory'))
-    expect(queryByText('INVENTORY')).toBeNull()
+    await waitFor(() => {
+      expect(queryByText('INVENTORY')).toBeNull()
+    })
   })
 
   it('shows lootbox reward overlay after rolling', async () => {

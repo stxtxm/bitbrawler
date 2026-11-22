@@ -78,11 +78,11 @@ describe('buildBossCharacter', () => {
     expect(boss.maxHp).toBe(Math.round(player.maxHp * GAME_RULES.BOSS.HP_MULTIPLIER * 0.25));
   });
 
-  it('applies Phase 3 HP at high level (no phase reduction)', () => {
+  it('applies Phase 3 HP at high level (phase reduction applied)', () => {
     const player = makePlayer({ level: 65 });
     const boss = buildBossCharacter(player);
 
-    expect(boss.maxHp).toBe(Math.round(player.maxHp * GAME_RULES.BOSS.HP_MULTIPLIER));
+    expect(boss.maxHp).toBe(Math.round(player.maxHp * GAME_RULES.BOSS.HP_MULTIPLIER * 0.75));
   });
 
   it('fights at playerLevel + LEVEL_BOOST', () => {
@@ -172,7 +172,7 @@ describe('ensureBossDailyReset / getBossAttacksLeft', () => {
 describe('resolveBossAttack', () => {
   const player = makePlayer({ level: 65 });
   const now = Date.UTC(2026, 0, 15, 12, 0, 0);
-  const fullHp = Math.round(player.maxHp * GAME_RULES.BOSS.HP_MULTIPLIER);
+  const fullHp = Math.round(player.maxHp * GAME_RULES.BOSS.HP_MULTIPLIER * 0.75);
 
   const base: BossProgress = {
     bossId: BOSS_ID,
@@ -185,17 +185,18 @@ describe('resolveBossAttack', () => {
     firstEncounterAt: now,
   };
 
-  it('on a loss: consumes an attack and keeps the remaining HP (pity kicks in at 3 defeats)', () => {
-    const result = resolveBossAttack(player, base, 5120, false, now);
+  it('on a loss: consumes an attack and resets boss HP to full for the next attempt', () => {
+    const remainingHp = Math.max(0, fullHp - 500);
+    const result = resolveBossAttack(player, base, remainingHp, false, now);
 
     expect(result.killed).toBe(false);
-    expect(result.damageDealt).toBe(fullHp - 5120);
+    expect(result.damageDealt).toBe(fullHp - remainingHp);
     expect(result.progress.attacksLeft).toBe(4);
-    expect(result.progress.bossHp).toBe(5120);
+    expect(result.progress.bossHp).toBe(result.progress.bossMaxHp);
     expect(result.progress.totalKills).toBe(0);
     expect(result.progress.pityStacks).toBe(1);
     expect(result.progress.bossMaxHp).toBe(fullHp);
-    expect(result.progress.totalDamageDealt).toBe(fullHp - 5120);
+    expect(result.progress.totalDamageDealt).toBe(fullHp - remainingHp);
   });
 
   it('on a win: starts a new cycle, counts the kill, and keeps remaining attacks', () => {
@@ -224,9 +225,9 @@ describe('resolveBossAttack', () => {
     expect(result.progress.attacksLeft).toBe(0);
   });
 
-  it('clamps boss HP at zero on a loss when the boss HP hit exactly 0', () => {
+  it('on a loss even at 0 HP dealt, boss HP resets to full for the next attempt', () => {
     const result = resolveBossAttack(player, base, 0, false, now);
-    expect(result.progress.bossHp).toBe(0);
+    expect(result.progress.bossHp).toBe(result.progress.bossMaxHp);
     expect(result.killed).toBe(false);
   });
 
@@ -294,7 +295,7 @@ describe('boss pity & consolation', () => {
     const player = makePlayer({ maxHp: 792, hp: 792, level: 65 });
     let progress = createBossProgress(player);
     const baseMax = progress.bossMaxHp;
-    expect(baseMax).toBe(Math.round(792 * GAME_RULES.BOSS.HP_MULTIPLIER));
+    expect(baseMax).toBe(Math.round(792 * GAME_RULES.BOSS.HP_MULTIPLIER * 0.75));
     for (let i = 1; i <= 2; i++) {
       progress = resolveBossAttack(player, progress, Math.max(1, progress.bossHp - 100), false).progress;
     }

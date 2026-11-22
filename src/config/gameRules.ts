@@ -34,7 +34,7 @@ export const GAME_RULES = {
         MAX_DAILY_ATTACKS: 5, // Daily attacks against the raid boss (independent from PvP/PvE gauge)
         LEVEL_BOOST: 2, // Boss fights at playerLevel + this offset
         STAT_MULTIPLIER: 1.1, // Boss raw stats scale off the player's raw stats
-        HP_MULTIPLIER: 10.0, // Boss persistent HP pool = player maxHp * this (before phase/pity)
+        HP_MULTIPLIER: 3.0, // Boss HP = player maxHp * this (before phase/pity), single-attempt fight
         XP_MODIFIER: 4.0, // Boss kill XP payout multiplier (vs a regular fight win)
         ESSENCE_REWARD: 60, // Essence rewarded on boss kill (Phase 3 baseline)
         PITY_STEP_DEFEATS: 3, // Every N defeats increases pity reduction
@@ -48,7 +48,7 @@ export const GAME_RULES = {
         void_titan: {
             PHASE_1: { MAX_LEVEL: 40, HP_FACTOR: 0.25, STAT_FACTOR: 0.5, ESSENCE_REWARD: 30 },
             PHASE_2: { MAX_LEVEL: 60, HP_FACTOR: 0.5, STAT_FACTOR: 1.0, ESSENCE_REWARD: 45 },
-            PHASE_3: { HP_FACTOR: 1.0, STAT_FACTOR: 1.0, ESSENCE_REWARD: 60 },
+            PHASE_3: { HP_FACTOR: 0.75, STAT_FACTOR: 1.0, ESSENCE_REWARD: 60 },
         },
     } as const,
     BOSS_TIERS: {
@@ -58,7 +58,7 @@ export const GAME_RULES = {
             MAX_DAILY_ATTACKS: 5,
             LEVEL_BOOST: 2,
             STAT_MULTIPLIER: 1.1,
-            HP_MULTIPLIER: 10.0,
+            HP_MULTIPLIER: 3.0,
             XP_MODIFIER: 4.0,
             ESSENCE_REWARD: 60,
             REQUIRES_KILLS: 0,
@@ -75,7 +75,7 @@ export const GAME_RULES = {
             MAX_DAILY_ATTACKS: 5,
             LEVEL_BOOST: 2,
             STAT_MULTIPLIER: 1.2,
-            HP_MULTIPLIER: 13.0,
+            HP_MULTIPLIER: 3.5,
             XP_MODIFIER: 5.0,
             ESSENCE_REWARD: 80,
             REQUIRES_KILLS: 1,
@@ -93,7 +93,7 @@ export const GAME_RULES = {
             MAX_DAILY_ATTACKS: 5,
             LEVEL_BOOST: 3,
             STAT_MULTIPLIER: 1.3,
-            HP_MULTIPLIER: 16.0,
+            HP_MULTIPLIER: 4.0,
             XP_MODIFIER: 6.0,
             ESSENCE_REWARD: 100,
             REQUIRES_KILLS: 1,
