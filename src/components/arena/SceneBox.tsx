@@ -29,7 +29,6 @@ export const SceneBox = memo(function SceneBox({
   // de biome soit immédiat, même avant refresh du personnage.
   const biome = getBiomeForCharacter(character);
   const activeBiomeId = idle.activeBiomeId ?? biome.id;
-  const volcanicBiome = activeBiomeId === 'volcanic';
   const lighting = getBiomeLighting(activeBiomeId);
 
   return (
@@ -40,14 +39,14 @@ export const SceneBox = memo(function SceneBox({
       style={sceneLightingStyle(lighting, lowPerf)}
     >
       <div className="scene-biome-swap" key={activeBiomeId}>
-        {volcanicBiome ? (
-          <BiomeTerrain
-            biomeId={activeBiomeId}
+        {activeBiomeId === 'plains' ? (
+          <ProceduralTerrain
             seed={character.seed}
             animated={pveMode}
           />
         ) : (
-          <ProceduralTerrain
+          <BiomeTerrain
+            biomeId={activeBiomeId}
             seed={character.seed}
             animated={pveMode}
           />

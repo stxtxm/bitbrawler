@@ -10,14 +10,16 @@ export const UPDATE_NOTES: UpdateNote[] = [
   {
     version: '5.9.1',
     date: '2026-11-22',
-    title: '🔒 Biomes verrouillés, transitions plus vivantes et QA renforcée',
+    title: '⛰️ Mountain redesign, nouveau boss lvl 40 et progression boss/biomes',
     changes: [
-      '🔒 BIOMES VERROUILLÉS — impossible de sélectionner un biome non débloqué (UI + garde côté logique).',
-      '🏔️ FROSTPEAK BIOME — débloqué uniquement après avoir vaincu le 2e boss (Frostpeak Monarch lvl 40), comme prévu dans la progression.',
-      '🌒 BIOME ECLIPSE PRÉPARÉ — slot du dernier biome ajouté, verrouillé jusqu’au futur boss lvl 60 (préparation de la progression endgame).',
+      '⛰️ BIOME MOUNTAIN REDESIGN — nouveau décor montagne en idle (pics enneigés, brume, pins, neige) distinct des Plaines.',
+      '🗿 STONE COLOSSUS (LVL 40) — nouveau boss intermédiaire entre Void Titan et Frostpeak Monarch. Le vaincre débloque le biome Mountain.',
+      '❄️ FROSTPEAK MONARCH (LVL 60) — l’ancien 2e boss devient le boss de palier 60 ; le vaincre débloque le biome Frostpeak.',
+      '🔒 BIOMES VERROUILLÉS — impossible de sélectionner un biome non débloqué (UI + garde côté logique). Progression : Void Titan → Volcanic, Stone Colossus → Mountain, Frostpeak Monarch → Frostpeak.',
+      '🌒 BIOME ECLIPSE PRÉPARÉ — slot du dernier biome ajouté, verrouillé jusqu’au futur boss endgame.',
       '🌄 TRANSITION BIOME — changer de biome en idle met à jour immédiatement l’ambiance et fait apparaître un monstre du nouveau biome, avec une transition visuelle douce.',
       '🔊 SOUND DESIGN — clics/boutons plus clairs et impacts de combat plus punchy en PvP comme en boss (hit/crit/magie/contre/raté).',
-      '🧪 QA & TESTS — le bot QA vérifie désormais les onglets PVE/PVP/BOSS, le sélecteur boss Frostpeak/lock, le sélecteur biome verrouillé/débloqué et les gains/min ; tests unitaires/composants renforcés.',
+      '🧪 QA & TESTS — bot QA vérifie onglets PVE/PVP/BOSS, sélecteur boss, sélecteur biome verrouillé/débloqué, gains/min Essence/XP ; tests renforcés.',
     ],
   },
   {

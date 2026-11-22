@@ -10,7 +10,9 @@ import {
 } from './terrainShared';
 import {
   VOLCANIC_TERRAIN,
+  MOUNTAIN_TERRAIN,
   getLayerSpeed,
+  type MountainTerrainConfig,
 } from './biomeTerrainConfig';
 
 interface BiomeTerrainProps {
@@ -49,7 +51,8 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
     [seed],
   );
 
-  const cfg = VOLCANIC_TERRAIN[biomeId] ?? VOLCANIC_TERRAIN.volcanic;
+  const volcanicCfg = VOLCANIC_TERRAIN[biomeId] ?? VOLCANIC_TERRAIN.volcanic;
+  const mountainCfg: MountainTerrainConfig | undefined = MOUNTAIN_TERRAIN[biomeId];
 
   const isMobile = width < 768;
   const groundTop = height * (isMobile ? 0.74 : 0.62);
@@ -61,9 +64,157 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const layerSpeed = (id: string) => getLayerSpeed(cfg, id);
+    const activeCfg = mountainCfg ?? volcanicCfg;
+    const layerSpeed = (id: string) => getLayerSpeed(activeCfg, id);
 
-    const drawFrame = (groundScroll: number) => {
+    const drawMountainFrame = (groundScroll: number) => {
+      if (!mountainCfg) return;
+      if (typeof ctx.setTransform !== 'function') return;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, width, height);
+      const scrollPx = Math.round(groundScroll);
+
+      const sky = ctx.createLinearGradient(0, 0, 0, height);
+      for (const [stop, color] of mountainCfg.sky) sky.addColorStop(stop, color);
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, width, height);
+
+      // Distant snowy peaks
+      const farSpeed = layerSpeed('peakFar');
+      const farSpacing = 320;
+      const farPhase = wrapPhase(scrollPx, farSpeed, farSpacing);
+      for (let sx = tileScanStart(farPhase, farSpacing); sx < width + farSpacing; sx += farSpacing) {
+        const worldIdx = worldIndexAt(sx, scrollPx, farSpeed, farSpacing);
+        const h = (worldIdx * 29 + seedNum * 7) % 101;
+        const pw = 140 + (h % 6) * 24;
+        const ph = 90 + (h % 8) * 16;
+        const px = Math.round(sx + ((h % 21) - 10) * 2);
+        const peakY = groundTop - ph;
+        ctx.fillStyle = mountainCfg.peakFar;
+        ctx.beginPath();
+        ctx.moveTo(px - pw / 2, groundTop);
+        ctx.lineTo(px, peakY);
+        ctx.lineTo(px + pw / 2, groundTop);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = mountainCfg.snow;
+        ctx.beginPath();
+        ctx.moveTo(px - pw * 0.16, peakY + ph * 0.28);
+        ctx.lineTo(px, peakY);
+        ctx.lineTo(px + pw * 0.16, peakY + ph * 0.28);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Mist bands
+      const mistSpeed = layerSpeed('mist');
+      const mistSpacing = 260;
+      const mistPhase = wrapPhase(scrollPx, mistSpeed, mistSpacing);
+      for (let sx = tileScanStart(mistPhase, mistSpacing); sx < width + mistSpacing; sx += mistSpacing) {
+        const worldIdx = worldIndexAt(sx, scrollPx, mistSpeed, mistSpacing);
+        const h = (worldIdx * 17 + seedNum * 5) % 101;
+        if (h > 55) continue;
+        const my = groundTop - 50 - (h % 5) * 12;
+        ctx.fillStyle = mountainCfg.mist;
+        ctx.fillRect(Math.round(sx), my, 160, 14);
+        ctx.fillRect(Math.round(sx + 20), my - 6, 90, 10);
+      }
+
+      // Near peaks
+      const nearSpeed = layerSpeed('peakNear');
+      const nearSpacing = 380;
+      const nearPhase = wrapPhase(scrollPx, nearSpeed, nearSpacing);
+      for (let sx = tileScanStart(nearPhase, nearSpacing); sx < width + nearSpacing; sx += nearSpacing) {
+        const worldIdx = worldIndexAt(sx, scrollPx, nearSpeed, nearSpacing);
+        const h = (worldIdx * 23 + seedNum * 11) % 101;
+        const pw = 170 + (h % 7) * 26;
+        const ph = 120 + (h % 9) * 18;
+        const px = Math.round(sx + ((h % 31) - 15) * 2);
+        const peakY = groundTop - ph;
+        ctx.fillStyle = mountainCfg.peakNear;
+        ctx.beginPath();
+        ctx.moveTo(px - pw / 2, groundTop);
+        ctx.lineTo(px - pw * 0.08, peakY + ph * 0.22);
+        ctx.lineTo(px, peakY);
+        ctx.lineTo(px + pw * 0.1, peakY + ph * 0.2);
+        ctx.lineTo(px + pw / 2, groundTop);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = mountainCfg.snow;
+        ctx.beginPath();
+        ctx.moveTo(px - pw * 0.2, peakY + ph * 0.32);
+        ctx.lineTo(px, peakY);
+        ctx.lineTo(px + pw * 0.22, peakY + ph * 0.34);
+        ctx.lineTo(px + pw * 0.06, peakY + ph * 0.36);
+        ctx.lineTo(px - pw * 0.04, peakY + ph * 0.3);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // Ground
+      ctx.fillStyle = mountainCfg.ground;
+      ctx.fillRect(0, groundTop, width, height - groundTop);
+      const groundSpeed = layerSpeed('ground');
+      const rockSpacing = 88;
+      const rockPhase = wrapPhase(scrollPx, groundSpeed, rockSpacing);
+      for (let sx = tileScanStart(rockPhase, rockSpacing); sx < width + rockSpacing; sx += rockSpacing) {
+        const worldIdx = worldIndexAt(sx, scrollPx, groundSpeed, rockSpacing);
+        const h = (worldIdx * 19 + seedNum * 13) % 101;
+        if (h > 55) continue;
+        const rx = Math.round(sx + (h % 19) - 9);
+        const ry = groundTop + 6 + (h % 5) * 6;
+        const rw = 10 + (h % 6) * 4;
+        const rh = 4 + (h % 3) * 2;
+        ctx.fillStyle = mountainCfg.groundRock;
+        ctx.fillRect(rx, ry, rw, rh);
+        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        ctx.fillRect(rx, ry, Math.max(2, rw - 3), 1);
+      }
+
+      // Pine trees
+      const pineSpacing = 120;
+      const pinePhase = wrapPhase(scrollPx, groundSpeed, pineSpacing);
+      for (let sx = tileScanStart(pinePhase, pineSpacing); sx < width + pineSpacing; sx += pineSpacing) {
+        const worldIdx = worldIndexAt(sx, scrollPx, groundSpeed, pineSpacing);
+        const h = (worldIdx * 31 + seedNum * 17) % 101;
+        if (h > 45) continue;
+        const px = Math.round(sx + ((h % 23) - 11));
+        const treeH = 28 + (h % 5) * 8;
+        const baseY = groundTop + 2;
+        ctx.fillStyle = '#3a2a20';
+        ctx.fillRect(px - 2, baseY - 8, 4, 10);
+        for (let i = 0; i < 3; i++) {
+          const levelY = baseY - 8 - i * (treeH / 3);
+          const halfW = 14 - i * 3;
+          ctx.fillStyle = i % 2 === 0 ? mountainCfg.pineDark : mountainCfg.pine;
+          ctx.beginPath();
+          ctx.moveTo(px - halfW, levelY);
+          ctx.lineTo(px, levelY - 14);
+          ctx.lineTo(px + halfW, levelY);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        ctx.fillRect(px - 4, baseY - treeH + 8, 8, 2);
+      }
+
+      // Falling snow / particles
+      const snowSpeed = layerSpeed('snow');
+      const snowSpacing = 42;
+      const snowPhase = wrapPhase(scrollPx, snowSpeed, snowSpacing);
+      for (let sx = tileScanStart(snowPhase, snowSpacing); sx < width + snowSpacing; sx += snowSpacing) {
+        const worldIdx = worldIndexAt(sx, scrollPx, snowSpeed, snowSpacing);
+        const h = (worldIdx * 13 + seedNum * 3) % 101;
+        if (h > 60) continue;
+        const size = 1 + (h % 3);
+        const sway = Math.sin(scrollPx * 0.04 + worldIdx) * 4;
+        const y = Math.round(((h % 50) / 50) * (groundTop - 20) + 10);
+        ctx.fillStyle = mountainCfg.particles[h % mountainCfg.particles.length];
+        ctx.fillRect(Math.round(sx + sway), y, size, size);
+      }
+    };
+
+    const drawVolcanicFrame = (groundScroll: number) => {
       if (typeof ctx.setTransform !== 'function') return;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
@@ -73,7 +224,7 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
       const scrollPx = Math.round(groundScroll);
 
       const sky = ctx.createLinearGradient(0, 0, 0, height);
-      for (const [stop, color] of cfg.sky) {
+      for (const [stop, color] of volcanicCfg.sky) {
         sky.addColorStop(stop, color);
       }
       ctx.fillStyle = sky;
@@ -143,7 +294,7 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
         const off = ((worldIdx * 7 + seedNum * 5) % 31) - 15;
         const vw = 90 + (h % 6) * 14;
         const vh = 110 + (h % 8) * 16;
-        drawVolcano(ctx, Math.round(sx + off), groundTop, vw, vh, cfg.volcanoFar, cfg.crater, null);
+        drawVolcano(ctx, Math.round(sx + off), groundTop, vw, vh, volcanicCfg.volcanoFar, volcanicCfg.crater, null);
       }
 
       // ── Ash drifting (background particles) ──
@@ -157,7 +308,7 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
         if (h > 55) continue;
         const ay = Math.round(((h % 40) / 40) * (groundTop - 30) + 8);
         const size = 2 + (h % 3);
-        ctx.fillStyle = cfg.ash;
+        ctx.fillStyle = volcanicCfg.ash;
         ctx.fillRect(Math.round(sx + ((h % 11) - 5)), ay, size, size);
       }
 
@@ -175,11 +326,11 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
         const vw = 150 + (h % 7) * 18;
         const vh = 150 + (h % 9) * 20;
         const vx = Math.round(sx + off);
-        drawVolcano(ctx, vx, groundTop, vw, vh, cfg.volcanoNear, cfg.crater, cfg.lava, scrollPx);
+        drawVolcano(ctx, vx, groundTop, vw, vh, volcanicCfg.volcanoNear, volcanicCfg.crater, volcanicCfg.lava, scrollPx);
         // Lava pool glow at the base
-        ctx.fillStyle = cfg.lavaBright;
+        ctx.fillStyle = volcanicCfg.lavaBright;
         ctx.fillRect(vx - 14, groundTop - 2, 28, 4);
-        ctx.fillStyle = cfg.lava;
+        ctx.fillStyle = volcanicCfg.lava;
         ctx.fillRect(vx - 10, groundTop + 2, 20, 3);
 
         // ── Volcano Active Craters: Erupting Sparks & Falling Lava Geysers ──
@@ -209,7 +360,7 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
 
           // Only draw if spark hasn't fallen below ground top
           if (sparkY < groundTop) {
-            ctx.fillStyle = s % 2 === 0 ? cfg.lavaBright : cfg.lava;
+            ctx.fillStyle = s % 2 === 0 ? volcanicCfg.lavaBright : volcanicCfg.lava;
             ctx.fillRect(sparkX, sparkY, 3, 3);
             ctx.fillStyle = 'rgba(255, 110, 40, 0.45)';
             ctx.fillRect(sparkX - 1, sparkY - 1, 5, 5);
@@ -249,7 +400,7 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
       }
 
       // ── Basalt ground with lava veins ──
-      ctx.fillStyle = cfg.ground;
+      ctx.fillStyle = volcanicCfg.ground;
       ctx.fillRect(0, groundTop, width, height - groundTop);
 
       const groundSpeed = layerSpeed('ground');
@@ -272,10 +423,10 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
         ctx.fillStyle = '#2e1208';
         ctx.fillRect(px - 2, py - 1, poolW + 4, poolH + 2);
         // Lava pool base
-        ctx.fillStyle = cfg.lava;
+        ctx.fillStyle = volcanicCfg.lava;
         ctx.fillRect(px, py, poolW, poolH);
         // Molten bright highlight core
-        ctx.fillStyle = cfg.lavaBright;
+        ctx.fillStyle = volcanicCfg.lavaBright;
         const hiliteOffset = Math.floor((scrollPx * 0.1) % (poolW - 8));
         ctx.fillRect(px + 4 + (hiliteOffset % (poolW - 8)), py + 2, Math.max(4, poolW / 4), poolH - 4);
       }
@@ -291,9 +442,9 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
         const off = ((worldIdx * 5 + seedNum * 3) % 15) - 7;
         const vx = Math.round(sx + off);
         const vy = groundTop + 2 + (h % 6) * 5;
-        ctx.fillStyle = cfg.groundVein;
+        ctx.fillStyle = volcanicCfg.groundVein;
         ctx.fillRect(vx, vy, 6 + (h % 4), 3);
-        ctx.fillStyle = cfg.lava;
+        ctx.fillStyle = volcanicCfg.lava;
         ctx.fillRect(vx + 1, vy + 1, 3, 2);
       }
 
@@ -345,12 +496,12 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
 
         const ex = Math.round(sx + off + sway);
         const ey = Math.round(groundTop - 6 - rise * (groundTop * 0.65));
-        const colorIdx = h % cfg.embers.length;
+        const colorIdx = h % volcanicCfg.embers.length;
 
         // Randomize ember size for perspective depth (1px, 2px, or 3px)
         const emberSize = 1 + (h % 3);
 
-        ctx.fillStyle = cfg.embers[colorIdx];
+        ctx.fillStyle = volcanicCfg.embers[colorIdx];
         ctx.fillRect(ex, ey, emberSize, emberSize);
         ctx.fillStyle = 'rgba(255, 170, 80, 0.25)';
         ctx.fillRect(ex - 1, ey - 1, emberSize + 2, emberSize + 2);
@@ -410,7 +561,7 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
       }
 
       lastTimeRef.current = now;
-      drawFrame(scrollOffsetRef.current);
+      (mountainCfg ? drawMountainFrame : drawVolcanicFrame)(scrollOffsetRef.current);
     };
 
     lastTimeRef.current = performance.now();
@@ -422,7 +573,7 @@ export const BiomeTerrain: React.FC<BiomeTerrainProps> = ({
       document.removeEventListener('visibilitychange', onVisibility);
       cancelAnimationFrame(rafId);
     };
-  }, [width, height, seedNum, isMobile, groundTop, cfg]);
+  }, [width, height, seedNum, isMobile, groundTop, volcanicCfg]);
 
   return (
     <div

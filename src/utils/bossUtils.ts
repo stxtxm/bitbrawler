@@ -64,8 +64,12 @@ export function isBossUnlockedForCharacter(character: Character, bossId: BossId 
   const tier: any = getBossTier(bossId);
   if (character.level < tier.UNLOCK_LEVEL) return false;
   if (tier.REQUIRES_KILLS && tier.REQUIRES_KILLS > 0) {
-    const voidProgress = getBossProgressForId(character, BOSS_ID);
-    const kills = voidProgress?.totalKills ?? character.bossProgress?.totalKills ?? 0;
+    const requiredBossId = (tier.REQUIRES_BOSS_ID as BossId | undefined) ?? BOSS_ID;
+    const requiredProgress = getBossProgressForId(character, requiredBossId);
+    const fallbackKills = requiredBossId === BOSS_ID
+      ? (character.bossProgress?.totalKills ?? 0)
+      : 0;
+    const kills = requiredProgress?.totalKills ?? fallbackKills;
     if (kills < tier.REQUIRES_KILLS) return false;
   }
   return true;

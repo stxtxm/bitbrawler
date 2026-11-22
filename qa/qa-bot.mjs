@@ -2215,7 +2215,7 @@ async function captureBossFight(page, runKey, fightNumber) {
     fight_duration_ms: fightDuration,
     max_hp: null,
     fight_type: 'boss',
-    monster_name: BOSS_NAME,
+    monster_name: bossStatus.boss_name || BOSS_NAME,
     boss_hp_left: bossStatus.boss_hp,
     boss_max_hp: bossStatus.boss_max_hp,
   }
@@ -2267,22 +2267,33 @@ async function captureUiFeatureChecks(page, runRecord) {
         let cardData = await readBossCards()
         let interaction = null
         const voidCard = bossSelect.locator('.boss-select-card').filter({ hasText: 'VOID TITAN' }).first()
+        const stoneCard = bossSelect.locator('.boss-select-card').filter({ hasText: 'STONE' }).first()
         const frostCard = bossSelect.locator('.boss-select-card').filter({ hasText: 'FROSTPEAK' }).first()
+        const stoneLocked = await stoneCard.evaluate(el => el.classList.contains('locked')).catch(() => false)
         const frostLocked = await frostCard.evaluate(el => el.classList.contains('locked')).catch(() => false)
         if (await voidCard.isVisible().catch(() => false)) {
           await voidCard.click({ timeout: 2000 }).catch(() => {})
           await page.waitForTimeout(350)
           const afterVoid = await readBossCards()
-          interaction = { selected_void_titan: afterVoid.some(c => c.name.includes('VOID') && c.selected), frostpeak_locked: frostLocked }
+          interaction = {
+            selected_void_titan: afterVoid.some(c => c.name.includes('VOID') && c.selected),
+            stone_locked: stoneLocked,
+            frostpeak_locked: frostLocked,
+          }
+          if (!stoneLocked && await stoneCard.isVisible().catch(() => false)) {
+            await stoneCard.click({ timeout: 2000 }).catch(() => {})
+            await page.waitForTimeout(350)
+            const afterStone = await readBossCards()
+            interaction.selected_stone_colossus = afterStone.some(c => c.name.includes('STONE') && c.selected)
+          }
           if (!frostLocked && await frostCard.isVisible().catch(() => false)) {
             await frostCard.click({ timeout: 2000 }).catch(() => {})
             await page.waitForTimeout(350)
             const afterFrost = await readBossCards()
             interaction.selected_frostpeak = afterFrost.some(c => c.name.includes('FROST') && c.selected)
-            // restore to void titan to keep run stable
-            await voidCard.click({ timeout: 2000 }).catch(() => {})
-            await page.waitForTimeout(250)
           }
+          await voidCard.click({ timeout: 2000 }).catch(() => {})
+          await page.waitForTimeout(250)
           cardData = await readBossCards()
         }
         checks.boss_ui = { visible: true, cards: cardData, interaction }

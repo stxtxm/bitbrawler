@@ -153,10 +153,13 @@ describe('BossScreen', () => {
     expect(screen.getByText('SUMMIT RAID')).toBeInTheDocument();
   });
 
-  it('shows boss selector after first kill and allows training on Void Titan while Frostpeak is locked', () => {
+  it('shows boss selector after first kill and allows training on Void Titan while next boss is locked', () => {
     const onSelectBoss = vi.fn();
     renderBoss({
       nextBossVisible: true,
+      stoneBossVisible: true,
+      stoneUnlocked: false,
+      abyssalBossVisible: false,
       abyssalUnlocked: false,
       voidTitanKills: 1,
       selectedBossId: 'void_titan',
@@ -165,26 +168,30 @@ describe('BossScreen', () => {
 
     expect(screen.getByRole('radiogroup', { name: 'Boss target' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /VOID TITAN/i })).toHaveAttribute('aria-checked', 'true');
-    const frostpeak = screen.getByRole('radio', { name: /FROSTPEAK/i });
-    expect(frostpeak).toHaveAttribute('aria-checked', 'false');
-    expect(frostpeak.className).toContain('locked');
+    const stone = screen.getByRole('radio', { name: /STONE COLOSSUS/i });
+    expect(stone).toHaveAttribute('aria-checked', 'false');
+    expect(stone.className).toContain('locked');
     expect(screen.getByText(/LOCKED LVL 40/)).toBeInTheDocument();
-    fireEvent.click(frostpeak);
-    expect(onSelectBoss).toHaveBeenCalledWith('abyssal_monarch');
+    fireEvent.click(stone);
+    expect(onSelectBoss).toHaveBeenCalledWith('stone_colossus');
   });
 
-  it('allows selecting unlocked Frostpeak boss', () => {
+  it('allows selecting unlocked Frostpeak boss (lvl 60) after stone boss kill', () => {
     const onSelectBoss = vi.fn();
     renderBoss({
       bossId: 'abyssal_monarch',
-      bossProgress: { ...progress, bossId: 'abyssal_monarch', bossLevel: 40, bossMaxHp: 12000, bossHp: 12000 },
+      bossProgress: { ...progress, bossId: 'abyssal_monarch', bossLevel: 60, bossMaxHp: 12000, bossHp: 12000 },
       nextBossVisible: true,
+      stoneBossVisible: true,
+      abyssalBossVisible: true,
+      stoneUnlocked: true,
       abyssalUnlocked: true,
       voidTitanKills: 2,
+      stoneKills: 1,
       selectedBossId: 'abyssal_monarch',
       onSelectBoss,
-      character: { ...character, level: 40 },
-      effectiveCharacter: { ...character, level: 40 },
+      character: { ...character, level: 60 },
+      effectiveCharacter: { ...character, level: 60 },
     });
 
     const frostpeak = screen.getByRole('radio', { name: /FROSTPEAK/i });

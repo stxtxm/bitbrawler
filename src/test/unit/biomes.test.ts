@@ -135,29 +135,54 @@ describe('biome unlock and selection', () => {
     expect(getBiomeForCharacter(character).id).toBe('volcanic');
   });
 
-  it('unlocks mountain at level 40', () => {
-    const character = makeCharacter({ level: 40, bossProgress: makeBossProgress(1) });
-    expect(getUnlockedBiomes(character).map((b) => b.id)).toContain('mountain');
-  });
-
-  it('keeps frostpeak biome locked until the second boss is defeated', () => {
-    const character = makeCharacter({ level: 40, bossProgress: makeBossProgress(1) } as any);
-    expect(getUnlockedBiomes(character).map((b) => b.id)).not.toContain('abyssal');
-    const withKill = makeCharacter({
+  it('unlocks mountain only after Stone Colossus (lvl 40 boss) is defeated', () => {
+    const before = makeCharacter({ level: 40, bossProgress: makeBossProgress(1) } as any);
+    expect(getUnlockedBiomes(before).map((b) => b.id)).not.toContain('mountain');
+    const after = makeCharacter({
       level: 40,
       bossProgress: makeBossProgress(1),
-      bossProgresses: { abyssal_monarch: { ...makeBossProgress(1), bossId: 'abyssal_monarch' } } as any,
+      bossProgresses: { stone_colossus: { ...makeBossProgress(1), bossId: 'stone_colossus' } } as any,
+    } as any);
+    expect(getUnlockedBiomes(after).map((b) => b.id)).toContain('mountain');
+  });
+
+  it('keeps frostpeak biome locked until Frostpeak Monarch (lvl 60 boss) is defeated', () => {
+    const character = makeCharacter({
+      level: 60,
+      bossProgress: makeBossProgress(1),
+      bossProgresses: { stone_colossus: { ...makeBossProgress(1), bossId: 'stone_colossus' } } as any,
+    } as any);
+    expect(getUnlockedBiomes(character).map((b) => b.id)).not.toContain('abyssal');
+    const withKill = makeCharacter({
+      level: 60,
+      bossProgress: makeBossProgress(1),
+      bossProgresses: {
+        stone_colossus: { ...makeBossProgress(1), bossId: 'stone_colossus' },
+        abyssal_monarch: { ...makeBossProgress(1), bossId: 'abyssal_monarch' },
+      } as any,
     } as any);
     expect(getUnlockedBiomes(withKill).map((b) => b.id)).toContain('abyssal');
   });
 
-  it('keeps eclipse prepared but locked (future lvl 60 boss)', () => {
-    const character = makeCharacter({ level: 99, bossProgress: makeBossProgress(5), bossProgresses: { abyssal_monarch: { ...makeBossProgress(3), bossId: 'abyssal_monarch' } } as any } as any);
+  it('keeps eclipse prepared but locked (future endgame boss)', () => {
+    const character = makeCharacter({
+      level: 99,
+      bossProgress: makeBossProgress(5),
+      bossProgresses: {
+        stone_colossus: { ...makeBossProgress(1), bossId: 'stone_colossus' },
+        abyssal_monarch: { ...makeBossProgress(3), bossId: 'abyssal_monarch' },
+      } as any,
+    } as any);
     expect(getUnlockedBiomes(character).map((b) => b.id)).not.toContain('eclipse');
   });
 
   it('defaults to highest unlocked biome but allows selecting an unlocked one', () => {
-    const character = makeCharacter({ id: 'char-b1', level: 40, bossProgress: makeBossProgress(1) } as any);
+    const character = makeCharacter({
+      id: 'char-b1',
+      level: 40,
+      bossProgress: makeBossProgress(1),
+      bossProgresses: { stone_colossus: { ...makeBossProgress(1), bossId: 'stone_colossus' } } as any,
+    } as any);
     setSelectedBiomeId(character, 'volcanic');
     expect(getSelectedBiomeId(character)).toBe('volcanic');
     expect(getBiomeForCharacter(character).id).toBe('volcanic');

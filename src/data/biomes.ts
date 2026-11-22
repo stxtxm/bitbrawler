@@ -31,6 +31,11 @@ function getVoidTitanKills(character: Character): number {
   );
 }
 
+function getStoneColossusKills(character: Character): number {
+  const anyChar = character as any;
+  return anyChar.bossProgresses?.stone_colossus?.totalKills ?? 0;
+}
+
 function getFrostpeakKills(character: Character): number {
   const anyChar = character as any;
   return (
@@ -57,14 +62,15 @@ export const BIOMES: BiomeDef[] = [
   {
     id: 'mountain',
     label: 'Mountain',
-    unlockAt: (character) => character.level >= 40,
+    // Débloqué après la victoire sur le boss lvl 40 (Stone Colossus).
+    unlockAt: (character) => getStoneColossusKills(character) > 0,
     monsterPool: MOUNTAIN_MONSTER_POOL,
     rewardMultiplier: 1.35,
   },
   {
     id: 'abyssal',
     label: 'Frostpeak',
-    // Débloqué uniquement après avoir battu le 2e boss (Frostpeak Monarch, lvl 40).
+    // Débloqué après la victoire sur le boss lvl 60 (Frostpeak Monarch).
     unlockAt: (character) => getFrostpeakKills(character) > 0,
     monsterPool: ABYSSAL_MONSTER_POOL,
     rewardMultiplier: 1.5,
@@ -72,7 +78,7 @@ export const BIOMES: BiomeDef[] = [
   {
     id: 'eclipse',
     label: 'Eclipse',
-    // Préparé : débloqué par le prochain boss (lvl 60). Inaccessible pour l'instant.
+    // Préparé : débloqué par le prochain boss endgame. Inaccessible pour l'instant.
     unlockAt: () => false,
     monsterPool: ECLIPSE_MONSTER_POOL,
     rewardMultiplier: 1.7,
@@ -99,7 +105,7 @@ function getBiomeStorageKey(character: Character): string {
 export function getSelectedBiomeId(character: Character): BiomeId | null {
   try {
     const raw = localStorage.getItem(getBiomeStorageKey(character));
-    if (raw === 'plains' || raw === 'volcanic' || raw === 'abyssal' || raw === 'mountain') return raw;
+    if (raw === 'plains' || raw === 'volcanic' || raw === 'abyssal' || raw === 'mountain' || raw === 'eclipse') return raw;
   } catch { /* ignore */ }
   return null;
 }

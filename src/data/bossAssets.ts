@@ -1,12 +1,12 @@
 import { Element } from '../types/Item';
-import { BackgroundDef, VOLCANIC_BACKGROUND, ABYSSAL_RIFT_BACKGROUND } from './backgrounds';
+import { BackgroundDef, VOLCANIC_BACKGROUND, MOUNTAIN_STRONGHOLD_BACKGROUND, ABYSSAL_RIFT_BACKGROUND } from './backgrounds';
 
 // ─── Unique Raid Boss ─────────────────────────────────────────────────────────
 // A single, fully-designed boss ("VOID TITAN"). Its level & stats are scaled off
 // the attacking player at spawn time (see bossUtils), so no baseStats/growthRates
 // are needed — only the cosmetic data (id, name, element, specialty, pixels).
 
-export type BossId = 'void_titan' | 'abyssal_monarch';
+export type BossId = 'void_titan' | 'stone_colossus' | 'abyssal_monarch';
 
 // ============================================================================
 // Boss Combat Background Engine
@@ -30,6 +30,7 @@ export type BossDef = {
 };
 
 export const BOSS_ID: BossId = 'void_titan';
+export const STONE_BOSS_ID: BossId = 'stone_colossus';
 export const ABYSSAL_BOSS_ID: BossId = 'abyssal_monarch';
 
 /** [1387] Design du boss lvl 20 — à développer plus tard.
@@ -75,6 +76,43 @@ export const BOSS_ASSETS: BossDef[] = [
       [0,0,1,2,4,2,2,2,2,2,2,4,2,1,0,0],
       [0,0,0,1,2,2,1,0,0,1,2,2,1,0,0,0],
       [0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0],
+    ],
+  },
+  {
+    id: STONE_BOSS_ID,
+    name: 'STONE COLOSSUS',
+    element: 'earth',
+    specialty: 'Mountain Guardian',
+    description:
+      'A colossal guardian carved from the mountain itself. It blocks the path to the high peaks — only those who shatter its stone core can claim the mountain biome.',
+    background: MOUNTAIN_STRONGHOLD_BACKGROUND,
+    palette: {
+      0: 'transparent',
+      1: '#1b2028',
+      2: '#3a4452',
+      3: '#667789',
+      4: '#9fb0c2',
+      5: '#dce8f3',
+      6: '#7bc67b',
+      7: '#f0c36a',
+    },
+    pixels: [
+      [0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0],
+      [0,0,0,1,2,3,3,3,3,2,1,0,0,0,0,0],
+      [0,0,1,2,3,4,4,4,4,3,2,1,0,0,0,0],
+      [0,1,2,3,4,5,5,5,5,4,3,2,1,0,0,0],
+      [0,1,2,3,4,5,6,5,5,6,4,3,2,1,0,0],
+      [1,2,3,3,4,4,4,4,4,4,4,3,3,2,1,0],
+      [1,2,3,4,4,4,7,7,7,4,4,4,3,2,1,0],
+      [1,2,3,4,4,4,7,7,7,4,4,4,3,2,1,0],
+      [1,2,3,3,4,4,4,4,4,4,4,3,3,2,1,0],
+      [0,1,2,3,3,4,4,4,4,4,3,3,2,1,0,0],
+      [0,1,2,2,3,3,4,4,4,3,3,2,2,1,0,0],
+      [0,0,1,2,2,3,3,3,3,3,2,2,1,0,0,0],
+      [0,0,1,2,3,2,1,0,0,1,2,3,2,1,0,0],
+      [0,0,1,3,3,1,0,0,0,0,1,3,3,1,0,0],
+      [0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     ],
   },
   {

@@ -54,14 +54,18 @@ const bossSlayer: Character = {
 const mountainExplorer: Character = {
   ...bossSlayer,
   level: 58,
-  bossProgresses: { void_titan: { totalKills: 1 } },
+  bossProgresses: {
+    void_titan: { totalKills: 1 },
+    stone_colossus: { totalKills: 1, bossId: 'stone_colossus' },
+  },
 } as Character;
 
 const frostpeakExplorer: Character = {
   ...bossSlayer,
-  level: 58,
+  level: 60,
   bossProgresses: {
     void_titan: { totalKills: 1 },
+    stone_colossus: { totalKills: 1, bossId: 'stone_colossus' },
     abyssal_monarch: { totalKills: 1, bossId: 'abyssal_monarch' },
   },
 } as Character;

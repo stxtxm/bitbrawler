@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MonsterId } from '../data/monsterAssets';
-import { ABYSSAL_BOSS_ID, BOSS_ID, BossId } from '../data/bossAssets';
+import { ABYSSAL_BOSS_ID, BOSS_ID, STONE_BOSS_ID, BossId } from '../data/bossAssets';
 import { Character } from '../types/Character';
 import { MatchmakingResult } from '../utils/matchmakingUtils';
 import { getTacticalHint } from '../utils/tacticalLens';
@@ -97,29 +97,48 @@ export const useArenaCombat = ({
     : null;
   const bossAttacksLeft = getBossAttacksLeft(character?.bossProgress);
   const bossUnlocked = !!character && isBossUnlocked(character.level);
+
+  const stoneRaw = character ? getBossProgressForId(character, STONE_BOSS_ID) : undefined;
+  const stoneProgress = stoneRaw ? ensureBossDailyReset(stoneRaw) : null;
+  const stoneAttacksLeft = getBossAttacksLeft(stoneRaw as any);
+  const stoneUnlocked = !!character && isBossUnlockedForCharacter(character, STONE_BOSS_ID);
+  const stoneKills = stoneProgress?.totalKills ?? 0;
+
   const abyssalRaw = character ? (getBossProgressForId(character, ABYSSAL_BOSS_ID) ?? (character as any).abyssalBossProgress) : undefined;
   const abyssalProgress = abyssalRaw ? ensureBossDailyReset(abyssalRaw) : null;
   const abyssalAttacksLeft = getBossAttacksLeft(abyssalRaw as any);
   const abyssalUnlocked = !!character && isBossUnlockedForCharacter(character, ABYSSAL_BOSS_ID);
   const voidTitanKills = bossProgress?.totalKills ?? character?.bossProgress?.totalKills ?? 0;
-  const nextBossVisible = voidTitanKills > 0;
+
+  const stoneBossVisible = voidTitanKills > 0;
+  const abyssalBossVisible = stoneKills > 0;
+  const nextBossVisible = stoneBossVisible; // compat prop: au moins un boss suivant visible
 
   const [selectedBossId, setSelectedBossId] = useState<BossId>(BOSS_ID);
   const bossSelectInitRef = useRef<string | null>(null);
   useEffect(() => {
     if (!character) return;
-    const key = `${character.id ?? character.seed}:${nextBossVisible}:${abyssalUnlocked}`;
+    const key = `${character.id ?? character.seed}:${stoneBossVisible}:${abyssalBossVisible}:${stoneUnlocked}:${abyssalUnlocked}`;
     if (bossSelectInitRef.current === key) return;
     bossSelectInitRef.current = key;
-    setSelectedBossId(abyssalUnlocked || nextBossVisible ? ABYSSAL_BOSS_ID : BOSS_ID);
-  }, [character?.id, character?.seed, abyssalUnlocked, nextBossVisible]);
+    if (abyssalUnlocked || abyssalBossVisible) setSelectedBossId(ABYSSAL_BOSS_ID);
+    else if (stoneUnlocked || stoneBossVisible) setSelectedBossId(STONE_BOSS_ID);
+    else setSelectedBossId(BOSS_ID);
+  }, [character?.id, character?.seed, stoneBossVisible, abyssalBossVisible, stoneUnlocked, abyssalUnlocked]);
 
-  const effectiveBossId: BossId = selectedBossId === ABYSSAL_BOSS_ID && nextBossVisible
-    ? ABYSSAL_BOSS_ID
+  const effectiveBossId: BossId =
+    selectedBossId === ABYSSAL_BOSS_ID && abyssalBossVisible ? ABYSSAL_BOSS_ID
+    : selectedBossId === STONE_BOSS_ID && stoneBossVisible ? STONE_BOSS_ID
     : BOSS_ID;
-  const effectiveBossProgress = effectiveBossId === ABYSSAL_BOSS_ID ? abyssalProgress : bossProgress;
-  const effectiveAttacksLeft = effectiveBossId === ABYSSAL_BOSS_ID ? abyssalAttacksLeft : bossAttacksLeft;
-  const effectiveUnlocked = effectiveBossId === ABYSSAL_BOSS_ID ? abyssalUnlocked : bossUnlocked;
+  const effectiveBossProgress = effectiveBossId === ABYSSAL_BOSS_ID ? abyssalProgress
+    : effectiveBossId === STONE_BOSS_ID ? stoneProgress
+    : bossProgress;
+  const effectiveAttacksLeft = effectiveBossId === ABYSSAL_BOSS_ID ? abyssalAttacksLeft
+    : effectiveBossId === STONE_BOSS_ID ? stoneAttacksLeft
+    : bossAttacksLeft;
+  const effectiveUnlocked = effectiveBossId === ABYSSAL_BOSS_ID ? abyssalUnlocked
+    : effectiveBossId === STONE_BOSS_ID ? stoneUnlocked
+    : bossUnlocked;
   const effectivePityReduction = getBossPityReductionPct(effectiveBossProgress ?? undefined, effectiveBossId);
   const effectivePityStacks = effectiveBossProgress?.pityStacks ?? 0;
 
@@ -144,9 +163,10 @@ export const useArenaCombat = ({
   }, []);
 
   const onSelectBoss = useCallback((bossId: BossId) => {
-    if (bossId === ABYSSAL_BOSS_ID && !nextBossVisible) return;
+    if (bossId === STONE_BOSS_ID && !stoneBossVisible) return;
+    if (bossId === ABYSSAL_BOSS_ID && !abyssalBossVisible) return;
     setSelectedBossId(bossId);
-  }, [nextBossVisible]);
+  }, [stoneBossVisible, abyssalBossVisible]);
 
   const onFight = useCallback(async () => {
     if (!character || matchmaking || hasPendingFight || character.autoMode) return;
@@ -160,7 +180,9 @@ export const useArenaCombat = ({
         const bossId = effectiveBossId;
         const existing = bossId === ABYSSAL_BOSS_ID
           ? (getBossProgressForId(character, ABYSSAL_BOSS_ID) ?? (character as any).abyssalBossProgress)
-          : character.bossProgress;
+          : bossId === STONE_BOSS_ID
+            ? getBossProgressForId(character, STONE_BOSS_ID)
+            : character.bossProgress;
         const progress = existing
           ? ensureBossDailyReset(existing)
           : createBossProgress(character, Date.now(), bossId);
@@ -360,11 +382,16 @@ export const useArenaCombat = ({
     autoMode,
     isOfflineMode,
     nextBossVisible,
+    stoneBossVisible,
+    abyssalBossVisible,
+    stoneUnlocked,
     abyssalUnlocked,
     voidTitanKills,
+    stoneKills,
     selectedBossId: effectiveBossId,
     onSelectBoss,
   }), [
+    abyssalBossVisible,
     abyssalUnlocked,
     autoMode,
     canFight,
@@ -380,6 +407,9 @@ export const useArenaCombat = ({
     onFight,
     onModeChange,
     onSelectBoss,
+    stoneBossVisible,
+    stoneKills,
+    stoneUnlocked,
     voidTitanKills,
   ]);
 

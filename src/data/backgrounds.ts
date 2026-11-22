@@ -166,6 +166,43 @@ export const VOID_ABYSS_BACKGROUND: BackgroundDef = {
     ],
 };
 
+// ─── MOUNTAIN STRONGHOLD — Stone Colossus arena ──────────────────────────────
+// Windswept mountain pass, jagged peaks, cold mist and rocky ground. The boss
+// guards the path to the high summit.
+
+export const MOUNTAIN_STRONGHOLD_BACKGROUND: BackgroundDef = {
+    id: 'mountain_stronghold',
+    label: 'STONE COLOSSUS',
+    accent: '#9aa7b5',
+    accentAlt: '#dce6f2',
+    gradient:
+        'radial-gradient(120% 80% at 50% 20%, rgba(180, 210, 255, 0.18) 0%, rgba(180,210,255,0) 55%),' +
+        'radial-gradient(140% 120% at 50% 115%, #4b5563 0%, #303946 38%, #1a222d 72%, #0d1219 100%)',
+    elements: [
+        { type: 'halo', x: 50, y: 22, size: 170, color: 'rgba(200, 220, 245, 0.18)', speed: 5.5 },
+        { type: 'peak', x: 16, y: 92, size: 170, height: 190, color: '#1c2430', speed: 9, delay: 0.2 },
+        { type: 'peak', x: 84, y: 92, size: 170, height: 185, color: '#18202b', speed: 9.2, delay: 0.6 },
+        { type: 'peak', x: 50, y: 96, size: 300, height: 150, color: '#222c38', speed: 10, delay: 0.4 },
+        { type: 'peak', x: 34, y: 88, size: 115, height: 120, color: '#2a3543', speed: 8.6, delay: 1.0 },
+        { type: 'peak', x: 66, y: 90, size: 120, height: 125, color: '#283341', speed: 8.8, delay: 1.2 },
+        { type: 'rock', x: 50, y: 62, size: 8, width: 86, height: 10, color: '#e6eff8', speed: 7, delay: 0.3 },
+        { type: 'rock', x: 35, y: 68, size: 6, width: 52, height: 8, color: '#d9e5f2', speed: 7.2, delay: 0.7 },
+        { type: 'rock', x: 66, y: 67, size: 6, width: 54, height: 8, color: '#dde9f5', speed: 7.1, delay: 0.9 },
+        { type: 'rock', x: 50, y: 94, size: 10, width: 480, height: 34, color: '#1d2631', speed: 6, delay: 0.4 },
+        { type: 'rock', x: 50, y: 90, size: 8, width: 260, height: 12, color: '#273241', speed: 6.5, delay: 0.8 },
+        { type: 'crack', x: 28, y: 88, size: 5, width: 34, color: 'rgba(170, 190, 210, 0.45)', glow: 'rgba(170,190,210,0.25)', speed: 2.8, delay: 0.4, rotate: -10 },
+        { type: 'crack', x: 72, y: 90, size: 5, width: 30, color: 'rgba(190, 210, 230, 0.45)', glow: 'rgba(190,210,230,0.22)', speed: 3.0, delay: 1.2, rotate: 8 },
+        { type: 'star', x: 10, y: 10, size: 2, color: '#eef6ff', delay: 0.3 },
+        { type: 'star', x: 24, y: 16, size: 2, color: '#cfdff0', delay: 1.0 },
+        { type: 'star', x: 76, y: 9, size: 2, color: '#eef6ff', delay: 0.9 },
+        { type: 'star', x: 90, y: 18, size: 3, color: '#cfdff0', delay: 1.8 },
+        { type: 'wisp', x: 22, y: 54, size: 4, color: '#dce8f5', glow: 'rgba(220,232,245,0.55)', speed: 10, delay: 0.5 },
+        { type: 'wisp', x: 78, y: 58, size: 4, color: '#cfdff0', glow: 'rgba(207,223,240,0.5)', speed: 11, delay: 1.6 },
+        { type: 'rune', x: 30, y: 90, size: 8, color: '#b7c7d8', glow: 'rgba(183,199,216,0.55)', speed: 2.8, delay: 0.3 },
+        { type: 'rune', x: 70, y: 91, size: 8, color: '#b7c7d8', glow: 'rgba(183,199,216,0.55)', speed: 2.8, delay: 1.4 },
+    ],
+};
+
 // ─── ABYSSAL RIFT — Monarch arena (deep abyss theme) ───────────────────────
 // Crushing obsidian trench, bioluminescent abyssal trench walls, distant
 // leviathan silhouettes. Cold teal / amber palette over crushing black.
@@ -225,6 +262,7 @@ export const ABYSSAL_RIFT_BACKGROUND: BackgroundDef = {
 export const BACKGROUNDS: Record<string, BackgroundDef> = {
     volcanic: VOLCANIC_BACKGROUND,
     void_abyss: VOID_ABYSS_BACKGROUND,
+    mountain_stronghold: MOUNTAIN_STRONGHOLD_BACKGROUND,
     abyssal_rift: ABYSSAL_RIFT_BACKGROUND,
 };
 

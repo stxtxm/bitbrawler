@@ -1925,7 +1925,7 @@ describe('QA Bot Fight CTA Robustness Contract', () => {
   it('defines a captureBossFight helper producing a fight_type: boss record (#705)', () => {
     const fn = requireAsyncFunction('captureBossFight')
     expect(fn).toContain("fight_type: 'boss'")
-    expect(fn).toContain('monster_name: BOSS_NAME')
+    expect(fn).toContain("bossStatus.boss_name || BOSS_NAME")
     expect(fn).toContain('VICTORY')
   })
 

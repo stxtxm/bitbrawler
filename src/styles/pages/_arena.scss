@@ -3063,7 +3063,7 @@
 // Sélecteur de boss : s'entraîner sur le premier ou défier le suivant.
 .boss-select {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
     gap: 6px;
 }
 

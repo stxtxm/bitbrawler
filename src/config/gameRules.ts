@@ -69,9 +69,27 @@ export const GAME_RULES = {
             CONSOLATION_XP: 25,
             CONSOLATION_CAP: 5,
         },
-        abyssal_monarch: {
-            // Second raid boss: visible after first Void Titan kill, unlocks at lvl 40.
+        stone_colossus: {
+            // Second raid boss: débloqué après le premier kill Void Titan, ouvre le biome montagne.
             UNLOCK_LEVEL: 40,
+            MAX_DAILY_ATTACKS: 5,
+            LEVEL_BOOST: 2,
+            STAT_MULTIPLIER: 1.2,
+            HP_MULTIPLIER: 13.0,
+            XP_MODIFIER: 5.0,
+            ESSENCE_REWARD: 80,
+            REQUIRES_KILLS: 1,
+            REQUIRES_BOSS_ID: 'void_titan',
+            PITY_STEP_DEFEATS: 3,
+            PITY_STEP_REDUCTION: 0.2,
+            PITY_CAP: 0.6,
+            CONSOLATION_ESSENCE: 22,
+            CONSOLATION_XP: 30,
+            CONSOLATION_CAP: 4,
+        },
+        abyssal_monarch: {
+            // Troisième raid boss: débloqué après le kill du Stone Colossus, devient le boss lvl 60.
+            UNLOCK_LEVEL: 60,
             MAX_DAILY_ATTACKS: 5,
             LEVEL_BOOST: 3,
             STAT_MULTIPLIER: 1.3,
@@ -79,6 +97,7 @@ export const GAME_RULES = {
             XP_MODIFIER: 6.0,
             ESSENCE_REWARD: 100,
             REQUIRES_KILLS: 1,
+            REQUIRES_BOSS_ID: 'stone_colossus',
             PITY_STEP_DEFEATS: 3,
             PITY_STEP_REDUCTION: 0.2,
             PITY_CAP: 0.6,

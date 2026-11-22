@@ -1,7 +1,7 @@
 import { memo, useMemo, type CSSProperties, type ReactNode } from 'react';
 import type { Character } from '../../types/Character';
 import { ELEMENT_COLORS, ELEMENT_LABELS, type Element } from '../../types/Item';
-import { ABYSSAL_BOSS_ID, BOSS_ID, getBossDef, type BossId } from '../../data/bossAssets';
+import { ABYSSAL_BOSS_ID, BOSS_ID, STONE_BOSS_ID, getBossDef, type BossId } from '../../data/bossAssets';
 import {
   buildBossCharacter,
   createBossProgress,
@@ -102,8 +102,12 @@ export interface BossScreenProps {
   autoMode?: boolean;
   isOfflineMode?: boolean;
   nextBossVisible?: boolean;
+  stoneBossVisible?: boolean;
+  abyssalBossVisible?: boolean;
+  stoneUnlocked?: boolean;
   abyssalUnlocked?: boolean;
   voidTitanKills?: number;
+  stoneKills?: number;
   selectedBossId?: BossId;
   onSelectBoss?: (bossId: BossId) => void;
 }
@@ -130,13 +134,18 @@ export const BossScreen = memo(function BossScreen({
   autoMode = false,
   isOfflineMode = false,
   nextBossVisible = false,
+  stoneBossVisible: _stoneBossVisible,
+  abyssalBossVisible,
+  stoneUnlocked = false,
   abyssalUnlocked = false,
   voidTitanKills = 0,
+  stoneKills = 0,
   selectedBossId,
   onSelectBoss,
 }: BossScreenProps) {
   const bossDef = getBossDef(bossId);
-  const isSecondBoss = bossId === ABYSSAL_BOSS_ID;
+  const isSummitBoss = bossId === ABYSSAL_BOSS_ID;
+  const isMountainBoss = bossId === STONE_BOSS_ID;
   const accent = bossDef ? ELEMENT_COLORS[bossDef.element] : '#b678ff';
   const activeBossId = selectedBossId ?? bossId;
 
@@ -207,7 +216,7 @@ export const BossScreen = memo(function BossScreen({
     <div className={`boss-screen${bossUnlocked ? '' : ' boss-screen-locked'}`} style={style} data-boss={bossId}>
       <div className="boss-screen-head">
         <div className="boss-screen-titles">
-          <span className="boss-rank">{isSecondBoss ? 'SUMMIT RAID' : 'WORLD BOSS'}</span>
+          <span className="boss-rank">{isSummitBoss ? 'SUMMIT RAID' : isMountainBoss ? 'MOUNTAIN RAID' : 'WORLD BOSS'}</span>
           <h2 className="boss-title">{bossDef?.name ?? 'RAID BOSS'}</h2>
           {bossDef?.specialty && <span className="boss-specialty">{bossDef.specialty}</span>}
         </div>
@@ -225,11 +234,26 @@ export const BossScreen = memo(function BossScreen({
       {nextBossVisible && (
         <div className="boss-select" role="radiogroup" aria-label="Boss target">
           {([
-            { id: BOSS_ID, label: 'VOID TITAN', sub: 'TRAIN / FARM' },
-            { id: ABYSSAL_BOSS_ID, label: 'FROSTPEAK', sub: abyssalUnlocked ? 'SUMMIT RAID' : `LOCKED LVL ${(GAME_RULES.BOSS_TIERS as any).abyssal_monarch.UNLOCK_LEVEL}` },
-          ] as const).map((b) => {
+            { id: BOSS_ID, label: 'VOID TITAN', sub: 'TRAIN / FARM', locked: false, kills: voidTitanKills },
+            {
+              id: STONE_BOSS_ID,
+              label: 'STONE COLOSSUS',
+              sub: stoneUnlocked ? 'MOUNTAIN RAID' : `LOCKED LVL ${(GAME_RULES.BOSS_TIERS as any).stone_colossus.UNLOCK_LEVEL}`,
+              locked: !stoneUnlocked,
+              kills: stoneKills,
+            },
+            {
+              id: ABYSSAL_BOSS_ID,
+              label: 'FROSTPEAK',
+              sub: abyssalUnlocked ? 'SUMMIT RAID' : `LOCKED LVL ${(GAME_RULES.BOSS_TIERS as any).abyssal_monarch.UNLOCK_LEVEL}`,
+              locked: !abyssalUnlocked || !(abyssalBossVisible ?? false),
+              kills: 0,
+            },
+          ] as const)
+            .filter((b) => b.id === BOSS_ID || b.id === STONE_BOSS_ID || (abyssalBossVisible ?? stoneKills > 0))
+            .map((b) => {
             const selected = activeBossId === b.id;
-            const locked = b.id === ABYSSAL_BOSS_ID && !abyssalUnlocked;
+            const locked = b.locked;
             return (
               <button
                 key={b.id}
@@ -242,9 +266,7 @@ export const BossScreen = memo(function BossScreen({
               >
                 <span className="boss-select-name">{b.label}</span>
                 <span className="boss-select-sub">{b.sub}</span>
-                {b.id === BOSS_ID && voidTitanKills > 0 && (
-                  <span className="boss-select-kills">☠ {voidTitanKills}</span>
-                )}
+                {b.kills > 0 && <span className="boss-select-kills">☠ {b.kills}</span>}
               </button>
             );
           })}
@@ -297,7 +319,7 @@ export const BossScreen = memo(function BossScreen({
         </div>
 
         <div className="boss-duelist enemy">
-          <span className="boss-duelist-tag boss">{isSecondBoss ? "SUMMIT BOSS" : "WORLD BOSS"}</span>
+          <span className="boss-duelist-tag boss">{isSummitBoss ? "SUMMIT BOSS" : isMountainBoss ? "MOUNTAIN BOSS" : "WORLD BOSS"}</span>
           <div className="boss-sprite-wrap boss">
             <div className="boss-aura" aria-hidden="true" />
             <PixelMonster monsterId={bossId} scale={bossScale} aura={bossDef?.element ?? null} />
