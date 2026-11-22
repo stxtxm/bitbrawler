@@ -668,7 +668,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   const queryIdle = (columns: string) => supabase
     .from('characters')
     .select(columns)
-    .lt('last_idle_check', cutoff)
+    .or(`last_idle_check.is.null,last_idle_check.lt.${cutoff}`)
     .is('pending_fight', null)
     .limit(cronLimit)
 
