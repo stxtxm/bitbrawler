@@ -18,6 +18,7 @@ export const UPDATE_NOTES: UpdateNote[] = [
       '🔒 BIOMES VERROUILLÉS — impossible de sélectionner un biome non débloqué (UI + garde côté logique). Progression : Void Titan → Volcanic, Stone Colossus → Mountain, Frostpeak Monarch → Frostpeak.',
       '🌒 BIOME ECLIPSE PRÉPARÉ — slot du dernier biome ajouté, verrouillé jusqu’au futur boss endgame.',
       '🌄 TRANSITION BIOME — changer de biome en idle met à jour immédiatement l’ambiance et fait apparaître un monstre du nouveau biome, avec une transition visuelle douce.',
+      '❤️ PV RÉTABLIS — les PV du personnage remontent à fond entre chaque combat de boss et chaque combat PvP.',
       '🔊 SOUND DESIGN — clics/boutons plus clairs et impacts de combat plus punchy en PvP comme en boss (hit/crit/magie/contre/raté).',
       '🧪 QA & TESTS — bot QA vérifie onglets PVE/PVP/BOSS, sélecteur boss, sélecteur biome verrouillé/débloqué, gains/min Essence/XP ; tests renforcés.',
     ],
