@@ -246,15 +246,20 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       return (a.bossHp ?? 0) < (b.bossHp ?? 0) ? a : b;
     };
     const serverBossRaw: any = freshRow?.boss_progress;
-    const serverBossVoid = serverBossRaw?.bossId ? serverBossRaw : serverBossRaw?.void_titan;
-    const serverAbyss = serverBossRaw?.abyssal_monarch;
+    const serverIsMap = serverBossRaw && !serverBossRaw.bossId && typeof serverBossRaw === 'object';
+    const serverBossMap: any = serverIsMap ? serverBossRaw : (serverBossRaw?.bossId ? { [serverBossRaw.bossId]: serverBossRaw } : {});
     const localAny: any = local as any;
-    const mergedVoid = pickBoss(localAny.bossProgress, serverBossVoid) ?? pickBoss(localAny.bossProgresses?.void_titan, serverBossVoid);
-    const mergedAbyss = pickBoss(localAny.abyssalBossProgress ?? localAny.bossProgresses?.abyssal_monarch, serverAbyss);
-    const mergedProgresses: any = { ...(localAny.bossProgresses ?? {}) };
-    if (serverBossRaw?.void_titan || serverBossRaw?.abyssal_monarch) Object.assign(mergedProgresses, serverBossRaw);
-    if (mergedVoid) mergedProgresses.void_titan = mergedVoid;
-    if (mergedAbyss) mergedProgresses.abyssal_monarch = mergedAbyss;
+    const localBossMap: any = { ...(localAny.bossProgresses ?? {}) };
+    if (localAny.bossProgress?.bossId) localBossMap[localAny.bossProgress.bossId] = localBossMap[localAny.bossProgress.bossId] ?? localAny.bossProgress;
+    if (localAny.abyssalBossProgress?.bossId) localBossMap[localAny.abyssalBossProgress.bossId] = localBossMap[localAny.abyssalBossProgress.bossId] ?? localAny.abyssalBossProgress;
+    const bossIds = new Set<string>([...Object.keys(localBossMap), ...Object.keys(serverBossMap)]);
+    const mergedProgresses: any = { ...localBossMap };
+    for (const bossId of bossIds) {
+      const merged = pickBoss(localBossMap[bossId], serverBossMap[bossId]);
+      if (merged) mergedProgresses[bossId] = merged;
+    }
+    const mergedVoid = mergedProgresses.void_titan;
+    const mergedAbyss = mergedProgresses.abyssal_monarch;
     return normalizeCharacter({
       ...local,
       ...xpSource,
@@ -423,11 +428,24 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         const anyBest: any = bestChar as any;
         const anyLocal: any = localChar as any;
         const anyServer: any = serverChar as any;
-        const mergedVoid = pickBossProgress(anyLocal.bossProgress, anyServer.bossProgress) ?? pickBossProgress(anyLocal.bossProgresses?.void_titan, anyServer.bossProgresses?.void_titan);
-        const mergedAbyss = pickBossProgress(anyLocal.abyssalBossProgress ?? anyLocal.bossProgresses?.abyssal_monarch, anyServer.abyssalBossProgress ?? anyServer.bossProgresses?.abyssal_monarch);
-        const mergedProgresses: any = { ...(anyBest.bossProgresses ?? anyLocal.bossProgresses ?? anyServer.bossProgresses ?? {}) };
-        if (mergedVoid) mergedProgresses.void_titan = mergedVoid;
-        if (mergedAbyss) mergedProgresses.abyssal_monarch = mergedAbyss;
+        const allBossIds = new Set<string>([
+          ...Object.keys(anyLocal.bossProgresses ?? {}),
+          ...Object.keys(anyServer.bossProgresses ?? {}),
+          ...(anyLocal.bossProgress?.bossId ? [anyLocal.bossProgress.bossId] : []),
+          ...(anyServer.bossProgress?.bossId ? [anyServer.bossProgress.bossId] : []),
+          ...(anyLocal.abyssalBossProgress?.bossId ? [anyLocal.abyssalBossProgress.bossId] : []),
+          ...(anyServer.abyssalBossProgress?.bossId ? [anyServer.abyssalBossProgress.bossId] : []),
+        ]);
+        const mergedProgresses: any = {};
+        for (const bossId of allBossIds) {
+          const merged = pickBossProgress(
+            (anyLocal.bossProgresses ?? {})[bossId] ?? (bossId === 'void_titan' ? anyLocal.bossProgress : bossId === 'abyssal_monarch' ? anyLocal.abyssalBossProgress : undefined),
+            (anyServer.bossProgresses ?? {})[bossId] ?? (bossId === 'void_titan' ? anyServer.bossProgress : bossId === 'abyssal_monarch' ? anyServer.abyssalBossProgress : undefined),
+          );
+          if (merged) mergedProgresses[bossId] = merged;
+        }
+        const mergedVoid = mergedProgresses.void_titan;
+        const mergedAbyss = mergedProgresses.abyssal_monarch;
         const mergedChar: Character = {
           ...bestChar,
           bossProgress: mergedVoid ?? anyBest.bossProgress ?? anyLocal.bossProgress ?? undefined,

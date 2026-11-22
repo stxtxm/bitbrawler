@@ -108,6 +108,7 @@ export interface BossScreenProps {
   abyssalUnlocked?: boolean;
   voidTitanKills?: number;
   stoneKills?: number;
+  abyssalKills?: number;
   selectedBossId?: BossId;
   onSelectBoss?: (bossId: BossId) => void;
 }
@@ -135,11 +136,12 @@ export const BossScreen = memo(function BossScreen({
   isOfflineMode = false,
   nextBossVisible = false,
   stoneBossVisible: _stoneBossVisible,
-  abyssalBossVisible,
+  abyssalBossVisible: _abyssalBossVisible,
   stoneUnlocked = false,
   abyssalUnlocked = false,
   voidTitanKills = 0,
   stoneKills = 0,
+  abyssalKills = 0,
   selectedBossId,
   onSelectBoss,
 }: BossScreenProps) {
@@ -246,11 +248,10 @@ export const BossScreen = memo(function BossScreen({
               id: ABYSSAL_BOSS_ID,
               label: 'FROSTPEAK',
               sub: abyssalUnlocked ? 'SUMMIT RAID' : `LOCKED LVL ${(GAME_RULES.BOSS_TIERS as any).abyssal_monarch.UNLOCK_LEVEL}`,
-              locked: !abyssalUnlocked || !(abyssalBossVisible ?? false),
-              kills: 0,
+              locked: !abyssalUnlocked,
+              kills: abyssalKills,
             },
           ] as const)
-            .filter((b) => b.id === BOSS_ID || b.id === STONE_BOSS_ID || (abyssalBossVisible ?? stoneKills > 0))
             .map((b) => {
             const selected = activeBossId === b.id;
             const locked = b.locked;

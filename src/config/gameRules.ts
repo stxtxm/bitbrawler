@@ -73,9 +73,9 @@ export const GAME_RULES = {
             // Second raid boss: débloqué après le premier kill Void Titan, ouvre le biome montagne.
             UNLOCK_LEVEL: 40,
             MAX_DAILY_ATTACKS: 5,
-            LEVEL_BOOST: 2,
-            STAT_MULTIPLIER: 1.2,
-            HP_MULTIPLIER: 3.5,
+            LEVEL_BOOST: 3,
+            STAT_MULTIPLIER: 1.35,
+            HP_MULTIPLIER: 5.5,
             XP_MODIFIER: 5.0,
             ESSENCE_REWARD: 80,
             REQUIRES_KILLS: 1,

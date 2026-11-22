@@ -121,13 +121,13 @@ export const useArenaCombat = ({
     const key = `${character.id ?? character.seed}:${stoneBossVisible}:${abyssalBossVisible}:${stoneUnlocked}:${abyssalUnlocked}`;
     if (bossSelectInitRef.current === key) return;
     bossSelectInitRef.current = key;
-    if (abyssalUnlocked || abyssalBossVisible) setSelectedBossId(ABYSSAL_BOSS_ID);
+    if (abyssalUnlocked) setSelectedBossId(ABYSSAL_BOSS_ID);
     else if (stoneUnlocked || stoneBossVisible) setSelectedBossId(STONE_BOSS_ID);
     else setSelectedBossId(BOSS_ID);
   }, [character?.id, character?.seed, stoneBossVisible, abyssalBossVisible, stoneUnlocked, abyssalUnlocked]);
 
   const effectiveBossId: BossId =
-    selectedBossId === ABYSSAL_BOSS_ID && abyssalBossVisible ? ABYSSAL_BOSS_ID
+    selectedBossId === ABYSSAL_BOSS_ID && nextBossVisible ? ABYSSAL_BOSS_ID
     : selectedBossId === STONE_BOSS_ID && stoneBossVisible ? STONE_BOSS_ID
     : BOSS_ID;
   const effectiveBossProgress = effectiveBossId === ABYSSAL_BOSS_ID ? abyssalProgress
@@ -164,9 +164,9 @@ export const useArenaCombat = ({
 
   const onSelectBoss = useCallback((bossId: BossId) => {
     if (bossId === STONE_BOSS_ID && !stoneBossVisible) return;
-    if (bossId === ABYSSAL_BOSS_ID && !abyssalBossVisible) return;
+    if (bossId === ABYSSAL_BOSS_ID && !nextBossVisible) return;
     setSelectedBossId(bossId);
-  }, [stoneBossVisible, abyssalBossVisible]);
+  }, [stoneBossVisible, nextBossVisible]);
 
   const onFight = useCallback(async () => {
     if (!character || matchmaking || hasPendingFight || character.autoMode) return;
@@ -388,6 +388,7 @@ export const useArenaCombat = ({
     abyssalUnlocked,
     voidTitanKills,
     stoneKills,
+    abyssalKills: abyssalProgress?.totalKills ?? 0,
     selectedBossId: effectiveBossId,
     onSelectBoss,
   }), [
@@ -411,6 +412,7 @@ export const useArenaCombat = ({
     stoneKills,
     stoneUnlocked,
     voidTitanKills,
+    abyssalProgress?.totalKills,
   ]);
 
   return {
