@@ -5,6 +5,9 @@ import type { StatKey } from '../../utils/statUtils';
 
 export type StatIconType = StatKey;
 
+/** Onglets de l'arène : PvE (idle), PvP (matchmaking) et BOSS (raid dédié). */
+export type ArenaMode = 'pve' | 'pvp' | 'boss';
+
 export interface ArenaStatOption {
   key: StatKey;
   label: string;

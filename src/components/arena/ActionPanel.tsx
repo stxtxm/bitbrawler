@@ -4,146 +4,120 @@ import { GAME_RULES } from '../../config/gameRules';
 import { TacticalLens } from './TacticalLens';
 import type { Character } from '../../types/Character';
 import type { TacticalHint } from '../../utils/tacticalLens';
-
-import { BossId } from '../../data/bossAssets';
+import { ArenaModeTabs } from './ArenaModeTabs';
+import type { ArenaMode } from './arenaTypes';
 
 interface ActionPanelProps {
-  mode?: 'pve' | 'pvp' | 'boss';
-  bossMode?: boolean;
-  onModeChange?: (mode: 'pve' | 'pvp' | 'boss') => void;
-  pveMode: boolean;
-  canFight: boolean;
-  matchmaking: boolean;
-  hasPendingFight: boolean;
-  autoMode: boolean;
-  isOfflineMode: boolean;
-  fightsLeft: number;
-  bossAttacksLeft: number;
-  bossUnlocked: boolean;
-  bossHp: number;
-  bossMaxHp: number;
-  bossLevel: number;
-  bossPityStacks?: number;
-  bossPityReduction?: number;
-  bossDamagePct?: number;
-  bossEstimatedDays?: number | null;
-  onTogglePve: () => void;
-  onTogglePvp: () => void;
-  onFight: () => void;
+  mode?: ArenaMode;
+  pveMode?: boolean;
+  canFight?: boolean;
+  matchmaking?: boolean;
+  hasPendingFight?: boolean;
+  autoMode?: boolean;
+  isOfflineMode?: boolean;
+  fightsLeft?: number;
+  onModeChange?: (mode: ArenaMode) => void;
+  onFight?: () => void;
   tacticalOpponent?: Character | null;
   tacticalHint?: TacticalHint | null;
   onOpenInventory?: (element?: string) => void;
-  bossId?: BossId;
-  abyssalUnlocked?: boolean;
 }
 
+/**
+ * Panneau d'action des modes PVE (idle) et PVP. Le mode BOSS a son propre écran
+ * (`BossScreen`) : plus de jauge de boss ni de bouton à double libellé ici.
+ */
 export const ActionPanel = memo(function ActionPanel({
-  mode = 'pve', bossMode = false, onModeChange,
-  pveMode, canFight, matchmaking, hasPendingFight, autoMode,
-  isOfflineMode, fightsLeft, bossAttacksLeft, bossUnlocked,
-  bossHp, bossMaxHp, bossLevel, bossPityStacks = 0, bossPityReduction = 0, bossDamagePct = 0, bossEstimatedDays = null, onFight,
-  tacticalOpponent, tacticalHint, onOpenInventory,
-  bossId, abyssalUnlocked,
+  mode = 'pve',
+  pveMode,
+  canFight = false,
+  matchmaking = false,
+  hasPendingFight = false,
+  autoMode = false,
+  isOfflineMode = false,
+  fightsLeft = 0,
+  onModeChange,
+  onFight,
+  tacticalOpponent,
+  tacticalHint,
+  onOpenInventory,
 }: ActionPanelProps) {
-
-  const bossHpPct = bossMaxHp > 0 ? Math.max(0, Math.min(100, (bossHp / bossMaxHp) * 100)) : 100;
-  // Swipe haut/bas sur le bouton de combat — pivotation jolie de la touche
-  // (flip 3D). Le swipe de haut en bas = vers le bas (dy>0) et inversement.
-  const isAbyssal = abyssalUnlocked && bossId === 'abyssal_monarch';
+  const isPve = pveMode ?? mode !== 'pvp';
+  const showTacticalLens = !isPve && tacticalOpponent && tacticalHint && onOpenInventory
+    && !hasPendingFight && !autoMode;
 
   return (
     <div className="action-panel">
-      <div className={`daily-status-compact ${bossMode ? 'boss-status-compact' : ''}`}>
-        {bossMode ? (
+      <div className="daily-status-compact">
+        {isPve ? (
           <div className="status-label">
-            <span className="boss-icon">{isAbyssal ? '🌊' : '👑'}</span>
+            <PixelIcon type="sword" size={32} />
             <div className="label-text">
-              <span className="label-main">{isAbyssal ? 'ABYSSAL MONARCH' : 'MONSTER ATTACKS'}</span>
+              <span className="label-main">IDLE HUNT</span>
               <span className="label-sub">
-                {!bossUnlocked
-                  ? `UNLOCK AT LVL ${GAME_RULES.BOSS.UNLOCK_LEVEL}`
-                  : `${bossAttacksLeft} / ${GAME_RULES.BOSS.MAX_DAILY_ATTACKS} AVAILABLE`}
+                {isOfflineMode ? 'OFFLINE SNAPSHOT' : 'AUTO-BATTLE RUNNING'}
               </span>
             </div>
           </div>
         ) : (
-          <div className="status-label">
-            <PixelIcon type="sword" size={32} />
-            <div className="label-text">
-              <span className="label-main">BATTLE ENERGY</span>
-              <span className="label-sub">
-                {isOfflineMode
-                  ? 'OFFLINE SNAPSHOT'
-                  : `${fightsLeft} / ${GAME_RULES.COMBAT.MAX_DAILY_FIGHTS} AVAILABLE`}
-              </span>
-            </div>
-          </div>
-        )}
-        <div className="mini-pips">
-          {pveMode
-            ? Array.from({ length: GAME_RULES.BOSS.MAX_DAILY_ATTACKS }).map((_, i) => (
-              <div key={i} className={`mini-pip ${i < bossAttacksLeft ? 'active' : 'used'}`}></div>
-            ))
-            : Array.from({ length: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS }).map((_, i) => (
-              <div key={i} className={`mini-pip ${i < fightsLeft ? 'active' : 'used'}`}></div>
-            ))
-          }
-        </div>
-        {pveMode && bossUnlocked && bossMaxHp > 0 && (
-          <div className={`boss-hp-strip ${isAbyssal ? 'abyssal' : ''}`}>
-            <div className="boss-hp-bar">
-              <div className="boss-hp-fill" style={{ width: `${bossHpPct}%` }} />
-            </div>
-            <div className="boss-hp-values" style={{ flexWrap: 'wrap', gap: 4 }}>
-              <span className="boss-hp-name" style={{ fontSize: isAbyssal ? 11 : 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, flex: 1 }}>{isAbyssal ? `ABYSSAL LVL ${bossLevel}` : `VOID TITAN LVL ${bossLevel}`}</span>
-              <span className="boss-hp-num" style={{ fontSize: 11, whiteSpace: 'nowrap' }}>{Math.max(0, Math.round(bossHp))} / {bossMaxHp}</span>
-            </div>
-            {bossPityStacks > 0 && (
-              <div className="boss-pity-badge" style={{ fontSize: 10, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{isAbyssal ? 'Abyss affaibli' : 'Titan affaibli'} -{bossPityReduction}% ({bossPityStacks})</div>
-            )}
-            {bossDamagePct > 0 && (
-              <div className="boss-progress-hint" style={{ fontSize: 10, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {Math.round(bossDamagePct)}% DAMAGE DEALT
-                {bossEstimatedDays != null ? ` · ~${bossEstimatedDays}D TO KILL` : ''}
+          <>
+            <div className="status-label">
+              <PixelIcon type="sword" size={32} />
+              <div className="label-text">
+                <span className="label-main">BATTLE ENERGY</span>
+                <span className="label-sub">
+                  {isOfflineMode
+                    ? 'OFFLINE SNAPSHOT'
+                    : `${fightsLeft} / ${GAME_RULES.COMBAT.MAX_DAILY_FIGHTS} AVAILABLE`}
+                </span>
               </div>
-            )}
-          </div>
+            </div>
+            <div className="mini-pips">
+              {Array.from({ length: GAME_RULES.COMBAT.MAX_DAILY_FIGHTS }).map((_, i) => (
+                <div key={i} className={`mini-pip ${i < fightsLeft ? 'active' : 'used'}`} />
+              ))}
+            </div>
+          </>
         )}
       </div>
 
-      {tacticalOpponent && tacticalHint && onOpenInventory && !pveMode && !hasPendingFight && !autoMode && (
-        <TacticalLens opponent={tacticalOpponent} hint={tacticalHint} onOpenInventory={onOpenInventory} />
+      {isPve ? (
+        <div className="idle-hunt-strip">
+          <span className="idle-hunt-dot" aria-hidden="true" />
+          <span>MONSTERS FIGHT ON THEIR OWN — NO ENERGY SPENT</span>
+        </div>
+      ) : (
+        <>
+          {showTacticalLens && (
+            <TacticalLens
+              opponent={tacticalOpponent}
+              hint={tacticalHint}
+              onOpenInventory={onOpenInventory}
+            />
+          )}
+
+          <div className="fight-row">
+            <button
+              type="button"
+              className="button primary-btn giant-btn fight-btn"
+              disabled={!canFight || matchmaking}
+              onClick={onFight}
+            >
+              {matchmaking
+                ? 'SEARCHING...'
+                : hasPendingFight
+                  ? 'RESOLVING...'
+                  : autoMode
+                    ? 'AUTO MODE'
+                    : isOfflineMode
+                      ? 'OFFLINE'
+                      : fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'}
+            </button>
+          </div>
+        </>
       )}
 
-      <div className="fight-row">
-        <button
-          className="button primary-btn giant-btn fight-btn"
-          disabled={!canFight || matchmaking}
-          onClick={onFight}
-        >
-          {matchmaking
-            ? 'SEARCHING...'
-            : hasPendingFight
-              ? 'RESOLVING...'
-              : autoMode
-                ? 'AUTO MODE'
-                : isOfflineMode
-                  ? 'OFFLINE'
-                  : bossMode
-                    ? bossUnlocked
-                      ? bossAttacksLeft > 0 ? 'ATTACK BOSS' : 'NO ATTACKS LEFT'
-                      : `LOCKED LVL ${GAME_RULES.BOSS.UNLOCK_LEVEL}`
-                    : pveMode
-                      ? fightsLeft > 0 ? 'ATTACK MONSTERS' : 'REST NOW'
-                      : fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'}
-        </button>
-      </div>
-
-      <div className="arena-bottom-tabs" role="tablist" aria-label="Game mode">
-        <button className={`arena-bottom-tab ${mode === 'pve' ? 'active' : ''}`} role="tab" aria-selected={mode === 'pve'} onClick={() => onModeChange?.('pve')}>👹 PVE</button>
-        <button className={`arena-bottom-tab ${mode === 'pvp' ? 'active' : ''}`} role="tab" aria-selected={mode === 'pvp'} onClick={() => onModeChange?.('pvp')}>⚔ PVP</button>
-        <button className={`arena-bottom-tab ${mode === 'boss' ? 'active' : ''}`} role="tab" aria-selected={mode === 'boss'} onClick={() => onModeChange?.('boss')}>👑 BOSS</button>
-      </div>
+      <ArenaModeTabs mode={mode} onModeChange={onModeChange} />
     </div>
   );
 });

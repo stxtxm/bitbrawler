@@ -1844,29 +1844,7 @@
     }
 }
 
-// Swipe haut/bas sur le bouton de combat — pivotement joli (flip 3D) —
-// animation déclenchée par triggerSpin() dans ActionPanel.
-.giant-btn.fight-btn {
-    perspective: 1000px;
-    transform-style: preserve-3d;
-}
-
-.giant-btn.fight-btn.fight-btn-spin-up,
-.giant-btn.fight-btn.fight-btn-spin-down {
-    animation: fightBtnSpin 0.85s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-    box-shadow: 0 0 14px rgba(255, 204, 0, 0.5);
-}
-
-// « Springy flip » — précharge (tilt élancé), flip 3D en deux temps,
-// rebond (overshoot) + retour doux — plus sympa qu'un flip plat.
-@keyframes fightBtnSpin {
-    0% { transform: rotateX(0deg); }
-    18% { transform: rotateX(-15deg); }
-    52% { transform: rotateX(-100deg); }
-    74% { transform: rotateX(-135deg); }
-    90% { transform: rotateX(-110deg); }
-    100% { transform: rotateX(-115deg); }
-}
+// Swipe/flip retirés : le mode se choisit désormais via les onglets du bas.
 
 .giant-btn {
     flex: 1;
@@ -2758,33 +2736,831 @@
     border-color: #4dd0ff !important;
 }
 
-// Barre d'onglets mobile PVE / PVP / BOSS en bas de l'arène.
+// ─── Onglets mobiles PVE / PVP / BOSS ────────────────────────────────────────
 .arena-bottom-tabs {
-  display: flex;
-  gap: 4px;
-  background: #0b0b0b;
-  border: 2px solid #222;
-  border-top: 2px solid $accent-gold;
-  padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
-  justify-content: space-around;
-  position: sticky;
-  bottom: 0;
-  z-index: 5;
+    display: flex;
+    gap: 4px;
+    background: #08080c;
+    border: 2px solid #26262c;
+    border-top-color: rgba(255, 204, 0, 0.55);
+    padding: 5px 6px calc(5px + env(safe-area-inset-bottom, 0px));
+    justify-content: space-around;
+    position: sticky;
+    bottom: 0;
+    z-index: 6;
+    box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.45);
 }
 
 .arena-bottom-tab {
-  flex: 1;
-  background: transparent;
-  border: 2px solid transparent;
-  color: #8b8b8b;
-  font-family: $font-pixel;
-  font-size: 0.55rem;
-  padding: 10px 4px;
-  cursor: pointer;
+    flex: 1;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: transparent;
+    border: 2px solid transparent;
+    color: #8b8b9a;
+    font-family: $font-pixel;
+    font-size: 0.55rem;
+    letter-spacing: 0.5px;
+    padding: 8px 4px;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 
-  &.active {
+    &:active {
+        transform: translateY(1px);
+    }
+
+    &.active {
+        color: $accent-gold;
+        border-color: $accent-gold;
+        background: linear-gradient(180deg, rgba(255, 204, 0, 0.16), rgba(255, 204, 0, 0.04));
+        box-shadow: inset 0 0 12px rgba(255, 204, 0, 0.18);
+    }
+}
+
+.arena-bottom-tab-lock {
+    font-size: 0.5rem;
+    opacity: 0.8;
+}
+
+// ─── PvE idle : plus de bouton de combat manuel ─────────────────────────────
+.idle-hunt-strip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px;
+    border: 1px dashed #26402a;
+    background: rgba(0, 255, 102, 0.03);
+    font-family: $font-pixel;
+    font-size: 0.42rem;
+    letter-spacing: 0.5px;
+    color: #6f9f7a;
+    text-align: center;
+
+    @include mobile {
+        font-size: 0.36rem;
+        padding: 5px 4px;
+    }
+}
+
+.idle-hunt-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: $accent-green;
+    box-shadow: 0 0 8px $accent-green;
+    animation: idleHuntPulse 1.6s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+@keyframes idleHuntPulse {
+    0%, 100% { opacity: 0.35; box-shadow: 0 0 3px $accent-green; }
+    50% { opacity: 1; box-shadow: 0 0 10px $accent-green; }
+}
+
+// ─── Écran BOSS dédié ───────────────────────────────────────────────────────
+.boss-screen {
+    --boss-accent: #b678ff;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    @include mobile {
+        // Le dock (margin-top:auto) absorbe l'espace libre : les onglets
+        // restent collés au bas de l'écran même quand les cartes sont courtes.
+        flex: 1;
+        gap: 6px;
+    }
+}
+
+.boss-screen-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 2px 2px 0;
+}
+
+.boss-screen-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.boss-rank {
+    font-family: $font-pixel;
+    font-size: 0.42rem;
+    letter-spacing: 2px;
+    color: var(--boss-accent);
+    text-transform: uppercase;
+}
+
+.boss-title {
+    margin: 0;
+    font-family: $font-pixel;
+    font-size: 1.05rem;
+    line-height: 1.25;
+    color: #fff;
+    text-shadow: 0 0 12px var(--boss-accent), 2px 2px 0 #000;
+    overflow-wrap: anywhere;
+
+    @include mobile {
+        font-size: 0.8rem;
+    }
+}
+
+.boss-specialty {
+    font-size: 0.48rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #8b8b9a;
+}
+
+.boss-screen-badges {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+    flex-shrink: 0;
+}
+
+.boss-element,
+.boss-kills {
+    font-family: $font-pixel;
+    font-size: 0.4rem;
+    letter-spacing: 0.5px;
+    padding: 3px 5px;
+    border: 1px solid var(--boss-accent);
+    color: var(--boss-accent);
+    background: rgba(0, 0, 0, 0.45);
+    white-space: nowrap;
+}
+
+.boss-kills {
+    border-color: rgba(255, 204, 0, 0.55);
     color: $accent-gold;
-    border-color: $accent-gold;
-    background: rgba(255, 204, 0, 0.12);
-  }
+}
+
+.boss-hp-strip {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 100%;
+}
+
+.boss-hp-bar {
+    height: 12px;
+    background: #111;
+    @include retro-border(2px, #3a2a52);
+    overflow: hidden;
+
+    @include mobile {
+        height: 10px;
+        border-width: 1px;
+    }
+}
+
+.boss-hp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--boss-accent) 0%, $accent-gold 100%);
+    box-shadow: 0 0 12px var(--boss-accent);
+    transition: width 0.6s ease;
+}
+
+.boss-hp-values {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.55rem;
+    letter-spacing: 0.5px;
+
+    @include mobile {
+        font-size: 0.46rem;
+    }
+}
+
+.boss-hp-name {
+    color: $accent-gold;
+    font-family: $font-pixel;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.boss-hp-num {
+    color: #cfcfda;
+    white-space: nowrap;
+}
+
+.boss-hp-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.42rem;
+    letter-spacing: 0.5px;
+    color: #77778a;
+    text-transform: uppercase;
+}
+
+.boss-pity-inline {
+    color: $accent-gold;
+}
+
+// Scène : autel du vide, runes et poussière d'étoiles.
+.boss-stage {
+    position: relative;
+    flex: none;
+    height: clamp(250px, 34svh, 330px);
+    min-height: 250px;
+    overflow: hidden;
+    isolation: isolate;
+    border: 2px solid rgba(255, 255, 255, 0.14);
+    background:
+        radial-gradient(ellipse at 72% 46%, rgba(138, 75, 216, 0.32) 0%, transparent 55%),
+        radial-gradient(ellipse at 18% 82%, rgba(255, 204, 0, 0.1) 0%, transparent 55%),
+        linear-gradient(180deg, #05030a 0%, #0b0614 55%, #120a1e 100%);
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.85), 0 0 18px rgba(0, 0, 0, 0.5);
+
+    @include mobile {
+        // La scène prend l'espace libre (borné) : sans ça, une bande noire
+        // morte séparait les cartes du dock collé en bas.
+        flex: 1 1 auto;
+        height: auto;
+        min-height: 240px;
+        max-height: 44svh;
+        border-width: 1px;
+    }
+}
+
+.boss-screen[data-boss="abyssal_monarch"] .boss-stage {
+    background:
+        radial-gradient(ellipse at 72% 46%, rgba(42, 240, 255, 0.26) 0%, transparent 55%),
+        radial-gradient(ellipse at 18% 82%, rgba(42, 74, 136, 0.35) 0%, transparent 55%),
+        linear-gradient(180deg, #010208 0%, #04101c 55%, #071a2a 100%);
+}
+
+.boss-stage-sky {
+    position: absolute;
+    inset: 0;
+    background-image:
+        radial-gradient(1px 1px at 12% 22%, #fff, transparent),
+        radial-gradient(1px 1px at 28% 68%, #cfc6ff, transparent),
+        radial-gradient(1.5px 1.5px at 44% 18%, #fff, transparent),
+        radial-gradient(1px 1px at 62% 78%, #9fe8ff, transparent),
+        radial-gradient(1px 1px at 78% 28%, #fff, transparent),
+        radial-gradient(1.5px 1.5px at 90% 60%, #e7d7ff, transparent);
+    opacity: 0.6;
+    animation: bossStars 7s ease-in-out infinite alternate;
+    pointer-events: none;
+}
+
+.boss-rune-ring {
+    position: absolute;
+    top: 50%;
+    right: 6%;
+    width: 230px;
+    height: 230px;
+    margin-top: -115px;
+    border-radius: 50%;
+    border: 2px dashed rgba(182, 120, 255, 0.34);
+    box-shadow:
+        0 0 34px rgba(182, 120, 255, 0.18),
+        inset 0 0 34px rgba(182, 120, 255, 0.12);
+    animation: bossRuneSpin 26s linear infinite;
+    pointer-events: none;
+}
+
+.boss-screen[data-boss="abyssal_monarch"] .boss-rune-ring {
+    border-color: rgba(42, 240, 255, 0.32);
+    box-shadow: 0 0 34px rgba(42, 240, 255, 0.16), inset 0 0 34px rgba(42, 240, 255, 0.1);
+}
+
+.boss-rune-ring.inner {
+    width: 154px;
+    height: 154px;
+    margin-top: -77px;
+    right: calc(6% + 38px);
+    border-style: dotted;
+    animation-direction: reverse;
+    animation-duration: 18s;
+}
+
+.boss-stage-shards {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+
+    span {
+        position: absolute;
+        width: 4px;
+        height: 15px;
+        background: var(--boss-accent);
+        opacity: 0.5;
+        transform: rotate(24deg);
+        animation: bossShardFloat 4.4s ease-in-out infinite;
+    }
+
+    span:nth-child(1) { left: 8%; top: 30%; animation-delay: 0s; }
+    span:nth-child(2) { left: 22%; top: 70%; height: 9px; animation-delay: 0.7s; }
+    span:nth-child(3) { left: 38%; top: 24%; height: 7px; animation-delay: 1.4s; }
+    span:nth-child(4) { right: 16%; top: 20%; animation-delay: 0.4s; }
+    span:nth-child(5) { right: 6%; top: 62%; height: 11px; animation-delay: 1.9s; }
+    span:nth-child(6) { left: 54%; top: 84%; height: 8px; animation-delay: 2.6s; }
+}
+
+.boss-duelist {
+    position: absolute;
+    bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    z-index: 3;
+    max-width: 42%;
+
+    &.player {
+        left: 4%;
+    }
+
+    &.enemy {
+        right: 4%;
+    }
+
+    @include mobile {
+        bottom: 14px;
+        gap: 2px;
+    }
+}
+
+.boss-sprite-wrap {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.65));
+}
+
+.boss-duelist-tag {
+    font-family: $font-pixel;
+    font-size: 0.34rem;
+    letter-spacing: 1px;
+    color: #8cb4ff;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(139, 180, 255, 0.35);
+    padding: 2px 5px;
+
+    &.boss {
+        color: var(--boss-accent);
+        border-color: var(--boss-accent);
+    }
+}
+
+.boss-duelist-name {
+    font-family: $font-pixel;
+    font-size: 0.44rem;
+    color: #fff;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-shadow: 0 2px 4px #000;
+}
+
+.boss-duelist-level {
+    font-size: 0.4rem;
+    color: #a2a2b4;
+    letter-spacing: 0.5px;
+}
+
+.boss-player-sprite {
+    filter: drop-shadow(0 0 8px rgba(255, 204, 0, 0.3));
+}
+
+.boss-aura {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 150px;
+    height: 150px;
+    translate: -50% -50%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(182, 120, 255, 0.35) 0%, rgba(182, 120, 255, 0.08) 48%, transparent 68%);
+    animation: bossAuraPulse 2.8s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.boss-screen[data-boss="abyssal_monarch"] .boss-aura {
+    background: radial-gradient(circle, rgba(42, 240, 255, 0.32) 0%, rgba(42, 240, 255, 0.08) 48%, transparent 68%);
+}
+
+.boss-vs-badge {
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    transform: translate(-50%, -50%) rotate(-4deg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    z-index: 4;
+    pointer-events: none;
+}
+
+.boss-vs-word {
+    font-family: $font-pixel;
+    font-size: 1.1rem;
+    color: $accent-gold;
+    text-shadow: 0 0 12px rgba(255, 204, 0, 0.8), 2px 2px 0 #000;
+
+    @include mobile {
+        font-size: 0.8rem;
+    }
+}
+
+.boss-vs-element {
+    font-size: 0.8rem;
+    filter: drop-shadow(0 0 6px var(--boss-accent));
+}
+
+.boss-lock-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 12px;
+    text-align: center;
+    font-family: $font-pixel;
+    background: rgba(2, 2, 8, 0.64);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+
+    strong {
+        font-size: 0.7rem;
+        letter-spacing: 2px;
+        color: $accent-gold;
+        text-shadow: 2px 2px 0 #000;
+    }
+
+    span:not(.boss-lock-icon) {
+        font-size: 0.42rem;
+        color: #c9c9d6;
+        letter-spacing: 0.5px;
+    }
+
+    @include mobile {
+        strong { font-size: 0.6rem; }
+        span:not(.boss-lock-icon) { font-size: 0.36rem; }
+    }
+}
+
+.boss-lock-icon {
+    font-size: 1.8rem;
+    filter: drop-shadow(0 0 10px rgba(255, 204, 0, 0.6));
+}
+
+.boss-screen-locked .boss-hp-fill {
+    background: #4c4c5a;
+    box-shadow: none;
+}
+
+.boss-screen-locked .boss-duelist.enemy,
+.boss-screen-locked .boss-aura {
+    filter: grayscale(0.55) brightness(0.55);
+}
+
+// Cartes : stats, probabilité, récompenses.
+.boss-screen-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+
+    @include mobile {
+        gap: 6px;
+    }
+}
+
+.boss-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    padding: 8px;
+    background: linear-gradient(180deg, #0b0b12 0%, #060608 100%);
+    border: 2px solid #22222c;
+
+    @include mobile {
+        padding: 6px;
+        border-width: 1px;
+    }
+}
+
+.boss-rewards-panel {
+    grid-column: 1 / -1;
+}
+
+.boss-panel-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #1f1f28;
+    font-family: $font-pixel;
+    font-size: 0.42rem;
+    letter-spacing: 1px;
+    color: #a2a2b4;
+}
+
+.boss-panel-side {
+    color: #555566;
+    white-space: nowrap;
+}
+
+.boss-stat-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.boss-stat-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 4px;
+    font-size: 0.48rem;
+}
+
+.boss-stat-value {
+    font-family: $font-pixel;
+
+    &.player { color: $accent-blue; }
+    &.boss { color: var(--boss-accent); }
+}
+
+.boss-stat-label {
+    font-size: 0.36rem;
+    letter-spacing: 1px;
+    color: #666677;
+}
+
+.boss-stat-track {
+    display: flex;
+    height: 6px;
+    background: #111;
+    border: 1px solid #2a2a34;
+    overflow: hidden;
+}
+
+.boss-stat-fill {
+    height: 100%;
+
+    &.player { background: $accent-blue; }
+    &.boss { background: var(--boss-accent); }
+}
+
+.boss-odds-values {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    font-family: $font-pixel;
+}
+
+// Deux lignes (WIN / LOSS) plutôt qu'une seule : dans une carte demi-largeur
+// sur mobile, un affichage horizontal des deux pourcentages passait à la ligne.
+.boss-odds-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.boss-odds-win {
+    font-size: 1.15rem;
+    line-height: 1.2;
+    color: $accent-green;
+    text-shadow: 0 0 10px rgba(0, 255, 102, 0.45);
+}
+
+.boss-odds-loss {
+    font-size: 0.95rem;
+    line-height: 1.2;
+    color: $accent-red;
+}
+
+.boss-odds-word {
+    font-size: 0.42rem;
+    letter-spacing: 1px;
+    color: #777788;
+
+    &.win { color: rgba(0, 255, 102, 0.7); }
+    &.loss { color: rgba(255, 51, 51, 0.7); }
+}
+
+.boss-odds-track {
+    height: 8px;
+    background: #1a0808;
+    border: 1px solid #332b2b;
+    overflow: hidden;
+}
+
+.boss-odds-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00a844, $accent-green);
+    box-shadow: 0 0 8px rgba(0, 255, 102, 0.45);
+    transition: width 0.4s ease;
+}
+
+.boss-odds-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.4rem;
+    color: #8b8b9a;
+}
+
+.boss-odds-locked {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.42rem;
+    color: #777788;
+}
+
+.boss-odds-unknown {
+    font-family: $font-pixel;
+    font-size: 1.1rem;
+    color: #4c4c5a;
+}
+
+.boss-rewards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.boss-reward {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px;
+    background: #0a0a10;
+    border: 1px solid #2a2a34;
+
+    &.kill {
+        border-left: 3px solid $accent-gold;
+        background: linear-gradient(90deg, rgba(255, 204, 0, 0.06), #0a0a10 60%);
+    }
+
+    &.defeat {
+        border-left: 3px solid $accent-blue;
+        background: linear-gradient(90deg, rgba(76, 201, 240, 0.06), #0a0a10 60%);
+    }
+}
+
+.boss-reward-title {
+    font-family: $font-pixel;
+    font-size: 0.42rem;
+    letter-spacing: 0.5px;
+    color: #dddde8;
+}
+
+.boss-reward-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.boss-reward-pill {
+    font-size: 0.42rem;
+    letter-spacing: 0.5px;
+    padding: 2px 4px;
+    border: 1px solid;
+
+    &.xp {
+        color: $accent-blue;
+        border-color: rgba(76, 201, 240, 0.4);
+        background: rgba(76, 201, 240, 0.08);
+    }
+
+    &.essence {
+        color: $accent-gold;
+        border-color: rgba(255, 204, 0, 0.4);
+        background: rgba(255, 204, 0, 0.08);
+    }
+}
+
+.boss-reward-empty {
+    font-size: 0.38rem;
+    letter-spacing: 0.5px;
+    color: #666677;
+}
+
+// Dock d'action : attaques du jour + bouton + onglets.
+.boss-action-dock {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: auto;
+    position: sticky;
+    bottom: 0;
+    z-index: 30;
+    padding-top: 4px;
+    background: linear-gradient(180deg, rgba(8, 8, 12, 0) 0%, rgba(5, 5, 7, 0.94) 32%, #050507 100%);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+
+    @include mobile {
+        gap: 4px;
+        padding: 4px 0 0;
+        box-shadow: 0 -8px 18px rgba(0, 0, 0, 0.45);
+    }
+}
+
+.boss-attacks-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    font-family: $font-pixel;
+    font-size: 0.4rem;
+    letter-spacing: 0.5px;
+    color: #8b8b9a;
+}
+
+.boss-attacks-label {
+    color: #666677;
+    white-space: nowrap;
+
+    @include mobile {
+        display: none;
+    }
+}
+
+.boss-attacks-pips {
+    display: flex;
+    gap: 4px;
+}
+
+.boss-attack-pip {
+    width: 9px;
+    height: 9px;
+    background: #111;
+    border: 1px solid #3a3a46;
+    transform: rotate(45deg);
+
+    &.active {
+        background: var(--boss-accent);
+        border-color: #fff;
+        box-shadow: 0 0 7px var(--boss-accent);
+    }
+}
+
+.boss-attacks-count {
+    color: #dddde8;
+    white-space: nowrap;
+}
+
+.boss-attack-btn {
+    min-height: 62px;
+    font-size: 1.4rem !important;
+    padding: 14px !important;
+
+    @include mobile {
+        min-height: 56px;
+        font-size: 1rem !important;
+        padding: 12px !important;
+    }
+}
+
+@keyframes bossRuneSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes bossAuraPulse {
+    0%, 100% { transform: scale(0.92); opacity: 0.55; }
+    50% { transform: scale(1.08); opacity: 1; }
+}
+
+@keyframes bossShardFloat {
+    0%, 100% { translate: 0 0; opacity: 0.25; }
+    50% { translate: 0 -10px; opacity: 0.75; }
+}
+
+@keyframes bossStars {
+    from { opacity: 0.35; }
+    to { opacity: 0.7; }
 }

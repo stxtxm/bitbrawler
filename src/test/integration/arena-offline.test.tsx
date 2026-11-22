@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Arena from '../../pages/Arena'
 import { useGame } from '../../context/GameContext'
@@ -79,6 +79,8 @@ describe('Arena offline mode', () => {
       </MemoryRouter>
     )
 
+    fireEvent.click(screen.getByRole('tab', { name: /PVP/ }))
+
     const fightButton = getByRole('button', { name: 'OFFLINE' })
     expect(fightButton).toBeDisabled()
 
@@ -109,6 +111,8 @@ describe('Arena offline mode', () => {
         <Arena />
       </MemoryRouter>
     )
+
+    fireEvent.click(screen.getByRole('tab', { name: /PVP/ }))
 
     const fightButton = getByRole('button', { name: 'OFFLINE' })
     expect(fightButton).toBeDisabled()

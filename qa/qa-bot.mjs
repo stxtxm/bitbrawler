@@ -48,7 +48,7 @@ let suppressInventoryHandler = false
 let activeFleetMember = null
 
 // Raid boss constants (mirror src/config/gameRules.ts BOSS.* and src/data/bossAssets.ts)
-const BOSS_UNLOCK_LEVEL = 30
+const BOSS_UNLOCK_LEVEL = 20
 const BOSS_NAME = 'VOID TITAN'
 
 function elapsedRunMs() {
@@ -1514,37 +1514,61 @@ async function maybeReplaceExhaustedCharacter(page, runKey, runRecord, reason) {
 
 
 /**
- * Toggle PvP or PvE mode by clicking the appropriate switch button.
+ * Toggle PvP or PvE mode through the bottom tab bar (PVE / PVP / BOSS).
+ * Falls back to the legacy switches while an older bundle is still deployed.
  * Returns true on success.
  */
 async function togglePveMode(page, enablePve) {
-  const label = enablePve ? 'PvE mode' : 'PvP mode'
-  const button = page.locator(`button[aria-label="${label}"]`)
-  if (!(await button.isVisible({ timeout: 3000 }).catch(() => false))) {
-    console.log(`   ${label} switch not found — cannot toggle`)
-    return false
+  const label = enablePve ? 'PVE' : 'PVP'
+  const tab = page.locator('.arena-bottom-tabs [role="tab"]').filter({ hasText: label }).first()
+  const legacy = page.locator(`button[aria-label="${enablePve ? 'PvE mode' : 'PvP mode'}"]`)
+
+  let button = tab
+  if (!(await tab.isVisible({ timeout: 1500 }).catch(() => false))) {
+    if (await legacy.isVisible({ timeout: 1500 }).catch(() => false)) {
+      button = legacy
+    } else {
+      console.log(`   ${label} tab not found — cannot toggle`)
+      return false
+    }
   }
-  const isOn = await button.getAttribute('aria-checked').then(v => v === 'true')
-  if (!isOn) {
+
+  const readSelected = async () => {
+    const selected = await button.getAttribute('aria-selected').catch(() => null)
+    if (selected !== null) return selected === 'true'
+    const checked = await button.getAttribute('aria-checked').catch(() => null)
+    return checked === 'true'
+  }
+
+  if (!(await readSelected())) {
     await button.click()
     await page.waitForTimeout(600)
 
-    // Verify the toggle actually took effect
-    const verified = await button.getAttribute('aria-checked').then(v => v === 'true').catch(() => null)
-    if (verified === true) {
-      console.log(`   Mode toggled to ${enablePve ? 'PVE' : 'PVP'} ✅`)
+    if (await readSelected()) {
+      console.log(`   Mode toggled to ${label} ✅`)
     } else {
-      console.log(`   ⚠️ First toggle attempt may have failed, retrying...`)
+      console.log('   ⚠️ First toggle attempt may have failed, retrying...')
       await button.click({ force: true }).catch(() => {})
       await page.waitForTimeout(600)
-      const retryVerified = await button.getAttribute('aria-checked').then(v => v === 'true').catch(() => null)
-      if (retryVerified === true) {
-        console.log(`   Mode toggled to ${enablePve ? 'PVE' : 'PVP'} (after retry) ✅`)
+      if (await readSelected()) {
+        console.log(`   Mode toggled to ${label} (after retry) ✅`)
       } else {
-        console.log(`   ❌ Failed to toggle to ${enablePve ? 'PVE' : 'PVP'} mode`)
+        console.log(`   ❌ Failed to toggle to ${label} mode`)
         return false
       }
     }
+  }
+  return true
+}
+
+/** Select the dedicated BOSS tab (returns false on legacy bundles). */
+async function toggleBossTab(page) {
+  const tab = page.locator('.arena-bottom-tabs [role="tab"]').filter({ hasText: 'BOSS' }).first()
+  if (!(await tab.isVisible({ timeout: 1500 }).catch(() => false))) return false
+  const selected = await tab.getAttribute('aria-selected').then(v => v === 'true').catch(() => false)
+  if (!selected) {
+    await tab.click().catch(() => {})
+    await page.waitForTimeout(500)
   }
   return true
 }
@@ -2073,9 +2097,9 @@ async function parseMonsterNameFromResult(page) {
 
 /**
  * Capture the raid boss status from the arena ActionPanel DOM.
- * The boss HP strip (`.boss-hp-name` / `.boss-hp-num`) is only rendered once
- * the boss is unlocked (LVL 30+); for locked bosses we fall back to the
- * canonical boss name and null HP values.
+ * The boss HP strip (`.boss-hp-name` / `.boss-hp-num`) lives on the dedicated
+ * boss screen. For locked bosses we fall back to the canonical boss name and
+ * null HP values.
  */
 async function captureBossStatus(page) {
   try {
@@ -2243,6 +2267,35 @@ async function runFightSequence(page, runKey, runRecord) {
     const fightsAvailable = arenaStatus.fightsAvailable
     const isResting = arenaStatus.isResting
     runRecord.arena_status = buildArenaStatusRecord(arenaStatus)
+
+    // PvE est désormais un mode idle pur (plus de bouton de combat). Le raid
+    // boss vit dans son propre onglet : on y bascule quand le niveau le permet,
+    // sinon on retombe sur le PvP pour cette manche.
+    if (isPve && !arenaStatus.fightButtonVisible) {
+      const levelNow = currentLevel ?? parseLevelFromText(await readBodyText(page))
+      if (levelNow !== null && levelNow >= BOSS_UNLOCK_LEVEL && await toggleBossTab(page)) {
+        await page.waitForTimeout(500)
+        arenaStatus = await readArenaStatus(page)
+        runRecord.arena_status = buildArenaStatusRecord(arenaStatus)
+        if (arenaStatus.fightButtonLabel.includes('ATTACK BOSS')) {
+          runRecord.pve_data.pve_shifted = true
+          const bossFight = await captureBossFight(page, runKey, i + 1)
+          await togglePveMode(page, false).catch(() => {})
+          if (bossFight) {
+            runRecord.fights.push(bossFight)
+            const postBossLevel = parseLevelFromText(await page.locator('body').innerText().catch(() => ''))
+            if (postBossLevel !== null) currentLevel = postBossLevel
+          }
+          continue
+        }
+      }
+
+      console.log('   PvE is idle-only — falling back to PvP for this fight')
+      await togglePveMode(page, false).catch(() => {})
+      forcedPvpIndexes.add(i)
+      i--
+      continue
+    }
 
     if (isAutoModeArenaStatus(arenaStatus)) {
       const reason = classifyArenaSkipReason({

@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { ActionPanel } from '../components/arena/ActionPanel';
 import { ArenaHeader } from '../components/arena/ArenaHeader';
+import { BossScreen } from '../components/arena/BossScreen';
 import { CharacterDisplay } from '../components/arena/CharacterDisplay';
 import { InventoryPanel } from '../components/arena/InventoryPanel';
 import { SettingsPanel } from '../components/arena/SettingsPanel';
@@ -201,17 +202,27 @@ const Arena = () => {
       />
 
       <div className="arena-content">
-        <CharacterDisplay
-          character={activeCharacter}
-          effectiveCharacter={effectiveCharacter}
-          pveMode={combat.pveMode}
-          xpBarAnimating={levelUp.xpBarAnimating}
-          showXpGain={levelUp.showXpGain}
-          lastXpGain={lastXpGain}
-          statOptions={statOptions}
-          idle={idleView}
-        />
-        <ActionPanel {...combat.actionPanelProps} onOpenInventory={inventory.openInventoryFiltered} />
+        {combat.mode === 'boss' ? (
+          <BossScreen
+            character={activeCharacter}
+            effectiveCharacter={effectiveCharacter}
+            {...combat.bossScreenProps}
+          />
+        ) : (
+          <>
+            <CharacterDisplay
+              character={activeCharacter}
+              effectiveCharacter={effectiveCharacter}
+              pveMode={combat.pveMode}
+              xpBarAnimating={levelUp.xpBarAnimating}
+              showXpGain={levelUp.showXpGain}
+              lastXpGain={lastXpGain}
+              statOptions={statOptions}
+              idle={idleView}
+            />
+            <ActionPanel {...combat.actionPanelProps} onOpenInventory={inventory.openInventoryFiltered} />
+          </>
+        )}
       </div>
 
       <ConnectionModal open={connectionModal.open} message={connectionModal.message} onClose={closeModal} />

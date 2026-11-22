@@ -1800,19 +1800,17 @@ describe('QA Bot Fight CTA Robustness Contract', () => {
     return fn
   }
 
-  it('togglePveMode toggles based on the target switch aria-checked, not the desired boolean (#689)', () => {
-    // The PvP switch's aria-checked already encodes "PvP mode active" (true when
-    // in PvP). The old `isOn !== enablePve` check read "false" for the PvP switch
-    // while in PvE mode, so toggling back to PvP silently did nothing → the bot
-    // stayed in PvE mode where the boss is locked (LOCKED LVL 30) → 0 fights.
-    // The post-click verification must also compare against `true` (target mode
-    // active), never against the desired boolean.
+  it('togglePveMode clicks the bottom PVE/PVP tab and verifies its selected state (#689, #1387)', () => {
+    // Since the mobile tab bar, the mode is encoded by aria-selected on the
+    // tab (not aria-checked on a switch). The bot must read the real state
+    // before clicking, never assume the desired boolean, and retry with a
+    // force click when the first tap does not register.
     const fn = requireAsyncFunction('togglePveMode')
-    expect(fn).toContain('if (!isOn) {')
+    expect(fn).toContain('arena-bottom-tabs')
+    expect(fn).toContain("getAttribute('aria-selected')")
+    expect(fn).toContain('readSelected')
+    expect(fn).toContain('force: true')
     expect(fn).not.toContain('isOn !== enablePve')
-    expect(fn).toContain('if (verified === true) {')
-    expect(fn).toContain('if (retryVerified === true) {')
-    expect(fn).not.toContain('verified === enablePve')
   })
 
   it('readArenaStatus exposes fightButtonEnabled, isSearching and isPveLocked (#689)', () => {

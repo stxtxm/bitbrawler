@@ -8,13 +8,13 @@ import { getEquippedItems, getInventoryItems } from '../utils/equipmentUtils';
 import { isBurstActive, getMaxDailyFights, isBurstBonusUsed, markBurstBonusUsed, getEffectiveFightsLeft } from '../data/liveOps';
 import { BURST_MUTATORS, getStoredBurstMutator, setStoredBurstMutator } from '../utils/burstMutator';
 import type { BurstMutatorId } from '../utils/burstMutator';
+import type { ArenaMode } from '../components/arena/arenaTypes';
 import {
   buildBossCharacter,
   createBossProgress,
   ensureBossDailyReset,
   getBossAttacksLeft,
   getBossPityReductionPct,
-  getBossProgressEstimate,
   getBossProgressForId,
   isBossUnlocked,
   isBossUnlockedForCharacter,
@@ -40,8 +40,6 @@ type UseBossFight = (
   bossName: string,
   options?: { consumeEnergy?: boolean; characterOverride?: Character; bossHpLeft?: number; bossId?: BossId },
 ) => Promise<FightResult | null>;
-
-export type ArenaMode = 'pvp' | 'pve' | 'boss';
 
 interface UseArenaCombatOptions {
   character: Character | null;
@@ -113,29 +111,17 @@ export const useArenaCombat = ({
   const effectiveUnlocked = effectiveBossId === ABYSSAL_BOSS_ID ? abyssalUnlocked : bossUnlocked;
   const effectivePityReduction = getBossPityReductionPct(effectiveBossProgress ?? undefined, effectiveBossId);
   const effectivePityStacks = effectiveBossProgress?.pityStacks ?? 0;
-  const effectiveEstimate = getBossProgressEstimate(effectiveBossProgress ?? undefined);
 
   const canFight = !!character
     && !isOfflineMode
     && !hasPendingFight
     && !autoMode
-    && (pveMode
+    && (bossMode
       ? effectiveUnlocked && effectiveAttacksLeft > 0
-      : fightsLeft > 0);
+      : mode === 'pvp' && fightsLeft > 0);
 
   const onModeChange = useCallback((next: ArenaMode) => {
     setMode(next);
-    setPreviewMatch(null);
-    setPreviewLoading(false);
-  }, []);
-
-  const onTogglePve = useCallback(() => {
-    setMode('pve');
-    setPreviewMatch(null);
-    setPreviewLoading(false);
-  }, []);
-  const onTogglePvp = useCallback(() => {
-    setMode('pvp');
     setPreviewMatch(null);
     setPreviewLoading(false);
   }, []);
@@ -147,7 +133,7 @@ export const useArenaCombat = ({
 
     if (window.navigator.vibrate) window.navigator.vibrate(80);
 
-    if (pveMode) {
+    if (bossMode) {
       try {
         const bossId = effectiveBossId;
         const existing = bossId === ABYSSAL_BOSS_ID
@@ -196,7 +182,7 @@ export const useArenaCombat = ({
     matchmaking,
     openModal,
     previewMatch,
-    pveMode,
+    bossMode,
     effectiveBossId,
     startMatchmaking,
   ]);
@@ -259,7 +245,7 @@ export const useArenaCombat = ({
   }, [character, previewOpponent]);
 
   useEffect(() => {
-    if (pveMode || isOfflineMode || !character || hasPendingFight || autoMode || combatData || previewMatch || previewLoading) return;
+    if (mode !== 'pvp' || isOfflineMode || !character || hasPendingFight || autoMode || combatData || previewMatch || previewLoading) return;
     if (fightsLeft <= 0) return;
     if (typeof findPreviewOpponent !== 'function') return;
     let cancelled = false;
@@ -284,7 +270,7 @@ export const useArenaCombat = ({
     return () => {
       cancelled = true;
     };
-  }, [pveMode, isOfflineMode, character, hasPendingFight, autoMode, combatData, previewMatch, previewLoading, fightsLeft, findPreviewOpponent]);
+  }, [mode, isOfflineMode, character, hasPendingFight, autoMode, combatData, previewMatch, previewLoading, fightsLeft, findPreviewOpponent]);
 
   // Auto mode — salvage l'équipement que le personnage n'utilise plus (#1387).
   // GARDE-FOU ANTI-FREEZE : le timer ne redémarre PAS à chaque changement du
@@ -311,72 +297,58 @@ export const useArenaCombat = ({
 
   const actionPanelProps = useMemo(() => ({
     mode,
-    bossMode,
-    onModeChange,
-    pveMode,
+    pveMode: mode === 'pve',
     canFight,
     matchmaking,
     hasPendingFight,
     autoMode,
     isOfflineMode,
     fightsLeft,
-    maxDailyFights,
-    burstActive,
-    burstMutator,
-    draftChoices,
-    canPickMutator,
-    bossAttacksLeft: effectiveAttacksLeft,
-    bossUnlocked: effectiveUnlocked,
-    bossHp: effectiveBossProgress?.bossHp ?? 0,
-    bossMaxHp: effectiveBossProgress?.bossMaxHp ?? 0,
-    bossLevel: effectiveBossProgress?.bossLevel ?? 0,
-    bossPityStacks: effectivePityStacks,
-    bossPityReduction: effectivePityReduction,
-    bossDamagePct: effectiveEstimate.damagePct,
-    bossEstimatedDays: effectiveEstimate.estimatedDays,
-    bossId: effectiveBossId,
-    abyssalUnlocked,
-    onTogglePve,
-    onTogglePvp,
     onFight,
+    onModeChange,
     tacticalOpponent: previewOpponent,
     tacticalHint,
-    previewLoading,
-    onPickBurstMutator: pickBurstMutator,
-    onOpenBurstDraft: openBurstDraft,
   }), [
     autoMode,
-    effectiveAttacksLeft,
-    effectiveBossProgress?.bossHp,
-    effectiveBossProgress?.bossMaxHp,
-    effectiveBossProgress?.bossLevel,
-    effectivePityStacks,
-    effectivePityReduction,
-    effectiveEstimate.damagePct,
-    effectiveEstimate.estimatedDays,
-    effectiveUnlocked,
     canFight,
     fightsLeft,
-    maxDailyFights,
-    burstActive,
-    burstMutator,
-    draftChoices,
-    canPickMutator,
     hasPendingFight,
     isOfflineMode,
     matchmaking,
+    mode,
     onFight,
-    pickBurstMutator,
-    openBurstDraft,
-    onTogglePve,
-    onTogglePvp,
+    onModeChange,
     previewOpponent,
-    previewLoading,
-    pveMode,
     tacticalHint,
+  ]);
+
+  const bossScreenProps = useMemo(() => ({
+    mode,
+    onModeChange,
+    bossId: effectiveBossId,
+    bossProgress: effectiveBossProgress,
+    bossUnlocked: effectiveUnlocked,
+    attacksLeft: effectiveAttacksLeft,
+    canFight,
+    onFight,
+    matchmaking,
+    hasPendingFight,
+    autoMode,
+    isOfflineMode,
+  }), [
+    autoMode,
+    canFight,
+    effectiveAttacksLeft,
     effectiveBossId,
-    abyssalUnlocked,
-  ] as any);
+    effectiveBossProgress,
+    effectiveUnlocked,
+    hasPendingFight,
+    isOfflineMode,
+    matchmaking,
+    mode,
+    onFight,
+    onModeChange,
+  ]);
 
   return {
     mode,
@@ -403,11 +375,10 @@ export const useArenaCombat = ({
     previewOpponent,
     tacticalHint,
     previewLoading,
-    onTogglePve,
-    onTogglePvp,
     onFight,
     onCombatComplete,
     onCloseCombat,
     actionPanelProps,
+    bossScreenProps,
   };
 };
