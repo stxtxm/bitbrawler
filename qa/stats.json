@@ -237739,5 +237739,337 @@
       "budget_blocked_price": null
     },
     "error_patterns": []
+  },
+  {
+    "date": "2026-11-22T14:01:27.555Z",
+    "run": "2026-11-22",
+    "character": "QA-END",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "victory",
+        "xp": 292,
+        "fight_duration_ms": 11873,
+        "max_hp": 244,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 41.86
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "already-opened"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 5,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 8,
+      "vit": 8,
+      "dex": 8,
+      "luk": 15,
+      "int": 12,
+      "foc": 26,
+      "fights": 0
+    },
+    "initial_level": 6,
+    "initial_xp": {
+      "current": 1941,
+      "max": 2307
+    },
+    "progression_curve": {
+      "level": 6,
+      "total_xp": 6060,
+      "xp_for_next": 2307,
+      "percent": 84.1
+    },
+    "initial_max_hp": 259,
+    "initial_equipment": [
+      {
+        "slot": "🛡️",
+        "name": "Worn Bracers",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Spirit Orb",
+        "rarity": "EPIC"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 7,
+      "xp": 23,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 8,
+      "vit": 8,
+      "dex": 8,
+      "luk": 15,
+      "int": 13,
+      "foc": 26,
+      "last xp": 55,
+      "fights": 3
+    },
+    "final_max_hp": 244,
+    "final_equipment": [
+      {
+        "slot": "🛡️",
+        "name": "Worn Bracers",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Spirit Orb",
+        "rarity": "EPIC"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Tidal Blade"
+      },
+      {
+        "slot": "🛡",
+        "name": "Worn Bracers"
+      },
+      {
+        "slot": "💍",
+        "name": "Spirit Orb"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 6,
+        "new_level": 7
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 20454,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "ogre",
+        "goblin"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 72,
+      "xp_events": [
+        {
+          "time_ms": 15398,
+          "xp": 17,
+          "monster": "ogre",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15913,
+          "xp": 55,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        511,
+        1531,
+        15398
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 17,
+        "essence": 0.28,
+        "monster": "ogre"
+      },
+      {
+        "result": "victory",
+        "xp": 55,
+        "essence": 0.29,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.83,
+      "next_level_eta": "⬆ 59s",
+      "power_ratio": "⚔ 0.53x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.18x",
+      "interval": "12.0s",
+      "streak_bonus": "🔥 1-win streak (+25%)"
+    },
+    "initial_essence": 30.29,
+    "final_essence": 11.86,
+    "essence": {
+      "before_idle": 30.29,
+      "after_idle": 30.86,
+      "per_fight": [
+        41.86
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": 41,
+      "shop_after": 11,
+      "final": 11.86,
+      "flow": {
+        "idle_gained": 0.57,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": 30,
+        "net_change": -18.43
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 30,
+      "essence_before": 41,
+      "essence_after": 11,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Ember Blade",
+            "rarity": "RARE",
+            "price": 30
+          },
+          {
+            "name": "Storm Amulet",
+            "rarity": "RARE",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 11,
+        "essence_budget": 40,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 40
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 1,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1149,
+      "arena": 572
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Ember Blade",
+          "rarity": "RARE",
+          "price": 30
+        },
+        {
+          "name": "Storm Amulet",
+          "rarity": "RARE",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 11,
+      "essence_budget": 40,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    },
+    "error_patterns": []
   }
 ]
