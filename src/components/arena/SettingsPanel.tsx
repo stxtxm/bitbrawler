@@ -134,6 +134,13 @@ export const SettingsPanel = memo(function SettingsPanel({
                             : `VS ${fight.displayName}`}
                         </div>
                         <div className="history-date">{formatSettingsLogDate(fight.date)}</div>
+                        {(fight.xpGained || fight.essenceGained) ? (
+                          <div className="history-xp history-rewards">
+                            {fight.xpGained ? `+${fight.xpGained} XP` : ''}
+                            {fight.xpGained && fight.essenceGained ? ' · ' : ''}
+                            {fight.essenceGained ? `+${fight.essenceGained} 💎` : ''}
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   ))

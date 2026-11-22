@@ -3,6 +3,8 @@ export type SettingsLogEntry = {
     won: boolean;
     direction: 'outgoing' | 'incoming';
     displayName: string;
+    xpGained?: number;
+    essenceGained?: number;
 };
 
 export const formatSettingsLogDate = (timestamp: number) => {

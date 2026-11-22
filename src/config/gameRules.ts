@@ -141,6 +141,16 @@ export const GAME_RULES = {
         EPIC_BOOST_PER_COMMON: 0.005,
         EPIC_BOOST_CAP: 0.10,
     },
+    PVP_DEFENSE: {
+        WIN_XP_BASE: 18,
+        WIN_XP_PER_ATTACKER_LEVEL: 2,
+        WIN_ESSENCE_BASE: 5,
+        WIN_ESSENCE_PER_ATTACKER_LEVEL: 0.5,
+        LOSS_XP: 2,
+        LOSS_ESSENCE: 1,
+        MAX_WIN_XP: 120,
+        MAX_WIN_ESSENCE: 25,
+    },
 } as const;
 
 export type CombatSpeed = (typeof GAME_RULES)['COMBAT']['SPEED_OPTIONS'][number];

@@ -184,7 +184,7 @@ describe('Arena settings modal', () => {
     expect(stored.claimed).toContain(1)
   })
 
-  it('hides attacker type and xp details in combat logs', async () => {
+  it('shows combat log rewards and hides attacker type labels', async () => {
     const { getByLabelText, getByText, queryByText } = renderWithRouter(<Arena />)
 
     const user = userEvent.setup()
@@ -197,7 +197,7 @@ describe('Arena settings modal', () => {
     expect(getByText('ATTACKED BY NIGHT HUNTER')).toBeInTheDocument()
     expect(queryByText(/\[BOT\]/i)).toBeNull()
     expect(queryByText(/\[PLAYER\]/i)).toBeNull()
-    expect(queryByText(/\+\d+\s*XP/i)).toBeNull()
+    expect(getByText('+100 XP')).toBeInTheDocument()
   })
 
   it('disables fight button and shows AUTO MODE when auto mode is on', async () => {

@@ -70,12 +70,15 @@ export const useSettings = ({
         won: fight.won,
         direction: 'outgoing' as const,
         displayName: fight.opponentName,
+        xpGained: fight.xpGained,
       })),
       ...(character?.incomingFightHistory ?? []).map((fight) => ({
         date: fight.date,
         won: fight.won,
         direction: 'incoming' as const,
         displayName: fight.attackerName,
+        xpGained: fight.xpGained,
+        essenceGained: fight.essenceGained,
       })),
     ]
       .sort((a, b) => b.date - a.date)

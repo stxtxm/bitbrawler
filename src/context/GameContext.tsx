@@ -1,9 +1,9 @@
 import { createContext, useState, useContext, ReactNode, useEffect, useCallback, useRef } from 'react';
 import { supabase, type CharacterRow } from '../config/supabase';
 import { Character, IncomingFightHistory, PendingFight } from '../types/Character';
-import { gainXp, calculateFightXp } from '../utils/xpUtils';
+import { gainXp, calculateFightXp, getMaxLevel, getTotalXpForLevel } from '../utils/xpUtils';
 import { getActiveWinXpMultiplier } from '../utils/activeBonusUtils';
-import { applyStatPoint, autoAllocateStatPoints, HP_PER_LEVEL, repairLuckOverflow, StatKey } from '../utils/statUtils';
+import { applyStatPoint, autoAllocateStatPoints, getHpForVitality, HP_PER_LEVEL, repairLuckOverflow, StatKey } from '../utils/statUtils';
 import { GAME_RULES } from '../config/gameRules';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 import { findOpponent, MatchmakingResult } from '../utils/matchmakingUtils';
@@ -652,13 +652,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
   const appendIncomingFightHistory = useCallback(async (
     targetCharacterId: string,
-    entry: IncomingFightHistory
+    entry: IncomingFightHistory,
+    rewards?: { xp: number; essence: number }
   ) => {
     try {
-      // Get current history
       const { data, error } = await supabase
         .from('characters')
-        .select('incoming_fight_history')
+        .select('incoming_fight_history, essence, experience, level, stat_points, max_hp, hp, vitality')
         .eq('id', targetCharacterId)
         .single();
 
@@ -667,10 +667,52 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       const existing = Array.isArray(data.incoming_fight_history) ? data.incoming_fight_history : [];
       const nextHistory = [entry, ...existing].slice(0, COMBAT_LOG_HISTORY_CAP);
 
-      // Update with new history
+      const updatePayload: Record<string, unknown> = { incoming_fight_history: nextHistory };
+
+      if (rewards && (rewards.xp > 0 || rewards.essence > 0)) {
+        const currentEssence = Number(data.essence ?? 0);
+        const currentXp = Number(data.experience ?? 0);
+        const currentLevel = Number(data.level ?? 1);
+        const currentStatPoints = Number(data.stat_points ?? 0);
+        const currentMaxHp = Number(data.max_hp ?? 0);
+        const currentHp = Number(data.hp ?? 0);
+        const vitality = Number(data.vitality ?? 1);
+
+        const nextXp = currentXp + Math.max(0, Math.floor(rewards.xp));
+        let nextLevel = currentLevel;
+        let nextStatPoints = currentStatPoints;
+
+        while (nextLevel < getMaxLevel()) {
+          const xpNeeded = getTotalXpForLevel(nextLevel + 1);
+          if (nextXp >= xpNeeded) {
+            nextLevel++;
+            nextStatPoints += GAME_RULES.STATS.POINTS_PER_LEVEL;
+          } else {
+            break;
+          }
+        }
+
+        const levelsGained = nextLevel - currentLevel;
+        const nextMaxHp = levelsGained > 0
+          ? getHpForVitality(vitality, nextLevel)
+          : currentMaxHp;
+        const nextHp = levelsGained > 0
+          ? Math.min(nextMaxHp, currentHp + Math.max(0, nextMaxHp - currentMaxHp))
+          : currentHp;
+
+        updatePayload.essence = currentEssence + Math.max(0, Math.floor(rewards.essence));
+        updatePayload.experience = nextXp;
+        updatePayload.level = nextLevel;
+        updatePayload.stat_points = nextStatPoints;
+        if (levelsGained > 0) {
+          updatePayload.max_hp = nextMaxHp;
+          updatePayload.hp = nextHp;
+        }
+      }
+
       await supabase
         .from('characters')
-        .update({ incoming_fight_history: nextHistory })
+        .update(updatePayload)
         .eq('id', targetCharacterId);
     } catch (error) {
       console.warn('Failed to append incoming fight history:', error);
@@ -806,16 +848,33 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       }).catch(() => {});
 
       if (opponentId && opponentId !== baseCharacter.id) {
+        const defenderWon = !won;
+        const attackerLevel = baseCharacter.level ?? 1;
+        const defenseXp = defenderWon
+          ? Math.min(
+              GAME_RULES.PVP_DEFENSE.MAX_WIN_XP,
+              GAME_RULES.PVP_DEFENSE.WIN_XP_BASE + Math.floor(attackerLevel * GAME_RULES.PVP_DEFENSE.WIN_XP_PER_ATTACKER_LEVEL),
+            )
+          : GAME_RULES.PVP_DEFENSE.LOSS_XP;
+        const defenseEssence = defenderWon
+          ? Math.min(
+              GAME_RULES.PVP_DEFENSE.MAX_WIN_ESSENCE,
+              GAME_RULES.PVP_DEFENSE.WIN_ESSENCE_BASE + Math.floor(attackerLevel * GAME_RULES.PVP_DEFENSE.WIN_ESSENCE_PER_ATTACKER_LEVEL),
+            )
+          : GAME_RULES.PVP_DEFENSE.LOSS_ESSENCE;
+
         const incomingEntry: IncomingFightHistory = {
           date: Date.now(),
           attackerName: baseCharacter.name,
           attackerId: baseCharacter.id,
           attackerIsBot: !!baseCharacter.isBot,
-          won: !won,
-          source: 'player'
+          won: defenderWon,
+          source: 'player',
+          xpGained: defenseXp,
+          essenceGained: defenseEssence,
         };
 
-        appendIncomingFightHistory(opponentId, incomingEntry).catch((error) => {
+        appendIncomingFightHistory(opponentId, incomingEntry, { xp: defenseXp, essence: defenseEssence }).catch((error) => {
           console.warn('Incoming fight history sync skipped:', error);
         });
       }

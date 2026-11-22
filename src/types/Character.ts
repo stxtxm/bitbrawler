@@ -12,6 +12,8 @@ export interface IncomingFightHistory {
   attackerIsBot?: boolean;
   won: boolean; // Defender perspective
   source?: 'player' | 'bot';
+  xpGained?: number; // Defender reward (XP) from this incoming fight
+  essenceGained?: number; // Defender reward (essence) from this incoming fight
 }
 
 export interface PendingFightOpponent {
