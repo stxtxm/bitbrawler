@@ -236252,5 +236252,317 @@
       "essence_after_purchase": null
     },
     "error_patterns": []
+  },
+  {
+    "date": "2026-11-22T02:01:26.866Z",
+    "run": "2026-11-22",
+    "character": "QA-FRESH",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Iron Helm",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "ATTACK MONSTERS",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 6,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 10,
+      "vit": 9,
+      "dex": 13,
+      "luk": 8,
+      "int": 7,
+      "foc": 26,
+      "fights": 0
+    },
+    "initial_level": 5,
+    "initial_xp": {
+      "current": 52,
+      "max": 1707
+    },
+    "progression_curve": {
+      "level": 5,
+      "total_xp": 2464,
+      "xp_for_next": 1707,
+      "percent": 3
+    },
+    "initial_max_hp": 244,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife",
+        "rarity": "RARE"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 5,
+      "xp": 216,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 10,
+      "vit": 10,
+      "dex": 13,
+      "luk": 9,
+      "int": 8,
+      "foc": 26,
+      "fights": 0
+    },
+    "final_max_hp": 228,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife",
+        "rarity": "RARE"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife",
+        "rarity": "RARE"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Iron Helm",
+        "rarity": "COMMON"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 37636,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "mossling",
+        "goblin"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 72,
+      "xp_events": [
+        {
+          "time_ms": 3092,
+          "xp": 53,
+          "monster": "mossling",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 37636,
+          "xp": 19,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        520,
+        1545,
+        3092,
+        11675,
+        13212,
+        37636
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 53,
+        "essence": 0.93,
+        "monster": "mossling"
+      },
+      {
+        "result": "victory",
+        "xp": 19,
+        "essence": 0.93,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 3.63,
+      "next_level_eta": "⬆ 5m 27s",
+      "power_ratio": "⚔ 0.56x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.14x",
+      "interval": "11.5s",
+      "streak_bonus": "🔥 1-win streak (+25%)"
+    },
+    "initial_essence": 36.48,
+    "final_essence": 11.03,
+    "essence": {
+      "before_idle": 36.48,
+      "after_idle": 38.34,
+      "per_fight": [],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": 41,
+      "shop_after": 11,
+      "final": 11.03,
+      "flow": {
+        "idle_gained": 1.86,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": 30,
+        "net_change": -25.45
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": true,
+      "skip_reason": "forge requires LVL 6"
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": null,
+      "cost": 30,
+      "essence_before": 41,
+      "essence_after": 11,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Vitality Ring",
+            "rarity": "COMMON",
+            "price": 30
+          },
+          {
+            "name": "Spiked Gauntlets",
+            "rarity": "RARE",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 11,
+        "essence_budget": 50,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-FRESH",
+      "essence_budget": 50
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 1,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "not_attackable"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1539,
+      "arena": 617,
+      "arena_reload": 15
+    },
+    "skipped_summary": {
+      "not_attackable": 1
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Vitality Ring",
+          "rarity": "COMMON",
+          "price": 30
+        },
+        {
+          "name": "Spiked Gauntlets",
+          "rarity": "RARE",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 11,
+      "essence_budget": 50,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    },
+    "error_patterns": []
   }
 ]
