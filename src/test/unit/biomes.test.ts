@@ -6,6 +6,10 @@ import {
   BiomeId,
   getBiomeForCharacter,
   getBiomeMonsterPool,
+  getBiomeRewardMultiplier,
+  getSelectedBiomeId,
+  getUnlockedBiomes,
+  setSelectedBiomeId,
 } from '../../data/biomes';
 
 const makeCharacter = (overrides: Partial<Character> = {}): Character => ({
@@ -122,5 +126,41 @@ describe('getBiomeMonsterPool', () => {
     expect(getBiomeMonsterPool('tundra' as BiomeId)).toEqual(
       getBiomeMonsterPool('plains'),
     );
+  });
+});
+
+describe('biome unlock and selection', () => {
+  it('unlocks volcanic when void titan kill is stored in bossProgresses', () => {
+    const character = makeCharacter({
+      level: 12,
+      bossProgress: undefined,
+      bossProgresses: { void_titan: makeBossProgress(1) } as any,
+    } as any);
+    expect(getBiomeForCharacter(character).id).toBe('volcanic');
+  });
+
+  it('unlocks mountain at level 40', () => {
+    const character = makeCharacter({ level: 40, bossProgress: makeBossProgress(1) });
+    expect(getUnlockedBiomes(character).map((b) => b.id)).toContain('mountain');
+  });
+
+  it('defaults to highest unlocked biome but allows selecting an unlocked one', () => {
+    const character = makeCharacter({ id: 'char-b1', level: 40, bossProgress: makeBossProgress(1) } as any);
+    setSelectedBiomeId(character, 'volcanic');
+    expect(getSelectedBiomeId(character)).toBe('volcanic');
+    expect(getBiomeForCharacter(character).id).toBe('volcanic');
+  });
+
+  it('ignores a selected biome that is locked', () => {
+    const character = makeCharacter({ id: 'char-b2', level: 10, bossProgress: makeBossProgress(1) } as any);
+    setSelectedBiomeId(character, 'abyssal');
+    expect(getBiomeForCharacter(character).id).toBe('volcanic');
+  });
+
+  it('exposes increasing reward multipliers by biome progression', () => {
+    expect(getBiomeRewardMultiplier('plains')).toBe(1);
+    expect(getBiomeRewardMultiplier('volcanic')).toBeGreaterThan(1);
+    expect(getBiomeRewardMultiplier('mountain')).toBeGreaterThan(getBiomeRewardMultiplier('volcanic'));
+    expect(getBiomeRewardMultiplier('abyssal')).toBeGreaterThan(getBiomeRewardMultiplier('mountain'));
   });
 });

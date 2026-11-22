@@ -156,7 +156,14 @@ const Arena = () => {
     packInfo: idle.packInfo ?? null,
     eliteName: idle.eliteName ?? null,
     eliteElement: idle.eliteElement ?? null,
+    activeBiomeId: idle.activeBiomeId,
+    selectedBiomeId: idle.selectedBiomeId,
+    unlockedBiomeIds: idle.unlockedBiomeIds,
+    biomeRewardMultiplier: idle.biomeRewardMultiplier,
+    onSelectBiome: idle.selectBiome,
   }), [
+    idle.activeBiomeId,
+    idle.biomeRewardMultiplier,
     idle.clearOfflineGains,
     idle.currentMonster,
     idle.currentStreak,
@@ -170,7 +177,10 @@ const Arena = () => {
     idle.eliteElement,
     idle.remainingSeconds,
     idle.scenePhase,
+    idle.selectBiome,
+    idle.selectedBiomeId,
     idle.totalKills,
+    idle.unlockedBiomeIds,
     levelUp.recentLevelUp,
   ]);
 

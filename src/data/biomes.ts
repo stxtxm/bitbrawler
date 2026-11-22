@@ -11,6 +11,8 @@ export type BiomeDef = {
   unlockAt?: (character: Character) => boolean;
   monsterPool: MonsterId[];
   terrainSeed?: string;
+  /** Multiplicateur de gains idle (XP/essence). Plus le biome est avancé, plus il récompense. */
+  rewardMultiplier: number;
 };
 
 const VOLCANIC_MONSTER_POOL: MonsterId[] = ['magma_golem', 'lava_hound', 'cinder_imp'];
@@ -19,25 +21,35 @@ const PLAINS_MONSTER_POOL: MonsterId[] = MONSTER_ASSETS
   .filter((monster) => !VOLCANIC_MONSTER_POOL.includes(monster.id))
   .map((monster) => monster.id);
 
+function getVoidTitanKills(character: Character): number {
+  const anyChar = character as any;
+  return (
+    anyChar.bossProgresses?.void_titan?.totalKills ??
+    character.bossProgress?.totalKills ??
+    0
+  );
+}
+
 export const BIOMES: BiomeDef[] = [
   {
     id: 'plains',
     label: 'Plains',
     monsterPool: PLAINS_MONSTER_POOL,
+    rewardMultiplier: 1,
   },
   {
     id: 'volcanic',
     label: 'Volcanic',
-    unlockAt: (character) => (character.bossProgress?.totalKills ?? 0) > 0,
+    unlockAt: (character) => getVoidTitanKills(character) > 0,
     monsterPool: VOLCANIC_MONSTER_POOL,
+    rewardMultiplier: 1.2,
   },
   {
     id: 'mountain',
     label: 'Mountain',
-    // Biome de montagne neige — lvl 40. Documenté sur le design du boss lvl 40
-    // ([1387], implémentation à venir).
     unlockAt: (character) => character.level >= 40,
     monsterPool: MOUNTAIN_MONSTER_POOL,
+    rewardMultiplier: 1.35,
   },
   {
     id: 'abyssal',
@@ -45,19 +57,61 @@ export const BIOMES: BiomeDef[] = [
     unlockAt: (character) => {
       const abyssal = (character as any).bossProgresses?.abyssal_monarch ?? (character as any).abyssalBossProgress;
       if (abyssal) return true;
-      const voidKills = (character as any).bossProgresses?.void_titan?.totalKills ?? character.bossProgress?.totalKills ?? 0;
-      return character.level >= 40 && voidKills > 0;
+      return character.level >= 40 && getVoidTitanKills(character) > 0;
     },
     monsterPool: ABYSSAL_MONSTER_POOL,
+    rewardMultiplier: 1.5,
   },
 ];
 
+const BIOME_ORDER: BiomeId[] = ['abyssal', 'mountain', 'volcanic', 'plains'];
+
+export function isBiomeUnlocked(character: Character, biomeId: BiomeId): boolean {
+  const biome = BIOMES.find((b) => b.id === biomeId);
+  if (!biome) return false;
+  if (!biome.unlockAt) return true;
+  return biome.unlockAt(character);
+}
+
+export function getUnlockedBiomes(character: Character): BiomeDef[] {
+  return BIOMES.filter((biome) => isBiomeUnlocked(character, biome.id));
+}
+
+function getBiomeStorageKey(character: Character): string {
+  return `bitbrawler_selected_biome_${character.id ?? character.seed ?? 'local'}`;
+}
+
+export function getSelectedBiomeId(character: Character): BiomeId | null {
+  try {
+    const raw = localStorage.getItem(getBiomeStorageKey(character));
+    if (raw === 'plains' || raw === 'volcanic' || raw === 'abyssal' || raw === 'mountain') return raw;
+  } catch { /* ignore */ }
+  return null;
+}
+
+export function setSelectedBiomeId(character: Character, biomeId: BiomeId): void {
+  try {
+    localStorage.setItem(getBiomeStorageKey(character), biomeId);
+  } catch { /* ignore */ }
+}
+
 export function getBiomeForCharacter(character: Character): BiomeDef {
-  const abyssal = BIOMES.find((b) => b.id === 'abyssal' && b.unlockAt?.(character));
-  if (abyssal) return abyssal;
-  const volcanic = BIOMES.find((b) => b.id === 'volcanic' && b.unlockAt?.(character));
-  if (volcanic) return volcanic;
+  const selected = getSelectedBiomeId(character);
+  if (selected && isBiomeUnlocked(character, selected)) {
+    const biome = BIOMES.find((b) => b.id === selected);
+    if (biome) return biome;
+  }
+  for (const id of BIOME_ORDER) {
+    if (isBiomeUnlocked(character, id)) {
+      const biome = BIOMES.find((b) => b.id === id);
+      if (biome) return biome;
+    }
+  }
   return BIOMES[0];
+}
+
+export function getBiomeRewardMultiplier(biomeId: BiomeId): number {
+  return BIOMES.find((b) => b.id === biomeId)?.rewardMultiplier ?? 1;
 }
 
 export function getBiomeMonsterPool(biomeId: BiomeId): MonsterId[] {

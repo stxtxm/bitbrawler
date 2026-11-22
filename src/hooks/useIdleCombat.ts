@@ -21,7 +21,7 @@ import {
   calculateOfflineFights,
 } from '../utils/idleEfficiencyUtils'
 import { MonsterId } from '../data/monsterAssets'
-import { getBiomeForCharacter } from '../data/biomes'
+import { getBiomeForCharacter, getBiomeRewardMultiplier, getSelectedBiomeId, getUnlockedBiomes, setSelectedBiomeId, type BiomeId } from '../data/biomes'
 import { getSurgeEssenceMultiplier, incrementBountyProgress } from '../utils/biomeSurge'
 import { incrementMonsterCounter, mergeMonsterCounters } from '../utils/bestiaryUtils'
 import { toFiniteTimestamp } from '../utils/timestampUtils'
@@ -53,6 +53,11 @@ interface UseIdleCombatReturn {
   packInfo: IdlePackInfo | null
   eliteName: string | null
   eliteElement: Element | null
+  activeBiomeId: BiomeId
+  selectedBiomeId: BiomeId | null
+  unlockedBiomeIds: BiomeId[]
+  biomeRewardMultiplier: number
+  selectBiome: (id: BiomeId) => void
 }
 
 // Deterministic pack schedule (every 8th visit, every 4th in burst):
@@ -90,6 +95,25 @@ export function useIdleCombat({
   const [packInfo, setPackInfo] = useState<IdlePackInfo | null>(null)
   const [eliteName, setEliteName] = useState<string | null>(null)
   const [eliteElement, setEliteElement] = useState<Element | null>(null)
+  const [selectedBiomeId, setSelectedBiomeIdState] = useState<BiomeId | null>(null)
+  const biomeRewardRef = useRef<number>(1)
+
+  useEffect(() => {
+    if (!character) { setSelectedBiomeIdState(null); return }
+    setSelectedBiomeIdState(getSelectedBiomeId(character))
+  }, [character?.id, character?.seed])
+
+  const activeBiome = character ? getBiomeForCharacter(character) : { id: 'plains' as BiomeId, rewardMultiplier: 1 }
+  const activeBiomeId = activeBiome.id as BiomeId
+  const biomeRewardMultiplier = getBiomeRewardMultiplier(activeBiomeId)
+  biomeRewardRef.current = biomeRewardMultiplier
+  const unlockedBiomeIds = character ? getUnlockedBiomes(character).map((b) => b.id) : ['plains' as BiomeId]
+
+  const selectBiome = useCallback((id: BiomeId) => {
+    if (!character) return
+    setSelectedBiomeId(character, id)
+    setSelectedBiomeIdState(id)
+  }, [character])
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isPausedRef = useRef(isPaused)
@@ -172,9 +196,9 @@ export function useIdleCombat({
           streak * IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_PER_STEP,
           IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_CAP,
         )
-        const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
+        const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus) * biomeRewardRef.current)
 
-        const essenceGain = calculateIdleEssence(won, char.level, char.intelligence, char.focus) * xpBonusRef.current * getSurgeEssenceMultiplier(monster.def.id)
+        const essenceGain = calculateIdleEssence(won, char.level, char.intelligence, char.focus) * xpBonusRef.current * getSurgeEssenceMultiplier(monster.def.id) * biomeRewardRef.current
         totalEssenceGain += essenceGain
         if (won && monster.def.id) incrementBountyProgress(monster.def.id)
 
@@ -336,7 +360,7 @@ export function useIdleCombat({
   // Compute stable efficiency data — recalculates only when stats/level/equip change,
   // NOT on every idle tick (XP, essence, watermarks).
   const effDepKey = character
-    ? `${character.level}-${character.strength}-${character.vitality}-${character.dexterity}-${character.luck}-${character.intelligence}-${character.focus}-${JSON.stringify(character.equippedItems)}`
+    ? `${character.level}-${character.strength}-${character.vitality}-${character.dexterity}-${character.luck}-${character.intelligence}-${character.focus}-${JSON.stringify(character.equippedItems)}-${activeBiomeId}`
     : null
   useEffect(() => {
     if (!character) return
@@ -347,8 +371,9 @@ export function useIdleCombat({
     const eff = computeEfficiency(playerStats, monsterStats, effectiveChar.dexterity)
     effIntervalRef.current = eff.effectiveInterval
     xpBonusRef.current = eff.xpBonusMultiplier
-    const avgXp = calculateIdleXp(true, effectiveChar.level)
-    const avgEssencePerKill = calculateIdleEssence(true, effectiveChar.level, effectiveChar.intelligence, effectiveChar.focus) * eff.xpBonusMultiplier
+    const biomeReward = getBiomeRewardMultiplier(activeBiomeId)
+    const avgXp = calculateIdleXp(true, effectiveChar.level) * biomeReward
+    const avgEssencePerKill = calculateIdleEssence(true, effectiveChar.level, effectiveChar.intelligence, effectiveChar.focus) * eff.xpBonusMultiplier * biomeReward
     const fightsPerMinute = 60000 / eff.effectiveInterval
     const essencePerMinute = Math.round(avgEssencePerKill * fightsPerMinute * 100) / 100
     const speedEfficiency = calculateSpeedEfficiency(playerStats, monsterStats)
@@ -370,7 +395,7 @@ export function useIdleCombat({
       powerRatio: eff.powerRatio,
       efficiency: eff.efficiency,
       effectiveInterval: eff.effectiveInterval,
-      xpPerMinute: display.xpPerMinute,
+      xpPerMinute: xpMinWithBonus,
       essencePerMinute,
       streakBonus: display.streakBonus,
       streakMilestone: display.streakMilestone,
@@ -378,7 +403,7 @@ export function useIdleCombat({
       speedEfficiency,
       statEssenceMultiplier,
     })
-  }, [effDepKey])
+  }, [effDepKey, activeBiomeId])
 
   // Recompute remainingSeconds when XP or level changes.
   // No real-time tick — the value only updates on XP/rate events.
@@ -509,7 +534,7 @@ export function useIdleCombat({
           streak * IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_PER_STEP,
           IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_CAP,
         )
-        const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
+        const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus) * biomeRewardRef.current)
 
         setLastCombatResult(won ? 'win' : 'lose')
         setLastCombatXp(finalXp)
@@ -526,7 +551,7 @@ export function useIdleCombat({
 
         // Accumulate essence per kill (scales with power ratio + stats, like XP).
         // Enraged elites pay double essence (live-only spectacle bonus).
-        const essenceGain = calculateIdleEssence(won, running.level, running.intelligence, running.focus) * xpBonusRef.current * getSurgeEssenceMultiplier(member.def.id) * (member.elite ? IDLE_CONFIG.ELITE.ESSENCE_MULT : 1)
+        const essenceGain = calculateIdleEssence(won, running.level, running.intelligence, running.focus) * xpBonusRef.current * getSurgeEssenceMultiplier(member.def.id) * (member.elite ? IDLE_CONFIG.ELITE.ESSENCE_MULT : 1) * biomeRewardRef.current
         if (won) incrementBountyProgress(member.def.id)
 
         // Apply XP with updated idle stats and watermarks
@@ -726,9 +751,9 @@ export function useIdleCombat({
           streak * IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_PER_STEP,
           IDLE_CONFIG.EFFICIENCY.STREAK_BONUS_CAP,
         )
-        const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus))
+        const finalXp = Math.floor(baseXp * (1 + xpBonus) * (1 + streakBonus) * biomeRewardRef.current)
 
-        const essenceGain = calculateIdleEssence(won, char.level, char.intelligence, char.focus) * xpBonusRef.current * getSurgeEssenceMultiplier(monster.def.id)
+        const essenceGain = calculateIdleEssence(won, char.level, char.intelligence, char.focus) * xpBonusRef.current * getSurgeEssenceMultiplier(monster.def.id) * biomeRewardRef.current
         totalEssenceGain += essenceGain
         if (won) incrementBountyProgress(monster.def.id)
 
@@ -887,5 +912,10 @@ export function useIdleCombat({
     packInfo,
     eliteName,
     eliteElement,
+    activeBiomeId,
+    selectedBiomeId,
+    unlockedBiomeIds,
+    biomeRewardMultiplier,
+    selectBiome,
   }
 }

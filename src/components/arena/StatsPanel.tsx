@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { BIOMES, type BiomeId } from '../../data/biomes';
 import { Character } from '../../types/Character';
 import { STAT_TOOLTIPS } from '../../utils/statUtils';
 import { PixelIcon } from '../PixelIcon';
@@ -61,10 +62,43 @@ export const StatsPanel = memo(function StatsPanel({
 
       {idle.efficiencyData && (
         <div className="idle-efficiency">
+          {pveMode && (
+          <div className="biome-selector" role="radiogroup" aria-label="Idle biome">
+            <div className="biome-selector-head">
+              <span className="biome-selector-title">BIOME</span>
+              <span className="biome-selector-bonus">GAINS x{(idle.biomeRewardMultiplier ?? 1).toFixed(2)}</span>
+            </div>
+            <div className="biome-selector-options">
+              {BIOMES.map((biome) => {
+                const unlocked = (idle.unlockedBiomeIds ?? ['plains']).includes(biome.id as BiomeId);
+                const active = idle.activeBiomeId === biome.id;
+                return (
+                  <button
+                    key={biome.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    disabled={!unlocked}
+                    className={`biome-option ${active ? 'active' : ''} ${unlocked ? '' : 'locked'}`}
+                    onClick={() => unlocked && idle.onSelectBiome?.(biome.id as BiomeId)}
+                    title={unlocked ? `${biome.label} · x${biome.rewardMultiplier.toFixed(2)} rewards` : `${biome.label} (locked)`}
+                  >
+                    <span className="biome-option-name">{biome.label}</span>
+                    <span className="biome-option-mult">x{biome.rewardMultiplier.toFixed(2)}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          )}
           <div className="efficiency-primary">
             <span className="eff-rate eff-essence">
               <small>Essence/min</small>
               <strong>💎 ~{idle.efficiencyData.essencePerMinute.toFixed(2)}</strong>
+            </span>
+            <span className="eff-rate eff-xp">
+              <small>XP/min</small>
+              <strong>⚡ ~{Math.round(idle.efficiencyData.xpPerMinute ?? 0).toLocaleString()}</strong>
             </span>
             {remainingSeconds != null && (
               <span className="eff-rate eff-next">

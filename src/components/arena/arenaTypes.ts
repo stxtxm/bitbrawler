@@ -1,4 +1,5 @@
 import type { MonsterId } from '../../data/monsterAssets';
+import type { BiomeId } from '../../data/biomes';
 import type { IdleEfficiencyData, ScenePhase, IdlePackInfo } from '../../types/IdleCombat';
 import type { ItemStats, Element } from '../../types/Item';
 import type { StatKey } from '../../utils/statUtils';
@@ -37,6 +38,11 @@ export interface ArenaIdleViewModel {
   packInfo?: IdlePackInfo | null;
   eliteName?: string | null;
   eliteElement?: Element | null;
+  activeBiomeId?: BiomeId;
+  selectedBiomeId?: BiomeId | null;
+  unlockedBiomeIds?: BiomeId[];
+  biomeRewardMultiplier?: number;
+  onSelectBiome?: (id: BiomeId) => void;
 }
 
 export type InventoryStatKey = keyof ItemStats;

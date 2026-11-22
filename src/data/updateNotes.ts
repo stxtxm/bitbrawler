@@ -8,6 +8,20 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.9.0',
+    date: '2026-11-22',
+    title: '👑 Boss dédié, Frostpeak lvl 40, biomes au choix et PvP plus gratifiant',
+    changes: [
+      '📱 ONGLET ARÈNE — barre mobile PVE / PVP / BOSS en bas de l’écran : plus de flip/swipe, un tap suffit pour changer de mode.',
+      '👑 ÉCRAN BOSS DÉDIÉ — héros face au boss, barre de HP, duel de stats, estimation de victoire/défaite, dégâts moyens, attaques estimées et récompenses SLAY / DEFEAT avant d’attaquer.',
+      '🏔️ FROSTPEAK MONARCH (LVL 40) — nouveau boss glace/sommet débloqué après le 1er kill du Void Titan. Visible dès la victoire sur le Titan, verrouillé jusqu’au lvl 40 avec son propre design.',
+      '⚔️ CHOIX DU BOSS — tu peux t’entraîner sur le Void Titan pour accumuler des récompenses ou défier Frostpeak quand il est débloqué. Les récompenses de farm du Void Titan sont plus généreuses (consolation quotidienne relevée).',
+      '🗺️ BIOMES SÉLECTIONNABLES — choisis ton biome idle parmi ceux débloqués (Plains, Volcanic, Mountain, Frostpeak). Fini le retour forcé au premier biome : ton choix est mémorisé.',
+      '💎 GAINS PAR BIOME — chaque biome a son multiplicateur de récompenses ; l’Essence/min et l’XP/min s’affichent en temps réel selon biome, équipement et stats.',
+      '⚔️ PVP PLUS GRATIFIANT — les victoires PvP rapportent beaucoup plus, avec un bonus renforcé selon le niveau de l’adversaire et une essence de victoire qui récompense le risque.',
+    ],
+  },
+  {
     version: '5.8.2',
     date: '2026-10-19',
     title: '📖 Compendium — bestiaire et armurerie à collectionner sans toucher à la balance',
