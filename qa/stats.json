@@ -238837,5 +238837,346 @@
       "budget_blocked_price": null
     },
     "error_patterns": []
+  },
+  {
+    "date": "2026-11-22T22:57:39.584Z",
+    "run": "2026-11-22",
+    "character": "QA-END",
+    "character_action": "created",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [
+      {
+        "result": "defeat",
+        "xp": 34,
+        "fight_duration_ms": 11358,
+        "max_hp": 168,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 31.04,
+        "essence_before": 21.04,
+        "essence_gained": 10
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Lucky Charm",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 5,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 7,
+      "vit": 7,
+      "dex": 13,
+      "luk": 24,
+      "int": 8,
+      "foc": 7,
+      "fights": 0
+    },
+    "initial_level": 1,
+    "initial_xp": {
+      "current": 0,
+      "max": 120
+    },
+    "progression_curve": {
+      "level": 1,
+      "total_xp": 0,
+      "xp_for_next": 120,
+      "percent": 0
+    },
+    "initial_max_hp": 156,
+    "initial_equipment": [],
+    "initial_streak": 0,
+    "final_stats": {
+      "level": 2,
+      "xp": 49,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 7,
+      "vit": 7,
+      "dex": 13,
+      "luk": 24,
+      "int": 8,
+      "foc": 8,
+      "last xp": 42,
+      "fights": 3
+    },
+    "final_max_hp": 168,
+    "final_equipment": [],
+    "final_streak": 0,
+    "lootbox_equipment": [
+      {
+        "slot": "💍",
+        "name": "Lucky Charm",
+        "rarity": "COMMON"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 1,
+        "new_level": 2
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 20245,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "slime",
+        "wraith"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 88,
+      "xp_events": [
+        {
+          "time_ms": 3057,
+          "xp": 46,
+          "monster": "slime",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 14697,
+          "xp": 42,
+          "monster": "wraith",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": true,
+      "level_up_events": [
+        {
+          "time_ms": 13160,
+          "monster": "wraith"
+        },
+        {
+          "time_ms": 13673,
+          "monster": "wraith"
+        },
+        {
+          "time_ms": 14185,
+          "monster": "wraith"
+        },
+        {
+          "time_ms": 14697,
+          "monster": "wraith"
+        }
+      ],
+      "phase_transition_times_ms": [
+        509,
+        1527,
+        3057,
+        11631,
+        13160,
+        14697
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 46,
+        "essence": 0.35,
+        "monster": "slime"
+      },
+      {
+        "result": "victory",
+        "xp": 42,
+        "essence": 0.34,
+        "monster": "wraith"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.88,
+      "next_level_eta": "⬆ 1m 19s",
+      "power_ratio": "⚔ 0.55x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 0.96x",
+      "interval": "11.5s",
+      "streak_bonus": "🔥 3-win streak (+3%)"
+    },
+    "initial_essence": 20.35,
+    "final_essence": 31.04,
+    "essence": {
+      "before_idle": 20.35,
+      "after_idle": 21.04,
+      "per_fight": [
+        31.04
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": 31.04,
+      "flow": {
+        "idle_gained": 0.69,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": 10.69
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": true,
+      "skip_reason": "forge requires LVL 6"
+    },
+    "shop": {
+      "visited": false,
+      "offers_count": 0,
+      "purchased": false,
+      "offer_type": null,
+      "item_rarity": null,
+      "cost": null,
+      "essence_before": null,
+      "essence_after": null,
+      "skipped": true,
+      "skip_reason": "shop requires LVL 5",
+      "shop_data": {
+        "offers": [],
+        "purchased_offer": null,
+        "essence_after_purchase": null
+      }
+    },
+    "cohort": {
+      "name": "QA-FRESH",
+      "essence_budget": 50
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 2,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "ui_feature_checks": {
+      "arena_tabs": {
+        "pve": true,
+        "pvp": true,
+        "boss": true
+      },
+      "boss_ui": {
+        "visible": false,
+        "cta": "LOCKED LVL 20"
+      },
+      "biome_ui": {
+        "visible": true,
+        "bonus": "GAINS x1.00",
+        "options": [
+          {
+            "name": "Plains",
+            "mult": "x1.00",
+            "locked": false,
+            "selected": true
+          },
+          {
+            "name": "Volcanic",
+            "mult": "x1.20",
+            "locked": true,
+            "selected": false
+          },
+          {
+            "name": "Mountain",
+            "mult": "x1.35",
+            "locked": true,
+            "selected": false
+          },
+          {
+            "name": "Frostpeak",
+            "mult": "x1.50",
+            "locked": true,
+            "selected": false
+          },
+          {
+            "name": "Eclipse",
+            "mult": "x1.70",
+            "locked": true,
+            "selected": false
+          }
+        ],
+        "interaction": null
+      },
+      "idle_rates": {
+        "essence_per_min": "💎 ~1.88",
+        "xp_per_min": "⚡ ~274"
+      }
+    },
+    "errors": [],
+    "load_times_ms": {
+      "home": 1182,
+      "arena": 2840
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [],
+      "purchased_offer": null,
+      "essence_after_purchase": null
+    },
+    "error_patterns": []
   }
 ]
