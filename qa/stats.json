@@ -236564,5 +236564,334 @@
       "budget_blocked_price": null
     },
     "error_patterns": []
+  },
+  {
+    "date": "2026-11-22T05:01:27.503Z",
+    "run": "2026-11-22",
+    "character": "QA-MID",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fights": [],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Wooden Talisman",
+      "rarity": "RARE",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "ATTACK MONSTERS",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": false,
+      "fightsAvailable": 6,
+      "isResting": false,
+      "hasFightCta": false,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 9,
+      "vit": 8,
+      "dex": 9,
+      "luk": 10,
+      "int": 24,
+      "foc": 10,
+      "fights": 0
+    },
+    "initial_level": 4,
+    "initial_xp": {
+      "current": 1064,
+      "max": 1181
+    },
+    "progression_curve": {
+      "level": 4,
+      "total_xp": 2295,
+      "xp_for_next": 1181,
+      "percent": 90.1
+    },
+    "initial_max_hp": 216,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Bone Dagger",
+        "rarity": "COMMON"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 5,
+      "xp": 82,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 9,
+      "vit": 8,
+      "dex": 10,
+      "luk": 10,
+      "int": 26,
+      "foc": 10,
+      "fights": 0
+    },
+    "final_max_hp": 212,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Bone Dagger",
+        "rarity": "COMMON"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Bone Dagger",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Wooden Talisman",
+        "rarity": "RARE"
+      }
+    ],
+    "lootbox_streak": 62,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20264,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "slime",
+        "mossling"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 129,
+      "xp_events": [
+        {
+          "time_ms": 3080,
+          "xp": 66,
+          "monster": "slime",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15222,
+          "xp": 63,
+          "monster": "mossling",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": true,
+      "level_up_events": [
+        {
+          "time_ms": 1540,
+          "monster": "slime"
+        },
+        {
+          "time_ms": 2056,
+          "monster": "slime"
+        },
+        {
+          "time_ms": 2567,
+          "monster": "slime"
+        },
+        {
+          "time_ms": 3080,
+          "monster": "slime"
+        }
+      ],
+      "phase_transition_times_ms": [
+        511,
+        1540,
+        3080,
+        12158,
+        13691,
+        15222
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 66,
+        "essence": 0.78,
+        "monster": "slime"
+      },
+      {
+        "result": "victory",
+        "xp": 63,
+        "essence": 0.77,
+        "monster": "mossling"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 3.51,
+      "next_level_eta": "⬆ 6m 30s",
+      "power_ratio": "⚔ 0.55x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.16x",
+      "interval": "12.0s",
+      "streak_bonus": "🔥 61-win streak (+25%)"
+    },
+    "initial_essence": 41.75,
+    "final_essence": 18.42,
+    "essence": {
+      "before_idle": 41.75,
+      "after_idle": 43.3,
+      "per_fight": [],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": 48,
+      "shop_after": 18,
+      "final": 18.42,
+      "flow": {
+        "idle_gained": 1.55,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": 30,
+        "net_change": -23.33
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": true,
+      "skip_reason": "forge requires LVL 6"
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": null,
+      "cost": 30,
+      "essence_before": 48,
+      "essence_after": 18,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Worn Bracers",
+            "rarity": "COMMON",
+            "price": 30
+          },
+          {
+            "name": "Flint Knife",
+            "rarity": "RARE",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 18,
+        "essence_budget": 50,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-FRESH",
+      "essence_budget": 50
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 0,
+    "skipped_inventory": null,
+    "skipped_fights": [
+      {
+        "index": 1,
+        "reason": "not_attackable"
+      }
+    ],
+    "errors": [],
+    "load_times_ms": {
+      "home": 1302,
+      "arena": 641,
+      "arena_reload": 9
+    },
+    "skipped_summary": {
+      "not_attackable": 1
+    },
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Worn Bracers",
+          "rarity": "COMMON",
+          "price": 30
+        },
+        {
+          "name": "Flint Knife",
+          "rarity": "RARE",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 18,
+      "essence_budget": 50,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    },
+    "error_patterns": []
   }
 ]
