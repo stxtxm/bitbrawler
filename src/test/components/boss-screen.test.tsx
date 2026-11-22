@@ -126,7 +126,7 @@ describe('BossScreen', () => {
 
   it('hides the consolation rewards once the daily cap is reached', () => {
     renderBoss({
-      bossProgress: { ...progress, consolationCount: 3 },
+      bossProgress: { ...progress, consolationCount: 5 },
     });
 
     expect(screen.getByText('NO CONSOLATION LEFT TODAY')).toBeInTheDocument();
@@ -148,8 +148,8 @@ describe('BossScreen', () => {
       />,
     );
 
-    expect(screen.getAllByText('ABYSSAL MONARCH').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('FROSTPEAK MONARCH').length).toBeGreaterThan(0);
     expect(container.querySelector('.boss-screen')).toHaveAttribute('data-boss', 'abyssal_monarch');
-    expect(screen.getByText('ABYSSAL RAID')).toBeInTheDocument();
+    expect(screen.getByText('SUMMIT RAID')).toBeInTheDocument();
   });
 });

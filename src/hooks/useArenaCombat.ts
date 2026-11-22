@@ -32,6 +32,7 @@ type UseFight = (
   xpGained: number,
   opponentName: string,
   opponentId: string,
+  options?: { opponentLevel?: number },
 ) => Promise<FightResult | null>;
 
 type UseBossFight = (
@@ -100,17 +101,33 @@ export const useArenaCombat = ({
   const abyssalProgress = abyssalRaw ? ensureBossDailyReset(abyssalRaw) : null;
   const abyssalAttacksLeft = getBossAttacksLeft(abyssalRaw as any);
   const abyssalUnlocked = !!character && isBossUnlockedForCharacter(character, ABYSSAL_BOSS_ID);
-  const hasPendingFight = !!character?.pendingFight;
-  const autoMode = !!character?.autoMode;
+  const voidTitanKills = bossProgress?.totalKills ?? character?.bossProgress?.totalKills ?? 0;
+  const nextBossVisible = voidTitanKills > 0;
 
-  const pveMode = mode === 'pve' || mode === 'boss';
-  const bossMode = mode === 'boss';
-  const effectiveBossId: BossId = abyssalUnlocked ? ABYSSAL_BOSS_ID : BOSS_ID;
+  const [selectedBossId, setSelectedBossId] = useState<BossId>(BOSS_ID);
+  const bossSelectInitRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!character) return;
+    const key = `${character.id ?? character.seed}:${nextBossVisible}:${abyssalUnlocked}`;
+    if (bossSelectInitRef.current === key) return;
+    bossSelectInitRef.current = key;
+    setSelectedBossId(abyssalUnlocked || nextBossVisible ? ABYSSAL_BOSS_ID : BOSS_ID);
+  }, [character?.id, character?.seed, abyssalUnlocked, nextBossVisible]);
+
+  const effectiveBossId: BossId = selectedBossId === ABYSSAL_BOSS_ID && nextBossVisible
+    ? ABYSSAL_BOSS_ID
+    : BOSS_ID;
   const effectiveBossProgress = effectiveBossId === ABYSSAL_BOSS_ID ? abyssalProgress : bossProgress;
   const effectiveAttacksLeft = effectiveBossId === ABYSSAL_BOSS_ID ? abyssalAttacksLeft : bossAttacksLeft;
   const effectiveUnlocked = effectiveBossId === ABYSSAL_BOSS_ID ? abyssalUnlocked : bossUnlocked;
   const effectivePityReduction = getBossPityReductionPct(effectiveBossProgress ?? undefined, effectiveBossId);
   const effectivePityStacks = effectiveBossProgress?.pityStacks ?? 0;
+
+  const hasPendingFight = !!character?.pendingFight;
+  const autoMode = !!character?.autoMode;
+
+  const pveMode = mode === 'pve' || mode === 'boss';
+  const bossMode = mode === 'boss';
 
   const canFight = !!character
     && !isOfflineMode
@@ -125,6 +142,11 @@ export const useArenaCombat = ({
     setPreviewMatch(null);
     setPreviewLoading(false);
   }, []);
+
+  const onSelectBoss = useCallback((bossId: BossId) => {
+    if (bossId === ABYSSAL_BOSS_ID && !nextBossVisible) return;
+    setSelectedBossId(bossId);
+  }, [nextBossVisible]);
 
   const onFight = useCallback(async () => {
     if (!character || matchmaking || hasPendingFight || character.autoMode) return;
@@ -215,7 +237,9 @@ export const useArenaCombat = ({
             bossHpLeft: bossHpLeft ?? combatData.opponent.hp,
             bossId: bossIdForFight,
           })
-        : await useFight(won, xpGained, opponentName, combatData?.opponent.id ?? '');
+        : await useFight(won, xpGained, opponentName, combatData?.opponent.id ?? '', {
+            opponentLevel: combatData?.opponent.level,
+          });
       /* eslint-enable react-hooks/rules-of-hooks */
       if (wasBonusFight) markBurstBonusUsed();
       if (burstActive && combatData?.matchType !== 'boss') {
@@ -335,7 +359,13 @@ export const useArenaCombat = ({
     hasPendingFight,
     autoMode,
     isOfflineMode,
+    nextBossVisible,
+    abyssalUnlocked,
+    voidTitanKills,
+    selectedBossId: effectiveBossId,
+    onSelectBoss,
   }), [
+    abyssalUnlocked,
     autoMode,
     canFight,
     effectiveAttacksLeft,
@@ -346,8 +376,11 @@ export const useArenaCombat = ({
     isOfflineMode,
     matchmaking,
     mode,
+    nextBossVisible,
     onFight,
     onModeChange,
+    onSelectBoss,
+    voidTitanKills,
   ]);
 
   return {

@@ -259,9 +259,10 @@ describe('XP Utils', () => {
             vi.spyOn(Math, 'random').mockReturnValue(0.5);
         };
 
-        it('keeps the +50% cap on wins against a much stronger opponent', () => {
+        it('caps win level-diff bonus for much stronger opponents (generous PvP cap)', () => {
             fixVariance();
-            expect(calculateFightXp(true, 10, 99)).toBe(183);
+            // levelScaling 1.54 + diff cap 1.5, * 1.2 PvP prestige * 1.0 variance
+            expect(calculateFightXp(true, 10, 99)).toBe(328);
         });
 
         it('caps the loss bonus at +15% against a much stronger opponent', () => {
@@ -283,13 +284,13 @@ describe('XP Utils', () => {
             expect(calculateFightXp(false, 10, 1)).toBe(31);
         });
 
-        it('keeps a ~3x win/loss ratio at equal levels', () => {
+        it('keeps a generous win/loss ratio at equal levels', () => {
             fixVariance();
             const winXp = calculateFightXp(true, 10, 10);
             const lossXp = calculateFightXp(false, 10, 10);
 
-            expect(winXp / lossXp).toBeGreaterThanOrEqual(2.9);
-            expect(winXp / lossXp).toBeLessThanOrEqual(3.1);
+            expect(winXp / lossXp).toBeGreaterThanOrEqual(3.4);
+            expect(winXp / lossXp).toBeLessThanOrEqual(3.8);
         });
 
         it('keeps the win/loss ratio above 2.5x when losses face stronger opponents', () => {

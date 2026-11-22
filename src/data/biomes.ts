@@ -41,12 +41,12 @@ export const BIOMES: BiomeDef[] = [
   },
   {
     id: 'abyssal',
-    label: 'Abyssal Rift',
+    label: 'Frostpeak',
     unlockAt: (character) => {
       const abyssal = (character as any).bossProgresses?.abyssal_monarch ?? (character as any).abyssalBossProgress;
       if (abyssal) return true;
       const voidKills = (character as any).bossProgresses?.void_titan?.totalKills ?? character.bossProgress?.totalKills ?? 0;
-      return character.level >= 58 && voidKills > 0;
+      return character.level >= 40 && voidKills > 0;
     },
     monsterPool: ABYSSAL_MONSTER_POOL,
   },

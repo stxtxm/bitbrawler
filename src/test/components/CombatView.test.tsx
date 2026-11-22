@@ -350,7 +350,7 @@ describe('CombatView Interface', () => {
                 totalKills: 0,
                 firstEncounterAt: now,
                 pityStacks: 0,
-                consolationCount: GAME_RULES.BOSS.CONSOLATION_CAP - 1,
+                consolationCount: (GAME_RULES.BOSS_TIERS.void_titan.CONSOLATION_CAP ?? GAME_RULES.BOSS.CONSOLATION_CAP) - 1,
                 totalDamageDealt: 0,
             },
         };
@@ -371,7 +371,7 @@ describe('CombatView Interface', () => {
         act(() => { vi.advanceTimersByTime(3000); });
 
         expect(screen.queryByText('BOSS REMAINS')).toBeNull();
-        expect(screen.getByText(`+${GAME_RULES.BOSS.CONSOLATION_XP} XP`)).toBeInTheDocument();
+        expect(screen.getByText(`+${GAME_RULES.BOSS_TIERS.void_titan.CONSOLATION_XP} XP`)).toBeInTheDocument();
 
         vi.useRealTimers();
         vi.restoreAllMocks();
@@ -400,7 +400,7 @@ describe('CombatView Interface', () => {
                 totalKills: 0,
                 firstEncounterAt: now,
                 pityStacks: 0,
-                consolationCount: GAME_RULES.BOSS.CONSOLATION_CAP,
+                consolationCount: GAME_RULES.BOSS_TIERS.void_titan.CONSOLATION_CAP,
                 totalDamageDealt: 0,
             },
         };
@@ -423,7 +423,7 @@ describe('CombatView Interface', () => {
         act(() => { vi.advanceTimersByTime(3000); });
 
         expect(screen.getByText('BOSS REMAINS')).toBeInTheDocument();
-        expect(screen.queryByText(`+${GAME_RULES.BOSS.CONSOLATION_XP} XP`)).toBeNull();
+        expect(screen.queryByText(`+${GAME_RULES.BOSS_TIERS.void_titan.CONSOLATION_XP} XP`)).toBeNull();
 
         await act(async () => {
             fireEvent.click(screen.getByText('CONTINUE'));

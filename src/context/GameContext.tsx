@@ -77,7 +77,7 @@ interface GameContextType {
     xpGained: number,
     opponentName: string,
     opponentId: string,
-    options?: { consumeEnergy?: boolean; characterOverride?: Character }
+    options?: { consumeEnergy?: boolean; characterOverride?: Character; opponentLevel?: number }
   ) => Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null>;
   useBossFight: (
     won: boolean,
@@ -664,7 +664,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     xpGained: number,
     opponentName: string,
     opponentId: string,
-    options?: { consumeEnergy?: boolean; characterOverride?: Character }
+    options?: { consumeEnergy?: boolean; characterOverride?: Character; opponentLevel?: number }
   ): Promise<{ xpGained: number; leveledUp: boolean; levelsGained: number; newLevel: number } | null> => {
     // Prefer charRef.current (always forced by every persistCharacter) over the
     // React state: a stale activeCharacter here would let a PvP fight write a
@@ -706,9 +706,22 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     if (recoveryReward) recordRecovery(baseCharacter);
     const comebackEssence = secondWindEssence + (recoveryReward?.essence ?? 0);
 
+    // PvP victory essence: a real win should feel rewarding on its own. The
+    // payout scales with the opponent's level and spikes when you beat someone
+    // stronger — taking a risk is worth it.
+    const opponentLevel = options?.opponentLevel;
+    const pvpWinEssence = won && opponentLevel !== undefined
+      ? Math.min(
+          45,
+          8
+            + Math.floor(opponentLevel * 0.6)
+            + Math.max(0, opponentLevel - baseCharacter.level) * 2,
+        )
+      : 0;
+
     let updatedChar: Character = normalizeCharacter({
       ...xpResult.updatedCharacter,
-      essence: (xpResult.updatedCharacter.essence ?? baseCharacter.essence ?? 0) + comebackEssence,
+      essence: (xpResult.updatedCharacter.essence ?? baseCharacter.essence ?? 0) + comebackEssence + pvpWinEssence,
       fightsLeft: Math.max(0, (baseCharacter.fightsLeft || 0) - (shouldConsumeEnergy ? 1 : 0)),
       wins: won ? (baseCharacter.wins || 0) + 1 : (baseCharacter.wins || 0),
       losses: won ? (baseCharacter.losses || 0) : (baseCharacter.losses || 0) + 1,
@@ -833,7 +846,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
 
     const now = Date.now();
     const shouldConsume = options?.consumeEnergy ?? true;
-    const bossId: BossId = options?.bossId ?? (bossName === 'ABYSSAL MONARCH' ? ABYSSAL_BOSS_ID : BOSS_ID);
+    const bossId: BossId = options?.bossId ?? (bossName === 'ABYSSAL MONARCH' || bossName === 'FROSTPEAK MONARCH' ? ABYSSAL_BOSS_ID : BOSS_ID);
 
     // Progress starts fresh on first encounter; daily gauge refills at reset.
     const existingProgress = getBossProgressForId(baseCharacter, bossId) ?? (bossId === BOSS_ID ? baseCharacter.bossProgress : (baseCharacter as any).abyssalBossProgress);
@@ -1243,7 +1256,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         const xpGained = Math.floor(calculateFightXp(won, matchedChar.level, opponent.level) * getActiveWinXpMultiplier(matchedChar, won));
         await useFight(won, xpGained, opponent.name, opponent.id || '', {
           consumeEnergy: false,
-          characterOverride: matchedChar
+          characterOverride: matchedChar,
+          opponentLevel: opponent.level,
         });
         return;
       }
@@ -1255,7 +1269,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         const xpGained = Math.floor(calculateFightXp(won, character.level, opponent.level) * getActiveWinXpMultiplier(character, won));
         await useFight(won, xpGained, opponent.name, opponent.id || '', {
           consumeEnergy: false,
-          characterOverride: character
+          characterOverride: character,
+          opponentLevel: opponent.level,
         });
       }
     } catch (error: any) {

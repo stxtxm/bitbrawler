@@ -41,7 +41,7 @@ describe('LiveOpsHud', () => {
     render(<LiveOpsHud activeSurge="abyssal" burstActive burstEndsAt={endsAt} surgeModifier={1.25} />)
     expect(screen.getByTestId('liveops-surge-badge')).toBeInTheDocument()
     expect(screen.getByTestId('liveops-burst-countdown')).toBeInTheDocument()
-    expect(screen.getByText(/Abyssal Rift/)).toBeInTheDocument()
+    expect(screen.getByText(/Frostpeak/)).toBeInTheDocument()
   })
 
   it('hides burst when burstActive false even if endsAt set', () => {

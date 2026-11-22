@@ -256,7 +256,7 @@ describe('getBossKillXp / getBossRewards', () => {
 
   it('grants phase-aware essence and consolation XP on kill and defeat (capped)', () => {
     const phase1 = makePlayer({ level: 30 });
-    const consolationXp = GAME_RULES.BOSS.CONSOLATION_XP;
+    const consolationXp = getBossConsolationXp(BOSS_ID);
     expect(getBossRewards(phase1, true)).toEqual({
       xpGained: getBossKillXp(phase1),
       essenceGained: 30,
@@ -278,13 +278,13 @@ describe('getBossKillXp / getBossRewards', () => {
       totalKills: 0,
       firstEncounterAt: Date.now(),
       pityStacks: 6,
-      consolationCount: GAME_RULES.BOSS.CONSOLATION_CAP,
+      consolationCount: GAME_RULES.BOSS_TIERS.void_titan.CONSOLATION_CAP,
     };
     expect(getBossRewards(makePlayer({ level: 30 }), false, cappedProgress)).toEqual({ xpGained: 0, essenceGained: 0 });
   });
 
   it('exposes the consolation XP payout per tier', () => {
-    expect(getBossConsolationXp()).toBe(GAME_RULES.BOSS.CONSOLATION_XP);
+    expect(getBossConsolationXp()).toBe(GAME_RULES.BOSS_TIERS.void_titan.CONSOLATION_XP);
     expect(getBossConsolationXp('abyssal_monarch')).toBeGreaterThan(0);
   });
 });
@@ -332,14 +332,16 @@ describe('boss pity & consolation', () => {
     const player = makePlayer({ level: 65 });
     const now = Date.UTC(2026, 0, 15, 12, 0, 0);
     let progress = createBossProgress(player, now);
-    for (let i = 0; i < GAME_RULES.BOSS.CONSOLATION_CAP; i++) {
+    const cap = GAME_RULES.BOSS_TIERS.void_titan.CONSOLATION_CAP;
+    const consolation = getBossRewards(player, false, progress, now).essenceGained;
+    for (let i = 0; i < cap; i++) {
       const rewards = getBossRewards(player, false, progress, now);
-      expect(rewards.essenceGained).toBe(GAME_RULES.BOSS.CONSOLATION_ESSENCE);
+      expect(rewards.essenceGained).toBe(consolation);
       progress = resolveBossAttack(player, progress, progress.bossHp - 10, false, now).progress;
     }
     expect(getBossRewards(player, false, progress, now).essenceGained).toBe(0);
     const nextDay = now + 24 * 60 * 60 * 1000;
-    expect(getBossRewards(player, false, progress, nextDay).essenceGained).toBe(GAME_RULES.BOSS.CONSOLATION_ESSENCE);
+    expect(getBossRewards(player, false, progress, nextDay).essenceGained).toBe(consolation);
   });
 
   it('buildBossCharacter respects pityStacks for maxHp (stepwise)', () => {

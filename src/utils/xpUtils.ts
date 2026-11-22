@@ -7,7 +7,6 @@ const BASE_XP = 120;
 const EXPONENT = 1.65;
 const EARLY_SHIFT = 0;
 const MAX_LEVEL = 99;
-const WIN_DIFF_BONUS_CAP = 0.5;
 const LOSS_DIFF_BONUS_CAP = 0.15;
 const DIFF_BONUS_FLOOR = -0.5;
 
@@ -64,6 +63,10 @@ export function getXpProgress(character: Character) {
 /**
  * Calculate XP gained from a fight using centralized rules.
  * Combines player-level scaling, opponent level difference bonus, and small random variance.
+ *
+ * PvP wins (opponentLevel known) are intentionally more generous: beating a
+ * real opponent is a meaningful achievement, and the reward scales strongly
+ * with the opponent's level so high-risk fights feel worth it.
  */
 export function calculateFightXp(
     won: boolean,
@@ -74,18 +77,26 @@ export function calculateFightXp(
 
     const levelScaling = 1 + (playerLevel - 1) * 0.06;
 
-    // Opponent level difference bonus (capped to prevent exploitation)
+    // Opponent level difference bonus (capped to prevent exploitation).
+    // PvP wins scale harder with opponent level: taking down a stronger foe is
+    // a real accomplishment and should pay accordingly.
     let diffBonus = 0;
     if (opponentLevel !== undefined) {
-        diffBonus = (opponentLevel - playerLevel) * 0.1;
-        const diffBonusCap = won ? WIN_DIFF_BONUS_CAP : LOSS_DIFF_BONUS_CAP;
+        const coeff = won ? 0.18 : 0.1;
+        diffBonus = (opponentLevel - playerLevel) * coeff;
+        const diffBonusCap = won ? 1.5 : LOSS_DIFF_BONUS_CAP;
         diffBonus = Math.max(DIFF_BONUS_FLOOR, Math.min(diffBonusCap, diffBonus));
     }
+
+    // PvP victory prestige: known-opponent wins get a flat generosity boost on
+    // top of the level-diff scaling. No-opponent calls (idle/legacy) keep the
+    // historical baseline.
+    const pvpPrestige = won && opponentLevel !== undefined ? 1.2 : 1;
 
     // Small random variance (+/- 10%)
     const variance = 0.9 + Math.random() * 0.2;
 
-    return Math.floor(baseXp * (levelScaling + diffBonus) * variance);
+    return Math.floor(baseXp * (levelScaling + diffBonus) * pvpPrestige * variance);
 }
 
 /**

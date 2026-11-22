@@ -2974,6 +2974,71 @@
     color: $accent-gold;
 }
 
+// Sélecteur de boss : s'entraîner sur le premier ou défier le suivant.
+.boss-select {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.boss-select-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    min-height: 52px;
+    padding: 6px 8px;
+    background: #0b0b12;
+    border: 2px solid #2a2a36;
+    color: #b0b0bf;
+    font-family: $font-pixel;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+
+    &:active { transform: translateY(1px); }
+
+    &.active {
+        border-color: var(--boss-accent);
+        background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(0,0,0,0.1));
+        box-shadow: inset 0 0 14px rgba(255,255,255,0.04), 0 0 10px rgba(0,0,0,0.3);
+        color: #fff;
+    }
+
+    &.locked {
+        opacity: 0.88;
+    }
+
+    &.locked.active {
+        border-color: #77778a;
+    }
+}
+
+.boss-select-name {
+    font-size: 0.46rem;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+}
+
+.boss-select-sub {
+    font-size: 0.34rem;
+    letter-spacing: 0.5px;
+    color: #7f7f92;
+}
+
+.boss-select-card.active .boss-select-sub {
+    color: var(--boss-accent);
+}
+
+.boss-select-kills {
+    position: absolute;
+    top: 5px;
+    right: 6px;
+    font-size: 0.34rem;
+    color: $accent-gold;
+}
+
 // Scène : autel du vide, runes et poussière d'étoiles.
 .boss-stage {
     position: relative;
@@ -3002,9 +3067,9 @@
 
 .boss-screen[data-boss="abyssal_monarch"] .boss-stage {
     background:
-        radial-gradient(ellipse at 72% 46%, rgba(42, 240, 255, 0.26) 0%, transparent 55%),
-        radial-gradient(ellipse at 18% 82%, rgba(42, 74, 136, 0.35) 0%, transparent 55%),
-        linear-gradient(180deg, #010208 0%, #04101c 55%, #071a2a 100%);
+        radial-gradient(ellipse at 72% 42%, rgba(127, 220, 255, 0.24) 0%, transparent 55%),
+        radial-gradient(ellipse at 22% 80%, rgba(180, 255, 235, 0.12) 0%, transparent 55%),
+        linear-gradient(180deg, #040912 0%, #091423 55%, #142236 100%);
 }
 
 .boss-stage-sky {
@@ -3039,8 +3104,8 @@
 }
 
 .boss-screen[data-boss="abyssal_monarch"] .boss-rune-ring {
-    border-color: rgba(42, 240, 255, 0.32);
-    box-shadow: 0 0 34px rgba(42, 240, 255, 0.16), inset 0 0 34px rgba(42, 240, 255, 0.1);
+    border-color: rgba(127, 220, 255, 0.32);
+    box-shadow: 0 0 34px rgba(127, 220, 255, 0.16), inset 0 0 34px rgba(127, 220, 255, 0.1);
 }
 
 .boss-rune-ring.inner {
@@ -3159,7 +3224,7 @@
 }
 
 .boss-screen[data-boss="abyssal_monarch"] .boss-aura {
-    background: radial-gradient(circle, rgba(42, 240, 255, 0.32) 0%, rgba(42, 240, 255, 0.08) 48%, transparent 68%);
+    background: radial-gradient(circle, rgba(127, 220, 255, 0.34) 0%, rgba(223, 244, 255, 0.08) 48%, transparent 68%);
 }
 
 .boss-vs-badge {

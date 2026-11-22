@@ -172,42 +172,50 @@ export const VOID_ABYSS_BACKGROUND: BackgroundDef = {
 
 export const ABYSSAL_RIFT_BACKGROUND: BackgroundDef = {
     id: 'abyssal_rift',
-    label: 'ABYSSAL MONARCH',
-    accent: '#f0c040',
-    accentAlt: '#2af0ff',
+    label: 'FROSTPEAK MONARCH',
+    accent: '#7fdcff',
+    accentAlt: '#eafaff',
     gradient:
-        'radial-gradient(130% 90% at 50% 12%, #1a2a48 0%, #0e1430 32%, #060a1e 62%, #020410 100%)',
+        'radial-gradient(120% 80% at 50% 18%, rgba(127, 220, 255, 0.20) 0%, rgba(127, 220, 255, 0) 58%),' +
+        'radial-gradient(140% 120% at 50% 115%, #233a52 0%, #142236 35%, #091423 70%, #040912 100%)',
     elements: [
-        // Abyssal trench halo — deep teal rift behind the monarch.
-        { type: 'halo', x: 50, y: 28, size: 180, color: 'rgba(42, 240, 255, 0.22)', speed: 5 },
-        { type: 'halo', x: 50, y: 28, size: 96, color: 'rgba(240, 192, 64, 0.18)', speed: 3.5, delay: 0.9 },
-        // Trench walls — obsidian cliffs flanking the arena.
-        { type: 'peak', x: 12, y: 92, size: 140, height: 210, color: '#080a18', speed: 8, delay: 0.3 },
-        { type: 'peak', x: 88, y: 92, size: 140, height: 210, color: '#080a18', speed: 8.2, delay: 0.7 },
-        { type: 'peak', x: 50, y: 96, size: 260, height: 120, color: '#0a0e24', speed: 9, delay: 0.5 },
-        // Bioluminescent fissures — teal veins in the trench walls.
-        { type: 'crack', x: 18, y: 62, size: 6, width: 4, height: 80, color: 'rgba(42, 240, 255, 0.55)', glow: 'rgba(42,240,255,0.4)', speed: 2.8, rotate: -4 },
-        { type: 'crack', x: 82, y: 58, size: 6, width: 4, height: 90, color: 'rgba(42, 240, 255, 0.50)', glow: 'rgba(42,240,255,0.35)', speed: 3.1, rotate: 5 },
-        { type: 'crack', x: 50, y: 72, size: 5, width: 60, color: 'rgba(240, 192, 64, 0.35)', glow: 'rgba(240,192,64,0.25)', speed: 3.4, rotate: 2 },
-        // Starfield — sparse, cold, distant.
-        { type: 'star', x: 14, y: 10, size: 2, color: '#aaf0ff', delay: 0.4 },
-        { type: 'star', x: 32, y: 16, size: 2, color: '#f0d080', delay: 1.1 },
-        { type: 'star', x: 48, y: 8, size: 3, color: '#7af0ff', delay: 0.7 },
-        { type: 'star', x: 66, y: 14, size: 2, color: '#aaf0ff', delay: 1.6 },
-        { type: 'star', x: 84, y: 10, size: 2, color: '#f0d080', delay: 0.9 },
-        { type: 'star', x: 78, y: 30, size: 2, color: '#7af0ff', delay: 2.0 },
-        // Abyssal rocks — obsidian debris.
-        { type: 'rock', x: 8, y: 84, size: 18, color: '#0c1028', speed: 6.5, delay: 0.6 },
-        { type: 'rock', x: 92, y: 86, size: 16, color: '#0c1028', speed: 7, delay: 1.1 },
-        { type: 'rock', x: 50, y: 92, size: 10, width: 220, height: 18, color: '#0e142e', speed: 6, delay: 0.4 },
-        // Ancient runes — amber glyphs on the trench floor.
-        { type: 'rune', x: 26, y: 88, size: 9, color: '#f0c040', glow: 'rgba(240,192,64,0.6)', speed: 2.6, delay: 0.3 },
-        { type: 'rune', x: 74, y: 90, size: 9, color: '#f0c040', glow: 'rgba(240,192,64,0.6)', speed: 2.6, delay: 1.4 },
-        { type: 'rune', x: 50, y: 92, size: 7, color: '#2af0ff', glow: 'rgba(42,240,255,0.5)', speed: 2.9, delay: 0.8 },
-        // Wisps — souls trapped in the abyss.
-        { type: 'wisp', x: 34, y: 68, size: 4, color: '#2af0ff', glow: 'rgba(42,240,255,0.7)', speed: 10, delay: 0.7 },
-        { type: 'wisp', x: 66, y: 72, size: 5, color: '#f0c040', glow: 'rgba(240,192,64,0.6)', speed: 11, delay: 1.9 },
-        { type: 'wisp', x: 50, y: 50, size: 3, color: '#aaf0ff', glow: 'rgba(170,240,255,0.6)', speed: 9, delay: 1.2 },
+        // Aurora haze behind the summit.
+        { type: 'halo', x: 50, y: 24, size: 190, color: 'rgba(127, 220, 255, 0.22)', speed: 5.5 },
+        { type: 'halo', x: 38, y: 18, size: 110, color: 'rgba(180, 255, 235, 0.14)', speed: 4.2, delay: 0.8 },
+        { type: 'halo', x: 64, y: 20, size: 100, color: 'rgba(210, 235, 255, 0.14)', speed: 4.8, delay: 1.3 },
+        // Snow-capped mountain range.
+        { type: 'peak', x: 18, y: 92, size: 160, height: 190, color: '#16283b', speed: 9, delay: 0.2 },
+        { type: 'peak', x: 82, y: 92, size: 160, height: 185, color: '#142437', speed: 9.2, delay: 0.6 },
+        { type: 'peak', x: 50, y: 96, size: 300, height: 150, color: '#1b3148', speed: 10, delay: 0.4 },
+        { type: 'peak', x: 34, y: 88, size: 110, height: 115, color: '#203a54', speed: 8.6, delay: 1.0 },
+        { type: 'peak', x: 66, y: 90, size: 115, height: 120, color: '#1f3851', speed: 8.8, delay: 1.2 },
+        // Snow caps (bright rocky highlights).
+        { type: 'rock', x: 50, y: 62, size: 8, width: 86, height: 10, color: '#dff4ff', speed: 7, delay: 0.3 },
+        { type: 'rock', x: 35, y: 68, size: 6, width: 52, height: 8, color: '#d6eefb', speed: 7.2, delay: 0.7 },
+        { type: 'rock', x: 66, y: 67, size: 6, width: 54, height: 8, color: '#d8f0fc', speed: 7.1, delay: 0.9 },
+        // Icy ground.
+        { type: 'rock', x: 50, y: 94, size: 10, width: 480, height: 34, color: '#17293b', speed: 6, delay: 0.4 },
+        { type: 'rock', x: 50, y: 90, size: 8, width: 260, height: 12, color: '#20364c', speed: 6.5, delay: 0.8 },
+        // Ice fissures.
+        { type: 'crack', x: 28, y: 88, size: 5, width: 34, color: 'rgba(127, 220, 255, 0.55)', glow: 'rgba(127,220,255,0.35)', speed: 2.8, delay: 0.4, rotate: -10 },
+        { type: 'crack', x: 72, y: 90, size: 5, width: 30, color: 'rgba(180, 245, 255, 0.5)', glow: 'rgba(180,245,255,0.3)', speed: 3.0, delay: 1.2, rotate: 8 },
+        { type: 'crack', x: 50, y: 84, size: 4, width: 42, color: 'rgba(234, 250, 255, 0.38)', glow: 'rgba(234,250,255,0.22)', speed: 3.2, delay: 0.9, rotate: 0 },
+        // Cold stars.
+        { type: 'star', x: 10, y: 10, size: 2, color: '#eafaff', delay: 0.3 },
+        { type: 'star', x: 24, y: 16, size: 2, color: '#7fdcff', delay: 1.0 },
+        { type: 'star', x: 44, y: 8, size: 3, color: '#ffffff', delay: 0.6 },
+        { type: 'star', x: 58, y: 14, size: 2, color: '#b8ecff', delay: 1.5 },
+        { type: 'star', x: 76, y: 9, size: 2, color: '#eafaff', delay: 0.9 },
+        { type: 'star', x: 90, y: 18, size: 3, color: '#7fdcff', delay: 1.8 },
+        // Snow wisps / drifting frost.
+        { type: 'wisp', x: 22, y: 54, size: 4, color: '#dff4ff', glow: 'rgba(223,244,255,0.7)', speed: 10, delay: 0.5 },
+        { type: 'wisp', x: 78, y: 58, size: 4, color: '#b8ecff', glow: 'rgba(184,236,255,0.65)', speed: 11, delay: 1.6 },
+        { type: 'wisp', x: 50, y: 42, size: 3, color: '#eafaff', glow: 'rgba(234,250,255,0.6)', speed: 9, delay: 2.2 },
+        { type: 'wisp', x: 38, y: 74, size: 3, color: '#7fdcff', glow: 'rgba(127,220,255,0.55)', speed: 12, delay: 1.1 },
+        { type: 'wisp', x: 64, y: 76, size: 3, color: '#7fdcff', glow: 'rgba(127,220,255,0.55)', speed: 12.5, delay: 0.4 },
+        // Frozen runes.
+        { type: 'rune', x: 30, y: 90, size: 8, color: '#7fdcff', glow: 'rgba(127,220,255,0.7)', speed: 2.8, delay: 0.3 },
+        { type: 'rune', x: 70, y: 91, size: 8, color: '#7fdcff', glow: 'rgba(127,220,255,0.7)', speed: 2.8, delay: 1.4 },
     ],
 };
 
