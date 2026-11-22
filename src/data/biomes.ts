@@ -1,7 +1,7 @@
 import { Character } from '../types/Character';
 import { MONSTER_ASSETS, MonsterId } from './monsterAssets';
 
-export type BiomeId = 'plains' | 'volcanic' | 'abyssal' | 'mountain';
+export type BiomeId = 'plains' | 'volcanic' | 'mountain' | 'abyssal' | 'eclipse';
 
 const MOUNTAIN_MONSTER_POOL: MonsterId[] = ['goblin', 'ogre', 'skeleton', 'slime', 'wolf'];
 
@@ -17,6 +17,7 @@ export type BiomeDef = {
 
 const VOLCANIC_MONSTER_POOL: MonsterId[] = ['magma_golem', 'lava_hound', 'cinder_imp'];
 const ABYSSAL_MONSTER_POOL: MonsterId[] = ['chimera', 'dragon_spawn', 'wraith'];
+const ECLIPSE_MONSTER_POOL: MonsterId[] = ['chimera', 'dragon_spawn', 'wraith', 'magma_golem'];
 const PLAINS_MONSTER_POOL: MonsterId[] = MONSTER_ASSETS
   .filter((monster) => !VOLCANIC_MONSTER_POOL.includes(monster.id))
   .map((monster) => monster.id);
@@ -26,6 +27,15 @@ function getVoidTitanKills(character: Character): number {
   return (
     anyChar.bossProgresses?.void_titan?.totalKills ??
     character.bossProgress?.totalKills ??
+    0
+  );
+}
+
+function getFrostpeakKills(character: Character): number {
+  const anyChar = character as any;
+  return (
+    anyChar.bossProgresses?.abyssal_monarch?.totalKills ??
+    anyChar.abyssalBossProgress?.totalKills ??
     0
   );
 }
@@ -54,17 +64,22 @@ export const BIOMES: BiomeDef[] = [
   {
     id: 'abyssal',
     label: 'Frostpeak',
-    unlockAt: (character) => {
-      const abyssal = (character as any).bossProgresses?.abyssal_monarch ?? (character as any).abyssalBossProgress;
-      if (abyssal) return true;
-      return character.level >= 40 && getVoidTitanKills(character) > 0;
-    },
+    // Débloqué uniquement après avoir battu le 2e boss (Frostpeak Monarch, lvl 40).
+    unlockAt: (character) => getFrostpeakKills(character) > 0,
     monsterPool: ABYSSAL_MONSTER_POOL,
     rewardMultiplier: 1.5,
   },
+  {
+    id: 'eclipse',
+    label: 'Eclipse',
+    // Préparé : débloqué par le prochain boss (lvl 60). Inaccessible pour l'instant.
+    unlockAt: () => false,
+    monsterPool: ECLIPSE_MONSTER_POOL,
+    rewardMultiplier: 1.7,
+  },
 ];
 
-const BIOME_ORDER: BiomeId[] = ['abyssal', 'mountain', 'volcanic', 'plains'];
+const BIOME_ORDER: BiomeId[] = ['eclipse', 'abyssal', 'mountain', 'volcanic', 'plains'];
 
 export function isBiomeUnlocked(character: Character, biomeId: BiomeId): boolean {
   const biome = BIOMES.find((b) => b.id === biomeId);

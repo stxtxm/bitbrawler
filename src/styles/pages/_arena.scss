@@ -1352,6 +1352,14 @@
     animation: sceneSwap 0.28s ease;
 }
 
+// Transition douce au changement de biome (terrain + ambiance).
+.scene-biome-swap {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    animation: sceneSwap 0.35s ease;
+}
+
 .scene-lighting {
     position: absolute;
     inset: 0;

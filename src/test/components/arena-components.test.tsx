@@ -135,6 +135,41 @@ describe('arena extracted components', () => {
     expect(screen.getByText('💀 9 slain')).toBeInTheDocument();
   });
 
+  it('StatsPanel shows biome selector with locked/unlocked states and real-time rates', () => {
+    const onSelectBiome = vi.fn();
+    render(
+      <StatsPanel
+        effectiveCharacter={character}
+        pveMode
+        statOptions={statOptions}
+        idle={{
+          ...idle,
+          activeBiomeId: 'plains',
+          selectedBiomeId: 'plains',
+          unlockedBiomeIds: ['plains', 'volcanic'],
+          biomeRewardMultiplier: 1,
+          onSelectBiome,
+          efficiencyData: {
+            ...idle.efficiencyData!,
+            xpPerMinute: 120,
+            essencePerMinute: 2.5,
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByRole('radiogroup', { name: 'Idle biome' })).toBeInTheDocument();
+    expect(screen.getByText('XP/min')).toBeInTheDocument();
+    expect(screen.getByText(/~120/)).toBeInTheDocument();
+    expect(screen.getByText(/~2.50/)).toBeInTheDocument();
+    const volcanic = screen.getByRole('radio', { name: /Volcanic/i });
+    expect(volcanic).not.toBeDisabled();
+    fireEvent.click(volcanic);
+    expect(onSelectBiome).toHaveBeenCalledWith('volcanic');
+    const mountain = screen.getByRole('radio', { name: /Mountain/i });
+    expect(mountain).toBeDisabled();
+  });
+
   it('SceneBox switches between PvE runner and PvP avatar', () => {
     const { container, rerender } = render(
       <SceneBox character={character} effectiveCharacter={character} pveMode idle={idle} />,

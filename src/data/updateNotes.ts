@@ -8,6 +8,19 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.9.1',
+    date: '2026-11-22',
+    title: '🔒 Biomes verrouillés, transitions plus vivantes et QA renforcée',
+    changes: [
+      '🔒 BIOMES VERROUILLÉS — impossible de sélectionner un biome non débloqué (UI + garde côté logique).',
+      '🏔️ FROSTPEAK BIOME — débloqué uniquement après avoir vaincu le 2e boss (Frostpeak Monarch lvl 40), comme prévu dans la progression.',
+      '🌒 BIOME ECLIPSE PRÉPARÉ — slot du dernier biome ajouté, verrouillé jusqu’au futur boss lvl 60 (préparation de la progression endgame).',
+      '🌄 TRANSITION BIOME — changer de biome en idle met à jour immédiatement l’ambiance et fait apparaître un monstre du nouveau biome, avec une transition visuelle douce.',
+      '🔊 SOUND DESIGN — clics/boutons plus clairs et impacts de combat plus punchy en PvP comme en boss (hit/crit/magie/contre/raté).',
+      '🧪 QA & TESTS — le bot QA vérifie désormais les onglets PVE/PVP/BOSS, le sélecteur boss Frostpeak/lock, le sélecteur biome verrouillé/débloqué et les gains/min ; tests unitaires/composants renforcés.',
+    ],
+  },
+  {
     version: '5.9.0',
     date: '2026-11-22',
     title: '👑 Boss dédié, Frostpeak lvl 40, biomes au choix et PvP plus gratifiant',

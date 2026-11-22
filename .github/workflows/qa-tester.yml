@@ -100,6 +100,32 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+      - name: Summarize QA feature checks
+        if: always()
+        run: |
+          node - <<'NODE'
+          const fs = require('fs');
+          try {
+            const stats = JSON.parse(fs.readFileSync('qa/stats.json', 'utf8'));
+            const last = stats[stats.length - 1];
+            if (!last) { console.log('No QA stats record found'); process.exit(0); }
+            const checks = last.ui_feature_checks;
+            console.log('QA feature checks:', JSON.stringify(checks, null, 2));
+            if (!checks) {
+              console.log('::warning::No ui_feature_checks in latest QA run (older bot or early failure)');
+              process.exit(0);
+            }
+            const missing = [];
+            if (!checks.arena_tabs?.pve || !checks.arena_tabs?.pvp || !checks.arena_tabs?.boss) missing.push('arena_tabs');
+            if (!checks.biome_ui?.visible) missing.push('biome_ui');
+            if (!checks.idle_rates?.essence_per_min || !checks.idle_rates?.xp_per_min) missing.push('idle_rates');
+            if (missing.length) console.log('::warning::QA feature checks missing/incomplete: ' + missing.join(', '));
+            else console.log('✅ QA feature checks captured (tabs/boss/biome/rates)');
+          } catch (e) {
+            console.log('::warning::Could not summarize QA feature checks: ' + e.message);
+          }
+          NODE
+
       - name: Commit QA stats
         if: always()
         run: |

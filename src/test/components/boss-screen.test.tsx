@@ -152,4 +152,45 @@ describe('BossScreen', () => {
     expect(container.querySelector('.boss-screen')).toHaveAttribute('data-boss', 'abyssal_monarch');
     expect(screen.getByText('SUMMIT RAID')).toBeInTheDocument();
   });
+
+  it('shows boss selector after first kill and allows training on Void Titan while Frostpeak is locked', () => {
+    const onSelectBoss = vi.fn();
+    renderBoss({
+      nextBossVisible: true,
+      abyssalUnlocked: false,
+      voidTitanKills: 1,
+      selectedBossId: 'void_titan',
+      onSelectBoss,
+    });
+
+    expect(screen.getByRole('radiogroup', { name: 'Boss target' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /VOID TITAN/i })).toHaveAttribute('aria-checked', 'true');
+    const frostpeak = screen.getByRole('radio', { name: /FROSTPEAK/i });
+    expect(frostpeak).toHaveAttribute('aria-checked', 'false');
+    expect(frostpeak.className).toContain('locked');
+    expect(screen.getByText(/LOCKED LVL 40/)).toBeInTheDocument();
+    fireEvent.click(frostpeak);
+    expect(onSelectBoss).toHaveBeenCalledWith('abyssal_monarch');
+  });
+
+  it('allows selecting unlocked Frostpeak boss', () => {
+    const onSelectBoss = vi.fn();
+    renderBoss({
+      bossId: 'abyssal_monarch',
+      bossProgress: { ...progress, bossId: 'abyssal_monarch', bossLevel: 40, bossMaxHp: 12000, bossHp: 12000 },
+      nextBossVisible: true,
+      abyssalUnlocked: true,
+      voidTitanKills: 2,
+      selectedBossId: 'abyssal_monarch',
+      onSelectBoss,
+      character: { ...character, level: 40 },
+      effectiveCharacter: { ...character, level: 40 },
+    });
+
+    const frostpeak = screen.getByRole('radio', { name: /FROSTPEAK/i });
+    expect(frostpeak).toHaveAttribute('aria-checked', 'true');
+    expect(frostpeak.className).not.toContain('locked');
+    fireEvent.click(screen.getByRole('radio', { name: /VOID TITAN/i }));
+    expect(onSelectBoss).toHaveBeenCalledWith('void_titan');
+  });
 });

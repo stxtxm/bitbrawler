@@ -79,6 +79,7 @@ export const StatsPanel = memo(function StatsPanel({
                     role="radio"
                     aria-checked={active}
                     disabled={!unlocked}
+                    data-click-sound={unlocked ? 'nav' : 'error'}
                     className={`biome-option ${active ? 'active' : ''} ${unlocked ? '' : 'locked'}`}
                     onClick={() => unlocked && idle.onSelectBiome?.(biome.id as BiomeId)}
                     title={unlocked ? `${biome.label} · x${biome.rewardMultiplier.toFixed(2)} rewards` : `${biome.label} (locked)`}

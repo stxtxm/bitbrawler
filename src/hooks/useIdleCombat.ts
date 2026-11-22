@@ -111,9 +111,26 @@ export function useIdleCombat({
 
   const selectBiome = useCallback((id: BiomeId) => {
     if (!character) return
+    if (!getUnlockedBiomes(character).some((b) => b.id === id)) return
+    if (id === activeBiomeId) return
     setSelectedBiomeId(character, id)
     setSelectedBiomeIdState(id)
-  }, [character])
+    // UX: changement de biome immédiat en idle — on reset la scène et on relance
+    // la boucle pour faire apparaître un monstre du nouveau biome.
+    phaseTimers.current.forEach(clearTimeout)
+    phaseTimers.current = []
+    if (hardTimeoutRef.current) { clearTimeout(hardTimeoutRef.current); hardTimeoutRef.current = null }
+    setCurrentMonster(null)
+    setBackgroundMonster(null)
+    setPackInfo(null)
+    setEliteName(null)
+    setEliteElement(null)
+    setLastCombatResult(null)
+    setLastCombatXp(0)
+    packUntilRef.current = 0
+    setScenePhase('running')
+    setLoopEpoch((e) => e + 1)
+  }, [character, activeBiomeId])
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isPausedRef = useRef(isPaused)

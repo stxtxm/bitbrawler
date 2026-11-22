@@ -236,6 +236,7 @@ export const BossScreen = memo(function BossScreen({
                 type="button"
                 role="radio"
                 aria-checked={selected}
+                data-click-sound={locked ? 'error' : 'nav'}
                 className={`boss-select-card ${selected ? 'active' : ''} ${locked ? 'locked' : ''}`}
                 onClick={() => onSelectBoss?.(b.id)}
               >

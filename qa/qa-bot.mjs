@@ -2221,6 +2221,148 @@ async function captureBossFight(page, runKey, fightNumber) {
   }
 }
 
+async function captureUiFeatureChecks(page, runRecord) {
+  const checks = {
+    arena_tabs: { pve: false, pvp: false, boss: false },
+    boss_ui: null,
+    biome_ui: null,
+    idle_rates: null,
+  }
+
+  try {
+    const tabs = page.locator('.arena-bottom-tabs [role="tab"]')
+    const count = await tabs.count().catch(() => 0)
+    for (let i = 0; i < count; i++) {
+      const text = ((await tabs.nth(i).innerText().catch(() => '')) || '').toUpperCase()
+      if (text.includes('PVE')) checks.arena_tabs.pve = true
+      if (text.includes('PVP')) checks.arena_tabs.pvp = true
+      if (text.includes('BOSS')) checks.arena_tabs.boss = true
+    }
+  } catch (err) {
+    runRecord.errors.push(`UI tabs check: ${err.message}`)
+  }
+
+  // Boss UI: select boss tab, inspect boss selector / lock / interaction
+  try {
+    if (checks.arena_tabs.boss) {
+      await toggleBossTab(page)
+      await page.waitForTimeout(500)
+      const bossSelect = page.locator('.boss-select')
+      const visible = await bossSelect.isVisible({ timeout: 1500 }).catch(() => false)
+      if (visible) {
+        const readBossCards = async () => {
+          const cards = bossSelect.locator('.boss-select-card')
+          const cardCount = await cards.count().catch(() => 0)
+          const cardData = []
+          for (let i = 0; i < cardCount; i++) {
+            const card = cards.nth(i)
+            const name = ((await card.locator('.boss-select-name').innerText().catch(() => '')) || '').trim()
+            const sub = ((await card.locator('.boss-select-sub').innerText().catch(() => '')) || '').trim()
+            const locked = await card.evaluate(el => el.classList.contains('locked')).catch(() => false)
+            const selected = await card.evaluate(el => el.classList.contains('active')).catch(() => false)
+            cardData.push({ name, sub, locked, selected })
+          }
+          return cardData
+        }
+        let cardData = await readBossCards()
+        let interaction = null
+        const voidCard = bossSelect.locator('.boss-select-card').filter({ hasText: 'VOID TITAN' }).first()
+        const frostCard = bossSelect.locator('.boss-select-card').filter({ hasText: 'FROSTPEAK' }).first()
+        const frostLocked = await frostCard.evaluate(el => el.classList.contains('locked')).catch(() => false)
+        if (await voidCard.isVisible().catch(() => false)) {
+          await voidCard.click({ timeout: 2000 }).catch(() => {})
+          await page.waitForTimeout(350)
+          const afterVoid = await readBossCards()
+          interaction = { selected_void_titan: afterVoid.some(c => c.name.includes('VOID') && c.selected), frostpeak_locked: frostLocked }
+          if (!frostLocked && await frostCard.isVisible().catch(() => false)) {
+            await frostCard.click({ timeout: 2000 }).catch(() => {})
+            await page.waitForTimeout(350)
+            const afterFrost = await readBossCards()
+            interaction.selected_frostpeak = afterFrost.some(c => c.name.includes('FROST') && c.selected)
+            // restore to void titan to keep run stable
+            await voidCard.click({ timeout: 2000 }).catch(() => {})
+            await page.waitForTimeout(250)
+          }
+          cardData = await readBossCards()
+        }
+        checks.boss_ui = { visible: true, cards: cardData, interaction }
+      } else {
+        const cta = ((await page.locator('.boss-screen .primary-btn, .boss-screen button.primary-btn').first().innerText().catch(() => '')) || '').trim()
+        checks.boss_ui = { visible: false, cta }
+      }
+    }
+  } catch (err) {
+    runRecord.errors.push(`UI boss check: ${err.message}`)
+  }
+
+  // PVE biome selector + gains/min + interaction
+  try {
+    const pveOk = checks.arena_tabs.pve ? await togglePveMode(page, true) : true
+    if (pveOk) await page.waitForTimeout(500)
+    const biomeSelector = page.locator('.biome-selector')
+    const biomeVisible = await biomeSelector.isVisible({ timeout: 1500 }).catch(() => false)
+    if (biomeVisible) {
+      const readBiomeOptions = async () => {
+        const options = biomeSelector.locator('.biome-option')
+        const optCount = await options.count().catch(() => 0)
+        const biomeData = []
+        for (let i = 0; i < optCount; i++) {
+          const opt = options.nth(i)
+          const name = ((await opt.locator('.biome-option-name').innerText().catch(() => '')) || '').trim()
+          const mult = ((await opt.locator('.biome-option-mult').innerText().catch(() => '')) || '').trim()
+          const locked = await opt.isDisabled().catch(() => false)
+          const selected = (await opt.getAttribute('aria-checked').catch(() => 'false')) === 'true'
+          biomeData.push({ name, mult, locked, selected })
+        }
+        return biomeData
+      }
+      const readRates = async () => {
+        const essenceRate = ((await page.locator('.eff-rate.eff-essence strong').first().innerText().catch(() => '')) || '').trim()
+        const xpRate = ((await page.locator('.eff-rate.eff-xp strong').first().innerText().catch(() => '')) || '').trim()
+        return { essence_per_min: essenceRate || null, xp_per_min: xpRate || null }
+      }
+
+      let biomeData = await readBiomeOptions()
+      let interaction = null
+      const unlocked = biomeData.filter(b => !b.locked)
+      const active = biomeData.find(b => b.selected)
+      const alternative = unlocked.find(b => !b.selected)
+      if (alternative && active) {
+        const altBtn = biomeSelector.locator('.biome-option').filter({ hasText: alternative.name }).first()
+        await altBtn.click({ timeout: 2000 }).catch(() => {})
+        await page.waitForTimeout(700)
+        const after = await readBiomeOptions()
+        const ratesAfter = await readRates()
+        interaction = {
+          switched_to: alternative.name,
+          switch_ok: after.some(b => b.name === alternative.name && b.selected),
+          rates_after_switch: ratesAfter,
+        }
+        // restore original active biome
+        const activeBtn = biomeSelector.locator('.biome-option').filter({ hasText: active.name }).first()
+        await activeBtn.click({ timeout: 2000 }).catch(() => {})
+        await page.waitForTimeout(500)
+        biomeData = await readBiomeOptions()
+      }
+
+      const bonus = ((await biomeSelector.locator('.biome-selector-bonus').innerText().catch(() => '')) || '').trim()
+      checks.biome_ui = { visible: true, bonus, options: biomeData, interaction }
+    }
+
+    const essenceRate = ((await page.locator('.eff-rate.eff-essence strong').first().innerText().catch(() => '')) || '').trim()
+    const xpRate = ((await page.locator('.eff-rate.eff-xp strong').first().innerText().catch(() => '')) || '').trim()
+    if (essenceRate || xpRate) {
+      checks.idle_rates = { essence_per_min: essenceRate || null, xp_per_min: xpRate || null }
+    }
+  } catch (err) {
+    runRecord.errors.push(`UI biome check: ${err.message}`)
+  }
+
+  runRecord.ui_feature_checks = checks
+  console.log(`   🧪 UI checks: tabs PVE=${checks.arena_tabs.pve} PVP=${checks.arena_tabs.pvp} BOSS=${checks.arena_tabs.boss}, biome=${checks.biome_ui?.visible ?? false}, boss=${checks.boss_ui ? 'yes' : 'no'}, rates=${checks.idle_rates ? 'yes' : 'no'}`)
+  return checks
+}
+
 async function runFightSequence(page, runKey, runRecord) {
   let recreatedForExhaustion = false
   let currentLevel = runRecord.initial_level
@@ -2484,6 +2626,7 @@ async function runFightSequence(page, runKey, runRecord) {
 
     const fightBtn = page.locator('button.primary-btn.giant-btn').first()
     const fightStart = Date.now()
+    const preFightEssence = await parseEssenceBadge(page).catch(() => ({ value: null }))
 
     // Capture monster name from the combat DOM before the result poll
     let monsterName = null
@@ -2693,9 +2836,15 @@ async function runFightSequence(page, runKey, runRecord) {
     // Capture essence badge after fight
     const postFightEssence = await parseEssenceBadge(page)
     thisFightData.essence_after = postFightEssence.value
+    thisFightData.essence_before = preFightEssence?.value ?? null
+    if (typeof postFightEssence.value === 'number' && typeof preFightEssence?.value === 'number') {
+      thisFightData.essence_gained = Math.round((postFightEssence.value - preFightEssence.value) * 100) / 100
+    } else {
+      thisFightData.essence_gained = null
+    }
     runRecord.essence.per_fight.push(postFightEssence.value)
     if (postFightEssence.badge_visible) {
-      console.log(`   Essence after fight: ${postFightEssence.value}`)
+      console.log(`   Essence after fight: ${postFightEssence.value}${thisFightData.essence_gained !== null ? ` (Δ ${thisFightData.essence_gained})` : ''}`)
     }
 
     runRecord.fights.push(thisFightData)
@@ -3413,6 +3562,7 @@ async function run() {
     pvp_since_last_pve: resolveRunPvpSinceLastPve(state, runKey),
     skipped_inventory: null,
     skipped_fights: [],
+    ui_feature_checks: null,
     errors: [],
     load_times_ms: {},
   }
@@ -3632,6 +3782,15 @@ async function run() {
     if (!runRecord.no_legacy_overlay.all_clear) {
       console.log(`   ⚠️ Legacy overlay elements still present: ${JSON.stringify(runRecord.no_legacy_overlay)}`)
     }
+
+    // ── UI Feature Checks (tabs, boss selector, biome selector, rates) ──
+    console.log('')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    console.log('  🧪 UI Feature Checks')
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
+    await captureUiFeatureChecks(page, runRecord).catch(err => {
+      runRecord.errors.push(`UI feature checks failed: ${err.message}`)
+    })
 
     // Ensure PvP mode for start of fight sequence (skip if PvP is level-gated)
     const preFightLevel = parseLevelFromText(await page.locator('body').innerText().catch(() => ''))

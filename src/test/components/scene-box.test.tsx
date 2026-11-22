@@ -51,10 +51,19 @@ const bossSlayer: Character = {
   },
 };
 
-const abyssalExplorer: Character = {
+const mountainExplorer: Character = {
   ...bossSlayer,
   level: 58,
   bossProgresses: { void_titan: { totalKills: 1 } },
+} as Character;
+
+const frostpeakExplorer: Character = {
+  ...bossSlayer,
+  level: 58,
+  bossProgresses: {
+    void_titan: { totalKills: 1 },
+    abyssal_monarch: { totalKills: 1, bossId: 'abyssal_monarch' },
+  },
 } as Character;
 
 const idle: ArenaIdleViewModel = {
@@ -124,21 +133,27 @@ describe('SceneBox v2 — ombre portée + éclairage biome', () => {
     expect(lighting).toHaveAttribute('data-biome', 'plains');
   });
 
-  it('fait suivre l’éclairage au biome (volcanique puis abyssal)', () => {
+  it('fait suivre l’éclairage au biome selon la progression boss', () => {
     const volcanic = render(
       <SceneBox character={bossSlayer} effectiveCharacter={bossSlayer} pveMode idle={idle} />,
     );
     const volcanicBox = getBox(volcanic.container);
     expect(volcanicBox).toHaveAttribute('data-biome', 'volcanic');
     expect(volcanicBox.style.getPropertyValue('--scene-tint')).toBe(BIOME_LIGHTING.volcanic.tint);
-    expect(volcanicBox.style.getPropertyValue('--scene-shadow-spread')).toBe(BIOME_LIGHTING.volcanic.shadowSpread);
 
-    const abyssal = render(
-      <SceneBox character={abyssalExplorer} effectiveCharacter={abyssalExplorer} pveMode idle={idle} />,
+    const mountain = render(
+      <SceneBox character={mountainExplorer} effectiveCharacter={mountainExplorer} pveMode idle={idle} />,
     );
-    const abyssalBox = getBox(abyssal.container);
-    expect(abyssalBox).toHaveAttribute('data-biome', 'abyssal');
-    expect(abyssalBox.style.getPropertyValue('--scene-tint')).toBe(BIOME_LIGHTING.abyssal.tint);
+    const mountainBox = getBox(mountain.container);
+    expect(mountainBox).toHaveAttribute('data-biome', 'mountain');
+    expect(mountainBox.style.getPropertyValue('--scene-tint')).toBe(BIOME_LIGHTING.mountain.tint);
+
+    const frostpeak = render(
+      <SceneBox character={frostpeakExplorer} effectiveCharacter={frostpeakExplorer} pveMode idle={idle} />,
+    );
+    const frostpeakBox = getBox(frostpeak.container);
+    expect(frostpeakBox).toHaveAttribute('data-biome', 'abyssal');
+    expect(frostpeakBox.style.getPropertyValue('--scene-tint')).toBe(BIOME_LIGHTING.abyssal.tint);
   });
 
   it('déclare une ombre portée sous le combattant PvP, pilotée par les variables du biome', () => {

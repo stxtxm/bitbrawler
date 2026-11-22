@@ -6367,3 +6367,25 @@ describe('QA Data Quality Phase 3 (#1387) — Analytics Engine', () => {
     expect(source).toContain('rebalance_signals')
   })
 })
+
+describe('QA UI feature checks (arena/boss/biome)', () => {
+  it('qa-bot captures arena tabs, boss selector, biome selector and idle rates', () => {
+    const source = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
+    expect(source).toContain('captureUiFeatureChecks')
+    expect(source).toContain('ui_feature_checks')
+    expect(source).toContain("arena_tabs")
+    expect(source).toContain("boss_ui")
+    expect(source).toContain("biome_ui")
+    expect(source).toContain("idle_rates")
+    expect(source).toContain('.boss-select-card')
+    expect(source).toContain('.biome-option')
+    expect(source).toContain('eff-rate.eff-essence')
+    expect(source).toContain('eff-rate.eff-xp')
+  })
+
+  it('qa workflow summarizes UI feature checks', () => {
+    const source = readFileSync(join(process.cwd(), '.github', 'workflows', 'qa-tester.yml'), 'utf-8')
+    expect(source).toContain('Summarize QA feature checks')
+    expect(source).toContain('ui_feature_checks')
+  })
+})

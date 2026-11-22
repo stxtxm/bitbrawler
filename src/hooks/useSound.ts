@@ -56,55 +56,63 @@ const SOUND_DEFINITIONS: Record<SoundType, SoundConfig> = {
   },
 
   // ── COMBAT ──
-  // hit: short low thud — attacker lands a blow
+  // hit: punchy thud — impact clair en PvP comme en boss
   hit: {
     voices: [
-      { type: 'triangle', freq: 80, gain: 0.35 },
-      { type: 'triangle', freq: 150, gain: 0.2 },
+      { type: 'triangle', freq: 90, gain: 0.42 },
+      { type: 'square', freq: 55, gain: 0.14 },
+      { type: 'triangle', freq: 180, gain: 0.18 },
     ],
-    decay: 55, gain: 0.7,
-    noise: { gain: 0.12, dur: 0.03 },
-    reverb: 0.15, pitchVar: 15,
+    decay: 70, gain: 0.78,
+    noise: { gain: 0.16, dur: 0.035 },
+    reverb: 0.18, pitchVar: 12,
   },
-  // crit: bright high shimmer — big damage
+  // crit: impact lourd + éclat aigu
   crit: {
     voices: [
-      { type: 'triangle', freq: 100, gain: 0.35 },
-      { type: 'triangle', freq: 200, gain: 0.2 },
-      { type: 'sine', freq: 1400, gain: 0.1 },
-      { type: 'sine', freq: 2000, gain: 0.06 },
+      { type: 'triangle', freq: 110, gain: 0.42 },
+      { type: 'square', freq: 70, gain: 0.12 },
+      { type: 'triangle', freq: 220, gain: 0.22 },
+      { type: 'sine', freq: 1500, gain: 0.12 },
+      { type: 'sine', freq: 2200, gain: 0.07 },
     ],
-    decay: 70, gain: 0.75,
-    noise: { gain: 0.18, dur: 0.04 },
-    reverb: 0.2, pitchVar: 10,
+    decay: 90, gain: 0.82,
+    noise: { gain: 0.22, dur: 0.045 },
+    reverb: 0.22, pitchVar: 10,
   },
-  // magic: ethereal rising sweep — mystical attack
+  // magic: balayage mystique plus lisible
   magic: {
     voices: [
-      { type: 'sine', freq: 280, gain: 0.2 },
-      { type: 'sine', freq: 560, gain: 0.12 },
-      { type: 'triangle', freq: 840, gain: 0.08 },
+      { type: 'sine', freq: 320, gain: 0.22 },
+      { type: 'sine', freq: 640, gain: 0.14 },
+      { type: 'triangle', freq: 960, gain: 0.1 },
+      { type: 'sine', freq: 1280, gain: 0.06 },
     ],
-    decay: 100, gain: 0.65,
+    decay: 110, gain: 0.7,
+    noise: { gain: 0.04, dur: 0.02 },
     reverb: 0.45, pitchVar: 5,
   },
-  // miss: short sad puff — attacker whiffs
+  // miss: souffle court et lisible
   miss: {
-    voices: [{ type: 'sine', freq: 200, gain: 0.12 }],
-    decay: 20, gain: 0.5,
-    noise: { gain: 0.03, dur: 0.015 },
-    reverb: 0.1, pitchVar: 25,
+    voices: [
+      { type: 'sine', freq: 220, gain: 0.1 },
+      { type: 'triangle', freq: 160, gain: 0.06 },
+    ],
+    decay: 45, gain: 0.52,
+    noise: { gain: 0.05, dur: 0.025 },
+    reverb: 0.12, pitchVar: 20,
   },
-  // counter: sharp aggressive snap — reversal
+  // counter: riposte sèche et agressive
   counter: {
     voices: [
-      { type: 'triangle', freq: 500, gain: 0.25 },
-      { type: 'triangle', freq: 300, gain: 0.15 },
-      { type: 'sine', freq: 1100, gain: 0.08 },
+      { type: 'triangle', freq: 520, gain: 0.28 },
+      { type: 'square', freq: 260, gain: 0.1 },
+      { type: 'triangle', freq: 780, gain: 0.14 },
+      { type: 'sine', freq: 1200, gain: 0.08 },
     ],
-    decay: 40, gain: 0.75,
-    noise: { gain: 0.1, dur: 0.02 },
-    reverb: 0.12, pitchVar: 8,
+    decay: 55, gain: 0.8,
+    noise: { gain: 0.12, dur: 0.025 },
+    reverb: 0.14, pitchVar: 8,
   },
   // vs: dramatic chord — opponent reveal
   vs: {

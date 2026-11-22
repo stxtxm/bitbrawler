@@ -25,35 +25,37 @@ export const SceneBox = memo(function SceneBox({
   const pvpScale = typeof window !== 'undefined' && window.innerWidth < 480 ? 6 : 8;
   const lowPerf = useLowPerformanceMode();
 
-  // Once the first raid boss is slain the character enters the volcanic biome:
-  // the PvE training ground trades its scrolling plains for the flowing volcanic
-  // terrain — the world visibly warms up.
+  // Le biome affiché suit la sélection idle (temps réel) pour que le changement
+  // de biome soit immédiat, même avant refresh du personnage.
   const biome = getBiomeForCharacter(character);
-  const volcanicBiome = biome.id === 'volcanic';
-  const lighting = getBiomeLighting(biome.id);
+  const activeBiomeId = idle.activeBiomeId ?? biome.id;
+  const volcanicBiome = activeBiomeId === 'volcanic';
+  const lighting = getBiomeLighting(activeBiomeId);
 
   return (
     <div
       className={`scene-box${lowPerf ? ' scene-low-perf' : ''}`}
-      data-biome={biome.id}
+      data-biome={activeBiomeId}
       data-low-perf={lowPerf ? 'true' : 'false'}
       style={sceneLightingStyle(lighting, lowPerf)}
     >
-      {volcanicBiome ? (
-        <BiomeTerrain
-          biomeId={biome.id}
-          seed={character.seed}
-          animated={pveMode}
-        />
-      ) : (
-        <ProceduralTerrain
-          seed={character.seed}
-          animated={pveMode}
-        />
-      )}
+      <div className="scene-biome-swap" key={activeBiomeId}>
+        {volcanicBiome ? (
+          <BiomeTerrain
+            biomeId={activeBiomeId}
+            seed={character.seed}
+            animated={pveMode}
+          />
+        ) : (
+          <ProceduralTerrain
+            seed={character.seed}
+            animated={pveMode}
+          />
+        )}
+      </div>
       <div
         className="scene-lighting"
-        data-biome={biome.id}
+        data-biome={activeBiomeId}
         data-low-perf={lowPerf ? 'true' : 'false'}
         aria-hidden="true"
       />

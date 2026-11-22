@@ -46,14 +46,10 @@ const makeBossProgress = (totalKills: number) => ({
 });
 
 describe('biome registry', () => {
-  it('registers exactly the plains, volcanic, mountain and abyssal biomes', () => {
-    expect(BIOMES.length).toBe(4);
+  it('registers the expected biomes in progression order slots', () => {
+    expect(BIOMES.length).toBe(5);
     const ids = BIOMES.map((b) => b.id);
-    expect(ids).toContain('plains');
-    expect(ids).toContain('volcanic');
-    expect(ids).toContain('mountain');
-    expect(ids).toContain('abyssal');
-    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids).toEqual(['plains', 'volcanic', 'mountain', 'abyssal', 'eclipse']);
   });
 
   it('keeps plains first as the default biome', () => {
@@ -144,6 +140,22 @@ describe('biome unlock and selection', () => {
     expect(getUnlockedBiomes(character).map((b) => b.id)).toContain('mountain');
   });
 
+  it('keeps frostpeak biome locked until the second boss is defeated', () => {
+    const character = makeCharacter({ level: 40, bossProgress: makeBossProgress(1) } as any);
+    expect(getUnlockedBiomes(character).map((b) => b.id)).not.toContain('abyssal');
+    const withKill = makeCharacter({
+      level: 40,
+      bossProgress: makeBossProgress(1),
+      bossProgresses: { abyssal_monarch: { ...makeBossProgress(1), bossId: 'abyssal_monarch' } } as any,
+    } as any);
+    expect(getUnlockedBiomes(withKill).map((b) => b.id)).toContain('abyssal');
+  });
+
+  it('keeps eclipse prepared but locked (future lvl 60 boss)', () => {
+    const character = makeCharacter({ level: 99, bossProgress: makeBossProgress(5), bossProgresses: { abyssal_monarch: { ...makeBossProgress(3), bossId: 'abyssal_monarch' } } as any } as any);
+    expect(getUnlockedBiomes(character).map((b) => b.id)).not.toContain('eclipse');
+  });
+
   it('defaults to highest unlocked biome but allows selecting an unlocked one', () => {
     const character = makeCharacter({ id: 'char-b1', level: 40, bossProgress: makeBossProgress(1) } as any);
     setSelectedBiomeId(character, 'volcanic');
@@ -162,5 +174,6 @@ describe('biome unlock and selection', () => {
     expect(getBiomeRewardMultiplier('volcanic')).toBeGreaterThan(1);
     expect(getBiomeRewardMultiplier('mountain')).toBeGreaterThan(getBiomeRewardMultiplier('volcanic'));
     expect(getBiomeRewardMultiplier('abyssal')).toBeGreaterThan(getBiomeRewardMultiplier('mountain'));
+    expect(getBiomeRewardMultiplier('eclipse')).toBeGreaterThan(getBiomeRewardMultiplier('abyssal'));
   });
 });

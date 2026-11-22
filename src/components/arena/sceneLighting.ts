@@ -33,6 +33,12 @@ export const BIOME_LIGHTING: Record<BiomeId, BiomeLighting> = {
     shadowAlpha: 0.66,
     shadowSpread: '82%',
   },
+  eclipse: {
+    tint: 'rgba(255, 190, 90, 0.16)',
+    shadowRgb: '18, 10, 2',
+    shadowAlpha: 0.68,
+    shadowSpread: '84%',
+  },
 };
 
 const LOW_PERF_SHADOW_FACTOR = 0.6;
