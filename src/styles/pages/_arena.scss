@@ -2047,6 +2047,120 @@
     }
 }
 
+.pvp-feed {
+    border: 1px solid rgba($accent-gold, 0.25);
+    background: rgba(0, 0, 0, 0.35);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+}
+
+.pvp-feed-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pvp-feed-title {
+    font-size: 0.55rem;
+    color: $accent-gold;
+    letter-spacing: 1px;
+}
+
+.pvp-feed-subtitle {
+    font-size: 0.4rem;
+    color: #7fd9a7;
+    letter-spacing: 0.5px;
+    text-align: right;
+}
+
+.pvp-feed-empty {
+    font-size: 0.5rem;
+    color: #777;
+    text-align: center;
+    padding: 10px 4px;
+}
+
+.pvp-feed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 180px;
+    overflow-y: auto;
+    padding-right: 2px;
+
+    &::-webkit-scrollbar { width: 4px; }
+    &::-webkit-scrollbar-thumb { background: rgba($accent-gold, 0.5); }
+}
+
+.pvp-feed-item {
+    padding: 6px 8px;
+    gap: 8px;
+    align-items: center;
+
+    .history-status {
+        min-width: 54px;
+        font-size: 0.5rem;
+    }
+
+    .history-opponent {
+        font-size: 0.58rem;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .history-date {
+        font-size: 0.38rem;
+    }
+}
+
+.pvp-feed-rewards {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    margin-left: auto;
+    min-width: 72px;
+}
+
+.pvp-feed-reward {
+    font-size: 0.45rem;
+    color: $accent-gold;
+    white-space: nowrap;
+
+    &.essence { color: #7fd9ff; }
+    &.muted { color: #666; }
+}
+
+@include mobile {
+    .pvp-feed {
+        padding: 6px;
+        gap: 4px;
+    }
+
+    .pvp-feed-title { font-size: 0.48rem; }
+    .pvp-feed-subtitle { font-size: 0.35rem; }
+    .pvp-feed-list { max-height: 150px; gap: 4px; }
+
+    .pvp-feed-item {
+        padding: 5px 6px;
+        gap: 6px;
+
+        .history-status { min-width: 46px; font-size: 0.44rem; }
+        .history-opponent { font-size: 0.5rem; }
+    }
+
+    .pvp-feed-rewards { min-width: 60px; }
+    .pvp-feed-reward { font-size: 0.4rem; }
+}
+
 .boss-status-compact {
     border-left-color: $accent-gold !important;
 

@@ -197,7 +197,7 @@ describe('Arena settings modal', () => {
     expect(getByText('ATTACKED BY NIGHT HUNTER')).toBeInTheDocument()
     expect(queryByText(/\[BOT\]/i)).toBeNull()
     expect(queryByText(/\[PLAYER\]/i)).toBeNull()
-    expect(getByText('+100 XP')).toBeInTheDocument()
+    expect(screen.getAllByText('+100 XP').length).toBeGreaterThan(0)
   })
 
   it('disables fight button and shows AUTO MODE when auto mode is on', async () => {

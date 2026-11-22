@@ -6,6 +6,8 @@ import type { Character } from '../../types/Character';
 import type { TacticalHint } from '../../utils/tacticalLens';
 import { ArenaModeTabs } from './ArenaModeTabs';
 import type { ArenaMode } from './arenaTypes';
+import type { SettingsLogEntry } from '../../utils/arenaUtils';
+import { formatSettingsLogDate } from '../../utils/arenaUtils';
 
 interface ActionPanelProps {
   mode?: ArenaMode;
@@ -21,6 +23,7 @@ interface ActionPanelProps {
   tacticalOpponent?: Character | null;
   tacticalHint?: TacticalHint | null;
   onOpenInventory?: (element?: string) => void;
+  pvpHistory?: SettingsLogEntry[];
 }
 
 /**
@@ -41,6 +44,7 @@ export const ActionPanel = memo(function ActionPanel({
   tacticalOpponent,
   tacticalHint,
   onOpenInventory,
+  pvpHistory = [],
 }: ActionPanelProps) {
   const isPve = pveMode ?? mode !== 'pvp';
   const showTacticalLens = !isPve && tacticalOpponent && tacticalHint && onOpenInventory
@@ -113,6 +117,46 @@ export const ActionPanel = memo(function ActionPanel({
                       ? 'OFFLINE'
                       : fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'}
             </button>
+          </div>
+
+          <div className="pvp-feed" aria-label="PvP and defense history">
+            <div className="pvp-feed-header">
+              <span className="pvp-feed-title">PVP & DEFENSE LOG</span>
+              <span className="pvp-feed-subtitle">REWARDS ON DEFENSE</span>
+            </div>
+            {pvpHistory.length === 0 ? (
+              <div className="pvp-feed-empty">NO PVP ACTIVITY YET</div>
+            ) : (
+              <div className="pvp-feed-list">
+                {pvpHistory.slice(0, 6).map((fight, i) => (
+                  <div key={i} className={`history-item pvp-feed-item ${fight.won ? 'won' : 'lost'} ${fight.direction}`}>
+                    <div className="history-status">
+                      {fight.direction === 'incoming'
+                        ? (fight.won ? 'DEFENDED' : 'HIT')
+                        : (fight.won ? 'WIN' : 'LOSS')}
+                    </div>
+                    <div className="history-info">
+                      <div className="history-opponent">
+                        {fight.direction === 'incoming'
+                          ? `🛡 ${fight.displayName}`
+                          : `⚔ ${fight.displayName}`}
+                      </div>
+                      <div className="history-date">{formatSettingsLogDate(fight.date)}</div>
+                    </div>
+                    <div className="history-rewards pvp-feed-rewards">
+                      {fight.xpGained || fight.essenceGained ? (
+                        <>
+                          {fight.xpGained ? <span className="pvp-feed-reward">+{fight.xpGained} XP</span> : null}
+                          {fight.essenceGained ? <span className="pvp-feed-reward essence">+{fight.essenceGained} 💎</span> : null}
+                        </>
+                      ) : (
+                        <span className="pvp-feed-reward muted">—</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </>
       )}

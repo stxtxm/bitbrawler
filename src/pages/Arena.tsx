@@ -236,7 +236,11 @@ const Arena = () => {
               statOptions={statOptions}
               idle={idleView}
             />
-            <ActionPanel {...combat.actionPanelProps} onOpenInventory={inventory.openInventoryFiltered} />
+            <ActionPanel
+              {...combat.actionPanelProps}
+              onOpenInventory={inventory.openInventoryFiltered}
+              pvpHistory={settings.combinedHistory}
+            />
           </>
         )}
       </div>
