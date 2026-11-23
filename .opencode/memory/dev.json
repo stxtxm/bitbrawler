@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-11-23T00:26:04Z",
+  "last_session": "2026-11-23T00:35:11Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1312 QA XP: le regex body-wide /\\+(\\d+)\\s*XP/ ramassait le popup .xp-gain-popup perime de l arene. Toujours lire .result-xp-popup (texte exact +N XP ou BOSS REMAINS=>0) via parseResultXpPopup. boss_avg_xp_per_fight ne doit moyenner que les victoires; boss_avg_xp_per_loss expose les defaites.",
-      "issue": "#1312",
-      "date": "2026-10-24"
-    },
     {
       "lesson": "Issue #1299 : statusCheckRollup (gh pr list --json) contient les déploiements Cloudflare Pages (workflowName vide). Filtrer sur workflowName == \"CI\" pour compter la vraie CI. Anti-tempête watchdog : le reviewer ne peut pas poster de review formelle sur une PR github-actions[bot], il commente \"## Review PR #<n>\" → comparer created_at des commentaires au committer.date du commit de tête.",
       "issue": "#1299",
@@ -189,6 +184,11 @@
       "issues_encountered": [
         "gh issue list showed #1408 with a short lag after creation (eventual consistency); direct gh issue view confirmed it"
       ]
+    },
+    {
+      "lesson": "Issue #1405 follow-up: le commit 160ceef9 a renommé l étape tech-lead en « Dispatch OpenCode for /oc issues (any author, any age) » et supprimé la fenêtre since=, mais workflow-integrity.test.ts gardait 3 références à l ancien nom + une assertion since= et un cas 9009 contenant un vrai /oc. Toujours grep le nom d étape après un renommage de workflow.",
+      "issue": "#1405",
+      "date": "2026-11-23"
     }
   ]
 }
