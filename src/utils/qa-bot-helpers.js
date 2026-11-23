@@ -53,6 +53,85 @@ export function shouldReplaceExhaustedCharacter(characterType) {
  * produced no combat data — the fleet retry uses this to launch a fresh
  * character on the next run of the member.
  */
+function fleetLastRunInfo(value) {
+  if (typeof value !== 'string' || value.length === 0) {
+    return { missing: true, timestamp: Number.NaN, raw: '' }
+  }
+  return { missing: false, timestamp: Date.parse(value), raw: value }
+}
+
+function compareFleetLastRun(a, b) {
+  const infoA = fleetLastRunInfo(a)
+  const infoB = fleetLastRunInfo(b)
+  if (infoA.missing || infoB.missing) {
+    if (infoA.missing && infoB.missing) return 0
+    return infoA.missing ? -1 : 1
+  }
+  if (Number.isFinite(infoA.timestamp) && Number.isFinite(infoB.timestamp)) {
+    if (infoA.timestamp === infoB.timestamp) return 0
+    return infoA.timestamp < infoB.timestamp ? -1 : 1
+  }
+  if (infoA.raw === infoB.raw) return 0
+  return infoA.raw < infoB.raw ? -1 : 1
+}
+
+function compareFleetCreatedAt(a, b) {
+  const rawA = typeof a === 'string' ? a : ''
+  const rawB = typeof b === 'string' ? b : ''
+  if (rawA === rawB) return 0
+  return rawA < rawB ? -1 : 1
+}
+
+function isFleetMemberInBand(level, member) {
+  if (typeof level !== 'number' || !Number.isFinite(level)) return null
+  const min = typeof member?.minLevel === 'number' ? member.minLevel : Number.NEGATIVE_INFINITY
+  const max = typeof member?.maxLevel === 'number' ? member.maxLevel : Number.POSITIVE_INFINITY
+  return level >= min && level <= max
+}
+
+export function selectFleetMember(state, fleet) {
+  if (!Array.isArray(fleet) || fleet.length === 0) {
+    return { member: null, bandViolation: null }
+  }
+  const candidates = fleet.map((member, index) => {
+    const memberState = state?.fleet?.[member?.name] ?? {}
+    const level = typeof memberState.level === 'number' && Number.isFinite(memberState.level)
+      ? memberState.level
+      : null
+    return {
+      member,
+      index,
+      lastRun: memberState.last_run,
+      createdAt: memberState.created_at,
+      level,
+      inBand: isFleetMemberInBand(level, member) === true,
+    }
+  })
+  candidates.sort((a, b) => {
+    const lastRunOrder = compareFleetLastRun(a.lastRun, b.lastRun)
+    if (lastRunOrder !== 0) return lastRunOrder
+    if (a.inBand !== b.inBand) return a.inBand ? -1 : 1
+    const createdAtOrder = compareFleetCreatedAt(a.createdAt, b.createdAt)
+    if (createdAtOrder !== 0) return createdAtOrder
+    return a.index - b.index
+  })
+  const selected = candidates[0]
+  const member = selected?.member
+  if (!member || typeof member.name !== 'string' || member.name.length === 0) {
+    return { member: null, bandViolation: null }
+  }
+  const inBand = isFleetMemberInBand(selected.level, member)
+  const bandViolation = inBand === false
+    ? {
+        member: member.name,
+        level: selected.level,
+        minLevel: typeof member.minLevel === 'number' ? member.minLevel : null,
+        maxLevel: typeof member.maxLevel === 'number' ? member.maxLevel : null,
+      }
+    : null
+  return { member, bandViolation }
+}
+
 export function isQaRunFailed(runRecord) {
   if (!runRecord || typeof runRecord !== 'object') return false
   if (Array.isArray(runRecord.errors) && runRecord.errors.length > 0) return true

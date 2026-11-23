@@ -40,6 +40,40 @@ export declare function shouldReplaceExhaustedCharacter(
   characterType: string | null | undefined,
 ): boolean
 
+export declare interface QaFleetMember {
+  name: string
+  minLevel?: number
+  maxLevel?: number
+}
+
+export declare interface QaFleetStateMember {
+  last_run?: string | null
+  created_at?: string | null
+  level?: number | null
+}
+
+export declare interface QaFleetState {
+  fleet?: Record<string, QaFleetStateMember | null | undefined> | null
+}
+
+export declare interface QaFleetBandViolation {
+  member: string
+  level: number
+  minLevel: number | null
+  maxLevel: number | null
+}
+
+export declare interface QaFleetSelection {
+  member: QaFleetMember | null
+  bandViolation: QaFleetBandViolation | null
+}
+
+/** QA Combat Fleet (#1405) : rotation par plus ancien `last_run`, bande en départage. */
+export declare function selectFleetMember(
+  state: QaFleetState | null | undefined,
+  fleet: readonly QaFleetMember[] | null | undefined,
+): QaFleetSelection
+
 /** Shape of a run record as needed by the Phase 2 helpers (#1387). */
 export declare interface QaRunRecordShape {
   errors?: unknown[] | null
