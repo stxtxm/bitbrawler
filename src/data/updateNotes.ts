@@ -17,6 +17,7 @@ export const UPDATE_NOTES: UpdateNote[] = [
       '🧭 TECH-LEAD — dispatch des issues « Proposition » légères (ajout automatique de /oc) ; les propositions majeures / Effort 4+ restent à la main.',
       '🔧 AGENTS — correction du rebase sur branche obsolète (repart de master si plus de PR ouverte) et des droits de push sur .github/workflows/*.yml.',
       '🎛️ MODÈLES — les slugs des agents sont configurables par variables de dépôt GitHub (AGENT_MODEL_PRIMARY/SECONDARY/TERTIARY), sans modifier les workflows.',
+      '🔎 REVIEWER — chaine de modèles dédiée REVIEWER_MODEL_* pour relire les PR sans attendre le dev agent ; relance automatique des reviews sur les PR en attente.',
     ],
   },
   {

@@ -83,6 +83,9 @@ Les trois workflows (`opencode.yml`, `reviewer.yml`, `tech-lead.yml`) lisent des
 gh variable set AGENT_MODEL_PRIMARY   --body "<slug-primaire>"
 gh variable set AGENT_MODEL_SECONDARY --body "<slug-repli-1>"
 gh variable set AGENT_MODEL_TERTIARY  --body "<slug-repli-2>"
+
+# Le reviewer peut être configuré indépendamment :
+gh variable set REVIEWER_MODEL_PRIMARY --body "<slug-reviewer>"
 ```
 
 Un slug de fournisseur payant nécessite la clé correspondante : soit un secret

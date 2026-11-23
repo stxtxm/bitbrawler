@@ -97,12 +97,12 @@ jobs:
       id-token: write
 
     env:
-      # Modèles configurables via `gh variable set AGENT_MODEL_PRIMARY --body "<slug>"`.
-      # Les valeurs par defaut restent la chaine historique si aucune variable
-      # de depot n'est definie (aucun credential requis pour les slugs gratuits).
-      AGENT_MODEL_PRIMARY: ${{ vars.AGENT_MODEL_PRIMARY || 'opencode/deepseek-v4.1-flash-free' }}
-      AGENT_MODEL_SECONDARY: ${{ vars.AGENT_MODEL_SECONDARY || 'opencode/glm-5.3-flash-free' }}
-      AGENT_MODEL_TERTIARY: ${{ vars.AGENT_MODEL_TERTIARY || 'opencode/nemotron-3.5-lightning-free' }}
+      # Le reviewer peut avoir sa propre chaine de modeles via variables
+      # REVIEWER_MODEL_* (sinon il herite des variables globales AGENT_MODEL_*).
+      # `gh variable set REVIEWER_MODEL_PRIMARY --body "<slug-du-modele>"`.
+      AGENT_MODEL_PRIMARY: ${{ vars.REVIEWER_MODEL_PRIMARY || vars.AGENT_MODEL_PRIMARY || 'opencode/deepseek-v4.1-flash-free' }}
+      AGENT_MODEL_SECONDARY: ${{ vars.REVIEWER_MODEL_SECONDARY || vars.AGENT_MODEL_SECONDARY || 'opencode/glm-5.3-flash-free' }}
+      AGENT_MODEL_TERTIARY: ${{ vars.REVIEWER_MODEL_TERTIARY || vars.AGENT_MODEL_TERTIARY || 'opencode/nemotron-3.5-lightning-free' }}
     steps:
       - name: Resolve PR number from event
         env:
