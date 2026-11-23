@@ -320,6 +320,16 @@ jobs:
           done
 
           if [ "$ALL_RESOLVED" = false ]; then
+            # Une PR de faible impact n'a pas a attendre le DAG : on la relit et
+            # on la merge des que sa CI est verte (demande explicite du mainteneur).
+            CHANGED_FILES=$(gh pr diff "$PR_NUMBER" --name-only 2>/dev/null | wc -l)
+            CHANGED_LINES=$(gh pr diff "$PR_NUMBER" --numstat 2>/dev/null | awk '{a+=$1; d+=$2} END {print a+d}' 2>/dev/null || echo 0)
+            SENSITIVE=$(gh pr diff "$PR_NUMBER" --name-only 2>/dev/null | grep -E '(^\.github/workflows/|^supabase/|/migrations?/|gameRules\.ts)' | wc -l)
+            if [ "${CHANGED_FILES:-999}" -le 10 ] && [ "${CHANGED_LINES:-9999}" -le 400 ] && [ "${SENSITIVE:-1}" -eq 0 ]; then
+              echo "ℹ PR de faible impact — dépendances non bloquantes, review poursuivie"
+              echo "DEPS_BLOCKED=false" >> "$GITHUB_ENV"
+              exit 0
+            fi
             echo "⏳ Dependencies not yet resolved — skipping review (anti-spam: skip si déjà posté)"
             LAST_COMMENT=$(gh api "repos/${{ github.repository }}/issues/$PR_NUMBER/comments?per_page=1" --jq '.[-1].body // ""' 2>/dev/null || echo "")
             if echo "$LAST_COMMENT" | grep -q '^⏳ \*\*En attente de dépendances\*\*'; then
@@ -507,12 +517,11 @@ jobs:
              ## Règles STRICTES (en français)
             - ⚠️ **AVANT de merger** : re-vérifie la CI à l'instant T avec \`gh pr view "$PR_NUMBER" --json statusCheckRollup\`. Ignore le check du review lui-meme. Si un seul check n'est pas COMPLETED avec conclusion SUCCESS/NEUTRAL → \`gh pr review "$PR_NUMBER" --request-changes --body \"...en français...\"\` et ne merge PAS. Cela va automatiquement re-déclencher le dev agent avec mémoire pour corriger.
             - ✅ MERGE AUTOMATIQUE PAR LE REVIEWER : apres re-verification CI verte et revue favorable, execute \`gh pr merge "$PR_NUMBER" --squash --delete-branch\`. Ne laisse PAS la PR en attente.
-            - IMPACT (decide du merge auto) : evalue avec \`gh pr diff "$PR_NUMBER" --stat\` et la liste des fichiers. FAIBLE IMPACT = <= 10 fichiers ET <= 400 lignes changees ET aucun fichier \`.github/workflows/\`, \`supabase/\`, \`src/data/updateNotes.ts\`, ni SQL de migration → merge auto. GROS IMPACT = au-dela, ou tout changement de schemas/DB/workflows/config de regles de jeu → approuve then comment "Revue OK — merge manuel requis (gros impact)" SANS merger.
+            - IMPACT (decide du merge auto) : evalue avec \`gh pr diff "$PR_NUMBER" --stat\` et la liste des fichiers. FAIBLE IMPACT = <= 10 fichiers ET <= 400 lignes changees ET aucun fichier \`.github/workflows/\`, \`supabase/\`, \`src/data/updateNotes.ts\`, ni SQL de migration → merge auto. GROS IMPACT = au-dela, ou tout changement de schemas/DB/workflows/config de regles de jeu → approuve then comment \"Revue OK — merge manuel requis (gros impact)\" SANS merger.
             - Si SKIP_APPROVAL=true (PR auto-générée par bot) → merge directement \`gh pr merge "$PR_NUMBER" --squash --delete-branch\` apres re-verification CI verte.
             - Sinon, si CI est verte ✅ et tout est bon → \`gh pr review --approve "$PR_NUMBER" --body \"✅ Review en français — merge automatique.\"\` puis \`gh pr merge "$PR_NUMBER" --squash --delete-branch\`
             - Si CI est rouge → \`gh pr review "$PR_NUMBER" --request-changes --body \"feedback en français...\"\` même si l'erreur est préexistante (cela déclenche le dev agent qui corrigera avec mémoire)
             - NE JAMAIS approuver si CI est rouge
-            - NE JAMAIS merger ni demander a merger quoi que ce soit : le merge reste manuel
             - Si le changement semble bon mais mérite un suivi, approuve + crée une issue de suivi avec \`gh issue create\` (titre et body en français, terminée par /oc)
             - ⚠️ Issue de suivi = UNE SEULE COMMANDE, body UNE ligne courte sans guillemets/backticks, terminée par /oc. REMPLACE OBLIGATOIREMENT les placeholders par du contenu réel — NE COPIE JAMAIS l'exemple verbatim :
             NEW_ISSUE_URL=\$(gh issue create --title \"fix: exemple — invente un vrai titre descriptif\" --body \"Phrase unique decrivant le suivi concret. /oc\")

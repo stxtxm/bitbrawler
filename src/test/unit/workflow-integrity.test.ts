@@ -600,6 +600,14 @@ describe('Prompts des workflows : sûrs pour le shell (tech-lead mort 2026-11-08
     expect(offending).toEqual([])
   })
 
+  it('le prompt reviewer échappe les guillemets du commentaire gros impact', () => {
+    // 2026-11-23 : un guillemet nu autour de « Revue OK — merge manuel requis
+    // (gros impact) » a rendu le script bash invalide (syntax error near '('),
+    // tuant 4 reviews sur 5 sans jamais lancer de modèle.
+    const reviewer = readWorkflow('reviewer.yml')
+    expect(reviewer).toContain('\\"Revue OK — merge manuel requis (gros impact)\\"')
+  })
+
   it('le prompt tech-lead ne ferme pas sa chaîne sur un guillemet interne', () => {
     const source = readWorkflow('tech-lead.yml')
     const start = source.indexOf('PROMPT="Tu es le tech-lead')
