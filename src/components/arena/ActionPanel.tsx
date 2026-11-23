@@ -7,7 +7,7 @@ import type { TacticalHint } from '../../utils/tacticalLens';
 import { ArenaModeTabs } from './ArenaModeTabs';
 import type { ArenaMode } from './arenaTypes';
 import type { SettingsLogEntry } from '../../utils/arenaUtils';
-import { formatSettingsLogDate } from '../../utils/arenaUtils';
+import { formatRelativeLogDate, formatSettingsLogDate } from '../../utils/arenaUtils';
 
 interface ActionPanelProps {
   mode?: ArenaMode;
@@ -49,6 +49,7 @@ export const ActionPanel = memo(function ActionPanel({
   const isPve = pveMode ?? mode !== 'pvp';
   const showTacticalLens = !isPve && tacticalOpponent && tacticalHint && onOpenInventory
     && !hasPendingFight && !autoMode;
+  const visibleHistory = pvpHistory.slice(0, 8);
 
   return (
     <div className="action-panel">
@@ -100,6 +101,70 @@ export const ActionPanel = memo(function ActionPanel({
             />
           )}
 
+          <div className="pvp-feed" aria-label="PvP and defense history">
+            <div className="pvp-feed-head">
+              <span className="pvp-feed-title">
+                <span className="pvp-feed-live" aria-hidden="true" />
+                PVP &amp; DEFENSE LOG
+              </span>
+              <span className="pvp-feed-badge">
+                {visibleHistory.length > 0 ? `${visibleHistory.length} RECENT` : 'STANDBY'}
+              </span>
+            </div>
+
+            {visibleHistory.length === 0 ? (
+              <div className="pvp-feed-empty">
+                <span className="pvp-feed-empty-icon" aria-hidden="true">🛡</span>
+                <span>NO ACTIVITY YET — DEFEND TO EARN XP &amp; 💎</span>
+              </div>
+            ) : (
+              <ul className="pvp-feed-list" role="list">
+                {visibleHistory.map((fight, i) => {
+                  const incoming = fight.direction === 'incoming';
+                  const outcome = incoming
+                    ? (fight.won ? 'HELD' : 'BREACHED')
+                    : (fight.won ? 'VICTORY' : 'DEFEAT');
+                  const fullDate = formatSettingsLogDate(fight.date);
+
+                  return (
+                    <li
+                      key={`${fight.date}-${fight.direction}-${i}`}
+                      className={`pvp-feed-item ${fight.won ? 'won' : 'lost'} ${incoming ? 'incoming' : 'outgoing'}`}
+                      title={`${incoming ? 'DEFENSE' : 'ATTACK'} · ${fight.displayName} · ${fullDate}`}
+                    >
+                      <span className="pvp-feed-icon" aria-hidden="true">
+                        {incoming ? '🛡' : '⚔'}
+                      </span>
+
+                      <div className="pvp-feed-main">
+                        <div className="pvp-feed-line">
+                          <span className="pvp-feed-direction">{incoming ? 'DEFENSE' : 'ATTACK'}</span>
+                          <span className="pvp-feed-opponent">{fight.displayName}</span>
+                        </div>
+                        <div className="pvp-feed-meta">
+                          <span className={`pvp-feed-outcome ${fight.won ? 'won' : 'lost'}`}>{outcome}</span>
+                          <span className="pvp-feed-date">{formatRelativeLogDate(fight.date)}</span>
+                        </div>
+                      </div>
+
+                      <div className="pvp-feed-rewards">
+                        {fight.xpGained ? (
+                          <span className="pvp-feed-reward xp">+{fight.xpGained} XP</span>
+                        ) : null}
+                        {fight.essenceGained ? (
+                          <span className="pvp-feed-reward essence">+{fight.essenceGained} 💎</span>
+                        ) : null}
+                        {!fight.xpGained && !fight.essenceGained ? (
+                          <span className="pvp-feed-reward muted">—</span>
+                        ) : null}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+
           <div className="fight-row">
             <button
               type="button"
@@ -117,46 +182,6 @@ export const ActionPanel = memo(function ActionPanel({
                       ? 'OFFLINE'
                       : fightsLeft > 0 ? 'FIGHT!' : 'REST NOW'}
             </button>
-          </div>
-
-          <div className="pvp-feed" aria-label="PvP and defense history">
-            <div className="pvp-feed-header">
-              <span className="pvp-feed-title">PVP & DEFENSE LOG</span>
-              <span className="pvp-feed-subtitle">REWARDS ON DEFENSE</span>
-            </div>
-            {pvpHistory.length === 0 ? (
-              <div className="pvp-feed-empty">NO PVP ACTIVITY YET</div>
-            ) : (
-              <div className="pvp-feed-list">
-                {pvpHistory.slice(0, 6).map((fight, i) => (
-                  <div key={i} className={`history-item pvp-feed-item ${fight.won ? 'won' : 'lost'} ${fight.direction}`}>
-                    <div className="history-status">
-                      {fight.direction === 'incoming'
-                        ? (fight.won ? 'DEFENDED' : 'HIT')
-                        : (fight.won ? 'WIN' : 'LOSS')}
-                    </div>
-                    <div className="history-info">
-                      <div className="history-opponent">
-                        {fight.direction === 'incoming'
-                          ? `🛡 ${fight.displayName}`
-                          : `⚔ ${fight.displayName}`}
-                      </div>
-                      <div className="history-date">{formatSettingsLogDate(fight.date)}</div>
-                    </div>
-                    <div className="history-rewards pvp-feed-rewards">
-                      {fight.xpGained || fight.essenceGained ? (
-                        <>
-                          {fight.xpGained ? <span className="pvp-feed-reward">+{fight.xpGained} XP</span> : null}
-                          {fight.essenceGained ? <span className="pvp-feed-reward essence">+{fight.essenceGained} 💎</span> : null}
-                        </>
-                      ) : (
-                        <span className="pvp-feed-reward muted">—</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         </>
       )}

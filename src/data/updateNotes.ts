@@ -21,7 +21,7 @@ export const UPDATE_NOTES: UpdateNote[] = [
       '❤️ PV RÉTABLIS — les PV du personnage remontent à fond entre chaque combat de boss et chaque combat PvP.',
       '👑 BOSS SINGLE-ATTEMPT — les PV du boss remontent à fond entre chaque tentative ATTACK BOSS ; la difficulté a été ajustée pour des duels lisibles, avec pity conservé.',
       '🛠️ FIX PROGRESSION BOSS — correction du merge de progression multi-boss (Stone Colossus/Frostpeak) pour éviter les déblocages de biome incorrects.',
-      '🛡️ PVP & DÉFENSE — récompenses XP/Essence quand tu défends avec succès (même contre auto/bot), quasi nul en défaite défensive, et historique PvP/défense intégré directement dans l’onglet PVP de l’arène.',
+      '🛡️ PVP & DÉFENSE — récompenses XP/Essence quand tu défends avec succès (même contre auto/bot), quasi nul en défaite défensive. Journal PvP/défense détaillé affiché AU-DESSUS du bouton FIGHT (attaques + défenses, résultat, adversaire, heure, gains), avec scroll interne uniquement pour le journal : la scène PvE/PvP ne défile plus.',
       '🔊 SOUND DESIGN — clics/boutons plus clairs et impacts de combat plus punchy en PvP comme en boss (hit/crit/magie/contre/raté).',
       '🧪 QA & TESTS — bot QA vérifie onglets PVE/PVP/BOSS, sélecteur boss, sélecteur biome verrouillé/débloqué, gains/min Essence/XP ; tests renforcés.',
     ],

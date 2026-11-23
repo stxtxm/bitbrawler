@@ -9,6 +9,15 @@
     @include mobile {
         margin: 0 auto;
         padding: 8px;
+        // Vue arène verrouillée : la scène PvE/PvP ne défile plus. Seul le
+        // journal PvP a son propre scroll interne (cf. .pvp-feed-list).
+        // 30px = marges/paddings verticaux de .App (8 haut + 14 bas + 8 de
+        // respiration), ce qui évite de dépasser le viewport mobile. Les
+        // encoches (PWA iOS) sont retirées en plus : .App les ajoute déjà.
+        height: calc(100dvh - 30px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+        min-height: 0;
+        max-height: calc(100dvh - 30px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+        overflow: hidden;
     }
 }
 
@@ -1243,15 +1252,12 @@
     @include mobile {
         flex-direction: column;
         gap: 6px;
-        // Zone de défilement interne : indispensable en PWA (le conteneur est
-        // verrouillé), sans effet dans le navigateur où le body défile.
-        overflow-y: auto;
-        // overflow-y: auto calcule overflow-x à auto : le moindre enfant plus
-        // large ouvre une barre de scroll horizontal (incident Pixel 9a).
-        overflow-x: hidden;
-        overscroll-behavior: contain;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 4px;
+        // Aucun scroll de la vue arène (PvE comme PvP). Le conteneur est
+        // verrouillé sur la hauteur du viewport ; seuls les logs PvP ont un
+        // scroll interne. Le mode BOSS garde son propre scroll (.boss-screen).
+        overflow: hidden;
+        overscroll-behavior: none;
+        min-height: 0;
     }
 }
 
@@ -1265,9 +1271,12 @@
     min-width: 0;
 
     @include mobile {
-        // Hauteur naturelle : la scène impose sa taille (clamp svh), la
-        // colonne ne doit ni forcer ni écraser le bloc pendant le défilement.
-        flex: none;
+        // La colonne remplit l'espace laissé par la barre d'action ; la scène
+        // absorbe la hauteur restante (voir .scene-box) au lieu de forcer un
+        // défilement de page.
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow: hidden;
         padding: 6px;
         border-width: 1px;
     }
@@ -1300,12 +1309,13 @@
     isolation: isolate;
 
     @include mobile {
-        // Taille imposée par le clamp svh : pas d'étirement flex dans la
-        // colonne, sinon la scène « flotte » au-dessus des stats.
-        flex: none;
-        height: clamp(210px, 42svh, 280px);
-        min-height: 210px;
-        max-height: 280px;
+        // Hauteur élastique : la scène prend ce que la barre d'action laisse,
+        // dans des bornes lisibles. Plus de clamp fixe qui poussait la page
+        // au-delà du viewport.
+        flex: 1 1 auto;
+        height: auto;
+        min-height: 118px;
+        max-height: clamp(180px, 34svh, 280px);
         margin-bottom: 5px;
         border-width: 1px;
     }
@@ -1395,6 +1405,7 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
+    flex-shrink: 0;
 }
 
 .stats-content {
@@ -1403,6 +1414,10 @@
 
 .stats-content[aria-hidden="true"] {
     display: none;
+}
+
+.xp-section {
+    flex-shrink: 0;
 }
 
 .xp-header {
@@ -1779,22 +1794,13 @@
     min-width: 0;
 
     @include mobile {
-        flex: none;
+        flex: 0 0 auto;
         gap: 4px;
-        // Barre d'action collée en bas : le FIGHT reste sous le pouce, sans
-        // jamais devoir faire défiler la page pour attaquer. Sticky (et non
-        // fixed) : à l'arrêt, le panneau prend sa place naturelle, donc aucune
-        // zone de contenu ne doit être réservée à la main.
-        position: sticky;
-        bottom: 0;
-        z-index: 30;
-        // Aucune marge négative latérale : elle rendait le bloc plus large que
-        // .arena-content et ouvrait un scroll horizontal sur mobile.
-        // margin-top: auto : la scène a une hauteur naturelle (flex: none), ce
-        // qui laissait ~160px de vide SOUS la barre. L'espace libre est absorbé
-        // AU-DESSUS, la barre reste collée en bas — sticky n'agit que pendant
-        // le défilement, pas au repos.
-        margin: auto 0 0;
+        // La vue est verrouillée sur le viewport : plus besoin de sticky. Le
+        // panneau garde sa hauteur naturelle en bas, la scène se comprime.
+        position: relative;
+        z-index: 1;
+        margin: 0;
         padding: 6px 8px;
         background: linear-gradient(
             180deg,
@@ -1802,15 +1808,12 @@
             rgba(8, 8, 10, 0.92) 24%,
             rgba(5, 5, 6, 0.98) 100%
         );
-        backdrop-filter: blur(3px);
-        -webkit-backdrop-filter: blur(3px);
         border-top: 2px solid #26262c;
         box-shadow: 0 -8px 18px rgba(0, 0, 0, 0.45);
     }
 
     @include small-mobile {
-        margin: 4px 0 0;
-        padding: 5px 8px;
+        padding: 5px 7px;
     }
 }
 
@@ -2048,95 +2051,204 @@
 }
 
 .pvp-feed {
-    border: 1px solid rgba($accent-gold, 0.25);
-    background: rgba(0, 0, 0, 0.35);
-    padding: 8px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
     min-height: 0;
+    padding: 7px 8px;
+    border: 1px solid rgba($accent-gold, 0.25);
+    border-left: 3px solid rgba($accent-gold, 0.75);
+    background:
+        linear-gradient(135deg, rgba(255, 204, 0, 0.05) 0%, transparent 45%),
+        rgba(0, 0, 0, 0.42);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
-.pvp-feed-header {
+.pvp-feed-head {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: baseline;
     gap: 8px;
     padding-bottom: 4px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .pvp-feed-title {
-    font-size: 0.55rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.52rem;
     color: $accent-gold;
     letter-spacing: 1px;
+    white-space: nowrap;
 }
 
-.pvp-feed-subtitle {
-    font-size: 0.4rem;
-    color: #7fd9a7;
+.pvp-feed-live {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: $accent-green;
+    box-shadow: 0 0 6px $accent-green;
+    animation: pvpFeedPulse 1.8s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+.pvp-feed-badge {
+    font-size: 0.36rem;
     letter-spacing: 0.5px;
-    text-align: right;
+    color: #8b8b9a;
+    background: #0b0b12;
+    border: 1px solid #33333d;
+    padding: 1px 4px;
+    white-space: nowrap;
 }
 
 .pvp-feed-empty {
-    font-size: 0.5rem;
-    color: #777;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 44px;
+    padding: 8px 6px;
+    border: 1px dashed #2a2a34;
+    font-size: 0.42rem;
+    line-height: 1.4;
+    letter-spacing: 0.5px;
+    color: #7a7a88;
     text-align: center;
-    padding: 10px 4px;
+}
+
+.pvp-feed-empty-icon {
+    font-size: 0.85rem;
+    opacity: 0.7;
+    flex-shrink: 0;
 }
 
 .pvp-feed-list {
+    list-style: none;
+    margin: 0;
+    padding: 0 2px 0 0;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    max-height: 180px;
+    gap: 4px;
+    max-height: clamp(88px, 16svh, 156px);
     overflow-y: auto;
-    padding-right: 2px;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba($accent-gold, 0.55) transparent;
 
-    &::-webkit-scrollbar { width: 4px; }
-    &::-webkit-scrollbar-thumb { background: rgba($accent-gold, 0.5); }
+    &::-webkit-scrollbar { width: 3px; }
+    &::-webkit-scrollbar-track { background: transparent; }
+    &::-webkit-scrollbar-thumb {
+        background: rgba($accent-gold, 0.55);
+        border-radius: 1px;
+    }
 }
 
 .pvp-feed-item {
-    padding: 6px 8px;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr) auto;
     align-items: center;
+    gap: 6px;
+    padding: 5px 7px;
+    border: 1px solid #2a2a34;
+    border-left: 3px solid #555;
+    background: rgba(255, 255, 255, 0.025);
 
-    .history-status {
-        min-width: 54px;
-        font-size: 0.5rem;
-    }
+    &.won { border-left-color: $accent-green; }
+    &.lost { border-left-color: $accent-red; }
+    &.incoming { background: rgba(99, 179, 255, 0.07); }
+}
 
-    .history-opponent {
-        font-size: 0.58rem;
-        line-height: 1.2;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
+.pvp-feed-icon {
+    font-size: 0.6rem;
+    line-height: 1;
+    text-align: center;
+}
 
-    .history-date {
-        font-size: 0.38rem;
-    }
+.pvp-feed-main {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.pvp-feed-line {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    min-width: 0;
+}
+
+.pvp-feed-direction {
+    flex-shrink: 0;
+    font-size: 0.32rem;
+    letter-spacing: 0.5px;
+    color: #9a9aaa;
+    padding: 0 3px;
+    border: 1px solid #3a3a44;
+    background: #0b0b10;
+}
+
+.pvp-feed-opponent {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.54rem;
+    color: #fff;
+    letter-spacing: 0.3px;
+}
+
+.pvp-feed-meta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+}
+
+.pvp-feed-outcome {
+    font-size: 0.35rem;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+
+    &.won { color: $accent-green; }
+    &.lost { color: $accent-red; }
+}
+
+.pvp-feed-date {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.34rem;
+    color: #666;
 }
 
 .pvp-feed-rewards {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 2px;
-    margin-left: auto;
-    min-width: 72px;
+    gap: 1px;
+    min-width: 54px;
 }
 
 .pvp-feed-reward {
-    font-size: 0.45rem;
-    color: $accent-gold;
+    font-family: $font-pixel;
+    font-size: 0.42rem;
     white-space: nowrap;
 
+    &.xp { color: $accent-gold; }
     &.essence { color: #7fd9ff; }
-    &.muted { color: #666; }
+    &.muted { color: #555; }
+}
+
+@keyframes pvpFeedPulse {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pvp-feed-live { animation: none; }
 }
 
 @include mobile {
@@ -2145,20 +2257,76 @@
         gap: 4px;
     }
 
-    .pvp-feed-title { font-size: 0.48rem; }
-    .pvp-feed-subtitle { font-size: 0.35rem; }
-    .pvp-feed-list { max-height: 150px; gap: 4px; }
-
-    .pvp-feed-item {
-        padding: 5px 6px;
-        gap: 6px;
-
-        .history-status { min-width: 46px; font-size: 0.44rem; }
-        .history-opponent { font-size: 0.5rem; }
+    .pvp-feed-title { font-size: 0.46rem; gap: 4px; }
+    .pvp-feed-badge { font-size: 0.32rem; padding: 1px 3px; }
+    .pvp-feed-empty { min-height: 38px; font-size: 0.38rem; }
+    .pvp-feed-list {
+        max-height: clamp(76px, 14svh, 128px);
+        gap: 3px;
     }
 
-    .pvp-feed-rewards { min-width: 60px; }
-    .pvp-feed-reward { font-size: 0.4rem; }
+    .pvp-feed-item {
+        padding: 4px 6px;
+        gap: 5px;
+        grid-template-columns: 14px minmax(0, 1fr) auto;
+    }
+
+    .pvp-feed-icon { font-size: 0.52rem; }
+    .pvp-feed-opponent { font-size: 0.48rem; }
+    .pvp-feed-direction { font-size: 0.3rem; }
+    .pvp-feed-outcome { font-size: 0.32rem; }
+    .pvp-feed-date { font-size: 0.3rem; }
+    .pvp-feed-rewards { min-width: 48px; }
+    .pvp-feed-reward { font-size: 0.38rem; }
+}
+
+// Téléphones courts (≤ 740px de haut) : on comprime scène, stats secondaires
+// et journal pour que scène + FIGHT + onglets tiennent sans aucun scroll.
+@media (max-width: 600px) and (max-height: 740px) {
+    .arena-container.retro-container {
+        padding: 6px;
+    }
+
+    .arena-header {
+        padding: 2px 4px;
+        margin-bottom: 3px;
+    }
+
+    .character-display {
+        padding: 4px;
+    }
+
+    .scene-box {
+        min-height: 96px;
+        max-height: 180px;
+    }
+
+    .idle-efficiency {
+        padding: 3px 4px;
+        gap: 2px;
+    }
+
+    .efficiency-breakdown,
+    .efficiency-footer {
+        display: none;
+    }
+
+    .pvp-feed-list {
+        max-height: 84px;
+    }
+
+    .arena-bottom-tab {
+        min-height: 38px;
+        padding: 4px;
+        font-size: 0.5rem;
+    }
+
+    .giant-btn {
+        min-height: 40px;
+        height: 40px;
+        font-size: 0.8rem !important;
+        padding: 5px !important;
+    }
 }
 
 .boss-status-compact {
@@ -3040,6 +3208,11 @@
         // restent collés au bas de l'écran même quand les cartes sont courtes.
         flex: 1;
         gap: 6px;
+        // .arena-content est verrouillé : l'écran BOSS gère son propre
+        // défilement interne pour ne jamais être rogné.
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding-bottom: 4px;
     }
 }
 

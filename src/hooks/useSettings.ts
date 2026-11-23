@@ -71,6 +71,7 @@ export const useSettings = ({
         direction: 'outgoing' as const,
         displayName: fight.opponentName,
         xpGained: fight.xpGained,
+        essenceGained: fight.essenceGained,
       })),
       ...(character?.incomingFightHistory ?? []).map((fight) => ({
         date: fight.date,

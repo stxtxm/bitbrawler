@@ -1564,6 +1564,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
 
   // ===================== ISSUES & SUGGESTIONS =====================
   const issues: string[] = []
+  const suggestions: string[] = []
   if (incompleteRuns.length > 0) {
     issues.push(`${incompleteRuns.length} run(s) have combat data but an incomplete capture (missing initial level or final stats) — excluded from the analysis (Phase 2.3 validation #1387)`)
   }
@@ -1572,7 +1573,6 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     if (signal.severity === 'info') suggestions.push(signal.detail)
     else issues.push(signal.detail)
   }
-  const suggestions: string[] = []
   const recentRuns = stats.filter(isRunDataComplete).slice(-RECENT_WINDOW_RUNS)
 
   // Fight-type classification (#863, #705, #1303). VOID TITAN emitted as

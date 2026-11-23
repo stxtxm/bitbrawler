@@ -3,6 +3,7 @@ export interface FightHistory {
   opponentName: string;
   won: boolean;
   xpGained?: number;
+  essenceGained?: number;
 }
 
 export interface IncomingFightHistory {

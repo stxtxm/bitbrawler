@@ -742,7 +742,8 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const historyEntry = {
       date: Date.now(),
       won,
-      opponentName
+      opponentName,
+      xpGained,
     };
 
     // Maintain a max of 20 history entries
@@ -779,13 +780,20 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         )
       : 0;
 
+    // Rewards are stored on the newest entry so the arena feed can show what
+    // the attack actually paid out (not just the outcome).
+    const historyWithRewards = [
+      { ...historyEntry, essenceGained: comebackEssence + pvpWinEssence },
+      ...existingHistory,
+    ].slice(0, 20);
+
     let updatedChar: Character = normalizeCharacter({
       ...xpResult.updatedCharacter,
       essence: (xpResult.updatedCharacter.essence ?? baseCharacter.essence ?? 0) + comebackEssence + pvpWinEssence,
       fightsLeft: Math.max(0, (baseCharacter.fightsLeft || 0) - (shouldConsumeEnergy ? 1 : 0)),
       wins: won ? (baseCharacter.wins || 0) + 1 : (baseCharacter.wins || 0),
       losses: won ? (baseCharacter.losses || 0) : (baseCharacter.losses || 0) + 1,
-      fightHistory: newHistory,
+      fightHistory: historyWithRewards,
       foughtToday: newFoughtToday,
       statPoints: existingPoints + pointsGained,
       // Full heal after every PvP fight (documented design): nothing else
@@ -934,7 +942,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const rewards = getBossRewards(baseCharacter, won, baseProgress, now);
     const xpResult = gainXp(baseCharacter, rewards.xpGained);
 
-    const historyEntry = { date: now, won, opponentName: bossName };
+    const historyEntry = {
+      date: now,
+      won,
+      opponentName: bossName,
+      xpGained: rewards.xpGained,
+      essenceGained: rewards.essenceGained,
+    };
     const newHistory = [historyEntry, ...(baseCharacter.fightHistory || [])].slice(0, 20);
 
     const pointsGained = xpResult.levelsGained * GAME_RULES.STATS.POINTS_PER_LEVEL;

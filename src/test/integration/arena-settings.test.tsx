@@ -184,7 +184,32 @@ describe('Arena settings modal', () => {
     expect(stored.claimed).toContain(1)
   })
 
-  it('shows combat log rewards and hides attacker type labels', async () => {
+  it('shows the PvP & defense feed above the fight button with rewards', async () => {
+    const { container, getByText, getAllByText } = renderWithRouter(<Arena />)
+
+    const user = userEvent.setup()
+    await user.click(screen.getAllByRole('tab', { name: /PVP/ })[0])
+
+    const feed = container.querySelector('.pvp-feed')
+    const fightButton = container.querySelector('.fight-btn')
+
+    expect(feed).not.toBeNull()
+    expect(fightButton).not.toBeNull()
+    // DOM order drives the layout: the log must sit above the FIGHT button.
+    expect(
+      feed!.compareDocumentPosition(fightButton!) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+
+    expect(getByText('PVP & DEFENSE LOG')).toBeInTheDocument()
+    expect(getByText('RIVAL')).toBeInTheDocument()
+    expect(getByText('NIGHT HUNTER')).toBeInTheDocument()
+    expect(getByText('ATTACK')).toBeInTheDocument()
+    expect(getByText('DEFENSE')).toBeInTheDocument()
+    expect(getByText('BREACHED')).toBeInTheDocument()
+    expect(getAllByText('+100 XP').length).toBeGreaterThan(0)
+  })
+
+  it('hides attacker type labels in combat logs', async () => {
     const { getByLabelText, getByText, queryByText } = renderWithRouter(<Arena />)
 
     const user = userEvent.setup()
