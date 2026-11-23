@@ -6368,6 +6368,96 @@ describe('QA Data Quality Phase 3 (#1387) — Analytics Engine', () => {
   })
 })
 
+describe('QA false-signal guards (#1404)', () => {
+  const LOOT_DELTA_WINDOW_RUNS = 150
+  const MIN_LOOT_SAMPLE = 20
+
+  function computeLootRatesMirror(runs: RunRecord[]): Record<string, number> {
+    const counts = new Map<string, number>()
+    for (const r of runs) {
+      if (!r.lootbox?.opened) continue
+      const key = typeof r.lootbox.rarity === 'string' ? r.lootbox.rarity.toLowerCase() : 'unknown'
+      counts.set(key, (counts.get(key) ?? 0) + 1)
+    }
+    const total = [...counts.values()].reduce((sum, n) => sum + n, 0)
+    if (total === 0) return {}
+    return Object.fromEntries([...counts.entries()].map(([k, v]) => [k, Math.round((v / total) * 1000) / 1000]))
+  }
+
+  function countOpenedLootboxes(runs: RunRecord[]): number {
+    return runs.filter(r => r.lootbox?.opened).length
+  }
+
+  function computeLootRateDeltaMirror(runs: RunRecord[]): Record<string, number> {
+    const recentWindow = runs.slice(-LOOT_DELTA_WINDOW_RUNS)
+    const previousWindow = runs.slice(-2 * LOOT_DELTA_WINDOW_RUNS, -LOOT_DELTA_WINDOW_RUNS)
+    if (countOpenedLootboxes(recentWindow) < MIN_LOOT_SAMPLE) return {}
+    if (countOpenedLootboxes(previousWindow) < MIN_LOOT_SAMPLE) return {}
+    const recent = computeLootRatesMirror(recentWindow)
+    const previous = computeLootRatesMirror(previousWindow)
+    if (Object.keys(previous).length === 0) return {}
+    const out: Record<string, number> = {}
+    for (const key of new Set([...Object.keys(recent), ...Object.keys(previous)])) {
+      const delta = Math.round(((recent[key] ?? 0) - (previous[key] ?? 0)) * 1000) / 1000
+      if (Math.abs(delta) > 0.001) out[key] = delta
+    }
+    return out
+  }
+
+  function buildLootRuns(rarityAt: (index: number) => string | null): RunRecord[] {
+    return Array.from({ length: 2 * LOOT_DELTA_WINDOW_RUNS }, (_, i) => {
+      const rarity = rarityAt(i)
+      return {
+        date: '2026-11-23',
+        run: `r${i}`,
+        character: 'QA',
+        fights: [],
+        errors: [],
+        lootbox: rarity
+          ? { available: true, opened: true, rarity }
+          : { available: true, opened: false },
+      }
+    })
+  }
+
+  it('returns no loot-rate delta below the minimum sample in either window', () => {
+    const runs = buildLootRuns(i => {
+      if (i < 10) return 'common'
+      if (i >= LOOT_DELTA_WINDOW_RUNS && i < LOOT_DELTA_WINDOW_RUNS + 7) return 'common'
+      return null
+    })
+    expect(computeLootRateDeltaMirror(runs)).toEqual({})
+  })
+
+  it('returns a loot-rate delta once both windows reach the minimum sample', () => {
+    const runs = buildLootRuns(i => {
+      if (i < 10) return 'common'
+      if (i < 20) return 'epic'
+      if (i >= LOOT_DELTA_WINDOW_RUNS && i < 2 * LOOT_DELTA_WINDOW_RUNS) return 'common'
+      return null
+    })
+    const delta = computeLootRateDeltaMirror(runs)
+    expect(delta).not.toEqual({})
+    expect(delta.common).toBeCloseTo(0.5, 3)
+    expect(delta.epic).toBeCloseTo(-0.5, 3)
+  })
+
+  it('gates the monster-PvE suggestions behind !pveAnalysis.pve_shifted', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+    expect(source).toContain('if (!pveAnalysis.pve_shifted) {')
+    expect(source).toContain('monsters may be too weak')
+    expect(source).toContain('monsters may be too strong')
+  })
+
+  it('only compares loot-rate windows that reach LOOT_DELTA_WINDOW_RUNS and MIN_LOOT_SAMPLE', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+    expect(source).toContain('const LOOT_DELTA_WINDOW_RUNS = 150')
+    expect(source).toContain('const MIN_LOOT_SAMPLE = 20')
+    expect(source).toContain('runs.slice(-LOOT_DELTA_WINDOW_RUNS)')
+    expect(source).toContain('runs.slice(-2 * LOOT_DELTA_WINDOW_RUNS, -LOOT_DELTA_WINDOW_RUNS)')
+  })
+})
+
 describe('QA UI feature checks (arena/boss/biome)', () => {
   it('qa-bot captures arena tabs, boss selector, biome selector and idle rates', () => {
     const source = readFileSync(join(process.cwd(), 'qa', 'qa-bot.mjs'), 'utf-8')
