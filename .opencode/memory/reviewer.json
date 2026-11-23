@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-11-21T00:44:01Z",
+  "last_session": "2026-11-23T00:42:09Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR bot #1402 (fix/stats repairLuckOverflow) : aucun check CI attaché (seul Cloudflare Pages), mergeStateStatus UNSTABLE malgré gate locale verte (lint+tsc+2788 tests+build) → procédure: lancer la gate complète soi-même puis merger, ne PAS confondre absence de check avec CI rouge",
-      "issue": "#1402"
+      "lesson": "PR de sous-issue peut devenir un doublon en conflit si la sous-issue DÉPENDANTE est mergée avant (ici #1414/#1406 a livré le helper de #1405). Vérifier avant review : `git fetch` + comparer le diff PR au contenu de master, et si le contenu y est déjà, fermer la PR comme doublon plutôt que déclencher un rebase vide.",
+      "issue": "#1409/#1405"
     }
   ]
 }
