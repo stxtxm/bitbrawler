@@ -45,6 +45,19 @@ describe('Workflow contracts: auto bot-merge reliability ([skip ci] head)', () =
     expect(opencode).toContain('mode != \'supervisor\'')
   })
 
+  it('reviewer.yml asks for manual merge (no gh pr merge)', () => {
+    const reviewer = readWorkflow('reviewer.yml')
+    expect(reviewer).toContain('MERGE MANUEL OBLIGATOIRE')
+    expect(reviewer).not.toMatch(/gh pr merge "\$PR_NUMBER" --squash/)
+  })
+
+  it('no workflow declares the invalid `workflows` permission', () => {
+    const files = readdirSync(join(process.cwd(), '.github', 'workflows')).filter(f => f.endsWith('.yml'))
+    for (const file of files) {
+      expect(readWorkflow(file), file).not.toMatch(/^\s*workflows:\s*write\s*$/m)
+    }
+  })
+
   it('ci.yml exposes the pr_number workflow_dispatch input', () => {
     expect(ci).toMatch(/workflow_dispatch:\s*\n\s*inputs:/)
     expect(ci).toContain('pr_number')
