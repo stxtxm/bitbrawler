@@ -1,23 +1,22 @@
 {
   "run": "2026-11-23",
-  "character": "STONETAMER",
+  "character": "QA-END",
   "exhausted": false,
-  "updated_at": "2026-11-23T05:03:44.599Z",
-  "source": "created",
+  "updated_at": "2026-11-23T08:01:27.715Z",
+  "source": "reused",
   "character_type": "persistent",
   "persistent_generation": 0,
-  "persistent_created_at": "2026-11-23T05:01:46.924Z",
+  "persistent_created_at": "2026-11-23T08:01:24.748Z",
   "persistent_reset_ready": false,
   "pvp_since_last_pve": 1,
   "fleet": {
     "QA-END": {
       "character": "QA-END",
       "generation": 0,
-      "created_at": "2026-11-22T23:01:46.533Z",
-      "level": 2,
-      "last_run": "2026-11-23",
-      "exhausted": false,
-      "last_run_failed": false
+      "created_at": "2026-11-23T08:01:24.748Z",
+      "level": null,
+      "last_run": "2026-11-23T08:01:27.715Z",
+      "exhausted": false
     },
     "QA-FRESH": {
       "character": "ROGUERIDER",
