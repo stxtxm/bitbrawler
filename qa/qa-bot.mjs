@@ -33,6 +33,7 @@ import {
   resolveRunPvpSinceLastPve,
   isAutoModeArenaStatus,
   classifyArenaSkipReason,
+  selectFleetMember,
 } from '../src/utils/qa-bot-helpers.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -186,24 +187,6 @@ function resolvePersistentCharacter(state, now, baseName = config.persistentChar
     createdAt: null,
     reset: true,
   }
-}
-
-/**
- * QA Combat Fleet (#1387 Phase 1): pick the fleet member to run this time.
- * Members with no recorded run come first; among them the oldest `last_run`
- * wins — over several bot runs every member gets its turn (rotation by
- * oldest-last-run). Returns null when the fleet is disabled/empty.
- */
-function selectFleetMember(state, fleet) {
-  if (!Array.isArray(fleet) || fleet.length === 0) return null
-  const members = fleet.slice().sort((a, b) => {
-    const lastA = state?.fleet?.[a.name]?.last_run ?? ''
-    const lastB = state?.fleet?.[b.name]?.last_run ?? ''
-    if (lastA !== lastB) return lastA < lastB ? -1 : 1
-    return String(a.name).localeCompare(String(b.name))
-  })
-  const member = members[0]
-  return member && typeof member.name === 'string' && member.name ? member : null
 }
 
 function loadStats() {
@@ -1478,7 +1461,7 @@ function persistQaState(runKey, character, source, exhausted, extra = {}) {
         generation: nextState.persistent_generation ?? null,
         created_at: nextState.persistent_created_at ?? null,
         level: null,
-        last_run: runKey,
+        last_run: new Date().toISOString(),
         exhausted: exhausted === true,
       },
     }
@@ -3384,7 +3367,7 @@ async function run() {
   const zonedWeekday = getZonedWeekday(now, QA_TIME_ZONE)
   // QA Combat Fleet (#1387 Phase 1): when enabled, the run targets one of the
   // fleet members instead of the single persistent character.
-  const fleetMember = selectFleetMember(state, config.fleet)
+  const { member: fleetMember } = selectFleetMember(state, config.fleet)
   activeFleetMember = fleetMember
   const useFleet = fleetMember !== null
   // Fleet Phase 2.2 (#1387): a member whose last run failed retries with a
@@ -4061,16 +4044,17 @@ async function run() {
     if (useFleet && fleetMember) {
       const memberState = loadState()
       const currentMember = memberState?.fleet?.[fleetMember.name] ?? {}
+      const lastRunAt = new Date().toISOString()
       memberState.fleet = { ...(memberState?.fleet ?? {}) }
       memberState.fleet[fleetMember.name] = {
         ...currentMember,
         character: runRecord.character,
         level: runRecord.final_stats?.level ?? runRecord.initial_level ?? null,
-        last_run: runKey,
+        last_run: lastRunAt,
         last_run_failed: isQaRunFailed(runRecord),
       }
       saveState(memberState)
-      console.log(`   📊 Fleet member ${fleetMember.name}: level=${memberState.fleet[fleetMember.name].level ?? '?'}, last_run=${runKey}`)
+      console.log(`   📊 Fleet member ${fleetMember.name}: level=${memberState.fleet[fleetMember.name].level ?? '?'}, last_run=${lastRunAt}`)
     }
     console.log(`✅ Stats saved (run #${stats.length})`)
 
