@@ -34,6 +34,7 @@ import {
   isAutoModeArenaStatus,
   classifyArenaSkipReason,
   selectFleetMember,
+  resolvePersistentCharacter,
 } from '../src/utils/qa-bot-helpers.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -161,33 +162,7 @@ function getAppUrl(path) {
 // accumulate into usable longitudinal data. On controlled reset (level cap or
 // max age) a new generation of the character is created.
 // Pure helpers (persistentNameForGeneration, shouldForcePersistentReset,
-// parseLevelFromText) live in qa-bot-helpers.js and are unit-tested (#830).
-
-function resolvePersistentCharacter(state, now, baseName = config.persistentCharacterName) {
-  const generation = state.persistent_generation || 0
-  const createdAt = state.persistent_created_at ? new Date(state.persistent_created_at) : null
-  const ageMs = createdAt !== null ? now.getTime() - createdAt.getTime() : null
-  const ageExceeded =
-    config.persistentCharacterMaxAgeDays > 0 &&
-    ageMs !== null &&
-    ageMs > config.persistentCharacterMaxAgeDays * 24 * 60 * 60 * 1000
-  const shouldReset = state.persistent_reset_ready === true || ageExceeded
-  if (!shouldReset) {
-    return {
-      name: persistentNameForGeneration(baseName, generation),
-      generation,
-      createdAt: state.persistent_created_at || null,
-      reset: false,
-    }
-  }
-  const nextGeneration = generation + 1
-  return {
-    name: persistentNameForGeneration(baseName, nextGeneration),
-    generation: nextGeneration,
-    createdAt: null,
-    reset: true,
-  }
-}
+// resolvePersistentCharacter, parseLevelFromText) live in qa-bot-helpers.js.
 
 function loadStats() {
   try {
@@ -1450,6 +1425,12 @@ function persistQaState(runKey, character, source, exhausted, extra = {}) {
     source,
     ...extra,
   }
+  if (nextState.persistent_generation !== undefined && nextState.generation === undefined) {
+    nextState.generation = nextState.persistent_generation
+  }
+  if (nextState.persistent_created_at !== undefined && nextState.created_at === undefined) {
+    nextState.created_at = nextState.persistent_created_at
+  }
   // QA Combat Fleet (#1387 Phase 1): keep the fleet map of the other members
   // so each member's bookkeeping survives the wholesale state rewrites.
   if (activeFleetMember) {
@@ -1458,8 +1439,8 @@ function persistQaState(runKey, character, source, exhausted, extra = {}) {
       ...(persisted?.fleet ?? {}),
       [activeFleetMember.name]: {
         character,
-        generation: nextState.persistent_generation ?? null,
-        created_at: nextState.persistent_created_at ?? null,
+        generation: nextState.generation ?? nextState.persistent_generation ?? null,
+        created_at: nextState.created_at ?? nextState.persistent_created_at ?? null,
         level: null,
         last_run: new Date().toISOString(),
         exhausted: exhausted === true,
@@ -3367,7 +3348,7 @@ async function run() {
   const zonedWeekday = getZonedWeekday(now, QA_TIME_ZONE)
   // QA Combat Fleet (#1387 Phase 1): when enabled, the run targets one of the
   // fleet members instead of the single persistent character.
-  const { member: fleetMember } = selectFleetMember(state, config.fleet)
+  const { member: fleetMember, bandViolation: fleetBandViolation } = selectFleetMember(state, config.fleet)
   activeFleetMember = fleetMember
   const useFleet = fleetMember !== null
   // Fleet Phase 2.2 (#1387): a member whose last run failed retries with a
@@ -3382,7 +3363,7 @@ async function run() {
   const persistentInfo = usePersistent
     ? resolvePersistentCharacter(state, now)
     : useFleet
-      ? resolvePersistentCharacter(state?.fleet?.[fleetMember.name] ?? {}, now, fleetMember.name)
+      ? resolvePersistentCharacter(state?.fleet?.[fleetMember.name] ?? {}, now, fleetMember.name, fleetMember.minLevel)
       : null
   runStartTime = Date.now()
 
@@ -3412,6 +3393,9 @@ async function run() {
   console.log(`    slowMo:         ${config.slowMo}`)
   console.log(`  CWD: ${process.cwd()}`)
   console.log('───────────────────────────────────────────')
+  if (fleetBandViolation) {
+    console.log(`   ⚠️ Fleet band violation: ${fleetBandViolation.member} level=${fleetBandViolation.level} band=${fleetBandViolation.minLevel}-${fleetBandViolation.maxLevel}`)
+  }
 
   if (!existsSync(SCREENSHOTS_DIR)) {
     mkdirSync(SCREENSHOTS_DIR, { recursive: true })
@@ -3491,6 +3475,8 @@ async function run() {
     character_action: null,
     replaced_character: null,
     character_type: null,
+    fleet_member: fleetMember?.name ?? null,
+    fleet_band_violation: fleetBandViolation,
     fights: [],
     lootbox: null,
     auto_mode_enabled: false,
@@ -4049,6 +4035,8 @@ async function run() {
       memberState.fleet[fleetMember.name] = {
         ...currentMember,
         character: runRecord.character,
+        generation: activeGeneration ?? currentMember.generation ?? null,
+        created_at: activeCreatedAt ?? currentMember.created_at ?? null,
         level: runRecord.final_stats?.level ?? runRecord.initial_level ?? null,
         last_run: lastRunAt,
         last_run_failed: isQaRunFailed(runRecord),
