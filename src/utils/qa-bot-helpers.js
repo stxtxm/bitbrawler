@@ -48,6 +48,85 @@ export function shouldReplaceExhaustedCharacter(characterType) {
   )
 }
 
+function comparableTimestamp(value) {
+  return typeof value === 'string' ? value : ''
+}
+
+function compareTimestamps(a, b) {
+  const parsedA = Date.parse(a)
+  const parsedB = Date.parse(b)
+  if (Number.isFinite(parsedA) && Number.isFinite(parsedB)) {
+    if (parsedA === parsedB) return 0
+    return parsedA < parsedB ? -1 : 1
+  }
+  if (a === b) return 0
+  return a < b ? -1 : 1
+}
+
+function fleetMemberState(state, member) {
+  if (!member || typeof member.name !== 'string' || member.name.length === 0) return null
+  const fleet = state && typeof state === 'object' ? state.fleet : null
+  if (!fleet || typeof fleet !== 'object') return null
+  const entry = fleet[member.name]
+  return entry && typeof entry === 'object' ? entry : null
+}
+
+function bandBounds(member) {
+  const minLevel = typeof member.minLevel === 'number' && Number.isFinite(member.minLevel)
+    ? member.minLevel
+    : 0
+  const maxLevel = typeof member.maxLevel === 'number' && Number.isFinite(member.maxLevel)
+    ? member.maxLevel
+    : Number.POSITIVE_INFINITY
+  return { minLevel, maxLevel }
+}
+
+function isMemberInBand(member, level) {
+  if (typeof level !== 'number' || !Number.isFinite(level)) return false
+  const { minLevel, maxLevel } = bandBounds(member)
+  return level >= minLevel && level <= maxLevel
+}
+
+export function selectFleetMember(state, fleet) {
+  if (!Array.isArray(fleet) || fleet.length === 0) {
+    return { member: null, bandViolation: null }
+  }
+  const candidates = fleet
+    .map((member, index) => ({ member, index }))
+    .filter(({ member }) => member && typeof member.name === 'string' && member.name.length > 0)
+  if (candidates.length === 0) {
+    return { member: null, bandViolation: null }
+  }
+  candidates.sort((a, b) => {
+    const stateA = fleetMemberState(state, a.member)
+    const stateB = fleetMemberState(state, b.member)
+    const lastRunCompare = compareTimestamps(
+      comparableTimestamp(stateA?.last_run),
+      comparableTimestamp(stateB?.last_run),
+    )
+    if (lastRunCompare !== 0) return lastRunCompare
+    const inBandA = isMemberInBand(a.member, stateA?.level)
+    const inBandB = isMemberInBand(b.member, stateB?.level)
+    if (inBandA !== inBandB) return inBandA ? -1 : 1
+    const createdCompare = compareTimestamps(
+      comparableTimestamp(stateA?.created_at),
+      comparableTimestamp(stateB?.created_at),
+    )
+    if (createdCompare !== 0) return createdCompare
+    return a.index - b.index
+  })
+  const member = candidates[0].member
+  const level = fleetMemberState(state, member)?.level
+  if (typeof level !== 'number' || !Number.isFinite(level)) {
+    return { member, bandViolation: null }
+  }
+  const { minLevel, maxLevel } = bandBounds(member)
+  const bandViolation = level < minLevel || level > maxLevel
+    ? { member, level, minLevel, maxLevel }
+    : null
+  return { member, bandViolation }
+}
+
 /**
  * QA Data Quality Phase 2.2 (#1387): a run "fails" when it recorded errors or
  * produced no combat data — the fleet retry uses this to launch a fresh

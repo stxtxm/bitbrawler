@@ -33,6 +33,7 @@ import {
   getTotalXpForLevel,
   parseProgressionCurve,
   parseResultXpPopup,
+  selectFleetMember,
 } from '../../utils/qa-bot-helpers'
 
 describe('qa-bot-helpers combat speed', () => {
@@ -464,5 +465,158 @@ describe('qa-bot-helpers classifyQaRunErrors (#1387 Phase 2.1)', () => {
   it('falls back to ["other"] for unmatched errors', () => {
     expect(classifyQaRunErrors({ errors: ['something unexpected'] })).toEqual(['other'])
     expect(classifyQaRunErrors({ errors: [''] })).toEqual(['other'])
+  })
+})
+
+interface FleetMemberConfig {
+  name: string
+  minLevel?: number
+  maxLevel?: number
+}
+
+interface FleetMemberState {
+  last_run?: string
+  created_at?: string
+  level?: number
+}
+
+interface FleetState {
+  fleet?: Record<string, FleetMemberState>
+}
+
+const ROTATION_FLEET: FleetMemberConfig[] = [
+  { name: 'QA-FRESH', minLevel: 1, maxLevel: 5 },
+  { name: 'QA-MID', minLevel: 15, maxLevel: 25 },
+  { name: 'QA-END', minLevel: 30, maxLevel: 99 },
+]
+
+describe('qa-bot-helpers selectFleetMember (#1405)', () => {
+  it('rotates through every member three times over nine runs', () => {
+    const state: FleetState = {
+      fleet: {
+        'QA-FRESH': { level: 3 },
+        'QA-MID': { level: 20 },
+        'QA-END': { level: 40 },
+      },
+    }
+    const picks: string[] = []
+    for (let run = 0; run < 9; run++) {
+      const result = selectFleetMember(state, ROTATION_FLEET)
+      expect(result.member).not.toBeNull()
+      const name = result.member?.name ?? ''
+      picks.push(name)
+      const lastRun = new Date(Date.UTC(2026, 0, 1, 0, run)).toISOString()
+      state.fleet = {
+        ...state.fleet,
+        [name]: { ...state.fleet?.[name], last_run: lastRun },
+      }
+    }
+    expect(picks.filter((name) => name === 'QA-FRESH')).toHaveLength(3)
+    expect(picks.filter((name) => name === 'QA-MID')).toHaveLength(3)
+    expect(picks.filter((name) => name === 'QA-END')).toHaveLength(3)
+  })
+
+  it('never picks a member with a more recent last_run while another is older', () => {
+    const state: FleetState = {
+      fleet: {
+        'QA-FRESH': { level: 3, last_run: '2026-01-01T00:00:00.000Z' },
+        'QA-MID': { level: 20, last_run: '2026-01-02T00:00:00.000Z' },
+        'QA-END': { level: 40, last_run: '2026-01-03T00:00:00.000Z' },
+      },
+    }
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const result = selectFleetMember(state, ROTATION_FLEET)
+      expect(result.member?.name).toBe('QA-FRESH')
+    }
+  })
+
+  it('treats an empty or missing last_run as the oldest', () => {
+    const state: FleetState = {
+      fleet: {
+        'QA-FRESH': { level: 3, last_run: '2026-01-05T00:00:00.000Z' },
+        'QA-MID': { level: 20, last_run: '' },
+        'QA-END': { level: 40, last_run: '2026-01-06T00:00:00.000Z' },
+      },
+    }
+    const result = selectFleetMember(state, ROTATION_FLEET)
+    expect(result.member?.name).toBe('QA-MID')
+  })
+
+  it('breaks a last_run tie in favour of the member inside its band', () => {
+    const fleet: FleetMemberConfig[] = [
+      { name: 'OUT', minLevel: 1, maxLevel: 5 },
+      { name: 'IN', minLevel: 15, maxLevel: 25 },
+    ]
+    const state: FleetState = {
+      fleet: {
+        OUT: { level: 40, last_run: '2026-01-01T00:00:00.000Z' },
+        IN: { level: 20, last_run: '2026-01-01T00:00:00.000Z' },
+      },
+    }
+    const result = selectFleetMember(state, fleet)
+    expect(result.member?.name).toBe('IN')
+    expect(result.bandViolation).toBeNull()
+  })
+
+  it('breaks a remaining tie on the oldest created_at', () => {
+    const fleet: FleetMemberConfig[] = [
+      { name: 'FIRST', minLevel: 1, maxLevel: 99 },
+      { name: 'SECOND', minLevel: 1, maxLevel: 99 },
+    ]
+    const state: FleetState = {
+      fleet: {
+        FIRST: { level: 10, last_run: '2026-01-01T00:00:00.000Z', created_at: '2026-01-02T00:00:00.000Z' },
+        SECOND: { level: 10, last_run: '2026-01-01T00:00:00.000Z', created_at: '2026-01-01T00:00:00.000Z' },
+      },
+    }
+    const result = selectFleetMember(state, fleet)
+    expect(result.member?.name).toBe('SECOND')
+  })
+
+  it('falls back to the config index instead of alphabetical order', () => {
+    const fleet: FleetMemberConfig[] = [
+      { name: 'ZETA', minLevel: 1, maxLevel: 99 },
+      { name: 'ALPHA', minLevel: 1, maxLevel: 99 },
+    ]
+    const state: FleetState = {
+      fleet: {
+        ZETA: { level: 10, last_run: '2026-01-01T00:00:00.000Z', created_at: '2026-01-01T00:00:00.000Z' },
+        ALPHA: { level: 10, last_run: '2026-01-01T00:00:00.000Z', created_at: '2026-01-01T00:00:00.000Z' },
+      },
+    }
+    const result = selectFleetMember(state, fleet)
+    expect(result.member?.name).toBe('ZETA')
+  })
+
+  it('reports a band violation when the selected member is out of its band', () => {
+    const state: FleetState = {
+      fleet: {
+        'QA-END': { level: 2, last_run: '2026-01-01T00:00:00.000Z' },
+      },
+    }
+    const result = selectFleetMember(state, [ROTATION_FLEET[2]])
+    expect(result.member?.name).toBe('QA-END')
+    expect(result.bandViolation).toEqual({
+      member: ROTATION_FLEET[2],
+      level: 2,
+      minLevel: 30,
+      maxLevel: 99,
+    })
+  })
+
+  it('returns a null band violation when the level is inside the band', () => {
+    const state: FleetState = {
+      fleet: {
+        'QA-MID': { level: 20, last_run: '2026-01-01T00:00:00.000Z' },
+      },
+    }
+    const result = selectFleetMember(state, [ROTATION_FLEET[1]])
+    expect(result.member?.name).toBe('QA-MID')
+    expect(result.bandViolation).toBeNull()
+  })
+
+  it('returns null member and violation for an empty or disabled fleet', () => {
+    expect(selectFleetMember({}, [])).toEqual({ member: null, bandViolation: null })
+    expect(selectFleetMember({}, null)).toEqual({ member: null, bandViolation: null })
   })
 })
