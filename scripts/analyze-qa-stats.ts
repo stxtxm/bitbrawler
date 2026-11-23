@@ -10,7 +10,7 @@
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'fs'
-import { join, dirname } from 'path'
+import { join, dirname, resolve } from 'path'
 import { fileURLToPath } from 'url'
 import {
   isPurchaseWithinBudget,
@@ -107,6 +107,28 @@ interface EssenceData {
   flow: EssenceFlow
 }
 
+interface FleetBandViolation {
+  member: string
+  level: number | null
+  minLevel: number | null
+  maxLevel: number | null
+}
+
+interface FleetBandViolationReport {
+  member: string
+  level: number | null
+  min_level: number | null
+  max_level: number | null
+  run: string
+  date: string
+}
+
+interface FleetAnalysis {
+  runs_with_fleet: number
+  members: Record<string, number>
+  fleet_band_violations: FleetBandViolationReport[]
+}
+
 interface RunRecord {
   date: string
   run: string
@@ -118,6 +140,8 @@ interface RunRecord {
   character_type?: 'fresh' | 'persistent' | null  // #731: persistent QA character vs fresh first-session runs
   /** Cohorte QA du run (#1230) : profil de dépense résolu au début du run. */
   cohort?: { name: string; essence_budget: number | null } | null
+  fleet_member?: string | null
+  fleet_band_violation?: FleetBandViolation | null
   fights: FightRecord[]
   skipped_summary?: Record<string, number>
   idle_fights?: IdleFightRecord[]
@@ -533,6 +557,7 @@ interface AnalysisReport {
     idle_win_rate: number
     boss_win_rate: number | null
   }
+  fleet: FleetAnalysis
   issues: string[]
   suggestions: string[]
 }
@@ -1389,7 +1414,34 @@ function computeWinRateCi95(fights: FightRecord[]): number | null {
   return Math.round(196 * Math.sqrt(0.25 / n))
 }
 
-function analyze(stats: RunRecord[]): AnalysisReport {
+export function computeFleetAnalysis(runs: RunRecord[]): FleetAnalysis {
+  const runsWithFleet = runs.filter(r => typeof r.fleet_member === 'string' && r.fleet_member.length > 0)
+  const members: Record<string, number> = {}
+  for (const r of runsWithFleet) {
+    const name = r.fleet_member as string
+    members[name] = (members[name] ?? 0) + 1
+  }
+  const fleet_band_violations: FleetBandViolationReport[] = []
+  for (const r of runs) {
+    const v = r.fleet_band_violation
+    if (!v || typeof v !== 'object') continue
+    fleet_band_violations.push({
+      member: v.member,
+      level: v.level ?? null,
+      min_level: v.minLevel ?? null,
+      max_level: v.maxLevel ?? null,
+      run: r.run,
+      date: r.date,
+    })
+  }
+  return {
+    runs_with_fleet: runsWithFleet.length,
+    members,
+    fleet_band_violations,
+  }
+}
+
+export function analyze(stats: RunRecord[]): AnalysisReport {
   const now = new Date().toISOString()
   const data_freshness = computeDataFreshness(stats)
 
@@ -1438,15 +1490,15 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     (typeof f.monster_name === 'string' && f.monster_name.trim() === 'VOID TITAN')
 
   // XP analysis
-  const fightsWithXp = allFights.filter((f): f is FightRecord => f.xp !== null)
+  const fightsWithXp = allFights.filter((f): f is FightRecord & { xp: number } => f.xp !== null)
   const avgXp = fightsWithXp.length > 0
     ? fightsWithXp.reduce((s, f) => s + f.xp, 0) / fightsWithXp.length
     : 0
-  const xpPerWin = wins.filter((f): f is FightRecord => f.xp !== null)
+  const xpPerWin = wins.filter((f): f is FightRecord & { xp: number } => f.xp !== null)
   const avgXpWin = xpPerWin.length > 0
     ? xpPerWin.reduce((s, f) => s + f.xp, 0) / xpPerWin.length
     : 0
-  const xpPerLoss = losses.filter((f): f is FightRecord => f.xp !== null)
+  const xpPerLoss = losses.filter((f): f is FightRecord & { xp: number } => f.xp !== null)
   const avgXpLoss = xpPerLoss.length > 0
     ? xpPerLoss.reduce((s, f) => s + f.xp, 0) / xpPerLoss.length
     : 0
@@ -2098,6 +2150,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
 
   // --- Shop Real Purchases (#1229) ---
   const shopReal = computeShopRealAnalysis(stats)
+  const fleet = computeFleetAnalysis(stats)
 
   // --- Idle Analysis ---
   // Collect idle fights from both structured idle_fights[] (new) and legacy idle_runner (backward compat)
@@ -2292,6 +2345,19 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     }
   }
 
+  if (fleet.fleet_band_violations.length > 0) {
+    const counts = new Map<string, { member: string; level: number | null; min: number | null; max: number | null; count: number }>()
+    for (const v of fleet.fleet_band_violations) {
+      const key = `${v.member}|${v.level}|${v.min_level}|${v.max_level}`
+      const entry = counts.get(key)
+      if (entry) entry.count++
+      else counts.set(key, { member: v.member, level: v.level, min: v.min_level, max: v.max_level, count: 1 })
+    }
+    for (const { member, level, min, max, count } of counts.values()) {
+      suggestions.push(`${member} ran at level ${level ?? 'unknown'} outside band ${min ?? '?'}-${max ?? '?'} (${count} run(s)) — fleet rotation/reset bug`)
+    }
+  }
+
   // Idle suggestions
   if (idleAnalysis && idleAnalysis.runs_with_idle_data >= 3) {
     // Idle win-rate alerts use the recent idle-data window (#730): the all-time
@@ -2382,6 +2448,7 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     equipment_analysis: equipmentAnalysis,
     streak_analysis: streakAnalysis,
     fight_type_breakdown: fightTypeBreakdown,
+    fleet,
     issues,
     suggestions,
   }
@@ -2678,4 +2745,6 @@ function main() {
   printReport(report)
 }
 
-main()
+if (process.argv[1] && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) {
+  main()
+}
