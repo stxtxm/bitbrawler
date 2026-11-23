@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-11-23T00:39:16Z",
+  "last_session": "2026-11-23T00:40:18Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "tech-lead.yml: le PROMPT= contient ${QA_REPORT:-\"...\"} avec des guillemets NON échappés, ce qui ferme puis rouvre la chaîne shell. Un \\\"VAR\\\" inséré plus loin est alors avalé (les guillemets servent de délimiteurs) ; écrire \\$VAR sans guillemets dans le prompt, ou vérifier le rendu en exécutant le run: jusqu'à PROMPT.",
-      "issue": "#1260",
-      "date": "2026-10-25"
-    },
     {
       "lesson": "Issue #1323: qa-bot.config persistentCharacterMaxLevel doit rester > 30 (boss unlock) sinon le reset de generation tombe pile au deblocage boss et boss_win_rate se fige. shouldForcePersistentReset utilise cap - HEADROOM(2), donc le cap doit etre >= 33 pour laisser de l'exposition boss. Logique de fraicheur partagee dans qa-bot-helpers (computeBossDataFreshness + buildBossDataStaleIssue) pour que bot/analyzer/test ne divergent pas.",
       "issue": "#1323",
@@ -188,6 +183,11 @@
     {
       "lesson": "Issue #1407: les sous-issues dépendantes (#1405/#1406) n'étaient pas mergées → branche 1407 basée sur master sans le helper selectFleetMember {member, bandViolation}. Solution: extraction compatible des deux signatures ('member' in selection) + calcul local de bandViolation, donc le code marche avant ET après le merge de #1406. resolvePersistentCharacter lit désormais persistent_* ?? generation/created_at et n'accepte plus le reset âge/reset_ready sous minLevel. master était déjà rouge sur workflow-integrity (HEAD 160ceef9 avait renommé l'étape tech-lead sans mettre à jour 3 références + fixture 9009 contenait un /oc valide) : corrigé côté test uniquement, jamais le workflow.",
       "issue": "#1407",
+      "date": "2026-11-23"
+    },
+    {
+      "lesson": "Issue #1403 QA fleet: last_run doit être un timestamp ISO (pas dateKey) sinon les 3 membres à égalité sont départagés alphabétiquement et QA-END monopolise la journée. Rotation = tri last_run puis in-band puis created_at puis index. Les membres de flotte stockent generation/created_at (pas persistent_generation/persistent_created_at) : resolvePersistentCharacter doit lire les deux. Attention: la suite workflow-integrity était déjà rouge sur master (références à l'ancien nom d'étape tech-lead), corrigée en même temps.",
+      "issue": "#1403",
       "date": "2026-11-23"
     }
   ]
