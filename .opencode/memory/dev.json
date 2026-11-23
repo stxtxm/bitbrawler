@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-11-23T00:38:13Z",
+  "last_session": "2026-11-23T00:39:16Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Watchdog #1299 : statusCheckRollup inclut Cloudflare Pages (workflowName vide) → toujours filtrer select(.workflowName == \"CI\") avant de conclure 'pas de CI'. Le reviewer ne peut pas poser de review formelle sur une PR github-actions[bot] (même identité) : il commente '## Review PR #<n>' → l'anti-tempête doit comparer created_at du commentaire au commit de tête.",
-      "issue": "#1299",
-      "date": "2026-10-25"
-    },
     {
       "lesson": "tech-lead.yml: le PROMPT= contient ${QA_REPORT:-\"...\"} avec des guillemets NON échappés, ce qui ferme puis rouvre la chaîne shell. Un \\\"VAR\\\" inséré plus loin est alors avalé (les guillemets servent de délimiteurs) ; écrire \\$VAR sans guillemets dans le prompt, ou vérifier le rendu en exécutant le run: jusqu'à PROMPT.",
       "issue": "#1260",
@@ -188,6 +183,11 @@
     {
       "lesson": "Issue #1408: analyze-qa-stats.ts teste via miroirs purs dans qa-analysis.test.ts (pas d'export). Ajout section fleet (runs_with_fleet/members/fleet_band_violations mappés snake_case) + suggestion par membre. master 160ceef9 avait workflow-integrity.test.ts rouge (ancien nom d'étape 'Dispatch OpenCode for bot issues created in the last 48h' + fenêtre since= supprimée) : corrigé en même temps, sans toucher aux workflows.",
       "issue": "#1408",
+      "date": "2026-11-23"
+    },
+    {
+      "lesson": "Issue #1407: les sous-issues dépendantes (#1405/#1406) n'étaient pas mergées → branche 1407 basée sur master sans le helper selectFleetMember {member, bandViolation}. Solution: extraction compatible des deux signatures ('member' in selection) + calcul local de bandViolation, donc le code marche avant ET après le merge de #1406. resolvePersistentCharacter lit désormais persistent_* ?? generation/created_at et n'accepte plus le reset âge/reset_ready sous minLevel. master était déjà rouge sur workflow-integrity (HEAD 160ceef9 avait renommé l'étape tech-lead sans mettre à jour 3 références + fixture 9009 contenait un /oc valide) : corrigé côté test uniquement, jamais le workflow.",
+      "issue": "#1407",
       "date": "2026-11-23"
     }
   ]
