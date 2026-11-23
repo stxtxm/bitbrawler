@@ -45,10 +45,11 @@ describe('Workflow contracts: auto bot-merge reliability ([skip ci] head)', () =
     expect(opencode).toContain('mode != \'supervisor\'')
   })
 
-  it('reviewer.yml asks for manual merge (no gh pr merge)', () => {
+  it('reviewer.yml merges low-impact PRs automatically and defers big-impact ones', () => {
     const reviewer = readWorkflow('reviewer.yml')
-    expect(reviewer).toContain('MERGE MANUEL OBLIGATOIRE')
-    expect(reviewer).not.toMatch(/gh pr merge "\$PR_NUMBER" --squash/)
+    expect(reviewer).toContain('MERGE AUTOMATIQUE PAR LE REVIEWER')
+    expect(reviewer).toContain('IMPACT (decide du merge auto)')
+    expect(reviewer).toContain('gh pr merge "$PR_NUMBER" --squash --delete-branch')
   })
 
   it('no workflow declares the invalid `workflows` permission', () => {

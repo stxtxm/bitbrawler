@@ -348,7 +348,7 @@ dev agent has documented past refactoring failures and preferred patterns there.
 1. Waits for CI checks to pass
 2. Reads the PR title, description, and diff
 3. Checks code quality, security, tests
-4. **Approves or requests changes** — le merge est MANUEL (mainteneur humain), le bot ne merge jamais
+4. **Approves or requests changes, then merges low-impact PRs** — les PR à gros impact restent au merge manuel
 5. **Requests changes** if issues found
 6. **Never merges** if CI is red
 
@@ -892,7 +892,7 @@ Or visit: https://github.com/stxtxm/bitbrawler/actions
 **Check**:
 1. Is the PR head commit a `[skip ci]` marker (`chore: update dev memory [skip ci]`)?
    - GitHub ignores `pull_request` triggers when the head commit has a skip marker → no CI → no reviewer dispatch.
-   - Fix: opencode.yml now re-dispatches CI explicitly on the PR branch. If a PR is still stuck, re-dispatch manually : `gh workflow run ci.yml --ref <branche-de-la-PR> -f pr_number=<N> --repo stxtxm/bitbrawler` (CI pass → reviewer → merge manuel).
+   - Fix: opencode.yml now re-dispatches CI explicitly on the PR branch. If a PR is still stuck, re-dispatch manually : `gh workflow run ci.yml --ref <branche-de-la-PR> -f pr_number=<N> --repo stxtxm/bitbrawler` (CI pass → reviewer → merge auto si faible impact, sinon merge manuel).
    - ⚠️ Toujours passer `--ref <branche-de-la-PR>`. Sans lui le run part de master : le job compile master, affiche « success », et c'est ce verdict qui est présenté comme le check de la PR (incident #1179, run 39067317103). Depuis ce correctif `ci.yml` force `refs/pull/<N>/head` quand `pr_number` est fourni, donc le code validé est le bon — mais les checks restent rattachés au SHA du run, pas à la PR : sans `--ref`, le reviewer ne verra aucun check et rejouera la gate complète lui-même (plus lent, tout aussi sûr).
    - Note: when a PR has no CI checks at all, the reviewer itself runs the full gate (lint, tsc, tests, build) before merging — it never merges untested code.
    - Note 2: un run `pull_request` peut rester coincé en `action_required` (aucun job) sur une PR de bot — GitHub retient le déclenchement. `gh pr checks <N>` renvoie alors « no checks reported » : c'est le cas prévu par la note ci-dessus, la gate locale du reviewer prend le relais.

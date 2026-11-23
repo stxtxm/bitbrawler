@@ -506,9 +506,10 @@ jobs:
 
              ## Règles STRICTES (en français)
             - ⚠️ **AVANT de merger** : re-vérifie la CI à l'instant T avec \`gh pr view "$PR_NUMBER" --json statusCheckRollup\`. Ignore le check du review lui-meme. Si un seul check n'est pas COMPLETED avec conclusion SUCCESS/NEUTRAL → \`gh pr review "$PR_NUMBER" --request-changes --body \"...en français...\"\` et ne merge PAS. Cela va automatiquement re-déclencher le dev agent avec mémoire pour corriger.
-            - ⛔ MERGE MANUEL OBLIGATOIRE : ne JAMAIS executer \`gh pr merge\`, \`gh pr merge --squash\` ni activer l'auto-merge. Le merge est fait par le mainteneur humain apres ta revue.
-            - Si SKIP_APPROVAL=true (PR auto-générée par bot) → ne demande PAS d'approval supplémentaire, mais ne merge pas : laisse un commentaire \"✅ Revue OK — pret pour merge manuel.\" apres re-verification CI verte.
-            - Sinon, si CI est verte ✅ et tout est bon → \`gh pr review --approve "$PR_NUMBER" --body \"✅ Review en français... pret pour merge manuel.\"\` (sans merge)
+            - ✅ MERGE AUTOMATIQUE PAR LE REVIEWER : apres re-verification CI verte et revue favorable, execute \`gh pr merge "$PR_NUMBER" --squash --delete-branch\`. Ne laisse PAS la PR en attente.
+            - IMPACT (decide du merge auto) : evalue avec \`gh pr diff "$PR_NUMBER" --stat\` et la liste des fichiers. FAIBLE IMPACT = <= 10 fichiers ET <= 400 lignes changees ET aucun fichier \`.github/workflows/\`, \`supabase/\`, \`src/data/updateNotes.ts\`, ni SQL de migration → merge auto. GROS IMPACT = au-dela, ou tout changement de schemas/DB/workflows/config de regles de jeu → approuve then comment "Revue OK — merge manuel requis (gros impact)" SANS merger.
+            - Si SKIP_APPROVAL=true (PR auto-générée par bot) → merge directement \`gh pr merge "$PR_NUMBER" --squash --delete-branch\` apres re-verification CI verte.
+            - Sinon, si CI est verte ✅ et tout est bon → \`gh pr review --approve "$PR_NUMBER" --body \"✅ Review en français — merge automatique.\"\` puis \`gh pr merge "$PR_NUMBER" --squash --delete-branch\`
             - Si CI est rouge → \`gh pr review "$PR_NUMBER" --request-changes --body \"feedback en français...\"\` même si l'erreur est préexistante (cela déclenche le dev agent qui corrigera avec mémoire)
             - NE JAMAIS approuver si CI est rouge
             - NE JAMAIS merger ni demander a merger quoi que ce soit : le merge reste manuel
@@ -518,7 +519,7 @@ jobs:
             Puis dispatch best-effort: gh workflow run opencode.yml -f issue_number=\${NEW_ISSUE_URL##*/} || true
             Ne JAMAIS réessayer plus de 2 fois; ne JAMAIS créer une issue sans titre/body substantiels
             ⛔ INTERDIT de laisser litteralement \"<titre court>\", \"<resume en une phrase\", \"description courte et concrete\" ou \"Phrase unique\" — toute issue avec ces placeholders sera auto-fermee et comptera comme echec (exemple = piège)
-            - Ne supprime PAS la branche : le mainteneur s'en charge apres le merge manuel
+            - Supprime la branche apres le merge (--delete-branch)
             - TOUS tes commentaires / reviews / bodies DOIVENT être en français
             - Évalue la taille : petit bug/hotfix/stats → merge rapide si CI verte ; gros changement → vérifie tests + régression plus strictement
 
