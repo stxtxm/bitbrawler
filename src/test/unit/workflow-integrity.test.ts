@@ -37,8 +37,10 @@ describe('Workflow contracts: auto bot-merge reliability ([skip ci] head)', () =
     expect(opencode).not.toContain('HEAD_MSG')
   })
 
-  it('opencode.yml keeps the reviewer as the only merge authority', () => {
-    expect(opencode).toMatch(/gh pr merge --auto --squash/)
+  it('opencode.yml never auto-merges — merge is manual after reviewer approval', () => {
+    expect(opencode).not.toMatch(/gh pr merge --auto/)
+    expect(opencode).not.toMatch(/gh pr merge "\$PR_NUMBER" --squash/)
+    expect(opencode).toContain('gh pr merge --disable-auto')
     expect(opencode).not.toContain('--merge --admin')
     expect(opencode).toContain('mode != \'supervisor\'')
   })
