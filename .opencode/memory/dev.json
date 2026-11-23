@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-11-23T00:40:26Z",
+  "last_session": "2026-11-23T00:44:25Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1325: le combat speed existait déjà en x1/x2. Étendre GAME_RULES.COMBAT.SPEED_OPTIONS, garder la clé localStorage bitbrawler_combat_speed (pas bb_), passer le switch SETTINGS en radiogroup x1/x2/x4 et mettre à jour qa-bot (COMBAT_SPEED_SETTINGS_SELECTOR + option x2). La vitesse ne touche que les timers de CombatView, jamais simulateCombat ni le XP.",
-      "issue": "#1325",
-      "date": "2026-10-26"
-    },
     {
       "lesson": "Issue #1322: les tests de scripts/analyze-qa-stats.ts vivent dans src/test/unit/qa-analysis.test.ts sous forme de MIROIR recopie de l implementation + tests source contract readFileSync. Toute correction du script doit etre repliquee dans le miroir du test. Shop: analyser stats (pas validRuns, qui exclut les runs sans combat = 62% des achats) ; cohortes: essence_budget = dernier run + budget_generations.",
       "issue": "#1322",
@@ -188,6 +183,11 @@
     {
       "lesson": "Issue #1406 (depend de #1405 non mergee) : le helper selectFleetMember etait absent de src/utils/qa-bot-helpers.js, j'ai donc du l'implementer (JS + .d.ts + 9 tests) en plus du cablage qa/qa-bot.mjs, sinon l'import casse. qa-bot.mjs n'est pas type-check mais eslint . le parse. last_run = new Date().toISOString() aux 2 ecritures (persistQaState + sauvegarde finale), runKey conserve pour state.run. Echec pre-existant workflow-integrity.test.ts (4 tests, etape tech-lead renommee) sur master, non lie.",
       "issue": "#1406",
+      "date": "2026-11-23"
+    },
+    {
+      "lesson": "#1164 Weekly Streak Ladder: rank lootbox_streak par semaine ISO Europe/Paris, tiers percentile (10/25/50%), table streak_ladder avec fallback 42P01/PGRST205 + local, upsert gaté par (week,streak) et soumission App pour remplir sans ouvrir Rankings. Migration en .md manuelle. HEAD 160ceef9 avait 4 tests workflow-integrity obsolètes (étape renommée, fenêtre retirée, fixture avec /oc) : corrigés côté test seulement.",
+      "issue": "#1164",
       "date": "2026-11-23"
     }
   ]
