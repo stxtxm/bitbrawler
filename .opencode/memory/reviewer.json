@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-11-23T00:47:14Z",
+  "last_session": "2026-11-23T01:12:14Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR de bot en conflit : gh pr review --request-changes echoue sur sa propre PR (auteur=github-actions) -> poster un review COMMENT et ne PAS merger. Toujours comparer la branche a master (git diff master..branche) : un diff GitHub base sur le merge-base ne montre pas les regressions dues a une dependance mergee APRES la creation de la branche (#1412 stale vs #1414).",
-      "issue": "#1412"
+      "lesson": "Métriques QA calculées sur une fenêtre pré-filtrée (isRunDataComplete exige fights>0) = biais de survie : le dénominateur exclut les runs en échec, donc le taux d'échec est structurellement ~0. Toujours vérifier que les métriques d'échec (yield, coverage, CI) lisent la fenêtre BRUTE. PR #1419 / issue #1417.",
+      "issue": "#1417"
     }
   ]
 }
