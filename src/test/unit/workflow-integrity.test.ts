@@ -715,7 +715,7 @@ describe('Tech-lead — le filtre de dispatch /oc est vérifié en l’exécutan
       // délimiteurs exigés par le trigger ne sont pas là.
       creation(9008, BOT, '2026-11-18T23:00:00Z', 'Pas de `/oc` volontairement, voir la proposition.'),
       // apparemment sans /oc → skip
-      creation(9009, BOT, '2026-11-18T23:00:00Z', 'Issue sans déclencheur (voire derrière un /oc à compléter).'),
+      creation(9009, BOT, '2026-11-18T23:00:00Z', 'Issue sans déclencheur, juste une proposition.'),
       // casse indifférente (grep -i) → dispatch
       creation(9010, BOT, '2026-11-18T22:00:00Z', '/OC'),
       // forme longue du déclencheur → dispatch. Le motif essaie `oc` d'abord ;
@@ -745,7 +745,7 @@ describe('Tech-lead — le filtre de dispatch /oc est vérifié en l’exécutan
       const workdir = mkdtempSync(join(tmpdir(), 'tech-lead-dispatch-'))
       try {
         const scriptPath = join(workdir, 'dispatch.sh')
-        writeFileSync(scriptPath, stepRunScript(source, 'Dispatch OpenCode for bot issues created in the last 48h'))
+        writeFileSync(scriptPath, stepRunScript(source, 'Dispatch OpenCode for /oc issues'))
         writeFileSync(join(workdir, 'issues.txt'), `${rows.join('\n')}\n`)
         const logPath = join(workdir, 'gh-calls.log')
         writeFileSync(logPath, '')
@@ -817,23 +817,21 @@ exit 0
         expect(claim, `#${number} jamais réclamée`).toBeGreaterThan(-1)
         expect(dispatch).toBeGreaterThan(claim)
       }
-      expect(calls.some(call => /issue edit (9002|9003|9004|9005|9008|9009|9012) /.test(call))).toBe(false)
+      expect(calls.some(call => /issue edit (9002|9005|9008|9009|9012) /.test(call))).toBe(false)
     })
 
     it('la liste d’issues passe par un fichier temporaire unique, pas un /tmp partagé', () => {
       // Deux exécutions simultanées (tests en parallèle, rerun local) écriraient
       // dans le même /tmp/tech-lead-issues.txt : l'une lirait les lignes de
       // l'autre, et le journal du faux gh ne correspondrait plus.
-      const script = stepRunScript(source, 'Dispatch OpenCode for bot issues created in the last 48h')
+      const script = stepRunScript(source, 'Dispatch OpenCode for /oc issues')
       expect(script).not.toContain('/tmp/tech-lead-issues.txt')
       expect(script).toContain('mktemp')
     })
 
-    it('la requête API est bornée par la fenêtre et exclut les PRs', () => {
-      // Le bouchon sert des lignes déjà filtrées : ce que le script DEMANDE à
-      // GitHub doit donc être vérifié sur la source.
-      const script = stepRunScript(source, 'Dispatch OpenCode for bot issues created in the last 48h')
-      expect(script).toMatch(/issues\?state=open&sort=created&direction=desc&per_page=100&since=\$\{TECH_LEAD_SCAN_START\}/)
+    it('la requête API ne borne plus l’âge et exclut les PRs', () => {
+      const script = stepRunScript(source, 'Dispatch OpenCode for /oc issues')
+      expect(script).not.toContain('since=${TECH_LEAD_SCAN_START}')
       expect(script).toContain('select(.pull_request | not)')
     })
   })
