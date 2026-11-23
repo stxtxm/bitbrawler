@@ -8,6 +8,14 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.9.3',
+    date: '2026-11-23',
+    title: 'fix(qa-bot): la flotte QA est monopolisée par QA-END (5 runs/9) et sort de sa bande de niveau — plus aucun combattant boss-capable depuis le 19/11 (PR #1425)',
+    changes: [
+      '✅ fix(qa-bot): la flotte QA est monopolisée par QA-END (5 runs/9) et sort de sa bande de niveau — plus aucun combattant boss-capable depuis le 19/11 — livré automatiquement apres le merge de la PR #1425.',
+    ],
+  },
+  {
     version: '5.9.2',
     date: '2026-11-23',
     title: '🤖 Pipeline agents fiabilisée + merge manuel',
