@@ -87,6 +87,9 @@ gh variable set AGENT_MODEL_TERTIARY  --body "<slug-repli-2>"
 
 # Le reviewer peut être configuré indépendamment :
 gh variable set REVIEWER_MODEL_PRIMARY --body "<slug-reviewer>"
+
+# Defaut reviewer dans reviewer.yml : opencode/iceman-free (repli opencode/hy4-flash-free).
+# Les variables de depot ecrasent ces defauts sans modifier le workflow.
 ```
 
 Un slug de fournisseur payant nécessite la clé correspondante : soit un secret
