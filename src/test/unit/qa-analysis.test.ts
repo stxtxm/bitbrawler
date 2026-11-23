@@ -13,6 +13,7 @@ import { readFileSync } from 'fs'
 import { join } from 'path'
 import {
   isAttackableArenaStatus,
+  shouldFallbackToPvpAfterPveCta,
   didFightStart,
   decideFightTypeForIndex,
   FIGHT_START_GRACE_MS,
@@ -4499,6 +4500,59 @@ describe('QA Bot Fight Mode & Start Guards (#1178)', () => {
     })
   })
 
+  describe('shouldFallbackToPvpAfterPveCta', () => {
+    it('renvoie true pour un CTA PvE visible mais désactivé et non verrouillé', () => {
+      expect(shouldFallbackToPvpAfterPveCta({
+        isPve: true,
+        arenaStatus: {
+          fightButtonLabel: 'ATTACK MONSTERS',
+          fightButtonVisible: true,
+          fightButtonEnabled: false,
+          fightsAvailable: 6,
+          isResting: false,
+          isSearching: false,
+          isPveLocked: false,
+        },
+      })).toBe(true)
+    })
+
+    it('renvoie false quand isPve est false', () => {
+      expect(shouldFallbackToPvpAfterPveCta({
+        isPve: false,
+        arenaStatus: {
+          fightButtonLabel: 'ATTACK MONSTERS',
+          fightButtonVisible: true,
+          fightButtonEnabled: false,
+          isPveLocked: false,
+        },
+      })).toBe(false)
+    })
+
+    it('renvoie false quand isPveLocked est true', () => {
+      expect(shouldFallbackToPvpAfterPveCta({
+        isPve: true,
+        arenaStatus: {
+          fightButtonLabel: 'LOCKED LVL 30',
+          fightButtonVisible: true,
+          fightButtonEnabled: false,
+          isPveLocked: true,
+        },
+      })).toBe(false)
+    })
+
+    it('renvoie false pour un CTA attaquable', () => {
+      expect(shouldFallbackToPvpAfterPveCta({
+        isPve: true,
+        arenaStatus: {
+          fightButtonLabel: 'FIGHT!',
+          fightButtonVisible: true,
+          fightButtonEnabled: true,
+          isPveLocked: false,
+        },
+      })).toBe(false)
+    })
+  })
+
   describe('didFightStart', () => {
     it('détecte que la vue de combat a remplacé le CTA de l\'arène', () => {
       expect(didFightStart({ fightButtonVisible: false, fightButtonLabel: '', bodyText: '' })).toBe(true)
@@ -4623,10 +4677,18 @@ describe('QA Bot Fight Mode & Start Guards (#1178)', () => {
       expect(lockIdx).toBeGreaterThan(-1)
       const toggleIdx = fn.indexOf('togglePveMode(page, false)', lockIdx)
       expect(toggleIdx).toBeGreaterThan(lockIdx)
-      const recheckIdx = fn.indexOf('readArenaStatus(page)', toggleIdx)
-      expect(recheckIdx).toBeGreaterThan(toggleIdx)
-      const skipIdx = fn.indexOf("reason: 'pve_locked'", recheckIdx)
-      expect(skipIdx).toBeGreaterThan(recheckIdx)
+    })
+
+    it('bascule en PvP quand un CTA PvE visible est non attaquable au lieu de brûler le run (#1418)', () => {
+      const fn = requireAsyncFunction('runFightSequence')
+      const guardIdx = fn.indexOf('!isAttackableArenaStatus(arenaStatus)')
+      expect(guardIdx).toBeGreaterThan(-1)
+      const helperIdx = fn.indexOf('shouldFallbackToPvpAfterPveCta(', guardIdx)
+      expect(helperIdx).toBeGreaterThan(guardIdx)
+      const breakIdx = fn.indexOf('break', helperIdx)
+      expect(fn.slice(helperIdx, breakIdx)).toContain('forcedPvpIndexes.add(i)')
+      expect(fn.slice(helperIdx, breakIdx)).toContain('i--')
+      expect(fn.slice(helperIdx, breakIdx)).toContain('continue')
     })
 
     it('marque la décision PvP pour l\'index verrouillé au lieu de re-décider en PvE (fin de l\'oscillation PVP→PVE→PVP)', () => {

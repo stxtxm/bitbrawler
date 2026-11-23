@@ -407,6 +407,14 @@ export function isAttackableArenaStatus(status) {
   return label.includes('FIGHT') || label.includes('ATTACK BOSS')
 }
 
+export function shouldFallbackToPvpAfterPveCta({ isPve, arenaStatus } = {}) {
+  return Boolean(isPve)
+    && arenaStatus?.fightButtonVisible === true
+    && arenaStatus?.fightButtonEnabled !== true
+    && !arenaStatus?.isPveLocked
+    && !isAttackableArenaStatus(arenaStatus)
+}
+
 export function didFightStart(status) {
   if (!status || typeof status !== 'object') return false
   const body = String(status.bodyText ?? '')
