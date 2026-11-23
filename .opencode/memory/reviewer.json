@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-11-23T00:44:34Z",
+  "last_session": "2026-11-23T00:47:14Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "Vérifier la mergeabilité ET les PR concurrentes déjà mergées avant de juger : #1413 était CONFLICTING et doublonnait #1414 (même fix déjà sur master). Un dev-agent dispatched en parallèle produit des branches stale ; rebase + déduplication obligatoires.",
-      "issue": "#1413"
+      "lesson": "PR de bot en conflit : gh pr review --request-changes echoue sur sa propre PR (auteur=github-actions) -> poster un review COMMENT et ne PAS merger. Toujours comparer la branche a master (git diff master..branche) : un diff GitHub base sur le merge-base ne montre pas les regressions dues a une dependance mergee APRES la creation de la branche (#1412 stale vs #1414).",
+      "issue": "#1412"
     }
   ]
 }
