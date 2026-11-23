@@ -608,6 +608,27 @@ describe('qa-bot-helpers selectFleetMember (#1405)', () => {
     expect(selectFleetMember(state, fleet).member?.name).toBe('QA-FRESH')
   })
 
+  it('never selects the same member twice in a row when another member is older', () => {
+    const state: { fleet: Record<string, { last_run?: string; level?: number }> } = {
+      fleet: {
+        'QA-FRESH': { last_run: '2026-11-23T10:00:00.000Z', level: 3 },
+        'QA-MID': { last_run: '2026-11-23T10:05:00.000Z', level: 20 },
+        'QA-END': { last_run: '2026-11-23T10:10:00.000Z', level: 35 },
+      },
+    }
+    let previous: string | null = null
+    for (let i = 0; i < 9; i += 1) {
+      const { member } = selectFleetMember(state, fleet)
+      expect(member).not.toBeNull()
+      if (previous !== null) expect(member!.name).not.toBe(previous)
+      state.fleet[member!.name] = {
+        ...(state.fleet[member!.name] ?? {}),
+        last_run: new Date(Date.UTC(2026, 10, 23, 11, 0, i)).toISOString(),
+      }
+      previous = member!.name
+    }
+  })
+
   it('treats a missing last_run as the oldest member', () => {
     const state = {
       fleet: {
@@ -659,10 +680,23 @@ describe('qa-bot-helpers selectFleetMember (#1405)', () => {
     expect(selectFleetMember(state, tieFleet).member?.name).toBe('QA-MID')
   })
 
-  it('reports a band violation when the retained member is out of band', () => {
+  it('selects an in-band member before an older out-of-band member', () => {
     const state = {
       fleet: {
         'QA-FRESH': { last_run: '2026-11-23T10:05:00.000Z', level: 3 },
+        'QA-MID': { last_run: '2026-11-23T10:05:00.000Z', level: 4 },
+        'QA-END': { last_run: '2026-11-23T10:00:00.000Z', level: 2 },
+      },
+    }
+    const result = selectFleetMember(state, fleet)
+    expect(result.member?.name).toBe('QA-FRESH')
+    expect(result.bandViolation).toBeNull()
+  })
+
+  it('reports a band violation when no member is in band', () => {
+    const state = {
+      fleet: {
+        'QA-FRESH': { last_run: '2026-11-23T10:05:00.000Z', level: 6 },
         'QA-MID': { last_run: '2026-11-23T10:05:00.000Z', level: 4 },
         'QA-END': { last_run: '2026-11-23T10:00:00.000Z', level: 2 },
       },

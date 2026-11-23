@@ -1436,13 +1436,14 @@ function persistQaState(runKey, character, source, exhausted, extra = {}) {
   // so each member's bookkeeping survives the wholesale state rewrites.
   if (activeFleetMember) {
     const persisted = readStateQuiet()
+    const previousMember = persisted?.fleet?.[activeFleetMember.name] ?? {}
     nextState.fleet = {
       ...(persisted?.fleet ?? {}),
       [activeFleetMember.name]: {
+        ...previousMember,
         character,
         generation: nextState.generation ?? nextState.persistent_generation ?? null,
         created_at: nextState.created_at ?? nextState.persistent_created_at ?? null,
-        level: null,
         last_run: new Date().toISOString(),
         exhausted: exhausted === true,
       },

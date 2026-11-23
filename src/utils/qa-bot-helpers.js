@@ -55,9 +55,11 @@ export function shouldReplaceExhaustedCharacter(characterType) {
  */
 function fleetLastRunInfo(value) {
   if (typeof value !== 'string' || value.length === 0) {
-    return { missing: true, timestamp: Number.NaN, raw: '' }
+    return { missing: true, timestamp: Number.NaN }
   }
-  return { missing: false, timestamp: Date.parse(value), raw: value }
+  const timestamp = Date.parse(value)
+  if (Number.isFinite(timestamp)) return { missing: false, timestamp }
+  return { missing: true, timestamp: Number.NaN }
 }
 
 function compareFleetLastRun(a, b) {
@@ -67,12 +69,8 @@ function compareFleetLastRun(a, b) {
     if (infoA.missing && infoB.missing) return 0
     return infoA.missing ? -1 : 1
   }
-  if (Number.isFinite(infoA.timestamp) && Number.isFinite(infoB.timestamp)) {
-    if (infoA.timestamp === infoB.timestamp) return 0
-    return infoA.timestamp < infoB.timestamp ? -1 : 1
-  }
-  if (infoA.raw === infoB.raw) return 0
-  return infoA.raw < infoB.raw ? -1 : 1
+  if (infoA.timestamp === infoB.timestamp) return 0
+  return infoA.timestamp < infoB.timestamp ? -1 : 1
 }
 
 function compareFleetCreatedAt(a, b) {
@@ -107,15 +105,16 @@ export function selectFleetMember(state, fleet) {
       inBand: isFleetMemberInBand(level, member) === true,
     }
   })
-  candidates.sort((a, b) => {
+  const inBandCandidates = candidates.filter(candidate => candidate.inBand)
+  const pool = inBandCandidates.length > 0 ? inBandCandidates : candidates
+  pool.sort((a, b) => {
     const lastRunOrder = compareFleetLastRun(a.lastRun, b.lastRun)
     if (lastRunOrder !== 0) return lastRunOrder
-    if (a.inBand !== b.inBand) return a.inBand ? -1 : 1
     const createdAtOrder = compareFleetCreatedAt(a.createdAt, b.createdAt)
     if (createdAtOrder !== 0) return createdAtOrder
     return a.index - b.index
   })
-  const selected = candidates[0]
+  const selected = pool[0]
   const member = selected?.member
   if (!member || typeof member.name !== 'string' || member.name.length === 0) {
     return { member: null, bandViolation: null }
