@@ -4030,6 +4030,31 @@ describe('QA Combat Yield & Win-Rate Precision (#1329)', () => {
     expect(issues[1]).toBe('QA combat yield 50%: 15/30 attempts skipped (no_energy) — daily quota exhausted before the run')
   })
 
+  it('fenêtre brute avec runs à 0 combat → yield < 1 et alerte (pas de biais de survie, #1417)', () => {
+    const runs: RunRecord[] = [
+      ...Array.from({ length: 22 }, (_, i) => makeRun(`fight-${i}`, 1)),
+      ...Array.from({ length: 5 }, (_, i) => makeRun(`blocked-${i}`, 0, { not_attackable: 1 })),
+      ...Array.from({ length: 3 }, (_, i) => makeRun(`empty-${i}`, 0, { no_energy: 1 })),
+    ]
+    const yieldStats = computeCombatYield(runs)
+    expect(yieldStats.runs).toBe(30)
+    expect(yieldStats.executed).toBe(22)
+    expect(yieldStats.skipped).toBe(8)
+    expect(yieldStats.attempted).toBe(30)
+    expect(yieldStats.yield_rate).toBe(0.733)
+    expect(yieldStats.fights_per_run).toBe(0.73)
+    expect(yieldStats.skip_reasons).toEqual({ not_attackable: 5, no_energy: 3 })
+
+    const issues = precisionIssues(runs)
+    expect(issues).toHaveLength(2)
+    expect(issues[0]).toBe('QA window imprecise: 22 fights over last 30 runs (95% CI ±21 pts) — balance signals unreliable')
+    expect(issues[1]).toBe('QA combat yield 73%: 8/30 attempts skipped (not_attackable) — daily quota exhausted before the run')
+
+    const filtered = runs.filter(r => (r.fights?.length ?? 0) > 0)
+    expect(computeCombatYield(filtered).yield_rate).toBe(1)
+    expect(yieldStats.yield_rate).toBeLessThan(1)
+  })
+
   it('100 combats sans skip → CI 10 et aucune issue', () => {
     const runs: RunRecord[] = Array.from({ length: 20 }, (_, i) => makeRun(`r${i}`, 5))
     const fights = runs.flatMap(r => r.fights)
@@ -4065,6 +4090,16 @@ describe('QA Combat Yield & Win-Rate Precision (#1329)', () => {
     expect(source).toContain('win_rate_ci95')
     expect(source).toContain('QA window imprecise')
     expect(source).toContain('QA combat yield')
+  })
+
+  it('calcule yield, couverture et CI sur la fenêtre brute non filtrée (#1417)', () => {
+    const source = readFileSync(join(process.cwd(), 'scripts', 'analyze-qa-stats.ts'), 'utf-8')
+    expect(source).toContain('const recentRawRuns = stats.slice(-RECENT_WINDOW_RUNS)')
+    expect(source).toContain('const recent_fight_coverage = recentRawRuns.reduce(')
+    expect(source).toContain('const combat_yield = computeCombatYield(recentRawRuns)')
+    expect(source).toContain('const recentResultFights = recentRawRuns')
+    expect(source).not.toContain('const combat_yield = computeCombatYield(recentRuns)')
+    expect(source).not.toContain('const recent_fight_coverage = recentRuns.reduce(')
   })
 })
 
