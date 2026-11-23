@@ -6,11 +6,14 @@ import { SpriteCanvas } from '../components/sprite/SpriteCanvas'
 import { useGame } from '../context/GameContext'
 import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import { useFocusTrap } from '../hooks/useFocusTrap'
+import { useStreakLadder } from '../hooks/useStreakLadder'
+import { StreakLadderPanel } from '../components/streak/StreakLadderPanel'
 import { RANKINGS_SELECT_COLUMNS } from '../utils/supabaseUtils'
 
 const Rankings = () => {
     const navigate = useNavigate()
     const { dbAvailable, retryConnection } = useGame()
+    const streakLadder = useStreakLadder()
     const [characters, setCharacters] = useState<Character[]>([])
     const [loading, setLoading] = useState(true)
     const [showResetModal, setShowResetModal] = useState(false)
@@ -133,6 +136,16 @@ const Rankings = () => {
                 <h1 className="hero-text">HALL OF FAME</h1>
                 <p className="subtitle">LEGENDARY FIGHTERS</p>
             </header>
+
+            <StreakLadderPanel
+                weekKey={streakLadder.weekKey}
+                entries={streakLadder.entries}
+                ownEntry={streakLadder.ownEntry}
+                badges={streakLadder.badges}
+                loading={streakLadder.loading}
+                available={streakLadder.available}
+                onRefresh={streakLadder.refresh}
+            />
 
             <main id="main-content" className="rankings-content">
                 {!isOnline || !dbAvailable ? (

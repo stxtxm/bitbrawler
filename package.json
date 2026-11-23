@@ -13,6 +13,7 @@
     "test": "vitest",
     "bots:run": "tsx scripts/bot-engine.ts",
     "daily-reset:run": "tsx scripts/daily-reset-engine.ts",
+    "streak-ladder:reset": "tsx scripts/streak-ladder-reset.ts",
     "push-notify:run": "tsx scripts/push-notifier.ts",
     "qa:analyze": "tsx scripts/analyze-qa-stats.ts",
     "telemetry:report": "tsx scripts/telemetry-report.ts",

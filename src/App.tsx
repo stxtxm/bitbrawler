@@ -2,6 +2,7 @@ import { Suspense, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useGame } from './context/GameContext'
 import { useOnlineStatus } from './hooks/useOnlineStatus'
+import { useStreakLadderSubmission } from './hooks/useStreakLadderSubmission'
 import { initClickSound } from './hooks/useSound'
 import { HomePage, CharacterCreation, Rankings, Login, Arena, NotFound, Achievements } from './routes/lazyPages'
 import LoadingScreen from './components/LoadingScreen'
@@ -15,6 +16,7 @@ import { initTelemetry, setTelemetryLevel } from './utils/telemetry'
 function App() {
   useEffect(() => { initClickSound() }, [])
   const { activeCharacter, loading, dbAvailable, lastUnlockedMedal, clearMedalNotification, updatePushSubscription } = useGame()
+  useStreakLadderSubmission()
   const isOnline = useOnlineStatus()
 
   // Anonymous retention telemetry (#1230): one session_start per page load,
