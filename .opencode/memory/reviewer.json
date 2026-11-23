@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "reviewer",
-  "last_session": "2026-11-23T00:42:09Z",
+  "last_session": "2026-11-23T00:44:34Z",
   "recent_failures": [],
   "known_limitations": [
     "Ne pas merger si des marqueurs de conflit sont présents",
@@ -21,8 +21,8 @@
   ],
   "session_notes": [
     {
-      "lesson": "PR de sous-issue peut devenir un doublon en conflit si la sous-issue DÉPENDANTE est mergée avant (ici #1414/#1406 a livré le helper de #1405). Vérifier avant review : `git fetch` + comparer le diff PR au contenu de master, et si le contenu y est déjà, fermer la PR comme doublon plutôt que déclencher un rebase vide.",
-      "issue": "#1409/#1405"
+      "lesson": "Vérifier la mergeabilité ET les PR concurrentes déjà mergées avant de juger : #1413 était CONFLICTING et doublonnait #1414 (même fix déjà sur master). Un dev-agent dispatched en parallèle produit des branches stale ; rebase + déduplication obligatoires.",
+      "issue": "#1413"
     }
   ]
 }
