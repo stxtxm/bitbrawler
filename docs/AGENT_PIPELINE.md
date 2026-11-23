@@ -1,6 +1,6 @@
 # Pipeline Agents OpenCode × GitHub Actions
 
-> Référence du flux autonome : issue → dev agent → PR → CI → reviewer → merge.
+> Référence du flux autonome : issue → dev agent → PR → CI → reviewer → MERGE MANUEL → patch notes auto → déploiement Cloudflare.
 > Toute modification des workflows DOIT mettre à jour ce document.
 
 ## Vue d'ensemble
@@ -37,9 +37,9 @@
 │      avoir dirty le tree mémoire), conflict markers, puis si     │
 │      aucun check CI → gate complète locale avant merge           │
 │    • PR_DIFF plafonné à 40k chars dans le prompt (ARG_MAX!)      │
-│    • Agent review → approve+merge squash, ou request-changes     │
+│    • Agent review → approve ou request-changes (MERGE MANUEL)    │
 │      (déclenche une correction dev au prochain tour)             │
-│    • PRs créées par le bot: SKIP_APPROVAL=true (merge sans       │
+│    • PRs créées par le bot: SKIP_APPROVAL=true (pas d'approval   │
 │      approval humaine, après CI verte vérifiée à l'instant T)    │
 └──────────────────────────────┬───────────────────────────────────┘
                                ▼
@@ -60,6 +60,19 @@
   (argv ~128 KB) et **tous les modèles échouent instantanément**.
 - Le reviewer force-checkout la branche PR : le compactor dirty le workspace
   mémoire, un checkout simple aborterait sur les PR touchant ces fichiers.
+
+## Merge manuel & patch notes automatiques
+
+- Le reviewer (`reviewer.yml`, déclenché uniquement par `ci.yml` quand la CI est verte)
+  relit la PR et poste **approve** ou **request-changes**. Il ne fait plus jamais
+  `gh pr merge` : le merge est effectué par le mainteneur humain. Les PRs bot
+  (`SKIP_APPROVAL=true`) reçoivent un commentaire « prêt pour merge manuel ».
+- Au merge sur `master`, `patch-notes.yml` appelle `scripts/update-patch-notes.ts`
+  qui insère une entrée en tête de `src/data/updateNotes.ts` (homepage), avec
+  incrément de version : `fix:/chore:` → patch, `feat:` → minor.Le script est
+  idempotent (une PR déjà présente est ignorée).
+- Le commit de patch notes est poussé sur `master` **sans marqueur `[skip ci]` /
+  `[CF-Pages-Skip]`** : CI puis Cloudflare Pages redéploient automatiquement la prod.
 
 ## Modèles
 

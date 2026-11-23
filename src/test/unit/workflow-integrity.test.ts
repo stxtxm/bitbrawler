@@ -683,10 +683,11 @@ describe('Tech-lead — le filtre de dispatch /oc est vérifié en l’exécutan
     // GitHub Actions crée les issues avec `github-actions[bot]`, mais l'API renvoie
     // aussi `app/github-actions` et `opencode-agent` selon la voie de création.
     const BOT = 'github-actions[bot]'
-    const creation = (n: number, author: string, createdAt: string, body: string, labels: string[] = []) =>
+    const creation = (n: number, author: string, createdAt: string, body: string, labels: string[] = [], title = '') =>
       Buffer.from(
         JSON.stringify({
           number: n,
+          title,
           user: { login: author },
           created_at: createdAt,
           body,
@@ -727,6 +728,14 @@ describe('Tech-lead — le filtre de dispatch /oc est vérifié en l’exécutan
       // label plus long COMMENÇANT par « dispatched » → skip (label non ancré
       // suffisant à la masque manuelle, retour arrière impossible)
       creation(9013, BOT, '2026-11-18T19:00:00Z', '/oc', ['dispatched-by-watchdog']),
+      // proposition légère sans /oc → dispatch + /oc ajouté au corps
+      creation(9014, BOT, '2026-11-18T18:00:00Z', 'Petite proposition sans declencheur.', ['proposition'], 'Proposition: ajouter un filtre'),
+      // proposition majeure → skip (l'humain décide)
+      creation(9015, BOT, '2026-11-18T17:00:00Z', 'Type: Proposition', ['proposition'], 'Proposition majeure: guilde complete'),
+      // effort 4+ → skip
+      creation(9016, BOT, '2026-11-18T16:00:00Z', 'Type: Proposition. Effort: 4', ['proposition'], 'Proposition: refonte totale'),
+      // "Type: Proposition" dans le corps, titre neutre → dispatch
+      creation(9017, BOT, '2026-11-18T15:00:00Z', 'Type: Proposition — petit ajustement.', [], 'Ajuster le taux de loot'),
     ]
 
     type DispatchRun = {
@@ -800,8 +809,18 @@ exit 0
 
       // Toute issue sans `dispatched` et avec un /oc dans son corps : humain ou
       // bot, vieille ou récente (no window anymore), '/OC' ou '/opencode' → dispatch.
-      expect(dispatched).toEqual(['9001', '9003', '9004', '9006', '9007', '9010', '9011', '9013'])
+      expect(dispatched).toEqual(['9001', '9003', '9004', '9006', '9007', '9010', '9011', '9013', '9014', '9017'])
       expect(run.stdout).toContain('Dispatching OpenCode workflow for issue #9001...')
+    })
+
+    it('ajoute /oc au corps des propositions legères avant de les dispatcher', () => {
+      const run = runFilterOnce()
+      expect(run.status, `sortie : ${run.stdout}${run.stderr}`).toBe(0)
+      const bodyCalls = run.calls.filter(call => /^issue edit 90(14|17) --body /.test(call))
+      expect(bodyCalls.length).toBe(2)
+      expect(bodyCalls.every(call => call.includes('/oc'))).toBe(true)
+      // Les majeures ne sont pas modifiées.
+      expect(run.calls.some(call => /^issue edit 90(15|16) --body /.test(call))).toBe(false)
     })
 
     it('réclame chaque issue (label dispatched) AVANT de la dispatcher', () => {
@@ -811,7 +830,7 @@ exit 0
       const run = runFilterOnce()
       expect(run.status, `sortie : ${run.stdout}${run.stderr}`).toBe(0)
       const calls = run.calls
-      for (const number of ['9001', '9003', '9004', '9006', '9007', '9010', '9011', '9013']) {
+      for (const number of ['9001', '9003', '9004', '9006', '9007', '9010', '9011', '9013', '9014', '9017']) {
         const claim = calls.indexOf(`issue edit ${number} --add-label dispatched`)
         const dispatch = calls.indexOf(`workflow run opencode.yml -f issue_number=${number}`)
         expect(claim, `#${number} jamais réclamée`).toBeGreaterThan(-1)

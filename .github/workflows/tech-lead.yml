@@ -233,6 +233,7 @@ jobs:
 
             json=$(printf '%s' "$row" | base64 --decode)
             number=$(echo "$json" | jq -r '.number')
+            title=$(echo "$json" | jq -r '.title // ""')
             body=$(echo "$json" | jq -r '.body // ""')
             labels=$(echo "$json" | jq -r '[.labels[].name] | join(",")')
 
@@ -241,8 +242,30 @@ jobs:
               continue
             fi
 
-            if ! printf '%s' "$body" | grep -qiE '(^|[[:space:]])/(oc|opencode|Oc|OC|oC|proposal)($|[[:space:]])'; then
+            HAS_SLASH=$(printf '%s' "$body" | grep -qiE '(^|[[:space:]])/(oc|opencode|proposal)($|[[:space:]])' && echo yes || echo no)
+            IS_PROPOSITION=no
+            if echo "$labels" | grep -qiE '(^|,)proposition(,|$)' \
+              || printf '%s' "$title" | grep -qiE '^[[:space:]]*proposition' \
+              || printf '%s' "$body" | grep -qiE 'type[[:space:]]*:[[:space:]]*proposition'; then
+              IS_PROPOSITION=yes
+              # Les propositions majeures (effort 4+, label major, ou titre
+              # "Proposition majeure ...") restent a la main.
+              if printf '%s %s' "$title" "$body" | grep -qiE '(proposition majeure|majeure|(^|[[:space:]])major([[:space:]]|$)|effort:[[:space:]]*[4-9])'; then
+                IS_PROPOSITION=no
+              fi
+            fi
+
+            if [ "$HAS_SLASH" != "yes" ] && [ "$IS_PROPOSITION" != "yes" ]; then
               continue
+            fi
+
+            # Une proposition legere n'a pas de /oc : on l'ajoute au corps pour
+            # que le dev agent (opencode.yml) sache qu'il doit implementer.
+            if [ "$HAS_SLASH" != "yes" ] && [ "$IS_PROPOSITION" = "yes" ]; then
+              CURRENT_BODY=$(gh issue view "$number" --json body --jq '.body // ""' 2>/dev/null || printf '%s' "$body")
+              if ! printf '%s' "$CURRENT_BODY" | grep -qiE '(^|[[:space:]])/oc($|[[:space:]])'; then
+                gh issue edit "$number" --body "$(printf '%s\n\n/oc' "$CURRENT_BODY")" 2>/dev/null || true
+              fi
             fi
 
             # Pretend-dispatcher : le watchdog redispache si un dev agent meurt

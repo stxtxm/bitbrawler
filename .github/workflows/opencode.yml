@@ -56,6 +56,10 @@ jobs:
       pull-requests: write
       issues: write
       id-token: write
+      # Le dev agent corrige parfois .github/workflows/*.yml (garde-fous CI,
+      # dispatch, budgets). Sans ce droit, le push est refuse :
+      # "refusing to allow a GitHub App to create or update workflow ..."
+      workflows: write
 
     steps:
       - uses: actions/checkout@v4
@@ -185,6 +189,8 @@ jobs:
           fi
 
       - name: Create branch
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # Dirty guard: l'étape Load a pu compacter les mémoires (M) — on stash pour ne pas bloquer le rebase
           git stash push -m "opencode pre-branch stash" --include-untracked --keep-index 2>/dev/null || true
@@ -202,7 +208,21 @@ jobs:
             # Le rebase échoue si le working tree est dirty — on a stashe au dessus, mais garde un filet
             git stash push -m "opencode rebase stash" --include-untracked 2>/dev/null || true
             git checkout -f -B "$BRANCH" "origin/$BRANCH" 2>/dev/null || git checkout -b "$BRANCH" "origin/$BRANCH"
-            git rebase origin/master || { git rebase --abort; echo "Rebase aborted — using existing branch as-is"; }
+            if ! git rebase origin/master; then
+              git rebase --abort || true
+              # Une branche avec PR ouverte ne doit jamais etre ecrasee : un
+              # rebase en conflit signale un vrai desaccord a regler a la main.
+              OPEN_PR=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty' 2>/dev/null || true)
+              if [ -n "$OPEN_PR" ]; then
+                echo "::error::Branch $BRANCH (PR #$OPEN_PR) cannot be rebased on master — human rebase required"
+                exit 1
+              fi
+              # Branche orpheline (plus de PR) : on repart de master, sinon
+              # l'agent travaille sur du code perime (Forge.supprimee, tsc rouge).
+              echo "Rebase conflict on orphan branch — resetting to fresh master"
+              git checkout -f -B "$BRANCH" origin/master
+              git push --force-with-lease origin "$BRANCH" || true
+            fi
             git stash pop 2>/dev/null || true
           else
             git checkout -b "$BRANCH" master

@@ -499,18 +499,19 @@ jobs:
 
              ## Règles STRICTES (en français)
             - ⚠️ **AVANT de merger** : re-vérifie la CI à l'instant T avec \`gh pr view "$PR_NUMBER" --json statusCheckRollup\`. Ignore le check du review lui-meme. Si un seul check n'est pas COMPLETED avec conclusion SUCCESS/NEUTRAL → \`gh pr review "$PR_NUMBER" --request-changes --body \"...en français...\"\` et ne merge PAS. Cela va automatiquement re-déclencher le dev agent avec mémoire pour corriger.
-            - Si SKIP_APPROVAL=true (PR auto-générée par bot) → passe directement au merge sans approval: \`gh pr merge "$PR_NUMBER" --squash --delete-branch\` (après re-vérification CI verte)
-            - Sinon, si CI est verte ✅ et tout est bon → \`gh pr review --approve "$PR_NUMBER" --body \"✅ Review en français...\"\` puis \`gh pr merge "$PR_NUMBER" --squash --delete-branch\`
+            - ⛔ MERGE MANUEL OBLIGATOIRE : ne JAMAIS executer \`gh pr merge\`, \`gh pr merge --squash\` ni activer l'auto-merge. Le merge est fait par le mainteneur humain apres ta revue.
+            - Si SKIP_APPROVAL=true (PR auto-générée par bot) → ne demande PAS d'approval supplémentaire, mais ne merge pas : laisse un commentaire \"✅ Revue OK — pret pour merge manuel.\" apres re-verification CI verte.
+            - Sinon, si CI est verte ✅ et tout est bon → \`gh pr review --approve "$PR_NUMBER" --body \"✅ Review en français... pret pour merge manuel.\"\` (sans merge)
             - Si CI est rouge → \`gh pr review "$PR_NUMBER" --request-changes --body \"feedback en français...\"\` même si l'erreur est préexistante (cela déclenche le dev agent qui corrigera avec mémoire)
             - NE JAMAIS approuver si CI est rouge
-            - NE JAMAIS merge si le code a des problèmes de sécurité
+            - NE JAMAIS merger ni demander a merger quoi que ce soit : le merge reste manuel
             - Si le changement semble bon mais mérite un suivi, approuve + crée une issue de suivi avec \`gh issue create\` (titre et body en français, terminée par /oc)
             - ⚠️ Issue de suivi = UNE SEULE COMMANDE, body UNE ligne courte sans guillemets/backticks, terminée par /oc. REMPLACE OBLIGATOIREMENT les placeholders par du contenu réel — NE COPIE JAMAIS l'exemple verbatim :
             NEW_ISSUE_URL=\$(gh issue create --title \"fix: exemple — invente un vrai titre descriptif\" --body \"Phrase unique decrivant le suivi concret. /oc\")
             Puis dispatch best-effort: gh workflow run opencode.yml -f issue_number=\${NEW_ISSUE_URL##*/} || true
             Ne JAMAIS réessayer plus de 2 fois; ne JAMAIS créer une issue sans titre/body substantiels
             ⛔ INTERDIT de laisser litteralement \"<titre court>\", \"<resume en une phrase\", \"description courte et concrete\" ou \"Phrase unique\" — toute issue avec ces placeholders sera auto-fermee et comptera comme echec (exemple = piège)
-            - Nettoie la branche après merge
+            - Ne supprime PAS la branche : le mainteneur s'en charge apres le merge manuel
             - TOUS tes commentaires / reviews / bodies DOIVENT être en français
             - Évalue la taille : petit bug/hotfix/stats → merge rapide si CI verte ; gros changement → vérifie tests + régression plus strictement
 

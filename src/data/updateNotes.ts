@@ -8,6 +8,17 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.9.2',
+    date: '2026-11-23',
+    title: '🤖 Pipeline agents fiabilisée + merge manuel',
+    changes: [
+      '🛡️ REVIEWER — le reviewer GitHub Actions relit toujours chaque PR (CI verte) mais ne merge plus automatiquement : approbation / changements demandés, puis merge manuel par le mainteneur.',
+      '📝 PATCH NOTES AUTO — chaque PR mergée sur master met à jour les notes de version de la homepage via un workflow dédié, puis pousse sur master pour redéployer automatiquement Cloudflare Pages.',
+      '🧭 TECH-LEAD — dispatch des issues « Proposition » légères (ajout automatique de /oc) ; les propositions majeures / Effort 4+ restent à la main.',
+      '🔧 AGENTS — correction du rebase sur branche obsolète (repart de master si plus de PR ouverte) et des droits de push sur .github/workflows/*.yml.',
+    ],
+  },
+  {
     version: '5.9.1',
     date: '2026-11-22',
     title: '⛰️ Mountain redesign, nouveau boss lvl 40 et progression boss/biomes',

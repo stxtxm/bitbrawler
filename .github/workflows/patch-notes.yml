@@ -1,0 +1,39 @@
+name: Patch notes & deploy master
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-notes:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Insert merged PR in homepage patch notes
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: npx tsx scripts/update-patch-notes.ts
+      - name: Commit and push (déclenche le déploiement Cloudflare Pages)
+        run: |
+          git config user.name "opencode-agent"
+          git config user.email "agent@opencode.ai"
+          git add src/data/updateNotes.ts
+          if git diff --cached --quiet; then
+            echo "Patch notes déjà à jour — rien à pousser."
+            exit 0
+          fi
+          git commit -m "docs(patch-notes): PR #$PR_NUMBER dans les notes de version"
+          git pull --rebase origin master || true
+          git push origin master
