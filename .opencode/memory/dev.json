@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-11-23T00:44:25Z",
+  "last_session": "2026-11-23T01:06:36Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1322: les tests de scripts/analyze-qa-stats.ts vivent dans src/test/unit/qa-analysis.test.ts sous forme de MIROIR recopie de l implementation + tests source contract readFileSync. Toute correction du script doit etre repliquee dans le miroir du test. Shop: analyser stats (pas validRuns, qui exclut les runs sans combat = 62% des achats) ; cohortes: essence_budget = dernier run + budget_generations.",
-      "issue": "#1322",
-      "date": "2026-10-27"
-    },
     {
       "lesson": "Issue #1329 QA analysis: win_rate_ci95 is stored in percentage points (Math.round(196*sqrt(0.25/n))) not a proportion; the /100 in the issue text contradicts its own expected values (15 fights -> 25, 100 -> 10). qa-analysis.test.ts mirrors analyzer logic locally, so source-contract assertions (toContain) must be updated when an alert message is replaced.",
       "issue": "#1329",
@@ -188,6 +183,11 @@
     {
       "lesson": "#1164 Weekly Streak Ladder: rank lootbox_streak par semaine ISO Europe/Paris, tiers percentile (10/25/50%), table streak_ladder avec fallback 42P01/PGRST205 + local, upsert gaté par (week,streak) et soumission App pour remplir sans ouvrir Rankings. Migration en .md manuelle. HEAD 160ceef9 avait 4 tests workflow-integrity obsolètes (étape renommée, fenêtre retirée, fixture avec /oc) : corrigés côté test seulement.",
       "issue": "#1164",
+      "date": "2026-11-23"
+    },
+    {
+      "lesson": "QA analysis: les métriques de précision (combat yield, fight coverage, win-rate CI) doivent lire la fenêtre BRUTE (stats.slice(-30)), jamais stats.filter(isRunDataComplete) — le filtre supprime les runs à 0 combat et rend le yield tautologique à 100%. workflow-integrity: le faux gh logge $* ; un --body multi-ligne doit être aplati (${*//$\n/ }) sinon /oc disparaît du log et le test échoue.",
+      "issue": "#1417",
       "date": "2026-11-23"
     }
   ]
