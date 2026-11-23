@@ -1,0 +1,200 @@
+@use '../variables' as *;
+
+.streak-ladder-panel {
+    flex: 0 0 auto;
+    margin: 0 0 10px;
+    border: 2px solid #333;
+    background: #080808;
+    font-family: $font-pixel;
+    color: #f5f5f5;
+
+    @include mobile {
+        margin-bottom: 6px;
+        border-width: 1px;
+    }
+}
+
+.streak-ladder-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 0;
+    background: linear-gradient(180deg, #161616 0%, #0b0b0b 100%);
+    color: inherit;
+    font-family: inherit;
+    font-size: 10px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    text-align: left;
+
+    @include hoverable {
+        &:hover {
+            background: linear-gradient(180deg, #1f1f1f 0%, #101010 100%);
+        }
+    }
+
+    @include mobile {
+        padding: 8px 10px;
+        font-size: 8px;
+        gap: 6px;
+    }
+}
+
+.streak-ladder-title {
+    color: $accent-gold;
+    text-shadow: 1px 1px 0 #000;
+    white-space: nowrap;
+}
+
+.streak-ladder-week {
+    color: #9aa0a6;
+    font-size: 8px;
+}
+
+.streak-ladder-own-rank {
+    margin-left: auto;
+    color: $accent-green;
+    font-size: 9px;
+}
+
+.streak-ladder-chevron {
+    margin-left: auto;
+    color: #9aa0a6;
+    font-size: 9px;
+}
+
+.streak-ladder-own-rank + .streak-ladder-chevron {
+    margin-left: 0;
+}
+
+.streak-ladder-body {
+    padding: 10px 14px 14px;
+    border-top: 1px solid #222;
+    max-height: 42vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: $accent-gold #000;
+
+    @include mobile {
+        padding: 8px 10px 10px;
+    }
+}
+
+.streak-ladder-description {
+    margin: 0 0 10px;
+    color: #8b8b8b;
+    font-size: 7px;
+    line-height: 1.6;
+}
+
+.streak-ladder-offline,
+.streak-ladder-empty,
+.streak-ladder-loading {
+    margin: 8px 0;
+    padding: 10px;
+    border: 1px dashed #333;
+    color: #9aa0a6;
+    font-size: 8px;
+    text-align: center;
+}
+
+.streak-ladder-offline {
+    color: $accent-orange;
+}
+
+.streak-ladder-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.streak-ladder-row {
+    display: grid;
+    grid-template-columns: 34px 1fr 70px 30px;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border: 1px solid #1d1d1d;
+    background: #0d0d0d;
+    font-size: 8px;
+
+    &.own {
+        border-color: $accent-green;
+        background: rgba(0, 255, 102, 0.06);
+    }
+
+    &.gold {
+        border-color: rgba(255, 215, 0, 0.5);
+    }
+
+    &.silver {
+        border-color: rgba(192, 192, 192, 0.4);
+    }
+
+    &.bronze {
+        border-color: rgba(205, 127, 50, 0.4);
+    }
+
+    @include mobile {
+        grid-template-columns: 24px 1fr 54px 24px;
+        gap: 5px;
+        padding: 6px 7px;
+        font-size: 7px;
+    }
+}
+
+.streak-ladder-rank {
+    color: $accent-gold;
+    text-align: center;
+}
+
+.streak-ladder-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-transform: uppercase;
+}
+
+.streak-ladder-streak {
+    color: $accent-blue;
+    text-align: right;
+}
+
+.streak-ladder-tier {
+    text-align: center;
+    font-size: 12px;
+}
+
+.streak-ladder-best {
+    margin: 12px 0 0;
+    color: $accent-gold;
+    font-size: 8px;
+}
+
+.streak-ladder-refresh {
+    margin-top: 10px;
+    padding: 7px 12px;
+    border: 2px solid #444;
+    background: #111;
+    color: #f5f5f5;
+    font-family: inherit;
+    font-size: 8px;
+    cursor: pointer;
+
+    @include hoverable {
+        &:hover {
+            border-color: $accent-gold;
+            color: $accent-gold;
+        }
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: default;
+    }
+}

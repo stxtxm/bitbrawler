@@ -863,11 +863,12 @@ exit 0
       expect(script).toContain('mktemp')
     })
 
-    it('la requête API liste les issues ouvertes et exclut les PRs', () => {
+    it('la requête API ne borne plus l’âge et exclut les PRs', () => {
       // Le bouchon sert des lignes déjà filtrées : ce que le script DEMANDE à
       // GitHub doit donc être vérifié sur la source.
       const script = stepRunScript(source, 'Dispatch OpenCode for /oc issues')
       expect(script).toContain('issues?state=open&sort=created&direction=desc&per_page=100')
+      expect(script).not.toContain('since=${TECH_LEAD_SCAN_START}')
       expect(script).toContain('select(.pull_request | not)')
     })
   })
