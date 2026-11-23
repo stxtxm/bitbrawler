@@ -206,9 +206,15 @@ export declare interface ArenaStatusInput {
   isResolving?: boolean
   bodyText?: string | null
   bossLockedLevel?: number | null
+  fightsAvailable?: number | null
 }
 
 export declare function isAttackableArenaStatus(status: ArenaStatusInput | null | undefined): boolean
+
+export declare function shouldFallbackToPvpAfterPveCta(input?: {
+  isPve?: boolean
+  arenaStatus?: ArenaStatusInput | null
+}): boolean
 
 export declare function didFightStart(status: ArenaStatusInput | null | undefined): boolean
 

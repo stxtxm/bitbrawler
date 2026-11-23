@@ -19,6 +19,7 @@ import {
   decideFightTypeForIndex,
   FIGHT_START_GRACE_MS,
   isAttackableArenaStatus,
+  shouldFallbackToPvpAfterPveCta,
   didFightStart,
   shouldSkipForEnergy,
   capFightAttempts,
@@ -2607,6 +2608,15 @@ async function runFightSequence(page, runKey, runRecord) {
     }
 
     if (!isAttackableArenaStatus(arenaStatus)) {
+      const fallbackAttempted = forcedPvpIndexes.has(i)
+      if (shouldFallbackToPvpAfterPveCta({ isPve, arenaStatus }) && !fallbackAttempted) {
+        console.log(`   ⚠️ PvE CTA visible but not attackable (label=${arenaStatus.fightButtonLabel || 'none'}) — falling back to PvP for this fight (#1418)`)
+        await togglePveMode(page, false).catch(() => {})
+        forcedPvpIndexes.add(i)
+        i--
+        continue
+      }
+
       const reason = arenaStatus.isPveLocked ? 'pve_locked' : 'not_attackable'
       console.log(`   ⚠️ Arena CTA not attackable (label=${arenaStatus.fightButtonLabel || 'none'}) — skipping index ${i + 1} (${reason}) (#1178)`)
       if (!runRecord.skipped_fights) runRecord.skipped_fights = []
