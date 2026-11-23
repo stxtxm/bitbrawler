@@ -786,7 +786,7 @@ describe('Tech-lead — le filtre de dispatch /oc est vérifié en l’exécutan
         writeFileSync(
           fakeGh,
           `#!/usr/bin/env bash
-printf '%s\\n' "$*" >> "$GH_STUB_LOG"
+printf '%s\\n' "\${*//$'\\n'/ }" >> "$GH_STUB_LOG"
 if [ "$1" = "api" ]; then cat "$GH_STUB_ISSUES"; fi
 exit 0
 `

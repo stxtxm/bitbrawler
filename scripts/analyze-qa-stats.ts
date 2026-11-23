@@ -1619,14 +1619,15 @@ function analyze(stats: RunRecord[]): AnalysisReport {
   // fixed coverage threshold (structurally unreachable: 5 fights/day × 3 days =
   // 15) with the win-rate confidence interval and the combat yield, both of
   // which name the actionable cause.
-  const recent_fight_coverage = recentRuns.reduce((s, r) => s + (r.fights?.length ?? 0), 0)
-  const combat_yield = computeCombatYield(recentRuns)
-  const recentResultFights = recentRuns
+  const recentRawRuns = stats.slice(-RECENT_WINDOW_RUNS)
+  const recent_fight_coverage = recentRawRuns.reduce((s, r) => s + (r.fights?.length ?? 0), 0)
+  const combat_yield = computeCombatYield(recentRawRuns)
+  const recentResultFights = recentRawRuns
     .flatMap(r => r.fights ?? [])
     .filter(f => typeof f.result === 'string' && f.result.length > 0)
   const win_rate_ci95 = computeWinRateCi95(recentResultFights)
   if (win_rate_ci95 !== null && win_rate_ci95 > 15) {
-    issues.push(`QA window imprecise: ${recentResultFights.length} fights over last ${recentRuns.length} runs (95% CI ±${win_rate_ci95} pts) — balance signals unreliable`)
+    issues.push(`QA window imprecise: ${recentResultFights.length} fights over last ${recentRawRuns.length} runs (95% CI ±${win_rate_ci95} pts) — balance signals unreliable`)
   }
   if (combat_yield.yield_rate < 0.75) {
     const dominantSkip = Object.entries(combat_yield.skip_reasons).sort((a, b) => b[1] - a[1])[0]
