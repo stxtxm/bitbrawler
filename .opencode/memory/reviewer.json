@@ -7,7 +7,7 @@
     "Ne pas merger si des marqueurs de conflit sont présents",
     "Ne pas merger si des erreurs TypeScript sont détectées",
     "Ne pas merger si une migration SQL est dans la PR",
-    "Vérifier les dépendances (depends-on) avant d'approuver",
+    "Le gate shell tranche les dépendances (DEPS_BLOCKED=false) : ne pas les réinvoquer pour bloquer une PR faible impact",
     "Les PR auto-générées (github-actions[bot]) peuvent être mergées sans approval"
   ],
   "checklist": [
