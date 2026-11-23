@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-11-23T00:37:33Z",
+  "last_session": "2026-11-23T00:38:13Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1260: le garde-fou de opencode.yml contre les modifications .github/workflows ne strippe que les changements encore dans l'index (git diff --cached). Un commit local du dev-agent survit et est pushé. Step télémétrie: secrets SUPABASE_* scopés au step dédié, fallback '{}' si secrets/table/JSON absents, export TELEMETRY_REPORT via GITHUB_ENV, l'agent ne reçoit que le JSON. Garde-fous source-assertions dans workflow-integrity.test.ts (ordre du step, fallback, secret absent du step agent, prompt).",
-      "issue": "#1260",
-      "date": "2026-10-24"
-    },
     {
       "lesson": "Watchdog #1299 : statusCheckRollup inclut Cloudflare Pages (workflowName vide) → toujours filtrer select(.workflowName == \"CI\") avant de conclure 'pas de CI'. Le reviewer ne peut pas poser de review formelle sur une PR github-actions[bot] (même identité) : il commente '## Review PR #<n>' → l'anti-tempête doit comparer created_at du commentaire au commit de tête.",
       "issue": "#1299",
@@ -188,6 +183,11 @@
     {
       "lesson": "Issue #1404: le commit HEAD 160ceef9 avait laissé workflow-integrity.test.ts rouge (ancien nom d'étape 'Dispatch OpenCode for bot issues created in the last 48h' + assertion since= + row 9009 contenant /oc). Corrigé le test (jamais le workflow) pour rendre la CI verte. Côté analyseur, delta loot comparé sur 2 fenêtres de 150 runs avec MIN_LOOT_SAMPLE=20 lootboxes; suggestions monstre-PvE gatées par !pveAnalysis.pve_shifted.",
       "issue": "#1404",
+      "date": "2026-11-23"
+    },
+    {
+      "lesson": "Issue #1408: analyze-qa-stats.ts teste via miroirs purs dans qa-analysis.test.ts (pas d'export). Ajout section fleet (runs_with_fleet/members/fleet_band_violations mappés snake_case) + suggestion par membre. master 160ceef9 avait workflow-integrity.test.ts rouge (ancien nom d'étape 'Dispatch OpenCode for bot issues created in the last 48h' + fenêtre since= supprimée) : corrigé en même temps, sans toucher aux workflows.",
+      "issue": "#1408",
       "date": "2026-11-23"
     }
   ]
