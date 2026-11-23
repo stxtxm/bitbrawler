@@ -56,10 +56,6 @@ jobs:
       pull-requests: write
       issues: write
       id-token: write
-      # Le dev agent corrige parfois .github/workflows/*.yml (garde-fous CI,
-      # dispatch, budgets). Sans ce droit, le push est refuse :
-      # "refusing to allow a GitHub App to create or update workflow ..."
-      workflows: write
 
     steps:
       - uses: actions/checkout@v4
@@ -641,7 +637,7 @@ jobs:
             exit 1
           fi
 
-      - name: Skip dev — existing PR already clean, auto-merge inline
+      - name: Skip dev — existing PR already clean (merge manuel)
         if: github.event.inputs.mode != 'supervisor' && steps.check_pr.outputs.existing_pr != '' && env.SKIP_DEV_AGENT == 'true' && env.REAL_TRIGGER == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -718,8 +714,8 @@ jobs:
           else
             gh pr review --approve "$PR_NUMBER" --body "✅ Revue automatique: CI verte, dépendances résolues, pas de migration SQL."
           fi
-          gh pr merge "$PR_NUMBER" --squash --delete-branch || { echo "Merge still failing — check manually"; exit 1; }
-          echo "✓ PR #$PR_NUMBER merged"
+          gh pr comment "$PR_NUMBER" --body "✅ Revue automatique OK (CI verte, dépendances résolues, pas de migration SQL). Prêt pour merge manuel par le mainteneur." 2>/dev/null || true
+          echo "✓ PR #$PR_NUMBER prête pour merge manuel"
 
           # --- Traçabilité + fermeture explicite (l'auto-close "Closes #" est fragile en squash : ex. #933 restée OPEN malgré #935 mergée) ---
           RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
@@ -1113,8 +1109,18 @@ jobs:
         run: |
           git add -A
           # Detect and reject any .github/workflows/ changes — agent must never touch these
+          # GITHUB_TOKEN n'a PAS la permission `workflows` : un commit agent
+          # touchant .github/workflows est refuse par GitHub au push. On
+          # reconstruit donc le diff propre (hors workflows) depuis master.
+          if ! git diff --quiet origin/master -- .github/workflows/; then
+            echo "⛔ Agent a modifié .github/workflows/ — reconstruction du commit sans ces fichiers"
+            git diff origin/master --binary -- . ':(exclude).github/workflows' > /tmp/agent-clean.patch
+            git reset --hard origin/master
+            git apply /tmp/agent-clean.patch
+            git add -A
+          fi
           if git diff --cached --name-only | grep -q '^\.github/workflows/'; then
-            echo "⛔ Agent attempted to modify .github/workflows/ files — stripping them from commit"
+            echo "⛔ .github/workflows/ encore présent — retrait"
             git restore --staged .github/workflows/
             git checkout -- .github/workflows/ 2>/dev/null || true
             git add -A
@@ -1165,7 +1171,7 @@ jobs:
               --title "$(cat /tmp/issue-title.txt)" \
               --body "Closes #$ISSUE_NUMBER" \
               $LABEL_FLAG
-            gh pr merge --auto --squash "$PR_NUMBER" 2>/dev/null || true
+            gh pr merge --disable-auto "$PR_NUMBER" 2>/dev/null || true
             PR_URL="https://github.com/${{ github.repository }}/pull/$PR_NUMBER"
           else
             PR_URL=$(gh pr create \
@@ -1174,7 +1180,7 @@ jobs:
               --base master \
               $LABEL_FLAG)
             PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$' || true)
-            gh pr merge --auto --squash "$PR_NUMBER" 2>/dev/null || true
+            gh pr merge --disable-auto "$PR_NUMBER" 2>/dev/null || true
           fi
           echo "PR_NUMBER=$PR_NUMBER" >> $GITHUB_OUTPUT
           echo "✓ PR #$PR_NUMBER: $PR_URL"
@@ -1273,7 +1279,7 @@ jobs:
             echo "ℹ No new /oc issues found since scan start"
           fi
 
-      - name: Auto-merge pending docs PRs (bot-authored, reviewer skipped)
+      - name: Signal pending docs PRs (merge manuel)
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
@@ -1283,10 +1289,10 @@ jobs:
             .[] | select(.author.is_bot == true and .mergeable == "MERGEABLE") | .number
           ' 2>/dev/null || echo "")
           if [ -n "$DOCS_PR" ]; then
-            echo "✅ Merging docs PR #$DOCS_PR (bot-authored, mergeable)"
-            gh pr merge "$DOCS_PR" --squash --delete-branch
+            echo "✅ Docs PR #$DOCS_PR prête — merge manuel par le mainteneur"
+            gh pr comment "$DOCS_PR" --body "✅ PR docs prête pour merge manuel." 2>/dev/null || true
           else
-            echo "ℹ No pending docs PRs to merge"
+            echo "ℹ No pending docs PRs"
           fi
 
       # Anti-stale-claim : le label `dispatched` est posé AVANT le dispatch pour
