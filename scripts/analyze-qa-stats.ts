@@ -576,6 +576,9 @@ function median(values: number[]): number {
 const RECENT_WINDOW_RUNS = 30
 const RECENT_IDLE_RUNS = 15
 
+const LOOT_DELTA_WINDOW_RUNS = 150
+const MIN_LOOT_SAMPLE = 20
+
 // Real character stat keys (short labels parsed from the arena panel). The
 // structured parse can also capture non-stat counters (e.g. 'fights' from the
 // PvE panel) which must not be read as character stats (#730).
@@ -1283,9 +1286,17 @@ function computeLootRates(runs: RunRecord[]): Record<string, number> {
 }
 
 // Phase 3 — delta des loot rates : fenêtre récente vs précédente.
+function countOpenedLootboxes(runs: RunRecord[]): number {
+  return runs.filter(r => r.lootbox?.opened).length
+}
+
 function computeLootRateDelta(runs: RunRecord[]): Record<string, number> {
-  const recent = computeLootRates(runs.slice(-RECENT_WINDOW_RUNS))
-  const previous = computeLootRates(runs.slice(-2 * RECENT_WINDOW_RUNS, -RECENT_WINDOW_RUNS))
+  const recentWindow = runs.slice(-LOOT_DELTA_WINDOW_RUNS)
+  const previousWindow = runs.slice(-2 * LOOT_DELTA_WINDOW_RUNS, -LOOT_DELTA_WINDOW_RUNS)
+  if (countOpenedLootboxes(recentWindow) < MIN_LOOT_SAMPLE) return {}
+  if (countOpenedLootboxes(previousWindow) < MIN_LOOT_SAMPLE) return {}
+  const recent = computeLootRates(recentWindow)
+  const previous = computeLootRates(previousWindow)
   if (Object.keys(previous).length === 0) return {}
   const out: Record<string, number> = {}
   for (const key of new Set([...Object.keys(recent), ...Object.keys(previous)])) {
@@ -1989,14 +2000,16 @@ function analyze(stats: RunRecord[]): AnalysisReport {
     issues.push(`PvE mode now maps to the raid boss fight (LOCKED LVL ${bossLockedLevel}, ${pveAnalysis.boss_observations} observation run(s)) — monster PvE is stale (pve_shifted). pve_analysis reflects pre-shift monster data only; boss fights tracked via boss_fights (${pveAnalysis.boss_fights}). See #705.`)
   }
   if (pveAnalysis && pveAnalysis.total_fights >= 1) {
-    if (pveAnalysis.win_rate < 0.3) {
-      suggestions.push(`PvE win rate is ${(pveAnalysis.win_rate * 100).toFixed(0)}% — monsters may be too strong. Consider lowering PVE.STAT_MULTIPLIER or PVE.HP_MULTIPLIER.`)
-    }
-    if (pveAnalysis.win_rate > 0.9) {
-      suggestions.push(`PvE win rate is ${(pveAnalysis.win_rate * 100).toFixed(0)}% — monsters may be too weak. Consider raising PVE.STAT_MULTIPLIER or PVE.HP_MULTIPLIER.`)
-    }
-    if (pveAnalysis.avg_duration_ms > 40000) {
-      suggestions.push(`PvE fights avg ${(pveAnalysis.avg_duration_ms / 1000).toFixed(1)}s — may be too long for mobile sessions. Consider reducing monster HP.`)
+    if (!pveAnalysis.pve_shifted) {
+      if (pveAnalysis.win_rate < 0.3) {
+        suggestions.push(`PvE win rate is ${(pveAnalysis.win_rate * 100).toFixed(0)}% — monsters may be too strong. Consider lowering PVE.STAT_MULTIPLIER or PVE.HP_MULTIPLIER.`)
+      }
+      if (pveAnalysis.win_rate > 0.9) {
+        suggestions.push(`PvE win rate is ${(pveAnalysis.win_rate * 100).toFixed(0)}% — monsters may be too weak. Consider raising PVE.STAT_MULTIPLIER or PVE.HP_MULTIPLIER.`)
+      }
+      if (pveAnalysis.avg_duration_ms > 40000) {
+        suggestions.push(`PvE fights avg ${(pveAnalysis.avg_duration_ms / 1000).toFixed(1)}s — may be too long for mobile sessions. Consider reducing monster HP.`)
+      }
     }
     // PvE XP ratio: warn if actual saved XP deviates significantly from expected 2.5x (GAME_RULES.PVE.XP_MODIFIER).
     // Gated behind !pve_shifted: pre-shift monster fights are stale (#705) and
