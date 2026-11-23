@@ -286,7 +286,7 @@ describe('Agent workflows send no OpenCode credential', () => {
     for (const variable of ['AGENT_MODEL_PRIMARY', 'AGENT_MODEL_SECONDARY', 'AGENT_MODEL_TERTIARY']) {
       expect(opencode).toContain(variable)
     }
-    expect(opencode).toContain("'opencode/deepseek-v4.1-flash-free'")
+    expect(opencode).toContain("'opencode/iceman-free'")
     expect(opencode).not.toContain('OPENCODE_API_KEY')
   })
 })
