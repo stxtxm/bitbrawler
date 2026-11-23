@@ -27,6 +27,7 @@ import {
   BOSS_DATA_STALE_DAYS,
 } from '../../utils/qa-bot-helpers'
 import { IDLE_CONFIG } from '../../config/idleConfig'
+import { analyze, computeFleetAnalysis } from '../../../scripts/analyze-qa-stats'
 
 // ── Types matching RunRecord from analyze-qa-stats.ts ──
 
@@ -58,6 +59,13 @@ interface IdleFightRecord {
   monster?: string | null
 }
 
+interface FleetBandViolation {
+  member: string
+  level: number | null
+  minLevel: number | null
+  maxLevel: number | null
+}
+
 interface RunRecord {
   date: string
   run: string
@@ -82,7 +90,7 @@ interface RunRecord {
   cohort?: { name: string; essence_budget: number | null } | null
   initial_level?: number | null
   final_stats?: { level: number | null; xp: number | null; wins: number | null; losses: number | null } | null
-  progression_curve?: { level: number; total_xp: number; xp_for_next: number; percent: number } | null
+  progression_curve?: { level: number; total_xp: number; xp_for_next: number; percent: number }
   pve_data?: {
     fights: number
     wins: number
@@ -127,6 +135,8 @@ interface RunRecord {
       upgrade_cost: number | null
     } | null
   }
+  fleet_member?: string | null
+  fleet_band_violation?: FleetBandViolation | null
   errors: string[]
 }
 
@@ -6210,7 +6220,7 @@ describe('QA XP Accounting (#1378)', () => {
       errors: [],
       progression_curve:
         opts.totalXp === undefined || opts.totalXp === null
-          ? null
+          ? undefined
           : { level: 1, total_xp: opts.totalXp, xp_for_next: 1000, percent: 10 },
       character_action: opts.characterAction ?? null,
       replaced_character: opts.replaced ?? null,
@@ -6512,5 +6522,100 @@ describe('QA UI feature checks (arena/boss/biome)', () => {
     const source = readFileSync(join(process.cwd(), '.github', 'workflows', 'qa-tester.yml'), 'utf-8')
     expect(source).toContain('Summarize QA feature checks')
     expect(source).toContain('ui_feature_checks')
+  })
+})
+
+describe('fleet band violations analysis (#1408)', () => {
+  function makeRun(overrides: Partial<RunRecord> = {}): RunRecord {
+    return {
+      date: '2026-11-23T10:00:00.000Z',
+      run: 'r1',
+      character: 'QA-END',
+      fights: [],
+      errors: [],
+      ...overrides,
+    }
+  }
+
+  it('expose une violation de bande avec la suggestion associée', () => {
+    const report = analyze([
+      makeRun({
+        fleet_member: 'QA-END',
+        fleet_band_violation: { member: 'QA-END', level: 2, minLevel: 30, maxLevel: 99 },
+        run: 'run-1',
+        date: '2026-11-23T10:00:00.000Z',
+      }),
+    ] as Parameters<typeof analyze>[0])
+
+    expect(report.fleet.runs_with_fleet).toBe(1)
+    expect(report.fleet.members).toEqual({ 'QA-END': 1 })
+    expect(report.fleet.fleet_band_violations).toEqual([
+      {
+        member: 'QA-END',
+        level: 2,
+        min_level: 30,
+        max_level: 99,
+        run: 'run-1',
+        date: '2026-11-23T10:00:00.000Z',
+      },
+    ])
+    expect(report.suggestions).toContain(
+      'QA-END ran at level 2 outside band 30-99 (1 run(s)) — fleet rotation/reset bug'
+    )
+  })
+
+  it('retourne un tableau vide et aucune suggestion sans violation', () => {
+    const report = analyze([
+      makeRun({ fleet_member: 'QA-FRESH', fleet_band_violation: null }),
+      makeRun({ run: 'r2', fleet_member: 'QA-MID' }),
+    ] as Parameters<typeof analyze>[0])
+
+    expect(report.fleet.runs_with_fleet).toBe(2)
+    expect(report.fleet.members).toEqual({ 'QA-FRESH': 1, 'QA-MID': 1 })
+    expect(report.fleet.fleet_band_violations).toEqual([])
+    expect(report.suggestions.some(s => s.includes('fleet rotation/reset bug'))).toBe(false)
+  })
+
+  it('agrege les violations identiques dans la suggestion', () => {
+    const report = analyze([
+      makeRun({
+        run: 'r1',
+        fleet_member: 'QA-END',
+        fleet_band_violation: { member: 'QA-END', level: 2, minLevel: 30, maxLevel: 99 },
+      }),
+      makeRun({
+        run: 'r2',
+        date: '2026-11-23T11:00:00.000Z',
+        fleet_member: 'QA-END',
+        fleet_band_violation: { member: 'QA-END', level: 2, minLevel: 30, maxLevel: 99 },
+      }),
+    ] as Parameters<typeof analyze>[0])
+
+    expect(report.fleet.fleet_band_violations).toHaveLength(2)
+    expect(report.suggestions).toContain(
+      'QA-END ran at level 2 outside band 30-99 (2 run(s)) — fleet rotation/reset bug'
+    )
+  })
+
+  it('computeFleetAnalysis expose le comptage des membres et les violations', () => {
+    const fleet = computeFleetAnalysis([
+      makeRun({ fleet_member: 'QA-FRESH' }),
+      makeRun({ run: 'r2', fleet_member: 'QA-FRESH' }),
+      makeRun({
+        run: 'r3',
+        fleet_member: 'QA-END',
+        fleet_band_violation: { member: 'QA-END', level: 1, minLevel: 30, maxLevel: 99 },
+      }),
+    ] as Parameters<typeof computeFleetAnalysis>[0])
+
+    expect(fleet.runs_with_fleet).toBe(3)
+    expect(fleet.members).toEqual({ 'QA-FRESH': 2, 'QA-END': 1 })
+    expect(fleet.fleet_band_violations).toHaveLength(1)
+    expect(fleet.fleet_band_violations[0]).toMatchObject({
+      member: 'QA-END',
+      level: 1,
+      min_level: 30,
+      max_level: 99,
+    })
   })
 })
