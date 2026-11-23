@@ -1,14 +1,14 @@
 {
   "run": "2026-11-23",
-  "character": "QA-END",
+  "character": "ROGUERIDER",
   "exhausted": false,
-  "updated_at": "2026-11-22T23:03:28.941Z",
-  "source": "reused",
+  "updated_at": "2026-11-23T02:04:40.069Z",
+  "source": "created",
   "character_type": "persistent",
   "persistent_generation": 0,
-  "persistent_created_at": "2026-11-22T23:01:46.533Z",
+  "persistent_created_at": "2026-11-23T02:02:07.513Z",
   "persistent_reset_ready": false,
-  "pvp_since_last_pve": 1,
+  "pvp_since_last_pve": 2,
   "fleet": {
     "QA-END": {
       "character": "QA-END",
@@ -20,13 +20,13 @@
       "last_run_failed": false
     },
     "QA-FRESH": {
-      "character": "QA-FRESH",
+      "character": "ROGUERIDER",
       "generation": 0,
-      "created_at": "2026-11-22T02:01:26.866Z",
-      "level": 5,
-      "last_run": "2026-11-22",
+      "created_at": "2026-11-23T02:02:07.513Z",
+      "level": 1,
+      "last_run": "2026-11-23T02:04:44.313Z",
       "exhausted": false,
-      "last_run_failed": true
+      "last_run_failed": false
     },
     "QA-MID": {
       "character": "QA-MID",
