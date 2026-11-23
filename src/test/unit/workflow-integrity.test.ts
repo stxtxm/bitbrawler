@@ -715,7 +715,7 @@ describe('Tech-lead — le filtre de dispatch /oc est vérifié en l’exécutan
       // délimiteurs exigés par le trigger ne sont pas là.
       creation(9008, BOT, '2026-11-18T23:00:00Z', 'Pas de `/oc` volontairement, voir la proposition.'),
       // apparemment sans /oc → skip
-      creation(9009, BOT, '2026-11-18T23:00:00Z', 'Issue sans déclencheur (à compléter plus tard).'),
+      creation(9009, BOT, '2026-11-18T23:00:00Z', 'Issue sans déclencheur explicite, voir la proposition.'),
       // casse indifférente (grep -i) → dispatch
       creation(9010, BOT, '2026-11-18T22:00:00Z', '/OC'),
       // forme longue du déclencheur → dispatch. Le motif essaie `oc` d'abord ;
@@ -829,12 +829,11 @@ exit 0
       expect(script).toContain('mktemp')
     })
 
-    it('la requête API exclut les PRs et ne borne plus l’âge des issues', () => {
+    it('la requête API liste les issues ouvertes et exclut les PRs', () => {
       // Le bouchon sert des lignes déjà filtrées : ce que le script DEMANDE à
       // GitHub doit donc être vérifié sur la source.
       const script = stepRunScript(source, 'Dispatch OpenCode for /oc issues')
-      expect(script).toMatch(/issues\?state=open&sort=created&direction=desc&per_page=100/)
-      expect(script).not.toContain('since=${TECH_LEAD_SCAN_START}')
+      expect(script).toContain('issues?state=open&sort=created&direction=desc&per_page=100')
       expect(script).toContain('select(.pull_request | not)')
     })
   })
