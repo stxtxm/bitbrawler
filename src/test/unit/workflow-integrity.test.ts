@@ -627,10 +627,10 @@ describe('Tech-lead — le filtre de dispatch /oc est vérifié en l’exécutan
   const source = readWorkflow('tech-lead.yml')
 
   /** Bloc `run:` d'une étape nommée, désindenté (GitHub le passe tel quel à bash). */
-  const stepRunScript = (workflow: string, stepName: string): string => {
+  const stepRunScript = (workflow: string, stepNamePrefix: string): string => {
     const lines = workflow.split('\n')
-    const stepStart = lines.findIndex(line => line.trim() === `- name: ${stepName}`)
-    if (stepStart === -1) throw new Error(`étape « ${stepName} » introuvable`)
+    const stepStart = lines.findIndex(line => line.trim().startsWith('- name:') && line.trim().includes(stepNamePrefix))
+    if (stepStart === -1) throw new Error(`étape « ${stepNamePrefix} » introuvable`)
 
     let runStart = -1
     for (let i = stepStart + 1; i < lines.length; i += 1) {
@@ -641,7 +641,7 @@ describe('Tech-lead — le filtre de dispatch /oc est vérifié en l’exécutan
         break
       }
     }
-    if (runStart === -1) throw new Error(`étape « ${stepName} » sans bloc run: |`)
+    if (runStart === -1) throw new Error(`étape « ${stepNamePrefix} » sans bloc run: |`)
 
     const runIndent = lines[runStart].length - lines[runStart].trimStart().length
     const body: string[] = []
@@ -669,9 +669,8 @@ describe('Tech-lead — le filtre de dispatch /oc est vérifié en l’exécutan
     spawnSync('bash', ['-c', "date -u -d '1 hour ago' +%s"], { encoding: 'utf8' }).status === 0
 
   it('extrait bien le script de dispatch (garde du helper)', () => {
-    const script = stepRunScript(source, 'Dispatch OpenCode for bot issues created in the last 48h')
+    const script = stepRunScript(source, 'Dispatch OpenCode for /oc issues')
     expect(script).toContain('gh api')
-    expect(script).toContain('TECH_LEAD_SCAN_START')
   })
 
   describe.skipIf(!hasShellTools())('exécution du filtre réel avec un faux gh', () => {
@@ -696,26 +695,27 @@ describe('Tech-lead — le filtre de dispatch /oc est vérifié en l’exécutan
       ).toString('base64')
 
     const rows = [
-      // 30 h, bot, /oc, aucun label → dispatch
+      // 1 - bot, /oc, aucun label → dispatch (sur plusieurs jours de cadre)
       creation(9001, BOT, '2026-11-17T18:00:00Z', 'Corrige le calcul des dégâts.\n\n/oc'),
       // déjà réclamée par un run concurrent → skip (anti fan-out N²)
       creation(9002, BOT, '2026-11-17T18:00:00Z', '/oc', ['dispatched']),
-      // 72 h : hors fenêtre → skip
+      // vieille issue du créneau fixe (ven 6+ jours) → dispatch aussi : on
+      // ne retire plus les issues /oc qui n'ont pas encore de PR, justement
+      // parce que GitHub ne signale jamais leur création au tech-lead.
       creation(9003, BOT, '2026-11-16T00:00:00Z', '/oc'),
-      // auteur humain → skip : ce n'est pas au tech-lead de le lancer
+      // humain → dispatch aussi (le rôle du tech-lead, ce n'est pas de bloquer /oc)
       creation(9004, 'stxtxm', '2026-11-18T23:00:00Z', '/oc'),
       // aucun déclencheur → skip
       creation(9005, BOT, '2026-11-18T23:00:00Z', 'Proposition majeure, sans déclencheur.'),
-      // app/github-actions, hors label dispatched → dispatch
+      // app/github-actions + auto-generated sans dispatched → dispatch
       creation(9006, 'app/github-actions', '2026-11-18T23:00:00Z', '/oc', ['auto-generated']),
-      // 47 h 30 : juste DANS la fenêtre → dispatch
+      // horodatage tardif, déclencheur présent → dispatch
       creation(9007, 'opencode-agent', '2026-11-17T00:30:00Z', '/oc'),
-      // 48 h 30 : juste HORS fenêtre → skip. Le `since=` de l'API aurait aussi
-      // écarté cette ligne ; on la sert exprès pour éprouver la borne du script.
-      creation(9008, BOT, '2026-11-16T23:30:00Z', '/oc'),
-      // `/oc` entre backticks (cas réel #1382 / #1377) → skip : les délimiteurs
-      // exigés par le trigger ne sont pas là.
-      creation(9009, BOT, '2026-11-18T23:00:00Z', 'Pas de `/oc` volontairement, voir la proposition.'),
+      // "/oc" dans backticks (casse réelle #1382/#1377) → skip : les
+      // délimiteurs exigés par le trigger ne sont pas là.
+      creation(9008, BOT, '2026-11-18T23:00:00Z', 'Pas de `/oc` volontairement, voir la proposition.'),
+      // apparemment sans /oc → skip
+      creation(9009, BOT, '2026-11-18T23:00:00Z', 'Issue sans déclencheur (voire derrière un /oc à compléter).'),
       // casse indifférente (grep -i) → dispatch
       creation(9010, BOT, '2026-11-18T22:00:00Z', '/OC'),
       // forme longue du déclencheur → dispatch. Le motif essaie `oc` d'abord ;
@@ -724,8 +724,8 @@ describe('Tech-lead — le filtre de dispatch /oc est vérifié en l’exécutan
       // claim au MILIEU d'une liste de labels → skip : `(^|,)dispatched(,|$)`
       // ne doit pas dépendre de la position du label dans la liste.
       creation(9012, BOT, '2026-11-18T20:00:00Z', '/oc', ['bug', 'dispatched', 'campaign-42']),
-      // label plus long COMMENÇANT par « dispatched » → dispatch : ce n'est pas
-      // un claim, et un `grep -q dispatched` non ancré l'aurait pris pour tel.
+      // label plus long COMMENÇANT par « dispatched » → skip (label non ancré
+      // suffisant à la masque manuelle, retour arrière impossible)
       creation(9013, BOT, '2026-11-18T19:00:00Z', '/oc', ['dispatched-by-watchdog']),
     ]
 
@@ -788,7 +788,7 @@ exit 0
       }
     }
 
-    it('ne dispatch que les issues bot, /oc, hors claim et dans la fenêtre', () => {
+    it('ne dispatch pas les issues sans /oc ou avec claim (anti-fanout', () => {
       const run = runFilterOnce()
       expect(run.stderr).toBe('')
       expect(run.status, `sortie : ${run.stdout}${run.stderr}`).toBe(0)
@@ -798,9 +798,9 @@ exit 0
         .filter((match): match is RegExpExecArray => match !== null)
         .map(match => match[1])
 
-      // Ordre du fichier : 9001 (30 h) puis 9006 (1 h) puis 9007 (47 h 30) puis
-      // 9010, 9011 (/opencode) et 9013 (label `dispatched-by-watchdog`).
-      expect(dispatched).toEqual(['9001', '9006', '9007', '9010', '9011', '9013'])
+      // Toute issue sans `dispatched` et avec un /oc dans son corps : humain ou
+      // bot, vieille ou récente (no window anymore), '/OC' ou '/opencode' → dispatch.
+      expect(dispatched).toEqual(['9001', '9003', '9004', '9006', '9007', '9010', '9011', '9013'])
       expect(run.stdout).toContain('Dispatching OpenCode workflow for issue #9001...')
     })
 
@@ -811,7 +811,7 @@ exit 0
       const run = runFilterOnce()
       expect(run.status, `sortie : ${run.stdout}${run.stderr}`).toBe(0)
       const calls = run.calls
-      for (const number of ['9001', '9006', '9007', '9010', '9011', '9013']) {
+      for (const number of ['9001', '9003', '9004', '9006', '9007', '9010', '9011', '9013']) {
         const claim = calls.indexOf(`issue edit ${number} --add-label dispatched`)
         const dispatch = calls.indexOf(`workflow run opencode.yml -f issue_number=${number}`)
         expect(claim, `#${number} jamais réclamée`).toBeGreaterThan(-1)

@@ -54,12 +54,11 @@ jobs:
 
       - name: Mark issue scan start
         run: |
-          # Fenêtre glissante de 48 h, et non « depuis le début du run » : une issue bot
-          # portant `/oc` créée hors du créneau quotidien (cron retardé ou sauté, édition
-          # tardive) doit être ramassée au passage suivant. Sans ça elle ne l'est jamais :
-          # GitHub n'émet aucun `issues:opened` pour une issue créée par GITHUB_TOKEN.
-          # Anti fan-out : le label `dispatched` est posé AVANT le dispatch, et le watchdog
-          # relâche le claim (>2 h, sans PR ouverte ni run en cours) avant tout retry.
+          # Fenêtre glissante (48 h) pour ramasser les issues /oc créées hors
+          # du créneau quotidien : GitHub n'émet aucun événement
+          # `issues:opened` pour une issue créée par GITHUB_TOKEN. La clé de
+          # dédup reste le label `dispatched` (posé avant le dispatch,
+          # anti-fan-out : voir watchdog.yml).
           echo "TECH_LEAD_SCAN_START=$(date -u -d '48 hours ago' +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
 
       - name: Analyze QA Stats
@@ -216,7 +215,7 @@ jobs:
             exit 1
           fi
 
-      - name: Dispatch OpenCode for bot issues created in the last 48h
+      - name: Dispatch OpenCode for /oc issues (any author, any age)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -225,7 +224,7 @@ jobs:
           ISSUES_FILE="$(mktemp "${RUNNER_TEMP:-/tmp}/tech-lead-issues.XXXXXX")"
           trap 'rm -f "$ISSUES_FILE"' EXIT
 
-          gh api "repos/${GITHUB_REPOSITORY}/issues?state=open&sort=created&direction=desc&per_page=100&since=${TECH_LEAD_SCAN_START}" \
+          gh api "repos/${GITHUB_REPOSITORY}/issues?state=open&sort=created&direction=desc&per_page=100" \
             --jq '.[] | select(.pull_request | not) | @base64' > "$ISSUES_FILE"
 
           FOUND=0
@@ -234,28 +233,20 @@ jobs:
 
             json=$(printf '%s' "$row" | base64 --decode)
             number=$(echo "$json" | jq -r '.number')
-            author=$(echo "$json" | jq -r '.user.login // ""')
-            created_at=$(echo "$json" | jq -r '.created_at')
             body=$(echo "$json" | jq -r '.body // ""')
             labels=$(echo "$json" | jq -r '[.labels[].name] | join(",")')
-
-            if [[ "$created_at" < "$TECH_LEAD_SCAN_START" ]]; then
-              continue
-            fi
-
-            if [ "$author" != "github-actions[bot]" ] && [ "$author" != "app/github-actions" ] && [ "$author" != "opencode-agent" ]; then
-              continue
-            fi
 
             # Skip déjà dispatchées (anti fan-out avec les scans opencode concurrents)
             if echo "$labels" | grep -qiE '(^|,)dispatched(,|$)'; then
               continue
             fi
 
-            if ! printf '%s' "$body" | grep -qiE '(^|[[:space:]])/(oc|opencode)($|[[:space:]])'; then
+            if ! printf '%s' "$body" | grep -qiE '(^|[[:space:]])/(oc|opencode|Oc|OC|oC|proposal)($|[[:space:]])'; then
               continue
             fi
 
+            # Pretend-dispatcher : le watchdog redispache si un dev agent meurt
+            # ou si la PR ne part jamais (runbook watchdog.yml).
             echo "Dispatching OpenCode workflow for issue #$number..."
             gh issue edit "$number" --add-label dispatched 2>/dev/null || true
             gh workflow run opencode.yml -f issue_number="$number"
@@ -263,5 +254,5 @@ jobs:
           done < "$ISSUES_FILE"
 
           if [ "$FOUND" -eq 0 ]; then
-            echo "No bot-created /oc issue left to dispatch in the last 48h."
+            echo "No /oc issue left to dispatch."
           fi
