@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-11-21T00:43:34Z",
+  "last_session": "2026-11-23T00:26:04Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1299 watchdog: statusCheckRollup contient aussi les checks de deploiement (Cloudflare Pages, workflowName vide) -> filtrer select(.workflowName == \"CI\") sinon CHECK_COUNT>=1 sur les PR sans CI et le filet orphelines ne part jamais. Anti-tempete: le reviewer ne peut pas poster de review formelle sur une PR auteur github-actions[bot] (meme identite) -> detecter aussi les commentaires contenant 'Review PR #' posterieurs au commit (comparaison ISO created_at > commit.committer.date).",
-      "issue": "#1299",
-      "date": "2026-10-24"
-    },
     {
       "lesson": "Issue #1312 QA XP: le regex body-wide /\\+(\\d+)\\s*XP/ ramassait le popup .xp-gain-popup perime de l arene. Toujours lire .result-xp-popup (texte exact +N XP ou BOSS REMAINS=>0) via parseResultXpPopup. boss_avg_xp_per_fight ne doit moyenner que les victoires; boss_avg_xp_per_loss expose les defaites.",
       "issue": "#1312",
@@ -170,6 +165,30 @@
       "lesson": "GitHub Actions: une condition if: avec un littéral entre guillemets doubles REJETTE le workflow au chargement (0 job, aucun log) alors que le YAML parse. qa-tester.yml est resté mort 36 h après #1382. Garde-fou ajouté dans workflow-integrity.test.ts (scan de toutes les lignes if: de .github/workflows/*.yml).",
       "issue": "#1400",
       "date": "2026-11-21"
+    },
+    {
+      "session": "2026-11-23T00:00:00Z",
+      "parent_issue": 1403,
+      "title": "QA fleet rotation + level bands (campaign-1403)",
+      "sub_issues_created": [
+        1405,
+        1406,
+        1407,
+        1408
+      ],
+      "sub_issues_dispatched": [
+        1405
+      ],
+      "lessons_learned": [
+        "Rotation must stay primary and band only a tie-break: a strict band filter starves out-of-band members (QA-MID lvl5, QA-END lvl2) so they never climb back to their band, breaking the 9-runs->3/3/3 criterion",
+        "Never put depends-on on the parent issue: the parent stays open until supervisor, so reviewer.yml DAG gate would block the merge forever",
+        "qa/state.json date-only last_run stays lexicographically comparable with ISO timestamps, so no state migration is needed",
+        "Band guard + generation/persistent_generation alignment were grouped in one sub-issue because both touch qa/qa-bot.mjs fleet state (avoids same-file sequential conflicts)",
+        "github-actions is not an assignable user in this repo (only stxtxm) -> skipped --assignee"
+      ],
+      "issues_encountered": [
+        "gh issue list showed #1408 with a short lag after creation (eventual consistency); direct gh issue view confirmed it"
+      ]
     }
   ]
 }
