@@ -1,7 +1,7 @@
 {
   "version": 1,
   "agent": "dev",
-  "last_session": "2026-11-23T01:06:36Z",
+  "last_session": "2026-11-23T01:09:30Z",
   "recent_failures": [],
   "known_limitations": [
     "L'API idle-processor (Cloudflare Pages Function) peut etre indisponible -> fallback local obligatoire",
@@ -21,11 +21,6 @@
     "optional_chaining": "Toujours utiliser ?. et ?? pour les champs optionnels (surtout Supabase)"
   },
   "session_notes": [
-    {
-      "lesson": "Issue #1329 QA analysis: win_rate_ci95 is stored in percentage points (Math.round(196*sqrt(0.25/n))) not a proportion; the /100 in the issue text contradicts its own expected values (15 fights -> 25, 100 -> 10). qa-analysis.test.ts mirrors analyzer logic locally, so source-contract assertions (toContain) must be updated when an alert message is replaced.",
-      "issue": "#1329",
-      "date": "2026-10-27"
-    },
     {
       "lesson": "QA analyzer aggregates: bound all-time families with the existing RECENT_WINDOW_RUNS pattern. Shop price window must be applied on the GLOBAL run timeline (Set of runs.slice(-30)) then filtered per cohort, not per-cohort slice(-30) — otherwise old cohorts (unsegmented) still expose pre-rebalance prices. Boss XP metrics must read only fight_type===\"boss\" (captureBossFight) while boss_fights/win_rate/hp_left keep isBossFight() (VOID TITAN emitted as pve).",
       "issue": "#1340",
@@ -188,6 +183,11 @@
     {
       "lesson": "QA analysis: les métriques de précision (combat yield, fight coverage, win-rate CI) doivent lire la fenêtre BRUTE (stats.slice(-30)), jamais stats.filter(isRunDataComplete) — le filtre supprime les runs à 0 combat et rend le yield tautologique à 100%. workflow-integrity: le faux gh logge $* ; un --body multi-ligne doit être aplati (${*//$\n/ }) sinon /oc disparaît du log et le test échoue.",
       "issue": "#1417",
+      "date": "2026-11-23"
+    },
+    {
+      "lesson": "Issue #1418 qa-bot CTA PvE visible/disabled: helper pur shouldFallbackToPvpAfterPveCta dans src/utils/qa-bot-helpers.js (+ .d.ts). Branchement DANS le bloc !isAttackableArenaStatus AVANT le break, reutilise forcedPvpIndexes comme garde anti-boucle + i--/continue. Un test workflow-integrity pre-existant echoue sur master (tech-lead /oc body) — hors perimetre, ne pas y toucher.",
+      "issue": "#1418",
       "date": "2026-11-23"
     }
   ]
