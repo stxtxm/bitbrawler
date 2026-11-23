@@ -16,6 +16,7 @@ export const UPDATE_NOTES: UpdateNote[] = [
       '📝 PATCH NOTES AUTO — chaque PR mergée sur master met à jour les notes de version de la homepage via un workflow dédié, puis pousse sur master pour redéployer automatiquement Cloudflare Pages.',
       '🧭 TECH-LEAD — dispatch des issues « Proposition » légères (ajout automatique de /oc) ; les propositions majeures / Effort 4+ restent à la main.',
       '🔧 AGENTS — correction du rebase sur branche obsolète (repart de master si plus de PR ouverte) et des droits de push sur .github/workflows/*.yml.',
+      '🎛️ MODÈLES — les slugs des agents sont configurables par variables de dépôt GitHub (AGENT_MODEL_PRIMARY/SECONDARY/TERTIARY), sans modifier les workflows.',
     ],
   },
   {

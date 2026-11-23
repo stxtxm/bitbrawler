@@ -22,6 +22,13 @@ jobs:
       issues: write
       id-token: write
 
+    env:
+      # Modèles configurables via `gh variable set AGENT_MODEL_PRIMARY --body "<slug>"`.
+      # Les valeurs par defaut restent la chaine historique si aucune variable
+      # de depot n'est definie (aucun credential requis pour les slugs gratuits).
+      AGENT_MODEL_PRIMARY: ${{ vars.AGENT_MODEL_PRIMARY || 'opencode/deepseek-v4.1-flash-free' }}
+      AGENT_MODEL_SECONDARY: ${{ vars.AGENT_MODEL_SECONDARY || 'opencode/glm-5.3-flash-free' }}
+      AGENT_MODEL_TERTIARY: ${{ vars.AGENT_MODEL_TERTIARY || 'opencode/nemotron-3.5-lightning-free' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -86,9 +93,9 @@ jobs:
           # (pas de Google, pas de secret GitHub). Indisponible => repli saute.
         run: |
           MODELS=(
-            "opencode/deepseek-v4.1-flash-free"
-            "opencode/glm-5.3-flash-free"
-            "opencode/nemotron-3.5-lightning-free"
+            "$AGENT_MODEL_PRIMARY"
+            "$AGENT_MODEL_SECONDARY"
+            "$AGENT_MODEL_TERTIARY"
           )
           # Le quota est partage par les trois slugs : inutile d'attendre que le
           # CLI retente pendant 2 min, le watchdog coupe et on passe au bearer

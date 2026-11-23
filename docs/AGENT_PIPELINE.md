@@ -74,6 +74,23 @@
 - Le commit de patch notes est poussé sur `master` **sans marqueur `[skip ci]` /
   `[CF-Pages-Skip]`** : CI puis Cloudflare Pages redéploient automatiquement la prod.
 
+### Choisir les modèles des agents (sans modifier le code)
+
+Les trois workflows (`opencode.yml`, `reviewer.yml`, `tech-lead.yml`) lisent des
+**variables de dépôt** au lieu de slugs codés en dur :
+
+```bash
+gh variable set AGENT_MODEL_PRIMARY   --body "<slug-primaire>"
+gh variable set AGENT_MODEL_SECONDARY --body "<slug-repli-1>"
+gh variable set AGENT_MODEL_TERTIARY  --body "<slug-repli-2>"
+```
+
+Un slug de fournisseur payant nécessite la clé correspondante : soit un secret
+GitHub (`ZAI_API_KEY` via le broker OIDC uniquement pour `zai/`), soit une
+variable `OPENCODE_API_KEY` **uniquement si le modèle l'exige**. Les slugs
+`opencode/*-free` ne demandent aucun credential. Si une variable est absente,
+la chaîne historique reste utilisée (défauts credential-less).
+
 ## Modèles
 
 - Chaîne prioritaire (opencode.json + frontmatter `.opencode/agents/*.md` +

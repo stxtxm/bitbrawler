@@ -280,15 +280,13 @@ describe('Agent workflows send no OpenCode credential', () => {
     expect(readWorkflow(file)).not.toContain('OPENCODE_API_KEY')
   })
 
-  it('keeps the agent model chain on free, credential-less slugs', () => {
+  it('agent models are configurable via repository variables (with safe defaults)', () => {
     const opencode = readWorkflow('opencode.yml')
-    for (const model of [
-      'opencode/glm-5.3-flash-free',
-      'opencode/deepseek-v4.1-flash-free',
-      'opencode/nemotron-3.5-lightning-free',
-    ]) {
-      expect(opencode).toContain(model)
+    for (const variable of ['AGENT_MODEL_PRIMARY', 'AGENT_MODEL_SECONDARY', 'AGENT_MODEL_TERTIARY']) {
+      expect(opencode).toContain(variable)
     }
+    expect(opencode).toContain("'opencode/deepseek-v4.1-flash-free'")
+    expect(opencode).not.toContain('OPENCODE_API_KEY')
   })
 })
 
@@ -503,13 +501,12 @@ describe('Chaîne de modèles : watchdog + repli hors quota partagé (#tech-lead
     expect(source).not.toMatch(/MODELS=\(\s*"zai\//)
   })
 
-  it('les slugs opencode restent prioritaires dans les trois workflows', () => {
+  it('the configured agent models stay ahead of the broker fallback', () => {
     for (const file of agentWorkflows) {
       const source = readWorkflow(file)
-      const free = source.indexOf('"opencode/deepseek-v4.1-flash-free"')
-      expect(free).toBeGreaterThanOrEqual(0)
-      // Le repli est ajouté après le tableau des slugs gratuits.
-      expect(source.indexOf('MODELS+=("zai/glm-4.5-flash")')).toBeGreaterThan(free)
+      const primary = source.indexOf('"$AGENT_MODEL_PRIMARY"')
+      expect(primary, file).toBeGreaterThanOrEqual(0)
+      expect(source.indexOf('MODELS+=("zai/glm-4.5-flash")'), file).toBeGreaterThan(primary)
     }
   })
 
