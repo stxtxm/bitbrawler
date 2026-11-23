@@ -29,6 +29,12 @@ export declare interface QaStateLike {
   character_type?: QaCharacterType | string | null
   exhausted?: boolean
   pvp_since_last_pve?: number | null
+  persistent_generation?: number | null
+  generation?: number | null
+  persistent_created_at?: string | null
+  created_at?: string | null
+  persistent_reset_ready?: boolean | null
+  level?: number | null
 }
 
 export declare function resolveReusableDailyCharacter(
@@ -93,6 +99,20 @@ export declare function classifyQaRunErrors(runRecord: QaRunRecordShape | null |
 export declare function isRunDataComplete(runRecord: QaRunRecordShape | null | undefined): boolean
 
 export declare function persistentNameForGeneration(baseName: string, generation: number): string
+
+export declare interface PersistentCharacterResolution {
+  name: string
+  generation: number
+  createdAt: string | null
+  reset: boolean
+}
+
+export declare function resolvePersistentCharacter(
+  state: QaStateLike | null | undefined,
+  now: Date,
+  baseName?: string,
+  minLevel?: number | null,
+): PersistentCharacterResolution
 
 export declare function shouldForcePersistentReset(
   currentLevel: number | null | undefined,

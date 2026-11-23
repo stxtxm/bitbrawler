@@ -183,6 +183,35 @@ export function persistentNameForGeneration(baseName, generation) {
   return `${base}${suffix}`
 }
 
+export function resolvePersistentCharacter(state, now, baseName = config.persistentCharacterName, minLevel = null) {
+  const generation = state?.persistent_generation ?? state?.generation ?? 0
+  const createdAtRaw = state?.persistent_created_at ?? state?.created_at ?? null
+  const createdAt = createdAtRaw ? new Date(createdAtRaw) : null
+  const ageMs = createdAt !== null ? now.getTime() - createdAt.getTime() : null
+  const ageExceeded =
+    config.persistentCharacterMaxAgeDays > 0 &&
+    ageMs !== null &&
+    ageMs > config.persistentCharacterMaxAgeDays * 24 * 60 * 60 * 1000
+  const level = typeof state?.level === 'number' && Number.isFinite(state.level) ? state.level : null
+  const belowBand = typeof minLevel === 'number' && level !== null && level < minLevel
+  const shouldReset = !belowBand && (state?.persistent_reset_ready === true || ageExceeded)
+  if (!shouldReset) {
+    return {
+      name: persistentNameForGeneration(baseName, generation),
+      generation,
+      createdAt: createdAtRaw,
+      reset: false,
+    }
+  }
+  const nextGeneration = generation + 1
+  return {
+    name: persistentNameForGeneration(baseName, nextGeneration),
+    generation: nextGeneration,
+    createdAt: null,
+    reset: true,
+  }
+}
+
 export function shouldForcePersistentReset(
   currentLevel,
   maxLevel = config.persistentCharacterMaxLevel,

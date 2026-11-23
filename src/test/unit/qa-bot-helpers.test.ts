@@ -34,6 +34,7 @@ import {
   parseProgressionCurve,
   parseResultXpPopup,
   selectFleetMember,
+  resolvePersistentCharacter,
 } from '../../utils/qa-bot-helpers'
 
 describe('qa-bot-helpers combat speed', () => {
@@ -465,6 +466,112 @@ describe('qa-bot-helpers classifyQaRunErrors (#1387 Phase 2.1)', () => {
   it('falls back to ["other"] for unmatched errors', () => {
     expect(classifyQaRunErrors({ errors: ['something unexpected'] })).toEqual(['other'])
     expect(classifyQaRunErrors({ errors: [''] })).toEqual(['other'])
+  })
+})
+
+describe('qa-bot-helpers resolvePersistentCharacter (#1407)', () => {
+  const now = new Date('2026-11-23T12:00:00.000Z')
+
+  it('reads persistent_generation and persistent_created_at first', () => {
+    const result = resolvePersistentCharacter(
+      {
+        persistent_generation: 2,
+        generation: 1,
+        persistent_created_at: '2026-11-01T00:00:00.000Z',
+        created_at: '2026-10-01T00:00:00.000Z',
+      },
+      now,
+      'QA-PERSIST',
+    )
+    expect(result).toEqual({
+      name: 'QA-PERSI-3',
+      generation: 2,
+      createdAt: '2026-11-01T00:00:00.000Z',
+      reset: false,
+    })
+  })
+
+  it('falls back to generation and created_at for fleet members', () => {
+    const result = resolvePersistentCharacter(
+      {
+        generation: 1,
+        created_at: '2026-11-10T00:00:00.000Z',
+      },
+      now,
+      'QA-END',
+    )
+    expect(result).toEqual({
+      name: 'QA-END-2',
+      generation: 1,
+      createdAt: '2026-11-10T00:00:00.000Z',
+      reset: false,
+    })
+  })
+
+  it('does not reset a member below its minLevel even when reset_ready is true', () => {
+    const result = resolvePersistentCharacter(
+      {
+        generation: 0,
+        created_at: '2026-11-10T00:00:00.000Z',
+        persistent_reset_ready: true,
+        level: 2,
+      },
+      now,
+      'QA-END',
+      30,
+    )
+    expect(result.reset).toBe(false)
+    expect(result.generation).toBe(0)
+    expect(result.name).toBe('QA-END')
+  })
+
+  it('does not reset a member below its minLevel even when age is exceeded', () => {
+    const result = resolvePersistentCharacter(
+      {
+        generation: 1,
+        created_at: '2020-01-01T00:00:00.000Z',
+        level: 5,
+      },
+      now,
+      'QA-END',
+      30,
+    )
+    expect(result.reset).toBe(false)
+    expect(result.generation).toBe(1)
+    expect(result.name).toBe('QA-END-2')
+  })
+
+  it('resets when reset_ready is true and level is at or above minLevel', () => {
+    const result = resolvePersistentCharacter(
+      {
+        generation: 1,
+        created_at: '2026-11-10T00:00:00.000Z',
+        persistent_reset_ready: true,
+        level: 35,
+      },
+      now,
+      'QA-END',
+      30,
+    )
+    expect(result.reset).toBe(true)
+    expect(result.generation).toBe(2)
+    expect(result.name).toBe('QA-END-3')
+    expect(result.createdAt).toBeNull()
+  })
+
+  it('resets when age is exceeded and minLevel is not violated', () => {
+    const result = resolvePersistentCharacter(
+      {
+        generation: 0,
+        created_at: '2020-01-01T00:00:00.000Z',
+        level: 30,
+      },
+      now,
+      'QA-END',
+      30,
+    )
+    expect(result.reset).toBe(true)
+    expect(result.generation).toBe(1)
   })
 })
 
