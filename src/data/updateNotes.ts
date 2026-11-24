@@ -8,6 +8,14 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.9.4',
+    date: '2026-11-24',
+    title: 'Proposition: Codex Rewards — gonfler le bestiaire instrumenté hier (#1294) en 2e pilier de rétention long-terme (silhouettes, jalons kills, jackpot découverte) (PR #1426)',
+    changes: [
+      '✅ Proposition: Codex Rewards — gonfler le bestiaire instrumenté hier (#1294) en 2e pilier de rétention long-terme (silhouettes, jalons kills, jackpot découverte) — livré automatiquement apres le merge de la PR #1426.',
+    ],
+  },
+  {
     version: '5.9.3',
     date: '2026-11-23',
     title: 'fix(qa-bot): la flotte QA est monopolisée par QA-END (5 runs/9) et sort de sa bande de niveau — plus aucun combattant boss-capable depuis le 19/11 (PR #1425)',
