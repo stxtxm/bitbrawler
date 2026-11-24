@@ -243950,5 +243950,398 @@
       "browser_error",
       "timeout"
     ]
+  },
+  {
+    "date": "2026-11-24T16:42:05.692Z",
+    "run": "2026-11-24",
+    "character": "QA-FRESH",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fleet_member": "QA-FRESH",
+    "fleet_band_violation": null,
+    "fights": [
+      {
+        "result": "victory",
+        "xp": null,
+        "fight_duration_ms": 1049,
+        "max_hp": 264,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 110.51,
+        "essence_before": 110.51,
+        "essence_gained": 0
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Battle Axe",
+      "rarity": "COMMON",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 5,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 14,
+      "vit": 10,
+      "dex": 12,
+      "luk": 6,
+      "int": 25,
+      "foc": 8,
+      "fights": 0
+    },
+    "initial_level": 7,
+    "initial_xp": {
+      "current": 2799,
+      "max": 2975
+    },
+    "progression_curve": {
+      "level": 7,
+      "total_xp": 9225,
+      "xp_for_next": 2975,
+      "percent": 94.1
+    },
+    "initial_max_hp": 260,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife",
+        "rarity": "RARE"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 8,
+      "xp": 65,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 14,
+      "vit": 10,
+      "dex": 12,
+      "luk": 6,
+      "int": 26,
+      "foc": 8,
+      "last xp": 58,
+      "fights": 4
+    },
+    "final_max_hp": 264,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Flint Knife"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Battle Axe",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Reinforced Vest",
+        "rarity": "COMMON"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 7,
+        "new_level": 8
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 26556,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "goblin",
+        "ogre"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 107,
+      "xp_events": [
+        {
+          "time_ms": 3075,
+          "xp": 82,
+          "monster": "goblin",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 26556,
+          "xp": 25,
+          "monster": "ogre",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": true,
+      "level_up_events": [
+        {
+          "time_ms": 13188,
+          "monster": "ogre"
+        },
+        {
+          "time_ms": 13697,
+          "monster": "ogre"
+        },
+        {
+          "time_ms": 14209,
+          "monster": "ogre"
+        }
+      ],
+      "phase_transition_times_ms": [
+        512,
+        1534,
+        3075,
+        11656,
+        13188,
+        26556
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 82,
+        "essence": 0.28,
+        "monster": "goblin"
+      },
+      {
+        "result": "victory",
+        "xp": 25,
+        "essence": 0.28,
+        "monster": "ogre"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.29,
+      "next_level_eta": "⬆ 12m 7s",
+      "power_ratio": "⚔ 0.54x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.14x",
+      "interval": "11.7s",
+      "streak_bonus": "🔥 1-win streak (+0%)"
+    },
+    "initial_essence": 109.95,
+    "final_essence": 85.51,
+    "essence": {
+      "before_idle": 109.95,
+      "after_idle": 110.51,
+      "per_fight": [
+        110.51
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": 115,
+      "shop_after": 115,
+      "final": 85.51,
+      "flow": {
+        "idle_gained": 0.56,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": 0,
+        "net_change": -24.44
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": true,
+      "offline_time": "⏰ 2m 20s",
+      "fights": 0,
+      "xp_gained": 210,
+      "essence_gained": 11,
+      "levels_gained": null,
+      "claimed": true
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": null,
+      "cost": 0,
+      "essence_before": 115,
+      "essence_after": 115,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Silver Ring",
+            "rarity": "COMMON",
+            "price": 30
+          },
+          {
+            "name": "Dusk Blade",
+            "rarity": "RARE",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 115,
+        "essence_budget": 40,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 40
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 1,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "ui_feature_checks": {
+      "arena_tabs": {
+        "pve": true,
+        "pvp": true,
+        "boss": true
+      },
+      "boss_ui": {
+        "visible": false,
+        "cta": "LOCKED LVL 20"
+      },
+      "biome_ui": {
+        "visible": true,
+        "bonus": "GAINS x1.00",
+        "options": [
+          {
+            "name": "Plains",
+            "mult": "x1.00",
+            "locked": false,
+            "selected": true
+          },
+          {
+            "name": "Volcanic",
+            "mult": "x1.20",
+            "locked": true,
+            "selected": false
+          },
+          {
+            "name": "Mountain",
+            "mult": "x1.35",
+            "locked": true,
+            "selected": false
+          },
+          {
+            "name": "Frostpeak",
+            "mult": "x1.50",
+            "locked": true,
+            "selected": false
+          },
+          {
+            "name": "Eclipse",
+            "mult": "x1.70",
+            "locked": true,
+            "selected": false
+          }
+        ],
+        "interaction": null
+      },
+      "idle_rates": {
+        "essence_per_min": "💎 ~1.29",
+        "xp_per_min": "⚡ ~301"
+      }
+    },
+    "errors": [],
+    "load_times_ms": {
+      "home": 1068,
+      "arena": 1028
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Silver Ring",
+          "rarity": "COMMON",
+          "price": 30
+        },
+        {
+          "name": "Dusk Blade",
+          "rarity": "RARE",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 115,
+      "essence_budget": 40,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    },
+    "error_patterns": []
   }
 ]
