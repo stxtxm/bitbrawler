@@ -2,7 +2,7 @@
   "run": "2026-11-24",
   "character": "QA-FRESH",
   "exhausted": false,
-  "updated_at": "2026-11-24T11:02:12.960Z",
+  "updated_at": "2026-11-24T14:01:37.494Z",
   "source": "reused",
   "character_type": "persistent",
   "persistent_generation": 0,
@@ -25,7 +25,7 @@
       "generation": 0,
       "created_at": "2026-11-24T08:09:01.006Z",
       "level": 4,
-      "last_run": "2026-11-24T11:02:12.960Z",
+      "last_run": "2026-11-24T14:01:37.494Z",
       "exhausted": false,
       "last_run_failed": false
     },
