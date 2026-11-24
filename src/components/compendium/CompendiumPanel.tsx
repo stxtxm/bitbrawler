@@ -1,8 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { useNotification } from '../../hooks/useNotification';
 import { getBestiaryProgress } from '../../utils/bestiaryUtils';
+import {
+  claimBestiaryReward,
+  getBestiaryRewardState,
+  type BestiaryReward,
+} from '../../utils/bestiaryRewardUtils';
 import { getCodexIds, getCodexProgress } from '../../utils/codexUtils';
+import { grantFreeReroll } from '../../utils/shopStorage';
 import { CODEX_ENTRIES, getCodexEntry } from '../../data/codex';
 import type { Character } from '../../types/Character';
 import { ArmoryCard } from './ArmoryCard';
@@ -49,13 +55,29 @@ function createSnapshot(character: Character | null): CompendiumSnapshot | null 
 }
 
 export const CompendiumPanel = ({ onClose }: CompendiumPanelProps) => {
-  const { activeCharacter } = useGame();
+  const { activeCharacter, addEssence } = useGame() as { activeCharacter: Character | null; addEssence?: (amount: number) => Promise<Character | null> };
   const { notify } = useNotification();
   const [activeTab, setActiveTab] = useState<CompendiumTab>('bestiary');
   const snapshotRef = useRef<CompendiumSnapshot | null>(null);
+  const [claimVersion, setClaimVersion] = useState(0);
 
   const character = activeCharacter ?? null;
   const bestiary = useMemo(() => getBestiaryProgress(character ?? {}), [character]);
+  const rewardState = useMemo(() => (character ? getBestiaryRewardState(character) : { claimedIds: [], claimable: [] as BestiaryReward[] }), [character, claimVersion]);
+  const claimableByMonster = useMemo(() => {
+    const map = new Map<string, BestiaryReward[]>();
+    for (const reward of rewardState.claimable) {
+      if (reward.type !== 'monster') continue;
+      const list = map.get(reward.monsterId) ?? [];
+      list.push(reward);
+      map.set(reward.monsterId, list);
+    }
+    return map;
+  }, [rewardState.claimable]);
+  const globalClaimable = useMemo(
+    () => rewardState.claimable.filter((reward): reward is Extract<BestiaryReward, { type: 'global' }> => reward.type === 'global'),
+    [rewardState.claimable],
+  );
   const armory = useMemo(
     () => (character ? getCodexProgress(character) : EMPTY_ARMORY_PROGRESS),
     [character],
@@ -69,6 +91,24 @@ export const CompendiumPanel = ({ onClose }: CompendiumPanelProps) => {
     bestiary.total,
     armory.total,
   );
+
+  const handleClaimReward = useCallback(async (reward: BestiaryReward) => {
+    if (!character) return;
+    const claimed = claimBestiaryReward(character, reward.id);
+    if (!claimed) return;
+    if (reward.essence > 0) {
+      if (addEssence) await addEssence(reward.essence);
+      notify(`+${reward.essence} essence`, 'success', 2500);
+    }
+    if (reward.type === 'global' && reward.reroll > 0) {
+      grantFreeReroll(character.id ?? character.seed, undefined, reward.reroll);
+      notify(`+${reward.reroll} reroll shop`, 'success', 2500);
+    }
+    if (reward.type === 'monster' && reward.badge) {
+      notify(`Badge ${reward.badge} débloqué !`, 'success', 2500);
+    }
+    setClaimVersion((value) => value + 1);
+  }, [character, addEssence, notify]);
 
   useEffect(() => {
     const current = createSnapshot(character);
@@ -123,8 +163,28 @@ export const CompendiumPanel = ({ onClose }: CompendiumPanelProps) => {
 
       {activeTab === 'bestiary' ? (
         <div className="settings-medals-grid" role="tabpanel" aria-label="Bestiary">
+          {globalClaimable.length > 0 && (
+            <div className="compendium-global-rewards">
+              {globalClaimable.map((reward) => (
+                <button
+                  key={reward.id}
+                  type="button"
+                  className="compendium-reward-btn"
+                  onClick={() => { void handleClaimReward(reward); }}
+                >
+                  {`Claim ${reward.milestone} species`}
+                </button>
+              ))}
+            </div>
+          )}
           {bestiary.entries.map((entry) => (
-            <BestiaryCard key={entry.id} entry={entry} />
+            <BestiaryCard
+              key={entry.id}
+              entry={entry}
+              claimableRewards={claimableByMonster.get(entry.id) ?? []}
+              claimedRewardIds={rewardState.claimedIds}
+              onClaimReward={handleClaimReward}
+            />
           ))}
         </div>
       ) : (

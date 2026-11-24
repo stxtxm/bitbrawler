@@ -6,7 +6,7 @@ import { getItemStatEntries, ITEM_STAT_META } from '../../hooks/useInventory';
 import { SHOP_OFFERS, REROLL_COST } from '../../data/shopConstants';
 import { ITEM_ASSETS } from '../../data/itemAssets';
 import { getShopOffers, canBuyOffer, isOfferSoldOut, type ShopOffer } from '../../utils/shopUtils';
-import { isRerollUsed } from '../../utils/shopStorage';
+import { getFreeRerolls, isRerollUsed } from '../../utils/shopStorage';
 import { PixelIcon } from '../PixelIcon';
 import { PixelItemIcon } from '../PixelItemIcon';
 import type { PixelItemAsset } from '../../types/Item';
@@ -30,6 +30,7 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
   const [rerolling, setRerolling] = useState(false);
   const [rerolledOffers, setRerolledOffers] = useState<ShopOffer[] | null>(null);
   const [rerollUsed, setRerollUsed] = useState(false);
+  const [freeRerolls, setFreeRerolls] = useState(0);
   const [revealItem, setRevealItem] = useState<PixelItemAsset | null>(null);
 
   const offers = useMemo<ShopOffer[]>(() => {
@@ -44,6 +45,7 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
     setSoldOut(newSoldOut);
     const charId = activeCharacter.id ?? activeCharacter.seed;
     setRerollUsed(isRerollUsed(charId));
+    setFreeRerolls(getFreeRerolls(charId));
     // Reset rerolled offers if character changes
     setRerolledOffers(null);
   }, [activeCharacter]);
@@ -102,13 +104,14 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
 
   const handleRerollClick = useCallback(() => {
     if (rerolling || rerollUsed) return;
-    if ((activeCharacter?.essence ?? 0) < REROLL_COST) {
+    const hasFreeReroll = freeRerolls > 0;
+    if (!hasFreeReroll && (activeCharacter?.essence ?? 0) < REROLL_COST) {
       play('error');
       notify(`Not enough essence to reroll (${REROLL_COST} 🜁).`, 'error', 3000);
       return;
     }
     setShowRerollConfirm(true);
-  }, [rerolling, rerollUsed, activeCharacter, notify, play]);
+  }, [rerolling, rerollUsed, freeRerolls, activeCharacter, notify, play]);
 
   const handleRerollConfirm = useCallback(async () => {
     if (rerolling) return;
@@ -118,8 +121,10 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
       if (newOffers) {
         setRerolledOffers(newOffers);
         setRerollUsed(true);
+        const charId = activeCharacter?.id ?? activeCharacter?.seed;
+        if (charId) setFreeRerolls(getFreeRerolls(charId));
         play('reroll');
-        notify(`Shop offers rerolled! (-${REROLL_COST} 🜁)`, 'success', 3000);
+        notify(freeRerolls > 0 ? 'Shop offers rerolled! (free reroll)' : `Shop offers rerolled! (-${REROLL_COST} 🜁)`, 'success', 3000);
       } else {
         play('error');
         notify('Reroll failed — not enough essence or already used today.', 'error', 3000);
@@ -131,13 +136,13 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
       setRerolling(false);
       setShowRerollConfirm(false);
     }
-  }, [rerolling, rerollShopOffers, notify, play]);
+  }, [rerolling, rerollShopOffers, notify, play, activeCharacter, freeRerolls]);
 
   const handleRerollCancel = useCallback(() => {
     setShowRerollConfirm(false);
   }, []);
 
-  const canReroll = !rerollUsed && !rerolling && (activeCharacter?.essence ?? 0) >= REROLL_COST;
+  const canReroll = !rerollUsed && !rerolling && (freeRerolls > 0 || (activeCharacter?.essence ?? 0) >= REROLL_COST);
 
   if (!activeCharacter) return null;
 
@@ -282,7 +287,7 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
           title={rerollUsed ? 'Already rerolled today' : !canReroll ? `Need ${REROLL_COST} 🜁` : `Reroll offers for ${REROLL_COST} 🜁`}
           aria-label="Reroll shop offers"
         >
-          {rerollUsed ? 'REROLLED' : rerolling ? 'REROLLING...' : `RELANCE (${REROLL_COST} 🜁)`}
+          {rerollUsed ? 'REROLLED' : rerolling ? 'REROLLING...' : freeRerolls > 0 ? `RELANCE (FREE x${freeRerolls})` : `RELANCE (${REROLL_COST} 🜁)`}
         </button>
       </div>
 
@@ -293,7 +298,7 @@ export const ShopPanel = memo(function ShopPanel({ onClose }: ShopPanelProps) {
             <div className="forge-confirm-title">Confirm Reroll</div>
             <div className="forge-confirm-item">
               <span className="forge-confirm-item-name">Refresh all offers</span>
-              <span className="forge-confirm-yield">{REROLL_COST} 🜁</span>
+              <span className="forge-confirm-yield">{freeRerolls > 0 ? 'FREE' : `${REROLL_COST} 🜁`}</span>
             </div>
             <div className="forge-confirm-warning">This will replace all 3 offers with new ones.</div>
             <div className="forge-confirm-actions">
