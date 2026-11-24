@@ -189,3 +189,67 @@ $compendium-gold-light: #ffe680;
   font-size: 0.65rem;
   color: $compendium-text-muted;
 }
+
+.compendium-global-rewards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+.compendium-reward-btn {
+  border: 1px solid rgba($accent-gold, 0.8);
+  background: rgba(30, 20, 8, 0.9);
+  color: $compendium-gold-light;
+  font-family: $font-pixel;
+  font-size: 0.45rem;
+  padding: 6px 8px;
+  cursor: pointer;
+  line-height: 1.2;
+
+  &:hover {
+    background: rgba(60, 40, 12, 0.95);
+  }
+}
+
+.bestiary-card__milestones {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.bestiary-milestone {
+  font-family: $font-pixel;
+  font-size: 0.38rem;
+  padding: 2px 4px;
+  border: 1px solid #555;
+  color: #888;
+  background: #111;
+
+  &.is-reached {
+    color: $compendium-gold-light;
+    border-color: rgba($accent-gold, 0.8);
+  }
+}
+
+.bestiary-card__badge {
+  margin: 0;
+  font-family: $font-pixel;
+  font-size: 0.42rem;
+  color: #ffcc66;
+}
+
+.bestiary-card__rewards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.bestiary-card__hint {
+  margin: 0;
+  font-size: 0.58rem;
+  color: $compendium-text-muted;
+  text-align: center;
+}

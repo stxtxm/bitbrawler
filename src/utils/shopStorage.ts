@@ -3,7 +3,7 @@ import { SHOP_OFFER_COUNT } from '../data/shopConstants';
 const STORAGE_KEY = 'bitbrawler_shop_purchases';
 
 interface ShopPurchases {
-  [date: string]: boolean[] | boolean;
+  [date: string]: boolean[] | boolean | number;
 }
 
 /**
@@ -79,13 +79,21 @@ export function clearShopPurchases(characterId?: string): void {
   }
 }
 
+function getRerollKey(dateStr: string): string {
+  return `${dateStr}_reroll`;
+}
+
+function getFreeRerollKey(dateStr: string): string {
+  return `${dateStr}_free_rerolls`;
+}
+
 /**
  * Check if reroll was already used today.
  */
 export function isRerollUsed(characterId: string, dateStr?: string): boolean {
   const today = dateStr ?? new Date().toISOString().slice(0, 10);
   const purchases = loadShopPurchases(characterId);
-  return purchases[`${today}_reroll`] === true;
+  return purchases[getRerollKey(today)] === true;
 }
 
 /**
@@ -94,7 +102,7 @@ export function isRerollUsed(characterId: string, dateStr?: string): boolean {
 export function markRerollUsed(characterId: string, dateStr?: string): void {
   const today = dateStr ?? new Date().toISOString().slice(0, 10);
   const purchases = loadShopPurchases(characterId);
-  purchases[`${today}_reroll`] = true;
+  purchases[getRerollKey(today)] = true;
   saveShopPurchases(characterId, purchases);
 }
 
@@ -105,9 +113,37 @@ export function clearRerollUsed(characterId?: string, dateStr?: string): void {
   if (characterId) {
     const today = dateStr ?? new Date().toISOString().slice(0, 10);
     const purchases = loadShopPurchases(characterId);
-    delete purchases[`${today}_reroll`];
+    delete purchases[getRerollKey(today)];
     saveShopPurchases(characterId, purchases);
   }
+}
+
+export function getFreeRerolls(characterId: string, dateStr?: string): number {
+  const today = dateStr ?? new Date().toISOString().slice(0, 10);
+  const purchases = loadShopPurchases(characterId);
+  const value = purchases[getFreeRerollKey(today)];
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
+}
+
+export function grantFreeReroll(characterId: string, dateStr?: string, amount = 1): number {
+  const today = dateStr ?? new Date().toISOString().slice(0, 10);
+  const purchases = loadShopPurchases(characterId);
+  const current = getFreeRerolls(characterId, today);
+  const delta = Number.isFinite(amount) && amount > 0 ? Math.floor(amount) : 0;
+  const next = current + delta;
+  purchases[getFreeRerollKey(today)] = next;
+  saveShopPurchases(characterId, purchases);
+  return next;
+}
+
+export function consumeFreeReroll(characterId: string, dateStr?: string): boolean {
+  const today = dateStr ?? new Date().toISOString().slice(0, 10);
+  const current = getFreeRerolls(characterId, today);
+  if (current <= 0) return false;
+  const purchases = loadShopPurchases(characterId);
+  purchases[getFreeRerollKey(today)] = current - 1;
+  saveShopPurchases(characterId, purchases);
+  return true;
 }
 
 /**
@@ -117,7 +153,7 @@ export function isOfferPurchased(characterId: string, index: number, dateStr?: s
   const today = dateStr ?? new Date().toISOString().slice(0, 10);
   const purchases = loadShopPurchases(characterId);
   const day = purchases[today];
-  if (!day || typeof day === 'boolean') return false;
+  if (!Array.isArray(day)) return false;
   return day[index] === true;
 }
 

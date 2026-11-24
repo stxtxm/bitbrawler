@@ -84,7 +84,7 @@ describe('CompendiumPanel', () => {
   });
 
   it('reveals a seen monster and keeps unknown monsters hidden', () => {
-    setupCharacter(makeCharacter({ monsterKills: { goblin: 2 } }));
+    setupCharacter(makeCharacter({ monsterKills: { goblin: 5 }, monsterEncounters: { goblin: 5 } }));
     render(<CompendiumPanel />);
 
     expect(screen.getByText('Goblin')).toBeInTheDocument();
@@ -124,7 +124,7 @@ describe('CompendiumPanel', () => {
   });
 
   it('exposes the compendium header and bestiary style hooks', () => {
-    setupCharacter(makeCharacter({ monsterKills: { goblin: 2 } }));
+    setupCharacter(makeCharacter({ monsterKills: { goblin: 5 }, monsterEncounters: { goblin: 5 } }));
     const { container } = render(<CompendiumPanel />);
 
     expect(container.querySelector('.compendium-panel')).not.toBeNull();

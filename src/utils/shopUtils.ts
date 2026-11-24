@@ -9,7 +9,14 @@ import {
   SHOP_OFFER_COUNT,
 } from '../data/shopConstants';
 import { rollSimpleLootbox } from './lootboxUtils';
-import { isOfferPurchased, isRerollUsed, loadShopPurchases, saveShopPurchases } from './shopStorage';
+import {
+  consumeFreeReroll,
+  getFreeRerolls,
+  isOfferPurchased,
+  isRerollUsed,
+  loadShopPurchases,
+  saveShopPurchases,
+} from './shopStorage';
 
 export interface ShopOffer {
   index: number;
@@ -267,26 +274,29 @@ export function buyShopOffer(
   };
 }
 
+export interface ShopRerollResult {
+  character: Character;
+  offers: ShopOffer[];
+  usedFreeReroll: boolean;
+}
+
 /**
- * Reroll today's shop offers for 10 essence.
- * Checks that the player has enough essence and has not already rerolled today.
- * Returns the updated character (with essence deducted) and new offers, or null.
+ * Reroll today's shop offers for 10 essence, unless a free reroll is available.
+ * Returns the updated character and new offers, or null.
  */
 export function rerollShopOffers(
   character: Character,
   items: PixelItemAsset[],
   dateStr?: string,
-): { character: Character; offers: ShopOffer[] } | null {
+): ShopRerollResult | null {
   const today = dateStr ?? new Date().toISOString().slice(0, 10);
   const charId = character.id ?? character.seed;
 
-  // Check essence
-  if ((character.essence ?? 0) < REROLL_COST) return null;
-
-  // Check reroll not already used today
   if (isRerollUsed(charId, today)) return null;
 
-  // Generate new offers with a reroll seed (append '-reroll')
+  const hasFreeReroll = getFreeRerolls(charId, today) > 0;
+  if (!hasFreeReroll && (character.essence ?? 0) < REROLL_COST) return null;
+
   const rerollSeed = getDailySeed(charId, `${today}-reroll`);
   const rand = seededRandom(rerollSeed);
 
@@ -294,10 +304,7 @@ export function rerollShopOffers(
     buildOffer(index, character, items, rand),
   );
 
-  // Deduct essence
-  const newEssence = (character.essence ?? 0) - REROLL_COST;
-
-  // NOTE: reroll-used mark is written by the CALLER after persistence.
+  const newEssence = hasFreeReroll ? (character.essence ?? 0) : (character.essence ?? 0) - REROLL_COST;
 
   return {
     character: {
@@ -305,5 +312,12 @@ export function rerollShopOffers(
       essence: newEssence,
     } as Character,
     offers,
+    usedFreeReroll: hasFreeReroll,
   };
+}
+
+export function consumeShopRerollCredit(characterId: string, dateStr?: string): boolean {
+  const today = dateStr ?? new Date().toISOString().slice(0, 10);
+  if (consumeFreeReroll(characterId, today)) return true;
+  return false;
 }

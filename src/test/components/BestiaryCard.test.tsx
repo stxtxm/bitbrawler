@@ -48,13 +48,13 @@ describe('BestiaryCard', () => {
   it('renders a revealed volcanic monster', () => {
     render(
       <BestiaryCard
-        entry={{ id: 'lava_hound', name: 'Lava Hound', element: 'fire', seen: true, kills: 1, encounters: 1 }}
+        entry={{ id: 'lava_hound', name: 'Lava Hound', element: 'fire', seen: true, kills: 5, encounters: 5 }}
       />,
     );
 
     expect(screen.getByText('Lava Hound')).toBeInTheDocument();
     expect(screen.getByText('Ember Rush')).toBeInTheDocument();
-    expect(screen.getByText('1 kill')).toBeInTheDocument();
+    expect(screen.getByText('5 kills')).toBeInTheDocument();
     expect(screen.getByLabelText('Lava Hound')).toBeInTheDocument();
   });
 

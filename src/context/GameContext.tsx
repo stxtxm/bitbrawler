@@ -46,7 +46,14 @@ import {
   performFusion,
   performUpgrade,
 } from '../utils/forgeUtils';
-import { buyShopOffer as buyShopOfferUtil, getShopOfferPurchaseInfo, rerollShopOffers as rerollShopOffersUtil, type ShopOffer, type ShopPurchase } from '../utils/shopUtils';
+import {
+  buyShopOffer as buyShopOfferUtil,
+  consumeShopRerollCredit,
+  getShopOfferPurchaseInfo,
+  rerollShopOffers as rerollShopOffersUtil,
+  type ShopOffer,
+  type ShopPurchase,
+} from '../utils/shopUtils';
 import { completeRecoveryQuest, getConsecutiveLosses, getSecondWindEssence, recordRecovery, startRecoveryQuest } from '../utils/comebackUtils';
 import { claimDailyLoginEssence } from '../utils/dailyEssenceUtils';
 import { getDailyResetKey } from '../utils/dailyReset';
@@ -1847,6 +1854,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         })
         .eq('id', baseChar.id!);
       persistCharacter(normalized);
+      consumeShopRerollCredit(baseChar.id!, new Date().toISOString().slice(0, 10));
       markRerollUsed(baseChar.id!, new Date().toISOString().slice(0, 10));
       pendingSyncCharRef.current = null;
       if (syncToBackendTimeoutRef.current !== null) {
