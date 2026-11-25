@@ -245749,5 +245749,404 @@
       "browser_error",
       "timeout"
     ]
+  },
+  {
+    "date": "2026-11-25T05:01:55.779Z",
+    "run": "2026-11-25",
+    "character": "QA-FRESH",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fleet_member": "QA-FRESH",
+    "fleet_band_violation": {
+      "member": "QA-FRESH",
+      "level": 8,
+      "minLevel": 1,
+      "maxLevel": 5
+    },
+    "fights": [
+      {
+        "result": "victory",
+        "xp": null,
+        "fight_duration_ms": 1056,
+        "max_hp": 289,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 154.03,
+        "essence_before": 154.03,
+        "essence_gained": 0
+      }
+    ],
+    "lootbox": {
+      "available": true,
+      "opened": true,
+      "item": "Crystal Pendant",
+      "rarity": "EPIC",
+      "raw_text": "NEW ITEM"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": true,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 5,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 16,
+      "vit": 11,
+      "dex": 10,
+      "luk": 5,
+      "int": 26,
+      "foc": 8,
+      "fights": 0
+    },
+    "initial_level": 8,
+    "initial_xp": {
+      "current": 2370,
+      "max": 3709
+    },
+    "progression_curve": {
+      "level": 8,
+      "total_xp": 11771,
+      "xp_for_next": 3709,
+      "percent": 63.9
+    },
+    "initial_max_hp": 269,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Battle Axe",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Reinforced Vest",
+        "rarity": "COMMON"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 9,
+      "xp": 632,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 16,
+      "vit": 11,
+      "dex": 10,
+      "luk": 5,
+      "int": 27,
+      "foc": 8,
+      "last xp": 68,
+      "fights": 3
+    },
+    "final_max_hp": 289,
+    "final_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Battle Axe"
+      },
+      {
+        "slot": "🛡",
+        "name": "Reinforced Vest"
+      }
+    ],
+    "final_streak": 1,
+    "lootbox_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Battle Axe",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Reinforced Vest",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Crystal Pendant",
+        "rarity": "EPIC"
+      }
+    ],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [
+      {
+        "fight_number": 1,
+        "fight_type": "pvp",
+        "levels_gained": 1,
+        "previous_level": 8,
+        "new_level": 9
+      }
+    ],
+    "idle_runner": {
+      "observation_duration_ms": 20252,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "wolf",
+        "sunfang"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 132,
+      "xp_events": [
+        {
+          "time_ms": 3075,
+          "xp": 64,
+          "monster": "wolf",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 15210,
+          "xp": 68,
+          "monster": "sunfang",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        511,
+        1541,
+        3075,
+        12147,
+        13678,
+        15210
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 64,
+        "essence": 0.26,
+        "monster": "wolf"
+      },
+      {
+        "result": "victory",
+        "xp": 68,
+        "essence": 0.26,
+        "monster": "sunfang"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 1.28,
+      "next_level_eta": "⬆ 11m 34s",
+      "power_ratio": "⚔ 0.52x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.15x",
+      "interval": "12.0s",
+      "streak_bonus": "🔥 2-win streak (+0%)"
+    },
+    "initial_essence": 153.51,
+    "final_essence": 139.03,
+    "essence": {
+      "before_idle": 153.51,
+      "after_idle": 154.03,
+      "per_fight": [
+        154.03
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": 169,
+      "shop_after": 139,
+      "final": 139.03,
+      "flow": {
+        "idle_gained": 0.52,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": 30,
+        "net_change": -14.48
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": {
+      "notification_shown": false,
+      "offline_time": null,
+      "fights": null,
+      "xp_gained": null,
+      "essence_gained": null,
+      "levels_gained": null,
+      "claimed": false
+    },
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": {
+      "visited": false,
+      "essence_before": null,
+      "essence_after_salvage": null,
+      "essence_after_fusion": null,
+      "essence_after_upgrade": null,
+      "items_before": null,
+      "salvage_attempted": false,
+      "salvage_succeeded": false,
+      "fusion_attempted": false,
+      "fusion_succeeded": false,
+      "upgrade_attempted": false,
+      "upgrade_succeeded": false,
+      "essence_after": null,
+      "items_after": null,
+      "salvage_essence_gained": null,
+      "fusion_cost": null,
+      "upgrade_cost": null,
+      "skipped": false,
+      "skip_reason": null
+    },
+    "shop": {
+      "visited": true,
+      "offers_count": 3,
+      "purchased": true,
+      "offer_type": "item",
+      "item_rarity": "UNCOMMON",
+      "cost": 30,
+      "essence_before": 169,
+      "essence_after": 139,
+      "skipped": false,
+      "skip_reason": null,
+      "shop_data": {
+        "offers": [
+          {
+            "name": "Worn Bracers",
+            "rarity": "COMMON",
+            "price": 30
+          },
+          {
+            "name": "Storm Amulet",
+            "rarity": "RARE",
+            "price": 58
+          },
+          {
+            "name": "Coffre mystère",
+            "rarity": null,
+            "price": 50
+          }
+        ],
+        "purchased_offer": 0,
+        "essence_after_purchase": 139,
+        "essence_budget": 40,
+        "budget_limited": false,
+        "budget_blocked_price": null
+      }
+    },
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 40
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 1,
+    "skipped_inventory": null,
+    "skipped_fights": [],
+    "ui_feature_checks": {
+      "arena_tabs": {
+        "pve": true,
+        "pvp": true,
+        "boss": true
+      },
+      "boss_ui": {
+        "visible": false,
+        "cta": "LOCKED LVL 20"
+      },
+      "biome_ui": {
+        "visible": true,
+        "bonus": "GAINS x1.00",
+        "options": [
+          {
+            "name": "Plains",
+            "mult": "x1.00",
+            "locked": false,
+            "selected": true
+          },
+          {
+            "name": "Volcanic",
+            "mult": "x1.20",
+            "locked": true,
+            "selected": false
+          },
+          {
+            "name": "Mountain",
+            "mult": "x1.35",
+            "locked": true,
+            "selected": false
+          },
+          {
+            "name": "Frostpeak",
+            "mult": "x1.50",
+            "locked": true,
+            "selected": false
+          },
+          {
+            "name": "Eclipse",
+            "mult": "x1.70",
+            "locked": true,
+            "selected": false
+          }
+        ],
+        "interaction": null
+      },
+      "idle_rates": {
+        "essence_per_min": "💎 ~1.28",
+        "xp_per_min": "⚡ ~335"
+      }
+    },
+    "errors": [],
+    "load_times_ms": {
+      "home": 1287,
+      "arena": 798
+    },
+    "skipped_summary": {},
+    "shop_data": {
+      "offers": [
+        {
+          "name": "Worn Bracers",
+          "rarity": "COMMON",
+          "price": 30
+        },
+        {
+          "name": "Storm Amulet",
+          "rarity": "RARE",
+          "price": 58
+        },
+        {
+          "name": "Coffre mystère",
+          "rarity": null,
+          "price": 50
+        }
+      ],
+      "purchased_offer": 0,
+      "essence_after_purchase": 139,
+      "essence_budget": 40,
+      "budget_limited": false,
+      "budget_blocked_price": null
+    },
+    "error_patterns": []
   }
 ]
