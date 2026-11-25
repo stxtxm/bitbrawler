@@ -24,9 +24,9 @@ const makePlayer = (level: number) => ({
   equippedItems: { weapon: null, armor: null, accessory: null },
 })
 
-describe('PVE idle balance — STAT_MULTIPLIER 2.3 #1181', () => {
-  it('STAT_MULTIPLIER is 2.3', () => {
-    expect(GAME_RULES.PVE.STAT_MULTIPLIER).toBe(2.3)
+describe('PVE idle balance — STAT_MULTIPLIER 2.4 #1427', () => {
+  it('STAT_MULTIPLIER is 2.4', () => {
+    expect(GAME_RULES.PVE.STAT_MULTIPLIER).toBe(2.4)
   })
 
   it('HP_MULTIPLIER and LEVEL_BOOST unchanged', () => {
@@ -34,7 +34,7 @@ describe('PVE idle balance — STAT_MULTIPLIER 2.3 #1181', () => {
     expect(GAME_RULES.PVE.LEVEL_BOOST).toBe(4)
   })
 
-  it('2.3 — monster raw stats scale at 2.3x vs 2.1', () => {
+  it('2.4 — monster raw stats scale at 2.4x', () => {
     const m = generateMonster('goblin', 8)
     expect(m.strength).toBeGreaterThan(14 * 1.2)
   })
