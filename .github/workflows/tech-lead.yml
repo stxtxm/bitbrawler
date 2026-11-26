@@ -249,18 +249,24 @@ jobs:
               continue
             fi
 
-            HAS_SLASH=$(printf '%s' "$body" | grep -qiE '(^|[[:space:]])/(oc|opencode|proposal)($|[[:space:]])' && echo yes || echo no)
             IS_PROPOSITION=no
             if echo "$labels" | grep -qiE '(^|,)proposition(,|$)' \
               || printf '%s' "$title" | grep -qiE '^[[:space:]]*proposition' \
               || printf '%s' "$body" | grep -qiE 'type[[:space:]]*:[[:space:]]*proposition'; then
               IS_PROPOSITION=yes
-              # Les propositions majeures (effort 4+, label major, ou titre
-              # "Proposition majeure ...") restent a la main.
-              if printf '%s %s' "$title" "$body" | grep -qiE '(proposition majeure|majeure|(^|[[:space:]])major([[:space:]]|$)|effort:[[:space:]]*[4-9])'; then
-                IS_PROPOSITION=no
-              fi
             fi
+
+            # Les propositions majeures (effort 4+, label major, ou titre
+            # "Proposition majeure ...") restent a la main : jamais de dispatch,
+            # meme si le corps cite /oc.
+            if [ "$IS_PROPOSITION" = "yes" ] \
+              && printf '%s %s' "$title" "$body" | grep -qiE '(proposition majeure|majeure|(^|[[:space:]])major([[:space:]]|$)|effort:[[:space:]]*[4-9])'; then
+              continue
+            fi
+
+            # /oc doit terminer sa ligne : une mention en prose ("SANS /oc avec ...")
+            # n'est pas un trigger.
+            HAS_SLASH=$(printf '%s' "$body" | grep -qiE '(^|[[:space:]])/(oc|opencode|proposal)[[:space:]]*$' && echo yes || echo no)
 
             if [ "$HAS_SLASH" != "yes" ] && [ "$IS_PROPOSITION" != "yes" ]; then
               continue
@@ -270,7 +276,7 @@ jobs:
             # que le dev agent (opencode.yml) sache qu'il doit implementer.
             if [ "$HAS_SLASH" != "yes" ] && [ "$IS_PROPOSITION" = "yes" ]; then
               CURRENT_BODY=$(gh issue view "$number" --json body --jq '.body // ""' 2>/dev/null || printf '%s' "$body")
-              if ! printf '%s' "$CURRENT_BODY" | grep -qiE '(^|[[:space:]])/oc($|[[:space:]])'; then
+              if ! printf '%s' "$CURRENT_BODY" | grep -qiE '(^|[[:space:]])/oc[[:space:]]*$'; then
                 gh issue edit "$number" --body "$(printf '%s\n\n/oc' "$CURRENT_BODY")" 2>/dev/null || true
               fi
             fi

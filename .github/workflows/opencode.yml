@@ -181,7 +181,7 @@ jobs:
           else
             ISSUE_LABELS_EV=$(gh issue view "$ISSUE_NUMBER" --json labels --jq '[.labels[].name] | join(",")' 2>/dev/null || echo "")
             ISSUE_TITLE_EV=$(cat /tmp/issue-title.txt 2>/dev/null || echo "")
-            if grep -qiE '(^|[[:space:]])/(oc|opencode|proposal)([[:space:]]|$)' /tmp/prompt.txt \
+            if grep -qiE '(^|[[:space:]])/(oc|opencode|proposal)[[:space:]]*$' /tmp/prompt.txt \
               || echo "$ISSUE_LABELS_EV" | grep -qiE '(^|,)proposition(,|$)' \
               || echo "$ISSUE_TITLE_EV $(cat /tmp/prompt.txt)" | grep -qiE '(Phase|Effort:\s*[4-9]|Effort:\s*[1-9][0-9])'; then
               echo "REAL_TRIGGER=true" >> "$GITHUB_ENV"
@@ -1260,8 +1260,8 @@ jobs:
               continue
             fi
 
-            # Only dispatch if body contains /oc, /opencode, or /proposal
-            if ! printf '%s' "$body" | grep -qiE '(^|[[:space:]])/(oc|opencode|proposal)($|[[:space:]])'; then
+            # Only dispatch if a line ends with /oc, /opencode, or /proposal (pas une mention en prose)
+            if ! printf '%s' "$body" | grep -qiE '(^|[[:space:]])/(oc|opencode|proposal)[[:space:]]*$'; then
               continue
             fi
 
