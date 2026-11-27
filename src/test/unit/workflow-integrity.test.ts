@@ -936,3 +936,26 @@ describe('Workflow contracts: double quotes in `if:` conditions (#1400)', () => 
     expect(offenders).toEqual([])
   })
 })
+
+describe('Workflow contracts: /oc trigger must end its line (tech-lead dispatch)', () => {
+  // Une mention « SANS /oc avec ... » dans une issue de proposition majeure a
+  // fait dispatcher #1144 par le tech-lead : le trigger doit terminer sa ligne.
+  const OC_TRIGGER = '(^|[[:space:]])/(oc|opencode|proposal)[[:space:]]*$'
+  const matches = (body: string): boolean =>
+    spawnSync('grep', ['-qiE', OC_TRIGGER], { input: body }).status === 0
+
+  it('tech-lead.yml and opencode.yml use the line-ending trigger regex', () => {
+    expect(readWorkflow('tech-lead.yml')).toContain(`grep -qiE '${OC_TRIGGER}'`)
+    expect(readWorkflow('opencode.yml')).toContain(`grep -qiE '${OC_TRIGGER}'`)
+  })
+
+  it('a /oc cited in prose does not trigger', () => {
+    expect(matches('Migration dédiée SANS /oc avec SQL exact.\n')).toBe(false)
+    expect(matches('Type: Proposition majeure (pas de /oc)\n')).toBe(false)
+  })
+
+  it('a /oc ending a line (alone or after text) still triggers', () => {
+    expect(matches('Feature X\n\n/oc\n')).toBe(true)
+    expect(matches('Phrase unique. /oc\n')).toBe(true)
+  })
+})

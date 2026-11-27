@@ -181,7 +181,7 @@ jobs:
           else
             ISSUE_LABELS_EV=$(gh issue view "$ISSUE_NUMBER" --json labels --jq '[.labels[].name] | join(",")' 2>/dev/null || echo "")
             ISSUE_TITLE_EV=$(cat /tmp/issue-title.txt 2>/dev/null || echo "")
-            if grep -qiE '(^|[[:space:]])/(oc|opencode|proposal)([[:space:]]|$)' /tmp/prompt.txt \
+            if grep -qiE '(^|[[:space:]])/(oc|opencode|proposal)[[:space:]]*$' /tmp/prompt.txt \
               || echo "$ISSUE_LABELS_EV" | grep -qiE '(^|,)proposition(,|$)' \
               || echo "$ISSUE_TITLE_EV $(cat /tmp/prompt.txt)" | grep -qiE '(Phase|Effort:\s*[4-9]|Effort:\s*[1-9][0-9])'; then
               echo "REAL_TRIGGER=true" >> "$GITHUB_ENV"
@@ -1133,37 +1133,29 @@ jobs:
             git add -A
           fi
           if git diff --cached --quiet; then
-            echo "No unstaged changes. Checking for unpushed commits..."
-            # Count commits ahead of remote branch (handles both existing and new branches)
-            COMMITS=$(git log --oneline "origin/${BRANCH}..HEAD" 2>/dev/null | wc -l)
-            if [ "$COMMITS" -eq 0 ]; then
-              if git ls-remote --exit-code origin "refs/heads/${BRANCH}" >/dev/null 2>&1; then
-                echo "Branch exists on remote but no new commits locally — checking for existing PR..."
-                EXISTING_PR=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number' 2>/dev/null || true)
-                if [ -n "$EXISTING_PR" ]; then
-                  echo "Found existing PR #$EXISTING_PR — skipping creation"
-                  echo "PR_NUMBER=$EXISTING_PR" >> $GITHUB_OUTPUT
-                  exit 0
-                fi
-                echo "No PR exists — will create from existing remote branch"
+            echo "No unstaged changes. Checking the diff against master..."
+            # On compare le CONTENU à master, pas les commits vs la branche distante.
+            # Après un rebase sur master, une branche orpheline peut être identique à
+            # master (rien à livrer : GraphQL « No commits between master and … ») tout
+            # en étant « en avance » sur sa copie distante. L'ancien test poussait alors
+            # un force-push inutile qui écrasait la branche distante, puis la création
+            # de PR échouait (run 45740628641, #1144).
+            if git diff --quiet origin/master HEAD --; then
+              EXISTING_PR=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number' 2>/dev/null || true)
+              if [ -n "$EXISTING_PR" ]; then
+                echo "No changes vs master — existing PR #$EXISTING_PR kept, nothing to push"
               else
-                # New branch — count commits since branching from master
-                COMMITS=$(git log --oneline origin/master..HEAD 2>/dev/null | wc -l)
-                if [ "$COMMITS" -eq 0 ]; then
-                  echo "No commits found — no changes to push"
-                  # Le dev-agent n'a rien produit (modèle muet, tâche déjà couverte…).
-                  # Sans libérer le claim, la sous-issue reste « dispatched » à vie :
-                  # plus personne ne la relance et la campagne reste bloquée derrière
-                  # (2026-10-18 : #1203, run sans commit, claim jamais rendu).
-                  gh issue edit "$ISSUE_NUMBER" --remove-label "dispatched" 2>/dev/null || true
-                  echo "PR_NUMBER=" >> $GITHUB_OUTPUT
-                  exit 0
-                fi
-                echo "Found unpushed commits — pushing (new branch)"
+                echo "No changes vs master — no changes to push"
+                # Le dev-agent n'a rien produit (modèle muet, refus, tâche déjà couverte…).
+                # Sans libérer le claim, la sous-issue reste « dispatched » à vie :
+                # plus personne ne la relance et la campagne reste bloquée derrière
+                # (2026-10-18 : #1203, run sans commit, claim jamais rendu).
+                gh issue edit "$ISSUE_NUMBER" --remove-label "dispatched" 2>/dev/null || true
               fi
-            else
-              echo "Found unpushed commits — pushing"
+              echo "PR_NUMBER=$EXISTING_PR" >> $GITHUB_OUTPUT
+              exit 0
             fi
+            echo "Diff vs master present — pushing"
           else
             git commit -m "feat: auto-implement #$ISSUE_NUMBER"
           fi
@@ -1268,8 +1260,8 @@ jobs:
               continue
             fi
 
-            # Only dispatch if body contains /oc, /opencode, or /proposal
-            if ! printf '%s' "$body" | grep -qiE '(^|[[:space:]])/(oc|opencode|proposal)($|[[:space:]])'; then
+            # Only dispatch if a line ends with /oc, /opencode, or /proposal (pas une mention en prose)
+            if ! printf '%s' "$body" | grep -qiE '(^|[[:space:]])/(oc|opencode|proposal)[[:space:]]*$'; then
               continue
             fi
 
