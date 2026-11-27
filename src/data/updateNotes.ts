@@ -8,6 +8,14 @@ export type UpdateNote = {
 
 export const UPDATE_NOTES: UpdateNote[] = [
   {
+    version: '5.9.5',
+    date: '2026-11-27',
+    title: 'fix(ci): auto-dev sans force-push inutile, /oc en fin de ligne, majeures jamais dispatchées (PR #1429)',
+    changes: [
+      '✅ fix(ci): auto-dev sans force-push inutile, /oc en fin de ligne, majeures jamais dispatchées — livré automatiquement apres le merge de la PR #1429.',
+    ],
+  },
+  {
     version: '5.9.4',
     date: '2026-11-24',
     title: 'Proposition: Codex Rewards — gonfler le bestiaire instrumenté hier (#1294) en 2e pilier de rétention long-terme (silhouettes, jalons kills, jackpot découverte) (PR #1426)',
