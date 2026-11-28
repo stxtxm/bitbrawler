@@ -255315,5 +255315,293 @@
       "browser_error",
       "timeout"
     ]
+  },
+  {
+    "date": "2026-11-28T14:01:40.474Z",
+    "run": "2026-11-28",
+    "character": "QA-FRESH",
+    "character_action": "reused",
+    "replaced_character": null,
+    "character_type": "persistent",
+    "fleet_member": "QA-FRESH",
+    "fleet_band_violation": {
+      "member": "QA-FRESH",
+      "level": 9,
+      "minLevel": 1,
+      "maxLevel": 5
+    },
+    "fights": [
+      {
+        "result": "victory",
+        "xp": null,
+        "fight_duration_ms": 1055,
+        "max_hp": 369,
+        "fight_type": "pvp",
+        "monster_name": null,
+        "essence_after": 401.73,
+        "essence_before": 401.73,
+        "essence_gained": 0
+      }
+    ],
+    "lootbox": {
+      "available": false,
+      "opened": false,
+      "reason": "overlay-blocked",
+      "skipped_inventory": "overlay"
+    },
+    "auto_mode_enabled": false,
+    "auto_mode_sync_ok": false,
+    "arena_status": {
+      "fightButtonLabel": "FIGHT!",
+      "fightButtonVisible": true,
+      "fightButtonEnabled": true,
+      "fightsAvailable": 5,
+      "isResting": false,
+      "hasFightCta": true,
+      "isSearching": false,
+      "isPveLocked": false,
+      "bossLockedLevel": null
+    },
+    "initial_stats": {
+      "str": 17,
+      "vit": 12,
+      "dex": 12,
+      "luk": 11,
+      "int": 29,
+      "foc": 12,
+      "fights": 0
+    },
+    "initial_level": 13,
+    "initial_xp": {
+      "current": 140,
+      "max": 8263
+    },
+    "progression_curve": {
+      "level": 13,
+      "total_xp": 36628,
+      "xp_for_next": 8263,
+      "percent": 1.7
+    },
+    "initial_max_hp": 369,
+    "initial_equipment": [
+      {
+        "slot": "⚔️",
+        "name": "Battle Axe",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "🛡️",
+        "name": "Reinforced Vest",
+        "rarity": "COMMON"
+      },
+      {
+        "slot": "💍",
+        "name": "Silver Ring",
+        "rarity": "COMMON"
+      }
+    ],
+    "initial_streak": 1,
+    "final_stats": {
+      "level": 13,
+      "xp": 3088,
+      "wins": null,
+      "losses": null
+    },
+    "final_character_stats": {
+      "str": 17,
+      "vit": 12,
+      "dex": 12,
+      "luk": 11,
+      "int": 29,
+      "foc": 12,
+      "last xp": 72,
+      "fights": 3
+    },
+    "final_max_hp": 369,
+    "final_equipment": [],
+    "final_streak": 1,
+    "lootbox_equipment": [],
+    "lootbox_streak": 1,
+    "pve_data": {
+      "fights": 0,
+      "wins": 0,
+      "xp_total": 0,
+      "monsters_faced": [],
+      "pve_shifted": false
+    },
+    "level_up_events": [],
+    "idle_runner": {
+      "observation_duration_ms": 20266,
+      "cycles_observed": 1,
+      "monsters_faced": [
+        "wraith",
+        "goblin"
+      ],
+      "victories": 2,
+      "defeats": 0,
+      "xp_total": 147,
+      "xp_events": [
+        {
+          "time_ms": 3073,
+          "xp": 75,
+          "monster": "wraith",
+          "result": "VICTORY"
+        },
+        {
+          "time_ms": 14711,
+          "xp": 72,
+          "monster": "goblin",
+          "result": "VICTORY"
+        }
+      ],
+      "streak_banner_shown": false,
+      "level_up_fx_detected": false,
+      "level_up_events": [],
+      "phase_transition_times_ms": [
+        512,
+        1537,
+        3073,
+        12154,
+        13178,
+        14711
+      ]
+    },
+    "idle_fights": [
+      {
+        "result": "victory",
+        "xp": 75,
+        "essence": 0.5,
+        "monster": "wraith"
+      },
+      {
+        "result": "victory",
+        "xp": 72,
+        "essence": 0.5,
+        "monster": "goblin"
+      }
+    ],
+    "efficiency_panel": {
+      "visible": true,
+      "essence_per_min": 2.3,
+      "next_level_eta": "⬆ 13m 21s",
+      "power_ratio": "⚔ 0.54x",
+      "speed_ratio": "⚡ 0.50x",
+      "magic_mult": "🧠 1.21x",
+      "interval": "11.7s",
+      "streak_bonus": "🔥 2-win streak (+25%)"
+    },
+    "initial_essence": null,
+    "final_essence": null,
+    "essence": {
+      "before_idle": 400.73,
+      "after_idle": 401.73,
+      "per_fight": [
+        401.73
+      ],
+      "forge_before": null,
+      "forge_after_salvage": null,
+      "forge_after_fusion": null,
+      "forge_after_upgrade": null,
+      "forge_after": null,
+      "shop_before": null,
+      "shop_after": null,
+      "final": null,
+      "flow": {
+        "idle_gained": 1,
+        "fights_change": null,
+        "salvage_gained": null,
+        "fusion_cost": null,
+        "upgrade_cost": null,
+        "forge_net": null,
+        "shop_cost": null,
+        "net_change": null
+      }
+    },
+    "level_up_fx": {
+      "detected": false,
+      "glow_class_applied": false,
+      "float_text_shown": false,
+      "level": null
+    },
+    "offline_gains": null,
+    "no_legacy_overlay": {
+      "level_up_pop_overlay": false,
+      "stat_points_badge": false,
+      "all_clear": true
+    },
+    "forge": null,
+    "shop": null,
+    "cohort": {
+      "name": "QA-MID",
+      "essence_budget": 40
+    },
+    "combat_speed": 2,
+    "pvp_since_last_pve": 1,
+    "skipped_inventory": "overlay",
+    "skipped_fights": [],
+    "ui_feature_checks": {
+      "arena_tabs": {
+        "pve": true,
+        "pvp": true,
+        "boss": true
+      },
+      "boss_ui": {
+        "visible": false,
+        "cta": "LOCKED LVL 20"
+      },
+      "biome_ui": {
+        "visible": true,
+        "bonus": "GAINS x1.00",
+        "options": [
+          {
+            "name": "Plains",
+            "mult": "x1.00",
+            "locked": false,
+            "selected": true
+          },
+          {
+            "name": "Volcanic",
+            "mult": "x1.20",
+            "locked": true,
+            "selected": false
+          },
+          {
+            "name": "Mountain",
+            "mult": "x1.35",
+            "locked": true,
+            "selected": false
+          },
+          {
+            "name": "Frostpeak",
+            "mult": "x1.50",
+            "locked": true,
+            "selected": false
+          },
+          {
+            "name": "Eclipse",
+            "mult": "x1.70",
+            "locked": true,
+            "selected": false
+          }
+        ],
+        "interaction": null
+      },
+      "idle_rates": {
+        "essence_per_min": "💎 ~2.30",
+        "xp_per_min": "⚡ ~388"
+      }
+    },
+    "errors": [
+      "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('button[aria-label=\"Settings\"], button:has-text(\"SETTINGS\"), [class*=\"settings\"]').first()\n    - locator resolved to <button title=\"Settings\" aria-label=\"Settings\" class=\"button icon-btn\">…</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"combat-overlay\">…</div> intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <div class=\"combat-overlay\">…</div> intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    56 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <div class=\"combat-overlay\">…</div> intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n"
+    ],
+    "load_times_ms": {
+      "home": 957,
+      "arena": 931
+    },
+    "skipped_summary": {},
+    "error_patterns": [
+      "browser_error",
+      "timeout"
+    ]
   }
 ]
